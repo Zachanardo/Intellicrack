@@ -47,7 +47,7 @@ def get_machine_type(machine: int) -> str:
         machine: PE machine type constant value
 
     Returns:
-        str: Human-readable machine type description
+        Human-readable machine type description.
 
     """
     machine_types = {
@@ -70,7 +70,7 @@ def get_magic_type(magic: int) -> str:
         magic: PE optional header magic constant value
 
     Returns:
-        str: Human-readable magic type description
+        Human-readable magic type description.
 
     """
     magic_types = {0x10B: "PE32", 0x20B: "PE32+", 0x107: "ROM image"}
@@ -87,7 +87,7 @@ def get_characteristics(characteristics: int) -> str:
         characteristics: PE characteristics flag value
 
     Returns:
-        str: Space-separated list of characteristic flags or "None"
+        Space-separated list of characteristic flags or "None".
 
     """
     char_flags = {
@@ -113,7 +113,19 @@ def get_characteristics(characteristics: int) -> str:
 
 
 def get_pe_timestamp(timestamp: int) -> str:
-    """Convert PE timestamp to human-readable format."""
+    """Convert PE timestamp to human-readable format.
+
+    Converts a Unix timestamp value from the PE file header into a
+    human-readable date and time string in YYYY-MM-DD HH:MM:SS format.
+
+    Args:
+        timestamp: Unix timestamp value from PE file header.
+
+    Returns:
+        str: Formatted date-time string in "YYYY-MM-DD HH:MM:SS" format,
+            or "Invalid timestamp" if conversion fails.
+
+    """
     import datetime
 
     try:
@@ -133,12 +145,12 @@ def analyze_binary_internal(binary_path: str, flags: list[str] | None = None) ->
     dangerous permissions, and license-related imports.
 
     Args:
-        binary_path: Path to the binary file to analyze
+        binary_path: Path to the binary file to analyze.
         flags: Optional list of analysis flags to control behavior
-               (e.g., "stealth" to skip string scanning)
+               (e.g., "stealth" to skip string scanning).
 
     Returns:
-        list: Analysis results as a list of formatted strings
+        Analysis results as a list of formatted strings.
 
     """
     if flags is None:
@@ -184,10 +196,10 @@ def _analyze_pe_header(pe: object) -> list[str]:
     from the PE file header.
 
     Args:
-        pe: PE file object from pefile library
+        pe: PE file object from pefile library.
 
     Returns:
-        list: Formatted strings describing PE header contents
+        Formatted strings describing PE header contents.
 
     """
     results = ["\nPE Header:"]
@@ -218,10 +230,10 @@ def _analyze_optional_header(pe: object) -> list[str]:
     PE optional header.
 
     Args:
-        pe: PE file object from pefile library
+        pe: PE file object from pefile library.
 
     Returns:
-        list: Formatted strings describing PE optional header contents
+        Formatted strings describing PE optional header contents.
 
     """
     results = ["\nOptional Header:"]
@@ -259,11 +271,11 @@ def _analyze_sections(pe: object, results: list[str]) -> list[str]:
     that may indicate packing or protection mechanisms.
 
     Args:
-        pe: PE file object from pefile library
-        results: List to append section analysis results to
+        pe: PE file object from pefile library.
+        results: List to append section analysis results to.
 
     Returns:
-        list: List of suspicious section names identified
+        List of suspicious section names identified.
 
     """
     results.append("\nSections:")
@@ -305,11 +317,11 @@ def _analyze_imports(pe: object, results: list[str]) -> list[str]:
     such as validation, verification, authentication, and activation functions.
 
     Args:
-        pe: PE file object from pefile library
-        results: List to append import analysis results to
+        pe: PE file object from pefile library.
+        results: List to append import analysis results to.
 
     Returns:
-        list: List of license-related import function signatures
+        List of license-related import function signatures.
 
     """
     results.append("\nImports:")
@@ -349,8 +361,8 @@ def _analyze_exports(pe: object, results: list[str]) -> None:
     list for display.
 
     Args:
-        pe: PE file object from pefile library
-        results: List to append export analysis results to
+        pe: PE file object from pefile library.
+        results: List to append export analysis results to.
 
     """
     if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
@@ -365,9 +377,9 @@ def _generate_analysis_summary(results: list[str], suspicious_sections: list[str
     license-related imports found during analysis.
 
     Args:
-        results: List to append summary results to
-        suspicious_sections: List of suspicious section names
-        license_related_imports: List of license-related imports
+        results: List to append summary results to.
+        suspicious_sections: List of suspicious section names.
+        license_related_imports: List of license-related imports.
 
     """
     results.append("\nAnalysis Summary:")
@@ -382,10 +394,10 @@ def enhanced_deep_license_analysis(binary_path: str) -> dict[str, Any]:
     and protection mechanisms commonly used in commercial software.
 
     Args:
-        binary_path: Path to the binary file to analyze
+        binary_path: Path to the binary file to analyze.
 
     Returns:
-        dict: Analysis results containing license-related findings
+        Analysis results containing license-related findings.
 
     """
     results: dict[str, Any] = {
@@ -502,10 +514,10 @@ def detect_packing(binary_path: str) -> dict[str, Any]:
     compressed, or obfuscated to hide its true functionality.
 
     Args:
-        binary_path: Path to the binary file to analyze
+        binary_path: Path to the binary file to analyze.
 
     Returns:
-        dict: Packing detection results
+        Packing detection results.
 
     """
     results: dict[str, Any] = {
@@ -652,10 +664,10 @@ def decrypt_embedded_script(binary_path: str) -> list[str]:
     script content, identifying script type and displaying content preview.
 
     Args:
-        binary_path: Path to the binary file to search for embedded scripts
+        binary_path: Path to the binary file to search for embedded scripts.
 
     Returns:
-        list: Analysis results as formatted strings describing found scripts
+        Analysis results as formatted strings describing found scripts.
 
     """
     results: list[str] = [f"Searching for embedded scripts in {binary_path}..."]

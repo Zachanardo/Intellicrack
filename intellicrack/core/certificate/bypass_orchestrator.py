@@ -150,7 +150,27 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BypassResult:
-    """Result of certificate bypass operation."""
+    """Result of certificate bypass operation.
+
+    Contains comprehensive bypass operation results including success status,
+    method used, detection information, and rollback data for reverting changes.
+
+    Attributes:
+        success: Whether the bypass operation succeeded.
+        method_used: The bypass method that was executed (BINARY_PATCH, FRIDA_HOOK,
+            HYBRID, MITM_PROXY, or NONE).
+        detection_report: Detection report containing identified validation libraries
+            and functions.
+        patch_result: Result from binary patching operation if applicable, None
+            if patching was not used.
+        frida_status: Status dictionary from Frida hook operation if applicable,
+            None if Frida hooking was not used.
+        verification_passed: Whether bypass verification tests passed successfully.
+        errors: List of error messages encountered during bypass operation.
+        rollback_data: Binary data needed to rollback/restore patched binaries.
+        timestamp: Operation timestamp when bypass was initiated.
+
+    """
 
     success: bool
     method_used: BypassMethod
@@ -166,7 +186,8 @@ class BypassResult:
         """Convert result to dictionary.
 
         Returns:
-            Dictionary representation
+            Dictionary representation of bypass result with success status,
+            method used, verification results, and detection summary.
 
         """
         return {
@@ -184,10 +205,20 @@ class BypassResult:
 
 
 class CertificateBypassOrchestrator:
-    """Orchestrates complete certificate validation bypass workflow."""
+    """Orchestrates complete certificate validation bypass workflow.
+
+    This orchestrator coordinates the entire process of detecting and bypassing
+    certificate validation mechanisms in target binaries. It integrates multiple
+    bypass strategies (binary patching, Frida hooking, MITM proxy) and provides
+    a unified interface for executing and verifying bypass operations.
+
+    """
 
     def __init__(self) -> None:
-        """Initialize bypass orchestrator."""
+        """Initialize bypass orchestrator.
+
+        Sets up detector, strategy selector, and Frida hooks instances.
+        """
         self.detector = CertificateValidationDetector()
         self.strategy_selector = BypassStrategySelector()
         self.frida_hooks: FridaCertificateHooks | None = None
@@ -213,6 +244,10 @@ class CertificateBypassOrchestrator:
 
         Returns:
             BypassResult containing operation results
+
+        Raises:
+            FileNotFoundError: If target file does not exist and cannot be resolved
+            ValueError: If bypass method is unsupported
 
         """
         logger.info("Starting certificate bypass for target: %s", target)
@@ -309,10 +344,10 @@ class CertificateBypassOrchestrator:
         """Analyze target to determine if it's a file path or process.
 
         Args:
-            target: Target specification
+            target: Target specification (file path, PID, or process name).
 
         Returns:
-            Tuple of (target_path, is_running)
+            Tuple containing target path and whether the process is running.
 
         """
         target_path = Path(target)
@@ -341,10 +376,10 @@ class CertificateBypassOrchestrator:
         """Check if process with given name is running.
 
         Args:
-            process_name: Process executable name
+            process_name: Process executable name to check.
 
         Returns:
-            True if process is running
+            True if a process with the given name is running, False otherwise.
 
         """
         for proc in psutil.process_iter(["name"]):
@@ -359,10 +394,14 @@ class CertificateBypassOrchestrator:
         """Execute binary patching bypass.
 
         Args:
-            detection_report: Detection results
+            detection_report: Detection report containing target binary path and
+                validation functions to patch.
 
         Returns:
-            PatchResult from patching operation
+            PatchResult containing patched functions and operation status.
+
+        Raises:
+            Exception: If patching operation fails or binary cannot be accessed.
 
         """
         logger.info("Executing binary patch bypass")
@@ -391,11 +430,18 @@ class CertificateBypassOrchestrator:
     def _execute_frida_hook(self, target: str) -> dict[str, object]:
         """Execute Frida hooking bypass.
 
+        Attaches Frida instrumentation to the target process and injects
+        universal bypass hooks to disable certificate validation checks at
+        runtime.
+
         Args:
-            target: Target process
+            target: Target process name, PID, or binary path to attach.
 
         Returns:
-            Dictionary with Frida hook status
+            Dictionary with keys: success (bool), and on success: active (bool),
+            library (str), platform (str), hooks_installed (list), detected_libraries
+            (list), message_count (int), errors (list), intercepted_data (object).
+            On failure: success (bool), error (str).
 
         """
         logger.info("Executing Frida hook bypass")
@@ -444,10 +490,10 @@ class CertificateBypassOrchestrator:
         4. Sets up certificate cache for future use
 
         Args:
-            target: Target process or binary
+            target: Target process or binary path to analyze.
 
         Returns:
-            True if MITM proxy setup successful
+            True if MITM proxy setup successful, False otherwise.
 
         """
         logger.info("Executing MITM proxy bypass")
@@ -521,10 +567,10 @@ class CertificateBypassOrchestrator:
         activation, or authentication servers.
 
         Args:
-            target: Target binary path
+            target: Target binary path to scan for licensing domains.
 
         Returns:
-            List of identified licensing domains
+            List of identified licensing server domains, empty list if none found.
 
         """
         import re
@@ -588,10 +634,10 @@ class CertificateBypassOrchestrator:
         4. Confidence scoring: Assesses overall bypass effectiveness
 
         Args:
-            target_path: Path to target binary
+            target_path: Path to target binary to verify.
 
         Returns:
-            True if bypass verification passed
+            True if bypass verification passed with confidence >= 33%, False otherwise.
 
         """
         logger.info("Verifying bypass success")
@@ -637,10 +683,10 @@ class CertificateBypassOrchestrator:
         Scans binary for known patch signatures indicating successful patching.
 
         Args:
-            target_path: Path to target binary
+            target_path: Path to target binary to scan.
 
         Returns:
-            True if patches detected
+            True if patch signatures detected in binary, False otherwise.
 
         """
         if not target_path.exists():
@@ -675,7 +721,7 @@ class CertificateBypassOrchestrator:
         Checks if Frida hooks are currently attached and active.
 
         Returns:
-            True if hooks are active
+            True if Frida hooks are attached and active, False otherwise.
 
         """
         if self.frida_hooks is None:
@@ -704,10 +750,10 @@ class CertificateBypassOrchestrator:
         bypass effectiveness.
 
         Args:
-            target_path: Path to target binary
+            target_path: Path to target binary to verify.
 
         Returns:
-            True if validation appears bypassed
+            True if validation appears bypassed or no TLS libraries present.
 
         """
         try:
@@ -749,10 +795,11 @@ class CertificateBypassOrchestrator:
         """Rollback bypass changes.
 
         Args:
-            bypass_result: Result from bypass operation
+            bypass_result: Result from bypass operation containing patch and
+                Frida hook rollback information.
 
         Returns:
-            True if rollback successful
+            True if rollback successful, False if errors occurred.
 
         """
         logger.info("Rolling back bypass changes")

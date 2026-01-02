@@ -62,7 +62,11 @@ class R2SignatureAnalyzer:
         """Perform comprehensive signature analysis on the binary.
 
         Returns:
-            Complete signature analysis results
+            dict[str, Any]: Complete signature analysis results containing FLIRT signatures,
+                Zignatures, identified functions, library functions, compiler artifacts,
+                crypto functions, anti-analysis functions, license validation functions,
+                vulnerability signatures, custom pattern matches, statistics, and confidence
+                analysis. Includes error details if analysis fails.
 
         """
         result: dict[str, Any] = {
@@ -131,7 +135,16 @@ class R2SignatureAnalyzer:
         return result
 
     def _apply_flirt_signatures(self, r2: R2Session | R2SessionPoolAdapter) -> dict[str, Any]:
-        """Apply FLIRT signatures to identify library functions."""
+        """Apply FLIRT signatures to identify library functions.
+
+        Args:
+            r2: Radare2 session or session pool adapter for command execution.
+
+        Returns:
+            dict[str, Any]: FLIRT analysis results including signature count, function count,
+                signature files used, and matches with names, addresses, sizes, and types.
+
+        """
         flirt_result: dict[str, Any] = {
             "signatures_applied": 0,
             "functions_identified": 0,
@@ -161,7 +174,7 @@ class R2SignatureAnalyzer:
                 ):
                     if func_addr := func.get("offset", 0):
                         try:
-                            if func_info := r2.get_function_info(func_addr):
+                            if r2.get_function_info(func_addr):
                                 identified_by_flirt.append(
                                     {
                                         "name": func_name,
@@ -184,7 +197,16 @@ class R2SignatureAnalyzer:
         return flirt_result
 
     def _apply_zignatures(self, r2: R2Session | R2SessionPoolAdapter) -> dict[str, Any]:
-        """Apply Zignatures for function identification."""
+        """Apply Zignatures for function identification.
+
+        Args:
+            r2: Radare2 session or session pool adapter for command execution.
+
+        Returns:
+            dict[str, Any]: Zignature analysis results including signatures loaded, matches,
+                and match confidence data. Returns empty signature list if no zignatures available.
+
+        """
         zignature_result: dict[str, Any] = {
             "signatures_loaded": 0,
             "matches": [],
@@ -214,7 +236,16 @@ class R2SignatureAnalyzer:
         return zignature_result
 
     def _categorize_identified_functions(self, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Categorize functions based on their names and signatures."""
+        """Categorize functions based on their names and signatures.
+
+        Args:
+            functions: List of function dictionaries to categorize.
+
+        Returns:
+            list[dict[str, Any]]: Categorized functions with names, addresses, sizes,
+                categories, confidence scores, and signature sources.
+
+        """
         categorized = []
 
         for func in functions:
@@ -237,7 +268,16 @@ class R2SignatureAnalyzer:
         return categorized
 
     def _determine_function_category(self, func_name: str) -> str:
-        """Determine function category based on name patterns."""
+        """Determine function category based on name patterns.
+
+        Args:
+            func_name: Function name to analyze for category determination.
+
+        Returns:
+            str: Function category (system_api, c_runtime, cryptographic, string_manipulation,
+                network, file_io, registry, user_defined, entry_point, or unknown).
+
+        """
         name_lower = func_name.lower()
 
         # System/API functions
@@ -279,7 +319,15 @@ class R2SignatureAnalyzer:
         return "unknown"
 
     def _calculate_name_confidence(self, func_name: str) -> float:
-        """Calculate confidence level for function identification."""
+        """Calculate confidence level for function identification.
+
+        Args:
+            func_name: Function name to evaluate for identification confidence.
+
+        Returns:
+            float: Confidence score between 0.0 and 1.0 based on function name patterns.
+
+        """
         # Higher confidence for imported functions
         if func_name.startswith("sym.imp."):
             return 0.95
@@ -301,7 +349,16 @@ class R2SignatureAnalyzer:
         return 0.6
 
     def _determine_signature_source(self, func_name: str) -> str:
-        """Determine the source of function signature."""
+        """Determine the source of function signature.
+
+        Args:
+            func_name: Function name to analyze for signature source.
+
+        Returns:
+            str: Signature source (import_table, flirt_signature, analysis_heuristic,
+                disassembly, or signature_database).
+
+        """
         if func_name.startswith("sym.imp."):
             return "import_table"
         if func_name.startswith("sym._"):
@@ -311,7 +368,18 @@ class R2SignatureAnalyzer:
         return "disassembly" if func_name.startswith("sub_") else "signature_database"
 
     def _analyze_library_functions(self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]) -> dict[str, Any]:
-        """Analyze and categorize library functions."""
+        """Analyze and categorize library functions.
+
+        Args:
+            r2: Radare2 session or session pool adapter for command execution.
+            functions: List of function dictionaries to analyze.
+
+        Returns:
+            dict[str, Any]: Library analysis results categorized by type (c_runtime,
+                windows_api, posix_api, crypto_libraries, network_libraries, ui_libraries,
+                compression_libraries, database_libraries) with enhanced r2 information.
+
+        """
         library_analysis: dict[str, Any] = {
             "c_runtime": [],
             "windows_api": [],
@@ -399,7 +467,17 @@ class R2SignatureAnalyzer:
         return library_analysis
 
     def _detect_compiler_artifacts(self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]) -> dict[str, Any]:
-        """Detect compiler-specific artifacts and runtime functions."""
+        """Detect compiler-specific artifacts and runtime functions.
+
+        Args:
+            r2: Radare2 session or session pool adapter for command execution.
+            functions: List of function dictionaries to analyze for compiler artifacts.
+
+        Returns:
+            dict[str, Any]: Compiler artifacts including MSVC, GCC, clang, and Borland artifacts,
+                runtime checks, exception handling, stack guards, compiler info, and build info.
+
+        """
         compiler_artifacts: dict[str, Any] = {
             "msvc_artifacts": [],
             "gcc_artifacts": [],
@@ -495,7 +573,17 @@ class R2SignatureAnalyzer:
         return compiler_artifacts
 
     def _identify_crypto_functions(self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Identify cryptographic functions and algorithms."""
+        """Identify cryptographic functions and algorithms.
+
+        Args:
+            r2: Radare2 session or session pool adapter for command execution.
+            functions: List of function dictionaries to analyze for crypto implementations.
+
+        Returns:
+            list[dict[str, Any]]: Identified cryptographic functions with types, patterns matched,
+                confidence scores, and r2 analysis results.
+
+        """
         crypto_functions: list[dict[str, Any]] = []
 
         crypto_patterns: dict[str, list[str]] = {
@@ -599,7 +687,16 @@ class R2SignatureAnalyzer:
         return crypto_functions
 
     def _calculate_crypto_confidence(self, func_name: str, patterns: list[str]) -> float:
-        """Calculate confidence for crypto function identification."""
+        """Calculate confidence for crypto function identification.
+
+        Args:
+            func_name: Function name to evaluate for crypto identification.
+            patterns: List of patterns matched in the function name.
+
+        Returns:
+            float: Confidence score between 0.0 and 1.0 for crypto function identification.
+
+        """
         name_lower = func_name.lower()
         matches = sum(pattern in name_lower for pattern in patterns)
 
@@ -613,7 +710,17 @@ class R2SignatureAnalyzer:
     def _detect_anti_analysis_functions(
         self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """Detect anti-analysis and anti-debugging functions."""
+        """Detect anti-analysis and anti-debugging functions.
+
+        Args:
+            r2: Radare2 session or session pool adapter for command execution.
+            functions: List of function dictionaries to analyze for anti-analysis techniques.
+
+        Returns:
+            list[dict[str, Any]]: Detected anti-analysis functions with categories, patterns matched,
+                risk levels, and r2 analysis results.
+
+        """
         anti_analysis: list[dict[str, Any]] = []
 
         anti_patterns: dict[str, list[str]] = {
@@ -725,7 +832,16 @@ class R2SignatureAnalyzer:
         return anti_analysis
 
     def _calculate_anti_analysis_risk(self, func_name: str, category: str) -> str:
-        """Calculate risk level for anti-analysis functions."""
+        """Calculate risk level for anti-analysis functions.
+
+        Args:
+            func_name: Function name to evaluate for risk assessment.
+            category: Anti-analysis category (debugger_detection, vm_detection, etc).
+
+        Returns:
+            str: Risk level (low, medium, high, or critical) for anti-analysis functions.
+
+        """
         base_risk = "low"
 
         # Category-based risk assessment
@@ -757,7 +873,17 @@ class R2SignatureAnalyzer:
     def _identify_license_validation_functions(
         self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """Identify potential license validation functions."""
+        """Identify potential license validation functions.
+
+        Args:
+            r2: Radare2 session or session pool adapter for command execution.
+            functions: List of function dictionaries to analyze for license validation.
+
+        Returns:
+            list[dict[str, Any]]: Identified license validation functions with patterns matched,
+                confidence scores, license types, and r2 analysis results.
+
+        """
         license_functions: list[dict[str, Any]] = []
 
         license_patterns: list[str] = [
@@ -876,7 +1002,16 @@ class R2SignatureAnalyzer:
         return license_functions
 
     def _determine_license_type(self, func_name: str) -> str:
-        """Determine the type of license validation."""
+        """Determine the type of license validation.
+
+        Args:
+            func_name: Function name to analyze for license validation type.
+
+        Returns:
+            str: License type (trial_validation, serial_key_validation, activation_validation,
+                registration_validation, or general_validation).
+
+        """
         name_lower = func_name.lower()
 
         if "trial" in name_lower or "demo" in name_lower:
@@ -892,7 +1027,17 @@ class R2SignatureAnalyzer:
     def _check_vulnerability_signatures(
         self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """Check for known vulnerability signatures."""
+        """Check for known vulnerability signatures.
+
+        Args:
+            r2: Radare2 session or session pool adapter for command execution.
+            functions: List of function dictionaries to analyze for vulnerabilities.
+
+        Returns:
+            list[dict[str, Any]]: Detected vulnerability signatures with types, risk levels,
+                mitigation flags, and r2 analysis results.
+
+        """
         vulnerability_sigs: list[dict[str, Any]] = []
 
         vulnerable_functions: dict[str, list[str]] = {
@@ -1012,7 +1157,15 @@ class R2SignatureAnalyzer:
         return vulnerability_sigs
 
     def _calculate_vulnerability_risk(self, vuln_type: str) -> str:
-        """Calculate risk level for vulnerability types."""
+        """Calculate risk level for vulnerability types.
+
+        Args:
+            vuln_type: Vulnerability type to assess for risk.
+
+        Returns:
+            str: Risk level (low, medium, or high) for vulnerability type.
+
+        """
         high_risk = ["buffer_overflow", "format_string", "use_after_free"]
         if vuln_type in high_risk:
             return "high"
@@ -1021,7 +1174,17 @@ class R2SignatureAnalyzer:
         return "medium" if vuln_type in medium_risk else "low"
 
     def _apply_custom_patterns(self, r2: R2Session | R2SessionPoolAdapter, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Apply custom signature patterns for specific detection."""
+        """Apply custom signature patterns for specific detection.
+
+        Args:
+            r2: Radare2 session or session pool adapter for command execution.
+            functions: List of function dictionaries to analyze with custom patterns.
+
+        Returns:
+            list[dict[str, Any]]: Custom pattern matches with pattern names, confidence scores,
+                and r2 analysis results for license validation and protection detection.
+
+        """
         custom_matches: list[dict[str, Any]] = []
 
         custom_patterns: dict[str, str] = {
@@ -1188,7 +1351,16 @@ class R2SignatureAnalyzer:
         return custom_matches
 
     def _find_unidentified_functions(self, functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Find functions that haven't been identified by signatures."""
+        """Find functions that haven't been identified by signatures.
+
+        Args:
+            functions: List of function dictionaries to filter for unidentified functions.
+
+        Returns:
+            list[dict[str, Any]]: Functions with generic names (fcn.*, sub_*, loc_*) that lack
+                signature-based identification.
+
+        """
         unidentified: list[dict[str, Any]] = []
 
         for func in functions:
@@ -1201,7 +1373,17 @@ class R2SignatureAnalyzer:
         return unidentified
 
     def _generate_signature_statistics(self, result: dict[str, Any]) -> dict[str, Any]:
-        """Generate comprehensive signature statistics."""
+        """Generate comprehensive signature statistics.
+
+        Args:
+            result: Complete analysis result dictionary to extract statistics from.
+
+        Returns:
+            dict[str, Any]: Statistics including identification rate, function counts by category
+                (library, crypto, anti-analysis, license validation, vulnerabilities), and total
+                function counts.
+
+        """
         # Count functions
         identified_funcs = result.get("identified_functions", [])
         unidentified_funcs = result.get("unidentified_functions", [])
@@ -1232,7 +1414,16 @@ class R2SignatureAnalyzer:
         return stats
 
     def _analyze_identification_confidence(self, result: dict[str, Any]) -> dict[str, Any]:
-        """Analyze confidence levels of function identification."""
+        """Analyze confidence levels of function identification.
+
+        Args:
+            result: Complete analysis result dictionary to analyze confidence metrics.
+
+        Returns:
+            dict[str, Any]: Confidence analysis including high/medium/low confidence function lists,
+                average confidence score, and confidence distribution percentages.
+
+        """
         high_confidence: list[dict[str, Any]] = []
         medium_confidence: list[dict[str, Any]] = []
         low_confidence: list[dict[str, Any]] = []
@@ -1277,11 +1468,14 @@ def analyze_binary_signatures(binary_path: str, radare2_path: str | None = None)
     """Perform comprehensive signature analysis on a binary.
 
     Args:
-        binary_path: Path to binary file
-        radare2_path: Optional path to radare2 executable
+        binary_path: Path to binary file to analyze.
+        radare2_path: Optional path to radare2 executable. If None, uses system default.
 
     Returns:
-        Complete signature analysis results
+        dict[str, Any]: Complete signature analysis results containing FLIRT signatures,
+            Zignatures, identified functions, library functions, compiler artifacts,
+            cryptographic functions, anti-analysis functions, license validation functions,
+            vulnerability signatures, custom pattern matches, statistics, and confidence analysis.
 
     """
     analyzer = R2SignatureAnalyzer(binary_path, radare2_path)

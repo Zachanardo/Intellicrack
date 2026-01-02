@@ -43,7 +43,7 @@ from ...utils.system.system_utils import is_admin
 try:
     from ...utils.system.subprocess_utils import run_subprocess_check
 except ImportError:
-    run_subprocess_check = None  # type: ignore[assignment]
+    run_subprocess_check = None
 
 logger = get_logger(__name__)
 
@@ -396,11 +396,21 @@ class WindowsActivator:
             }
 
     def activate_windows_kms(self) -> dict[str, Any]:
-        """Activate Windows using KMS method."""
+        """Activate Windows using KMS method.
+
+        Returns:
+            dict[str, Any]: Dictionary with activation result
+
+        """
         return self.activate_windows(ActivationMethod.KMS38)
 
     def activate_windows_digital(self) -> dict[str, Any]:
-        """Activate Windows using HWID digital method."""
+        """Activate Windows using HWID digital method.
+
+        Returns:
+            dict[str, Any]: Dictionary with activation result
+
+        """
         return self.activate_windows(ActivationMethod.HWID)
 
     def activate_office(self, office_version: str = "auto") -> dict[str, Any]:
@@ -814,6 +824,19 @@ class WindowsActivator:
             stderr_lines: list[str] = []
 
             def reader_thread(pipe: IO[str], line_list: list[str], is_stderr: bool = False) -> None:
+                """Read lines from a pipe and add them to a queue and list.
+
+                This nested function reads output from a subprocess pipe and distributes
+                the lines to both an output list for collection and a queue for real-time
+                streaming via callback.
+
+                Args:
+                    pipe: Input file object representing the subprocess pipe
+                    line_list: List to accumulate output lines
+                    is_stderr: Boolean flag indicating if this is stderr (True) or
+                        stdout (False)
+
+                """
                 try:
                     for line in iter(pipe.readline, ""):
                         if not line:
@@ -1055,7 +1078,12 @@ class WindowsActivatorInteractive:
     """Interactive Windows activation with real-time output streaming."""
 
     def __init__(self, activator: WindowsActivator) -> None:
-        """Initialize with a WindowsActivator instance."""
+        """Initialize with a WindowsActivator instance.
+
+        Args:
+            activator: WindowsActivator instance to use for activation operations
+
+        """
         self.activator = activator
         self.logger = get_logger(__name__)
 
@@ -1092,6 +1120,19 @@ class WindowsActivatorInteractive:
         stderr_lines: list[str] = []
 
         def reader_thread(pipe: IO[str], line_list: list[str], is_stderr: bool = False) -> None:
+            """Read lines from a pipe and add them to a queue and list.
+
+            This nested function reads output from a subprocess pipe and distributes
+            the lines to both an output list for collection and a queue for real-time
+            streaming via callback.
+
+            Args:
+                pipe: Input file object representing the subprocess pipe
+                line_list: List to accumulate output lines
+                is_stderr: Boolean flag indicating if this is stderr (True) or
+                    stdout (False)
+
+            """
             try:
                 for line in iter(pipe.readline, ""):
                     if not line:

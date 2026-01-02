@@ -684,7 +684,9 @@ class TestToolOutputParsing:
 class TestSamplePluginCreation:
     """Test sample plugin creation functionality."""
 
-    def test_create_sample_plugins_creates_files(self, temp_workspace: Path, monkeypatch) -> None:
+    def test_create_sample_plugins_creates_files(
+        self, temp_workspace: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Sample plugin creation generates plugin files."""
         from intellicrack.utils.runtime.additional_runners import create_sample_plugins
 

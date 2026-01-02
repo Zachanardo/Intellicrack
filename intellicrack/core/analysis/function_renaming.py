@@ -199,7 +199,12 @@ class FunctionRenamingEngine:
             self._load_binary()
 
     def _load_binary(self) -> None:
-        """Load binary and extract basic PE information."""
+        """Load binary and extract basic PE information.
+
+        Raises:
+            ValueError: If the PE file is invalid or has incorrect signature
+            Exception: If binary loading fails for any other reason
+        """
         try:
             with open(self.binary_path, "rb") as f:
                 self.pe_data = f.read()
@@ -249,7 +254,7 @@ class FunctionRenamingEngine:
         """Scan binary for function prologs and build function signatures.
 
         Returns:
-            Dictionary mapping function addresses to signatures
+            dict[int, FunctionSignature]: Dictionary mapping function addresses to signatures
         """
         if not self.pe_data or self.code_section_size == 0:
             return {}
@@ -308,7 +313,7 @@ class FunctionRenamingEngine:
             max_distance: Maximum distance to search for strings
 
         Returns:
-            List of strings found near the function
+            list[str]: List of strings found near the function
         """
         if func_addr not in self.functions:
             return []
@@ -363,7 +368,7 @@ class FunctionRenamingEngine:
             custom_patterns: Optional custom pattern dictionary
 
         Returns:
-            Function rename result with suggested name and type
+            FunctionRenameResult: Function rename result with suggested name and type
         """
         if func_addr not in self.functions:
             return FunctionRenameResult(
@@ -424,7 +429,7 @@ class FunctionRenamingEngine:
             func_addr: Function address
 
         Returns:
-            Suggested function name
+            str: Suggested function name
         """
         type_prefixes = {
             FunctionType.LICENSE_VALIDATION: "check_license",
@@ -454,7 +459,7 @@ class FunctionRenamingEngine:
             min_confidence: Minimum confidence threshold
 
         Returns:
-            List of rename results for all identified functions
+            list[FunctionRenameResult]: List of rename results for all identified functions
         """
         if not self.functions:
             self.scan_for_functions()
@@ -482,7 +487,7 @@ class FunctionRenamingEngine:
             min_confidence: Minimum confidence threshold
 
         Returns:
-            List of matching function rename results
+            list[FunctionRenameResult]: List of matching function rename results
         """
         if function_types is None:
             function_types = [
@@ -509,7 +514,10 @@ class FunctionRenamingEngine:
             format: Script format ('ida', 'ghidra', 'radare2')
 
         Returns:
-            True if successful
+            bool: True if successful
+
+        Raises:
+            ValueError: If format is unknown
         """
         try:
             output_path = Path(output_path)
@@ -534,7 +542,14 @@ class FunctionRenamingEngine:
             return False
 
     def _generate_ida_script(self, results: list[FunctionRenameResult]) -> str:
-        """Generate IDA Pro Python script for renaming."""
+        """Generate IDA Pro Python script for renaming.
+
+        Args:
+            results: List of rename results to include in script
+
+        Returns:
+            str: Python script text for IDA Pro
+        """
         lines = [
             "import idc",
             "import idaapi",
@@ -556,7 +571,14 @@ class FunctionRenamingEngine:
         return "\n".join(lines)
 
     def _generate_ghidra_script(self, results: list[FunctionRenameResult]) -> str:
-        """Generate Ghidra Python script for renaming."""
+        """Generate Ghidra Python script for renaming.
+
+        Args:
+            results: List of rename results to include in script
+
+        Returns:
+            str: Python script text for Ghidra
+        """
         lines = [
             "from ghidra.program.model.symbol import SourceType",
             "",
@@ -583,7 +605,14 @@ class FunctionRenamingEngine:
         return "\n".join(lines)
 
     def _generate_radare2_script(self, results: list[FunctionRenameResult]) -> str:
-        """Generate radare2 script for renaming."""
+        """Generate radare2 script for renaming.
+
+        Args:
+            results: List of rename results to include in script
+
+        Returns:
+            str: Script text for radare2
+        """
         lines: list[str] = []
 
         for result in results:
@@ -597,7 +626,8 @@ class FunctionRenamingEngine:
         """Get statistics about identified functions.
 
         Returns:
-            Dictionary containing statistics
+            dict[str, Any]: Dictionary containing statistics with keys: total_functions,
+                identified_functions, function_types, confidence_distribution
         """
         if not self.functions:
             return {}

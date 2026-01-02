@@ -8,9 +8,6 @@ import sys
 import tempfile
 from datetime import datetime
 
-# Add intellicrack to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "intellicrack"))
-
 try:
     from intellicrack.core.analysis.radare2_vulnerability_engine import R2VulnerabilityEngine
     from intellicrack.core.exploitation.cet_bypass import CETBypass

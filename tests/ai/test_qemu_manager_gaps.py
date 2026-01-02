@@ -13,8 +13,7 @@ import subprocess
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, Mock, patch, call
+from typing import Any, Dict, List, Optional, Callable
 
 import paramiko
 import pytest
@@ -25,6 +24,67 @@ from intellicrack.ai.qemu_manager import (
     QEMUSnapshot,
     QEMUError,
 )
+
+
+class FakeConfig:
+    """Real configuration test double."""
+
+    def __init__(self, settings: Dict[str, Any]) -> None:
+        self.settings = settings
+        self.get_calls: List[tuple[str, Any]] = []
+        self.get_tool_path_calls: List[str] = []
+
+    def get(self, key: str, default: Any = None) -> Any:
+        self.get_calls.append((key, default))
+        return self.settings.get(key, default)
+
+    def get_tool_path(self, tool: str) -> Optional[str]:
+        self.get_tool_path_calls.append(tool)
+        return None
+
+
+class FakeQEMUDiscovery:
+    """Real QEMU image discovery test double."""
+
+    def __init__(self) -> None:
+        self.discover_calls: int = 0
+        self.images: List[Path] = []
+
+    def discover_images(self) -> List[Path]:
+        self.discover_calls += 1
+        return self.images
+
+
+class FakeProcess:
+    """Real process test double."""
+
+    def __init__(self, poll_return: Optional[int] = None) -> None:
+        self.poll_return = poll_return
+        self.wait_calls: int = 0
+        self.terminate_calls: int = 0
+        self.kill_calls: int = 0
+
+    def poll(self) -> Optional[int]:
+        return self.poll_return
+
+    def wait(self, timeout: Optional[float] = None) -> int:
+        self.wait_calls += 1
+        return 0
+
+    def terminate(self) -> None:
+        self.terminate_calls += 1
+
+    def kill(self) -> None:
+        self.kill_calls += 1
+
+
+class FakeCompletedProcess:
+    """Real subprocess.CompletedProcess test double."""
+
+    def __init__(self, returncode: int, stdout: bytes = b"", stderr: bytes = b"") -> None:
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
 
 
 @pytest.fixture
@@ -58,32 +118,47 @@ def qemu_manager_with_config(
     temp_qemu_workspace: Path,
     mock_windows_image: Path,
     mock_linux_image: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> QEMUManager:
-    """Create QEMUManager with mocked configuration."""
-    with patch("intellicrack.ai.qemu_manager.get_config") as mock_config, \
-         patch("intellicrack.ai.qemu_manager.get_resource_manager"), \
-         patch("intellicrack.ai.qemu_manager.get_audit_logger"), \
-         patch("intellicrack.utils.qemu_image_discovery.get_qemu_discovery") as mock_discovery:
+    """Create QEMUManager with fake configuration."""
 
-        config_mock = MagicMock()
-        config_mock.get.side_effect = lambda key, default=None: {
-            "vm_framework.ssh.timeout": 30,
-            "vm_framework.ssh.retry_count": 3,
-            "vm_framework.base_images.windows": [str(mock_windows_image)],
-            "vm_framework.base_images.linux": [str(mock_linux_image)],
-        }.get(key, default)
-        config_mock.get_tool_path.return_value = None
-        mock_config.return_value = config_mock
+    config = FakeConfig({
+        "vm_framework.ssh.timeout": 30,
+        "vm_framework.ssh.retry_count": 3,
+        "vm_framework.base_images.windows": [str(mock_windows_image)],
+        "vm_framework.base_images.linux": [str(mock_linux_image)],
+    })
 
-        mock_discovery_instance = MagicMock()
-        mock_discovery_instance.discover_images.return_value = []
-        mock_discovery.return_value = mock_discovery_instance
+    discovery = FakeQEMUDiscovery()
 
-        with patch("intellicrack.ai.qemu_manager.tempfile.gettempdir", return_value=str(temp_qemu_workspace)):
-            with patch.object(QEMUManager, "_validate_qemu_setup"):
-                manager = QEMUManager()
-                manager.working_dir = temp_qemu_workspace
-                return manager
+    def fake_get_config() -> FakeConfig:
+        return config
+
+    def fake_get_resource_manager() -> Any:
+        return None
+
+    def fake_get_audit_logger() -> Any:
+        return None
+
+    def fake_get_qemu_discovery() -> FakeQEMUDiscovery:
+        return discovery
+
+    def fake_gettempdir() -> str:
+        return str(temp_qemu_workspace)
+
+    def fake_validate_qemu_setup(self: QEMUManager) -> None:
+        pass
+
+    monkeypatch.setattr("intellicrack.ai.qemu_manager.get_config", fake_get_config)
+    monkeypatch.setattr("intellicrack.ai.qemu_manager.get_resource_manager", fake_get_resource_manager)
+    monkeypatch.setattr("intellicrack.ai.qemu_manager.get_audit_logger", fake_get_audit_logger)
+    monkeypatch.setattr("intellicrack.utils.qemu_image_discovery.get_qemu_discovery", fake_get_qemu_discovery)
+    monkeypatch.setattr("intellicrack.ai.qemu_manager.tempfile.gettempdir", fake_gettempdir)
+    monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._validate_qemu_setup", fake_validate_qemu_setup)
+
+    manager = QEMUManager()
+    manager.working_dir = temp_qemu_workspace
+    return manager
 
 
 class TestSnapshotComparison:
@@ -250,7 +325,7 @@ class TestSnapshotRollback:
     """Test snapshot rollback functionality."""
 
     def test_rollback_snapshot_to_parent_succeeds(
-        self, qemu_manager_with_config: QEMUManager, tmp_path: Path
+        self, qemu_manager_with_config: QEMUManager, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Snapshot rollback restores to parent state."""
         manager = qemu_manager_with_config
@@ -285,12 +360,20 @@ class TestSnapshotRollback:
         manager.snapshots["parent"] = parent
         manager.snapshots["child"] = child
 
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(returncode=0)
+        def fake_subprocess_run(*args: Any, **kwargs: Any) -> FakeCompletedProcess:
+            return FakeCompletedProcess(returncode=0)
 
-            with patch.object(manager, "_stop_vm_for_snapshot"):
-                with patch.object(manager, "_start_vm_for_snapshot"):
-                    result = manager.rollback_snapshot("child", "parent")
+        def fake_stop_vm(self: QEMUManager, snapshot_id: str) -> None:
+            pass
+
+        def fake_start_vm(self: QEMUManager, snapshot_id: str) -> None:
+            pass
+
+        monkeypatch.setattr("subprocess.run", fake_subprocess_run)
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._stop_vm_for_snapshot", fake_stop_vm)
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._start_vm_for_snapshot", fake_start_vm)
+
+        result = manager.rollback_snapshot("child", "parent")
 
         assert result is True
 
@@ -320,7 +403,7 @@ class TestVMInstanceControl:
     """Test VM instance start/stop/delete operations."""
 
     def test_start_vm_instance_spawns_process(
-        self, qemu_manager_with_config: QEMUManager, tmp_path: Path
+        self, qemu_manager_with_config: QEMUManager, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Start VM instance spawns QEMU process."""
         manager = qemu_manager_with_config
@@ -340,13 +423,18 @@ class TestVMInstanceControl:
 
         manager.snapshots["test_vm"] = snapshot
 
-        with patch("subprocess.Popen") as mock_popen:
-            mock_process = MagicMock()
-            mock_process.poll.return_value = None
-            mock_popen.return_value = mock_process
+        fake_process = FakeProcess(poll_return=None)
 
-            with patch.object(manager, "_wait_for_vm_ready", return_value=True):
-                result = manager.start_vm_instance("test_vm")
+        def fake_popen(*args: Any, **kwargs: Any) -> FakeProcess:
+            return fake_process
+
+        def fake_wait_for_vm_ready(self: QEMUManager) -> bool:
+            return True
+
+        monkeypatch.setattr("subprocess.Popen", fake_popen)
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._wait_for_vm_ready", fake_wait_for_vm_ready)
+
+        result = manager.start_vm_instance("test_vm")
 
         assert result is True
         assert snapshot.vm_process is not None
@@ -367,16 +455,15 @@ class TestVMInstanceControl:
             vnc_port=5900,
         )
 
-        mock_process = MagicMock()
-        mock_process.poll.return_value = None
-        snapshot.vm_process = mock_process
+        fake_process = FakeProcess(poll_return=None)
+        object.__setattr__(snapshot, "vm_process", fake_process)
 
         manager.snapshots["test_vm"] = snapshot
 
         result = manager.stop_vm_instance("test_vm")
 
         assert result is True
-        mock_process.wait.assert_called()
+        assert fake_process.wait_calls > 0
 
     def test_stop_vm_instance_raises_on_nonexistent_vm(
         self, qemu_manager_with_config: QEMUManager
@@ -388,7 +475,7 @@ class TestVMInstanceControl:
             manager.stop_vm_instance("nonexistent_vm")
 
     def test_delete_vm_instance_removes_snapshot(
-        self, qemu_manager_with_config: QEMUManager, tmp_path: Path
+        self, qemu_manager_with_config: QEMUManager, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Delete VM instance removes snapshot and disk."""
         manager = qemu_manager_with_config
@@ -408,15 +495,19 @@ class TestVMInstanceControl:
 
         manager.snapshots["test_vm"] = snapshot
 
-        with patch.object(manager, "_close_ssh_connection"):
-            result = manager.delete_vm_instance("test_vm")
+        def fake_close_ssh(self: QEMUManager, snapshot_id: str) -> None:
+            pass
+
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._close_ssh_connection", fake_close_ssh)
+
+        result = manager.delete_vm_instance("test_vm")
 
         assert result is True
         assert "test_vm" not in manager.snapshots
         assert not disk_path.exists()
 
     def test_delete_vm_instance_stops_running_vm(
-        self, qemu_manager_with_config: QEMUManager, tmp_path: Path
+        self, qemu_manager_with_config: QEMUManager, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Delete VM instance stops running VM before deletion."""
         manager = qemu_manager_with_config
@@ -434,17 +525,20 @@ class TestVMInstanceControl:
             vnc_port=5900,
         )
 
-        mock_process = MagicMock()
-        mock_process.poll.return_value = None
-        snapshot.vm_process = mock_process
+        fake_process = FakeProcess(poll_return=None)
+        object.__setattr__(snapshot, "vm_process", fake_process)
 
         manager.snapshots["test_vm"] = snapshot
 
-        with patch.object(manager, "_close_ssh_connection"):
-            result = manager.delete_vm_instance("test_vm")
+        def fake_close_ssh(self: QEMUManager, snapshot_id: str) -> None:
+            pass
+
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._close_ssh_connection", fake_close_ssh)
+
+        result = manager.delete_vm_instance("test_vm")
 
         assert result is True
-        mock_process.wait.assert_called()
+        assert fake_process.wait_calls > 0
 
 
 class TestBaseImageSelection:
@@ -479,7 +573,8 @@ class TestBaseImageSelection:
         """Windows base image selection raises error when no images configured."""
         manager = qemu_manager_with_config
 
-        manager.config.get = MagicMock(return_value=[])
+        empty_config = FakeConfig({})
+        object.__setattr__(manager, "config", empty_config)
 
         with pytest.raises(FileNotFoundError, match="No Windows base images"):
             manager._get_windows_base_image()
@@ -490,7 +585,8 @@ class TestBaseImageSelection:
         """Linux base image selection raises error when no images configured."""
         manager = qemu_manager_with_config
 
-        manager.config.get = MagicMock(return_value=[])
+        empty_config = FakeConfig({})
+        object.__setattr__(manager, "config", empty_config)
 
         with pytest.raises(FileNotFoundError, match="No Linux base images"):
             manager._get_linux_base_image()
@@ -504,8 +600,10 @@ class TestBaseImageSelection:
         x86_image = tmp_path / "x86_64.qcow2"
         x86_image.write_bytes(b"X86_IMAGE")
 
-        with patch.object(manager.config, 'get', return_value=[str(x86_image)]):
-            image = manager._get_image_for_architecture("x86_64")
+        x86_config = FakeConfig({"vm_framework.base_images.x86_64": [str(x86_image)]})
+        object.__setattr__(manager, "config", x86_config)
+
+        image = manager._get_image_for_architecture("x86_64")
 
         assert image is not None
         assert image.exists()
@@ -519,8 +617,10 @@ class TestBaseImageSelection:
         arm_image = tmp_path / "arm64.qcow2"
         arm_image.write_bytes(b"ARM_IMAGE")
 
-        with patch.object(manager.config, 'get', return_value=[str(arm_image)]):
-            image = manager._get_image_for_architecture("arm64")
+        arm_config = FakeConfig({"vm_framework.base_images.arm64": [str(arm_image)]})
+        object.__setattr__(manager, "config", arm_config)
+
+        image = manager._get_image_for_architecture("arm64")
 
         assert image is not None
         assert image.exists()
@@ -530,52 +630,54 @@ class TestMonitorCommandExecution:
     """Test QEMU monitor command execution."""
 
     def test_execute_guest_command_via_monitor_returns_output(
-        self, qemu_manager_with_config: QEMUManager
+        self, qemu_manager_with_config: QEMUManager, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Guest command execution via monitor returns command output."""
         manager = qemu_manager_with_config
 
         expected_output = "command output from guest"
 
-        with patch.object(manager, "_send_qmp_command") as mock_qmp:
-            mock_qmp.return_value = {
-                "return": {
-                    "out-data": expected_output
-                }
-            }
+        def fake_send_qmp(self: QEMUManager, cmd: Dict[str, Any]) -> Dict[str, Any]:
+            return {"return": {"out-data": expected_output}}
 
-            result = manager.execute_guest_command_via_monitor("echo test")
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._send_qmp_command", fake_send_qmp)
+
+        result = manager.execute_guest_command_via_monitor("echo test")
 
         assert result == expected_output
 
     def test_execute_guest_command_handles_timeout(
-        self, qemu_manager_with_config: QEMUManager
+        self, qemu_manager_with_config: QEMUManager, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Guest command execution handles timeout gracefully."""
         manager = qemu_manager_with_config
 
-        with patch.object(manager, "_send_qmp_command") as mock_qmp:
-            mock_qmp.side_effect = TimeoutError("Command timeout")
+        def fake_send_qmp(self: QEMUManager, cmd: Dict[str, Any]) -> Dict[str, Any]:
+            raise TimeoutError("Command timeout")
 
-            result = manager.execute_guest_command_via_monitor("sleep 100", timeout=1)
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._send_qmp_command", fake_send_qmp)
+
+        result = manager.execute_guest_command_via_monitor("sleep 100", timeout=1)
 
         assert result is None
 
     def test_execute_guest_command_handles_qmp_error(
-        self, qemu_manager_with_config: QEMUManager
+        self, qemu_manager_with_config: QEMUManager, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Guest command execution handles QMP protocol errors."""
         manager = qemu_manager_with_config
 
-        with patch.object(manager, "_send_qmp_command") as mock_qmp:
-            mock_qmp.return_value = {
+        def fake_send_qmp(self: QEMUManager, cmd: Dict[str, Any]) -> Dict[str, Any]:
+            return {
                 "error": {
                     "class": "CommandFailed",
                     "desc": "Command execution failed"
                 }
             }
 
-            result = manager.execute_guest_command_via_monitor("invalid_command")
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._send_qmp_command", fake_send_qmp)
+
+        result = manager.execute_guest_command_via_monitor("invalid_command")
 
         assert result is None
 
@@ -584,37 +686,55 @@ class TestKVMDetection:
     """Test KVM availability detection."""
 
     def test_is_kvm_available_on_linux_with_kvm(
-        self, qemu_manager_with_config: QEMUManager
+        self, qemu_manager_with_config: QEMUManager, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """KVM availability detection returns True on Linux with KVM."""
         manager = qemu_manager_with_config
 
-        with patch("platform.system", return_value="Linux"):
-            with patch("os.path.exists", return_value=True):
-                result = manager._is_kvm_available()
+        def fake_system() -> str:
+            return "Linux"
+
+        def fake_exists(path: str) -> bool:
+            return True
+
+        monkeypatch.setattr("platform.system", fake_system)
+        monkeypatch.setattr("os.path.exists", fake_exists)
+
+        result = manager._is_kvm_available()
 
         assert result is True
 
     def test_is_kvm_available_on_linux_without_kvm(
-        self, qemu_manager_with_config: QEMUManager
+        self, qemu_manager_with_config: QEMUManager, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """KVM availability detection returns False on Linux without KVM."""
         manager = qemu_manager_with_config
 
-        with patch("platform.system", return_value="Linux"):
-            with patch("os.path.exists", return_value=False):
-                result = manager._is_kvm_available()
+        def fake_system() -> str:
+            return "Linux"
+
+        def fake_exists(path: str) -> bool:
+            return False
+
+        monkeypatch.setattr("platform.system", fake_system)
+        monkeypatch.setattr("os.path.exists", fake_exists)
+
+        result = manager._is_kvm_available()
 
         assert result is False
 
     def test_is_kvm_available_on_windows(
-        self, qemu_manager_with_config: QEMUManager
+        self, qemu_manager_with_config: QEMUManager, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """KVM availability detection returns False on Windows."""
         manager = qemu_manager_with_config
 
-        with patch("platform.system", return_value="Windows"):
-            result = manager._is_kvm_available()
+        def fake_system() -> str:
+            return "Windows"
+
+        monkeypatch.setattr("platform.system", fake_system)
+
+        result = manager._is_kvm_available()
 
         assert result is False
 
@@ -623,41 +743,50 @@ class TestBootWaitLogic:
     """Test VM boot wait functionality."""
 
     def test_wait_for_boot_success(
-        self, qemu_manager_with_config: QEMUManager
+        self, qemu_manager_with_config: QEMUManager, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Boot wait succeeds when monitor connection established."""
         manager = qemu_manager_with_config
 
-        with patch.object(manager, "_test_monitor_connection", return_value=True):
-            result = manager._wait_for_boot(timeout=10)
+        def fake_test_monitor(self: QEMUManager) -> bool:
+            return True
+
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._test_monitor_connection", fake_test_monitor)
+
+        result = manager._wait_for_boot(timeout=10)
 
         assert result is True
 
     def test_wait_for_boot_timeout(
-        self, qemu_manager_with_config: QEMUManager
+        self, qemu_manager_with_config: QEMUManager, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Boot wait times out when VM doesn't boot."""
         manager = qemu_manager_with_config
 
-        with patch.object(manager, "_test_monitor_connection", return_value=False):
-            result = manager._wait_for_boot(timeout=1)
+        def fake_test_monitor(self: QEMUManager) -> bool:
+            return False
+
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._test_monitor_connection", fake_test_monitor)
+
+        result = manager._wait_for_boot(timeout=1)
 
         assert result is False
 
     def test_wait_for_boot_retries_on_connection_failure(
-        self, qemu_manager_with_config: QEMUManager
+        self, qemu_manager_with_config: QEMUManager, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Boot wait retries monitor connection on initial failure."""
         manager = qemu_manager_with_config
 
         call_count = [0]
 
-        def mock_connection_test() -> bool:
+        def fake_test_monitor(self: QEMUManager) -> bool:
             call_count[0] += 1
             return call_count[0] >= 3
 
-        with patch.object(manager, "_test_monitor_connection", side_effect=mock_connection_test):
-            result = manager._wait_for_boot(timeout=5)
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._test_monitor_connection", fake_test_monitor)
+
+        result = manager._wait_for_boot(timeout=5)
 
         assert result is True
         assert call_count[0] >= 3
@@ -667,58 +796,65 @@ class TestQEMUCommandBuilding:
     """Test QEMU command line construction."""
 
     def test_build_qemu_command_includes_memory(
-        self, qemu_manager_with_config: QEMUManager, tmp_path: Path
+        self, qemu_manager_with_config: QEMUManager, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """QEMU command includes memory specification."""
         manager = qemu_manager_with_config
 
-        disk_path = tmp_path / "test.qcow2"
+        config_with_memory = FakeConfig({"memory_mb": 4096, "cpu_cores": 2})
+        object.__setattr__(manager, "config", config_with_memory)
+
+        monkeypatch.setattr("shutil.which", lambda x: "/usr/bin/qemu-system-x86_64")
 
         cmd = manager._build_qemu_command(
-            disk_path=str(disk_path),
-            memory_mb=4096,
-            cpu_count=2,
-            ssh_port=22222,
-            vnc_port=5900,
+            qemu_binary="qemu-system-x86_64",
+            headless=True,
+            enable_snapshot=False,
         )
 
-        assert manager.qemu_executable in cmd
         assert "-m" in cmd
         assert "4096" in cmd
 
     def test_build_qemu_command_includes_cpu_count(
-        self, qemu_manager_with_config: QEMUManager, tmp_path: Path
+        self, qemu_manager_with_config: QEMUManager, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """QEMU command includes CPU count specification."""
         manager = qemu_manager_with_config
 
-        disk_path = tmp_path / "test.qcow2"
+        config_with_cpu = FakeConfig({"memory_mb": 2048, "cpu_cores": 4})
+        object.__setattr__(manager, "config", config_with_cpu)
+
+        monkeypatch.setattr("shutil.which", lambda x: "/usr/bin/qemu-system-x86_64")
 
         cmd = manager._build_qemu_command(
-            disk_path=str(disk_path),
-            memory_mb=2048,
-            cpu_count=4,
-            ssh_port=22222,
-            vnc_port=5900,
+            qemu_binary="qemu-system-x86_64",
+            headless=True,
+            enable_snapshot=False,
         )
 
         assert "-smp" in cmd
         assert "4" in cmd
 
     def test_build_qemu_command_includes_network_forwarding(
-        self, qemu_manager_with_config: QEMUManager, tmp_path: Path
+        self, qemu_manager_with_config: QEMUManager, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """QEMU command includes network port forwarding."""
         manager = qemu_manager_with_config
 
-        disk_path = tmp_path / "test.qcow2"
+        config_with_network = FakeConfig({
+            "memory_mb": 2048,
+            "cpu_cores": 2,
+            "network_enabled": True,
+            "ssh_port": 22222,
+        })
+        object.__setattr__(manager, "config", config_with_network)
+
+        monkeypatch.setattr("shutil.which", lambda x: "/usr/bin/qemu-system-x86_64")
 
         cmd = manager._build_qemu_command(
-            disk_path=str(disk_path),
-            memory_mb=2048,
-            cpu_count=2,
-            ssh_port=22222,
-            vnc_port=5900,
+            qemu_binary="qemu-system-x86_64",
+            headless=True,
+            enable_snapshot=False,
         )
 
         netdev_arg = next((arg for arg in cmd if "hostfwd" in arg), None)
@@ -726,21 +862,29 @@ class TestQEMUCommandBuilding:
         assert "22222" in netdev_arg
 
     def test_build_qemu_command_includes_kvm_when_available(
-        self, qemu_manager_with_config: QEMUManager, tmp_path: Path
+        self, qemu_manager_with_config: QEMUManager, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """QEMU command includes KVM acceleration when available."""
         manager = qemu_manager_with_config
 
-        disk_path = tmp_path / "test.qcow2"
+        config_with_kvm = FakeConfig({
+            "memory_mb": 2048,
+            "cpu_cores": 2,
+            "enable_kvm": True,
+        })
+        object.__setattr__(manager, "config", config_with_kvm)
 
-        with patch.object(manager, "_is_kvm_available", return_value=True):
-            cmd = manager._build_qemu_command(
-                disk_path=str(disk_path),
-                memory_mb=2048,
-                cpu_count=2,
-                ssh_port=22222,
-                vnc_port=5900,
-            )
+        def fake_is_kvm_available(self: QEMUManager) -> bool:
+            return True
+
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._is_kvm_available", fake_is_kvm_available)
+        monkeypatch.setattr("shutil.which", lambda x: "/usr/bin/qemu-system-x86_64")
+
+        cmd = manager._build_qemu_command(
+            qemu_binary="qemu-system-x86_64",
+            headless=True,
+            enable_snapshot=False,
+        )
 
         assert "-enable-kvm" in cmd or "-accel" in cmd
 
@@ -767,48 +911,60 @@ class TestMonitorSnapshotOperations:
     """Test QEMU monitor snapshot save/restore."""
 
     def test_create_monitor_snapshot_sends_savevm(
-        self, qemu_manager_with_config: QEMUManager
+        self, qemu_manager_with_config: QEMUManager, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Monitor snapshot creation sends savevm command."""
         manager = qemu_manager_with_config
 
-        with patch.object(manager, "_send_qmp_command") as mock_qmp:
-            mock_qmp.return_value = {"return": {}}
+        call_tracker: List[Dict[str, Any]] = []
 
-            result = manager.create_monitor_snapshot("test_snapshot")
+        def fake_send_qmp(self: QEMUManager, cmd: Dict[str, Any]) -> Dict[str, Any]:
+            call_tracker.append(cmd)
+            return {"return": {}}
+
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._send_qmp_command", fake_send_qmp)
+
+        result = manager.create_monitor_snapshot("test_snapshot")
 
         assert result is True
-        mock_qmp.assert_called_once()
+        assert len(call_tracker) == 1
 
     def test_restore_monitor_snapshot_sends_loadvm(
-        self, qemu_manager_with_config: QEMUManager
+        self, qemu_manager_with_config: QEMUManager, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Monitor snapshot restore sends loadvm command."""
         manager = qemu_manager_with_config
 
-        with patch.object(manager, "_send_qmp_command") as mock_qmp:
-            mock_qmp.return_value = {"return": {}}
+        call_tracker: List[Dict[str, Any]] = []
 
-            result = manager.restore_monitor_snapshot("test_snapshot")
+        def fake_send_qmp(self: QEMUManager, cmd: Dict[str, Any]) -> Dict[str, Any]:
+            call_tracker.append(cmd)
+            return {"return": {}}
+
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._send_qmp_command", fake_send_qmp)
+
+        result = manager.restore_monitor_snapshot("test_snapshot")
 
         assert result is True
-        mock_qmp.assert_called_once()
+        assert len(call_tracker) == 1
 
     def test_create_monitor_snapshot_handles_error(
-        self, qemu_manager_with_config: QEMUManager
+        self, qemu_manager_with_config: QEMUManager, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Monitor snapshot creation handles QMP errors."""
         manager = qemu_manager_with_config
 
-        with patch.object(manager, "_send_qmp_command") as mock_qmp:
-            mock_qmp.return_value = {
+        def fake_send_qmp(self: QEMUManager, cmd: Dict[str, Any]) -> Dict[str, Any]:
+            return {
                 "error": {
                     "class": "GenericError",
                     "desc": "Snapshot creation failed"
                 }
             }
 
-            result = manager.create_monitor_snapshot("test_snapshot")
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.QEMUManager._send_qmp_command", fake_send_qmp)
+
+        result = manager.create_monitor_snapshot("test_snapshot")
 
         assert result is False
 

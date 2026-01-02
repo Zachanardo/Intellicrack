@@ -36,15 +36,6 @@ from intellicrack.utils.logger import logger
 from ...config import get_config
 
 
-"""
-Qiling Binary Emulation Framework Integration.
-
-This module provides Qiling-based binary emulation capabilities for lightweight
-dynamic analysis, API hooking, and runtime behavior monitoring without full
-system emulation overhead.
-"""
-
-
 # Try to import Qiling
 try:
     from qiling import Qiling
@@ -112,6 +103,10 @@ class QilingEmulator:
             arch: Architecture type
             verbose: Enable verbose output
 
+        Raises:
+            ImportError: If Qiling framework is not available
+            FileNotFoundError: If binary file does not exist at specified path
+
         """
         if not QILING_AVAILABLE:
             raise ImportError("Qiling framework not available. Install with: pip install qiling")
@@ -149,7 +144,16 @@ class QilingEmulator:
         self.logger.info("Qiling emulator initialized for %s/%s", self.ostype, self.arch)
 
     def _get_ql_arch(self, arch: str) -> int | None:
-        """Convert architecture string to QL_ARCH constant."""
+        """Convert architecture string to QL_ARCH constant.
+
+        Args:
+            arch: Architecture string (e.g., 'x86', 'x86_64', 'arm', 'arm64')
+
+        Returns:
+            QL_ARCH constant value or None if Qiling unavailable; defaults to
+            X8664 for unknown architectures
+
+        """
         if not QILING_AVAILABLE or not QL_ARCH:
             return None
 
@@ -172,7 +176,16 @@ class QilingEmulator:
         return result
 
     def _get_ql_os(self, ostype: str) -> int | None:
-        """Convert OS type string to QL_OS constant."""
+        """Convert OS type string to QL_OS constant.
+
+        Args:
+            ostype: Operating system type (e.g., 'windows', 'linux', 'macos')
+
+        Returns:
+            QL_OS constant value or None if Qiling unavailable; defaults to
+            WINDOWS for unknown operating systems
+
+        """
         if not QILING_AVAILABLE or not QL_OS:
             return None
 
@@ -191,7 +204,13 @@ class QilingEmulator:
         return result
 
     def _get_default_rootfs(self) -> str:
-        """Get default rootfs path for the OS type."""
+        """Get default rootfs path for the OS type.
+
+        Returns:
+            Path to the root filesystem directory for the configured operating
+            system, either from configuration or filesystem discovery
+
+        """
         # Get config instance
         config = get_config()
 
@@ -233,8 +252,8 @@ class QilingEmulator:
         """Add hook for specific API call.
 
         Args:
-            api_name: Name of API to hook (e.g., 'CreateFileW')
-            hook_func: Function to call when API is invoked
+            api_name: Name of API to hook (e.g., 'CreateFileW').
+            hook_func: Function to call when API is invoked.
 
         """
         self.api_hooks[api_name.lower()] = hook_func
@@ -243,8 +262,11 @@ class QilingEmulator:
         """Map a host file or directory to the emulated filesystem.
 
         Args:
-            host_path: Path on the host system
-            guest_path: Path in the emulated filesystem
+            host_path: Path on the host system.
+            guest_path: Path in the emulated filesystem.
+
+        Raises:
+            FileNotFoundError: If the host path does not exist.
 
         """
         if not os.path.exists(host_path):
@@ -265,7 +287,13 @@ class QilingEmulator:
         self.logger.info("Mapped %s -> %s", host_path, guest_path)
 
     def setup_filesystem_mappings(self) -> None:
-        """Set up common filesystem mappings for license files."""
+        """Set up common filesystem mappings for license files.
+
+        Maps common license file locations from the host system to the
+        emulated filesystem, enabling the binary to access license files
+        during emulation.
+
+        """
         if not self.ql:
             return
 
@@ -300,7 +328,12 @@ class QilingEmulator:
                 self.logger.debug("Could not map %s: %s", host, e, exc_info=True)
 
     def add_license_detection_hooks(self) -> None:
-        """Add hooks for common license check patterns."""
+        """Add hooks for common license check patterns.
+
+        Registers API hooks for registry, file, network, cryptographic, time,
+        and hardware APIs commonly used by licensing validation routines.
+
+        """
         license_apis = [
             # Windows Registry APIs
             "RegOpenKeyExA",
@@ -345,7 +378,14 @@ class QilingEmulator:
             self.add_api_hook(api, self._license_api_hook)
 
     def _license_api_hook(self, ql: Qiling, address: int, params: dict[str, Any]) -> None:
-        """Monitor license-related API calls."""
+        """Monitor license-related API calls.
+
+        Args:
+            ql: Qiling emulator instance.
+            address: Memory address of the API call.
+            params: Dictionary of API call parameters.
+
+        """
         api_name = ql.os.user_defined_api_name or "Unknown"
 
         # Log the API call
@@ -373,7 +413,16 @@ class QilingEmulator:
         self.logger.info("Potential license API: %s at %s", api_name, hex(address))
 
     def hook_memory_access(self, ql: Qiling, access: int, address: int, size: int, value: int) -> None:
-        """Monitor memory access with detailed analysis."""
+        """Monitor memory access with detailed analysis.
+
+        Args:
+            ql: Qiling emulator instance.
+            access: Access type (1 for read, 2 for write).
+            address: Memory address being accessed.
+            size: Number of bytes accessed.
+            value: Value being written (for write operations).
+
+        """
         access_type = "READ" if access == 1 else "WRITE"
 
         # Extract current CPU state from Qiling object
@@ -428,18 +477,34 @@ class QilingEmulator:
         )
 
     def hook_code_execution(self, ql: Qiling, address: int, size: int) -> None:
-        """Monitor code execution."""
+        """Monitor code execution.
+
+        Args:
+            ql: Qiling emulator instance.
+            address: Memory address of the instruction.
+            size: Size of the instruction in bytes.
+
+        Returns:
+            None.
+
+        """
         # Could add disassembly here if needed
 
     def run(self, timeout: int | None = 60, until_address: int | None = None) -> dict[str, Any]:
         """Run the binary emulation.
 
         Args:
-            timeout: Maximum execution time in seconds
-            until_address: Run until this address is reached
+            timeout: Maximum execution time in seconds.
+            until_address: Run until this address is reached.
 
         Returns:
-            Dictionary containing analysis results
+            Dictionary containing analysis results including API calls, memory
+            accesses, license checks, execution time, and timeout status.
+
+        Raises:
+            OSError: If the binary cannot be executed.
+            ValueError: If invalid architecture or OS type is specified.
+            RuntimeError: If emulation fails or timeout occurs.
 
         """
         start_time = time.time()
@@ -447,7 +512,12 @@ class QilingEmulator:
         timeout_timer = None
 
         def timeout_handler() -> None:
-            """Handle timeout by stopping emulation."""
+            """Handle timeout by stopping emulation.
+
+            Stops the Qiling emulation instance when the timeout duration
+            is exceeded, preventing indefinite execution of the binary.
+
+            """
             nonlocal timeout_occurred
             timeout_occurred = True
             if self.ql is not None:
@@ -572,7 +642,14 @@ class QilingEmulator:
                     logger.error("Error in qiling_emulator: %s", e, exc_info=True)
 
     def get_arch_info(self) -> dict[str, Any]:
-        """Get detailed architecture information using QL_ARCH constants."""
+        """Get detailed architecture information using QL_ARCH constants.
+
+        Returns:
+            Dictionary containing architecture details including bits,
+            instruction set, endianness, registers, and QL_ARCH constant value.
+            Includes CPU architecture-specific register names and bit widths.
+
+        """
         if not QILING_AVAILABLE or not QL_ARCH or not self.ql_arch:
             return {"arch": self.arch, "bits": 32 if "86" in self.arch else 64}
 
@@ -729,7 +806,14 @@ class QilingEmulator:
         return arch_info
 
     def get_os_info(self) -> dict[str, Any]:
-        """Get detailed OS information using QL_OS constants."""
+        """Get detailed OS information using QL_OS constants.
+
+        Returns:
+            Dictionary containing OS details including family, syscall
+            convention, executable format, path separator, common directories,
+            and QL_OS constant value for the configured operating system.
+
+        """
         if not QILING_AVAILABLE or not QL_OS or not self.ql_os:
             return {"os": self.ostype, "family": "unknown"}
 
@@ -788,7 +872,14 @@ class QilingEmulator:
         return os_info
 
     def _analyze_results(self) -> dict[str, Any]:
-        """Analyze emulation results for suspicious behavior."""
+        """Analyze emulation results for suspicious behavior.
+
+        Returns:
+            Dictionary containing categorized API calls, suspicious behaviors,
+            license checks, memory access statistics, system information
+            including architecture and OS details.
+
+        """
         # Count API categories
         api_categories = {
             "registry": 0,
@@ -859,11 +950,13 @@ class QilingEmulator:
         r"""Run emulation with runtime patches applied.
 
         Args:
-            patches: List of patches to apply
-                    [{'address': 0x1000, 'bytes': b'\x90\x90'}, ...]
+            patches: List of patches to apply in format
+                [{'address': 0x1000, 'bytes': b'\x90\x90'}, ...] where
+                address is the memory location and bytes are the patch data.
 
         Returns:
-            Analysis results after patching
+            Analysis results after patching including API calls, memory
+            accesses, and license detection findings.
 
         """
 
@@ -872,7 +965,7 @@ class QilingEmulator:
             """Apply memory patches to the emulated process.
 
             Args:
-                ql: Qiling instance to apply patches to
+                ql: Qiling instance to apply patches to.
 
             Iterates through the patches list and writes the specified bytes
             to the given memory addresses in the emulated process.
@@ -896,10 +989,12 @@ class QilingEmulator:
 
         Returns:
             Dictionary with format details including:
-            - format: PE/ELF/Mach-O/etc
-            - arch: Architecture details
-            - os: OS details
-            - entry_point: Entry point if detectable
+            - format: PE/ELF/Mach-O/etc binary format.
+            - arch: Architecture details and register information.
+            - os: OS details and system call conventions.
+            - entry_point: Entry point address if detectable.
+            - sections: List of binary sections with addresses and sizes.
+            - imports: List of imported DLLs and functions.
 
         """
         format_info: dict[str, Any] = {
@@ -973,11 +1068,18 @@ def run_qiling_emulation(binary_path: str, options: dict[str, Any] | None = None
     """High-level function to run Qiling emulation on a binary.
 
     Args:
-        binary_path: Path to binary file
-        options: Emulation options
+        binary_path: Path to binary file for emulation.
+        options: Emulation options including ostype, arch, timeout,
+            until_address, and verbose mode.
 
     Returns:
-        Dictionary with emulation results
+        Dictionary with emulation results including status, API calls,
+        memory accesses, license checks, and binary format detection.
+
+    Raises:
+        OSError: If binary file cannot be read or accessed.
+        ValueError: If invalid architecture or OS type is detected.
+        RuntimeError: If Qiling emulation fails or times out.
 
     """
     if not QILING_AVAILABLE:

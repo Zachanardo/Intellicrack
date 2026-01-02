@@ -1,4 +1,8 @@
-"""Numpy handler for Intellicrack.
+"""NumPy Import Handler with Production-Ready Fallbacks.
+
+This module provides a centralized abstraction layer for NumPy imports.
+When NumPy is not available, it provides REAL, functional Python-based
+implementations for essential operations used in Intellicrack.
 
 This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
@@ -21,19 +25,10 @@ from __future__ import annotations
 
 import math
 import random as _random
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, TypeVar, Union, overload
 
 from intellicrack.utils.logger import logger
 
-
-"""
-NumPy Import Handler with Production-Ready Fallbacks
-
-This module provides a centralized abstraction layer for NumPy imports.
-When NumPy is not available, it provides REAL, functional Python-based
-implementations for essential operations used in Intellicrack.
-"""
 
 _T = TypeVar("_T")
 
@@ -84,7 +79,7 @@ class FallbackArray:
             lst: Nested list or tuple to flatten
 
         Returns:
-            Single-level list with all elements from nested structure
+            Single-level list with all elements from nested structure.
 
         """
         result: list[Any] = []
@@ -100,7 +95,7 @@ class FallbackArray:
         """Get array shape.
 
         Returns:
-            Tuple representing dimensions of the array
+            Tuple representing dimensions of the array.
 
         """
         return self._shape
@@ -110,7 +105,7 @@ class FallbackArray:
         """Get total number of elements.
 
         Returns:
-            Total number of elements in the array
+            Total number of elements in the array.
 
         """
         return len(self.data)
@@ -120,7 +115,7 @@ class FallbackArray:
         """Get number of dimensions.
 
         Returns:
-            Number of dimensions in the array
+            Number of dimensions in the array.
 
         """
         return len(self._shape)
@@ -132,10 +127,10 @@ class FallbackArray:
             *new_shape: New shape as variable arguments or single tuple
 
         Returns:
-            New FallbackArray with reshaped data
+            New FallbackArray with reshaped data.
 
         Raises:
-            ValueError: If total elements don't match new shape
+            ValueError: If total elements don't match new shape.
 
         """
         final_shape: tuple[int, ...]
@@ -157,7 +152,7 @@ class FallbackArray:
         """Flatten array to 1D.
 
         Returns:
-            Flattened 1D FallbackArray
+            Flattened 1D FallbackArray.
 
         """
         return FallbackArray(self.data.copy(), self.dtype, (self.size,))
@@ -166,7 +161,7 @@ class FallbackArray:
         """Convert to Python list.
 
         Returns:
-            List representation of array data
+            List representation of array data.
 
         """
         if self.ndim == 1:
@@ -182,7 +177,7 @@ class FallbackArray:
         """Create a copy of the array.
 
         Returns:
-            Deep copy of this FallbackArray
+            Deep copy of this FallbackArray.
 
         """
         return FallbackArray(self.data.copy(), self.dtype, self._shape)
@@ -194,7 +189,7 @@ class FallbackArray:
             dtype_arg: Target data type for conversion
 
         Returns:
-            New FallbackArray with converted data type
+            New FallbackArray with converted data type.
 
         """
         new_data = [dtype_arg(x) for x in self.data]
@@ -214,7 +209,7 @@ class FallbackArray:
             key: Integer index, slice, or list of indices
 
         Returns:
-            Single element or FallbackArray with selected elements
+            Single element or FallbackArray with selected elements.
 
         """
         if isinstance(key, int):
@@ -243,7 +238,7 @@ class FallbackArray:
         """Get length of first dimension.
 
         Returns:
-            Size of first dimension
+            Size of first dimension.
 
         """
         return self._shape[0] if self._shape else 0
@@ -252,7 +247,7 @@ class FallbackArray:
         """Represent as string.
 
         Returns:
-            String representation of the array
+            String representation of the array.
 
         """
         return f"FallbackArray({self.tolist()})"
@@ -264,7 +259,7 @@ class FallbackArray:
             other: FallbackArray or scalar to add
 
         Returns:
-            New FallbackArray with element-wise sum
+            New FallbackArray with element-wise sum.
 
         """
         if isinstance(other, FallbackArray):
@@ -280,7 +275,7 @@ class FallbackArray:
             other: FallbackArray or scalar to subtract
 
         Returns:
-            New FallbackArray with element-wise difference
+            New FallbackArray with element-wise difference.
 
         """
         if isinstance(other, FallbackArray):
@@ -296,7 +291,7 @@ class FallbackArray:
             other: FallbackArray or scalar to multiply
 
         Returns:
-            New FallbackArray with element-wise product
+            New FallbackArray with element-wise product.
 
         """
         if isinstance(other, FallbackArray):
@@ -312,7 +307,7 @@ class FallbackArray:
             other: FallbackArray or scalar to divide by
 
         Returns:
-            New FallbackArray with element-wise quotient
+            New FallbackArray with element-wise quotient.
 
         """
         if isinstance(other, FallbackArray):
@@ -328,7 +323,7 @@ class FallbackArray:
             axis: Axis along which to sum; currently unused for fallback
 
         Returns:
-            Sum of all elements
+            Sum of all elements.
 
         """
         return float(sum(self.data))
@@ -337,7 +332,7 @@ class FallbackArray:
         """Mean of array elements.
 
         Returns:
-            Arithmetic mean of array elements
+            Arithmetic mean of array elements.
 
         """
         return float(sum(self.data)) / len(self.data) if self.data else 0.0
@@ -346,7 +341,7 @@ class FallbackArray:
         """Calculate standard deviation of array elements.
 
         Returns:
-            Standard deviation of array elements
+            Standard deviation of array elements.
 
         """
         m = self.mean()
@@ -357,7 +352,7 @@ class FallbackArray:
         """Minimum value.
 
         Returns:
-            Minimum element in array or None if empty
+            Minimum element in array or None if empty.
 
         """
         return float(min(self.data)) if self.data else None
@@ -366,7 +361,7 @@ class FallbackArray:
         """Maximum value.
 
         Returns:
-            Maximum element in array or None if empty
+            Maximum element in array or None if empty.
 
         """
         return float(max(self.data)) if self.data else None
@@ -375,7 +370,7 @@ class FallbackArray:
         """Index of minimum value.
 
         Returns:
-            Index of minimum element or None if empty
+            Index of minimum element or None if empty.
 
         """
         if not self.data:
@@ -387,7 +382,7 @@ class FallbackArray:
         """Index of maximum value.
 
         Returns:
-            Index of maximum element or None if empty
+            Index of maximum element or None if empty.
 
         """
         if not self.data:
@@ -411,7 +406,7 @@ class _FallbackLinalg:
             ord: Order of norm; 1, 2, inf, or None for L2 norm
 
         Returns:
-            Computed norm value
+            Computed norm value.
 
         """
         data: list[Any] = x.data if isinstance(x, FallbackArray) else list(x)
@@ -431,10 +426,10 @@ class _FallbackLinalg:
             a: FallbackArray representing a 2x2 matrix
 
         Returns:
-            Inverted 2x2 matrix as FallbackArray
+            Inverted 2x2 matrix as FallbackArray.
 
         Raises:
-            ValueError: If not 2x2 matrix or matrix is singular
+            ValueError: If not 2x2 matrix or matrix is singular.
 
         """
         if a.shape != (2, 2):
@@ -467,7 +462,7 @@ class _FallbackFft:
             a: FallbackArray or list to compute FFT of
 
         Returns:
-            FallbackArray with FFT result as complex numbers
+            FallbackArray with FFT result as complex numbers.
 
         """
         data: list[Any] = a.data if isinstance(a, FallbackArray) else list(a)
@@ -493,7 +488,7 @@ class _FallbackFft:
             a: FallbackArray or list of complex numbers to compute inverse FFT of
 
         Returns:
-            FallbackArray with inverse FFT result
+            FallbackArray with inverse FFT result.
 
         """
         data: list[Any] = a.data if isinstance(a, FallbackArray) else list(a)
@@ -530,7 +525,7 @@ class _FallbackRandom:
             *shape: Dimensions of output array; if none, returns scalar
 
         Returns:
-            FallbackArray of random values or float scalar
+            FallbackArray of random values or float scalar.
 
         """
         if not shape:
@@ -551,7 +546,7 @@ class _FallbackRandom:
             *shape: Dimensions of output array; if none, returns scalar
 
         Returns:
-            FallbackArray of normally distributed values or float scalar
+            FallbackArray of normally distributed values or float scalar.
 
         """
         if not shape:
@@ -574,7 +569,7 @@ class _FallbackRandom:
             size: Shape of output array; if None, returns scalar
 
         Returns:
-            FallbackArray of random integers or int scalar
+            FallbackArray of random integers or int scalar.
 
         """
         if high is None:
@@ -607,10 +602,10 @@ class _FallbackRandom:
             replace: Whether to allow repeated selections; defaults to True
 
         Returns:
-            FallbackArray with random selections or scalar value
+            FallbackArray with random selections or scalar value.
 
         Raises:
-            ValueError: If sampling without replacement and size exceeds population
+            ValueError: If sampling without replacement and size exceeds population.
 
         """
         data: list[Any]
@@ -667,7 +662,7 @@ class _FallbackFunctions:
             dtype_arg: Optional data type for array elements
 
         Returns:
-            FallbackArray created from input data
+            FallbackArray created from input data.
 
         """
         return FallbackArray(data, dtype_arg)
@@ -681,7 +676,7 @@ class _FallbackFunctions:
             dtype_arg: Data type for array elements; defaults to float
 
         Returns:
-            FallbackArray filled with zeros
+            FallbackArray filled with zeros.
 
         """
         final_shape: tuple[int, ...]
@@ -700,7 +695,7 @@ class _FallbackFunctions:
             dtype_arg: Data type for array elements; defaults to float
 
         Returns:
-            FallbackArray filled with ones
+            FallbackArray filled with ones.
 
         """
         final_shape: tuple[int, ...]
@@ -719,7 +714,7 @@ class _FallbackFunctions:
             dtype_arg: Data type for array elements; defaults to float
 
         Returns:
-            FallbackArray with shape initialized to zeros
+            FallbackArray with shape initialized to zeros.
 
         """
         return _FallbackFunctions.zeros_func(shape, dtype_arg)
@@ -734,7 +729,7 @@ class _FallbackFunctions:
             dtype_arg: Optional data type; defaults to type of fill_value
 
         Returns:
-            FallbackArray filled with the specified value
+            FallbackArray filled with the specified value.
 
         """
         final_shape: tuple[int, ...]
@@ -756,7 +751,7 @@ class _FallbackFunctions:
             dtype_arg: Data type for array elements; defaults to float
 
         Returns:
-            Identity-like FallbackArray with ones on offset diagonal
+            Identity-like FallbackArray with ones on offset diagonal.
 
         """
         actual_M = M or N
@@ -779,7 +774,7 @@ class _FallbackFunctions:
             dtype_arg: Optional data type; defaults to type of start
 
         Returns:
-            FallbackArray with values from start to stop with given step
+            FallbackArray with values from start to stop with given step.
 
         """
         if stop is None:
@@ -804,7 +799,7 @@ class _FallbackFunctions:
             num: Number of samples to generate; defaults to 50
 
         Returns:
-            FallbackArray with linearly spaced values
+            FallbackArray with linearly spaced values.
 
         """
         if num <= 0:
@@ -824,7 +819,7 @@ class _FallbackFunctions:
             *xi: Variable number of coordinate arrays
 
         Returns:
-            List of FallbackArrays representing coordinate matrices
+            List of FallbackArrays representing coordinate matrices.
 
         """
         if not xi:
@@ -856,7 +851,7 @@ class _FallbackFunctions:
             x: FallbackArray or numeric value
 
         Returns:
-            FallbackArray with square root of elements, or float for scalar input
+            FallbackArray with square root of elements, or float for scalar input.
 
         """
         if isinstance(x, FallbackArray):
@@ -871,7 +866,7 @@ class _FallbackFunctions:
             x: FallbackArray or numeric value
 
         Returns:
-            FallbackArray with absolute values, or numeric type for scalar input
+            FallbackArray with absolute values, or numeric type for scalar input.
 
         """
         if isinstance(x, FallbackArray):
@@ -887,7 +882,7 @@ class _FallbackFunctions:
             decimals: Number of decimal places; defaults to 0
 
         Returns:
-            FallbackArray with rounded values, or numeric type for scalar input
+            FallbackArray with rounded values, or numeric type for scalar input.
 
         """
         if isinstance(x, FallbackArray):
@@ -903,7 +898,7 @@ class _FallbackFunctions:
             x: FallbackArray or numeric value
 
         Returns:
-            FallbackArray with floor of elements, or int for scalar input
+            FallbackArray with floor of elements, or int for scalar input.
 
         """
         if isinstance(x, FallbackArray):
@@ -918,7 +913,7 @@ class _FallbackFunctions:
             x: FallbackArray or numeric value
 
         Returns:
-            FallbackArray with ceiling of elements, or int for scalar input
+            FallbackArray with ceiling of elements, or int for scalar input.
 
         """
         if isinstance(x, FallbackArray):
@@ -934,7 +929,7 @@ class _FallbackFunctions:
             axis: Axis along which to concatenate; currently unused for fallback
 
         Returns:
-            Concatenated FallbackArray
+            Concatenated FallbackArray.
 
         """
         if not arrays:
@@ -958,7 +953,7 @@ class _FallbackFunctions:
             axis: Axis along which to stack; currently unused for fallback
 
         Returns:
-            Stacked FallbackArray
+            Stacked FallbackArray.
 
         """
         return _FallbackFunctions.concatenate_func(arrays, axis)
@@ -971,7 +966,7 @@ class _FallbackFunctions:
             ar: FallbackArray or list to find unique elements in
 
         Returns:
-            FallbackArray with unique elements
+            FallbackArray with unique elements.
 
         """
         data: list[Any] = ar.data if isinstance(ar, FallbackArray) else list(ar)
@@ -992,7 +987,7 @@ class _FallbackFunctions:
             a: FallbackArray or list to sort
 
         Returns:
-            FallbackArray with sorted elements, or sorted list for list input
+            FallbackArray with sorted elements, or sorted list for list input.
 
         """
         if isinstance(a, FallbackArray):
@@ -1007,7 +1002,7 @@ class _FallbackFunctions:
             a: FallbackArray or list to sort
 
         Returns:
-            FallbackArray with indices that would sort the input
+            FallbackArray with indices that would sort the input.
 
         """
         data: list[Any] = a.data if isinstance(a, FallbackArray) else list(a)
@@ -1029,7 +1024,7 @@ class _FallbackFunctions:
             y: Values to select where condition is False
 
         Returns:
-            FallbackArray with selected elements, or tuple of indices if x and y are None
+            FallbackArray with selected elements, or tuple of indices if x and y are None.
 
         """
         if x is None and y is None:
@@ -1062,7 +1057,7 @@ class _FallbackFunctions:
             atol: Absolute tolerance; defaults to 1e-08
 
         Returns:
-            True if arrays are close within tolerance, False otherwise
+            True if arrays are close within tolerance, False otherwise.
 
         """
         a_data: list[Any] = a.data if isinstance(a, FallbackArray) else list(a)
@@ -1082,7 +1077,7 @@ class _FallbackFunctions:
             b: Second FallbackArray or list
 
         Returns:
-            True if arrays are exactly equal, False otherwise
+            True if arrays are exactly equal, False otherwise.
 
         """
         a_data: list[Any] = a.data if isinstance(a, FallbackArray) else list(a)
@@ -1098,7 +1093,7 @@ class _FallbackFunctions:
             dtype_arg: Optional data type for conversion
 
         Returns:
-            FallbackArray with input data
+            FallbackArray with input data.
 
         """
         if isinstance(a, FallbackArray):
@@ -1114,7 +1109,7 @@ class _FallbackFunctions:
             *varargs: Additional parameters (currently unused for fallback)
 
         Returns:
-            FallbackArray with gradient values using forward, backward, or central differences
+            FallbackArray with gradient values using forward, backward, or central differences.
 
         """
         data: list[Any] = f.data if isinstance(f, FallbackArray) else list(f)
@@ -1139,7 +1134,7 @@ class _FallbackFunctions:
             n: Order of difference; defaults to 1
 
         Returns:
-            FallbackArray with differences
+            FallbackArray with differences.
 
         """
         data: list[Any] = a.data if isinstance(a, FallbackArray) else list(a)
@@ -1157,7 +1152,7 @@ class _FallbackFunctions:
             a: FallbackArray or list to compute cumulative sum for
 
         Returns:
-            FallbackArray with cumulative sum
+            FallbackArray with cumulative sum.
 
         """
         data: list[Any] = a.data if isinstance(a, FallbackArray) else list(a)
@@ -1178,7 +1173,7 @@ class _FallbackFunctions:
             bins: Number of bins; defaults to 10
 
         Returns:
-            Tuple of (counts, bin_edges) as FallbackArrays
+            Tuple of (counts, bin_edges) as FallbackArrays.
 
         """
         data: list[Any] = a.data if isinstance(a, FallbackArray) else list(a)
@@ -1210,7 +1205,7 @@ class _FallbackFunctions:
             q: Percentile value (0-100)
 
         Returns:
-            Percentile value, or None if input is empty
+            Percentile value, or None if input is empty.
 
         """
         data = sorted(a.data) if isinstance(a, FallbackArray) else sorted(a)
@@ -1236,7 +1231,7 @@ class _FallbackFunctions:
             a: FallbackArray or list to compute median for
 
         Returns:
-            Median value, or None if input is empty
+            Median value, or None if input is empty.
 
         """
         return _FallbackFunctions.percentile_func(a, 50)
@@ -1250,10 +1245,10 @@ class _FallbackFunctions:
             b: Second FallbackArray or list
 
         Returns:
-            Dot product result
+            Dot product result.
 
         Raises:
-            ValueError: If arrays have different lengths
+            ValueError: If arrays have different lengths.
 
         """
         a_data: list[Any] = a.data if isinstance(a, FallbackArray) else list(a)
@@ -1273,10 +1268,10 @@ class _FallbackFunctions:
             b: Second FallbackArray or list (3D vector)
 
         Returns:
-            FallbackArray with cross product result
+            FallbackArray with cross product result.
 
         Raises:
-            ValueError: If vectors are not 3D
+            ValueError: If vectors are not 3D.
 
         """
         a_data: list[Any] = a.data if isinstance(a, FallbackArray) else list(a)
@@ -1301,7 +1296,7 @@ class _FallbackFunctions:
             newshape: New shape as integer or tuple of integers
 
         Returns:
-            Reshaped FallbackArray
+            Reshaped FallbackArray.
 
         """
         if isinstance(a, FallbackArray):
@@ -1321,7 +1316,7 @@ class _FallbackFunctions:
             a: FallbackArray or list to transpose
 
         Returns:
-            Transposed FallbackArray
+            Transposed FallbackArray.
 
         """
         if not isinstance(a, FallbackArray):
@@ -1344,7 +1339,7 @@ class _FallbackFunctions:
             axis: Axis along which to sum; currently unused for fallback
 
         Returns:
-            Sum of all elements
+            Sum of all elements.
 
         """
         return a.sum(axis) if isinstance(a, FallbackArray) else float(sum(a))
@@ -1358,7 +1353,7 @@ class _FallbackFunctions:
             axis: Axis along which to compute mean; currently unused for fallback
 
         Returns:
-            Mean value
+            Mean value.
 
         """
         if isinstance(a, FallbackArray):
@@ -1374,7 +1369,7 @@ class _FallbackFunctions:
             axis: Axis along which to compute std; currently unused for fallback
 
         Returns:
-            Standard deviation value
+            Standard deviation value.
 
         """
         if isinstance(a, FallbackArray):
@@ -1392,7 +1387,7 @@ class _FallbackFunctions:
             axis: Axis along which to compute variance; currently unused for fallback
 
         Returns:
-            Variance value
+            Variance value.
 
         """
         if isinstance(a, FallbackArray):
@@ -1410,7 +1405,7 @@ class _FallbackFunctions:
             axis: Axis along which to find min; currently unused for fallback
 
         Returns:
-            Minimum value, or None if empty
+            Minimum value, or None if empty.
 
         """
         if isinstance(a, FallbackArray):
@@ -1426,7 +1421,7 @@ class _FallbackFunctions:
             axis: Axis along which to find max; currently unused for fallback
 
         Returns:
-            Maximum value, or None if empty
+            Maximum value, or None if empty.
 
         """
         if isinstance(a, FallbackArray):
@@ -1442,7 +1437,7 @@ class _FallbackFunctions:
             axis: Axis along which to find argmin; currently unused for fallback
 
         Returns:
-            Index of minimum element, or None if empty
+            Index of minimum element, or None if empty.
 
         """
         if isinstance(a, FallbackArray):
@@ -1461,7 +1456,7 @@ class _FallbackFunctions:
             axis: Axis along which to find argmax; currently unused for fallback
 
         Returns:
-            Index of maximum element, or None if empty
+            Index of maximum element, or None if empty.
 
         """
         if isinstance(a, FallbackArray):

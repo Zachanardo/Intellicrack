@@ -22,11 +22,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import re
-import struct
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any
 
 
 try:
@@ -225,10 +223,13 @@ class ActivationAnalyzer:
         """Analyze binary for activation and licensing patterns.
 
         Args:
-            binary_path: Path to binary file to analyze
+            binary_path: Path to binary file to analyze.
 
         Returns:
-            Complete activation analysis results
+            Complete activation analysis results.
+
+        Raises:
+            FileNotFoundError: If binary file does not exist.
 
         """
         self.binary_path = Path(binary_path)
@@ -273,7 +274,12 @@ class ActivationAnalyzer:
         )
 
     def _detect_activation_patterns(self) -> list[ActivationPattern]:
-        """Detect activation-related patterns in binary."""
+        """Detect activation-related patterns in binary.
+
+        Returns:
+            List of detected activation patterns.
+
+        """
         patterns: list[ActivationPattern] = []
 
         for keyword in self.ACTIVATION_KEYWORDS:
@@ -299,7 +305,12 @@ class ActivationAnalyzer:
         return self._deduplicate_patterns(patterns)
 
     def _detect_registration_patterns(self) -> list[RegistrationPattern]:
-        """Detect registration code validation patterns."""
+        """Detect registration code validation patterns.
+
+        Returns:
+            List of detected registration patterns.
+
+        """
         patterns: list[RegistrationPattern] = []
 
         for keyword in self.REGISTRATION_KEYWORDS:
@@ -328,7 +339,12 @@ class ActivationAnalyzer:
         return self._deduplicate_registration_patterns(patterns)
 
     def _detect_trial_patterns(self) -> list[TrialPattern]:
-        """Detect trial limitation and expiration patterns."""
+        """Detect trial limitation and expiration patterns.
+
+        Returns:
+            List of detected trial patterns.
+
+        """
         patterns: list[TrialPattern] = []
 
         for keyword in self.TRIAL_KEYWORDS:
@@ -353,7 +369,12 @@ class ActivationAnalyzer:
         return self._deduplicate_trial_patterns(patterns)
 
     def _detect_hardware_id_patterns(self) -> list[HardwareIDPattern]:
-        """Detect hardware fingerprinting and HWID generation patterns."""
+        """Detect hardware fingerprinting and HWID generation patterns.
+
+        Returns:
+            List of detected hardware ID patterns.
+
+        """
         patterns: list[HardwareIDPattern] = []
 
         for keyword in self.HWID_KEYWORDS:
@@ -370,7 +391,12 @@ class ActivationAnalyzer:
         return self._deduplicate_hwid_patterns(patterns)
 
     def _detect_license_file_patterns(self) -> list[LicenseFilePattern]:
-        """Detect license file handling patterns."""
+        """Detect license file handling patterns.
+
+        Returns:
+            List of detected license file patterns.
+
+        """
         patterns: list[LicenseFilePattern] = []
 
         for keyword in self.LICENSE_FILE_KEYWORDS:
@@ -390,7 +416,12 @@ class ActivationAnalyzer:
         return self._deduplicate_license_patterns(patterns)
 
     def _extract_activation_urls(self) -> list[str]:
-        """Extract activation server URLs from binary."""
+        """Extract activation server URLs from binary.
+
+        Returns:
+            List of activation-related URLs found in binary.
+
+        """
         urls: list[str] = []
 
         for match in re.finditer(self.URL_PATTERN, self.binary_data):
@@ -404,7 +435,16 @@ class ActivationAnalyzer:
         return list(set(urls))
 
     def _extract_context_strings(self, offset: int, window: int = 256) -> list[str]:
-        """Extract readable strings near offset."""
+        """Extract readable strings near offset.
+
+        Args:
+            offset: Memory offset to extract strings around.
+            window: Size of context window in bytes to extract.
+
+        Returns:
+            List of readable ASCII strings found in context window.
+
+        """
         start = max(0, offset - window)
         end = min(len(self.binary_data), offset + window)
         context = self.binary_data[start:end]
@@ -417,7 +457,16 @@ class ActivationAnalyzer:
         return strings[:10]
 
     def _find_nearby_api_calls(self, offset: int, window: int = 512) -> list[str]:
-        """Find API calls near offset."""
+        """Find API calls near offset.
+
+        Args:
+            offset: Memory offset to search around.
+            window: Size of context window in bytes to search.
+
+        Returns:
+            List of API calls found in context window.
+
+        """
         start = max(0, offset - window)
         end = min(len(self.binary_data), offset + window)
         context = self.binary_data[start:end]
@@ -426,7 +475,16 @@ class ActivationAnalyzer:
         return list(set(api_calls))
 
     def _determine_activation_type(self, strings: list[str], api_calls: list[str]) -> ActivationType:
-        """Determine type of activation mechanism."""
+        """Determine type of activation mechanism.
+
+        Args:
+            strings: Context strings found near pattern.
+            api_calls: API calls found near pattern.
+
+        Returns:
+            Detected activation mechanism type.
+
+        """
         all_text = " ".join(strings + api_calls).lower()
 
         if any(api in api_calls for api in ["InternetConnectW", "HttpSendRequestW", "WinHttpOpen"]):
@@ -447,7 +505,17 @@ class ActivationAnalyzer:
         return ActivationType.OFFLINE
 
     def _calculate_confidence(self, strings: list[str], api_calls: list[str], keyword: bytes) -> float:
-        """Calculate confidence score for pattern detection."""
+        """Calculate confidence score for pattern detection.
+
+        Args:
+            strings: Context strings found near pattern.
+            api_calls: API calls found near pattern.
+            keyword: Original keyword that triggered detection.
+
+        Returns:
+            Confidence score between 0.0 and 1.0.
+
+        """
         confidence = 0.5
 
         if api_calls:
@@ -462,7 +530,15 @@ class ActivationAnalyzer:
         return min(confidence, 1.0)
 
     def _find_validation_function(self, offset: int) -> int | None:
-        """Find nearby function that validates registration codes."""
+        """Find nearby function that validates registration codes.
+
+        Args:
+            offset: Memory offset to search around.
+
+        Returns:
+            Address of validation function if found, None otherwise.
+
+        """
         if not self.pe:
             return None
 
@@ -479,7 +555,15 @@ class ActivationAnalyzer:
         return None
 
     def _detect_validation_algorithm(self, offset: int) -> list[str]:
-        """Detect hints about validation algorithm used."""
+        """Detect hints about validation algorithm used.
+
+        Args:
+            offset: Memory offset to analyze.
+
+        Returns:
+            List of algorithm hints found (e.g., cryptographic_hash, md5, sha, rsa, aes, checksum).
+
+        """
         hints: list[str] = []
 
         window = 1024
@@ -503,7 +587,16 @@ class ActivationAnalyzer:
         return hints
 
     def _determine_registration_type(self, keyword: bytes, hints: list[str]) -> RegistrationType:
-        """Determine type of registration system."""
+        """Determine type of registration system.
+
+        Args:
+            keyword: Keyword that triggered detection.
+            hints: Algorithm hints detected.
+
+        Returns:
+            Detected registration type.
+
+        """
         kw = keyword.decode("utf-8", errors="ignore").lower()
 
         if "serial" in kw:
@@ -518,7 +611,15 @@ class ActivationAnalyzer:
         return RegistrationType.USER_REGISTRATION
 
     def _find_trial_storage(self, offset: int) -> str | None:
-        """Find where trial data is stored."""
+        """Find where trial data is stored.
+
+        Args:
+            offset: Memory offset to search around.
+
+        Returns:
+            Storage location (registry or file) if found, None otherwise.
+
+        """
         context_strings = self._extract_context_strings(offset, 512)
         api_calls = self._find_nearby_api_calls(offset)
 
@@ -533,7 +634,15 @@ class ActivationAnalyzer:
         )
 
     def _find_time_check_nearby(self, offset: int) -> int | None:
-        """Find time comparison operations near offset."""
+        """Find time comparison operations near offset.
+
+        Args:
+            offset: Memory offset to search around.
+
+        Returns:
+            Address of time comparison operation if found, None otherwise.
+
+        """
         if not self.pe:
             return None
 
@@ -550,7 +659,15 @@ class ActivationAnalyzer:
         return None
 
     def _find_expiration_check(self, offset: int) -> int | None:
-        """Find expiration validation logic."""
+        """Find expiration validation logic.
+
+        Args:
+            offset: Memory offset to search around.
+
+        Returns:
+            Address of expiration check if found, None otherwise.
+
+        """
         window = 512
         start = max(0, offset - window)
         end = min(len(self.binary_data), offset + window)
@@ -563,7 +680,16 @@ class ActivationAnalyzer:
         return None
 
     def _determine_trial_type(self, keyword: bytes, storage: str | None) -> str:
-        """Determine type of trial mechanism."""
+        """Determine type of trial mechanism.
+
+        Args:
+            keyword: Keyword that triggered detection.
+            storage: Storage location where trial data is stored.
+
+        Returns:
+            Type of trial mechanism detected.
+
+        """
         kw = keyword.decode("utf-8", errors="ignore").lower()
 
         if "days" in kw:
@@ -577,7 +703,15 @@ class ActivationAnalyzer:
         return "file_trial" if storage and "file" in storage else "trial_limitation"
 
     def _detect_hwid_components(self, api_calls: list[str]) -> list[str]:
-        """Detect which hardware components are fingerprinted."""
+        """Detect which hardware components are fingerprinted.
+
+        Args:
+            api_calls: API calls found near pattern.
+
+        Returns:
+            List of hardware components detected.
+
+        """
         components: list[str] = []
 
         if "GetVolumeInformationW" in api_calls:
@@ -592,7 +726,15 @@ class ActivationAnalyzer:
         return components
 
     def _determine_hwid_type(self, components: list[str]) -> str:
-        """Determine type of hardware fingerprinting."""
+        """Determine type of hardware fingerprinting.
+
+        Args:
+            components: List of hardware components detected.
+
+        Returns:
+            Type of hardware fingerprinting mechanism.
+
+        """
         if len(components) >= 3:
             return "multi_component"
         if "volume_serial" in components:
@@ -600,7 +742,15 @@ class ActivationAnalyzer:
         return "system_based" if "system_info" in components else "simple_hwid"
 
     def _extract_license_path(self, offset: int) -> str | None:
-        """Extract license file path from binary."""
+        """Extract license file path from binary.
+
+        Args:
+            offset: Memory offset to analyze.
+
+        Returns:
+            License file path if found, None otherwise.
+
+        """
         strings = self._extract_context_strings(offset, 512)
 
         return next(
@@ -613,7 +763,16 @@ class ActivationAnalyzer:
         )
 
     def _detect_license_format(self, keyword: bytes, offset: int) -> str | None:
-        """Detect license file format."""
+        """Detect license file format.
+
+        Args:
+            keyword: Keyword that triggered detection.
+            offset: Memory offset to analyze.
+
+        Returns:
+            Detected license file format (xml, json, binary, unknown).
+
+        """
         kw = keyword.decode("utf-8", errors="ignore").lower()
 
         if ".xml" in kw:
@@ -633,13 +792,29 @@ class ActivationAnalyzer:
         return "unknown"
 
     def _find_license_validation(self, offset: int) -> int | None:
-        """Find license file validation function."""
+        """Find license file validation function.
+
+        Args:
+            offset: Memory offset to search around.
+
+        Returns:
+            Address of validation function if found, None otherwise.
+
+        """
         api_calls = self._find_nearby_api_calls(offset, 1024)
 
         return offset if any("Crypt" in api for api in api_calls) else None
 
     def _detect_encryption_usage(self, offset: int) -> bool:
-        """Detect if license data is encrypted."""
+        """Detect if license data is encrypted.
+
+        Args:
+            offset: Memory offset to search around.
+
+        Returns:
+            True if encryption is detected, False otherwise.
+
+        """
         api_calls = self._find_nearby_api_calls(offset, 512)
 
         crypto_apis = ["CryptHashData", "CryptCreateHash", "CryptEncrypt", "CryptDecrypt"]
@@ -653,7 +828,19 @@ class ActivationAnalyzer:
         hwid: list[HardwareIDPattern],
         license_file: list[LicenseFilePattern],
     ) -> float:
-        """Calculate overall protection strength score."""
+        """Calculate overall protection strength score.
+
+        Args:
+            activation: List of detected activation patterns.
+            registration: List of detected registration patterns.
+            trial: List of detected trial patterns.
+            hwid: List of detected hardware ID patterns.
+            license_file: List of detected license file patterns.
+
+        Returns:
+            Protection strength score between 0.0 and 1.0.
+
+        """
         score = 0.0
 
         if activation:
@@ -670,7 +857,15 @@ class ActivationAnalyzer:
         return min(score, 1.0)
 
     def _deduplicate_patterns(self, patterns: list[ActivationPattern]) -> list[ActivationPattern]:
-        """Remove duplicate activation patterns."""
+        """Remove duplicate activation patterns.
+
+        Args:
+            patterns: List of activation patterns to deduplicate.
+
+        Returns:
+            Deduplicated list of patterns.
+
+        """
         seen: set[int] = set()
         unique: list[ActivationPattern] = []
 
@@ -683,7 +878,15 @@ class ActivationAnalyzer:
         return unique
 
     def _deduplicate_registration_patterns(self, patterns: list[RegistrationPattern]) -> list[RegistrationPattern]:
-        """Remove duplicate registration patterns."""
+        """Remove duplicate registration patterns.
+
+        Args:
+            patterns: List of registration patterns to deduplicate.
+
+        Returns:
+            Deduplicated list of patterns.
+
+        """
         seen: set[int] = set()
         unique: list[RegistrationPattern] = []
 
@@ -696,7 +899,15 @@ class ActivationAnalyzer:
         return unique
 
     def _deduplicate_trial_patterns(self, patterns: list[TrialPattern]) -> list[TrialPattern]:
-        """Remove duplicate trial patterns."""
+        """Remove duplicate trial patterns.
+
+        Args:
+            patterns: List of trial patterns to deduplicate.
+
+        Returns:
+            Deduplicated list of patterns.
+
+        """
         seen: set[int] = set()
         unique: list[TrialPattern] = []
 
@@ -709,7 +920,15 @@ class ActivationAnalyzer:
         return unique
 
     def _deduplicate_hwid_patterns(self, patterns: list[HardwareIDPattern]) -> list[HardwareIDPattern]:
-        """Remove duplicate HWID patterns."""
+        """Remove duplicate HWID patterns.
+
+        Args:
+            patterns: List of hardware ID patterns to deduplicate.
+
+        Returns:
+            Deduplicated list of patterns.
+
+        """
         seen: set[int] = set()
         unique: list[HardwareIDPattern] = []
 
@@ -722,7 +941,15 @@ class ActivationAnalyzer:
         return unique
 
     def _deduplicate_license_patterns(self, patterns: list[LicenseFilePattern]) -> list[LicenseFilePattern]:
-        """Remove duplicate license file patterns."""
+        """Remove duplicate license file patterns.
+
+        Args:
+            patterns: List of license file patterns to deduplicate.
+
+        Returns:
+            Deduplicated list of patterns.
+
+        """
         seen: set[str | None] = set()
         unique: list[LicenseFilePattern] = []
 

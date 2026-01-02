@@ -15,8 +15,7 @@ This module validates BaseDialog's core functionality including:
 
 import logging
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
+from typing import Any, Callable
 
 import pytest
 from PyQt6.QtCore import Qt
@@ -221,17 +220,31 @@ class TestBaseDialogButtons:
         button = base_dialog.add_custom_button("Delete", lambda: None, "danger")
         assert button.objectName() == "danger_button"
 
-    def test_help_button_shows_help_text(self, base_dialog_with_help: BaseDialog) -> None:
+    def test_help_button_shows_help_text(self, base_dialog_with_help: BaseDialog, monkeypatch: pytest.MonkeyPatch) -> None:
         """Clicking help button displays help text in message box."""
         from PyQt6.QtWidgets import QDialogButtonBox
 
-        with patch.object(QMessageBox, "information") as mock_info:
-            help_button = base_dialog_with_help.button_box.button(QDialogButtonBox.StandardButton.Help)
-            help_button.click()
-            mock_info.assert_called_once()
-            call_args = mock_info.call_args
-            assert "Help" in str(call_args)
-            assert "comprehensive help text" in str(call_args)
+        class FakeMessageBox:
+            call_count: int = 0
+            parent_widget: QWidget | None = None
+            title: str = ""
+            message: str = ""
+
+            @classmethod
+            def information(cls, parent: QWidget, title: str, message: str) -> None:
+                cls.call_count += 1
+                cls.parent_widget = parent
+                cls.title = title
+                cls.message = message
+
+        monkeypatch.setattr(QMessageBox, "information", FakeMessageBox.information)
+
+        help_button = base_dialog_with_help.button_box.button(QDialogButtonBox.StandardButton.Help)
+        help_button.click()
+
+        assert FakeMessageBox.call_count == 1
+        assert "Help" in FakeMessageBox.title
+        assert "comprehensive help text" in FakeMessageBox.message
 
 
 class TestBaseDialogKeyboardShortcuts:
@@ -600,33 +613,52 @@ class TestBaseDialogBinarySelection:
         base_dialog.setup_header(layout, extra_buttons=[("Extra", callback)])
         assert layout.count() > 0
 
-    def test_browse_binary_opens_file_dialog(self, base_dialog: BaseDialog) -> None:
+    def test_browse_binary_opens_file_dialog(self, base_dialog: BaseDialog, monkeypatch: pytest.MonkeyPatch) -> None:
         """_browse_binary opens file dialog for binary selection."""
         from PyQt6.QtWidgets import QVBoxLayout
+
+        class FakeFileDialog:
+            @staticmethod
+            def getOpenFileName(parent: QWidget | None, caption: str, directory: str, filter: str) -> tuple[str, str]:
+                return ("D:\\test\\binary.exe", "")
+
+        monkeypatch.setattr(QFileDialog, "getOpenFileName", FakeFileDialog.getOpenFileName)
 
         layout = QVBoxLayout()
         base_dialog.setup_header(layout)
 
-        with patch.object(QFileDialog, "getOpenFileName", return_value=("D:\\test\\binary.exe", "")):
-            base_dialog._browse_binary()
-            assert base_dialog.binary_path_edit.text() == "D:\\test\\binary.exe"
-            assert base_dialog.binary_path == "D:\\test\\binary.exe"
+        base_dialog._browse_binary()
+        assert base_dialog.binary_path_edit.text() == "D:\\test\\binary.exe"
+        assert base_dialog.binary_path == "D:\\test\\binary.exe"
 
-    def test_browse_binary_handles_cancel(self, base_dialog: BaseDialog) -> None:
+    def test_browse_binary_handles_cancel(self, base_dialog: BaseDialog, monkeypatch: pytest.MonkeyPatch) -> None:
         """_browse_binary handles user canceling file dialog."""
         from PyQt6.QtWidgets import QVBoxLayout
+
+        class FakeFileDialog:
+            @staticmethod
+            def getOpenFileName(parent: QWidget | None, caption: str, directory: str, filter: str) -> tuple[str, str]:
+                return ("", "")
+
+        monkeypatch.setattr(QFileDialog, "getOpenFileName", FakeFileDialog.getOpenFileName)
 
         layout = QVBoxLayout()
         base_dialog.setup_header(layout)
         original_text = base_dialog.binary_path_edit.text()
 
-        with patch.object(QFileDialog, "getOpenFileName", return_value=("", "")):
-            base_dialog._browse_binary()
-            assert base_dialog.binary_path_edit.text() == original_text
+        base_dialog._browse_binary()
+        assert base_dialog.binary_path_edit.text() == original_text
 
-    def test_browse_binary_triggers_callback(self, base_dialog: BaseDialog) -> None:
+    def test_browse_binary_triggers_callback(self, base_dialog: BaseDialog, monkeypatch: pytest.MonkeyPatch) -> None:
         """_browse_binary triggers on_binary_selected callback."""
         from PyQt6.QtWidgets import QVBoxLayout
+
+        class FakeFileDialog:
+            @staticmethod
+            def getOpenFileName(parent: QWidget | None, caption: str, directory: str, filter: str) -> tuple[str, str]:
+                return ("D:\\test\\target.exe", "")
+
+        monkeypatch.setattr(QFileDialog, "getOpenFileName", FakeFileDialog.getOpenFileName)
 
         callback_triggered = False
         selected_path = None
@@ -641,10 +673,9 @@ class TestBaseDialogBinarySelection:
         layout = QVBoxLayout()
         dialog.setup_header(layout)
 
-        with patch.object(QFileDialog, "getOpenFileName", return_value=("D:\\test\\target.exe", "")):
-            dialog._browse_binary()
-            assert callback_triggered
-            assert selected_path == "D:\\test\\target.exe"
+        dialog._browse_binary()
+        assert callback_triggered
+        assert selected_path == "D:\\test\\target.exe"
 
 
 class TestBaseDialogResultHandling:
@@ -676,14 +707,22 @@ class TestBaseDialogCleanup:
         base_dialog.set_loading(True, "Loading...")
         base_dialog.close()
 
-    def test_close_event_schedules_deletion(self, base_dialog: BaseDialog) -> None:
+    def test_close_event_schedules_deletion(self, base_dialog: BaseDialog, monkeypatch: pytest.MonkeyPatch) -> None:
         """closeEvent schedules dialog for deletion."""
-        with patch.object(base_dialog, "deleteLater") as mock_delete:
-            from PyQt6.QtGui import QCloseEvent
+        from PyQt6.QtGui import QCloseEvent
 
-            event = QCloseEvent()
-            base_dialog.closeEvent(event)
-            mock_delete.assert_called_once()
+        class FakeDeleteLater:
+            call_count: int = 0
+
+            @classmethod
+            def delete_later(cls) -> None:
+                cls.call_count += 1
+
+        monkeypatch.setattr(base_dialog, "deleteLater", FakeDeleteLater.delete_later)
+
+        event = QCloseEvent()
+        base_dialog.closeEvent(event)
+        assert FakeDeleteLater.call_count == 1
 
 
 class TestBaseDialogThemeApplication:

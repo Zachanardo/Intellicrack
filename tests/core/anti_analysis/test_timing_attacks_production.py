@@ -14,6 +14,7 @@ import platform
 import threading
 import time
 from typing import Callable
+from unittest.mock import patch
 
 import pytest
 
@@ -221,8 +222,8 @@ class TestTimeBomb:
         """Time bomb executes action after specified delay."""
         defense = TimingAttackDefense()
 
-        action_executed = [False]
-        execution_time = [None]
+        action_executed: list[bool] = [False]
+        execution_time: list[float | None] = [None]
 
         def timed_action() -> None:
             action_executed[0] = True
@@ -234,8 +235,9 @@ class TestTimeBomb:
         time.sleep(0.3)
 
         assert action_executed[0] is True
-        assert execution_time[0] is not None
-        assert (execution_time[0] - start_time) >= 0.18
+        exec_time = execution_time[0]
+        assert exec_time is not None
+        assert (exec_time - start_time) >= 0.18
 
     def test_time_bomb_aborts_on_acceleration_detection(self) -> None:
         """Time bomb aborts action if timing acceleration detected."""

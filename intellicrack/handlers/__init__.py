@@ -73,7 +73,7 @@ def get_available_handlers() -> list[str]:
     loaded during module initialization.
 
     Returns:
-        List of successfully loaded handler module names.
+        Successfully loaded handler module names.
 
     """
     return list(_handlers.keys())
@@ -89,11 +89,11 @@ def is_handler_available(handler_name: str) -> bool:
         handler_name: The name of the handler module to check.
 
     Returns:
-        True if the handler is available, False otherwise.
+        Whether the handler is available.
 
     """
     return handler_name in _handlers
 
 
 _handlers_list: list[str] = [str(name) for name in _handlers]
-__all__: list[str] = ["get_available_handlers", "is_handler_available", *_handlers_list]  # noqa: PLE0604
+__all__: list[str] = ["get_available_handlers", "is_handler_available"] + _handlers_list

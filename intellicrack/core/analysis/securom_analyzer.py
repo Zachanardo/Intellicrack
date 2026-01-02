@@ -1089,7 +1089,15 @@ class SecuROMAnalyzer:
         return imports
 
     def _get_exports(self, target_path: Path) -> list[str]:
-        """Get exported functions."""
+        """Get exported functions.
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            list[str]: List of exported functions.
+
+        """
         if not PEFILE_AVAILABLE or not target_path.exists():
             return []
 
@@ -1108,7 +1116,15 @@ class SecuROMAnalyzer:
         return exports
 
     def _analyze_resources(self, target_path: Path) -> dict[str, int]:
-        """Analyze PE resources."""
+        """Analyze PE resources.
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            dict[str, int]: Dictionary of resource types and counts.
+
+        """
         if not PEFILE_AVAILABLE or not target_path.exists():
             return {}
 
@@ -1132,7 +1148,15 @@ class SecuROMAnalyzer:
         return resources
 
     def _extract_relevant_strings(self, target_path: Path) -> list[str]:
-        """Extract relevant strings from executable."""
+        """Extract relevant strings from executable.
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            list[str]: List of relevant strings found in executable.
+
+        """
         if not target_path.exists():
             return []
 
@@ -1151,7 +1175,15 @@ class SecuROMAnalyzer:
         return list(set(strings))[:50]
 
     def _extract_network_endpoints(self, target_path: Path) -> list[str]:
-        """Extract network endpoints (URLs, IPs)."""
+        """Extract network endpoints (URLs, IPs).
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            list[str]: List of network endpoints found in executable.
+
+        """
         if not target_path.exists():
             return []
 
@@ -1182,7 +1214,15 @@ class SecuROMAnalyzer:
         return list(set(endpoints))
 
     def _identify_registry_access(self, target_path: Path) -> list[str]:
-        """Identify registry keys accessed."""
+        """Identify registry keys accessed.
+
+        Args:
+            target_path: Path to the binary file to analyze.
+
+        Returns:
+            list[str]: List of registry keys accessed by the binary.
+
+        """
         if not target_path.exists():
             return []
 

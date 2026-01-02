@@ -120,13 +120,21 @@ class StarForceAnalyzer:
     }
 
     def __init__(self) -> None:
-        """Initialize StarForce analyzer."""
+        """Initialize StarForce analyzer.
+
+        Raises:
+            Exception: Any exception from _setup_winapi is caught and logged.
+        """
         self.logger = logging.getLogger(__name__)
         self._kernel32: ctypes.WinDLL | None = None
         self._setup_winapi()
 
     def _setup_winapi(self) -> None:
-        """Set up Windows API functions."""
+        """Set up Windows API functions.
+
+        Raises:
+            Exception: Any exception is caught and logged.
+        """
         try:
             self._kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
@@ -166,8 +174,10 @@ class StarForceAnalyzer:
             driver_path: Path to StarForce kernel driver
 
         Returns:
-            StarForceAnalysis results with detailed findings
+            StarForceAnalysis results with detailed findings.
 
+        Raises:
+            FileNotFoundError: If the driver file does not exist (handled internally).
         """
         driver_version = self._get_driver_version(driver_path)
         ioctl_commands = self._analyze_ioctls(driver_path)
@@ -198,7 +208,17 @@ class StarForceAnalyzer:
         )
 
     def _get_driver_version(self, driver_path: Path) -> str:
-        """Extract driver version information."""
+        """Extract driver version information.
+
+        Args:
+            driver_path: Path to the driver binary file.
+
+        Returns:
+            Driver version string or "Unknown" if extraction fails.
+
+        Raises:
+            Exception: Any exception is caught and logged, returns "Unknown".
+        """
         if not PEFILE_AVAILABLE or not driver_path.exists():
             return "Unknown"
 
@@ -223,7 +243,17 @@ class StarForceAnalyzer:
         return "Unknown"
 
     def _analyze_ioctls(self, driver_path: Path) -> list[IOCTLCommand]:
-        """Analyze and extract IOCTL command codes from driver."""
+        """Analyze and extract IOCTL command codes from driver.
+
+        Args:
+            driver_path: Path to the driver binary file.
+
+        Returns:
+            List of IOCTLCommand objects representing detected IOCTL codes.
+
+        Raises:
+            Exception: Any exception is caught and logged, returns empty list.
+        """
         ioctls: list[IOCTLCommand] = []
 
         if not driver_path.exists():
@@ -262,7 +292,17 @@ class StarForceAnalyzer:
         return ioctls
 
     def _find_custom_ioctls(self, data: bytes) -> list[IOCTLCommand]:
-        """Find custom IOCTL codes through pattern analysis."""
+        """Find custom IOCTL codes through pattern analysis.
+
+        Args:
+            data: Binary data to search for custom IOCTL patterns.
+
+        Returns:
+            List of IOCTLCommand objects for detected custom IOCTL codes.
+
+        Raises:
+            struct.error: If binary data cannot be unpacked.
+        """
         ioctls = []
 
         ioctl_pattern = b"\x81\x7d"
@@ -299,7 +339,17 @@ class StarForceAnalyzer:
         return ioctls
 
     def _detect_anti_debug(self, driver_path: Path) -> list[AntiDebugTechnique]:
-        """Detect anti-debugging techniques in driver."""
+        """Detect anti-debugging techniques in driver.
+
+        Args:
+            driver_path: Path to the driver binary file.
+
+        Returns:
+            List of AntiDebugTechnique objects representing detected techniques.
+
+        Raises:
+            Exception: Any exception is caught and logged, returns empty list.
+        """
         techniques: list[AntiDebugTechnique] = []
 
         if not driver_path.exists():
@@ -336,7 +386,17 @@ class StarForceAnalyzer:
         return techniques
 
     def _get_anti_debug_details(self, technique: str) -> tuple[str, str]:
-        """Get detailed information about anti-debugging technique."""
+        """Get detailed information about anti-debugging technique.
+
+        Args:
+            technique: Name of the anti-debugging technique.
+
+        Returns:
+            Tuple of (description, bypass_method) for the technique.
+
+        Raises:
+            KeyError: Never raised, all key errors are handled with defaults.
+        """
         details = {
             "kernel_debugger_check": (
                 "Checks KdDebuggerEnabled flag in KPCR or SharedUserData",
@@ -359,7 +419,17 @@ class StarForceAnalyzer:
         return details.get(technique, ("Unknown technique", "Manual analysis required"))
 
     def _detect_vm_checks(self, driver_path: Path) -> list[str]:
-        """Detect virtual machine detection methods."""
+        """Detect virtual machine detection methods.
+
+        Args:
+            driver_path: Path to the driver binary file.
+
+        Returns:
+            List of detected VM detection methods.
+
+        Raises:
+            Exception: Any exception is caught and logged, returns empty list.
+        """
         vm_methods: list[str] = []
 
         if not driver_path.exists():
@@ -390,7 +460,17 @@ class StarForceAnalyzer:
         return vm_methods
 
     def _analyze_disc_auth(self, driver_path: Path) -> list[str]:
-        """Analyze disc authentication mechanisms."""
+        """Analyze disc authentication mechanisms.
+
+        Args:
+            driver_path: Path to the driver binary file.
+
+        Returns:
+            List of detected disc authentication mechanisms.
+
+        Raises:
+            Exception: Any exception is caught and logged, returns empty list.
+        """
         mechanisms: list[str] = []
 
         if not driver_path.exists():
@@ -424,7 +504,17 @@ class StarForceAnalyzer:
         return mechanisms
 
     def _detect_kernel_hooks(self, driver_path: Path) -> list[tuple[str, int]]:
-        """Detect kernel function hooks."""
+        """Detect kernel function hooks.
+
+        Args:
+            driver_path: Path to the driver binary file.
+
+        Returns:
+            List of tuples containing (function_name, offset) for detected hooks.
+
+        Raises:
+            Exception: Any exception is caught and logged, returns empty list.
+        """
         hooks: list[tuple[str, int]] = []
 
         if not driver_path.exists():
@@ -462,7 +552,17 @@ class StarForceAnalyzer:
         return hooks
 
     def _analyze_license_validation(self, driver_path: Path) -> LicenseValidationFlow | None:
-        """Analyze license validation flow in driver."""
+        """Analyze license validation flow in driver.
+
+        Args:
+            driver_path: Path to the driver binary file.
+
+        Returns:
+            LicenseValidationFlow object with detected validation mechanisms or None on failure.
+
+        Raises:
+            Exception: Any exception is caught and logged, returns None.
+        """
         if not driver_path.exists():
             return None
 
@@ -540,7 +640,17 @@ class StarForceAnalyzer:
         return None
 
     def _find_validation_entry_point(self, data: bytes) -> int:
-        """Find license validation entry point address."""
+        """Find license validation entry point address.
+
+        Args:
+            data: Binary data to search for entry point.
+
+        Returns:
+            Entry point address or 0 if not found.
+
+        Raises:
+            Exception: Any exception is caught and logged, returns 0.
+        """
         if not PEFILE_AVAILABLE:
             return 0
 
@@ -558,7 +668,17 @@ class StarForceAnalyzer:
         return 0
 
     def _find_entry_points(self, driver_path: Path) -> list[tuple[str, int]]:
-        """Find driver entry points and initialization routines."""
+        """Find driver entry points and initialization routines.
+
+        Args:
+            driver_path: Path to the driver binary file.
+
+        Returns:
+            List of tuples containing (entry_point_name, address).
+
+        Raises:
+            Exception: Any exception is caught and logged, returns empty list.
+        """
         if not PEFILE_AVAILABLE or not driver_path.exists():
             return []
 
@@ -583,7 +703,17 @@ class StarForceAnalyzer:
         return entry_points
 
     def _get_imports(self, driver_path: Path) -> list[str]:
-        """Get imported functions from driver."""
+        """Get imported functions from driver.
+
+        Args:
+            driver_path: Path to the driver binary file.
+
+        Returns:
+            List of imported function names in format 'dll_name!function_name'.
+
+        Raises:
+            Exception: Any exception is caught and logged, returns empty list.
+        """
         if not PEFILE_AVAILABLE or not driver_path.exists():
             return []
 
@@ -608,7 +738,17 @@ class StarForceAnalyzer:
         return imports
 
     def _get_exports(self, driver_path: Path) -> list[str]:
-        """Get exported functions from driver."""
+        """Get exported functions from driver.
+
+        Args:
+            driver_path: Path to the driver binary file.
+
+        Returns:
+            List of exported function names.
+
+        Raises:
+            Exception: Any exception is caught and logged, returns empty list.
+        """
         if not PEFILE_AVAILABLE or not driver_path.exists():
             return []
 
@@ -627,7 +767,17 @@ class StarForceAnalyzer:
         return exports
 
     def _find_dispatch_routines(self, driver_path: Path) -> list[tuple[str, int]]:
-        """Find IRP dispatch routines in driver."""
+        """Find IRP dispatch routines in driver.
+
+        Args:
+            driver_path: Path to the driver binary file.
+
+        Returns:
+            List of tuples containing (IRP_type, handler_address).
+
+        Raises:
+            Exception: Any exception is caught and logged, returns empty list.
+        """
         if not driver_path.exists():
             return []
 
@@ -673,7 +823,17 @@ class StarForceAnalyzer:
         return dispatch_routines
 
     def _identify_crypto(self, driver_path: Path) -> list[str]:
-        """Identify cryptographic algorithms used in driver."""
+        """Identify cryptographic algorithms used in driver.
+
+        Args:
+            driver_path: Path to the driver binary file.
+
+        Returns:
+            List of identified cryptographic algorithm names.
+
+        Raises:
+            Exception: Any exception is caught and logged, returns empty list.
+        """
         if not driver_path.exists():
             return []
 
@@ -712,8 +872,10 @@ class StarForceAnalyzer:
             input_data: Input buffer data
 
         Returns:
-            Output buffer data or None on failure
+            Output buffer data or None on failure.
 
+        Raises:
+            Exception: Any exception is caught and logged, returns None.
         """
         if not self._kernel32:
             return None

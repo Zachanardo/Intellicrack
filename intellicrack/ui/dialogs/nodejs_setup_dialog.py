@@ -23,6 +23,7 @@ import os
 from pathlib import Path
 
 from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import (
     QFileDialog,
     QGroupBox,
@@ -41,6 +42,7 @@ from PyQt6.QtWidgets import (
 
 from .base_dialog import BaseDialog
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -52,11 +54,21 @@ class NodeJSInstallWorker(QThread):
     finished = pyqtSignal(bool, str)
 
     def __init__(self) -> None:
-        """Initialize Node.js installation worker."""
+        """Initialize Node.js installation worker.
+
+        Returns:
+            None
+        """
         super().__init__()
 
     def run(self) -> None:
-        """Install Node.js in background thread with real progress tracking."""
+        """Install Node.js in background thread with real progress tracking.
+
+        Emits progress signals during installation and finishes with a completion signal.
+
+        Raises:
+            ValueError: If the Node.js download URL has an invalid scheme.
+        """
         try:
             # Phase 1: Detection (10%)
             self.progress.emit("Detecting system configuration...")
@@ -145,7 +157,11 @@ class NodeJSSetupDialog(BaseDialog):
     """Dialog for Node.js installation setup."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize Node.js setup dialog."""
+        """Initialize Node.js setup dialog.
+
+        Args:
+            parent: Parent widget for the dialog, defaults to None.
+        """
         super().__init__(parent=parent, title="Node.js Setup Required", width=600, height=500, resizable=False)
         self.install_worker: NodeJSInstallWorker | None = None
         self.setup_content(self.content_layout)
@@ -154,7 +170,14 @@ class NodeJSSetupDialog(BaseDialog):
         self.set_ok_text("Proceed")
 
     def setup_content(self, layout: QLayout) -> None:
-        """Initialize the dialog UI content."""
+        """Initialize the dialog UI content.
+
+        Args:
+            layout: The layout to add dialog widgets to.
+
+        Returns:
+            None
+        """
         # Explanation header
         header_label = QLabel(
             "<h3>Node.js Required for AdobeLicenseX</h3>\n"
@@ -243,13 +266,27 @@ class NodeJSSetupDialog(BaseDialog):
         # We just need to override validate_input for the OK button behavior
 
     def on_option_changed(self) -> None:
-        """Handle option radio button changes."""
+        """Handle option radio button changes.
+
+        Updates the enabled state of path input and browse button based on
+        selection.
+
+        Returns:
+            None
+        """
         is_custom = self.custom_path_radio.isChecked()
         self.path_input.setEnabled(is_custom)
         self.browse_btn.setEnabled(is_custom)
 
     def browse_nodejs_path(self) -> None:
-        """Browse for Node.js installation directory."""
+        """Browse for Node.js installation directory.
+
+        Opens a file dialog to select a directory and updates the path input
+        field.
+
+        Returns:
+            None
+        """
         if directory := QFileDialog.getExistingDirectory(self, "Select Node.js Installation Directory", "C:\\Program Files"):
             self.path_input.setText(directory)
 
@@ -259,8 +296,7 @@ class NodeJSSetupDialog(BaseDialog):
         This is called when the OK/Proceed button is clicked.
 
         Returns:
-            True if input is valid and dialog should close, False otherwise
-
+            True if input is valid and dialog should close, False otherwise.
         """
         if self.auto_install_radio.isChecked():
             self.start_installation()
@@ -296,7 +332,14 @@ class NodeJSSetupDialog(BaseDialog):
         return False
 
     def start_installation(self) -> None:
-        """Start the Node.js installation process."""
+        """Start the Node.js installation process.
+
+        Shows progress UI, disables controls, and launches installation worker
+        thread.
+
+        Returns:
+            None
+        """
         # Show progress UI with real progress tracking
         self.progress_bar.setVisible(True)
         self.progress_bar.setRange(0, 100)  # Real progress from 0 to 100%
@@ -320,11 +363,26 @@ class NodeJSSetupDialog(BaseDialog):
             self.install_worker.start()
 
     def on_install_progress(self, message: str) -> None:
-        """Handle installation progress updates."""
+        """Handle installation progress updates.
+
+        Args:
+            message: Progress message to display in the progress text area.
+
+        Returns:
+            None
+        """
         self.progress_text.append(message)
 
     def on_install_finished(self, success: bool, message: str) -> None:
-        """Handle installation completion."""
+        """Handle installation completion.
+
+        Args:
+            success: Whether the installation completed successfully.
+            message: Completion message to display to the user.
+
+        Returns:
+            None
+        """
         self.progress_bar.setVisible(False)
         self.progress_text.append(f"\n{message}")
 
@@ -339,3 +397,23 @@ class NodeJSSetupDialog(BaseDialog):
             self.accept()
         else:
             self.show_error(f"{message}\n\nPlease try manual installation or specify a custom path.")
+
+    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+        """Handle dialog close with proper thread cleanup.
+
+        Ensures any running installation worker is properly terminated before
+        closing the dialog to prevent resource leaks.
+
+        Args:
+            event: Close event from Qt framework.
+
+        Returns:
+            None
+        """
+        if self.install_worker is not None and self.install_worker.isRunning():
+            self.install_worker.quit()
+            if not self.install_worker.wait(2000):
+                self.install_worker.terminate()
+                self.install_worker.wait()
+            self.install_worker = None
+        super().closeEvent(event)

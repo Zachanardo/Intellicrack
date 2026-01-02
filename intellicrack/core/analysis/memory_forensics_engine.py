@@ -156,7 +156,12 @@ class MemoryAnalysisResult:
 
     @property
     def has_suspicious_activity(self) -> bool:
-        """Check if any suspicious activity was detected."""
+        """Check if any suspicious activity was detected.
+
+        Returns:
+            True if suspicious activity was detected, False otherwise.
+
+        """
         return (
             any(p.is_hidden for p in self.processes)
             or any(p.suspicious_indicators for p in self.processes)
@@ -166,7 +171,12 @@ class MemoryAnalysisResult:
 
     @property
     def hidden_process_count(self) -> int:
-        """Get count of hidden processes."""
+        """Get count of hidden processes.
+
+        Returns:
+            Number of hidden processes detected in analysis.
+
+        """
         return sum(bool(p.is_hidden) for p in self.processes)
 
 
@@ -184,7 +194,12 @@ class MemoryForensicsEngine:
     """
 
     def __init__(self, cache_directory: str | None = None) -> None:
-        """Initialize the memory forensics engine with cache configuration and plugin detection."""
+        """Initialize the memory forensics engine with cache configuration and plugin detection.
+
+        Args:
+            cache_directory: Optional path to cache directory for Volatility3 data
+
+        """
         self.logger = logging.getLogger("IntellicrackLogger.MemoryForensics")
 
         if cache_directory:
@@ -204,7 +219,12 @@ class MemoryForensicsEngine:
         self.analyzed_dumps: set[str] = set()
 
     def _init_volatility(self) -> None:
-        """Initialize Volatility3 framework."""
+        """Initialize Volatility3 framework.
+
+        Initializes the Volatility3 context, configuration, and automagic modules
+        for memory forensics analysis.
+
+        """
         try:
             # Initialize Volatility3 context
             self.vol_context = contexts.Context()
@@ -234,12 +254,12 @@ class MemoryForensicsEngine:
         """Analyze a memory dump file for forensic artifacts.
 
         Args:
-            dump_path: Path to the memory dump file
-            profile: Memory analysis profile to use
-            deep_analysis: Whether to perform deep analysis
+            dump_path: Path to the memory dump file.
+            profile: Memory analysis profile to use.
+            deep_analysis: Whether to perform deep analysis.
 
         Returns:
-            Complete memory forensics analysis results
+            Complete memory forensics analysis results.
 
         """
         start_time = time.time()
@@ -315,7 +335,15 @@ class MemoryForensicsEngine:
             )
 
     def _fallback_memory_analysis(self, dump_path: str) -> MemoryAnalysisResult:
-        """Fallback analysis when Volatility3 is not available."""
+        """Fallback analysis when Volatility3 is not available.
+
+        Args:
+            dump_path: Path to the memory dump file.
+
+        Returns:
+            Basic analysis results using fallback methods.
+
+        """
         result = MemoryAnalysisResult(dump_path=dump_path)
 
         try:
@@ -363,7 +391,15 @@ class MemoryForensicsEngine:
         return result
 
     def _detect_profile(self, dump_path: str) -> str:
-        """Detect appropriate Volatility3 profile for memory dump."""
+        """Detect appropriate Volatility3 profile for memory dump.
+
+        Args:
+            dump_path: Path to the memory dump file.
+
+        Returns:
+            Profile name suitable for Volatility3 analysis.
+
+        """
         try:
             # First, try file-based heuristics using dump_path
             import os
@@ -451,7 +487,16 @@ class MemoryForensicsEngine:
             return AnalysisProfile.WINDOWS_10.value
 
     def _configure_volatility(self, dump_path: str, profile: str) -> None:
-        """Configure Volatility3 for analysis."""
+        """Configure Volatility3 for analysis.
+
+        Args:
+            dump_path: Path to the memory dump file.
+            profile: Volatility3 profile name to use for analysis.
+
+        Raises:
+            Exception: If Volatility3 configuration fails during automagic initialization.
+
+        """
         try:
             # Clear existing configuration
             self.vol_config.clear()
@@ -471,7 +516,16 @@ class MemoryForensicsEngine:
             raise
 
     def _run_volatility_plugin(self, plugin_name: str, plugin_config: dict[str, Any]) -> list[Any]:
-        """Run a Volatility3 plugin and return results."""
+        """Run a Volatility3 plugin and return results.
+
+        Args:
+            plugin_name: Name of the Volatility3 plugin to execute.
+            plugin_config: Configuration dictionary for the plugin.
+
+        Returns:
+            Results from plugin execution.
+
+        """
         try:
             # Get plugin class using plugins framework
             available_plugins = plugins.list_plugins()
@@ -570,7 +624,12 @@ class MemoryForensicsEngine:
             return []
 
     def _analyze_processes(self) -> list[MemoryProcess]:
-        """Analyze processes in memory dump."""
+        """Analyze processes in memory dump.
+
+        Returns:
+            List of analyzed processes from the memory dump.
+
+        """
         processes = []
 
         try:
@@ -606,7 +665,12 @@ class MemoryForensicsEngine:
         return processes
 
     def _analyze_modules(self) -> list[MemoryModule]:
-        """Analyze loaded modules."""
+        """Analyze loaded modules.
+
+        Returns:
+            List of analyzed modules loaded in the process.
+
+        """
         modules = []
 
         try:
@@ -630,7 +694,12 @@ class MemoryForensicsEngine:
         return modules
 
     def _analyze_network_connections(self) -> list[NetworkConnection]:
-        """Analyze network connections."""
+        """Analyze network connections.
+
+        Returns:
+            List of analyzed network connections.
+
+        """
         connections = []
 
         try:
@@ -657,7 +726,12 @@ class MemoryForensicsEngine:
         return connections
 
     def _analyze_registry(self) -> list[dict[str, Any]]:
-        """Analyze registry artifacts."""
+        """Analyze registry artifacts.
+
+        Returns:
+            List of registry artifact dictionaries found in memory.
+
+        """
         registry_artifacts = []
 
         try:
@@ -679,7 +753,12 @@ class MemoryForensicsEngine:
         return registry_artifacts
 
     def _analyze_file_handles(self) -> list[dict[str, Any]]:
-        """Analyze file handles."""
+        """Analyze file handles.
+
+        Returns:
+            List of file handle dictionaries found in memory.
+
+        """
         file_handles = []
 
         try:
@@ -703,7 +782,15 @@ class MemoryForensicsEngine:
         return file_handles
 
     def _extract_memory_strings(self, min_length: int = 6) -> list[MemoryString]:
-        """Extract strings from memory dump."""
+        """Extract strings from memory dump.
+
+        Args:
+            min_length: Minimum length of strings to extract.
+
+        Returns:
+            List of extracted memory strings.
+
+        """
         strings = []
 
         try:
@@ -728,7 +815,16 @@ class MemoryForensicsEngine:
         return strings
 
     def _extract_strings_fallback(self, file_path: str, min_length: int = 4) -> list[str]:
-        """Fallback string extraction using basic binary parsing."""
+        """Fallback string extraction using basic binary parsing.
+
+        Args:
+            file_path: Path to the file to extract strings from.
+            min_length: Minimum length of strings to extract.
+
+        Returns:
+            List of extracted ASCII strings.
+
+        """
         strings = []
 
         try:
@@ -764,7 +860,15 @@ class MemoryForensicsEngine:
         return strings
 
     def _check_process_suspicious_indicators(self, process: MemoryProcess) -> list[str]:
-        """Check for suspicious process indicators."""
+        """Check for suspicious process indicators.
+
+        Args:
+            process: Memory process object to check for suspicious indicators.
+
+        Returns:
+            List of suspicious indicator descriptions found.
+
+        """
         indicators = []
 
         # Check for common license bypass tool process names
@@ -825,7 +929,12 @@ class MemoryForensicsEngine:
         return indicators
 
     def _detect_hidden_processes(self, processes: list[MemoryProcess]) -> None:
-        """Detect hidden processes using psxview-like analysis."""
+        """Detect hidden processes using psxview-like analysis.
+
+        Args:
+            processes: List of memory processes to check for hidden status.
+
+        """
         try:
             # This would involve comparing multiple process listing methods
             # For now, mark processes with suspicious characteristics as potentially hidden
@@ -845,10 +954,10 @@ class MemoryForensicsEngine:
         bypass mechanisms.
 
         Args:
-            module_data: Volatility3 module object with attributes like BaseDllName, FullDllName
+            module_data: Volatility3 module object with attributes like BaseDllName, FullDllName.
 
         Returns:
-            True if module exhibits suspicious characteristics, False otherwise
+            True if module exhibits suspicious characteristics, False otherwise.
 
         """
         try:
@@ -913,7 +1022,15 @@ class MemoryForensicsEngine:
             return False
 
     def _detect_security_issues(self, analysis_result: MemoryAnalysisResult) -> list[dict[str, Any]]:
-        """Detect security issues based on analysis results."""
+        """Detect security issues based on analysis results.
+
+        Args:
+            analysis_result: Complete memory analysis results to scan for security issues.
+
+        Returns:
+            List of detected security findings with type and severity.
+
+        """
         findings = []
 
         try:
@@ -976,11 +1093,11 @@ class MemoryForensicsEngine:
         """Analyze live process memory or specific process from dump.
 
         Args:
-            process_id: Process ID to analyze
-            dump_path: Optional memory dump path
+            process_id: Process ID to analyze.
+            dump_path: Optional memory dump path.
 
         Returns:
-            Process-specific memory analysis results
+            Process-specific memory analysis results.
 
         """
         try:
@@ -1020,7 +1137,15 @@ class MemoryForensicsEngine:
             return {"error": str(e)}
 
     def _analyze_live_process_windows(self, process_id: int) -> dict[str, Any]:
-        """Analyze live process memory on Windows."""
+        """Analyze live process memory on Windows.
+
+        Args:
+            process_id: Process ID to analyze.
+
+        Returns:
+            Dictionary containing process analysis results including modules, memory regions, handles, and connections.
+
+        """
         try:
             import ctypes
             from ctypes import wintypes
@@ -1219,7 +1344,15 @@ class MemoryForensicsEngine:
             }
 
     def _analyze_live_process_linux(self, process_id: int) -> dict[str, Any]:
-        """Analyze live process memory on Linux."""
+        """Analyze live process memory on Linux.
+
+        Args:
+            process_id: Process ID to analyze.
+
+        Returns:
+            Dictionary containing process analysis results including modules, memory regions, and connections.
+
+        """
         try:
             import os
             import re
@@ -1404,7 +1537,15 @@ class MemoryForensicsEngine:
             }
 
     def _get_protection_string(self, protect: int) -> str:
-        """Convert Windows protection flags to string."""
+        """Convert Windows protection flags to string.
+
+        Args:
+            protect: Windows memory protection flags as integer.
+
+        Returns:
+            Human-readable protection flag name.
+
+        """
         protections = {
             0x10: "PAGE_EXECUTE",
             0x20: "PAGE_EXECUTE_READ",
@@ -1418,7 +1559,15 @@ class MemoryForensicsEngine:
         return protections.get(protect & 0xFF, f"0x{protect:X}")
 
     def _get_memory_type(self, mem_type: int) -> str:
-        """Convert Windows memory type to string."""
+        """Convert Windows memory type to string.
+
+        Args:
+            mem_type: Windows memory type flags as integer.
+
+        Returns:
+            Human-readable memory type name.
+
+        """
         types = {
             0x1000000: "MEM_IMAGE",
             0x40000: "MEM_MAPPED",
@@ -1427,7 +1576,15 @@ class MemoryForensicsEngine:
         return types.get(mem_type, f"0x{mem_type:X}")
 
     def _parse_linux_addr(self, addr_str: str) -> str:
-        """Parse Linux /proc/net address format."""
+        """Parse Linux /proc/net address format.
+
+        Args:
+            addr_str: Address string from /proc/net in hex format.
+
+        Returns:
+            Converted address string in standard notation (IP:port).
+
+        """
         try:
             host, port = addr_str.split(":")
             # Convert from hex and reverse byte order
@@ -1451,11 +1608,11 @@ class MemoryForensicsEngine:
         """Extract ASCII strings from memory data.
 
         Args:
-            memory_data: Binary memory data
-            min_length: Minimum string length to extract
+            memory_data: Binary memory data.
+            min_length: Minimum string length to extract.
 
         Returns:
-            List of extracted strings
+            List of extracted strings.
 
         """
         try:
@@ -1484,10 +1641,10 @@ class MemoryForensicsEngine:
         """Generate supplemental data for ICP backend integration.
 
         Args:
-            analysis_result: Memory analysis results
+            analysis_result: Memory analysis results.
 
         Returns:
-            Dictionary with supplemental memory forensics data for ICP
+            Dictionary with supplemental memory forensics data for ICP.
 
         """
         if analysis_result.error:
@@ -1566,7 +1723,15 @@ class MemoryForensicsEngine:
         return supplemental_data
 
     def get_analysis_summary(self, analysis_result: MemoryAnalysisResult) -> dict[str, Any]:
-        """Generate a summary of memory analysis results."""
+        """Generate a summary of memory analysis results.
+
+        Args:
+            analysis_result: Complete memory analysis results to summarize.
+
+        Returns:
+            Summary dictionary with artifacts, security assessment, and performance data.
+
+        """
         return {
             "dump_path": analysis_result.dump_path,
             "analysis_profile": analysis_result.analysis_profile,
@@ -1587,11 +1752,11 @@ class MemoryForensicsEngine:
         """Export memory analysis results to JSON report.
 
         Args:
-            analysis_result: Analysis results to export
-            output_path: Path to save the JSON report
+            analysis_result: Analysis results to export.
+            output_path: Path to save the JSON report.
 
         Returns:
-            Tuple of (success, message)
+            Tuple of (success, message).
 
         """
         try:
@@ -1656,7 +1821,12 @@ _memory_forensics_engine: MemoryForensicsEngine | None = None
 
 
 def get_memory_forensics_engine() -> MemoryForensicsEngine | None:
-    """Get or create the memory forensics engine singleton."""
+    """Get or create the memory forensics engine singleton.
+
+    Returns:
+        Singleton engine instance or None if initialization failed.
+
+    """
     global _memory_forensics_engine
     if _memory_forensics_engine is None:
         try:
@@ -1668,12 +1838,25 @@ def get_memory_forensics_engine() -> MemoryForensicsEngine | None:
 
 
 def is_volatility3_available() -> bool:
-    """Check if Volatility3 functionality is available."""
+    """Check if Volatility3 functionality is available.
+
+    Returns:
+        True if Volatility3 is available and enabled, False otherwise.
+
+    """
     return VOLATILITY3_AVAILABLE
 
 
 def analyze_memory_dump_file(dump_path: str) -> MemoryAnalysisResult | None:
-    """Quick memory dump analysis function for integration."""
+    """Quick memory dump analysis function for integration.
+
+    Args:
+        dump_path: Path to the memory dump file to analyze.
+
+    Returns:
+        Analysis results or None if engine unavailable.
+
+    """
     if engine := get_memory_forensics_engine():
         return engine.analyze_memory_dump(dump_path)
     return None

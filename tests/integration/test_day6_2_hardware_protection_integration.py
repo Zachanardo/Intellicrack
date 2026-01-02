@@ -7,9 +7,10 @@ import os
 import sys
 import tempfile
 from datetime import datetime
+from typing import Any, Dict, List, cast
 
 
-def create_test_binary_with_hardware_protections():
+def create_test_binary_with_hardware_protections() -> str:
     """Create a test binary to simulate hardware protection analysis."""
     test_program = '''
 #include <stdio.h>
@@ -84,7 +85,7 @@ int main(int argc, char *argv[]) {
 class MockTPMProtectionBypass:
     """Mock TPM protection bypass module for testing."""
 
-    def get_available_bypass_methods(self):
+    def get_available_bypass_methods(self) -> list[str]:
         """Return mock bypass methods."""
         return [
             "virtual_tpm_creation",
@@ -97,7 +98,7 @@ class MockTPMProtectionBypass:
 class MockHardwareDongleEmulator:
     """Mock hardware dongle emulator for testing."""
 
-    def get_dongle_config(self, dongle_type):
+    def get_dongle_config(self, dongle_type: str) -> dict[str, Any]:
         """Return mock dongle configuration."""
         configs = {
             "hasp": {
@@ -122,7 +123,7 @@ class MockHardwareDongleEmulator:
 class MockProtocolFingerprinter:
     """Mock protocol fingerprinter for testing."""
 
-    def analyze_binary(self, binary_path):
+    def analyze_binary(self, binary_path: str) -> dict[str, Any]:
         """Mock binary protocol analysis."""
         return {
             "protocols_detected": [
@@ -143,7 +144,7 @@ class MockProtocolFingerprinter:
 class MockR2ImportExportAnalyzer:
     """Mock radare2 import analyzer."""
 
-    def get_imports(self):
+    def get_imports(self) -> dict[str, Any]:
         """Mock imports with TPM and dongle indicators."""
         return {
             "imports": [
@@ -158,7 +159,7 @@ class MockR2ImportExportAnalyzer:
 class MockR2StringAnalyzer:
     """Mock radare2 string analyzer."""
 
-    def get_strings(self):
+    def get_strings(self) -> dict[str, Any]:
         """Mock strings with hardware protection indicators."""
         return {
             "strings": [
@@ -173,19 +174,19 @@ class MockR2StringAnalyzer:
 class MockR2VulnerabilityEngine:
     """Mock radare2 vulnerability engine with hardware protection analysis."""
 
-    def __init__(self, binary_path):
+    def __init__(self, binary_path: str) -> None:
         self.binary_path = binary_path
 
         # Initialize hardware protection modules (this is what we're testing)
-        self.tpm_bypass = MockTPMProtectionBypass()
-        self.dongle_emulator = MockHardwareDongleEmulator()
-        self.protocol_fingerprinter = MockProtocolFingerprinter()
+        self.tpm_bypass: MockTPMProtectionBypass = MockTPMProtectionBypass()
+        self.dongle_emulator: MockHardwareDongleEmulator = MockHardwareDongleEmulator()
+        self.protocol_fingerprinter: MockProtocolFingerprinter = MockProtocolFingerprinter()
 
         # Mock analyzers
-        self.import_analyzer = MockR2ImportExportAnalyzer()
-        self.string_analyzer = MockR2StringAnalyzer()
+        self.import_analyzer: MockR2ImportExportAnalyzer = MockR2ImportExportAnalyzer()
+        self.string_analyzer: MockR2StringAnalyzer = MockR2StringAnalyzer()
 
-    def _analyze_hardware_protections(self, r2=None, vuln_results=None):
+    def _analyze_hardware_protections(self, r2: Any = None, vuln_results: Any = None) -> dict[str, Any]:
         """Analyze hardware-based protection systems."""
         hardware_analysis = {
             "tpm_detected": False,
@@ -202,7 +203,7 @@ class MockR2VulnerabilityEngine:
             imp_name = imp.get("name", "").lower()
             if any(tpm_func.lower() in imp_name for tpm_func in ["tbs_", "tpm2_", "ncrypt"]):
                 hardware_analysis["tpm_detected"] = True
-                hardware_analysis["hardware_checks"].append({
+                cast(List[Dict[str, Any]], hardware_analysis["hardware_checks"]).append({
                     "type": "tpm_api_call",
                     "function": imp_name,
                     "address": imp.get("plt", 0)
@@ -215,9 +216,10 @@ class MockR2VulnerabilityEngine:
             string_val = string_data.get("string", "").lower()
             for dongle in dongle_types:
                 if dongle in string_val:
-                    if dongle not in hardware_analysis["dongles_detected"]:
-                        hardware_analysis["dongles_detected"].append(dongle)
-                    hardware_analysis["hardware_checks"].append({
+                    dongles_detected = cast(List[str], hardware_analysis["dongles_detected"])
+                    if dongle not in dongles_detected:
+                        dongles_detected.append(dongle)
+                    cast(List[Dict[str, Any]], hardware_analysis["hardware_checks"]).append({
                         "type": "dongle_string",
                         "dongle_type": dongle,
                         "string": string_val,
@@ -230,8 +232,9 @@ class MockR2VulnerabilityEngine:
             hardware_analysis["protocol_fingerprints"] = protocol_results["protocols_detected"]
 
         # Determine approach
-        if hardware_analysis["tpm_detected"] or hardware_analysis["dongles_detected"]:
-            if len(hardware_analysis["dongles_detected"]) > 2:
+        dongles_list = cast(list[str], hardware_analysis["dongles_detected"])
+        if hardware_analysis["tpm_detected"] or dongles_list:
+            if len(dongles_list) > 2:
                 hardware_analysis["bypass_complexity"] = "high"
                 hardware_analysis["recommended_approach"] = "multi_emulation"
             elif hardware_analysis["tpm_detected"]:
@@ -243,8 +246,9 @@ class MockR2VulnerabilityEngine:
 
         return hardware_analysis
 
-    def _analyze_tpm_bypass_opportunities(self, r2=None, vuln_results=None):
+    def _analyze_tpm_bypass_opportunities(self, r2: Any = None, vuln_results: dict[str, Any] | None = None) -> dict[str, Any]:
         """Analyze TPM bypass opportunities."""
+        vuln_results = vuln_results or {}
         hardware_analysis = vuln_results.get("hardware_protection_analysis", {})
 
         if not hardware_analysis.get("tpm_detected", False):
@@ -279,8 +283,9 @@ class MockR2VulnerabilityEngine:
             "complexity_assessment": "medium"
         }
 
-    def _analyze_dongle_bypass_opportunities(self, r2=None, vuln_results=None):
+    def _analyze_dongle_bypass_opportunities(self, r2: Any = None, vuln_results: dict[str, Any] | None = None) -> dict[str, Any]:
         """Analyze dongle bypass opportunities."""
+        vuln_results = vuln_results or {}
         hardware_analysis = vuln_results.get("hardware_protection_analysis", {})
         detected_dongles = hardware_analysis.get("dongles_detected", [])
 
@@ -309,10 +314,10 @@ class MockR2VulnerabilityEngine:
             "bypass_complexity": "high" if len(detected_dongles) > 1 else "medium"
         }
 
-    def analyze_vulnerabilities(self):
+    def analyze_vulnerabilities(self) -> dict[str, Any]:
         """Mock vulnerability analysis with hardware protection fields."""
         # Simulate basic vulnerability results
-        result = {
+        result: dict[str, Any] = {
             "vulnerabilities": [
                 {
                     "type": "hardware_protection_bypass",
@@ -336,10 +341,10 @@ class MockR2VulnerabilityEngine:
 class TestHardwareProtectionIntegration:
     """Test hardware protection analysis integration with radare2 vulnerability detection."""
 
-    def __init__(self):
-        self.test_results = []
+    def __init__(self) -> None:
+        self.test_results: list[bool] = []
 
-    def test_hardware_protection_modules_integration(self):
+    def test_hardware_protection_modules_integration(self) -> bool:
         """Test hardware protection modules are properly integrated."""
         print("Testing Hardware Protection Module Integration:")
         print("=" * 48)
@@ -371,7 +376,7 @@ class TestHardwareProtectionIntegration:
             self.test_results.append(False)
             return False
 
-    def test_hardware_protection_analysis_methods(self):
+    def test_hardware_protection_analysis_methods(self) -> bool:
         """Test hardware protection analysis methods are available."""
         print("\nTesting Hardware Protection Analysis Methods:")
         print("=" * 48)
@@ -407,7 +412,7 @@ class TestHardwareProtectionIntegration:
             self.test_results.append(False)
             return False
 
-    def test_vulnerability_analysis_includes_hardware_protections(self):
+    def test_vulnerability_analysis_includes_hardware_protections(self) -> bool:
         """Test vulnerability analysis includes hardware protection fields."""
         print("\nTesting Vulnerability Analysis Includes Hardware Protections:")
         print("=" * 60)
@@ -447,7 +452,7 @@ class TestHardwareProtectionIntegration:
             self.test_results.append(False)
             return False
 
-    def test_hardware_protection_detection_capabilities(self):
+    def test_hardware_protection_detection_capabilities(self) -> bool:
         """Test hardware protection detection and analysis capabilities."""
         print("\nTesting Hardware Protection Detection Capabilities:")
         print("=" * 52)
@@ -506,7 +511,7 @@ class TestHardwareProtectionIntegration:
             return False
 
 
-def main():
+def main() -> int:
     """Execute Day 6.2 Hardware Protection Analysis integration testing."""
     print("DAY 6.2 HARDWARE PROTECTION ANALYSIS INTEGRATION TESTING")
     print("=" * 60)

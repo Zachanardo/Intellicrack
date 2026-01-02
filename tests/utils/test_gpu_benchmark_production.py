@@ -22,7 +22,6 @@ import os
 import struct
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock
 
 import pytest
 
@@ -37,6 +36,33 @@ from intellicrack.utils.gpu_benchmark import (
     benchmark_gpu_frameworks,
     run_gpu_accelerated_analysis,
 )
+
+
+class FakeSignal:
+    """Test double for PyQt signal objects."""
+
+    def __init__(self) -> None:
+        self.emit_calls: list[tuple[Any, ...]] = []
+        self.call_count: int = 0
+
+    def emit(self, *args: Any) -> None:
+        self.emit_calls.append(args)
+        self.call_count += 1
+
+    @property
+    def call_args_list(self) -> list[tuple[Any, ...]]:
+        return self.emit_calls
+
+
+class FakeApp:
+    """Test double for application object with GPU framework support."""
+
+    def __init__(
+        self, gpu_frameworks: dict[str, bool] | None = None, has_update_output: bool = True
+    ) -> None:
+        self.gpu_frameworks: dict[str, bool] = gpu_frameworks or {}
+        if has_update_output:
+            self.update_output = FakeSignal()
 
 
 class TestGPUBenchmarkDataGeneration:
@@ -199,7 +225,7 @@ class TestGPUFrameworkBenchmarks:
             "total_time": 0,
         }
 
-        _benchmark_pycuda_benchmark_framework(framework_results, test_data)
+        _benchmark_pycuda_framework(framework_results, test_data)
 
 
 class TestBestFrameworkDetermination:
@@ -339,9 +365,7 @@ class TestBenchmarkGPUFrameworks:
 
     def test_benchmark_gpu_frameworks_default_sizes(self) -> None:
         """Test GPU benchmarking with default test sizes."""
-        app = Mock()
-        app.update_output = Mock()
-        app.gpu_frameworks = {}
+        app = FakeApp()
 
         results = benchmark_gpu_frameworks(app)
 
@@ -353,9 +377,7 @@ class TestBenchmarkGPUFrameworks:
 
     def test_benchmark_gpu_frameworks_custom_sizes(self) -> None:
         """Test GPU benchmarking with custom test sizes."""
-        app = Mock()
-        app.update_output = Mock()
-        app.gpu_frameworks = {}
+        app = FakeApp()
 
         test_sizes = [512 * 1024, 2 * 1024 * 1024]
         results = benchmark_gpu_frameworks(app, test_sizes=test_sizes)
@@ -367,13 +389,13 @@ class TestBenchmarkGPUFrameworks:
 
     def test_benchmark_gpu_frameworks_with_gpu_available(self) -> None:
         """Test GPU benchmarking when GPU frameworks are available."""
-        app = Mock()
-        app.update_output = Mock()
-        app.gpu_frameworks = {
-            "pycuda": False,
-            "cupy": False,
-            "numba_cuda": False,
-        }
+        app = FakeApp(
+            gpu_frameworks={
+                "pycuda": False,
+                "cupy": False,
+                "numba_cuda": False,
+            }
+        )
 
         results = benchmark_gpu_frameworks(app)
 
@@ -382,22 +404,18 @@ class TestBenchmarkGPUFrameworks:
 
     def test_benchmark_gpu_frameworks_output_emitted(self) -> None:
         """Test GPU benchmarking emits status updates."""
-        app = Mock()
-        app.update_output = Mock()
-        app.gpu_frameworks = {}
+        app = FakeApp()
 
         benchmark_gpu_frameworks(app)
 
-        assert app.update_output.emit.call_count > 0
-        calls = [str(call) for call in app.update_output.emit.call_args_list]
+        assert app.update_output.call_count > 0
+        calls = [str(call) for call in app.update_output.call_args_list]
         assert any("Starting GPU framework benchmarks" in str(call) for call in calls)
         assert any("Benchmark complete" in str(call) for call in calls)
 
     def test_benchmark_gpu_frameworks_total_time_calculated(self) -> None:
         """Test total benchmark time is calculated correctly."""
-        app = Mock()
-        app.update_output = Mock()
-        app.gpu_frameworks = {}
+        app = FakeApp()
 
         results = benchmark_gpu_frameworks(app)
 
@@ -422,8 +440,7 @@ class TestRunGPUAcceleratedAnalysis:
 
     def test_run_gpu_accelerated_analysis_basic(self, pe_binary: bytes) -> None:
         """Test basic GPU-accelerated analysis execution."""
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
 
         results = run_gpu_accelerated_analysis(app, pe_binary)
 
@@ -433,8 +450,7 @@ class TestRunGPUAcceleratedAnalysis:
 
     def test_run_gpu_accelerated_analysis_pattern_search(self, pe_binary: bytes) -> None:
         """Test GPU analysis finds license-related patterns."""
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
 
         results = run_gpu_accelerated_analysis(app, pe_binary)
 
@@ -465,8 +481,7 @@ class TestRunGPUAcceleratedAnalysis:
 
     def test_run_gpu_accelerated_analysis_entropy(self, pe_binary: bytes) -> None:
         """Test GPU analysis calculates entropy."""
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
 
         results = run_gpu_accelerated_analysis(app, pe_binary)
 
@@ -479,8 +494,7 @@ class TestRunGPUAcceleratedAnalysis:
 
     def test_run_gpu_accelerated_analysis_hashes(self, pe_binary: bytes) -> None:
         """Test GPU analysis computes hashes."""
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
 
         results = run_gpu_accelerated_analysis(app, pe_binary)
 
@@ -491,8 +505,7 @@ class TestRunGPUAcceleratedAnalysis:
 
     def test_run_gpu_accelerated_analysis_performance_metrics(self, pe_binary: bytes) -> None:
         """Test GPU analysis calculates performance metrics."""
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
 
         results = run_gpu_accelerated_analysis(app, pe_binary)
 
@@ -508,8 +521,7 @@ class TestRunGPUAcceleratedAnalysis:
 
     def test_run_gpu_accelerated_analysis_cpu_fallback(self) -> None:
         """Test GPU analysis falls back to CPU when GPU unavailable."""
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
         binary_data = b"TEST" * 1000
 
         results = run_gpu_accelerated_analysis(app, binary_data)
@@ -518,8 +530,7 @@ class TestRunGPUAcceleratedAnalysis:
 
     def test_run_gpu_accelerated_analysis_empty_binary(self) -> None:
         """Test GPU analysis handles empty binary."""
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
 
         results = run_gpu_accelerated_analysis(app, b"")
 
@@ -528,8 +539,7 @@ class TestRunGPUAcceleratedAnalysis:
 
     def test_run_gpu_accelerated_analysis_large_binary(self) -> None:
         """Test GPU analysis handles large binary data."""
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
         binary_data = b"LICENSE" * 100000 + b"\xff" * 1000000
 
         results = run_gpu_accelerated_analysis(app, binary_data)
@@ -540,8 +550,7 @@ class TestRunGPUAcceleratedAnalysis:
 
     def test_run_gpu_accelerated_analysis_high_entropy_detection(self) -> None:
         """Test GPU analysis identifies high entropy blocks."""
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
 
         low_entropy = b"\x00" * 8192
         high_entropy = os.urandom(8192)
@@ -558,7 +567,7 @@ class TestRunGPUAcceleratedAnalysis:
 
     def test_run_gpu_accelerated_analysis_without_update_output(self) -> None:
         """Test GPU analysis works without update_output signal."""
-        app = Mock(spec=[])
+        app = FakeApp(has_update_output=False)
         binary_data = b"TEST" * 1000
 
         results = run_gpu_accelerated_analysis(app, binary_data)
@@ -628,8 +637,7 @@ class TestGPUBenchmarkEdgeCases:
 
     def test_run_gpu_analysis_import_error(self) -> None:
         """Test GPU analysis handles GPU module import errors gracefully."""
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
 
         results = run_gpu_accelerated_analysis(app, b"TEST")
 

@@ -75,7 +75,12 @@ class JWTManipulator:
         self.ec_private_key, self.ec_public_key = self._generate_default_ec_keypair()
 
     def _generate_default_rsa_keypair(self) -> tuple[Any, Any]:
-        """Generate 2048-bit RSA keypair with public exponent 65537 for instance default, returning private and public key objects."""
+        """Generate 2048-bit RSA keypair with public exponent 65537 for instance default.
+
+        Returns:
+            tuple[Any, Any]: Tuple containing (private_key, public_key) RSA key objects for RS256/RS512 JWT signing.
+
+        """
         private_key = rsa.generate_private_key(
             public_exponent=65537,
             key_size=2048,
@@ -85,13 +90,26 @@ class JWTManipulator:
         return private_key, public_key
 
     def _generate_default_ec_keypair(self) -> tuple[Any, Any]:
-        """Generate elliptic curve keypair using SECP256R1 for instance default ES256 signing, returning private and public key objects."""
+        """Generate elliptic curve keypair using SECP256R1 for instance default ES256 signing.
+
+        Returns:
+            tuple[Any, Any]: Tuple containing (private_key, public_key) EC key objects for ES256 JWT signing.
+
+        """
         private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
         public_key = private_key.public_key()
         return private_key, public_key
 
     def generate_rsa_keypair(self, key_size: int = 2048) -> tuple[bytes, bytes]:
-        """Generate RSA keypair with configurable key size (default 2048-bit) using public exponent 65537 and return PKCS8 private key and SubjectPublicKeyInfo public key as PEM-encoded bytes."""
+        """Generate RSA keypair with configurable key size using public exponent 65537.
+
+        Args:
+            key_size: RSA key size in bits (defaults to 2048).
+
+        Returns:
+            Tuple containing (private_pem, public_pem) as PEM-encoded bytes for RS256/RS512 signing.
+
+        """
         private_key = rsa.generate_private_key(
             public_exponent=65537,
             key_size=key_size,
@@ -113,7 +131,12 @@ class JWTManipulator:
         return private_pem, public_pem
 
     def generate_ec_keypair(self) -> tuple[bytes, bytes]:
-        """Generate elliptic curve keypair using SECP256R1 curve (NIST P-256) and return PKCS8 private key and SubjectPublicKeyInfo public key as PEM-encoded bytes for ES256 JWT signing."""
+        """Generate elliptic curve keypair using SECP256R1 (NIST P-256).
+
+        Returns:
+            tuple[bytes, bytes]: Tuple containing (private_pem, public_pem) as PEM-encoded bytes for ES256 JWT signing.
+
+        """
         private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
         public_key = private_key.public_key()
 
@@ -131,7 +154,18 @@ class JWTManipulator:
         return private_pem, public_pem
 
     def parse_jwt(self, token: str) -> tuple[dict[str, Any], dict[str, Any], str]:
-        """Split JWT token on periods, base64url decode header and payload sections without signature verification, and return tuple of (header dict, payload dict, raw signature string)."""
+        """Split JWT token and decode header and payload sections.
+
+        Args:
+            token: JWT token string to parse.
+
+        Returns:
+            Tuple containing (header_dict, payload_dict, signature_string) with decoded header and payload.
+
+        Raises:
+            ValueError: If token format is invalid (not three dot-separated parts).
+
+        """
         parts = token.split(".")
         if len(parts) != 3:
             error_msg = "Invalid JWT token format"
@@ -150,7 +184,16 @@ class JWTManipulator:
         return header, payload, signature
 
     def sign_jwt_rs256(self, payload: dict[str, Any], private_key: rsa.RSAPrivateKey | None = None) -> str:
-        """Sign JWT payload using RS256 algorithm (RSASSA-PKCS1-v1_5 with SHA-256) with provided RSA private key or instance default, returning signed JWT token string."""
+        """Sign JWT payload using RS256 algorithm (RSASSA-PKCS1-v1_5 with SHA-256).
+
+        Args:
+            payload: JWT claims dictionary to sign.
+            private_key: RSA private key to use (uses instance default if None).
+
+        Returns:
+            Signed JWT token string.
+
+        """
         import jwt
 
         key_to_use = private_key or self.rsa_private_key
@@ -164,7 +207,16 @@ class JWTManipulator:
         return jwt.encode(payload, private_pem, algorithm="RS256")
 
     def sign_jwt_rs512(self, payload: dict[str, Any], private_key: rsa.RSAPrivateKey | None = None) -> str:
-        """Sign JWT payload using RS512 algorithm (RSASSA-PKCS1-v1_5 with SHA-512) with provided RSA private key or instance default, returning signed JWT token string."""
+        """Sign JWT payload using RS512 algorithm (RSASSA-PKCS1-v1_5 with SHA-512).
+
+        Args:
+            payload: JWT claims dictionary to sign.
+            private_key: RSA private key to use (uses instance default if None).
+
+        Returns:
+            Signed JWT token string.
+
+        """
         import jwt
 
         key_to_use = private_key or self.rsa_private_key
@@ -178,7 +230,16 @@ class JWTManipulator:
         return jwt.encode(payload, private_pem, algorithm="RS512")
 
     def sign_jwt_es256(self, payload: dict[str, Any], private_key: ec.EllipticCurvePrivateKey | None = None) -> str:
-        """Sign JWT payload using ES256 algorithm (ECDSA with P-256 curve and SHA-256) with provided EC private key or instance default, returning signed JWT token string."""
+        """Sign JWT payload using ES256 algorithm (ECDSA with P-256 curve and SHA-256).
+
+        Args:
+            payload: JWT claims dictionary to sign.
+            private_key: EC private key to use (uses instance default if None).
+
+        Returns:
+            Signed JWT token string.
+
+        """
         import jwt
 
         key_to_use = private_key or self.ec_private_key
@@ -192,19 +253,46 @@ class JWTManipulator:
         return jwt.encode(payload, private_pem, algorithm="ES256")
 
     def sign_jwt_hs256(self, payload: dict[str, Any], secret: str) -> str:
-        """Sign JWT payload using HS256 algorithm (HMAC with SHA-256) with provided secret string, returning signed JWT token string."""
+        """Sign JWT payload using HS256 algorithm (HMAC with SHA-256).
+
+        Args:
+            payload: JWT claims dictionary to sign.
+            secret: Secret string for HMAC signature.
+
+        Returns:
+            Signed JWT token string.
+
+        """
         import jwt
 
         return jwt.encode(payload, secret, algorithm="HS256")
 
     def sign_jwt_hs512(self, payload: dict[str, Any], secret: str) -> str:
-        """Sign JWT payload using HS512 algorithm (HMAC with SHA-512) with provided secret string, returning signed JWT token string."""
+        """Sign JWT payload using HS512 algorithm (HMAC with SHA-512).
+
+        Args:
+            payload: JWT claims dictionary to sign.
+            secret: Secret string for HMAC signature.
+
+        Returns:
+            Signed JWT token string.
+
+        """
         import jwt
 
         return jwt.encode(payload, secret, algorithm="HS512")
 
     def brute_force_hs256_secret(self, token: str, wordlist: list[str]) -> str | None:
-        """Iterate through wordlist attempting to verify HS256 JWT signature with each candidate secret until valid signature found, returning discovered secret or None."""
+        """Brute-force HS256 JWT signature by testing candidate secrets from wordlist.
+
+        Args:
+            token: JWT token to crack.
+            wordlist: List of secret strings to test.
+
+        Returns:
+            Discovered secret string if valid signature found, None otherwise.
+
+        """
         import jwt
 
         _header, _payload, _signature = self.parse_jwt(token)
@@ -221,7 +309,16 @@ class JWTManipulator:
         return None
 
     def modify_jwt_claims(self, token: str, modifications: dict[str, Any]) -> dict[str, Any]:
-        """Parse JWT token, apply claim modifications from dictionary, set expiration to one year from now, update issued-at to current time, and return modified payload."""
+        """Parse JWT token and apply claim modifications.
+
+        Args:
+            token: JWT token to modify.
+            modifications: Dictionary of claims to add or update.
+
+        Returns:
+            Modified JWT payload dictionary with updated exp and iat timestamps.
+
+        """
         _header, payload, _signature = self.parse_jwt(token)
 
         payload.update(modifications)
@@ -239,7 +336,18 @@ class JWTManipulator:
         algorithm: str = "RS256",
         key: rsa.RSAPrivateKey | ec.EllipticCurvePrivateKey | str | None = None,
     ) -> str:
-        """Modify JWT claims, then re-sign token with specified algorithm (RS256/RS512/ES256/HS256/HS512) using provided or default cryptographic key, returning forged JWT string."""
+        """Modify JWT claims and re-sign token with specified algorithm.
+
+        Args:
+            token: JWT token to resign.
+            modifications: Dictionary of claims to add or update.
+            algorithm: Signing algorithm (RS256, RS512, ES256, HS256, HS512).
+            key: Cryptographic key for signing (uses instance default if None).
+
+        Returns:
+            Forged JWT token string signed with specified algorithm.
+
+        """
         modified_payload = self.modify_jwt_claims(token, modifications)
 
         if algorithm == "RS256":
@@ -274,7 +382,17 @@ class OAuthTokenGenerator:
         user_id: str | None = None,
         scopes: list[str] | None = None,
     ) -> str:
-        """Build provider-specific JWT payload with authentic claim structure for Azure AD, Google, AWS Cognito, Okta, or Auth0, sign with RS256, and return forged access token."""
+        """Build provider-specific JWT payload and sign with RS256.
+
+        Args:
+            provider: OAuth provider type (AZURE_AD, GOOGLE, AWS_COGNITO, OKTA, AUTH0).
+            user_id: User identifier (generates UUID if None).
+            scopes: OAuth scopes list (defaults to openid, profile, email).
+
+        Returns:
+            Forged access token JWT string with provider-specific claims.
+
+        """
         current_time = int(time.time())
         user_id = user_id or str(uuid.uuid4())
         scopes = scopes or ["openid", "profile", "email"]
@@ -352,7 +470,15 @@ class OAuthTokenGenerator:
         return self.jwt_manipulator.sign_jwt_rs256(payload)
 
     def generate_refresh_token(self, provider: OAuthProvider) -> str:
-        """Generate cryptographically random 64-byte refresh token, base64url encode, and strip padding for OAuth 2.0 flow."""
+        """Generate cryptographically random refresh token.
+
+        Args:
+            provider: OAuth provider type (used for consistency).
+
+        Returns:
+            Base64url-encoded 64-byte random token string without padding.
+
+        """
         return base64.urlsafe_b64encode(secrets.token_bytes(64)).decode("utf-8").rstrip("=")
 
     def generate_id_token(
@@ -361,7 +487,17 @@ class OAuthTokenGenerator:
         user_id: str,
         email: str | None = None,
     ) -> str:
-        """Build OpenID Connect ID token with provider-specific claims for Azure AD, Google, AWS Cognito, Okta, or Auth0, sign with RS256, and return forged ID token JWT."""
+        """Build OpenID Connect ID token with provider-specific claims.
+
+        Args:
+            provider: OAuth provider type (AZURE_AD, GOOGLE, AWS_COGNITO, OKTA, AUTH0).
+            user_id: User identifier.
+            email: User email address (defaults to user_id@example.com).
+
+        Returns:
+            Forged ID token JWT string with provider-specific OpenID Connect claims.
+
+        """
         current_time = int(time.time())
         email = email or f"{user_id}@example.com"
 
@@ -440,7 +576,16 @@ class OAuthTokenGenerator:
         provider: OAuthProvider,
         user_id: str | None = None,
     ) -> dict[str, Any]:
-        """Generate complete OAuth 2.0 authorization flow response containing access_token, refresh_token, id_token, token_type Bearer, and expires_in 3600 seconds."""
+        """Generate complete OAuth 2.0 authorization flow response.
+
+        Args:
+            provider: OAuth provider type (AZURE_AD, GOOGLE, AWS_COGNITO, OKTA, AUTH0).
+            user_id: User identifier (generates UUID if None).
+
+        Returns:
+            Dictionary containing access_token, refresh_token, id_token, token_type, and expires_in (3600 seconds).
+
+        """
         user_id = user_id or str(uuid.uuid4())
 
         return {
@@ -460,7 +605,16 @@ class APIResponseSynthesizer:
         product_name: str,
         tier: SubscriptionTier = SubscriptionTier.ENTERPRISE,
     ) -> dict[str, Any]:
-        """Build generic license validation response with status valid, 100-year expiration, all features enabled, and maximum quotas (999999999) for API calls, storage, and users."""
+        """Build generic license validation response with active status and maximum quotas.
+
+        Args:
+            product_name: Product name for license response.
+            tier: Subscription tier (defaults to ENTERPRISE).
+
+        Returns:
+            Dictionary containing status, license, features, and quotas fields with active license data.
+
+        """
         return {
             "status": "valid",
             "license": {
@@ -488,7 +642,16 @@ class APIResponseSynthesizer:
         features: list[str],
         tier: SubscriptionTier = SubscriptionTier.PREMIUM,
     ) -> dict[str, Any]:
-        """Build feature unlock response with success status, specified tier, and feature flags dictionary mapping all requested features to True."""
+        """Build feature unlock response with enabled features for specified tier.
+
+        Args:
+            features: List of feature names to enable.
+            tier: Subscription tier (defaults to PREMIUM).
+
+        Returns:
+            Dictionary containing status success, tier, enabled_features list, and feature_flags mapping.
+
+        """
         return {
             "status": "success",
             "tier": tier.value,
@@ -502,7 +665,17 @@ class APIResponseSynthesizer:
         limit: int,
         used: int,
     ) -> dict[str, Any]:
-        """Build quota validation response calculating remaining resources and percentage used from provided limit and current usage values."""
+        """Build quota validation response with usage and remaining quota calculation.
+
+        Args:
+            resource_name: Name of the resource being validated.
+            limit: Maximum quota limit.
+            used: Current usage amount.
+
+        Returns:
+            Dictionary containing status ok, resource, limit, used, remaining, and percentage_used fields.
+
+        """
         return {
             "status": "ok",
             "resource": resource_name,
@@ -516,7 +689,15 @@ class APIResponseSynthesizer:
         self,
         tier: SubscriptionTier = SubscriptionTier.ENTERPRISE,
     ) -> dict[str, Any]:
-        """Build subscription status response with active status, 100-year future end date, auto-renewal enabled, and paid payment status."""
+        """Build subscription status response with active and paid status.
+
+        Args:
+            tier: Subscription tier (defaults to ENTERPRISE).
+
+        Returns:
+            Dictionary containing subscription and payment status information with active/paid status.
+
+        """
         return {
             "subscription": {
                 "status": "active",
@@ -533,7 +714,12 @@ class APIResponseSynthesizer:
         }
 
     def synthesize_microsoft365_validation(self) -> dict[str, Any]:
-        """Build Microsoft 365 Enterprise E5 license response with Licensed status, Active subscription, 100-year expiration, and 999999 user licenses."""
+        """Build Microsoft 365 Enterprise E5 license response with Licensed status, Active subscription, 100-year expiration, and 999999 user licenses.
+
+        Returns:
+            Dictionary containing Microsoft 365 license status with Licensed status and maximum user licenses.
+
+        """
         return {
             "LicenseStatus": "Licensed",
             "SubscriptionStatus": "Active",
@@ -545,7 +731,12 @@ class APIResponseSynthesizer:
         }
 
     def synthesize_adobe_validation(self) -> dict[str, Any]:
-        """Build Adobe Creative Cloud All Apps subscription response with active status, 100-year plan duration, and all applications (Photoshop, Illustrator, Premiere, After Effects, InDesign, Acrobat) entitled."""
+        """Build Adobe Creative Cloud All Apps subscription response with active status, 100-year plan duration, and all applications (Photoshop, Illustrator, Premiere, After Effects, InDesign, Acrobat) entitled.
+
+        Returns:
+            Dictionary containing Adobe Creative Cloud subscription with active status and all applications enabled.
+
+        """
         return {
             "status": "ACTIVE",
             "subscription": {
@@ -566,7 +757,12 @@ class APIResponseSynthesizer:
         }
 
     def synthesize_atlassian_validation(self) -> dict[str, Any]:
-        """Build Atlassian unlimited tier license response with active non-evaluation license for Jira Software, Confluence, and Bitbucket applications."""
+        """Build Atlassian unlimited tier license response with active non-evaluation license for Jira Software, Confluence, and Bitbucket applications.
+
+        Returns:
+            Dictionary containing Atlassian license with unlimited tier and active non-evaluation status.
+
+        """
         return {
             "license": {
                 "active": True,
@@ -582,7 +778,12 @@ class APIResponseSynthesizer:
         }
 
     def synthesize_salesforce_validation(self) -> dict[str, Any]:
-        """Build Salesforce Enterprise license response with active status, 999999 total user licenses with 999998 remaining, and all features (API, custom objects, sandboxes) enabled."""
+        """Build Salesforce Enterprise license response with active status, 999999 total user licenses with 999998 remaining, and all features (API, custom objects, sandboxes) enabled.
+
+        Returns:
+            Dictionary containing Salesforce Enterprise license with maximum user licenses and all features enabled.
+
+        """
         return {
             "licenseType": "Enterprise",
             "status": "Active",
@@ -599,7 +800,12 @@ class APIResponseSynthesizer:
         }
 
     def synthesize_slack_validation(self) -> dict[str, Any]:
-        """Build Slack workspace validation response with ok status and enterprise plan designation."""
+        """Build Slack workspace validation response with ok status and enterprise plan designation.
+
+        Returns:
+            Dictionary containing Slack workspace with enterprise plan and is_enterprise flag.
+
+        """
         return {
             "ok": True,
             "team": {
@@ -611,7 +817,12 @@ class APIResponseSynthesizer:
         }
 
     def synthesize_zoom_validation(self) -> dict[str, Any]:
-        """Build Zoom Enterprise plan validation response with active status and 999999 total licenses."""
+        """Build Zoom Enterprise plan validation response with active status and 999999 total licenses.
+
+        Returns:
+            Dictionary containing Zoom Enterprise plan with maximum total licenses.
+
+        """
         return {
             "plan_type": "Enterprise",
             "status": "active",
@@ -626,7 +837,16 @@ class APIResponseSynthesizer:
         query_type: str,
         tier: SubscriptionTier = SubscriptionTier.ENTERPRISE,
     ) -> dict[str, Any]:
-        """Build GraphQL data response for subscription queries (viewer with active subscription and tier) or features queries (100 enabled feature nodes with UUIDs)."""
+        """Build GraphQL data response for subscription queries (viewer with active subscription and tier) or features queries (100 enabled feature nodes with UUIDs).
+
+        Args:
+            query_type: Type of GraphQL query (subscription or features).
+            tier: Subscription tier for subscription responses (defaults to ENTERPRISE).
+
+        Returns:
+            Dictionary containing GraphQL data field with appropriate query response structure.
+
+        """
         if query_type == "subscription":
             return {
                 "data": {
@@ -655,7 +875,15 @@ class APIResponseSynthesizer:
         self,
         tier: SubscriptionTier = SubscriptionTier.ENTERPRISE,
     ) -> dict[str, str]:
-        """Build gRPC metadata headers dictionary with subscription tier, active license status, all features enabled, and maximum quota limit."""
+        """Build gRPC metadata headers dictionary with subscription tier, active license status, all features enabled, and maximum quota limit.
+
+        Args:
+            tier: Subscription tier for x-subscription-tier header (defaults to ENTERPRISE).
+
+        Returns:
+            Dictionary mapping gRPC header names to string values for license validation.
+
+        """
         return {
             "x-subscription-tier": tier.value,
             "x-license-status": "active",
@@ -668,7 +896,12 @@ class SubscriptionValidationBypass:
     """Main orchestrator class integrating JWT manipulation, OAuth token generation, and API response synthesis for comprehensive subscription licensing bypass across cloud platforms."""
 
     def __init__(self) -> None:
-        """Initialize bypass orchestrator by instantiating JWTManipulator, OAuthTokenGenerator, and APIResponseSynthesizer with predefined bypass methods and known service mappings."""
+        """Initialize bypass orchestrator by instantiating JWTManipulator, OAuthTokenGenerator, and APIResponseSynthesizer with predefined bypass methods and known service mappings.
+
+        Initializes internal state for local license server emulation, including thread, socket, HTTP/TCP
+        server, and hosts file entry tracking for comprehensive subscription validation bypass capabilities.
+
+        """
         self.jwt_manipulator = JWTManipulator()
         self.oauth_generator = OAuthTokenGenerator()
         self.api_synthesizer = APIResponseSynthesizer()
@@ -706,7 +939,18 @@ class SubscriptionValidationBypass:
         features: list[str] | None = None,
         quota_overrides: dict[str, int] | None = None,
     ) -> str:
-        """Inject subscription claim with upgraded tier, active status, one-year expiration, custom features list, and quota overrides into JWT, then re-sign token."""
+        """Inject subscription claim with upgraded tier, active status, one-year expiration, custom features list, and quota overrides into JWT, then re-sign token.
+
+        Args:
+            token: JWT token to modify with subscription claims.
+            tier: Target subscription tier (defaults to ENTERPRISE).
+            features: Optional list of feature names to enable in subscription.
+            quota_overrides: Optional dictionary mapping resource names to quota limits.
+
+        Returns:
+            Re-signed JWT token string containing the modified subscription claims.
+
+        """
         features = features or []
         quota_overrides = quota_overrides or {}
 
@@ -730,7 +974,17 @@ class SubscriptionValidationBypass:
         provider: OAuthProvider = OAuthProvider.GENERIC,
         tier: SubscriptionTier = SubscriptionTier.ENTERPRISE,
     ) -> dict[str, str]:
-        """Generate complete token set for product including RS256-signed access token with subscription claims, cryptographically random refresh token, and provider-specific ID token."""
+        """Generate complete token set for product including RS256-signed access token with subscription claims, cryptographically random refresh token, and provider-specific ID token.
+
+        Args:
+            product_name: Name of the product for subscription token generation.
+            provider: OAuth provider type for token generation (defaults to GENERIC).
+            tier: Target subscription tier for access token claims (defaults to ENTERPRISE).
+
+        Returns:
+            Dictionary containing access_token, refresh_token, and id_token JWT strings.
+
+        """
         user_id = str(uuid.uuid4())
         current_time = int(time.time())
 
@@ -764,7 +1018,17 @@ class SubscriptionValidationBypass:
         product_name: str,
         tier: SubscriptionTier = SubscriptionTier.ENTERPRISE,
     ) -> dict[str, Any]:
-        """Analyze endpoint URL and product name to route to appropriate platform-specific response synthesizer (Microsoft365, Adobe, Atlassian, Salesforce) or generic validation response."""
+        """Analyze endpoint URL and product name to route to appropriate platform-specific response synthesizer (Microsoft365, Adobe, Atlassian, Salesforce) or generic validation response.
+
+        Args:
+            endpoint: API endpoint URL to analyze for platform detection.
+            product_name: Name of the product being licensed.
+            tier: Subscription tier for generic response fallback (defaults to ENTERPRISE).
+
+        Returns:
+            Dictionary containing spoofed API response with platform-specific structure.
+
+        """
         service_type = self.known_services.get(product_name)
 
         if service_type == "microsoft365" or "license" in endpoint.lower():
@@ -782,7 +1046,16 @@ class SubscriptionValidationBypass:
         current_seats: int,
         target_seats: int,
     ) -> dict[str, Any]:
-        """Build manipulated license data setting total seats to target value with only 1 used, calculating available seats and preserving previous seat count."""
+        """Build manipulated license data setting total seats to target value with only 1 used, calculating available seats and preserving previous seat count.
+
+        Args:
+            current_seats: Current number of allocated seats before manipulation.
+            target_seats: Target number of seats to allocate in manipulated response.
+
+        Returns:
+            Dictionary containing seats allocation with total, used, available, status, and previous_seats.
+
+        """
         return {
             "seats": {
                 "total": target_seats,
@@ -799,7 +1072,17 @@ class SubscriptionValidationBypass:
         current_usage: int,
         new_limit: int,
     ) -> dict[str, Any]:
-        """Build manipulated quota data resetting usage to 0, setting limit to new maximum, calculating full remaining quota, and preserving previous usage value."""
+        """Build manipulated quota data resetting usage to 0, setting limit to new maximum, calculating full remaining quota, and preserving previous usage value.
+
+        Args:
+            resource_type: Type of resource being quota-manipulated (e.g., api_calls, storage).
+            current_usage: Current usage amount before manipulation.
+            new_limit: New maximum quota limit to set in response.
+
+        Returns:
+            Dictionary containing resource, limit, used (0), remaining, and previous_usage values.
+
+        """
         return {
             "resource": resource_type,
             "limit": new_limit,
@@ -814,7 +1097,17 @@ class SubscriptionValidationBypass:
         target_tier: SubscriptionTier,
         features: list[str],
     ) -> dict[str, Any]:
-        """Delegate to API synthesizer to build feature unlock response for upgraded tier with specified features enabled."""
+        """Delegate to API synthesizer to build feature unlock response for upgraded tier with specified features enabled.
+
+        Args:
+            current_tier: Current subscription tier before upgrade.
+            target_tier: Target subscription tier to upgrade to.
+            features: List of feature names to enable in upgraded tier.
+
+        Returns:
+            Dictionary containing feature unlock response with status, tier, enabled_features, and feature_flags.
+
+        """
         return self.api_synthesizer.synthesize_feature_unlock(features, target_tier)
 
     def extend_time_based_subscription(
@@ -822,7 +1115,16 @@ class SubscriptionValidationBypass:
         current_expiry: datetime,
         extension_days: int,
     ) -> dict[str, Any]:
-        """Calculate new expiration by adding extension days to current expiry, return subscription data with active status, ISO-formatted previous and new expiry dates, and extension duration."""
+        """Calculate new expiration by adding extension days to current expiry, return subscription data with active status, ISO-formatted previous and new expiry dates, and extension duration.
+
+        Args:
+            current_expiry: Current subscription expiration date.
+            extension_days: Number of days to extend the subscription.
+
+        Returns:
+            Dictionary containing subscription status with previous_expiry, new_expiry, and extended_by_days.
+
+        """
         new_expiry = current_expiry + timedelta(days=extension_days)
 
         return {
@@ -847,6 +1149,9 @@ class SubscriptionValidationBypass:
             - license_type: Detected license type from registry
             - expiration: License expiration if found
             - bypass_method: Recommended bypass approach
+
+        Raises:
+            OSError: If registry access fails on Windows platform.
 
         """
         import platform
@@ -953,6 +1258,9 @@ class SubscriptionValidationBypass:
             - config_files: List of configuration file paths found
             - server_endpoints: Detected server endpoints
             - bypass_method: Recommended bypass approach
+
+        Raises:
+            OSError: If filesystem access fails during configuration file search.
 
         """
         import os
@@ -1119,6 +1427,9 @@ class SubscriptionValidationBypass:
             - token_type: Type of OAuth token detected
             - bypass_method: Recommended bypass approach
 
+        Raises:
+            OSError: If filesystem access fails during token search.
+
         """
         import os
         from pathlib import Path
@@ -1242,6 +1553,9 @@ class SubscriptionValidationBypass:
             - server_info: Information about license server
             - bypass_method: Recommended bypass approach
 
+        Raises:
+            OSError: If network socket operations fail during port scanning.
+
         """
         import os
         import socket
@@ -1339,7 +1653,15 @@ class SubscriptionValidationBypass:
         return result
 
     def detect_subscription_type(self, product_name: str) -> SubscriptionType:
-        """Analyze product name for keywords (office, adobe, salesforce) to classify subscription model, defaulting to CLOUD_BASED for all products."""
+        """Analyze product name for keywords (office, adobe, salesforce) to classify subscription model, defaulting to CLOUD_BASED for all products.
+
+        Args:
+            product_name: Name of the product to classify subscription type for.
+
+        Returns:
+            SubscriptionType enumeration value representing the detected licensing model.
+
+        """
         product_name.lower()
 
         return SubscriptionType.CLOUD_BASED
@@ -1349,7 +1671,16 @@ class SubscriptionValidationBypass:
         product_name: str,
         subscription_type: SubscriptionType | None = None,
     ) -> bool:
-        """Auto-detect or use provided subscription type, then return True for all subscription models indicating bypass capability available."""
+        """Auto-detect or use provided subscription type, then return True for all subscription models indicating bypass capability available.
+
+        Args:
+            product_name: Name of the product for subscription bypass evaluation.
+            subscription_type: Optional subscription type (auto-detects if None).
+
+        Returns:
+            Boolean indicating whether bypass capability is available for the subscription type.
+
+        """
         if subscription_type is None:
             subscription_type = self.detect_subscription_type(product_name)
 
@@ -1365,6 +1696,10 @@ class SubscriptionValidationBypass:
         Returns:
             True if server was successfully stopped or no server was running,
             False if an error occurred during shutdown.
+
+        Raises:
+            RuntimeError: If thread termination or server shutdown fails.
+            OSError: If socket closure or hosts file cleanup fails.
 
         """
         stopped_successfully = True
@@ -1428,6 +1763,10 @@ class SubscriptionValidationBypass:
         Reads the system hosts file, filters out any entries that were added by
         this bypass system (tracked in _added_hosts_entries), and writes the
         cleaned content back.
+
+        Raises:
+            OSError: If hosts file read/write operations fail due to permission issues.
+            PermissionError: If insufficient privileges to modify hosts file.
 
         """
         if not hasattr(self, "_added_hosts_entries") or not self._added_hosts_entries:

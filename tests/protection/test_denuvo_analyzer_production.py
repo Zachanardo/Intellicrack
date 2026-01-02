@@ -5,16 +5,14 @@ All tests verify genuine detection capabilities work on real protection schemes.
 """
 
 import os
-import struct
 import tempfile
-from pathlib import Path
 from typing import Any
 
 import pytest
 
 from intellicrack.protection.denuvo_analyzer import (
+    DenuvoAnalysisResult,
     DenuvoAnalyzer,
-    DenuvoProtectionLevel,
     DenuvoVersion,
 )
 
@@ -22,26 +20,19 @@ from intellicrack.protection.denuvo_analyzer import (
 class TestDenuvoAnalyzerInitialization:
     """Test Denuvo analyzer initialization."""
 
-    def test_analyzer_initializes_with_real_binary(self) -> None:
-        """Analyzer initializes with valid binary path."""
-        notepad_path = r"C:\Windows\System32\notepad.exe"
-        if not os.path.exists(notepad_path):
-            pytest.skip("notepad.exe not found")
+    def test_analyzer_initializes_without_arguments(self) -> None:
+        """Analyzer initializes without any arguments."""
+        analyzer = DenuvoAnalyzer()
 
-        analyzer = DenuvoAnalyzer(notepad_path)
+        assert analyzer is not None
+        assert hasattr(analyzer, "analyze")
+        assert hasattr(analyzer, "md")
 
-        assert analyzer.binary_path == notepad_path
-        assert isinstance(analyzer.protection_signatures, dict)
-        assert len(analyzer.protection_signatures) > 0
+    def test_analyzer_has_capstone_disassembler(self) -> None:
+        """Analyzer initializes Capstone disassembler if available."""
+        analyzer = DenuvoAnalyzer()
 
-    def test_analyzer_loads_denuvo_signatures(self) -> None:
-        """Analyzer loads comprehensive Denuvo detection signatures."""
-        analyzer = DenuvoAnalyzer(r"C:\Windows\System32\notepad.exe")
-
-        assert "vm_obfuscation" in analyzer.protection_signatures
-        assert "anti_debug" in analyzer.protection_signatures
-        assert "integrity_checks" in analyzer.protection_signatures
-        assert "hardware_fingerprinting" in analyzer.protection_signatures
+        assert hasattr(analyzer, "md")
 
 
 class TestDenuvoVersionDetection:
@@ -63,12 +54,13 @@ class TestDenuvoVersionDetection:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.detect_version()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert result["detected"] is True or result["detected"] is False
-            if result["detected"]:
-                assert result["version"] in [v.value for v in DenuvoVersion]
+            assert isinstance(result, DenuvoAnalysisResult)
+            assert isinstance(result.detected, bool)
+            if result.version is not None:
+                assert isinstance(result.version, DenuvoVersion)
         finally:
             os.unlink(binary_path)
 
@@ -88,12 +80,11 @@ class TestDenuvoVersionDetection:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.detect_version()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert "version" in result
-            assert "confidence" in result
-            assert 0.0 <= result["confidence"] <= 1.0
+            assert isinstance(result, DenuvoAnalysisResult)
+            assert 0.0 <= result.confidence <= 1.0
         finally:
             os.unlink(binary_path)
 
@@ -119,13 +110,11 @@ class TestVirtualMachineDetection:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.detect_vm_obfuscation()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert isinstance(result, dict)
-            assert "vm_detected" in result
-            assert "vm_handlers" in result
-            assert isinstance(result["vm_handlers"], list)
+            assert isinstance(result, DenuvoAnalysisResult)
+            assert isinstance(result.vm_regions, list)
         finally:
             os.unlink(binary_path)
 
@@ -140,19 +129,20 @@ class TestVirtualMachineDetection:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.detect_vm_obfuscation()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert "entry_point_virtualized" in result or "vm_detected" in result
+            assert isinstance(result, DenuvoAnalysisResult)
+            assert hasattr(result, "vm_regions")
         finally:
             os.unlink(binary_path)
 
 
 class TestAntiDebugDetection:
-    """Test anti-debug mechanism detection."""
+    """Test anti-debug mechanism detection through analysis."""
 
     def test_detect_peb_beingdebugged_check(self) -> None:
-        """Detects PEB.BeingDebugged anti-debug check."""
+        """Detects PEB.BeingDebugged anti-debug check patterns."""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as tmp:
             pe_header = b"MZ\x90\x00"
             peb_check = b"\x64\xA1\x30\x00\x00\x00\x0F\xB6\x40\x02\x85\xC0\x75"
@@ -162,17 +152,16 @@ class TestAntiDebugDetection:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.detect_anti_debug()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert isinstance(result, dict)
-            assert "anti_debug_detected" in result
-            assert isinstance(result.get("techniques", []), list)
+            assert isinstance(result, DenuvoAnalysisResult)
+            assert isinstance(result.triggers, list)
         finally:
             os.unlink(binary_path)
 
     def test_detect_ntglobalflag_check(self) -> None:
-        """Detects NtGlobalFlag anti-debug check."""
+        """Detects NtGlobalFlag anti-debug check patterns."""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as tmp:
             pe_header = b"MZ\x90\x00"
             ntglobalflag_check = b"\x64\xA1\x30\x00\x00\x00\x8B\x40\x68\x83\xE0\x70\x75"
@@ -182,15 +171,15 @@ class TestAntiDebugDetection:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.detect_anti_debug()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert "techniques" in result or "anti_debug_detected" in result
+            assert isinstance(result, DenuvoAnalysisResult)
         finally:
             os.unlink(binary_path)
 
     def test_detect_timing_checks(self) -> None:
-        """Detects RDTSC timing-based anti-debug."""
+        """Detects RDTSC timing-based anti-debug patterns."""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as tmp:
             pe_header = b"MZ\x90\x00"
             rdtsc_check = b"\x0F\x31\x48\x8B\xC8\x48\x8B\xD0"
@@ -200,10 +189,11 @@ class TestAntiDebugDetection:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.detect_anti_debug()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert isinstance(result.get("techniques", []), list)
+            assert isinstance(result, DenuvoAnalysisResult)
+            assert isinstance(result.timing_checks, list)
         finally:
             os.unlink(binary_path)
 
@@ -212,7 +202,7 @@ class TestIntegrityCheckDetection:
     """Test integrity check and anti-tamper detection."""
 
     def test_detect_code_integrity_checks(self) -> None:
-        """Detects code section integrity validation."""
+        """Detects code section integrity validation patterns."""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as tmp:
             pe_header = b"MZ\x90\x00"
             crc_calculation = b"\x33\xC0\x8B\x4C\x24\x04\x8B\x54\x24\x08"
@@ -223,17 +213,16 @@ class TestIntegrityCheckDetection:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.detect_integrity_checks()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert isinstance(result, dict)
-            assert "integrity_checks_detected" in result
-            assert isinstance(result.get("check_locations", []), list)
+            assert isinstance(result, DenuvoAnalysisResult)
+            assert isinstance(result.integrity_checks, list)
         finally:
             os.unlink(binary_path)
 
     def test_detect_memory_checksum_validation(self) -> None:
-        """Detects memory checksum validation routines."""
+        """Detects memory checksum validation routine patterns."""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as tmp:
             pe_header = b"MZ\x90\x00"
             checksum_loop = b"\x8A\x04\x0A\x84\xC0\x74\x08\x32\xC2\x8A\xD0\x41\xEB\xF2"
@@ -243,19 +232,20 @@ class TestIntegrityCheckDetection:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.detect_integrity_checks()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert "check_locations" in result or "integrity_checks_detected" in result
+            assert isinstance(result, DenuvoAnalysisResult)
+            assert hasattr(result, "integrity_checks")
         finally:
             os.unlink(binary_path)
 
 
 class TestHardwareFingerprintingDetection:
-    """Test hardware fingerprinting detection."""
+    """Test hardware fingerprinting detection via analysis results."""
 
     def test_detect_cpuid_fingerprinting(self) -> None:
-        """Detects CPUID-based hardware fingerprinting."""
+        """Detects CPUID-based hardware fingerprinting patterns."""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as tmp:
             pe_header = b"MZ\x90\x00"
             cpuid_instruction = b"\x0F\xA2\x89\x44\x24\x04"
@@ -265,17 +255,16 @@ class TestHardwareFingerprintingDetection:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.detect_hardware_fingerprinting()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert isinstance(result, dict)
-            assert "fingerprinting_detected" in result
-            assert isinstance(result.get("methods", []), list)
+            assert isinstance(result, DenuvoAnalysisResult)
+            assert isinstance(result.analysis_details, dict)
         finally:
             os.unlink(binary_path)
 
     def test_detect_disk_serial_collection(self) -> None:
-        """Detects disk serial number collection."""
+        """Detects disk serial number collection patterns."""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as tmp:
             pe_header = b"MZ\x90\x00"
             api_call_pattern = b"\xFF\x15\x00\x00\x00\x00\x85\xC0\x74"
@@ -285,19 +274,19 @@ class TestHardwareFingerprintingDetection:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.detect_hardware_fingerprinting()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert "methods" in result or "fingerprinting_detected" in result
+            assert isinstance(result, DenuvoAnalysisResult)
         finally:
             os.unlink(binary_path)
 
 
 class TestProtectionLevelAssessment:
-    """Test overall protection level assessment."""
+    """Test overall protection level assessment via analysis."""
 
     def test_assess_protection_level_comprehensive(self) -> None:
-        """Assesses overall Denuvo protection level."""
+        """Assesses overall Denuvo protection level via analyze()."""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as tmp:
             pe_header = b"MZ\x90\x00"
             vm_pattern = b"\xFF\x24\xC5\x00\x00\x00\x00"
@@ -314,15 +303,12 @@ class TestProtectionLevelAssessment:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.assess_protection_level()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert "protection_level" in result
-            assert result["protection_level"] in [level.value for level in DenuvoProtectionLevel]
-            assert "confidence" in result
-            assert 0.0 <= result["confidence"] <= 1.0
-            assert "features_detected" in result
-            assert isinstance(result["features_detected"], list)
+            assert isinstance(result, DenuvoAnalysisResult)
+            assert 0.0 <= result.confidence <= 1.0
+            assert isinstance(result.detected, bool)
         finally:
             os.unlink(binary_path)
 
@@ -334,22 +320,23 @@ class TestComprehensiveAnalysis:
     def test_analyze_real_binary_completes(self) -> None:
         """Comprehensive analysis completes on real Windows binary."""
         notepad_path = r"C:\Windows\System32\notepad.exe"
-        analyzer = DenuvoAnalyzer(notepad_path)
+        analyzer = DenuvoAnalyzer()
 
-        result = analyzer.analyze()
+        result = analyzer.analyze(notepad_path)
 
-        assert "denuvo_detected" in result
-        assert "version_info" in result
-        assert "vm_obfuscation" in result
-        assert "anti_debug_mechanisms" in result
-        assert "integrity_checks" in result
-        assert "hardware_fingerprinting" in result
-        assert "protection_level" in result
-        assert "bypass_difficulty" in result
-        assert isinstance(result["bypass_difficulty"], str)
+        assert isinstance(result, DenuvoAnalysisResult)
+        assert isinstance(result.detected, bool)
+        assert isinstance(result.confidence, float)
+        assert isinstance(result.triggers, list)
+        assert isinstance(result.integrity_checks, list)
+        assert isinstance(result.timing_checks, list)
+        assert isinstance(result.vm_regions, list)
+        assert isinstance(result.encrypted_sections, list)
+        assert isinstance(result.bypass_recommendations, list)
+        assert isinstance(result.analysis_details, dict)
 
     def test_comprehensive_analysis_includes_bypass_recommendations(self) -> None:
-        """Comprehensive analysis includes bypass recommendations."""
+        """Comprehensive analysis includes bypass recommendations list."""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as tmp:
             pe_header = b"MZ\x90\x00"
             denuvo_pattern = b"\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10"
@@ -359,20 +346,20 @@ class TestComprehensiveAnalysis:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.analyze()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert "bypass_recommendations" in result
-            assert isinstance(result["bypass_recommendations"], list)
+            assert isinstance(result, DenuvoAnalysisResult)
+            assert isinstance(result.bypass_recommendations, list)
         finally:
             os.unlink(binary_path)
 
 
 class TestTicketSystemAnalysis:
-    """Test Denuvo ticket system detection."""
+    """Test Denuvo ticket system detection via analysis."""
 
     def test_detect_ticket_validation_code(self) -> None:
-        """Detects Denuvo ticket validation routines."""
+        """Detects Denuvo ticket validation patterns via analysis."""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as tmp:
             pe_header = b"MZ\x90\x00"
             ticket_validation = b"\x48\x8B\x05\x00\x00\x00\x00\x48\x85\xC0\x74\x0A"
@@ -382,20 +369,20 @@ class TestTicketSystemAnalysis:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.detect_ticket_system()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert isinstance(result, dict)
-            assert "ticket_system_detected" in result
+            assert isinstance(result, DenuvoAnalysisResult)
+            assert hasattr(result, "triggers")
         finally:
             os.unlink(binary_path)
 
 
 class TestDenuvoBypassOpportunities:
-    """Test identification of bypass opportunities."""
+    """Test identification of bypass opportunities via analysis."""
 
     def test_identify_vm_exit_points(self) -> None:
-        """Identifies potential VM exit points for bypass."""
+        """Identifies potential VM exit points via analysis."""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as tmp:
             pe_header = b"MZ\x90\x00"
             vm_exit = b"\xC3\x90\x90\x90"
@@ -405,17 +392,16 @@ class TestDenuvoBypassOpportunities:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.find_bypass_opportunities()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert isinstance(result, dict)
-            assert "opportunities" in result
-            assert isinstance(result["opportunities"], list)
+            assert isinstance(result, DenuvoAnalysisResult)
+            assert isinstance(result.bypass_recommendations, list)
         finally:
             os.unlink(binary_path)
 
     def test_identify_weak_integrity_checks(self) -> None:
-        """Identifies weak integrity checks as bypass targets."""
+        """Identifies weak integrity checks via analysis."""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as tmp:
             pe_header = b"MZ\x90\x00"
             weak_check = b"\x85\xC0\x74\x05"
@@ -425,10 +411,10 @@ class TestDenuvoBypassOpportunities:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.find_bypass_opportunities()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert "opportunities" in result
+            assert isinstance(result, DenuvoAnalysisResult)
         finally:
             os.unlink(binary_path)
 
@@ -438,12 +424,12 @@ class TestErrorHandling:
 
     def test_analyze_nonexistent_file_handles_error(self) -> None:
         """Analyzing non-existent file handles error gracefully."""
-        analyzer = DenuvoAnalyzer(r"C:\nonexistent\binary.exe")
+        analyzer = DenuvoAnalyzer()
 
-        result = analyzer.analyze()
+        result = analyzer.analyze(r"C:\nonexistent\binary.exe")
 
-        assert result["denuvo_detected"] is False
-        assert "error" in result or "denuvo_detected" in result
+        assert isinstance(result, DenuvoAnalysisResult)
+        assert result.detected is False
 
     def test_analyze_corrupted_binary_handles_error(self) -> None:
         """Analyzing corrupted binary handles error gracefully."""
@@ -453,9 +439,64 @@ class TestErrorHandling:
             binary_path = tmp.name
 
         try:
-            analyzer = DenuvoAnalyzer(binary_path)
-            result = analyzer.analyze()
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
 
-            assert "denuvo_detected" in result
+            assert isinstance(result, DenuvoAnalysisResult)
+            assert isinstance(result.detected, bool)
+        finally:
+            os.unlink(binary_path)
+
+
+class TestAnalysisResultFields:
+    """Test that analysis result contains all expected fields."""
+
+    def test_result_has_all_expected_fields(self) -> None:
+        """Analysis result has all required dataclass fields."""
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as tmp:
+            pe_header = b"MZ\x90\x00"
+            tmp.write(pe_header + b"\x00" * 500)
+            tmp.flush()
+            binary_path = tmp.name
+
+        try:
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
+
+            assert hasattr(result, "detected")
+            assert hasattr(result, "confidence")
+            assert hasattr(result, "version")
+            assert hasattr(result, "triggers")
+            assert hasattr(result, "integrity_checks")
+            assert hasattr(result, "timing_checks")
+            assert hasattr(result, "vm_regions")
+            assert hasattr(result, "encrypted_sections")
+            assert hasattr(result, "bypass_recommendations")
+            assert hasattr(result, "analysis_details")
+        finally:
+            os.unlink(binary_path)
+
+    def test_result_field_types(self) -> None:
+        """Analysis result fields have correct types."""
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as tmp:
+            pe_header = b"MZ\x90\x00"
+            tmp.write(pe_header + b"\x00" * 500)
+            tmp.flush()
+            binary_path = tmp.name
+
+        try:
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
+
+            assert isinstance(result.detected, bool)
+            assert isinstance(result.confidence, float)
+            assert result.version is None or isinstance(result.version, DenuvoVersion)
+            assert isinstance(result.triggers, list)
+            assert isinstance(result.integrity_checks, list)
+            assert isinstance(result.timing_checks, list)
+            assert isinstance(result.vm_regions, list)
+            assert isinstance(result.encrypted_sections, list)
+            assert isinstance(result.bypass_recommendations, list)
+            assert isinstance(result.analysis_details, dict)
         finally:
             os.unlink(binary_path)

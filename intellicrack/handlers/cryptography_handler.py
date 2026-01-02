@@ -17,11 +17,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import base64
 import hashlib
 import hmac
 import os
 import struct
+import types
 from collections.abc import Callable
 from typing import Any
 
@@ -35,6 +38,25 @@ This module provides a centralized abstraction layer for cryptography imports.
 When cryptography is not available, it provides REAL, functional Python-based
 implementations for essential cryptographic operations used in Intellicrack.
 """
+
+# Module-level type declarations for cross-branch assignment compatibility
+Fernet: type[Any]
+Cipher: type[Any]
+AESGCM: type[Any] | None
+HKDF: type[Any] | None
+algorithms: types.ModuleType | Any
+modes: types.ModuleType | Any
+hashes: types.ModuleType | Any
+padding: types.ModuleType | Any
+serialization: types.ModuleType | Any
+asym_padding: types.ModuleType | Any
+rsa: types.ModuleType | Any
+PBKDF2: type[Any]
+PBKDF2HMAC: type[Any]
+NameOID: type[Any]
+x509: types.ModuleType | Any
+load_pem_x509_certificate: Callable[..., Any]
+load_pem_private_key: Callable[..., Any]
 
 # Cryptography availability detection and import handling
 try:
@@ -356,7 +378,7 @@ except ImportError as e:
                 plaintext: Plaintext block to encrypt.
 
             Returns:
-                bytes: Encrypted ciphertext block.
+                Encrypted ciphertext block.
 
             Raises:
                 ValueError: If plaintext is not exactly 16 bytes.
@@ -379,7 +401,7 @@ except ImportError as e:
                 ciphertext: Ciphertext block to decrypt.
 
             Returns:
-                bytes: Decrypted plaintext block.
+                Decrypted plaintext block.
 
             Raises:
                 ValueError: If ciphertext is not exactly 16 bytes.
@@ -423,7 +445,7 @@ except ImportError as e:
             """Get encryptor.
 
             Returns:
-                FallbackEncryptor instance for encryption operations.
+                Encryptor instance for encryption operations.
 
             """
             self.encryptor_obj = FallbackEncryptor(self.algorithm, self.mode)
@@ -433,7 +455,7 @@ except ImportError as e:
             """Get decryptor.
 
             Returns:
-                FallbackDecryptor instance for decryption operations.
+                Decryptor instance for decryption operations.
 
             """
             self.decryptor_obj = FallbackDecryptor(self.algorithm, self.mode)
@@ -473,7 +495,7 @@ except ImportError as e:
                 data: Data to encrypt.
 
             Returns:
-                bytes: Encrypted output from completed blocks.
+                Encrypted output from completed blocks.
 
             """
             self._buffer += data
@@ -502,7 +524,7 @@ except ImportError as e:
             """Finalize encryption.
 
             Returns:
-                bytes: Final encrypted output including padded data.
+                Final encrypted output including padded data.
 
             """
             if self._buffer:
@@ -545,7 +567,7 @@ except ImportError as e:
                 data: Data to decrypt.
 
             Returns:
-                bytes: Decrypted output from completed blocks.
+                Decrypted output from completed blocks.
 
             """
             self._buffer += data
@@ -572,7 +594,7 @@ except ImportError as e:
             """Finalize decryption.
 
             Returns:
-                bytes: Final decrypted output with padding removed.
+                Final decrypted output with padding removed.
 
             """
             result = self.update(b"")
@@ -613,7 +635,7 @@ except ImportError as e:
             """Generate a new Fernet key.
 
             Returns:
-                bytes: Base64-encoded random 32-byte key.
+                Base64-encoded random 32-byte key.
 
             """
             return base64.urlsafe_b64encode(os.urandom(32))
@@ -625,7 +647,7 @@ except ImportError as e:
                 data: Data to encrypt.
 
             Returns:
-                bytes: Base64-encoded encrypted token.
+                Base64-encoded encrypted token.
 
             """
             if isinstance(data, str):
@@ -662,7 +684,7 @@ except ImportError as e:
                 token: Base64-encoded encrypted token.
 
             Returns:
-                bytes: Decrypted plaintext data.
+                Decrypted plaintext data.
 
             Raises:
                 ValueError: If token is invalid or signature verification fails.
@@ -720,7 +742,7 @@ except ImportError as e:
                 backend: Backend instance (ignored).
 
             Returns:
-                FallbackRSAPrivateKey: Generated private key.
+                Generated private key.
 
             """
             # Simplified RSA key generation
@@ -746,7 +768,7 @@ except ImportError as e:
                 bits: Bit length for prime generation.
 
             Returns:
-                int: Generated prime number.
+                Generated prime number.
 
             """
             # Use a pre-selected prime for fallback
@@ -766,7 +788,7 @@ except ImportError as e:
                 m: Modulus.
 
             Returns:
-                int: Modular inverse of a modulo m.
+                Modular inverse of a modulo m.
 
             Raises:
                 ValueError: If modular inverse does not exist.
@@ -814,7 +836,7 @@ except ImportError as e:
             """Get public key.
 
             Returns:
-                FallbackRSAPublicKey with same modulus and exponent.
+                Public key with same modulus and exponent.
 
             """
             return FallbackRSAPublicKey(self.n, self.e)
@@ -828,7 +850,7 @@ except ImportError as e:
                 encryption_algorithm: Encryption algorithm for key material.
 
             Returns:
-                bytes: Encoded private key.
+                Encoded private key.
 
             """
             # Simplified PEM format
@@ -848,7 +870,7 @@ MIIEowIBAAKCAQEA{base64.b64encode(str(self.n).encode()).decode()}
                 algorithm: Hash algorithm instance.
 
             Returns:
-                bytes: Digital signature.
+                Digital signature.
 
             """
             # Simplified signature
@@ -865,7 +887,7 @@ MIIEowIBAAKCAQEA{base64.b64encode(str(self.n).encode()).decode()}
                 padding_obj: Padding scheme instance.
 
             Returns:
-                bytes: Decrypted plaintext.
+                Decrypted plaintext.
 
             """
             c_int = int.from_bytes(ciphertext, "big")
@@ -898,7 +920,7 @@ MIIEowIBAAKCAQEA{base64.b64encode(str(self.n).encode()).decode()}
                 format: Key format structure.
 
             Returns:
-                bytes: Encoded public key.
+                Encoded public key.
 
             """
             # Simplified PEM format
@@ -916,7 +938,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 padding_obj: Padding scheme instance.
 
             Returns:
-                bytes: Encrypted ciphertext.
+                Encrypted ciphertext.
 
             """
             m_int = int.from_bytes(message, "big")
@@ -933,7 +955,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 algorithm: Hash algorithm instance.
 
             Returns:
-                bool: True if signature is valid, False otherwise.
+                True if signature is valid, False otherwise.
 
             """
             # Simplified verification
@@ -979,7 +1001,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 key_material: Password or key material to derive from.
 
             Returns:
-                bytes: Derived key material.
+                Derived key material.
 
             """
             # Use Python's hashlib.pbkdf2_hmac
@@ -1053,7 +1075,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         Provides cipher mode definitions for block cipher operations.
         """
 
-        class CBC:  # noqa: B903 - Must match cryptography library API
+        class CBC:
             """CBC mode with initialization vector."""
 
             def __init__(self, initialization_vector: bytes) -> None:
@@ -1070,7 +1092,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
             pass
 
-        class CTR:  # noqa: B903 - Must match cryptography library API
+        class CTR:
             """CTR mode with nonce."""
 
             def __init__(self, nonce: bytes) -> None:
@@ -1107,7 +1129,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 """Get padder for this scheme.
 
                 Returns:
-                    FallbackPadder: Padder instance.
+                    Padder instance.
 
                 """
                 return FallbackPadder(self.block_size)
@@ -1116,7 +1138,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 """Get unpadder for this scheme.
 
                 Returns:
-                    FallbackUnpadder: Unpadder instance.
+                    Unpadder instance.
 
                 """
                 return FallbackUnpadder(self.block_size)
@@ -1144,7 +1166,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 data: Data to pad.
 
             Returns:
-                bytes: Padded complete blocks.
+                Padded complete blocks.
 
             """
             self._buffer += data
@@ -1161,7 +1183,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             """Finalize with padding.
 
             Returns:
-                bytes: Final padded data.
+                Final padded data.
 
             """
             padding_len = self.block_size - len(self._buffer)
@@ -1191,7 +1213,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 data: Data to unpad.
 
             Returns:
-                bytes: Unpadded complete blocks.
+                Unpadded complete blocks.
 
             """
             self._buffer += data
@@ -1207,7 +1229,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             """Remove padding.
 
             Returns:
-                bytes: Final unpadded data.
+                Final unpadded data.
 
             Raises:
                 ValueError: If padding is invalid.
@@ -1245,7 +1267,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             """Represent backend instance.
 
             Returns:
-                str: String representation of backend.
+                String representation of backend.
 
             """
             return "<FallbackBackend>"
@@ -1259,7 +1281,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         """Get default backend.
 
         Returns:
-            FallbackBackend: Default backend instance.
+            Default backend instance.
 
         """
         return FallbackBackend()
@@ -1275,7 +1297,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             backend: Backend instance (ignored).
 
         Returns:
-            FallbackX509Certificate: Parsed certificate object.
+            Parsed certificate object.
 
         """
         # Parse PEM format (simplified)
@@ -1295,7 +1317,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         cert_bytes = base64.b64decode(cert_data)
         return FallbackX509Certificate(cert_bytes)
 
-    load_pem_x509_certificate = _load_pem_x509_certificate  # type: ignore[assignment]
+    load_pem_x509_certificate = _load_pem_x509_certificate
 
     def _load_pem_private_key(data: bytes | str, password: bytes | None = None, backend: object | None = None) -> Any:
         """Load PEM private key with proper base64 decoding.
@@ -1306,7 +1328,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             backend: Backend instance (ignored).
 
         Returns:
-            Any: Private key object with key material and methods.
+            Private key object with key material and methods.
 
         """
         data_str: str = data.decode() if isinstance(data, bytes) else data
@@ -1337,7 +1359,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 encryption: Encryption algorithm for key.
 
             Returns:
-                bytes: Encoded key material.
+                Encoded key material.
 
             """
             logger.debug(
@@ -1355,7 +1377,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 self: Private key instance.
 
             Returns:
-                object: Public key object with key_size attribute.
+                Public key object with key_size attribute.
 
             """
             logger.debug("Fallback public_key called on %s", self)
@@ -1371,7 +1393,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 algorithm: Hash algorithm instance.
 
             Returns:
-                bytes: Digital signature.
+                Digital signature.
 
             """
             return hashlib.sha256(data_to_sign + decoded_key_bytes).digest()
@@ -1388,7 +1410,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             },
         )()
 
-    load_pem_private_key = _load_pem_private_key  # type: ignore[assignment]
+    load_pem_private_key = _load_pem_private_key
 
     class FallbackX509Certificate:
         """X.509 certificate object for production certificate handling.
@@ -1408,7 +1430,11 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             self._parse_certificate_data()
 
         def _parse_certificate_data(self) -> None:
-            """Parse certificate data to extract key information."""
+            """Parse certificate data to extract key information.
+
+            Extracts subject, issuer, serial number, and validity dates
+            from certificate DER data and stores as instance attributes.
+            """
             try:
                 self.subject = self._extract_subject_from_der()
                 self.issuer = self._extract_issuer_from_der()
@@ -1426,7 +1452,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             """Extract subject name from DER data.
 
             Returns:
-                str: Certificate subject distinguished name.
+                Certificate subject distinguished name.
 
             """
             if len(self.data) > 32:
@@ -1437,7 +1463,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             """Extract issuer name from DER data.
 
             Returns:
-                str: Certificate issuer distinguished name.
+                Certificate issuer distinguished name.
 
             """
             return f"CN=Issuer{self.data[48:52].hex()}" if len(self.data) > 64 else "CN=CA"
@@ -1446,7 +1472,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             """Extract serial number from DER structure.
 
             Returns:
-                int: Certificate serial number.
+                Certificate serial number.
 
             """
             if len(self.data) > 8:
@@ -1457,7 +1483,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             """Extract certificate validity start date.
 
             Returns:
-                str: Certificate not-valid-before datetime string.
+                Certificate not-valid-before datetime string.
 
             """
             return "1970-01-01"
@@ -1466,7 +1492,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             """Extract certificate validity end date.
 
             Returns:
-                str: Certificate not-valid-after datetime string.
+                Certificate not-valid-after datetime string.
 
             """
             return "2038-01-19"
@@ -1488,7 +1514,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             """Extract RSA public key components from certificate DER data.
 
             Returns:
-                Tuple of (exponent, modulus) as integers.
+                Tuple of exponent and modulus as integers.
 
             """
             if len(self.data) < 300:
@@ -1522,10 +1548,10 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             return exponent, max(modulus, 3)
 
     # Module exports - using Any for type compatibility
-    Fernet: Any = FallbackFernet  # type: ignore[no-redef]
-    Cipher: Any = FallbackCipher  # type: ignore[no-redef]
-    AESGCM: Any = None  # type: ignore[no-redef]  # Not implemented in fallback
-    HKDF: Any = None  # type: ignore[no-redef]  # Not implemented in fallback
+    Fernet = FallbackFernet
+    Cipher = FallbackCipher
+    AESGCM = None  # Not implemented in fallback
+    HKDF = None  # Not implemented in fallback
 
     # Hazmat modules
     class Hazmat:
@@ -1560,7 +1586,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 class Padding:
                     """Asymmetric padding schemes."""
 
-                    class OAEP:  # noqa: B903 - Must match cryptography library API
+                    class OAEP:
                         """OAEP padding for RSA encryption.
 
                         Optimal Asymmetric Encryption Padding for public key encryption.
@@ -1579,7 +1605,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                             self.algorithm = algorithm
                             self.label = label
 
-                    class PSS:  # noqa: B903 - Must match cryptography library API
+                    class PSS:
                         """PSS padding for RSA signatures.
 
                         Probabilistic Signature Scheme for digital signatures.
@@ -1668,7 +1694,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                         """
                         self._encrypted = False
 
-                class BestAvailableEncryption:  # noqa: B903 - Must match cryptography library API
+                class BestAvailableEncryption:
                     """Best available encryption for private key.
 
                     Uses strong encryption for password-protected key export.
@@ -1708,16 +1734,16 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         NameOID = FallbackNameOID
 
     # Convenience imports - using Any for type compatibility
-    algorithms: Any = Hazmat.Primitives.Ciphers.algorithms  # type: ignore[no-redef]
-    modes: Any = Hazmat.Primitives.Ciphers.modes  # type: ignore[no-redef]
-    hashes: Any = Hazmat.Primitives.hashes  # type: ignore[no-redef]
-    padding: Any = Hazmat.Primitives.padding  # type: ignore[no-redef]
-    serialization: Any = Hazmat.Primitives.Serialization  # type: ignore[no-redef]
-    asym_padding: Any = Hazmat.Primitives.Asymmetric.Padding  # type: ignore[no-redef]
-    rsa: Any = Hazmat.Primitives.Asymmetric.rsa  # type: ignore[no-redef]
-    PBKDF2: Any = Hazmat.Primitives.Kdf.Pbkdf2.PBKDF2  # type: ignore[no-redef]
-    PBKDF2HMAC: Any = Hazmat.Primitives.Kdf.Pbkdf2.PBKDF2HMAC  # type: ignore[no-redef]
-    NameOID: Any = FallbackNameOID  # type: ignore[no-redef]
+    algorithms = Hazmat.Primitives.Ciphers.algorithms
+    modes = Hazmat.Primitives.Ciphers.modes
+    hashes = Hazmat.Primitives.hashes
+    padding = Hazmat.Primitives.padding
+    serialization = Hazmat.Primitives.Serialization
+    asym_padding = Hazmat.Primitives.Asymmetric.Padding
+    rsa = Hazmat.Primitives.Asymmetric.rsa
+    PBKDF2 = Hazmat.Primitives.Kdf.Pbkdf2.PBKDF2
+    PBKDF2HMAC = Hazmat.Primitives.Kdf.Pbkdf2.PBKDF2HMAC
+    NameOID = FallbackNameOID
 
     # Compatibility aliases - using Any types
     hazmat: Any = type("hazmat", (), {})()
@@ -1730,7 +1756,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
     hazmat.primitives.kdf = type("kdf", (), {})()
     hazmat.primitives.kdf.pbkdf2 = type("pbkdf2", (), {"PBKDF2": PBKDF2, "PBKDF2HMAC": PBKDF2HMAC})()
     hazmat.primitives.serialization = serialization
-    x509: Any = X509  # type: ignore[no-redef]
+    x509 = X509
 
 
 # Export all cryptography objects and availability flag

@@ -52,7 +52,7 @@ def get_available_parsers() -> list[str]:
     """Get list of successfully loaded protocol parsers.
 
     Returns:
-        list[str]: Names of successfully loaded protocol parser modules.
+        Names of successfully loaded protocol parser modules.
 
     """
     return list(_parsers.keys())
@@ -65,7 +65,7 @@ def get_parser(parser_name: str) -> ModuleType | None:
         parser_name: Name of the parser module.
 
     Returns:
-        ModuleType | None: The parser module, or None if not available.
+        The parser module, or None if not available.
 
     """
     return _parsers.get(parser_name)
@@ -78,7 +78,7 @@ def is_parser_available(parser_name: str) -> bool:
         parser_name: Name of the parser to check.
 
     Returns:
-        bool: True if parser is available, False otherwise.
+        True if parser is available, False otherwise.
 
     """
     return parser_name in _parsers
@@ -88,7 +88,7 @@ def get_supported_protocols() -> list[str]:
     """Get list of protocols supported by available parsers.
 
     Returns:
-        list[str]: Protocol names supported by available parsers.
+        Protocol names supported by available parsers.
 
     """
     parser_protocol_map = {

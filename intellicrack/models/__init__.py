@@ -1,4 +1,7 @@
-"""Models module initialization for Intellicrack.
+"""Intellicrack Models Package.
+
+This package contains data models and knowledge bases for Intellicrack.
+ML models have been replaced with ICP Engine for protection detection.
 
 This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
@@ -18,32 +21,16 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
-from typing import TYPE_CHECKING
+from collections.abc import Callable
 
 from ..utils.severity_levels import SeverityLevel, VulnerabilityLevel
 from .model_manager import ModelManager
+from .protection_knowledge_base import ProtectionKnowledgeBase
 
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
+logger: logging.Logger = logging.getLogger(__name__)
 
-    from .protection_knowledge_base import ProtectionKnowledgeBase
-
-
-"""
-Intellicrack Models Package
-
-This package contains data models and knowledge bases for Intellicrack.
-ML models have been replaced with ICP Engine for protection detection.
-"""
-
-# Create module logger
-logger = logging.getLogger(__name__)
-
-# Import model manager for compatibility
-
-# Import protection knowledge base
-get_protection_knowledge_base: "Callable[[], ProtectionKnowledgeBase] | None"
+get_protection_knowledge_base: Callable[[], ProtectionKnowledgeBase] | None
 try:
     from .protection_knowledge_base import get_protection_knowledge_base as _get_protection_knowledge_base
 
@@ -52,8 +39,7 @@ except ImportError:
     logger.exception("Import error in __init__")
     get_protection_knowledge_base = None
 
-# Export main interface
-__all__ = [
+__all__: list[str] = [
     "ModelManager",
     "SeverityLevel",
     "VulnerabilityLevel",
@@ -62,7 +48,4 @@ __all__ = [
 if get_protection_knowledge_base is not None:
     __all__.append("get_protection_knowledge_base")
 
-# Log initialization
-
-logger = logging.getLogger(__name__)
 logger.info("Models package initialized - Using ICP Engine for protection detection")

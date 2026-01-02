@@ -32,7 +32,11 @@ class WebSocketProtocol(Protocol):
     """Protocol for WebSocket connections with async send."""
 
     async def send(self, message: str) -> None:
-        """Send a message over the WebSocket connection."""
+        """Send a message over the WebSocket connection.
+
+        Args:
+            message: The message to send over the WebSocket.
+        """
         ...
 
 
@@ -64,7 +68,7 @@ class DataEvent:
         """Convert pipeline event to dictionary representation.
 
         Returns:
-            dict[str, Any]: Dictionary representation of the event with all fields.
+            Dictionary representation of the event with all fields.
         """
         return {
             "timestamp": self.timestamp,
@@ -594,7 +598,7 @@ class LiveDataPipeline:
 
             for connection in self.websocket_connections:
                 try:
-                    ws_connection = cast(WebSocketProtocol, connection)
+                    ws_connection = cast("WebSocketProtocol", connection)
                     asyncio.run_coroutine_threadsafe(ws_connection.send(message_json), asyncio.get_event_loop())
                 except Exception as e:
                     self.logger.exception("Error sending to WebSocket: %s", e)

@@ -15,14 +15,84 @@ This module validates PluginEditorDialog's complete functionality including:
 import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QProcess
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
 from intellicrack.ui.dialogs.plugin_editor_dialog import PluginEditorDialog
+
+
+class FakeQMessageBox:
+    """Real test double for QMessageBox static method calls."""
+
+    def __init__(self) -> None:
+        self.critical_calls: list[tuple[Any, str, str]] = []
+        self.warning_calls: list[tuple[Any, str, str]] = []
+        self.information_calls: list[tuple[Any, str, str]] = []
+
+    def critical(self, parent: Any, title: str, message: str) -> int:
+        """Record critical message box calls."""
+        self.critical_calls.append((parent, title, message))
+        return QMessageBox.StandardButton.Ok.value
+
+    def warning(self, parent: Any, title: str, message: str) -> int:
+        """Record warning message box calls."""
+        self.warning_calls.append((parent, title, message))
+        return QMessageBox.StandardButton.Ok.value
+
+    def information(self, parent: Any, title: str, message: str) -> int:
+        """Record information message box calls."""
+        self.information_calls.append((parent, title, message))
+        return QMessageBox.StandardButton.Ok.value
+
+
+class FakeFileDialog:
+    """Real test double for QFileDialog static method calls."""
+
+    def __init__(self, return_path: str = "") -> None:
+        self.return_path = return_path
+        self.get_open_file_calls: list[tuple[Any, str, str, str]] = []
+
+    def getOpenFileName(
+        self, parent: Any, caption: str, directory: str = "", filter: str = ""
+    ) -> tuple[str, str]:
+        """Record file dialog calls and return configured path."""
+        self.get_open_file_calls.append((parent, caption, directory, filter))
+        return (self.return_path, "")
+
+
+class FakeQProcess:
+    """Real test double for QProcess used in plugin testing."""
+
+    def __init__(self) -> None:
+        self.program: str = ""
+        self.arguments: list[str] = []
+        self.started: bool = False
+        self.terminated: bool = False
+
+    def start(self, program: str, arguments: list[str]) -> None:
+        """Record process start calls."""
+        self.program = program
+        self.arguments = arguments
+        self.started = True
+
+    def terminate(self) -> None:
+        """Record process termination calls."""
+        self.terminated = True
+
+
+class FakeEditorWidget:
+    """Real test double for code editor widget."""
+
+    def __init__(self) -> None:
+        self.current_file: str | None = None
+        self.save_called: bool = False
+
+    def save_file(self) -> None:
+        """Record save file calls."""
+        self.save_called = True
 
 
 @pytest.fixture
@@ -180,25 +250,31 @@ class TestPluginEditorDialogFileOperations:
         assert dialog.editor.current_file == str(temp_plugin_file)
 
     def test_load_nonexistent_plugin_shows_error(
-        self, plugin_editor_dialog: PluginEditorDialog
+        self, plugin_editor_dialog: PluginEditorDialog, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Loading nonexistent plugin file displays error message."""
-        with patch.object(QMessageBox, "critical") as mock_critical:
-            plugin_editor_dialog.load_plugin("/nonexistent/plugin.py")
-            mock_critical.assert_called_once()
-            args = mock_critical.call_args[0]
-            assert "Failed to load plugin" in args[2]
+        fake_msgbox = FakeQMessageBox()
+        monkeypatch.setattr(QMessageBox, "critical", fake_msgbox.critical)
+
+        plugin_editor_dialog.load_plugin("/nonexistent/plugin.py")
+
+        assert len(fake_msgbox.critical_calls) == 1
+        parent, title, message = fake_msgbox.critical_calls[0]
+        assert "Failed to load plugin" in message
 
     def test_save_plugin_calls_editor_save(
-        self, plugin_editor_dialog: PluginEditorDialog
+        self, plugin_editor_dialog: PluginEditorDialog, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Save plugin calls editor's save_file method."""
-        with patch.object(plugin_editor_dialog.editor, "save_file") as mock_save:
-            plugin_editor_dialog.save_plugin()
-            mock_save.assert_called_once()
+        fake_editor = FakeEditorWidget()
+        monkeypatch.setattr(plugin_editor_dialog.editor, "save_file", fake_editor.save_file)
+
+        plugin_editor_dialog.save_plugin()
+
+        assert fake_editor.save_called
 
     def test_on_plugin_saved_emits_signal(
-        self, plugin_editor_dialog: PluginEditorDialog, temp_plugin_file: Path
+        self, plugin_editor_dialog: PluginEditorDialog, temp_plugin_file: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Plugin saved event emits plugin_saved signal with path."""
         signal_received = False
@@ -211,21 +287,26 @@ class TestPluginEditorDialogFileOperations:
 
         plugin_editor_dialog.plugin_saved.connect(signal_handler)
 
-        with patch.object(QMessageBox, "information"):
-            plugin_editor_dialog.on_plugin_saved(str(temp_plugin_file))
+        fake_msgbox = FakeQMessageBox()
+        monkeypatch.setattr(QMessageBox, "information", fake_msgbox.information)
+
+        plugin_editor_dialog.on_plugin_saved(str(temp_plugin_file))
 
         assert signal_received
         assert received_path == str(temp_plugin_file)
 
     def test_on_plugin_saved_shows_success_message(
-        self, plugin_editor_dialog: PluginEditorDialog, temp_plugin_file: Path
+        self, plugin_editor_dialog: PluginEditorDialog, temp_plugin_file: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Plugin saved event shows success message to user."""
-        with patch.object(QMessageBox, "information") as mock_info:
-            plugin_editor_dialog.on_plugin_saved(str(temp_plugin_file))
-            mock_info.assert_called_once()
-            args = mock_info.call_args[0]
-            assert "saved successfully" in args[2]
+        fake_msgbox = FakeQMessageBox()
+        monkeypatch.setattr(QMessageBox, "information", fake_msgbox.information)
+
+        plugin_editor_dialog.on_plugin_saved(str(temp_plugin_file))
+
+        assert len(fake_msgbox.information_calls) == 1
+        parent, title, message = fake_msgbox.information_calls[0]
+        assert "saved successfully" in message
 
 
 class TestPluginEditorDialogTestingTab:
@@ -252,61 +333,72 @@ class TestPluginEditorDialogTestingTab:
         assert plugin_editor_dialog.test_output.isReadOnly()
 
     def test_browse_test_file_opens_dialog(
-        self, plugin_editor_dialog: PluginEditorDialog, temp_binary_file: Path
+        self, plugin_editor_dialog: PluginEditorDialog, temp_binary_file: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Browse test file button opens file dialog and sets path."""
-        with patch.object(
-            QFileDialog, "getOpenFileName", return_value=(str(temp_binary_file), "")
-        ):
-            plugin_editor_dialog.browse_test_file()
-            assert plugin_editor_dialog.test_file_edit.text() == str(temp_binary_file)
+        fake_file_dialog = FakeFileDialog(return_path=str(temp_binary_file))
+        monkeypatch.setattr(QFileDialog, "getOpenFileName", fake_file_dialog.getOpenFileName)
+
+        plugin_editor_dialog.browse_test_file()
+
+        assert plugin_editor_dialog.test_file_edit.text() == str(temp_binary_file)
+        assert len(fake_file_dialog.get_open_file_calls) == 1
 
     def test_run_test_requires_saved_plugin(
-        self, plugin_editor_dialog: PluginEditorDialog
+        self, plugin_editor_dialog: PluginEditorDialog, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Running test without saved plugin shows warning."""
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            plugin_editor_dialog.run_test()
-            mock_warning.assert_called_once()
-            args = mock_warning.call_args[0]
-            assert "No Plugin" in args[1]
+        fake_msgbox = FakeQMessageBox()
+        monkeypatch.setattr(QMessageBox, "warning", fake_msgbox.warning)
+
+        plugin_editor_dialog.run_test()
+
+        assert len(fake_msgbox.warning_calls) == 1
+        parent, title, message = fake_msgbox.warning_calls[0]
+        assert "No Plugin" in title
 
     def test_run_test_requires_test_file(
-        self, plugin_editor_with_file: PluginEditorDialog
+        self, plugin_editor_with_file: PluginEditorDialog, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Running test without test binary shows warning."""
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            plugin_editor_with_file.run_test()
-            mock_warning.assert_called_once()
-            args = mock_warning.call_args[0]
-            assert "No Test File" in args[1]
+        fake_msgbox = FakeQMessageBox()
+        monkeypatch.setattr(QMessageBox, "warning", fake_msgbox.warning)
+
+        plugin_editor_with_file.run_test()
+
+        assert len(fake_msgbox.warning_calls) == 1
+        parent, title, message = fake_msgbox.warning_calls[0]
+        assert "No Test File" in title
 
     def test_run_test_starts_process(
-        self, plugin_editor_with_file: PluginEditorDialog, temp_binary_file: Path
+        self, plugin_editor_with_file: PluginEditorDialog, temp_binary_file: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Running test starts QProcess with plugin and binary."""
         plugin_editor_with_file.test_file_edit.setText(str(temp_binary_file))
 
-        with patch("intellicrack.ui.dialogs.plugin_editor_dialog.QProcess") as MockProcess:
-            mock_process = Mock()
-            MockProcess.return_value = mock_process
+        fake_process = FakeQProcess()
 
-            plugin_editor_with_file.run_test()
+        def create_fake_process() -> FakeQProcess:
+            return fake_process
 
-            mock_process.start.assert_called_once()
-            assert plugin_editor_with_file.run_test_btn.isEnabled() is False
-            assert plugin_editor_with_file.stop_test_btn.isEnabled() is True
+        monkeypatch.setattr("intellicrack.ui.dialogs.plugin_editor_dialog.QProcess", create_fake_process)
+
+        plugin_editor_with_file.run_test()
+
+        assert fake_process.started
+        assert plugin_editor_with_file.run_test_btn.isEnabled() is False
+        assert plugin_editor_with_file.stop_test_btn.isEnabled() is True
 
     def test_stop_test_terminates_process(
         self, plugin_editor_dialog: PluginEditorDialog
     ) -> None:
         """Stop test button terminates running test process."""
-        mock_process = Mock()
-        plugin_editor_dialog.test_process = mock_process
+        fake_process = FakeQProcess()
+        plugin_editor_dialog.test_process = fake_process
 
         plugin_editor_dialog.stop_test()
 
-        mock_process.terminate.assert_called_once()
+        assert fake_process.terminated
 
     def test_test_finished_updates_ui_state(
         self, plugin_editor_dialog: PluginEditorDialog
@@ -322,16 +414,21 @@ class TestPluginEditorDialogTestingTab:
         assert plugin_editor_dialog.test_process is None
 
     def test_run_plugin_switches_to_test_tab(
-        self, plugin_editor_with_file: PluginEditorDialog, temp_binary_file: Path
+        self, plugin_editor_with_file: PluginEditorDialog, temp_binary_file: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Run plugin button switches to testing tab."""
         plugin_editor_with_file.test_file_edit.setText(str(temp_binary_file))
 
-        with patch.object(plugin_editor_with_file.editor, "save_file"):
-            with patch("intellicrack.ui.dialogs.plugin_editor_dialog.QProcess"):
-                plugin_editor_with_file.run_plugin()
-                current_tab = plugin_editor_with_file.tab_widget.currentWidget()
-                assert current_tab == plugin_editor_with_file.test_widget
+        fake_editor = FakeEditorWidget()
+        monkeypatch.setattr(plugin_editor_with_file.editor, "save_file", fake_editor.save_file)
+
+        fake_process = FakeQProcess()
+        monkeypatch.setattr("intellicrack.ui.dialogs.plugin_editor_dialog.QProcess", lambda: fake_process)
+
+        plugin_editor_with_file.run_plugin()
+
+        current_tab = plugin_editor_with_file.tab_widget.currentWidget()
+        assert current_tab == plugin_editor_with_file.test_widget
 
 
 class TestPluginEditorDialogDocumentation:
@@ -430,61 +527,79 @@ class TestPluginEditorDialogIntegrations:
     """Test integration buttons and external dialog launches."""
 
     def test_debug_plugin_requires_saved_file(
-        self, plugin_editor_dialog: PluginEditorDialog
+        self, plugin_editor_dialog: PluginEditorDialog, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Debug plugin without saved file shows warning."""
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            plugin_editor_dialog.debug_plugin()
-            mock_warning.assert_called_once()
-            args = mock_warning.call_args[0]
-            assert "save the plugin first" in args[2].lower()
+        fake_msgbox = FakeQMessageBox()
+        monkeypatch.setattr(QMessageBox, "warning", fake_msgbox.warning)
+
+        plugin_editor_dialog.debug_plugin()
+
+        assert len(fake_msgbox.warning_calls) == 1
+        parent, title, message = fake_msgbox.warning_calls[0]
+        assert "save the plugin first" in message.lower()
 
     def test_generate_tests_requires_saved_file(
-        self, plugin_editor_dialog: PluginEditorDialog
+        self, plugin_editor_dialog: PluginEditorDialog, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Generate tests without saved file shows warning."""
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            plugin_editor_dialog.generate_tests()
-            mock_warning.assert_called_once()
-            args = mock_warning.call_args[0]
-            assert "save the plugin first" in args[2].lower()
+        fake_msgbox = FakeQMessageBox()
+        monkeypatch.setattr(QMessageBox, "warning", fake_msgbox.warning)
+
+        plugin_editor_dialog.generate_tests()
+
+        assert len(fake_msgbox.warning_calls) == 1
+        parent, title, message = fake_msgbox.warning_calls[0]
+        assert "save the plugin first" in message.lower()
 
     def test_open_ci_cd_requires_saved_file(
-        self, plugin_editor_dialog: PluginEditorDialog
+        self, plugin_editor_dialog: PluginEditorDialog, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Open CI/CD without saved file shows warning."""
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            plugin_editor_dialog.open_ci_cd()
-            mock_warning.assert_called_once()
-            args = mock_warning.call_args[0]
-            assert "save the plugin first" in args[2].lower()
+        fake_msgbox = FakeQMessageBox()
+        monkeypatch.setattr(QMessageBox, "warning", fake_msgbox.warning)
+
+        plugin_editor_dialog.open_ci_cd()
+
+        assert len(fake_msgbox.warning_calls) == 1
+        parent, title, message = fake_msgbox.warning_calls[0]
+        assert "save the plugin first" in message.lower()
 
     def test_debug_plugin_handles_import_error(
-        self, plugin_editor_with_file: PluginEditorDialog
+        self, plugin_editor_with_file: PluginEditorDialog, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Debug plugin handles missing debugger module gracefully."""
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            plugin_editor_with_file.debug_plugin()
-            if mock_warning.called:
-                args = mock_warning.call_args[0]
-                assert "Not Available" in args[1] or "Debugger" in str(args)
+        fake_msgbox = FakeQMessageBox()
+        monkeypatch.setattr(QMessageBox, "warning", fake_msgbox.warning)
+
+        plugin_editor_with_file.debug_plugin()
+
+        if len(fake_msgbox.warning_calls) > 0:
+            parent, title, message = fake_msgbox.warning_calls[0]
+            assert "Not Available" in title or "Debugger" in message
 
     def test_generate_tests_handles_import_error(
-        self, plugin_editor_with_file: PluginEditorDialog
+        self, plugin_editor_with_file: PluginEditorDialog, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Generate tests handles missing test generator gracefully."""
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            plugin_editor_with_file.generate_tests()
-            if mock_warning.called:
-                args = mock_warning.call_args[0]
-                assert "Not Available" in args[1] or "Test generator" in str(args)
+        fake_msgbox = FakeQMessageBox()
+        monkeypatch.setattr(QMessageBox, "warning", fake_msgbox.warning)
+
+        plugin_editor_with_file.generate_tests()
+
+        if len(fake_msgbox.warning_calls) > 0:
+            parent, title, message = fake_msgbox.warning_calls[0]
+            assert "Not Available" in title or "Test generator" in message
 
     def test_open_ci_cd_handles_import_error(
-        self, plugin_editor_with_file: PluginEditorDialog
+        self, plugin_editor_with_file: PluginEditorDialog, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Open CI/CD handles missing CI/CD module gracefully."""
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            plugin_editor_with_file.open_ci_cd()
-            if mock_warning.called:
-                args = mock_warning.call_args[0]
-                assert "Not Available" in args[1] or "CI/CD" in str(args)
+        fake_msgbox = FakeQMessageBox()
+        monkeypatch.setattr(QMessageBox, "warning", fake_msgbox.warning)
+
+        plugin_editor_with_file.open_ci_cd()
+
+        if len(fake_msgbox.warning_calls) > 0:
+            parent, title, message = fake_msgbox.warning_calls[0]
+            assert "Not Available" in title or "CI/CD" in message

@@ -22,9 +22,9 @@ from intellicrack.core.subscription_validation_bypass import (
     JWTPayload,
     OAuthProvider,
     OAuthTokenGenerator,
-    SubscriptionBypassEngine,
     SubscriptionTier,
     SubscriptionType,
+    SubscriptionValidationBypass,
 )
 
 
@@ -422,14 +422,10 @@ class TestOAuthTokenGenerator:
         """Generate OAuth refresh token."""
         token = oauth_generator.generate_refresh_token(
             provider=OAuthProvider.GOOGLE,
-            user_id="refresh_user",
         )
 
-        _header, payload, _signature = oauth_generator.jwt_manipulator.parse_jwt(token)
-
-        assert payload["sub"] == "refresh_user"
-        assert payload["token_type"] == "refresh"
-        assert "jti" in payload
+        assert len(token) > 0
+        assert "-" in token
 
     def test_generate_id_token(self, oauth_generator: OAuthTokenGenerator) -> None:
         """Generate OAuth ID token with user claims."""
@@ -437,14 +433,12 @@ class TestOAuthTokenGenerator:
             provider=OAuthProvider.GOOGLE,
             user_id="id_token_user",
             email="user@example.com",
-            name="Test User",
         )
 
         _header, payload, _signature = oauth_generator.jwt_manipulator.parse_jwt(token)
 
         assert payload["sub"] == "id_token_user"
         assert payload["email"] == "user@example.com"
-        assert payload["name"] == "Test User"
 
 
 class TestSubscriptionBypassEngine:

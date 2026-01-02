@@ -64,14 +64,24 @@ class ProtectionAnalyzer:
     """Comprehensive protection analysis engine for binary files."""
 
     def __init__(self, logger: logging.Logger | None = None) -> None:
-        """Initialize protection analyzer."""
+        """Initialize protection analyzer.
+
+        Args:
+            logger: Optional logger instance for debug output. If not provided,
+                a module-level logger will be created.
+        """
         self.logger = logger or get_logger(__name__)
         self.protection_signatures = self._load_protection_signatures()
         self.entropy_threshold_high = 7.5
         self.entropy_threshold_low = 1.0
 
     def _load_protection_signatures(self) -> dict[str, dict[str, Any]]:
-        """Load known protection system signatures."""
+        """Load known protection system signatures.
+
+        Returns:
+            Dictionary mapping protection identifiers to their metadata including name,
+                type, binary signatures, string patterns, and severity level.
+        """
         return {
             "upx": {
                 "name": "UPX Packer",
@@ -160,7 +170,17 @@ class ProtectionAnalyzer:
         }
 
     def analyze(self, file_path: str | Path) -> dict[str, Any]:
-        """Perform comprehensive protection analysis on a binary file."""
+        """Perform comprehensive protection analysis on a binary file.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+
+        Returns:
+            Dictionary containing file information, detected protections, entropy
+                analysis, section analysis, import analysis, anti-analysis findings,
+                recommendations, risk score, and analysis timestamp. Returns error
+                dictionary if analysis fails.
+        """
         self.logger.info("Starting protection analysis for %s", file_path)
         try:
             file_path = Path(file_path)
@@ -235,7 +255,16 @@ class ProtectionAnalyzer:
             return {"error": str(e)}
 
     def _get_file_info(self, file_path: Path, file_data: bytes) -> dict[str, Any]:
-        """Get basic file information."""
+        """Get basic file information.
+
+        Args:
+            file_path: Path object pointing to the file.
+            file_data: Raw binary data of the file.
+
+        Returns:
+            Dictionary containing filename, filepath, size, SHA256 and SHA3-256 hashes,
+                and detected file type.
+        """
         return {
             "filename": file_path.name,
             "filepath": str(file_path),
@@ -247,7 +276,14 @@ class ProtectionAnalyzer:
         }
 
     def _detect_file_type(self, file_data: bytes) -> str:
-        """Detect binary file type from magic bytes."""
+        """Detect binary file type from magic bytes.
+
+        Args:
+            file_data: Raw binary data to examine.
+
+        Returns:
+            String describing file type (PE, ELF, Mach-O, or Unknown).
+        """
         if len(file_data) < 4:
             return "Unknown"
 
@@ -266,7 +302,15 @@ class ProtectionAnalyzer:
         return "Unknown"
 
     def _detect_protections(self, file_data: bytes) -> list[dict[str, Any]]:
-        """Detect protection systems using signatures and heuristics."""
+        """Detect protection systems using signatures and heuristics.
+
+        Args:
+            file_data: Raw binary data to scan for known protections.
+
+        Returns:
+            List of detection dictionaries containing name, type, severity, and matched
+                signatures for each detected protection.
+        """
         detections = []
 
         for prot_info in self.protection_signatures.values():
@@ -283,7 +327,15 @@ class ProtectionAnalyzer:
         return detections
 
     def _analyze_entropy(self, file_data: bytes) -> dict[str, Any]:
-        """Calculate Shannon entropy of file data."""
+        """Calculate Shannon entropy of file data.
+
+        Args:
+            file_data: Raw binary data to analyze.
+
+        Returns:
+            Dictionary containing overall entropy value and lists of high and low entropy
+                section indices.
+        """
         if not file_data:
             return {
                 "overall_entropy": 0.0,
@@ -311,7 +363,16 @@ class ProtectionAnalyzer:
         }
 
     def _analyze_sections(self, file_path: Path, file_data: bytes) -> dict[str, Any]:
-        """Analyze binary sections for suspicious characteristics."""
+        """Analyze binary sections for suspicious characteristics.
+
+        Args:
+            file_path: Path object pointing to the binary file.
+            file_data: Raw binary data of the file.
+
+        Returns:
+            Dictionary containing list of sections with their properties and a filtered
+                list of suspicious sections with high entropy.
+        """
         sections: list[dict[str, Any]] = []
 
         if HAS_PEFILE and file_data[:2] == b"MZ":
@@ -337,7 +398,16 @@ class ProtectionAnalyzer:
         }
 
     def _analyze_imports(self, file_path: Path, file_data: bytes) -> dict[str, Any]:
-        """Analyze import table for suspicious API calls."""
+        """Analyze import table for suspicious API calls.
+
+        Args:
+            file_path: Path object pointing to the binary file.
+            file_data: Raw binary data of the file.
+
+        Returns:
+            Dictionary containing list of imports, suspicious imports list, and total
+                import count.
+        """
         imports = []
         suspicious_imports = []
 
@@ -374,7 +444,15 @@ class ProtectionAnalyzer:
         }
 
     def _detect_anti_analysis(self, file_data: bytes) -> dict[str, Any]:
-        """Detect anti-analysis and anti-debugging techniques."""
+        """Detect anti-analysis and anti-debugging techniques.
+
+        Args:
+            file_data: Raw binary data to scan for anti-analysis signatures.
+
+        Returns:
+            Dictionary containing detection flag, list of detected techniques, and risk
+                level assessment.
+        """
         anti_debug_signatures = {
             "IsDebuggerPresent": b"IsDebuggerPresent",
             "CheckRemoteDebuggerPresent": b"CheckRemoteDebuggerPresent",
@@ -397,7 +475,17 @@ class ProtectionAnalyzer:
         section_analysis: dict[str, Any],
         anti_analysis: dict[str, Any],
     ) -> list[str]:
-        """Generate analysis recommendations based on findings."""
+        """Generate analysis recommendations based on findings.
+
+        Args:
+            detected_protections: List of detected protection systems.
+            entropy_analysis: Entropy analysis results dictionary.
+            section_analysis: Binary section analysis results dictionary.
+            anti_analysis: Anti-analysis detection results dictionary.
+
+        Returns:
+            List of actionable recommendation strings for analysis approaches.
+        """
         recommendations: list[str] = []
 
         if detected_protections:
@@ -428,7 +516,17 @@ class ProtectionAnalyzer:
         entropy_analysis: dict[str, Any],
         anti_analysis: dict[str, Any],
     ) -> int:
-        """Calculate overall risk score (0-100)."""
+        """Calculate overall risk score (0-100).
+
+        Args:
+            detected_protections: List of detected protection systems.
+            entropy_analysis: Entropy analysis results dictionary.
+            anti_analysis: Anti-analysis detection results dictionary.
+
+        Returns:
+            Integer risk score between 0 and 100 representing overall protection
+                complexity and analysis difficulty.
+        """
         risk_score = 0
 
         risk_score += len(detected_protections) * 15
@@ -446,7 +544,11 @@ class ProtectionAnalyzer:
         return min(risk_score, 100)
 
     def _get_protection_timestamp(self) -> str:
-        """Get current timestamp for analysis."""
+        """Get current timestamp for analysis.
+
+        Returns:
+            ISO format timestamp string with UTC timezone indicator.
+        """
         from datetime import datetime
 
         return f"{datetime.utcnow().isoformat()}Z"

@@ -27,17 +27,23 @@ logger = logging.getLogger(__name__)
 
 
 def get_service_url(service_name: str, fallback: str | None = None) -> str:
-    """Get URL for a service from configuration.
+    """Retrieve URL for a service from configuration with fallback support.
+
+    Attempts to load the service URL from the configuration manager. If the URL
+    is not found and a fallback is provided, uses the fallback. Otherwise raises
+    an error. Validates that the URL uses a supported protocol.
 
     Args:
-        service_name: Name of the service
-        fallback: Optional fallback URL to use if service is not configured
+        service_name: Name of the service to look up in configuration.
+        fallback: Optional fallback URL to use if service is not configured.
 
     Returns:
-        Service URL from configuration or fallback
+        Service URL from configuration, fallback, or raises an error.
 
     Raises:
-        ConfigurationError: If service URL is not configured and no fallback provided
+        ConfigurationError: If configuration manager cannot be imported or
+            if service URL is not configured and no fallback provided, or
+            if the URL format is invalid.
 
     """
     # Import here to avoid circular imports

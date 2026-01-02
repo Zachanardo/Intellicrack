@@ -20,7 +20,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 from collections import defaultdict
-from collections.abc import Callable
 from typing import Any
 
 
@@ -63,7 +62,7 @@ class OpaquePredicateDetector:
             taken: Whether branch was taken
 
         Returns:
-            dict: Analysis results with opaque predicate detection
+            Analysis results with opaque predicate detection
 
         """
         branch_key = f"{address:x}_{condition}"
@@ -128,7 +127,7 @@ class OpaquePredicateDetector:
             condition: Branch condition
 
         Returns:
-            dict: Opaque predicate information if detected
+            Opaque predicate information if detected
 
         """
         branch_key = f"{address:x}_{condition}"
@@ -140,7 +139,7 @@ class OpaquePredicateDetector:
         """Get detection statistics.
 
         Returns:
-            dict: Statistics about detected opaque predicates
+            Statistics about detected opaque predicates
 
         """
         always_true = sum(p["type"] == "always_true" for p in self.detected_predicates.values())
@@ -157,7 +156,7 @@ class OpaquePredicateDetector:
         """Get all detected opaque predicates.
 
         Returns:
-            dict: Detected opaque predicates
+            Detected opaque predicates
 
         """
         return self.detected_predicates.copy()
@@ -196,7 +195,7 @@ class ControlFlowFlatteningHandler:
             instructions: List of instructions in block
 
         Returns:
-            dict: Analysis results with dispatcher detection
+            Analysis results with dispatcher detection
 
         """
         if not instructions:
@@ -264,7 +263,7 @@ class ControlFlowFlatteningHandler:
         """Reconstruct original control flow from observed transitions.
 
         Returns:
-            dict: Reconstructed control flow graph
+            Reconstructed control flow graph
 
         """
         return {
@@ -278,7 +277,7 @@ class ControlFlowFlatteningHandler:
         """Get all detected dispatcher blocks.
 
         Returns:
-            set: Set of dispatcher block addresses
+            Set of dispatcher block addresses
 
         """
         return self.dispatcher_blocks.copy()
@@ -310,7 +309,7 @@ class VirtualizationDetector:
             loop_body: Instructions in loop body
 
         Returns:
-            dict: VM detection results
+            VM detection results
 
         """
         if not loop_body:
@@ -401,7 +400,7 @@ class VirtualizationDetector:
         """Get detected VM context information.
 
         Returns:
-            dict: VM context with dispatch loop and handlers
+            VM context with dispatch loop and handlers
 
         """
         return {
@@ -434,7 +433,7 @@ class StringDeobfuscation:
             instructions: Function instructions
 
         Returns:
-            dict: Decryption routine analysis
+            Decryption routine analysis
 
         """
         if not instructions:
@@ -483,7 +482,7 @@ class StringDeobfuscation:
             key: Decryption key (single byte or byte array)
 
         Returns:
-            str: Decrypted plaintext string or None if invalid type
+            Decrypted plaintext string or None if invalid type
 
         """
         if encryption_type != "xor":
@@ -510,7 +509,7 @@ class StringDeobfuscation:
         """Get all decrypted strings.
 
         Returns:
-            dict: Mapping of encrypted data to decrypted strings
+            Mapping of encrypted data to decrypted strings
 
         """
         return self.decrypted_strings.copy()
@@ -524,7 +523,7 @@ class StringDeobfuscation:
             key: XOR key
 
         Returns:
-            dict: Detection results with encryption type and key
+            Detection results with encryption type and key
 
         """
         self.decryption_routines[address] = {
@@ -582,7 +581,7 @@ class ObfuscationAwareConcolicEngine:
             taken: Whether branch was taken
 
         Returns:
-            dict: Branch analysis with obfuscation detection
+            Branch analysis with obfuscation detection
 
         """
         opaque_analysis = self.opaque_detector.analyze_branch(address, condition, taken)
@@ -642,7 +641,7 @@ class ObfuscationAwareConcolicEngine:
             instructions: Block instructions
 
         Returns:
-            dict: Comprehensive obfuscation analysis
+            Comprehensive obfuscation analysis
 
         """
         results: dict[str, Any] = {
@@ -684,7 +683,7 @@ class ObfuscationAwareConcolicEngine:
             obfuscation_type: Type of obfuscation detected
 
         Returns:
-            dict: Execution strategy configuration
+            Execution strategy configuration
 
         """
         strategies: dict[str, dict[str, Any]] = {
@@ -723,7 +722,7 @@ class ObfuscationAwareConcolicEngine:
         """Generate comprehensive obfuscation analysis report.
 
         Returns:
-            dict: Detailed obfuscation report
+            Detailed obfuscation report
 
         """
         opaque_stats = self.opaque_detector.get_statistics()
@@ -755,7 +754,7 @@ class ObfuscationAwareConcolicEngine:
             address: Block address to check
 
         Returns:
-            bool: True if address is a dispatcher block
+            True if address is a dispatcher block
 
         """
         return address in self.cff_handler.dispatcher_blocks
@@ -768,7 +767,7 @@ class ObfuscationAwareConcolicEngine:
             end_address: Target ending address
 
         Returns:
-            list: Execution results
+            Execution results
 
         """
         return self.base_engine.explore() if hasattr(self.base_engine, "explore") else []
@@ -777,7 +776,7 @@ class ObfuscationAwareConcolicEngine:
         """Analyze detected obfuscation techniques.
 
         Returns:
-            dict: Obfuscation analysis results
+            Obfuscation analysis results
 
         """
         return {
@@ -806,7 +805,7 @@ def create_obfuscation_aware_engine(base_engine: object) -> ObfuscationAwareConc
         base_engine: Base concolic execution engine
 
     Returns:
-        ObfuscationAwareConcolicEngine: Enhanced engine instance
+        Enhanced engine instance
 
     """
     return ObfuscationAwareConcolicEngine(base_engine)

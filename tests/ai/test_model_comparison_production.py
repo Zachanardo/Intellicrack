@@ -11,14 +11,14 @@ the Free Software Foundation, either version 3 of the License, or
 
 import tempfile
 import time
+from collections.abc import Generator
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 
-from intellicrack.ai.llm_backends import LLMConfig, LLMManager, LLMMessage, LLMResponse
+from intellicrack.ai.llm_backends import LLMBackend, LLMConfig, LLMManager, LLMMessage, LLMProvider, LLMResponse
 from intellicrack.ai.model_comparison import (
     ComparisonReport,
     ComparisonResult,
@@ -27,7 +27,7 @@ from intellicrack.ai.model_comparison import (
 )
 
 
-class MockLLM:
+class MockLLM(LLMBackend):
     """Mock LLM for testing comparisons."""
 
     def __init__(self, model_id: str, response_delay: float = 0.1, response_text: str | None = None) -> None:
@@ -35,13 +35,21 @@ class MockLLM:
         self.model_id = model_id
         self.response_delay = response_delay
         self.response_text = response_text or f"Response from {model_id}"
-        self.config = LLMConfig(
+        config = LLMConfig(
+            provider=LLMProvider.OPENAI,
             model_name=model_id,
             temperature=0.7,
             max_tokens=500
         )
+        super().__init__(config)
+        self.is_initialized = True
 
-    def complete(self, messages: list[LLMMessage]) -> LLMResponse:
+    def initialize(self) -> bool:
+        """Initialize the mock backend."""
+        self.is_initialized = True
+        return True
+
+    def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
         """Generate mock response."""
         time.sleep(self.response_delay)
 
@@ -51,6 +59,10 @@ class MockLLM:
             model=self.model_id,
             usage={"completion_tokens": token_count, "prompt_tokens": 10}
         )
+
+    def complete(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
+        """Generate mock response (alias for chat)."""
+        return self.chat(messages, tools)
 
 
 class TestComparisonResult:
@@ -131,7 +143,7 @@ class TestModelComparison:
     """Test ModelComparison tool functionality."""
 
     @pytest.fixture
-    def temp_save_dir(self) -> Path:
+    def temp_save_dir(self) -> Generator[Path, None, None]:
         """Create temporary save directory."""
         temp_dir = tempfile.mkdtemp(prefix="comparison_test_")
         save_path = Path(temp_dir)
@@ -140,24 +152,50 @@ class TestModelComparison:
         shutil.rmtree(save_path, ignore_errors=True)
 
     @pytest.fixture
-    def mock_llm_manager(self) -> LLMManager:
-        """Create mock LLM manager with test models."""
-        manager = MagicMock(spec=LLMManager)
+    def mock_llm_manager(self) -> "FakeLLMManager":
+        """Create fake LLM manager with test models."""
+        manager = FakeLLMManager()
 
-        fast_llm = MockLLM("fast-model", response_delay=0.05, response_text="Quick response about license analysis")
-        slow_llm = MockLLM("slow-model", response_delay=0.15, response_text="Detailed response about license bypass strategies")
-        efficient_llm = MockLLM("efficient-model", response_delay=0.08, response_text="Efficient license cracking approach")
+        manager.register_model("fast-model", MockLLM("fast-model", response_delay=0.05, response_text="Quick response about license analysis"))
+        manager.register_model("slow-model", MockLLM("slow-model", response_delay=0.15, response_text="Detailed response about license bypass strategies"))
+        manager.register_model("efficient-model", MockLLM("efficient-model", response_delay=0.08, response_text="Efficient license cracking approach"))
 
-        def get_llm(model_id: str) -> MockLLM | None:
-            models = {
-                "fast-model": fast_llm,
-                "slow-model": slow_llm,
-                "efficient-model": efficient_llm
-            }
-            return models.get(model_id)
-
-        manager.get_llm = get_llm
         return manager
+
+
+class FakeLLMManager(LLMManager):
+    """Test double for LLM Manager that bypasses singleton pattern."""
+
+    def __new__(cls, enable_lazy_loading: bool = True, enable_background_loading: bool = True) -> "FakeLLMManager":
+        """Create new instance bypassing singleton."""
+        instance = object.__new__(cls)
+        return instance
+
+    def __init__(self, enable_lazy_loading: bool = False, enable_background_loading: bool = False) -> None:
+        """Initialize with tracking for registered models."""
+        self._initialized = False
+        self.backends: dict[str, LLMBackend] = {}
+        self.configs: dict[str, LLMConfig] = {}
+        self.active_backend: str | None = None
+        self.enable_lazy_loading = enable_lazy_loading
+        self.enable_background_loading = enable_background_loading
+        self.lazy_manager: Any = None
+        self.lazy_wrappers: dict[str, Any] = {}
+        self.background_loader: Any = None
+        self.loading_tasks: dict[str, Any] = {}
+        self.progress_callbacks: list[Any] = []
+        self.models: dict[str, MockLLM] = {}
+        import threading
+        self.lock = threading.RLock()
+        self._initialized = True
+
+    def register_model(self, model_id: str, llm: MockLLM) -> None:
+        """Register a mock model."""
+        self.models[model_id] = llm
+
+    def get_llm(self, model_id: str) -> LLMBackend | None:
+        """Get a registered mock LLM."""
+        return self.models.get(model_id)
 
     @pytest.fixture
     def comparison_tool(self, mock_llm_manager: LLMManager, temp_save_dir: Path) -> ModelComparison:
@@ -459,7 +497,7 @@ class TestGlobalComparisonTool:
 
     def test_get_comparison_tool_with_manager(self) -> None:
         """Global comparison tool can be initialized with LLM manager."""
-        manager = MagicMock(spec=LLMManager)
+        manager = FakeLLMManager()
         tool = get_comparison_tool(llm_manager=manager)
 
         assert isinstance(tool, ModelComparison)
@@ -469,7 +507,7 @@ class TestComparisonEdgeCases:
     """Test edge cases and error handling."""
 
     @pytest.fixture
-    def comparison_tool(self) -> ModelComparison:
+    def comparison_tool(self) -> Generator[ModelComparison, None, None]:
         """Create comparison tool for edge case testing."""
         temp_dir = tempfile.mkdtemp(prefix="comparison_edge_")
         tool = ModelComparison(llm_manager=None)

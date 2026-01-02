@@ -7,11 +7,13 @@ Tests the model import components implemented for Intellicrack without full syst
 import sys
 import os
 
-def test_bridge_function():
+from intellicrack.utils.path_resolver import get_project_root
+
+
+def test_bridge_function() -> bool:
     """Test that the bridge function exists and can be imported."""
     print("Testing bridge function...")
     try:
-        from intellicrack.utils.path_resolver import get_project_root
         with open(get_project_root() / "intellicrack/ai/llm_backends.py", encoding='utf-8') as f:
             content = f.read()
 
@@ -27,7 +29,7 @@ def test_bridge_function():
         print(f"FAIL Bridge function test failed: {e}")
         return False
 
-def test_onnx_backend_generation():
+def test_onnx_backend_generation() -> bool:
     """Test that ONNX backend has iterative generation."""
     print("Testing ONNX backend generation...")
     try:
@@ -52,7 +54,7 @@ def test_onnx_backend_generation():
         print(f"FAIL ONNX backend test failed: {e}")
         return False
 
-def test_model_discovery_methods():
+def test_model_discovery_methods() -> bool:
     """Test that model discovery methods exist in ai_script_generator."""
     with open(get_project_root() / "intellicrack/ai/ai_script_generator.py", encoding='utf-8') as f:
         content = f.read()
@@ -73,7 +75,7 @@ def test_model_discovery_methods():
         print(f"FAIL Missing methods. Found: {methods_found}")
         return False
 
-def test_model_path_parameters():
+def test_model_path_parameters() -> bool:
     """Test that model_path parameters were added to class constructors."""
     print("Testing model_path parameters...")
     try:
@@ -107,7 +109,7 @@ def test_model_path_parameters():
         print(f"FAIL Model path parameter test failed: {e}")
         return False
 
-def test_file_extensions():
+def test_file_extensions() -> bool:
     """Test that file extension detection covers all required formats."""
     print("Testing file extension coverage...")
     try:
@@ -134,7 +136,7 @@ def test_file_extensions():
         print(f"FAIL File extension test failed: {e}")
         return False
 
-def main():
+def main() -> bool:
     """Run all AI model import integration tests."""
     print("🔄 Running AI Model Import Integration Tests...")
     print("=" * 60)

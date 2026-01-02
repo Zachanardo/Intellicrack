@@ -31,7 +31,7 @@ import types
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, TypedDict, cast
+from typing import TYPE_CHECKING, Any, TypedDict, cast
 
 from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT as PYQT6_AVAILABLE,
@@ -65,7 +65,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
-from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, nn, torch
+from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, torch
 
 
 if TYPE_CHECKING:
@@ -227,7 +227,12 @@ class TrainingConfig:
     logging_steps: int = 10
 
     def to_enhanced_config(self) -> "EnhancedTrainingConfiguration | None":
-        """Convert TrainingConfig to EnhancedTrainingConfiguration if available."""
+        """Convert TrainingConfig to EnhancedTrainingConfiguration if available.
+
+        Returns:
+            EnhancedTrainingConfiguration instance if available, None otherwise.
+
+        """
         if ENHANCED_TRAINING_AVAILABLE:
             return EnhancedTrainingConfiguration(
                 model_name=os.path.basename(self.model_path) if self.model_path else "model",
@@ -271,7 +276,7 @@ class TrainingThread(QThread):
         """Initialize training thread.
 
         Args:
-            config: Training configuration parameters
+            config: Training configuration parameters.
 
         """
         if PYQT6_AVAILABLE:
@@ -344,14 +349,20 @@ class TrainingThread(QThread):
                 )
 
     def _load_model(self) -> None:
-        """Load the base model and tokenizer."""
+        """Load the base model and tokenizer.
+
+        Raises:
+            OSError: If model files cannot be read from disk.
+            RuntimeError: If required framework is not available for model loading.
+            ValueError: If model format is invalid or model configuration is corrupted.
+        """
         try:
             model_path = self.config.model_path
 
             if TRANSFORMERS_AVAILABLE and self.config.model_format == "Transformers":
                 import torch as torch_local
 
-                self.tokenizer = cast("object", AutoTokenizer.from_pretrained(model_path))  # type: ignore[no-untyped-call]
+                self.tokenizer = cast("object", AutoTokenizer.from_pretrained(model_path))
                 self.model = AutoModelForCausalLM.from_pretrained(
                     model_path,
                     torch_dtype=torch_local.float16 if TORCH_AVAILABLE else None,
@@ -394,6 +405,9 @@ class TrainingThread(QThread):
         This function creates a realistic transformer model with proper initialization,
         multiple architecture options, and comprehensive configuration that can be used
         for actual fine-tuning experiments and testing.
+
+        Raises:
+            Exception: If model creation fails due to invalid configuration or framework issues.
         """
         try:
             if TORCH_AVAILABLE:
@@ -460,6 +474,8 @@ class TrainingThread(QThread):
         Returns:
             GPTModel instance with causal attention masking and proper positional encoding.
 
+        Raises:
+            RuntimeError: If PyTorch is not available for model creation.
         """
         if not TORCH_AVAILABLE:
             raise RuntimeError("PyTorch required for model creation")
@@ -474,7 +490,15 @@ class TrainingThread(QThread):
             """
 
             def __init__(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int) -> None:
-                """Initialize GPT model architecture with specified parameters."""
+                """Initialize GPT model architecture with specified parameters.
+
+                Args:
+                    vocab_size: Size of the vocabulary for token embeddings.
+                    hidden_size: Dimensionality of the hidden representations.
+                    num_layers: Number of transformer layers.
+                    num_heads: Number of attention heads.
+
+                """
                 super().__init__()
                 self.hidden_size = hidden_size
                 self.num_layers = num_layers
@@ -506,7 +530,13 @@ class TrainingThread(QThread):
                     """A single GPT transformer block with attention and feed-forward layers."""
 
                     def __init__(self, hidden_size: int, num_heads: int) -> None:
-                        """Initialize GPT block with attention and feed-forward layers."""
+                        """Initialize GPT block with attention and feed-forward layers.
+
+                        Args:
+                            hidden_size: Dimensionality of hidden representations.
+                            num_heads: Number of attention heads.
+
+                        """
                         super().__init__()
                         self.attention = nn_local.MultiheadAttention(
                             hidden_size,
@@ -528,10 +558,10 @@ class TrainingThread(QThread):
 
                         Args:
                             x: Input tensor of shape (batch_size, seq_len, hidden_size).
-                            attention_mask: Optional attention mask for masking positions.
+                            attention_mask: Optional attention mask to prevent attending to padding tokens.
 
                         Returns:
-                            Tensor of shape (batch_size, seq_len, hidden_size).
+                            Output tensor of shape (batch_size, seq_len, hidden_size).
 
                         """
                         # Pre-norm attention
@@ -590,6 +620,8 @@ class TrainingThread(QThread):
         Returns:
             BERTModel instance with masked language modeling capabilities.
 
+        Raises:
+            RuntimeError: If PyTorch is not available for model creation.
         """
         if not TORCH_AVAILABLE:
             raise RuntimeError("PyTorch required for model creation")
@@ -604,7 +636,15 @@ class TrainingThread(QThread):
             """
 
             def __init__(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int) -> None:
-                """Initialize BERT model architecture with specified parameters."""
+                """Initialize BERT model architecture with specified parameters.
+
+                Args:
+                    vocab_size: Size of the vocabulary for token embeddings.
+                    hidden_size: Dimensionality of the hidden representations.
+                    num_layers: Number of transformer encoder layers.
+                    num_heads: Number of attention heads.
+
+                """
                 super().__init__()
                 self.hidden_size = hidden_size
                 self.max_position_embeddings = 512
@@ -691,6 +731,8 @@ class TrainingThread(QThread):
         Returns:
             RoBERTa model based on BERT architecture without token type embeddings.
 
+        Raises:
+            RuntimeError: If PyTorch is not available for model creation.
         """
         if not TORCH_AVAILABLE:
             raise RuntimeError("PyTorch required for model creation")
@@ -712,6 +754,8 @@ class TrainingThread(QThread):
         Returns:
             LlamaModel instance with RMSNorm and SwiGLU activation.
 
+        Raises:
+            RuntimeError: If PyTorch is not available for model creation.
         """
         if not TORCH_AVAILABLE:
             raise RuntimeError("PyTorch required for model creation")
@@ -726,7 +770,15 @@ class TrainingThread(QThread):
             """
 
             def __init__(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int) -> None:
-                """Initialize LLaMA model architecture with specified parameters."""
+                """Initialize LLaMA model architecture with specified parameters.
+
+                Args:
+                    vocab_size: Size of the vocabulary for token embeddings.
+                    hidden_size: Dimensionality of the hidden representations.
+                    num_layers: Number of transformer layers.
+                    num_heads: Number of attention heads.
+
+                """
                 super().__init__()
                 self.hidden_size = hidden_size
                 self.num_heads = num_heads
@@ -753,7 +805,13 @@ class TrainingThread(QThread):
                     """RMS normalization layer for transformer models."""
 
                     def __init__(self, hidden_size: int, eps: float = 1e-6) -> None:
-                        """Initialize RMS normalization with hidden size and epsilon."""
+                        """Initialize RMS normalization with hidden size and epsilon.
+
+                        Args:
+                            hidden_size: Dimensionality of the normalization weight.
+                            eps: Small value to prevent division by zero.
+
+                        """
                         super().__init__()
                         self.weight = nn_local.Parameter(torch_local.ones(hidden_size))
                         self.eps = eps
@@ -790,7 +848,13 @@ class TrainingThread(QThread):
                     """Single layer of a LLaMA transformer model."""
 
                     def __init__(self, hidden_size: int, num_heads: int) -> None:
-                        """Initialize LLaMA layer with attention and feed-forward networks."""
+                        """Initialize LLaMA layer with attention and feed-forward networks.
+
+                        Args:
+                            hidden_size: Dimensionality of hidden representations.
+                            num_heads: Number of attention heads.
+
+                        """
                         super().__init__()
                         self.attention_norm = parent._create_rms_norm(hidden_size)
                         self.attention = nn_local.MultiheadAttention(
@@ -869,6 +933,8 @@ class TrainingThread(QThread):
         Returns:
             EnhancedTransformerModel instance with modern architectural improvements.
 
+        Raises:
+            RuntimeError: If PyTorch is not available for model creation.
         """
         if not TORCH_AVAILABLE:
             raise RuntimeError("PyTorch required for model creation")
@@ -883,7 +949,15 @@ class TrainingThread(QThread):
             """
 
             def __init__(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int) -> None:
-                """Initialize enhanced transformer with modern architectural improvements."""
+                """Initialize enhanced transformer with modern architectural improvements.
+
+                Args:
+                    vocab_size: Size of the vocabulary for token embeddings.
+                    hidden_size: Dimensionality of the hidden representations.
+                    num_layers: Number of transformer layers.
+                    num_heads: Number of attention heads.
+
+                """
                 super().__init__()
                 self.hidden_size = hidden_size
                 self.num_heads = num_heads
@@ -915,7 +989,13 @@ class TrainingThread(QThread):
                     """Enhanced transformer layer with modern improvements and optimizations."""
 
                     def __init__(self, hidden_size: int, num_heads: int) -> None:
-                        """Initialize enhanced transformer layer with pre-norm and improved attention."""
+                        """Initialize enhanced transformer layer with pre-norm and improved attention.
+
+                        Args:
+                            hidden_size: Dimensionality of hidden representations.
+                            num_heads: Number of attention heads.
+
+                        """
                         super().__init__()
                         self.attention_norm = nn_local.LayerNorm(hidden_size)
                         self.attention = nn_local.MultiheadAttention(
@@ -1025,6 +1105,12 @@ class TrainingThread(QThread):
             """
 
             def __init__(self, vocab_size: int) -> None:
+                """Initialize the tokenizer with a vocabulary.
+
+                Args:
+                    vocab_size: Size of the vocabulary to create.
+
+                """
                 self.vocab_size = vocab_size
                 self.vocab = self._create_vocabulary(vocab_size)
                 self.token_to_id = {token: idx for idx, token in enumerate(self.vocab)}
@@ -1217,6 +1303,12 @@ class TrainingThread(QThread):
                 return " ".join(tokens)
 
             def __len__(self) -> int:
+                """Return the size of the vocabulary.
+
+                Returns:
+                    Size of the vocabulary.
+
+                """
                 return self.vocab_size
 
         return MinimalTokenizer(vocab_size)
@@ -1231,6 +1323,12 @@ class TrainingThread(QThread):
         from torch import nn as nn_local
 
         def init_weights(module: TorchModule) -> None:
+            """Initialize weights for a neural network module using standard strategies.
+
+            Args:
+                module: The neural network module to initialize.
+
+            """
             if isinstance(module, nn_local.Linear):
                 torch_local.nn.init.xavier_uniform_(module.weight)
                 if module.bias is not None:
@@ -1251,12 +1349,20 @@ class TrainingThread(QThread):
         self.logger.info("Model weights initialized with Xavier/normal initialization")
 
     def _add_model_metadata(self, model_type: str, vocab_size: int, hidden_size: int, num_layers: int) -> None:
-        """Add comprehensive metadata to the model."""
+        """Add comprehensive metadata to the model.
+
+        Args:
+            model_type: Type of model (gpt, bert, roberta, llama, etc.).
+            vocab_size: Size of the vocabulary.
+            hidden_size: Dimensionality of hidden representations.
+            num_layers: Number of layers in the model.
+
+        """
         if self.model is None:
             return
         model = self.model
         if not hasattr(model, "config"):
-            setattr(model, "config", {})
+            model.config = {}
 
         model_config = getattr(model, "config", {})
         if isinstance(model_config, dict):
@@ -1287,10 +1393,20 @@ class TrainingThread(QThread):
             "warmup_steps": getattr(self.config, "warmup_steps", 1000),
             "weight_decay": getattr(self.config, "weight_decay", 0.01),
         }
-        setattr(model, "training_config", training_config)
+        model.training_config = training_config
 
     def _estimate_parameter_count(self, hidden_size: int, num_layers: int, vocab_size: int) -> int:
-        """Estimate the number of parameters in the model."""
+        """Estimate the number of parameters in the model.
+
+        Args:
+            hidden_size: Dimensionality of hidden representations.
+            num_layers: Number of layers in the model.
+            vocab_size: Size of the vocabulary.
+
+        Returns:
+            Estimated number of parameters in the model.
+
+        """
         # Rough estimation for transformer models
         embedding_params = vocab_size * hidden_size * 2  # Token + position embeddings
         layer_params = num_layers * ((hidden_size**2 * 4 * 3 + hidden_size**2 * 4 * 2) + hidden_size * 4)
@@ -1315,7 +1431,6 @@ class TrainingThread(QThread):
 
         Raises:
             FileNotFoundError: If the dataset file does not exist.
-            OSError: If there are issues reading the dataset file.
 
         """
         try:
@@ -1377,6 +1492,11 @@ class TrainingThread(QThread):
         Args:
             dataset: Training dataset for setup configuration.
 
+        Raises:
+            OSError: If training configuration files cannot be accessed.
+            ValueError: If training configuration parameters are invalid.
+            RuntimeError: If training configuration cannot be set up.
+
         """
         _ = dataset
         try:
@@ -1421,7 +1541,12 @@ class TrainingThread(QThread):
             raise
 
     def _train_model(self) -> None:
-        """Execute sophisticated license-focused model training with real neural network optimization."""
+        """Execute sophisticated license-focused model training with real neural network optimization.
+
+        Raises:
+            ValueError: If the model is not initialized or does not implement training functionality.
+
+        """
         try:
             if self.model is None:
                 error_msg = "Model not initialized before training"
@@ -1732,6 +1857,9 @@ class TrainingThread(QThread):
             training_data: Tuple of (X_train, y_train) training tensors.
             validation_data: Optional tuple of (X_val, y_val) validation tensors.
 
+        Raises:
+            ImportError: If PyTorch is not available for model training.
+
         """
         if self.model is None:
             self.logger.exception("Model is not initialized for PyTorch training")
@@ -1787,7 +1915,7 @@ class TrainingThread(QThread):
 
                 for _batch_idx, (batch_x, batch_y) in enumerate(train_loader):
                     if self.is_stopped:
-                        break  # type: ignore[unreachable]
+                        break
 
                     # Move to device if available
                     if hasattr(self, "training_device") and torch.cuda.is_available():
@@ -1960,7 +2088,12 @@ class LicenseAnalysisNeuralNetwork:
     """Production-ready neural network for binary analysis when PyTorch unavailable."""
 
     def __init__(self) -> None:
-        """Initialize license analysis neural network with sophisticated architecture."""
+        """Initialize license analysis neural network with sophisticated architecture.
+
+        Sets up network weights, configuration, and pattern recognition for
+        license protection analysis.
+
+        """
         import json
 
         import numpy as np
@@ -2397,7 +2530,7 @@ class LicenseAnalysisNeuralNetwork:
         self.training = False
 
         if not isinstance(binary_features, self.np.ndarray):
-            binary_features = self.np.array(binary_features)  # type: ignore[unreachable]
+            binary_features = self.np.array(binary_features)
 
         if len(binary_features.shape) == 1:
             binary_features = binary_features.reshape(1, -1)
@@ -2607,7 +2740,12 @@ class ModelFinetuningDialog(QDialog):
             return tensor_or_model
 
     def _get_device_info_text(self) -> str:
-        """Get formatted device information text."""
+        """Get formatted device information text.
+
+        Returns:
+            Formatted string with device information including training device and GPU details.
+
+        """
         try:
             if GPU_AUTOLOADER_AVAILABLE:
                 device_info = f"Training Device: {self.training_device}\n"
@@ -3143,7 +3281,13 @@ class ModelFinetuningDialog(QDialog):
             self.logger.exception("Error stopping training: %s", e)
 
     def _update_training_progress(self, progress: dict[str, Any]) -> None:
-        """Update training progress display."""
+        """Update training progress display.
+
+        Args:
+            progress: Dictionary containing training progress data with keys like
+                status, step, loss, lr, progress, history, and optionally error.
+
+        """
         try:
             if "error" in progress:
                 self.training_log.append(f"Error: {progress['error']}")
@@ -3212,7 +3356,11 @@ class ModelFinetuningDialog(QDialog):
             self.logger.exception("Error handling training completion: %s", e)
 
     def _save_model(self) -> None:
-        """Save the fine-tuned model."""
+        """Save the fine-tuned model.
+
+        Raises:
+            OSError: If the model file cannot be written to disk or file operations fail.
+        """
         try:
             save_path, _ = QFileDialog.getSaveFileName(
                 self,
@@ -3360,7 +3508,12 @@ class ModelFinetuningDialog(QDialog):
             QMessageBox.warning(self, "Preview Error", f"Error loading dataset preview: {e!s}")
 
     def _add_dataset_row(self, sample: dict[str, Any]) -> None:
-        """Add a sample to the dataset preview table."""
+        """Add a sample to the dataset preview table.
+
+        Args:
+            sample: Dictionary containing the data sample with input/output pairs.
+
+        """
         row = self.dataset_preview.rowCount()
         self.dataset_preview.insertRow(row)
 
@@ -3376,7 +3529,16 @@ class ModelFinetuningDialog(QDialog):
         self.dataset_preview.setItem(row, 1, output_item)
 
     def _truncate_text(self, text: str, max_length: int = 100) -> str:
-        """Truncate text to maximum length."""
+        """Truncate text to maximum length.
+
+        Args:
+            text: Text string to truncate.
+            max_length: Maximum length before truncation.
+
+        Returns:
+            Truncated text with ellipsis if exceeds max_length, otherwise original text.
+
+        """
         return f"{text[:max_length]}..." if len(text) > max_length else text
 
     def _create_dataset(self) -> None:
@@ -3444,7 +3606,15 @@ class ModelFinetuningDialog(QDialog):
             QMessageBox.critical(self, "Dataset Creation Error", str(e))
 
     def _get_sample_data(self, template: str) -> str:
-        """Get sample data for a template."""
+        """Get sample data for a template.
+
+        Args:
+            template: Name of the template to retrieve sample data for.
+
+        Returns:
+            JSON formatted sample data for the specified template.
+
+        """
         samples = {
             "Binary Analysis Q&A": json.dumps(
                 [
@@ -3482,7 +3652,13 @@ class ModelFinetuningDialog(QDialog):
         return samples.get(template, "")
 
     def _generate_dataset(self, template: str, dialog: QDialog) -> None:
-        """Generate a dataset from template."""
+        """Generate a dataset from template.
+
+        Args:
+            template: Name of the template to use for dataset generation.
+            dialog: Parent dialog to show save dialog within.
+
+        """
         try:
             save_path, _ = QFileDialog.getSaveFileName(
                 dialog,
@@ -3558,7 +3734,12 @@ class ModelFinetuningDialog(QDialog):
             QMessageBox.critical(self, "Validation Error", str(e))
 
     def _export_dataset(self) -> None:
-        """Export dataset in different format."""
+        """Export dataset in different format.
+
+        Allows exporting the currently selected dataset to various formats including
+        JSON, JSONL, and CSV with automatic format conversion.
+
+        """
         try:
             source_path = self.dataset_path_edit.text()
             if not source_path or not os.path.exists(source_path):
@@ -3676,7 +3857,16 @@ class ModelFinetuningDialog(QDialog):
             QMessageBox.critical(self, "Preview Error", str(e))
 
     def _apply_augmentation_technique(self, text: str, technique: str) -> str:
-        """Apply a specific augmentation technique to text."""
+        """Apply a specific augmentation technique to text.
+
+        Args:
+            text: Input text to augment.
+            technique: Name of augmentation technique (synonym_replacement, random_insertion, etc.).
+
+        Returns:
+            Augmented text using the specified technique.
+
+        """
         words = text.split()
 
         if technique == "synonym_replacement" and NLTK_AVAILABLE:
@@ -3726,7 +3916,12 @@ class ModelFinetuningDialog(QDialog):
         return " ".join(words)
 
     def _apply_augmentation(self) -> None:
-        """Apply augmentation to the dataset."""
+        """Apply augmentation to the dataset.
+
+        Applies selected augmentation techniques to create an augmented version
+        of the dataset with more training samples.
+
+        """
         try:
             dataset_path = self.dataset_path_edit.text()
             if not dataset_path or not os.path.exists(dataset_path):
@@ -3810,7 +4005,12 @@ class ModelFinetuningDialog(QDialog):
             QMessageBox.critical(self, "Augmentation Error", str(e))
 
     def _update_visualization(self, history: list[dict[str, Any]]) -> None:
-        """Update training visualization with loss curve."""
+        """Update training visualization with loss curve.
+
+        Args:
+            history: List of training history dictionaries containing step and loss information.
+
+        """
         try:
             if not history or not MATPLOTLIB_AVAILABLE or plt is None:
                 return
@@ -3855,7 +4055,11 @@ class ModelFinetuningDialog(QDialog):
             self.logger.exception("Failed to update visualization: %s", e)
 
     def _export_metrics(self) -> None:
-        """Export training metrics to file."""
+        """Export training metrics to file.
+
+        Exports training history and configuration metrics in JSON or CSV format.
+
+        """
         try:
             if self.training_thread is None or not self.training_thread.training_history:
                 QMessageBox.warning(self, "No Metrics", "No training metrics available to export.")
@@ -3898,7 +4102,12 @@ class ModelFinetuningDialog(QDialog):
             QMessageBox.critical(self, "Export Error", str(e))
 
     def _save_plot(self) -> None:
-        """Save the current training plot."""
+        """Save the current training plot.
+
+        Saves the training loss curve visualization to a PNG or PDF file with
+        summary statistics displayed.
+
+        """
         try:
             if self.training_thread is None or not self.training_thread.training_history:
                 QMessageBox.warning(self, "No Plot", "No training plot available to save.")
@@ -3957,7 +4166,12 @@ class ModelFinetuningDialog(QDialog):
             QMessageBox.critical(self, "Save Error", str(e))
 
     def _open_enhanced_training(self) -> None:
-        """Open the enhanced training interface with current configuration."""
+        """Open the enhanced training interface with current configuration.
+
+        Launches the enhanced training interface if available, passing the current
+        training configuration.
+
+        """
         try:
             if not ENHANCED_TRAINING_AVAILABLE:
                 QMessageBox.warning(
@@ -3993,7 +4207,12 @@ class ModelFinetuningDialog(QDialog):
             QMessageBox.critical(self, "Enhanced Training Error", f"Error opening enhanced training interface:\n{e}")
 
     def _get_current_config(self) -> TrainingConfig:
-        """Get current training configuration from UI."""
+        """Get current training configuration from UI.
+
+        Returns:
+            Current configuration with values from UI widgets.
+
+        """
         config = TrainingConfig()
 
         # Update config with current UI values
@@ -4011,7 +4230,12 @@ class ModelFinetuningDialog(QDialog):
         return config
 
     def _show_help(self) -> None:
-        """Show help dialog with usage instructions."""
+        """Show help dialog with usage instructions.
+
+        Displays comprehensive help documentation with model training, dataset management,
+        data augmentation, and training metrics information.
+
+        """
         help_text = """
 <h2>AI Model Fine-Tuning Help</h2>
 

@@ -90,8 +90,31 @@ class R2PatchIntegrator:
                 "binary_patches": [],
             }
 
-    def _generate_r2_bypass_patches(self, binary_path: str, license_analysis: dict[str, Any]) -> dict[str, Any]:
-        """Generate bypass patches using the enhanced R2 bypass generator."""
+    def _generate_r2_bypass_patches(
+        self,
+        binary_path: str,
+        license_analysis: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Generate bypass patches using the enhanced R2 bypass generator.
+
+        Leverages the enhanced R2 bypass generator to create automation-ready
+        patch instructions from binary analysis and licensing protection data.
+        This integrates real-time patching capabilities with offline patch
+        generation for comprehensive licensing bypass coverage.
+
+        Args:
+            binary_path: Absolute path to the binary file for patch generation.
+            license_analysis: Licensing protection analysis results dictionary
+                containing detection data, protection markers, and validation
+                routine offsets from Radare2 analysis.
+
+        Returns:
+            Dictionary containing two keys: 'automated_patches' (list of
+            automated patch dictionaries) and 'memory_patches' (list of
+            memory-based patch instructions). Empty lists are returned on
+            error conditions.
+
+        """
         try:
             generator = self.bypass_generator or R2BypassGenerator(binary_path)
             if generator is not self.bypass_generator:

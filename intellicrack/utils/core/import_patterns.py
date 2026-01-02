@@ -19,7 +19,9 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 Common import patterns used across the Intellicrack codebase.
 
 This module provides centralized import handling for commonly used libraries
-with consistent error handling and availability flags.
+with consistent error handling and availability flags. It includes lazy loading
+for binary analysis tools (pefile, capstone, lief, pyelftools, macholib),
+Android/Java analysis tools (zipfile, XML parsing), and system tools (psutil).
 """
 
 import logging
@@ -77,7 +79,7 @@ except ImportError:
     logger.debug("pyelftools not available")
 
 try:
-    from macholib.MachO import MachO  # type: ignore[no-redef]
+    from macholib.MachO import MachO
 
     MACHOLIB_AVAILABLE = True
 except ImportError:
@@ -93,19 +95,9 @@ except ImportError:
     ZIPFILE_AVAILABLE = False
     logger.debug("zipfile not available")
 
-ET: Any = None
-try:
-    import defusedxml.ElementTree as ET  # type: ignore[no-redef]  # noqa: N817
+from defusedxml import ElementTree as ET
 
-    XML_AVAILABLE = True
-except ImportError:
-    try:
-        import xml.etree.ElementTree as ET  # noqa: S405
-
-        XML_AVAILABLE = True
-    except ImportError:
-        XML_AVAILABLE = False
-        logger.debug("xml.etree.ElementTree not available")
+XML_AVAILABLE = True
 
 # System tools
 try:
@@ -121,7 +113,7 @@ def get_pefile() -> Any:
     """Get pefile module if available.
 
     Returns:
-        The pefile module if available, None otherwise.
+        The pefile module if available, or None if not.
 
     """
     return pefile
@@ -131,7 +123,8 @@ def get_capstone() -> dict[str, object]:
     """Get capstone module components if available.
 
     Returns:
-        Dictionary containing Capstone disassembler components and availability flag.
+        Dictionary containing Cs disassembler class, architecture and mode
+        constants, and availability flag.
 
     """
     return {
@@ -147,7 +140,7 @@ def get_lief() -> Any:
     """Get lief module if available.
 
     Returns:
-        The lief module if available, None otherwise.
+        The lief module if available, or None if not.
 
     """
     return lief
@@ -157,7 +150,7 @@ def get_elftools() -> dict[str, object]:
     """Get elftools components if available.
 
     Returns:
-        Dictionary containing ELF file reader and availability flag.
+        Dictionary containing ELFFile class and availability flag.
 
     """
     return {
@@ -170,7 +163,7 @@ def get_macholib() -> dict[str, object]:
     """Get macholib components if available.
 
     Returns:
-        Dictionary containing Mach-O binary reader and availability flag.
+        Dictionary containing MachO class and availability flag.
 
     """
     return {
@@ -196,7 +189,7 @@ def get_xml() -> dict[str, object]:
     """Get XML parsing components if available.
 
     Returns:
-        Dictionary containing ElementTree XML parser and availability flag.
+        Dictionary containing ElementTree parser and availability flag.
 
     """
     return {
@@ -209,7 +202,7 @@ def get_psutil() -> Any:
     """Get psutil module if available.
 
     Returns:
-        The psutil module if available, None otherwise.
+        The psutil module if available, or None if not.
 
     """
     return psutil

@@ -5,7 +5,6 @@ All tests validate intelligent decision-making for real protection scenarios.
 """
 
 import logging
-from unittest.mock import Mock
 
 import pytest
 

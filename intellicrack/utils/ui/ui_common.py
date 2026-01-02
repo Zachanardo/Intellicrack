@@ -24,31 +24,18 @@ from __future__ import annotations
 
 import os
 import webbrowser
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from intellicrack.types.ui import (
-    BinarySelectionWidgets,
-    LayoutProtocol,
-    StandardButton,
-    WidgetProtocol,
-    get_file_dialog,
-    get_message_box,
-)
+from intellicrack.types.ui import BinarySelectionWidgets, LayoutProtocol, StandardButton, WidgetProtocol, get_file_dialog, get_message_box
 from intellicrack.utils.logger import logger
 
 
 if TYPE_CHECKING:
-    pass
+    from collections.abc import Callable
+
 
 try:
-    from PyQt6.QtWidgets import (
-        QGroupBox,
-        QHBoxLayout,
-        QLabel,
-        QLineEdit,
-        QPushButton,
-    )
+    from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton
 
     HAS_PYQT = True
 except ImportError as e:
@@ -60,11 +47,11 @@ def ask_open_report(parent: WidgetProtocol | None, report_path: str) -> bool:
     """Ask user if they want to open a generated report.
 
     Args:
-        parent: Parent widget (WidgetProtocol or None)
-        report_path: Path to the report file
+        parent: Parent widget.
+        report_path: Path to the report file.
 
     Returns:
-        True if report was opened
+        True if report was opened, False otherwise.
 
     """
     MessageBox = get_message_box()
@@ -96,13 +83,13 @@ def get_save_filename(
     """Show file save dialog and get filename.
 
     Args:
-        parent: Parent widget (WidgetProtocol or None)
-        caption: Dialog caption
-        filter_str: File filter string
-        default_suffix: Default file suffix to add if missing
+        parent: Parent widget.
+        caption: Dialog caption.
+        filter_str: File filter string.
+        default_suffix: Default file suffix to add if missing.
 
     Returns:
-        Selected filename or None
+        Selected filename or None if dialog is cancelled or an error occurs.
 
     """
     FileDialog = get_file_dialog()
@@ -133,17 +120,13 @@ def create_binary_selection_header(
     """Create a standard binary selection header widget.
 
     Args:
-        parent_layout: Layout to add the header to (must implement LayoutProtocol)
-        binary_path: Initial binary path
-        show_label: Whether to show "Binary Path:" label
-        extra_buttons: List of (button_text, callback) tuples for additional buttons
+        parent_layout: Layout to add the header to.
+        binary_path: Initial binary path.
+        show_label: Whether to show "Binary Path:" label.
+        extra_buttons: List of (button_text, callback) tuples for additional buttons.
 
     Returns:
-        BinarySelectionWidgets: Pydantic model with widget references containing:
-            - group: QGroupBox
-            - path_edit: QLineEdit
-            - browse_btn: QPushButton
-            - extra_buttons: dict mapping button_text to QPushButton
+        Pydantic model with widget references including group, path_edit, browse_btn, and extra_buttons.
 
     """
     if not HAS_PYQT:

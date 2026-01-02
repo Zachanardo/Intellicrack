@@ -3,17 +3,41 @@
 Tests that validate actual HWID spoofing against real Windows API calls and Registry
 modifications. These tests verify genuine offensive capability to bypass hardware-based
 license checks.
+
+**IMPORTANT**: Tests that modify HKEY_LOCAL_MACHINE registry keys require Administrator
+privileges. Run pytest from an elevated command prompt to execute all tests:
+
+    Run as Administrator:
+    > python -m pytest tests/core/test_hardware_spoofer_registry.py -v
+
+Without Admin rights, registry modification tests will be skipped.
 """
 
+import ctypes
 import platform
 import secrets
 import uuid
 import winreg
+from collections.abc import Generator
 from typing import Any
 
 import pytest
 
+if platform.system() == "Windows":
+    import pythoncom
+    import wmi as wmi_module
+
 from intellicrack.core.hardware_spoofer import HardwareFingerPrintSpoofer, HardwareIdentifiers
+
+
+def is_admin() -> bool:
+    """Check if the current process has Administrator privileges."""
+    if platform.system() != "Windows":
+        return False
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin() != 0
+    except Exception:
+        return False
 
 
 pytestmark = pytest.mark.skipif(
@@ -21,19 +45,29 @@ pytestmark = pytest.mark.skipif(
     reason="Hardware spoofing tests require Windows platform"
 )
 
+requires_admin = pytest.mark.skipif(
+    not is_admin(),
+    reason="Registry modification tests require Administrator privileges"
+)
+
 
 class TestHardwareSpooferRegistryModification:
     """Test suite validating real Windows Registry modifications for HWID spoofing."""
 
     @pytest.fixture
-    def spoofer(self) -> HardwareFingerPrintSpoofer:
-        """Create HardwareFingerPrintSpoofer instance."""
-        spoofer_instance = HardwareFingerPrintSpoofer()
-        yield spoofer_instance
+    def spoofer(self) -> Generator[HardwareFingerPrintSpoofer, None, None]:
+        """Create HardwareFingerPrintSpoofer instance with COM initialization and pre-created WMI client."""
+        pythoncom.CoInitialize()
         try:
-            spoofer_instance.restore_original()
-        except Exception:
-            pass
+            wmi_client = wmi_module.WMI()
+            spoofer_instance = HardwareFingerPrintSpoofer(wmi_client=wmi_client)
+            yield spoofer_instance
+            try:
+                spoofer_instance.restore_original()
+            except Exception:
+                pass
+        finally:
+            pythoncom.CoUninitialize()
 
     @pytest.fixture
     def original_registry_values(self) -> dict[str, dict[str, Any]]:
@@ -56,6 +90,7 @@ class TestHardwareSpooferRegistryModification:
 
         return values
 
+    @requires_admin
     def test_cpu_spoof_modifies_actual_registry(self, spoofer: HardwareFingerPrintSpoofer) -> None:
         """Test that CPU spoofing actually modifies Windows Registry keys.
 
@@ -76,6 +111,7 @@ class TestHardwareSpooferRegistryModification:
         assert actual_cpu_name == spoofed_cpu_name, "CPU name not properly spoofed in Registry"
         assert spoofed_cpu_id in actual_cpu_id or actual_cpu_id == spoofed_cpu_id, "CPU ID not properly spoofed in Registry"
 
+    @requires_admin
     def test_motherboard_spoof_modifies_system_information(self, spoofer: HardwareFingerPrintSpoofer) -> None:
         """Test motherboard spoofing modifies system information registry keys.
 
@@ -96,6 +132,7 @@ class TestHardwareSpooferRegistryModification:
         assert actual_manufacturer == spoofed_manufacturer, "Motherboard manufacturer not spoofed in Registry"
         assert actual_product == spoofed_serial, "Motherboard serial not spoofed in Registry"
 
+    @requires_admin
     def test_bios_spoof_modifies_hardware_description(self, spoofer: HardwareFingerPrintSpoofer) -> None:
         """Test BIOS spoofing modifies hardware description registry keys.
 
@@ -116,6 +153,7 @@ class TestHardwareSpooferRegistryModification:
         assert spoofed_bios_version in actual_version or actual_version[0] == spoofed_bios_version, "BIOS version not spoofed"
         assert actual_product == spoofed_bios_serial, "BIOS serial not spoofed"
 
+    @requires_admin
     def test_system_uuid_spoof_modifies_computer_hardware_id(self, spoofer: HardwareFingerPrintSpoofer) -> None:
         """Test system UUID spoofing modifies ComputerHardwareId registry key.
 
@@ -133,6 +171,7 @@ class TestHardwareSpooferRegistryModification:
 
         assert actual_uuid == spoofed_uuid, "System UUID not properly spoofed in Registry"
 
+    @requires_admin
     def test_disk_serial_spoof_creates_ide_enum_entries(self, spoofer: HardwareFingerPrintSpoofer) -> None:
         """Test disk serial spoofing creates IDE enumeration registry entries.
 
@@ -156,6 +195,7 @@ class TestHardwareSpooferRegistryModification:
             except OSError:
                 pytest.skip(f"Could not verify disk {i} serial spoofing due to registry access")
 
+    @requires_admin
     def test_restore_original_reverts_registry_modifications(
         self,
         spoofer: HardwareFingerPrintSpoofer,
@@ -241,6 +281,7 @@ class TestHardwareSpooferRegistryModification:
         except OSError:
             pytest.skip("Could not verify network adapter spoofing due to registry access")
 
+    @requires_admin
     def test_multiple_spoofs_all_persist_in_registry(self, spoofer: HardwareFingerPrintSpoofer) -> None:
         """Test that multiple simultaneous spoofs all persist correctly in Registry.
 
@@ -268,6 +309,7 @@ class TestHardwareSpooferRegistryModification:
         assert actual_mb == spoofed_mb_serial, "Motherboard not persisted after multiple spoofs"
         assert actual_uuid == spoofed_uuid, "UUID not persisted after multiple spoofs"
 
+    @requires_admin
     def test_spoofing_with_special_characters_handles_correctly(self, spoofer: HardwareFingerPrintSpoofer) -> None:
         """Test spoofing handles special characters in hardware identifiers.
 
@@ -300,6 +342,7 @@ class TestHardwareSpooferRegistryModification:
         except Exception as e:
             pytest.fail(f"Unexpected exception during spoofing: {e}")
 
+    @requires_admin
     def test_concurrent_registry_modifications_are_atomic(self, spoofer: HardwareFingerPrintSpoofer) -> None:
         """Test that concurrent registry modifications don't cause corruption.
 

@@ -20,8 +20,8 @@ try:
     from phase2.detection_validator import DetectionValidator
 except ImportError:
     # Fallback implementation for validation when DetectionValidator is not available
-    class DetectionValidator:
-        def __init__(self, base_dir):
+    class DetectionValidator:  # type: ignore[no-redef]
+        def __init__(self, base_dir: str) -> None:
             self.base_dir = base_dir
 
         def validate_detection(self, binary_path: str, software_name: str, protection_name: str) -> dict[str, Any]:
@@ -100,7 +100,7 @@ except ImportError:
 
         def _detect_protection_patterns(self, data: bytes, protection_name: str) -> list[dict[str, Any]]:
             """Detect protection-specific patterns in binary data."""
-            protections = []
+            protections: list[dict[str, Any]] = []
 
             # FlexLM detection patterns
             if "flexlm" in protection_name.lower():
@@ -198,9 +198,9 @@ class VersionTestResult:
     detection_result: dict[str, Any]
     success: bool
     error_message: str | None = None
-    timestamp: str = None
+    timestamp: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp is None:
             self.timestamp = datetime.now().isoformat()
 
@@ -215,9 +215,9 @@ class CrossVersionTestReport:
     success_rate: float
     version_differences: dict[str, Any]
     overall_success: bool
-    timestamp: str = None
+    timestamp: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp is None:
             self.timestamp = datetime.now().isoformat()
 
@@ -225,7 +225,7 @@ class CrossVersionTestReport:
 class CrossVersionTester:
     """Tests Intellicrack against multiple versions of protection mechanisms."""
 
-    def __init__(self, base_dir: str = "C:\\Intellicrack\\tests\\validation_system"):
+    def __init__(self, base_dir: str = "C:\\Intellicrack\\tests\\validation_system") -> None:
         self.base_dir = Path(base_dir)
         self.binaries_dir = self.base_dir / "commercial_binaries"
         self.reports_dir = self.base_dir / "reports"
@@ -551,7 +551,7 @@ class CrossVersionTester:
         ]
 
         # Group results by software
-        software_results = {}
+        software_results: dict[str, list[VersionTestResult]] = {}
         for result in self.test_results:
             if result.software_name not in software_results:
                 software_results[result.software_name] = []
@@ -635,7 +635,7 @@ class CrossVersionTester:
             logger.info(f"  JSON: {json_path}")
             logger.info(f"  Human-readable: {readable_path}")
 
-            return human_readable
+            return str(human_readable)
 
         except Exception as e:
             logger.error(f"Failed to generate version difference report: {e}")

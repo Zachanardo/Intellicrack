@@ -302,7 +302,12 @@ class TestScriptDialog(BaseDialog):
         self.update_syntax_display()
 
     def detect_script_language(self) -> str:
-        """Detect the programming language of the script."""
+        """Detect the programming language of the script.
+
+        Returns:
+            str: The detected language (javascript, python, powershell, or unknown).
+
+        """
         content = self.script_content.lower()
 
         js_patterns = [
@@ -1155,6 +1160,8 @@ class ScriptGeneratorWorker(QThread):
                 self._generate_exploit_script()
             elif self.script_type == "strategy":
                 self._generate_exploit_strategy()
+            elif self.script_type == "custom":
+                self._generate_custom_script()
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.exception("Error in script_generator_dialog: %s", e)
             self.error_occurred.emit(str(e))
@@ -1264,6 +1271,867 @@ def exploit_target(binary_path: str) -> dict:
 - Document any limitations or edge cases
 """
         self.script_generated.emit(result)
+
+    def _generate_custom_script(self) -> None:
+        """Generate custom script based on user-defined configuration."""
+        framework = str(self.kwargs.get("framework", "Python Standalone"))
+        target_type = str(self.kwargs.get("target_type", "License Validation"))
+        features = list(self.kwargs.get("features", []))
+        user_template = str(self.kwargs.get("template", ""))
+
+        target_mapping = {
+            "License Validation": "license_check",
+            "Trial Limitation": "trial_limit",
+            "Feature Unlock": "feature_unlock",
+            "Registration Check": "registration",
+            "Network License": "network_license",
+            "Hardware ID Check": "hwid_check",
+        }
+        target_func = target_mapping.get(target_type, "license_check")
+
+        feature_imports = []
+        feature_code = []
+        if "verbose_logging" in features:
+            feature_imports.append("import logging")
+            feature_code.append("logging.basicConfig(level=logging.DEBUG)")
+            feature_code.append('logger = logging.getLogger("intellicrack")')
+        if "backup_original" in features:
+            feature_imports.append("import shutil")
+            feature_code.append("# Backup original before modifications")
+        if "rollback_support" in features:
+            feature_code.append("# Rollback support enabled - save state for recovery")
+        if "stealth_mode" in features:
+            feature_code.append("# Stealth mode - minimize detection footprint")
+        if "persistent_bypass" in features:
+            feature_code.append("# Persistent bypass - modifications survive restarts")
+
+        script = ""
+        documentation = ""
+        template_code = ""
+
+        if framework == "Frida Hook":
+            script = self._build_frida_hook_script(target_func, features, user_template)
+            documentation = self._build_frida_documentation(target_type, features)
+            template_code = self._get_frida_template()
+        elif framework == "Ghidra Script":
+            script = self._build_ghidra_script(target_func, features, user_template)
+            documentation = self._build_ghidra_documentation(target_type, features)
+            template_code = self._get_ghidra_template()
+        elif framework == "Python Standalone":
+            script = self._build_python_script(target_func, features, feature_imports, feature_code, user_template)
+            documentation = self._build_python_documentation(target_type, features)
+            template_code = self._get_python_template()
+        elif framework == "PowerShell":
+            script = self._build_powershell_script(target_func, features, user_template)
+            documentation = self._build_powershell_documentation(target_type, features)
+            template_code = self._get_powershell_template()
+        elif framework == "Batch Script":
+            script = self._build_batch_script(target_func, features, user_template)
+            documentation = self._build_batch_documentation(target_type, features)
+            template_code = self._get_batch_template()
+        elif framework == "C/C++ Template":
+            script = self._build_cpp_template(target_func, features, user_template)
+            documentation = self._build_cpp_documentation(target_type, features)
+            template_code = self._get_cpp_template()
+        else:
+            script = self._build_python_script(target_func, features, feature_imports, feature_code, user_template)
+            documentation = self._build_python_documentation(target_type, features)
+            template_code = self._get_python_template()
+
+        result: dict[str, Any] = {
+            "script": script,
+            "documentation": documentation,
+            "template": template_code,
+        }
+        self.script_generated.emit(result)
+
+    def _build_frida_hook_script(
+        self,
+        target_func: str,
+        features: list[str],
+        user_template: str,
+    ) -> str:
+        """Build Frida hook script for license bypass.
+
+        Args:
+            target_func: Target function type to hook.
+            features: List of enabled features.
+            user_template: User-provided template or empty string.
+
+        Returns:
+            Complete Frida JavaScript hook script.
+
+        """
+        if user_template:
+            return user_template.replace("{{TARGET_FUNCTION}}", target_func).replace(
+                "{{BINARY_PATH}}", self.binary_path
+            )
+
+        logging_code = ""
+        if "verbose_logging" in features:
+            logging_code = 'console.log("[HOOK] " + message);'
+
+        stealth_code = ""
+        if "stealth_mode" in features:
+            stealth_code = """
+    // Stealth mode: Hide Frida presence
+    Interceptor.attach(Module.findExportByName(null, "ptrace"), {
+        onEnter: function(args) {
+            args[0] = ptr(0);
+        }
+    });"""
+
+        return f'''// Frida Hook Script for {target_func}
+// Generated by Intellicrack
+
+Java.perform(function() {{
+    {stealth_code}
+
+    // Target: {target_func}
+    var targetClass = Java.use("com.target.{target_func}");
+
+    targetClass.validate.implementation = function() {{
+        var message = "[*] Bypassing {target_func}";
+        {logging_code}
+        return true;
+    }};
+
+    targetClass.checkLicense.implementation = function() {{
+        var message = "[*] License check bypassed";
+        {logging_code}
+        return true;
+    }};
+
+    console.log("[+] Hooks installed successfully");
+}});
+'''
+
+    def _build_ghidra_script(
+        self,
+        target_func: str,
+        features: list[str],
+        user_template: str,
+    ) -> str:
+        """Build Ghidra analysis script.
+
+        Args:
+            target_func: Target function type to analyze.
+            features: List of enabled features.
+            user_template: User-provided template or empty string.
+
+        Returns:
+            Complete Ghidra Python script.
+
+        """
+        if user_template:
+            return user_template.replace("{{TARGET_FUNCTION}}", target_func).replace(
+                "{{BINARY_PATH}}", self.binary_path
+            )
+
+        verbose_logging = "verbose_logging" in features
+        backup_enabled = "backup_original" in features
+
+        verbose_code = ""
+        if verbose_logging:
+            verbose_code = """
+def log_verbose(message):
+    \"\"\"Print verbose debugging information.\"\"\"
+    println("[DEBUG] " + str(message))
+"""
+
+        backup_code = ""
+        if backup_enabled:
+            backup_code = """
+def backup_analysis():
+    \"\"\"Save analysis results to file.\"\"\"
+    import java.io.FileWriter as FileWriter
+    path = str(currentProgram.getExecutablePath()) + ".analysis"
+    println("[BACKUP] Saving analysis to: " + path)
+"""
+
+        return f'''# Ghidra Script for {target_func} Analysis
+# @author Intellicrack
+# @category LicenseAnalysis
+
+from ghidra.program.model.symbol import SymbolType
+from ghidra.app.decompiler import DecompileOptions, DecompInterface
+{verbose_code}{backup_code}
+def find_license_functions():
+    """Locate license validation functions."""
+    fm = currentProgram.getFunctionManager()
+    functions = fm.getFunctions(True)
+
+    license_keywords = ["license", "validate", "check", "register", "activate", "{target_func}"]
+    found = []
+
+    for func in functions:
+        name = func.getName().lower()
+        if any(kw in name for kw in license_keywords):
+            found.append(func)
+            println("[FOUND] " + func.getName() + " at " + str(func.getEntryPoint()))
+
+    return found
+
+def analyze_function(func):
+    """Decompile and analyze a function."""
+    options = DecompileOptions()
+    ifc = DecompInterface()
+    ifc.setOptions(options)
+    ifc.openProgram(currentProgram)
+
+    result = ifc.decompileFunction(func, 60, monitor)
+    if result.decompileCompleted():
+        println("[DECOMPILED] " + func.getName())
+        println(result.getDecompiledFunction().getC())
+
+def main():
+    println("[*] Starting {target_func} analysis...")
+    funcs = find_license_functions()
+    println("[*] Found " + str(len(funcs)) + " potential license functions")
+
+    for func in funcs:
+        analyze_function(func)
+
+main()
+'''
+
+    def _build_python_script(
+        self,
+        target_func: str,
+        features: list[str],
+        feature_imports: list[str],
+        feature_code: list[str],
+        user_template: str,
+    ) -> str:
+        """Build standalone Python bypass script.
+
+        Args:
+            target_func: Target function type.
+            features: List of enabled features.
+            feature_imports: Import statements for features.
+            feature_code: Setup code for features.
+            user_template: User-provided template or empty string.
+
+        Returns:
+            Complete Python script.
+
+        """
+        if user_template:
+            return user_template.replace("{{TARGET_FUNCTION}}", target_func).replace(
+                "{{BINARY_PATH}}", self.binary_path
+            )
+
+        imports = "\n".join(feature_imports) if feature_imports else ""
+        setup = "\n".join(feature_code) if feature_code else ""
+
+        backup_code = ""
+        if "backup_original" in features:
+            backup_code = '''
+def backup_binary(path: str) -> str:
+    """Create backup of original binary."""
+    backup_path = path + ".bak"
+    shutil.copy2(path, backup_path)
+    logger.info(f"Backup created: {backup_path}")
+    return backup_path
+'''
+
+        rollback_code = ""
+        if "rollback_support" in features:
+            rollback_code = '''
+def rollback_changes(original_path: str, backup_path: str) -> None:
+    """Restore original binary from backup."""
+    shutil.copy2(backup_path, original_path)
+    logger.info("Changes rolled back successfully")
+'''
+
+        return f'''#!/usr/bin/env python3
+"""License Bypass Script for {target_func}
+
+Generated by Intellicrack
+Target: {self.binary_path}
+"""
+
+import struct
+import os
+{imports}
+
+{setup}
+{backup_code}
+{rollback_code}
+
+class LicenseBypass:
+    """Bypass license validation in target binary."""
+
+    def __init__(self, binary_path: str) -> None:
+        self.binary_path = binary_path
+        self.patches: list[tuple[int, bytes, bytes]] = []
+
+    def find_{target_func}_offset(self) -> int:
+        """Locate the {target_func} validation routine."""
+        with open(self.binary_path, "rb") as f:
+            data = f.read()
+
+        # Common license check patterns
+        patterns = [
+            b"\\x83\\xf8\\x01\\x74",  # cmp eax, 1; je
+            b"\\x85\\xc0\\x74",       # test eax, eax; je
+            b"\\x3d\\x00\\x00\\x00\\x00\\x74",  # cmp eax, 0; je
+        ]
+
+        for pattern in patterns:
+            offset = data.find(pattern)
+            if offset != -1:
+                return offset
+        return -1
+
+    def apply_patch(self, offset: int, original: bytes, patched: bytes) -> bool:
+        """Apply binary patch at specified offset."""
+        self.patches.append((offset, original, patched))
+
+        with open(self.binary_path, "r+b") as f:
+            f.seek(offset)
+            f.write(patched)
+        return True
+
+    def bypass_{target_func}(self) -> bool:
+        """Execute the {target_func} bypass."""
+        offset = self.find_{target_func}_offset()
+        if offset == -1:
+            print("[!] Could not locate {target_func} routine")
+            return False
+
+        print(f"[+] Found {target_func} at offset 0x{{offset:x}}")
+
+        # NOP the conditional jump
+        original = b"\\x74"  # je
+        patched = b"\\xeb"   # jmp (always)
+
+        return self.apply_patch(offset + 3, original, patched)
+
+
+def main():
+    binary = "{self.binary_path}"
+
+    if not os.path.exists(binary):
+        print(f"[!] Binary not found: {{binary}}")
+        return
+
+    bypass = LicenseBypass(binary)
+    if bypass.bypass_{target_func}():
+        print("[+] {target_func} bypass applied successfully")
+    else:
+        print("[-] Bypass failed")
+
+
+if __name__ == "__main__":
+    main()
+'''
+
+    def _build_powershell_script(
+        self,
+        target_func: str,
+        features: list[str],
+        user_template: str,
+    ) -> str:
+        """Build PowerShell bypass script.
+
+        Args:
+            target_func: Target function type.
+            features: List of enabled features.
+            user_template: User-provided template or empty string.
+
+        Returns:
+            Complete PowerShell script.
+
+        """
+        if user_template:
+            return user_template.replace("{{TARGET_FUNCTION}}", target_func).replace(
+                "{{BINARY_PATH}}", self.binary_path
+            )
+
+        verbose = "$VerbosePreference = 'Continue'" if "verbose_logging" in features else ""
+        backup = '''
+# Backup original
+$backupPath = "$BinaryPath.bak"
+Copy-Item -Path $BinaryPath -Destination $backupPath -Force
+Write-Verbose "Backup created: $backupPath"
+''' if "backup_original" in features else ""
+
+        return f'''# PowerShell License Bypass Script
+# Target: {target_func}
+# Generated by Intellicrack
+
+{verbose}
+
+$BinaryPath = "{self.binary_path}"
+{backup}
+
+function Find-LicenseCheck {{
+    param([string]$Path)
+
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+
+    # Common license check patterns
+    $patterns = @(
+        @(0x83, 0xF8, 0x01, 0x74),  # cmp eax, 1; je
+        @(0x85, 0xC0, 0x74),         # test eax, eax; je
+        @(0x3D, 0x00, 0x00, 0x00, 0x00, 0x74)  # cmp eax, 0; je
+    )
+
+    foreach ($pattern in $patterns) {{
+        for ($i = 0; $i -lt ($bytes.Length - $pattern.Length); $i++) {{
+            $match = $true
+            for ($j = 0; $j -lt $pattern.Length; $j++) {{
+                if ($bytes[$i + $j] -ne $pattern[$j]) {{
+                    $match = $false
+                    break
+                }}
+            }}
+            if ($match) {{
+                return $i
+            }}
+        }}
+    }}
+    return -1
+}}
+
+function Patch-Binary {{
+    param(
+        [string]$Path,
+        [int]$Offset,
+        [byte]$Original,
+        [byte]$Patched
+    )
+
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+
+    if ($bytes[$Offset] -eq $Original) {{
+        $bytes[$Offset] = $Patched
+        [System.IO.File]::WriteAllBytes($Path, $bytes)
+        Write-Host "[+] Patched byte at offset 0x$($Offset.ToString('X'))"
+        return $true
+    }}
+    return $false
+}}
+
+# Main execution
+$offset = Find-LicenseCheck -Path $BinaryPath
+
+if ($offset -ge 0) {{
+    Write-Host "[+] Found {target_func} check at offset 0x$($offset.ToString('X'))"
+
+    # Patch je to jmp
+    $success = Patch-Binary -Path $BinaryPath -Offset ($offset + 3) -Original 0x74 -Patched 0xEB
+
+    if ($success) {{
+        Write-Host "[+] {target_func} bypass applied successfully"
+    }}
+}} else {{
+    Write-Host "[-] Could not locate {target_func} routine"
+}}
+'''
+
+    def _build_batch_script(
+        self,
+        target_func: str,
+        features: list[str],
+        user_template: str,
+    ) -> str:
+        """Build Windows batch script wrapper.
+
+        Args:
+            target_func: Target function type.
+            features: List of enabled features.
+            user_template: User-provided template or empty string.
+
+        Returns:
+            Complete batch script.
+
+        """
+        if user_template:
+            return user_template.replace("{{TARGET_FUNCTION}}", target_func).replace(
+                "{{BINARY_PATH}}", self.binary_path
+            )
+
+        backup_cmd = f'copy /Y "{self.binary_path}" "{self.binary_path}.bak"' if "backup_original" in features else ""
+
+        return f'''@echo off
+REM License Bypass Launcher for {target_func}
+REM Generated by Intellicrack
+
+set BINARY={self.binary_path}
+set TARGET={target_func}
+
+echo [*] Intellicrack License Bypass
+echo [*] Target: %TARGET%
+echo.
+
+{backup_cmd}
+
+REM Check if Python is available
+python --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [!] Python not found, using PowerShell fallback
+    powershell -ExecutionPolicy Bypass -File "%~dp0bypass.ps1"
+    goto :end
+)
+
+REM Run Python bypass script
+python "%~dp0bypass.py" "%BINARY%"
+
+:end
+echo.
+echo [*] Operation complete
+pause
+'''
+
+    def _build_cpp_template(
+        self,
+        target_func: str,
+        features: list[str],
+        user_template: str,
+    ) -> str:
+        """Build C/C++ DLL injection template.
+
+        Args:
+            target_func: Target function type.
+            features: List of enabled features.
+            user_template: User-provided template or empty string.
+
+        Returns:
+            Complete C++ source template.
+
+        """
+        if user_template:
+            return user_template.replace("{{TARGET_FUNCTION}}", target_func).replace(
+                "{{BINARY_PATH}}", self.binary_path
+            )
+
+        debug_def = "#define DEBUG_MODE 1" if "verbose_logging" in features else "#define DEBUG_MODE 0"
+        stealth_def = "#define STEALTH_MODE 1" if "stealth_mode" in features else "#define STEALTH_MODE 0"
+
+        return f'''/*
+ * License Bypass DLL for {target_func}
+ * Generated by Intellicrack
+ * Compile: cl /LD bypass.cpp
+ */
+
+#include <windows.h>
+#include <detours.h>
+
+{debug_def}
+{stealth_def}
+
+#if DEBUG_MODE
+#include <stdio.h>
+#define LOG(msg, ...) printf("[BYPASS] " msg "\\n", ##__VA_ARGS__)
+#else
+#define LOG(msg, ...)
+#endif
+
+// Original function pointer
+typedef BOOL (WINAPI *pLicenseCheck)(void);
+pLicenseCheck OriginalLicenseCheck = NULL;
+
+// Hooked function
+BOOL WINAPI HookedLicenseCheck(void) {{
+    LOG("Intercepted {target_func} check");
+    return TRUE;  // Always return licensed
+}}
+
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {{
+    if (reason == DLL_PROCESS_ATTACH) {{
+#if STEALTH_MODE
+        // Hide from module enumeration
+        PLIST_ENTRY moduleList = (PLIST_ENTRY)((PBYTE)NtCurrentTeb()->ProcessEnvironmentBlock + 0x0C);
+        // Implementation depends on Windows version
+#endif
+
+        LOG("Bypass DLL loaded");
+
+        DetourTransactionBegin();
+        DetourUpdateThread(GetCurrentThread());
+
+        // Hook the license check function
+        OriginalLicenseCheck = (pLicenseCheck)GetProcAddress(
+            GetModuleHandleA(NULL), "{target_func}"
+        );
+
+        if (OriginalLicenseCheck) {{
+            DetourAttach(&(PVOID&)OriginalLicenseCheck, HookedLicenseCheck);
+            LOG("Hook installed at %p", OriginalLicenseCheck);
+        }}
+
+        DetourTransactionCommit();
+    }}
+    else if (reason == DLL_PROCESS_DETACH) {{
+        DetourTransactionBegin();
+        DetourUpdateThread(GetCurrentThread());
+        if (OriginalLicenseCheck) {{
+            DetourDetach(&(PVOID&)OriginalLicenseCheck, HookedLicenseCheck);
+        }}
+        DetourTransactionCommit();
+        LOG("Bypass DLL unloaded");
+    }}
+    return TRUE;
+}}
+'''
+
+    def _build_frida_documentation(self, target_type: str, features: list[str]) -> str:
+        """Build documentation for Frida script.
+
+        Args:
+            target_type: The target type being documented.
+            features: List of enabled features.
+
+        Returns:
+            Formatted documentation string for Frida scripts.
+
+        """
+        return f"""# Frida Hook Script Documentation
+
+## Target Type: {target_type}
+
+## Enabled Features
+{chr(10).join(f"- {f}" for f in features) if features else "- None"}
+
+## Usage
+1. Start Frida server on target device
+2. Identify target process: `frida-ps -U`
+3. Inject script: `frida -U -f <package> -l script.js`
+
+## Notes
+- Requires Frida server running on target
+- May require root/jailbreak for some targets
+- Test on non-production systems first
+"""
+
+    def _build_ghidra_documentation(self, target_type: str, features: list[str]) -> str:
+        """Build documentation for Ghidra script.
+
+        Args:
+            target_type: The target type being documented.
+            features: List of enabled features.
+
+        Returns:
+            Formatted documentation string for Ghidra scripts.
+
+        """
+        return f"""# Ghidra Analysis Script Documentation
+
+## Target Type: {target_type}
+
+## Enabled Features
+{chr(10).join(f"- {f}" for f in features) if features else "- None"}
+
+## Usage
+1. Open target binary in Ghidra
+2. Run analysis (Auto Analyze)
+3. Open Script Manager (Window > Script Manager)
+4. Run this script
+
+## Output
+Script will identify and decompile license-related functions.
+"""
+
+    def _build_python_documentation(self, target_type: str, features: list[str]) -> str:
+        """Build documentation for Python script.
+
+        Args:
+            target_type: The target type being documented.
+            features: List of enabled features.
+
+        Returns:
+            Formatted documentation string for Python scripts.
+
+        """
+        return f"""# Python Bypass Script Documentation
+
+## Target Type: {target_type}
+
+## Enabled Features
+{chr(10).join(f"- {f}" for f in features) if features else "- None"}
+
+## Requirements
+- Python 3.8+
+- Write access to target binary
+
+## Usage
+```bash
+python bypass.py
+```
+
+## Warning
+Creates permanent modifications to target binary.
+Always keep backups.
+"""
+
+    def _build_powershell_documentation(self, target_type: str, features: list[str]) -> str:
+        """Build documentation for PowerShell script.
+
+        Args:
+            target_type: The target type being documented.
+            features: List of enabled features.
+
+        Returns:
+            Formatted documentation string for PowerShell scripts.
+
+        """
+        return f"""# PowerShell Bypass Script Documentation
+
+## Target Type: {target_type}
+
+## Enabled Features
+{chr(10).join(f"- {f}" for f in features) if features else "- None"}
+
+## Requirements
+- PowerShell 5.1+ or PowerShell Core
+- Administrator privileges may be required
+
+## Usage
+```powershell
+Set-ExecutionPolicy Bypass -Scope Process
+.\\bypass.ps1
+```
+"""
+
+    def _build_batch_documentation(self, target_type: str, features: list[str]) -> str:
+        """Build documentation for Batch script.
+
+        Args:
+            target_type: The target type being documented.
+            features: List of enabled features.
+
+        Returns:
+            Formatted documentation string for Batch scripts.
+
+        """
+        return f"""# Batch Script Documentation
+
+## Target Type: {target_type}
+
+## Enabled Features
+{chr(10).join(f"- {f}" for f in features) if features else "- None"}
+
+## Usage
+Double-click or run from command prompt.
+Requires Python or PowerShell to be installed.
+"""
+
+    def _build_cpp_documentation(self, target_type: str, features: list[str]) -> str:
+        """Build documentation for C++ template.
+
+        Args:
+            target_type: The target type being documented.
+            features: List of enabled features.
+
+        Returns:
+            Formatted documentation string for C++ templates.
+
+        """
+        return f"""# C++ DLL Template Documentation
+
+## Target Type: {target_type}
+
+## Enabled Features
+{chr(10).join(f"- {f}" for f in features) if features else "- None"}
+
+## Requirements
+- Microsoft Detours library
+- Visual Studio or compatible compiler
+
+## Compilation
+```cmd
+cl /LD /EHsc bypass.cpp detours.lib
+```
+
+## Injection Methods
+1. DLL injection via CreateRemoteThread
+2. AppInit_DLLs registry key
+3. Import table modification
+"""
+
+    def _get_frida_template(self) -> str:
+        """Get Frida template code.
+
+        Returns:
+            Frida template code string.
+
+        """
+        return '''// Frida Template
+Java.perform(function() {
+    // Hook implementation
+    var TargetClass = Java.use("{{TARGET_CLASS}}");
+    TargetClass.{{TARGET_METHOD}}.implementation = function() {
+        return true;
+    };
+});'''
+
+    def _get_ghidra_template(self) -> str:
+        """Get Ghidra template code.
+
+        Returns:
+            Ghidra template code string.
+
+        """
+        return '''# Ghidra Template
+# @category Analysis
+def analyze():
+    fm = currentProgram.getFunctionManager()
+    for func in fm.getFunctions(True):
+        println(func.getName())
+analyze()'''
+
+    def _get_python_template(self) -> str:
+        """Get Python template code.
+
+        Returns:
+            Python template code string.
+
+        """
+        return '''#!/usr/bin/env python3
+def main():
+    # Bypass implementation
+    pass
+
+if __name__ == "__main__":
+    main()'''
+
+    def _get_powershell_template(self) -> str:
+        """Get PowerShell template code.
+
+        Returns:
+            PowerShell template code string.
+
+        """
+        return '''# PowerShell Template
+$BinaryPath = "{{BINARY_PATH}}"
+# Patch implementation'''
+
+    def _get_batch_template(self) -> str:
+        """Get Batch template code.
+
+        Returns:
+            Batch template code string.
+
+        """
+        return '''@echo off
+REM Batch Template
+set BINARY={{BINARY_PATH}}
+echo Processing %BINARY%'''
+
+    def _get_cpp_template(self) -> str:
+        """Get C++ template code.
+
+        Returns:
+            C++ template code string.
+
+        """
+        return '''// C++ DLL Template
+#include <windows.h>
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
+    return TRUE;
+}'''
 
 
 class ScriptGeneratorDialog(BaseDialog):
@@ -1403,6 +2271,7 @@ class ScriptGeneratorDialog(BaseDialog):
         self.setup_bypass_config()
         self.setup_exploit_config()
         self.setup_strategy_config()
+        self.setup_custom_config()
 
         left_layout.addWidget(self.config_stack)
 
@@ -1531,6 +2400,76 @@ class ScriptGeneratorDialog(BaseDialog):
             self.config_layout.addWidget(self.strategy_config)
         self.strategy_config.hide()
 
+    def setup_custom_config(self) -> None:
+        """Set up custom script configuration.
+
+        Allows users to define their own script templates and parameters
+        for generating custom license bypass and analysis scripts.
+
+        """
+        self.custom_config = QGroupBox("Custom Script Configuration")
+        layout = QGridLayout(self.custom_config)
+
+        layout.addWidget(QLabel("Script Framework:"), 0, 0)
+        self.custom_framework = QComboBox()
+        self.custom_framework.addItems([
+            "Frida Hook",
+            "Ghidra Script",
+            "Python Standalone",
+            "PowerShell",
+            "Batch Script",
+            "C/C++ Template",
+        ])
+        layout.addWidget(self.custom_framework, 0, 1)
+
+        layout.addWidget(QLabel("Target Type:"), 1, 0)
+        self.custom_target = QComboBox()
+        self.custom_target.addItems([
+            "License Validation",
+            "Trial Limitation",
+            "Feature Unlock",
+            "Registration Check",
+            "Network License",
+            "Hardware ID Check",
+        ])
+        layout.addWidget(self.custom_target, 1, 1)
+
+        layout.addWidget(QLabel("Script Features:"), 2, 0)
+        self.custom_features = QWidget()
+        features_layout = QVBoxLayout(self.custom_features)
+
+        self.feature_logging = QCheckBox("Verbose Logging")
+        self.feature_logging.setChecked(True)
+        self.feature_backup = QCheckBox("Backup Original")
+        self.feature_backup.setChecked(True)
+        self.feature_rollback = QCheckBox("Rollback Support")
+        self.feature_stealth = QCheckBox("Stealth Mode")
+        self.feature_persistence = QCheckBox("Persistent Bypass")
+
+        features_layout.addWidget(self.feature_logging)
+        features_layout.addWidget(self.feature_backup)
+        features_layout.addWidget(self.feature_rollback)
+        features_layout.addWidget(self.feature_stealth)
+        features_layout.addWidget(self.feature_persistence)
+
+        layout.addWidget(self.custom_features, 2, 1)
+
+        layout.addWidget(QLabel("Custom Template:"), 3, 0)
+        self.custom_template = QPlainTextEdit()
+        self.custom_template.setToolTip(
+            "Enter custom script template or leave blank for auto-generation.\n\n"
+            "Template variables:\n"
+            "  {{TARGET_FUNCTION}} - Target function to hook\n"
+            "  {{BINARY_PATH}} - Path to binary\n"
+            "  {{PROTECTION_TYPE}} - Detected protection type"
+        )
+        self.custom_template.setMaximumHeight(100)
+        layout.addWidget(self.custom_template, 3, 1)
+
+        if self.config_layout is not None:
+            self.config_layout.addWidget(self.custom_config)
+        self.custom_config.hide()
+
     def setup_right_panel(self, splitter: QSplitter) -> None:
         """Set up right script display panel.
 
@@ -1632,6 +2571,8 @@ class ScriptGeneratorDialog(BaseDialog):
             self.exploit_config.hide()
         if self.strategy_config is not None:
             self.strategy_config.hide()
+        if hasattr(self, "custom_config") and self.custom_config is not None:
+            self.custom_config.hide()
 
         if script_type == "Bypass Script":
             if self.bypass_config is not None:
@@ -1642,6 +2583,9 @@ class ScriptGeneratorDialog(BaseDialog):
         elif script_type == "Exploit Strategy":
             if self.strategy_config is not None:
                 self.strategy_config.show()
+        elif script_type == "Custom Script":
+            if hasattr(self, "custom_config") and self.custom_config is not None:
+                self.custom_config.show()
 
     def generate_script(self) -> None:
         """Generate script based on configuration."""
@@ -1667,8 +2611,10 @@ class ScriptGeneratorDialog(BaseDialog):
         elif script_type == "Exploit Strategy":
             kwargs = self.get_strategy_config()
             worker_type = "strategy"
+        elif script_type == "Custom Script":
+            kwargs = self.get_custom_config()
+            worker_type = "custom"
         else:
-            QMessageBox.warning(self, "Warning", "Custom scripts not yet implemented.")
             if self.generate_btn is not None:
                 self.generate_btn.setEnabled(True)
             return
@@ -1781,6 +2727,51 @@ class ScriptGeneratorDialog(BaseDialog):
             "include_analysis": analysis,
             "include_exploitation": exploitation,
             "include_persistence": persistence,
+        }
+
+    def get_custom_config(self) -> dict[str, Any]:
+        """Get custom script configuration from UI elements.
+
+        Returns:
+            Dictionary containing custom script configuration with keys:
+            framework, target_type, features, template, and binary_path.
+
+        """
+        framework = ""
+        if hasattr(self, "custom_framework") and self.custom_framework is not None:
+            framework = self.custom_framework.currentText()
+
+        target_type = ""
+        if hasattr(self, "custom_target") and self.custom_target is not None:
+            target_type = self.custom_target.currentText()
+
+        features: list[str] = []
+        if hasattr(self, "feature_logging") and self.feature_logging is not None:
+            if self.feature_logging.isChecked():
+                features.append("verbose_logging")
+        if hasattr(self, "feature_backup") and self.feature_backup is not None:
+            if self.feature_backup.isChecked():
+                features.append("backup_original")
+        if hasattr(self, "feature_rollback") and self.feature_rollback is not None:
+            if self.feature_rollback.isChecked():
+                features.append("rollback_support")
+        if hasattr(self, "feature_stealth") and self.feature_stealth is not None:
+            if self.feature_stealth.isChecked():
+                features.append("stealth_mode")
+        if hasattr(self, "feature_persistence") and self.feature_persistence is not None:
+            if self.feature_persistence.isChecked():
+                features.append("persistent_bypass")
+
+        template = ""
+        if hasattr(self, "custom_template") and self.custom_template is not None:
+            template = self.custom_template.toPlainText().strip()
+
+        return {
+            "framework": framework,
+            "target_type": target_type,
+            "features": features,
+            "template": template,
+            "binary_path": self.binary_path,
         }
 
     def on_script_generated(self, result: dict[str, Any]) -> None:

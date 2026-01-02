@@ -69,7 +69,7 @@ class TestDateTimeEncoder:
 
     def test_path_encoding(self) -> None:
         """DateTimeEncoder serializes Path objects to strings."""
-        p = Path("D:/Intellicrack/test.bin")
+        p = Path("test_data/test.bin")
         result = dumps(p)
 
         assert "__type__" in result
@@ -151,7 +151,7 @@ class TestDateTimeDecoder:
 
     def test_path_decoding(self) -> None:
         """datetime_decoder deserializes Path from JSON."""
-        p = Path("D:/Intellicrack/test.bin")
+        p = Path("test_data/test.bin")
         encoded = dumps(p)
         decoded = loads(encoded)
 
@@ -210,7 +210,7 @@ class TestDumpsLoads:
             "analysis": {
                 "timestamp": datetime(2025, 12, 15, 10, 30),
                 "duration": timedelta(minutes=15),
-                "binary_path": Path("D:/test.exe"),
+                "binary_path": Path("test_data/test.exe"),
                 "protections": {"vmprotect", "themida"},
                 "entropy_samples": b"\x90\x50\x56",
             },
@@ -252,7 +252,7 @@ class TestDumpLoad:
         """dump writes JSON to file with datetime support."""
         data = {
             "timestamp": datetime(2025, 12, 15),
-            "path": Path("D:/test.exe"),
+            "path": Path("test_data/test.exe"),
         }
 
         with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
@@ -289,7 +289,7 @@ class TestDumpLoad:
     def test_roundtrip_file_operations(self) -> None:
         """dump/load roundtrip preserves all data."""
         data: dict[str, Any] = {
-            "binary": Path("D:/protected.exe"),
+            "binary": Path("test_data/protected.exe"),
             "analyzed": datetime(2025, 12, 15, 10, 30),
             "protections": ["vmprotect", "themida"],
             "entropy": b"\x90\x50",
@@ -446,7 +446,7 @@ class TestSafeSerialization:
         """safe_serialize/deserialize roundtrip with JSON preserves data."""
         data: dict[str, Any] = {
             "analysis_time": datetime(2025, 12, 15, 10, 30),
-            "binary_path": Path("D:/test.exe"),
+            "binary_path": Path("test_data/test.exe"),
             "entropy": b"\x90\x50",
             "protections": {"vmprotect", "themida"},
         }

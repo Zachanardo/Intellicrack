@@ -891,7 +891,7 @@ class TestSessionPoolEdgeCases:
 
         session_pool.return_session(foreign_session)
 
-    def test_pool_get_session_raises_when_r2pipe_not_available(self, test_binary_path: str, monkeypatch) -> None:
+    def test_pool_get_session_raises_when_r2pipe_not_available(self, test_binary_path: str, monkeypatch: Any) -> None:
         """Pool raises RuntimeError when r2pipe not available."""
         from intellicrack.core.analysis import radare2_session_manager
 

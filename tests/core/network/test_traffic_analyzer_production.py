@@ -17,8 +17,11 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from hypothesis import given, strategies as st
-from scapy.all import IP, TCP, Raw, Ether
+from hypothesis import (
+    given,
+    strategies as st,
+)
+from scapy.all import IP, TCP, Ether, Raw
 
 from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
 
@@ -397,7 +400,7 @@ class TestPacketProcessing:
         protocol = flexlm_license_request_packet[9]
         assert protocol == 6, "Test packet must be TCP"
 
-        src_port = (flexlm_license_request_packet[ihl] << 8) | flexlm_license_request_packet[ihl + 1]
+        (flexlm_license_request_packet[ihl] << 8) | flexlm_license_request_packet[ihl + 1]
         dst_port = (flexlm_license_request_packet[ihl + 2] << 8) | flexlm_license_request_packet[ihl + 3]
 
         assert dst_port == 27000, "FlexLM packet must target port 27000"

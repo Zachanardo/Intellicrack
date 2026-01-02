@@ -24,7 +24,7 @@ import re
 import shutil
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
@@ -83,7 +83,7 @@ class EnvFileManager:
         """Read all key-value pairs from the .env file.
 
         Returns:
-            Dictionary of environment variables
+            Dictionary of environment variables.
 
         """
         env_vars: dict[str, str] = {}
@@ -120,8 +120,11 @@ class EnvFileManager:
         """Write key-value pairs to the .env file.
 
         Args:
-            env_vars: Dictionary of environment variables to write
-            preserve_comments: Whether to preserve existing comments
+            env_vars: Dictionary of environment variables to write.
+            preserve_comments: Whether to preserve existing comments.
+
+        Raises:
+            Exception: If file write operations fail or backup restoration is needed.
 
         """
         # Create backup
@@ -196,10 +199,10 @@ class EnvFileManager:
         """Get a single value from the .env file.
 
         Args:
-            key: The environment variable key
+            key: The environment variable key.
 
         Returns:
-            The value or None if not found
+            The value or None if not found.
 
         """
         env_vars = self.read_env()
@@ -209,8 +212,8 @@ class EnvFileManager:
         """Set a single key-value pair in the .env file.
 
         Args:
-            key: The environment variable key
-            value: The value to set
+            key: The environment variable key.
+            value: The value to set.
 
         """
         env_vars = self.read_env()
@@ -223,7 +226,7 @@ class EnvFileManager:
         """Update multiple keys in the .env file.
 
         Args:
-            updates: Dictionary of key-value pairs to update
+            updates: Dictionary of key-value pairs to update.
 
         """
         env_vars = self.read_env()
@@ -236,10 +239,10 @@ class EnvFileManager:
         """Delete a key from the .env file.
 
         Args:
-            key: The environment variable key to delete
+            key: The environment variable key to delete.
 
         Returns:
-            True if key was deleted, False if it didn't exist
+            True if key was deleted, False if it didn't exist.
 
         """
         env_vars = self.read_env()
@@ -255,10 +258,10 @@ class EnvFileManager:
         """Validate that a key name is valid for environment variables.
 
         Args:
-            key: The key to validate
+            key: The key to validate.
 
         Returns:
-            True if valid, False otherwise
+            True if valid, False otherwise.
 
         """
         # Environment variable names must start with letter or underscore
@@ -269,7 +272,7 @@ class EnvFileManager:
         """Create a backup of the current .env file.
 
         Returns:
-            Path to the backup file or None if no file to backup
+            Path to the backup file or None if no file to backup.
 
         """
         if not self.env_path.exists():
@@ -287,11 +290,11 @@ class EnvFileManager:
         """Test if an API key is valid for a service.
 
         Args:
-            service: Service name (openai, anthropic, google, etc.)
-            api_key: The API key to test
+            service: Service name (openai, anthropic, google, etc.).
+            api_key: The API key to test.
 
         Returns:
-            Tuple of (success, message)
+            Tuple of (success, message).
 
         """
         if not api_key:
@@ -323,7 +326,7 @@ class EnvFileManager:
         """Get all API keys from the .env file.
 
         Returns:
-            Dictionary of API keys (only keys ending with _API_KEY or _API_TOKEN)
+            Dictionary of API keys (only keys ending with _API_KEY, _API_TOKEN, _KEY, or _TOKEN).
 
         """
         env_vars = self.read_env()
@@ -333,8 +336,8 @@ class EnvFileManager:
         """Set an API key for a specific service.
 
         Args:
-            service: Service name (openai, anthropic, etc.)
-            api_key: The API key to set
+            service: Service name (openai, anthropic, etc.).
+            api_key: The API key to set.
 
         """
         # Normalize service name to uppercase with _API_KEY suffix
@@ -383,7 +386,7 @@ class EnvFileManager:
         """Load all variables from .env file into the actual environment.
 
         Args:
-            override: Whether to override existing environment variables
+            override: Whether to override existing environment variables.
 
         """
         env_vars = self.read_env()

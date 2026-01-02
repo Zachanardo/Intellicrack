@@ -19,7 +19,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import asyncio
-import asyncio.subprocess
 import base64
 import datetime
 import hashlib
@@ -27,7 +26,6 @@ import ipaddress
 import json
 import logging
 import mimetypes
-import pickle  # noqa: S403
 import random
 import re
 import secrets
@@ -72,8 +70,8 @@ try:
 except ImportError:
     from typing import Any
 
-    X509Certificate = Any  # type: ignore[misc,assignment]
-    PrivateKeyTypes = Any  # type: ignore[misc,assignment]
+    X509Certificate = Any
+    PrivateKeyTypes = Any
     HAS_CRYPTO_TYPES = False
 
 
@@ -246,7 +244,7 @@ class CertificateManager:
         paths. If files don't exist, generates a new CA certificate authority.
 
         Returns:
-            bool: True if CA initialization succeeded, False otherwise.
+            True if CA initialization succeeded, False otherwise.
 
         """
         try:  # Try to load existing CA
@@ -269,7 +267,7 @@ class CertificateManager:
                     ),
                 ):
                     self.logger.warning("Unsupported key type: %s, using anyway", type(loaded_key))
-                self.ca_key = loaded_key  # type: ignore[assignment]
+                self.ca_key = loaded_key
 
                 self.logger.info("Loaded existing CA certificate")
                 return True
@@ -289,7 +287,7 @@ class CertificateManager:
         it to the configured paths for future use.
 
         Returns:
-            bool: True if CA generation succeeded, False otherwise.
+            True if CA generation succeeded, False otherwise.
 
         """
         try:
@@ -382,7 +380,7 @@ class CertificateManager:
             hostname: The DNS hostname for certificate generation.
 
         Returns:
-            tuple[ssl.SSLContext, str]: SSL context and hostname pair.
+            SSL context and hostname pair.
 
         Raises:
             RuntimeError: If CA certificate or key not initialized.
@@ -562,7 +560,7 @@ class RequestClassifier:
             request: The request information to classify.
 
         Returns:
-            tuple[CloudProvider, AuthenticationType, RequestType, float]: Provider, auth type, request type, and confidence score.
+            Provider, auth type, request type, and confidence score.
 
         """
         # Detect cloud provider
@@ -589,7 +587,7 @@ class RequestClassifier:
             headers: The HTTP headers dictionary.
 
         Returns:
-            CloudProvider: Detected cloud provider or GENERIC_SAAS.
+            Detected cloud provider or GENERIC_SAAS.
 
         """
         url_lower = url.lower()
@@ -621,7 +619,7 @@ class RequestClassifier:
             body: The request body bytes.
 
         Returns:
-            AuthenticationType: Detected authentication type or CUSTOM.
+            Detected authentication type or CUSTOM.
 
         """
         if auth_header := headers.get("Authorization", ""):
@@ -667,7 +665,7 @@ class RequestClassifier:
             body: The request body bytes.
 
         Returns:
-            RequestType: Detected request type or REGULAR_API.
+            Detected request type or REGULAR_API.
 
         """
         url_lower = url.lower()
@@ -749,7 +747,7 @@ class RequestClassifier:
             request: The request information.
 
         Returns:
-            float: Confidence score between 0.0 and 1.0.
+            Confidence score between 0.0 and 1.0.
 
         """
         confidence = 0.0
@@ -818,7 +816,7 @@ class AuthenticationManager:
             token: The JWT token string.
 
         Returns:
-            dict[str, Any]: Dictionary with 'header', 'payload', 'valid' keys and optional 'error'.
+            Dictionary with 'header', 'payload', 'valid' keys and optional 'error'.
 
         """
         try:
@@ -846,7 +844,7 @@ class AuthenticationManager:
             modifications: Dictionary of claim modifications.
 
         Returns:
-            str: Modified JWT token or original if modification fails.
+            Modified JWT token or original if modification fails.
 
         """
         try:  # Parse existing token
@@ -915,7 +913,7 @@ class AuthenticationManager:
             auth_type: The authentication type for the token.
 
         Returns:
-            str: Generated JWT license token.
+            Generated JWT license token.
 
         """
         current_time = int(time.time())
@@ -1008,7 +1006,7 @@ class AuthenticationManager:
             auth_header: The Authorization header value.
 
         Returns:
-            str | None: The bearer token or None if not in bearer format.
+            The bearer token or None if not in bearer format.
 
         """
         return auth_header[7:] if auth_header.lower().startswith("bearer ") else None
@@ -1020,7 +1018,7 @@ class AuthenticationManager:
             api_key: The original API key.
 
         Returns:
-            str: Modified API key maintaining format conventions.
+            Modified API key maintaining format conventions.
 
         """
         # Generate a valid-looking API key
@@ -1061,7 +1059,7 @@ class ResponseModifier:
             response_body: The response body bytes.
 
         Returns:
-            tuple[int, dict[str, str], bytes]: Modified status, headers, and body.
+            Modified status, headers, and body.
 
         """
         if request.request_type == RequestType.LICENSE_VALIDATION:
@@ -1090,7 +1088,7 @@ class ResponseModifier:
             response_body: The response body bytes.
 
         Returns:
-            tuple[int, dict[str, str], bytes]: Modified status, headers, and body.
+            Modified status, headers, and body.
 
         """
         try:
@@ -1182,7 +1180,7 @@ class ResponseModifier:
             response_body: The response body bytes.
 
         Returns:
-            tuple[int, dict[str, str], bytes]: Modified status, headers, and body.
+            Modified status, headers, and body.
 
         """
         try:
@@ -1277,7 +1275,7 @@ class ResponseModifier:
             response_body: The response body bytes.
 
         Returns:
-            tuple[int, dict[str, str], bytes]: Modified status, headers, and body.
+            Modified status, headers, and body.
 
         """
         try:
@@ -1325,7 +1323,7 @@ class ResponseModifier:
             response_body: The response body bytes.
 
         Returns:
-            tuple[int, dict[str, str], bytes]: Modified status, headers, and body.
+            Modified status, headers, and body.
 
         """
         try:
@@ -1412,7 +1410,7 @@ class CacheManager:
             request: The request information.
 
         Returns:
-            str: SHA256 hash as cache key.
+            SHA256 hash as cache key.
 
         """
         # Include method, URL, and relevant headers
@@ -1432,7 +1430,7 @@ class CacheManager:
             request: The request information.
 
         Returns:
-            ResponseInfo | None: Cached response if available and not expired, None otherwise.
+            Cached response if available and not expired, None otherwise.
 
         """
         cache_key = self._generate_cache_key(request)
@@ -1474,11 +1472,25 @@ class CacheManager:
             self.cache[cache_key] = (response, time.time())
             self.access_times[cache_key] = time.time()
 
-            # Use pickle for serializing cache data for potential persistence
+            # Use JSON for serializing cache data for potential persistence
             try:
-                serialized_data = pickle.dumps((response, time.time()))
-                # Use base64 encoding for safe storage
-                encoded_data = base64.b64encode(serialized_data).decode("utf-8")
+                cache_data = {
+                    "response": {
+                        "status": response.status,
+                        "headers": response.headers,
+                        "body": base64.b64encode(response.body).decode("ascii"),
+                        "timestamp": response.timestamp,
+                        "original_response": (
+                            base64.b64encode(response.original_response).decode("ascii")
+                            if response.original_response else None
+                        ),
+                        "bypass_applied": response.bypass_applied,
+                        "cache_hit": response.cache_hit,
+                        "source": response.source,
+                    },
+                    "cached_at": time.time(),
+                }
+                encoded_data = json.dumps(cache_data)
 
                 # Store in SQLite for persistence (if configured)
                 if hasattr(self.config, "enable_persistent_cache") and self.config.enable_persistent_cache:
@@ -1518,7 +1530,7 @@ class CacheManager:
             url: The URL to check connectivity for.
 
         Returns:
-            bool: True if connection successful, False otherwise.
+            True if connection successful, False otherwise.
 
         """
         try:
@@ -1564,7 +1576,7 @@ class CacheManager:
             data: The data bytes to compress.
 
         Returns:
-            bytes: Compressed data or original if compression fails.
+            Compressed data or original if compression fails.
 
         """
         try:
@@ -1583,7 +1595,7 @@ class CacheManager:
             content_type: The content type header value.
 
         Returns:
-            dict[str, Any]: Analysis results including MIME type and found domains.
+            Analysis results including MIME type and found domains.
 
         """
         # Use Set type for tracking unique domains
@@ -1620,7 +1632,12 @@ class CacheManager:
         return analysis
 
     def _evict_oldest(self) -> None:
-        """Evict oldest cache entry based on access time."""
+        """Evict oldest cache entry based on least recent access time.
+
+        Removes the cache entry with the oldest access timestamp to make room
+        for new entries when the cache size limit is reached.
+
+        """
         if not self.cache:
             return
 
@@ -1728,7 +1745,7 @@ class LocalLicenseServer:
             request: The request information.
 
         Returns:
-            ResponseInfo: Generated license response.
+            Generated license response.
 
         """
         # Extract identifier from request
@@ -1775,7 +1792,7 @@ class LocalLicenseServer:
             request: The request information.
 
         Returns:
-            str: Extracted identifier or 'default'.
+            Extracted identifier or 'default'.
 
         """
         # Try to extract from various sources
@@ -1809,7 +1826,7 @@ class LocalLicenseServer:
             license_data: The license data dictionary.
 
         Returns:
-            dict[str, Any]: Validation response with license data.
+            Validation response with license data.
 
         """
         return {
@@ -1829,7 +1846,7 @@ class LocalLicenseServer:
             license_data: The license data dictionary.
 
         Returns:
-            dict[str, Any]: Feature response with all features enabled.
+            Feature response with all features enabled.
 
         """
         return {
@@ -1853,7 +1870,7 @@ class LocalLicenseServer:
             license_data: The license data dictionary.
 
         Returns:
-            dict[str, Any]: Token response with access and refresh tokens.
+            Token response with access and refresh tokens.
 
         """
         # Generate new tokens
@@ -1876,7 +1893,7 @@ class LocalLicenseServer:
             license_data: The license data dictionary.
 
         Returns:
-            dict[str, Any]: Generic success response with license data.
+            Generic success response with license data.
 
         """
         return {
@@ -1930,7 +1947,7 @@ class CloudLicenseInterceptor:
         aiohttp web server on configured host and port.
 
         Returns:
-            bool: True if server started successfully, False otherwise.
+            True if server started successfully, False otherwise.
 
         """
         try:
@@ -1991,7 +2008,7 @@ class CloudLicenseInterceptor:
         """Create aiohttp application.
 
         Returns:
-            aiohttp.web.Application: Configured web application with routes and middleware.
+            Configured web application with routes and middleware.
 
         """
         app = aiohttp.web.Application()
@@ -2027,7 +2044,7 @@ class CloudLicenseInterceptor:
             handler: The handler function.
 
         Returns:
-            aiohttp.web.StreamResponse: The response with stealth headers.
+            The response with stealth headers.
 
         """
         if self.config.stealth_mode:
@@ -2054,7 +2071,7 @@ class CloudLicenseInterceptor:
             handler: The handler function.
 
         Returns:
-            aiohttp.web.StreamResponse: The response with processing time logged.
+            The response with processing time logged.
 
         """
         start_time = time.time()
@@ -2079,7 +2096,7 @@ class CloudLicenseInterceptor:
             request: The incoming request.
 
         Returns:
-            aiohttp.web.Response: The response to send to client.
+            The response to send to client.
 
         """
         try:

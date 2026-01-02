@@ -59,7 +59,8 @@ def check_buffer_overflow(binary_path: str, functions: list[str] | None = None) 
         functions: List of specific functions to check (optional)
 
     Returns:
-        Dict containing buffer overflow analysis results
+        Buffer overflow analysis results containing vulnerable functions, unsafe
+        patterns, and risk assessment.
 
     """
     results = {
@@ -209,7 +210,8 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> dict[str, Any]:
         data: Binary data
 
     Returns:
-        dict: Stack analysis results including patterns and canary detection
+        Stack analysis results including patterns, canary detection, and stack
+        operations.
 
     """
     results: dict[str, Any] = {"patterns": [], "stack_canaries": False, "stack_operations": []}
@@ -313,7 +315,7 @@ def _analyze_patterns_without_disassembly(data: bytes) -> dict[str, Any]:
         data: Binary data
 
     Returns:
-        dict: Analysis results with patterns and stack canary detection
+        Analysis results with patterns and stack canary detection.
 
     """
     results: dict[str, Any] = {"patterns": [], "stack_canaries": False}
@@ -380,7 +382,7 @@ def _detect_vulnerability_patterns(data: bytes) -> list[dict[str, Any]]:
         data: Binary data
 
     Returns:
-        list: Detected vulnerability patterns
+        Detected vulnerability patterns.
 
     """
     patterns = []
@@ -440,7 +442,8 @@ def _analyze_rop_gadgets(data: bytes) -> dict[str, Any]:
         data: Binary data
 
     Returns:
-        dict: ROP gadget analysis results
+        ROP gadget analysis results including gadget count, types, and
+        exploitability assessment.
 
     """
     results: dict[str, Any] = {"gadget_count": 0, "gadget_types": {}, "exploitability": "low"}
@@ -523,7 +526,7 @@ def _analyze_string_operations(data: bytes) -> list[dict[str, Any]]:
         data: Binary data
 
     Returns:
-        list: Unsafe string operation patterns
+        Unsafe string operation patterns detected in binary.
 
     """
     patterns = []
@@ -607,7 +610,8 @@ def check_for_memory_leaks(binary_path: str, process_pid: int | None = None) -> 
         process_pid: Process ID for runtime analysis (optional)
 
     Returns:
-        Dict containing memory leak analysis results
+        Memory leak analysis results including static and dynamic analysis,
+        allocation/deallocation functions, and risk level.
 
     """
     results = {
@@ -766,7 +770,8 @@ def check_memory_usage(process_pid: int) -> dict[str, Any]:
         process_pid: Process ID to check
 
     Returns:
-        Dict containing memory usage information
+        Memory usage information including RSS, VMS, percentage, and memory
+        categories.
 
     """
     if not PSUTIL_AVAILABLE:
@@ -836,7 +841,8 @@ def bypass_tpm_checks(binary_path: str) -> dict[str, Any]:
         binary_path: Path to the binary file
 
     Returns:
-        Dict containing TPM bypass information
+        TPM bypass information including detected functions, patches, and
+        bypass methods.
 
     """
     results: dict[str, Any] = {"tpm_functions": [], "patches": [], "method": "none"}
@@ -918,7 +924,8 @@ def scan_protectors(binary_path: str) -> dict[str, Any]:
         binary_path: Path to the binary file
 
     Returns:
-        Dict containing protection scan results
+        Protection scan results including detected protections, anti-debug
+        techniques, VM checks, packers, obfuscation, and checksums.
 
     """
     results: dict[str, Any] = {
@@ -1027,7 +1034,7 @@ def run_tpm_bypass(binary_path: str, output_path: str | None = None) -> dict[str
         output_path: Path for patched binary (optional)
 
     Returns:
-        Dict containing bypass results
+        Bypass results including generated patches and status information.
 
     """
     results = bypass_tpm_checks(binary_path)
@@ -1051,7 +1058,8 @@ def run_vm_bypass(binary_path: str, output_path: str | None = None) -> dict[str,
         output_path: Path for patched binary (optional)
 
     Returns:
-        Dict containing bypass results
+        Bypass results including VM checks found, generated patches, and status
+        information.
 
     """
     results: dict[str, Any] = {"vm_checks": [], "patches": [], "method": "none"}

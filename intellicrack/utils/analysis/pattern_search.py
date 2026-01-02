@@ -41,7 +41,8 @@ def find_all_pattern_occurrences(
         max_results: Maximum number of results to return (None for no limit)
 
     Returns:
-        List of dictionaries containing found pattern information
+        Dictionaries containing found pattern information including address,
+        offset, pattern bytes, and hexadecimal representation.
 
     """
     results = []
@@ -74,11 +75,12 @@ def search_patterns_in_binary(binary_data: bytes, patterns: list[bytes], base_ad
 
     Args:
         binary_data: Binary data to search in
-        patterns: List of byte patterns to search for
+        patterns: Byte patterns to search for
         base_address: Base address to add to found offsets
 
     Returns:
-        List of dictionaries containing found pattern information
+        Dictionaries containing found pattern information with pattern index,
+        address, offset, and hexadecimal representation.
 
     """
     results = []
@@ -100,7 +102,8 @@ def find_function_prologues(binary_data: bytes, base_address: int = 0) -> list[d
         base_address: Base address to add to found offsets
 
     Returns:
-        List of found function prologues with their addresses
+        Found function prologues with their addresses, type markers, and
+        confidence scores.
 
     """
     # Common function prologues
@@ -132,12 +135,13 @@ def find_license_patterns(
 
     Args:
         binary_data: Binary data to search in
-        base_address: Base address to add to found offsets (default: 0x400000)
+        base_address: Base address to add to found offsets
         max_results: Maximum number of results to return
         context_size: Number of bytes of context to include around matches
 
     Returns:
-        List of found license patterns with context and metadata
+        Found license patterns with context, metadata, and decoded pattern
+        keywords indicating licensing-related strings.
 
     """
     # Common license/validation function patterns

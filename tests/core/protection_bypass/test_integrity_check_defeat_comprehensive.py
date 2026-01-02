@@ -11,7 +11,6 @@ import tempfile
 import zlib
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
 
 import pefile
 import pytest

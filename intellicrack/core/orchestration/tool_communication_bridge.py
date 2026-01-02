@@ -36,7 +36,6 @@ from typing import Any, cast
 
 import msgpack
 import zmq
-import zmq.asyncio
 
 
 logger = logging.getLogger(__name__)
@@ -93,7 +92,11 @@ class IPCMessage:
     priority: int = 5
 
     def to_bytes(self) -> bytes:
-        """Serialize message to bytes using msgpack."""
+        """Serialize message to bytes using msgpack.
+
+        Returns:
+            bytes: Serialized message data as msgpack-encoded bytes.
+        """
         data_dict = asdict(self)
         data_dict["source"] = self.source.value
         data_dict["destination"] = self.destination.value if self.destination else None
@@ -102,7 +105,14 @@ class IPCMessage:
 
     @classmethod
     def from_bytes(cls, data: bytes) -> "IPCMessage":
-        """Deserialize message from bytes."""
+        """Deserialize message from bytes.
+
+        Args:
+            data: Serialized message data as msgpack-encoded bytes.
+
+        Returns:
+            IPCMessage: Deserialized IPC message instance.
+        """
         msg_dict = msgpack.unpackb(data, raw=False)
         msg_dict["source"] = ToolType(msg_dict["source"])
         if msg_dict["destination"]:
@@ -115,7 +125,12 @@ class ToolCommunicationBridge:
     """Central communication bridge for all analysis tools."""
 
     def __init__(self, orchestrator_port: int = 5555, auth_key: str | None = None) -> None:
-        """Initialize the communication bridge."""
+        """Initialize the communication bridge.
+
+        Args:
+            orchestrator_port: TCP port for the orchestrator server (default: 5555).
+            auth_key: Pre-shared authentication key for message verification (default: auto-generated).
+        """
         self.orchestrator_port = orchestrator_port
         self.auth_key = auth_key or self._generate_auth_key()
 
@@ -145,11 +160,19 @@ class ToolCommunicationBridge:
         self.response_timeout: float = 30.0
 
     def _generate_auth_key(self) -> str:
-        """Generate secure authentication key for IPC."""
+        """Generate secure authentication key for IPC.
+
+        Returns:
+            str: SHA256-hashed authentication key as hexadecimal string.
+        """
         return hashlib.sha256(uuid.uuid4().bytes).hexdigest()
 
     def start(self) -> None:
-        """Start the communication bridge."""
+        """Start the communication bridge.
+
+        Initializes ZeroMQ publisher, subscriber, and router sockets, then
+        starts background threads for message routing and subscription processing.
+        """
         self.running = True
 
         # Setup publisher socket for broadcasting
@@ -180,7 +203,11 @@ class ToolCommunicationBridge:
         logger.info("Communication bridge started on port %d", self.orchestrator_port)
 
     def stop(self) -> None:
-        """Stop the communication bridge."""
+        """Stop the communication bridge.
+
+        Shuts down all ZeroMQ sockets, terminates the context, and stops
+        background message processing threads.
+        """
         self.running = False
 
         if self.publisher is not None:
@@ -197,7 +224,15 @@ class ToolCommunicationBridge:
         logger.info("Communication bridge stopped")
 
     def register_tool(self, tool_type: ToolType, capabilities: dict[str, Any]) -> str:
-        """Register a tool with the communication bridge."""
+        """Register a tool with the communication bridge.
+
+        Args:
+            tool_type: Type of analysis tool being registered.
+            capabilities: Dictionary of tool capabilities and features.
+
+        Returns:
+            str: Unique tool identifier for the registered tool.
+        """
         tool_id = str(uuid.uuid4())
 
         self.tool_registry[tool_type] = {
@@ -218,7 +253,13 @@ class ToolCommunicationBridge:
         return tool_id
 
     def unregister_tool(self, tool_type: ToolType) -> None:
-        """Unregister a tool from the bridge."""
+        """Unregister a tool from the bridge.
+
+        Removes the tool from the registry and closes its associated dealer socket.
+
+        Args:
+            tool_type: Type of analysis tool to unregister.
+        """
         if tool_type in self.tool_registry:
             del self.tool_registry[tool_type]
 
@@ -229,7 +270,14 @@ class ToolCommunicationBridge:
         logger.info("Unregistered tool %s", tool_type.value)
 
     def send_message(self, message: IPCMessage) -> str | None:
-        """Send a message to a specific tool or broadcast."""
+        """Send a message to a specific tool or broadcast.
+
+        Args:
+            message: IPC message to send.
+
+        Returns:
+            str | None: Message ID if response is required, None otherwise.
+        """
         # Add authentication
         message.payload["auth"] = self._generate_message_auth(message)
 
@@ -259,7 +307,14 @@ class ToolCommunicationBridge:
         return None
 
     def _generate_message_auth(self, message: IPCMessage) -> str:
-        """Generate HMAC authentication for message."""
+        """Generate HMAC authentication for message.
+
+        Args:
+            message: IPC message to authenticate.
+
+        Returns:
+            str: HMAC authentication token as hexadecimal string.
+        """
         msg_bytes = json.dumps(
             {
                 "id": message.id,
@@ -272,7 +327,14 @@ class ToolCommunicationBridge:
         return hmac.new(self.auth_key.encode(), msg_bytes, hashlib.sha256).hexdigest()
 
     def _verify_message_auth(self, message: IPCMessage) -> bool:
-        """Verify message authentication."""
+        """Verify message authentication.
+
+        Args:
+            message: IPC message to verify.
+
+        Returns:
+            bool: True if message authentication is valid, False otherwise.
+        """
         if "auth" not in message.payload:
             return False
 
@@ -280,13 +342,28 @@ class ToolCommunicationBridge:
         return hmac.compare_digest(message.payload["auth"], expected_auth)
 
     def add_message_handler(self, message_type: MessageType, handler: Callable[[IPCMessage], Any]) -> None:
-        """Add a message handler for a specific message type."""
+        """Add a message handler for a specific message type.
+
+        Multiple handlers can be registered for the same message type, and
+        all will be invoked when a message of that type is received.
+
+        Args:
+            message_type: Type of message to handle.
+            handler: Callable that processes incoming messages.
+        """
         if message_type not in self.message_handlers:
             self.message_handlers[message_type] = []
         self.message_handlers[message_type].append(handler)
 
     async def send_and_wait(self, message: IPCMessage) -> IPCMessage | None:
-        """Send message and wait for response."""
+        """Send message and wait for response.
+
+        Args:
+            message: IPC message to send.
+
+        Returns:
+            IPCMessage | None: Response message if received before timeout, None otherwise.
+        """
         message.requires_response = True
         msg_id = self.send_message(message)
 
@@ -305,12 +382,22 @@ class ToolCommunicationBridge:
         return None
 
     def register_handler(self, message_type: MessageType, handler: Callable[[IPCMessage], Any]) -> None:
-        """Register a message handler for specific message type."""
+        """Register a message handler for specific message type.
+
+        Args:
+            message_type: Type of message to handle.
+            handler: Callable that processes incoming messages.
+        """
         self.message_handlers[message_type].append(handler)
         logger.debug("Registered handler for %s", message_type.value)
 
     def _router_loop(self) -> None:
-        """Process request-reply messages."""
+        """Process request-reply messages.
+
+        Runs as a background thread, continuously polling the router socket
+        for incoming request-reply messages, verifying authentication, and
+        dispatching to registered message handlers.
+        """
         if self.router is None:
             logger.error("Router socket is not initialized")
             return
@@ -343,7 +430,12 @@ class ToolCommunicationBridge:
                 logger.exception("Router loop error: %s", e)
 
     def _subscriber_loop(self) -> None:
-        """Process broadcast messages."""
+        """Process broadcast messages.
+
+        Runs as a background thread, continuously polling the subscriber socket
+        for incoming broadcast messages, verifying authentication, and
+        dispatching to registered message handlers.
+        """
         if self.subscriber is None:
             logger.error("Subscriber socket is not initialized")
             return
@@ -364,7 +456,12 @@ class ToolCommunicationBridge:
                 logger.exception("Subscriber loop error: %s", e)
 
     def _handle_message(self, message: IPCMessage, identity: bytes | None) -> None:
-        """Handle incoming message."""
+        """Handle incoming message.
+
+        Args:
+            message: IPC message to handle.
+            identity: Router identity for source tool (None for broadcasts).
+        """
         start_time = time.time()
 
         # Check if this is a response to a pending request
@@ -402,7 +499,15 @@ class ToolCommunicationBridge:
         self.latency_stats[message.message_type].append(latency)
 
     def broadcast_analysis_event(self, event_type: str, data: dict[str, Any]) -> None:
-        """Broadcast an analysis event to all tools."""
+        """Broadcast an analysis event to all tools.
+
+        Creates an ANALYSIS_RESULT message and broadcasts it to all connected
+        tools without expecting a response.
+
+        Args:
+            event_type: Type of analysis event being broadcast.
+            data: Event data as dictionary.
+        """
         message = IPCMessage(
             id=str(uuid.uuid4()),
             source=ToolType.ORCHESTRATOR,
@@ -414,7 +519,15 @@ class ToolCommunicationBridge:
         self.send_message(message)
 
     def request_cross_reference(self, address: int, tool_type: ToolType) -> dict[str, Any] | None:
-        """Request cross-reference analysis from specific tool."""
+        """Request cross-reference analysis from specific tool.
+
+        Args:
+            address: Binary address to analyze for cross-references.
+            tool_type: Analysis tool to request cross-reference from.
+
+        Returns:
+            dict[str, Any] | None: Cross-reference analysis results or None if timeout.
+        """
         message = IPCMessage(
             id=str(uuid.uuid4()),
             source=ToolType.ORCHESTRATOR,
@@ -433,7 +546,14 @@ class ToolCommunicationBridge:
         return response.payload if response else None
 
     def synchronize_breakpoints(self, breakpoints: list[int]) -> None:
-        """Synchronize breakpoints across all debugging tools."""
+        """Synchronize breakpoints across all debugging tools.
+
+        Sends synchronization messages to Frida, x64dbg, and Radare2 tools
+        with the breakpoint list for coordinated debugging.
+
+        Args:
+            breakpoints: List of binary addresses where breakpoints are set.
+        """
         for tool in [ToolType.FRIDA, ToolType.X64DBG, ToolType.RADARE2]:
             if tool in self.tool_registry:
                 message = IPCMessage(
@@ -447,7 +567,15 @@ class ToolCommunicationBridge:
                 self.send_message(message)
 
     def share_function_signature(self, address: int, signature: dict[str, Any]) -> None:
-        """Share discovered function signature with all tools."""
+        """Share discovered function signature with all tools.
+
+        Broadcasts a FUNCTION_DISCOVERED message containing the address and
+        signature to all connected tools for coordinated analysis.
+
+        Args:
+            address: Binary address of discovered function.
+            signature: Function signature details including parameters and return type.
+        """
         message = IPCMessage(
             id=str(uuid.uuid4()),
             source=ToolType.ORCHESTRATOR,
@@ -459,7 +587,14 @@ class ToolCommunicationBridge:
         self.send_message(message)
 
     def coordinate_patch_operation(self, patches: list[dict[str, Any]]) -> bool:
-        """Coordinate patch operation across tools."""
+        """Coordinate patch operation across tools.
+
+        Args:
+            patches: List of patch operations to apply to the binary.
+
+        Returns:
+            bool: True if all patches verified and applied successfully, False otherwise.
+        """
         success = True
 
         # First, verify patches with Radare2
@@ -507,7 +642,11 @@ class ToolCommunicationBridge:
         return success
 
     def get_tool_status(self) -> dict[ToolType, dict[str, Any]]:
-        """Get status of all registered tools."""
+        """Get status of all registered tools.
+
+        Returns:
+            dict[ToolType, dict[str, Any]]: Status information for each registered tool.
+        """
         status: dict[ToolType, dict[str, Any]] = {}
         current_time = time.time()
 
@@ -525,7 +664,11 @@ class ToolCommunicationBridge:
         return status
 
     def get_performance_metrics(self) -> dict[str, Any]:
-        """Get communication performance metrics."""
+        """Get communication performance metrics.
+
+        Returns:
+            dict[str, Any]: Performance metrics including message counts and latency statistics.
+        """
         average_latency: dict[str, dict[str, float]] = {
             msg_type.value: {
                 "avg": sum(latencies) / len(latencies),
@@ -549,7 +692,13 @@ class ToolConnector:
     """Client connector for individual tools to communicate with bridge."""
 
     def __init__(self, tool_type: ToolType, bridge_host: str = "127.0.0.1", bridge_port: int = 5555) -> None:
-        """Initialize tool connector."""
+        """Initialize tool connector.
+
+        Args:
+            tool_type: Type of analysis tool this connector represents.
+            bridge_host: Hostname of the communication bridge (default: 127.0.0.1).
+            bridge_port: TCP port of the communication bridge (default: 5555).
+        """
         self.tool_type = tool_type
         self.bridge_host = bridge_host
         self.bridge_port = bridge_port
@@ -562,7 +711,11 @@ class ToolConnector:
         self.running = False
 
     def connect(self) -> str:
-        """Connect to the communication bridge."""
+        """Connect to the communication bridge.
+
+        Returns:
+            str: Unique tool identifier assigned by the bridge.
+        """
         dealer_socket: zmq.Socket[bytes] = self.context.socket(zmq.DEALER)
         tool_id = str(uuid.uuid4())
         dealer_socket.setsockopt_string(zmq.IDENTITY, tool_id)
@@ -583,7 +736,11 @@ class ToolConnector:
         return self.tool_id
 
     def disconnect(self) -> None:
-        """Disconnect from bridge."""
+        """Disconnect from bridge.
+
+        Stops message processing, closes ZeroMQ sockets, and terminates
+        the ZeroMQ context.
+        """
         self.running = False
 
         if self.dealer is not None:
@@ -594,7 +751,15 @@ class ToolConnector:
         self.context.term()
 
     def send_result(self, result_type: MessageType, data: dict[str, Any]) -> None:
-        """Send analysis result to bridge."""
+        """Send analysis result to bridge.
+
+        Creates and sends an IPCMessage with the specified result type and data
+        to the orchestrator via the dealer socket.
+
+        Args:
+            result_type: Type of result message to send.
+            data: Result data as dictionary.
+        """
         if self.dealer is None:
             logger.error("Dealer socket is not initialized")
             return
@@ -611,7 +776,11 @@ class ToolConnector:
         self.dealer.send(message.to_bytes())
 
     def _process_messages(self) -> None:
-        """Process incoming messages."""
+        """Process incoming messages.
+
+        Runs as a background thread, continuously polling dealer and subscriber
+        sockets for incoming messages and dispatching them to registered handlers.
+        """
         if self.dealer is None or self.subscriber is None:
             logger.error("Sockets are not initialized")
             return
@@ -638,7 +807,13 @@ class ToolConnector:
                 logger.exception("Message processing error: %s", e)
 
     def _handle_message(self, message: IPCMessage) -> None:
-        """Handle incoming message."""
+        """Handle incoming message.
+
+        Args:
+            message: IPC message to handle.
+
+        Dispatches the message to all registered handlers for this message type.
+        """
         for handler in self.message_handlers.get(message.message_type, []):
             try:
                 handler(message)
@@ -646,5 +821,13 @@ class ToolConnector:
                 logger.exception("Handler error: %s", e)
 
     def register_handler(self, message_type: MessageType, handler: Callable[[IPCMessage], Any]) -> None:
-        """Register message handler."""
+        """Register message handler.
+
+        Args:
+            message_type: Type of message to handle.
+            handler: Callable that processes incoming messages.
+
+        Multiple handlers can be registered for the same message type, and
+        all will be invoked when a message of that type is received.
+        """
         self.message_handlers[message_type].append(handler)

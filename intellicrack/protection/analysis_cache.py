@@ -20,117 +20,23 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-import hashlib
-import hmac
 import json
 import logging
-import os
-import pickle  # noqa: S403
+import pickle
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from threading import Lock
 
+from ..utils.core.secure_serialization import (
+    RestrictedUnpickler,
+    secure_pickle_dump,
+    secure_pickle_load,
+)
 from ..utils.logger import get_logger
 
 
 logger = get_logger(__name__)
-
-# Security configuration for pickle
-PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
-
-
-class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
-    """Restricted unpickler that only allows safe classes."""
-
-    def find_class(self, module: str, name: str) -> type[object]:
-        """Override ``find_class`` to restrict allowed classes."""
-        # Allow only safe modules and classes
-        ALLOWED_MODULES = {
-            "numpy",
-            "numpy.core.multiarray",
-            "numpy.core.numeric",
-            "pandas",
-            "pandas.core.frame",
-            "pandas.core.series",
-            "sklearn",
-            "torch",
-            "tensorflow",
-            "__builtin__",
-            "builtins",
-            "collections",
-            "collections.abc",
-            "datetime",
-        }
-
-        # Allow model classes from our own modules
-        if module.startswith("intellicrack."):
-            return super().find_class(module, name)  # type: ignore[no-any-return]
-
-        # Check if module is in allowed list
-        if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
-            return super().find_class(module, name)  # type: ignore[no-any-return]
-
-        # Deny everything else
-        raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
-
-
-def secure_pickle_dump(obj: object, file_path: str | Path) -> None:
-    """Securely dump object with integrity check.
-
-    Args:
-        obj: Object to serialize.
-        file_path: Path to write pickled data with HMAC integrity check.
-
-    """
-    # Serialize object
-    data = pickle.dumps(obj)
-
-    # Calculate HMAC for integrity
-    mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
-
-    # Write MAC + data
-    with open(file_path, "wb") as f:
-        f.write(mac)
-        f.write(data)
-
-
-def secure_pickle_load(file_path: str | Path) -> object:
-    """Securely load object with integrity verification.
-
-    Args:
-        file_path: Path to pickled data file with HMAC integrity check.
-
-    Returns:
-        Deserialized object loaded from file.
-
-    Raises:
-        ValueError: If integrity check fails, indicating possible tampering.
-
-    """
-    try:
-        # Try joblib first as it's safer for ML models
-        import joblib
-
-        return joblib.load(file_path)
-    except (ImportError, ValueError):
-        # Fallback to pickle with restricted unpickler
-        pass
-
-    with open(file_path, "rb") as f:
-        # Read MAC
-        stored_mac = f.read(32)  # SHA256 produces 32 bytes
-        data = f.read()
-
-    # Verify integrity
-    expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
-    if not hmac.compare_digest(stored_mac, expected_mac):
-        raise ValueError("Pickle file integrity check failed - possible tampering detected")
-
-    # Load object using RestrictedUnpickler
-    import io
-
-    return RestrictedUnpickler(io.BytesIO(data)).load()
 
 
 @dataclass
@@ -147,12 +53,29 @@ class CacheEntry:
     logger: logging.Logger = logging.getLogger(f"{__name__}.CacheEntry")
 
     def __post_init__(self) -> None:
-        """Initialize logger after dataclass initialization."""
+        """Initialize logger after dataclass initialization.
+
+        Ensures the logger instance is properly initialized after the dataclass
+        fields are set up.
+
+        """
         if not hasattr(self, "logger") or self.logger is None:
             self.logger = logging.getLogger(f"{__name__}.CacheEntry")
 
     def is_valid(self, file_path: str) -> bool:
-        """Check if cache entry is still valid."""
+        """Check if cache entry is still valid.
+
+        Validates the cache entry against the current state of the analyzed file
+        by checking modification time and file size.
+
+        Args:
+            file_path: Path to the file that was analyzed.
+
+        Returns:
+            True if the cache entry is still valid based on file modifications;
+            False if the file has changed or no longer exists.
+
+        """
         try:
             if not os.path.exists(file_path):
                 return False
@@ -170,7 +93,12 @@ class CacheEntry:
             return False
 
     def update_access(self) -> None:
-        """Update access statistics."""
+        """Update access statistics.
+
+        Increments the access count and updates the last access timestamp
+        to track cache entry usage patterns for LRU eviction.
+
+        """
         self.access_count += 1
         self.last_access = time.time()
 
@@ -189,12 +117,24 @@ class CacheStats:
 
     @property
     def hit_rate(self) -> float:
-        """Calculate cache hit rate."""
+        """Calculate cache hit rate.
+
+        Returns:
+            The cache hit rate as a percentage (0.0-100.0); returns 0.0 if there
+            are no hits or misses recorded yet.
+
+        """
         total = self.cache_hits + self.cache_misses
         return (self.cache_hits / total * 100) if total > 0 else 0.0
 
     def to_dict(self) -> dict[str, object]:
-        """Convert to dictionary for JSON serialization."""
+        """Convert to dictionary for JSON serialization.
+
+        Returns:
+            Dictionary representation of cache statistics suitable for JSON export
+            containing all statistical counters and metrics.
+
+        """
         return asdict(self)
 
 
@@ -357,7 +297,12 @@ class AnalysisCache:
             return False
 
     def clear(self) -> None:
-        """Clear all cache entries."""
+        """Clear all cache entries.
+
+        Removes all cache entries from memory and deletes persistent cache files
+        from disk.
+
+        """
         with self._lock:
             self._cache.clear()
             self._stats = CacheStats()
@@ -403,14 +348,26 @@ class AnalysisCache:
         return removed_count
 
     def get_stats(self) -> CacheStats:
-        """Get cache statistics."""
+        """Get cache statistics.
+
+        Returns:
+            Current cache statistics object including hit rate, entry count, size
+            metrics, and invalidation counters.
+
+        """
         with self._lock:
             self._stats.total_entries = len(self._cache)
             self._stats.total_size_bytes = self._calculate_cache_size()
             return self._stats
 
     def get_cache_info(self) -> dict[str, object]:
-        """Get detailed cache information."""
+        """Get detailed cache information.
+
+        Returns:
+            Dictionary containing cache statistics, size info, top accessed entries,
+            and configuration parameters including cache directory and size limits.
+
+        """
         stats = self.get_stats()
 
         with self._lock:
@@ -443,7 +400,12 @@ class AnalysisCache:
         }
 
     def save_cache(self) -> None:
-        """Manually save cache to disk."""
+        """Manually save cache to disk.
+
+        Persists cache entries and statistics to disk files. Handles serialization
+        using secure_pickle_dump for cache data and JSON for statistics.
+
+        """
         try:
             with self._lock:
                 # Save cache data
@@ -459,14 +421,31 @@ class AnalysisCache:
             logger.exception("Failed to save cache: %s", e)
 
     def _generate_cache_key(self, file_path: str, scan_options: str) -> str:
-        """Generate cache key from file path and options."""
+        """Generate cache key from file path and options.
+
+        Creates a unique cache key by combining the file path and SHA256 hash of
+        the scan options for lookup and storage.
+
+        Args:
+            file_path: Path to the file being analyzed.
+            scan_options: Additional scan options to include in the cache key.
+
+        Returns:
+            A unique cache key string combining file path and options hash.
+
+        """
         # Use file path + scan options hash for key
         key_data = f"{file_path}:{scan_options}"
         key_hash = hashlib.sha256(key_data.encode()).hexdigest()[:16]
         return f"{file_path}:{key_hash}"
 
     def _evict_if_needed(self) -> None:
-        """Evict entries if cache is too large."""
+        """Evict entries if cache is too large.
+
+        Checks both entry count and total size limits, removing 25% of
+        least recently used entries when either limit is exceeded.
+
+        """
         # Check entry count limit
         if len(self._cache) >= self.max_entries:
             self._evict_lru_entries(self.max_entries // 4)  # Remove 25%
@@ -477,7 +456,15 @@ class AnalysisCache:
             self._evict_lru_entries(len(self._cache) // 4)  # Remove 25%
 
     def _evict_lru_entries(self, count: int) -> None:
-        """Evict least recently used entries."""
+        """Evict least recently used entries.
+
+        Removes the specified number of least recently used cache entries from
+        the cache based on their last access time.
+
+        Args:
+            count: Number of entries to evict from the cache.
+
+        """
         if not self._cache:
             return
 
@@ -494,7 +481,15 @@ class AnalysisCache:
             logger.debug("Evicted LRU entry: %s", cache_key)
 
     def _calculate_cache_size(self) -> int:
-        """Calculate total cache size in bytes."""
+        """Calculate total cache size in bytes.
+
+        Sums the estimated size of all cached entries using pickle serialization
+        or string representation as fallback.
+
+        Returns:
+            Total size of all cached entries in bytes.
+
+        """
         total_size = 0
         for entry in self._cache.values():
             try:
@@ -506,11 +501,21 @@ class AnalysisCache:
         return total_size
 
     def _get_cache_size_mb(self) -> float:
-        """Get cache size in MB."""
+        """Get cache size in MB.
+
+        Returns:
+            Cache size in megabytes as a floating point value.
+
+        """
         return self._calculate_cache_size() / (1024 * 1024)
 
     def _load_cache(self) -> None:
-        """Load cache from disk."""
+        """Load cache from disk.
+
+        Attempts to restore cached entries and statistics from persisted files.
+        If loading fails, initializes with empty cache and default statistics.
+
+        """
         try:
             # Load cache data
             if self.cache_file.exists():
@@ -534,7 +539,12 @@ class AnalysisCache:
             self._stats = CacheStats()
 
     def _save_cache_async(self) -> None:
-        """Save cache asynchronously (non-blocking)."""
+        """Save cache asynchronously (non-blocking).
+
+        Launches a background thread to save cache to disk without blocking
+        the caller. Skipped during testing or when background threads are disabled.
+
+        """
         # Skip thread creation during testing
         if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
             logger.info("Skipping async cache save (testing mode)")
@@ -543,6 +553,11 @@ class AnalysisCache:
         import threading
 
         def save_worker() -> None:
+            """Background thread worker for saving cache.
+
+            Catches and logs any exceptions that occur during async save operation.
+
+            """
             try:
                 self.save_cache()
             except Exception as e:
@@ -557,7 +572,13 @@ _analysis_cache: AnalysisCache | None = None
 
 
 def get_analysis_cache() -> AnalysisCache:
-    """Get or create global analysis cache instance."""
+    """Get or create global analysis cache instance.
+
+    Returns:
+        The global AnalysisCache singleton instance, creating it on first call
+        if it does not already exist.
+
+    """
     global _analysis_cache
     if _analysis_cache is None:
         _analysis_cache = AnalysisCache()
@@ -565,7 +586,12 @@ def get_analysis_cache() -> AnalysisCache:
 
 
 def clear_analysis_cache() -> None:
-    """Clear global analysis cache."""
+    """Clear global analysis cache.
+
+    Clears all entries from the global analysis cache and resets the singleton
+    instance to None.
+
+    """
     global _analysis_cache
     if _analysis_cache:
         _analysis_cache.clear()

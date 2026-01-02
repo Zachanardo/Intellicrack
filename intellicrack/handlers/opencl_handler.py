@@ -65,7 +65,7 @@ try:
     try:
         from pyopencl import CommandQueue as OpenCLQueue
     except ImportError:
-        from pyopencl import Queue as OpenCLQueue  # type: ignore[attr-defined,no-redef]
+        from pyopencl import Queue as OpenCLQueue
 
     HAS_OPENCL = True
     OPENCL_AVAILABLE = True
@@ -80,11 +80,27 @@ try:
     Platform: type[Any] = OpenCLPlatform
 
     def create_some_context(interactive: bool | None = None, answers: list[str] | None = None) -> Any:
-        """Create OpenCL context with optional interactivity control."""
+        """Create OpenCL context with optional interactivity control.
+
+        Args:
+            interactive: bool | None. Enable interactive mode for device selection if True.
+                Defaults to None for automatic selection.
+            answers: list[str] | None. Preset answers for interactive device selection.
+                Defaults to None if no preset answers are provided.
+
+        Returns:
+            Any: OpenCL context object created by pyopencl with the specified
+                parameters or fallback context if OpenCL is unavailable.
+        """
         return opencl_create_some_context(interactive=interactive, answers=answers)
 
     def get_platforms() -> list[Any]:
-        """Get available OpenCL platforms."""
+        """Get available OpenCL platforms.
+
+        Returns:
+            list[Any]: List of available OpenCL platform objects from pyopencl,
+                each supporting device enumeration and context creation.
+        """
         return list(opencl_get_platforms())
 
 except ImportError as e:
@@ -102,11 +118,28 @@ except ImportError as e:
     Platform = FallbackPlatform
 
     def create_some_context(interactive: bool | None = None, answers: list[str] | None = None) -> Any:
-        """Fallback context creation."""
+        """Fallback context creation.
+
+        Args:
+            interactive: bool | None. Enable interactive mode for device selection if True.
+                Defaults to None for automatic selection.
+            answers: list[str] | None. Preset answers for interactive device selection.
+                Defaults to None if no preset answers are provided.
+
+        Returns:
+            Any: Fallback OpenCL context object when pyopencl is unavailable,
+                providing a compatibility implementation for graceful degradation.
+        """
         return FallbackContext()
 
     def get_platforms() -> list[Any]:
-        """Fallback platform enumeration."""
+        """Fallback platform enumeration.
+
+        Returns:
+            list[Any]: Empty list when OpenCL is not available, allowing code
+                to gracefully handle the absence of GPU platforms while maintaining
+                compatibility with the standard OpenCL interface.
+        """
         return []
 
 

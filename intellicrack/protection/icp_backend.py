@@ -2360,7 +2360,7 @@ class ICPBackend:
                     file_size = os.path.getsize(file_path)
                     filename = os.path.basename(file_path).lower()
 
-                    if is_memory_dump := (
+                    if (
                         file_size > 100 * 1024 * 1024  # > 100MB
                         or any(keyword in filename for keyword in ["dump", "mem", "vmem", "raw", "dmp"])
                         or filename.endswith((".vmem", ".raw", ".dmp", ".mem"))

@@ -810,6 +810,15 @@ class ResponseSynthesizer:
         result = bytearray()
 
         def encode_varint(value: int) -> bytes:
+            """Encode integer as protobuf varint format.
+
+            Args:
+                value: Integer to encode
+
+            Returns:
+                Varint encoded bytes
+
+            """
             buf = bytearray()
             while value > 127:
                 buf.append((value & 0x7F) | 0x80)
@@ -818,6 +827,13 @@ class ResponseSynthesizer:
             return bytes(buf)
 
         def encode_field(field_num: int, value: object) -> None:
+            """Encode protobuf field with wire type encoding.
+
+            Args:
+                field_num: Field number
+                value: Field value to encode
+
+            """
             if isinstance(value, str):
                 wire_type = 2
                 tag = (field_num << 3) | wire_type
@@ -1079,6 +1095,15 @@ class MITMProxyAddon:
             self.state_machine.transition(LicenseState.ACTIVE)
 
     def _get_request_json(self, flow: "http.HTTPFlow") -> dict[Any, Any]:
+        """Extract JSON from HTTP request body.
+
+        Args:
+            flow: mitmproxy HTTPFlow object
+
+        Returns:
+            Parsed JSON dictionary, or empty dict if parsing fails
+
+        """
         try:
             result = json.loads(flow.request.text)
             return result if isinstance(result, dict) else {}
@@ -1150,6 +1175,13 @@ class CloudLicenseProtocolHandler:
         }
 
     def _configure_intercept_rules(self, target_host: str, protocol_type: ProtocolType) -> None:
+        """Configure interception rules for license server traffic modification.
+
+        Args:
+            target_host: Target license server hostname
+            protocol_type: Protocol type being intercepted
+
+        """
         self.intercept_rules = {
             "modify": [
                 {"url_pattern": r"/license", "action": "synthesize"},
@@ -1174,6 +1206,13 @@ class CloudLicenseProtocolHandler:
         }
 
     def _run_mitmproxy(self, listen_port: int, state_machine: ProtocolStateMachine) -> None:
+        """Execute mitmproxy server for intercepting license traffic.
+
+        Args:
+            listen_port: Port to listen for proxy connections
+            state_machine: Protocol state machine for tracking license state
+
+        """
         opts = Options(listen_port=listen_port, ssl_insecure=True)
 
         addon = MITMProxyAddon(self.intercept_rules, state_machine, self.synthesizer)

@@ -43,6 +43,7 @@ class UILayoutHelpers:
         dialog: QWidget,
         window_title: str,
         size: tuple[int, int] = (1000, 700),
+        *,
         is_modal: bool = False,
     ) -> tuple[QVBoxLayout, QTabWidget]:
         """Create a standard tabbed dialog layout structure.
@@ -130,7 +131,6 @@ class UILayoutHelpers:
 
         line_edit = QLineEdit()
         if line_edit_text:
-            line_edit.setPlaceholderText(line_edit_text)
             line_edit.setToolTip(line_edit_text)
 
         browse_btn = QPushButton(browse_text)
@@ -143,7 +143,7 @@ class UILayoutHelpers:
         return layout, line_edit, browse_btn
 
     @staticmethod
-    def create_config_group(title: str, use_form_layout: bool = True) -> tuple[QGroupBox, QFormLayout | QVBoxLayout]:
+    def create_config_group(title: str, *, use_form_layout: bool = True) -> tuple[QGroupBox, QFormLayout | QVBoxLayout]:
         """Create a configuration group box with appropriate layout.
 
         Args:
@@ -182,7 +182,7 @@ class UILayoutHelpers:
         """Add a standard form field to a form layout.
 
         Args:
-            layout: QFormLayout to add to
+            layout: Layout to add form field to
             label_text: Text for the label
             widget: Widget to add as the field
 

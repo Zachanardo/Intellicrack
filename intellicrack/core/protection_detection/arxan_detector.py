@@ -37,7 +37,7 @@ except ImportError:
     if TYPE_CHECKING:
         import lief
     else:
-        lief = None  # type: ignore[assignment]
+        lief = None
 
 try:
     import pefile
@@ -51,7 +51,15 @@ logger = logging.getLogger(__name__)
 
 
 class ArxanVersion(Enum):
-    """Arxan TransformIT version enumeration."""
+    """Arxan TransformIT version enumeration.
+
+    Attributes:
+        UNKNOWN: Version could not be determined.
+        TRANSFORM_5X: Arxan TransformIT version 5.x.
+        TRANSFORM_6X: Arxan TransformIT version 6.x.
+        TRANSFORM_7X: Arxan TransformIT version 7.x.
+        TRANSFORM_8X: Arxan TransformIT version 8.x.
+    """
 
     UNKNOWN = "unknown"
     TRANSFORM_5X = "5.x"
@@ -62,7 +70,22 @@ class ArxanVersion(Enum):
 
 @dataclass
 class ArxanProtectionFeatures:
-    """Detected Arxan protection features."""
+    """Detected Arxan protection features.
+
+    Attributes:
+        anti_debugging: Whether anti-debugging protection is detected.
+        anti_tampering: Whether anti-tampering protection is detected.
+        control_flow_obfuscation: Whether control flow obfuscation is detected.
+        string_encryption: Whether string encryption is detected.
+        integrity_checks: Whether integrity checks are detected.
+        rasp_protection: Whether RASP protection is detected.
+        license_validation: Whether license validation is detected.
+        code_virtualization: Whether code virtualization is detected.
+        junk_code_insertion: Whether junk code insertion is detected.
+        api_wrapping: Whether API wrapping is detected.
+        certificate_pinning: Whether certificate pinning is detected.
+        white_box_crypto: Whether white-box cryptography is detected.
+    """
 
     anti_debugging: bool = False
     anti_tampering: bool = False
@@ -80,7 +103,18 @@ class ArxanProtectionFeatures:
 
 @dataclass
 class ArxanDetectionResult:
-    """Result of Arxan detection analysis."""
+    """Result of Arxan detection analysis.
+
+    Attributes:
+        is_protected: Whether Arxan protection was detected in the binary.
+        confidence: Confidence score (0.0-1.0) of detection result.
+        version: Detected version of Arxan TransformIT.
+        features: Detected protection features and capabilities.
+        signatures_found: List of discovered Arxan string signatures.
+        sections: List of discovered Arxan-specific section names.
+        import_hints: List of suspicious API imports found.
+        metadata: Additional metadata from analysis including entropy and scores.
+    """
 
     is_protected: bool
     confidence: float
@@ -93,7 +127,16 @@ class ArxanDetectionResult:
 
 
 class ArxanDetector:
-    """Detects Arxan TransformIT protection in binaries."""
+    """Detects Arxan TransformIT protection in binaries.
+
+    Attributes:
+        ARXAN_STRING_SIGNATURES: List of byte signatures of Arxan-related strings.
+        ARXAN_SECTION_NAMES: List of Arxan-specific PE/ELF section names.
+        ARXAN_API_PATTERNS: List of suspicious Windows API functions used by Arxan.
+        VERSION_SIGNATURES: Dictionary mapping versions to byte patterns for version detection.
+        ANTI_DEBUG_PATTERNS: Byte patterns indicating anti-debugging code.
+        INTEGRITY_CHECK_PATTERNS: Byte patterns indicating integrity checking routines.
+    """
 
     ARXAN_STRING_SIGNATURES = [
         b"Arxan",
@@ -200,18 +243,33 @@ class ArxanDetector:
     ]
 
     def __init__(self) -> None:
-        """Initialize ArxanDetector with pattern databases."""
+        """Initialize the ArxanDetector with pattern databases.
+
+        Sets up the detector with a logger instance for recording analysis
+        events during binary protection detection.
+
+        Raises:
+            None: This method does not raise exceptions.
+        """
         self.logger = logging.getLogger(__name__)
 
     def detect(self, binary_path: str | Path) -> ArxanDetectionResult:
         """Detect Arxan protection in binary.
 
+        Performs comprehensive analysis of binary file to detect Arxan
+        TransformIT protection mechanisms through signature matching,
+        section analysis, import examination, and heuristic detection.
+
         Args:
-            binary_path: Path to binary file to analyze
+            binary_path: Path to binary file to analyze.
 
         Returns:
-            ArxanDetectionResult with detection details and confidence
+            ArxanDetectionResult: Detection result with protection status, confidence score,
+                identified version, detected features, and analysis metadata.
 
+        Raises:
+            FileNotFoundError: If binary file does not exist at specified path.
+            Exception: If Arxan detection analysis fails during processing.
         """
         binary_path = Path(binary_path)
 
@@ -266,7 +324,21 @@ class ArxanDetector:
             raise
 
     def _check_string_signatures(self, binary_data: bytes, signatures_found: list[str]) -> float:
-        """Check for Arxan string signatures in binary."""
+        """Check for Arxan string signatures in binary.
+
+        Searches for known Arxan string signatures within binary data and
+        populates the signatures_found list with matches found.
+
+        Args:
+            binary_data: Raw binary file contents to search for signatures.
+            signatures_found: Mutable list to accumulate discovered signature strings.
+
+        Returns:
+            float: Normalized score (0.0-1.0) based on ratio of signatures found.
+
+        Raises:
+            None: This method does not raise exceptions.
+        """
         found_count = 0
 
         for signature in self.ARXAN_STRING_SIGNATURES:
@@ -279,7 +351,21 @@ class ArxanDetector:
         return min(found_count / 5.0, 1.0)
 
     def _check_section_names(self, binary_path: Path, sections: list[str]) -> float:
-        """Check for Arxan-specific section names."""
+        """Check for Arxan-specific section names.
+
+        Examines PE or ELF binary sections for Arxan-specific section names
+        and adds matches to the sections list.
+
+        Args:
+            binary_path: Path to binary file to analyze for sections.
+            sections: Mutable list to accumulate discovered section names.
+
+        Returns:
+            float: Normalized score (0.0-1.0) based on number of Arxan sections found.
+
+        Raises:
+            None: This method does not raise exceptions (errors are caught internally).
+        """
         found_count = 0
 
         try:
@@ -326,7 +412,21 @@ class ArxanDetector:
         return min(found_count / 2.0, 1.0)
 
     def _check_api_imports(self, binary_path: Path, import_hints: list[str]) -> float:
-        """Check for API imports commonly used by Arxan."""
+        """Check for API imports commonly used by Arxan.
+
+        Analyzes binary import tables for Windows API functions frequently
+        used by Arxan protection mechanisms and adds matches to import_hints.
+
+        Args:
+            binary_path: Path to binary file to analyze for imports.
+            import_hints: Mutable list to accumulate discovered API names.
+
+        Returns:
+            float: Normalized score (0.0-1.0) based on number and type of suspicious imports found.
+
+        Raises:
+            None: This method does not raise exceptions (errors are caught internally).
+        """
         found_count = 0
         suspicious_count = 0
 
@@ -382,7 +482,22 @@ class ArxanDetector:
             return 0.0
 
     def _detect_version(self, binary_data: bytes, metadata: dict[str, Any]) -> ArxanVersion:
-        """Detect Arxan TransformIT version."""
+        """Detect Arxan TransformIT version.
+
+        Analyzes binary data for version-specific signatures to determine
+        which version of Arxan TransformIT is present. Updates metadata
+        with version scores.
+
+        Args:
+            binary_data: Raw binary file contents to scan for version signatures.
+            metadata: Mutable dictionary to store version detection scores and results.
+
+        Returns:
+            ArxanVersion: Detected version or ArxanVersion.UNKNOWN if no match found.
+
+        Raises:
+            None: This method does not raise exceptions.
+        """
         version_scores = dict.fromkeys(ArxanVersion, 0)
 
         for version, patterns in self.VERSION_SIGNATURES.items():
@@ -410,7 +525,23 @@ class ArxanDetector:
         features: ArxanProtectionFeatures,
         metadata: dict[str, Any],
     ) -> float:
-        """Perform heuristic analysis for Arxan protection features."""
+        """Perform heuristic analysis for Arxan protection features.
+
+        Scans binary data for various protection mechanisms and modifies
+        the features object to reflect detected capabilities. Updates
+        metadata with heuristic scoring information.
+
+        Args:
+            binary_data: Raw binary file contents to analyze.
+            features: ArxanProtectionFeatures object to populate with detected features.
+            metadata: Mutable dictionary to store analysis scores and feature counts.
+
+        Returns:
+            float: Composite heuristic score (0.0-1.0+) representing detection strength.
+
+        Raises:
+            None: This method does not raise exceptions.
+        """
         score = 0.0
         feature_count = 0
 
@@ -468,7 +599,20 @@ class ArxanDetector:
         return score
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data."""
+        """Calculate Shannon entropy of data.
+
+        Computes the Shannon entropy value for binary data to assess
+        the degree of data compression or encryption present.
+
+        Args:
+            data: Binary data to analyze for entropy.
+
+        Returns:
+            float: Shannon entropy value (typically 0.0-8.0).
+
+        Raises:
+            None: This method does not raise exceptions.
+        """
         if not data:
             return 0.0
 
@@ -489,7 +633,20 @@ class ArxanDetector:
         return entropy
 
     def _check_string_encryption(self, binary_data: bytes) -> bool:
-        """Check for encrypted string patterns."""
+        """Check for encrypted string patterns.
+
+        Detects evidence of string encryption by analyzing byte patterns
+        for XOR operations and low printable character ratios.
+
+        Args:
+            binary_data: Raw binary file contents to scan.
+
+        Returns:
+            bool: True if encrypted string patterns detected, False otherwise.
+
+        Raises:
+            None: This method does not raise exceptions.
+        """
         xor_patterns = [
             b"\x80\x30",
             b"\x30\x04",
@@ -506,7 +663,20 @@ class ArxanDetector:
         return printable_ratio < 0.05
 
     def _check_control_flow_obfuscation(self, binary_data: bytes) -> bool:
-        """Check for control flow obfuscation patterns."""
+        """Check for control flow obfuscation patterns.
+
+        Analyzes binary data for excessive jump instructions and opaque
+        predicate patterns indicative of control flow obfuscation.
+
+        Args:
+            binary_data: Raw binary file contents to examine.
+
+        Returns:
+            bool: True if obfuscation patterns detected, False otherwise.
+
+        Raises:
+            None: This method does not raise exceptions.
+        """
         jmp_patterns = [
             b"\xe9",
             b"\xeb",
@@ -528,7 +698,20 @@ class ArxanDetector:
         return any(pattern in binary_data for pattern in opaque_predicate_patterns)
 
     def _check_rasp_indicators(self, binary_data: bytes) -> bool:
-        """Check for Runtime Application Self-Protection indicators."""
+        """Check for Runtime Application Self-Protection indicators.
+
+        Searches for RASP-related strings and exception handler patterns
+        that indicate runtime protection mechanisms.
+
+        Args:
+            binary_data: Raw binary file contents to scan.
+
+        Returns:
+            bool: True if RASP indicators detected, False otherwise.
+
+        Raises:
+            None: This method does not raise exceptions.
+        """
         rasp_strings = [
             b"tamper",
             b"rootkit",
@@ -555,7 +738,20 @@ class ArxanDetector:
         return any(binary_data.count(pattern) > 5 for pattern in exception_handler_patterns)
 
     def _check_license_validation(self, binary_data: bytes) -> bool:
-        """Check for license validation routines."""
+        """Check for license validation routines.
+
+        Detects license validation mechanisms through keyword scanning
+        and cryptographic license checking pattern matching.
+
+        Args:
+            binary_data: Raw binary file contents to analyze.
+
+        Returns:
+            bool: True if license validation code detected, False otherwise.
+
+        Raises:
+            None: This method does not raise exceptions.
+        """
         license_strings = [
             b"license",
             b"serial",
@@ -582,7 +778,20 @@ class ArxanDetector:
         return any(pattern in binary_data for pattern in crypto_license_patterns)
 
     def _check_white_box_crypto(self, binary_data: bytes) -> bool:
-        """Check for white-box cryptography implementations."""
+        """Check for white-box cryptography implementations.
+
+        Detects white-box cryptography through analysis of large lookup
+        tables and AES S-box patterns embedded in binary.
+
+        Args:
+            binary_data: Raw binary file contents to scan.
+
+        Returns:
+            bool: True if white-box crypto patterns detected, False otherwise.
+
+        Raises:
+            None: This method does not raise exceptions.
+        """
         large_lookup_tables = 0
         offset = 0
 
@@ -603,7 +812,16 @@ class ArxanDetector:
 
 
 def main() -> None:
-    """Test entry point for Arxan detector."""
+    """Entry point for Arxan detector command-line tool.
+
+    Parses command-line arguments and runs Arxan detection on specified
+    binary files, outputting detailed protection analysis results.
+
+    Raises:
+        SystemExit: When argparse encounters parsing errors.
+        FileNotFoundError: If specified binary file does not exist.
+        Exception: If Arxan detection analysis fails during processing.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description="Arxan TransformIT Detector")

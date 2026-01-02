@@ -8,11 +8,41 @@ Copyright (C) 2025 Zachary Flint
 
 import time
 from typing import Any
-from unittest.mock import Mock
 
 import pytest
 
-from intellicrack.core.analysis.simconcolic import BinaryAnalyzer, Plugin
+from intellicrack.core.analysis.simconcolic import BinaryAnalyzer, Plugin, State
+
+
+class FakeState:
+    """Real test double for State objects in tests."""
+
+    def __init__(self, address: int = 0x400000, state_id: str = "test_state_1") -> None:
+        """Initialize a fake state for testing.
+
+        Args:
+            address: The instruction pointer address for this state.
+            state_id: The unique identifier for this state.
+
+        """
+        self.address: int = address
+        self.state_id: str = state_id
+        self.terminated: bool = False
+        self.termination_reason: str = "running"
+        self.constraints: list[Any] = []
+        self.input_symbols: dict[str, bytes | list[bytes]] = {
+            "stdin": b"",
+            "argv": [],
+        }
+
+    def is_terminated(self) -> bool:
+        """Check if state is terminated.
+
+        Returns:
+            True if state has been terminated, False otherwise.
+
+        """
+        return self.terminated
 
 
 class TestPluginBase:
@@ -60,30 +90,30 @@ class TestPluginBase:
     def test_will_fork_state_callback(self) -> None:
         """will_fork_state_callback executes without error."""
         plugin = Plugin()
-        mock_state = Mock()
+        fake_state = FakeState(address=0x401000, state_id="fork_test_1")
 
-        plugin.will_fork_state_callback(mock_state)
+        plugin.will_fork_state_callback(fake_state)
 
     def test_did_fork_state_callback(self) -> None:
         """did_fork_state_callback executes without error."""
         plugin = Plugin()
-        mock_state = Mock()
+        fake_state = FakeState(address=0x401000, state_id="fork_test_2")
 
-        plugin.did_fork_state_callback(mock_state)
+        plugin.did_fork_state_callback(fake_state)
 
     def test_will_terminate_state_callback(self) -> None:
         """will_terminate_state_callback executes without error."""
         plugin = Plugin()
-        mock_state = Mock()
+        fake_state = FakeState(address=0x402000, state_id="term_test_1")
 
-        plugin.will_terminate_state_callback(mock_state)
+        plugin.will_terminate_state_callback(fake_state)
 
     def test_did_terminate_state_callback(self) -> None:
         """did_terminate_state_callback executes without error."""
         plugin = Plugin()
-        mock_state = Mock()
+        fake_state = FakeState(address=0x402000, state_id="term_test_2")
 
-        plugin.did_terminate_state_callback(mock_state)
+        plugin.did_terminate_state_callback(fake_state)
 
 
 class TestPluginLifecycle:
@@ -97,12 +127,12 @@ class TestPluginLifecycle:
 
         time.sleep(0.05)
 
-        mock_state = Mock()
-        plugin.will_fork_state_callback(mock_state)
-        plugin.did_fork_state_callback(mock_state)
+        fake_state = FakeState(address=0x403000, state_id="lifecycle_1")
+        plugin.will_fork_state_callback(fake_state)
+        plugin.did_fork_state_callback(fake_state)
 
-        plugin.will_terminate_state_callback(mock_state)
-        plugin.did_terminate_state_callback(mock_state)
+        plugin.will_terminate_state_callback(fake_state)
+        plugin.did_terminate_state_callback(fake_state)
 
         plugin.did_finish_run_callback()
 
@@ -115,10 +145,10 @@ class TestPluginLifecycle:
 
         plugin.will_run_callback()
 
-        for _ in range(5):
-            mock_state = Mock()
-            plugin.will_fork_state_callback(mock_state)
-            plugin.did_fork_state_callback(mock_state)
+        for i in range(5):
+            fake_state = FakeState(address=0x404000 + (i * 0x100), state_id=f"multi_state_{i}")
+            plugin.will_fork_state_callback(fake_state)
+            plugin.did_fork_state_callback(fake_state)
 
         plugin.did_finish_run_callback()
 
@@ -128,10 +158,10 @@ class TestPluginLifecycle:
         """Plugin handles state termination correctly."""
         plugin = Plugin()
 
-        mock_state = Mock()
+        fake_state = FakeState(address=0x405000, state_id="term_seq_1")
 
-        plugin.will_terminate_state_callback(mock_state)
-        plugin.did_terminate_state_callback(mock_state)
+        plugin.will_terminate_state_callback(fake_state)
+        plugin.did_terminate_state_callback(fake_state)
 
 
 class TestPluginStatistics:
@@ -176,13 +206,13 @@ class TestBinaryAnalyzer:
 
     def test_binary_analyzer_initialization(self) -> None:
         """BinaryAnalyzer initializes correctly."""
-        analyzer = BinaryAnalyzer()
+        analyzer = BinaryAnalyzer("test_binary.exe")
 
         assert analyzer is not None
 
     def test_binary_analyzer_with_plugins(self) -> None:
         """BinaryAnalyzer works with plugins."""
-        analyzer = BinaryAnalyzer()
+        analyzer = BinaryAnalyzer("test_binary.exe")
         plugin = Plugin()
 
         plugin.analyzer = analyzer
@@ -195,7 +225,7 @@ class TestPluginIntegration:
 
     def test_plugin_analyzer_reference(self) -> None:
         """Plugin maintains reference to analyzer."""
-        analyzer = BinaryAnalyzer()
+        analyzer = BinaryAnalyzer("test_binary.exe")
         plugin = Plugin()
 
         plugin.analyzer = analyzer
@@ -205,7 +235,7 @@ class TestPluginIntegration:
 
     def test_multiple_plugins_on_analyzer(self) -> None:
         """Multiple plugins can reference same analyzer."""
-        analyzer = BinaryAnalyzer()
+        analyzer = BinaryAnalyzer("test_binary.exe")
 
         plugin1 = Plugin()
         plugin2 = Plugin()
@@ -235,20 +265,20 @@ class TestPluginCallbackOrder:
     def test_state_callbacks_sequence(self) -> None:
         """State callbacks execute in correct sequence."""
         plugin = Plugin()
-        mock_state = Mock()
+        fake_state = FakeState(address=0x406000, state_id="seq_test_1")
 
-        plugin.will_fork_state_callback(mock_state)
+        plugin.will_fork_state_callback(fake_state)
 
-        plugin.did_fork_state_callback(mock_state)
+        plugin.did_fork_state_callback(fake_state)
 
     def test_termination_callbacks_sequence(self) -> None:
         """Termination callbacks execute in correct sequence."""
         plugin = Plugin()
-        mock_state = Mock()
+        fake_state = FakeState(address=0x407000, state_id="term_seq_test")
 
-        plugin.will_terminate_state_callback(mock_state)
+        plugin.will_terminate_state_callback(fake_state)
 
-        plugin.did_terminate_state_callback(mock_state)
+        plugin.did_terminate_state_callback(fake_state)
 
 
 class TestPluginCallbackArguments:
@@ -276,11 +306,11 @@ class TestPluginCallbackArguments:
     def test_state_callbacks_with_args(self) -> None:
         """State callbacks accept arbitrary arguments."""
         plugin = Plugin()
-        mock_state = Mock()
+        fake_state = FakeState(address=0x408000, state_id="args_test")
 
-        plugin.will_fork_state_callback(mock_state, "extra_arg", extra_kwarg="value")
+        plugin.will_fork_state_callback(fake_state, "extra_arg", extra_kwarg="value")
 
-        plugin.did_fork_state_callback(mock_state, "extra_arg", extra_kwarg="value")
+        plugin.did_fork_state_callback(fake_state, "extra_arg", extra_kwarg="value")
 
 
 class TestPluginErrorHandling:
@@ -316,10 +346,10 @@ class TestPluginPerformance:
 
         start = time.time()
 
-        for _ in range(1000):
-            mock_state = Mock()
-            plugin.will_fork_state_callback(mock_state)
-            plugin.did_fork_state_callback(mock_state)
+        for i in range(1000):
+            fake_state = FakeState(address=0x500000 + i, state_id=f"perf_state_{i}")
+            plugin.will_fork_state_callback(fake_state)
+            plugin.did_fork_state_callback(fake_state)
 
         duration = time.time() - start
 

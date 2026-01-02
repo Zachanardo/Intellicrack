@@ -20,7 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import os
-from typing import Any, cast
+from typing import Any
 
 from PyQt6.QtCore import QPoint, QSize, Qt
 from PyQt6.QtGui import QFont
@@ -419,11 +419,17 @@ class HexViewerDialog(QDialog):
         original_focus_in = new_viewer.focusInEvent
 
         def handle_focus(event: Any) -> None:
+            """Handle focus event to set viewer as active.
+
+            Args:
+                event: Focus event from the viewer
+
+            """
             logger.debug("Focus event: %s", event)
             self.set_active_viewer(new_viewer)
             original_focus_in(event)
 
-        new_viewer.focusInEvent = handle_focus  # type: ignore[assignment]
+        new_viewer.focusInEvent = handle_focus
 
         # Add to tracking
         self.viewers.append(new_viewer)
@@ -536,6 +542,12 @@ class HexViewerDialog(QDialog):
         """
 
         def sync_vertical(value: int) -> None:
+            """Synchronize vertical scroll position across viewers.
+
+            Args:
+                value: Vertical scroll position value
+
+            """
             if not self.sync_scrolling_action.isChecked():
                 return
             for other in self.viewers:
@@ -547,6 +559,12 @@ class HexViewerDialog(QDialog):
                         vbar.blockSignals(False)
 
         def sync_horizontal(value: int) -> None:
+            """Synchronize horizontal scroll position across viewers.
+
+            Args:
+                value: Horizontal scroll position value
+
+            """
             if not self.sync_scrolling_action.isChecked():
                 return
             for other in self.viewers:
@@ -862,10 +880,23 @@ class HexViewerDialog(QDialog):
 
         # Connect signals
         def update_progress(current: int, total: int) -> None:
+            """Update progress dialog during comparison.
+
+            Args:
+                current: Current progress count
+                total: Total items to compare
+
+            """
             if total > 0:
                 progress.setValue(int(current * 100 / total))
 
         def on_finished(differences: list[Any]) -> None:
+            """Handle completion of file comparison.
+
+            Args:
+                differences: List of difference blocks found
+
+            """
             progress.close()
 
             if mode == "visual":
@@ -876,6 +907,12 @@ class HexViewerDialog(QDialog):
                 self.show_structural_comparison(differences, settings)
 
         def on_error(error_msg: str) -> None:
+            """Handle error during file comparison.
+
+            Args:
+                error_msg: Error message to display
+
+            """
             progress.close()
             QMessageBox.critical(self, "Comparison Error", f"Error comparing files: {error_msg}")
 
@@ -1470,6 +1507,12 @@ class HexViewerDialog(QDialog):
         """
 
         def sync_vertical_scroll(value: int) -> None:
+            """Synchronize vertical scrolling across all comparison viewers.
+
+            Args:
+                value: Vertical scroll position value
+
+            """
             if not getattr(self, "sync_scrolling", True):
                 return
             for target_viewer in self.viewers:
@@ -1484,6 +1527,12 @@ class HexViewerDialog(QDialog):
                         viewport.update()
 
         def sync_horizontal_scroll(value: int) -> None:
+            """Synchronize horizontal scrolling across all comparison viewers.
+
+            Args:
+                value: Horizontal scroll position value
+
+            """
             if not getattr(self, "sync_scrolling", True):
                 return
             for target_viewer in self.viewers:

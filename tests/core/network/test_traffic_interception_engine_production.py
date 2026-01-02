@@ -15,11 +15,7 @@ from typing import Any
 
 import pytest
 
-from intellicrack.core.network.traffic_interception_engine import (
-    AnalyzedTraffic,
-    InterceptedPacket,
-    TrafficInterceptionEngine,
-)
+from intellicrack.core.network.traffic_interception_engine import AnalyzedTraffic, InterceptedPacket, TrafficInterceptionEngine
 
 
 class TestTrafficInterceptionEngineProduction:
@@ -362,7 +358,7 @@ class TestTrafficInterceptionEngineProduction:
                     server_received.append(data)
                     client.sendall(b"RESPONSE")
                     client.close()
-                except (socket.timeout, OSError):
+                except (TimeoutError, OSError):
                     pass
 
         server_thread = threading.Thread(target=test_server, daemon=True)

@@ -11,11 +11,98 @@ import struct
 import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
 from intellicrack.core.analysis.ghidra_binary_integration import GhidraBinaryIntegration
+
+
+class FakeGhidraScriptRunner:
+    """Real test double for GhidraScriptRunner with complete behavior tracking."""
+
+    def __init__(self) -> None:
+        self.run_script_calls: list[tuple[str, Path, dict[str, Any]]] = []
+        self.list_available_scripts_calls: int = 0
+        self.refresh_scripts_calls: int = 0
+        self._run_script_responses: list[dict[str, Any]] = []
+        self._run_script_exceptions: list[Exception | None] = []
+        self._list_scripts_response: list[dict[str, str]] = []
+        self._refresh_scripts_count: int = 0
+        self._current_response_index: int = 0
+
+    def set_run_script_response(self, response: dict[str, Any]) -> None:
+        """Configure single response for run_script."""
+        self._run_script_responses = [response]
+        self._run_script_exceptions = [None]
+        self._current_response_index = 0
+
+    def set_run_script_responses(self, responses: list[dict[str, Any]]) -> None:
+        """Configure multiple responses for run_script."""
+        self._run_script_responses = responses
+        self._run_script_exceptions = [None] * len(responses)
+        self._current_response_index = 0
+
+    def set_run_script_exception(self, exception: Exception) -> None:
+        """Configure run_script to raise exception."""
+        self._run_script_responses = []
+        self._run_script_exceptions = [exception]
+        self._current_response_index = 0
+
+    def set_list_available_scripts_response(self, scripts: list[dict[str, str]]) -> None:
+        """Configure list_available_scripts response."""
+        self._list_scripts_response = scripts
+
+    def set_refresh_scripts_count(self, count: int) -> None:
+        """Configure refresh_scripts return value."""
+        self._refresh_scripts_count = count
+
+    def run_script(
+        self, script_name: str, binary_path: Path, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Track run_script calls and return configured response."""
+        actual_params = params or {}
+        self.run_script_calls.append((script_name, binary_path, actual_params))
+
+        if self._current_response_index < len(self._run_script_exceptions):
+            exc = self._run_script_exceptions[self._current_response_index]
+            if exc is not None:
+                self._current_response_index += 1
+                raise exc
+
+        if self._current_response_index < len(self._run_script_responses):
+            response = self._run_script_responses[self._current_response_index]
+            self._current_response_index += 1
+            return response
+
+        return {"success": True}
+
+    def list_available_scripts(self) -> list[dict[str, str]]:
+        """Track list_available_scripts calls and return configured response."""
+        self.list_available_scripts_calls += 1
+        return self._list_scripts_response
+
+    def refresh_scripts(self) -> int:
+        """Track refresh_scripts calls and return configured count."""
+        self.refresh_scripts_calls += 1
+        return self._refresh_scripts_count
+
+    def _get_script(self, script_name: str) -> Path | None:
+        """Stub for internal script lookup."""
+        return None
+
+    def assert_run_script_called_once(self) -> None:
+        """Verify run_script was called exactly once."""
+        assert len(self.run_script_calls) == 1, f"Expected 1 call, got {len(self.run_script_calls)}"
+
+    def assert_run_script_call_count(self, expected: int) -> None:
+        """Verify run_script was called expected number of times."""
+        actual = len(self.run_script_calls)
+        assert actual == expected, f"Expected {expected} calls, got {actual}"
+
+    def get_last_run_script_call(self) -> tuple[str, Path, dict[str, Any]]:
+        """Get the last run_script call arguments."""
+        assert len(self.run_script_calls) > 0, "No run_script calls recorded"
+        return self.run_script_calls[-1]
 
 
 def create_minimal_pe(path: Path, machine_type: int = 0x014C) -> Path:
@@ -137,40 +224,57 @@ def test_binary(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def mock_script_runner() -> Mock:
-    """Create mock GhidraScriptRunner for testing."""
-    runner = Mock()
-    runner.run_script = Mock(
-        return_value={
-            "success": True,
-            "validation_functions": 3,
-            "function_count": 42,
-        }
-    )
-    runner.list_available_scripts = Mock(return_value=[])
-    runner._get_script = Mock(return_value=None)
-    runner.refresh_scripts = Mock(return_value=0)
+def fake_script_runner() -> FakeGhidraScriptRunner:
+    """Create fake GhidraScriptRunner for testing."""
+    runner = FakeGhidraScriptRunner()
+    runner.set_run_script_response({
+        "success": True,
+        "validation_functions": 3,
+        "function_count": 42,
+    })
     return runner
 
 
 class TestGhidraBinaryIntegrationInitialization:
     """Test GhidraBinaryIntegration initialization."""
 
-    def test_initialization_with_valid_path(self, mock_ghidra_path: Path) -> None:
+    def test_initialization_with_valid_path(
+        self, mock_ghidra_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """GhidraBinaryIntegration initializes with valid Ghidra path."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner"):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        fake_runner = FakeGhidraScriptRunner()
 
-            assert integration.ghidra_path == mock_ghidra_path
-            assert integration.script_runner is not None
-            assert integration.logger is not None
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_runner
 
-    def test_ghidra_path_attribute_preserved(self, mock_ghidra_path: Path) -> None:
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
+
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
+
+        assert integration.ghidra_path == mock_ghidra_path
+        assert integration.script_runner is not None
+        assert integration.logger is not None
+
+    def test_ghidra_path_attribute_preserved(
+        self, mock_ghidra_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Ghidra path is correctly stored during initialization."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner"):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        fake_runner = FakeGhidraScriptRunner()
 
-            assert str(integration.ghidra_path) == str(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_runner
+
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
+
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
+
+        assert str(integration.ghidra_path) == str(mock_ghidra_path)
 
 
 class TestLicenseValidationAnalysis:
@@ -180,66 +284,90 @@ class TestLicenseValidationAnalysis:
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """analyze_license_validation detects license validation routines."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.run_script.return_value = {
-                "success": True,
-                "validation_functions": 5,
-                "serial_check_function": "CheckSerialNumber",
-                "license_check_function": "ValidateLicense",
-            }
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            result = integration.analyze_license_validation(test_binary, deep_analysis=False)
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert result["success"] is True
-            assert result["validation_functions"] == 5
-            assert "serial_check_function" in result
-            mock_script_runner.run_script.assert_called_once()
+        fake_script_runner.set_run_script_response({
+            "success": True,
+            "validation_functions": 5,
+            "serial_check_function": "CheckSerialNumber",
+            "license_check_function": "ValidateLicense",
+        })
+
+        result = integration.analyze_license_validation(test_binary, deep_analysis=False)
+
+        assert result["success"] is True
+        assert result["validation_functions"] == 5
+        assert "serial_check_function" in result
+        fake_script_runner.assert_run_script_called_once()
 
     def test_deep_license_analysis(
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Deep analysis mode uses enhanced licensing script."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.run_script.return_value = {
-                "success": True,
-                "validation_functions": 8,
-                "algorithm_details": {"type": "RSA-2048"},
-            }
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            result = integration.analyze_license_validation(test_binary, deep_analysis=True)
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert result["success"] is True
-            assert result["validation_functions"] == 8
-            call_args = mock_script_runner.run_script.call_args
-            assert "enhanced_licensing_analysis" in str(call_args)
+        fake_script_runner.set_run_script_response({
+            "success": True,
+            "validation_functions": 8,
+            "algorithm_details": {"type": "RSA-2048"},
+        })
+
+        result = integration.analyze_license_validation(test_binary, deep_analysis=True)
+
+        assert result["success"] is True
+        assert result["validation_functions"] == 8
+        script_name, _, _ = fake_script_runner.get_last_run_script_call()
+        assert "enhanced_licensing_analysis" in script_name
 
     def test_license_analysis_error_handling(
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """License analysis handles script execution errors."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.run_script.side_effect = RuntimeError("Script execution failed")
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            result = integration.analyze_license_validation(test_binary)
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert result["success"] is False
-            assert "error" in result
-            assert "Script execution failed" in result["error"]
+        fake_script_runner.set_run_script_exception(RuntimeError("Script execution failed"))
+
+        result = integration.analyze_license_validation(test_binary)
+
+        assert result["success"] is False
+        assert "error" in result
+        assert "Script execution failed" in result["error"]
 
 
 class TestProtectionDetection:
@@ -249,71 +377,95 @@ class TestProtectionDetection:
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """detect_protections identifies VMProtect."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.run_script.return_value = {
-                "success": True,
-                "vmprotect_detected": True,
-                "themida_detected": False,
-                "enigma_detected": False,
-            }
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            result = integration.detect_protections(test_binary)
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert result["success"] is True
-            assert "VMProtect" in result["protections"]
-            assert len(result["protections"]) == 1
+        fake_script_runner.set_run_script_response({
+            "success": True,
+            "vmprotect_detected": True,
+            "themida_detected": False,
+            "enigma_detected": False,
+        })
+
+        result = integration.detect_protections(test_binary)
+
+        assert result["success"] is True
+        assert "VMProtect" in result["protections"]
+        assert len(result["protections"]) == 1
 
     def test_detect_multiple_protections(
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """detect_protections identifies multiple protection schemes."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.run_script.return_value = {
-                "success": True,
-                "vmprotect_detected": True,
-                "themida_detected": True,
-                "enigma_detected": True,
-            }
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            result = integration.detect_protections(test_binary)
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert result["success"] is True
-            assert len(result["protections"]) == 3
-            assert "VMProtect" in result["protections"]
-            assert "Themida" in result["protections"]
-            assert "Enigma" in result["protections"]
+        fake_script_runner.set_run_script_response({
+            "success": True,
+            "vmprotect_detected": True,
+            "themida_detected": True,
+            "enigma_detected": True,
+        })
+
+        result = integration.detect_protections(test_binary)
+
+        assert result["success"] is True
+        assert len(result["protections"]) == 3
+        assert "VMProtect" in result["protections"]
+        assert "Themida" in result["protections"]
+        assert "Enigma" in result["protections"]
 
     def test_detect_no_protections(
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """detect_protections returns empty list when no protections found."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.run_script.return_value = {
-                "success": True,
-                "vmprotect_detected": False,
-                "themida_detected": False,
-                "enigma_detected": False,
-            }
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            result = integration.detect_protections(test_binary)
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert result["success"] is True
-            assert len(result["protections"]) == 0
+        fake_script_runner.set_run_script_response({
+            "success": True,
+            "vmprotect_detected": False,
+            "themida_detected": False,
+            "enigma_detected": False,
+        })
+
+        result = integration.detect_protections(test_binary)
+
+        assert result["success"] is True
+        assert len(result["protections"]) == 0
 
 
 class TestCryptoAnalysis:
@@ -323,40 +475,56 @@ class TestCryptoAnalysis:
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """analyze_crypto_routines detects cryptographic algorithms."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.run_script.side_effect = [
-                {"success": True, "algorithms": ["AES-256", "SHA-256"]},
-                {"success": True, "custom_crypto": ["custom_xor"]},
-            ]
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            result = integration.analyze_crypto_routines(test_binary)
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert result["success"] is True
-            assert "AES-256" in result["standard_algorithms"]
-            assert "SHA-256" in result["standard_algorithms"]
-            assert "custom_xor" in result["custom_crypto"]
+        fake_script_runner.set_run_script_responses([
+            {"success": True, "algorithms": ["AES-256", "SHA-256"]},
+            {"success": True, "custom_crypto": ["custom_xor"]},
+        ])
+
+        result = integration.analyze_crypto_routines(test_binary)
+
+        assert result["success"] is True
+        assert "AES-256" in result["standard_algorithms"]
+        assert "SHA-256" in result["standard_algorithms"]
+        assert "custom_xor" in result["custom_crypto"]
 
     def test_crypto_analysis_error_handling(
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Crypto analysis handles errors gracefully."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.run_script.side_effect = Exception("Analysis failed")
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            result = integration.analyze_crypto_routines(test_binary)
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert result["success"] is False
-            assert "error" in result
+        fake_script_runner.set_run_script_exception(Exception("Analysis failed"))
+
+        result = integration.analyze_crypto_routines(test_binary)
+
+        assert result["success"] is False
+        assert "error" in result
 
 
 class TestKeygenTemplateGeneration:
@@ -366,24 +534,32 @@ class TestKeygenTemplateGeneration:
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """generate_keygen_template creates valid template from license algorithm."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.run_script.return_value = {
-                "success": True,
-                "algorithm_type": "RSA-2048",
-                "validation_function": "ValidateSerial",
-                "keygen_code": "def generate_key(): pass",
-            }
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            result = integration.generate_keygen_template(test_binary)
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert result["success"] is True
-            assert result["algorithm_type"] == "RSA-2048"
-            assert "keygen_code" in result
+        fake_script_runner.set_run_script_response({
+            "success": True,
+            "algorithm_type": "RSA-2048",
+            "validation_function": "ValidateSerial",
+            "keygen_code": "def generate_key(): pass",
+        })
+
+        result = integration.generate_keygen_template(test_binary)
+
+        assert result["success"] is True
+        assert result["algorithm_type"] == "RSA-2048"
+        assert "keygen_code" in result
 
 
 class TestDeobfuscationFeatures:
@@ -393,42 +569,58 @@ class TestDeobfuscationFeatures:
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """deobfuscate_control_flow removes obfuscation."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.run_script.return_value = {
-                "success": True,
-                "blocks_deobfuscated": 15,
-                "junk_code_removed": 42,
-            }
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            result = integration.deobfuscate_control_flow(test_binary)
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert result["success"] is True
-            assert result["blocks_deobfuscated"] == 15
+        fake_script_runner.set_run_script_response({
+            "success": True,
+            "blocks_deobfuscated": 15,
+            "junk_code_removed": 42,
+        })
+
+        result = integration.deobfuscate_control_flow(test_binary)
+
+        assert result["success"] is True
+        assert result["blocks_deobfuscated"] == 15
 
     def test_decrypt_strings(
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """decrypt_strings decrypts obfuscated strings."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.run_script.return_value = {
-                "success": True,
-                "decrypted_strings": ["License key invalid", "Registration required"],
-            }
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            result = integration.decrypt_strings(test_binary)
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert result["success"] is True
-            assert len(result["decrypted_strings"]) == 2
+        fake_script_runner.set_run_script_response({
+            "success": True,
+            "decrypted_strings": ["License key invalid", "Registration required"],
+        })
+
+        result = integration.decrypt_strings(test_binary)
+
+        assert result["success"] is True
+        assert len(result["decrypted_strings"]) == 2
 
 
 class TestAntiAnalysisDetection:
@@ -438,46 +630,62 @@ class TestAntiAnalysisDetection:
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """detect_anti_analysis identifies anti-debug techniques."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.run_script.return_value = {
-                "success": True,
-                "anti_debug": True,
-                "anti_vm": False,
-                "anti_dump": False,
-            }
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            result = integration.detect_anti_analysis(test_binary)
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert result["success"] is True
-            assert "anti-debug" in result["techniques"]
-            assert len(result["techniques"]) == 1
+        fake_script_runner.set_run_script_response({
+            "success": True,
+            "anti_debug": True,
+            "anti_vm": False,
+            "anti_dump": False,
+        })
+
+        result = integration.detect_anti_analysis(test_binary)
+
+        assert result["success"] is True
+        assert "anti-debug" in result["techniques"]
+        assert len(result["techniques"]) == 1
 
     def test_detect_multiple_anti_analysis(
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """detect_anti_analysis identifies multiple techniques."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.run_script.return_value = {
-                "success": True,
-                "anti_debug": True,
-                "anti_vm": True,
-                "anti_dump": True,
-            }
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            result = integration.detect_anti_analysis(test_binary)
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert result["success"] is True
-            assert len(result["techniques"]) == 3
+        fake_script_runner.set_run_script_response({
+            "success": True,
+            "anti_debug": True,
+            "anti_vm": True,
+            "anti_dump": True,
+        })
+
+        result = integration.detect_anti_analysis(test_binary)
+
+        assert result["success"] is True
+        assert len(result["techniques"]) == 3
 
 
 class TestComprehensiveAnalysis:
@@ -487,23 +695,31 @@ class TestComprehensiveAnalysis:
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """perform_comprehensive_analysis runs full analysis."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.run_script.return_value = {
-                "success": True,
-                "function_count": 128,
-                "imports": 45,
-                "exports": 12,
-            }
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            result = integration.perform_comprehensive_analysis(test_binary)
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert result["success"] is True
-            assert result["function_count"] == 128
+        fake_script_runner.set_run_script_response({
+            "success": True,
+            "function_count": 128,
+            "imports": 45,
+            "exports": 12,
+        })
+
+        result = integration.perform_comprehensive_analysis(test_binary)
+
+        assert result["success"] is True
+        assert result["function_count"] == 128
 
 
 class TestLicensingCrackWorkflow:
@@ -513,62 +729,78 @@ class TestLicensingCrackWorkflow:
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """perform_licensing_crack_workflow executes full crack workflow."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.run_script.return_value = {
-                "success": True,
-                "vmprotect_detected": False,
-                "themida_detected": False,
-                "enigma_detected": False,
-                "validation_functions": 3,
-                "algorithms": ["MD5"],
-                "custom_crypto": [],
-                "decrypted_strings": ["License"],
-                "anti_debug": False,
-                "anti_vm": False,
-                "anti_dump": False,
-            }
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            result = integration.perform_licensing_crack_workflow(test_binary)
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert result["success"] is True
-            assert "stages" in result
-            assert "protection_detection" in result["stages"]
-            assert "license_analysis" in result["stages"]
-            assert "crypto_analysis" in result["stages"]
-            assert "keygen_generation" in result["stages"]
+        fake_script_runner.set_run_script_response({
+            "success": True,
+            "vmprotect_detected": False,
+            "themida_detected": False,
+            "enigma_detected": False,
+            "validation_functions": 3,
+            "algorithms": ["MD5"],
+            "custom_crypto": [],
+            "decrypted_strings": ["License"],
+            "anti_debug": False,
+            "anti_vm": False,
+            "anti_dump": False,
+        })
+
+        result = integration.perform_licensing_crack_workflow(test_binary)
+
+        assert result["success"] is True
+        assert "stages" in result
+        assert "protection_detection" in result["stages"]
+        assert "license_analysis" in result["stages"]
+        assert "crypto_analysis" in result["stages"]
+        assert "keygen_generation" in result["stages"]
 
     def test_licensing_crack_workflow_with_packer(
         self,
         mock_ghidra_path: Path,
         test_binary: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Workflow includes unpacking when packer detected."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            responses = [
-                {"success": True, "vmprotect_detected": True, "themida_detected": False, "enigma_detected": False},
-                {"success": True, "oep": 0x401000},
-                {"success": True, "validation_functions": 5},
-                {"success": True, "algorithms": []},
-                {"success": True, "custom_crypto": []},
-                {"success": True, "algorithm_type": "custom"},
-                {"success": True, "decrypted_strings": []},
-                {"success": True, "anti_debug": False, "anti_vm": False, "anti_dump": False},
-            ]
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            mock_script_runner.run_script.side_effect = responses
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            result = integration.perform_licensing_crack_workflow(test_binary)
+        responses = [
+            {"success": True, "vmprotect_detected": True, "themida_detected": False, "enigma_detected": False},
+            {"success": True, "oep": 0x401000},
+            {"success": True, "validation_functions": 5},
+            {"success": True, "algorithms": []},
+            {"success": True, "custom_crypto": []},
+            {"success": True, "algorithm_type": "custom"},
+            {"success": True, "decrypted_strings": []},
+            {"success": True, "anti_debug": False, "anti_vm": False, "anti_dump": False},
+        ]
 
-            assert result["success"] is True
-            assert "unpacking" in result["stages"]
+        fake_script_runner.set_run_script_responses(responses)
+
+        result = integration.perform_licensing_crack_workflow(test_binary)
+
+        assert result["success"] is True
+        assert "unpacking" in result["stages"]
 
 
 class TestScriptManagement:
@@ -577,34 +809,50 @@ class TestScriptManagement:
     def test_get_available_scripts(
         self,
         mock_ghidra_path: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """get_available_scripts returns list of discovered scripts."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.list_available_scripts.return_value = [
-                {"name": "licensing_analysis", "language": "python"},
-                {"name": "crypto_finder", "language": "java"},
-            ]
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            scripts = integration.get_available_scripts()
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert len(scripts) == 2
-            assert scripts[0]["name"] == "licensing_analysis"
+        fake_script_runner.set_list_available_scripts_response([
+            {"name": "licensing_analysis", "language": "python"},
+            {"name": "crypto_finder", "language": "java"},
+        ])
+
+        scripts = integration.get_available_scripts()
+
+        assert len(scripts) == 2
+        assert scripts[0]["name"] == "licensing_analysis"
 
     def test_refresh_scripts(
         self,
         mock_ghidra_path: Path,
-        mock_script_runner: Mock,
+        fake_script_runner: FakeGhidraScriptRunner,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """refresh_scripts rediscovers scripts from filesystem."""
-        with patch("intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner", return_value=mock_script_runner):
-            integration = GhidraBinaryIntegration(mock_ghidra_path)
+        def fake_runner_init(ghidra_path: Path) -> FakeGhidraScriptRunner:
+            return fake_script_runner
 
-            mock_script_runner.refresh_scripts.return_value = 5
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
+            fake_runner_init
+        )
 
-            count = integration.refresh_scripts()
+        integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-            assert count == 5
-            mock_script_runner.refresh_scripts.assert_called_once()
+        fake_script_runner.set_refresh_scripts_count(5)
+
+        count = integration.refresh_scripts()
+
+        assert count == 5
+        assert fake_script_runner.refresh_scripts_calls == 1

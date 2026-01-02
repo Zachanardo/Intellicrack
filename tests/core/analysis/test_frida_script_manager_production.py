@@ -46,6 +46,18 @@ from intellicrack.core.analysis.frida_script_manager import (
 pytestmark = pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida not available")
 
 
+class FakeFridaSession:
+    """Real test double for Frida session objects."""
+
+    def __init__(self) -> None:
+        self.detached: bool = False
+        self.detach_call_count: int = 0
+
+    def detach(self) -> None:
+        self.detached = True
+        self.detach_call_count += 1
+
+
 @pytest.fixture(scope="module")
 def scripts_dir(tmp_path_factory: Any) -> Path:
     """Create temporary scripts directory with test scripts."""
@@ -555,18 +567,17 @@ rpc.exports = {
 class TestSessionManagement:
     """Test Frida session management and cleanup."""
 
-    def test_stop_script_removes_session_from_active_sessions(self, manager: FridaScriptManager) -> None:
+    def test_stop_script_removes_session_from_active_sessions(self, manager: FridaScriptManager, monkeypatch: pytest.MonkeyPatch) -> None:
         """stop_script removes session from active_sessions dictionary."""
-        from unittest.mock import MagicMock
-
         session_id = "test_session_123"
-        mock_session = MagicMock()
-        manager.active_sessions[session_id] = mock_session
+        fake_session = FakeFridaSession()
+        manager.active_sessions[session_id] = fake_session
 
         manager.stop_script(session_id)
 
         assert session_id not in manager.active_sessions
-        mock_session.detach.assert_called_once()
+        assert fake_session.detached is True
+        assert fake_session.detach_call_count == 1
 
     def test_stop_script_handles_nonexistent_session_gracefully(self, manager: FridaScriptManager) -> None:
         """stop_script handles attempts to stop non-existent sessions gracefully."""

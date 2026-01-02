@@ -41,7 +41,7 @@ from typing import Any
 from intellicrack.ai.qemu_manager import QEMUManager
 from intellicrack.utils.logger import logger
 
-from .ai_script_generator import AIScriptGenerator, ScriptType
+from .ai_script_generator import AIScriptGenerator
 
 
 class EditType(Enum):

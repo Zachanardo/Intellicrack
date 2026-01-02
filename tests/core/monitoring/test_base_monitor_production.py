@@ -16,8 +16,7 @@ Tests validate REAL monitoring infrastructure capabilities:
 
 import threading
 import time
-from typing import Any
-from unittest.mock import MagicMock
+from typing import Any, Callable
 
 import pytest
 
@@ -454,7 +453,12 @@ class TestEventCallbacks:
     def test_base_monitor_registers_event_callbacks(self) -> None:
         """BaseMonitor registers event callbacks successfully."""
         monitor = ConcreteMonitor()
-        callback = MagicMock()
+
+        callback_called = False
+
+        def callback(event: MonitorEvent) -> None:
+            nonlocal callback_called
+            callback_called = True
 
         monitor.on_event(callback)
 
@@ -463,8 +467,21 @@ class TestEventCallbacks:
     def test_base_monitor_executes_callbacks_on_event(self) -> None:
         """BaseMonitor executes all registered callbacks on event emission."""
         monitor = ConcreteMonitor()
-        callback1 = MagicMock()
-        callback2 = MagicMock()
+
+        callback1_count = 0
+        callback2_count = 0
+        received_event1 = None
+        received_event2 = None
+
+        def callback1(event: MonitorEvent) -> None:
+            nonlocal callback1_count, received_event1
+            callback1_count += 1
+            received_event1 = event
+
+        def callback2(event: MonitorEvent) -> None:
+            nonlocal callback2_count, received_event2
+            callback2_count += 1
+            received_event2 = event
 
         monitor.on_event(callback1)
         monitor.on_event(callback2)
@@ -479,14 +496,26 @@ class TestEventCallbacks:
 
         monitor.emit_test_event(event)
 
-        callback1.assert_called_once_with(event)
-        callback2.assert_called_once_with(event)
+        assert callback1_count == 1
+        assert callback2_count == 1
+        assert received_event1 == event
+        assert received_event2 == event
 
     def test_base_monitor_handles_callback_exceptions(self) -> None:
         """BaseMonitor continues operation when callback raises exception."""
         monitor = ConcreteMonitor()
-        failing_callback = MagicMock(side_effect=RuntimeError("Callback error"))
-        working_callback = MagicMock()
+
+        failing_callback_called = False
+        working_callback_called = False
+
+        def failing_callback(event: MonitorEvent) -> None:
+            nonlocal failing_callback_called
+            failing_callback_called = True
+            raise RuntimeError("Callback error")
+
+        def working_callback(event: MonitorEvent) -> None:
+            nonlocal working_callback_called
+            working_callback_called = True
 
         monitor.on_event(failing_callback)
         monitor.on_event(working_callback)
@@ -501,8 +530,8 @@ class TestEventCallbacks:
 
         monitor.emit_test_event(event)
 
-        failing_callback.assert_called_once()
-        working_callback.assert_called_once()
+        assert failing_callback_called
+        assert working_callback_called
 
     def test_base_monitor_updates_stats_on_event(self) -> None:
         """BaseMonitor updates statistics when emitting events."""
@@ -691,7 +720,14 @@ class TestMonitorIntegration:
         process_info = ProcessInfo(pid=1234, name="test.exe", path="C:\\test.exe")
         monitor = ConcreteMonitor(name="IntegrationTest", process_info=process_info)
 
-        callback = MagicMock()
+        callback_count = 0
+        received_events = []
+
+        def callback(event: MonitorEvent) -> None:
+            nonlocal callback_count
+            callback_count += 1
+            received_events.append(event)
+
         monitor.on_event(callback)
 
         assert monitor.start() is True
@@ -735,7 +771,8 @@ class TestMonitorIntegration:
         assert stats["events_by_type"]["scan"] == 1
         assert stats["monitor_name"] == "IntegrationTest"
 
-        assert callback.call_count == 3
+        assert callback_count == 3
+        assert len(received_events) == 3
 
         monitor.stop()
 

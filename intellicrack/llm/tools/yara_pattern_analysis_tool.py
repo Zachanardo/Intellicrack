@@ -1,7 +1,13 @@
-"""YARA Pattern Analysis Tool for LLM Integration
+"""YARA Pattern Analysis Tool for LLM Integration.
 
 Provides AI models with the ability to run YARA pattern matching and analysis
-on binary files to detect protection patterns and security indicators.
+on binary files to detect protection patterns, licensing protections, packers,
+anti-debug mechanisms, and other security indicators relevant to software
+licensing analysis.
+
+This module enables LLM-based binary analysis workflows by exposing YARA
+pattern matching capabilities through a well-defined tool interface compatible
+with LLM agent systems.
 
 Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
@@ -17,18 +23,40 @@ logger = get_logger(__name__)
 
 
 class YARAPatternAnalysisTool:
-    """LLM tool for running YARA pattern analysis on binary files"""
+    """LLM tool for running YARA pattern analysis on binary files.
+
+    Provides LLM agents with the ability to scan binaries for protection patterns
+    including anti-debug mechanisms, packers, encryption, and software licensing
+    protections. Supports rule-based pattern matching with categorization,
+    confidence scoring, and threat assessment.
+
+    Attributes:
+        engine: YARA pattern engine instance for running pattern scans.
+        analysis_cache: Dictionary cache mapping analysis parameters to results
+            for performance optimization.
+
+    """
 
     def __init__(self) -> None:
-        """Initialize YARA pattern analysis tool"""
+        """Initialize YARA pattern analysis tool.
+
+        Sets up the YARA engine and initializes an empty analysis cache for
+        caching scan results across multiple invocations.
+
+        """
         self.engine: YaraPatternEngine | None = get_yara_engine()
         self.analysis_cache: dict[str, dict[str, Any]] = {}
 
     def get_tool_definition(self) -> dict[str, Any]:
-        """Get tool definition for LLM registration
+        """Get tool definition for LLM registration.
+
+        Provides the OpenAI-compatible tool schema definition for LLM integration,
+        specifying parameters for YARA pattern analysis including file path, rule
+        categories, custom rules, timeout, and output options.
 
         Returns:
-            Tool definition dictionary
+            dict[str, Any]: Tool definition dictionary with name, description,
+                parameter schema, and required parameter specification.
 
         """
         return {
@@ -85,13 +113,30 @@ class YARAPatternAnalysisTool:
         }
 
     def execute(self, **kwargs: Any) -> dict[str, Any]:
-        """Execute YARA pattern analysis
+        """Execute YARA pattern analysis.
+
+        Runs YARA pattern matching on a target binary file, optionally with
+        custom rules and specific rule categories. Results are cached to improve
+        performance for repeated analysis of the same files.
 
         Args:
-            **kwargs: Tool parameters
+            **kwargs: Tool parameters including:
+                file_path (str): Path to the binary file to analyze.
+                rule_categories (list[str]): Categories of rules to run.
+                    Defaults to ["ALL"].
+                custom_rules (list[str]): Optional custom YARA rules.
+                    Defaults to [].
+                timeout (int): Analysis timeout in seconds. Defaults to 60.
+                include_strings (bool): Include matched string data.
+                    Defaults to True.
+                detailed_output (bool): Include detailed analysis.
+                    Defaults to True.
 
         Returns:
-            Analysis results dictionary
+            dict[str, Any]: Analysis results with success status, file path,
+                match count, pattern matches, security assessment, bypass
+                recommendations, and optional detailed analysis. Returns error
+                dictionary if analysis fails.
 
         """
         file_path = kwargs.get("file_path")
@@ -194,7 +239,19 @@ class YARAPatternAnalysisTool:
             return {"success": False, "error": str(e)}
 
     def _format_pattern_matches(self, matches: list[Any], include_strings: bool) -> list[dict[str, Any]]:
-        """Format pattern matches for LLM consumption"""
+        """Format pattern matches for LLM consumption.
+
+        Args:
+            matches (list[Any]): List of pattern match objects from YARA scan.
+            include_strings (bool): Whether to include matched string data in
+                results.
+
+        Returns:
+            list[dict[str, Any]]: List of formatted match dictionaries with
+                rule name, category, confidence, description, severity, tags,
+                offset, and optionally matched strings and metadata.
+
+        """
         formatted_matches = []
 
         for match in matches:
@@ -227,7 +284,18 @@ class YARAPatternAnalysisTool:
         return formatted_matches
 
     def _assess_security_findings(self, matches: list[Any]) -> dict[str, Any]:
-        """Assess security implications of pattern matches"""
+        """Assess security implications of pattern matches.
+
+        Args:
+            matches (list[Any]): List of pattern match objects from YARA scan.
+
+        Returns:
+            dict[str, Any]: Dictionary containing overall threat level, protection
+                complexity, anti-analysis presence, encryption indicators, packing
+                indicators, licensing indicators, security score, high confidence
+                match count, and findings summary.
+
+        """
         assessment: dict[str, Any] = {
             "overall_threat_level": "low",
             "protection_complexity": "basic",
@@ -304,7 +372,17 @@ class YARAPatternAnalysisTool:
         return assessment
 
     def _generate_bypass_recommendations(self, matches: list[Any]) -> list[dict[str, Any]]:
-        """Generate bypass recommendations based on pattern matches"""
+        """Generate bypass recommendations based on pattern matches.
+
+        Args:
+            matches (list[Any]): List of pattern match objects from YARA scan.
+
+        Returns:
+            list[dict[str, Any]]: List of recommendation dictionaries containing
+                target protection type, bypass method, applicable tools, difficulty
+                level, description, and technical details.
+
+        """
         recommendations = []
         processed_categories = set()
 
@@ -379,7 +457,16 @@ class YARAPatternAnalysisTool:
         return recommendations
 
     def _categorize_patterns(self, matches: list[Any]) -> dict[str, list[str]]:
-        """Categorize detected patterns by type"""
+        """Categorize detected patterns by type.
+
+        Args:
+            matches (list[Any]): List of pattern match objects from YARA scan.
+
+        Returns:
+            dict[str, list[str]]: Dictionary mapping category names to lists of
+                matching rule names for each category.
+
+        """
         categories: dict[str, list[str]] = {}
 
         for match in matches:
@@ -391,7 +478,16 @@ class YARAPatternAnalysisTool:
         return categories
 
     def _analyze_confidence_levels(self, matches: list[Any]) -> dict[str, Any]:
-        """Analyze confidence levels of matches"""
+        """Analyze confidence levels of matches.
+
+        Args:
+            matches (list[Any]): List of pattern match objects from YARA scan.
+
+        Returns:
+            dict[str, Any]: Dictionary containing average confidence level, high
+                confidence count, low confidence count, and total match count.
+
+        """
         if not matches:
             return {"average": 0.0, "high_confidence_count": 0, "low_confidence_count": 0}
 
@@ -407,7 +503,17 @@ class YARAPatternAnalysisTool:
         }
 
     def _extract_threat_indicators(self, matches: list[Any]) -> list[dict[str, Any]]:
-        """Extract specific threat indicators from matches"""
+        """Extract specific threat indicators from matches.
+
+        Args:
+            matches (list[Any]): List of pattern match objects from YARA scan.
+
+        Returns:
+            list[dict[str, Any]]: List of threat indicator dictionaries containing
+                type, name, severity, confidence, description, and threat
+                classification for high-confidence matches.
+
+        """
         indicators = []
 
         for match in matches:
@@ -435,7 +541,17 @@ class YARAPatternAnalysisTool:
         return indicators
 
     def _analyze_protection_layers(self, matches: list[Any]) -> dict[str, Any]:
-        """Analyze layered protection schemes"""
+        """Analyze layered protection schemes.
+
+        Args:
+            matches (list[Any]): List of pattern match objects from YARA scan.
+
+        Returns:
+            dict[str, Any]: Dictionary containing flags for packing, encryption,
+                anti-analysis, and licensing layers; total layer count; and
+                complexity assessment (simple, moderate, or advanced).
+
+        """
         layers: dict[str, Any] = {
             "packing_layer": False,
             "encryption_layer": False,
@@ -480,14 +596,19 @@ class YARAPatternAnalysisTool:
         return layers
 
     def analyze_custom_patterns(self, file_path: str, custom_rules_text: str) -> dict[str, Any]:
-        """Analyze file with custom YARA rules provided as text
+        """Analyze file with custom YARA rules provided as text.
 
         Args:
-            file_path: Path to file to analyze
-            custom_rules_text: YARA rules as text string
+            file_path (str): Path to file to analyze.
+            custom_rules_text (str): YARA rules as text string.
 
         Returns:
-            Analysis results
+            dict[str, Any]: Analysis results dictionary with success status, file
+                path, custom rules flag, pattern matches, total match count, and
+                scan time.
+
+        Raises:
+            ValueError: If custom YARA rules fail to compile or are empty.
 
         """
         try:
@@ -524,5 +645,11 @@ class YARAPatternAnalysisTool:
 
 
 def create_yara_pattern_tool() -> YARAPatternAnalysisTool:
-    """Factory function to create YARA pattern analysis tool"""
+    """Factory function to create YARA pattern analysis tool.
+
+    Returns:
+        YARAPatternAnalysisTool: Initialized YARAPatternAnalysisTool instance
+            ready for pattern analysis.
+
+    """
     return YARAPatternAnalysisTool()

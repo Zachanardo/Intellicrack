@@ -1,7 +1,17 @@
 """Streaming Cryptographic Routine Detector for Large Binaries.
 
-Production-ready streaming-enabled cryptographic detection for multi-GB executables.
-Extends CryptographicRoutineDetector with chunk-based processing and result merging.
+This module provides production-ready streaming-enabled cryptographic detection
+for multi-GB executables. It extends CryptographicRoutineDetector with chunk-based
+processing and result merging for analyzing large binaries without loading them
+entirely into memory.
+
+Key features:
+- Streaming chunk-based analysis for memory efficiency
+- Deduplication of detection results across chunk boundaries
+- Complexity scoring based on cryptographic algorithm diversity
+- Licensing-relevant detection filtering (RSA, AES, ECC, SHA256, SHA512)
+- Progress callback support for long-running analyses
+- Comprehensive error handling and recovery
 
 Copyright (C) 2025 Zachary Flint
 
@@ -42,7 +52,16 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ChunkCryptoResults:
-    """Results from cryptographic detection in a single chunk."""
+    """Results from cryptographic detection in a single chunk.
+
+    Attributes:
+        chunk_offset: Byte offset of this chunk in the binary.
+        chunk_size: Size of the chunk in bytes.
+        detections: List of CryptoDetection objects found in chunk.
+        constants_found: List of detected cryptographic constants.
+        algorithm_counts: Dictionary mapping algorithm names to occurrence counts.
+
+    """
 
     chunk_offset: int
     chunk_size: int
@@ -52,14 +71,30 @@ class ChunkCryptoResults:
 
 
 class StreamingCryptoDetector(StreamingAnalyzer):
-    """Streaming analyzer for cryptographic routine detection in large binaries."""
+    """Streaming analyzer for cryptographic routine detection in large binaries.
+
+    This class implements the StreamingAnalyzer protocol to enable memory-efficient
+    analysis of large binary files by processing them in chunks. It uses the
+    underlying CryptographicRoutineDetector for each chunk and merges results with
+    deduplication to avoid reporting the same detection multiple times across
+    overlapping chunk boundaries.
+
+    Attributes:
+        quick_mode: Enable fast mode that skips expensive analysis steps.
+        use_radare2: Enable radare2 integration for enhanced instruction analysis.
+        detector: Instance of CryptographicRoutineDetector for analysis.
+        binary_path: Path to the binary being analyzed.
+        global_detections: List of all detections found across all chunks.
+        detection_offsets: Set of offsets already detected to prevent duplicates.
+
+    """
 
     def __init__(self, quick_mode: bool = False, use_radare2: bool = False) -> None:
         """Initialize streaming crypto detector.
 
         Args:
-            quick_mode: Skip expensive analysis for faster processing
-            use_radare2: Enable radare2 integration for enhanced analysis
+            quick_mode: Skip expensive analysis for faster processing.
+            use_radare2: Enable radare2 integration for enhanced analysis.
 
         """
         self.quick_mode = quick_mode
@@ -72,8 +107,11 @@ class StreamingCryptoDetector(StreamingAnalyzer):
     def initialize_analysis(self, file_path: Path) -> None:
         """Initialize detector before chunk processing begins.
 
+        Resets internal state and prepares the detector to analyze a new binary file.
+        Called once before the streaming manager begins processing chunks.
+
         Args:
-            file_path: Path to binary being analyzed
+            file_path: Path to binary being analyzed.
 
         """
         self.binary_path = file_path
@@ -84,11 +122,16 @@ class StreamingCryptoDetector(StreamingAnalyzer):
     def analyze_chunk(self, context: ChunkContext) -> dict[str, Any]:
         """Analyze a single chunk for cryptographic routines.
 
+        Processes a chunk of binary data with overlap context to detect cryptographic
+        algorithms and constants. Filters results to the actual chunk boundaries and
+        deduplicates against previously detected offsets.
+
         Args:
-            context: Chunk context with data and metadata
+            context: Chunk context with data and metadata.
 
         Returns:
-            Partial detection results for this chunk
+            Dictionary with chunk offset, size, detections list, constants found,
+            and algorithm occurrence counts. Includes error key if processing failed.
 
         """
         try:
@@ -158,11 +201,16 @@ class StreamingCryptoDetector(StreamingAnalyzer):
     def merge_results(self, results: list[dict[str, Any]]) -> dict[str, Any]:
         """Merge detection results from all chunks.
 
+        Combines per-chunk results into a unified result set with algorithm
+        distribution analysis, coverage metrics, and error aggregation.
+
         Args:
-            results: List of partial results from each chunk
+            results: List of partial results from each chunk.
 
         Returns:
-            Merged detection results
+            Dictionary containing total detections, merged detections list,
+            algorithm distribution with percentages, coverage metrics, and any
+            errors encountered during processing.
 
         """
         try:
@@ -231,11 +279,16 @@ class StreamingCryptoDetector(StreamingAnalyzer):
     def finalize_analysis(self, merged_results: dict[str, Any]) -> dict[str, Any]:
         """Finalize analysis with post-processing and enhanced metadata.
 
+        Performs final analysis steps including licensing relevance filtering,
+        key size extraction, complexity scoring, and human-readable summary generation.
+
         Args:
-            merged_results: Merged results from all chunks
+            merged_results: Merged results from all chunks.
 
         Returns:
-            Final analysis results with enhancements
+            Enhanced results dictionary with added fields: licensing_relevant_crypto,
+            unique_algorithms list, key_size_analysis by algorithm, complexity_score,
+            and human-readable analysis_summary.
 
         """
         try:
@@ -280,11 +333,15 @@ class StreamingCryptoDetector(StreamingAnalyzer):
     def _serialize_detection(self, detection: CryptoDetection) -> dict[str, Any]:
         """Convert CryptoDetection to serializable dictionary.
 
+        Transforms a CryptoDetection object into a JSON-serializable dictionary
+        format with limited code/data references for compact representation.
+
         Args:
-            detection: CryptoDetection object
+            detection: CryptoDetection object to serialize.
 
         Returns:
-            Serializable dictionary representation
+            Dictionary with algorithm name, offset, size, confidence score, variant,
+            key size, mode, details, and truncated lists of code and data references.
 
         """
         return {
@@ -303,11 +360,18 @@ class StreamingCryptoDetector(StreamingAnalyzer):
     def _calculate_complexity_score(self, results: dict[str, Any]) -> float:
         """Calculate cryptographic complexity score.
 
+        Computes a single complexity score (0-100) based on algorithm diversity,
+        detection volume, and licensing relevance. Higher scores indicate more
+        sophisticated cryptographic implementations.
+
         Args:
-            results: Merged detection results
+            results: Merged detection results containing unique_algorithms,
+                total_detections, and licensing_relevant_crypto fields.
 
         Returns:
-            Complexity score (0-100)
+            Complexity score (0-100) with algorithm diversity accounting for 40%,
+            detection volume accounting for 30%, and licensing relevance accounting
+            for 30%.
 
         """
         score = 0.0
@@ -331,11 +395,18 @@ class StreamingCryptoDetector(StreamingAnalyzer):
     def _generate_summary(self, results: dict[str, Any]) -> str:
         """Generate human-readable analysis summary.
 
+        Creates a concise English-language summary of the cryptographic analysis
+        including total detections, algorithm diversity, licensing relevance, and
+        most common algorithms.
+
         Args:
-            results: Merged detection results
+            results: Merged detection results containing total_detections,
+                unique_algorithms, licensing_relevant_crypto, and
+                algorithm_distribution fields.
 
         Returns:
-            Summary string
+            Human-readable summary string describing the cryptographic content
+            of the analyzed binary.
 
         """
         total = results.get("total_detections", 0)
@@ -362,15 +433,20 @@ def analyze_crypto_streaming(
 ) -> dict[str, Any]:
     """Perform streaming cryptographic analysis on large binary.
 
+    Analyzes a binary file for cryptographic routines using streaming chunk
+    processing to handle large files efficiently. Returns comprehensive detection
+    results including algorithm distribution and complexity scoring.
+
     Args:
         binary_path: Path to binary file for cryptographic analysis.
-        quick_mode: Skip expensive analysis for faster processing. Defaults to False.
-        use_radare2: Enable radare2 integration for enhanced analysis. Defaults to False.
-        progress_callback: Optional callback for progress updates. Defaults to None.
+        quick_mode: Skip expensive analysis for faster processing.
+        use_radare2: Enable radare2 integration for enhanced analysis.
+        progress_callback: Optional callback for progress updates.
 
     Returns:
-        Dictionary containing complete cryptographic analysis results with detections,
-        algorithm distribution, and complexity scoring.
+        Dictionary containing cryptographic analysis results with keys including
+        total_detections, detections list, algorithm distribution, and
+        complexity score. On error, returns dict with error key and status.
 
     """
     try:

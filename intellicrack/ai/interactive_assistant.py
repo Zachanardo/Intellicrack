@@ -154,7 +154,7 @@ class IntellicrackAIAssistant:
 
         """
         import contextlib
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         log_entry = {
             "timestamp": datetime.now(tz=UTC).isoformat(),

@@ -176,7 +176,16 @@ class AutodeskLicensingParser:
         self._initialize_server_keys()
 
     def _initialize_server_keys(self) -> None:
-        """Initialize server cryptographic keys."""
+        """Initialize server cryptographic keys for license signing and validation.
+
+        Sets up SHA256-derived cryptographic keys used to:
+        - Sign license activations and validations
+        - Generate ADSK authentication tokens
+        - Verify machine signatures during licensing operations
+
+        Raises:
+            No exceptions raised during normal operation.
+        """
         self.server_private_key = hashlib.sha256(b"autodesk_server_private_key_2024").hexdigest()
         self.server_public_key = hashlib.sha256(b"autodesk_server_public_key_2024").hexdigest()
         self.activation_seed = hashlib.sha256(str(time.time()).encode()).hexdigest()
@@ -185,12 +194,15 @@ class AutodeskLicensingParser:
     def parse_request(self, http_data: str) -> AutodeskRequest | None:
         """Parse incoming Autodesk licensing HTTP request.
 
+        Parses HTTP headers and body to extract Autodesk licensing request
+        data including request type, product key, machine identifiers, and
+        authentication tokens. Handles both JSON and form-encoded request bodies.
+
         Args:
-            http_data: Raw HTTP request data
+            http_data: Raw HTTP request data including headers and body.
 
         Returns:
-            Parsed AutodeskRequest object or None if invalid
-
+            Parsed AutodeskRequest object or None if request is invalid.
         """
         try:
             # Parse HTTP headers and body
@@ -267,7 +279,20 @@ class AutodeskLicensingParser:
             return None
 
     def _determine_request_type(self, request_line: str, headers: dict[str, str], data: dict[str, Any]) -> str:
-        """Determine Autodesk request type from URL and data."""
+        """Determine Autodesk request type from URL patterns, headers, and request data.
+
+        Analyzes HTTP request components to identify the specific Autodesk licensing
+        operation being performed (activation, validation, entitlement, etc.). Uses
+        URL path matching, product detection from User-Agent, and request data analysis.
+
+        Args:
+            request_line: HTTP request line (e.g., "POST /activate HTTP/1.1").
+            headers: Request headers dictionary.
+            data: Parsed request body data.
+
+        Returns:
+            Request type identifier (e.g., "activation", "validation", "heartbeat").
+        """
         request_line_lower = request_line.lower()
 
         # Analyze headers for additional context
@@ -342,7 +367,20 @@ class AutodeskLicensingParser:
         return base_type
 
     def _extract_field(self, data: dict[str, Any], headers: dict[str, str], field_names: list[str]) -> str | None:
-        """Extract field from request data or headers."""
+        """Extract field value from request data or headers using multiple possible names.
+
+        Searches for a field using alternative naming conventions, checking request
+        body data first, then HTTP headers. Useful for handling variations in how
+        Autodesk products submit licensing information.
+
+        Args:
+            data: Parsed request body data.
+            headers: Request headers dictionary.
+            field_names: List of possible field names to search for.
+
+        Returns:
+            Field value as string, or None if not found in either source.
+        """
         # Check data first
         for field_name in field_names:
             if field_name in data:
@@ -354,7 +392,20 @@ class AutodeskLicensingParser:
         )
 
     def _extract_platform_info(self, data: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
-        """Extract platform and system information."""
+        """Extract platform and system information from request headers and data.
+
+        Analyzes User-Agent header to detect OS type and extracts system metrics
+        including language, timezone, screen resolution, processor count, and memory.
+        Used during activation to build machine signature and validate licensing.
+
+        Args:
+            data: Parsed request body data.
+            headers: Request headers dictionary.
+
+        Returns:
+            Platform information dictionary with user_agent, os, language, timezone,
+            screen_resolution, processor_count, and memory_total keys.
+        """
         platform_info = {}
 
         if user_agent := headers.get("user-agent", ""):
@@ -378,7 +429,18 @@ class AutodeskLicensingParser:
         return platform_info
 
     def _parse_form_data(self, body: str) -> dict[str, Any]:
-        """Parse form-encoded data."""
+        """Parse form-encoded (application/x-www-form-urlencoded) request body.
+
+        Parses key=value pairs separated by ampersands. Used as fallback when
+        request body is not valid JSON, allowing licensing requests from older
+        Autodesk clients using form encoding.
+
+        Args:
+            body: URL-encoded form data string.
+
+        Returns:
+            Parsed key-value pairs from form data.
+        """
         data = {}
         try:
             pairs = body.split("&")
@@ -391,14 +453,17 @@ class AutodeskLicensingParser:
         return data
 
     def generate_response(self, request: AutodeskRequest) -> AutodeskResponse:
-        """Generate appropriate Autodesk response based on request.
+        """Generate appropriate Autodesk response based on request type.
+
+        Routes incoming Autodesk requests to appropriate handler methods based on
+        the request type field. Supports activation, validation, deactivation,
+        entitlement verification, and other licensing operations.
 
         Args:
-            request: Parsed Autodesk request
+            request: Parsed Autodesk request containing request_type and related data.
 
         Returns:
-            Autodesk response object
-
+            AutodeskResponse object with appropriate status, codes, and data fields.
         """
         self.logger.info("Generating response for Autodesk %s request", request.request_type)
 
@@ -429,7 +494,20 @@ class AutodeskLicensingParser:
         return self._handle_unknown_request(request)
 
     def _handle_activation(self, request: AutodeskRequest) -> AutodeskResponse:
-        """Handle Autodesk product activation."""
+        """Handle Autodesk product activation request.
+
+        Processes license activation for Autodesk products. Validates product key,
+        generates activation ID and machine signature, creates license data with
+        features and expiry dates, and stores activation in local cache. Supports
+        both standalone and network licensing models.
+
+        Args:
+            request: Parsed Autodesk activation request.
+
+        Returns:
+            Response containing activation_id, license_data, entitlements, and
+            digital signature.
+        """
         product_key = request.product_key or "UNKNOWN"
 
         # Validate product
@@ -518,7 +596,19 @@ class AutodeskLicensingParser:
         )
 
     def _handle_validation(self, request: AutodeskRequest) -> AutodeskResponse:
-        """Handle license validation."""
+        """Handle license validation request.
+
+        Validates an activated license by verifying the activation ID and machine
+        signature. Returns license validity, remaining days, and enabled features.
+        Allows validation for unknown activations (permissive for compatibility).
+        Updates last validation timestamp for tracking.
+
+        Args:
+            request: Parsed Autodesk validation request.
+
+        Returns:
+            Response with validation_status, license_valid flag, and remaining days.
+        """
         activation_id = request.activation_id
 
         if activation_id and activation_id in self.active_activations:
@@ -586,7 +676,18 @@ class AutodeskLicensingParser:
         )
 
     def _handle_deactivation(self, request: AutodeskRequest) -> AutodeskResponse:
-        """Handle product deactivation."""
+        """Handle product deactivation request.
+
+        Removes an activated license from the server cache, effectively deactivating
+        the product for the specified installation. Allows the license to be
+        reactivated on a different machine.
+
+        Args:
+            request: Parsed Autodesk deactivation request.
+
+        Returns:
+            Response with deactivation_status and deactivation_time.
+        """
         activation_id = request.activation_id
 
         if activation_id in self.active_activations:
@@ -606,7 +707,19 @@ class AutodeskLicensingParser:
         )
 
     def _handle_entitlement(self, request: AutodeskRequest) -> AutodeskResponse:
-        """Handle entitlement verification."""
+        """Handle entitlement verification request.
+
+        Verifies user entitlements for Autodesk products. Caches entitlement data
+        to avoid repeated verification. Returns subscription status, contract
+        information, and support level for license server validation.
+
+        Args:
+            request: Parsed Autodesk entitlement request.
+
+        Returns:
+            Response with entitlement_data including subscription status and
+            contract information.
+        """
         user_id = request.user_id or "anonymous"
 
         # Generate or retrieve entitlement data
@@ -637,7 +750,19 @@ class AutodeskLicensingParser:
         )
 
     def _handle_heartbeat(self, request: AutodeskRequest) -> AutodeskResponse:
-        """Handle license heartbeat."""
+        """Handle license heartbeat/ping request.
+
+        Processes periodic heartbeat pings from licensed products to verify
+        continued license validity. Returns next heartbeat interval based on
+        license type (network licenses require more frequent heartbeats).
+
+        Args:
+            request: Parsed Autodesk heartbeat request.
+
+        Returns:
+            Response with heartbeat_status, server_time, and next_heartbeat
+            interval in seconds.
+        """
         product_key = request.product_key or "UNKNOWN"
         license_method = request.request_data.get("license_method", "standalone")
         session_id = request.request_data.get("session_id", str(uuid.uuid4()))
@@ -674,7 +799,19 @@ class AutodeskLicensingParser:
         )
 
     def _handle_registration(self, request: AutodeskRequest) -> AutodeskResponse:
-        """Handle product registration."""
+        """Handle product registration request.
+
+        Registers an Autodesk product to a user account. Generates registration ID
+        and provides registration benefits (support, updates, cloud services).
+        Used for user-specific product association in license system.
+
+        Args:
+            request: Parsed Autodesk registration request.
+
+        Returns:
+            Response with registration_id, registration_status, and registered_to
+            user information.
+        """
         registration_id = str(uuid.uuid4()).upper()
 
         return AutodeskResponse(
@@ -695,7 +832,18 @@ class AutodeskLicensingParser:
         )
 
     def _handle_subscription(self, request: AutodeskRequest) -> AutodeskResponse:
-        """Handle subscription status check."""
+        """Handle subscription status check request.
+
+        Retrieves current subscription status for a user including plan type, billing
+        frequency, next billing date, and available benefits. Used by products to
+        verify active subscriptions during product startup.
+
+        Args:
+            request: Parsed Autodesk subscription status request.
+
+        Returns:
+            Response with subscription_id, status, plan_type, and auto_renew flag.
+        """
         user_id = request.user_id or "anonymous"
         logger.debug("Processing subscription request for user: %s", user_id)
 
@@ -727,7 +875,18 @@ class AutodeskLicensingParser:
         )
 
     def _handle_feature_usage(self, request: AutodeskRequest) -> AutodeskResponse:
-        """Handle feature usage reporting."""
+        """Handle feature usage reporting request.
+
+        Processes feature usage analytics from licensed products. Calculates usage
+        statistics including session duration, most-used features, and usage frequency.
+        Used by license server to track compliance and feature adoption.
+
+        Args:
+            request: Parsed Autodesk feature usage reporting request.
+
+        Returns:
+            Response with usage_recorded flag, usage_analytics, and compliance_status.
+        """
         features_used = request.request_data.get("features_used", [])
         session_duration = request.request_data.get("session_duration", 0)
         product_version = request.request_data.get("product_version", "2024")
@@ -765,7 +924,17 @@ class AutodeskLicensingParser:
         )
 
     def _handle_license_transfer(self, request: AutodeskRequest) -> AutodeskResponse:
-        """Handle license transfer."""
+        """Handle license transfer request.
+
+        Transfers an activated license from one machine to another. Deactivates
+        the license on the old machine and enables it on the new machine.
+
+        Args:
+            request: Parsed Autodesk license transfer request.
+
+        Returns:
+            Response with transfer_id, transfer_status, and new_machine_id.
+        """
         transfer_id = str(uuid.uuid4()).upper()
 
         return AutodeskResponse(
@@ -786,7 +955,18 @@ class AutodeskLicensingParser:
         )
 
     def _handle_offline_activation(self, request: AutodeskRequest) -> AutodeskResponse:
-        """Handle offline activation."""
+        """Handle offline activation request.
+
+        Generates an offline activation code that can be used on a machine without
+        internet connectivity. The code must be exchanged on an online machine to
+        complete the activation process.
+
+        Args:
+            request: Parsed Autodesk offline activation request.
+
+        Returns:
+            Response with offline_activation_code and activation instructions.
+        """
         offline_code = (
             hashlib
             .sha256(
@@ -811,7 +991,19 @@ class AutodeskLicensingParser:
         )
 
     def _handle_network_license(self, request: AutodeskRequest) -> AutodeskResponse:
-        """Handle network license request."""
+        """Handle network license request.
+
+        Processes network license checkout requests from Autodesk products in a
+        network licensing environment. Tracks license seat usage and enforces
+        maximum concurrent user limits.
+
+        Args:
+            request: Parsed Autodesk network license request.
+
+        Returns:
+            Response with network_license_id, license_server, seats_in_use, and
+            total seats.
+        """
         license_id = f"NLM_{uuid.uuid4().hex[:8].upper()}"
 
         # Track network license usage
@@ -843,7 +1035,19 @@ class AutodeskLicensingParser:
         )
 
     def _handle_borrowing(self, request: AutodeskRequest) -> AutodeskResponse:
-        """Handle license borrowing."""
+        """Handle license borrowing request.
+
+        Enables license borrowing for offline use. Allows products to function for
+        a specified period without network access. Borrowed licenses must be
+        returned (or renewed) when the borrow period expires.
+
+        Args:
+            request: Parsed Autodesk license borrowing request.
+
+        Returns:
+            Response with borrow_id, borrow_status, borrow_start, and borrow_end
+            timestamps.
+        """
         borrow_id = str(uuid.uuid4()).upper()
         borrow_period = int(request.request_data.get("borrow_days", 7))
 
@@ -869,7 +1073,17 @@ class AutodeskLicensingParser:
         )
 
     def _handle_unknown_request(self, request: AutodeskRequest) -> AutodeskResponse:
-        """Handle unknown request type."""
+        """Handle unknown or unrecognized request type.
+
+        Provides a generic error response for request types that are not explicitly
+        handled by the protocol parser. Logs warning for debugging.
+
+        Args:
+            request: Parsed Autodesk request with unknown type.
+
+        Returns:
+            Error response with 400 status code.
+        """
         self.logger.warning("Unknown Autodesk request type: %s", request.request_type)
         return AutodeskResponse(
             status="error",
@@ -882,19 +1096,52 @@ class AutodeskLicensingParser:
         )
 
     def _generate_machine_signature(self, request: AutodeskRequest) -> str:
-        """Generate machine signature from request data."""
+        """Generate machine signature from request data.
+
+        Creates a SHA256 hash combining machine ID, installation ID, and product key.
+        Used to verify that license validation requests come from the same machine
+        that performed the original activation.
+
+        Args:
+            request: Autodesk request containing machine identifiers.
+
+        Returns:
+            Uppercase hexadecimal SHA256 hash of machine signature.
+        """
         signature_data = f"{request.machine_id}:{request.installation_id}:{request.product_key}"
         return hashlib.sha256(signature_data.encode()).hexdigest().upper()
 
     def _generate_validation_signature(self, request: AutodeskRequest) -> str:
-        """Generate validation signature."""
+        """Generate validation signature for license verification response.
+
+        Creates a cryptographically signed hash combining activation ID, machine ID,
+        and current timestamp with the server's private key. Prevents tampering with
+        validation responses.
+
+        Args:
+            request: Autodesk request containing validation data.
+
+        Returns:
+            Hexadecimal SHA256 hash of signed validation data.
+        """
         validation_data = f"{request.activation_id}:{request.machine_id}:{time.time()}"
         return hashlib.sha256(
             (validation_data + self.server_private_key).encode(),
         ).hexdigest()
 
     def _generate_adsk_token(self, request: AutodeskRequest) -> str:
-        """Generate Autodesk authentication token."""
+        """Generate Autodesk authentication token.
+
+        Creates a JWT-like token containing user ID, product key, and expiry
+        information. Token is base64 encoded with a cryptographic signature
+        to prevent tampering. Valid for 24 hours from issuance.
+
+        Args:
+            request: Autodesk request containing user and product information.
+
+        Returns:
+            str: Base64-encoded token with format: payload.signature.
+        """
         token_data = {
             "user_id": request.user_id,
             "product_key": request.product_key,
@@ -912,7 +1159,17 @@ class AutodeskLicensingParser:
         return f"{token_b64}.{signature}"
 
     def _calculate_expiry_date(self, product: dict[str, Any]) -> str:
-        """Calculate license expiry date."""
+        """Calculate license expiry date based on product subscription model.
+
+        Returns either a specific expiry date for subscription-based licenses
+        (1 year from now) or "permanent" for perpetual licenses.
+
+        Args:
+            product: Product information dictionary containing subscription_required flag.
+
+        Returns:
+            ISO date string (YYYY-MM-DD) or "permanent" for non-expiring licenses.
+        """
         if product.get("subscription_required", True):
             # Subscription licenses expire in 1 year
             expiry_time = time.time() + (365 * 24 * 3600)
@@ -923,12 +1180,15 @@ class AutodeskLicensingParser:
     def serialize_response(self, response: AutodeskResponse) -> str:
         """Serialize Autodesk response to HTTP response.
 
+        Converts an AutodeskResponse object into a properly formatted HTTP response
+        with headers, status code, and JSON body. Handles serialization errors
+        gracefully by returning a minimal error response.
+
         Args:
-            response: Autodesk response object
+            response: Autodesk response object to serialize.
 
         Returns:
-            HTTP response string
-
+            Complete HTTP response with headers and JSON-encoded body.
         """
         try:
             # Prepare response body

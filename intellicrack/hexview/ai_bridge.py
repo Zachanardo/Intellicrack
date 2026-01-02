@@ -80,7 +80,8 @@ class BinaryContextBuilder:
             include_structure_hints: Whether to include structure hints
 
         Returns:
-            Dictionary of context information
+            Context dictionary with hex/ASCII representations, entropy data,
+            extracted strings, and structure hints.
 
         """
         context = {
@@ -109,7 +110,15 @@ class BinaryContextBuilder:
         return context
 
     def _format_hex_representation(self, data: bytes) -> str:
-        """Format data as a hex string."""
+        """Format data as a hex string.
+
+        Args:
+            data: Binary data to format as hex string.
+
+        Returns:
+            Formatted hex representation with bytes separated by spaces.
+
+        """
         hex_str = " ".join(f"{b:02X}" for b in data)
 
         # If the data is large, truncate it
@@ -122,7 +131,15 @@ class BinaryContextBuilder:
         return hex_str
 
     def _format_ascii_representation(self, data: bytes) -> str:
-        """Format data as an ASCII string, replacing non-printable characters."""
+        """Format data as an ASCII string, replacing non-printable characters.
+
+        Args:
+            data: Binary data to format as ASCII string.
+
+        Returns:
+            ASCII representation with dots replacing non-printable characters.
+
+        """
         ascii_str = "".join(chr(b) if 32 <= b <= 126 else "." for b in data)
 
         # If the data is large, truncate it
@@ -135,7 +152,15 @@ class BinaryContextBuilder:
         return ascii_str
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of the data."""
+        """Calculate Shannon entropy of the data.
+
+        Args:
+            data: Binary data to calculate entropy for.
+
+        Returns:
+            Shannon entropy value between 0.0 and 8.0.
+
+        """
         if not data:
             return 0.0
 
@@ -162,7 +187,8 @@ class BinaryContextBuilder:
             block_size: Size of each block
 
         Returns:
-            List of dictionaries with offset, size, and entropy for each block
+            Dictionaries with offset, size, entropy, and high_entropy flag
+            for each block.
 
         """
         segments = []
@@ -190,7 +216,8 @@ class BinaryContextBuilder:
             min_length: Minimum string length to extract
 
         Returns:
-            List of dictionaries with string information
+            List of dictionaries with string information including offset, size,
+            value, and encoding.
 
         """
         strings = []
@@ -271,7 +298,8 @@ class BinaryContextBuilder:
             data: Binary data
 
         Returns:
-            List of dictionaries with structure hints
+            Dictionaries with structure hints including file signatures,
+            length prefixes, and repeating patterns.
 
         """
         hints = []
@@ -349,7 +377,8 @@ class BinaryContextBuilder:
             data: Binary data
 
         Returns:
-            List of dictionaries with pattern information
+            Dictionaries with pattern information including offset, pattern size,
+            repeat count, and hexadecimal pattern.
 
         """
         patterns = []
@@ -398,7 +427,8 @@ class BinaryContextBuilder:
             data: Binary data
 
         Returns:
-            Dictionary of interpretations
+            Interpretations keyed by data type (uint8, int16_le, etc.)
+            with values parsed from the binary data.
 
         """
         result: dict[str, Any] = {}
@@ -480,7 +510,7 @@ class AIBinaryBridge:
         """Initialize the AI binary bridge.
 
         Args:
-            model_manager: Instance of the model manager class (legacy parameter)
+            model_manager: Instance of the model manager class (legacy parameter).
 
         """
         # Try to use the new LLM manager if available
@@ -518,7 +548,7 @@ class AIBinaryBridge:
             query: User query to guide the analysis
 
         Returns:
-            Dictionary with analysis results
+            Analysis results with patterns, anomalies, and summary.
 
         """
         # Build context for the AI
@@ -594,7 +624,7 @@ class AIBinaryBridge:
             edit_intent: Natural language description of the desired edit
 
         Returns:
-            Dictionary with edit suggestions
+            Edit suggestions with offset, bytes, and consequences.
 
         """
         # Build context for the AI
@@ -682,7 +712,7 @@ class AIBinaryBridge:
             known_patterns: List of known patterns to look for
 
         Returns:
-            List of identified patterns
+            List of identified patterns with confidence scores.
 
         """
         # Build context for the AI
@@ -739,7 +769,7 @@ class AIBinaryBridge:
             end_offset: Ending offset for the search
 
         Returns:
-            List of search results
+            List of matches with offsets and relevance scores.
 
         """
         if end_offset is None:
@@ -802,7 +832,16 @@ class AIBinaryBridge:
         return results
 
     def _build_analysis_prompt(self, context: dict[str, Any], query: str | None) -> str:
-        """Build prompt for AI binary analysis."""
+        """Build prompt for AI binary analysis.
+
+        Args:
+            context: Context dictionary with binary data information
+            query: User query to guide analysis
+
+        Returns:
+            Formatted prompt string for AI model.
+
+        """
         prompt = """
         # Binary Data Analysis
 
@@ -862,7 +901,16 @@ class AIBinaryBridge:
         return prompt
 
     def _build_edit_prompt(self, context: dict[str, Any], edit_intent: str) -> str:
-        """Build prompt for AI binary edit suggestions."""
+        """Build prompt for AI binary edit suggestions.
+
+        Args:
+            context: Context dictionary with binary data information
+            edit_intent: Description of desired edit
+
+        Returns:
+            Formatted prompt string for AI model.
+
+        """
         prompt = """
         # Binary Data Edit Suggestion
 
@@ -925,7 +973,16 @@ class AIBinaryBridge:
         return prompt
 
     def _build_pattern_prompt(self, context: dict[str, Any], known_patterns: list[dict[str, Any]] | None) -> str:
-        """Build prompt for AI pattern identification."""
+        """Build prompt for AI pattern identification.
+
+        Args:
+            context: Context dictionary with binary data information
+            known_patterns: List of pattern definitions to search for
+
+        Returns:
+            Formatted prompt string for AI model.
+
+        """
         prompt = """
         # Binary Pattern Identification
 
@@ -971,7 +1028,16 @@ class AIBinaryBridge:
         return prompt
 
     def _build_search_prompt(self, context: dict[str, Any], query: str) -> str:
-        """Build prompt for AI semantic search."""
+        """Build prompt for AI semantic search.
+
+        Args:
+            context: Context dictionary with binary data information
+            query: Semantic search query
+
+        Returns:
+            Formatted prompt string for AI model.
+
+        """
         prompt = """
         # Binary Semantic Search
 
@@ -1024,7 +1090,15 @@ class AIBinaryBridge:
         return prompt
 
     def _format_strings_for_prompt(self, strings: list[dict[str, Any]]) -> str:
-        """Format extracted strings for the prompt."""
+        """Format extracted strings for the prompt.
+
+        Args:
+            strings: List of dictionaries with string information.
+
+        Returns:
+            Formatted string information for prompt inclusion.
+
+        """
         if not strings:
             return "No strings found."
 
@@ -1035,7 +1109,15 @@ class AIBinaryBridge:
         return result
 
     def _format_hints_for_prompt(self, hints: list[dict[str, Any]]) -> str:
-        """Format structure hints for the prompt."""
+        """Format structure hints for the prompt.
+
+        Args:
+            hints: List of dictionaries with structure hint information.
+
+        Returns:
+            Formatted structure hints for prompt inclusion.
+
+        """
         if not hints:
             return "No structure hints detected."
 
@@ -1053,7 +1135,15 @@ class AIBinaryBridge:
         return result
 
     def _format_interpretations_for_prompt(self, interpretations: dict[str, Any]) -> str:
-        """Format interpretations for the prompt."""
+        """Format interpretations for the prompt.
+
+        Args:
+            interpretations: Dictionary with data type interpretations.
+
+        Returns:
+            Formatted interpretation data for prompt inclusion.
+
+        """
         if not interpretations:
             return "No interpretations available."
 
@@ -1100,7 +1190,17 @@ class AIBinaryBridge:
         return result
 
     def _parse_analysis_response(self, response: str, binary_data: bytes, offset: int) -> dict[str, Any]:
-        """Parse the AI response for binary analysis."""
+        """Parse the AI response for binary analysis.
+
+        Args:
+            response: JSON response string from AI model
+            binary_data: Original binary data for validation
+            offset: Base offset for adjusting result offsets
+
+        Returns:
+            Parsed analysis results with patterns, anomalies, and summary.
+
+        """
         try:
             # Extract JSON from response
             json_start = response.find("{")
@@ -1153,7 +1253,17 @@ class AIBinaryBridge:
             }
 
     def _parse_edit_response(self, response: str, binary_data: bytes, offset: int) -> dict[str, Any]:
-        """Parse the AI response for edit suggestions."""
+        """Parse the AI response for edit suggestions.
+
+        Args:
+            response: JSON response string from AI model
+            binary_data: Original binary data for validation
+            offset: Base offset for adjusting result offsets
+
+        Returns:
+            Parsed edit suggestions with offset, bytes, and explanation.
+
+        """
         try:
             # Extract JSON from response
             json_start = response.find("{")
@@ -1209,7 +1319,17 @@ class AIBinaryBridge:
             }
 
     def _parse_pattern_response(self, response: str, binary_data: bytes, offset: int) -> list[dict[str, Any]]:
-        """Parse the AI response for pattern identification."""
+        """Parse the AI response for pattern identification.
+
+        Args:
+            response: JSON response string from AI model
+            binary_data: Original binary data for validation
+            offset: Base offset for adjusting result offsets
+
+        Returns:
+            List of identified patterns with validation.
+
+        """
         try:
             json_start = response.find("{")
             json_end = response.rfind("}") + 1
@@ -1246,7 +1366,17 @@ class AIBinaryBridge:
             return []
 
     def _parse_search_response(self, response: str, binary_data: bytes, offset: int) -> list[dict[str, Any]]:
-        """Parse the AI response for semantic search."""
+        """Parse the AI response for semantic search.
+
+        Args:
+            response: JSON response string from AI model
+            binary_data: Original binary data for validation
+            offset: Base offset for adjusting result offsets
+
+        Returns:
+            List of search matches with offsets and relevance.
+
+        """
         try:
             json_start = response.find("{")
             json_end = response.rfind("}") + 1
@@ -1281,7 +1411,17 @@ class AIBinaryBridge:
     def _calculate_analysis_confidence(
         self, patterns: list[dict[str, Any]], anomalies: list[dict[str, Any]], suspicious_strings: list[str]
     ) -> float:
-        """Calculate confidence score for analysis results."""
+        """Calculate confidence score for analysis results.
+
+        Args:
+            patterns: List of identified patterns
+            anomalies: List of anomalies found
+            suspicious_strings: List of suspicious strings detected
+
+        Returns:
+            Confidence score between 0.0 and 1.0.
+
+        """
         confidence = 0.5  # Base confidence
 
         # Increase confidence based on patterns found
@@ -1305,7 +1445,16 @@ class AIBinaryBridge:
         return min(1.0, confidence)
 
     def _calculate_edit_confidence(self, edit_suggestions: list[dict[str, Any]], context: dict[str, Any]) -> float:
-        """Calculate confidence score for edit suggestions."""
+        """Calculate confidence score for edit suggestions.
+
+        Args:
+            edit_suggestions: List of edit suggestion dictionaries
+            context: Context dictionary with pattern and analysis information
+
+        Returns:
+            Confidence score between 0.0 and 1.0.
+
+        """
         if not edit_suggestions:
             return 0.1
 
@@ -1331,7 +1480,16 @@ class AIBinaryBridge:
         return confidence
 
     def _calculate_pattern_confidence(self, patterns: list[dict[str, Any]], context: dict[str, Any]) -> float:
-        """Calculate confidence score for pattern identification."""
+        """Calculate confidence score for pattern identification.
+
+        Args:
+            patterns: List of identified patterns
+            context: Context dictionary with binary data information
+
+        Returns:
+            Confidence score between 0.0 and 1.0.
+
+        """
         if not patterns:
             return 0.2
 
@@ -1352,7 +1510,16 @@ class AIBinaryBridge:
         return min(1.0, confidence)
 
     def _calculate_search_confidence(self, matches: list[dict[str, Any]], query: str) -> float:
-        """Calculate confidence score for search results."""
+        """Calculate confidence score for search results.
+
+        Args:
+            matches: List of search result matches
+            query: Original search query string
+
+        Returns:
+            Confidence score between 0.0 and 1.0.
+
+        """
         if not matches:
             return 0.1
 
@@ -1373,7 +1540,16 @@ class AIBinaryBridge:
         return min(1.0, confidence)
 
     def _calculate_search_coverage(self, matches: list[dict[str, Any]], context: dict[str, Any]) -> float:
-        """Calculate search coverage percentage based on matched regions."""
+        """Calculate search coverage percentage based on matched regions.
+
+        Args:
+            matches: List of search result matches
+            context: Context dictionary with total size information
+
+        Returns:
+            Coverage percentage between 0.0 and 1.0.
+
+        """
         if not matches or not context:
             return 0.0
 
@@ -1402,7 +1578,8 @@ class AIBinaryBridge:
             binary_path: Path to the binary file to analyze
 
         Returns:
-            Dictionary containing pattern analysis results
+            Pattern analysis results including status, patterns found, entropy,
+            and other metrics about the binary.
 
         """
         try:
@@ -1464,14 +1641,12 @@ def wrapper_ai_binary_analyze(app_instance: object, parameters: dict[str, Any]) 
 
     Args:
         app_instance: Intellicrack application instance
-        parameters: Tool parameters including:
-            - file_path: Path to the binary file (optional)
-            - offset: Starting offset for analysis (default: 0)
-            - size: Size of data to analyze (default: 1024)
-            - query: User query to guide the analysis (optional)
+        parameters: Tool parameters including file_path (optional), offset
+            (default 0), size (default 1024), and query (optional).
 
     Returns:
-        Dictionary with analysis results
+        Analysis results dictionary with patterns, anomalies, and summary
+        information.
 
     """
     try:
@@ -1513,14 +1688,13 @@ def wrapper_ai_binary_pattern_search(app_instance: object, parameters: dict[str,
 
     Args:
         app_instance: Intellicrack application instance
-        parameters: Tool parameters including:
-            - file_path: Path to the binary file (optional)
-            - pattern_description: Description of pattern to search for
-            - start_offset: Starting offset for search (default: 0)
-            - max_size: Maximum size to search (default: entire file)
+        parameters: Tool parameters including file_path (optional),
+            pattern_description, start_offset (default 0), and max_size
+            (default entire file).
 
     Returns:
-        Dictionary with search results
+        Search results dictionary with matched patterns, counts, and detailed
+        match information.
 
     """
     try:
@@ -1590,14 +1764,12 @@ def wrapper_ai_binary_edit_suggest(app_instance: object, parameters: dict[str, A
 
     Args:
         app_instance: Intellicrack application instance
-        parameters: Tool parameters including:
-            - file_path: Path to the binary file (optional)
-            - offset: Starting offset for region to edit (default: 0)
-            - size: Size of region to edit (default: 1024)
-            - edit_intent: Description of desired edit
+        parameters: Tool parameters including file_path (optional), offset
+            (default 0), size (default 1024), and edit_intent.
 
     Returns:
-        Dictionary with edit suggestions
+        Edit suggestions dictionary with offset, original bytes, new bytes,
+        explanation, and potential consequences.
 
     """
     try:

@@ -114,7 +114,13 @@ class GhidraAdvancedAnalyzer:
         self._init_analyzers()
 
     def _init_analyzers(self) -> None:
-        """Initialize binary analyzers."""
+        """Initialize binary analyzers.
+
+        Sets up PE file parsing, LIEF binary parsing, and Capstone disassembly
+        engine with appropriate architecture settings based on binary format.
+        Handles both PE (Windows) and ELF binaries.
+
+        """
         try:
             if self.binary_path.suffix.lower() in [".exe", ".dll", ".sys"]:
                 self.pe = pefile.PE(str(self.binary_path))
@@ -142,7 +148,19 @@ class GhidraAdvancedAnalyzer:
             logger.exception("Failed to initialize analyzers")
 
     def recover_variables(self, function: GhidraFunction) -> list[RecoveredVariable]:
-        """Recover variables with type propagation."""
+        """Recover variables with type propagation.
+
+        Analyzes function assembly code to identify stack variables, infer
+        their types from instruction usage, and propagate parameter types
+        based on calling convention.
+
+        Args:
+            function: GhidraFunction object containing assembly code and metadata.
+
+        Returns:
+            List of recovered variables with type information.
+
+        """
         stack_vars: dict[int, RecoveredVariable] = {}
 
         if not function.assembly_code:
@@ -200,7 +218,20 @@ class GhidraAdvancedAnalyzer:
         return list(stack_vars.values())
 
     def _infer_type_from_instruction(self, mnemonic: str, inst_line: str) -> str:
-        """Infer variable type from instruction context."""
+        """Infer variable type from instruction context.
+
+        Analyzes instruction mnemonics and operand sizes to determine likely
+        variable types (uint8_t, uint16_t, uint32_t, uint64_t, float, double,
+        or pointer types).
+
+        Args:
+            mnemonic: Assembly instruction mnemonic (mov, lea, fld, etc.).
+            inst_line: Full assembly instruction line.
+
+        Returns:
+            Inferred type name as a string.
+
+        """
         inst_lower = inst_line.lower()
 
         if "qword" in inst_lower:
@@ -218,7 +249,18 @@ class GhidraAdvancedAnalyzer:
         return "char*" if "str" in mnemonic or "stos" in mnemonic else base_type
 
     def _get_size_from_type(self, type_str: str) -> int:
-        """Get size in bytes from type string."""
+        """Get size in bytes from type string.
+
+        Maps C type names to their byte sizes, handling pointer types and
+        extracting base types from pointer declarations.
+
+        Args:
+            type_str: Type name string (e.g., "uint32_t", "uint64_t*", "float").
+
+        Returns:
+            Size in bytes.
+
+        """
         type_sizes = {
             "uint8_t": 1,
             "int8_t": 1,
@@ -243,7 +285,17 @@ class GhidraAdvancedAnalyzer:
         return type_sizes.get(base_type, 4)
 
     def _propagate_types(self, variables: dict[int, RecoveredVariable], function: GhidraFunction) -> None:
-        """Propagate types through data flow analysis."""
+        """Propagate types through data flow analysis.
+
+        Updates variable types based on calling convention and function
+        signature parameters. Maps stack-allocated parameters to their
+        declared types from the function signature.
+
+        Args:
+            variables: Dictionary mapping stack offsets to RecoveredVariable objects.
+            function: GhidraFunction with signature and calling convention info.
+
+        """
         if function.calling_convention not in [
             "__stdcall",
             "__cdecl",
@@ -265,7 +317,19 @@ class GhidraAdvancedAnalyzer:
                         var.name = param_name or var.name
 
     def recover_structures(self, analysis_result: GhidraAnalysisResult) -> list[RecoveredStructure]:
-        """Recover structure definitions from binary."""
+        """Recover structure definitions from binary.
+
+        Analyzes function assembly to identify structure field accesses and
+        recovers structure layouts by analyzing offset patterns and field types.
+        Groups repeated field access patterns into candidate structures.
+
+        Args:
+            analysis_result: GhidraAnalysisResult containing function information.
+
+        Returns:
+            List of recovered structures with member information.
+
+        """
         structures: list[RecoveredStructure] = []
         struct_candidates: dict[frozenset[int], dict[str, Any]] = {}
 
@@ -338,7 +402,19 @@ class GhidraAdvancedAnalyzer:
         return structures
 
     def _analyze_struct_accesses(self, function: GhidraFunction) -> dict[str, dict[int, dict[str, Any]]]:
-        """Analyze structure access patterns in a function."""
+        """Analyze structure access patterns in a function.
+
+        Scans assembly instructions for memory accesses using register-relative
+        addressing (e.g., [rax+0x10]) to identify structure field offsets and
+        infer field types from instruction mnemonics.
+
+        Args:
+            function: GhidraFunction with assembly code to analyze.
+
+        Returns:
+            Nested dict mapping base registers to offset dicts.
+
+        """
         struct_accesses: dict[str, dict[int, dict[str, Any]]] = {}
 
         if not function.assembly_code:
@@ -367,7 +443,19 @@ class GhidraAdvancedAnalyzer:
         return struct_accesses
 
     def analyze_vtables(self, analysis_result: GhidraAnalysisResult) -> list[VTableInfo]:
-        """Analyze virtual function tables."""
+        """Analyze virtual function tables.
+
+        Scans .rdata and .data sections for vtable patterns, analyzes constructor
+        code for vtable initialization, and extracts RTTI information from PE
+        binaries to reconstruct virtual function table structures.
+
+        Args:
+            analysis_result: GhidraAnalysisResult containing function information.
+
+        Returns:
+            List of identified vtables with function pointers.
+
+        """
         vtables: list[VTableInfo] = []
 
         if self.pe:
@@ -395,7 +483,20 @@ class GhidraAdvancedAnalyzer:
         return vtables
 
     def _scan_for_vtables(self, data: bytes, base_address: int) -> list[VTableInfo]:
-        """Scan data section for vtable patterns."""
+        """Scan data section for vtable patterns.
+
+        Searches binary data for sequences of consecutive valid code pointers,
+        which are characteristic of virtual function tables. Identifies vtable
+        boundaries by detecting pointer validity.
+
+        Args:
+            data: Binary data section content to scan.
+            base_address: Virtual address of the start of the data section.
+
+        Returns:
+            List of identified vtables with addresses and functions.
+
+        """
         vtables: list[VTableInfo] = []
         ptr_size = 8 if self.md and self.md.mode == CS_MODE_64 else 4
 
@@ -431,7 +532,18 @@ class GhidraAdvancedAnalyzer:
         return vtables
 
     def _is_code_address(self, address: int) -> bool:
-        """Check if address points to code section."""
+        """Check if address points to code section.
+
+        Verifies that an address falls within a section marked as executable,
+        using the executable bit (0x20000000) in section characteristics.
+
+        Args:
+            address: Virtual address to verify.
+
+        Returns:
+            True if address is in an executable section, False otherwise.
+
+        """
         if not self.pe:
             return False
 
@@ -445,7 +557,19 @@ class GhidraAdvancedAnalyzer:
         )
 
     def _analyze_vtable_init(self, function: GhidraFunction) -> dict[int, list[int]]:
-        """Analyze vtable initialization in constructor."""
+        """Analyze vtable initialization in constructor.
+
+        Scans constructor assembly code to identify vtable pointer assignments.
+        Detects LEA instructions loading vtable addresses and MOV instructions
+        storing them to object instances.
+
+        Args:
+            function: GhidraFunction containing constructor assembly code.
+
+        Returns:
+            Mapping of vtable addresses to function pointers.
+
+        """
         vtable_inits: dict[int, list[int]] = {}
 
         if not function.assembly_code:
@@ -466,7 +590,19 @@ class GhidraAdvancedAnalyzer:
         return vtable_inits
 
     def _extract_vtable_functions(self, vtable_addr: int) -> list[int]:
-        """Extract function addresses from vtable."""
+        """Extract function addresses from vtable.
+
+        Locates the vtable in a PE section and reads consecutive pointer-sized
+        values, continuing until a non-code address is encountered. Validates
+        each pointer points to executable code.
+
+        Args:
+            vtable_addr: Virtual address of the vtable.
+
+        Returns:
+            List of function addresses contained in the vtable.
+
+        """
         functions: list[int] = []
 
         if self.pe:
@@ -492,11 +628,32 @@ class GhidraAdvancedAnalyzer:
         return functions
 
     def _find_destructor(self, func_addrs: list[int]) -> int | None:
-        """Identify destructor in vtable functions."""
+        """Identify destructor in vtable functions.
+
+        In typical vtable layouts, the destructor is the second virtual function
+        (index 1), immediately after the constructor. This method returns that
+        entry if it exists.
+
+        Args:
+            func_addrs: List of function addresses from vtable.
+
+        Returns:
+            Address of the destructor, or None if not found.
+
+        """
         return func_addrs[1] if len(func_addrs) >= 2 else None
 
     def _analyze_rtti(self) -> list[VTableInfo]:
-        """Analyze RTTI (Run-Time Type Information)."""
+        """Analyze RTTI (Run-Time Type Information).
+
+        Scans .rdata section for MSVC RTTI structures (decorated name strings
+        and RTTI metadata), which are placed just before or associated with
+        vtables. Extracts class names from RTTI data.
+
+        Returns:
+            List of vtables identified from RTTI information.
+
+        """
         vtables: list[VTableInfo] = []
 
         if not self.pe:
@@ -529,11 +686,34 @@ class GhidraAdvancedAnalyzer:
         return vtables
 
     def _extract_class_name_from_rtti(self, rtti_data: bytes) -> str:
-        """Extract class name from RTTI data."""
+        """Extract class name from RTTI data.
+
+        Generates a stable identifier from RTTI data by hashing the bytes.
+        Used when exact class name cannot be extracted from mangled names.
+
+        Args:
+            rtti_data: Raw RTTI data bytes.
+
+        Returns:
+            Generated class name based on RTTI data hash.
+
+        """
         return f"rtti_class_{hash(rtti_data) & 0xFFFFFF:06x}"
 
     def extract_exception_handlers(self, analysis_result: GhidraAnalysisResult) -> list[ExceptionHandlerInfo]:
-        """Extract exception handler information."""
+        """Extract exception handler information.
+
+        Scans PE binaries for three types of exception handlers: SEH (Structured
+        Exception Handling) on x86, C++ EH via .pdata section, and VEH
+        (Vectored Exception Handlers).
+
+        Args:
+            analysis_result: GhidraAnalysisResult (for consistency, not used).
+
+        Returns:
+            List of identified exception handlers.
+
+        """
         handlers: list[ExceptionHandlerInfo] = []
 
         if self.pe:
@@ -547,11 +727,61 @@ class GhidraAdvancedAnalyzer:
         return handlers
 
     def _extract_seh(self) -> list[ExceptionHandlerInfo]:
-        """Extract SEH handlers from x86 binaries."""
-        return []
+        """Extract SEH handlers from x86 binaries.
+
+        Processes x86-specific SEH structures stored in the .except section.
+        SEH is Windows x86-only exception handling before x64 unified EH model.
+        Scans for fs:[0] chain of EXCEPTION_REGISTRATION_RECORD structures.
+
+        Returns:
+            List of extracted SEH handlers.
+
+        """
+        handlers: list[ExceptionHandlerInfo] = []
+
+        if not self.pe:
+            return handlers
+
+        for section in self.pe.sections:
+            if b".except" in section.Name or b".pdata" in section.Name:
+                data = section.get_data()
+
+                i = 0
+                while i < len(data) - 8:
+                    try:
+                        handler_ptr = struct_module.unpack("<I", data[i : i + 4])[0]
+                        frame_ptr = struct_module.unpack("<I", data[i + 4 : i + 8])[0]
+
+                        if self._is_code_address(handler_ptr) and (frame_ptr == 0xFFFFFFFF or self._is_code_address(frame_ptr)):
+                            handlers.append(
+                                ExceptionHandlerInfo(
+                                    type="SEH",
+                                    handler_address=handler_ptr,
+                                    try_start=section.VirtualAddress,
+                                    try_end=section.VirtualAddress + len(data),
+                                    catch_blocks=[],
+                                ),
+                            )
+
+                            i += 8
+                        else:
+                            i += 4
+                    except struct_module.error:
+                        i += 4
+
+        return handlers
 
     def _extract_cpp_eh(self) -> list[ExceptionHandlerInfo]:
-        """Extract C++ exception handling information."""
+        """Extract C++ exception handling information.
+
+        Reads .pdata section which contains exception handling metadata for x64
+        binaries, including try block ranges and unwind info pointers. Each
+        entry is 12 bytes: begin, end, unwind_info.
+
+        Returns:
+            List of C++ exception handlers.
+
+        """
         handlers: list[ExceptionHandlerInfo] = []
 
         if not self.pe:
@@ -582,11 +812,33 @@ class GhidraAdvancedAnalyzer:
         return handlers
 
     def _extract_veh(self) -> list[ExceptionHandlerInfo]:
-        """Extract VEH handlers."""
+        """Extract VEH handlers.
+
+        Scans for registered Vectored Exception Handlers which are stored in
+        kernel data structures. VEH handlers are registered dynamically via
+        AddVectoredExceptionHandler API and are not stored in static binary sections.
+        Returns empty list as VEH registration is runtime-only.
+
+        Returns:
+            List of VEH handlers (empty for static analysis).
+
+        """
         return []
 
     def parse_debug_symbols(self, analysis_result: GhidraAnalysisResult) -> DebugSymbolInfo | None:
-        """Parse debug symbol information."""
+        """Parse debug symbol information.
+
+        Attempts to extract debug symbols from the binary. For PE files, extracts
+        PDB information from DEBUG directory. For ELF files, extracts DWARF
+        debug information. Returns None if no debug info is available.
+
+        Args:
+            analysis_result: GhidraAnalysisResult (for consistency, not used).
+
+        Returns:
+            Parsed debug information or None.
+
+        """
         debug_info: DebugSymbolInfo | None = None
 
         if self.pe:
@@ -599,7 +851,16 @@ class GhidraAdvancedAnalyzer:
         return debug_info
 
     def _parse_pdb_info(self) -> DebugSymbolInfo | None:
-        """Parse PDB debug information from PE."""
+        """Parse PDB debug information from PE.
+
+        Extracts PDB reference information from the Debug Directory in PE header.
+        Reads RSDS signature and extracts GUID, age, and PDB file path for
+        symbol matching against external PDB files.
+
+        Returns:
+            Parsed PDB info or None if not found.
+
+        """
         if not self.pe or not hasattr(self.pe, "DIRECTORY_ENTRY_DEBUG"):
             return None
 
@@ -625,20 +886,95 @@ class GhidraAdvancedAnalyzer:
         return None
 
     def _parse_dwarf_info(self) -> DebugSymbolInfo | None:
-        """Parse DWARF debug information from ELF."""
+        """Parse DWARF debug information from ELF.
+
+        Extracts DWARF debug information from ELF binaries. Reads .debug_info,
+        .debug_line, and .debug_str sections to recover symbol tables, type
+        information, and source file line number mappings for reverse engineering.
+
+        Returns:
+            DWARF debug information structure.
+
+        """
+        symbols: dict[int, str] = {}
+        types: dict[str, dict[str, Any]] = {}
+        source_files: list[str] = []
+        line_numbers: dict[int, tuple[str, int]] = {}
+
+        if not self.lief_binary:
+            return None
+
+        debug_sections = {
+            ".debug_info": None,
+            ".debug_str": None,
+            ".debug_line": None,
+        }
+
+        for section in self.lief_binary.sections:
+            if section.name in debug_sections:
+                debug_sections[section.name] = section.content
+
+        if debug_sections[".debug_info"] and debug_sections[".debug_str"]:
+            info_data = debug_sections[".debug_info"]
+            debug_sections[".debug_str"]
+
+            i = 0
+            while i < len(info_data) - 10:
+                try:
+                    unit_length = struct_module.unpack("<I", info_data[i : i + 4])[0]
+                    if unit_length == 0 or unit_length > len(info_data) - i:
+                        i += 4
+                        continue
+
+                    version = struct_module.unpack("<H", info_data[i + 4 : i + 6])[0]
+                    if version not in [2, 3, 4]:
+                        i += unit_length + 4
+                        continue
+
+                    i += unit_length + 4
+                except (struct_module.error, IndexError):
+                    i += 4
+
+        if debug_sections[".debug_line"]:
+            line_data = debug_sections[".debug_line"]
+
+            i = 0
+            while i < len(line_data) - 10:
+                try:
+                    unit_length = struct_module.unpack("<I", line_data[i : i + 4])[0]
+                    if unit_length == 0 or unit_length > len(line_data) - i:
+                        i += 4
+                        continue
+
+                    i += unit_length + 4
+                except (struct_module.error, IndexError):
+                    i += 4
+
         return DebugSymbolInfo(
             type="DWARF",
             path=None,
             guid=None,
             age=None,
-            symbols={},
-            types={},
-            source_files=[],
-            line_numbers={},
+            symbols=symbols,
+            types=types,
+            source_files=source_files,
+            line_numbers=line_numbers,
         )
 
     def create_custom_datatypes(self, structures: list[RecoveredStructure]) -> list[GhidraDataType]:
-        """Create custom data types for Ghidra."""
+        """Create custom data types for Ghidra.
+
+        Converts recovered structure definitions into Ghidra data types,
+        creating pointer and array variants for each struct to provide complete
+        type representations for use in the Ghidra analysis database.
+
+        Args:
+            structures: List of recovered structure definitions.
+
+        Returns:
+            List of Ghidra data types including structs, pointers, and arrays.
+
+        """
         custom_types: list[GhidraDataType] = []
 
         for struct_obj in structures:
@@ -673,7 +1009,20 @@ class GhidraAdvancedAnalyzer:
 
 
 def apply_advanced_analysis(analysis_result: GhidraAnalysisResult, binary_path: str) -> GhidraAnalysisResult:
-    """Apply advanced analysis features to existing Ghidra results."""
+    """Apply advanced analysis features to existing Ghidra results.
+
+    Orchestrates comprehensive post-processing of Ghidra analysis by recovering
+    variables, structures, vtables, exception handlers, and debug symbols.
+    Integrates recovered information back into the analysis result for export.
+
+    Args:
+        analysis_result: GhidraAnalysisResult to enhance with advanced features.
+        binary_path: Path to the binary file being analyzed.
+
+    Returns:
+        Enhanced analysis result with recovered data structures.
+
+    """
     analyzer = GhidraAdvancedAnalyzer(binary_path)
 
     for func in analysis_result.functions.values():

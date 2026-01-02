@@ -887,7 +887,7 @@ def analyze_license(program):
 # @param depth Recursion depth
 # @output json
 
-def run():
+def run() -> None:
     pass
 """
         script_path.write_text(script_content, encoding="utf-8")

@@ -12,15 +12,17 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
-import sys
 import re
+import sys
+from collections.abc import Generator
+
 import pytest
 
 from intellicrack.handlers.pyqt6_handler import QApplication
 
 
 @pytest.fixture(scope="module")
-def qapp():
+def qapp() -> Generator[QApplication, None, None]:
     """Create QApplication instance for testing."""
     app = QApplication.instance()
     if app is None:
@@ -31,7 +33,7 @@ def qapp():
 class TestAccentColorFunctionality:
     """Test suite for accent color replacement with real application stylesheets."""
 
-    def test_replace_default_accent_color_uppercase(self, qapp):
+    def test_replace_default_accent_color_uppercase(self, qapp: QApplication) -> None:
         """Test replacement of default accent color in uppercase format."""
         test_stylesheet = """
 QPushButton {
@@ -57,7 +59,7 @@ QPushButton {
 
         qapp.setStyleSheet("")
 
-    def test_replace_default_accent_color_lowercase(self, qapp):
+    def test_replace_default_accent_color_lowercase(self, qapp: QApplication) -> None:
         """Test replacement of default accent color in lowercase format."""
         test_stylesheet = """
 QPushButton {
@@ -83,7 +85,7 @@ QPushButton {
 
         qapp.setStyleSheet("")
 
-    def test_replace_mixed_case_accent_colors(self, qapp):
+    def test_replace_mixed_case_accent_colors(self, qapp: QApplication) -> None:
         """Test replacement with mixed case color codes in stylesheet."""
         test_stylesheet = """
 QPushButton { background-color: #0078D4; }
@@ -109,7 +111,7 @@ QComboBox { border: 1px solid #0078D4; }
 
         qapp.setStyleSheet("")
 
-    def test_replace_custom_accent_color(self, qapp):
+    def test_replace_custom_accent_color(self, qapp: QApplication) -> None:
         """Test replacement of previously set custom accent color."""
         test_stylesheet = """
 QPushButton { background-color: #FF6B6B; }
@@ -132,7 +134,7 @@ QSlider::handle { background-color: #FF6B6B; }
 
         qapp.setStyleSheet("")
 
-    def test_preserve_non_accent_colors(self, qapp):
+    def test_preserve_non_accent_colors(self, qapp: QApplication) -> None:
         """Test that non-accent colors are preserved during replacement."""
         test_stylesheet = """
 QMainWindow { background-color: #1E1E1E; }
@@ -159,7 +161,7 @@ QLabel { color: #808080; }
 
         qapp.setStyleSheet("")
 
-    def test_multiple_accent_color_changes(self, qapp):
+    def test_multiple_accent_color_changes(self, qapp: QApplication) -> None:
         """Test multiple sequential accent color changes."""
         test_stylesheet = """
 QPushButton { background-color: #0078D4; }
@@ -187,7 +189,7 @@ QPushButton { background-color: #0078D4; }
 
         qapp.setStyleSheet("")
 
-    def test_case_insensitive_regex_replacement(self, qapp):
+    def test_case_insensitive_regex_replacement(self, qapp: QApplication) -> None:
         """Test that regex pattern matching is case-insensitive."""
         test_stylesheet = """
 QPushButton { background-color: #0078d4; }
@@ -211,7 +213,7 @@ QComboBox { border-color: #0078D4; }
 
         qapp.setStyleSheet("")
 
-    def test_empty_stylesheet_accent_color_application(self, qapp):
+    def test_empty_stylesheet_accent_color_application(self, qapp: QApplication) -> None:
         """Test that accent color replacement works on empty stylesheet."""
         qapp.setStyleSheet("")
 
@@ -224,7 +226,7 @@ QPushButton { background-color: #FF0000; }
 
         qapp.setStyleSheet("")
 
-    def test_complex_stylesheet_with_multiple_accent_occurrences(self, qapp):
+    def test_complex_stylesheet_with_multiple_accent_occurrences(self, qapp: QApplication) -> None:
         """Test replacement in complex stylesheet with many accent color occurrences."""
         test_stylesheet = """
 QTabBar::tab:selected { border-top: 2px solid #0078D4; }
@@ -253,7 +255,7 @@ QListWidget::item:selected { background-color: #0078D4; }
 
         qapp.setStyleSheet("")
 
-    def test_special_characters_in_color_values(self, qapp):
+    def test_special_characters_in_color_values(self, qapp: QApplication) -> None:
         """Test that regex properly escapes special characters."""
         test_stylesheet = """
 QPushButton { background-color: #0078D4; }

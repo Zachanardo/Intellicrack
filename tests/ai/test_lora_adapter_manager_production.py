@@ -12,6 +12,7 @@ the Free Software Foundation, either version 3 of the License, or
 import json
 import tempfile
 from pathlib import Path
+from collections.abc import Generator
 from typing import Any
 
 import pytest
@@ -27,7 +28,7 @@ class TestLoRAAdapterManager:
     """Test LoRA adapter manager functionality."""
 
     @pytest.fixture
-    def temp_cache_dir(self) -> Path:
+    def temp_cache_dir(self) -> Generator[Path, None, None]:
         """Create temporary cache directory."""
         temp_dir = tempfile.mkdtemp(prefix="lora_test_")
         cache_path = Path(temp_dir)
@@ -350,7 +351,7 @@ class TestAdapterManagerEdgeCases:
     """Test edge cases and error handling."""
 
     @pytest.fixture
-    def adapter_manager(self) -> LoRAAdapterManager:
+    def adapter_manager(self) -> Generator[LoRAAdapterManager, None, None]:
         """Create adapter manager for edge case testing."""
         temp_dir = tempfile.mkdtemp(prefix="lora_edge_")
         manager = LoRAAdapterManager(cache_dir=temp_dir)

@@ -35,7 +35,7 @@ def detect_operating_system() -> str:
     """Detect and normalize operating system identifier.
 
     Returns:
-        Normalized OS identifier: 'windows', 'linux', or 'unknown'
+        Normalized OS identifier ('windows', 'linux', or 'unknown').
 
     """
     system = platform.system().lower()
@@ -48,17 +48,32 @@ def detect_operating_system() -> str:
 
 
 def is_windows() -> bool:
-    """Check if running on Windows."""
+    """Check if running on Windows.
+
+    Returns:
+        True if running on Windows, False otherwise.
+
+    """
     return detect_operating_system() == "windows"
 
 
 def is_linux_like() -> bool:
-    """Check if running on Linux or macOS."""
+    """Check if running on Linux or macOS.
+
+    Returns:
+        True if running on Linux or macOS, False otherwise.
+
+    """
     return detect_operating_system() == "linux"
 
 
 def is_unix_like() -> bool:
-    """Check if running on Unix-like system (Linux or macOS)."""
+    """Check if running on Unix-like system (Linux or macOS).
+
+    Returns:
+        True if running on a Unix-like system, False otherwise.
+
+    """
     return is_linux_like()
 
 
@@ -66,7 +81,7 @@ def get_platform_details() -> dict[str, Any]:
     """Get detailed platform information.
 
     Returns:
-        Dictionary with platform details
+        Dictionary containing system, release, version, machine, processor, architecture, and normalized OS information.
 
     """
     return {
@@ -84,7 +99,7 @@ def get_default_persistence_method() -> str:
     """Get default persistence method based on operating system.
 
     Returns:
-        Default persistence method for the current OS
+        The default persistence method for the current OS (scheduled_task, systemd_service, or cron_job).
 
     """
     current_os = detect_operating_system()
@@ -98,7 +113,7 @@ def get_platform_specific_paths() -> dict[str, str]:
     """Get platform-specific common paths.
 
     Returns:
-        Dictionary with common paths for the current platform
+        Dictionary containing common system paths (temp, appdata, system directories, etc.) for the current platform.
 
     """
     current_os = detect_operating_system()
@@ -126,10 +141,14 @@ def detect_file_type(file_path: str) -> str:
     """Detect the type of a binary file.
 
     Args:
-        file_path: Path to the file to analyze
+        file_path: Path to the file to analyze.
 
     Returns:
-        File type string: 'pe', 'elf', 'macho', or 'unknown'
+        The detected file type ('pe', 'elf', 'macho', or 'unknown').
+
+    Raises:
+        Exception: Any exception encountered during file reading is caught
+            and logged, with 'unknown' returned as fallback.
 
     """
     if not os.path.exists(file_path):

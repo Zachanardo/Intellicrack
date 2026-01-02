@@ -46,8 +46,8 @@ class ESILAnalysisEngine:
         """Initialize ESIL analysis engine.
 
         Args:
-            binary_path: Path to binary file
-            radare2_path: Optional path to radare2 executable
+            binary_path: Path to binary file to analyze.
+            radare2_path: Optional path to radare2 executable. Defaults to None.
 
         """
         self.binary_path = binary_path
@@ -59,10 +59,10 @@ class ESILAnalysisEngine:
         """Initialize ESIL virtual machine with optimal settings.
 
         Args:
-            r2: Active radare2 session
+            r2: Active radare2 session for ESIL initialization.
 
         Returns:
-            Success status
+            True if ESIL VM initialized successfully, False otherwise.
 
         """
         try:
@@ -89,11 +89,13 @@ class ESILAnalysisEngine:
         """Emulate function execution using ESIL.
 
         Args:
-            address: Function start address
-            max_steps: Maximum execution steps
+            address: Function start address to emulate.
+            max_steps: Maximum execution steps to perform. Defaults to 100.
 
         Returns:
-            Comprehensive emulation results
+            Dictionary containing comprehensive emulation results with execution
+                trace, register states, memory accesses, API calls, and detected
+                license checks.
 
         """
         cache_key = f"{address}_{max_steps}"
@@ -214,7 +216,19 @@ class ESILAnalysisEngine:
         return result
 
     def _analyze_instruction_patterns(self, trace_entry: dict[str, Any], result: dict[str, Any]) -> None:
-        """Analyze individual instruction for interesting patterns."""
+        """Analyze individual instruction for interesting patterns.
+
+        Detects API calls, conditional branches, memory access patterns,
+        license checks, and vulnerability indicators in the instruction.
+
+        Args:
+            trace_entry: Dictionary containing instruction trace details
+                including step, address, instruction, and esil_output.
+            result: Dictionary to store analysis results. Updated with detected
+                API calls, branch decisions, memory accesses, license checks,
+                and vulnerabilities.
+
+        """
         instruction = trace_entry.get("instruction", "").lower()
         address = trace_entry.get("address", "")
 
@@ -279,7 +293,17 @@ class ESILAnalysisEngine:
             )
 
     def _extract_branch_type(self, instruction: str) -> str:
-        """Extract branch type from instruction."""
+        """Extract branch type from instruction.
+
+        Args:
+            instruction: Assembly instruction string to analyze for branch types.
+
+        Returns:
+            Branch type identifier string (e.g., 'jump_if_equal',
+                'jump_if_not_equal', 'jump_if_greater', 'jump_if_less',
+                'jump_if_greater_equal', 'jump_if_less_equal', or 'unknown').
+
+        """
         if "je" in instruction or "jz" in instruction:
             return "jump_if_equal"
         if "jne" in instruction or "jnz" in instruction:
@@ -293,7 +317,16 @@ class ESILAnalysisEngine:
         return "jump_if_less_equal" if "jle" in instruction else "unknown"
 
     def _extract_memory_access_type(self, instruction: str) -> str:
-        """Extract memory access type from instruction."""
+        """Extract memory access type from instruction.
+
+        Args:
+            instruction: Assembly instruction string to analyze for memory access.
+
+        Returns:
+            Memory access type identifier string ('move', 'load_effective_address',
+                'stack_push', 'stack_pop', or 'unknown').
+
+        """
         if "mov" in instruction:
             return "move"
         if "lea" in instruction:
@@ -303,7 +336,16 @@ class ESILAnalysisEngine:
         return "stack_pop" if "pop" in instruction else "unknown"
 
     def _is_function_exit(self, instruction: str) -> bool:
-        """Check if instruction indicates function exit."""
+        """Check if instruction indicates function exit.
+
+        Args:
+            instruction: Assembly instruction string to check for exit patterns.
+
+        Returns:
+            True if instruction is a function exit (ret, retn, iret),
+                False otherwise.
+
+        """
         if not instruction:
             return False
 
@@ -311,7 +353,18 @@ class ESILAnalysisEngine:
         return any(exit_pattern in instruction_lower for exit_pattern in ["ret", "retn", "iret"])
 
     def _perform_post_execution_analysis(self, result: dict[str, Any]) -> None:
-        """Perform analysis on the complete execution trace."""
+        """Perform analysis on the complete execution trace.
+
+        Analyzes execution patterns, detects license validation routines,
+        analyzes API call sequences, and detects anti-analysis techniques.
+
+        Args:
+            result: Dictionary containing execution trace and results. Updated
+                with analysis findings including execution patterns, license
+                validation patterns, API call sequences, and anti-analysis
+                techniques.
+
+        """
         trace = result.get("execution_trace", [])
 
         # Analyze execution patterns
@@ -327,7 +380,17 @@ class ESILAnalysisEngine:
         self._detect_anti_analysis_techniques(result, trace)
 
     def _analyze_execution_patterns(self, result: dict[str, Any], trace: list[dict[str, Any]]) -> None:
-        """Analyze overall execution patterns."""
+        """Analyze overall execution patterns.
+
+        Calculates metrics including total instructions, unique addresses,
+        loop detection, and code coverage ratio.
+
+        Args:
+            result: Dictionary to store analysis results. Updated with
+                execution_patterns containing metrics.
+            trace: List of execution trace entries to analyze.
+
+        """
         if not trace:
             return
 
@@ -351,7 +414,17 @@ class ESILAnalysisEngine:
         }
 
     def _detect_license_validation_patterns(self, result: dict[str, Any], trace: list[dict[str, Any]]) -> None:
-        """Detect license validation patterns in execution trace."""
+        """Detect license validation patterns in execution trace.
+
+        Identifies string comparison validation patterns and complex validation
+        routines with multiple comparisons.
+
+        Args:
+            result: Dictionary to store detected validation patterns. Updated
+                with license_validation_patterns list.
+            trace: List of execution trace entries to search for patterns.
+
+        """
         validation_patterns = []
 
         # Look for sequences that suggest license validation
@@ -387,7 +460,16 @@ class ESILAnalysisEngine:
         result["license_validation_patterns"] = validation_patterns
 
     def _analyze_api_call_sequences(self, result: dict[str, Any]) -> None:
-        """Analyze sequences of API calls for patterns."""
+        """Analyze sequences of API calls for patterns.
+
+        Groups consecutive API calls within 5 steps and identifies call sequences
+        for pattern analysis.
+
+        Args:
+            result: Dictionary containing API calls and where to store analysis.
+                Updated with api_call_sequences list.
+
+        """
         api_calls = result.get("api_calls_detected", [])
 
         if not api_calls:
@@ -411,7 +493,17 @@ class ESILAnalysisEngine:
         result["api_call_sequences"] = call_sequences
 
     def _detect_anti_analysis_techniques(self, result: dict[str, Any], trace: list[dict[str, Any]]) -> None:
-        """Detect anti-analysis and anti-debugging techniques."""
+        """Detect anti-analysis and anti-debugging techniques.
+
+        Identifies debugger detection, timing checks, and VM detection patterns
+        in the execution trace.
+
+        Args:
+            result: Dictionary to store detected anti-analysis techniques.
+                Updated with anti_analysis_techniques list.
+            trace: List of execution trace entries to search for techniques.
+
+        """
         anti_analysis_detected = []
 
         for entry in trace:
@@ -456,11 +548,12 @@ class ESILAnalysisEngine:
         """Emulate multiple functions and provide comparative analysis.
 
         Args:
-            function_addresses: List of function addresses to emulate
-            max_steps_per_function: Maximum steps per function
+            function_addresses: List of function addresses to emulate.
+            max_steps_per_function: Maximum steps per function. Defaults to 50.
 
         Returns:
-            Comparative emulation results
+            Dictionary containing emulation summary, function results, and
+                comparative analysis across all functions.
 
         """
         results: dict[str, Any] = {
@@ -494,7 +587,22 @@ class ESILAnalysisEngine:
         return results
 
     def _perform_comparative_analysis(self, function_results: dict[str, Any]) -> dict[str, Any]:
-        """Perform comparative analysis across multiple function emulations."""
+        """Perform comparative analysis across multiple function emulations.
+
+        Identifies the most complex functions, functions with most API calls,
+        functions with most license checks, and suspicious functions with
+        anti-analysis techniques.
+
+        Args:
+            function_results: Dictionary mapping function addresses to emulation
+                results from emulate_function_execution.
+
+        Returns:
+            Dictionary containing most_complex_function, most_api_calls,
+                most_license_checks, common_patterns, and suspicious_functions
+                list with suspicion scores.
+
+        """
         most_complex_function: str | None = None
         most_api_calls: str | None = None
         most_license_checks: str | None = None
@@ -552,14 +660,23 @@ def analyze_binary_esil(
 ) -> dict[str, Any]:
     """Perform comprehensive ESIL analysis on a binary.
 
+    Initializes an ESILAnalysisEngine, extracts function addresses from the
+    binary, and performs emulation and comparative analysis across multiple
+    functions.
+
     Args:
-        binary_path: Path to binary file
-        radare2_path: Optional path to radare2 executable
-        function_limit: Maximum number of functions to analyze
-        max_steps: Maximum steps per function emulation
+        binary_path: Path to binary file to analyze.
+        radare2_path: Optional path to radare2 executable. Defaults to None.
+        function_limit: Maximum number of functions to analyze. Defaults to 10.
+        max_steps: Maximum steps per function emulation. Defaults to 100.
 
     Returns:
-        Complete ESIL analysis results
+        Dictionary containing complete ESIL analysis results including
+            emulation_summary, function_results, and comparative_analysis, or
+            error dictionary if analysis fails.
+
+    Raises:
+        R2Exception: If radare2 fails to analyze the binary.
 
     """
     engine = ESILAnalysisEngine(binary_path, radare2_path)

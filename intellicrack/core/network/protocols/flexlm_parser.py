@@ -32,7 +32,23 @@ logger = get_logger(__name__)
 
 @dataclass
 class FlexLMRequest:
-    """FlexLM request structure."""
+    """FlexLM request structure.
+
+    Attributes:
+        command: FlexLM command code.
+        version: Protocol version.
+        sequence: Request sequence number.
+        client_id: Client identifier string.
+        feature: Requested feature name.
+        version_requested: Requested feature version.
+        platform: Client platform identifier.
+        hostname: Client hostname.
+        username: Client username.
+        pid: Client process ID.
+        checkout_time: Request checkout timestamp.
+        additional_data: Additional request fields.
+
+    """
 
     command: int
     version: int
@@ -50,7 +66,19 @@ class FlexLMRequest:
 
 @dataclass
 class FlexLMResponse:
-    """FlexLM response structure."""
+    """FlexLM response structure.
+
+    Attributes:
+        status: Response status code.
+        sequence: Response sequence number.
+        server_version: FlexLM server version.
+        feature: Licensed feature name.
+        expiry_date: License expiry date string.
+        license_key: Generated license key.
+        server_id: Server identifier.
+        additional_data: Additional response fields.
+
+    """
 
     status: int
     sequence: int
@@ -112,7 +140,13 @@ class FlexLMProtocolParser:
         self._load_default_features()
 
     def _load_default_features(self) -> None:
-        """Load default feature set for common applications."""
+        """Load default feature set for common applications.
+
+        Initializes the server with pre-configured FlexLM features for popular
+        commercial software including Autodesk, MATLAB, SolidWorks, and ANSYS
+        products for licensing bypass testing.
+
+        """
         self.server_features = {
             # Autodesk Products
             "AUTOCAD": {
@@ -178,17 +212,25 @@ class FlexLMProtocolParser:
         }
 
     def _generate_encryption_seed(self) -> bytes:
-        """Generate encryption seed for FlexLM communication."""
+        """Generate encryption seed for FlexLM communication.
+
+        Returns:
+            bytes: SHA-256 derived encryption seed for protocol communication.
+
+        """
         return hashlib.sha256(str(time.time()).encode()).digest()
 
     def parse_request(self, data: bytes) -> FlexLMRequest | None:
         """Parse incoming FlexLM request.
 
         Args:
-            data: Raw FlexLM request data
+            data: Raw FlexLM request data in binary format.
 
         Returns:
-            Parsed FlexLMRequest object or None if invalid
+            FlexLMRequest | None: Parsed request object or None if parsing fails.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
 
         """
         try:
@@ -277,23 +319,46 @@ class FlexLMProtocolParser:
             self.logger.info("Parsed FlexLM %s request for feature '%s'", self.FLEXLM_COMMANDS.get(command, "UNKNOWN"), feature)
             return request
 
-        except Exception as e:
-            self.logger.exception("Failed to parse FlexLM request: %s", e)
+        except Exception:
+            self.logger.exception("Failed to parse FlexLM request")
             return None
 
     def _parse_string_field(self, data: bytes, offset: int) -> str:
-        """Parse null-terminated string from data."""
+        """Parse null-terminated string from binary data.
+
+        Args:
+            data: Binary data buffer containing string field.
+            offset: Byte offset to start parsing from.
+
+        Returns:
+            str: Decoded string (empty if parsing fails).
+
+        Raises:
+            None: All exceptions are caught and logged internally.
+
+        """
         try:
             end = data.find(b"\x00", offset)
             if end == -1:
                 end = len(data)
             return data[offset:end].decode("utf-8", errors="ignore")
-        except Exception as e:
-            self.logger.exception("Error in flexlm_parser: %s", e)
+        except Exception:
+            self.logger.exception("Error in flexlm_parser")
             return ""
 
     def _parse_additional_data(self, data: bytes) -> dict[str, Any]:
-        """Parse additional FlexLM data fields."""
+        """Parse additional FlexLM data fields.
+
+        Args:
+            data: Binary data buffer containing additional fields.
+
+        Returns:
+            dict[str, Any]: Dictionary of parsed field key-value pairs.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
+
+        """
         additional = {}
         try:
             offset = 0
@@ -320,8 +385,8 @@ class FlexLMProtocolParser:
                 else:
                     additional[f"field_{field_type:04X}"] = field_data.hex()
 
-        except Exception as e:
-            self.logger.debug("Error parsing additional data: %s", e)
+        except Exception:
+            self.logger.debug("Error parsing additional data")
 
         return additional
 
@@ -329,10 +394,13 @@ class FlexLMProtocolParser:
         """Generate appropriate FlexLM response based on request.
 
         Args:
-            request: Parsed FlexLM request
+            request: Parsed FlexLM request with command code.
 
         Returns:
-            FlexLM response object
+            FlexLMResponse: Appropriate response for the request command.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
 
         """
         command_name = self.FLEXLM_COMMANDS.get(request.command, "UNKNOWN")
@@ -357,7 +425,18 @@ class FlexLMProtocolParser:
         return self._handle_unknown_command(request)
 
     def _handle_checkout(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle license checkout request."""
+        """Handle license checkout request.
+
+        Args:
+            request: Parsed FlexLM checkout request.
+
+        Returns:
+            FlexLMResponse: Response with license key and feature info or error status.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
+
+        """
         feature = request.feature.upper()
 
         # Check if feature exists
@@ -406,7 +485,18 @@ class FlexLMProtocolParser:
         )
 
     def _handle_checkin(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle license checkin request."""
+        """Handle license checkin request.
+
+        Args:
+            request: Parsed FlexLM checkin request.
+
+        Returns:
+            FlexLMResponse: Response confirming license checkin completion.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
+
+        """
         checkout_id = f"{request.hostname}:{request.username}:{request.feature}"
 
         if checkout_id in self.active_checkouts:
@@ -424,7 +514,18 @@ class FlexLMProtocolParser:
         )
 
     def _handle_status(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle server status request."""
+        """Handle server status request.
+
+        Args:
+            request: Parsed FlexLM status request.
+
+        Returns:
+            FlexLMResponse: Response with server status and active checkout count.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
+
+        """
         return FlexLMResponse(
             status=0x00,  # SUCCESS
             sequence=request.sequence,
@@ -442,7 +543,18 @@ class FlexLMProtocolParser:
         )
 
     def _handle_heartbeat(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle heartbeat request."""
+        """Handle heartbeat request.
+
+        Args:
+            request: Parsed FlexLM heartbeat request.
+
+        Returns:
+            FlexLMResponse: Response with heartbeat status (success or failed).
+
+        Raises:
+            None: All exceptions are caught and logged internally.
+
+        """
         checkout_id = f"{request.hostname}:{request.username}:{request.feature}"
 
         if checkout_id in self.active_checkouts:
@@ -464,7 +576,18 @@ class FlexLMProtocolParser:
         )
 
     def _handle_feature_info(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle feature information request."""
+        """Handle feature information request.
+
+        Args:
+            request: Parsed FlexLM feature info request.
+
+        Returns:
+            FlexLMResponse: Response with feature details or not found error.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
+
+        """
         feature = request.feature.upper()
 
         if feature in self.server_features:
@@ -491,7 +614,18 @@ class FlexLMProtocolParser:
         )
 
     def _handle_server_info(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle server information request."""
+        """Handle server information request.
+
+        Args:
+            request: Parsed FlexLM server info request.
+
+        Returns:
+            FlexLMResponse: Response with server configuration and available features.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
+
+        """
         return FlexLMResponse(
             status=0x00,  # SUCCESS
             sequence=request.sequence,
@@ -510,7 +644,18 @@ class FlexLMProtocolParser:
         )
 
     def _handle_hostid_request(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle host ID request."""
+        """Handle host ID request.
+
+        Args:
+            request: Parsed FlexLM host ID request.
+
+        Returns:
+            FlexLMResponse: Response with computed host ID for the client.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
+
+        """
         # Generate deterministic host ID
         hostid = hashlib.sha256(request.hostname.encode()).hexdigest()[:12].upper()
 
@@ -526,7 +671,18 @@ class FlexLMProtocolParser:
         )
 
     def _handle_encryption_seed(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle encryption seed request."""
+        """Handle encryption seed request.
+
+        Args:
+            request: Parsed FlexLM encryption seed request.
+
+        Returns:
+            FlexLMResponse: Response with encryption seed for protocol security.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
+
+        """
         return FlexLMResponse(
             status=0x00,  # SUCCESS
             sequence=request.sequence,
@@ -539,7 +695,18 @@ class FlexLMProtocolParser:
         )
 
     def _handle_unknown_command(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle unknown command."""
+        """Handle unknown command.
+
+        Args:
+            request: Parsed FlexLM request with unknown command code.
+
+        Returns:
+            FlexLMResponse: Error response indicating unknown command.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
+
+        """
         self.logger.warning("Unknown FlexLM command: 0x%02X", request.command)
         return FlexLMResponse(
             status=0x0C,  # ENCRYPTION_FAILED (generic error)
@@ -553,7 +720,19 @@ class FlexLMProtocolParser:
         )
 
     def _generate_checkout_key(self, request: FlexLMRequest, feature_info: dict[str, Any]) -> str:
-        """Generate checkout key for license."""
+        """Generate checkout key for license.
+
+        Args:
+            request: FlexLM request containing client details.
+            feature_info: Feature information dictionary with version and limits.
+
+        Returns:
+            str: Generated license checkout key with feature prefix.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
+
+        """
         # Incorporate feature information into key generation
         feature_version = feature_info.get("version", "1.0")
         feature_type = feature_info.get("type", "standard")
@@ -584,10 +763,13 @@ class FlexLMProtocolParser:
         """Serialize FlexLM response to bytes.
 
         Args:
-            response: FlexLM response object
+            response: FlexLM response object to serialize.
 
         Returns:
-            Serialized response bytes
+            bytes: Binary serialized response packet.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
 
         """
         try:
@@ -634,13 +816,24 @@ class FlexLMProtocolParser:
 
             return bytes(packet)
 
-        except Exception as e:
-            self.logger.exception("Failed to serialize FlexLM response: %s", e)
+        except Exception:
+            self.logger.exception("Failed to serialize FlexLM response")
             # Return minimal error response
             return struct.pack(">IHI", 0x464C4558, 0x03, response.sequence) + b"\x00"
 
     def _serialize_additional_data(self, data: dict[str, Any]) -> bytes:
-        """Serialize additional data fields."""
+        """Serialize additional data fields.
+
+        Args:
+            data: Dictionary of additional fields to serialize.
+
+        Returns:
+            bytes: Serialized binary representation of additional fields.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
+
+        """
         serialized = bytearray()
 
         for key, value in data.items():
@@ -659,8 +852,8 @@ class FlexLMProtocolParser:
                 serialized.extend(struct.pack(">HH", field_type, len(value_bytes)))
                 serialized.extend(value_bytes)
 
-            except Exception as e:
-                self.logger.debug("Error serializing field %s: %s", key, e)
+            except Exception:
+                self.logger.debug("Error serializing field %s", key)
 
         return bytes(serialized)
 
@@ -676,12 +869,12 @@ class FlexLMProtocolParser:
         """Add custom FlexLM feature to server.
 
         Args:
-            name: Feature name
-            version: Feature version
-            vendor: Vendor daemon name
-            count: License count
-            expiry: Expiry date
-            signature: License signature (generated if None)
+            name: Feature name.
+            version: Feature version.
+            vendor: Vendor daemon name.
+            count: License count. Defaults to 100.
+            expiry: Expiry date. Defaults to "31-dec-2025".
+            signature: License signature. Auto-generated if None. Defaults to None.
 
         """
         if signature is None:
@@ -700,7 +893,10 @@ class FlexLMProtocolParser:
         """Remove feature from server.
 
         Args:
-            name: Feature name to remove
+            name: Feature name to remove.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
 
         """
         feature_key = name.upper()
@@ -712,13 +908,20 @@ class FlexLMProtocolParser:
         """Get all active license checkouts.
 
         Returns:
-            Dictionary of active checkouts
+            dict[str, dict[str, Any]]: Copy of active checkouts dictionary.
 
         """
         return self.active_checkouts.copy()
 
     def clear_checkouts(self) -> None:
-        """Clear all active checkouts."""
+        """Clear all active checkouts.
+
+        Removes all tracked license checkouts and logs the operation.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
+
+        """
         count = len(self.active_checkouts)
         self.active_checkouts.clear()
         self.logger.info("Cleared %d active checkouts", count)
@@ -727,7 +930,8 @@ class FlexLMProtocolParser:
         """Get server statistics.
 
         Returns:
-            Dictionary containing server statistics
+            dict[str, Any]: Dictionary with total features, active checkouts,
+                version, and uptime information.
 
         """
         return {
@@ -740,13 +944,22 @@ class FlexLMProtocolParser:
 
 
 class FlexLMTrafficCapture:
-    """FlexLM traffic capture and analysis engine."""
+    """FlexLM traffic capture and analysis engine.
+
+    Captures and analyzes FlexLM protocol traffic for license cracking research.
+    Tracks requests/responses, analyzes traffic patterns, and extracts license
+    information from captured packets.
+
+    """
 
     def __init__(self, parser: FlexLMProtocolParser) -> None:
         """Initialize traffic capture engine.
 
         Args:
-            parser: FlexLM protocol parser instance
+            parser: FlexLM protocol parser instance.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
 
         """
         self.logger = get_logger(__name__)
@@ -766,13 +979,16 @@ class FlexLMTrafficCapture:
         """Capture FlexLM network packet.
 
         Args:
-            data: Raw packet data
-            source: Source (IP, port) tuple
-            dest: Destination (IP, port) tuple
-            timestamp: Capture timestamp (current time if None)
+            data: Raw packet data.
+            source: Source (IP, port) tuple.
+            dest: Destination (IP, port) tuple.
+            timestamp: Capture timestamp. If None, uses current time. Defaults to None.
 
         Returns:
-            True if packet was successfully parsed and captured
+            bool: True if packet was successfully parsed and captured.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
 
         """
         if timestamp is None:
@@ -791,7 +1007,11 @@ class FlexLMTrafficCapture:
         """Analyze captured traffic patterns.
 
         Returns:
-            Dictionary containing traffic analysis results
+            dict[str, Any]: Dictionary with command distribution, top features,
+                and traffic statistics.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
 
         """
         if not self.captured_requests:
@@ -835,7 +1055,11 @@ class FlexLMTrafficCapture:
         """Extract license information from captured traffic.
 
         Returns:
-            List of extracted license information dictionaries
+            list[dict[str, Any]]: List of license checkout requests with timestamps
+                and client details.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
 
         """
         licenses = []
@@ -859,7 +1083,11 @@ class FlexLMTrafficCapture:
         """Detect FlexLM server endpoints from captured traffic.
 
         Returns:
-            List of detected server endpoint information
+            list[dict[str, Any]]: List of server endpoints with IP, port, and
+                protocol information.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
 
         """
         servers = []
@@ -878,7 +1106,10 @@ class FlexLMTrafficCapture:
         """Export captured traffic to file.
 
         Args:
-            filepath: Output file path
+            filepath: Output file path for JSON export.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
 
         """
         import json
@@ -910,10 +1141,23 @@ class FlexLMTrafficCapture:
 
 
 class FlexLMLicenseGenerator:
-    """FlexLM license file generator."""
+    """FlexLM license file generator.
+
+    Generates, parses, and validates FlexLM license files for licensing
+    bypass research and testing. Supports feature creation, signature
+    generation, and license file format manipulation.
+
+    """
 
     def __init__(self) -> None:
-        """Initialize license generator."""
+        """Initialize license generator.
+
+        Initializes the FlexLM license file generator with logging support.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
+
+        """
         self.logger = get_logger(__name__)
 
     def generate_license_file(
@@ -927,14 +1171,17 @@ class FlexLMLicenseGenerator:
         """Generate FlexLM license file content.
 
         Args:
-            features: List of feature dictionaries
-            server_host: License server hostname
-            server_port: License server port
-            vendor_daemon: Vendor daemon name
-            vendor_port: Vendor daemon port
+            features: List of feature dictionaries.
+            server_host: License server hostname.
+            server_port: License server port. Defaults to 27000.
+            vendor_daemon: Vendor daemon name. Defaults to "vendor".
+            vendor_port: Vendor daemon port. Defaults to 27001.
 
         Returns:
-            License file content as string
+            str: License file content in FlexLM format.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
 
         """
         lines = [
@@ -960,11 +1207,14 @@ class FlexLMLicenseGenerator:
         """Generate license signature.
 
         Args:
-            feature: Feature name
-            version: Version string
+            feature: Feature name.
+            version: Version string.
 
         Returns:
-            Generated signature string
+            str: Generated signature string.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
 
         """
         data = f"{feature}:{version}:{time.time()}"
@@ -974,10 +1224,14 @@ class FlexLMLicenseGenerator:
         """Parse FlexLM license file.
 
         Args:
-            content: License file content
+            content: License file content.
 
         Returns:
-            Parsed license data dictionary
+            dict[str, Any]: Parsed license data dictionary with servers, vendors,
+                and features.
+
+        Raises:
+            None: All exceptions are caught and logged internally.
 
         """
         license_data: dict[str, Any] = {

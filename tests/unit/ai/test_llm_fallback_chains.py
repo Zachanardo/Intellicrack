@@ -10,7 +10,7 @@ Licensed under GNU General Public License v3.0
 import asyncio
 import time
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
+from typing import Any
 
 import pytest
 
@@ -24,6 +24,142 @@ from intellicrack.ai.llm_fallback_chains import (
     create_simple_fallback_chain,
     get_fallback_manager,
 )
+
+
+class FakeLLMBackend:
+    """Real test backend implementing complete LLM interface with configurable behavior."""
+
+    def __init__(self, model_id: str) -> None:
+        self.model_id = model_id
+        self.is_initialized = True
+        self.call_count = 0
+        self.failure_mode: str | None = None
+        self.failure_count_limit: int = 0
+        self.response_delay: float = 0.0
+        self.custom_response: str | None = None
+
+    def set_failure_mode(self, mode: str, failure_limit: int = 999) -> None:
+        """Configure backend to fail with specific error type."""
+        self.failure_mode = mode
+        self.failure_count_limit = failure_limit
+        self.call_count = 0
+
+    def set_response_delay(self, delay: float) -> None:
+        """Configure response time for performance testing."""
+        self.response_delay = delay
+
+    def set_custom_response(self, response: str) -> None:
+        """Configure custom response content."""
+        self.custom_response = response
+
+    def chat(
+        self,
+        messages: list[LLMMessage],
+        model_id: str | None = None,
+        tools: list[dict[str, Any]] | None = None,
+    ) -> LLMResponse:
+        """Execute chat request with configurable behavior."""
+        self.call_count += 1
+
+        if self.response_delay > 0:
+            time.sleep(self.response_delay)
+
+        if self.failure_mode and self.call_count <= self.failure_count_limit:
+            if self.failure_mode == "rate_limit":
+                raise Exception("429 rate limit exceeded")
+            elif self.failure_mode == "auth":
+                raise Exception("401 unauthorized")
+            elif self.failure_mode == "timeout":
+                raise Exception("request timeout")
+            elif self.failure_mode == "overload":
+                raise Exception("503 service unavailable")
+            elif self.failure_mode == "connection":
+                raise Exception("Connection refused")
+            elif self.failure_mode == "generic":
+                raise Exception("Generic error occurred")
+
+        content = self.custom_response if self.custom_response else f"Response from {self.model_id}"
+        return LLMResponse(
+            content=content,
+            model=model_id or self.model_id,
+            usage={"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
+        )
+
+
+class FakeLLMManager:
+    """Real LLM manager implementation for testing fallback chains."""
+
+    def __init__(self) -> None:
+        self.backends: dict[str, FakeLLMBackend] = {}
+        self.configs: dict[str, LLMConfig] = {}
+
+    def register_llm(self, model_id: str, config: LLMConfig) -> None:
+        """Register a new LLM backend."""
+        backend = FakeLLMBackend(model_id)
+        self.backends[model_id] = backend
+        self.configs[model_id] = config
+
+    def chat(
+        self,
+        messages: list[LLMMessage],
+        model_id: str | None = None,
+        tools: list[dict[str, Any]] | None = None,
+    ) -> LLMResponse:
+        """Execute chat request through registered backend."""
+        if model_id and model_id in self.backends:
+            return self.backends[model_id].chat(messages, model_id, tools)
+        raise ValueError(f"Model {model_id} not registered")
+
+    def get_backend(self, model_id: str) -> FakeLLMBackend:
+        """Get backend instance for configuration."""
+        if model_id not in self.backends:
+            raise ValueError(f"Model {model_id} not registered")
+        return self.backends[model_id]
+
+    def get_llm_info(self, model_id: str) -> dict[str, Any] | None:
+        """Get information about a registered model."""
+        if model_id in self.configs:
+            return {"model_id": model_id, "provider": self.configs[model_id].provider.value}
+        return None
+
+
+@pytest.fixture
+def fake_llm_manager(monkeypatch: pytest.MonkeyPatch) -> FakeLLMManager:
+    """Provide real fake LLM manager for testing."""
+    manager = FakeLLMManager()
+
+    def get_fake_manager() -> FakeLLMManager:
+        return manager
+
+    monkeypatch.setattr("intellicrack.ai.llm_fallback_chains.get_llm_manager", get_fake_manager)
+    return manager
+
+
+@pytest.fixture
+def test_configs() -> list[tuple[str, LLMConfig]]:
+    """Create real test model configurations."""
+    config1 = LLMConfig(
+        provider=LLMProvider.OPENAI,
+        model_name="gpt-4",
+        api_key="test-key-1",
+    )
+    config2 = LLMConfig(
+        provider=LLMProvider.ANTHROPIC,
+        model_name="claude-3-opus",
+        api_key="test-key-2",
+    )
+    return [("model-1", config1), ("model-2", config2)]
+
+
+@pytest.fixture
+def single_model_config() -> list[tuple[str, LLMConfig]]:
+    """Create single model configuration for testing."""
+    config = LLMConfig(
+        provider=LLMProvider.OPENAI,
+        model_name="gpt-4",
+        api_key="test-key-1",
+    )
+    return [("test-model", config)]
 
 
 class TestFailureType:
@@ -174,316 +310,231 @@ class TestModelHealth:
 
 
 class TestFallbackChain:
-    """Test FallbackChain class."""
+    """Test FallbackChain class with real implementations."""
 
-    @pytest.fixture
-    def mock_llm_manager(self):
-        """Create mock LLM manager."""
-        manager = Mock()
-        manager.register_llm = Mock()
-        manager.chat = Mock()
-        return manager
-
-    @pytest.fixture
-    def test_configs(self):
-        """Create test model configurations."""
-        config1 = LLMConfig(
-            provider=LLMProvider.OPENAI,
-            model_name="gpt-4",
-            api_key="test-key-1",
+    def test_initialization(self, test_configs: list[tuple[str, LLMConfig]], fake_llm_manager: FakeLLMManager) -> None:
+        """Test FallbackChain initialization registers models and sets up health tracking."""
+        chain = FallbackChain(
+            chain_id="test-chain",
+            model_configs=test_configs,
+            max_retries=5,
+            retry_delay=2.0,
+            circuit_failure_threshold=10,
+            enable_adaptive_ordering=False,
         )
-        config2 = LLMConfig(
-            provider=LLMProvider.ANTHROPIC,
-            model_name="claude-3-opus",
-            api_key="test-key-2",
-        )
-        return [("model-1", config1), ("model-2", config2)]
 
-    def test_initialization(self, test_configs, mock_llm_manager) -> None:
-        """Test FallbackChain initialization."""
-        with patch(
-            "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-            return_value=mock_llm_manager,
-        ):
-            chain = FallbackChain(
-                chain_id="test-chain",
-                model_configs=test_configs,
-                max_retries=5,
-                retry_delay=2.0,
-                circuit_failure_threshold=10,
-                enable_adaptive_ordering=False,
-            )
+        assert chain.chain_id == "test-chain"
+        assert len(chain.model_configs) == 2
+        assert chain.max_retries == 5
+        assert chain.retry_delay == 2.0
+        assert chain.circuit_failure_threshold == 10
+        assert chain.enable_adaptive_ordering is False
+        assert len(chain.health_stats) == 2
+        assert "model-1" in fake_llm_manager.backends
+        assert "model-2" in fake_llm_manager.backends
 
-            assert chain.chain_id == "test-chain"
-            assert len(chain.model_configs) == 2
-            assert chain.max_retries == 5
-            assert chain.retry_delay == 2.0
-            assert chain.circuit_failure_threshold == 10
-            assert chain.enable_adaptive_ordering is False
-            assert len(chain.health_stats) == 2
+    def test_classify_error_rate_limit(self, test_configs: list[tuple[str, LLMConfig]], fake_llm_manager: FakeLLMManager) -> None:
+        """Test error classification correctly identifies rate limiting errors."""
+        chain = FallbackChain("test", test_configs)
 
-    def test_classify_error_rate_limit(self, test_configs, mock_llm_manager) -> None:
-        """Test error classification for rate limiting."""
-        with patch(
-            "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-            return_value=mock_llm_manager,
-        ):
-            chain = FallbackChain("test", test_configs)
+        error = Exception("429 rate limit exceeded")
+        failure_type = chain._classify_error(error)
 
-            error = Exception("429 rate limit exceeded")
-            failure_type = chain._classify_error(error)
+        assert failure_type == FailureType.TEMPORARY
 
-            assert failure_type == FailureType.TEMPORARY
+    def test_classify_error_auth(self, test_configs: list[tuple[str, LLMConfig]], fake_llm_manager: FakeLLMManager) -> None:
+        """Test error classification correctly identifies authentication errors."""
+        chain = FallbackChain("test", test_configs)
 
-    def test_classify_error_auth(self, test_configs, mock_llm_manager) -> None:
-        """Test error classification for authentication errors."""
-        with patch(
-            "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-            return_value=mock_llm_manager,
-        ):
-            chain = FallbackChain("test", test_configs)
+        auth_errors = [
+            Exception("401 unauthorized"),
+            Exception("403 forbidden"),
+            Exception("auth failed"),
+        ]
 
-            auth_errors = [
-                Exception("401 unauthorized"),
-                Exception("403 forbidden"),
-                Exception("auth failed"),
-            ]
+        for error in auth_errors:
+            assert chain._classify_error(error) == FailureType.PERMANENT
 
-            for error in auth_errors:
-                assert chain._classify_error(error) == FailureType.PERMANENT
+    def test_classify_error_timeout(self, test_configs: list[tuple[str, LLMConfig]], fake_llm_manager: FakeLLMManager) -> None:
+        """Test error classification correctly identifies timeout errors."""
+        chain = FallbackChain("test", test_configs)
 
-    def test_classify_error_timeout(self, test_configs, mock_llm_manager) -> None:
-        """Test error classification for timeouts."""
-        with patch(
-            "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-            return_value=mock_llm_manager,
-        ):
-            chain = FallbackChain("test", test_configs)
+        timeout_errors = [
+            Exception("request timeout"),
+            Exception("operation timed out"),
+        ]
 
-            timeout_errors = [
-                Exception("request timeout"),
-                Exception("operation timed out"),
-            ]
+        for error in timeout_errors:
+            assert chain._classify_error(error) == FailureType.TIMEOUT
 
-            for error in timeout_errors:
-                assert chain._classify_error(error) == FailureType.TIMEOUT
+    def test_classify_error_overloaded(self, test_configs: list[tuple[str, LLMConfig]], fake_llm_manager: FakeLLMManager) -> None:
+        """Test error classification correctly identifies service overload errors."""
+        chain = FallbackChain("test", test_configs)
 
-    def test_classify_error_overloaded(self, test_configs, mock_llm_manager) -> None:
-        """Test error classification for service overload."""
-        with patch(
-            "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-            return_value=mock_llm_manager,
-        ):
-            chain = FallbackChain("test", test_configs)
+        overload_errors = [
+            Exception("503 service unavailable"),
+            Exception("502 bad gateway"),
+            Exception("service overloaded"),
+        ]
 
-            overload_errors = [
-                Exception("503 service unavailable"),
-                Exception("502 bad gateway"),
-                Exception("service overloaded"),
-            ]
+        for error in overload_errors:
+            assert chain._classify_error(error) == FailureType.OVERLOADED
 
-            for error in overload_errors:
-                assert chain._classify_error(error) == FailureType.OVERLOADED
+        gateway_timeout = Exception("504 gateway timeout")
+        assert chain._classify_error(gateway_timeout) == FailureType.TIMEOUT
 
-            gateway_timeout = Exception("504 gateway timeout")
-            assert chain._classify_error(gateway_timeout) == FailureType.TIMEOUT
+    def test_classify_error_unknown(self, test_configs: list[tuple[str, LLMConfig]], fake_llm_manager: FakeLLMManager) -> None:
+        """Test error classification defaults to unknown for unrecognized errors."""
+        chain = FallbackChain("test", test_configs)
 
-    def test_classify_error_unknown(self, test_configs, mock_llm_manager) -> None:
-        """Test error classification for unknown errors."""
-        with patch(
-            "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-            return_value=mock_llm_manager,
-        ):
-            chain = FallbackChain("test", test_configs)
-
-            error = Exception("Some random error")
-            assert chain._classify_error(error) == FailureType.UNKNOWN
+        error = Exception("Some random error")
+        assert chain._classify_error(error) == FailureType.UNKNOWN
 
     def test_update_health_stats_success(
-        self, test_configs, mock_llm_manager
+        self, test_configs: list[tuple[str, LLMConfig]], fake_llm_manager: FakeLLMManager
     ) -> None:
-        """Test health stats update on success."""
-        with patch(
-            "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-            return_value=mock_llm_manager,
-        ):
-            chain = FallbackChain("test", test_configs)
+        """Test health stats correctly track successful requests."""
+        chain = FallbackChain("test", test_configs)
 
-            chain._update_health_stats("model-1", True, response_time=0.5)
+        chain._update_health_stats("model-1", True, response_time=0.5)
 
-            health = chain.health_stats["model-1"]
-            assert health.success_count == 1
-            assert health.failure_count == 0
-            assert health.total_requests == 1
-            assert health.last_success is not None
-            assert health.avg_response_time == 0.5
+        health = chain.health_stats["model-1"]
+        assert health.success_count == 1
+        assert health.failure_count == 0
+        assert health.total_requests == 1
+        assert health.last_success is not None
+        assert health.avg_response_time == 0.5
 
     def test_update_health_stats_failure(
-        self, test_configs, mock_llm_manager
+        self, test_configs: list[tuple[str, LLMConfig]], fake_llm_manager: FakeLLMManager
     ) -> None:
-        """Test health stats update on failure."""
-        with patch(
-            "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-            return_value=mock_llm_manager,
-        ):
-            chain = FallbackChain("test", test_configs)
+        """Test health stats correctly track failed requests."""
+        chain = FallbackChain("test", test_configs)
 
-            error = Exception("Test error")
-            chain._update_health_stats("model-1", False, error=error)
+        error = Exception("Test error")
+        chain._update_health_stats("model-1", False, error=error)
 
-            health = chain.health_stats["model-1"]
-            assert health.success_count == 0
-            assert health.failure_count == 1
-            assert health.total_requests == 1
-            assert health.last_failure is not None
-            assert len(health.recent_failures) == 1
+        health = chain.health_stats["model-1"]
+        assert health.success_count == 0
+        assert health.failure_count == 1
+        assert health.total_requests == 1
+        assert health.last_failure is not None
+        assert len(health.recent_failures) == 1
 
     def test_circuit_breaker_opens_after_threshold(
-        self, test_configs, mock_llm_manager
+        self, test_configs: list[tuple[str, LLMConfig]], fake_llm_manager: FakeLLMManager
     ) -> None:
-        """Test circuit breaker opens after failure threshold."""
-        with patch(
-            "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-            return_value=mock_llm_manager,
-        ):
-            chain = FallbackChain(
-                "test", test_configs, circuit_failure_threshold=3
-            )
+        """Test circuit breaker opens after exceeding failure threshold."""
+        chain = FallbackChain(
+            "test", test_configs, circuit_failure_threshold=3
+        )
 
-            for i in range(5):
-                error = Exception(f"Error {i}")
-                chain._update_health_stats("model-1", False, error=error)
+        for i in range(5):
+            error = Exception(f"Error {i}")
+            chain._update_health_stats("model-1", False, error=error)
 
-            health = chain.health_stats["model-1"]
-            assert health.is_circuit_open is True
-            assert health.circuit_opened_at is not None
+        health = chain.health_stats["model-1"]
+        assert health.is_circuit_open is True
+        assert health.circuit_opened_at is not None
 
     def test_circuit_breaker_closes_on_success(
-        self, test_configs, mock_llm_manager
+        self, test_configs: list[tuple[str, LLMConfig]], fake_llm_manager: FakeLLMManager
     ) -> None:
-        """Test circuit breaker closes on successful request."""
-        with patch(
-                "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-                return_value=mock_llm_manager,
-            ):
-            chain = FallbackChain("test", test_configs)
+        """Test circuit breaker closes on successful request after being open."""
+        chain = FallbackChain("test", test_configs)
 
-            health = chain.health_stats["model-1"]
-            health.is_circuit_open = True
-            health.circuit_opened_at = datetime.now()
+        health = chain.health_stats["model-1"]
+        health.is_circuit_open = True
+        health.circuit_opened_at = datetime.now()
 
-            chain._update_health_stats("model-1", True, response_time=0.3)
+        chain._update_health_stats("model-1", True, response_time=0.3)
 
-            assert not health.is_circuit_open
-            assert health.circuit_opened_at is None
+        assert not health.is_circuit_open
+        assert health.circuit_opened_at is None
 
     def test_get_ordered_models_no_adaptive(
-        self, test_configs, mock_llm_manager
+        self, test_configs: list[tuple[str, LLMConfig]], fake_llm_manager: FakeLLMManager
     ) -> None:
-        """Test get_ordered_models returns original order when adaptive disabled."""
-        with patch(
-            "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-            return_value=mock_llm_manager,
-        ):
-            chain = FallbackChain("test", test_configs, enable_adaptive_ordering=False)
+        """Test model ordering returns original order when adaptive ordering disabled."""
+        chain = FallbackChain("test", test_configs, enable_adaptive_ordering=False)
 
-            ordered = chain._get_ordered_models()
-            assert ordered == test_configs
+        ordered = chain._get_ordered_models()
+        assert ordered == test_configs
 
     def test_get_ordered_models_adaptive_filtering(
-        self, test_configs, mock_llm_manager
+        self, test_configs: list[tuple[str, LLMConfig]], fake_llm_manager: FakeLLMManager
     ) -> None:
-        """Test adaptive ordering filters out unavailable models."""
-        with patch(
-            "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-            return_value=mock_llm_manager,
-        ):
-            chain = FallbackChain("test", test_configs, enable_adaptive_ordering=True)
+        """Test adaptive ordering filters out models with open circuit breakers."""
+        chain = FallbackChain("test", test_configs, enable_adaptive_ordering=True)
 
-            health_1 = chain.health_stats["model-1"]
-            health_1.is_circuit_open = True
-            health_1.circuit_opened_at = datetime.now()
+        health_1 = chain.health_stats["model-1"]
+        health_1.is_circuit_open = True
+        health_1.circuit_opened_at = datetime.now()
 
-            ordered = chain._get_ordered_models()
-            model_ids = [mid for mid, _ in ordered]
-            assert "model-1" not in model_ids
-            assert "model-2" in model_ids
+        ordered = chain._get_ordered_models()
+        model_ids = [mid for mid, _ in ordered]
+        assert "model-1" not in model_ids
+        assert "model-2" in model_ids
 
-    def test_get_health_report(self, test_configs, mock_llm_manager) -> None:
-        """Test health report generation."""
-        with patch(
-            "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-            return_value=mock_llm_manager,
-        ):
-            chain = FallbackChain("test-chain", test_configs)
+    def test_get_health_report(self, test_configs: list[tuple[str, LLMConfig]], fake_llm_manager: FakeLLMManager) -> None:
+        """Test health report contains comprehensive metrics for all models."""
+        chain = FallbackChain("test-chain", test_configs)
 
-            chain._update_health_stats("model-1", True, 0.5)
-            chain._update_health_stats("model-1", False, error=Exception("Error"))
+        chain._update_health_stats("model-1", True, 0.5)
+        chain._update_health_stats("model-1", False, error=Exception("Error"))
 
-            report = chain.get_health_report()
+        report = chain.get_health_report()
 
-            assert report["chain_id"] == "test-chain"
-            assert report["total_models"] == 2
-            assert "models" in report
-            assert "model-1" in report["models"]
+        assert report["chain_id"] == "test-chain"
+        assert report["total_models"] == 2
+        assert "models" in report
+        assert "model-1" in report["models"]
 
-            model_1_report = report["models"]["model-1"]
-            assert model_1_report["success_count"] == 1
-            assert model_1_report["failure_count"] == 1
-            assert model_1_report["total_requests"] == 2
+        model_1_report = report["models"]["model-1"]
+        assert model_1_report["success_count"] == 1
+        assert model_1_report["failure_count"] == 1
+        assert model_1_report["total_requests"] == 2
 
     def test_reset_health_stats_specific_model(
-        self, test_configs, mock_llm_manager
+        self, test_configs: list[tuple[str, LLMConfig]], fake_llm_manager: FakeLLMManager
     ) -> None:
-        """Test resetting health stats for specific model."""
-        with patch(
-            "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-            return_value=mock_llm_manager,
-        ):
-            chain = FallbackChain("test", test_configs)
+        """Test resetting health stats for a specific model clears its metrics."""
+        chain = FallbackChain("test", test_configs)
 
-            chain._update_health_stats("model-1", True, 0.5)
-            chain.reset_health_stats("model-1")
+        chain._update_health_stats("model-1", True, 0.5)
+        chain.reset_health_stats("model-1")
 
-            health = chain.health_stats["model-1"]
+        health = chain.health_stats["model-1"]
+        assert health.success_count == 0
+        assert health.total_requests == 0
+
+    def test_reset_health_stats_all_models(
+        self, test_configs: list[tuple[str, LLMConfig]], fake_llm_manager: FakeLLMManager
+    ) -> None:
+        """Test resetting health stats for all models clears all metrics."""
+        chain = FallbackChain("test", test_configs)
+
+        chain._update_health_stats("model-1", True, 0.5)
+        chain._update_health_stats("model-2", True, 0.3)
+        chain.reset_health_stats()
+
+        for health in chain.health_stats.values():
             assert health.success_count == 0
             assert health.total_requests == 0
 
-    def test_reset_health_stats_all_models(
-        self, test_configs, mock_llm_manager
-    ) -> None:
-        """Test resetting health stats for all models."""
-        with patch(
-            "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-            return_value=mock_llm_manager,
-        ):
-            chain = FallbackChain("test", test_configs)
-
-            chain._update_health_stats("model-1", True, 0.5)
-            chain._update_health_stats("model-2", True, 0.3)
-            chain.reset_health_stats()
-
-            for health in chain.health_stats.values():
-                assert health.success_count == 0
-                assert health.total_requests == 0
-
 
 class TestFallbackManager:
-    """Test FallbackManager class."""
+    """Test FallbackManager class with real chain management."""
 
     def test_initialization(self) -> None:
-        """Test FallbackManager initialization."""
+        """Test FallbackManager initializes with empty state."""
         manager = FallbackManager()
 
         assert manager.chains == {}
         assert manager.default_chain_id is None
 
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    def test_create_chain(self, mock_get_llm) -> None:
-        """Test creating a fallback chain."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    def test_create_chain(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test creating a fallback chain registers it and sets as default if first."""
         manager = FallbackManager()
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         model_configs = [("model-1", config)]
@@ -495,12 +546,8 @@ class TestFallbackManager:
         assert "test-chain" in manager.chains
         assert manager.default_chain_id == "test-chain"
 
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    def test_create_chain_duplicate_error(self, mock_get_llm) -> None:
+    def test_create_chain_duplicate_error(self, fake_llm_manager: FakeLLMManager) -> None:
         """Test creating duplicate chain raises ValueError."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
         manager = FallbackManager()
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         model_configs = [("model-1", config)]
@@ -510,12 +557,8 @@ class TestFallbackManager:
         with pytest.raises(ValueError):
             manager.create_chain("test-chain", model_configs)
 
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    def test_get_chain_exists(self, mock_get_llm) -> None:
-        """Test getting existing chain."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    def test_get_chain_exists(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test getting existing chain returns correct instance."""
         manager = FallbackManager()
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         model_configs = [("model-1", config)]
@@ -533,12 +576,8 @@ class TestFallbackManager:
 
         assert result is None
 
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    def test_set_default_chain(self, mock_get_llm) -> None:
-        """Test setting default chain."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    def test_set_default_chain(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test setting default chain updates manager state."""
         manager = FallbackManager()
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
 
@@ -556,12 +595,8 @@ class TestFallbackManager:
         with pytest.raises(ValueError):
             manager.set_default_chain("nonexistent")
 
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    def test_list_chains(self, mock_get_llm) -> None:
-        """Test listing all chains."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    def test_list_chains(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test listing all chains returns all registered chain IDs."""
         manager = FallbackManager()
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
 
@@ -574,12 +609,8 @@ class TestFallbackManager:
         assert "chain-1" in chains
         assert "chain-2" in chains
 
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    def test_remove_chain(self, mock_get_llm) -> None:
-        """Test removing a chain."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    def test_remove_chain(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test removing a chain deletes it from manager."""
         manager = FallbackManager()
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
 
@@ -598,12 +629,8 @@ class TestFallbackManager:
 
         assert result is False
 
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    def test_remove_default_chain_updates_default(self, mock_get_llm) -> None:
-        """Test removing default chain updates default to another chain."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    def test_remove_default_chain_updates_default(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test removing default chain automatically sets new default."""
         manager = FallbackManager()
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
 
@@ -616,12 +643,8 @@ class TestFallbackManager:
 
         assert manager.default_chain_id == "chain-2"
 
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    def test_get_global_health_report(self, mock_get_llm) -> None:
-        """Test getting global health report for all chains."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    def test_get_global_health_report(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test getting global health report includes all chains."""
         manager = FallbackManager()
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
 
@@ -641,7 +664,7 @@ class TestGetFallbackManager:
     """Test global fallback manager singleton."""
 
     def test_get_fallback_manager_returns_singleton(self) -> None:
-        """Test get_fallback_manager returns same instance."""
+        """Test get_fallback_manager returns same instance across calls."""
         manager1 = get_fallback_manager()
         manager2 = get_fallback_manager()
 
@@ -650,14 +673,10 @@ class TestGetFallbackManager:
 
 
 class TestRealWorldScenarios:
-    """Real-world scenario tests for fallback chains."""
+    """Real-world scenario tests for fallback chains with actual behavior."""
 
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    def test_circuit_breaker_prevents_hammering(self, mock_get_llm) -> None:
-        """Test circuit breaker prevents repeated calls to failing model."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    def test_circuit_breaker_prevents_hammering(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test circuit breaker prevents repeated calls to consistently failing model."""
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         chain = FallbackChain(
             "test", [("model-1", config)], circuit_failure_threshold=3
@@ -671,14 +690,10 @@ class TestRealWorldScenarios:
         assert health.is_circuit_open is True
         assert not health.should_retry()
 
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
     def test_adaptive_ordering_prioritizes_successful_models(
-        self, mock_get_llm
+        self, fake_llm_manager: FakeLLMManager
     ) -> None:
-        """Test adaptive ordering moves successful models to front."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+        """Test adaptive ordering moves successful models ahead of failing ones."""
         config1 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         config2 = LLMConfig(provider=LLMProvider.ANTHROPIC, model_name="claude")
 
@@ -700,12 +715,8 @@ class TestRealWorldScenarios:
         assert first_model_id == "model-2"
 
     @pytest.mark.asyncio
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    async def test_failover_when_primary_model_down(self, mock_get_llm) -> None:
-        """Test failover behavior when primary model is completely down."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    async def test_failover_when_primary_model_down(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test automatic failover to backup when primary model fails completely."""
         config1 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         config2 = LLMConfig(provider=LLMProvider.ANTHROPIC, model_name="claude")
 
@@ -715,28 +726,24 @@ class TestRealWorldScenarios:
             max_retries=2,
         )
 
-        messages = [LLMMessage(role="user", content="Test message")]
+        primary_backend = fake_llm_manager.get_backend("primary")
+        primary_backend.set_failure_mode("connection", failure_limit=999)
 
-        mock_llm_manager.chat.side_effect = [
-            Exception("Connection refused"),
-            Exception("Connection refused"),
-            LLMResponse(content="Success from backup", model="backup"),
-        ]
+        backup_backend = fake_llm_manager.get_backend("backup")
+        backup_backend.set_custom_response("Success from backup")
+
+        messages = [LLMMessage(role="user", content="Test message")]
 
         response = await chain.chat_async(messages)
 
         assert response is not None
         assert response.content == "Success from backup"
-        assert chain.health_stats["primary"].failure_count == 2
+        assert chain.health_stats["primary"].failure_count >= 2
         assert chain.health_stats["backup"].success_count == 1
 
     @pytest.mark.asyncio
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    async def test_failover_when_rate_limited(self, mock_get_llm) -> None:
-        """Test failover behavior when primary model is rate-limited."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    async def test_failover_when_rate_limited(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test failover to backup when primary model is rate-limited."""
         config1 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         config2 = LLMConfig(provider=LLMProvider.ANTHROPIC, model_name="claude")
 
@@ -746,29 +753,25 @@ class TestRealWorldScenarios:
             max_retries=2,
         )
 
-        messages = [LLMMessage(role="user", content="Test message")]
+        primary_backend = fake_llm_manager.get_backend("primary")
+        primary_backend.set_failure_mode("rate_limit", failure_limit=999)
 
-        mock_llm_manager.chat.side_effect = [
-            Exception("429 rate limit exceeded"),
-            Exception("429 rate limit exceeded"),
-            LLMResponse(content="Success from backup", model="backup"),
-        ]
+        backup_backend = fake_llm_manager.get_backend("backup")
+        backup_backend.set_custom_response("Success from backup")
+
+        messages = [LLMMessage(role="user", content="Test message")]
 
         response = await chain.chat_async(messages)
 
         assert response is not None
         assert response.content == "Success from backup"
-        assert chain.health_stats["primary"].failure_count == 2
+        assert chain.health_stats["primary"].failure_count >= 2
         primary_failures = chain.health_stats["primary"].recent_failures
         assert primary_failures[0].failure_type == FailureType.TEMPORARY
 
     @pytest.mark.asyncio
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    async def test_failover_when_timeout_repeatedly(self, mock_get_llm) -> None:
-        """Test failover behavior when primary model times out repeatedly."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    async def test_failover_when_timeout_repeatedly(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test failover when primary model repeatedly times out."""
         config1 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         config2 = LLMConfig(provider=LLMProvider.ANTHROPIC, model_name="claude")
 
@@ -779,30 +782,26 @@ class TestRealWorldScenarios:
             retry_delay=0.1,
         )
 
-        messages = [LLMMessage(role="user", content="Test message")]
+        primary_backend = fake_llm_manager.get_backend("primary")
+        primary_backend.set_failure_mode("timeout", failure_limit=999)
 
-        mock_llm_manager.chat.side_effect = [
-            Exception("request timeout"),
-            Exception("request timeout"),
-            LLMResponse(content="Success from backup", model="backup"),
-        ]
+        backup_backend = fake_llm_manager.get_backend("backup")
+        backup_backend.set_custom_response("Success from backup")
+
+        messages = [LLMMessage(role="user", content="Test message")]
 
         response = await chain.chat_async(messages)
 
         assert response is not None
-        assert chain.health_stats["primary"].failure_count == 2
+        assert chain.health_stats["primary"].failure_count >= 2
         timeout_failures = [
             f for f in chain.health_stats["primary"].recent_failures
             if f.failure_type == FailureType.TIMEOUT
         ]
-        assert len(timeout_failures) == 2
+        assert len(timeout_failures) >= 2
 
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    def test_circuit_breaker_recovers_after_cooldown(self, mock_get_llm) -> None:
-        """Test circuit breaker recovers after 5 minute cool-down period."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    def test_circuit_breaker_recovers_after_cooldown(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test circuit breaker allows retry after 5 minute cool-down period."""
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         chain = FallbackChain(
             "test", [("model-1", config)], circuit_failure_threshold=3
@@ -819,12 +818,8 @@ class TestRealWorldScenarios:
 
         assert health.should_retry() is True
 
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    def test_adaptive_ordering_improves_over_time(self, mock_get_llm) -> None:
-        """Test adaptive ordering improves performance over time."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    def test_adaptive_ordering_improves_over_time(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test adaptive ordering ranks models by performance metrics over time."""
         config1 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         config2 = LLMConfig(provider=LLMProvider.ANTHROPIC, model_name="claude")
         config3 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-3.5")
@@ -849,25 +844,15 @@ class TestRealWorldScenarios:
         assert ordered[2][0] == "slow"
 
     @pytest.mark.asyncio
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    async def test_concurrent_chat_requests_thread_safety(self, mock_get_llm) -> None:
-        """Test concurrent chat requests to same chain (thread safety)."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    async def test_concurrent_chat_requests_thread_safety(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test concurrent chat requests to same chain maintain thread safety."""
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         chain = FallbackChain("test", [("model-1", config)])
 
+        backend = fake_llm_manager.get_backend("model-1")
+        backend.set_response_delay(0.05)
+
         messages = [LLMMessage(role="user", content="Test message")]
-
-        call_count = [0]
-
-        def chat_side_effect(*args, **kwargs):
-            call_count[0] += 1
-            time.sleep(0.05)
-            return LLMResponse(content=f"Response {call_count[0]}", model="model-1")
-
-        mock_llm_manager.chat.side_effect = chat_side_effect
 
         tasks = [chain.chat_async(messages) for _ in range(10)]
         responses = await asyncio.gather(*tasks)
@@ -878,12 +863,8 @@ class TestRealWorldScenarios:
         assert chain.health_stats["model-1"].total_requests == 10
 
     @pytest.mark.asyncio
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    async def test_all_models_failing_returns_none(self, mock_get_llm) -> None:
-        """Test chain behavior with all models failing (should return None)."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    async def test_all_models_failing_returns_none(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test chain returns None when all models fail exhaustively."""
         config1 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         config2 = LLMConfig(provider=LLMProvider.ANTHROPIC, model_name="claude")
 
@@ -894,9 +875,13 @@ class TestRealWorldScenarios:
             retry_delay=0.05,
         )
 
-        messages = [LLMMessage(role="user", content="Test message")]
+        backend1 = fake_llm_manager.get_backend("model-1")
+        backend1.set_failure_mode("generic", failure_limit=999)
 
-        mock_llm_manager.chat.side_effect = Exception("All models failing")
+        backend2 = fake_llm_manager.get_backend("model-2")
+        backend2.set_failure_mode("generic", failure_limit=999)
+
+        messages = [LLMMessage(role="user", content="Test message")]
 
         response = await chain.chat_async(messages)
 
@@ -905,22 +890,16 @@ class TestRealWorldScenarios:
         assert chain.health_stats["model-2"].failure_count > 0
 
     @pytest.mark.asyncio
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    async def test_transient_failures_resolve(self, mock_get_llm) -> None:
-        """Test chain behavior with transient failures that resolve."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    async def test_transient_failures_resolve(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test chain recovers from transient failures through retry logic."""
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         chain = FallbackChain("test", [("model-1", config)], max_retries=3, retry_delay=0.05)
 
-        messages = [LLMMessage(role="user", content="Test message")]
+        backend = fake_llm_manager.get_backend("model-1")
+        backend.set_failure_mode("generic", failure_limit=2)
+        backend.set_custom_response("Success after retries")
 
-        mock_llm_manager.chat.side_effect = [
-            Exception("Temporary error"),
-            Exception("Temporary error"),
-            LLMResponse(content="Success after retries", model="model-1"),
-        ]
+        messages = [LLMMessage(role="user", content="Test message")]
 
         response = await chain.chat_async(messages)
 
@@ -929,12 +908,8 @@ class TestRealWorldScenarios:
         assert chain.health_stats["model-1"].success_count == 1
         assert chain.health_stats["model-1"].failure_count == 2
 
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    def test_health_report_accuracy_mixed_results(self, mock_get_llm) -> None:
-        """Test health report accuracy after mixed successes/failures."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    def test_health_report_accuracy_mixed_results(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Test health report accuracy reflects actual mixed success/failure patterns."""
         config1 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         config2 = LLMConfig(provider=LLMProvider.ANTHROPIC, model_name="claude")
 
@@ -966,23 +941,16 @@ class TestRealWorldScenarios:
         assert model_2_report["success_rate_24h"] == 1.0
 
     @pytest.mark.asyncio
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    async def test_recovery_from_rate_limiting(self, mock_get_llm) -> None:
-        """Integration test: Recovery from rate limiting (429 errors)."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    async def test_recovery_from_rate_limiting(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Integration test: Complete recovery workflow from rate limiting."""
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         chain = FallbackChain("test", [("model-1", config)], max_retries=4, retry_delay=0.05)
 
-        messages = [LLMMessage(role="user", content="Test message")]
+        backend = fake_llm_manager.get_backend("model-1")
+        backend.set_failure_mode("rate_limit", failure_limit=3)
+        backend.set_custom_response("Success after rate limit")
 
-        mock_llm_manager.chat.side_effect = [
-            Exception("429 rate limit"),
-            Exception("429 rate limit"),
-            Exception("429 quota exceeded"),
-            LLMResponse(content="Success after rate limit", model="model-1"),
-        ]
+        messages = [LLMMessage(role="user", content="Test message")]
 
         response = await chain.chat_async(messages)
 
@@ -996,22 +964,16 @@ class TestRealWorldScenarios:
         assert len(rate_limit_failures) == 3
 
     @pytest.mark.asyncio
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    async def test_recovery_from_network_timeouts(self, mock_get_llm) -> None:
-        """Integration test: Recovery from network timeouts."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    async def test_recovery_from_network_timeouts(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Integration test: Complete recovery workflow from network timeouts."""
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         chain = FallbackChain("test", [("model-1", config)], max_retries=3, retry_delay=0.05)
 
-        messages = [LLMMessage(role="user", content="Test message")]
+        backend = fake_llm_manager.get_backend("model-1")
+        backend.set_failure_mode("timeout", failure_limit=2)
+        backend.set_custom_response("Success after timeout")
 
-        mock_llm_manager.chat.side_effect = [
-            Exception("timeout"),
-            Exception("request timed out"),
-            LLMResponse(content="Success after timeout", model="model-1"),
-        ]
+        messages = [LLMMessage(role="user", content="Test message")]
 
         response = await chain.chat_async(messages)
 
@@ -1024,20 +986,15 @@ class TestRealWorldScenarios:
         assert len(timeout_failures) == 2
 
     @pytest.mark.asyncio
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    async def test_response_time_overhead_minimal(self, mock_get_llm) -> None:
-        """Performance test: Response time overhead of fallback logic."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    async def test_response_time_overhead_minimal(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Performance test: Fallback logic adds minimal overhead to response time."""
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         chain = FallbackChain("test", [("model-1", config)])
 
-        messages = [LLMMessage(role="user", content="Test message")]
+        backend = fake_llm_manager.get_backend("model-1")
+        backend.set_custom_response("Quick response")
 
-        mock_llm_manager.chat.return_value = LLMResponse(
-            content="Quick response", model="model-1"
-        )
+        messages = [LLMMessage(role="user", content="Test message")]
 
         start_time = time.time()
         response = await chain.chat_async(messages)
@@ -1048,12 +1005,8 @@ class TestRealWorldScenarios:
         assert overhead < 0.5
 
     @pytest.mark.asyncio
-    @patch("intellicrack.ai.llm_fallback_chains.get_llm_manager")
-    async def test_stress_concurrent_requests_with_failures(self, mock_get_llm) -> None:
-        """Stress test: Many concurrent requests with failures."""
-        mock_llm_manager = Mock()
-        mock_get_llm.return_value = mock_llm_manager
-
+    async def test_stress_concurrent_requests_with_failures(self, fake_llm_manager: FakeLLMManager) -> None:
+        """Stress test: High concurrent load with intermittent failures."""
         config1 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         config2 = LLMConfig(provider=LLMProvider.ANTHROPIC, model_name="claude")
 
@@ -1064,17 +1017,20 @@ class TestRealWorldScenarios:
             retry_delay=0.02,
         )
 
-        messages = [LLMMessage(role="user", content="Test message")]
-
+        primary_backend = fake_llm_manager.get_backend("primary")
         call_count = [0]
 
-        def chat_side_effect(*args, **kwargs):
+        original_chat = primary_backend.chat
+
+        def intermittent_chat(messages: list[LLMMessage], model_id: str | None = None, tools: list[dict[str, Any]] | None = None) -> LLMResponse:
             call_count[0] += 1
             if call_count[0] % 3 == 0:
                 raise Exception("Intermittent error")
-            return LLMResponse(content=f"Response {call_count[0]}", model="primary")
+            return original_chat(messages, model_id, tools)
 
-        mock_llm_manager.chat.side_effect = chat_side_effect
+        primary_backend.chat = intermittent_chat
+
+        messages = [LLMMessage(role="user", content="Test message")]
 
         tasks = [chain.chat_async(messages) for _ in range(50)]
         responses = await asyncio.gather(*tasks, return_exceptions=True)

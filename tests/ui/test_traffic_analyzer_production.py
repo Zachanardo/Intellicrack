@@ -3,7 +3,7 @@
 Tests real network traffic capture and analysis functionality.
 """
 
-from unittest.mock import MagicMock, patch
+from typing import Any
 
 import pytest
 
@@ -16,17 +16,77 @@ from intellicrack.ui.traffic_analyzer import (
 )
 
 
+class FakeQWidget:
+    """Real test double for QWidget parent."""
+
+    def __init__(self) -> None:
+        self.title: str = ""
+        self.geometry: tuple[int, int, int, int] = (0, 0, 800, 600)
+        self.visible: bool = False
+        self.children: list[Any] = []
+
+    def setWindowTitle(self, title: str) -> None:
+        self.title = title
+
+    def setGeometry(self, x: int, y: int, width: int, height: int) -> None:
+        self.geometry = (x, y, width, height)
+
+    def show(self) -> None:
+        self.visible = True
+
+    def hide(self) -> None:
+        self.visible = False
+
+    def close(self) -> None:
+        self.visible = False
+
+
+class FakeQDialog:
+    """Real test double for QDialog."""
+
+    def __init__(self, parent: Any = None) -> None:
+        self.parent: Any = parent
+        self.title: str = ""
+        self.modal: bool = False
+        self.minimum_size: tuple[int, int] = (0, 0)
+        self.result_code: int = 0
+        self.executed: bool = False
+
+    def setWindowTitle(self, title: str) -> None:
+        self.title = title
+
+    def setModal(self, modal: bool) -> None:
+        self.modal = modal
+
+    def setMinimumSize(self, width: int, height: int) -> None:
+        self.minimum_size = (width, height)
+
+    def exec(self) -> int:
+        self.executed = True
+        return self.result_code
+
+
 @pytest.fixture
-def mock_parent() -> MagicMock:
-    """Create mock parent widget."""
-    return MagicMock()
+def fake_parent() -> FakeQWidget:
+    """Create real test double for parent widget."""
+    return FakeQWidget()
 
 
-def test_traffic_analyzer_initialization(mock_parent: MagicMock) -> None:
+def test_traffic_analyzer_initialization(fake_parent: FakeQWidget, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test traffic analyzer initializes."""
-    with patch("intellicrack.ui.traffic_analyzer.QDialog.__init__"):
-        analyzer = TrafficAnalyzer(mock_parent)
-        assert analyzer is not None
+    original_init_called: bool = False
+
+    def fake_qdialog_init(self: Any, parent: Any = None) -> None:
+        nonlocal original_init_called
+        original_init_called = True
+
+    monkeypatch.setattr("intellicrack.ui.traffic_analyzer.QDialog.__init__", fake_qdialog_init)
+
+    analyzer = TrafficAnalyzer()
+    assert analyzer is not None
+    assert analyzer.analyzer is None
+    assert analyzer.analysis_thread is None
+    assert analyzer.capture_active is False
 
 
 def test_license_connection_info_typed_dict() -> None:

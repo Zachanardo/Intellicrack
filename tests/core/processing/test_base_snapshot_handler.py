@@ -6,7 +6,6 @@ Validates real snapshot operations without mocks.
 
 import time
 from typing import Any
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -25,6 +24,66 @@ class ConcreteSnapshotHandler(BaseSnapshotHandler):
             "cpu_diff": s2.get("cpu", 0) - s1.get("cpu", 0),
             "platform": "test_platform",
         }
+
+
+class FakeSnapshotComparison:
+    """Real test double for snapshot comparison operations."""
+
+    def __init__(self) -> None:
+        self.call_count: int = 0
+        self.calls: list[tuple[dict[str, Any], str, str]] = []
+        self.return_success: bool = True
+        self.return_data: dict[str, Any] | None = None
+        self.return_error: str | None = None
+        self.raise_exception: Exception | None = None
+
+    def __call__(
+        self,
+        snapshots_dict: dict[str, Any],
+        snapshot1: str,
+        snapshot2: str,
+        logger: Any = None,
+    ) -> tuple[bool, dict[str, Any] | None, str | None]:
+        """Fake implementation of start_snapshot_comparison."""
+        self.call_count += 1
+        self.calls.append((snapshots_dict, snapshot1, snapshot2))
+
+        if self.raise_exception:
+            raise self.raise_exception
+
+        if snapshot1 not in snapshots_dict:
+            return False, None, f"Snapshot '{snapshot1}' not found"
+
+        if snapshot2 not in snapshots_dict:
+            return False, None, f"Snapshot '{snapshot2}' not found"
+
+        if not self.return_success:
+            return False, None, self.return_error
+
+        if self.return_data is not None:
+            return True, self.return_data, None
+
+        s1 = snapshots_dict[snapshot1]
+        s2 = snapshots_dict[snapshot2]
+        return True, {"s1": s1, "s2": s2}, None
+
+    def set_success_response(
+        self, s1_data: dict[str, Any], s2_data: dict[str, Any]
+    ) -> None:
+        """Configure fake to return successful comparison."""
+        self.return_success = True
+        self.return_data = {"s1": s1_data, "s2": s2_data}
+        self.return_error = None
+
+    def set_error_response(self, error_message: str) -> None:
+        """Configure fake to return error."""
+        self.return_success = False
+        self.return_data = None
+        self.return_error = error_message
+
+    def set_exception(self, exception: Exception) -> None:
+        """Configure fake to raise exception."""
+        self.raise_exception = exception
 
 
 class TestBaseSnapshotHandlerInit:
@@ -210,102 +269,124 @@ class TestGetCurrentTimestamp:
 class TestCompareSnapshotsBase:
     """Test compare_snapshots_base method."""
 
-    def test_compare_snapshots_base_returns_error_for_missing_snapshot1(self) -> None:
+    def test_compare_snapshots_base_returns_error_for_missing_snapshot1(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """compare_snapshots_base returns error when first snapshot missing."""
         handler = ConcreteSnapshotHandler()
         handler.snapshots["snap2"] = {"timestamp": 200}
 
-        with patch("intellicrack.utils.system.snapshot_common.start_snapshot_comparison") as mock_compare:
-            mock_compare.return_value = (False, {}, "Snapshot 'snap1' not found")
+        fake_compare = FakeSnapshotComparison()
+        monkeypatch.setattr(
+            "intellicrack.utils.system.snapshot_common.start_snapshot_comparison",
+            fake_compare,
+        )
 
-            result = handler.compare_snapshots_base("snap1", "snap2")
+        result = handler.compare_snapshots_base("snap1", "snap2")
 
-            assert "error" in result
-            assert "snap1" in result["error"] or "not found" in result["error"].lower()
+        assert "error" in result
+        assert "snap1" in result["error"] or "not found" in result["error"].lower()
 
-    def test_compare_snapshots_base_returns_error_for_missing_snapshot2(self) -> None:
+    def test_compare_snapshots_base_returns_error_for_missing_snapshot2(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """compare_snapshots_base returns error when second snapshot missing."""
         handler = ConcreteSnapshotHandler()
         handler.snapshots["snap1"] = {"timestamp": 100}
 
-        with patch("intellicrack.utils.system.snapshot_common.start_snapshot_comparison") as mock_compare:
-            mock_compare.return_value = (False, {}, "Snapshot 'snap2' not found")
+        fake_compare = FakeSnapshotComparison()
+        monkeypatch.setattr(
+            "intellicrack.utils.system.snapshot_common.start_snapshot_comparison",
+            fake_compare,
+        )
 
-            result = handler.compare_snapshots_base("snap1", "snap2")
+        result = handler.compare_snapshots_base("snap1", "snap2")
 
-            assert "error" in result
+        assert "error" in result
 
-    def test_compare_snapshots_base_calculates_timestamp_diff(self) -> None:
+    def test_compare_snapshots_base_calculates_timestamp_diff(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """compare_snapshots_base calculates timestamp difference."""
         handler = ConcreteSnapshotHandler()
 
-        with patch("intellicrack.utils.system.snapshot_common.start_snapshot_comparison") as mock_compare:
-            mock_compare.return_value = (
-                True,
-                {
-                    "s1": {"timestamp": 100, "memory": 1024, "cpu": 50},
-                    "s2": {"timestamp": 200, "memory": 2048, "cpu": 75},
-                },
-                None,
-            )
+        fake_compare = FakeSnapshotComparison()
+        fake_compare.set_success_response(
+            {"timestamp": 100, "memory": 1024, "cpu": 50},
+            {"timestamp": 200, "memory": 2048, "cpu": 75},
+        )
+        monkeypatch.setattr(
+            "intellicrack.utils.system.snapshot_common.start_snapshot_comparison",
+            fake_compare,
+        )
 
-            result = handler.compare_snapshots_base("snap1", "snap2")
+        result = handler.compare_snapshots_base("snap1", "snap2")
 
-            assert result["timestamp_diff"] == 100
-            assert result["success"] is True
+        assert result["timestamp_diff"] == 100
+        assert result["success"] is True
 
-    def test_compare_snapshots_base_includes_comparison_metadata(self) -> None:
+    def test_compare_snapshots_base_includes_comparison_metadata(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """compare_snapshots_base includes snapshot names and comparison time."""
         handler = ConcreteSnapshotHandler()
 
-        with patch("intellicrack.utils.system.snapshot_common.start_snapshot_comparison") as mock_compare:
-            mock_compare.return_value = (
-                True,
-                {
-                    "s1": {"timestamp": 100},
-                    "s2": {"timestamp": 200},
-                },
-                None,
-            )
+        fake_compare = FakeSnapshotComparison()
+        fake_compare.set_success_response(
+            {"timestamp": 100},
+            {"timestamp": 200},
+        )
+        monkeypatch.setattr(
+            "intellicrack.utils.system.snapshot_common.start_snapshot_comparison",
+            fake_compare,
+        )
 
-            result = handler.compare_snapshots_base("snap1", "snap2")
+        result = handler.compare_snapshots_base("snap1", "snap2")
 
-            assert result["snapshot1"] == "snap1"
-            assert result["snapshot2"] == "snap2"
-            assert "comparison_time" in result
-            assert isinstance(result["comparison_time"], float)
+        assert result["snapshot1"] == "snap1"
+        assert result["snapshot2"] == "snap2"
+        assert "comparison_time" in result
+        assert isinstance(result["comparison_time"], float)
 
-    def test_compare_snapshots_base_merges_platform_specific_data(self) -> None:
+    def test_compare_snapshots_base_merges_platform_specific_data(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """compare_snapshots_base merges platform-specific comparison results."""
         handler = ConcreteSnapshotHandler()
 
-        with patch("intellicrack.utils.system.snapshot_common.start_snapshot_comparison") as mock_compare:
-            mock_compare.return_value = (
-                True,
-                {
-                    "s1": {"timestamp": 100, "memory": 1024, "cpu": 50},
-                    "s2": {"timestamp": 200, "memory": 2048, "cpu": 75},
-                },
-                None,
-            )
+        fake_compare = FakeSnapshotComparison()
+        fake_compare.set_success_response(
+            {"timestamp": 100, "memory": 1024, "cpu": 50},
+            {"timestamp": 200, "memory": 2048, "cpu": 75},
+        )
+        monkeypatch.setattr(
+            "intellicrack.utils.system.snapshot_common.start_snapshot_comparison",
+            fake_compare,
+        )
 
-            result = handler.compare_snapshots_base("snap1", "snap2")
+        result = handler.compare_snapshots_base("snap1", "snap2")
 
-            assert result["memory_diff"] == 1024
-            assert result["cpu_diff"] == 25
-            assert result["platform"] == "test_platform"
+        assert result["memory_diff"] == 1024
+        assert result["cpu_diff"] == 25
+        assert result["platform"] == "test_platform"
 
-    def test_compare_snapshots_base_handles_exception(self) -> None:
+    def test_compare_snapshots_base_handles_exception(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """compare_snapshots_base handles exceptions gracefully."""
         handler = ConcreteSnapshotHandler()
 
-        with patch("intellicrack.utils.system.snapshot_common.start_snapshot_comparison") as mock_compare:
-            mock_compare.side_effect = Exception("Unexpected error")
+        fake_compare = FakeSnapshotComparison()
+        fake_compare.set_exception(Exception("Unexpected error"))
+        monkeypatch.setattr(
+            "intellicrack.utils.system.snapshot_common.start_snapshot_comparison",
+            fake_compare,
+        )
 
-            result = handler.compare_snapshots_base("snap1", "snap2")
+        result = handler.compare_snapshots_base("snap1", "snap2")
 
-            assert "error" in result
-            assert "Comparison failed" in result["error"] or "Unexpected error" in result["error"]
+        assert "error" in result
+        assert "Comparison failed" in result["error"] or "Unexpected error" in result["error"]
 
 
 class TestPlatformSpecificComparison:
@@ -427,47 +508,53 @@ class TestAbstractMethods:
 class TestRealWorldScenarios:
     """Test real-world snapshot comparison scenarios."""
 
-    def test_compare_process_memory_snapshots(self) -> None:
+    def test_compare_process_memory_snapshots(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Compare snapshots showing process memory growth."""
         handler = ConcreteSnapshotHandler()
 
-        with patch("intellicrack.utils.system.snapshot_common.start_snapshot_comparison") as mock_compare:
-            mock_compare.return_value = (
-                True,
-                {
-                    "s1": {"timestamp": 1000, "memory": 512 * 1024, "cpu": 10},
-                    "s2": {"timestamp": 2000, "memory": 1024 * 1024, "cpu": 25},
-                },
-                None,
-            )
+        fake_compare = FakeSnapshotComparison()
+        fake_compare.set_success_response(
+            {"timestamp": 1000, "memory": 512 * 1024, "cpu": 10},
+            {"timestamp": 2000, "memory": 1024 * 1024, "cpu": 25},
+        )
+        monkeypatch.setattr(
+            "intellicrack.utils.system.snapshot_common.start_snapshot_comparison",
+            fake_compare,
+        )
 
-            result = handler.compare_snapshots_base("before_crack", "after_crack")
+        result = handler.compare_snapshots_base("before_crack", "after_crack")
 
-            assert result["memory_diff"] == 512 * 1024
-            assert result["cpu_diff"] == 15
-            assert result["timestamp_diff"] == 1000
+        assert result["memory_diff"] == 512 * 1024
+        assert result["cpu_diff"] == 15
+        assert result["timestamp_diff"] == 1000
 
-    def test_compare_snapshots_detecting_license_bypass(self) -> None:
+    def test_compare_snapshots_detecting_license_bypass(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Compare snapshots before and after license bypass."""
         handler = ConcreteSnapshotHandler()
 
-        with patch("intellicrack.utils.system.snapshot_common.start_snapshot_comparison") as mock_compare:
-            mock_compare.return_value = (
-                True,
-                {
-                    "s1": {"timestamp": 5000, "memory": 2048, "cpu": 30},
-                    "s2": {"timestamp": 6000, "memory": 2560, "cpu": 35},
-                },
-                None,
-            )
+        fake_compare = FakeSnapshotComparison()
+        fake_compare.set_success_response(
+            {"timestamp": 5000, "memory": 2048, "cpu": 30},
+            {"timestamp": 6000, "memory": 2560, "cpu": 35},
+        )
+        monkeypatch.setattr(
+            "intellicrack.utils.system.snapshot_common.start_snapshot_comparison",
+            fake_compare,
+        )
 
-            result = handler.compare_snapshots_base("pre_bypass", "post_bypass")
+        result = handler.compare_snapshots_base("pre_bypass", "post_bypass")
 
-            assert result["success"] is True
-            assert result["memory_diff"] == 512
-            assert "comparison_time" in result
+        assert result["success"] is True
+        assert result["memory_diff"] == 512
+        assert "comparison_time" in result
 
-    def test_sequential_snapshot_comparisons(self) -> None:
+    def test_sequential_snapshot_comparisons(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Multiple sequential snapshot comparisons work correctly."""
         handler = ConcreteSnapshotHandler()
 
@@ -478,17 +565,17 @@ class TestRealWorldScenarios:
         ]
 
         for snap1_name, snap2_name, ts1, ts2 in comparisons:
-            with patch("intellicrack.utils.system.snapshot_common.start_snapshot_comparison") as mock_compare:
-                mock_compare.return_value = (
-                    True,
-                    {
-                        "s1": {"timestamp": ts1, "memory": 1000, "cpu": 50},
-                        "s2": {"timestamp": ts2, "memory": 1000, "cpu": 50},
-                    },
-                    None,
-                )
+            fake_compare = FakeSnapshotComparison()
+            fake_compare.set_success_response(
+                {"timestamp": ts1, "memory": 1000, "cpu": 50},
+                {"timestamp": ts2, "memory": 1000, "cpu": 50},
+            )
+            monkeypatch.setattr(
+                "intellicrack.utils.system.snapshot_common.start_snapshot_comparison",
+                fake_compare,
+            )
 
-                result = handler.compare_snapshots_base(snap1_name, snap2_name)
+            result = handler.compare_snapshots_base(snap1_name, snap2_name)
 
-                assert result["success"] is True
-                assert result["timestamp_diff"] == 100
+            assert result["success"] is True
+            assert result["timestamp_diff"] == 100

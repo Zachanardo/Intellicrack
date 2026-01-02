@@ -18,18 +18,20 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-import hashlib
-import hmac
-import io
 import json
 import logging
-import os
-import pickle  # noqa: S403
+import pickle
 import sys
 import traceback
 from pathlib import Path
 from types import TracebackType
 from typing import Any, cast
+
+from .secure_serialization import (
+    RestrictedUnpickler as BaseRestrictedUnpickler,
+    secure_pickle_dump,
+    secure_pickle_load,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -48,130 +50,115 @@ try:
 except ImportError as e:
     logger.exception("Import error in exception_utils: %s", e)
 
-# Security configuration for pickle
-PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
+class ExceptionUnpickler(BaseRestrictedUnpickler):
+    """Extended unpickler that allows exception types for exception serialization.
 
-class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
-    """Restricted unpickler that only allows safe classes."""
+    Extends the base RestrictedUnpickler with additional exception classes
+    needed for serializing and deserializing exception information.
+    """
+
+    EXCEPTION_CLASSES: frozenset[str] = frozenset({
+        # Built-in exception types
+        "Exception",
+        "BaseException",
+        "ValueError",
+        "TypeError",
+        "KeyError",
+        "AttributeError",
+        "RuntimeError",
+        "OSError",
+        "IOError",
+        "FileNotFoundError",
+        "PermissionError",
+        "TimeoutError",
+        "ConnectionError",
+        "ImportError",
+        "ModuleNotFoundError",
+        "StopIteration",
+        "GeneratorExit",
+        "SystemExit",
+        "KeyboardInterrupt",
+        "AssertionError",
+        "IndexError",
+        "MemoryError",
+        "RecursionError",
+        "OverflowError",
+        "ZeroDivisionError",
+        "UnicodeError",
+        "UnicodeDecodeError",
+        "UnicodeEncodeError",
+        # traceback safe types for exception serialization
+        "TracebackException",
+        "FrameSummary",
+        "StackSummary",
+        # types module - safe descriptor types
+        "TracebackType",
+        "FrameType",
+        "CodeType",
+        "SimpleNamespace",
+        "MappingProxyType",
+        "ModuleType",
+    })
+
+    EXCEPTION_MODULES: frozenset[str] = frozenset({
+        "traceback",
+        "types",
+    })
+
+    EXCEPTION_INTELLICRACK_CLASSES: frozenset[str] = frozenset({
+        "IntellicrackError",
+        "AnalysisError",
+        "ProtectionError",
+        "ConfigurationError",
+        "NetworkError",
+        "BinaryFormatError",
+        "ExceptionContext",
+        "ExceptionInfo",
+    })
 
     def find_class(self, module: str, name: str) -> type[object]:
-        """Override ``find_class`` to restrict allowed classes.
+        """Override to also allow exception-related classes.
 
         Args:
-            module: The module name of the class to unpickle
-            name: The class name to unpickle
+            module: The module name of the class to unpickle.
+            name: The class name to unpickle.
 
         Returns:
-            The class object if allowed
+            The class object if allowed.
 
         Raises:
-            pickle.UnpicklingError: If the class is not in the allowed list
+            UnpicklingError: If the class is not in the allowed list.
 
         """
-        ALLOWED_MODULES = {
-            "numpy",
-            "numpy.core.multiarray",
-            "numpy.core.numeric",
-            "pandas",
-            "pandas.core.frame",
-            "pandas.core.series",
-            "sklearn",
-            "torch",
-            "tensorflow",
-            "__builtin__",
-            "builtins",
-            "collections",
-            "collections.abc",
-            "traceback",
-            "types",
-        }
+        # Check exception-specific classes first
+        if module == "builtins" and name in self.EXCEPTION_CLASSES:
+            return cast("type[object]", super(BaseRestrictedUnpickler, self).find_class(module, name))
 
-        # Allow model classes from our own modules
-        if module.startswith("intellicrack."):
-            result: type[object] = cast("type[object]", super().find_class(module, name))
-            return result
+        if module in self.EXCEPTION_MODULES and name in self.EXCEPTION_CLASSES:
+            return cast("type[object]", super(BaseRestrictedUnpickler, self).find_class(module, name))
 
-        # Check if module is in allowed list
-        if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
-            result = cast("type[object]", super().find_class(module, name))
-            return result
+        if module.startswith("intellicrack.") and name in self.EXCEPTION_INTELLICRACK_CLASSES:
+            return cast("type[object]", super(BaseRestrictedUnpickler, self).find_class(module, name))
 
-        # Deny everything else
-        error_msg = f"Attempted to load unsafe class {module}.{name}"
-        logger.exception(error_msg)
-        raise pickle.UnpicklingError(error_msg)
+        # Fall back to base class check
+        return cast("type[object]", super().find_class(module, name))
 
 
-def secure_pickle_dump(obj: object, file_path: str) -> None:
-    """Securely dump object with integrity check.
-
-    Args:
-        obj: Object to pickle and save
-        file_path: Path where the pickled object will be saved
-
-    Raises:
-        OSError: If file cannot be written
-
-    """
-    # Serialize object
-    data = pickle.dumps(obj)
-
-    # Calculate HMAC for integrity
-    mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
-
-    # Write MAC + data
-    with open(file_path, "wb") as f:
-        f.write(mac)
-        f.write(data)
-
-
-def secure_pickle_load(file_path: str) -> object:
-    """Securely load object with integrity verification.
-
-    Args:
-        file_path: Path to the pickled file to load
-
-    Returns:
-        The unpickled object
-
-    Raises:
-        ValueError: If integrity check fails or file format is invalid
-        OSError: If file cannot be read
-
-    """
-    try:
-        # Try joblib first as it's safer for ML models
-        import joblib
-
-        return joblib.load(file_path)
-    except (ImportError, ValueError):
-        # Fallback to pickle with restricted unpickler
-        pass
-
-    with open(file_path, "rb") as f:
-        # Read MAC
-        stored_mac = f.read(32)  # SHA256 produces 32 bytes
-        data = f.read()
-
-    # Verify integrity
-    expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
-    if not hmac.compare_digest(stored_mac, expected_mac):
-        error_msg = "Pickle file integrity check failed - possible tampering detected"
-        logger.exception(error_msg)
-        raise ValueError(error_msg)
-
-    # Load object using RestrictedUnpickler
-    return RestrictedUnpickler(io.BytesIO(data)).load()
+# Re-export for backward compatibility
+RestrictedUnpickler = ExceptionUnpickler
 
 
 def handle_exception(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None) -> None:
     """Global exception handler for unhandled exceptions.
 
     Args:
-        exc_type: Exception type
-        exc_value: Exception instance
-        exc_traceback: Exception traceback object
+        exc_type: Exception type.
+        exc_value: Exception instance.
+        exc_traceback: Exception traceback object.
+
+    Returns:
+        None
 
     """
     if issubclass(exc_type, KeyboardInterrupt):
@@ -193,9 +180,12 @@ def _display_exception_dialog(exc_type: type[BaseException], exc_value: BaseExce
     """Display an exception dialog to the user.
 
     Args:
-        exc_type: Exception type
-        exc_value: Exception instance
-        exc_traceback: Exception traceback object
+        exc_type: Exception type.
+        exc_value: Exception instance.
+        exc_traceback: Exception traceback object.
+
+    Returns:
+        None
 
     """
     if QMessageBox is None or QApplication is None:
@@ -226,9 +216,12 @@ def _report_error(exc_type: type[BaseException], exc_value: BaseException, exc_t
     """Report error to log file and optionally to remote service.
 
     Args:
-        exc_type: Exception type
-        exc_value: Exception instance
-        exc_traceback: Exception traceback object
+        exc_type: Exception type.
+        exc_value: Exception instance.
+        exc_traceback: Exception traceback object.
+
+    Returns:
+        None
 
     """
     try:
@@ -271,10 +264,15 @@ def load_config(config_path: str = "config.json") -> dict[str, Any]:
     """Load configuration from JSON file.
 
     Args:
-        config_path: Path to configuration file
+        config_path: Path to configuration file.
 
     Returns:
-        Configuration dictionary
+        Configuration dictionary.
+
+    Raises:
+        OSError: If the file cannot be read due to permission or I/O errors.
+        ValueError: If the JSON file is malformed or contains invalid data.
+        RuntimeError: If an unexpected error occurs during configuration loading.
 
     """
     try:
@@ -295,11 +293,11 @@ def save_config(config: dict[str, Any], config_path: str = "config.json") -> boo
     """Save configuration to JSON file.
 
     Args:
-        config: Configuration dictionary to save
-        config_path: Path to configuration file
+        config: Configuration dictionary to save.
+        config_path: Path to configuration file.
 
     Returns:
-        True if successful, False otherwise
+        True if successful, False otherwise.
 
     """
     try:
@@ -317,11 +315,11 @@ def setup_file_logging(log_file: str = "intellicrack.log", level: int = logging.
     """Set up file logging for the application.
 
     Args:
-        log_file: Path to log file
-        level: Logging level
+        log_file: Path to log file.
+        level: Logging level.
 
     Returns:
-        Configured logger
+        Configured logger.
 
     """
     try:
@@ -357,7 +355,7 @@ def create_sample_plugins() -> bool:
     """Create sample plugin files for demonstration.
 
     Returns:
-        True if successful, False otherwise
+        True if successful, False otherwise.
 
     """
     try:
@@ -429,15 +427,16 @@ def load_ai_model(model_path: str) -> object | None:
     security validation to prevent loading maliciously crafted model files.
 
     Args:
-        model_path: Path to model file (must be .joblib, .pkl, or .onnx)
+        model_path: Path to model file (must be .joblib, .pkl, or .onnx).
 
     Returns:
         Loaded model object, or None if loading fails due to unsupported
-        format, missing dependencies, or security restrictions
+        format, missing dependencies, or security restrictions.
 
     Raises:
-        OSError: If model file cannot be accessed
-        ValueError: If pickle file fails integrity check
+        OSError: If the file cannot be accessed due to permission or I/O errors.
+        ValueError: If the model file is corrupted or integrity check fails.
+        RuntimeError: If an unexpected error occurs during model loading.
 
     """
     try:

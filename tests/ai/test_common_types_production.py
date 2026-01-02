@@ -186,6 +186,8 @@ ValueError: Invalid modulus size"""
             success=True, output="Step 2", error="", exit_code=0, runtime_ms=100
         )
 
+        assert result1.timestamp is not None
+        assert result2.timestamp is not None
         assert result2.timestamp > result1.timestamp
 
     def test_execution_result_partial_success(self) -> None:

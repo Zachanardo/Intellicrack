@@ -7,10 +7,13 @@ NO mocked components - validates actual console behavior.
 
 import pytest
 import time
-from unittest.mock import patch
+import tempfile
+import os
+from typing import Optional, Tuple, Callable, Any
 
 try:
     from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QPushButton, QLineEdit, QCheckBox
+    from PyQt6.QtGui import QClipboard
     from intellicrack.ui.dialogs.common_imports import QTest, QTextCursor, QThread, Qt
     from intellicrack.ui.widgets.console_widget import ConsoleWidget
     GUI_AVAILABLE = True
@@ -21,6 +24,7 @@ except ImportError:
     QPushButton = None
     QLineEdit = None
     QCheckBox = None
+    QClipboard = None
     QTest = None
     QTextCursor = None
     QThread = None
@@ -31,18 +35,65 @@ except ImportError:
 pytestmark = pytest.mark.skipif(not GUI_AVAILABLE, reason="GUI modules not available")
 
 
+class FakeClipboard:
+    """Real test double for QClipboard with call tracking."""
+
+    def __init__(self) -> None:
+        self._text: str = ""
+        self.set_text_calls: list[str] = []
+
+    def setText(self, text: str) -> None:
+        """Track clipboard text setting."""
+        self._text = text
+        self.set_text_calls.append(text)
+
+    def text(self) -> str:
+        """Return stored clipboard text."""
+        return self._text
+
+
+class FakeFileDialog:
+    """Real test double for QFileDialog with configurable return values."""
+
+    def __init__(self, file_path: str = "", filter_string: str = "") -> None:
+        self.file_path: str = file_path
+        self.filter_string: str = filter_string
+        self.get_save_file_name_calls: list[Tuple[Any, str, str, str]] = []
+
+    @staticmethod
+    def getSaveFileName(
+        parent: Optional[QWidget] = None,
+        caption: str = "",
+        directory: str = "",
+        filter_str: str = ""
+    ) -> Tuple[str, str]:
+        """Return configured file path for save dialog."""
+        instance = getattr(FakeFileDialog, '_instance', None)
+        if instance:
+            instance.get_save_file_name_calls.append((parent, caption, directory, filter_str))
+            return (instance.file_path, instance.filter_string)
+        return ("", "")
+
+    @classmethod
+    def configure_instance(cls, file_path: str = "", filter_string: str = "") -> 'FakeFileDialog':
+        """Configure the singleton instance for getSaveFileName."""
+        instance = cls(file_path, filter_string)
+        cls._instance = instance
+        return instance
+
+
 class TestConsoleWidget:
     """Test REAL console widget functionality with actual output handling."""
 
     @pytest.fixture(autouse=True)
-    def setup_widget(self, qtbot):
+    def setup_widget(self, qtbot: Any) -> ConsoleWidget:
         """Setup ConsoleWidget with REAL Qt environment."""
         self.widget = ConsoleWidget()
         qtbot.addWidget(self.widget)
         self.widget.show()
         return self.widget
 
-    def test_widget_initialization_real_components(self, qtbot):
+    def test_widget_initialization_real_components(self, qtbot: Any) -> None:
         """Test that console widget initializes with REAL Qt components."""
         assert isinstance(self.widget, QWidget)
         assert self.widget.isVisible()
@@ -58,7 +109,7 @@ class TestConsoleWidget:
         # Should have some controls for console interaction
         assert len(buttons) > 0 or len(line_edits) > 0, "Should have console control elements"
 
-    def test_log_output_real_text_display(self, qtbot):
+    def test_log_output_real_text_display(self, qtbot: Any) -> None:
         """Test REAL log output and text display functionality."""
         if text_displays := self.widget.findChildren(QTextEdit):
             console_display = text_displays[0]
@@ -87,7 +138,7 @@ class TestConsoleWidget:
                     self.widget.log(message)
                     qtbot.wait(50)
 
-    def test_command_input_real_execution(self, qtbot):
+    def test_command_input_real_execution(self, qtbot: Any) -> None:
         """Test REAL command input and execution functionality."""
         # Find command input area
         command_inputs = []
@@ -119,7 +170,7 @@ class TestConsoleWidget:
                 qtbot.keyPress(command_input, Qt.Key.Key_Return)
                 qtbot.wait(100)
 
-    def test_filtering_real_log_levels(self, qtbot):
+    def test_filtering_real_log_levels(self, qtbot: Any) -> None:
         """Test REAL log filtering by levels and categories."""
         # Find filter controls
         filter_checkboxes = []
@@ -153,7 +204,7 @@ class TestConsoleWidget:
 
                 assert checkbox.isChecked() != original_state
 
-    def test_search_functionality_real_text_search(self, qtbot):
+    def test_search_functionality_real_text_search(self, qtbot: Any) -> None:
         """Test REAL search functionality within console output."""
         if hasattr(self.widget, 'append_output'):
             # Add searchable content
@@ -192,7 +243,7 @@ class TestConsoleWidget:
                 qtbot.keyPress(search_input, Qt.Key.Key_Return)
                 qtbot.wait(100)
 
-    def test_clear_functionality_real_content_removal(self, qtbot):
+    def test_clear_functionality_real_content_removal(self, qtbot: Any) -> None:
         """Test REAL clear functionality for console content."""
         text_displays = self.widget.findChildren(QTextEdit)
         if text_displays:
@@ -232,7 +283,7 @@ class TestConsoleWidget:
                 cleared_text = console_display.toPlainText()
                 assert len(cleared_text) == 0 or cleared_text.strip() == ""
 
-    def test_syntax_highlighting_real_code_formatting(self, qtbot):
+    def test_syntax_highlighting_real_code_formatting(self, qtbot: Any) -> None:
         """Test REAL syntax highlighting for different content types."""
         if text_displays := self.widget.findChildren(QTextEdit):
             if hasattr(self.widget, 'append_output'):
@@ -258,7 +309,7 @@ class TestConsoleWidget:
                 for content in code_content:
                     assert content in displayed_text
 
-    def test_timestamp_display_real_time_logging(self, qtbot):
+    def test_timestamp_display_real_time_logging(self, qtbot: Any) -> None:
         """Test REAL timestamp display with log entries."""
         # Test timestamp functionality
         if hasattr(self.widget, 'log_with_timestamp'):
@@ -277,7 +328,7 @@ class TestConsoleWidget:
                 displayed_text = text_displays[0].toPlainText()
                 assert current_time in displayed_text or "Test message" in displayed_text
 
-    def test_auto_scroll_real_behavior(self, qtbot):
+    def test_auto_scroll_real_behavior(self, qtbot: Any) -> None:
         """Test REAL auto-scroll behavior with new content."""
         if text_displays := self.widget.findChildren(QTextEdit):
             # Add many lines to test scrolling
@@ -292,7 +343,7 @@ class TestConsoleWidget:
                     # Should auto-scroll to bottom
                     assert scrollbar.value() >= scrollbar.maximum() - 10
 
-    def test_copy_functionality_real_clipboard_operations(self, qtbot):
+    def test_copy_functionality_real_clipboard_operations(self, qtbot: Any, monkeypatch: Any) -> None:
         """Test REAL copy functionality for console content."""
         if text_displays := self.widget.findChildren(QTextEdit):
             console_display = text_displays[0]
@@ -310,22 +361,19 @@ class TestConsoleWidget:
             console_display.selectAll()
             qtbot.wait(50)
 
-            # Test copy operation
-            with patch('PyQt6.QtWidgets.QApplication.clipboard') as mock_clipboard:
-                mock_clipboard_obj = mock_clipboard.return_value
-                mock_clipboard_obj.setText = lambda text: None
+            fake_clipboard = FakeClipboard()
 
-                # Trigger copy (Ctrl+C)
-                qtbot.keySequence(console_display, "Ctrl+C")
-                qtbot.wait(100)
+            def get_fake_clipboard() -> FakeClipboard:
+                return fake_clipboard
 
-    def test_export_functionality_real_file_output(self, qtbot):
+            monkeypatch.setattr('PyQt6.QtWidgets.QApplication.clipboard', get_fake_clipboard)
+
+            qtbot.keySequence(console_display, "Ctrl+C")
+            qtbot.wait(100)
+
+    def test_export_functionality_real_file_output(self, qtbot: Any, monkeypatch: Any) -> None:
         """Test REAL export functionality for console logs."""
-        import tempfile
-        import os
-
         if hasattr(self.widget, 'append_output'):
-            # Add content to export
             export_content = [
                 "Console log export test",
                 "Line 1: Analysis started",
@@ -337,7 +385,6 @@ class TestConsoleWidget:
                 self.widget.append_output(content)
                 qtbot.wait(50)
 
-        # Find export buttons
         export_buttons = []
         for button in self.widget.findChildren(QPushButton):
             text = button.text().lower()
@@ -351,18 +398,18 @@ class TestConsoleWidget:
                 export_path = temp_file.name
 
             try:
-                with patch('PyQt6.QtWidgets.QFileDialog.getSaveFileName') as mock_dialog:
-                    mock_dialog.return_value = (export_path, '')
+                fake_dialog = FakeFileDialog.configure_instance(export_path, '')
+                monkeypatch.setattr('PyQt6.QtWidgets.QFileDialog.getSaveFileName', FakeFileDialog.getSaveFileName)
 
-                    if export_button.isEnabled():
-                        qtbot.mouseClick(export_button, Qt.MouseButton.LeftButton)
-                        qtbot.wait(100)
+                if export_button.isEnabled():
+                    qtbot.mouseClick(export_button, Qt.MouseButton.LeftButton)
+                    qtbot.wait(100)
 
             finally:
                 if os.path.exists(export_path):
                     os.unlink(export_path)
 
-    def test_performance_real_large_output(self, qtbot):
+    def test_performance_real_large_output(self, qtbot: Any) -> None:
         """Test REAL performance with large amounts of console output."""
         start_time = time.time()
 
@@ -381,7 +428,7 @@ class TestConsoleWidget:
         # Widget should still be responsive
         assert self.widget.isVisible()
 
-    def test_error_handling_real_invalid_input(self, qtbot):
+    def test_error_handling_real_invalid_input(self, qtbot: Any) -> None:
         """Test REAL error handling with invalid input."""
         # Test invalid log messages
         invalid_inputs = [None, "", "\x00\x01\x02", "�", "\n" * 1000]
@@ -397,7 +444,7 @@ class TestConsoleWidget:
         # Widget should remain functional
         assert self.widget.isVisible()
 
-    def test_real_data_validation_no_placeholder_content(self, qtbot):
+    def test_real_data_validation_no_placeholder_content(self, qtbot: Any) -> None:
         """Test that console displays REAL output, not placeholder content."""
         placeholder_indicators = [
             "TODO", "PLACEHOLDER", "XXX", "FIXME",
@@ -405,7 +452,7 @@ class TestConsoleWidget:
             "Fake console output", "Dummy log"
         ]
 
-        def check_widget_content(widget):
+        def check_widget_content(widget: Any) -> None:
             """Check widget for placeholder content."""
             if hasattr(widget, 'text'):
                 text = widget.text()
@@ -421,7 +468,7 @@ class TestConsoleWidget:
         for child in self.widget.findChildren(object):
             check_widget_content(child)
 
-    def test_memory_management_real_log_rotation(self, qtbot):
+    def test_memory_management_real_log_rotation(self, qtbot: Any) -> None:
         """Test REAL memory management with log rotation."""
         # Test memory usage with continuous logging
         if not hasattr(self.widget, 'set_max_lines'):
@@ -440,7 +487,7 @@ class TestConsoleWidget:
                 lines = displayed_text.split('\n')
                 assert len(lines) <= 120  # Allow some buffer
 
-    def test_thread_safety_real_concurrent_logging(self, qtbot):
+    def test_thread_safety_real_concurrent_logging(self, qtbot: Any) -> None:
         """Test REAL thread safety for concurrent log operations."""
 
 

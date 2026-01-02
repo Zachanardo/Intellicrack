@@ -6,7 +6,7 @@ Tests real tool integration with dashboard for monitoring and visualization.
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock
+from typing import Any, Callable, Dict, Generator, List, Optional
 
 import pytest
 
@@ -17,10 +17,56 @@ from intellicrack.dashboard.dashboard_integration import (
 )
 
 
+class FakeGhidraAnalyzer:
+    """Real test double for Ghidra analyzer."""
+
+    def __init__(self) -> None:
+        self.callbacks: List[Callable[..., Any]] = []
+        self.analysis_stats: Dict[str, Any] = {"functions": 100}
+
+    def register_callback(self, callback: Callable[..., Any]) -> None:
+        """Register callback for Ghidra events."""
+        self.callbacks.append(callback)
+
+    def get_analysis_stats(self) -> Dict[str, Any]:
+        """Return analysis statistics."""
+        return self.analysis_stats
+
+
+class FakeFridaAnalyzer:
+    """Real test double for Frida analyzer."""
+
+    def __init__(self) -> None:
+        self.hook_stats: Dict[str, Any] = {"total": 15}
+        self.intercept_count: int = 50
+
+    def get_hook_stats(self) -> Dict[str, Any]:
+        """Return hook statistics."""
+        return self.hook_stats
+
+    def get_intercept_count(self) -> int:
+        """Return number of intercepts."""
+        return self.intercept_count
+
+
+class FakeRadare2Analyzer:
+    """Real test double for Radare2 analyzer."""
+
+    def __init__(self) -> None:
+        pass
+
+
+class FakeAnalyzer:
+    """Generic test double for analyzer instances."""
+
+    def __init__(self) -> None:
+        pass
+
+
 @pytest.fixture
-def dashboard_integration() -> DashboardIntegration:
+def dashboard_integration() -> Generator[DashboardIntegration, None, None]:
     """Create dashboard integration instance."""
-    config = {
+    config: dict[str, object] = {
         "enable_websocket": False,
         "enable_http": False,
         "websocket_port": 8765,
@@ -31,6 +77,24 @@ def dashboard_integration() -> DashboardIntegration:
     integration.shutdown()
 
 
+@pytest.fixture
+def fake_ghidra() -> FakeGhidraAnalyzer:
+    """Create fake Ghidra analyzer."""
+    return FakeGhidraAnalyzer()
+
+
+@pytest.fixture
+def fake_frida() -> FakeFridaAnalyzer:
+    """Create fake Frida analyzer."""
+    return FakeFridaAnalyzer()
+
+
+@pytest.fixture
+def fake_radare2() -> FakeRadare2Analyzer:
+    """Create fake Radare2 analyzer."""
+    return FakeRadare2Analyzer()
+
+
 def test_dashboard_integration_initialization(dashboard_integration: DashboardIntegration) -> None:
     """Test dashboard integration initializes."""
     assert dashboard_integration.dashboard_manager is not None
@@ -38,33 +102,26 @@ def test_dashboard_integration_initialization(dashboard_integration: DashboardIn
     assert len(dashboard_integration.active_analyses) == 0
 
 
-def test_integrate_ghidra(dashboard_integration: DashboardIntegration) -> None:
+def test_integrate_ghidra(dashboard_integration: DashboardIntegration, fake_ghidra: FakeGhidraAnalyzer) -> None:
     """Test Ghidra analyzer integration."""
-    mock_ghidra = MagicMock()
-    mock_ghidra.register_callback = MagicMock()
-
-    dashboard_integration.integrate_ghidra(mock_ghidra)
+    dashboard_integration.integrate_ghidra(fake_ghidra)
 
     assert "ghidra" in dashboard_integration.tool_integrations
     integration = dashboard_integration.tool_integrations["ghidra"]
     assert integration.tool_name == "ghidra"
-    assert integration.analyzer_instance is mock_ghidra
+    assert integration.analyzer_instance is fake_ghidra
 
 
-def test_integrate_frida(dashboard_integration: DashboardIntegration) -> None:
+def test_integrate_frida(dashboard_integration: DashboardIntegration, fake_frida: FakeFridaAnalyzer) -> None:
     """Test Frida analyzer integration."""
-    mock_frida = MagicMock()
-
-    dashboard_integration.integrate_frida(mock_frida)
+    dashboard_integration.integrate_frida(fake_frida)
 
     assert "frida" in dashboard_integration.tool_integrations
 
 
-def test_integrate_radare2(dashboard_integration: DashboardIntegration) -> None:
+def test_integrate_radare2(dashboard_integration: DashboardIntegration, fake_radare2: FakeRadare2Analyzer) -> None:
     """Test Radare2 analyzer integration."""
-    mock_r2 = MagicMock()
-
-    dashboard_integration.integrate_radare2(mock_r2)
+    dashboard_integration.integrate_radare2(fake_radare2)
 
     assert "radare2" in dashboard_integration.tool_integrations
 
@@ -107,7 +164,7 @@ def test_complete_analysis_monitoring(dashboard_integration: DashboardIntegratio
 
 def test_report_finding_vulnerability(dashboard_integration: DashboardIntegration) -> None:
     """Test vulnerability finding reporting."""
-    finding_data = {
+    finding_data: dict[str, object] = {
         "type": "buffer_overflow",
         "severity": "high",
         "location": "0x401000",
@@ -152,12 +209,9 @@ def test_export_analysis_report(dashboard_integration: DashboardIntegration) -> 
         Path(report_path).unlink(missing_ok=True)
 
 
-def test_get_ghidra_metrics(dashboard_integration: DashboardIntegration) -> None:
+def test_get_ghidra_metrics(dashboard_integration: DashboardIntegration, fake_ghidra: FakeGhidraAnalyzer) -> None:
     """Test Ghidra metrics retrieval."""
-    mock_ghidra = MagicMock()
-    mock_ghidra.get_analysis_stats.return_value = {"functions": 100}
-
-    dashboard_integration.integrate_ghidra(mock_ghidra)
+    dashboard_integration.integrate_ghidra(fake_ghidra)
 
     metrics = dashboard_integration._get_ghidra_metrics()
 
@@ -165,13 +219,9 @@ def test_get_ghidra_metrics(dashboard_integration: DashboardIntegration) -> None
     assert metrics["functions"] == 100
 
 
-def test_get_frida_metrics(dashboard_integration: DashboardIntegration) -> None:
+def test_get_frida_metrics(dashboard_integration: DashboardIntegration, fake_frida: FakeFridaAnalyzer) -> None:
     """Test Frida metrics retrieval."""
-    mock_frida = MagicMock()
-    mock_frida.get_hook_stats.return_value = {"total": 15}
-    mock_frida.get_intercept_count.return_value = 50
-
-    dashboard_integration.integrate_frida(mock_frida)
+    dashboard_integration.integrate_frida(fake_frida)
 
     metrics = dashboard_integration._get_frida_metrics()
 
@@ -180,10 +230,9 @@ def test_get_frida_metrics(dashboard_integration: DashboardIntegration) -> None:
     assert metrics["intercepts"] == 50
 
 
-def test_tool_status_reporting(dashboard_integration: DashboardIntegration) -> None:
+def test_tool_status_reporting(dashboard_integration: DashboardIntegration, fake_ghidra: FakeGhidraAnalyzer) -> None:
     """Test tool status reporting."""
-    mock_ghidra = MagicMock()
-    dashboard_integration.integrate_ghidra(mock_ghidra)
+    dashboard_integration.integrate_ghidra(fake_ghidra)
 
     status = dashboard_integration._get_ghidra_status()
 
@@ -201,16 +250,16 @@ def test_create_dashboard_integration_factory() -> None:
 
 def test_tool_integration_dataclass() -> None:
     """Test ToolIntegration dataclass."""
-    mock_analyzer = MagicMock()
+    fake_analyzer = FakeAnalyzer()
 
     integration = ToolIntegration(
         tool_name="test_tool",
-        analyzer_instance=mock_analyzer,
+        analyzer_instance=fake_analyzer,
         enabled=True,
     )
 
     assert integration.tool_name == "test_tool"
-    assert integration.analyzer_instance is mock_analyzer
+    assert integration.analyzer_instance is fake_analyzer
     assert integration.enabled is True
 
 

@@ -83,7 +83,12 @@ class ConfirmationManager:
     """Manages user confirmations for AI actions."""
 
     def __init__(self, auto_approve_low_risk: bool = False) -> None:
-        """Initialize confirmation manager with action tracking and approval settings."""
+        """Initialize confirmation manager with action tracking and approval settings.
+
+        Args:
+            auto_approve_low_risk: Whether to automatically approve low-risk actions without user input.
+
+        """
         self.pending_actions: dict[str, PendingAction] = {}
         self.action_history: list[dict[str, Any]] = []
         self.auto_approve_low_risk = auto_approve_low_risk
@@ -91,7 +96,15 @@ class ConfirmationManager:
 
     # pylint: disable=too-many-branches
     def request_confirmation(self, action: PendingAction) -> bool:
-        """Request user confirmation for an action."""
+        """Request user confirmation for an action.
+
+        Args:
+            action: The pending action requiring user approval.
+
+        Returns:
+            bool: True if the action was approved, False if declined or cancelled.
+
+        """
         # Auto-approve low-risk actions if enabled
         if self.auto_approve_low_risk and action.risk_level == "low":
             logger.info("Auto-approving low-risk action: %s", action.description)
@@ -190,20 +203,38 @@ class IntellicrackAIInterface:
     }
 
     def __init__(self, confirmation_manager: ConfirmationManager | None = None) -> None:
-        """Initialize Intellicrack AI interface with confirmation management and session handling."""
+        """Initialize Intellicrack AI interface with confirmation management and session handling.
+
+        Args:
+            confirmation_manager: Optional custom confirmation manager instance.
+
+        """
         self.confirmation_manager = confirmation_manager or ConfirmationManager()
         self.cli_path = os.path.join(script_dir, "main.py")
         self.current_analysis: dict[str, Any] = {}
         self.session_id = self._generate_session_id()
 
     def _generate_session_id(self) -> str:
-        """Generate unique session ID."""
+        """Generate unique session ID.
+
+        Returns:
+            str: A unique 8-character session identifier.
+
+        """
         import uuid
 
         return str(uuid.uuid4())[:8]
 
     def _determine_action_type(self, args: list[str]) -> ActionType:
-        """Determine the type of action based on arguments."""
+        """Determine the type of action based on arguments.
+
+        Args:
+            args: List of CLI arguments to analyze.
+
+        Returns:
+            ActionType: The categorized action type.
+
+        """
         if any(arg in args for arg in ["--apply-patch", "--memory-patch"]):
             return ActionType.PATCHING
         if any(arg in args for arg in ["--bypass-tpm", "--bypass-vm-detection", "--hwid-spoof"]):
@@ -219,7 +250,15 @@ class IntellicrackAIInterface:
         return ActionType.ANALYSIS
 
     def _determine_risk_level(self, args: list[str]) -> str:
-        """Determine risk level of the operation."""
+        """Determine risk level of the operation.
+
+        Args:
+            args: List of CLI arguments to analyze.
+
+        Returns:
+            str: Risk level as 'low', 'medium', or 'high'.
+
+        """
         max_risk = "low"
 
         for arg in args:
@@ -233,7 +272,15 @@ class IntellicrackAIInterface:
         return max_risk
 
     def _get_potential_impacts(self, args: list[str]) -> list[str]:
-        """Determine potential impacts of the operation."""
+        """Determine potential impacts of the operation.
+
+        Args:
+            args: List of CLI arguments to analyze.
+
+        Returns:
+            list[str]: List of potential impacts from executing the operation.
+
+        """
         impacts = []
 
         if "--apply-patch" in args:
@@ -254,7 +301,17 @@ class IntellicrackAIInterface:
         return impacts
 
     def _create_action(self, args: list[str], description: str, ai_reasoning: str | None = None) -> PendingAction:
-        """Create a pending action for confirmation."""
+        """Create a pending action for confirmation.
+
+        Args:
+            args: List of CLI arguments for the action.
+            description: Human-readable description of the action.
+            ai_reasoning: Optional AI explanation for why this action is needed.
+
+        Returns:
+            PendingAction: The created action object ready for confirmation.
+
+        """
         import uuid
 
         return PendingAction(
@@ -272,12 +329,12 @@ class IntellicrackAIInterface:
         """Execute an Intellicrack CLI command with confirmation.
 
         Args:
-            args: CLI arguments
-            description: Human-readable description of the action
-            ai_reasoning: Optional AI explanation for why this action is needed
+            args: CLI arguments to pass to the Intellicrack CLI.
+            description: Human-readable description of the action being performed.
+            ai_reasoning: Optional AI explanation for why this action is needed.
 
         Returns:
-            Dict containing execution results
+            dict[str, Any]: Execution result containing status, exit code, and output.
 
         """
         # Create pending action
@@ -338,11 +395,11 @@ class IntellicrackAIInterface:
         """Perform comprehensive analysis on a binary.
 
         Args:
-            binary_path: Path to the binary
-            analyses: List of specific analyses to run
+            binary_path: Path to the binary file to analyze.
+            analyses: List of specific analyses to run (comprehensive, vulnerabilities, protections, license, network).
 
         Returns:
-            Analysis results
+            dict[str, Any]: Analysis results with status and detailed findings.
 
         """
         if analyses is None:
@@ -369,7 +426,15 @@ class IntellicrackAIInterface:
         return self.execute_command(args, description, reasoning)
 
     def suggest_patches(self, binary_path: str) -> dict[str, Any]:
-        """Suggest patches for a binary."""
+        """Suggest patches for a binary.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            dict[str, Any]: Execution results containing patch suggestions.
+
+        """
         args = [binary_path, "--suggest-patches", "--format", "json"]
         description = f"Generate patch suggestions for: {os.path.basename(binary_path)}"
         reasoning = "Analyzing binary to identify patchable locations"
@@ -377,7 +442,16 @@ class IntellicrackAIInterface:
         return self.execute_command(args, description, reasoning)
 
     def apply_patch(self, binary_path: str, patch_file: str) -> dict[str, Any]:
-        """Apply a patch to a binary."""
+        """Apply a patch to a binary.
+
+        Args:
+            binary_path: Path to the binary file to patch.
+            patch_file: Path to the patch definition file.
+
+        Returns:
+            dict[str, Any]: Execution results from applying the patch.
+
+        """
         args = [binary_path, "--apply-patch", "--patch-file", patch_file]
         description = f"Apply patch to: {os.path.basename(binary_path)}"
         reasoning = "Applying identified patches to bypass protections"
@@ -385,7 +459,12 @@ class IntellicrackAIInterface:
         return self.execute_command(args, description, reasoning)
 
     def get_session_summary(self) -> dict[str, Any]:
-        """Get summary of the current session."""
+        """Get summary of the current session.
+
+        Returns:
+            dict[str, Any]: Session summary with ID, action counts, and history.
+
+        """
         return {
             "session_id": self.session_id,
             "total_actions": len(self.confirmation_manager.action_history),
@@ -411,7 +490,7 @@ class IntellicrackAIInterface:
             script_type: Type of script to generate (hook, bypass, trace, spoof).
 
         Returns:
-            Dictionary containing the generated script and metadata.
+            dict[str, Any]: Dictionary containing the generated script and metadata.
 
         """
         if not binary_path:
@@ -444,7 +523,16 @@ class IntellicrackAIInterface:
         }
 
     def _generate_hook_script(self, binary_name: str, target_function: str | None) -> str:
-        """Generate a Frida hook script for licensing functions."""
+        """Generate a Frida hook script for licensing functions.
+
+        Args:
+            binary_name: Name of the target binary module.
+            target_function: Optional specific function to target.
+
+        Returns:
+            JavaScript code for Frida hook script.
+
+        """
         target_spec = ""
         if target_function:
             target_spec = f'''
@@ -532,7 +620,16 @@ hookLicenseFunctions();
 '''
 
     def _generate_bypass_script(self, binary_name: str, target_function: str | None) -> str:
-        """Generate a Frida bypass script for license validation."""
+        """Generate a Frida bypass script for license validation.
+
+        Args:
+            binary_name: Name of the target binary module.
+            target_function: Optional specific function to bypass.
+
+        Returns:
+            JavaScript code for Frida bypass script.
+
+        """
         target_bypass = ""
         if target_function:
             target_bypass = f'''
@@ -612,7 +709,16 @@ console.log("[*] License bypass script active");
 '''
 
     def _generate_trace_script(self, binary_name: str, target_function: str | None) -> str:
-        """Generate a Frida trace script for API monitoring."""
+        """Generate a Frida trace script for API monitoring.
+
+        Args:
+            binary_name: Name of the target binary module.
+            target_function: Optional specific function to trace.
+
+        Returns:
+            JavaScript code for Frida trace script.
+
+        """
         target_trace = ""
         if target_function:
             target_trace = f'''
@@ -677,7 +783,16 @@ setupTracing();
 '''
 
     def _generate_spoof_script(self, binary_name: str, target_function: str | None) -> str:
-        """Generate a Frida spoof script for hardware ID and time manipulation."""
+        """Generate a Frida spoof script for hardware ID and time manipulation.
+
+        Args:
+            binary_name: Name of the target binary module.
+            target_function: Optional specific function parameter (unused for spoof).
+
+        Returns:
+            JavaScript code for Frida spoof script.
+
+        """
         return f'''"use strict";
 
 const targetModule = "{binary_name}";
@@ -785,7 +900,7 @@ console.log("[*] Hardware/Time spoofing script active");
             analysis_type: Type of analysis (comprehensive, licensing, crypto, strings).
 
         Returns:
-            Dictionary containing the generated script and metadata.
+            dict[str, Any]: Dictionary containing the generated script and metadata.
 
         """
         if not binary_path:
@@ -819,7 +934,15 @@ console.log("[*] Hardware/Time spoofing script active");
         }
 
     def _generate_comprehensive_ghidra_script(self, binary_name: str) -> str:
-        """Generate comprehensive Ghidra analysis script."""
+        """Generate comprehensive Ghidra analysis script.
+
+        Args:
+            binary_name: Name of the binary for analysis labeling.
+
+        Returns:
+            Java code for Ghidra comprehensive analysis script.
+
+        """
         return f"""//@category Intellicrack
 //@menupath Analysis.Intellicrack.Comprehensive Analysis
 //@author Intellicrack AI
@@ -957,7 +1080,15 @@ public class {binary_name}_Analysis extends GhidraScript {{
 """
 
     def _generate_licensing_ghidra_script(self, binary_name: str) -> str:
-        """Generate Ghidra script focused on licensing analysis."""
+        """Generate Ghidra script focused on licensing analysis.
+
+        Args:
+            binary_name: Name of the binary for analysis labeling.
+
+        Returns:
+            Java code for Ghidra licensing analysis script.
+
+        """
         return f"""//@category Intellicrack
 //@menupath Analysis.Intellicrack.Licensing Analysis
 //@author Intellicrack AI
@@ -1016,7 +1147,15 @@ public class {binary_name}_LicenseAnalysis extends GhidraScript {{
 """
 
     def _generate_crypto_ghidra_script(self, binary_name: str) -> str:
-        """Generate Ghidra script focused on cryptographic analysis."""
+        """Generate Ghidra script focused on cryptographic analysis.
+
+        Args:
+            binary_name: Name of the binary for analysis labeling.
+
+        Returns:
+            Java code for Ghidra cryptographic analysis script.
+
+        """
         return f"""//@category Intellicrack
 //@menupath Analysis.Intellicrack.Crypto Analysis
 //@author Intellicrack AI
@@ -1096,7 +1235,15 @@ public class {binary_name}_CryptoAnalysis extends GhidraScript {{
 """
 
     def _generate_strings_ghidra_script(self, binary_name: str) -> str:
-        """Generate Ghidra script for string analysis."""
+        """Generate Ghidra script for string analysis.
+
+        Args:
+            binary_name: Name of the binary for analysis labeling.
+
+        Returns:
+            Java code for Ghidra string analysis script.
+
+        """
         return f"""//@category Intellicrack
 //@menupath Analysis.Intellicrack.String Analysis
 //@author Intellicrack AI
@@ -1194,7 +1341,12 @@ AI_TOOLS = {
 
 
 def create_ai_prompt() -> str:
-    """Create prompt for AI models to use Intellicrack."""
+    """Create prompt for AI models to use Intellicrack.
+
+    Returns:
+        str: A comprehensive system prompt for AI models using Intellicrack.
+
+    """
     return """You are an AI assistant with access to Intellicrack, a comprehensive binary analysis and patching tool.
 
 You can use the following tools:
@@ -1225,7 +1377,12 @@ Example workflow:
 
 
 def main() -> None:
-    """Demonstrate usage and run tests."""
+    """Demonstrate usage and run tests.
+
+    Initializes the Intellicrack AI interface and demonstrates basic analysis
+    workflow with session summary reporting.
+
+    """
     # Initialize the AI interface
     manager = ConfirmationManager(auto_approve_low_risk=False)
     ai_interface = IntellicrackAIInterface(manager)

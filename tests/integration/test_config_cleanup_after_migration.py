@@ -10,42 +10,58 @@ import os
 import shutil
 import time
 from pathlib import Path
-from unittest.mock import patch, Mock
 from datetime import datetime
+from typing import Optional
 
 from intellicrack.core.config_manager import IntellicrackConfig, get_config
 from intellicrack.core.config_migration_handler import ConfigMigrationHandler
 from tests.base_test import IntellicrackTestBase
 
 
+class RealConfigDirectoryProvider:
+    """Real test double for providing config directory."""
+
+    def __init__(self, config_dir: Path) -> None:
+        self.config_dir: Path = config_dir
+        self.call_count: int = 0
+
+    def get_user_config_dir(self) -> Path:
+        """Return configured test directory."""
+        self.call_count += 1
+        return self.config_dir
+
+
 class TestConfigCleanupAfterMigration(IntellicrackTestBase):
     """Task 20.1.4: Verify cleanup of old config files after migration."""
 
     @pytest.fixture(autouse=True)
-    def setup(self, temp_workspace):
+    def setup(self, temp_workspace: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Set up test with real temporary workspace."""
-        self.temp_dir = temp_workspace
-        self.test_config_dir = self.temp_dir / "config"
+        self.temp_dir: Path = temp_workspace
+        self.test_config_dir: Path = self.temp_dir / "config"
         self.test_config_dir.mkdir(parents=True, exist_ok=True)
-        self.backup_dir = self.temp_dir / "backups"
+        self.backup_dir: Path = self.temp_dir / "backups"
         self.backup_dir.mkdir(parents=True, exist_ok=True)
-        self.legacy_dir = self.temp_dir / "legacy"
+        self.legacy_dir: Path = self.temp_dir / "legacy"
         self.legacy_dir.mkdir(parents=True, exist_ok=True)
 
-        # Reset singleton for clean testing
         IntellicrackConfig._instance = None
 
-        # Mock the config directory to use our temp directory
-        with patch.object(IntellicrackConfig, '_get_user_config_dir', return_value=self.test_config_dir):
-            self.config = IntellicrackConfig()
+        config_dir_provider: RealConfigDirectoryProvider = RealConfigDirectoryProvider(self.test_config_dir)
+        monkeypatch.setattr(
+            IntellicrackConfig,
+            '_get_user_config_dir',
+            lambda self: config_dir_provider.get_user_config_dir()
+        )
 
-        # Create migration handler
-        self.migration_handler = ConfigMigrationHandler(
+        self.config: IntellicrackConfig = IntellicrackConfig()
+
+        self.migration_handler: ConfigMigrationHandler = ConfigMigrationHandler(
             config=self.config,
             backup_dir=self.backup_dir
         )
 
-    def create_legacy_configs(self):
+    def create_legacy_configs(self) -> dict[str, Path]:
         """Create various legacy configuration files."""
         # QSettings-style config
         qsettings_config = {
@@ -143,49 +159,39 @@ log_level=DEBUG"""
             "vm": vm_file
         }
 
-    def test_20_1_4_cleanup_after_successful_migration(self):
+    def test_20_1_4_cleanup_after_successful_migration(self) -> None:
         """Test that old config files are cleaned up after successful migration."""
-        # Create legacy config files
-        legacy_files = self.create_legacy_configs()
+        legacy_files: dict[str, Path] = self.create_legacy_configs()
 
-        # Verify all files exist before migration
         for name, file_path in legacy_files.items():
             assert file_path.exists(), f"{name} config should exist before migration"
 
-        # Perform migration for each config type
         self.migration_handler.migrate_legacy_config(legacy_files["qsettings"])
         self.migration_handler.migrate_llm_config(legacy_files["llm"])
         self.migration_handler.migrate_cli_config(legacy_files["cli"])
 
-        # Verify data was migrated
         assert self.config.get("general_preferences.last_open_file") == "test.exe"
         assert self.config.get("llm_configuration.models.gpt4.provider") == "openai"
         assert self.config.get("cli_configuration.profiles.default.output_format") == "json"
 
-        # Clean up old files
         self.migration_handler.cleanup_migrated_files(list(legacy_files.values()))
 
-        # Verify old files are removed
         for name, file_path in legacy_files.items():
             assert not file_path.exists(), f"{name} config should be removed after cleanup"
 
-        # Verify backup of old files exists
-        backup_files = list(self.backup_dir.glob("*"))
+        backup_files: list[Path] = list(self.backup_dir.glob("*"))
         assert backup_files, "Backups should be created before cleanup"
 
-    def test_20_1_4_cleanup_preserves_failed_migrations(self):
+    def test_20_1_4_cleanup_preserves_failed_migrations(self) -> None:
         """Test that cleanup doesn't remove files from failed migrations."""
-        # Create legacy configs
-        legacy_files = self.create_legacy_configs()
+        legacy_files: dict[str, Path] = self.create_legacy_configs()
 
-        # Create a corrupted config that will fail migration
-        corrupted_file = self.legacy_dir / "corrupted.json"
+        corrupted_file: Path = self.legacy_dir / "corrupted.json"
         with open(corrupted_file, 'w', encoding='utf-8') as f:
             f.write("{ invalid json content")
 
-        # Attempt migration (will fail for corrupted file)
-        successful_files = []
-        failed_files = []
+        successful_files: list[Path] = []
+        failed_files: list[Path] = []
 
         for name, file_path in legacy_files.items():
             try:
@@ -217,52 +223,42 @@ log_level=DEBUG"""
         # Verify failed migration file still exists
         assert corrupted_file.exists(), "Corrupted file should not be cleaned up"
 
-    def test_20_1_4_cleanup_with_user_confirmation(self):
+    def test_20_1_4_cleanup_with_user_confirmation(self) -> None:
         """Test cleanup with user confirmation simulation."""
-        # Create legacy configs
-        legacy_files = self.create_legacy_configs()
+        legacy_files: dict[str, Path] = self.create_legacy_configs()
 
-        # Simulate user confirmation for cleanup
-        def cleanup_with_confirmation(files, require_confirmation=True):
+        def cleanup_with_confirmation(files: list[Path], require_confirmation: bool = True) -> bool:
             """Simulate cleanup with user confirmation."""
             if require_confirmation:
-                # In real implementation, would prompt user
-                user_confirmed = True  # Simulate user saying yes
+                user_confirmed: bool = True
 
                 if user_confirmed:
                     for file_path in files:
                         if file_path.exists():
-                            # Create backup before deletion
-                            backup_name = f"pre_cleanup_{file_path.name}"
-                            backup_path = self.backup_dir / backup_name
+                            backup_name: str = f"pre_cleanup_{file_path.name}"
+                            backup_path: Path = self.backup_dir / backup_name
                             shutil.copy2(file_path, backup_path)
-                            # Remove original
                             file_path.unlink()
                     return True
                 return False
             else:
-                # Auto cleanup without confirmation
                 for file_path in files:
                     if file_path.exists():
                         file_path.unlink()
                 return True
 
-        # Test with confirmation
-        result = cleanup_with_confirmation(list(legacy_files.values()), require_confirmation=True)
+        result: bool = cleanup_with_confirmation(list(legacy_files.values()), require_confirmation=True)
         assert result is True, "Cleanup should succeed with confirmation"
 
-        # Verify files are removed
         for file_path in legacy_files.values():
             assert not file_path.exists(), "Files should be removed after confirmed cleanup"
 
-        # Verify backups exist
-        backup_count = len(list(self.backup_dir.glob("pre_cleanup_*")))
+        backup_count: int = len(list(self.backup_dir.glob("pre_cleanup_*")))
         assert backup_count == len(legacy_files), "Backups should be created for all files"
 
-    def test_20_1_4_cleanup_temporary_files(self):
+    def test_20_1_4_cleanup_temporary_files(self) -> None:
         """Test cleanup of temporary files created during migration."""
-        # Create temporary files that might be created during migration
-        temp_files = [
+        temp_files: list[Path] = [
             self.temp_dir / "config.json.tmp",
             self.temp_dir / "config.json.backup",
             self.temp_dir / "migration.lock",
@@ -274,62 +270,53 @@ log_level=DEBUG"""
             temp_file.write_text("temporary content")
             assert temp_file.exists()
 
-        # Perform cleanup of temporary files
         self.migration_handler.cleanup_temporary_files(self.temp_dir)
 
-        # Verify temporary files are removed
         for temp_file in temp_files:
             assert not temp_file.exists(), f"Temporary file {temp_file.name} should be removed"
 
-        # Verify non-temporary files are preserved
-        permanent_file = self.temp_dir / "important_data.json"
+        permanent_file: Path = self.temp_dir / "important_data.json"
         permanent_file.write_text('{"important": "data"}')
 
         self.migration_handler.cleanup_temporary_files(self.temp_dir)
         assert permanent_file.exists(), "Non-temporary files should be preserved"
 
-    def test_20_1_4_cleanup_old_backup_files(self):
+    def test_20_1_4_cleanup_old_backup_files(self) -> None:
         """Test cleanup of old backup files beyond retention period."""
-        # Create multiple backup files with different ages
-        now = datetime.now()
+        now: datetime = datetime.now()
 
-        backup_files = []
+        backup_files: list[tuple[Path, int]] = []
         for days_old in [1, 7, 14, 30, 60, 90, 180, 365]:
-            timestamp = now.timestamp() - (days_old * 24 * 3600)
-            backup_name = f"backup_{datetime.fromtimestamp(timestamp).strftime('%Y%m%d_%H%M%S')}.json"
-            backup_path = self.backup_dir / backup_name
+            timestamp: float = now.timestamp() - (days_old * 24 * 3600)
+            backup_name: str = f"backup_{datetime.fromtimestamp(timestamp).strftime('%Y%m%d_%H%M%S')}.json"
+            backup_path: Path = self.backup_dir / backup_name
             backup_path.write_text('{"backup": "data"}')
-            # Set file modification time
             os.utime(backup_path, (timestamp, timestamp))
             backup_files.append((backup_path, days_old))
 
-        # Clean up backups older than 30 days
-        retention_days = 30
+        retention_days: int = 30
         self.migration_handler.cleanup_old_backups(retention_days=retention_days)
 
-        # Verify old backups are removed
         for backup_path, days_old in backup_files:
             if days_old > retention_days:
                 assert not backup_path.exists(), f"Backup {days_old} days old should be removed"
             else:
                 assert backup_path.exists(), f"Backup {days_old} days old should be kept"
 
-    def test_20_1_4_verify_no_orphaned_files(self):
+    def test_20_1_4_verify_no_orphaned_files(self) -> None:
         """Test that no orphaned configuration files remain after migration."""
-        # Create a complex directory structure with various config files
-        config_locations = [
+        config_locations: list[Path] = [
             self.temp_dir / "AppData" / "Roaming" / "Intellicrack",
             self.temp_dir / ".config" / "intellicrack",
             self.temp_dir / "intellicrack_config",
             self.test_config_dir
         ]
 
-        orphaned_files = []
+        orphaned_files: list[Path] = []
         for location in config_locations:
             location.mkdir(parents=True, exist_ok=True)
 
-            # Create various config files
-            files = [
+            files: list[Path] = [
                 location / "config.json",
                 location / "settings.ini",
                 location / "preferences.xml",
@@ -340,49 +327,40 @@ log_level=DEBUG"""
                 file_path.write_text("orphaned config content")
                 orphaned_files.append(file_path)
 
-        # Scan for orphaned config files
-        def find_orphaned_configs(root_dir):
+        def find_orphaned_configs(root_dir: Path) -> list[Path]:
             """Find potential orphaned configuration files."""
-            orphaned = []
-            config_patterns = ['config', 'settings', 'preferences', 'options']
-            config_extensions = ['.json', '.ini', '.xml', '.yaml', '.yml', '.conf']
+            orphaned: list[Path] = []
+            config_patterns: list[str] = ['config', 'settings', 'preferences', 'options']
+            config_extensions: list[str] = ['.json', '.ini', '.xml', '.yaml', '.yml', '.conf']
 
             for root, dirs, files in os.walk(root_dir):
                 for file in files:
-                    file_lower = file.lower()
-                    # Check if file matches config patterns
+                    file_lower: str = file.lower()
                     if any(pattern in file_lower for pattern in config_patterns) and any(file.endswith(ext) for ext in config_extensions):
-                        file_path = Path(root) / file
-                        # Skip if it's the current config
+                        file_path: Path = Path(root) / file
                         if file_path != self.test_config_dir / "config.json":
                             orphaned.append(file_path)
 
             return orphaned
 
-        # Find orphaned files
-        found_orphaned = find_orphaned_configs(self.temp_dir)
+        found_orphaned: list[Path] = find_orphaned_configs(self.temp_dir)
 
-        # Clean up orphaned files
         for file_path in found_orphaned:
             if file_path.exists():
-                # Create backup before removal
-                backup_name = f"orphaned_{file_path.parent.name}_{file_path.name}"
-                backup_path = self.backup_dir / backup_name
+                backup_name: str = f"orphaned_{file_path.parent.name}_{file_path.name}"
+                backup_path: Path = self.backup_dir / backup_name
                 shutil.copy2(file_path, backup_path)
                 file_path.unlink()
 
-        # Verify cleanup
-        remaining_orphaned = find_orphaned_configs(self.temp_dir)
-        # Should only have the main config file
+        remaining_orphaned: list[Path] = find_orphaned_configs(self.temp_dir)
         assert len(remaining_orphaned) <= 1, f"Found {len(remaining_orphaned)} orphaned files"
 
-    def test_20_1_4_cleanup_preserves_user_data(self):
+    def test_20_1_4_cleanup_preserves_user_data(self) -> None:
         """Test that cleanup preserves important user data."""
-        # Create user data that should be preserved
-        user_data_dir = self.temp_dir / "user_data"
+        user_data_dir: Path = self.temp_dir / "user_data"
         user_data_dir.mkdir(exist_ok=True)
 
-        important_files = [
+        important_files: list[Path] = [
             user_data_dir / "projects.db",
             user_data_dir / "analysis_results.json",
             user_data_dir / "custom_scripts.py",
@@ -392,8 +370,7 @@ log_level=DEBUG"""
         for file_path in important_files:
             file_path.write_text(f"Important user data: {file_path.name}")
 
-        # Create config files that should be cleaned
-        config_files = [
+        config_files: list[Path] = [
             user_data_dir / "old_config.json",
             user_data_dir / "legacy_settings.ini"
         ]
@@ -401,43 +378,35 @@ log_level=DEBUG"""
         for file_path in config_files:
             file_path.write_text("old config data")
 
-        # Perform selective cleanup
-        def selective_cleanup(directory):
+        def selective_cleanup(directory: Path) -> None:
             """Clean up only configuration files, preserve user data."""
-            config_keywords = ['config', 'settings', 'preferences']
-            user_data_extensions = ['.db', '.txt', '.py', '.exe', '.dll']
+            config_keywords: list[str] = ['config', 'settings', 'preferences']
+            user_data_extensions: list[str] = ['.db', '.txt', '.py', '.exe', '.dll']
 
             for file_path in directory.rglob('*'):
                 if file_path.is_file():
-                    file_name_lower = file_path.name.lower()
+                    file_name_lower: str = file_path.name.lower()
 
-                    # Check if it's a config file
-                    is_config = any(keyword in file_name_lower for keyword in config_keywords)
+                    is_config: bool = any(keyword in file_name_lower for keyword in config_keywords)
 
-                    # Check if it's user data
-                    is_user_data = any(file_path.suffix == ext for ext in user_data_extensions)
+                    is_user_data: bool = any(file_path.suffix == ext for ext in user_data_extensions)
 
                     if is_config and not is_user_data:
                         file_path.unlink()
 
-        # Run cleanup
         selective_cleanup(user_data_dir)
 
-        # Verify user data is preserved
         for file_path in important_files:
             assert file_path.exists(), f"User data {file_path.name} should be preserved"
 
-        # Verify config files are removed
         for file_path in config_files:
             assert not file_path.exists(), f"Config file {file_path.name} should be removed"
 
-    def test_20_1_4_cleanup_summary_report(self):
+    def test_20_1_4_cleanup_summary_report(self) -> None:
         """Test generation of cleanup summary report."""
-        # Create various files for cleanup
-        legacy_files = self.create_legacy_configs()
+        legacy_files: dict[str, Path] = self.create_legacy_configs()
 
-        # Track cleanup operations
-        cleanup_report = {
+        cleanup_report: dict[str, object] = {
             "timestamp": datetime.now().isoformat(),
             "files_migrated": [],
             "files_backed_up": [],
@@ -446,13 +415,10 @@ log_level=DEBUG"""
             "total_size_freed": 0
         }
 
-        # Perform migration and cleanup with tracking
         for name, file_path in legacy_files.items():
             try:
-                # Get file size before removal
-                file_size = file_path.stat().st_size
+                file_size: int = file_path.stat().st_size
 
-                # Migrate based on type
                 if name == "qsettings":
                     self.migration_handler.migrate_legacy_config(file_path)
                 elif name == "llm":
@@ -462,12 +428,10 @@ log_level=DEBUG"""
 
                 cleanup_report["files_migrated"].append(str(file_path))
 
-                # Backup before removal
-                backup_path = self.backup_dir / f"backup_{file_path.name}"
+                backup_path: Path = self.backup_dir / f"backup_{file_path.name}"
                 shutil.copy2(file_path, backup_path)
                 cleanup_report["files_backed_up"].append(str(backup_path))
 
-                # Remove file
                 file_path.unlink()
                 cleanup_report["files_removed"].append(str(file_path))
                 cleanup_report["total_size_freed"] += file_size
@@ -478,8 +442,7 @@ log_level=DEBUG"""
                     "error": str(e)
                 })
 
-        # Generate summary
-        summary = f"""
+        summary: str = f"""
 Configuration Cleanup Summary
 =============================
 Timestamp: {cleanup_report['timestamp']}
@@ -498,11 +461,9 @@ Details:
         for failure in cleanup_report['files_failed']:
             summary += f"\nFAIL Failed: {failure['file']} - {failure['error']}"
 
-        # Save report
-        report_file = self.temp_dir / "cleanup_report.txt"
+        report_file: Path = self.temp_dir / "cleanup_report.txt"
         report_file.write_text(summary)
 
-        # Verify report was created
         assert report_file.exists()
         assert "Configuration Cleanup Summary" in report_file.read_text()
         assert len(cleanup_report["files_removed"]) > 0

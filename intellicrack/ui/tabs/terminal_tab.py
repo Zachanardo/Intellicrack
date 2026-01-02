@@ -69,7 +69,12 @@ class TerminalTab(BaseTab):
         logger.info("TerminalTab initialized")
 
     def setup_content(self) -> None:
-        """Set up the terminal tab content."""
+        """Set up the terminal tab content.
+
+        Initializes the terminal tab layout with toolbar, terminal widget,
+        and status bar. Registers the terminal widget with the terminal manager
+        and connects signals for session management.
+        """
         from intellicrack.handlers.pyqt6_handler import QSizePolicy
         from intellicrack.ui.widgets.terminal_session_widget import TerminalSessionWidget as TerminalSessionWidgetClass
 
@@ -121,8 +126,7 @@ class TerminalTab(BaseTab):
         including new session, clear, export log, and kill process controls.
 
         Returns:
-            QHBoxLayout: Configured toolbar layout with action buttons.
-
+            Configured toolbar layout with action buttons.
         """
         toolbar = QHBoxLayout()
 
@@ -158,8 +162,7 @@ class TerminalTab(BaseTab):
         current working directory information labels.
 
         Returns:
-            QHBoxLayout: Configured status bar layout with information labels.
-
+            Configured status bar layout with information labels.
         """
         status_bar = QHBoxLayout()
 
@@ -179,14 +182,21 @@ class TerminalTab(BaseTab):
         return status_bar
 
     def create_new_session(self) -> None:
-        """Create a new terminal session."""
+        """Create a new terminal session.
+
+        Creates a new terminal session through the terminal widget and updates
+        the status bar to reflect the new session count.
+        """
         if self.terminal_widget is not None:
             session_id = self.terminal_widget.create_new_session()
             logger.info("Created new terminal session: %s", session_id)
             self._update_status()
 
     def clear_current_terminal(self) -> None:
-        """Clear the current terminal display."""
+        """Clear the current terminal display.
+
+        Clears the terminal buffer of the currently active session if one exists.
+        """
         if self.terminal_widget is None:
             return
 
@@ -197,7 +207,12 @@ class TerminalTab(BaseTab):
             logger.info("Cleared terminal session: %s", session_id)
 
     def export_terminal_log(self) -> None:
-        """Export current terminal log to file."""
+        """Export current terminal log to file.
+
+        Displays a file save dialog and writes the terminal output of the
+        currently active session to the selected file. Updates the status
+        label with the export result.
+        """
         if self.terminal_widget is None:
             return
 
@@ -228,7 +243,11 @@ class TerminalTab(BaseTab):
                 self.status_label.setText(f"Status: Export error - {e}")
 
     def kill_current_process(self) -> None:
-        """Kill the currently running process."""
+        """Kill the currently running process.
+
+        Stops the currently running process in the active terminal session
+        and updates the status label to reflect the process termination.
+        """
         if self.terminal_widget is None:
             return
 
@@ -256,7 +275,6 @@ class TerminalTab(BaseTab):
 
         Args:
             session_id: The identifier of the newly created session.
-
         """
         self._update_status()
         logger.info("Session created: %s", session_id)
@@ -268,7 +286,6 @@ class TerminalTab(BaseTab):
 
         Args:
             session_id: The identifier of the closed session.
-
         """
         self._update_status()
         logger.info("Session closed: %s", session_id)
@@ -280,13 +297,17 @@ class TerminalTab(BaseTab):
 
         Args:
             session_id: The identifier of the newly active session.
-
         """
         self._update_status()
         logger.info("Active session changed: %s", session_id)
 
     def _update_status(self) -> None:
-        """Update status bar with current session info."""
+        """Update status bar with current session info.
+
+        Updates all status bar labels including session count, running status
+        with process ID, and idle state information based on the currently
+        active terminal session.
+        """
         if self.terminal_widget is None:
             return
 
@@ -317,7 +338,6 @@ class TerminalTab(BaseTab):
         multiple terminal sessions and command execution.
 
         Returns:
-            TerminalSessionWidget or None if not initialized.
-
+            The terminal session widget instance or None if not initialized.
         """
         return self.terminal_widget

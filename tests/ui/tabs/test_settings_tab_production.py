@@ -11,7 +11,6 @@ import json
 import platform
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -22,6 +21,193 @@ pytestmark = pytest.mark.skipif(
 )
 
 pytest.importorskip("PyQt6", reason="PyQt6 required for settings tab tests")
+
+
+class FakeMainWindow:
+    """Fake main window for settings tab testing."""
+
+    def __init__(self) -> None:
+        self.opacity_value: float = 1.0
+
+    def setWindowOpacity(self, value: float) -> None:
+        self.opacity_value = value
+
+
+class FakeConfig:
+    """Fake configuration manager for testing settings persistence."""
+
+    def __init__(self) -> None:
+        self.data: dict[str, Any] = {}
+        self.save_called: bool = False
+        self.save_count: int = 0
+
+    def get(self, key: str, default: Any = None) -> Any:
+        keys = key.split(".")
+        current = self.data
+        for k in keys:
+            if isinstance(current, dict) and k in current:
+                current = current[k]
+            else:
+                return default
+        return current
+
+    def set(self, key: str, value: Any, save: bool = True) -> None:
+        keys = key.split(".")
+        current = self.data
+        for k in keys[:-1]:
+            if k not in current:
+                current[k] = {}
+            current = current[k]
+        current[keys[-1]] = value
+        if save:
+            self.save()
+
+    def save(self) -> None:
+        self.save_called = True
+        self.save_count += 1
+
+
+class FakeThemeManager:
+    """Fake theme manager for testing theme changes."""
+
+    def __init__(self) -> None:
+        self.current_theme: str = "dark"
+        self.set_theme_calls: list[str] = []
+
+    def set_theme(self, theme: str) -> None:
+        self.current_theme = theme
+        self.set_theme_calls.append(theme)
+
+    def _apply_theme(self) -> None:
+        pass
+
+
+class FakeToolDiscovery:
+    """Fake tool discovery for testing tool detection."""
+
+    def __init__(self) -> None:
+        self.discovered_tools: dict[str, dict[str, Any]] = {}
+        self.manual_overrides: dict[str, str] = {}
+        self.discover_all_calls: int = 0
+        self.discover_tool_calls: list[tuple[str, dict[str, Any]]] = []
+        self.health_check_calls: list[str] = []
+        self.refresh_calls: int = 0
+
+    def discover_all_tools(self) -> dict[str, dict[str, Any]]:
+        self.discover_all_calls += 1
+        return self.discovered_tools
+
+    def discover_tool(self, tool_key: str, config: dict[str, Any]) -> dict[str, Any]:
+        self.discover_tool_calls.append((tool_key, config))
+        return self.discovered_tools.get(
+            tool_key,
+            {"available": False, "path": "", "error": "Not configured"},
+        )
+
+    def health_check_tool(self, tool_key: str) -> dict[str, Any]:
+        self.health_check_calls.append(tool_key)
+        tool_info = self.discovered_tools.get(tool_key, {})
+        if tool_info.get("available"):
+            return {
+                "healthy": True,
+                "available": True,
+                "version": tool_info.get("version", "1.0.0"),
+            }
+        return {"healthy": False, "available": False, "issues": ["Not found"]}
+
+    def set_manual_override(self, tool_key: str, path: str) -> None:
+        self.manual_overrides[tool_key] = path
+
+    def clear_manual_override(self, tool_key: str) -> None:
+        if tool_key in self.manual_overrides:
+            del self.manual_overrides[tool_key]
+
+    def refresh_discovery(self) -> None:
+        self.refresh_calls += 1
+
+
+class FakeModelDiscoveryService:
+    """Fake AI model discovery service for testing AI provider detection."""
+
+    def __init__(self) -> None:
+        self.available_models: dict[str, list[str]] = {}
+
+    def discover_all_models(self, force_refresh: bool = False) -> dict[str, list[str]]:
+        return self.available_models
+
+
+class FakeQColor:
+    """Fake QColor for testing color selection."""
+
+    def __init__(self, color_hex: str) -> None:
+        self.color_hex: str = color_hex
+        self.valid: bool = True
+
+    def isValid(self) -> bool:
+        return self.valid
+
+    def name(self) -> str:
+        return self.color_hex
+
+
+class FakeQApplication:
+    """Fake QApplication for testing application-wide settings."""
+
+    def __init__(self) -> None:
+        self.stylesheet: str = "* { color: black; }"
+        self.widgets: list[Any] = []
+
+    def styleSheet(self) -> str:
+        return self.stylesheet
+
+    def setStyleSheet(self, stylesheet: str) -> None:
+        self.stylesheet = stylesheet
+
+    def allWidgets(self) -> list[Any]:
+        return self.widgets
+
+
+class FakeQMessageBox:
+    """Fake message box for capturing user interactions."""
+
+    class StandardButton:
+        Yes = 1
+        No = 0
+
+    last_question_response: int = StandardButton.No
+
+    @staticmethod
+    def information(parent: Any, title: str, message: str) -> None:
+        pass
+
+    @staticmethod
+    def question(parent: Any, title: str, message: str, buttons: int, default: int) -> int:
+        return FakeQMessageBox.last_question_response
+
+
+class FakeQFileDialog:
+    """Fake file dialog for testing file operations."""
+
+    save_file_name: str = ""
+    open_file_name: str = ""
+
+    @staticmethod
+    def getSaveFileName(parent: Any, title: str, directory: str, filter: str) -> tuple[str, str]:
+        return (FakeQFileDialog.save_file_name, "")
+
+    @staticmethod
+    def getOpenFileName(parent: Any, title: str, directory: str, filter: str) -> tuple[str, str]:
+        return (FakeQFileDialog.open_file_name, "")
+
+
+class FakeQColorDialog:
+    """Fake color dialog for testing color selection."""
+
+    selected_color: FakeQColor | None = None
+
+    @staticmethod
+    def getColor(initial: Any, parent: Any) -> Any:
+        return FakeQColorDialog.selected_color
 
 
 @pytest.fixture
@@ -39,16 +225,48 @@ def qt_app() -> Any:
 
 
 @pytest.fixture
-def settings_tab(qt_app: Any) -> Any:
+def fake_config() -> FakeConfig:
+    """Create fake configuration manager."""
+    return FakeConfig()
+
+
+@pytest.fixture
+def fake_theme_manager() -> FakeThemeManager:
+    """Create fake theme manager."""
+    return FakeThemeManager()
+
+
+@pytest.fixture
+def fake_tool_discovery() -> FakeToolDiscovery:
+    """Create fake tool discovery."""
+    fake_discovery = FakeToolDiscovery()
+    fake_discovery.discovered_tools = {
+        "ghidra": {"available": True, "path": "C:\\ghidra\\ghidraRun.bat", "version": "10.1"},
+        "radare2": {"available": True, "path": "C:\\radare2\\bin\\r2.exe", "version": "5.6.0"},
+    }
+    return fake_discovery
+
+
+@pytest.fixture
+def settings_tab(qt_app: Any, fake_config: FakeConfig, monkeypatch: Any) -> Any:
     """Create settings tab instance for testing."""
     from intellicrack.ui.tabs.settings_tab import SettingsTab
 
-    shared_context = {"main_window": Mock()}
+    shared_context = {"main_window": FakeMainWindow()}
 
-    with patch("intellicrack.ui.tabs.settings_tab.AdvancedToolDiscovery"):
-        tab = SettingsTab(shared_context=shared_context)
-        yield tab
-        tab.deleteLater()
+    def fake_tool_discovery_init(self: Any) -> None:
+        pass
+
+    monkeypatch.setattr(
+        "intellicrack.ui.tabs.settings_tab.AdvancedToolDiscovery.__init__",
+        fake_tool_discovery_init,
+    )
+
+    tab = SettingsTab(shared_context=shared_context)
+    tab.config = fake_config
+
+    yield tab
+    tab.deleteLater()
 
 
 def test_settings_tab_initialization_loads_defaults(settings_tab: Any) -> None:
@@ -61,23 +279,36 @@ def test_settings_tab_initialization_loads_defaults(settings_tab: Any) -> None:
     assert "analysis_depth" in settings_tab.settings
 
 
-def test_settings_tab_saves_configuration_to_disk(settings_tab: Any, tmp_path: Path, qt_app: Any) -> None:
+def test_settings_tab_saves_configuration_to_disk(
+    settings_tab: Any,
+    tmp_path: Path,
+    qt_app: Any,
+    fake_config: FakeConfig,
+    monkeypatch: Any,
+) -> None:
     """Settings tab persists configuration changes to centralized config system."""
     settings_tab.settings["theme"] = "Dark"
     settings_tab.settings["ui_font_size"] = 12
+    settings_tab.config = fake_config
 
-    mock_config = Mock()
-    settings_tab.config = mock_config
+    monkeypatch.setattr(
+        "intellicrack.ui.tabs.settings_tab.QMessageBox.information",
+        FakeQMessageBox.information,
+    )
 
-    with patch("intellicrack.ui.tabs.settings_tab.QMessageBox.information"):
-        settings_tab.save_settings()
-
+    settings_tab.save_settings()
     qt_app.processEvents()
 
-    assert mock_config.save.called
+    assert fake_config.save_called
+    assert fake_config.save_count >= 1
 
 
-def test_settings_tab_theme_change_applies_immediately(settings_tab: Any, qt_app: Any) -> None:
+def test_settings_tab_theme_change_applies_immediately(
+    settings_tab: Any,
+    qt_app: Any,
+    fake_theme_manager: FakeThemeManager,
+    monkeypatch: Any,
+) -> None:
     """Settings tab theme changes are applied to application immediately."""
     theme_changed = {"signal_emitted": False}
 
@@ -86,37 +317,42 @@ def test_settings_tab_theme_change_applies_immediately(settings_tab: Any, qt_app
 
     settings_tab.theme_changed.connect(on_theme_changed)
 
-    with patch("intellicrack.ui.tabs.settings_tab.get_theme_manager") as mock_theme_mgr:
-        mock_manager = Mock()
-        mock_theme_mgr.return_value = mock_manager
+    def fake_get_theme_manager() -> FakeThemeManager:
+        return fake_theme_manager
 
-        settings_tab.on_theme_changed("Dark")
+    monkeypatch.setattr(
+        "intellicrack.ui.tabs.settings_tab.get_theme_manager",
+        fake_get_theme_manager,
+    )
 
+    settings_tab.on_theme_changed("Dark")
     qt_app.processEvents()
 
     assert theme_changed["signal_emitted"] is True
     assert settings_tab.settings["theme"] == "Dark"
+    assert "dark" in fake_theme_manager.set_theme_calls
 
 
-def test_settings_tab_tool_discovery_detects_installations(settings_tab: Any, qt_app: Any) -> None:
+def test_settings_tab_tool_discovery_detects_installations(
+    settings_tab: Any,
+    qt_app: Any,
+    fake_tool_discovery: FakeToolDiscovery,
+) -> None:
     """Settings tab tool discovery successfully detects installed tools."""
     if not hasattr(settings_tab, "tool_discovery"):
-        pytest.skip("Tool discovery not initialized")
-
-    mock_discovery = Mock()
-    mock_discovery.discover_all_tools.return_value = {
-        "ghidra": {"available": True, "path": "C:\\ghidra\\ghidraRun.bat"},
-        "radare2": {"available": True, "path": "C:\\radare2\\bin\\r2.exe"},
-    }
-    settings_tab.tool_discovery = mock_discovery
+        settings_tab.tool_discovery = fake_tool_discovery
 
     settings_tab.discover_tools()
     qt_app.processEvents()
 
-    mock_discovery.discover_all_tools.assert_called_once()
+    assert fake_tool_discovery.discover_all_calls >= 1
 
 
-def test_settings_tab_manual_tool_path_validation(settings_tab: Any, tmp_path: Path, qt_app: Any) -> None:
+def test_settings_tab_manual_tool_path_validation(
+    settings_tab: Any,
+    tmp_path: Path,
+    qt_app: Any,
+) -> None:
     """Settings tab validates manually entered tool paths."""
     if not hasattr(settings_tab, "tool_widgets"):
         pytest.skip("Tool widgets not initialized")
@@ -128,19 +364,30 @@ def test_settings_tab_manual_tool_path_validation(settings_tab: Any, tmp_path: P
     qt_app.processEvents()
 
 
-def test_settings_tab_export_settings_to_json(settings_tab: Any, tmp_path: Path, qt_app: Any) -> None:
+def test_settings_tab_export_settings_to_json(
+    settings_tab: Any,
+    tmp_path: Path,
+    qt_app: Any,
+    monkeypatch: Any,
+) -> None:
     """Settings tab exports configuration to JSON file successfully."""
     export_file = tmp_path / "exported_settings.json"
 
     settings_tab.settings["theme"] = "Dark"
     settings_tab.settings["analysis_timeout"] = 600
 
-    with (
-        patch("intellicrack.ui.tabs.settings_tab.QFileDialog.getSaveFileName", return_value=(str(export_file), "")),
-        patch("intellicrack.ui.tabs.settings_tab.QMessageBox.information"),
-    ):
-        settings_tab.export_settings()
+    FakeQFileDialog.save_file_name = str(export_file)
 
+    monkeypatch.setattr(
+        "intellicrack.ui.tabs.settings_tab.QFileDialog.getSaveFileName",
+        FakeQFileDialog.getSaveFileName,
+    )
+    monkeypatch.setattr(
+        "intellicrack.ui.tabs.settings_tab.QMessageBox.information",
+        FakeQMessageBox.information,
+    )
+
+    settings_tab.export_settings()
     qt_app.processEvents()
 
     assert export_file.exists()
@@ -152,7 +399,13 @@ def test_settings_tab_export_settings_to_json(settings_tab: Any, tmp_path: Path,
     assert exported_data["theme"] == "Dark"
 
 
-def test_settings_tab_import_settings_from_json(settings_tab: Any, tmp_path: Path, qt_app: Any) -> None:
+def test_settings_tab_import_settings_from_json(
+    settings_tab: Any,
+    tmp_path: Path,
+    qt_app: Any,
+    fake_config: FakeConfig,
+    monkeypatch: Any,
+) -> None:
     """Settings tab imports configuration from JSON file and applies changes."""
     import_file = tmp_path / "import_settings.json"
 
@@ -165,64 +418,97 @@ def test_settings_tab_import_settings_from_json(settings_tab: Any, tmp_path: Pat
     with open(import_file, "w") as f:
         json.dump(import_data, f)
 
-    mock_config = Mock()
-    settings_tab.config = mock_config
+    settings_tab.config = fake_config
 
-    with (
-        patch("intellicrack.ui.tabs.settings_tab.QFileDialog.getOpenFileName", return_value=(str(import_file), "")),
-        patch("intellicrack.ui.tabs.settings_tab.QMessageBox.information"),
-        patch.object(settings_tab, "update_ui_from_settings"),
-        patch.object(settings_tab, "update_preview"),
-    ):
-        settings_tab.import_settings()
+    FakeQFileDialog.open_file_name = str(import_file)
 
+    update_ui_called = {"called": False}
+    update_preview_called = {"called": False}
+
+    original_update_ui = settings_tab.update_ui_from_settings
+    original_update_preview = settings_tab.update_preview
+
+    def fake_update_ui() -> None:
+        update_ui_called["called"] = True
+        original_update_ui()
+
+    def fake_update_preview() -> None:
+        update_preview_called["called"] = True
+        original_update_preview()
+
+    monkeypatch.setattr(settings_tab, "update_ui_from_settings", fake_update_ui)
+    monkeypatch.setattr(settings_tab, "update_preview", fake_update_preview)
+    monkeypatch.setattr(
+        "intellicrack.ui.tabs.settings_tab.QFileDialog.getOpenFileName",
+        FakeQFileDialog.getOpenFileName,
+    )
+    monkeypatch.setattr(
+        "intellicrack.ui.tabs.settings_tab.QMessageBox.information",
+        FakeQMessageBox.information,
+    )
+
+    settings_tab.import_settings()
     qt_app.processEvents()
 
     assert settings_tab.settings["theme"] == "Light"
     assert settings_tab.settings["analysis_timeout"] == 900
 
 
-def test_settings_tab_reset_to_defaults_confirmation(settings_tab: Any, qt_app: Any) -> None:
+def test_settings_tab_reset_to_defaults_confirmation(
+    settings_tab: Any,
+    qt_app: Any,
+    monkeypatch: Any,
+) -> None:
     """Settings tab requires confirmation before resetting to defaults."""
     settings_tab.settings["theme"] = "Dark"
 
-    with patch("intellicrack.ui.tabs.settings_tab.QMessageBox.question") as mock_question:
-        from intellicrack.handlers.pyqt6_handler import QMessageBox
+    FakeQMessageBox.last_question_response = FakeQMessageBox.StandardButton.No
 
-        mock_question.return_value = QMessageBox.StandardButton.No
+    monkeypatch.setattr(
+        "intellicrack.ui.tabs.settings_tab.QMessageBox.question",
+        FakeQMessageBox.question,
+    )
 
-        settings_tab.reset_to_defaults()
-
+    settings_tab.reset_to_defaults()
     qt_app.processEvents()
 
     assert settings_tab.settings["theme"] == "Dark"
 
 
-def test_settings_tab_accent_color_selection_applies(settings_tab: Any, qt_app: Any) -> None:
+def test_settings_tab_accent_color_selection_applies(
+    settings_tab: Any,
+    qt_app: Any,
+    monkeypatch: Any,
+) -> None:
     """Settings tab accent color selection updates application stylesheet."""
-    with patch("intellicrack.ui.tabs.settings_tab.QColorDialog.getColor") as mock_color_dialog:
-        from intellicrack.handlers.pyqt6_handler import QColor
+    test_color = FakeQColor("#FF5733")
 
-        test_color = QColor("#FF5733")
-        test_color.setRed(255)
-        mock_color = Mock(spec=QColor)
-        mock_color.isValid.return_value = True
-        mock_color.name.return_value = "#FF5733"
+    FakeQColorDialog.selected_color = test_color
 
-        mock_color_dialog.return_value = mock_color
+    apply_calls = {"count": 0, "color": None}
 
-        with patch.object(settings_tab, "apply_accent_color") as mock_apply:
-            settings_tab.select_accent_color()
+    def fake_apply_accent_color(color_hex: str) -> None:
+        apply_calls["count"] += 1
+        apply_calls["color"] = color_hex
 
-        qt_app.processEvents()
+    monkeypatch.setattr(
+        "intellicrack.ui.tabs.settings_tab.QColorDialog.getColor",
+        FakeQColorDialog.getColor,
+    )
+    monkeypatch.setattr(settings_tab, "apply_accent_color", fake_apply_accent_color)
 
-        assert settings_tab.settings["accent_color"] == "#FF5733"
-        mock_apply.assert_called_once_with("#FF5733")
+    settings_tab.select_accent_color()
+    qt_app.processEvents()
+
+    assert settings_tab.settings["accent_color"] == "#FF5733"
+    assert apply_calls["count"] == 1
+    assert apply_calls["color"] == "#FF5733"
 
 
 def test_settings_tab_opacity_slider_updates_window(settings_tab: Any, qt_app: Any) -> None:
     """Settings tab opacity slider dynamically updates main window transparency."""
-    settings_tab.shared_context = {"main_window": Mock()}
+    fake_main_window = FakeMainWindow()
+    settings_tab.shared_context = {"main_window": fake_main_window}
 
     settings_tab.on_opacity_changed(75)
     qt_app.processEvents()
@@ -231,60 +517,93 @@ def test_settings_tab_opacity_slider_updates_window(settings_tab: Any, qt_app: A
     assert settings_tab.opacity_label.text() == "75%"
 
 
-def test_settings_tab_tooltip_toggle_disables_globally(settings_tab: Any, qt_app: Any) -> None:
+def test_settings_tab_tooltip_toggle_disables_globally(
+    settings_tab: Any,
+    qt_app: Any,
+    monkeypatch: Any,
+) -> None:
     """Settings tab tooltip toggle disables tooltips application-wide."""
-    with patch("intellicrack.ui.tabs.settings_tab.QApplication.instance") as mock_app:
-        mock_app_instance = Mock()
-        mock_app_instance.allWidgets.return_value = []
-        mock_app.return_value = mock_app_instance
+    fake_app = FakeQApplication()
 
-        settings_tab.apply_tooltip_settings(False)
+    def fake_app_instance() -> FakeQApplication:
+        return fake_app
 
+    monkeypatch.setattr(
+        "intellicrack.ui.tabs.settings_tab.QApplication.instance",
+        fake_app_instance,
+    )
+
+    settings_tab.apply_tooltip_settings(False)
     qt_app.processEvents()
 
 
-def test_settings_tab_animation_toggle_modifies_stylesheet(settings_tab: Any, qt_app: Any) -> None:
+def test_settings_tab_animation_toggle_modifies_stylesheet(
+    settings_tab: Any,
+    qt_app: Any,
+    monkeypatch: Any,
+) -> None:
     """Settings tab animation toggle modifies application stylesheet correctly."""
-    with patch("intellicrack.ui.tabs.settings_tab.QApplication.instance") as mock_app:
-        mock_app_instance = Mock()
-        mock_app_instance.styleSheet.return_value = "* { color: black; }"
-        mock_app.return_value = mock_app_instance
+    fake_app = FakeQApplication()
 
-        settings_tab.apply_animation_settings(False)
+    def fake_app_instance() -> FakeQApplication:
+        return fake_app
 
+    monkeypatch.setattr(
+        "intellicrack.ui.tabs.settings_tab.QApplication.instance",
+        fake_app_instance,
+    )
+
+    initial_stylesheet = fake_app.stylesheet
+
+    settings_tab.apply_animation_settings(False)
     qt_app.processEvents()
 
-    mock_app_instance.setStyleSheet.assert_called()
+    assert fake_app.stylesheet != initial_stylesheet
 
 
-def test_settings_tab_ai_provider_discovery(settings_tab: Any, qt_app: Any) -> None:
+def test_settings_tab_ai_provider_discovery(
+    settings_tab: Any,
+    qt_app: Any,
+    monkeypatch: Any,
+) -> None:
     """Settings tab dynamically discovers available AI providers."""
-    with patch("intellicrack.ui.tabs.settings_tab.get_model_discovery_service") as mock_discovery:
-        mock_service = Mock()
-        mock_service.discover_all_models.return_value = {
-            "OpenAI": ["gpt-4", "gpt-3.5-turbo"],
-            "Anthropic": ["claude-3-opus"],
-        }
-        mock_discovery.return_value = mock_service
+    fake_discovery_service = FakeModelDiscoveryService()
+    fake_discovery_service.available_models = {
+        "OpenAI": ["gpt-4", "gpt-3.5-turbo"],
+        "Anthropic": ["claude-3-opus"],
+    }
 
-        settings_tab.populate_ai_providers()
+    def fake_get_discovery_service() -> FakeModelDiscoveryService:
+        return fake_discovery_service
 
+    monkeypatch.setattr(
+        "intellicrack.ui.tabs.settings_tab.get_model_discovery_service",
+        fake_get_discovery_service,
+    )
+
+    settings_tab.populate_ai_providers()
     qt_app.processEvents()
 
     assert settings_tab.ai_provider_combo.count() >= 2
 
 
-def test_settings_tab_console_font_applies_to_terminals(settings_tab: Any, qt_app: Any) -> None:
+def test_settings_tab_console_font_applies_to_terminals(
+    settings_tab: Any,
+    qt_app: Any,
+    monkeypatch: Any,
+) -> None:
     """Settings tab console font changes apply to terminal widgets."""
-    from intellicrack.handlers.pyqt6_handler import QFont
+    fake_app = FakeQApplication()
 
-    with patch("intellicrack.ui.tabs.settings_tab.QApplication.instance") as mock_app:
-        mock_app_instance = Mock()
-        mock_app_instance.allWidgets.return_value = []
-        mock_app.return_value = mock_app_instance
+    def fake_app_instance() -> FakeQApplication:
+        return fake_app
 
-        settings_tab.apply_console_font()
+    monkeypatch.setattr(
+        "intellicrack.ui.tabs.settings_tab.QApplication.instance",
+        fake_app_instance,
+    )
 
+    settings_tab.apply_console_font()
     qt_app.processEvents()
 
 
@@ -313,20 +632,17 @@ def test_settings_tab_collect_settings_from_ui_widgets(settings_tab: Any, qt_app
         assert settings_tab.settings.get("theme") == "Light"
 
 
-def test_settings_tab_tool_reset_clears_manual_override(settings_tab: Any, qt_app: Any) -> None:
+def test_settings_tab_tool_reset_clears_manual_override(
+    settings_tab: Any,
+    qt_app: Any,
+    fake_tool_discovery: FakeToolDiscovery,
+) -> None:
     """Settings tab tool path reset clears manual overrides and re-discovers."""
     if not hasattr(settings_tab, "tool_discovery"):
-        pytest.skip("Tool discovery not initialized")
-
-    mock_discovery = Mock()
-    mock_discovery.discover_tool.return_value = {
-        "available": True,
-        "path": "C:\\auto_discovered\\r2.exe",
-    }
-    settings_tab.tool_discovery = mock_discovery
+        settings_tab.tool_discovery = fake_tool_discovery
 
     if "radare2" in getattr(settings_tab, "tool_widgets", {}):
         settings_tab.reset_tool_path("radare2")
         qt_app.processEvents()
 
-        mock_discovery.clear_manual_override.assert_called_once_with("radare2")
+        assert "radare2" not in fake_tool_discovery.manual_overrides

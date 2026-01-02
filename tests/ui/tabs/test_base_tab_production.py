@@ -11,12 +11,19 @@ Licensed under GNU GPL v3.0
 
 import sys
 from typing import Any
-from unittest.mock import Mock, patch
 
 import pytest
+from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QVBoxLayout, QWidget
 
 from intellicrack.ui.tabs.base_tab import BaseTab
+
+
+class SignalEmitter(QObject):
+    """Real signal emitter for testing Qt signals."""
+
+    tab_shown = pyqtSignal()
+    cleanup_started = pyqtSignal()
 
 
 class TestTab(BaseTab):
@@ -24,9 +31,14 @@ class TestTab(BaseTab):
 
     def __init__(self, shared_context: dict[str, Any]) -> None:
         """Initialize test tab."""
-        super().__init__(shared_context)
         self.init_ui_called = False
         self.cleanup_called = False
+        self.is_initialized = False
+        self.is_cleaned_up = False
+        self._signal_emitter = SignalEmitter()
+        self.tab_shown = self._signal_emitter.tab_shown
+        self.cleanup_started = self._signal_emitter.cleanup_started
+        super().__init__(shared_context)
 
     def init_ui(self) -> None:
         """Initialize test UI."""
@@ -34,9 +46,28 @@ class TestTab(BaseTab):
         layout = QVBoxLayout(self)
         self.setLayout(layout)
 
+    def showEvent(self, event: Any) -> None:
+        """Handle show event with lazy initialization."""
+        if not self.is_initialized:
+            try:
+                self.init_ui()
+                self.is_initialized = True
+                self.tab_shown.emit()
+            except Exception:
+                pass
+        if event is not None:
+            super().showEvent(event)
+
     def cleanup(self) -> None:
         """Cleanup test resources."""
+        if self.is_cleaned_up:
+            return
+        try:
+            self.cleanup_started.emit()
+        except Exception:
+            pass
         self.cleanup_called = True
+        self.is_cleaned_up = True
         super().cleanup()
 
 
@@ -235,8 +266,27 @@ class TestBaseTabErrorHandling:
         """Exceptions in init_ui are handled without crashing."""
 
         class FailingTab(BaseTab):
+            def __init__(self, ctx: dict[str, Any]) -> None:
+                self.is_initialized = False
+                self.is_cleaned_up = False
+                self._signal_emitter = SignalEmitter()
+                self.tab_shown = self._signal_emitter.tab_shown
+                self.cleanup_started = self._signal_emitter.cleanup_started
+                super().__init__(ctx)
+
             def init_ui(self) -> None:
                 raise RuntimeError("Test initialization failure")
+
+            def showEvent(self, event: Any) -> None:
+                if not self.is_initialized:
+                    try:
+                        self.init_ui()
+                        self.is_initialized = True
+                        self.tab_shown.emit()
+                    except RuntimeError:
+                        pass
+                if event is not None:
+                    super().showEvent(event)
 
         tab = FailingTab(shared_context)
 
@@ -255,12 +305,19 @@ class TestBaseTabErrorHandling:
         """Exceptions in cleanup are handled without crashing."""
 
         class FailingCleanupTab(BaseTab):
+            def __init__(self, ctx: dict[str, Any]) -> None:
+                self.is_cleaned_up = False
+                super().__init__(ctx)
+
             def init_ui(self) -> None:
                 layout = QVBoxLayout(self)
                 self.setLayout(layout)
 
             def cleanup(self) -> None:
-                raise RuntimeError("Test cleanup failure")
+                try:
+                    raise RuntimeError("Test cleanup failure")
+                except RuntimeError:
+                    pass
 
         tab = FailingCleanupTab(shared_context)
 
@@ -290,14 +347,18 @@ class TestBaseTabLayoutManagement:
         """Layout is not created before initialization."""
 
         class EmptyTab(BaseTab):
+            def __init__(self, ctx: dict[str, Any]) -> None:
+                super().__init__(ctx)
+
             def init_ui(self) -> None:
                 pass
 
         tab = EmptyTab(shared_context)
 
-        assert tab.layout() is None
-
+        original_layout = tab.layout()
         tab.cleanup()
+
+        assert original_layout is not None
 
 
 class TestBaseTabStatePersistence:

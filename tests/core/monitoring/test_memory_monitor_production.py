@@ -17,7 +17,6 @@ Tests validate REAL memory scanning capabilities:
 
 import time
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
 
 import frida
 import pytest

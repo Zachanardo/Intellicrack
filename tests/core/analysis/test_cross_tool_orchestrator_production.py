@@ -71,14 +71,6 @@ pytestmark = [
 
 
 @pytest.fixture
-def temp_workspace(tmp_path: Path) -> Path:
-    """Provide temporary workspace for test files."""
-    workspace = tmp_path / "orchestrator_test_workspace"
-    workspace.mkdir(parents=True, exist_ok=True)
-    return workspace
-
-
-@pytest.fixture
 def test_binary_path() -> Path:
     """Provide path to Windows system binary for testing."""
     return NOTEPAD_EXE

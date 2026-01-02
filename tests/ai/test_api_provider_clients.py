@@ -1,5 +1,4 @@
-from typing import Any
-from unittest.mock import MagicMock, patch
+from typing import Any, cast
 
 import pytest
 
@@ -12,6 +11,70 @@ from intellicrack.ai.api_provider_clients import (
     OpenAIProviderClient,
     ProviderManager,
 )
+
+
+class FakeHTTPResponse:
+    """Fake HTTP response for testing without mocks."""
+
+    def __init__(self, json_data: dict[str, Any] | None, status_code: int = 200) -> None:
+        self._json_data = json_data
+        self.status_code = status_code
+        self.text = str(json_data) if json_data else ""
+
+    def json(self) -> dict[str, Any]:
+        if self._json_data is None:
+            raise ValueError("No JSON data")
+        return self._json_data
+
+    def raise_for_status(self) -> None:
+        if self.status_code >= 400:
+            raise Exception(f"HTTP Error {self.status_code}")
+
+
+class FakeSession:
+    """Fake requests.Session for testing without mocks."""
+
+    def __init__(self, response_data: dict[str, Any] | None = None) -> None:
+        self.headers: dict[str, str] = {}
+        self._response_data = response_data
+        self._should_fail = response_data is None
+
+    def update(self, headers: dict[str, str]) -> None:
+        self.headers.update(headers)
+
+    def request(
+        self, method: str, url: str, timeout: int = 10, **kwargs: Any
+    ) -> FakeHTTPResponse:
+        if self._should_fail:
+            raise ConnectionError("Failed to connect")
+        return FakeHTTPResponse(self._response_data)
+
+
+class FakeProviderClientWithResponse:
+    """Base class for creating fake provider clients with predetermined responses."""
+
+    def __init__(
+        self,
+        client_class: type,
+        response_data: dict[str, Any] | None,
+        api_key: str | None = "test-key",
+        base_url: str | None = None,
+    ) -> None:
+        self.client = client_class(api_key=api_key, base_url=base_url)
+        self.client.session = FakeSession(response_data)
+
+    def fetch_models(self) -> list[ModelInfo]:
+        return cast(list[ModelInfo], self.client.fetch_models())
+
+
+class FakeGGUFManager:
+    """Fake GGUF manager for testing local models."""
+
+    def __init__(self, models: dict[str, dict[str, Any]]) -> None:
+        self._models = models
+
+    def list_models(self) -> dict[str, dict[str, Any]]:
+        return self._models
 
 
 @pytest.fixture
@@ -130,10 +193,11 @@ class TestOpenAIProviderClient:
     def test_fetch_models_success_extracts_context_window(
         self, openai_api_response: dict[str, Any]
     ) -> None:
-        client = OpenAIProviderClient(api_key="test-key")
-        client._make_request = MagicMock(return_value=openai_api_response)
+        fake_client = FakeProviderClientWithResponse(
+            OpenAIProviderClient, openai_api_response
+        )
 
-        models = client.fetch_models()
+        models = fake_client.fetch_models()
 
         assert len(models) == 3
 
@@ -151,10 +215,11 @@ class TestOpenAIProviderClient:
     def test_fetch_models_filters_non_chat_models(
         self, openai_api_response: dict[str, Any]
     ) -> None:
-        client = OpenAIProviderClient(api_key="test-key")
-        client._make_request = MagicMock(return_value=openai_api_response)
+        fake_client = FakeProviderClientWithResponse(
+            OpenAIProviderClient, openai_api_response
+        )
 
-        models = client.fetch_models()
+        models = fake_client.fetch_models()
 
         model_ids = [m.id for m in models]
         assert "whisper-1" not in model_ids
@@ -170,19 +235,19 @@ class TestOpenAIProviderClient:
         assert models[0].context_length == 128000
 
     def test_fetch_models_api_failure_returns_fallback(self) -> None:
-        client = OpenAIProviderClient(api_key="test-key")
-        client._make_request = MagicMock(return_value=None)
+        fake_client = FakeProviderClientWithResponse(OpenAIProviderClient, None)
 
-        models = client.fetch_models()
+        models = fake_client.fetch_models()
 
         assert len(models) == 2
         assert models[0].id == "gpt-4o"
 
     def test_fetch_models_empty_data_returns_fallback(self) -> None:
-        client = OpenAIProviderClient(api_key="test-key")
-        client._make_request = MagicMock(return_value={"data": []})
+        fake_client = FakeProviderClientWithResponse(
+            OpenAIProviderClient, {"data": []}
+        )
 
-        models = client.fetch_models()
+        models = fake_client.fetch_models()
 
         assert len(models) == 2
         assert models[0].id == "gpt-4o"
@@ -218,10 +283,11 @@ class TestAnthropicProviderClient:
     def test_fetch_models_success_uses_v1_models_endpoint(
         self, anthropic_api_response: dict[str, Any]
     ) -> None:
-        client = AnthropicProviderClient(api_key="test-key")
-        client._make_request = MagicMock(return_value=anthropic_api_response)
+        fake_client = FakeProviderClientWithResponse(
+            AnthropicProviderClient, anthropic_api_response
+        )
 
-        models = client.fetch_models()
+        models = fake_client.fetch_models()
 
         assert len(models) == 3
 
@@ -237,10 +303,11 @@ class TestAnthropicProviderClient:
     def test_fetch_models_extracts_display_name(
         self, anthropic_api_response: dict[str, Any]
     ) -> None:
-        client = AnthropicProviderClient(api_key="test-key")
-        client._make_request = MagicMock(return_value=anthropic_api_response)
+        fake_client = FakeProviderClientWithResponse(
+            AnthropicProviderClient, anthropic_api_response
+        )
 
-        models = client.fetch_models()
+        models = fake_client.fetch_models()
 
         haiku = next((m for m in models if "haiku" in m.id), None)
         assert haiku is not None
@@ -250,10 +317,11 @@ class TestAnthropicProviderClient:
     def test_fetch_models_infers_capabilities(
         self, anthropic_api_response: dict[str, Any]
     ) -> None:
-        client = AnthropicProviderClient(api_key="test-key")
-        client._make_request = MagicMock(return_value=anthropic_api_response)
+        fake_client = FakeProviderClientWithResponse(
+            AnthropicProviderClient, anthropic_api_response
+        )
 
-        models = client.fetch_models()
+        models = fake_client.fetch_models()
 
         opus = next((m for m in models if "opus" in m.id), None)
         assert opus is not None
@@ -271,19 +339,19 @@ class TestAnthropicProviderClient:
         assert models[0].context_length == 200000
 
     def test_fetch_models_api_failure_returns_fallback(self) -> None:
-        client = AnthropicProviderClient(api_key="test-key")
-        client._make_request = MagicMock(return_value=None)
+        fake_client = FakeProviderClientWithResponse(AnthropicProviderClient, None)
 
-        models = client.fetch_models()
+        models = fake_client.fetch_models()
 
         assert len(models) == 2
         assert models[0].id == "claude-3-5-sonnet-20241022"
 
     def test_fetch_models_empty_data_returns_fallback(self) -> None:
-        client = AnthropicProviderClient(api_key="test-key")
-        client._make_request = MagicMock(return_value={"data": []})
+        fake_client = FakeProviderClientWithResponse(
+            AnthropicProviderClient, {"data": []}
+        )
 
-        models = client.fetch_models()
+        models = fake_client.fetch_models()
 
         assert len(models) == 2
 
@@ -291,10 +359,11 @@ class TestAnthropicProviderClient:
 class TestOllamaProviderClient:
 
     def test_fetch_models_success(self, ollama_api_response: dict[str, Any]) -> None:
-        client = OllamaProviderClient()
-        client._make_request = MagicMock(return_value=ollama_api_response)
+        fake_client = FakeProviderClientWithResponse(
+            OllamaProviderClient, ollama_api_response, api_key=None
+        )
 
-        models = client.fetch_models()
+        models = fake_client.fetch_models()
 
         assert len(models) == 2
 
@@ -306,28 +375,31 @@ class TestOllamaProviderClient:
     def test_fetch_models_calculates_size(
         self, ollama_api_response: dict[str, Any]
     ) -> None:
-        client = OllamaProviderClient()
-        client._make_request = MagicMock(return_value=ollama_api_response)
+        fake_client = FakeProviderClientWithResponse(
+            OllamaProviderClient, ollama_api_response, api_key=None
+        )
 
-        models = client.fetch_models()
+        models = fake_client.fetch_models()
 
         codellama = next((m for m in models if "codellama" in m.id), None)
         assert codellama is not None
         assert "6.9GB" in codellama.description
 
     def test_fetch_models_api_failure_returns_empty(self) -> None:
-        client = OllamaProviderClient()
-        client._make_request = MagicMock(return_value=None)
+        fake_client = FakeProviderClientWithResponse(
+            OllamaProviderClient, None, api_key=None
+        )
 
-        models = client.fetch_models()
+        models = fake_client.fetch_models()
 
         assert len(models) == 0
 
     def test_fetch_models_missing_models_key_returns_empty(self) -> None:
-        client = OllamaProviderClient()
-        client._make_request = MagicMock(return_value={"data": []})
+        fake_client = FakeProviderClientWithResponse(
+            OllamaProviderClient, {"data": []}, api_key=None
+        )
 
-        models = client.fetch_models()
+        models = fake_client.fetch_models()
 
         assert len(models) == 0
 
@@ -337,59 +409,84 @@ class TestLMStudioProviderClient:
     def test_fetch_models_success(
         self, lmstudio_api_response: dict[str, Any]
     ) -> None:
-        client = LMStudioProviderClient()
-        client._make_request = MagicMock(return_value=lmstudio_api_response)
+        fake_client = FakeProviderClientWithResponse(
+            LMStudioProviderClient, lmstudio_api_response, api_key=None
+        )
 
-        models = client.fetch_models()
+        models = fake_client.fetch_models()
 
         assert len(models) == 2
         assert models[0].provider == "LM Studio"
         assert models[0].id == "local-model-1"
 
     def test_fetch_models_api_failure_returns_empty(self) -> None:
-        client = LMStudioProviderClient()
-        client._make_request = MagicMock(return_value=None)
+        fake_client = FakeProviderClientWithResponse(
+            LMStudioProviderClient, None, api_key=None
+        )
 
-        models = client.fetch_models()
+        models = fake_client.fetch_models()
 
         assert len(models) == 0
 
 
 class TestLocalProviderClient:
 
-    def test_fetch_models_success(self) -> None:
-        mock_gguf_manager = MagicMock()
-        mock_gguf_manager.list_models.return_value = {
-            "model1.gguf": {
-                "size_mb": 4096,
-                "quantization": "Q4_K_M",
-                "context_length": 8192,
-            },
-            "model2.gguf": {
-                "size_mb": 7680,
-                "quantization": "Q5_K_M",
-                "context_length": 16384,
-            },
-        }
+    def test_fetch_models_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        fake_gguf_manager = FakeGGUFManager(
+            {
+                "model1.gguf": {
+                    "size_mb": 4096,
+                    "quantization": "Q4_K_M",
+                    "context_length": 8192,
+                },
+                "model2.gguf": {
+                    "size_mb": 7680,
+                    "quantization": "Q5_K_M",
+                    "context_length": 16384,
+                },
+            }
+        )
 
-        with patch("intellicrack.ai.local_gguf_server.gguf_manager", mock_gguf_manager):
-            client = LocalProviderClient()
-            models = client.fetch_models()
+        class FakeModule:
+            gguf_manager = fake_gguf_manager
 
-            assert len(models) == 2
-            assert models[0].provider == "Local GGUF"
-            assert "Q4_K_M" in models[0].description or "Q5_K_M" in models[0].description
-            assert models[0].context_length in [8192, 16384]
+        def fake_import(
+            name: str, globals: Any = None, locals: Any = None, fromlist: Any = None, level: int = 0
+        ) -> Any:
+            if name == "intellicrack.ai.local_gguf_server" or (
+                fromlist and "gguf_manager" in fromlist
+            ):
+                return FakeModule()
+            return __import__(name, globals, locals, fromlist, level)
 
-    def test_fetch_models_import_error_returns_empty(self) -> None:
-        def mock_import_error(*_args: Any, **_kwargs: Any) -> None:
-            raise ImportError("Module not found")
+        monkeypatch.setattr("builtins.__import__", fake_import)
 
-        with patch("builtins.__import__", side_effect=mock_import_error):
-            client = LocalProviderClient()
-            models = client.fetch_models()
+        client = LocalProviderClient()
+        models = client.fetch_models()
 
-            assert len(models) == 0
+        assert len(models) == 2
+        assert models[0].provider == "Local GGUF"
+        assert "Q4_K_M" in models[0].description or "Q5_K_M" in models[0].description
+        assert models[0].context_length in [8192, 16384]
+
+    def test_fetch_models_import_error_returns_empty(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def fake_import_error(
+            name: str, globals: Any = None, locals: Any = None, fromlist: Any = None, level: int = 0
+        ) -> Any:
+            if name == "intellicrack.ai.local_gguf_server" or (
+                fromlist and "gguf_manager" in fromlist
+            ):
+                raise ImportError("Module not found")
+            return __import__(name, globals, locals, fromlist, level)
+
+        monkeypatch.setattr("builtins.__import__", fake_import_error)
+
+        client = LocalProviderClient()
+        models = client.fetch_models()
+
+        assert len(models) == 0
 
 
 class TestProviderManager:
@@ -413,10 +510,11 @@ class TestProviderManager:
         self, openai_api_response: dict[str, Any]
     ) -> None:
         manager = ProviderManager()
-        client = OpenAIProviderClient(api_key="test-key")
-        client._make_request = MagicMock(return_value=openai_api_response)
+        fake_client = FakeProviderClientWithResponse(
+            OpenAIProviderClient, openai_api_response
+        )
 
-        manager.register_provider("OpenAI", client)
+        manager.register_provider("OpenAI", fake_client.client)
 
         models = manager.fetch_models_from_provider("OpenAI")
 
@@ -435,14 +533,15 @@ class TestProviderManager:
     ) -> None:
         manager = ProviderManager()
 
-        openai_client = OpenAIProviderClient(api_key="test-key")
-        openai_client._make_request = MagicMock(return_value=openai_api_response)
+        openai_fake = FakeProviderClientWithResponse(
+            OpenAIProviderClient, openai_api_response
+        )
+        anthropic_fake = FakeProviderClientWithResponse(
+            AnthropicProviderClient, anthropic_api_response
+        )
 
-        anthropic_client = AnthropicProviderClient(api_key="test-key")
-        anthropic_client._make_request = MagicMock(return_value=anthropic_api_response)
-
-        manager.register_provider("OpenAI", openai_client)
-        manager.register_provider("Anthropic", anthropic_client)
+        manager.register_provider("OpenAI", openai_fake.client)
+        manager.register_provider("Anthropic", anthropic_fake.client)
 
         all_models = manager.fetch_all_models()
 

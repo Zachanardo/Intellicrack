@@ -17,11 +17,13 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU GPL v3
 """
 
+from __future__ import annotations
+
 import json
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -35,6 +37,12 @@ if PYQT6_AVAILABLE:
     from intellicrack.ui.widgets.ai_assistant_widget import (
         AIAssistantWidget,
     )
+
+
+def qwait(ms: int) -> None:
+    """Wait for ms milliseconds, processing Qt events."""
+    if PYQT6_AVAILABLE:
+        QTest.qWait(ms)  # type: ignore[arg-type, call-arg]
 
 pytestmark = pytest.mark.skipif(
     not PYQT6_AVAILABLE,
@@ -54,7 +62,7 @@ def qapp() -> Any:
 
 
 @pytest.fixture
-def temp_output_dir() -> Path:
+def temp_output_dir() -> Generator[Path, None, None]:
     """Create temporary directory for test files."""
     with tempfile.TemporaryDirectory(prefix="ai_assistant_test_") as tmpdir:
         yield Path(tmpdir)
@@ -81,7 +89,7 @@ def calculate_checksum(data: str) -> str:
 @pytest.fixture
 def large_conversation_history() -> list[dict[str, str]]:
     """Generate large conversation history for testing."""
-    history = []
+    history: list[dict[str, str]] = []
     for i in range(1000):
         history.extend(
             (
@@ -90,6 +98,19 @@ def large_conversation_history() -> list[dict[str, str]]:
             )
         )
     return history
+
+
+class FakeLLMManager:
+    """Real test double for LLMManager that simulates failures."""
+
+    def __init__(self, should_fail: bool = False) -> None:
+        self.should_fail = should_fail
+
+    def get_available_models(self) -> list[str]:
+        """Return model list or raise exception."""
+        if self.should_fail:
+            raise Exception("Model loading failed")
+        return ["model-1", "model-2"]
 
 
 class TestAIAssistantWidget:
@@ -118,19 +139,19 @@ class TestAIAssistantWidget:
         widget = AIAssistantWidget()
 
         widget.tabs.setCurrentIndex(0)
-        QTest.qWait(50)
+        qwait(50)
         assert widget.tabs.currentWidget() == widget.chat_tab
 
         widget.tabs.setCurrentIndex(1)
-        QTest.qWait(50)
+        qwait(50)
         assert widget.tabs.currentWidget() == widget.script_tab
 
         widget.tabs.setCurrentIndex(2)
-        QTest.qWait(50)
+        qwait(50)
         assert widget.tabs.currentWidget() == widget.analysis_tab
 
         widget.tabs.setCurrentIndex(3)
-        QTest.qWait(50)
+        qwait(50)
         assert widget.tabs.currentWidget() == widget.keygen_tab
 
         widget.close()
@@ -144,7 +165,7 @@ class TestAIAssistantWidget:
 
             if widget.model_combo.count() > 1:
                 widget.model_combo.setCurrentIndex(1)
-                QTest.qWait(100)
+                qwait(100)
 
                 new_model = widget.model_combo.currentText()
                 assert new_model != original_model or widget.model_combo.count() == 1
@@ -156,7 +177,7 @@ class TestAIAssistantWidget:
         widget = AIAssistantWidget()
 
         widget.temperature_spin.setCurrentText("0.9")
-        QTest.qWait(50)
+        qwait(50)
 
         assert widget.temperature_spin.currentText() == "0.9"
 
@@ -170,7 +191,7 @@ class TestAIAssistantWidget:
 
         if hasattr(widget, "load_available_models"):
             widget.load_available_models(force_refresh=True)
-            QTest.qWait(200)
+            qwait(200)
 
             final_count = widget.model_combo.count()
             assert final_count >= 0
@@ -198,7 +219,7 @@ class TestChatFunctionality:
         widget.message_sent.connect(capture_message)
 
         widget.send_button.click()
-        QTest.qWait(200)
+        qwait(200)
 
         assert test_message in emitted_messages or len(widget.conversation_history) > 0
 
@@ -213,7 +234,7 @@ class TestChatFunctionality:
         for i in range(5):
             widget.message_input.setText(f"Message {i}")
             widget.send_button.click()
-            QTest.qWait(100)
+            qwait(100)
 
         if hasattr(widget, "conversation_history"):
             assert len(widget.conversation_history) > 0
@@ -241,7 +262,7 @@ class TestChatFunctionality:
         test_message = "Test question"
         widget.message_input.setText(test_message)
         widget.send_button.click()
-        QTest.qWait(200)
+        qwait(200)
 
         if widget.chat_history:
             history_text = widget.chat_history.toPlainText()
@@ -255,7 +276,7 @@ class TestChatFunctionality:
 
         if hasattr(widget, "set_context"):
             widget.set_context(sample_python_code)
-            QTest.qWait(100)
+            qwait(100)
 
             if widget.context_label:
                 context_text = widget.context_label.text()
@@ -298,7 +319,7 @@ class TestScriptGeneration:
 
         if hasattr(widget, "generate_frida_script"):
             widget.generate_frida_script("license_check")
-            QTest.qWait(500)
+            qwait(500)
 
         widget.close()
 
@@ -310,7 +331,7 @@ class TestScriptGeneration:
 
         if hasattr(widget, "generate_ghidra_script"):
             widget.generate_ghidra_script("Find license validation functions")
-            QTest.qWait(500)
+            qwait(500)
 
         widget.close()
 
@@ -322,7 +343,7 @@ class TestScriptGeneration:
 
         if hasattr(widget, "generate_python_script"):
             widget.generate_python_script("License key generator")
-            QTest.qWait(500)
+            qwait(500)
 
         widget.close()
 
@@ -366,8 +387,8 @@ class TestCodeAnalysis:
         widget.tabs.setCurrentWidget(widget.analysis_tab)
 
         if hasattr(widget, "analyze_code"):
-            widget.analyze_code(sample_python_code)
-            QTest.qWait(500)
+            widget.analyze_code()
+            qwait(500)
 
         widget.close()
 
@@ -444,7 +465,7 @@ class TestKeygenGeneration:
 
         if hasattr(widget, "generate_keygen_code"):
             widget.generate_keygen_code("rsa", 20)
-            QTest.qWait(500)
+            qwait(500)
 
         widget.close()
 
@@ -481,13 +502,13 @@ class TestModelSwitching:
         if widget.model_combo.count() > 1:
             original_model = widget.model_combo.currentText()
             widget.model_combo.setCurrentIndex(1)
-            QTest.qWait(100)
+            qwait(100)
 
             new_model = widget.model_combo.currentText()
 
             widget.message_input.setText("Question 2")
             widget.send_button.click()
-            QTest.qWait(200)
+            qwait(200)
 
         widget.close()
 
@@ -504,7 +525,7 @@ class TestModelSwitching:
 
         if widget.model_combo.count() > 1:
             widget.model_combo.setCurrentIndex(1)
-            QTest.qWait(100)
+            qwait(100)
 
             assert len(widget.conversation_history) == initial_history_len
 
@@ -523,7 +544,7 @@ class TestStreamingResponses:
 
             for chunk in chunks:
                 widget.handle_streaming_response(chunk)
-                QTest.qWait(50)
+                qwait(50)
 
         widget.close()
 
@@ -533,7 +554,7 @@ class TestStreamingResponses:
 
         if hasattr(widget, "stop_streaming"):
             widget.stop_streaming()
-            QTest.qWait(100)
+            qwait(100)
 
         widget.close()
 
@@ -547,7 +568,7 @@ class TestEdgeCases:
 
         widget.message_input.setText("")
         widget.send_button.click()
-        QTest.qWait(100)
+        qwait(100)
 
         widget.close()
 
@@ -558,7 +579,7 @@ class TestEdgeCases:
         long_message = "A" * 10000
         widget.message_input.setText(long_message)
         widget.send_button.click()
-        QTest.qWait(200)
+        qwait(200)
 
         widget.close()
 
@@ -569,7 +590,7 @@ class TestEdgeCases:
         unicode_message = "Test 你好 Привет مرحبا"
         widget.message_input.setText(unicode_message)
         widget.send_button.click()
-        QTest.qWait(200)
+        qwait(200)
 
         widget.close()
 
@@ -578,13 +599,8 @@ class TestEdgeCases:
         widget = AIAssistantWidget()
 
         if hasattr(widget, "analyze_code"):
-            code_with_special = '''def test():
-    s = "String with \\" quotes \\\\ backslashes"
-    return s
-'''
-
-            widget.analyze_code(code_with_special)
-            QTest.qWait(200)
+            widget.analyze_code()
+            qwait(200)
 
         widget.close()
 
@@ -596,20 +612,23 @@ class TestEdgeCases:
 
         widget.message_input.setText("Test message")
         widget.send_button.click()
-        QTest.qWait(100)
+        qwait(100)
 
         widget.close()
 
-    def test_model_loading_failure(self, qapp: Any) -> None:
+    def test_model_loading_failure(self, qapp: Any, monkeypatch: pytest.MonkeyPatch) -> None:
         """Widget handles model loading failures gracefully."""
         widget = AIAssistantWidget()
 
         if hasattr(widget, "load_available_models"):
-            with patch("intellicrack.ai.llm_backends.LLMManager.get_available_models") as mock_get:
-                mock_get.side_effect = Exception("Model loading failed")
+            fake_llm = FakeLLMManager(should_fail=True)
+            monkeypatch.setattr(
+                "intellicrack.ai.llm_backends.LLMManager.get_available_models",
+                fake_llm.get_available_models
+            )
 
-                widget.load_available_models(force_refresh=True)
-                QTest.qWait(200)
+            widget.load_available_models(force_refresh=True)
+            qwait(200)
 
         widget.close()
 
@@ -620,9 +639,9 @@ class TestEdgeCases:
         for i in range(5):
             widget.message_input.setText(f"Concurrent request {i}")
             widget.send_button.click()
-            QTest.qWait(50)
+            qwait(50)
 
-        QTest.qWait(500)
+        qwait(500)
 
         widget.close()
 
@@ -634,7 +653,7 @@ class TestEdgeCases:
             very_large_context = "A" * 100000
 
             widget.set_context(very_large_context)
-            QTest.qWait(200)
+            qwait(200)
 
         widget.close()
 
@@ -653,7 +672,7 @@ class TestEdgeCases:
 
         if hasattr(widget, "save_conversation"):
             widget.save_conversation(str(output_file))
-            QTest.qWait(100)
+            qwait(100)
 
             if output_file.exists():
                 with open(output_file, "r") as f:
@@ -679,7 +698,7 @@ class TestEdgeCases:
 
         if hasattr(widget, "load_conversation"):
             widget.load_conversation(str(history_file))
-            QTest.qWait(100)
+            qwait(100)
 
             assert len(widget.conversation_history) > 0
 

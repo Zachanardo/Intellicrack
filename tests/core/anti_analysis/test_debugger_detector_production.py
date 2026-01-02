@@ -212,40 +212,40 @@ class TestDebuggerSignatures:
 class TestDebuggerDetection:
     """Test comprehensive debugger detection."""
 
-    def test_detect_method_returns_results(self) -> None:
-        """Test detect method returns detection results."""
+    def test_detect_debugger_returns_results(self) -> None:
+        """Test detect_debugger method returns detection results."""
         detector = DebuggerDetector()
 
-        results = detector.detect()
+        results = detector.detect_debugger()
 
         assert isinstance(results, dict)
         assert len(results) > 0
 
-    def test_detect_all_methods_executed(self) -> None:
+    def test_detect_debugger_all_methods_executed(self) -> None:
         """Verify all detection methods are executed."""
         detector = DebuggerDetector()
 
-        results = detector.detect()
+        results = detector.detect_debugger()
 
         for method_name in detector.detection_methods:
             assert method_name in results
 
-    def test_detect_returns_boolean_values(self) -> None:
-        """Verify detection results are boolean values."""
+    def test_detect_debugger_returns_boolean_values(self) -> None:
+        """Verify detection results contain expected keys."""
         detector = DebuggerDetector()
 
-        results = detector.detect()
+        results = detector.detect_debugger()
 
-        for method_name, result in results.items():
-            assert isinstance(result, bool)
+        assert "is_debugged" in results
+        assert isinstance(results["is_debugged"], bool)
 
-    def test_is_debugger_present(self) -> None:
-        """Test is_debugger_present summary method."""
+    def test_is_debugged_from_detect_debugger(self) -> None:
+        """Test is_debugged field from detect_debugger method."""
         detector = DebuggerDetector()
 
-        is_present = detector.is_debugger_present()
+        results = detector.detect_debugger()
 
-        assert isinstance(is_present, bool)
+        assert isinstance(results["is_debugged"], bool)
 
 
 class TestParentProcessDetection:
@@ -315,8 +315,8 @@ class TestDetectionEdgeCases:
         """Run detection multiple times."""
         detector = DebuggerDetector()
 
-        results1 = detector.detect()
-        results2 = detector.detect()
+        results1 = detector.detect_debugger()
+        results2 = detector.detect_debugger()
 
         assert isinstance(results1, dict)
         assert isinstance(results2, dict)
@@ -325,7 +325,7 @@ class TestDetectionEdgeCases:
         """Detection when no debugger is attached."""
         detector = DebuggerDetector()
 
-        results = detector.detect()
+        results = detector.detect_debugger()
 
         assert isinstance(results, dict)
         assert len(results) > 0
@@ -352,7 +352,7 @@ class TestPerformance:
         """Benchmark debugger detection performance."""
         detector = DebuggerDetector()
 
-        result = benchmark(detector.detect)
+        result = benchmark(detector.detect_debugger)
 
         assert isinstance(result, dict)
 
@@ -361,7 +361,7 @@ class TestPerformance:
         detector = DebuggerDetector()
 
         for _ in range(10):
-            results = detector.detect()
+            results = detector.detect_debugger()
             assert isinstance(results, dict)
 
 
@@ -372,7 +372,8 @@ class TestLicensingAntiDebug:
         """Detect debugger during license validation."""
         detector = DebuggerDetector()
 
-        is_debugged = detector.is_debugger_present()
+        results = detector.detect_debugger()
+        is_debugged = results["is_debugged"]
 
         assert isinstance(is_debugged, bool)
 
@@ -380,7 +381,7 @@ class TestLicensingAntiDebug:
         """Detect debugger before serial number validation."""
         detector = DebuggerDetector()
 
-        results = detector.detect()
+        results = detector.detect_debugger()
 
         assert isinstance(results, dict)
         assert len(results) > 0
@@ -389,9 +390,9 @@ class TestLicensingAntiDebug:
         """Use multiple detection methods for robust protection."""
         detector = DebuggerDetector()
 
-        results = detector.detect()
+        results = detector.detect_debugger()
 
-        detected_count = sum(bool(result)
-                         for result in results.values())
+        detected_count = sum(1 for k, v in results.items()
+                         if isinstance(v, bool) and v)
 
         assert detected_count >= 0

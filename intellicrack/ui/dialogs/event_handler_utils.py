@@ -1,5 +1,9 @@
 """Event handler utilities for Intellicrack UI dialogs.
 
+This module provides reusable event handling patterns to reduce code duplication
+across dialog implementations. It includes utilities for managing thread signals,
+context menus, timers, and UI state transitions.
+
 This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
 
@@ -18,21 +22,17 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 from collections.abc import Callable
-from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import QAction, QCloseEvent, QDialog, QMenu, QMessageBox, QPoint, QThread, QTimer, QWidget
 
 
-"""
-Event Handler Utilities for Dialog Management
-
-This module provides reusable event handling patterns to reduce
-code duplication across dialog implementations.
-"""
-
-
 class DialogEventHandler:
-    """Base event handler for dialog common patterns."""
+    """Base event handler for dialog common patterns.
+
+    Provides static methods for creating and managing event handlers used in
+    dialog-based UI components, including close confirmations, thread signal
+    connections, and context menu creation.
+    """
 
     @staticmethod
     def create_close_confirmation(
@@ -44,15 +44,18 @@ class DialogEventHandler:
     ) -> Callable[[QCloseEvent], None]:
         """Create a close event handler with confirmation dialog.
 
+        Returns a callable that handles close events, optionally prompting for
+        confirmation before allowing the dialog to close.
+
         Args:
-            dialog: The dialog instance
+            dialog: The dialog instance to attach the handler to
             condition_check: Function that returns True if confirmation is needed
-            title: Title for confirmation dialog
-            message: Message for confirmation dialog
+            title: Title text for the confirmation dialog
+            message: Message text for the confirmation dialog
             cleanup_action: Optional cleanup function to call before closing
 
         Returns:
-            Close event handler function
+            Callable that handles QCloseEvent instances and manages confirmation flow.
 
         """
 
@@ -79,9 +82,13 @@ class DialogEventHandler:
     def connect_thread_signals(thread: QThread, signal_connections: dict[str, Callable[..., None]]) -> None:
         """Connect multiple thread signals to their handlers.
 
+        Safely connects signal handlers to a thread instance by iterating through
+        a mapping of signal names to handler functions. Uses getattr for safe
+        attribute access to handle missing signals gracefully.
+
         Args:
-            thread: The thread instance
-            signal_connections: Dict mapping signal names to handler functions
+            thread: The QThread instance to attach signals to
+            signal_connections: Dict mapping signal attribute names to handler callables
 
         """
         for signal_name, handler in signal_connections.items():
@@ -97,14 +104,17 @@ class DialogEventHandler:
     ) -> Callable[[QPoint], None]:
         """Create a context menu handler.
 
+        Returns a callable that creates and displays a context menu at a given
+        position. Optionally checks a condition before showing the menu.
+
         Args:
-            parent: Parent widget for the menu
-            position_widget: Widget to map position from
-            actions: Dict mapping action names to callback functions
+            parent: Parent widget for the context menu
+            position_widget: Widget to map the context menu position from
+            actions: Dict mapping action display text to callback functions
             condition_check: Optional function to check if menu should be shown
 
         Returns:
-            Context menu handler function
+            Callable that accepts a QPoint and displays the context menu.
 
         """
 
@@ -126,12 +136,15 @@ class DialogEventHandler:
     def create_periodic_timer(interval_ms: int, callback: Callable[[], None]) -> QTimer:
         """Create a timer that calls a function periodically.
 
+        Creates a configured QTimer instance that calls the provided callback
+        function repeatedly at the specified interval in milliseconds.
+
         Args:
-            interval_ms: Interval in milliseconds
-            callback: Function to call on timeout
+            interval_ms: Timer interval in milliseconds
+            callback: Function to call on each timeout event
 
         Returns:
-            Configured QTimer
+            Configured and started QTimer instance.
 
         """
         timer = QTimer()
@@ -143,9 +156,13 @@ class DialogEventHandler:
     def cleanup_thread(thread: QThread, timeout_seconds: int = 2) -> None:
         """Safely cleanup a thread.
 
+        Gracefully shuts down a QThread by first requesting it to quit, then
+        waiting for it to finish. If the thread does not finish within the
+        timeout period, forcefully terminates it.
+
         Args:
-            thread: Thread to cleanup
-            timeout_seconds: Timeout for waiting
+            thread: QThread instance to cleanup
+            timeout_seconds: Timeout in seconds for waiting for thread to finish
 
         """
         if thread and thread.isRunning():
@@ -156,18 +173,29 @@ class DialogEventHandler:
 
 
 class UIStateManager:
-    """Manages UI state transitions for dialogs."""
+    """Manages UI state transitions for dialogs.
+
+    Provides functionality to register and apply named UI states that control
+    the enabled/disabled status of multiple widgets. Useful for managing
+    complex dialog states where multiple widgets need synchronized updates.
+    """
 
     def __init__(self) -> None:
-        """Initialize the UIStateManager with default values."""
+        """Initialize the UIStateManager with default values.
+
+        Creates an empty state mappings dictionary for storing registered states.
+        """
         self.state_mappings: dict[str, dict[QWidget, bool]] = {}
 
     def register_state_mapping(self, state_name: str, widget_states: dict[QWidget, bool]) -> None:
         """Register a state mapping for widgets.
 
+        Stores a named state configuration that maps widgets to their desired
+        enabled/disabled status. This state can later be applied with apply_state.
+
         Args:
-            state_name: Name of the state
-            widget_states: Dict mapping widgets to their enabled state
+            state_name: Unique identifier for the state
+            widget_states: Dict mapping QWidget instances to their enabled status
 
         """
         self.state_mappings[state_name] = widget_states
@@ -175,8 +203,11 @@ class UIStateManager:
     def apply_state(self, state_name: str) -> None:
         """Apply a registered state to all widgets.
 
+        Updates all widgets in the registered state mapping by setting their
+        enabled status accordingly. Does nothing if the state_name is not found.
+
         Args:
-            state_name: Name of the state to apply
+            state_name: Name of the registered state to apply
 
         """
         if state_name in self.state_mappings:
@@ -187,11 +218,14 @@ class UIStateManager:
 def format_file_size(size_bytes: int) -> str:
     """Format file size in human-readable format.
 
+    Converts a byte count to a human-readable string representation with
+    appropriate unit suffixes (B, KB, MB, GB, TB).
+
     Args:
-        size_bytes: Size in bytes
+        size_bytes: File size in bytes
 
     Returns:
-        Formatted size string
+        Formatted size string with appropriate unit suffix.
 
     """
     if size_bytes == 0:
@@ -211,12 +245,16 @@ def format_file_size(size_bytes: int) -> str:
 def create_colored_message(message: str, message_type: str = "info") -> str:
     """Create a colored message with appropriate formatting.
 
+    Wraps a message text in HTML span tags with color styling based on the
+    message type. Supports info, warning, error, success, and debug types.
+
     Args:
-        message: The message text
-        message_type: Type of message (info, warning, error, success)
+        message: The message text to format
+        message_type: Type of message determining color (info, warning, error,
+            success, debug). Defaults to "info".
 
     Returns:
-        Formatted message string
+        HTML-formatted message string with color styling.
 
     """
     colors = {

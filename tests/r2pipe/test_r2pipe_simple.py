@@ -9,7 +9,7 @@ import sys
 import os
 import subprocess
 
-def test_radare2_direct():
+def test_radare2_direct() -> bool:
     """Test radare2 binary directly."""
     radare2_path = r"D:\Intellicrack\tools\radare2_extracted\radare2-5.9.4-w64\bin\radare2.exe"
     test_binary = r"C:\Windows\System32\notepad.exe"
@@ -35,7 +35,7 @@ def test_radare2_direct():
         print(f"ERROR: Failed to execute radare2 - {e}")
         return False
 
-def test_r2pipe_simple():
+def test_r2pipe_simple() -> bool:
     """Test r2pipe with minimal configuration."""
     radare2_path = r"D:\Intellicrack\tools\radare2_extracted\radare2-5.9.4-w64\bin\radare2.exe"
     test_binary = r"C:\Windows\System32\notepad.exe"
@@ -65,7 +65,7 @@ def test_r2pipe_simple():
         print(f"ERROR: r2pipe test failed - {e}")
         return False
 
-def main():
+def main() -> bool:
     print("Testing Radare2 Integration - Step 1.2")
     print("=" * 50)
 

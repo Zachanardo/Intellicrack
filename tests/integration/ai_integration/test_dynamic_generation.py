@@ -2,29 +2,26 @@
 """Test dynamic AI script generation functionality."""
 
 import sys
-import os
 
-# Add the project root to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-def test_frida_generation():
+def test_frida_generation() -> bool:
     """Test Frida script generation from natural language prompt."""
     print("🧪 Testing dynamic Frida script generation...")
 
     try:
-        from intellicrack.ai.ai_script_generator import DynamicScriptGenerator, ScriptType
+        from intellicrack.ai.ai_script_generator import AIScriptGenerator, ScriptType
 
         # Create generator instance
-        generator = DynamicScriptGenerator()
+        generator = AIScriptGenerator()
 
         # Test prompt for license bypass
         prompt = "Create a Frida script that hooks CreateFileW API calls and logs all file access attempts. Focus on detecting license file reads."
 
-        # Generate script
-        result = generator.generate_from_prompt(
-            prompt=prompt,
-            script_type=ScriptType.FRIDA,
-            binary_path=None  # Generic script, no specific binary
+        # Generate script using actual method
+        result = generator.generate_frida_script(
+            binary_path="",
+            protection_types=[],
+            custom_hooks=["CreateFileW"]
         )
 
         if result.success:
@@ -40,21 +37,21 @@ def test_frida_generation():
         print(f"FAIL Exception during generation: {e}")
         return False
 
-def test_ghidra_generation():
+def test_ghidra_generation() -> bool:
     """Test Ghidra script generation from natural language prompt."""
     print("\n🧪 Testing dynamic Ghidra script generation...")
 
     try:
-        from intellicrack.ai.ai_script_generator import DynamicScriptGenerator, ScriptType
+        from intellicrack.ai.ai_script_generator import AIScriptGenerator, ScriptType
 
-        generator = DynamicScriptGenerator()
+        generator = AIScriptGenerator()
 
         prompt = "Generate a Ghidra script that scans for string patterns related to license validation. Look for keywords like 'license', 'serial', 'activation', and 'trial'."
 
-        result = generator.generate_from_prompt(
-            prompt=prompt,
-            script_type=ScriptType.GHIDRA,
-            binary_path=None
+        result = generator.generate_ghidra_script(
+            binary_path="",
+            analysis_goals=["License validation pattern detection"],
+            protection_types=[]
         )
 
         if result.success:
@@ -70,7 +67,7 @@ def test_ghidra_generation():
         print(f"FAIL Exception during generation: {e}")
         return False
 
-def main():
+def main() -> bool:
     """Run all tests."""
     print(" Testing Dynamic AI Script Generation System")
     print("=" * 50)

@@ -25,7 +25,8 @@ def create_bypass_result() -> dict[str, Any]:
     """Create standard bypass result structure.
 
     Returns:
-        dict: Standard result dictionary for bypass operations
+        Standard result dictionary for bypass operations with success flag,
+        methods applied, and error tracking capabilities.
 
     """
     return {
@@ -39,8 +40,8 @@ def add_bypass_method(result: dict[str, Any], method_name: str) -> None:
     """Add a successful bypass method to results.
 
     Args:
-        result: Bypass result dictionary
-        method_name: Name of the bypass method
+        result: Bypass result dictionary to update with successful method.
+        method_name: Name of the bypass method to add to the methods applied list.
 
     """
     if "methods_applied" not in result:
@@ -52,8 +53,8 @@ def add_bypass_error(result: dict[str, Any], error: str) -> None:
     """Add an error to bypass results.
 
     Args:
-        result: Bypass result dictionary
-        error: Error message
+        result: Bypass result dictionary to update with error information.
+        error: Error message describing the bypass attempt failure or issue.
 
     """
     if "errors" not in result:
@@ -65,10 +66,11 @@ def finalize_bypass_result(result: dict[str, Any]) -> dict[str, Any]:
     """Finalize bypass result by setting success flag.
 
     Args:
-        result: Bypass result dictionary
+        result: Bypass result dictionary to finalize with success determination.
 
     Returns:
-        dict: Finalized result dictionary
+        The finalized result dictionary with the success flag set based on
+        whether any bypass methods were successfully applied.
 
     """
     result["success"] = len(result.get("methods_applied", [])) > 0

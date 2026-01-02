@@ -40,16 +40,16 @@ def build_ghidra_command(
     """Build a standard Ghidra headless command.
 
     Args:
-        ghidra_headless_path: Path to analyzeHeadless script
-        temp_dir: Temporary directory for Ghidra project
-        project_name: Name of the Ghidra project
-        binary_path: Path to binary to analyze
-        script_path: Directory containing the script
-        script_name: Name of the script to run
-        overwrite: Whether to overwrite existing project
+        ghidra_headless_path: Path to analyzeHeadless script.
+        temp_dir: Temporary directory for Ghidra project.
+        project_name: Name of the Ghidra project.
+        binary_path: Path to binary to analyze.
+        script_path: Directory containing the script.
+        script_name: Name of the script to run.
+        overwrite: Whether to overwrite existing project.
 
     Returns:
-        List of command arguments
+        List of command arguments for analyzeHeadless execution.
 
     """
     cmd = [
@@ -74,7 +74,7 @@ def get_ghidra_headless_path() -> str | None:
     """Find the Ghidra headless analyzer path.
 
     Returns:
-        Path to analyzeHeadless or None if not found
+        Path to the analyzeHeadless executable, or None if not found.
 
     """
     # First, try to get from config

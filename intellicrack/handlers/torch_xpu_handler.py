@@ -3,8 +3,16 @@
 This module provides a centralized handler for importing PyTorch with XPU support.
 Replaces the legacy Intel Extension for PyTorch (IPEX) handler.
 
+The module automatically detects XPU device availability and initializes the XPU
+runtime if available. It respects environment variables to skip initialization in
+testing, CI, or when explicitly disabled.
+
 Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
+
+Attributes:
+    HAS_XPU: Boolean flag indicating whether PyTorch XPU devices are available.
+        Automatically initialized during module import.
 """
 
 import os

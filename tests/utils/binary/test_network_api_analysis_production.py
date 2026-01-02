@@ -7,8 +7,7 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from typing import Any
-from unittest.mock import Mock
+from typing import Any, List
 
 import pytest
 
@@ -21,12 +20,53 @@ from intellicrack.utils.binary.network_api_analysis import (
 )
 
 
+class FakePEImport:
+    """Real test double for PE import entry."""
+
+    def __init__(self, name: str | bytes | None) -> None:
+        if name is None:
+            self.name = None
+        elif isinstance(name, str):
+            self.name = name.encode("utf-8")
+        else:
+            self.name = name
+
+
+class FakePEImportDirectory:
+    """Real test double for PE import directory entry."""
+
+    def __init__(self, imports: List[FakePEImport]) -> None:
+        self.imports = imports
+
+
+class FakePEBinary:
+    """Real test double for PE binary with imports."""
+
+    def __init__(self, import_names: List[str | bytes | None]) -> None:
+        imports = [FakePEImport(name) for name in import_names]
+        entry = FakePEImportDirectory(imports)
+        self.DIRECTORY_ENTRY_IMPORT = [entry]
+
+
+class FakePEBinaryNoImports:
+    """Real test double for PE binary without imports."""
+
+    def __init__(self) -> None:
+        self.DIRECTORY_ENTRY_IMPORT = []
+
+
+class FakePEBinaryNoDirectory:
+    """Real test double for PE binary without DIRECTORY_ENTRY_IMPORT."""
+
+    pass
+
+
 class TestAnalyzeNetworkAPIs:
     """Test network API analysis on PE binaries."""
 
     def test_detects_basic_network_apis(self) -> None:
         """Network analyzer detects basic networking functions."""
-        pe_binary = self._create_mock_pe_with_imports(["socket", "connect", "send", "recv"])
+        pe_binary = FakePEBinary(["socket", "connect", "send", "recv"])
         network_apis = {"basic": ["socket", "connect", "send", "recv"]}
 
         detected = analyze_network_apis(pe_binary, network_apis)
@@ -37,7 +77,7 @@ class TestAnalyzeNetworkAPIs:
 
     def test_detects_http_apis(self) -> None:
         """Network analyzer detects HTTP-related functions."""
-        pe_binary = self._create_mock_pe_with_imports(["HttpOpenRequest", "HttpSendRequest", "InternetConnect"])
+        pe_binary = FakePEBinary(["HttpOpenRequest", "HttpSendRequest", "InternetConnect"])
         network_apis = {"http": ["HttpOpenRequest", "HttpSendRequest", "InternetConnect"]}
 
         detected = analyze_network_apis(pe_binary, network_apis)
@@ -47,7 +87,7 @@ class TestAnalyzeNetworkAPIs:
 
     def test_detects_ssl_apis(self) -> None:
         """Network analyzer detects SSL/TLS functions."""
-        pe_binary = self._create_mock_pe_with_imports(["SSL_connect", "SSL_write", "SSL_read", "CryptAcquireContext"])
+        pe_binary = FakePEBinary(["SSL_connect", "SSL_write", "SSL_read", "CryptAcquireContext"])
         network_apis = {"ssl": ["SSL_connect", "SSL_write", "SSL_read", "CryptAcquireContext"]}
 
         detected = analyze_network_apis(pe_binary, network_apis)
@@ -57,7 +97,7 @@ class TestAnalyzeNetworkAPIs:
 
     def test_categorizes_apis_correctly(self) -> None:
         """Network analyzer categorizes APIs into correct categories."""
-        pe_binary = self._create_mock_pe_with_imports(["socket", "HttpOpenRequest", "SSL_connect"])
+        pe_binary = FakePEBinary(["socket", "HttpOpenRequest", "SSL_connect"])
         network_apis = {
             "basic": ["socket"],
             "http": ["HttpOpenRequest"],
@@ -72,7 +112,7 @@ class TestAnalyzeNetworkAPIs:
 
     def test_handles_case_insensitive_matching(self) -> None:
         """Network analyzer performs case-insensitive API matching."""
-        pe_binary = self._create_mock_pe_with_imports(["SOCKET", "Connect", "SEND"])
+        pe_binary = FakePEBinary(["SOCKET", "Connect", "SEND"])
         network_apis = {"basic": ["socket", "connect", "send"]}
 
         detected = analyze_network_apis(pe_binary, network_apis)
@@ -82,7 +122,7 @@ class TestAnalyzeNetworkAPIs:
 
     def test_calls_logger_for_detected_apis(self) -> None:
         """Network analyzer logs detected APIs."""
-        pe_binary = self._create_mock_pe_with_imports(["socket", "connect"])
+        pe_binary = FakePEBinary(["socket", "connect"])
         network_apis = {"basic": ["socket", "connect"]}
 
         log_calls: list[str] = []
@@ -97,7 +137,7 @@ class TestAnalyzeNetworkAPIs:
 
     def test_limits_logger_calls_per_category(self) -> None:
         """Network analyzer limits logging to first 3 APIs per category."""
-        pe_binary = self._create_mock_pe_with_imports(["api1", "api2", "api3", "api4", "api5"])
+        pe_binary = FakePEBinary(["api1", "api2", "api3", "api4", "api5"])
         network_apis = {"test": ["api1", "api2", "api3", "api4", "api5"]}
 
         log_calls: list[str] = []
@@ -107,8 +147,7 @@ class TestAnalyzeNetworkAPIs:
 
     def test_returns_empty_for_no_imports(self) -> None:
         """Network analyzer returns empty dict for PE without imports."""
-        pe_binary = Mock()
-        pe_binary.DIRECTORY_ENTRY_IMPORT = []
+        pe_binary = FakePEBinaryNoImports()
         network_apis = {"basic": ["socket"]}
 
         detected = analyze_network_apis(pe_binary, network_apis)
@@ -117,26 +156,12 @@ class TestAnalyzeNetworkAPIs:
 
     def test_handles_pe_without_directory_entry(self) -> None:
         """Network analyzer handles PE without DIRECTORY_ENTRY_IMPORT."""
-        pe_binary = Mock(spec=[])
+        pe_binary = FakePEBinaryNoDirectory()
         network_apis = {"basic": ["socket"]}
 
         detected = analyze_network_apis(pe_binary, network_apis)
 
         assert detected == {}
-
-    def _create_mock_pe_with_imports(self, import_names: list[str]) -> Any:
-        """Create mock PE with specified imports."""
-        pe = Mock()
-        entry = Mock()
-        entry.imports = []
-
-        for name in import_names:
-            imp = Mock()
-            imp.name = name.encode()
-            entry.imports.append(imp)
-
-        pe.DIRECTORY_ENTRY_IMPORT = [entry]
-        return pe
 
 
 class TestProcessNetworkAPIResults:
@@ -270,13 +295,7 @@ class TestDetectNetworkAPIs:
 
     def test_detect_network_apis_alias_works(self) -> None:
         """Backward compatibility alias functions correctly."""
-        pe_binary = Mock()
-        entry = Mock()
-        imp = Mock()
-        imp.name = b"socket"
-        entry.imports = [imp]
-        pe_binary.DIRECTORY_ENTRY_IMPORT = [entry]
-
+        pe_binary = FakePEBinary(["socket"])
         network_apis = {"basic": ["socket"]}
 
         detected = detect_network_apis(pe_binary, network_apis)
@@ -289,7 +308,7 @@ class TestRealWorldScenarios:
 
     def test_detects_license_server_communication(self) -> None:
         """Network analyzer detects license server communication APIs."""
-        pe_binary = self._create_mock_pe_with_imports(["HttpOpenRequest", "HttpSendRequest", "SSL_connect"])
+        pe_binary = FakePEBinary(["HttpOpenRequest", "HttpSendRequest", "SSL_connect"])
         categories = get_network_api_categories()
 
         detected = analyze_network_apis(pe_binary, categories)
@@ -300,7 +319,7 @@ class TestRealWorldScenarios:
 
     def test_detects_online_activation_apis(self) -> None:
         """Network analyzer detects online activation API usage."""
-        pe_binary = self._create_mock_pe_with_imports(
+        pe_binary = FakePEBinary(
             ["InternetConnect", "HttpOpenRequest", "SSL_connect", "CryptAcquireContext"]
         )
         categories = get_network_api_categories()
@@ -312,7 +331,7 @@ class TestRealWorldScenarios:
 
     def test_identifies_insecure_license_check(self) -> None:
         """Network analyzer identifies unencrypted license checking."""
-        pe_binary = self._create_mock_pe_with_imports(["socket", "connect", "send", "recv"])
+        pe_binary = FakePEBinary(["socket", "connect", "send", "recv"])
         categories = get_network_api_categories()
 
         detected = analyze_network_apis(pe_binary, categories)
@@ -320,42 +339,22 @@ class TestRealWorldScenarios:
 
         assert result["ssl_usage"]["network_without_ssl"] is True
 
-    def _create_mock_pe_with_imports(self, import_names: list[str]) -> Any:
-        """Create mock PE with specified imports."""
-        pe = Mock()
-        entry = Mock()
-        entry.imports = []
-
-        for name in import_names:
-            imp = Mock()
-            imp.name = name.encode()
-            entry.imports.append(imp)
-
-        pe.DIRECTORY_ENTRY_IMPORT = [entry]
-        return pe
-
 
 class TestEdgeCases:
     """Test edge cases and error handling."""
 
     def test_handles_none_import_names(self) -> None:
         """Network analyzer handles imports with None names."""
-        pe = Mock()
-        entry = Mock()
-        imp = Mock()
-        imp.name = None
-        entry.imports = [imp]
-        pe.DIRECTORY_ENTRY_IMPORT = [entry]
-
+        pe_binary = FakePEBinary([None])
         network_apis = {"basic": ["socket"]}
 
-        detected = analyze_network_apis(pe, network_apis)
+        detected = analyze_network_apis(pe_binary, network_apis)
 
         assert detected == {}
 
     def test_handles_empty_api_categories(self) -> None:
         """Network analyzer handles empty API category dictionary."""
-        pe_binary = self._create_mock_pe_with_imports(["socket"])
+        pe_binary = FakePEBinary(["socket"])
 
         detected = analyze_network_apis(pe_binary, {})
 
@@ -363,16 +362,12 @@ class TestEdgeCases:
 
     def test_handles_unicode_api_names(self) -> None:
         """Network analyzer handles Unicode in API names."""
-        pe = Mock()
-        entry = Mock()
-        imp = Mock()
-        imp.name = "socket测试".encode("utf-8")
-        entry.imports = [imp]
-        pe.DIRECTORY_ENTRY_IMPORT = [entry]
-
+        pe_binary = FakePEBinary(["socket测试"])
         network_apis = {"test": ["socket测试"]}
 
-        if detected := analyze_network_apis(pe, network_apis):
+        detected = analyze_network_apis(pe_binary, network_apis)
+
+        if detected:
             assert "test" in detected
 
     def test_summarizes_empty_detection(self) -> None:
@@ -383,16 +378,61 @@ class TestEdgeCases:
         assert summary["has_network"] is False
         assert summary["has_dns"] is False
 
-    def _create_mock_pe_with_imports(self, import_names: list[str]) -> Any:
-        """Create mock PE with specified imports."""
-        pe = Mock()
-        entry = Mock()
-        entry.imports = []
+    def test_handles_multiple_import_directories(self) -> None:
+        """Network analyzer handles PE with multiple import directories."""
+        imports1 = [FakePEImport("socket"), FakePEImport("connect")]
+        imports2 = [FakePEImport("HttpOpenRequest"), FakePEImport("SSL_connect")]
+        entry1 = FakePEImportDirectory(imports1)
+        entry2 = FakePEImportDirectory(imports2)
 
-        for name in import_names:
-            imp = Mock()
-            imp.name = name.encode() if isinstance(name, str) else name
-            entry.imports.append(imp)
+        class FakePEMultipleDirectories:
+            def __init__(self) -> None:
+                self.DIRECTORY_ENTRY_IMPORT = [entry1, entry2]
 
-        pe.DIRECTORY_ENTRY_IMPORT = [entry]
-        return pe
+        pe_binary = FakePEMultipleDirectories()
+        network_apis = {
+            "basic": ["socket", "connect"],
+            "http": ["HttpOpenRequest"],
+            "ssl": ["SSL_connect"],
+        }
+
+        detected = analyze_network_apis(pe_binary, network_apis)
+
+        assert "basic" in detected
+        assert "http" in detected
+        assert "ssl" in detected
+        assert len(detected["basic"]) == 2
+
+    def test_handles_mixed_valid_and_none_imports(self) -> None:
+        """Network analyzer handles mix of valid and None import names."""
+        pe_binary = FakePEBinary(["socket", None, "connect", None, "send"])
+        network_apis = {"basic": ["socket", "connect", "send"]}
+
+        detected = analyze_network_apis(pe_binary, network_apis)
+
+        assert "basic" in detected
+        assert len(detected["basic"]) == 3
+
+    def test_handles_empty_import_list(self) -> None:
+        """Network analyzer handles import directory with empty import list."""
+        class FakePEEmptyImports:
+            def __init__(self) -> None:
+                entry = FakePEImportDirectory([])
+                self.DIRECTORY_ENTRY_IMPORT = [entry]
+
+        pe_binary = FakePEEmptyImports()
+        network_apis = {"basic": ["socket"]}
+
+        detected = analyze_network_apis(pe_binary, network_apis)
+
+        assert detected == {}
+
+    def test_handles_bytes_import_names(self) -> None:
+        """Network analyzer handles import names already as bytes."""
+        pe_binary = FakePEBinary([b"socket", b"connect", b"send"])
+        network_apis = {"basic": ["socket", "connect", "send"]}
+
+        detected = analyze_network_apis(pe_binary, network_apis)
+
+        assert "basic" in detected
+        assert len(detected["basic"]) == 3

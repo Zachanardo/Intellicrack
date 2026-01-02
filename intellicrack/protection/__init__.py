@@ -15,6 +15,9 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
+
+This module provides comprehensive protection detection capabilities through
+a unified engine that seamlessly combines multiple detection methods.
 """
 
 from __future__ import annotations
@@ -205,12 +208,6 @@ except ImportError as e:
     VMContext = None
     DevirtualizedCode = None
 
-"""
-Protection Detection Module
-
-This module provides comprehensive protection detection capabilities through
-a unified engine that seamlessly combines multiple detection methods.
-"""
 
 __all__ = [
     "DetectionResult",

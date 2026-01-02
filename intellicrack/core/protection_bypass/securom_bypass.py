@@ -104,7 +104,11 @@ class SecuROMBypass:
         self._setup_winapi()
 
     def _setup_winapi(self) -> None:
-        """Set up Windows API functions with proper signatures."""
+        """Set up Windows API functions with proper signatures.
+
+        Initializes ctypes function signatures for Windows API calls including
+        service control functions, file operations, and registry access.
+        """
         try:
             self._advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
             self._kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
@@ -158,8 +162,7 @@ class SecuROMBypass:
         """Perform complete SecuROM removal from system.
 
         Returns:
-            SecuROMRemovalResult with detailed removal information
-
+            SecuROMRemovalResult: Contains lists of removed/stopped/cleaned items and overall success status.
         """
         errors: list[str] = []
         drivers_removed: list[str] = []
@@ -197,7 +200,11 @@ class SecuROMBypass:
         )
 
     def _stop_all_services(self) -> list[str]:
-        """Stop all SecuROM services."""
+        """Stop all SecuROM services.
+
+        Returns:
+            list[str]: Service names that were successfully stopped.
+        """
         if not self._advapi32:
             return []
 
@@ -241,7 +248,11 @@ class SecuROMBypass:
         return stopped
 
     def _delete_all_services(self) -> list[str]:
-        """Delete all SecuROM services."""
+        """Delete all SecuROM services.
+
+        Returns:
+            list[str]: Service names that were successfully deleted.
+        """
         if not self._advapi32:
             return []
 
@@ -272,7 +283,11 @@ class SecuROMBypass:
         return deleted
 
     def _clean_registry(self) -> list[str]:
-        """Clean SecuROM registry keys."""
+        """Clean SecuROM registry keys.
+
+        Returns:
+            list[str]: Registry key paths that were successfully deleted.
+        """
         return [
             f"{root_key}\\{subkey_path}"
             for root_key, subkey_path in self.REGISTRY_KEYS_TO_DELETE
@@ -280,7 +295,15 @@ class SecuROMBypass:
         ]
 
     def _delete_registry_key_recursive(self, root_key: int | winreg.HKEYType, subkey_path: str) -> bool:
-        """Recursively delete a registry key and all subkeys."""
+        """Recursively delete a registry key and all subkeys.
+
+        Args:
+            root_key: Registry root key handle or constant.
+            subkey_path: Path to the subkey to delete.
+
+        Returns:
+            bool: True if the key was successfully deleted, False otherwise.
+        """
         try:
             key = winreg.OpenKey(root_key, subkey_path, 0, winreg.KEY_ALL_ACCESS)
 
@@ -300,7 +323,11 @@ class SecuROMBypass:
             return False
 
     def _bypass_activation_registry(self) -> bool:
-        """Bypass activation through registry manipulation."""
+        """Bypass activation through registry manipulation.
+
+        Returns:
+            bool: True if activation registry was successfully bypassed, False otherwise.
+        """
         bypassed = False
 
         for root_key, subkey_path in self.ACTIVATION_REGISTRY_KEYS:
@@ -325,7 +352,11 @@ class SecuROMBypass:
         return bypassed
 
     def _remove_driver_files(self) -> list[str]:
-        """Remove SecuROM driver files."""
+        """Remove SecuROM driver files.
+
+        Returns:
+            list[str]: Driver file paths that were successfully removed.
+        """
         removed = []
 
         for driver_path in self.DRIVER_PATHS:
@@ -340,7 +371,11 @@ class SecuROMBypass:
         return removed
 
     def _remove_application_files(self) -> list[str]:
-        """Remove SecuROM application files."""
+        """Remove SecuROM application files.
+
+        Returns:
+            list[str]: Directories that were successfully removed.
+        """
         deleted = []
 
         sr_dirs = [
@@ -366,12 +401,11 @@ class SecuROMBypass:
         """Bypass SecuROM product activation system.
 
         Args:
-            target_exe: Path to protected executable
-            product_id: Optional product ID for specific game/software
+            target_exe: Path to protected executable.
+            product_id: Optional product ID for specific game/software.
 
         Returns:
-            BypassResult with bypass status
-
+            BypassResult: Contains bypass success status, technique name, detailed results, and error list.
         """
         if not PEFILE_AVAILABLE or not target_exe.exists():
             return BypassResult(
@@ -414,7 +448,14 @@ class SecuROMBypass:
         )
 
     def _patch_activation_checks(self, target_exe: Path) -> bool:
-        """Patch activation validation checks in executable."""
+        """Patch activation validation checks in executable.
+
+        Args:
+            target_exe: Path to the executable to patch.
+
+        Returns:
+            bool: True if patching was successful, False otherwise.
+        """
         try:
             pe = pefile.PE(str(target_exe))
 
@@ -466,7 +507,15 @@ class SecuROMBypass:
             return False
 
     def _inject_activation_data(self, target_exe: Path, product_id: str | None) -> bool:
-        """Inject bypassed activation data into executable resource section."""
+        """Inject bypassed activation data into executable resource section.
+
+        Args:
+            target_exe: Path to the executable to modify.
+            product_id: Product ID to inject or None to use default.
+
+        Returns:
+            bool: True if injection was successful, False otherwise.
+        """
         try:
             pe = pefile.PE(str(target_exe))
 
@@ -494,7 +543,14 @@ class SecuROMBypass:
             return False
 
     def _disable_activation_countdown(self, target_exe: Path) -> bool:
-        """Disable activation countdown timers."""
+        """Disable activation countdown timers.
+
+        Args:
+            target_exe: Path to the executable to modify.
+
+        Returns:
+            bool: True if countdown was successfully disabled, False otherwise.
+        """
         try:
             with open(target_exe, "r+b") as f:
                 data = bytearray(f.read())
@@ -533,11 +589,10 @@ class SecuROMBypass:
         """Remove online validation triggers from executable.
 
         Args:
-            target_exe: Path to protected executable
+            target_exe: Path to protected executable.
 
         Returns:
-            BypassResult with number of triggers removed
-
+            BypassResult: Contains removal success status, technique name, detailed count of removed triggers, and error list.
         """
         if not PEFILE_AVAILABLE or not target_exe.exists():
             return BypassResult(
@@ -612,7 +667,15 @@ class SecuROMBypass:
         return BypassResult(success=success, technique="Trigger Removal", details=details, errors=errors)
 
     def _nop_trigger_function(self, data: bytearray, offset: int) -> bool:
-        """NOP out trigger function by finding its prologue and replacing with RET."""
+        """NOP out trigger function by finding its prologue and replacing with RET.
+
+        Args:
+            data: Binary data buffer to modify.
+            offset: Offset to the trigger function keyword.
+
+        Returns:
+            bool: True if the function was successfully NOPed, False otherwise.
+        """
         try:
             search_start = max(0, offset - 100)
 
@@ -628,7 +691,15 @@ class SecuROMBypass:
             return False
 
     def _is_network_call(self, data: bytearray, offset: int) -> bool:
-        """Check if call is network-related."""
+        """Check if call is network-related.
+
+        Args:
+            data: Binary data buffer to analyze.
+            offset: Offset to the instruction to check.
+
+        Returns:
+            bool: True if the call appears to be network-related, False otherwise.
+        """
         context_start = max(0, offset - 200)
         context_end = min(len(data), offset + 200)
         context = bytes(data[context_start:context_end])
@@ -648,11 +719,10 @@ class SecuROMBypass:
         """Bypass SecuROM disc authentication.
 
         Args:
-            target_exe: Path to protected executable
+            target_exe: Path to protected executable.
 
         Returns:
-            BypassResult with bypass status
-
+            BypassResult: Contains disc check bypass success status, technique name, detailed results, and error list.
         """
         if not PEFILE_AVAILABLE or not target_exe.exists():
             return BypassResult(
@@ -690,7 +760,14 @@ class SecuROMBypass:
         )
 
     def _patch_disc_check_calls(self, target_exe: Path) -> bool:
-        """Patch disc check API calls in executable."""
+        """Patch disc check API calls in executable.
+
+        Args:
+            target_exe: Path to the executable to patch.
+
+        Returns:
+            bool: True if disc check calls were successfully patched, False otherwise.
+        """
         try:
             with open(target_exe, "r+b") as f:
                 data = bytearray(f.read())
@@ -732,7 +809,14 @@ class SecuROMBypass:
             return False
 
     def _patch_scsi_commands(self, target_exe: Path) -> bool:
-        """Patch SCSI command execution."""
+        """Patch SCSI command execution.
+
+        Args:
+            target_exe: Path to the executable to patch.
+
+        Returns:
+            bool: True if SCSI commands were successfully patched, False otherwise.
+        """
         try:
             with open(target_exe, "r+b") as f:
                 data = bytearray(f.read())
@@ -776,7 +860,14 @@ class SecuROMBypass:
             return False
 
     def _emulate_disc_presence(self, target_exe: Path) -> bool:
-        """Configure registry for disc presence emulation."""
+        """Configure registry for disc presence emulation.
+
+        Args:
+            target_exe: Path to the executable (used for context).
+
+        Returns:
+            bool: True if disc emulation was successfully configured, False otherwise.
+        """
         try:
             key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\SecuROM\DiscEmulation")
 
@@ -794,11 +885,10 @@ class SecuROMBypass:
         """Bypass product key validation.
 
         Args:
-            target_exe: Path to protected executable
+            target_exe: Path to protected executable.
 
         Returns:
-            BypassResult with bypass status
-
+            BypassResult: Contains product key bypass success status, technique name, detailed results, and error list.
         """
         if not PEFILE_AVAILABLE or not target_exe.exists():
             return BypassResult(
@@ -831,7 +921,14 @@ class SecuROMBypass:
         )
 
     def _patch_key_validation(self, target_exe: Path) -> bool:
-        """Patch product key validation logic."""
+        """Patch product key validation logic.
+
+        Args:
+            target_exe: Path to the executable to patch.
+
+        Returns:
+            bool: True if key validation was successfully patched, False otherwise.
+        """
         try:
             with open(target_exe, "r+b") as f:
                 data = bytearray(f.read())
@@ -861,7 +958,14 @@ class SecuROMBypass:
             return False
 
     def _inject_valid_key_data(self, target_exe: Path) -> bool:
-        """Inject valid key data into registry."""
+        """Inject valid key data into registry.
+
+        Args:
+            target_exe: Path to the executable (used for context).
+
+        Returns:
+            bool: True if key data was successfully injected, False otherwise.
+        """
         try:
             key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"SOFTWARE\SecuROM\ProductKeys")
 
@@ -879,12 +983,11 @@ class SecuROMBypass:
         """Block phone-home mechanisms.
 
         Args:
-            target_exe: Path to protected executable
-            server_urls: Optional list of activation server URLs to block
+            target_exe: Path to protected executable.
+            server_urls: Optional list of activation server URLs to block.
 
         Returns:
-            BypassResult with blocking status
-
+            BypassResult: Contains blocking success status, technique name, detailed results, and error list.
         """
         errors = []
         details = []
@@ -914,7 +1017,14 @@ class SecuROMBypass:
         )
 
     def _patch_network_calls(self, target_exe: Path) -> bool:
-        """Patch network API calls to return immediately."""
+        """Patch network API calls to return immediately.
+
+        Args:
+            target_exe: Path to the executable to patch.
+
+        Returns:
+            bool: True if network calls were successfully patched, False otherwise.
+        """
         try:
             with open(target_exe, "r+b") as f:
                 data = bytearray(f.read())
@@ -943,7 +1053,14 @@ class SecuROMBypass:
             return False
 
     def _add_hosts_entries(self, server_urls: list[str]) -> bool:
-        """Add activation server URLs to hosts file."""
+        """Add activation server URLs to hosts file.
+
+        Args:
+            server_urls: List of activation server URLs to block.
+
+        Returns:
+            bool: True if hosts file entries were successfully added, False otherwise.
+        """
         try:
             hosts_path = Path(r"C:\Windows\System32\drivers\etc\hosts")
 
@@ -967,7 +1084,15 @@ class SecuROMBypass:
             return False
 
     def _block_firewall(self, server_urls: list[str]) -> bool:
-        """Create firewall rules to block activation servers."""
+        """Create firewall rules to block activation servers.
+
+        Args:
+            server_urls: List of activation server URLs to block.
+
+        Returns:
+            bool: True if firewall rules were successfully created, False otherwise.
+
+        """
         try:
             for server in server_urls:
                 clean_server = server.replace("https://", "").replace("http://", "").split("/")[0]
@@ -997,10 +1122,10 @@ class SecuROMBypass:
         """Defeat challenge-response authentication.
 
         Args:
-            target_exe: Path to protected executable
+            target_exe: Path to protected executable.
 
         Returns:
-            BypassResult with defeat status
+            BypassResult: Contains challenge-response defeat success status, technique name, detailed results, and error list.
 
         """
         if not PEFILE_AVAILABLE or not target_exe.exists():
@@ -1034,7 +1159,15 @@ class SecuROMBypass:
         )
 
     def _patch_challenge_generation(self, target_exe: Path) -> bool:
-        """Patch challenge generation to return fixed value."""
+        """Patch challenge generation to return fixed value.
+
+        Args:
+            target_exe: Path to the executable to patch.
+
+        Returns:
+            bool: True if challenge generation was successfully patched, False otherwise.
+
+        """
         try:
             with open(target_exe, "r+b") as f:
                 data = bytearray(f.read())
@@ -1068,7 +1201,15 @@ class SecuROMBypass:
             return False
 
     def _patch_response_validation(self, target_exe: Path) -> bool:
-        """Patch response validation to always return success."""
+        """Patch response validation to always return success.
+
+        Args:
+            target_exe: Path to the executable to patch.
+
+        Returns:
+            bool: True if response validation was successfully patched, False otherwise.
+
+        """
         try:
             with open(target_exe, "r+b") as f:
                 data = bytearray(f.read())

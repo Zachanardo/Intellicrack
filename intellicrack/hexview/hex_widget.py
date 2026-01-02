@@ -191,28 +191,57 @@ class HexViewerWidget(QAbstractScrollArea):
         logger.debug("HexViewerWidget initialized")
 
     def _get_vscrollbar(self) -> QScrollBar:
-        """Get vertical scrollbar with guaranteed non-None return."""
+        """Get vertical scrollbar with guaranteed non-None return.
+
+        Returns:
+            QScrollBar: The vertical scrollbar widget.
+
+        Raises:
+            RuntimeError: If the vertical scrollbar is unavailable.
+
+        """
         scrollbar = self.verticalScrollBar()
         if scrollbar is None:
             raise RuntimeError("Vertical scrollbar not available")
         return scrollbar
 
     def _get_hscrollbar(self) -> QScrollBar:
-        """Get horizontal scrollbar with guaranteed non-None return."""
+        """Get horizontal scrollbar with guaranteed non-None return.
+
+        Returns:
+            QScrollBar: The horizontal scrollbar widget.
+
+        Raises:
+            RuntimeError: If the horizontal scrollbar is unavailable.
+
+        """
         scrollbar = self.horizontalScrollBar()
         if scrollbar is None:
             raise RuntimeError("Horizontal scrollbar not available")
         return scrollbar
 
     def _get_viewport(self) -> QWidget:
-        """Get viewport with guaranteed non-None return."""
+        """Get viewport with guaranteed non-None return.
+
+        Returns:
+            QWidget: The viewport widget.
+
+        Raises:
+            RuntimeError: If the viewport is unavailable.
+
+        """
         vp = self.viewport()
         if vp is None:
             raise RuntimeError("Viewport not available")
         return vp
 
     def _set_clipboard_text(self, text: str) -> None:
-        """Set clipboard text safely."""
+        """Set clipboard text safely.
+
+        Args:
+            text (str): The text to set on the clipboard.
+
+        """
         clipboard = QApplication.clipboard()
         if clipboard is not None:
             clipboard.setText(text)
@@ -367,7 +396,6 @@ class HexViewerWidget(QAbstractScrollArea):
                 return False
 
             # Create a temporary file
-            import os
             import tempfile
 
             temp_file = tempfile.NamedTemporaryFile(delete=False)  # noqa: SIM115

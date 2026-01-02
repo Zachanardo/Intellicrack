@@ -52,11 +52,11 @@ class TimingAttackDefense:
         """Sleep with protection against acceleration.
 
         Args:
-            duration: Sleep duration in seconds
-            callback: Optional callback to execute during sleep
+            duration: Sleep duration in seconds.
+            callback: Optional callback to execute during sleep.
 
         Returns:
-            True if sleep completed normally, False if accelerated
+            True if sleep completed normally, False if accelerated.
 
         """
         try:
@@ -140,8 +140,11 @@ class TimingAttackDefense:
         """Execute computationally intensive stalling code.
 
         Args:
-            min_duration: Minimum stall duration
-            max_duration: Maximum stall duration
+            min_duration: Minimum stall duration in seconds.
+            max_duration: Maximum stall duration in seconds.
+
+        Returns:
+            None.
 
         """
         try:
@@ -180,11 +183,11 @@ class TimingAttackDefense:
         """Create a time bomb that triggers after specific duration.
 
         Args:
-            trigger_time: Time in seconds until trigger
-            action: Function to execute when triggered
+            trigger_time: Time in seconds until trigger.
+            action: Function to execute when triggered.
 
         Returns:
-            Thread handle for the time bomb
+            Thread handle for the time bomb.
 
         """
 
@@ -212,7 +215,10 @@ class TimingAttackDefense:
         """Delay execution to evade automated analysis.
 
         Args:
-            check_environment: Perform environment checks during delay
+            check_environment: Perform environment checks during delay.
+
+        Returns:
+            None.
 
         """
         try:
@@ -251,7 +257,7 @@ class TimingAttackDefense:
         """Use RDTSC instruction for precise timing checks.
 
         Returns:
-            True if timing is normal, False if anomaly detected
+            True if timing is normal, False if anomaly detected.
 
         """
         if not self.timing_checks["rdtsc_available"]:
@@ -284,7 +290,10 @@ class TimingAttackDefense:
         """Loop that resists sleep acceleration attempts.
 
         Args:
-            duration: Total duration to loop
+            duration: Total duration to loop in seconds.
+
+        Returns:
+            None.
 
         """
         try:
@@ -314,7 +323,12 @@ class TimingAttackDefense:
             self.logger.exception("Anti-acceleration loop failed: %s", e, exc_info=True)
 
     def _check_rdtsc_availability(self) -> bool:
-        """Check if RDTSC instruction is available."""
+        """Check if RDTSC instruction is available.
+
+        Returns:
+            True if RDTSC is available on this architecture, False otherwise.
+
+        """
         try:
             # Check CPU features
             # This would normally check CPUID for RDTSC support
@@ -326,7 +340,12 @@ class TimingAttackDefense:
             return False
 
     def _get_tick_count(self) -> int | None:
-        """Get system tick count (Windows)."""
+        """Get system tick count (Windows).
+
+        Returns:
+            The system tick count in milliseconds on Windows, None on error or non-Windows.
+
+        """
         try:
             import platform
 
@@ -339,7 +358,12 @@ class TimingAttackDefense:
         return None
 
     def _quick_debugger_check(self) -> bool:
-        """Quick check for debugger presence."""
+        """Quick check for debugger presence.
+
+        Returns:
+            True if a debugger is currently attached, False otherwise.
+
+        """
         try:
             import platform
 
@@ -356,7 +380,12 @@ class TimingAttackDefense:
         return False
 
     def generate_timing_defense_code(self) -> str:
-        """Generate C code for timing attack defense."""
+        """Generate C code for timing attack defense.
+
+        Returns:
+            C source code implementing timing attack defense mechanisms.
+
+        """
         return """
 // Timing Attack Defense
 #include <windows.h>

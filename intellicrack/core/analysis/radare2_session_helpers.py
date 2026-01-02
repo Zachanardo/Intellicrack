@@ -51,6 +51,9 @@ class DirectR2Session:
             binary_path: Path to binary file
             flags: Optional r2 flags
 
+        Raises:
+            RuntimeError: If r2pipe is not available
+
         """
         self.binary_path = binary_path
         self.flags = flags or ["-2"]
@@ -91,7 +94,11 @@ class DirectR2Session:
             expect_json: Whether to parse JSON
 
         Returns:
-            Command result as JSON dictionary if expect_json is True, else as string
+            dict[str, Any] | str: Command result as JSON dictionary if expect_json is True,
+                else as string
+
+        Raises:
+            RuntimeError: If not connected to radare2
 
         """
         if not self.r2:
@@ -121,7 +128,10 @@ def get_r2_session(
         auto_analyze: Whether to auto-analyze binary
 
     Yields:
-        R2SessionWrapper or DirectR2Session
+        Generator[Any, None, None]: R2SessionWrapper or DirectR2Session
+
+    Raises:
+        RuntimeError: If connection to binary fails
 
     """
     if use_pooling and SESSION_MANAGER_AVAILABLE:
@@ -156,7 +166,11 @@ def execute_r2_command(
         use_pooling: Whether to use session pooling
 
     Returns:
-        Command result as JSON dictionary if expect_json is True, else as string
+        dict[str, Any] | str: Command result as JSON dictionary if expect_json
+            is True, else as string
+
+    Raises:
+        RuntimeError: If connection to binary fails
 
     """
     with get_r2_session(binary_path, flags, use_pooling) as session:
@@ -197,7 +211,15 @@ def get_all_session_metrics() -> list[dict[str, Any]]:
 
 
 def cleanup_idle_sessions() -> None:
-    """Force cleanup of idle sessions in the pool."""
+    """Force cleanup of idle sessions in the pool.
+
+    Returns:
+        None
+
+    Raises:
+        RuntimeError: If session manager is not available
+
+    """
     if SESSION_MANAGER_AVAILABLE:
         pool = get_global_pool()
         pool._cleanup_idle_sessions(force=True)
@@ -217,6 +239,12 @@ def configure_global_pool(
         max_idle_time: Maximum idle time before cleanup
         auto_analyze: Whether to auto-analyze binaries
         analysis_level: radare2 analysis level
+
+    Returns:
+        None
+
+    Raises:
+        RuntimeError: If session manager is not available
 
     """
     if SESSION_MANAGER_AVAILABLE:
@@ -256,6 +284,9 @@ class R2CommandBatch:
             command: radare2 command
             expect_json: Whether to parse as JSON
 
+        Returns:
+            None
+
         """
         self.commands.append((command, expect_json))
 
@@ -293,7 +324,10 @@ def migrate_r2pipe_to_pooled(
         flags: Optional r2 flags
 
     Returns:
-        New R2SessionWrapper instance
+        Any: New R2SessionWrapper instance
+
+    Raises:
+        RuntimeError: If session manager is not available
 
     """
     if not SESSION_MANAGER_AVAILABLE:

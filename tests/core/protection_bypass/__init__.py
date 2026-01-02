@@ -1,1 +1,1 @@
-"""Tests for protection bypass modules."""
+"""Protection bypass tests."""

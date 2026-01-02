@@ -17,7 +17,7 @@ from enum import Enum
 
 import frida
 
-from intellicrack.utils.log_message import MessageCategory, log_analysis, log_error, log_security
+from intellicrack.utils.log_message import log_analysis, log_error, log_security
 from intellicrack.utils.logger import log_all_methods
 
 
@@ -70,7 +70,20 @@ class FridaProtectionBypasser:
         self.detected_protections: list[ProtectionInfo] = []
 
     def attach(self) -> bool:
-        """Attach to target process."""
+        """Attach to target process.
+
+        Establishes a Frida session to the target process specified during
+        initialization either by process name or process ID. Updates the
+        internal session object used for all subsequent instrumentation.
+
+        Returns:
+            True if attachment succeeded, False otherwise.
+
+        Raises:
+            Exception: If process name and PID are both None, or if Frida
+                attachment fails due to invalid process or permission issues.
+
+        """
         try:
             if self.pid:
                 self.session = frida.attach(self.pid)
@@ -87,7 +100,24 @@ class FridaProtectionBypasser:
             return False
 
     def detect_anti_debug(self) -> list[ProtectionInfo]:
-        """Detect anti-debugging mechanisms."""
+        """Detect anti-debugging mechanisms.
+
+        Analyzes the target process for common anti-debugging techniques
+        including IsDebuggerPresent, CheckRemoteDebuggerPresent,
+        NtQueryInformationProcess, PEB flags, hardware breakpoints, and
+        ptrace mechanisms on Linux platforms.
+
+        Returns:
+            List of detected anti-debug protection information objects.
+                Each object contains type, location, confidence score,
+                bypass details, and a Frida script for defeating the
+                anti-debug mechanism.
+
+        Raises:
+            Exception: If Frida session is not initialized or script
+                execution fails.
+
+        """
         detections = []
 
         anti_debug_script = """
@@ -325,7 +355,24 @@ class FridaProtectionBypasser:
         return detections
 
     def detect_cert_pinning(self) -> list[ProtectionInfo]:
-        """Detect certificate pinning implementations."""
+        """Detect certificate pinning implementations.
+
+        Identifies certificate pinning mechanisms across Android, iOS, and
+        Windows platforms including OkHttp3 CertificatePinner, TrustManagerImpl,
+        NetworkSecurityConfig, SSL/TLS validation hooks, and Windows CryptoAPI
+        certificate verification routines.
+
+        Returns:
+            List of detected certificate pinning protection information objects.
+                Each object contains pinning method, hostname (if available),
+                confidence score, and Frida bypass script for certificate
+                validation bypass.
+
+        Raises:
+            Exception: If Frida session is not initialized or script
+                execution fails.
+
+        """
         detections = []
 
         cert_pinning_script = """
@@ -509,7 +556,24 @@ class FridaProtectionBypasser:
         return detections
 
     def detect_integrity_checks(self) -> list[ProtectionInfo]:
-        """Detect integrity check mechanisms."""
+        """Detect integrity check mechanisms.
+
+        Identifies hash-based and checksum-based integrity verification
+        routines including CryptCreateHash, BCryptCreateHash, OpenSSL hash
+        functions, memory protection changes, and self-modification detection
+        mechanisms used to verify binary integrity.
+
+        Returns:
+            List of detected integrity check protection information objects.
+                Each object contains hashing method, algorithm used,
+                protected memory addresses, confidence score, and Frida
+                bypass script for disabling integrity checks.
+
+        Raises:
+            Exception: If Frida session is not initialized or script
+                execution fails.
+
+        """
         detections = []
 
         integrity_script = """
@@ -712,7 +776,25 @@ class FridaProtectionBypasser:
         return detections
 
     def detect_vm_detection(self) -> list[ProtectionInfo]:
-        """Detect VM/sandbox detection mechanisms."""
+        """Detect VM/sandbox detection mechanisms.
+
+        Identifies virtualization and sandbox detection techniques including
+        registry key checks, CPUID instruction analysis, WMI queries, hardware
+        device enumeration, RDTSC timing checks, /proc/cpuinfo analysis, and
+        DMI/SMBIOS detection methods used to prevent execution in virtual
+        environments.
+
+        Returns:
+            List of detected VM/sandbox detection protection information objects.
+                Each object contains detection method, registry keys or file
+                paths examined, confidence score, and Frida bypass script for
+                spoofing physical hardware characteristics.
+
+        Raises:
+            Exception: If Frida session is not initialized or script
+                execution fails.
+
+        """
         detections = []
 
         vm_detection_script = """
@@ -941,7 +1023,24 @@ class FridaProtectionBypasser:
         return detections
 
     def detect_packers(self) -> list[ProtectionInfo]:
-        """Detect known packers and protectors."""
+        """Detect known packers and protectors.
+
+        Performs signature-based and heuristic detection of common executable
+        packers including UPX, ASPack, PECompact, Themida, VMProtect, Enigma,
+        MPRESS, Obsidium, ASProtect, Armadillo, ExeCryptor, and others by
+        analyzing section headers, import tables, and entropy patterns.
+
+        Returns:
+            List of detected packer protection information objects.
+                Each object contains packer name, detection method,
+                confidence score, and Frida script for automated unpacking
+                of the identified packer.
+
+        Raises:
+            Exception: If Frida session is not initialized or script
+                execution fails.
+
+        """
         detections: list[ProtectionInfo] = []
 
         # Signature-based packer detection
@@ -1170,7 +1269,26 @@ class FridaProtectionBypasser:
         return detections
 
     def _generate_unpacking_script(self, packer_name: str) -> str:
-        """Generate packer-specific unpacking script."""
+        """Generate packer-specific unpacking script.
+
+        Selects and returns an appropriate Frida instrumentation script tailored
+        to defeat the specified packer, delegating to specialized unpacking
+        methods for known packers (UPX, VMProtect, Themida) or falling back to
+        generic unpacking techniques.
+
+        Args:
+            packer_name: Name of the packer to generate script for. Supports
+                UPX, VMProtect, Themida, and other common packers.
+
+        Returns:
+            Frida script string for unpacking the specified packer. Script hooks
+                decompression routines, memory allocations, and protection changes
+                to extract unpacked code.
+
+        Raises:
+            ValueError: If packer_name is empty or None.
+
+        """
         if packer_name == "UPX":
             return self._generate_upx_unpacking_script()
         if packer_name == "VMProtect":
@@ -1180,7 +1298,19 @@ class FridaProtectionBypasser:
         return self._generate_generic_unpacking_script()
 
     def _generate_upx_unpacking_script(self) -> str:
-        """Generate UPX unpacking script."""
+        """Generate UPX unpacking script.
+
+        Creates a Frida instrumentation script that detects and bypasses UPX
+        decompression routines by hooking the decompression function, monitoring
+        VirtualProtect calls for executable memory regions, and extracting the
+        original entry point and unpacked code sections.
+
+        Returns:
+            Frida script string for unpacking UPX-packed binaries. Script identifies
+                the original entry point and performs memory dumps of decompressed
+                code sections.
+
+        """
         return """
         // UPX Unpacking Script
         const mainModule = Process.enumerateModules()[0];
@@ -1246,7 +1376,19 @@ class FridaProtectionBypasser:
         """
 
     def _generate_vmprotect_unpacking_script(self) -> str:
-        """Generate VMProtect unpacking script."""
+        """Generate VMProtect unpacking script.
+
+        Creates a Frida instrumentation script that bypasses VMProtect's virtual
+        machine by using Stalker to trace VM handler execution patterns, monitors
+        memory allocations and writes for unpacked code, and identifies the
+        original entry point through execution analysis.
+
+        Returns:
+            Frida script string for unpacking VMProtect-protected binaries. Script
+                uses dynamic instrumentation to trace VM handler execution and
+                extract unpacked code regions.
+
+        """
         return """
         // VMProtect Unpacking Script
         const mainModule = Process.enumerateModules()[0];
@@ -1313,7 +1455,19 @@ class FridaProtectionBypasser:
         """
 
     def _generate_themida_unpacking_script(self) -> str:
-        """Generate Themida unpacking script."""
+        """Generate Themida unpacking script.
+
+        Creates a Frida instrumentation script that defeats Themida's advanced
+        anti-debug and virtual machine protections by bypassing IsDebuggerPresent,
+        hooking exception handlers, monitoring file reads for signature validation,
+        and tracing VM instruction patterns to extract unpacked code.
+
+        Returns:
+            Frida script string for unpacking Themida-protected binaries. Script
+                defeats anti-debug checks and traces VM execution to identify
+                unpacked code regions.
+
+        """
         return """
         // Themida Unpacking Script
         const mainModule = Process.enumerateModules()[0];
@@ -1401,7 +1555,19 @@ class FridaProtectionBypasser:
         """
 
     def _generate_generic_unpacking_script(self) -> str:
-        """Generate generic unpacking script."""
+        """Generate generic unpacking script.
+
+        Creates a Frida instrumentation script that unpacks arbitrary binaries
+        by monitoring VirtualAlloc and VirtualProtect calls, tracking memory
+        writes, identifying unpacker patterns like PUSHAD/POPAD sequences,
+        detecting tail jumps to unpacked code, and dumping decrypted code regions.
+
+        Returns:
+            Generic Frida script string for unpacking any protected binary. Script
+                monitors memory operations to extract unpacked code independent
+                of packer type.
+
+        """
         return """
         // Generic Unpacking Script
         const mainModule = Process.enumerateModules()[0];
@@ -1541,7 +1707,22 @@ class FridaProtectionBypasser:
         """
 
     def apply_all_bypasses(self) -> bool:
-        """Apply all detected protection bypasses."""
+        """Apply all detected protection bypasses.
+
+        Combines all available bypass scripts from detected protections,
+        creates a unified Frida script that applies all bypasses simultaneously,
+        and loads the script into the target process to defeat all identified
+        protection mechanisms.
+
+        Returns:
+            True if bypasses were applied successfully and script is loaded,
+                False if no bypasses available or script loading failed.
+
+        Raises:
+            Exception: If Frida session is not initialized or script creation
+                fails.
+
+        """
         try:
             if self.session is None:
                 logger.error("Session is not initialized")
@@ -1598,7 +1779,22 @@ class FridaProtectionBypasser:
             return False
 
     def detect_all_protections(self) -> list[ProtectionInfo]:
-        """Run all protection detection routines."""
+        """Run all protection detection routines.
+
+        Sequentially executes all available detection methods to perform
+        comprehensive analysis of the target process, including anti-debug,
+        certificate pinning, integrity checks, VM detection, and packer
+        detection, aggregating all results into a single list.
+
+        Returns:
+            List of all detected protection information objects from all detection
+                methods. Returns empty list if detection fails or no protections
+                are detected.
+
+        Raises:
+            Exception: If critical Frida operations fail during detection.
+
+        """
         logger.info("Starting comprehensive protection detection...")
 
         all_detections = []
@@ -1627,7 +1823,20 @@ class FridaProtectionBypasser:
         return all_detections
 
     def generate_bypass_report(self) -> str:
-        """Generate detailed report of detected protections and bypasses."""
+        """Generate detailed report of detected protections and bypasses.
+
+        Produces a comprehensive human-readable report documenting all detected
+        protections, their locations, confidence scores, bypass availability,
+        and detailed information grouped by protection type, along with actionable
+        recommendations for applying bypasses.
+
+        Returns:
+            Formatted report string containing detection results, confidence levels,
+                detailed protection information, and step-by-step bypass
+                recommendations. Report includes sections for each protection
+                type found.
+
+        """
         report = [
             "=" * 60,
             "PROTECTION BYPASS ANALYSIS REPORT",
@@ -1678,7 +1887,16 @@ class FridaProtectionBypasser:
 
 
 def main() -> None:
-    """Demonstrate usage of FridaProtectionBypasser."""
+    """Command-line interface for protection detection and bypass operations.
+
+    Attach to a target process by name or PID, run comprehensive protection
+    detection, apply available bypasses, and generate analysis reports. Supports
+    automated bypass application and report file output for documentation purposes.
+
+    Returns:
+        None. Exits after completing protection analysis and bypass operations.
+
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description="Frida Protection Bypass Automation")

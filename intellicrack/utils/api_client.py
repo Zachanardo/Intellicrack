@@ -44,8 +44,8 @@ try:
     HAS_AIOHTTP = True
 except ImportError as e:
     logger.exception("Import error in api_client: %s", e)
-    aiohttp = None  # type: ignore[assignment]
-    ClientTimeout = None  # type: ignore[misc,assignment]
+    aiohttp = None
+    ClientTimeout = None
     HAS_AIOHTTP = False
 
 
@@ -53,7 +53,12 @@ class APIClient:
     """Production-ready API client with retry logic and error handling."""
 
     def __init__(self, base_url: str | None = None) -> None:
-        """Initialize the API client with configuration from environment or defaults."""
+        """Initialize the API client with configuration from environment or defaults.
+
+        Args:
+            base_url: Optional base URL for API calls. If not provided,
+                retrieved from environment variables. Defaults to None.
+        """
         from .secrets_manager import get_secret
 
         if not HAS_AIOHTTP:
@@ -68,7 +73,11 @@ class APIClient:
         self.session: Any = None
 
     async def __aenter__(self) -> "APIClient":
-        """Async context manager entry."""
+        """Async context manager entry.
+
+        Returns:
+            APIClient: The APIClient instance for use in async context manager.
+        """
         if not HAS_AIOHTTP:
             return self
         if ClientTimeout is not None and aiohttp is not None:
@@ -82,7 +91,13 @@ class APIClient:
         exc_val: BaseException | None,
         exc_tb: types.TracebackType | None,
     ) -> None:
-        """Async context manager exit."""
+        """Async context manager exit.
+
+        Args:
+            exc_type: Exception type if an exception occurred, or None.
+            exc_val: Exception instance if an exception occurred, or None.
+            exc_tb: Traceback if an exception occurred, or None.
+        """
         if self.session is not None:
             await self.session.close()
 
@@ -96,17 +111,19 @@ class APIClient:
         """Fetch data from API endpoint with retry logic and error handling.
 
         Args:
-            endpoint: API endpoint path
-            method: HTTP method (GET, POST, PUT, DELETE)
-            data: Request data for POST/PUT
-            headers: Additional headers
+            endpoint: API endpoint path.
+            method: HTTP method (GET, POST, PUT, DELETE). Defaults to "GET".
+            data: Request data for POST/PUT requests. Defaults to None.
+            headers: Additional headers for the request. Defaults to None.
 
         Returns:
-            Response data as dictionary
+            dict[str, Any]: Response data as dictionary containing the API response.
 
         Raises:
-            aiohttp.ClientError: On network errors
-            ValueError: On invalid responses
+            RuntimeError: If session is not initialized or max retry attempts
+                exceeded.
+            ValueError: On invalid API responses (4xx client errors).
+            ClientError: On server errors (5xx) after retry attempts exhausted.
 
         """
         if not HAS_AIOHTTP:
@@ -187,16 +204,21 @@ class APIClient:
 
 
 async def make_api_call(endpoint: str, method: str = "GET", data: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Provide for making API calls.
+    """Convenience function for making API calls.
 
     Args:
-        endpoint: API endpoint
-        method: HTTP method
-        data: Request data
+        endpoint: API endpoint path.
+        method: HTTP method (GET, POST, PUT, DELETE). Defaults to "GET".
+        data: Optional request data for POST/PUT requests. Defaults to None.
 
     Returns:
-        Response data
+        dict[str, Any]: Response data as dictionary containing the API response.
 
+    Raises:
+        RuntimeError: If session is not initialized or max retry attempts
+            exceeded.
+        ValueError: On invalid API responses (4xx client errors).
+        ClientError: On server errors (5xx) after retry attempts exhausted.
     """
     async with APIClient() as client:
         return await client.fetch(endpoint, method, data)
@@ -204,16 +226,23 @@ async def make_api_call(endpoint: str, method: str = "GET", data: dict[str, Any]
 
 # Synchronous wrapper for compatibility
 def sync_api_call(endpoint: str, method: str = "GET", data: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Wrap for API calls.
+    """Synchronous wrapper for making API calls.
+
+    Runs async API calls in a new event loop for synchronous contexts.
 
     Args:
-        endpoint: API endpoint
-        method: HTTP method
-        data: Request data
+        endpoint: API endpoint path.
+        method: HTTP method (GET, POST, PUT, DELETE). Defaults to "GET".
+        data: Optional request data for POST/PUT requests. Defaults to None.
 
     Returns:
-        Response data
+        dict[str, Any]: Response data as dictionary containing the API response.
 
+    Raises:
+        RuntimeError: If session is not initialized or max retry attempts
+            exceeded.
+        ValueError: On invalid API responses (4xx client errors).
+        ClientError: On server errors (5xx) after retry attempts exhausted.
     """
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)

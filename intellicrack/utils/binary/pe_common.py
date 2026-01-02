@@ -63,7 +63,6 @@ def iterate_pe_imports_with_dll(
     Args:
         pe_obj: A pefile PE object
         callback: Function to call for each import
-                 (dll_name, func_name[, imp_obj]) -> Any
         include_import_obj: Whether to pass the import object as 3rd parameter
 
     Yields:

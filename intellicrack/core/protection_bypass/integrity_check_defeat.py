@@ -49,7 +49,20 @@ class IntegrityCheckType(IntEnum):
 
 @dataclass
 class IntegrityCheck:
-    """Represents detected integrity check."""
+    """Represents a detected integrity check in a binary.
+
+    Attributes:
+        check_type: Type of integrity check detected (CRC32, hash, signature, etc).
+        address: Virtual address of the integrity check in the binary.
+        size: Size in bytes of the integrity check code or storage location.
+        expected_value: Expected checksum or signature value.
+        actual_value: Actual calculated checksum or signature value.
+        function_name: Name of the function containing the integrity check.
+        bypass_method: Strategy to bypass (e.g. "hook_api", "patch_inline").
+        confidence: Confidence score (0.0 to 1.0) in the detection.
+        section_name: PE section name containing the check (default: empty string).
+        binary_path: Full path to the binary being analyzed (default: empty string).
+    """
 
     check_type: IntegrityCheckType
     address: int
@@ -65,7 +78,15 @@ class IntegrityCheck:
 
 @dataclass
 class BypassStrategy:
-    """Strategy for bypassing integrity check."""
+    """Strategy for bypassing integrity checks using Frida runtime hooks.
+
+    Attributes:
+        name: Human-readable name of the bypass strategy.
+        check_types: List of IntegrityCheckType values this strategy addresses.
+        frida_script: Frida JavaScript code for implementing the bypass hooks.
+        success_rate: Expected success rate (0.0 to 1.0) of the bypass strategy.
+        priority: Priority ordering (lower numbers = higher priority).
+    """
 
     name: str
     check_types: list[IntegrityCheckType]
@@ -76,7 +97,26 @@ class BypassStrategy:
 
 @dataclass
 class ChecksumRecalculation:
-    """Results of checksum recalculation for patched binary."""
+    """Results of checksum recalculation comparing original and patched binaries.
+
+    Attributes:
+        original_crc32: CRC32 checksum of original binary.
+        patched_crc32: CRC32 checksum of patched binary.
+        original_crc64: CRC64 checksum of original binary.
+        patched_crc64: CRC64 checksum of patched binary.
+        original_md5: MD5 hash of original binary.
+        patched_md5: MD5 hash of patched binary.
+        original_sha1: SHA-1 hash of original binary.
+        patched_sha1: SHA-1 hash of patched binary.
+        original_sha256: SHA-256 hash of original binary.
+        patched_sha256: SHA-256 hash of patched binary.
+        original_sha512: SHA-512 hash of original binary.
+        patched_sha512: SHA-512 hash of patched binary.
+        pe_checksum: Recalculated PE header checksum for patched binary.
+        sections: Dictionary mapping section names to their hash values
+            (MD5, SHA1, SHA256, SHA512, CRC32, CRC64, size).
+        hmac_keys: List of potential HMAC keys extracted from patched binary.
+    """
 
     original_crc32: int
     patched_crc32: int
@@ -97,7 +137,16 @@ class ChecksumRecalculation:
 
 @dataclass
 class ChecksumLocation:
-    """Location of embedded checksum in binary."""
+    """Location and metadata of an embedded checksum in a binary.
+
+    Attributes:
+        offset: File offset where the checksum is stored in the binary.
+        size: Size in bytes of the checksum data.
+        algorithm: Type of checksum algorithm (CRC32, MD5, SHA256, etc).
+        current_value: Current bytes found at the checksum location.
+        calculated_value: Recalculated checksum bytes for comparison.
+        confidence: Confidence score (0.0 to 1.0) that this is a valid checksum.
+    """
 
     offset: int
     size: int
@@ -111,13 +160,26 @@ class ChecksumRecalculator:
     """Recalculates checksums for patched binaries with production-grade algorithms."""
 
     def __init__(self) -> None:
-        """Initialize the ChecksumRecalculator with lookup tables."""
+        """Initialize the ChecksumRecalculator with lookup tables.
+
+        Sets up lookup tables for CRC32, reversed CRC32, and CRC64 calculations.
+        These tables are used internally for fast checksum computation on binary
+        data during integrity check defeat operations.
+        """
         self.crc32_table = self._generate_crc32_table()
         self.crc32_reversed_table = self._generate_crc32_reversed_table()
         self.crc64_table = self._generate_crc64_table()
 
     def _generate_crc32_table(self) -> list[int]:
-        """Generate CRC32 lookup table using standard polynomial."""
+        """Generate CRC32 lookup table using standard polynomial.
+
+        Generates a CRC32 lookup table for fast CRC calculation using the
+        standard Zlib polynomial 0xEDB88320. This table is used internally
+        for checksum calculations on binary data.
+
+        Returns:
+            CRC32 lookup table with 256 entries for byte-indexed calculations.
+        """
         polynomial = 0xEDB88320
         table = []
         for i in range(256):
@@ -131,7 +193,15 @@ class ChecksumRecalculator:
         return table
 
     def _generate_crc32_reversed_table(self) -> list[int]:
-        """Generate reversed CRC32 table for forward computation."""
+        """Generate reversed CRC32 table for forward computation.
+
+        Generates a reversed CRC32 table using the polynomial 0x04C11DB7
+        for forward-directed CRC computation. Used as an alternative method
+        for CRC32 calculations in different contexts.
+
+        Returns:
+            Reversed CRC32 lookup table with 256 entries.
+        """
         polynomial = 0x04C11DB7
         table = []
         for i in range(256):
@@ -146,7 +216,15 @@ class ChecksumRecalculator:
         return table
 
     def _generate_crc64_table(self) -> list[int]:
-        """Generate CRC64 lookup table using ECMA-182 polynomial."""
+        """Generate CRC64 lookup table using ECMA-182 polynomial.
+
+        Generates a CRC64 lookup table for fast 64-bit CRC calculation using
+        the ECMA-182 polynomial 0x42F0E1EBA9EA3693. Used for integrity checks
+        on larger data blocks.
+
+        Returns:
+            CRC64 lookup table with 256 entries for byte-indexed calculations.
+        """
         polynomial = 0x42F0E1EBA9EA3693
         table = []
         for i in range(256):
@@ -160,7 +238,18 @@ class ChecksumRecalculator:
         return table
 
     def calculate_crc32(self, data: bytes) -> int:
-        """Calculate CRC32 checksum using lookup table."""
+        """Calculate CRC32 checksum using lookup table.
+
+        Computes CRC32 checksum for arbitrary binary data using the internal
+        lookup table. This is the primary method for CRC32 calculation in
+        integrity check defeat operations.
+
+        Args:
+            data: Binary data to calculate CRC32 for.
+
+        Returns:
+            CRC32 checksum value as a 32-bit integer.
+        """
         crc = 0xFFFFFFFF
         for byte in data:
             table_index = (crc & 0xFF) ^ byte
@@ -168,27 +257,89 @@ class ChecksumRecalculator:
         return crc ^ 0xFFFFFFFF
 
     def calculate_crc32_zlib(self, data: bytes) -> int:
-        """Calculate CRC32 using zlib (faster for large data)."""
+        """Calculate CRC32 using zlib (faster for large data).
+
+        Computes CRC32 using the zlib library implementation, which is
+        optimized for high-speed calculation on large data blocks. Preferred
+        for performance-critical integrity checks.
+
+        Args:
+            data: Binary data to calculate CRC32 for.
+
+        Returns:
+            CRC32 checksum value masked to 32 bits.
+        """
         return zlib.crc32(data) & 0xFFFFFFFF
 
     def calculate_md5(self, data: bytes) -> str:
-        """Calculate MD5 hash."""
+        """Calculate MD5 hash.
+
+        Computes MD5 hash digest for binary data. Used for integrity checks
+        and binary comparison operations in licensing protection analysis.
+
+        Args:
+            data: Binary data to hash.
+
+        Returns:
+            Hexadecimal string representation of the MD5 hash.
+        """
         return hashlib.md5(data).hexdigest()  # noqa: S324
 
     def calculate_sha1(self, data: bytes) -> str:
-        """Calculate SHA-1 hash."""
+        """Calculate SHA-1 hash.
+
+        Computes SHA-1 hash digest for binary data. Used for integrity checks
+        and signature verification in licensing protection mechanisms.
+
+        Args:
+            data: Binary data to hash.
+
+        Returns:
+            Hexadecimal string representation of the SHA-1 hash.
+        """
         return hashlib.sha1(data).hexdigest()  # noqa: S324
 
     def calculate_sha256(self, data: bytes) -> str:
-        """Calculate SHA-256 hash."""
+        """Calculate SHA-256 hash.
+
+        Computes SHA-256 hash digest for binary data. Used for modern integrity
+        checks and cryptographic signature verification in licensing protection.
+
+        Args:
+            data: Binary data to hash.
+
+        Returns:
+            Hexadecimal string representation of the SHA-256 hash.
+        """
         return hashlib.sha256(data).hexdigest()
 
     def calculate_sha512(self, data: bytes) -> str:
-        """Calculate SHA-512 hash."""
+        """Calculate SHA-512 hash.
+
+        Computes SHA-512 hash digest for binary data. Used for advanced
+        integrity checks and robust cryptographic protection mechanisms.
+
+        Args:
+            data: Binary data to hash.
+
+        Returns:
+            Hexadecimal string representation of the SHA-512 hash.
+        """
         return hashlib.sha512(data).hexdigest()
 
     def calculate_crc64(self, data: bytes) -> int:
-        """Calculate CRC64 checksum using lookup table."""
+        """Calculate CRC64 checksum using lookup table.
+
+        Computes CRC64 checksum for binary data using the internal lookup table
+        with ECMA-182 polynomial. Used for 64-bit integrity checks on large
+        binaries.
+
+        Args:
+            data: Binary data to calculate CRC64 for.
+
+        Returns:
+            CRC64 checksum value as a 64-bit integer.
+        """
         crc = 0xFFFFFFFFFFFFFFFF
         for byte in data:
             table_index = (crc & 0xFF) ^ byte
@@ -196,12 +347,37 @@ class ChecksumRecalculator:
         return crc ^ 0xFFFFFFFFFFFFFFFF
 
     def calculate_hmac(self, data: bytes, key: bytes, algorithm: str = "sha256") -> str:
-        """Calculate HMAC signature with specified algorithm."""
+        """Calculate HMAC signature with specified algorithm.
+
+        Computes HMAC (Hash-based Message Authentication Code) for data using
+        the specified hash algorithm. Used to verify integrity and authenticity
+        of protected software binaries.
+
+        Args:
+            data: Binary data to compute HMAC for.
+            key: HMAC key material for authentication.
+            algorithm: Hash algorithm to use (default: "sha256"). Must be a
+                valid hashlib algorithm name.
+
+        Returns:
+            Hexadecimal string representation of the HMAC.
+        """
         hash_func = getattr(hashlib, algorithm)
         return hmac.new(key, data, hash_func).hexdigest()
 
     def calculate_all_hashes(self, data: bytes) -> dict[str, str]:
-        """Calculate all supported hash algorithms."""
+        """Calculate all supported hash algorithms.
+
+        Computes all supported hash and checksum algorithms for comprehensive
+        integrity analysis of binary data. Returns results for CRC32, CRC64,
+        MD5, SHA1, SHA256, and SHA512.
+
+        Args:
+            data: Binary data to hash.
+
+        Returns:
+            Dictionary mapping algorithm names to their hexadecimal hash values.
+        """
         return {
             "crc32": hex(self.calculate_crc32_zlib(data)),
             "crc64": hex(self.calculate_crc64(data)),
@@ -212,7 +388,18 @@ class ChecksumRecalculator:
         }
 
     def recalculate_pe_checksum(self, binary_path: str) -> int:
-        """Recalculate PE checksum for Windows executables."""
+        """Recalculate PE checksum for Windows executables.
+
+        Computes the checksum field value used by Windows PE headers for
+        integrity verification. This is the standard PE checksum calculation
+        required by the Windows loader.
+
+        Args:
+            binary_path: Path to the Windows PE binary (exe, dll, or sys file).
+
+        Returns:
+            Calculated PE checksum value as a 32-bit integer. Returns 0 on error.
+        """
         try:
             pe = pefile.PE(binary_path)
 
@@ -246,7 +433,19 @@ class ChecksumRecalculator:
             return 0
 
     def recalculate_section_hashes(self, binary_path: str) -> dict[str, dict[str, str]]:
-        """Recalculate hashes for individual PE sections."""
+        """Recalculate hashes for individual PE sections.
+
+        Computes all supported hash algorithms for each section in a PE binary.
+        Useful for detecting which specific sections are protected by integrity
+        checks.
+
+        Args:
+            binary_path: Path to the Windows PE binary.
+
+        Returns:
+            Dictionary mapping section names to their calculated hashes
+            (MD5, SHA1, SHA256, SHA512, CRC32, CRC64, and size).
+        """
         section_hashes = {}
 
         try:
@@ -274,7 +473,20 @@ class ChecksumRecalculator:
         return section_hashes
 
     def extract_hmac_keys(self, binary_path: str) -> list[dict[str, str | int]]:
-        """Extract potential HMAC keys from binary using entropy and pattern analysis."""
+        """Extract potential HMAC keys from binary using entropy and pattern analysis.
+
+        Scans binary for potential HMAC key material using entropy analysis and
+        byte pattern heuristics. Identifies high-entropy sequences that may be
+        cryptographic keys used for message authentication codes.
+
+        Args:
+            binary_path: Path to the binary file to scan for key material.
+
+        Returns:
+            List of dictionaries containing potential HMAC keys with offsets,
+            sizes, hex values, entropy scores, and confidence ratings. Limited
+            to top 10 candidates sorted by confidence.
+        """
         hmac_keys = []
 
         try:
@@ -323,7 +535,20 @@ class ChecksumRecalculator:
             return []
 
     def _calculate_key_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy for potential key material."""
+        """Calculate Shannon entropy for potential key material.
+
+        Computes Shannon entropy to measure the randomness and information
+        density of byte sequences. High entropy suggests cryptographic key
+        material or encrypted data. Used for identifying cryptographic keys
+        embedded in binaries.
+
+        Args:
+            data: Byte sequence to analyze for entropy.
+
+        Returns:
+            Shannon entropy value as a float (0.0 to 8.0 for 8-bit data).
+            Returns 0.0 for empty byte sequences.
+        """
         if not data:
             return 0.0
 
@@ -343,7 +568,20 @@ class ChecksumRecalculator:
         return entropy
 
     def _is_likely_key(self, data: bytes) -> bool:
-        """Heuristic check if data is likely cryptographic key material."""
+        """Heuristic check if data is likely cryptographic key material.
+
+        Applies heuristics to determine if a byte sequence is likely to be
+        cryptographic key material based on null byte frequency, repeated
+        patterns, and byte distribution characteristics. Filters out padding
+        and obviously non-random sequences.
+
+        Args:
+            data: Byte sequence to evaluate as potential key material.
+
+        Returns:
+            True if data passes heuristics for key material, False otherwise.
+            Returns False if null bytes or 0xFF bytes exceed 30% of sequence.
+        """
         if data.count(b"\x00") > len(data) * 0.3:
             return False
 
@@ -354,7 +592,20 @@ class ChecksumRecalculator:
         return len(set(repeating_patterns)) >= len(data) * 0.4
 
     def _calculate_key_confidence(self, data: bytes, entropy: float) -> float:
-        """Calculate confidence score for potential key material."""
+        """Calculate confidence score for potential key material.
+
+        Generates a confidence score (0.0 to 1.0) based on entropy level,
+        byte diversity, pattern distribution, and printable character ratio.
+        Higher scores indicate better likelihood of being actual key material.
+        Weights entropy, byte diversity, and non-padding characteristics.
+
+        Args:
+            data: Byte sequence being evaluated.
+            entropy: Pre-calculated Shannon entropy for the data.
+
+        Returns:
+            Confidence score as a float between 0.0 and 1.0, capped at 1.0.
+        """
         confidence = 0.0
 
         if 4.0 <= entropy <= 6.5:
@@ -374,7 +625,20 @@ class ChecksumRecalculator:
         return min(confidence, 1.0)
 
     def find_checksum_locations(self, binary_path: str) -> list[ChecksumLocation]:
-        """Automatically identify locations where checksums are stored in binary."""
+        """Automatically identify locations where checksums are stored in binary.
+
+        Scans binary for patterns matching calculated checksums (CRC32, CRC64,
+        MD5, SHA1, SHA256, SHA512) and identifies storage locations. Validates
+        locations against PE section characteristics.
+
+        Args:
+            binary_path: Path to the binary file to scan.
+
+        Returns:
+            List of ChecksumLocation objects containing offset, size, algorithm,
+            current value, calculated value, and confidence scores for each
+            detected embedded checksum.
+        """
         locations = []
 
         try:
@@ -460,7 +724,22 @@ class ChecksumRecalculator:
         return locations
 
     def _is_valid_checksum_location(self, binary_data: bytes, offset: int, size: int) -> bool:
-        """Validate if offset is a likely checksum storage location."""
+        """Validate if offset is a likely checksum storage location.
+
+        Validates potential checksum storage locations by checking if they
+        fall within PE read-only data sections (.rdata, .data, .idata) or
+        non-executable sections, which are typical for integrity metadata.
+        Returns safe default for unparseable binaries.
+
+        Args:
+            binary_data: Binary file contents as bytes.
+            offset: File offset to validate.
+            size: Size of the potential checksum data in bytes.
+
+        Returns:
+            True if location is valid for checksum storage, False otherwise.
+            Returns True for offsets > 0x400 if binary cannot be parsed.
+        """
         try:
             pe = pefile.PE(data=binary_data)
 
@@ -489,7 +768,20 @@ class ChecksumRecalculator:
         original_path: str,
         patched_path: str,
     ) -> ChecksumRecalculation:
-        """Recalculate all checksums for patched binary."""
+        """Recalculate all checksums for patched binary.
+
+        Computes and compares all checksums (CRC32, CRC64, MD5, SHA1, SHA256,
+        SHA512) between original and patched binaries. Also recalculates PE
+        checksum and extracts potential HMAC keys from the patched binary.
+
+        Args:
+            original_path: Path to the original unmodified binary.
+            patched_path: Path to the patched binary with integrity checks removed.
+
+        Returns:
+            ChecksumRecalculation object containing checksums for both binaries,
+            PE checksum value, section-level hashes, and extracted HMAC keys.
+        """
         with open(original_path, "rb") as f:
             original_data = f.read()
 
@@ -523,7 +815,12 @@ class IntegrityCheckDetector:
     """Detect integrity checking mechanisms in binaries."""
 
     def __init__(self) -> None:
-        """Initialize the IntegrityCheckDetector with disassembler and pattern databases."""
+        """Initialize the IntegrityCheckDetector with disassembler and pattern databases.
+
+        Sets up 32-bit and 64-bit x86 Capstone disassemblers for binary analysis
+        and loads pattern databases for integrity check detection. Initializes
+        API signature mappings for cryptographic function identification.
+        """
         self.md_32 = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
         self.md_32.detail = True
         self.md_64 = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
@@ -532,7 +829,18 @@ class IntegrityCheckDetector:
         self.api_signatures = self._load_api_signatures()
 
     def _load_check_patterns(self) -> dict[str, dict[str, bytes | IntegrityCheckType | str]]:
-        """Load patterns for detecting integrity checks."""
+        """Load patterns for detecting integrity checks.
+
+        Initializes database of binary patterns for common integrity checking
+        algorithms (CRC32, CRC64, MD5, SHA1, SHA256, SHA512, HMAC) and their
+        mathematical constants. Patterns are used for code-level detection
+        of integrity check implementations.
+
+        Returns:
+            Dictionary mapping pattern names to their byte patterns, check types,
+            and descriptions for pattern matching operations. Each entry contains
+            "pattern" (bytes), "type" (IntegrityCheckType), and "description" (str).
+        """
         return {
             "crc32": {
                 "pattern": b"\xc1\xe8\x08\x33",
@@ -612,7 +920,17 @@ class IntegrityCheckDetector:
         }
 
     def _load_api_signatures(self) -> dict[str, IntegrityCheckType]:
-        """Load Windows API signatures for integrity checks."""
+        """Load Windows API signatures for integrity checks.
+
+        Initializes database of Windows API functions related to integrity
+        checking, including cryptographic, signature verification, and file
+        integrity checking APIs. Enables detection of integrity checks through
+        imported function analysis.
+
+        Returns:
+            Dictionary mapping API function names (str) to their corresponding
+            IntegrityCheckType enumeration values for import-based detection.
+        """
         return {
             "GetFileSize": IntegrityCheckType.SIZE_CHECK,
             "GetFileSizeEx": IntegrityCheckType.SIZE_CHECK,
@@ -647,7 +965,21 @@ class IntegrityCheckDetector:
         }
 
     def detect_checks(self, binary_path: str) -> list[IntegrityCheck]:
-        """Detect integrity checks in binary."""
+        """Detect integrity checks in binary.
+
+        Performs comprehensive scan of binary for integrity checking mechanisms
+        including API imports, inline code patterns, and anti-tampering
+        measures. Supports PE (Windows) and ELF (Linux) formats. Combines
+        multiple detection strategies for comprehensive coverage.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            List of IntegrityCheck objects for each detected check, containing
+            type, address, size, function name, bypass method, and confidence.
+            Returns empty list if no checks detected or file cannot be parsed.
+        """
         checks: list[IntegrityCheck] = []
 
         try:
@@ -674,7 +1006,20 @@ class IntegrityCheckDetector:
         return checks
 
     def _scan_api_imports(self, pe: pefile.PE, binary_path: str) -> list[IntegrityCheck]:
-        """Scan for integrity check API imports."""
+        """Scan for integrity check API imports.
+
+        Analyzes PE import tables to identify imported functions related to
+        integrity checking (hash computation, signature verification, etc.).
+        Matches imported functions against known integrity check API signatures.
+
+        Args:
+            pe: Parsed PE binary object from pefile.
+            binary_path: Path to the binary being analyzed.
+
+        Returns:
+            List of IntegrityCheck objects for each detected API import related
+            to integrity checking, with function names and confidence scores.
+        """
         checks: list[IntegrityCheck] = []
 
         if not hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
@@ -702,7 +1047,20 @@ class IntegrityCheckDetector:
         return checks
 
     def _scan_inline_checks(self, pe: pefile.PE, binary_path: str) -> list[IntegrityCheck]:
-        """Scan for inline integrity checks."""
+        """Scan for inline integrity checks.
+
+        Searches executable sections of PE binary for embedded patterns
+        matching known integrity check algorithm implementations. Scans for CRC,
+        hash calculation, and signature verification code patterns.
+
+        Args:
+            pe: Parsed PE binary object from pefile.
+            binary_path: Path to the binary being analyzed.
+
+        Returns:
+            List of IntegrityCheck objects for each detected inline check pattern,
+            including address, section name, and confidence scores.
+        """
         checks: list[IntegrityCheck] = []
 
         for section in pe.sections:
@@ -747,7 +1105,21 @@ class IntegrityCheckDetector:
         return checks
 
     def _scan_antitamper(self, pe: pefile.PE, binary_path: str) -> list[IntegrityCheck]:
-        """Scan for anti-tamper mechanisms."""
+        """Scan for anti-tamper mechanisms.
+
+        Detects packing, encryption, and self-modifying code (SMC) patterns
+        that protect against binary modification. Analyzes entropy and searches
+        for CPU lock prefixes and SMC instruction patterns (atomic operations,
+        compare-and-swap instructions, CPU lock prefixes).
+
+        Args:
+            pe: Parsed PE binary object from pefile.
+            binary_path: Path to the binary being analyzed.
+
+        Returns:
+            List of IntegrityCheck objects for detected anti-tamper mechanisms,
+            including high-entropy sections and self-modifying code patterns.
+        """
         checks = []
 
         for section in pe.sections:
@@ -799,7 +1171,19 @@ class IntegrityCheckDetector:
         return checks
 
     def _scan_elf_checks(self, binary: lief.Binary, binary_path: str) -> list[IntegrityCheck]:
-        """Scan ELF binaries for integrity checks."""
+        """Scan ELF binaries for integrity checks.
+
+        Analyzes ELF binaries for imported integrity checking functions.
+        Handles Linux and Unix binary formats using LIEF library.
+
+        Args:
+            binary: Parsed ELF/binary object from LIEF.
+            binary_path: Path to the binary being analyzed.
+
+        Returns:
+            List of IntegrityCheck objects for detected checks in ELF binaries,
+            matching imported functions against integrity check API signatures.
+        """
         checks: list[IntegrityCheck] = []
 
         try:
@@ -826,7 +1210,19 @@ class IntegrityCheckDetector:
         return checks
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy."""
+        """Calculate Shannon entropy.
+
+        Computes Shannon entropy to measure data randomness and encryption.
+        High entropy values indicate packed or encrypted sections. Uses standard
+        Shannon entropy formula with logarithm base 2.
+
+        Args:
+            data: Binary data to analyze for entropy calculation.
+
+        Returns:
+            Shannon entropy value as a float (0.0 to 8.0 for 8-bit data).
+            Returns 0.0 for empty data.
+        """
         if not data:
             return 0.0
 
@@ -850,7 +1246,12 @@ class IntegrityBypassEngine:
     """Bypasses detected integrity checks using Frida runtime hooks."""
 
     def __init__(self) -> None:
-        """Initialize the IntegrityBypassEngine with bypass strategies and Frida session."""
+        """Initialize the IntegrityBypassEngine with bypass strategies and Frida session.
+
+        Loads all bypass strategies for CRC32, CRC64, hash, HMAC, Authenticode,
+        and PE checksum integrity checks. Initializes Frida session attributes
+        and checksum calculator for runtime hook customization during bypass.
+        """
         self.bypass_strategies = self._load_bypass_strategies()
         self.session: frida.core.Session | None = None
         self.script: frida.core.Script | None = None
@@ -859,7 +1260,16 @@ class IntegrityBypassEngine:
         self.original_bytes_cache: dict[int, bytes] = {}
 
     def _load_bypass_strategies(self) -> list[BypassStrategy]:
-        """Load bypass strategies for different check types."""
+        """Load bypass strategies for integrity check types.
+
+        Initializes comprehensive Frida-based bypass scripts for all integrity
+        check types including CRC32, CRC64, MD5, SHA1, SHA256, SHA512, HMAC,
+        Authenticode, PE checksums, and memory hash protection mechanisms.
+
+        Returns:
+            List of BypassStrategy objects with Frida hooks for each check type,
+            containing frida_script code, priority values, and success rates.
+        """
         strategies = [
             BypassStrategy(
                 name="crc32_bypass",
@@ -1456,7 +1866,21 @@ class IntegrityBypassEngine:
         return strategies
 
     def bypass_checks(self, process_name: str, checks: list[IntegrityCheck]) -> bool:
-        """Bypass detected integrity checks using runtime hooks."""
+        """Bypass detected integrity checks using runtime hooks.
+
+        Attaches to running process and injects Frida scripts to hook and
+        bypass integrity checking functions at runtime. Returns expected
+        checksum values instead of calculating them. Installs message handler
+        for Frida script communication.
+
+        Args:
+            process_name: Name or PID of the process to attach to.
+            checks: List of IntegrityCheck objects to bypass.
+
+        Returns:
+            True if bypass installation succeeded and script loaded, False
+            if Frida attachment or script injection failed.
+        """
         try:
             self.session = frida.attach(process_name)
 
@@ -1465,6 +1889,12 @@ class IntegrityBypassEngine:
             self.script = self.session.create_script(combined_script)
 
             def message_wrapper(message: Any, data: bytes | None) -> None:
+                """Handle messages from Frida script execution.
+
+                Args:
+                    message: Message data from Frida script.
+                    data: Optional binary data attachment.
+                """
                 if isinstance(message, dict):
                     self._on_message(message, data)
 
@@ -1479,7 +1909,19 @@ class IntegrityBypassEngine:
             return False
 
     def _build_bypass_script(self, checks: list[IntegrityCheck]) -> str:
-        """Build combined Frida script for all checks."""
+        """Build combined Frida script for all checks.
+
+        Constructs a unified Frida script combining bypass strategies for all
+        detected integrity check types. Groups checks by type and selects the
+        best bypass strategy for each type.
+
+        Args:
+            checks: List of detected integrity checks to build bypasses for.
+
+        Returns:
+            Complete Frida JavaScript code as a string combining all applicable
+            bypass strategies with proper substitutions for expected values.
+        """
         script_parts: list[str] = []
 
         checks_by_type: dict[IntegrityCheckType, list[IntegrityCheck]] = {}
@@ -1495,7 +1937,18 @@ class IntegrityBypassEngine:
         return "\n".join(script_parts)
 
     def _get_best_strategy(self, check_type: IntegrityCheckType) -> BypassStrategy | None:
-        """Get best bypass strategy for check type."""
+        """Get best bypass strategy for check type.
+
+        Selects the highest-priority bypass strategy for a given check type
+        from the loaded strategies. Compares priority values to find minimum.
+
+        Args:
+            check_type: IntegrityCheckType to find strategy for.
+
+        Returns:
+            BypassStrategy with best priority (lowest numeric value), or None
+            if no strategy is loaded for this check type.
+        """
         best_strategy = None
         best_priority = 999
 
@@ -1507,7 +1960,22 @@ class IntegrityBypassEngine:
         return best_strategy
 
     def _customize_script(self, script_template: str, checks: list[IntegrityCheck]) -> str:
-        """Customize script template with actual recalculated values."""
+        """Customize script template with actual recalculated values.
+
+        Substitutes tokens in Frida script template with actual checksum
+        values, protected memory ranges, and key material extracted from binary.
+        Performs token replacement for integrity check values including CRC32,
+        CRC64, MD5, SHA1, SHA256, SHA512, HMAC keys, and protected memory ranges.
+
+        Args:
+            script_template: Frida script with token values to be replaced.
+            checks: List of integrity checks with address and size information
+                for determining protected memory ranges.
+
+        Returns:
+            Customized Frida script with actual values substituted. Falls back
+            to default values if binary cannot be read.
+        """
         script = script_template
 
         if checks:
@@ -1583,14 +2051,30 @@ class IntegrityBypassEngine:
         return script
 
     def _on_message(self, message: dict[str, Any], data: bytes | None) -> None:
-        """Handle Frida script messages."""
+        """Handle Frida script messages.
+
+        Processes messages received from Frida runtime hooks, including log
+        messages and error reports. Routes messages to logging system for
+        visibility into hook execution and error conditions.
+
+        Args:
+            message: Dictionary containing message type ("send" or "error")
+                and payload with the actual message content.
+            data: Optional binary data attached to message (typically None
+                for integrity check bypass operations).
+        """
         if message.get("type") == "send":
             logger.info("[Frida] %s", message.get("payload", ""))
         elif message.get("type") == "error":
             logger.exception("[Frida Error] %s", message.get("stack", ""))
 
     def cleanup(self) -> None:
-        """Clean up Frida session."""
+        """Clean up Frida session.
+
+        Unloads Frida scripts and detaches from target process, releasing all
+        resources and removing installed hooks. Must be called after bypass
+        operations to ensure proper cleanup of Frida resources.
+        """
         if self.script is not None:
             self.script.unload()
         if self.session is not None:
@@ -1601,7 +2085,12 @@ class BinaryPatcher:
     """Patches binaries to remove integrity checks and recalculates checksums."""
 
     def __init__(self) -> None:
-        """Initialize the BinaryPatcher with checksum calculator."""
+        """Initialize the BinaryPatcher with checksum calculator.
+
+        Sets up checksum calculator for recalculation of PE checksums and
+        cryptographic hashes. Initializes patch history for audit trail
+        tracking of all binary modifications.
+        """
         self.checksum_calc = ChecksumRecalculator()
         self.patch_history: list[dict[str, int | bytes | str]] = []
 
@@ -1611,7 +2100,24 @@ class BinaryPatcher:
         checks: list[IntegrityCheck],
         output_path: str | None = None,
     ) -> tuple[bool, ChecksumRecalculation | None]:
-        """Patch binary to remove integrity checks and recalculate all checksums."""
+        """Patch binary to remove integrity checks and recalculate all checksums.
+
+        Patches binary to remove detected integrity checks by replacing check
+        code with NOP instructions (0x90) or working return instructions (mov eax, 0;
+        ret). Recalculates PE checksum and all hash values for the modified binary.
+        Saves patch history for audit and verification purposes.
+
+        Args:
+            binary_path: Path to the original binary file.
+            checks: List of integrity checks to patch and remove.
+            output_path: Optional path for patched binary. If None, generates
+                filename by appending ".patched" before file extension.
+
+        Returns:
+            Tuple of (success: bool, checksums: ChecksumRecalculation | None).
+            Returns checksums for both original and patched binaries on success.
+            Returns (False, None) on any patching or checksum errors.
+        """
         final_output_path = (
             output_path if output_path is not None else str(Path(binary_path).with_suffix(f".patched{Path(binary_path).suffix}"))
         )
@@ -1682,7 +2188,21 @@ class BinaryPatcher:
             return False, None
 
     def _rva_to_offset(self, pe: pefile.PE, rva: int) -> int | None:
-        """Convert RVA to file offset."""
+        """Convert RVA to file offset.
+
+        Converts a Relative Virtual Address (RVA) from PE headers to its
+        corresponding file offset by finding the section containing that address
+        and computing the offset within that section. Used for patching inline
+        integrity checks at specific code locations.
+
+        Args:
+            pe: Parsed PE binary object from pefile.
+            rva: Relative Virtual Address to convert to file offset.
+
+        Returns:
+            File offset corresponding to the RVA, or None if RVA is not
+            found within any PE section bounds.
+        """
         return next(
             (
                 section.PointerToRawData + (rva - section.VirtualAddress)
@@ -1697,18 +2217,48 @@ class IntegrityCheckDefeatSystem:
     """Complete integrity check defeat system with detection, bypass, and patching."""
 
     def __init__(self) -> None:
-        """Initialize the IntegrityCheckDefeatSystem with all components."""
+        """Initialize the IntegrityCheckDefeatSystem with all components.
+
+        Creates instances of detector, bypasser, patcher, and checksum calculator
+        to provide complete integrated system for integrity check analysis,
+        runtime bypassing, binary patching, and checksum recalculation.
+        """
         self.detector = IntegrityCheckDetector()
         self.bypasser = IntegrityBypassEngine()
         self.patcher = BinaryPatcher()
         self.checksum_calc = ChecksumRecalculator()
 
     def find_embedded_checksums(self, binary_path: str) -> list[ChecksumLocation]:
-        """Find locations where checksums are embedded in the binary."""
+        """Find locations where checksums are embedded in the binary.
+
+        Scans binary for embedded checksum values using pattern matching and
+        validates locations against PE section characteristics. Detects CRC32,
+        CRC64, MD5, SHA1, SHA256, and SHA512 checksums.
+
+        Args:
+            binary_path: Path to the binary to scan for embedded checksums.
+
+        Returns:
+            List of ChecksumLocation objects with offsets, sizes, algorithm
+            types, current and calculated values, and confidence scores.
+        """
         return self.checksum_calc.find_checksum_locations(binary_path)
 
     def extract_hmac_keys(self, binary_path: str) -> list[dict[str, str | int]]:
-        """Extract potential HMAC keys from binary."""
+        """Extract potential HMAC keys from binary.
+
+        Scans binary for high-entropy sequences that may be HMAC key material
+        using entropy analysis and pattern heuristics. Identifies cryptographic
+        key material for authentication code verification and bypassing.
+
+        Args:
+            binary_path: Path to the binary to scan for potential HMAC keys.
+
+        Returns:
+            List of dictionaries containing potential HMAC keys with metadata
+            including offset, size, key hex value, entropy score, and confidence.
+            Limited to top 10 candidates sorted by confidence.
+        """
         return self.checksum_calc.extract_hmac_keys(binary_path)
 
     def patch_embedded_checksums(
@@ -1717,7 +2267,22 @@ class IntegrityCheckDefeatSystem:
         checksum_locations: list[ChecksumLocation],
         output_path: str | None = None,
     ) -> bool:
-        """Patch embedded checksums in binary with recalculated values."""
+        """Patch embedded checksums in binary with recalculated values.
+
+        Replaces embedded checksum values at specified locations with their
+        recalculated counterparts to match the modified binary. Updates all
+        algorithm types including CRC, MD5, SHA variants.
+
+        Args:
+            binary_path: Path to the binary containing embedded checksums.
+            checksum_locations: List of ChecksumLocation objects to patch,
+                each containing offset, size, and calculated value.
+            output_path: Optional path for output binary. If None, generates
+                filename by appending ".patched" before file extension.
+
+        Returns:
+            True if patching succeeded and output written, False otherwise.
+        """
         final_output_path = (
             output_path if output_path is not None else str(Path(binary_path).with_suffix(f".patched{Path(binary_path).suffix}"))
         )
@@ -1747,7 +2312,24 @@ class IntegrityCheckDefeatSystem:
         process_name: str | None = None,
         patch_binary: bool = False,
     ) -> dict[str, Any]:
-        """Complete integrity check defeat workflow."""
+        """Complete integrity check defeat workflow.
+
+        Orchestrates full defeat workflow: detect checks, apply runtime bypasses
+        to running process, optionally patch binary, and recalculate checksums.
+        Provides comprehensive analysis results and audit trail of all operations.
+
+        Args:
+            binary_path: Path to the binary to analyze and potentially patch.
+            process_name: Optional process name/PID for runtime bypass application.
+                If provided, Frida runtime hooks are installed.
+            patch_binary: If True, patch binary to remove checks and recalculate
+                all checksums (CRC32, CRC64, MD5, SHA1, SHA256, SHA512).
+
+        Returns:
+            Dictionary with keys: success (bool), checks_detected (int),
+            checks_bypassed (int), binary_patched (bool), checksums (dict or None),
+            and details (list of check information dictionaries).
+        """
         logger.info("Detecting integrity checks: %s", binary_path)
         checks = self.detector.detect_checks(binary_path)
         result: dict[str, Any] = {
@@ -1813,7 +2395,19 @@ class IntegrityCheckDefeatSystem:
         return result
 
     def generate_bypass_script(self, binary_path: str) -> str:
-        """Generate Frida script for bypassing integrity checks."""
+        """Generate Frida script for bypassing integrity checks.
+
+        Detects integrity checks and generates complete Frida script for
+        runtime bypassing without executing it. Script includes hooks for all
+        detected check types with calculated bypass values.
+
+        Args:
+            binary_path: Path to the binary to generate bypass script for.
+
+        Returns:
+            Complete Frida JavaScript code as a string. Returns comment message
+            if no integrity checks are detected in the binary.
+        """
         checks = self.detector.detect_checks(binary_path)
 
         if not checks:
@@ -1825,12 +2419,33 @@ class IntegrityCheckDefeatSystem:
         return self.bypasser._build_bypass_script(checks)
 
     def recalculate_checksums(self, original_path: str, patched_path: str) -> ChecksumRecalculation:
-        """Recalculate all checksums for comparison."""
+        """Recalculate all checksums for comparison.
+
+        Computes all hash algorithms and checksums for both original and patched
+        binaries for detailed comparison and integrity analysis. Provides complete
+        checksum audit trail including CRC32, CRC64, MD5, SHA1, SHA256, and SHA512.
+
+        Args:
+            original_path: Path to the original unmodified binary.
+            patched_path: Path to the patched binary after integrity checks removed.
+
+        Returns:
+            ChecksumRecalculation object with checksums for both binaries,
+            including PE checksum, section hashes, and extracted HMAC keys.
+        """
         return self.checksum_calc.recalculate_for_patched_binary(original_path, patched_path)
 
 
 def main() -> None:
-    """Test entry point."""
+    """Test entry point.
+
+    Command-line interface for integrity check defeat system. Supports detection,
+    bypass script generation, binary patching, and checksum analysis operations.
+    Implements argparse-based CLI with options for finding embedded checksums,
+    extracting HMAC keys, generating bypass scripts, patching binaries, and
+    analyzing checksums with detailed reporting.
+
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description="Integrity Check Defeat System")

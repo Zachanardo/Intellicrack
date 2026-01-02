@@ -13,7 +13,7 @@ import threading
 import time
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -109,26 +109,40 @@ class TestSafeTorchImport:
 
     def test_safe_torch_import_intel_arc_detection(self) -> None:
         """safe_torch_import returns None when Intel Arc is detected."""
-        with patch.dict("os.environ", {"UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS": "1"}):
+        original_value = os.environ.get("UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS")
+        try:
+            os.environ["UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS"] = "1"
             torch_module = safe_torch_import()
             assert torch_module is None
+        finally:
+            if original_value is not None:
+                os.environ["UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS"] = original_value
+            else:
+                os.environ.pop("UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS", None)
 
     def test_safe_torch_import_sets_environment_variables(self) -> None:
         """safe_torch_import sets threading environment variables."""
-        with patch.dict("os.environ", {}, clear=True):
-            # Remove Intel Arc detection
-            if "UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS" in os.environ:
-                del os.environ["UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS"]
+        saved_env = {}
+        env_vars = ["OMP_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS", "UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS"]
 
+        for var in env_vars:
+            if var in os.environ:
+                saved_env[var] = os.environ[var]
+                del os.environ[var]
+
+        try:
             try:
                 safe_torch_import()
             except ImportError:
                 pass
 
-            # Environment variables should be set
             assert os.environ.get("OMP_NUM_THREADS") == "1"
             assert os.environ.get("MKL_NUM_THREADS") == "1"
             assert os.environ.get("NUMEXPR_NUM_THREADS") == "1"
+        finally:
+            for var in env_vars:
+                if var in saved_env:
+                    os.environ[var] = saved_env[var]
 
     def test_safe_torch_import_handles_missing_torch(self) -> None:
         """safe_torch_import returns None when torch is not available."""

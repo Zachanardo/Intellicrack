@@ -77,7 +77,7 @@ class ReportGenerator:
         """Get or create the reports directory.
 
         Returns:
-            Path to the reports directory
+            Reports directory path.
 
         """
         reports_dir: Path
@@ -96,7 +96,7 @@ class ReportGenerator:
         """Get the templates directory.
 
         Returns:
-            Path to the templates directory
+            Templates directory path.
 
         """
         # Check multiple possible locations
@@ -119,10 +119,10 @@ class ReportGenerator:
         """Generate an HTML report from analysis data.
 
         Args:
-            data: Analysis results data
+            data: Analysis results data.
 
         Returns:
-            HTML content as string
+            HTML content for the report.
 
         """
         if self.jinja_env:
@@ -222,7 +222,7 @@ class ReportGenerator:
         """Get default CSS styles for HTML reports.
 
         Returns:
-            CSS styles as string
+            CSS styles for HTML report formatting.
 
         """
         return """
@@ -310,10 +310,10 @@ class ReportGenerator:
         """Generate a JSON report from analysis data.
 
         Args:
-            data: Analysis results data
+            data: Analysis results data.
 
         Returns:
-            JSON content as string
+            JSON content for the report.
 
         """
         # Add metadata
@@ -332,10 +332,10 @@ class ReportGenerator:
         """Generate a text report from analysis data.
 
         Args:
-            data: Analysis results data
+            data: Analysis results data.
 
         Returns:
-            Text content as string
+            Text content for the report.
 
         """
         lines = [
@@ -392,12 +392,12 @@ class ReportGenerator:
         """Save report content to file.
 
         Args:
-            content: Report content
-            format: Report format (html, json, txt)
-            filename: Optional custom filename
+            content: Report content.
+            format: Report format (html, json, txt).
+            filename: Optional custom filename.
 
         Returns:
-            Path to saved report file
+            Path to saved report file.
 
         """
         if filename is None:
@@ -420,11 +420,11 @@ class ReportGenerator:
         """Create a temporary report file for preview or processing.
 
         Args:
-            content: Report content
-            format: Report format extension
+            content: Report content.
+            format: Report format extension.
 
         Returns:
-            Path to temporary report file
+            Path to temporary report file.
 
         """
         # Use tempfile to create secure temporary file
@@ -445,7 +445,7 @@ class ReportGenerator:
         """Get list of supported report formats.
 
         Returns:
-            List of supported format extensions
+            Supported format extensions.
 
         """
         basic_formats: list[str] = ["html", "json", "txt"]
@@ -462,7 +462,7 @@ class ReportGenerator:
         """Get MIME types for supported formats.
 
         Returns:
-            Dictionary mapping formats to MIME types
+            Dictionary mapping formats to MIME types.
 
         """
         return {
@@ -476,10 +476,10 @@ class ReportGenerator:
         """Create a Jinja2 template from string content.
 
         Args:
-            template_string: Template content as string
+            template_string: Template content as string.
 
         Returns:
-            Jinja2 Template object or None if creation fails
+            Jinja2 Template object or None if creation fails.
 
         """
         if JINJA_AVAILABLE and Template is not None:
@@ -494,13 +494,13 @@ def generate_report(app_instance: object, format: str = "html", save: bool = Tru
     """Generate an analysis report in the specified format.
 
     Args:
-        app_instance: The Intellicrack application instance
-        format: Report format (html, json, txt, pdf)
-        save: Whether to save the report to file
-        filename: Optional custom filename
+        app_instance: The Intellicrack application instance.
+        format: Report format (html, json, txt, pdf).
+        save: Whether to save the report to file.
+        filename: Optional custom filename.
 
     Returns:
-        Path to saved report or report content if not saved
+        Path to saved report, report content if not saved, or None on error.
 
     """
     try:
@@ -608,11 +608,11 @@ def view_report(app_instance: object, filepath: str | None = None) -> bool:
     """View a generated report in the appropriate viewer.
 
     Args:
-        app_instance: The Intellicrack application instance
-        filepath: Path to report file, or None to browse
+        app_instance: The Intellicrack application instance.
+        filepath: Path to report file, or None to browse.
 
     Returns:
-        True if report was opened successfully
+        True if report was opened successfully, False otherwise.
 
     """
     try:

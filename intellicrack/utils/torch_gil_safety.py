@@ -14,7 +14,7 @@ import sys
 import threading
 from collections.abc import Callable
 from types import ModuleType, TracebackType
-from typing import Any, cast
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -40,8 +40,10 @@ def torch_thread_safe(func: Callable[..., Any]) -> Callable[..., Any]:
         func: Function that uses PyTorch operations
 
     Returns:
-        Thread-safe wrapped function
+        Thread-safe wrapped function that executes within a lock context.
 
+    Raises:
+        Exception: Any exception raised by the wrapped function is propagated.
     """
 
     @functools.wraps(func)
@@ -55,8 +57,13 @@ def torch_thread_safe(func: Callable[..., Any]) -> Callable[..., Any]:
 def safe_torch_import() -> ModuleType | None:
     """Safely import PyTorch with thread-safe configuration.
 
+    Initializes threading locks and environment variables before attempting
+    to import the torch module. Returns None if the import fails or if
+    Intel Arc GPU is detected.
+
     Returns:
-        torch module or None if import fails
+        torch module if successfully imported, None if import fails or
+        Intel Arc GPU is detected.
 
     """
     # Intel Arc detection - return None immediately without ANY torch import
@@ -82,7 +89,11 @@ class TorchGILSafeContext:
     """Context manager for PyTorch operations that ensures GIL safety."""
 
     def __enter__(self) -> "TorchGILSafeContext":
-        """Enter the thread-safe PyTorch context."""
+        """Enter the thread-safe PyTorch context.
+
+        Returns:
+            Context manager instance for the locked PyTorch operations.
+        """
         _torch_lock.acquire()
         return self
 
@@ -92,7 +103,13 @@ class TorchGILSafeContext:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        """Exit the thread-safe PyTorch context."""
+        """Exit the thread-safe PyTorch context.
+
+        Args:
+            exc_type: Exception type if an exception occurred, None otherwise.
+            exc_val: Exception instance if an exception occurred, None otherwise.
+            exc_tb: Traceback object if an exception occurred, None otherwise.
+        """
         _torch_lock.release()
 
 
@@ -118,7 +135,13 @@ def configure_pybind11_environment() -> None:
     """Configure environment for pybind11 GIL safety.
 
     This should be called very early in application startup,
-    before any C++ extensions are imported.
+    before any C++ extensions are imported. Sets critical environment
+    variables and Python flags to prevent GIL-related issues with
+    pybind11 extensions and PyTorch operations.
+
+    Returns:
+        None
+
     """
     # Disable pybind11 GIL checks if they're causing issues
     # This is a last resort but may be necessary for complex applications
@@ -152,7 +175,13 @@ def initialize_gil_safety() -> None:
     """Initialize GIL safety measures for the application.
 
     This function should be called at the very beginning of the application
-    before any threading or C++ extension imports occur.
+    before any threading or C++ extension imports occur. Configures pybind11
+    environment and validates that initialization occurs from the main thread,
+    logging warnings when called from non-main threads outside launcher contexts.
+
+    Returns:
+        None
+
     """
     configure_pybind11_environment()
 

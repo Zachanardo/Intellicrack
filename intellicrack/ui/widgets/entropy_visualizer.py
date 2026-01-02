@@ -58,6 +58,9 @@ class EntropyVisualizer(QWidget):
 
         Creates plot widgets with entropy curve, threshold lines, and
         high/low entropy regions for visual analysis of binary data.
+
+        Returns:
+            None
         """
         layout = QVBoxLayout(self)
 
@@ -169,6 +172,9 @@ class EntropyVisualizer(QWidget):
             data: Binary data to load and analyze.
             block_size: Size of each analysis block in bytes.
 
+        Returns:
+            None
+
         Raises:
             TypeError: If data is not bytes type.
             ValueError: If data is empty or block_size is non-positive.
@@ -211,6 +217,14 @@ class EntropyVisualizer(QWidget):
 
         Renders entropy data on the plot, calculates statistics, identifies
         suspicious regions, and emits signals for connected widgets.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If entropy data is empty or mismatches with position data.
+            AttributeError: If entropy curve is not properly initialized.
+
         """
         try:
             if not self.entropy_data:
@@ -323,6 +337,9 @@ class EntropyVisualizer(QWidget):
         """Clear the visualization.
 
         Resets all entropy data, clears the plot, and restores initial state.
+
+        Returns:
+            None
         """
         self.file_data = None
         self.entropy_data = []

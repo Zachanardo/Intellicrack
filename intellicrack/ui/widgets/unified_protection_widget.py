@@ -8,7 +8,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-from typing import Any, cast
+from typing import Any
 
 # Import for QDateTime
 from PyQt6.QtCore import QDateTime, Qt, QThread, pyqtSignal, pyqtSlot
@@ -66,7 +66,13 @@ class UnifiedAnalysisThread(QThread):
         self.engine = UnifiedProtectionEngine()
 
     def run(self) -> None:
-        """Execute the unified protection analysis in background thread."""
+        """Execute the unified protection analysis in background thread.
+
+        Performs a complete protection analysis workflow including quick summary,
+        comprehensive analysis, and bypass strategy generation. Emits progress
+        updates during execution and sends the final result via signal.
+
+        """
         try:
             self.analysis_progress.emit("Initializing protection analysis...", 10)
 
@@ -113,7 +119,12 @@ class ProtectionCard(QFrame):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """Initialize the protection card UI."""
+        """Initialize the protection card UI.
+
+        Constructs the visual layout of a protection card including the protection
+        name, type, confidence level with color-coding, and detection source indicator.
+
+        """
         self.setFrameStyle(QFrame.Shape.Box)
         self.setStyleSheet("""
             ProtectionCard {
@@ -169,6 +180,9 @@ class ProtectionCard(QFrame):
     def _get_source_text(self, source: AnalysisSource) -> str:
         """Get user-friendly source text for display in the protection card.
 
+        Converts AnalysisSource enum values to human-readable strings suitable
+        for UI display in protection cards and analysis reports.
+
         Args:
             source: The analysis source enum value indicating detection method
 
@@ -188,6 +202,9 @@ class ProtectionCard(QFrame):
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Handle mouse click event on the protection card.
+
+        Emits the clicked signal when the left mouse button is pressed on this
+        card, allowing parent widgets to respond to protection card selection.
 
         Args:
             event: The mouse event containing button and position information
@@ -220,7 +237,13 @@ class UnifiedProtectionWidget(QWidget):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """Initialize the UI."""
+        """Initialize the main UI components and layout.
+
+        Constructs the complete UI layout for the unified protection widget including
+        header with controls, content splitter with overview and details panels, and
+        status bar with progress indicator.
+
+        """
         layout = QVBoxLayout()
         layout.setSpacing(10)
 
@@ -248,6 +271,11 @@ class UnifiedProtectionWidget(QWidget):
 
     def _create_header_section(self, parent_layout: QVBoxLayout) -> None:
         """Create header section with controls and file information.
+
+        Constructs the top-level header widget containing the title, Quick Scan
+        and Deep Analysis buttons, ICP Features button, and file information
+        label. The header provides the primary entry points for analysis
+        operations.
 
         Args:
             parent_layout: The parent layout to add the header section to
@@ -305,8 +333,13 @@ class UnifiedProtectionWidget(QWidget):
     def _create_overview_panel(self) -> QWidget:
         """Create overview panel with summary and protection cards.
 
+        Constructs the left panel containing the Summary group box and scrollable
+        Detected Protections area with individual protection cards. This panel
+        provides a high-level overview of analysis results.
+
         Returns:
-            Widget containing the overview panel UI components
+            Widget containing the overview panel UI components with summary and
+            protection cards layout
 
         """
         widget = QWidget()
@@ -350,8 +383,14 @@ class UnifiedProtectionWidget(QWidget):
     def _create_details_panel(self) -> QTabWidget:
         """Create details panel with tabbed interface for analysis results.
 
+        Constructs the right panel with a tabbed interface providing multiple
+        views: Analysis Details, Hex View, Strings, Entropy Analysis, Bypass
+        Strategies, Technical Information, and Analysis Performance. Each tab
+        offers detailed analysis from different perspectives.
+
         Returns:
-            Tab widget containing analysis details, hex view, strings, entropy, bypass strategies, and technical info
+            Tab widget containing analysis details, hex view, strings, entropy,
+            bypass strategies, and technical info tabs
 
         """
         self.details_tabs = QTabWidget()
@@ -398,6 +437,10 @@ class UnifiedProtectionWidget(QWidget):
     def _create_bypass_widget(self) -> QWidget:
         """Create bypass strategies widget with export functionality.
 
+        Constructs a widget containing a scrollable area for displaying bypass
+        strategy cards and an Export Bypass Guide button. This widget is added
+        as a tab in the details panel.
+
         Returns:
             Widget containing bypass strategies display and export button
 
@@ -429,6 +472,10 @@ class UnifiedProtectionWidget(QWidget):
     def _create_status_bar(self, parent_layout: QVBoxLayout) -> None:
         """Create status bar with progress indicator.
 
+        Constructs the bottom status bar containing a status label and progress
+        bar that indicates analysis progress and displays status messages during
+        analysis operations.
+
         Args:
             parent_layout: The parent layout to add the status bar to
 
@@ -451,7 +498,21 @@ class UnifiedProtectionWidget(QWidget):
         parent_layout.addWidget(status_widget)
 
     def analyze_file(self, file_path: str | None = None, deep_scan: bool = True) -> None:
-        """Analyze a file for protections."""
+        """Analyze a file for protections.
+
+        Initiates protection analysis on a binary file. If no file path is provided,
+        opens a file dialog for user selection. Spawns a background analysis thread
+        to avoid blocking the UI. Updates progress indicators and protection cards
+        as analysis completes.
+
+        Args:
+            file_path: Path to the binary file for analysis, or None to open file dialog
+            deep_scan: Whether to perform deep analysis or quick scan
+
+        Raises:
+            OSError: If the selected file does not exist or cannot be accessed
+
+        """
         if not file_path:
             file_path, _ = QFileDialog.getOpenFileName(
                 self,
@@ -507,7 +568,17 @@ class UnifiedProtectionWidget(QWidget):
 
     @pyqtSlot(object)
     def on_analysis_complete(self, result: UnifiedProtectionResult) -> None:
-        """Handle analysis completion."""
+        """Handle analysis completion.
+
+        Called when the background analysis thread completes analysis. Displays
+        the results in all UI panels, loads the binary in hex viewer and string
+        extractor, highlights protection-related regions, re-enables controls,
+        and emits the protection_analyzed signal for parent widgets.
+
+        Args:
+            result: The unified protection analysis result from the background thread
+
+        """
         self.current_result = result
         self.display_results(result)
 
@@ -547,7 +618,16 @@ class UnifiedProtectionWidget(QWidget):
 
     @pyqtSlot(str)
     def on_analysis_error(self, error_msg: str) -> None:
-        """Handle analysis error."""
+        """Handle analysis error.
+
+        Called when the background analysis thread encounters an error. Displays
+        an error message box to the user and resets the UI controls to their
+        enabled state.
+
+        Args:
+            error_msg: Error message from the analysis thread
+
+        """
         QMessageBox.critical(self, "Analysis Error", f"Error during analysis:\n{error_msg}")
 
         self.quick_scan_btn.setEnabled(True)
@@ -557,12 +637,32 @@ class UnifiedProtectionWidget(QWidget):
 
     @pyqtSlot(str, int)
     def on_analysis_progress(self, message: str, progress: int) -> None:
-        """Update progress."""
+        """Update progress.
+
+        Updates the status label and progress bar with the current analysis progress.
+        Called by the analysis thread to provide real-time feedback to the user during
+        ongoing protection analysis operations.
+
+        Args:
+            message: Status message to display
+            progress: Progress percentage value
+
+        """
         self.status_label.setText(message)
         self.progress_bar.setValue(progress)
 
     def display_results(self, result: UnifiedProtectionResult) -> None:
-        """Display analysis results."""
+        """Display analysis results.
+
+        Orchestrates display of all analysis results across the UI by updating
+        the summary, protection cards, details panels, bypass strategies, technical
+        info, performance metrics, and entropy visualization. This is the main
+        method called after analysis completes.
+
+        Args:
+            result: The unified protection analysis result to display
+
+        """
         # Update summary
         self.update_summary(result)
 
@@ -589,9 +689,10 @@ class UnifiedProtectionWidget(QWidget):
 
         Populates the details text panel with formatted analysis results including
         protection overview, detection sources, and actionable recommendations.
+        This is a public wrapper around the internal _update_analysis_details method.
 
         Args:
-            result: The unified protection analysis result containing all detection data.
+            result: The unified protection analysis result containing all detection data
 
         """
         self._update_analysis_details(result)
@@ -599,8 +700,12 @@ class UnifiedProtectionWidget(QWidget):
     def _update_analysis_details(self, result: UnifiedProtectionResult) -> None:
         """Internal method to update the analysis details display.
 
+        Generates a comprehensive text report of all detected protections with
+        detailed information including confidence scores, detection sources, versions,
+        and status flags. Includes recommendations for each protection type detected.
+
         Args:
-            result: The unified protection analysis result containing all detection data.
+            result: The unified protection analysis result containing all detection data
 
         """
         details = "=== Protection Analysis Details ===\n\n"
@@ -673,7 +778,16 @@ class UnifiedProtectionWidget(QWidget):
         self.details_text.setPlainText(details)
 
     def update_summary(self, result: UnifiedProtectionResult) -> None:
-        """Update summary display."""
+        """Update summary display.
+
+        Updates the summary card with a high-level overview including file type,
+        architecture, protection count, and confidence score. Includes visual
+        indicators for packing, anti-debugging, and licensing protection.
+
+        Args:
+            result: The unified protection analysis result containing protection data
+
+        """
         if not result.protections:
             summary = f"""
 <h3>No Protections Detected</h3>
@@ -703,7 +817,16 @@ Overall Confidence: {result.confidence_score:.0f}%</p>
         self.summary_text.setText(summary)
 
     def display_protection_cards(self, result: UnifiedProtectionResult) -> None:
-        """Display protection cards."""
+        """Display protection cards.
+
+        Creates and displays individual ProtectionCard widgets for each detected
+        protection. Cards are clickable and signal selection to display detailed
+        information in the analysis details panel.
+
+        Args:
+            result: The unified protection analysis result containing protection data
+
+        """
         # Clear existing cards
         while self.cards_layout.count():
             child: QLayoutItem | None = self.cards_layout.takeAt(0)
@@ -722,7 +845,16 @@ Overall Confidence: {result.confidence_score:.0f}%</p>
         self.cards_layout.addStretch()
 
     def on_protection_clicked(self, protection_data: dict[str, Any]) -> None:
-        """Handle protection card click."""
+        """Handle protection card click.
+
+        Responds to user click on a protection card by displaying detailed
+        information about the selected protection and switching the details view
+        to the Analysis Details tab.
+
+        Args:
+            protection_data: Dictionary containing the clicked protection's information
+
+        """
         # Show details for this protection
         self.show_protection_details(protection_data)
 
@@ -730,7 +862,16 @@ Overall Confidence: {result.confidence_score:.0f}%</p>
         self.details_tabs.setCurrentIndex(0)
 
     def show_protection_details(self, protection: dict[str, Any]) -> None:
-        """Show detailed information for a protection."""
+        """Show detailed information for a protection.
+
+        Formats and displays comprehensive details about a specific protection
+        including name, type, confidence, version, additional metadata, and
+        bypass recommendations in the details text panel.
+
+        Args:
+            protection: Dictionary containing detailed protection information
+
+        """
         details = f"""
 === {protection["name"]} ===
 
@@ -758,6 +899,9 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
     def _format_source(self, source: AnalysisSource) -> str:
         """Format analysis source for display in technical information.
 
+        Converts AnalysisSource enum values to human-readable strings for
+        display in technical information and performance panels.
+
         Args:
             source: The analysis source enum value indicating detection method
 
@@ -776,7 +920,16 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
         return str(source)
 
     def display_bypass_strategies(self, result: UnifiedProtectionResult) -> None:
-        """Display bypass strategies."""
+        """Display bypass strategies.
+
+        Creates and displays strategy cards for each bypass strategy in the result.
+        Each card shows the strategy name, description, difficulty, required tools,
+        and implementation steps. Clears previous strategies before displaying new ones.
+
+        Args:
+            result: The unified protection analysis result containing bypass strategies
+
+        """
         # Clear existing strategies
         while self.strategies_layout.count():
             child: QLayoutItem | None = self.strategies_layout.takeAt(0)
@@ -801,8 +954,13 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
     def _create_strategy_card(self, strategy: dict[str, Any]) -> QGroupBox:
         """Create a bypass strategy card with difficulty and steps.
 
+        Constructs a formatted group box displaying a single bypass strategy with
+        its description, difficulty level (color-coded), required tools, and step-by-step
+        implementation instructions.
+
         Args:
-            strategy: Dictionary containing strategy information including name, description, difficulty, tools, and steps
+            strategy: Dictionary containing strategy information including name,
+                description, difficulty, tools, and steps
 
         Returns:
             Group box containing the formatted strategy information
@@ -856,7 +1014,16 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
         return card
 
     def update_technical_info(self, result: UnifiedProtectionResult) -> None:
-        """Update technical information display."""
+        """Update technical information display.
+
+        Generates comprehensive technical information including file properties,
+        protection flags, ICP analysis results, section details, and entropy
+        analysis. Displays all data in a formatted text panel.
+
+        Args:
+            result: The unified protection analysis result containing technical data
+
+        """
         tech_info = "=== Technical Analysis Details ===\n\n"
 
         tech_info += f"File: {result.file_path}\n"
@@ -901,7 +1068,16 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
         self.tech_text.setPlainText(tech_info)
 
     def update_entropy_graph(self, result: UnifiedProtectionResult) -> None:
-        """Update entropy visualization with analysis data."""
+        """Update entropy visualization with analysis data.
+
+        Updates the entropy graph widget with entropy analysis data from ICP analysis.
+        Displays entropy visualization for binary sections if available, otherwise
+        displays an empty graph.
+
+        Args:
+            result: The unified protection analysis result containing entropy data
+
+        """
         if result.icp_analysis and hasattr(result.icp_analysis, "entropy_analysis"):
             # Update the entropy graph with ICP entropy data
             self.entropy_graph.update_entropy_data(result.icp_analysis.entropy_analysis)
@@ -910,7 +1086,17 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
             self.entropy_graph.update_entropy_data([])
 
     def _on_entropy_section_clicked(self, section_name: str, entropy_value: float) -> None:
-        """Handle entropy section click."""
+        """Handle entropy section click.
+
+        Displays detailed information about a clicked entropy section including
+        the entropy value and interpretation of what the entropy level indicates
+        about compression, encryption, or obfuscation.
+
+        Args:
+            section_name: Name of the clicked entropy section
+            entropy_value: Entropy value of the section
+
+        """
         # Show details about the section
         msg = f"Section: {section_name}\nEntropy: {entropy_value:.4f}\n\n"
         if entropy_value >= 7.0:
@@ -923,7 +1109,16 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
         QMessageBox.information(self, "Section Entropy Details", msg)
 
     def update_performance_info(self, result: UnifiedProtectionResult) -> None:
-        """Update performance information."""
+        """Update performance information.
+
+        Displays analysis performance metrics including total analysis time,
+        engines used, and detection source breakdown. Provides statistics about
+        which analysis engines contributed to the protection detections.
+
+        Args:
+            result: The unified protection analysis result containing performance data
+
+        """
         perf_info = "=== Analysis Performance ===\n\n"
 
         perf_info += f"Total Analysis Time: {result.analysis_time:.3f} seconds\n"
@@ -941,7 +1136,13 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
         self.perf_text.setPlainText(perf_info)
 
     def clear_results(self) -> None:
-        """Clear all results."""
+        """Clear all analysis results from display.
+
+        Resets all UI elements to their initial state including summary text,
+        protection cards, analysis details, technical information, performance
+        metrics, and bypass strategies. Clears the current analysis result.
+
+        """
         self.summary_text.setText("No analysis performed")
 
         # Clear cards
@@ -968,7 +1169,16 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
         self.current_result = None
 
     def export_bypass_guide(self) -> None:
-        """Export bypass strategies to file."""
+        """Export bypass strategies to file.
+
+        Saves the bypass strategies and protection analysis to a Markdown or
+        text file selected by the user. Includes protection details, strategy
+        descriptions, and implementation steps.
+
+        Raises:
+            OSError: If the file cannot be written to the selected path
+
+        """
         if not self.current_result or not self.current_result.bypass_strategies:
             QMessageBox.information(self, "No Data", "No bypass strategies to export.")
             return
@@ -1002,7 +1212,16 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
             )
 
     def _generate_bypass_guide(self) -> str:
-        """Generate bypass guide content."""
+        """Generate bypass guide content.
+
+        Creates a comprehensive Markdown-formatted bypass guide from the current
+        analysis result including detected protections and corresponding bypass
+        strategies with step-by-step instructions.
+
+        Returns:
+            Markdown-formatted bypass guide text
+
+        """
         result = self.current_result
         if result is None:
             return ""
@@ -1043,7 +1262,15 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
         return guide
 
     def set_binary_path(self, file_path: str) -> None:
-        """Set binary path for analysis."""
+        """Set binary path for analysis.
+
+        Sets the binary file path and automatically initiates a quick analysis scan.
+        Updates the file info label and starts the analysis process.
+
+        Args:
+            file_path: Path to the binary file to analyze
+
+        """
         if file_path and os.path.exists(file_path):
             self.file_info_label.setText(f"File: {os.path.basename(file_path)}")
             # Auto-analyze
@@ -1059,6 +1286,11 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
         - String extraction with offsets
 
         The analysis runs in a background thread to avoid blocking the UI.
+
+        Raises:
+            ImportError: If the ICPFeaturesDialog class cannot be imported
+            Exception: If the ICP analysis fails or the dialog cannot be displayed
+
         """
         if not hasattr(self, "_current_file_path") or not self._current_file_path:
             QMessageBox.information(
@@ -1095,6 +1327,10 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
 
         All analysis is performed using the native ICP backend in a background
         thread to maintain UI responsiveness.
+
+        Raises:
+            Exception: If the ICP analysis thread encounters errors during execution
+
         """
         from PyQt6.QtCore import QThread, pyqtSignal
         from PyQt6.QtWidgets import QDialog, QProgressBar, QTabWidget, QTextEdit, QVBoxLayout
@@ -1139,6 +1375,9 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
             def __init__(self, file_path: str) -> None:
                 """Initialize ICP analysis thread.
 
+                Sets up the background thread for executing ICP analysis without
+                blocking the UI.
+
                 Args:
                     file_path: Path to the binary file to analyze
 
@@ -1147,6 +1386,12 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
                 self.file_path = file_path
 
             def run(self) -> None:
+                """Execute ICP analysis in background thread.
+
+                Performs detailed ICP backend analysis on the binary file and
+                emits progress updates and final results via signals.
+
+                """
                 try:
                     backend = get_icp_backend()
                     self.progress_updated.emit(25)
@@ -1163,8 +1408,13 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
         def update_analysis(analysis_data: dict[str, Any]) -> None:
             """Update the dialog with ICP analysis results.
 
+            Populates all four analysis tabs with results from ICP backend analysis
+            including signature data, section information, entropy analysis, and
+            extracted strings. Formats the data for display in the tabbed interface.
+
             Args:
-                analysis_data: Dictionary containing ICP analysis results including file type, entropy, sections, and strings
+                analysis_data: Dictionary containing ICP analysis results including
+                    file type, entropy, sections, and strings
 
             """
             progress.setVisible(False)
@@ -1264,7 +1514,13 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
         dialog.exec()
 
     def generate_bypass_script(self) -> None:
-        """Generate bypass script using the script generation handler."""
+        """Generate bypass script using the script generation handler.
+
+        Allows user to select a script type (Frida or Ghidra) and generates
+        a bypass script tailored to the detected protections in the current
+        analysis result. Uses the script generation handler to produce the script.
+
+        """
         if not self.current_result:
             QMessageBox.warning(self, "No Analysis", "Please analyze a file first.")
             return
@@ -1300,7 +1556,16 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
             handler.generate_script(script_type.lower(), self)
 
     def _on_hex_offset_selected(self, offset: int) -> None:
-        """Handle hex viewer offset selection."""
+        """Handle hex viewer offset selection.
+
+        Updates the technical information panel with details about the selected
+        offset including which PE section contains it and the offset relative
+        to the section start.
+
+        Args:
+            offset: Memory offset selected in the hex viewer
+
+        """
         # Update technical info with offset details
         if self.current_result and self.current_result.icp_analysis and hasattr(self.current_result.icp_analysis, "supplemental_data"):
             sections = self.current_result.icp_analysis.supplemental_data.get("sections", [])
@@ -1315,7 +1580,17 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
                     break
 
     def _on_string_selected(self, offset: int, string: str) -> None:
-        """Handle string selection from string extractor."""
+        """Handle string selection from string extractor.
+
+        Navigates the hex viewer to the selected string's offset and highlights
+        the string bytes in the hex view. Also updates the technical information
+        panel with string details including offset, content, and length.
+
+        Args:
+            offset: File offset where the string is located
+            string: The selected string content
+
+        """
         # Navigate hex viewer to the string offset
         self.hex_viewer.go_to_offset(offset)
 

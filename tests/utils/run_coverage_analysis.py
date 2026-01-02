@@ -10,7 +10,7 @@ import subprocess
 import time
 from pathlib import Path
 
-def main():
+def main() -> bool:
     """Run comprehensive coverage analysis for analysis_orchestrator.py"""
 
     # Ensure we're in the right directory
@@ -168,7 +168,7 @@ def main():
 
     return False
 
-def analyze_test_coverage_manually():
+def analyze_test_coverage_manually() -> bool:
     """Manually analyze test coverage by examining test methods."""
     print("\n MANUAL COVERAGE ANALYSIS")
     print("=" * 40)
@@ -261,7 +261,7 @@ def analyze_test_coverage_manually():
         print(f"FAIL Manual analysis failed: {e}")
         return False
 
-def generate_coverage_report():
+def generate_coverage_report() -> None:
     """Generate a detailed coverage report."""
     print("\n GENERATING COVERAGE REPORT")
     print("=" * 40)

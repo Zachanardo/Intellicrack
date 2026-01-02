@@ -25,7 +25,7 @@ between binary_differ.py and vulnerability_analyzer.py.
 import csv
 import json
 import logging
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
@@ -51,15 +51,28 @@ class AnalysisExporter:
     ) -> bool:
         """Export analysis results to file in specified format.
 
+        Routes analysis results to the appropriate export handler based on
+        format and analysis type. Supports JSON, HTML, CSV, and plain text
+        export formats with specialized formatting for vulnerability and
+        binary diff analysis types.
+
         Args:
-            result: Analysis results dictionary
-            output_file: Output file path
-            format: Export format ('json', 'html', 'csv', 'text')
-            analysis_type: Type of analysis for specialized formatting
+            result: Analysis results dictionary containing findings or
+                comparisons to export.
+            output_file: Output file path where results will be written.
+            format: Export format selection - 'json', 'html', 'csv', or
+                'text'. Defaults to 'json'.
+            analysis_type: Type of analysis for specialized formatting -
+                'vulnerability', 'binary_diff', or 'generic'. Defaults to
+                'generic'.
 
         Returns:
-            True if export successful, False otherwise
+            bool: True if export succeeded without errors, False if an
+                exception occurred during export.
 
+        Raises:
+            Exception: Any exceptions are caught, logged, and converted to
+                False return value without re-raising.
         """
         try:
             if format == "json":
@@ -79,7 +92,26 @@ class AnalysisExporter:
 
     @staticmethod
     def _export_json(result: dict[str, Any], output_file: str) -> bool:
-        """Export results as JSON."""
+        """Export analysis results to JSON file.
+
+        Serializes the analysis results dictionary to JSON format with 2-space
+        indentation for readability. Uses str() as default serializer for
+        non-standard types. Creates or overwrites the output file.
+
+        Args:
+            result: Dictionary containing analysis results to export with
+                any structure and data types.
+            output_file: Path to the output JSON file where results will be
+                written.
+
+        Returns:
+            bool: True if export succeeded without errors, False if file
+                I/O or serialization error occurred.
+
+        Raises:
+            Exception: Any exceptions are caught and logged internally,
+                returning False without re-raising.
+        """
         try:
             with open(output_file, "w") as f:
                 json.dump(result, f, indent=2, default=str)
@@ -90,7 +122,29 @@ class AnalysisExporter:
 
     @staticmethod
     def _export_html(result: dict[str, Any], output_file: str, analysis_type: str) -> bool:
-        """Export results as HTML."""
+        """Export analysis results to HTML file with specialized formatting.
+
+        Routes to appropriate HTML generation method based on analysis type.
+        Generates formatted, styled HTML documents with statistics summaries
+        and detailed result information suitable for browser viewing and
+        printing.
+
+        Args:
+            result: Dictionary containing analysis results to export with
+                structure appropriate for the specified analysis type.
+            output_file: Path to the output HTML file where results will be
+                written.
+            analysis_type: Type of analysis determining formatting - 'vulnerability',
+                'binary_diff', or 'generic' for default handling.
+
+        Returns:
+            bool: True if export succeeded without errors, False if file
+                I/O or formatting error occurred.
+
+        Raises:
+            Exception: Any exceptions are caught and logged internally,
+                returning False without re-raising.
+        """
         try:
             if analysis_type == "vulnerability":
                 html_content = AnalysisExporter._generate_vulnerability_html(result)
@@ -108,7 +162,29 @@ class AnalysisExporter:
 
     @staticmethod
     def _export_csv(result: dict[str, Any], output_file: str, analysis_type: str) -> bool:
-        """Export results as CSV."""
+        """Export analysis results to CSV file with specialized formatting.
+
+        Routes to appropriate CSV writing method based on analysis type.
+        Generates comma-separated values with headers appropriate for the
+        analysis type. Creates or overwrites the output file with UTF-8
+        encoding and standard newline handling.
+
+        Args:
+            result: Dictionary containing analysis results to export with
+                structure appropriate for the specified analysis type.
+            output_file: Path to the output CSV file where results will be
+                written.
+            analysis_type: Type of analysis determining formatting - 'vulnerability',
+                'binary_diff', or 'generic' for default handling.
+
+        Returns:
+            bool: True if export succeeded without errors, False if file
+                I/O or formatting error occurred.
+
+        Raises:
+            Exception: Any exceptions are caught and logged internally,
+                returning False without re-raising.
+        """
         try:
             with open(output_file, "w", newline="") as f:
                 writer = csv.writer(f)
@@ -127,7 +203,26 @@ class AnalysisExporter:
 
     @staticmethod
     def _export_text(result: dict[str, Any], output_file: str) -> bool:
-        """Export results as plain text."""
+        """Export analysis results to plain text file.
+
+        Converts the analysis results dictionary to string representation
+        and writes to a plain text file. Suitable for simple human-readable
+        output of analysis data in text format.
+
+        Args:
+            result: Dictionary containing analysis results to export in any
+                structure format.
+            output_file: Path to the output text file where string
+                representation will be written.
+
+        Returns:
+            bool: True if export succeeded without errors, False if file
+                I/O error occurred.
+
+        Raises:
+            Exception: Any exceptions are caught and logged internally,
+                returning False without re-raising.
+        """
         try:
             with open(output_file, "w") as f:
                 f.write(str(result))
@@ -138,7 +233,20 @@ class AnalysisExporter:
 
     @staticmethod
     def _write_vulnerability_csv(writer: CSVWriter, result: dict[str, Any]) -> None:
-        """Write vulnerability-specific CSV format."""
+        """Write vulnerability analysis results in CSV format.
+
+        Writes a CSV report containing vulnerability findings with columns for
+        type, file location, line number, severity level, confidence score,
+        and detailed description for each discovered vulnerability.
+
+        Args:
+            writer: CSV writer instance to write rows to.
+            result: Dictionary containing vulnerability data with 'vulnerabilities'
+                key holding a list of vulnerability dictionaries.
+
+        Returns:
+            None: Writes directly to the CSV writer without returning data.
+        """
         writer.writerow(["Type", "File", "Line", "Severity", "Confidence", "Description"])
 
         for vuln in result.get("vulnerabilities", []):
@@ -155,7 +263,21 @@ class AnalysisExporter:
 
     @staticmethod
     def _write_diff_csv(writer: CSVWriter, result: dict[str, Any]) -> None:
-        """Write binary diff-specific CSV format."""
+        """Write binary diff analysis results in CSV format.
+
+        Writes a CSV report containing binary differences identified between
+        two analyzed binaries with columns for difference type, old value,
+        new value, severity, and description of each identified change.
+
+        Args:
+            writer: CSV writer instance to write rows to.
+            result: Dictionary containing diff data with 'differences' key
+                holding a list of difference dictionaries.
+
+        Returns:
+            None: Writes directly to the CSV writer without returning data.
+        """
+
         writer.writerow(["Type", "Old_Value", "New_Value", "Severity", "Description"])
 
         for diff in result.get("differences", []):
@@ -171,7 +293,21 @@ class AnalysisExporter:
 
     @staticmethod
     def _write_generic_csv(writer: CSVWriter, result: dict[str, Any]) -> None:
-        """Write generic CSV format."""
+        """Write generic analysis results in CSV format.
+
+        Writes a CSV report for any analysis results by dynamically determining
+        column headers from the first data item structure. Supports both flat
+        dictionaries and nested dictionary structures for flexible data export.
+
+        Args:
+            writer: CSV writer instance to write rows to.
+            result: Dictionary containing analysis data to export with
+                flexible structure adaptable to various analysis types.
+
+        Returns:
+            None: Writes directly to the CSV writer without returning data.
+        """
+
         if not result:
             return
 
@@ -191,7 +327,22 @@ class AnalysisExporter:
 
     @staticmethod
     def _generate_vulnerability_html(result: dict[str, Any]) -> str:
-        """Generate HTML report for vulnerability analysis."""
+        """Generate formatted HTML report for vulnerability analysis results.
+
+        Creates a complete HTML5 document with styling and summary statistics
+        for vulnerabilities. Organizes findings by severity level (high, medium,
+        low) with color-coded borders and detailed information for each
+        discovered vulnerability in the analysis results.
+
+        Args:
+            result: Dictionary containing vulnerability data with
+                'vulnerabilities' key (list of vulnerability dicts) and optional
+                'statistics' key for summary metrics.
+
+        Returns:
+            str: HTML string formatted as a complete vulnerability analysis
+                report with embedded CSS styling and interactive structure.
+        """
         html = """
 <!DOCTYPE html>
 <html>
@@ -268,7 +419,22 @@ class AnalysisExporter:
 
     @staticmethod
     def _generate_diff_html(result: dict[str, Any]) -> str:
-        """Generate HTML report for binary diff analysis."""
+        """Generate formatted HTML report for binary diff analysis results.
+
+        Creates a complete HTML5 document with styling and summary statistics
+        for binary differences. Categorizes changes as added, removed, or
+        modified functions with color-coded borders and detailed information
+        for each identified difference between analyzed binaries.
+
+        Args:
+            result: Dictionary containing diff data with 'differences' key
+                holding a list of difference dictionaries with type, old value,
+                new value, and description fields.
+
+        Returns:
+            str: HTML string formatted as a complete binary diff analysis
+                report with embedded CSS styling and categorized differences.
+        """
         html = """
 <!DOCTYPE html>
 <html>
@@ -342,7 +508,21 @@ class AnalysisExporter:
 
     @staticmethod
     def _generate_generic_html(result: dict[str, Any]) -> str:
-        """Generate generic HTML report."""
+        """Generate generic HTML report for any analysis results.
+
+        Creates a simple HTML5 document with embedded JSON representation of
+        analysis results. Suitable for any analysis type where specialized
+        formatting is not required. Includes automatic timestamp and formatted
+        code block for readability.
+
+        Args:
+            result: Dictionary containing analysis data to report in any
+                structure format.
+
+        Returns:
+            str: HTML string formatted as a complete analysis report with
+                embedded JSON representation and timestamp.
+        """
         import time
 
         return f"""

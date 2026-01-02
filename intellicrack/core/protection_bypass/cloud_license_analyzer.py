@@ -10,7 +10,6 @@ import os
 import pickle  # noqa: S403
 import secrets
 import threading
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -99,6 +98,7 @@ class CloudLicenseAnalyzer:
         self._init_proxy()
 
     def _init_certificates(self) -> None:
+        """Initialize CA certificate and key from cache or generate new ones."""
         ca_path = Path(__file__).parent / "certs"
         ca_path.mkdir(exist_ok=True)
 
@@ -112,6 +112,12 @@ class CloudLicenseAnalyzer:
             self._generate_ca_certificate(cert_file, key_file)
 
     def _generate_ca_certificate(self, cert_file: Path, key_file: Path) -> None:
+        """Generate self-signed root CA certificate for HTTPS interception.
+
+        Args:
+            cert_file: Path where CA certificate will be written.
+            key_file: Path where CA private key will be written.
+        """
         key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 
         subject = issuer = x509.Name(
@@ -166,6 +172,7 @@ class CloudLicenseAnalyzer:
         cert_file.write_bytes(self.ca_cert)
 
     def _init_proxy(self) -> None:
+        """Initialize MITM proxy with custom addon for traffic interception."""
         self.proxy_options = options.Options(
             listen_port=self.proxy_port,
             ssl_insecure=True,
@@ -177,7 +184,17 @@ class CloudLicenseAnalyzer:
         self.proxy_master.addons.add(CloudInterceptor(self))
 
     def generate_host_certificate(self, hostname: str) -> tuple[bytes, bytes]:
-        """Generate SSL certificate for intercepting HTTPS traffic to specific host."""
+        """Generate SSL certificate for intercepting HTTPS traffic to specific host.
+
+        Args:
+            hostname: Target hostname for certificate generation.
+
+        Returns:
+            Tuple of (certificate_pem, key_pem) bytes for the generated host certificate.
+
+        Raises:
+            ValueError: If CA certificate and key are not initialized.
+        """
         if self.ca_key is None or self.ca_cert is None:
             raise ValueError("CA certificate and key must be initialized before generating host certificates")
 
@@ -215,7 +232,7 @@ class CloudLicenseAnalyzer:
                 ),
                 critical=False,
             )
-            .sign(ca_key_obj, hashes.SHA256(), default_backend())  # type: ignore[arg-type]
+            .sign(ca_key_obj, hashes.SHA256(), default_backend())
         )
 
         cert_pem = cert.public_bytes(serialization.Encoding.PEM)
@@ -228,7 +245,11 @@ class CloudLicenseAnalyzer:
         return cert_pem, key_pem
 
     def start_interception(self, target_process: int | None = None) -> None:
-        """Start MITM proxy to intercept cloud license traffic from target process."""
+        """Start MITM proxy to intercept cloud license traffic from target process.
+
+        Args:
+            target_process: Optional process ID to inject proxy settings into.
+        """
         self.target_process = target_process
 
         if target_process:
@@ -241,10 +262,16 @@ class CloudLicenseAnalyzer:
         logger.info("TLS interception proxy started on port %d", self.proxy_port)
 
     def _run_proxy(self) -> None:
+        """Run the MITM proxy in blocking mode on dedicated event loop."""
         asyncio.set_event_loop(asyncio.new_event_loop())
         self.proxy_master.run()
 
     def _inject_proxy_settings(self, pid: int) -> None:
+        """Inject proxy configuration into target process using Frida.
+
+        Args:
+            pid: Process ID to inject proxy settings into.
+        """
         try:
             session: FridaSession = frida.attach(pid)
             script_code = self._generate_proxy_injection_script()
@@ -256,6 +283,11 @@ class CloudLicenseAnalyzer:
             logger.exception("Failed to inject proxy settings: %s", e)
 
     def _generate_proxy_injection_script(self) -> str:
+        """Generate Frida script to disable certificate validation and set proxy.
+
+        Returns:
+            JavaScript code for Frida to hook network libraries and disable certificate validation.
+        """
         return (
             """
         'use strict';
@@ -400,9 +432,12 @@ class CloudLicenseAnalyzer:
         """Handle Frida script messages from injected proxy hooks.
 
         Args:
-            message: Message dictionary from Frida script containing type and payload.
+            message: Message dictionary from Frida script containing type and
+                payload data.
             data: Binary data associated with message, if any.
 
+        Returns:
+            None.
         """
         if message.get("type") == "send":
             payload = message.get("payload")
@@ -410,7 +445,23 @@ class CloudLicenseAnalyzer:
                 logger.info("Proxy hooks successfully installed in target process")
 
     def analyze_endpoint(self, request: mitmproxy.http.Request, response: mitmproxy.http.Response) -> CloudEndpoint:
-        """Analyze intercepted HTTP request/response to extract endpoint metadata."""
+        """Analyze intercepted HTTP request/response to extract endpoint metadata.
+
+        Parses request and response data to identify the license server endpoint,
+        authentication mechanism, and response schema structure. Caches the
+        discovered endpoint for later token injection and bypass operations.
+
+        Args:
+            request: Intercepted HTTP request object containing method, URL,
+                headers, and body parameters.
+            response: Intercepted HTTP response object containing status code,
+                headers, and response body.
+
+        Returns:
+            CloudEndpoint instance with analyzed metadata for the intercepted
+                request/response pair, including URL, method, headers, request
+                parameters, response schema, and authentication type.
+        """
         url = request.pretty_url
         method = request.method
         headers = dict(request.headers)
@@ -454,6 +505,21 @@ class CloudLicenseAnalyzer:
         return endpoint
 
     def _analyze_response_schema(self, response: mitmproxy.http.Response) -> dict[str, Any]:
+        """Extract response schema and content structure from HTTP response.
+
+        Parses the response body based on content type (JSON, XML, or plaintext)
+        and extracts the schema structure to understand the license server response
+        format for license tokens, expiration dates, and features.
+
+        Args:
+            response: HTTP response object to analyze for content structure and
+                metadata.
+
+        Returns:
+            Dictionary with status code, headers, content type, and parsed body
+                schema structure if applicable. For JSON/XML responses, includes
+                body_schema and body_sample fields.
+        """
         schema = {
             "status_code": response.status_code,
             "headers": dict(response.headers),
@@ -476,6 +542,23 @@ class CloudLicenseAnalyzer:
         return schema
 
     def _extract_json_schema(self, data: object, depth: int = 0) -> dict[str, object]:
+        """Extract JSON schema structure from nested data.
+
+        Recursively analyzes nested JSON/dict structures to build a schema
+        representation that identifies field types, nesting levels, and sample
+        values. Used to understand response structures from cloud license servers.
+
+        Args:
+            data: Data object to extract schema from, typically a parsed JSON
+                dict, list, or primitive type.
+            depth: Current recursion depth, increments for nested structures
+                (stops at 5 to prevent infinite recursion).
+
+        Returns:
+            Dictionary representing the schema structure with type field and
+                optional properties (for objects), items (for arrays), or example
+                values (for primitives).
+        """
         if depth > 5:
             return {"type": "any"}
 
@@ -495,6 +578,23 @@ class CloudLicenseAnalyzer:
         return {"type": "any"}
 
     def _detect_authentication_type(self, request: mitmproxy.http.Request) -> str:
+        """Detect authentication mechanism used in HTTP request.
+
+        Inspects HTTP headers (Authorization, Cookie) and query parameters to
+        identify the authentication scheme used by the cloud license server,
+        such as JWT, API key, OAuth, or basic auth.
+
+        Args:
+            request: HTTP request object to analyze for authentication headers and
+                credential patterns.
+
+        Returns:
+            String indicating detected authentication type: "jwt" for JWT tokens,
+                "bearer_token" for generic bearer tokens, "basic" for basic auth,
+                "digest" for digest auth, "api_key" for API key authentication,
+                "oauth" for OAuth tokens, "cookie_based" for session cookies, or
+                "unknown" if no authentication detected.
+        """
         auth_header = request.headers.get("authorization", "").lower()
 
         if auth_header.startswith("bearer "):
@@ -516,6 +616,19 @@ class CloudLicenseAnalyzer:
         return "unknown"
 
     def _is_jwt_token(self, token: str) -> bool:
+        """Check if token string has valid JWT structure.
+
+        Validates JWT format by checking for three base64-encoded parts
+        separated by dots (header.payload.signature) and attempting to decode
+        the header and payload sections.
+
+        Args:
+            token: Token string to validate against JWT structure requirements.
+
+        Returns:
+            True if token has three base64-encoded parts separated by dots that
+                can be decoded, False if format is invalid or decoding fails.
+        """
         try:
             parts = token.split(".")
             if len(parts) != 3:
@@ -529,7 +642,23 @@ class CloudLicenseAnalyzer:
             return False
 
     def extract_license_tokens(self, request: mitmproxy.http.Request, response: mitmproxy.http.Response) -> list[LicenseToken]:
-        """Extract license tokens from intercepted HTTP traffic."""
+        """Extract license tokens from intercepted HTTP traffic.
+
+        Analyzes both request and response for license tokens in authorization
+        headers, response JSON bodies, and cookies. Extracts tokens for replay
+        attacks and license bypass operations.
+
+        Args:
+            request: Intercepted HTTP request object containing authorization
+                headers and request parameters.
+            response: Intercepted HTTP response object containing JSON body with
+                tokens, cookies, and response headers.
+
+        Returns:
+            List of LicenseToken objects extracted from request/response headers,
+                cookies, and JSON body fields. May include JWT tokens, API keys,
+                bearer tokens, and session cookies.
+        """
         tokens = []
 
         if auth_header := request.headers.get("authorization", ""):
@@ -559,6 +688,21 @@ class CloudLicenseAnalyzer:
         return tokens
 
     def _analyze_bearer_token(self, token_value: str) -> LicenseToken | None:
+        """Analyze bearer token and determine its type (JWT or generic bearer).
+
+        Checks if the token is a valid JWT by parsing header and payload claims.
+        Extracts expiration time, scope, and custom claims from JWT tokens.
+        Handles generic bearer tokens that don't have JWT structure.
+
+        Args:
+            token_value: Bearer token string to analyze, may be JWT or opaque
+                bearer token format.
+
+        Returns:
+            LicenseToken instance with parsed metadata if JWT including header,
+                payload, expiration time, and scope. For non-JWT tokens, returns
+                generic bearer token representation. None if analysis fails.
+        """
         if self._is_jwt_token(token_value):
             with contextlib.suppress(ValueError, TypeError):
                 header = jwt.get_unverified_header(token_value)
@@ -587,6 +731,22 @@ class CloudLicenseAnalyzer:
         )
 
     def _extract_tokens_from_json(self, data: object, tokens: list[LicenseToken] | None = None) -> list[LicenseToken]:
+        """Recursively extract license tokens from nested JSON data structures.
+
+        Searches through nested JSON dictionaries and lists for common token field
+        names (access_token, refresh_token, license_key, api_key) and extracts
+        them with metadata (expiration, scope, type).
+
+        Args:
+            data: JSON data object to search for token fields, typically a parsed
+                JSON dict, list, or nested structure from response body.
+            tokens: Accumulator list for extracted tokens (internal use for
+                recursion, defaults to empty list on first call).
+
+        Returns:
+            List of LicenseToken objects found in data structure with metadata
+                extracted from surrounding fields (expires_in, scope, token_type).
+        """
         if tokens is None:
             tokens = []
 
@@ -641,7 +801,23 @@ class CloudLicenseAnalyzer:
         return tokens
 
     def generate_token(self, token_type: str, **kwargs: Any) -> str:
-        """Generate valid license token of specified type for bypassing cloud checks."""
+        """Generate valid license token of specified type for bypassing cloud checks.
+
+        Dispatches to specialized token generators based on token type. Supports
+        JWT tokens with custom claims, API keys with prefixes, formatted license
+        keys, and generic SHA256 tokens.
+
+        Args:
+            token_type: Type of token to generate: "jwt" for JWT tokens,
+                "api_key" for API keys, "license_key" for formatted license keys,
+                or "generic" for random tokens.
+            **kwargs: Additional arguments passed to token generation methods
+                (issuer, subject, expires_in for JWT; prefix, length for API key, etc.).
+
+        Returns:
+            Generated token string suitable for license verification requests and
+                cloud license server bypass operations.
+        """
         if token_type == TOKEN_TYPE_JWT:
             return self._generate_jwt_token(**kwargs)
         if token_type == TOKEN_TYPE_API_KEY:
@@ -659,6 +835,30 @@ class CloudLicenseAnalyzer:
         claims: dict[str, object] | None = None,
         **kwargs: Any,
     ) -> str:
+        """Generate JWT token with specified claims and signing algorithm.
+
+        Constructs a complete JWT token with standard claims (iss, sub, iat, exp,
+        jti) and optional custom claims. Supports both HS256 (HMAC) and RS256
+        (RSA) signing algorithms.
+
+        Args:
+            issuer: JWT iss claim identifying the token issuer (default:
+                "intellicrack").
+            subject: JWT sub claim identifying the token subject (default:
+                "user").
+            audience: Optional JWT aud claim specifying the intended recipient
+                of the token.
+            expires_in: Token expiration time in seconds from current time
+                (default: 3600 for one hour).
+            claims: Additional custom claims to include in the token payload
+                as a dictionary.
+            **kwargs: Optional secret (for HMAC) and algorithm parameters
+                (default: HS256 with "intellicrack-secret-key").
+
+        Returns:
+            Encoded JWT token string in the format header.payload.signature
+                suitable for authorization headers and cloud license verification.
+        """
         now = datetime.utcnow()
 
         payload: dict[str, Any] = {
@@ -693,11 +893,43 @@ class CloudLicenseAnalyzer:
         return jwt.encode(payload, secret, algorithm=algorithm)
 
     def _generate_api_key(self, prefix: str = "ik", length: int = 32, **kwargs: Any) -> str:
+        """Generate random API key with specified prefix and length.
+
+        Creates a cryptographically random API key using base64 encoding of
+        random bytes, suitable for cloud license server authentication.
+
+        Args:
+            prefix: Prefix for API key for identification (default: "ik").
+            length: Length of random component in characters (default: 32).
+            **kwargs: Additional arguments (unused, for compatibility with
+                generate_token interface).
+
+        Returns:
+            Generated API key string in format prefix_randomdata with base64
+                encoded random bytes.
+        """
         random_bytes = os.urandom(length)
         key = base64.urlsafe_b64encode(random_bytes).decode("utf-8")[:length]
         return f"{prefix}_{key}"
 
     def _generate_license_key(self, format: str = "4-4-4-4", **kwargs: Any) -> str:
+        """Generate license key following specified format pattern.
+
+        Generates license keys by parsing a format string and producing random
+        alphanumeric segments separated by delimiters, suitable for license
+        verification endpoints.
+
+        Args:
+            format: Format string with numeric segments separated by delimiters
+                (default: "4-4-4-4" for four 4-character segments). Example:
+                "5-5-5-5" produces 5-char-5-char-5-char-5-char format.
+            **kwargs: Additional arguments (unused, for compatibility with
+                generate_token interface).
+
+        Returns:
+            Generated license key matching the specified format with random
+                uppercase alphanumeric characters.
+        """
         import string
 
         chars = string.ascii_uppercase + string.digits
@@ -718,10 +950,39 @@ class CloudLicenseAnalyzer:
         return "-".join(key_parts)
 
     def _generate_generic_token(self, length: int = 64, **kwargs: Any) -> str:
+        """Generate generic token as SHA256 hash of random data.
+
+        Creates a generic opaque token by hashing cryptographically random bytes
+        with SHA256, suitable as a fallback for unknown cloud license server
+        token formats.
+
+        Args:
+            length: Maximum length of returned token in characters (default: 64,
+                which is the full SHA256 hex digest length).
+            **kwargs: Additional arguments (unused, for compatibility with
+                generate_token interface).
+
+        Returns:
+            Hexadecimal token string of specified length derived from SHA256
+                hash.
+        """
         return hashlib.sha256(os.urandom(32)).hexdigest()[:length]
 
     def refresh_token(self, token: LicenseToken) -> LicenseToken | None:
-        """Attempt to refresh expired license token using refresh_token grant."""
+        """Attempt to refresh expired license token using refresh_token grant.
+
+        Scans discovered endpoints for token refresh operations and attempts to
+        use the stored refresh_token to obtain a new access token from the cloud
+        license server.
+
+        Args:
+            token: LicenseToken with refresh_token field to use for refresh
+                operation.
+
+        Returns:
+            Refreshed LicenseToken if successful, None if refresh fails, no
+                refresh_token available, or no refresh endpoint found.
+        """
         if not token.refresh_token:
             return None
 
@@ -740,6 +1001,21 @@ class CloudLicenseAnalyzer:
         return None
 
     def _make_refresh_request(self, endpoint: CloudEndpoint, refresh_token: str) -> requests.Response:
+        """Make HTTP request to refresh endpoint with refresh token grant.
+
+        Sends an HTTP request to the discovered refresh endpoint using the
+        refresh_token grant type to obtain a new access token from the cloud
+        license server.
+
+        Args:
+            endpoint: CloudEndpoint describing the refresh endpoint with method,
+                URL, and headers.
+            refresh_token: Refresh token value to send to the endpoint.
+
+        Returns:
+            HTTP response from refresh endpoint containing new access token and
+                token metadata.
+        """
         url = endpoint.url
         headers = endpoint.headers.copy()
 
@@ -753,13 +1029,30 @@ class CloudLicenseAnalyzer:
         return requests.get(url, params=params, headers=headers, timeout=30)
 
     def emulate_license_server(self, port: int = 9090) -> None:
-        """Start local emulated license server to respond to intercepted requests."""
+        """Start local emulated license server to respond to intercepted requests.
+
+        Creates a Flask HTTP server that emulates a cloud license server,
+        responding to license verification, activation, and token refresh
+        requests with valid license data to bypass cloud checks.
+
+        Args:
+            port: Port number for emulated license server (default: 9090).
+        """
         from flask import Flask, Response, jsonify, request
 
         app = Flask(__name__)
 
         @app.route("/api/license/verify", methods=["POST"])
         def verify_license() -> Response:
+            """Handle license verification requests.
+
+            Validates a license key and returns license validity, expiration,
+            and enabled features for the requesting client.
+
+            Returns:
+                JSON response with license validity status (always valid),
+                    expiration date, feature list, and activation limits.
+            """
             data = request.json
             data.get("license_key")
 
@@ -775,6 +1068,15 @@ class CloudLicenseAnalyzer:
 
         @app.route("/api/license/activate", methods=["POST"])
         def activate_license() -> Response:
+            """Handle license activation requests.
+
+            Processes license activation by generating an activation ID and
+            recording the machine/hardware ID for offline license binding.
+
+            Returns:
+                JSON response with activation success confirmation, unique
+                    activation ID, hardware ID, and activation timestamp.
+            """
             data = request.json
 
             response = {
@@ -788,6 +1090,15 @@ class CloudLicenseAnalyzer:
 
         @app.route("/api/token/refresh", methods=["POST"])
         def refresh_token() -> Response:
+            """Handle token refresh requests.
+
+            Generates new JWT access and refresh tokens for clients whose tokens
+            have expired or are about to expire.
+
+            Returns:
+                JSON response with new access token, token type, expiration time,
+                    and new refresh token for future token refresh cycles.
+            """
             new_token = self.generate_token("jwt", expires_in=3600)
 
             response = {
@@ -802,7 +1113,20 @@ class CloudLicenseAnalyzer:
         app.run(host="127.0.0.1", port=port, ssl_context="adhoc")
 
     def export_analysis(self, filepath: Path) -> bool:
-        """Export intercepted cloud license analysis data to file."""
+        """Export intercepted cloud license analysis data to file.
+
+        Serializes all discovered cloud license server endpoints, extracted tokens,
+        API schemas, and intercepted request metadata to a file format (JSON, YAML,
+        or pickle) for later analysis or integration with other tools.
+
+        Args:
+            filepath: Path where analysis data will be written, file extension
+                determines format (.json for JSON, .yaml for YAML, .pkl for pickle).
+
+        Returns:
+            True if export succeeds, False if export fails due to I/O or
+                serialization errors.
+        """
         try:
             analysis_data = {
                 "timestamp": datetime.now().isoformat(),
@@ -831,6 +1155,20 @@ class CloudLicenseAnalyzer:
             return False
 
     def _serialize_endpoint(self, endpoint: CloudEndpoint) -> dict[str, Any]:
+        """Serialize CloudEndpoint to JSON-compatible dictionary.
+
+        Converts a CloudEndpoint dataclass instance to a plain dictionary with
+        all fields serialized to JSON-compatible types for export to file formats.
+
+        Args:
+            endpoint: CloudEndpoint instance to serialize, containing URL, method,
+                headers, and response schema information.
+
+        Returns:
+            Dictionary with endpoint metadata suitable for JSON export, including
+                URL, method, headers, parameters, response schema, authentication
+                type, rate limit, and last seen timestamp.
+        """
         return {
             "url": endpoint.url,
             "method": endpoint.method,
@@ -843,6 +1181,21 @@ class CloudLicenseAnalyzer:
         }
 
     def _serialize_token(self, token: LicenseToken) -> dict[str, Any]:
+        """Serialize LicenseToken to JSON-compatible dictionary for export.
+
+        Converts a LicenseToken dataclass instance to a dictionary with sensitive
+        token values truncated for safe export, while preserving metadata and
+        expiration information.
+
+        Args:
+            token: LicenseToken instance to serialize, containing token type,
+                value, expiration, and metadata.
+
+        Returns:
+            Dictionary with token metadata including type, truncated token value
+                (first 20 characters only), expiration timestamp, presence of
+                refresh token, scope, and associated metadata.
+        """
         return {
             "token_type": token.token_type,
             "value": (f"{token.value[:20]}..." if len(token.value) > 20 else token.value),
@@ -853,7 +1206,14 @@ class CloudLicenseAnalyzer:
         }
 
     def cleanup(self) -> None:
-        """Clean up proxy and Frida resources."""
+        """Clean up proxy and Frida resources.
+
+        Gracefully shuts down the MITM proxy server and detaches from any active
+        Frida sessions, releasing system resources and stopping interception.
+
+        Returns:
+            None.
+        """
         if self.proxy_master:
             self.proxy_master.shutdown()
 
@@ -865,11 +1225,26 @@ class CloudInterceptor:
     """Mitmproxy addon for intercepting and analyzing cloud license traffic."""
 
     def __init__(self, analyzer: CloudLicenseAnalyzer) -> None:
-        """Initialize interceptor with reference to parent analyzer."""
+        """Initialize interceptor with reference to parent analyzer.
+
+        Args:
+            analyzer: Parent CloudLicenseAnalyzer instance for data storage.
+        """
         self.analyzer = analyzer
 
     def request(self, flow: mitmproxy.http.HTTPFlow) -> None:
-        """Handle intercepted HTTP request."""
+        """Handle intercepted HTTP request by logging metadata.
+
+        Captures HTTP request data including timestamp, method, URL, headers,
+        and body content for analysis by the parent CloudLicenseAnalyzer.
+
+        Args:
+            flow: HTTPFlow object containing the intercepted request with full
+                method, URL, headers, and body data.
+
+        Returns:
+            None.
+        """
         request = flow.request
 
         self.analyzer.intercepted_requests.append(
@@ -883,7 +1258,19 @@ class CloudInterceptor:
         )
 
     def response(self, flow: mitmproxy.http.HTTPFlow) -> None:
-        """Handle intercepted HTTP response."""
+        """Handle intercepted HTTP response by analyzing and modifying if needed.
+
+        Analyzes the response to extract endpoint metadata, license tokens, and
+        modifies license-related responses to always return valid status. Caches
+        discovered tokens for later bypass operations.
+
+        Args:
+            flow: HTTPFlow object containing the intercepted response with
+                headers, status code, and body data.
+
+        Returns:
+            None.
+        """
         request = flow.request
         response = flow.response
 
@@ -898,6 +1285,20 @@ class CloudInterceptor:
             self._modify_response(flow)
 
     def _should_modify_response(self, request: mitmproxy.http.Request, response: mitmproxy.http.Response) -> bool:
+        """Determine if HTTP response should be modified based on URL path.
+
+        Checks if the request URL path contains license-related keywords that
+        indicate the response contains license validation or activation data that
+        should be modified to always return valid status.
+
+        Args:
+            request: HTTP request object to check for license-related URL paths.
+            response: HTTP response object to evaluate for modification.
+
+        Returns:
+            True if response URL path contains license-related keywords (license,
+                verify, validate, check, activate), False otherwise.
+        """
         url_path = urlparse(request.pretty_url).path.lower()
 
         license_paths = ["/license", "/verify", "/validate", "/check", "/activate"]
@@ -905,6 +1306,19 @@ class CloudInterceptor:
         return any(path in url_path for path in license_paths)
 
     def _modify_response(self, flow: mitmproxy.http.HTTPFlow) -> None:
+        """Modify license-related responses to bypass validation checks.
+
+        Intercepts and modifies JSON responses from license verification endpoints
+        to always return valid license status, extended expiration dates, and full
+        feature access. Converts license denial responses into valid approvals.
+
+        Args:
+            flow: HTTPFlow object containing the response to modify, including
+                content type, status code, and body.
+
+        Returns:
+            None.
+        """
         response = flow.response
 
         if response.content:
@@ -938,14 +1352,32 @@ class CloudLicenseBypasser:
     def __init__(self, analyzer: CloudLicenseAnalyzer) -> None:
         """Initialize the CloudLicenseBypassSystem with an analyzer instance.
 
-        Args:
-            analyzer: CloudLicenseAnalyzer instance to use for analysis data.
+        Stores a reference to the parent analyzer to access discovered endpoints,
+        cached tokens, and token generation capabilities for license bypass
+        operations.
 
+        Args:
+            analyzer: CloudLicenseAnalyzer instance to use for analysis data,
+                endpoint discovery, and token management.
         """
         self.analyzer = analyzer
 
     def bypass_license_check(self, target_url: str) -> bool:
-        """Bypass cloud license check by replaying valid tokens to target URL."""
+        """Bypass cloud license check by replaying valid tokens to target URL.
+
+        Matches the target URL against discovered endpoints and attempts to send
+        a bypass request with a valid or freshly generated license token. Returns
+        true if the server accepts the token as valid.
+
+        Args:
+            target_url: Target URL of the license check endpoint to bypass,
+                typically matching a discovered cloud license server path.
+
+        Returns:
+            True if bypass request succeeds with HTTP 200/201/204 status code
+                using a valid token, False if no valid token found, endpoint
+                not discovered, or request fails.
+        """
         parsed = urlparse(target_url)
 
         for endpoint in self.analyzer.discovered_endpoints.values():
@@ -956,6 +1388,20 @@ class CloudLicenseBypasser:
         return False
 
     def _get_valid_token(self, endpoint: CloudEndpoint) -> LicenseToken | None:
+        """Obtain valid license token for endpoint, refreshing or generating if necessary.
+
+        Attempts to find a non-expired cached token from the analyzer. If expired
+        tokens with refresh_token are available, attempts to refresh them. Falls
+        back to generating a new JWT token if no valid cached tokens exist.
+
+        Args:
+            endpoint: CloudEndpoint to obtain valid token for, used to determine
+                required token type and authentication scheme.
+
+        Returns:
+            LicenseToken instance that is valid for the endpoint (non-expired or
+                freshly generated), or None if token generation completely fails.
+        """
         for token in self.analyzer.license_tokens.values():
             if token.expires_at and token.expires_at > datetime.now():
                 return token
@@ -973,6 +1419,23 @@ class CloudLicenseBypasser:
         )
 
     def _send_bypass_request(self, endpoint: CloudEndpoint, token: LicenseToken) -> bool:
+        """Send HTTP request with license token to bypass cloud license check.
+
+        Constructs an HTTP request to the endpoint with the license token
+        appropriately placed in authorization headers or API key headers based on
+        token type. Returns true if the server accepts the request.
+
+        Args:
+            endpoint: CloudEndpoint to send request to, containing URL, method,
+                headers, and request body parameters.
+            token: LicenseToken to include in the request headers using
+                appropriate authorization scheme for token type.
+
+        Returns:
+            True if request succeeds with HTTP 200, 201, or 204 status code
+                indicating server accepted the token, False if request fails,
+                times out, or returns error status.
+        """
         headers = endpoint.headers.copy()
 
         if token.token_type in (TOKEN_TYPE_JWT, TOKEN_TYPE_BEARER):

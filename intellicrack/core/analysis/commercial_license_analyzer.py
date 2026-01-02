@@ -24,17 +24,13 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 import contextlib
 import re
 import struct
-import sys
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import Any, Protocol, cast
 
-from intellicrack.utils.type_safety import get_typed_item, validate_type
+from intellicrack.utils.type_safety import validate_type
 
 from ...utils.logger import get_logger
-
-if TYPE_CHECKING:
-    pass
 
 
 class ProtocolFingerprinterProtocol(Protocol):
@@ -70,7 +66,7 @@ def _get_protocol_fingerprinter() -> type:
     """Lazy import ProtocolFingerprinter to avoid circular import.
 
     Returns:
-        ProtocolFingerprinter class for lazy loading to avoid circular imports.
+        Class for ProtocolFingerprinter lazy loading to avoid circular imports.
 
     """
     from ..network.protocol_fingerprinter import ProtocolFingerprinter
@@ -82,7 +78,7 @@ def _get_flexlm_parser() -> type:
     """Lazy import FlexLMProtocolParser to avoid circular import.
 
     Returns:
-        FlexLMProtocolParser class for lazy loading to avoid circular imports.
+        Class for FlexLMProtocolParser lazy loading to avoid circular imports.
 
     """
     from ..network.protocols.flexlm_parser import FlexLMProtocolParser
@@ -94,7 +90,7 @@ def _get_dongle_emulator() -> type:
     """Lazy import HardwareDongleEmulator to avoid circular import.
 
     Returns:
-        HardwareDongleEmulator class for lazy loading to avoid circular imports.
+        Class for HardwareDongleEmulator lazy loading to avoid circular imports.
 
     """
     from ..protection_bypass.dongle_emulator import HardwareDongleEmulator
@@ -134,7 +130,7 @@ class CommercialLicenseAnalyzer:
         """Lazy load FlexLMProtocolParser.
 
         Returns:
-            object: FlexLMProtocolParser instance for analyzing FlexLM license protocols.
+            FlexLMProtocolParser instance for analyzing FlexLM license protocols.
 
         """
         if self._flexlm_parser is None:
@@ -147,7 +143,7 @@ class CommercialLicenseAnalyzer:
         """Lazy load HardwareDongleEmulator.
 
         Returns:
-            object: HardwareDongleEmulator instance for emulating hardware protection dongles.
+            HardwareDongleEmulator instance for emulating hardware protection dongles.
 
         """
         if self._dongle_emulator is None:
@@ -160,7 +156,7 @@ class CommercialLicenseAnalyzer:
         """Lazy load ProtocolFingerprinter.
 
         Returns:
-            object: ProtocolFingerprinter instance for identifying commercial license protocols.
+            ProtocolFingerprinter instance for identifying commercial license protocols.
 
         """
         if self._protocol_fingerprinter is None:
@@ -175,7 +171,7 @@ class CommercialLicenseAnalyzer:
             binary_path: Optional path to binary (uses self.binary_path if not provided).
 
         Returns:
-            dict[str, Any]: Analysis results including detected systems and bypass strategies.
+            Analysis results including detected systems and bypass strategies.
 
         """
         if binary_path:
@@ -226,7 +222,7 @@ class CommercialLicenseAnalyzer:
         """Analyze with API compatibility for tests.
 
         Returns:
-            dict[str, Any]: Analysis results from binary analysis.
+            Analysis results from binary analysis.
 
         """
         return self.analyze_binary(self.binary_path)
@@ -235,7 +231,7 @@ class CommercialLicenseAnalyzer:
         """Detect FlexLM license system in binary.
 
         Returns:
-            bool: True if FlexLM detected.
+            True if FlexLM detected.
 
         """
         flexlm_indicators = [
@@ -289,7 +285,7 @@ class CommercialLicenseAnalyzer:
         """Detect HASP dongle protection in binary.
 
         Returns:
-            bool: True if HASP detected.
+            True if HASP detected.
 
         """
         hasp_indicators = [
@@ -340,7 +336,7 @@ class CommercialLicenseAnalyzer:
         """Detect CodeMeter protection in binary.
 
         Returns:
-            bool: True if CodeMeter detected.
+            True if CodeMeter detected.
 
         """
         codemeter_indicators = [
@@ -392,7 +388,7 @@ class CommercialLicenseAnalyzer:
         """Analyze network protocols for license communication.
 
         Returns:
-            dict[str, Any]: Network protocol analysis results.
+            Network protocol analysis results.
 
         """
         analysis: dict[str, Any] = {"servers": [], "features": {}, "protocols": []}
@@ -401,7 +397,7 @@ class CommercialLicenseAnalyzer:
         if self.binary_path:
             from typing import cast
 
-            pf = cast(ProtocolFingerprinterProtocol, self.protocol_fingerprinter)
+            pf = cast("ProtocolFingerprinterProtocol", self.protocol_fingerprinter)
             fingerprint = pf.fingerprint_packet(b"", {"binary_path": self.binary_path})
 
             if fingerprint and fingerprint.get("protocol_type") in [
@@ -430,7 +426,7 @@ class CommercialLicenseAnalyzer:
         """Generate FlexLM bypass strategy based on binary analysis.
 
         Returns:
-            dict[str, Any]: Dynamically generated FlexLM bypass configuration.
+            Dynamically generated FlexLM bypass configuration.
 
         """
         import re
@@ -590,7 +586,7 @@ class CommercialLicenseAnalyzer:
             binary_data: Binary data to analyze.
 
         Returns:
-            str: Detected FlexLM version string.
+            Detected FlexLM version string.
 
         """
         version_patterns = {
@@ -612,7 +608,7 @@ class CommercialLicenseAnalyzer:
             binary_data: Binary data to analyze.
 
         Returns:
-            str: Extracted vendor daemon name.
+            Extracted vendor daemon name.
 
         """
         # Look for vendor daemon patterns
@@ -628,7 +624,7 @@ class CommercialLicenseAnalyzer:
             pattern: Assembly pattern with wildcard dots.
 
         Returns:
-            bytes: Regex pattern for matching.
+            Regex pattern for matching.
 
         """
         result = b""
@@ -646,7 +642,7 @@ class CommercialLicenseAnalyzer:
             offset: Offset in binary where checkout is called.
 
         Returns:
-            int: Extracted feature ID or 0 if not found.
+            Extracted feature ID or 0 if not found.
 
         """
         # Look for feature ID pushed before call
@@ -668,7 +664,7 @@ class CommercialLicenseAnalyzer:
             version: FlexLM version string.
 
         Returns:
-            bytes: Machine code bytes for hook.
+            Machine code bytes for hook.
 
         """
         if "11" in version:
@@ -683,7 +679,7 @@ class CommercialLicenseAnalyzer:
             version: FlexLM version string.
 
         Returns:
-            bytes: Machine code bytes for init hook.
+            Machine code bytes for init hook.
 
         """
         if self._detect_architecture() == "x64":
@@ -698,7 +694,7 @@ class CommercialLicenseAnalyzer:
             offset: Offset of crypto call.
 
         Returns:
-            str: Detected crypto type (TEA, MD5, or XOR).
+            Detected crypto type (TEA, MD5, or XOR).
 
         """
         # Look for crypto constants near the call
@@ -715,7 +711,7 @@ class CommercialLicenseAnalyzer:
             crypto_type: Type of crypto (AES, DES, XOR, etc).
 
         Returns:
-            bytes: Machine code bytes for crypto bypass.
+            Machine code bytes for crypto bypass.
 
         """
         if self._detect_architecture() == "x64":
@@ -728,7 +724,7 @@ class CommercialLicenseAnalyzer:
         """Detect binary architecture.
 
         Returns:
-            str: Detected architecture ('x86' or 'x64').
+            Detected architecture ('x86' or 'x64').
 
         """
         if hasattr(self, "_binary_data") and self._binary_data and self._binary_data[:2] == b"MZ":
@@ -747,7 +743,7 @@ class CommercialLicenseAnalyzer:
             offset: Offset to check context around.
 
         Returns:
-            bool: True if in license check context.
+            True if in license check context.
 
         """
         # Look for license-related strings nearby
@@ -772,7 +768,7 @@ class CommercialLicenseAnalyzer:
             binary_data: Binary data to analyze.
 
         Returns:
-            list[str]: List of extracted FlexLM features.
+            List of extracted FlexLM features.
 
         """
         # Look for FEATURE lines
@@ -787,7 +783,7 @@ class CommercialLicenseAnalyzer:
             patches: List of patches to generate in script.
 
         Returns:
-            str: Generated Frida JavaScript code.
+            Generated Frida JavaScript code.
 
         """
         script = "// Dynamic FlexLM bypass script\n"
@@ -820,7 +816,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         """Generate HASP bypass strategy based on binary analysis.
 
         Returns:
-            dict[str, Any]: Dynamically generated HASP bypass configuration.
+            Dynamically generated HASP bypass configuration.
 
         """
         import re
@@ -866,7 +862,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
             bypass["product_id"] = product_id
 
         # Get dynamic dongle configuration
-        dongle_emu = cast(DongleEmulatorProtocol, self.dongle_emulator)
+        dongle_emu = cast("DongleEmulatorProtocol", self.dongle_emulator)
         dongle_config = dongle_emu.get_dongle_config("hasp")
         dongle_config["vendor_id"] = bypass["vendor_id"]
         dongle_config["product_id"] = bypass["product_id"]
@@ -1016,7 +1012,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
             binary_data: Binary data to analyze.
 
         Returns:
-            str: Detected HASP version string.
+            Detected HASP version string.
 
         """
         version_patterns = {
@@ -1039,7 +1035,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
             binary_data: Binary data to analyze.
 
         Returns:
-            str: Detected HASP dongle type.
+            Detected HASP dongle type.
 
         """
         if b"HASP HL Pro" in binary_data:
@@ -1055,7 +1051,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
             binary_data: Binary data to analyze.
 
         Returns:
-            tuple[int, int]: Vendor ID and product ID.
+            Vendor ID and product ID.
 
         """
         vendor_id = 0x0529  # Default Aladdin vendor ID
@@ -1081,7 +1077,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
             offset: Offset of login call.
 
         Returns:
-            int: Extracted vendor code or default.
+            Extracted vendor code or default.
 
         """
         # Look for vendor code pushed or loaded before call
@@ -1107,7 +1103,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
             version: HASP version string.
 
         Returns:
-            bytes: Machine code for login hook.
+            Machine code for login hook.
 
         """
         # Return HASP_STATUS_OK (0)
@@ -1461,7 +1457,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
             bypass["product_code"] = product_code
 
         # Get dynamic dongle configuration
-        dongle_emu_cm = cast(DongleEmulatorProtocol, self.dongle_emulator)
+        dongle_emu_cm = cast("DongleEmulatorProtocol", self.dongle_emulator)
         dongle_config = dongle_emu_cm.get_dongle_config("codemeter")
         dongle_config["firm_code"] = bypass["firm_code"]
         dongle_config["product_code"] = bypass["product_code"]

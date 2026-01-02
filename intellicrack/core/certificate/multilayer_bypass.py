@@ -103,7 +103,7 @@ VERIFICATION:
 
 import logging
 from dataclasses import dataclass, field
-from typing import NoReturn, assert_never
+from typing import assert_never
 
 from intellicrack.core.certificate.cert_patcher import CertificatePatcher
 from intellicrack.core.certificate.frida_cert_hooks import FridaCertificateHooks
@@ -140,7 +140,14 @@ class MultiLayerResult:
     rollback_data: dict[ValidationLayer, bytes] = field(default_factory=dict)
 
     def add_stage_result(self, result: StageResult) -> None:
-        """Add a stage result to the overall result."""
+        """Add a stage result to the overall result.
+
+        Args:
+            result: Stage result to add to the overall result tracking
+
+        Raises:
+            No exceptions are raised by this method.
+        """
         self.stage_results[result.stage_number] = result
         if result.success:
             self.bypassed_layers.append(result.layer)
@@ -173,8 +180,7 @@ class MultiLayerBypass:
             dependency_graph: Layer dependency graph
 
         Returns:
-            MultiLayerResult containing bypass results for all layers
-
+            Bypass results for all layers
         """
         result = MultiLayerResult(overall_success=False)
 
@@ -237,7 +243,17 @@ class MultiLayerBypass:
         layer_info: LayerInfo,
         target: str,
     ) -> StageResult:
-        """Execute bypass for a specific layer."""
+        """Execute bypass for a specific layer.
+
+        Args:
+            stage_number: Current stage number in the bypass sequence
+            layer: Validation layer type to bypass
+            layer_info: Detailed information about the layer
+            target: Path to target binary or process name
+
+        Returns:
+            Result of the bypass attempt for this stage
+        """
         if layer == ValidationLayer.OS_LEVEL:
             return self._bypass_os_level(stage_number, layer, target)
         elif layer == ValidationLayer.LIBRARY_LEVEL:
@@ -255,7 +271,16 @@ class MultiLayerBypass:
         layer: ValidationLayer,
         target: str,
     ) -> StageResult:
-        """Bypass OS-level validation (CryptoAPI, Schannel)."""
+        """Bypass OS-level validation (CryptoAPI, Schannel).
+
+        Args:
+            stage_number: Current stage number in the bypass sequence
+            layer: Validation layer type (OS_LEVEL)
+            target: Path to target binary or process name
+
+        Returns:
+            Result of the OS-level bypass attempt
+        """
         logger.info("Bypassing OS-level certificate validation")
 
         try:
@@ -321,7 +346,16 @@ class MultiLayerBypass:
         layer: ValidationLayer,
         target: str,
     ) -> StageResult:
-        """Bypass library-level validation (OpenSSL, NSS, BoringSSL)."""
+        """Bypass library-level validation (OpenSSL, NSS, BoringSSL).
+
+        Args:
+            stage_number: Current stage number in the bypass sequence
+            layer: Validation layer type (LIBRARY_LEVEL)
+            target: Path to target binary or process name
+
+        Returns:
+            Result of the library-level bypass attempt
+        """
         logger.info("Bypassing library-level certificate validation")
 
         try:
@@ -391,7 +425,16 @@ class MultiLayerBypass:
         layer: ValidationLayer,
         target: str,
     ) -> StageResult:
-        """Bypass application-level validation (custom pinning, hardcoded certs)."""
+        """Bypass application-level validation (custom pinning, hardcoded certs).
+
+        Args:
+            stage_number: Current stage number in the bypass sequence
+            layer: Validation layer type (APPLICATION_LEVEL)
+            target: Path to target binary or process name
+
+        Returns:
+            Result of the application-level bypass attempt
+        """
         logger.info("Bypassing application-level certificate validation")
 
         try:
@@ -449,7 +492,16 @@ class MultiLayerBypass:
         layer: ValidationLayer,
         target: str,
     ) -> StageResult:
-        """Bypass server-level validation (network-based validation)."""
+        """Bypass server-level validation (network-based validation).
+
+        Args:
+            stage_number: Current stage number in the bypass sequence
+            layer: Validation layer type (SERVER_LEVEL)
+            target: Path to target binary or process name
+
+        Returns:
+            Result of the server-level bypass attempt
+        """
         logger.info("Bypassing server-level certificate validation")
 
         try:
@@ -494,7 +546,19 @@ class MultiLayerBypass:
         dependency_graph: DependencyGraph,
         result: MultiLayerResult,
     ) -> bool:
-        """Check if all dependencies for a layer have been successfully bypassed."""
+        """Check if all dependencies for a layer have been successfully bypassed.
+
+        Args:
+            layer: Validation layer type to check dependencies for
+            dependency_graph: Layer dependency graph
+            result: Current bypass result containing bypassed layers
+
+        Returns:
+            True if all dependencies are satisfied, False otherwise
+
+        Raises:
+            No exceptions are raised by this method.
+        """
         dependencies = dependency_graph.get_dependencies(layer)
 
         return all(dependency in result.bypassed_layers for dependency in dependencies)
@@ -508,7 +572,6 @@ class MultiLayerBypass:
 
         Returns:
             True if verification passed, False otherwise
-
         """
         try:
             if layer == ValidationLayer.OS_LEVEL:
@@ -527,7 +590,14 @@ class MultiLayerBypass:
             return False
 
     def _verify_os_level_bypass(self, target: str) -> bool:
-        """Verify OS-level bypass is working."""
+        """Verify OS-level bypass is working.
+
+        Args:
+            target: Path to target binary or process name
+
+        Returns:
+            True if OS-level bypass is verified or fallback check passes
+        """
         try:
             if hasattr(self._frida_hooks, "_script") and self._frida_hooks._script:
                 status = self._frida_hooks.get_bypass_status()
@@ -539,7 +609,14 @@ class MultiLayerBypass:
             return True
 
     def _verify_library_level_bypass(self, target: str) -> bool:
-        """Verify library-level bypass is working."""
+        """Verify library-level bypass is working.
+
+        Args:
+            target: Path to target binary or process name
+
+        Returns:
+            True if any library-level bypass is verified or fallback check passes
+        """
         try:
             if hasattr(self._frida_hooks, "_script") and self._frida_hooks._script:
                 status = self._frida_hooks.get_bypass_status()
@@ -557,7 +634,14 @@ class MultiLayerBypass:
             return True
 
     def _verify_application_level_bypass(self, target: str) -> bool:
-        """Verify application-level bypass is working."""
+        """Verify application-level bypass is working.
+
+        Args:
+            target: Path to target binary or process name
+
+        Returns:
+            True if application-level bypass is verified or fallback check passes
+        """
         try:
             if hasattr(self._frida_hooks, "_script") and self._frida_hooks._script:
                 status = self._frida_hooks.get_bypass_status()
@@ -569,7 +653,14 @@ class MultiLayerBypass:
             return True
 
     def _verify_server_level_bypass(self, target: str) -> bool:
-        """Verify server-level bypass is working."""
+        """Verify server-level bypass is working.
+
+        Args:
+            target: Path to target binary or process name
+
+        Returns:
+            True if server-level bypass is verified or fallback check passes
+        """
         try:
             if hasattr(self._frida_hooks, "_script") and self._frida_hooks._script:
                 status = self._frida_hooks.get_bypass_status()
@@ -581,7 +672,11 @@ class MultiLayerBypass:
             return True
 
     def _rollback_previous_stages(self, result: MultiLayerResult) -> None:
-        """Rollback all successfully applied bypasses."""
+        """Rollback all successfully applied bypasses.
+
+        Args:
+            result: Multi-layer result containing rollback data
+        """
         logger.warning("Rolling back previous bypass stages due to failure")
 
         try:

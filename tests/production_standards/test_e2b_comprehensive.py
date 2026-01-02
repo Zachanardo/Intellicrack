@@ -3,16 +3,11 @@ Comprehensive e2b Test Suite for Intellicrack Production Standards
 Tests all modules using the e2b secure sandbox environment
 """
 
-import sys
-import os
 import json
 import platform
 from typing import Dict, List, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
-
-# Add Intellicrack to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 class TestResult(Enum):
     PASS = "PASS"
@@ -32,11 +27,11 @@ class TestCase:
 class ComprehensiveE2BTester:
     """Comprehensive testing framework for Intellicrack modules in e2b sandbox"""
 
-    def __init__(self):
-        self.results = []
-        self.modules_tested = set()
-        self.apis_tested = set()
-        self.capabilities_verified = {}
+    def __init__(self) -> None:
+        self.results: list[TestCase] = []
+        self.modules_tested: set[str] = set()
+        self.apis_tested: set[str] = set()
+        self.capabilities_verified: dict[str, bool] = {}
         self.is_windows = platform.system() == "Windows"
 
     def run_all_tests(self) -> dict[str, Any]:
@@ -72,7 +67,7 @@ class ComprehensiveE2BTester:
         # Generate Report
         return self.generate_report()
 
-    def test_module_loading(self):
+    def test_module_loading(self) -> None:
         """Test that all critical modules load properly"""
         print("\nPhase 1: Testing Module Loading")
         print("-" * 40)
@@ -123,7 +118,7 @@ class ComprehensiveE2BTester:
 
             self.results.append(test)
 
-    def test_windows_apis(self):
+    def test_windows_apis(self) -> None:
         """Test all Windows API implementations"""
         print("\nPhase 2: Testing Windows APIs")
         print("-" * 40)
@@ -177,7 +172,7 @@ class ComprehensiveE2BTester:
         except Exception as e:
             print(f"Error testing Windows APIs: {e}")
 
-    def test_pattern_matching(self):
+    def test_pattern_matching(self) -> None:
         """Test pattern matching functionality"""
         print("\nPhase 3: Testing Pattern Matching")
         print("-" * 40)
@@ -252,7 +247,7 @@ class ComprehensiveE2BTester:
         except ImportError:
             print("⊙ Module not available for pattern testing")
 
-    def test_memory_operations(self):
+    def test_memory_operations(self) -> None:
         """Test memory operation capabilities"""
         print("\nPhase 4: Testing Memory Operations")
         print("-" * 40)
@@ -305,7 +300,7 @@ class ComprehensiveE2BTester:
         except ImportError:
             print("⊙ Module not available for memory testing")
 
-    def test_debugging_functions(self):
+    def test_debugging_functions(self) -> None:
         """Test debugging engine functionality"""
         print("\nPhase 5: Testing Debugging Functions")
         print("-" * 40)
@@ -381,7 +376,7 @@ class ComprehensiveE2BTester:
         except ImportError:
             print("⊙ Module not available for debugging tests")
 
-    def test_yara_integration(self):
+    def test_yara_integration(self) -> None:
         """Test YARA scanner integration"""
         print("\nPhase 6: Testing YARA Integration")
         print("-" * 40)
@@ -471,7 +466,7 @@ class ComprehensiveE2BTester:
         except ImportError as e:
             print(f"⊙ YARA module not available: {e}")
 
-    def test_error_handling(self):
+    def test_error_handling(self) -> None:
         """Test error handling robustness"""
         print("\nPhase 7: Testing Error Handling")
         print("-" * 40)
@@ -584,7 +579,7 @@ class ComprehensiveE2BTester:
 
             self.results.append(test)
 
-    def test_cross_module_integration(self):
+    def test_cross_module_integration(self) -> None:
         """Test integration between modules"""
         print("\nPhase 8: Testing Cross-Module Integration")
         print("-" * 40)
@@ -780,7 +775,7 @@ class ComprehensiveE2BTester:
 
         return report
 
-def main():
+def main() -> int:
     """Main entry point for e2b testing"""
     tester = ComprehensiveE2BTester()
     report = tester.run_all_tests()

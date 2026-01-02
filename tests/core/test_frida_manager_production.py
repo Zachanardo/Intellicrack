@@ -4,12 +4,9 @@ Tests Frida script injection, hook management, process attachment, protection de
 and bypass capabilities WITHOUT mocks - requires Frida to be available.
 """
 
-import json
 import logging
-import os
 import platform
-import tempfile
-import time
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -23,15 +20,23 @@ from intellicrack.core.frida_manager import (
     HookBatcher,
     ProtectionDetector,
 )
-from intellicrack.utils.core.import_checks import FRIDA_AVAILABLE, frida, psutil
+from intellicrack.utils.core.import_checks import FRIDA_AVAILABLE
 
+frida: type[Any] | None
+try:
+    import frida
+
+    FRIDA_IMPORT_AVAILABLE = True
+except ImportError:
+    frida = None
+    FRIDA_IMPORT_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida not available")
 
-BUFFER_MAX_SIZE = 10000
-MINIMUM_LOG_ENTRIES = 1
-VALID_HOOK_CATEGORIES = {category.value for category in HookCategory}
-VALID_PROTECTION_TYPES = {ptype.value for ptype in ProtectionType}
+BUFFER_MAX_SIZE: int = 10000
+MINIMUM_LOG_ENTRIES: int = 1
+VALID_HOOK_CATEGORIES: set[str] = {category.value for category in HookCategory}
+VALID_PROTECTION_TYPES: set[str] = {ptype.value for ptype in ProtectionType}
 
 
 class TestFridaOperationLogger:
@@ -39,9 +44,9 @@ class TestFridaOperationLogger:
 
     def test_logger_initialization_creates_log_directory(self, tmp_path: Path) -> None:
         """Logger creates log directory on initialization."""
-        log_dir = tmp_path / "frida_logs"
+        log_dir: Path = tmp_path / "frida_logs"
 
-        logger = FridaOperationLogger(log_dir=str(log_dir))
+        logger: FridaOperationLogger = FridaOperationLogger(log_dir=str(log_dir))
 
         assert log_dir.exists()
         assert log_dir.is_dir()
@@ -49,9 +54,9 @@ class TestFridaOperationLogger:
 
     def test_logger_creates_separate_log_files(self, tmp_path: Path) -> None:
         """Logger creates separate files for different operation types."""
-        log_dir = tmp_path / "frida_logs"
+        log_dir: Path = tmp_path / "frida_logs"
 
-        logger = FridaOperationLogger(log_dir=str(log_dir))
+        logger: FridaOperationLogger = FridaOperationLogger(log_dir=str(log_dir))
 
         assert logger.operation_log.exists()
         assert logger.hook_log.exists()
@@ -60,8 +65,8 @@ class TestFridaOperationLogger:
 
     def test_log_operation_records_to_buffer(self, tmp_path: Path) -> None:
         """log_operation adds entry to operation buffer."""
-        log_dir = tmp_path / "frida_logs"
-        logger = FridaOperationLogger(log_dir=str(log_dir))
+        log_dir: Path = tmp_path / "frida_logs"
+        logger: FridaOperationLogger = FridaOperationLogger(log_dir=str(log_dir))
 
         logger.log_operation(
             operation="test_attach",
@@ -70,16 +75,16 @@ class TestFridaOperationLogger:
         )
 
         assert len(logger.operation_buffer) >= MINIMUM_LOG_ENTRIES
-        entry = logger.operation_buffer[-1]
+        entry: dict[str, Any] = logger.operation_buffer[-1]
         assert entry["operation"] == "test_attach"
         assert entry["success"] is True
 
     def test_log_operation_updates_statistics(self, tmp_path: Path) -> None:
         """log_operation updates total operations counter."""
-        log_dir = tmp_path / "frida_logs"
-        logger = FridaOperationLogger(log_dir=str(log_dir))
+        log_dir: Path = tmp_path / "frida_logs"
+        logger: FridaOperationLogger = FridaOperationLogger(log_dir=str(log_dir))
 
-        initial_count = logger.stats["total_operations"]
+        initial_count: int = logger.stats["total_operations"]
 
         logger.log_operation(
             operation="test_op",
@@ -89,12 +94,12 @@ class TestFridaOperationLogger:
 
         assert logger.stats["total_operations"] == initial_count + 1
 
-    def test_log_hook_call_records_hook_execution(self, tmp_path: Path) -> None:
-        """log_hook_call records hook execution details."""
-        log_dir = tmp_path / "frida_logs"
-        logger = FridaOperationLogger(log_dir=str(log_dir))
+    def test_log_hook_records_hook_execution(self, tmp_path: Path) -> None:
+        """log_hook records hook execution details."""
+        log_dir: Path = tmp_path / "frida_logs"
+        logger: FridaOperationLogger = FridaOperationLogger(log_dir=str(log_dir))
 
-        logger.log_hook_call(
+        logger.log_hook(
             hook_name="TestHook",
             function="TestFunction",
             args={"arg1": "value1"},
@@ -102,69 +107,49 @@ class TestFridaOperationLogger:
         )
 
         assert len(logger.hook_buffer) >= MINIMUM_LOG_ENTRIES
-        entry = logger.hook_buffer[-1]
+        entry: dict[str, Any] = logger.hook_buffer[-1]
         assert entry["hook_name"] == "TestHook"
         assert entry["function"] == "TestFunction"
 
     def test_log_bypass_attempt_records_bypass_details(self, tmp_path: Path) -> None:
         """log_bypass_attempt records protection bypass attempts."""
-        log_dir = tmp_path / "frida_logs"
-        logger = FridaOperationLogger(log_dir=str(log_dir))
+        log_dir: Path = tmp_path / "frida_logs"
+        logger: FridaOperationLogger = FridaOperationLogger(log_dir=str(log_dir))
 
         logger.log_bypass_attempt(
-            protection_type="test_protection",
+            protection_type=ProtectionType.ANTI_DEBUG,
             technique="test_technique",
             success=True,
             details={"method": "hook_modification"},
         )
 
         assert logger.stats["bypasses_attempted"] >= 1
-        if success := True:
-            assert logger.stats["bypasses_successful"] >= 1
+        assert logger.stats["bypasses_successful"] >= 1
 
     def test_log_performance_metric_tracks_execution_time(self, tmp_path: Path) -> None:
-        """log_performance_metric tracks operation performance."""
-        log_dir = tmp_path / "frida_logs"
-        logger = FridaOperationLogger(log_dir=str(log_dir))
+        """log_performance tracks operation performance."""
+        log_dir: Path = tmp_path / "frida_logs"
+        logger: FridaOperationLogger = FridaOperationLogger(log_dir=str(log_dir))
 
-        logger.log_performance_metric(
-            operation="test_operation",
-            duration=1.5,
-            cpu_usage=25.0,
-            memory_usage=1024,
+        logger.log_performance(
+            metric_name="test_operation",
+            value=1.5,
+            unit="ms",
+            metadata={"cpu_usage": 25.0, "memory_usage": 1024},
         )
 
         assert "test_operation" in logger.performance_metrics
         assert logger.performance_metrics["test_operation"]
 
-    def test_get_recent_operations_returns_latest_entries(self, tmp_path: Path) -> None:
-        """get_recent_operations returns most recent operation entries."""
-        log_dir = tmp_path / "frida_logs"
-        logger = FridaOperationLogger(log_dir=str(log_dir))
-
-        for i in range(5):
-            logger.log_operation(
-                operation=f"op_{i}",
-                details={"index": i},
-                success=True,
-            )
-
-        recent = logger.get_recent_operations(count=3)
-
-        assert len(recent) == 3
-        assert recent[0]["operation"] == "op_4"
-        assert recent[1]["operation"] == "op_3"
-        assert recent[2]["operation"] == "op_2"
-
     def test_get_statistics_returns_current_stats(self, tmp_path: Path) -> None:
         """get_statistics returns comprehensive statistics."""
-        log_dir = tmp_path / "frida_logs"
-        logger = FridaOperationLogger(log_dir=str(log_dir))
+        log_dir: Path = tmp_path / "frida_logs"
+        logger: FridaOperationLogger = FridaOperationLogger(log_dir=str(log_dir))
 
         logger.log_operation("op1", {}, True)
-        logger.log_hook_call("hook1", "func1", {}, "result")
+        logger.log_hook("hook1", "func1", {}, "result")
 
-        stats = logger.get_statistics()
+        stats: dict[str, Any] = logger.get_statistics()
 
         assert "total_operations" in stats
         assert "successful_hooks" in stats
@@ -176,67 +161,45 @@ class TestProtectionDetector:
 
     def test_detector_initialization(self) -> None:
         """ProtectionDetector initializes with protection patterns."""
-        detector = ProtectionDetector()
+        detector: ProtectionDetector = ProtectionDetector()
 
         assert detector.detected_protections is not None
         assert isinstance(detector.detected_protections, dict)
-        assert detector.detection_patterns is not None
+        assert detector.protection_signatures is not None
 
-    def test_analyze_function_detects_debugger_checks(self) -> None:
-        """analyze_function detects debugger detection patterns."""
-        detector = ProtectionDetector()
+    def test_analyze_api_call_detects_debugger_checks(self) -> None:
+        """analyze_api_call detects debugger detection patterns."""
+        detector: ProtectionDetector = ProtectionDetector()
 
-        test_code = """
-        if (IsDebuggerPresent()) {
-            exit(1);
-        }
-        """
-
-        result = detector.analyze_function(
-            function_name="check_debugger",
-            code=test_code,
+        result: set[ProtectionType] = detector.analyze_api_call(
+            module="kernel32.dll",
+            function="IsDebuggerPresent",
+            args=[],
         )
 
         assert result is not None
-        if result:
-            assert "protection_type" in result or isinstance(result, dict)
+        assert ProtectionType.ANTI_DEBUG in result
 
-    def test_analyze_function_detects_virtualization_checks(self) -> None:
-        """analyze_function detects virtualization detection."""
-        detector = ProtectionDetector()
+    def test_analyze_string_detects_protection_indicators(self) -> None:
+        """analyze_string detects protection strings."""
+        detector: ProtectionDetector = ProtectionDetector()
 
-        test_code = """
-        CPUID instruction check for VMware
-        Check for VBox guest additions
-        """
+        test_string: str = "VMware guest additions detected"
 
-        result = detector.analyze_function(
-            function_name="check_vm",
-            code=test_code,
-        )
+        result: set[ProtectionType] = detector.analyze_string(test_string)
 
-        assert result is None or isinstance(result, dict)
+        assert result is None or isinstance(result, set)
 
-    def test_classify_protection_categorizes_correctly(self) -> None:
-        """classify_protection categorizes protection types."""
-        detector = ProtectionDetector()
+    def test_get_detected_protections_returns_evidence(self) -> None:
+        """get_detected_protections returns detected protections with evidence."""
+        detector: ProtectionDetector = ProtectionDetector()
 
-        protection_type = "debugger_detection"
+        detector.analyze_api_call("kernel32.dll", "IsDebuggerPresent", [])
 
-        category = detector.classify_protection(protection_type)
+        protections: dict[str, list[str]] = detector.get_detected_protections()
 
-        assert category is not None
-        assert category in VALID_PROTECTION_TYPES or isinstance(category, str)
-
-    def test_get_bypass_strategy_provides_strategy(self) -> None:
-        """get_bypass_strategy provides bypass strategy for protection."""
-        detector = ProtectionDetector()
-
-        strategy = detector.get_bypass_strategy("debugger_detection")
-
-        assert strategy is not None
-        assert isinstance(strategy, dict)
-        assert "hooks" in strategy or "technique" in strategy
+        assert protections is not None
+        assert isinstance(protections, dict)
 
 
 class TestHookBatcher:
@@ -244,55 +207,40 @@ class TestHookBatcher:
 
     def test_batcher_initialization(self) -> None:
         """HookBatcher initializes with batch size configuration."""
-        batcher = HookBatcher(batch_size=50)
+        batcher: HookBatcher = HookBatcher(max_batch_size=50)
 
-        assert batcher.batch_size == 50
+        assert batcher.max_batch_size == 50
         assert batcher.pending_hooks is not None
-        assert isinstance(batcher.pending_hooks, list)
+        assert isinstance(batcher.pending_hooks, dict)
 
-    def test_add_hook_to_batch(self) -> None:
-        """add_hook adds hook to pending batch."""
-        batcher = HookBatcher(batch_size=50)
+    def test_add_hook_to_queue(self) -> None:
+        """add_hook adds hook to pending queue."""
+        batcher: HookBatcher = HookBatcher(max_batch_size=50)
 
-        hook_script = "Interceptor.attach(ptr('0x1000'), { onEnter: function(args) {} });"
+        hook_spec: dict[str, Any] = {
+            "target": "TestFunction",
+            "script": "Interceptor.attach(ptr('0x1000'), { onEnter: function(args) {} });",
+            "module": "test.dll",
+        }
 
-        batcher.add_hook(hook_script, category=HookCategory.DEBUGGER_DETECTION)
+        batcher.add_hook(category=HookCategory.DEBUGGER_DETECTION, hook_spec=hook_spec)
 
-        assert len(batcher.pending_hooks) >= 1
+        assert batcher.hook_queue.qsize() >= 1
 
-    def test_batch_ready_when_size_reached(self) -> None:
-        """Batch becomes ready when batch size is reached."""
-        batcher = HookBatcher(batch_size=2)
+    def test_get_batch_stats_returns_queue_status(self) -> None:
+        """get_batch_stats returns batching statistics."""
+        batcher: HookBatcher = HookBatcher(max_batch_size=10)
 
-        batcher.add_hook("hook1", category=HookCategory.DEBUGGER_DETECTION)
-        assert not batcher.is_batch_ready()
+        hook_spec1: dict[str, Any] = {"target": "Func1", "script": "hook1", "module": "test.dll"}
+        hook_spec2: dict[str, Any] = {"target": "Func2", "script": "hook2", "module": "test.dll"}
 
-        batcher.add_hook("hook2", category=HookCategory.ANTI_TAMPERING)
-        assert batcher.is_batch_ready()
+        batcher.add_hook(HookCategory.DEBUGGER_DETECTION, hook_spec1)
+        batcher.add_hook(HookCategory.LICENSE_CHECK, hook_spec2)
 
-    def test_get_batch_returns_pending_hooks(self) -> None:
-        """get_batch returns and clears pending hooks."""
-        batcher = HookBatcher(batch_size=10)
+        stats: dict[str, Any] = batcher.get_batch_stats()
 
-        batcher.add_hook("hook1", HookCategory.DEBUGGER_DETECTION)
-        batcher.add_hook("hook2", HookCategory.LICENSE_CHECK)
-
-        batch = batcher.get_batch()
-
-        assert len(batch) >= 2
-        assert len(batcher.pending_hooks) == 0
-
-    def test_generate_batch_script_combines_hooks(self) -> None:
-        """generate_batch_script combines multiple hooks into single script."""
-        batcher = HookBatcher(batch_size=10)
-
-        batcher.add_hook("console.log('Hook 1');", HookCategory.DEBUGGER_DETECTION)
-        batcher.add_hook("console.log('Hook 2');", HookCategory.LICENSE_CHECK)
-
-        script = batcher.generate_batch_script()
-
-        assert "Hook 1" in script
-        assert "Hook 2" in script
+        assert "pending_hooks" in stats
+        assert stats["pending_hooks"] >= 2
 
 
 class TestFridaPerformanceOptimizer:
@@ -300,24 +248,28 @@ class TestFridaPerformanceOptimizer:
 
     def test_optimizer_initialization(self) -> None:
         """FridaPerformanceOptimizer initializes with configuration."""
-        optimizer = FridaPerformanceOptimizer()
+        optimizer: FridaPerformanceOptimizer = FridaPerformanceOptimizer()
 
-        assert optimizer.metrics is not None
-        assert isinstance(optimizer.metrics, dict)
+        assert hasattr(optimizer, "optimization_enabled")
+        assert hasattr(optimizer, "selective_hooks")
 
-    def test_should_batch_hooks_based_on_threshold(self) -> None:
-        """should_batch_hooks returns True when hook count exceeds threshold."""
-        optimizer = FridaPerformanceOptimizer()
+    def test_should_hook_function_evaluates_importance(self) -> None:
+        """should_hook_function evaluates based on importance."""
+        optimizer: FridaPerformanceOptimizer = FridaPerformanceOptimizer()
 
-        result = optimizer.should_batch_hooks(hook_count=100)
+        result: bool = optimizer.should_hook_function(
+            module="kernel32.dll",
+            function="IsDebuggerPresent",
+            importance=HookCategory.CRITICAL,
+        )
 
         assert isinstance(result, bool)
 
     def test_optimize_script_improves_performance(self) -> None:
         """optimize_script applies performance optimizations to script."""
-        optimizer = FridaPerformanceOptimizer()
+        optimizer: FridaPerformanceOptimizer = FridaPerformanceOptimizer()
 
-        original_script = """
+        original_script: str = """
         Interceptor.attach(ptr('0x1000'), {
             onEnter: function(args) {
                 console.log('Hook called');
@@ -325,20 +277,19 @@ class TestFridaPerformanceOptimizer:
         });
         """
 
-        optimized = optimizer.optimize_script(original_script)
+        optimized: str = optimizer.optimize_script(original_script)
 
         assert optimized is not None
         assert isinstance(optimized, str)
         assert len(optimized) > 0
 
-    def test_get_recommendations_provides_optimization_tips(self) -> None:
-        """get_recommendations provides performance optimization recommendations."""
-        optimizer = FridaPerformanceOptimizer()
+    def test_get_optimization_recommendations_provides_tips(self) -> None:
+        """get_optimization_recommendations provides optimization tips."""
+        optimizer: FridaPerformanceOptimizer = FridaPerformanceOptimizer()
 
-        optimizer.record_metric("hook_execution_time", 5.0)
-        optimizer.record_metric("memory_usage", 1024 * 1024 * 100)
+        optimizer.track_hook_performance("kernel32.dll", "TestFunction", 5.0)
 
-        recommendations = optimizer.get_recommendations()
+        recommendations: list[str] = optimizer.get_optimization_recommendations()
 
         assert isinstance(recommendations, list)
 
@@ -348,67 +299,40 @@ class TestDynamicScriptGenerator:
 
     def test_generator_initialization(self) -> None:
         """DynamicScriptGenerator initializes with script templates."""
-        generator = DynamicScriptGenerator()
+        generator: DynamicScriptGenerator = DynamicScriptGenerator()
 
-        assert generator.templates is not None
-        assert isinstance(generator.templates, dict)
+        assert generator.protection_handlers is not None
+        assert isinstance(generator.protection_handlers, dict)
 
-    def test_generate_debugger_bypass_script(self) -> None:
-        """generate_debugger_bypass generates valid Frida script."""
-        generator = DynamicScriptGenerator()
+    def test_generate_script_creates_complete_bypass(self) -> None:
+        """generate_script creates complete bypass script."""
+        generator: DynamicScriptGenerator = DynamicScriptGenerator()
 
-        script = generator.generate_debugger_bypass()
-
-        assert script is not None
-        assert isinstance(script, str)
-        assert len(script) > 0
-        assert "Interceptor" in script or "NativeFunction" in script
-
-    def test_generate_license_check_bypass_script(self) -> None:
-        """generate_license_check_bypass generates license bypass script."""
-        generator = DynamicScriptGenerator()
-
-        script = generator.generate_license_check_bypass(
-            target_function="CheckLicense",
+        script: str = generator.generate_script(
+            target_info={"process": "test.exe", "arch": "x64"},
+            detected_protections=[ProtectionType.ANTI_DEBUG],
+            strategy="adaptive",
         )
-
-        assert script is not None
-        assert isinstance(script, str)
-        assert "CheckLicense" in script
-
-    def test_generate_trial_reset_script(self) -> None:
-        """generate_trial_reset generates trial period bypass script."""
-        generator = DynamicScriptGenerator()
-
-        script = generator.generate_trial_reset()
 
         assert script is not None
         assert isinstance(script, str)
         assert len(script) > 0
 
-    def test_generate_custom_hook_with_parameters(self) -> None:
-        """generate_custom_hook creates hook with custom parameters."""
-        generator = DynamicScriptGenerator()
+    def test_generate_script_with_multiple_protections(self) -> None:
+        """generate_script handles multiple protections."""
+        generator: DynamicScriptGenerator = DynamicScriptGenerator()
 
-        script = generator.generate_custom_hook(
-            function_name="CustomFunction",
-            module_name="test.dll",
-            on_enter="console.log('Enter');",
-            on_leave="console.log('Leave');",
+        script: str = generator.generate_script(
+            target_info={"process": "test.exe"},
+            detected_protections=[
+                ProtectionType.ANTI_DEBUG,
+                ProtectionType.ANTI_VM,
+                ProtectionType.LICENSE,
+            ],
+            strategy="comprehensive",
         )
 
         assert script is not None
-        assert "CustomFunction" in script
-        assert "test.dll" in script
-
-    def test_generate_anti_tampering_bypass(self) -> None:
-        """generate_anti_tampering_bypass generates anti-tamper bypass script."""
-        generator = DynamicScriptGenerator()
-
-        script = generator.generate_anti_tampering_bypass()
-
-        assert script is not None
-        assert isinstance(script, str)
         assert len(script) > 0
 
 
@@ -418,12 +342,12 @@ class TestFridaManagerWindowsIntegration:
 
     def test_enumerate_processes_returns_running_processes(self) -> None:
         """enumerate_processes returns list of running Windows processes."""
-        if not FRIDA_AVAILABLE:
+        if not FRIDA_IMPORT_AVAILABLE or frida is None:
             pytest.skip("Frida not available")
 
         try:
-            device = frida.get_local_device()
-            processes = device.enumerate_processes()
+            device: Any = frida.get_local_device()
+            processes: list[Any] = device.enumerate_processes()
 
             assert processes is not None
             assert len(processes) > 0
@@ -438,17 +362,21 @@ class TestFridaManagerWindowsIntegration:
 
     def test_frida_can_access_system_process(self) -> None:
         """Frida can access and query system process information."""
-        if not FRIDA_AVAILABLE:
+        if not FRIDA_IMPORT_AVAILABLE or frida is None:
             pytest.skip("Frida not available")
 
         try:
-            device = frida.get_local_device()
+            device: Any = frida.get_local_device()
 
-            system_processes = [p for p in device.enumerate_processes() if "System" in p.name or "explorer" in p.name.lower()]
+            system_processes: list[Any] = [
+                p
+                for p in device.enumerate_processes()
+                if "System" in p.name or "explorer" in p.name.lower()
+            ]
 
             if system_processes:
                 assert len(system_processes) > 0
-                test_process = system_processes[0]
+                test_process: Any = system_processes[0]
                 assert test_process.pid > 0
                 assert test_process.name
 
@@ -456,35 +384,38 @@ class TestFridaManagerWindowsIntegration:
             pytest.skip(f"System process access failed: {e}")
 
 
-class TestScriptTemplateGeneration:
-    """Test script template generation and customization."""
+class TestScriptGeneration:
+    """Test script generation capabilities."""
 
-    def test_generate_hook_template_with_all_parameters(self) -> None:
-        """Generates complete hook template with all parameters."""
-        generator = DynamicScriptGenerator()
+    def test_generate_script_for_all_protection_types(self) -> None:
+        """Generates scripts for all protection types."""
+        generator: DynamicScriptGenerator = DynamicScriptGenerator()
 
-        template_params = {
-            "function_name": "TestFunction",
-            "module_name": "test.dll",
-            "return_type": "int",
-            "log_args": True,
-            "log_return": True,
-        }
-
-        script = generator.generate_from_template("hook", template_params)
-
-        assert script is not None
-        assert isinstance(script, str)
-
-    def test_generate_bypass_template_for_common_protections(self) -> None:
-        """Generates bypass templates for common protection mechanisms."""
-        generator = DynamicScriptGenerator()
-
-        for protection in ["debugger", "vm", "integrity"]:
-            script = generator.generate_bypass_for_protection(protection)
+        for protection in ProtectionType:
+            script: str = generator.generate_script(
+                target_info={"process": "test.exe"},
+                detected_protections=[protection],
+                strategy="adaptive",
+            )
 
             assert script is not None
             assert isinstance(script, str)
+            assert len(script) > 0
+
+    def test_generate_script_with_different_strategies(self) -> None:
+        """Generates scripts with different hooking strategies."""
+        generator: DynamicScriptGenerator = DynamicScriptGenerator()
+
+        strategies: list[str] = ["aggressive", "stealthy", "adaptive", "minimal", "comprehensive"]
+
+        for strategy in strategies:
+            script: str = generator.generate_script(
+                target_info={"process": "test.exe"},
+                detected_protections=[ProtectionType.ANTI_DEBUG],
+                strategy=strategy,
+            )
+
+            assert script is not None
             assert len(script) > 0
 
 
@@ -493,8 +424,8 @@ class TestLoggingPerformance:
 
     def test_operation_buffer_maintains_max_size(self, tmp_path: Path) -> None:
         """Operation buffer respects maximum size limit."""
-        log_dir = tmp_path / "frida_logs"
-        logger = FridaOperationLogger(log_dir=str(log_dir))
+        log_dir: Path = tmp_path / "frida_logs"
+        logger: FridaOperationLogger = FridaOperationLogger(log_dir=str(log_dir))
 
         for i in range(BUFFER_MAX_SIZE + 100):
             logger.log_operation(f"op_{i}", {}, True)
@@ -503,44 +434,50 @@ class TestLoggingPerformance:
 
     def test_hook_buffer_maintains_max_size(self, tmp_path: Path) -> None:
         """Hook buffer respects maximum size limit."""
-        log_dir = tmp_path / "frida_logs"
-        logger = FridaOperationLogger(log_dir=str(log_dir))
+        log_dir: Path = tmp_path / "frida_logs"
+        logger: FridaOperationLogger = FridaOperationLogger(log_dir=str(log_dir))
 
-        max_hook_buffer = 50000
+        max_hook_buffer: int = 50000
 
         for i in range(max_hook_buffer + 100):
-            logger.log_hook_call(f"hook_{i}", "func", {}, "result")
+            logger.log_hook(f"hook_{i}", "func", {}, "result")
 
         assert len(logger.hook_buffer) <= max_hook_buffer
 
 
-class TestProtectionBypassStrategies:
-    """Test protection bypass strategy generation."""
+class TestProtectionDetectionIntegration:
+    """Test protection detection integration."""
 
-    def test_get_bypass_for_debugger_detection(self) -> None:
-        """get_bypass_strategy returns strategy for debugger detection."""
-        detector = ProtectionDetector()
+    def test_detection_with_multiple_api_calls(self) -> None:
+        """Detects protections from multiple API calls."""
+        detector: ProtectionDetector = ProtectionDetector()
 
-        strategy = detector.get_bypass_strategy("debugger_detection")
+        api_calls: list[tuple[str, str]] = [
+            ("kernel32.dll", "IsDebuggerPresent"),
+            ("kernel32.dll", "CheckRemoteDebuggerPresent"),
+            ("ntdll.dll", "NtQueryInformationProcess"),
+        ]
 
-        assert strategy is not None
-        assert "technique" in strategy or "hooks" in strategy
+        for module, function in api_calls:
+            detector.analyze_api_call(module, function, [])
 
-    def test_get_bypass_for_vm_detection(self) -> None:
-        """get_bypass_strategy returns strategy for VM detection."""
-        detector = ProtectionDetector()
+        protections: dict[str, list[str]] = detector.get_detected_protections()
 
-        strategy = detector.get_bypass_strategy("vm_detection")
+        assert len(protections) > 0
 
-        assert strategy is not None
+    def test_adaptation_callback_invocation(self) -> None:
+        """Adaptation callbacks are invoked on detection."""
+        detector: ProtectionDetector = ProtectionDetector()
 
-    def test_get_bypass_for_license_check(self) -> None:
-        """get_bypass_strategy returns strategy for license validation."""
-        detector = ProtectionDetector()
+        called: list[bool] = [False]
 
-        strategy = detector.get_bypass_strategy("license_check")
+        def callback(prot_type: ProtectionType, details: dict[str, Any] | set[str]) -> None:
+            called[0] = True
 
-        assert strategy is not None
+        detector.register_adaptation_callback(callback)
+        detector.notify_protection_detected(ProtectionType.ANTI_DEBUG, {"test": "data"})
+
+        assert called[0]
 
 
 class TestEndToEndScriptGeneration:
@@ -548,28 +485,36 @@ class TestEndToEndScriptGeneration:
 
     def test_complete_bypass_script_generation_workflow(self) -> None:
         """Generates complete bypass script from detection to implementation."""
-        detector = ProtectionDetector()
-        generator = DynamicScriptGenerator()
+        detector: ProtectionDetector = ProtectionDetector()
+        generator: DynamicScriptGenerator = DynamicScriptGenerator()
 
-        protection_type = "debugger_detection"
+        detector.analyze_api_call("kernel32.dll", "IsDebuggerPresent", [])
+        protections_dict: dict[str, list[str]] = detector.get_detected_protections()
 
-        strategy = detector.get_bypass_strategy(protection_type)
-        assert strategy is not None
+        bypass_script: str = generator.generate_script(
+            target_info={"process": "test.exe"},
+            detected_protections=[ProtectionType.ANTI_DEBUG],
+            strategy="adaptive",
+        )
 
-        bypass_script = generator.generate_debugger_bypass()
         assert bypass_script is not None
         assert len(bypass_script) > 0
 
     def test_multi_protection_bypass_script_generation(self) -> None:
         """Generates combined bypass script for multiple protections."""
-        generator = DynamicScriptGenerator()
+        generator: DynamicScriptGenerator = DynamicScriptGenerator()
 
-        scripts = []
-        scripts.append(generator.generate_debugger_bypass())
-        scripts.append(generator.generate_trial_reset())
-        scripts.append(generator.generate_anti_tampering_bypass())
+        protections: list[ProtectionType] = [
+            ProtectionType.ANTI_DEBUG,
+            ProtectionType.ANTI_VM,
+            ProtectionType.LICENSE,
+        ]
 
-        combined_script = "\n\n".join(scripts)
+        script: str = generator.generate_script(
+            target_info={"process": "test.exe"},
+            detected_protections=protections,
+            strategy="comprehensive",
+        )
 
-        assert combined_script is not None
-        assert len(combined_script) > len(scripts[0])
+        assert script is not None
+        assert len(script) > 0

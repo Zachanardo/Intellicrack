@@ -64,18 +64,20 @@ class ChecksumWorker(QThread):
         """Progress callback for calculator.
 
         Args:
-            current: Current progress
-            total: Total items
-
+            current: Current progress value.
+            total: Total items to process.
         """
         self.progress.emit(current, total)
 
     def run(self) -> None:
         """Run checksum calculation.
 
-        Raises:
-            ValueError: If neither data nor file path is provided
+        Performs checksum calculations on either in-memory data or file content.
+        Emits progress signals during calculation and either a result signal with
+        the calculated values or an error signal if calculation fails.
 
+        Raises:
+            ValueError: If neither data nor file path is provided.
         """
         try:
             results = {}
@@ -123,7 +125,11 @@ class ChecksumDialog(QDialog):
         self.resize(600, 500)
 
     def init_ui(self) -> None:
-        """Initialize UI components."""
+        """Initialize UI components.
+
+        Sets up all dialog widgets including data source selection, algorithm
+        checkboxes, results display area, and control buttons.
+        """
         layout = QVBoxLayout()
 
         # Data source selection
@@ -239,12 +245,20 @@ class ChecksumDialog(QDialog):
         self.setLayout(layout)
 
     def select_all_algorithms(self) -> None:
-        """Select all algorithm checkboxes."""
+        """Select all algorithm checkboxes.
+
+        Iterates through all algorithm checkbox widgets and sets them to checked
+        state.
+        """
         for checkbox in self.algorithm_checkboxes.values():
             checkbox.setChecked(True)
 
     def select_no_algorithms(self) -> None:
-        """Deselect all algorithm checkboxes."""
+        """Deselect all algorithm checkboxes.
+
+        Iterates through all algorithm checkbox widgets and sets them to unchecked
+        state.
+        """
         for checkbox in self.algorithm_checkboxes.values():
             checkbox.setChecked(False)
 
@@ -258,7 +272,12 @@ class ChecksumDialog(QDialog):
         return [algo for algo, checkbox in self.algorithm_checkboxes.items() if checkbox.isChecked()]
 
     def calculate_checksums(self) -> None:
-        """Start checksum calculation."""
+        """Start checksum calculation.
+
+        Initiates a background worker thread to calculate selected checksum
+        algorithms on either the entire file or a selection. Updates the UI
+        with progress and results as the calculation completes.
+        """
         # Get selected algorithms
         algorithms = self.get_selected_algorithms()
         if not algorithms:
@@ -324,9 +343,8 @@ class ChecksumDialog(QDialog):
         """Update progress bar.
 
         Args:
-            current: Current progress
-            total: Total items
-
+            current: Current progress value.
+            total: Total items to process.
         """
         self.progress_bar.setValue(current)
 
@@ -334,8 +352,7 @@ class ChecksumDialog(QDialog):
         """Display calculation results.
 
         Args:
-            results: Dictionary of algorithm names and results
-
+            results: Dictionary mapping algorithm names to calculated hash values.
         """
         # Format results
         text = "Checksum/Hash Results\n"
@@ -373,15 +390,18 @@ class ChecksumDialog(QDialog):
         """Display error message.
 
         Args:
-            error: Error message
-
+            error: Error message to display to the user.
         """
         self.results_text.setPlainText(f"Error: {error}")
         self.progress_bar.setVisible(False)
         self.calculate_btn.setEnabled(True)
 
     def copy_results(self) -> None:
-        """Copy results to clipboard."""
+        """Copy results to clipboard.
+
+        Copies the displayed results text to the system clipboard and provides
+        brief visual feedback to the user.
+        """
         if text := self.results_text.toPlainText():
             from PyQt6.QtWidgets import QApplication
 

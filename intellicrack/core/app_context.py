@@ -1,6 +1,13 @@
 """Application context management for Intellicrack.
 
 This module provides centralized application context management including
+configuration, state management, and shared resources across the application.
+
+The AppContext class manages global application state and provides signals for
+state changes, enabling decoupled communication between UI components. It handles
+binary file management, project persistence, analysis result tracking, plugin
+registration, AI model management, task coordination, settings management, and
+session history.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -16,7 +23,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
-configuration, state management, and shared resources across the application.
 """
 
 import json
@@ -87,7 +93,23 @@ if PYQT6_AVAILABLE:
 
         # Binary Management
         def load_binary(self, file_path: str, metadata: dict[str, Any] | None = None) -> bool:
-            """Load a binary file and emit appropriate signals."""
+            """Load a binary file and emit appropriate signals.
+
+            Loads a binary file from the specified path, validates its existence,
+            retrieves file metadata, stores binary information in application state,
+            adds it to recent files, and emits the binary_loaded signal.
+
+            Args:
+                file_path: Path to the binary file to load.
+                metadata: Optional metadata dictionary to associate with the binary.
+
+            Returns:
+                bool: True if the binary was loaded successfully, False if the file
+                    does not exist or file stats cannot be retrieved.
+
+            Raises:
+                Exception: Catches and logs any unexpected errors during binary loading.
+            """
             try:
                 path = Path(file_path)
                 if not path.exists():
@@ -121,7 +143,14 @@ if PYQT6_AVAILABLE:
                 return False
 
         def unload_binary(self) -> None:
-            """Unload the current binary."""
+            """Unload the current binary.
+
+            Clears the currently loaded binary and associated analysis results,
+            and emits the binary_unloaded signal to notify listeners of the change.
+
+            Raises:
+                None: This method catches all exceptions internally.
+            """
             if current_binary := self._state["current_binary"]:
                 if isinstance(current_binary, dict):
                     logger.info("Unloading binary: %s", current_binary.get("name", "unknown"))
@@ -132,7 +161,16 @@ if PYQT6_AVAILABLE:
                 self.binary_unloaded.emit()
 
         def get_current_binary(self) -> dict[str, Any] | None:
-            """Get information about the currently loaded binary."""
+            """Get information about the currently loaded binary.
+
+            Returns:
+                dict[str, Any] | None: Dictionary containing binary metadata (path,
+                    name, size, loaded_at, metadata) if a binary is loaded,
+                    None otherwise.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             result = self._state["current_binary"]
             if result is None or isinstance(result, dict):
                 return validate_type(result, dict) if result is not None else None
@@ -140,7 +178,19 @@ if PYQT6_AVAILABLE:
 
         # Analysis Results Management
         def set_analysis_results(self, analysis_type: str, results: dict[str, Any]) -> None:
-            """Store analysis results and emit completion signal."""
+            """Store analysis results and emit completion signal.
+
+            Stores analysis results in the application state indexed by analysis type,
+            and emits the analysis_completed signal to notify listeners of the results.
+
+            Args:
+                analysis_type: Type of analysis being stored (e.g., 'entropy',
+                    'protection_detection').
+                results: Dictionary of analysis results keyed by result type.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             analysis_results = self._state["analysis_results"]
             if isinstance(analysis_results, dict):
                 analysis_results[analysis_type] = {
@@ -151,7 +201,19 @@ if PYQT6_AVAILABLE:
             self.analysis_completed.emit(analysis_type, results)
 
         def get_analysis_results(self, analysis_type: str | None = None) -> dict[str, Any]:
-            """Get analysis results for a specific type or all results."""
+            """Get analysis results for a specific type or all results.
+
+            Args:
+                analysis_type: Optional type of analysis to retrieve. If None,
+                    returns all analysis results.
+
+            Returns:
+                dict[str, Any]: Dictionary of analysis results for the specified type
+                    or all results if analysis_type is None.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             analysis_results = self._state["analysis_results"]
             if not isinstance(analysis_results, dict):
                 return {}
@@ -161,18 +223,57 @@ if PYQT6_AVAILABLE:
             return validate_type(analysis_results, dict)
 
         def start_analysis(self, analysis_type: str, options: dict[str, Any] | None = None) -> None:
-            """Signal that an analysis has started."""
+            """Signal that an analysis has started.
+
+            Emits the analysis_started signal to notify listeners that a new analysis
+            operation is beginning with the specified type and options.
+
+            Args:
+                analysis_type: Type of analysis being started (e.g., 'entropy',
+                    'protection_detection').
+                options: Optional dictionary of analysis options and configuration
+                    parameters.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             logger.info("Analysis started: %s", analysis_type)
             self.analysis_started.emit(analysis_type, options or {})
 
         def fail_analysis(self, analysis_type: str, error_message: str) -> None:
-            """Signal that an analysis has failed."""
+            """Signal that an analysis has failed.
+
+            Emits the analysis_failed signal to notify listeners that an analysis
+            operation has encountered an error and cannot continue.
+
+            Args:
+                analysis_type: Type of analysis that failed.
+                error_message: Description of the error that occurred during analysis.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             logger.error("Analysis failed: %s - %s", analysis_type, error_message)
             self.analysis_failed.emit(analysis_type, error_message)
 
         # Project Management
         def load_project(self, project_path: str) -> bool:
-            """Load a project from file."""
+            """Load a project from file.
+
+            Loads a project configuration from the specified file path, validates
+            the JSON structure, restores associated binary and analysis results,
+            and emits the project_loaded signal.
+
+            Args:
+                project_path: Path to the project file to load.
+
+            Returns:
+                bool: True if the project was loaded successfully, False if the file
+                    does not exist or contains invalid JSON.
+
+            Raises:
+                Exception: Catches and logs any unexpected errors during project loading.
+            """
             try:
                 path = Path(project_path)
                 if not path.exists():
@@ -218,7 +319,21 @@ if PYQT6_AVAILABLE:
                 return False
 
         def save_project(self, project_path: str) -> bool:
-            """Save current state as a project."""
+            """Save current state as a project.
+
+            Serializes the current binary, analysis results, and settings to a JSON
+            project file at the specified path. Creates parent directories if needed.
+
+            Args:
+                project_path: Path where the project file should be saved.
+
+            Returns:
+                bool: True if the project was saved successfully, False if the
+                    directory cannot be created or the file cannot be written.
+
+            Raises:
+                Exception: Catches and logs any unexpected errors during project saving.
+            """
             try:
                 current_binary = self._state["current_binary"]
                 binary_path_value: str | None = None
@@ -262,7 +377,14 @@ if PYQT6_AVAILABLE:
                 return False
 
         def close_project(self) -> None:
-            """Close the current project."""
+            """Close the current project.
+
+            Clears the currently loaded project and emits the project_closed signal
+            to notify listeners of the project closure.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             if current_project := self._state["current_project"]:
                 if isinstance(current_project, dict):
                     logger.info("Closing project: %s", current_project.get("name", "unknown"))
@@ -271,7 +393,18 @@ if PYQT6_AVAILABLE:
 
         # Plugin Management
         def register_plugin(self, plugin_name: str, plugin_info: dict[str, Any]) -> None:
-            """Register a loaded plugin."""
+            """Register a loaded plugin.
+
+            Stores plugin metadata in the application state and emits the
+            plugin_loaded signal to notify listeners of the new plugin registration.
+
+            Args:
+                plugin_name: Name of the plugin being registered.
+                plugin_info: Dictionary containing plugin metadata and configuration.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             loaded_plugins = self._state["loaded_plugins"]
             if isinstance(loaded_plugins, dict):
                 loaded_plugins[plugin_name] = {
@@ -282,7 +415,17 @@ if PYQT6_AVAILABLE:
             self.plugin_loaded.emit(plugin_name, plugin_info)
 
         def unregister_plugin(self, plugin_name: str) -> None:
-            """Unregister a plugin."""
+            """Unregister a plugin.
+
+            Removes plugin metadata from the application state and emits the
+            plugin_unloaded signal to notify listeners of the plugin removal.
+
+            Args:
+                plugin_name: Name of the plugin to unregister.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             loaded_plugins = self._state["loaded_plugins"]
             if isinstance(loaded_plugins, dict) and plugin_name in loaded_plugins:
                 del loaded_plugins[plugin_name]
@@ -290,13 +433,32 @@ if PYQT6_AVAILABLE:
                 self.plugin_unloaded.emit(plugin_name)
 
         def get_loaded_plugins(self) -> dict[str, Any]:
-            """Get information about all loaded plugins."""
+            """Get information about all loaded plugins.
+
+            Returns:
+                dict[str, Any]: Dictionary of all currently loaded plugins with their
+                    metadata keyed by plugin name.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             loaded_plugins = self._state["loaded_plugins"]
             return validate_type(loaded_plugins, dict) if isinstance(loaded_plugins, dict) else {}
 
         # Model Management
         def register_model(self, model_name: str, model_info: dict[str, Any]) -> None:
-            """Register a loaded AI model."""
+            """Register a loaded AI model.
+
+            Stores AI model metadata in the application state and emits the
+            model_loaded signal to notify listeners of the new model registration.
+
+            Args:
+                model_name: Name of the AI model being registered.
+                model_info: Dictionary containing model metadata and configuration.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             loaded_models = self._state["loaded_models"]
             if isinstance(loaded_models, dict):
                 loaded_models[model_name] = {
@@ -307,7 +469,17 @@ if PYQT6_AVAILABLE:
             self.model_loaded.emit(model_name, model_info)
 
         def unregister_model(self, model_name: str) -> None:
-            """Unregister an AI model."""
+            """Unregister an AI model.
+
+            Removes AI model metadata from the application state and emits the
+            model_unloaded signal to notify listeners of the model removal.
+
+            Args:
+                model_name: Name of the AI model to unregister.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             loaded_models = self._state["loaded_models"]
             if isinstance(loaded_models, dict) and model_name in loaded_models:
                 del loaded_models[model_name]
@@ -315,13 +487,32 @@ if PYQT6_AVAILABLE:
                 self.model_unloaded.emit(model_name)
 
         def get_loaded_models(self) -> dict[str, Any]:
-            """Get information about all loaded models."""
+            """Get information about all loaded models.
+
+            Returns:
+                dict[str, Any]: Dictionary of all currently loaded AI models with their
+                    metadata keyed by model name.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             loaded_models = self._state["loaded_models"]
             return validate_type(loaded_models, dict) if isinstance(loaded_models, dict) else {}
 
         # Task Management
         def register_task(self, task_id: str, description: str) -> None:
-            """Register a new task."""
+            """Register a new task.
+
+            Creates a new task entry in the application state with initial progress
+            and emits the task_started signal to notify listeners of the new task.
+
+            Args:
+                task_id: Unique identifier for the task.
+                description: Human-readable description of the task being registered.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             active_tasks = self._state["active_tasks"]
             if isinstance(active_tasks, dict):
                 active_tasks[task_id] = {
@@ -333,7 +524,18 @@ if PYQT6_AVAILABLE:
             self.task_started.emit(task_id, description)
 
         def update_task_progress(self, task_id: str, progress: int) -> None:
-            """Update task progress."""
+            """Update task progress.
+
+            Updates the progress percentage for an active task and emits the
+            task_progress signal to notify listeners of the update.
+
+            Args:
+                task_id: Identifier of the task to update.
+                progress: Progress percentage as integer between 0 and 100.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             active_tasks = self._state["active_tasks"]
             if isinstance(active_tasks, dict) and task_id in active_tasks:
                 task_data = active_tasks[task_id]
@@ -342,7 +544,18 @@ if PYQT6_AVAILABLE:
                 self.task_progress.emit(task_id, progress)
 
         def complete_task(self, task_id: str, result: object = None) -> None:
-            """Mark a task as completed."""
+            """Mark a task as completed.
+
+            Removes the task from active tasks and emits the task_completed signal
+            to notify listeners that the task has finished with the given result.
+
+            Args:
+                task_id: Identifier of the task to complete.
+                result: Optional result object from the task execution.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             active_tasks = self._state["active_tasks"]
             if isinstance(active_tasks, dict) and task_id in active_tasks:
                 task_info = active_tasks.pop(task_id)
@@ -351,7 +564,19 @@ if PYQT6_AVAILABLE:
                 self.task_completed.emit(task_id, result)
 
         def fail_task(self, task_id: str, error_message: str) -> None:
-            """Mark a task as failed."""
+            """Mark a task as failed.
+
+            Removes the task from active tasks, stores failure information in history,
+            and emits the task_failed signal to notify listeners of the task failure.
+
+            Args:
+                task_id: Identifier of the task that failed.
+                error_message: Description of the error that occurred during task
+                    execution.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             active_tasks = self._state["active_tasks"]
             if isinstance(active_tasks, dict) and task_id in active_tasks:
                 task_info = active_tasks.pop(task_id)
@@ -382,13 +607,32 @@ if PYQT6_AVAILABLE:
                 self.task_failed.emit(task_id, error_message)
 
         def get_active_tasks(self) -> dict[str, Any]:
-            """Get all active tasks."""
+            """Get all active tasks.
+
+            Returns:
+                dict[str, Any]: Dictionary of all active tasks with task_id as keys
+                    and task metadata as values.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             active_tasks = self._state["active_tasks"]
             return validate_type(active_tasks, dict) if isinstance(active_tasks, dict) else {}
 
         # Settings Management
         def set_setting(self, key: str, value: object) -> None:
-            """Update a setting value."""
+            """Update a setting value.
+
+            Stores the setting value in the application state and emits the
+            settings_changed signal to notify listeners of the configuration change.
+
+            Args:
+                key: The setting key to update.
+                value: The new value for the setting.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             settings = self._state["settings"]
             if isinstance(settings, dict):
                 old_value = settings.get(key)
@@ -402,18 +646,42 @@ if PYQT6_AVAILABLE:
             self.settings_changed.emit(key, value)
 
         def get_setting(self, key: str, default: object = None) -> object:
-            """Get a setting value."""
+            """Get a setting value.
+
+            Args:
+                key: The setting key to retrieve.
+                default: Default value to return if key is not found.
+
+            Returns:
+                The setting value associated with the key, or default if not found.
+            """
             settings = self._state["settings"]
             return settings.get(key, default) if isinstance(settings, dict) else default
 
         def get_all_settings(self) -> dict[str, Any]:
-            """Get all settings."""
+            """Get all settings.
+
+            Returns:
+                dict[str, Any]: Dictionary of all settings with keys as setting names
+                    and values as setting values.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             settings = self._state["settings"]
             return validate_type(settings, dict) if isinstance(settings, dict) else {}
 
         # History Management
         def add_to_session_history(self, action: str, details: dict[str, Any]) -> None:
-            """Add an action to the session history."""
+            """Add an action to the session history.
+
+            Args:
+                action: Description of the action performed.
+                details: Dictionary containing details about the action.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             entry: dict[str, Any] = {
                 "action": action,
                 "details": details,
@@ -428,27 +696,65 @@ if PYQT6_AVAILABLE:
                     self._state["session_history"] = session_history[-1000:]
 
         def get_session_history(self) -> list[dict[str, Any]]:
-            """Get the session history."""
+            """Get the session history.
+
+            Returns:
+                list[dict[str, Any]]: List of session history entries with action and
+                    timestamp information.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             session_history = self._state["session_history"]
             return validate_type(session_history, list) if isinstance(session_history, list) else []
 
         def get_recent_files(self) -> list[str]:
-            """Get list of recently opened files."""
+            """Get list of recently opened files.
+
+            Returns:
+                list[str]: List of file paths ordered by most recent first (up to
+                    10 entries).
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             recent_files = self._state["recent_files"]
             return validate_type(recent_files, list) if isinstance(recent_files, list) else []
 
         def get_recent_projects(self) -> list[str]:
-            """Get list of recently opened projects."""
+            """Get list of recently opened projects.
+
+            Returns:
+                list[str]: List of project paths ordered by most recent first (up to
+                    10 entries).
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             recent_projects = self._state["recent_projects"]
             return validate_type(recent_projects, list) if isinstance(recent_projects, list) else []
 
         def _get_timestamp(self) -> str:
-            """Return a formatted timestamp string."""
+            """Return a formatted timestamp string.
+
+            Returns:
+                str: ISO format timestamp string representing the current time.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             return datetime.now().isoformat()
 
         # Private helper methods
         def _add_to_recent_files(self, file_path: str) -> None:
-            """Add a file to the recent files list."""
+            """Add a file to the recent files list.
+
+            Args:
+                file_path: Path to the file to add to recent files.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             recent_files = self._state["recent_files"]
             if isinstance(recent_files, list):
                 if file_path in recent_files:
@@ -457,7 +763,14 @@ if PYQT6_AVAILABLE:
                 self._state["recent_files"] = recent_files[:10]
 
         def _add_to_recent_projects(self, project_path: str) -> None:
-            """Add a project to the recent projects list."""
+            """Add a project to the recent projects list.
+
+            Args:
+                project_path: Path to the project to add to recent projects.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             recent_projects = self._state["recent_projects"]
             if isinstance(recent_projects, list):
                 if project_path in recent_projects:
@@ -467,11 +780,25 @@ if PYQT6_AVAILABLE:
 
         # State observation for debugging
         def get_full_state(self) -> dict[str, Any]:
-            """Get the complete application state (for debugging)."""
+            """Get the complete application state (for debugging).
+
+            Returns:
+                dict[str, Any]: Copy of the entire application state dictionary.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             return self._state.copy()
 
         def reset_state(self) -> None:
-            """Reset the application state to defaults."""
+            """Reset the application state to defaults.
+
+            Clears all active tasks, analysis results, and history while preserving
+            settings configuration.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             logger.warning("Resetting application state")
             self.unload_binary()
             self.close_project()
@@ -487,7 +814,7 @@ if PYQT6_AVAILABLE:
 
 else:
 
-    class AppContext:  # type: ignore[no-redef]
+    class AppContext:
         """Centralized application state manager.
 
         Manages global application state and provides signals for state changes,
@@ -539,7 +866,23 @@ else:
 
         # Binary Management
         def load_binary(self, file_path: str, metadata: dict[str, Any] | None = None) -> bool:
-            """Load a binary file and emit appropriate signals."""
+            """Load a binary file and emit appropriate signals.
+
+            Loads a binary file from the specified path, validates its existence,
+            retrieves file metadata, stores binary information in application state,
+            adds it to recent files.
+
+            Args:
+                file_path: Path to the binary file to load.
+                metadata: Optional metadata dictionary to associate with the binary.
+
+            Returns:
+                bool: True if the binary was loaded successfully, False if the file
+                    does not exist or file stats cannot be retrieved.
+
+            Raises:
+                Exception: Catches and logs any unexpected errors during binary loading.
+            """
             try:
                 path = Path(file_path)
                 if not path.exists():
@@ -572,7 +915,14 @@ else:
                 return False
 
         def unload_binary(self) -> None:
-            """Unload the current binary."""
+            """Unload the current binary.
+
+            Clears the currently loaded binary and associated analysis results
+            to prepare for loading a different binary or shutdown.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             if current_binary := self._state["current_binary"]:
                 if isinstance(current_binary, dict):
                     logger.info("Unloading binary: %s", current_binary.get("name", "unknown"))
@@ -582,7 +932,16 @@ else:
                     analysis_results.clear()
 
         def get_current_binary(self) -> dict[str, Any] | None:
-            """Get information about the currently loaded binary."""
+            """Get information about the currently loaded binary.
+
+            Returns:
+                dict[str, Any] | None: Dictionary containing binary metadata (path,
+                    name, size, loaded_at, metadata) if a binary is loaded,
+                    None otherwise.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             result = self._state["current_binary"]
             if result is None or isinstance(result, dict):
                 return cast("dict[str, Any] | None", result)
@@ -590,7 +949,19 @@ else:
 
         # Analysis Results Management
         def set_analysis_results(self, analysis_type: str, results: dict[str, Any]) -> None:
-            """Store analysis results and emit completion signal."""
+            """Store analysis results and emit completion signal.
+
+            Stores analysis results in the application state indexed by analysis type
+            with timestamp information for tracking when results were generated.
+
+            Args:
+                analysis_type: Type of analysis being stored (e.g., 'entropy',
+                    'protection_detection').
+                results: Dictionary of analysis results keyed by result type.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             analysis_results = self._state["analysis_results"]
             if isinstance(analysis_results, dict):
                 analysis_results[analysis_type] = {
@@ -600,7 +971,19 @@ else:
             logger.info("Analysis completed: %s. Results keys: %s", analysis_type, list(results.keys()))
 
         def get_analysis_results(self, analysis_type: str | None = None) -> dict[str, Any]:
-            """Get analysis results for a specific type or all results."""
+            """Get analysis results for a specific type or all results.
+
+            Args:
+                analysis_type: Optional type of analysis to retrieve. If None,
+                    returns all analysis results.
+
+            Returns:
+                dict[str, Any]: Dictionary of analysis results for the specified type
+                    or all results if analysis_type is None.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             analysis_results = self._state["analysis_results"]
             if not isinstance(analysis_results, dict):
                 return {}
@@ -610,16 +993,54 @@ else:
             return cast("dict[str, Any]", analysis_results)
 
         def start_analysis(self, analysis_type: str, options: dict[str, Any] | None = None) -> None:
-            """Signal that an analysis has started."""
+            """Signal that an analysis has started.
+
+            Logs the start of a new analysis operation with the specified type and options.
+            In non-PyQt6 environments, this method provides logging-only functionality.
+
+            Args:
+                analysis_type: Type of analysis being started (e.g., 'entropy',
+                    'protection_detection').
+                options: Optional dictionary of analysis options and configuration
+                    parameters.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             logger.info("Analysis started: %s", analysis_type)
 
         def fail_analysis(self, analysis_type: str, error_message: str) -> None:
-            """Signal that an analysis has failed."""
+            """Signal that an analysis has failed.
+
+            Logs the failure of an analysis operation with error details.
+            In non-PyQt6 environments, this method provides logging-only functionality.
+
+            Args:
+                analysis_type: Type of analysis that failed.
+                error_message: Description of the error that occurred during analysis.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             logger.error("Analysis failed: %s - %s", analysis_type, error_message)
 
         # Project Management
         def load_project(self, project_path: str) -> bool:
-            """Load a project from file."""
+            """Load a project from file.
+
+            Loads a project configuration from the specified file path, validates
+            the JSON structure, restores associated binary and analysis results.
+
+            Args:
+                project_path: Path to the project file to load.
+
+            Returns:
+                bool: True if the project was loaded successfully, False if the file
+                    does not exist or contains invalid JSON.
+
+            Raises:
+                Exception: Catches and logs any unexpected errors during project loading.
+            """
             try:
                 path = Path(project_path)
                 if not path.exists():
@@ -664,7 +1085,21 @@ else:
                 return False
 
         def save_project(self, project_path: str) -> bool:
-            """Save current state as a project."""
+            """Save current state as a project.
+
+            Serializes the current binary, analysis results, and settings to a JSON
+            project file at the specified path. Creates parent directories if needed.
+
+            Args:
+                project_path: Path where the project file should be saved.
+
+            Returns:
+                bool: True if the project was saved successfully, False if the
+                    directory cannot be created or the file cannot be written.
+
+            Raises:
+                Exception: Catches and logs any unexpected errors during project saving.
+            """
             try:
                 current_binary = self._state["current_binary"]
                 binary_path_value: str | None = None
@@ -709,7 +1144,14 @@ else:
                 return False
 
         def close_project(self) -> None:
-            """Close the current project."""
+            """Close the current project.
+
+            Clears the currently loaded project from the application state,
+            making room for loading a different project or application shutdown.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             if current_project := self._state["current_project"]:
                 if isinstance(current_project, dict):
                     logger.info("Closing project: %s", current_project.get("name", "unknown"))
@@ -717,7 +1159,18 @@ else:
 
         # Plugin Management
         def register_plugin(self, plugin_name: str, plugin_info: dict[str, Any]) -> None:
-            """Register a loaded plugin."""
+            """Register a loaded plugin.
+
+            Stores plugin metadata in the application state with registration timestamp
+            for tracking loaded plugins and their configurations.
+
+            Args:
+                plugin_name: Name of the plugin being registered.
+                plugin_info: Dictionary containing plugin metadata and configuration.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             loaded_plugins = self._state["loaded_plugins"]
             if isinstance(loaded_plugins, dict):
                 loaded_plugins[plugin_name] = {
@@ -727,20 +1180,49 @@ else:
             logger.info("Plugin registered: %s", plugin_name)
 
         def unregister_plugin(self, plugin_name: str) -> None:
-            """Unregister a plugin."""
+            """Unregister a plugin.
+
+            Removes plugin metadata from the application state to clean up
+            after plugin unloading or application shutdown.
+
+            Args:
+                plugin_name: Name of the plugin to unregister.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             loaded_plugins = self._state["loaded_plugins"]
             if isinstance(loaded_plugins, dict) and plugin_name in loaded_plugins:
                 del loaded_plugins[plugin_name]
                 logger.info("Plugin unregistered: %s", plugin_name)
 
         def get_loaded_plugins(self) -> dict[str, Any]:
-            """Get information about all loaded plugins."""
+            """Get information about all loaded plugins.
+
+            Returns:
+                dict[str, Any]: Dictionary of all currently loaded plugins with their
+                    metadata keyed by plugin name.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             loaded_plugins = self._state["loaded_plugins"]
             return cast("dict[str, Any]", loaded_plugins) if isinstance(loaded_plugins, dict) else {}
 
         # Model Management
         def register_model(self, model_name: str, model_info: dict[str, Any]) -> None:
-            """Register a loaded AI model."""
+            """Register a loaded AI model.
+
+            Stores AI model metadata in the application state with registration timestamp
+            for tracking loaded models and their configurations.
+
+            Args:
+                model_name: Name of the AI model being registered.
+                model_info: Dictionary containing model metadata and configuration.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             loaded_models = self._state["loaded_models"]
             if isinstance(loaded_models, dict):
                 loaded_models[model_name] = {
@@ -750,20 +1232,49 @@ else:
             logger.info("Model registered: %s", model_name)
 
         def unregister_model(self, model_name: str) -> None:
-            """Unregister an AI model."""
+            """Unregister an AI model.
+
+            Removes AI model metadata from the application state to clean up
+            after model unloading or application shutdown.
+
+            Args:
+                model_name: Name of the AI model to unregister.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             loaded_models = self._state["loaded_models"]
             if isinstance(loaded_models, dict) and model_name in loaded_models:
                 del loaded_models[model_name]
                 logger.info("Model unregistered: %s", model_name)
 
         def get_loaded_models(self) -> dict[str, Any]:
-            """Get information about all loaded models."""
+            """Get information about all loaded models.
+
+            Returns:
+                dict[str, Any]: Dictionary of all currently loaded AI models with their
+                    metadata keyed by model name.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             loaded_models = self._state["loaded_models"]
             return cast("dict[str, Any]", loaded_models) if isinstance(loaded_models, dict) else {}
 
         # Task Management
         def register_task(self, task_id: str, description: str) -> None:
-            """Register a new task."""
+            """Register a new task.
+
+            Creates a new task entry in the application state with initial progress
+            set to zero and start timestamp recorded for tracking purposes.
+
+            Args:
+                task_id: Unique identifier for the task.
+                description: Human-readable description of the task being registered.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             active_tasks = self._state["active_tasks"]
             if isinstance(active_tasks, dict):
                 active_tasks[task_id] = {
@@ -774,7 +1285,18 @@ else:
             logger.info("Task registered: %s - %s", task_id, description)
 
         def update_task_progress(self, task_id: str, progress: int) -> None:
-            """Update task progress."""
+            """Update task progress.
+
+            Updates the progress percentage for an active task in the application state,
+            allowing callers to track the completion status of ongoing operations.
+
+            Args:
+                task_id: Identifier of the task to update.
+                progress: Progress percentage as integer between 0 and 100.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             active_tasks = self._state["active_tasks"]
             if isinstance(active_tasks, dict) and task_id in active_tasks:
                 task_data = active_tasks[task_id]
@@ -782,7 +1304,18 @@ else:
                     task_data["progress"] = progress
 
         def complete_task(self, task_id: str, result: object = None) -> None:
-            """Mark a task as completed."""
+            """Mark a task as completed.
+
+            Removes the task from the active tasks in the application state,
+            logging the completion and any associated result or metadata.
+
+            Args:
+                task_id: Identifier of the task to complete.
+                result: Optional result object from the task execution.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             active_tasks = self._state["active_tasks"]
             if isinstance(active_tasks, dict) and task_id in active_tasks:
                 task_info = active_tasks.pop(task_id)
@@ -790,7 +1323,19 @@ else:
                     logger.info("Task completed: %s - %s", task_id, task_info.get("description", "unknown"))
 
         def fail_task(self, task_id: str, error_message: str) -> None:
-            """Mark a task as failed."""
+            """Mark a task as failed.
+
+            Removes the task from active tasks, stores failure information including
+            the original task metadata and error details for auditing and debugging.
+
+            Args:
+                task_id: Identifier of the task that failed.
+                error_message: Description of the error that occurred during task
+                    execution.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             active_tasks = self._state["active_tasks"]
             if isinstance(active_tasks, dict) and task_id in active_tasks:
                 task_info = active_tasks.pop(task_id)
@@ -821,13 +1366,32 @@ else:
                 )
 
         def get_active_tasks(self) -> dict[str, Any]:
-            """Get all active tasks."""
+            """Get all active tasks.
+
+            Returns:
+                dict[str, Any]: Dictionary of all active tasks with task_id as keys
+                    and task metadata as values.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             active_tasks = self._state["active_tasks"]
             return cast("dict[str, Any]", active_tasks) if isinstance(active_tasks, dict) else {}
 
         # Settings Management
         def set_setting(self, key: str, value: object) -> None:
-            """Update a setting value."""
+            """Update a setting value.
+
+            Stores the setting value in the application state and logs the change
+            to provide visibility into configuration modifications over time.
+
+            Args:
+                key: The setting key to update.
+                value: The new value for the setting.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             settings = self._state["settings"]
             if isinstance(settings, dict):
                 old_value = settings.get(key)
@@ -839,18 +1403,42 @@ else:
                     logger.debug("Setting updated (no change): %s = %s", key, value)
 
         def get_setting(self, key: str, default: object = None) -> object:
-            """Get a setting value."""
+            """Get a setting value.
+
+            Args:
+                key: The setting key to retrieve.
+                default: Default value to return if key is not found.
+
+            Returns:
+                The setting value associated with the key, or default if not found.
+            """
             settings = self._state["settings"]
             return settings.get(key, default) if isinstance(settings, dict) else default
 
         def get_all_settings(self) -> dict[str, Any]:
-            """Get all settings."""
+            """Get all settings.
+
+            Returns:
+                dict[str, Any]: Dictionary of all settings with keys as setting names
+                    and values as setting values.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             settings = self._state["settings"]
             return cast("dict[str, Any]", settings) if isinstance(settings, dict) else {}
 
         # History Management
         def add_to_session_history(self, action: str, details: dict[str, Any]) -> None:
-            """Add an action to the session history."""
+            """Add an action to the session history.
+
+            Args:
+                action: Description of the action performed.
+                details: Dictionary containing details about the action.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             entry: dict[str, Any] = {
                 "action": action,
                 "details": details,
@@ -865,27 +1453,65 @@ else:
                     self._state["session_history"] = session_history[-1000:]
 
         def get_session_history(self) -> list[dict[str, Any]]:
-            """Get the session history."""
+            """Get the session history.
+
+            Returns:
+                list[dict[str, Any]]: List of session history entries with action and
+                    timestamp information.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             session_history = self._state["session_history"]
             return cast("list[dict[str, Any]]", session_history) if isinstance(session_history, list) else []
 
         def get_recent_files(self) -> list[str]:
-            """Get list of recently opened files."""
+            """Get list of recently opened files.
+
+            Returns:
+                list[str]: List of file paths ordered by most recent first (up to
+                    10 entries).
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             recent_files = self._state["recent_files"]
             return cast("list[str]", recent_files) if isinstance(recent_files, list) else []
 
         def get_recent_projects(self) -> list[str]:
-            """Get list of recently opened projects."""
+            """Get list of recently opened projects.
+
+            Returns:
+                list[str]: List of project paths ordered by most recent first (up to
+                    10 entries).
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             recent_projects = self._state["recent_projects"]
             return cast("list[str]", recent_projects) if isinstance(recent_projects, list) else []
 
         def _get_timestamp(self) -> str:
-            """Return a formatted timestamp string."""
+            """Return a formatted timestamp string.
+
+            Returns:
+                str: ISO format timestamp string representing the current time.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             return datetime.now().isoformat()
 
         # Private helper methods
         def _add_to_recent_files(self, file_path: str) -> None:
-            """Add a file to the recent files list."""
+            """Add a file to the recent files list.
+
+            Args:
+                file_path: Path to the file to add to recent files.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             recent_files = self._state["recent_files"]
             if isinstance(recent_files, list):
                 if file_path in recent_files:
@@ -894,7 +1520,14 @@ else:
                 self._state["recent_files"] = recent_files[:10]
 
         def _add_to_recent_projects(self, project_path: str) -> None:
-            """Add a project to the recent projects list."""
+            """Add a project to the recent projects list.
+
+            Args:
+                project_path: Path to the project to add to recent projects.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             recent_projects = self._state["recent_projects"]
             if isinstance(recent_projects, list):
                 if project_path in recent_projects:
@@ -904,11 +1537,25 @@ else:
 
         # State observation for debugging
         def get_full_state(self) -> dict[str, Any]:
-            """Get the complete application state (for debugging)."""
+            """Get the complete application state (for debugging).
+
+            Returns:
+                dict[str, Any]: Copy of the entire application state dictionary.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             return self._state.copy()
 
         def reset_state(self) -> None:
-            """Reset the application state to defaults."""
+            """Reset the application state to defaults.
+
+            Clears all active tasks, analysis results, and history while preserving
+            settings configuration.
+
+            Raises:
+                None: This method does not raise exceptions.
+            """
             logger.warning("Resetting application state")
             self.unload_binary()
             self.close_project()
@@ -928,7 +1575,18 @@ _app_context_instance: AppContext | None = None
 
 
 def get_app_context() -> AppContext:
-    """Get the global AppContext instance."""
+    """Get the global AppContext instance.
+
+    Returns a singleton instance of AppContext for managing application state
+    across the entire Intellicrack application. The instance is created on first
+    call and reused for subsequent calls.
+
+    Returns:
+        AppContext: The global AppContext singleton instance.
+
+    Raises:
+        None: This function does not raise exceptions.
+    """
     global _app_context_instance
     if _app_context_instance is None:
         _app_context_instance = AppContext()

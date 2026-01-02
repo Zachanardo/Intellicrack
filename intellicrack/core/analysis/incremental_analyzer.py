@@ -41,22 +41,48 @@ class MainAppProtocol(Protocol):
     analysis_completed: Any
 
     def emit(self, *args: Any) -> None:
-        """Emit a signal."""
+        """Emit a signal.
+
+        Emits a signal with the provided arguments to connected signal handlers.
+
+        Args:
+            *args: Variable-length argument list containing signal data.
+
+        Returns:
+            None.
+
+        """
         ...
 
     def run_selected_analysis_partial(self, analysis_type: str) -> None:
-        """Run a partial analysis of the specified type."""
+        """Run a partial analysis of the specified type.
+
+        Executes a partial analysis on the currently selected binary using the
+        specified analysis type.
+
+        Args:
+            analysis_type: Type of analysis to run (e.g., 'comprehensive').
+
+        Returns:
+            None.
+
+        """
         ...
 
 
 def get_cache_path(binary_path: str) -> Path:
     """Generate a consistent cache file path for a given binary.
 
+    Creates and ensures the existence of the cache directory, then returns a
+    Path object pointing to a cache file whose name is derived from a SHA256
+    hash of the binary path.
+
     Args:
-        binary_path: Absolute path to the binary file
+        binary_path: Absolute path to the binary file to generate cache path
+            for.
 
     Returns:
-        Path to the cache file for this binary
+        Path object pointing to the cache file for the specified binary.
 
     """
     config = get_config()
@@ -77,7 +103,15 @@ def run_incremental_analysis(main_app: MainAppProtocol) -> None:
     that integrates with the main application's analysis pipeline.
 
     Args:
-        main_app: Main application instance with update_output and other signal emitters
+        main_app: Main application instance with update_output and other signal
+            emitters.
+
+    Returns:
+        None.
+
+    Raises:
+        Exception: If an error occurs during cache access or analysis execution,
+            the error message is emitted to the main application's output signal.
 
     """
     if not main_app.current_binary:

@@ -10,9 +10,9 @@ Licensed under GNU General Public License v3.0
 
 import sys
 import time
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -22,8 +22,109 @@ from intellicrack.protection.unified_protection_engine import UnifiedProtectionE
 from intellicrack.ui.widgets.cache_management_widget import CacheManagementWidget, CacheStatsWidget, CacheTopEntriesWidget
 
 
+class FakeUnifiedProtectionEngine:
+    """Real test double for UnifiedProtectionEngine with cache operations."""
+
+    def __init__(self, cache: AnalysisCache, cache_dir: Path) -> None:
+        self.cache = cache
+        self._cache_dir = cache_dir
+        self._cleanup_count = 0
+        self._stats_override: dict[str, Any] | None = None
+        self._cleanup_error: Exception | None = None
+
+    def get_cache_stats(self) -> dict[str, Any]:
+        """Get cache statistics with realistic structure."""
+        if self._stats_override is not None:
+            return self._stats_override
+
+        return {
+            "stats": {
+                "total_entries": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "cache_invalidations": 0,
+                "hit_rate": 0.0,
+                "total_size_bytes": 0,
+                "oldest_entry": 0,
+                "newest_entry": 0,
+            },
+            "cache_size_mb": 0.0,
+            "max_entries": 1000,
+            "max_size_mb": 100.0,
+            "cache_directory": str(self._cache_dir),
+            "top_entries": [],
+        }
+
+    def cleanup_cache(self) -> int:
+        """Cleanup invalid cache entries."""
+        if self._cleanup_error:
+            raise self._cleanup_error
+        return self._cleanup_count
+
+    def save_cache(self) -> None:
+        """Save cache to disk."""
+        pass
+
+    def clear_cache(self) -> None:
+        """Clear all cache entries."""
+        self.cache.clear()
+
+    def set_stats_override(self, stats: dict[str, Any]) -> None:
+        """Override stats for testing."""
+        self._stats_override = stats
+
+    def set_cleanup_count(self, count: int) -> None:
+        """Set cleanup return count for testing."""
+        self._cleanup_count = count
+
+    def set_cleanup_error(self, error: Exception) -> None:
+        """Set cleanup error for testing."""
+        self._cleanup_error = error
+
+
+class FakeMessageBox:
+    """Real test double for QMessageBox."""
+
+    Yes = 1
+    No = 0
+
+    def __init__(self) -> None:
+        self.information_calls: list[tuple[Any, str, str]] = []
+        self.critical_calls: list[tuple[Any, str, str]] = []
+        self.question_calls: list[tuple[Any, str, str, int]] = []
+        self._question_response = self.No
+
+    def information(self, parent: Any, title: str, message: str) -> None:
+        """Record information dialog call."""
+        self.information_calls.append((parent, title, message))
+
+    def critical(self, parent: Any, title: str, message: str) -> None:
+        """Record critical dialog call."""
+        self.critical_calls.append((parent, title, message))
+
+    def question(self, parent: Any, title: str, message: str, buttons: int) -> int:
+        """Record question dialog call and return preset response."""
+        self.question_calls.append((parent, title, message, buttons))
+        return self._question_response
+
+    def set_question_response(self, response: int) -> None:
+        """Set response for question dialogs."""
+        self._question_response = response
+
+
+class FakeQApplication:
+    """Real test double for QApplication."""
+
+    def __init__(self) -> None:
+        self._widgets: list[Any] = []
+
+    def allWidgets(self) -> list[Any]:
+        """Return list of all widgets."""
+        return self._widgets
+
+
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Generator[Any, None, None]:
     """Create QApplication instance for widget tests."""
     app = QApplication.instance()
     if app is None:
@@ -41,19 +142,14 @@ def temp_cache_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def mock_unified_engine(temp_cache_dir: Path) -> UnifiedProtectionEngine:
-    """Create mocked unified engine with real cache operations."""
-    with patch("intellicrack.protection.unified_protection_engine.get_analysis_cache") as mock_get_cache:
-        cache = AnalysisCache(str(temp_cache_dir))
-        mock_get_cache.return_value = cache
-
-        engine = UnifiedProtectionEngine()
-        engine.cache = cache
-        yield engine
+def fake_unified_engine(temp_cache_dir: Path) -> FakeUnifiedProtectionEngine:
+    """Create fake unified engine with real cache operations."""
+    cache = AnalysisCache(str(temp_cache_dir))
+    return FakeUnifiedProtectionEngine(cache, temp_cache_dir)
 
 
 @pytest.fixture
-def cache_stats_widget(qapp: QApplication) -> CacheStatsWidget:
+def cache_stats_widget(qapp: Any) -> Generator[CacheStatsWidget, None, None]:
     """Create cache stats widget for testing."""
     widget = CacheStatsWidget()
     yield widget
@@ -61,7 +157,7 @@ def cache_stats_widget(qapp: QApplication) -> CacheStatsWidget:
 
 
 @pytest.fixture
-def cache_top_entries_widget(qapp: QApplication) -> CacheTopEntriesWidget:
+def cache_top_entries_widget(qapp: Any) -> Generator[CacheTopEntriesWidget, None, None]:
     """Create cache top entries widget for testing."""
     widget = CacheTopEntriesWidget()
     yield widget
@@ -69,46 +165,27 @@ def cache_top_entries_widget(qapp: QApplication) -> CacheTopEntriesWidget:
 
 
 @pytest.fixture
-def cache_management_widget(qapp: QApplication, temp_cache_dir: Path) -> CacheManagementWidget:
+def cache_management_widget(qapp: Any, temp_cache_dir: Path, monkeypatch: pytest.MonkeyPatch) -> Generator[CacheManagementWidget, None, None]:
     """Create cache management widget with temporary cache."""
-    with patch("intellicrack.ui.widgets.cache_management_widget.get_unified_engine") as mock_engine, \
-         patch("intellicrack.ui.widgets.cache_management_widget.get_analysis_cache") as mock_cache:
+    cache = AnalysisCache(str(temp_cache_dir))
+    engine = FakeUnifiedProtectionEngine(cache, temp_cache_dir)
 
-        cache = AnalysisCache(str(temp_cache_dir))
-        mock_cache.return_value = cache
+    def fake_get_unified_engine() -> FakeUnifiedProtectionEngine:
+        return engine
 
-        engine = MagicMock(spec=UnifiedProtectionEngine)
-        engine.cache = cache
-        engine.get_cache_stats.return_value = {
-            "stats": {
-                "total_entries": 0,
-                "cache_hits": 0,
-                "cache_misses": 0,
-                "cache_invalidations": 0,
-                "hit_rate": 0.0,
-                "total_size_bytes": 0,
-                "oldest_entry": 0,
-                "newest_entry": 0,
-            },
-            "cache_size_mb": 0.0,
-            "max_entries": 1000,
-            "max_size_mb": 100.0,
-            "cache_directory": str(temp_cache_dir),
-            "top_entries": [],
-        }
-        engine.cleanup_cache.return_value = 0
-        engine.save_cache.return_value = None
-        engine.clear_cache.return_value = None
+    def fake_get_analysis_cache() -> AnalysisCache:
+        return cache
 
-        mock_engine.return_value = engine
+    monkeypatch.setattr("intellicrack.ui.widgets.cache_management_widget.get_unified_engine", fake_get_unified_engine)
+    monkeypatch.setattr("intellicrack.ui.widgets.cache_management_widget.get_analysis_cache", fake_get_analysis_cache)
 
-        widget = CacheManagementWidget()
-        widget.engine = engine
-        widget.cache = cache
+    widget = CacheManagementWidget()
+    widget.engine = engine  # type: ignore[assignment]
+    widget.cache = cache
 
-        yield widget
-        widget.timer.stop()
-        widget.deleteLater()
+    yield widget
+    widget.timer.stop()
+    widget.deleteLater()
 
 
 class TestCacheStatsWidget:
@@ -206,10 +283,14 @@ class TestCacheTopEntriesWidget:
         cache_top_entries_widget.update_entries(entries)
 
         assert cache_top_entries_widget.table.rowCount() == 3
-        assert cache_top_entries_widget.table.item(0, 0).text() == "notepad.exe"
-        assert cache_top_entries_widget.table.item(0, 1).text() == "125"
-        assert cache_top_entries_widget.table.item(1, 0).text() == "calculator.exe"
-        assert cache_top_entries_widget.table.item(2, 2).text() == "1024.0"
+        item_0_0 = cache_top_entries_widget.table.item(0, 0)
+        item_0_1 = cache_top_entries_widget.table.item(0, 1)
+        item_1_0 = cache_top_entries_widget.table.item(1, 0)
+        item_2_2 = cache_top_entries_widget.table.item(2, 2)
+        assert item_0_0 is not None and item_0_0.text() == "notepad.exe"
+        assert item_0_1 is not None and item_0_1.text() == "125"
+        assert item_1_0 is not None and item_1_0.text() == "calculator.exe"
+        assert item_2_2 is not None and item_2_2.text() == "1024.0"
 
     def test_update_entries_empty_list(self, cache_top_entries_widget: CacheTopEntriesWidget) -> None:
         """Test updating with empty entry list."""
@@ -234,7 +315,10 @@ class TestCacheManagementWidget:
 
     def test_refresh_stats_updates_ui(self, cache_management_widget: CacheManagementWidget) -> None:
         """Test refresh button updates cache statistics."""
-        cache_management_widget.engine.get_cache_stats.return_value = {
+        engine = cache_management_widget.engine
+        assert isinstance(engine, FakeUnifiedProtectionEngine)
+
+        engine.set_stats_override({
             "stats": {
                 "total_entries": 10,
                 "cache_hits": 50,
@@ -257,7 +341,7 @@ class TestCacheManagementWidget:
                     "age_hours": 1.5,
                 },
             ],
-        }
+        })
 
         cache_management_widget.refresh_stats()
 
@@ -266,66 +350,70 @@ class TestCacheManagementWidget:
         assert "Total Entries: 10" in cache_management_widget.details_text.toPlainText()
 
     def test_cleanup_cache_removes_invalid_entries(
-        self, cache_management_widget: CacheManagementWidget, qapp: QApplication
+        self, cache_management_widget: CacheManagementWidget, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test cleanup operation removes invalid cache entries."""
-        cache_management_widget.engine.cleanup_cache.return_value = 5
+        engine = cache_management_widget.engine
+        assert isinstance(engine, FakeUnifiedProtectionEngine)
+        engine.set_cleanup_count(5)
 
-        with patch("intellicrack.ui.widgets.cache_management_widget.QMessageBox") as mock_msgbox:
-            cache_management_widget.cleanup_cache()
+        fake_msgbox = FakeMessageBox()
+        monkeypatch.setattr("intellicrack.ui.widgets.cache_management_widget.QMessageBox", fake_msgbox)
 
-            cache_management_widget.engine.cleanup_cache.assert_called_once()
-            mock_msgbox.information.assert_called_once()
+        cache_management_widget.cleanup_cache()
 
-            args = mock_msgbox.information.call_args[0]
-            assert "5" in args[2]
+        assert len(fake_msgbox.information_calls) == 1
+        _, title, message = fake_msgbox.information_calls[0]
+        assert "5" in message
 
     def test_save_cache_persists_to_disk(
-        self, cache_management_widget: CacheManagementWidget
+        self, cache_management_widget: CacheManagementWidget, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test save button persists cache to disk."""
-        with patch("intellicrack.ui.widgets.cache_management_widget.QMessageBox") as mock_msgbox:
-            cache_management_widget.save_cache()
+        fake_msgbox = FakeMessageBox()
+        monkeypatch.setattr("intellicrack.ui.widgets.cache_management_widget.QMessageBox", fake_msgbox)
 
-            cache_management_widget.engine.save_cache.assert_called_once()
-            mock_msgbox.information.assert_called_once()
+        cache_management_widget.save_cache()
+
+        assert len(fake_msgbox.information_calls) == 1
 
     def test_clear_cache_with_confirmation(
-        self, cache_management_widget: CacheManagementWidget
+        self, cache_management_widget: CacheManagementWidget, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test clear cache requires confirmation and emits signal."""
-        with patch("intellicrack.ui.widgets.cache_management_widget.QMessageBox") as mock_msgbox, \
-             patch("intellicrack.ui.widgets.cache_management_widget.QApplication") as mock_qapp:
+        fake_msgbox = FakeMessageBox()
+        fake_msgbox.set_question_response(FakeMessageBox.Yes)
+        monkeypatch.setattr("intellicrack.ui.widgets.cache_management_widget.QMessageBox", fake_msgbox)
 
-            mock_msgbox.question.return_value = mock_msgbox.Yes
-            mock_msgbox.Yes = 1
-            mock_msgbox.No = 0
-            mock_qapp.allWidgets.return_value = []
+        fake_qapp = FakeQApplication()
+        monkeypatch.setattr("intellicrack.ui.widgets.cache_management_widget.QApplication", fake_qapp)
 
-            signal_emitted = False
+        signal_emitted = False
 
-            def on_cache_cleared() -> None:
-                nonlocal signal_emitted
-                signal_emitted = True
+        def on_cache_cleared() -> None:
+            nonlocal signal_emitted
+            signal_emitted = True
 
-            cache_management_widget.cache_cleared.connect(on_cache_cleared)
+        cache_management_widget.cache_cleared.connect(on_cache_cleared)
 
-            cache_management_widget.clear_cache()
+        cache_management_widget.clear_cache()
 
-            cache_management_widget.engine.clear_cache.assert_called_once()
-            assert signal_emitted
+        assert len(fake_msgbox.question_calls) == 1
+        assert signal_emitted
 
     def test_clear_cache_cancelled_no_action(
-        self, cache_management_widget: CacheManagementWidget
+        self, cache_management_widget: CacheManagementWidget, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test clear cache cancellation does not clear cache."""
-        with patch("intellicrack.ui.widgets.cache_management_widget.QMessageBox") as mock_msgbox:
-            mock_msgbox.question.return_value = mock_msgbox.No
-            mock_msgbox.No = 0
+        fake_msgbox = FakeMessageBox()
+        fake_msgbox.set_question_response(FakeMessageBox.No)
+        monkeypatch.setattr("intellicrack.ui.widgets.cache_management_widget.QMessageBox", fake_msgbox)
 
-            cache_management_widget.clear_cache()
+        initial_cache_size = len(cache_management_widget.cache._cache)
 
-            cache_management_widget.engine.clear_cache.assert_not_called()
+        cache_management_widget.clear_cache()
+
+        assert len(cache_management_widget.cache._cache) == initial_cache_size
 
     def test_auto_refresh_timer_active(self, cache_management_widget: CacheManagementWidget) -> None:
         """Test auto-refresh timer is active and configured."""
@@ -373,10 +461,12 @@ class TestCacheManagementWidget:
         assert not cache_management_widget.timer.isActive()
 
     def test_cache_cleaned_signal_emission(
-        self, cache_management_widget: CacheManagementWidget
+        self, cache_management_widget: CacheManagementWidget, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test cache_cleaned signal emits with correct count."""
-        cache_management_widget.engine.cleanup_cache.return_value = 12
+        engine = cache_management_widget.engine
+        assert isinstance(engine, FakeUnifiedProtectionEngine)
+        engine.set_cleanup_count(12)
 
         signal_count = None
 
@@ -386,8 +476,10 @@ class TestCacheManagementWidget:
 
         cache_management_widget.cache_cleaned.connect(on_cache_cleaned)
 
-        with patch("intellicrack.ui.widgets.cache_management_widget.QMessageBox"):
-            cache_management_widget.cleanup_cache()
+        fake_msgbox = FakeMessageBox()
+        monkeypatch.setattr("intellicrack.ui.widgets.cache_management_widget.QMessageBox", fake_msgbox)
+
+        cache_management_widget.cleanup_cache()
 
         assert signal_count == 12
 
@@ -397,61 +489,66 @@ class TestCacheManagementIntegration:
     """Integration tests with real cache operations."""
 
     def test_widget_with_real_cache_engine(
-        self, qapp: QApplication, temp_cache_dir: Path
+        self, qapp: QApplication, temp_cache_dir: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test widget integrates with real cache engine."""
-        with patch("intellicrack.ui.widgets.cache_management_widget.get_unified_engine") as mock_engine, \
-             patch("intellicrack.ui.widgets.cache_management_widget.get_analysis_cache") as mock_cache:
+        cache = AnalysisCache(str(temp_cache_dir))
+        engine = FakeUnifiedProtectionEngine(cache, temp_cache_dir)
 
-            cache = AnalysisCache(str(temp_cache_dir))
-            mock_cache.return_value = cache
+        cache.put("test_binary.exe", {"protection": "VMProtect"})
+        cache.put("app.exe", {"protection": "Themida"})
 
-            cache.cache_analysis_result("test_binary.exe", {"protection": "VMProtect"})
-            cache.cache_analysis_result("app.exe", {"protection": "Themida"})
+        engine.set_stats_override({
+            "stats": {
+                "total_entries": 2,
+                "cache_hits": 5,
+                "cache_misses": 2,
+                "cache_invalidations": 0,
+                "hit_rate": 71.4,
+                "total_size_bytes": 2048,
+                "oldest_entry": 0,
+                "newest_entry": 0,
+            },
+            "cache_size_mb": 0.002,
+            "max_entries": 1000,
+            "max_size_mb": 100.0,
+            "cache_directory": str(temp_cache_dir),
+            "top_entries": [],
+        })
 
-            engine = MagicMock(spec=UnifiedProtectionEngine)
-            engine.cache = cache
-            engine.get_cache_stats.return_value = {
-                "stats": {
-                    "total_entries": 2,
-                    "cache_hits": 5,
-                    "cache_misses": 2,
-                    "cache_invalidations": 0,
-                    "hit_rate": 71.4,
-                    "total_size_bytes": 2048,
-                    "oldest_entry": 0,
-                    "newest_entry": 0,
-                },
-                "cache_size_mb": 0.002,
-                "max_entries": 1000,
-                "max_size_mb": 100.0,
-                "cache_directory": str(temp_cache_dir),
-                "top_entries": [],
-            }
-            engine.cleanup_cache.return_value = 0
+        def fake_get_unified_engine() -> FakeUnifiedProtectionEngine:
+            return engine
 
-            mock_engine.return_value = engine
+        def fake_get_analysis_cache() -> AnalysisCache:
+            return cache
 
-            widget = CacheManagementWidget()
+        monkeypatch.setattr("intellicrack.ui.widgets.cache_management_widget.get_unified_engine", fake_get_unified_engine)
+        monkeypatch.setattr("intellicrack.ui.widgets.cache_management_widget.get_analysis_cache", fake_get_analysis_cache)
 
-            try:
-                widget.refresh_stats()
+        widget = CacheManagementWidget()
 
-                assert widget.stats_widget.entries_label.text() == "Entries: 2"
-                assert "71.4%" in widget.stats_widget.hit_rate_label.text()
-            finally:
-                widget.timer.stop()
-                widget.deleteLater()
+        try:
+            widget.refresh_stats()
+
+            assert widget.stats_widget.entries_label.text() == "Entries: 2"
+            assert "71.4%" in widget.stats_widget.hit_rate_label.text()
+        finally:
+            widget.timer.stop()
+            widget.deleteLater()
 
     def test_cache_operations_error_handling(
-        self, cache_management_widget: CacheManagementWidget
+        self, cache_management_widget: CacheManagementWidget, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test widget handles cache operation errors gracefully."""
-        cache_management_widget.engine.cleanup_cache.side_effect = Exception("Cache error")
+        engine = cache_management_widget.engine
+        assert isinstance(engine, FakeUnifiedProtectionEngine)
+        engine.set_cleanup_error(Exception("Cache error"))
 
-        with patch("intellicrack.ui.widgets.cache_management_widget.QMessageBox") as mock_msgbox:
-            cache_management_widget.cleanup_cache()
+        fake_msgbox = FakeMessageBox()
+        monkeypatch.setattr("intellicrack.ui.widgets.cache_management_widget.QMessageBox", fake_msgbox)
 
-            mock_msgbox.critical.assert_called_once()
-            args = mock_msgbox.critical.call_args[0]
-            assert "Cache error" in args[2]
+        cache_management_widget.cleanup_cache()
+
+        assert len(fake_msgbox.critical_calls) == 1
+        _, title, message = fake_msgbox.critical_calls[0]
+        assert "Cache error" in message

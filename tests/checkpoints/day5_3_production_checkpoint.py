@@ -31,9 +31,9 @@ except ImportError as e:
 class ProductionStringAnalysisValidator:
     """Production validation for Day 5 string analysis capabilities."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize validation framework."""
-        self.test_results = []
+        self.test_results: list[dict[str, Any]] = []
         self.validation_timestamp = datetime.now().isoformat()
 
     def create_test_binary_with_real_patterns(self) -> str:
@@ -241,12 +241,12 @@ if __name__ == "__main__":
                 print("  OK PASS: All dynamic monitoring methods present")
 
             # Test event system integration
-            test_events = []
-            def test_callback(update):
+            test_events: list[Any] = []
+            def test_callback(update: Any) -> None:
                 test_events.append(update)
 
             try:
-                analyzer.register_callback(AnalysisEvent.STRING_ANALYSIS_UPDATED, test_callback)
+                analyzer.register_event_callback(AnalysisEvent.STRING_ANALYSIS_UPDATED, test_callback)
                 print("  OK PASS: Event callback registration successful")
             except Exception as e:
                 print(f"  FAIL FAIL: Event registration failed: {e}")
@@ -460,7 +460,7 @@ if __name__ == "__main__":
         }
 
 
-def main():
+def main() -> int:
     """Execute Day 5.3 Production Readiness Checkpoint 5."""
     print("DAY 5.3 PRODUCTION READINESS CHECKPOINT 5")
     print("=" * 50)

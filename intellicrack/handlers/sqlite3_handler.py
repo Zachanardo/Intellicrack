@@ -17,13 +17,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import re
 import sys
 import types
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from intellicrack.utils.logger import logger
 
@@ -32,10 +34,69 @@ class Comparable(Protocol):
     """Protocol for comparable types."""
 
     def __lt__(self, other: Any) -> bool:
-        """Less than comparison."""
+        """Less than comparison.
+
+        Args:
+            other: Value to compare against.
+
+        Returns:
+            True if self is less than other, False otherwise.
+
+        """
+        ...
 
     def __gt__(self, other: Any) -> bool:
-        """Greater than comparison."""
+        """Greater than comparison.
+
+        Args:
+            other: Value to compare against.
+
+        Returns:
+            True if self is greater than other, False otherwise.
+
+        """
+        ...
+
+
+# Protocol definitions for database types - satisfied by both sqlite3 and fallback implementations
+@runtime_checkable
+class CursorProtocol(Protocol):
+    """Protocol defining interface for database cursors."""
+
+    description: list[tuple[Any, ...]] | None
+    rowcount: int
+    lastrowid: int | None
+    arraysize: int
+
+    def execute(self, sql: str, parameters: list[Any] | None = None) -> "CursorProtocol": ...
+    def executemany(self, sql: str, seq_of_parameters: list[list[Any]]) -> "CursorProtocol": ...
+    def fetchone(self) -> tuple[Any, ...] | None: ...
+    def fetchall(self) -> list[tuple[Any, ...]]: ...
+    def fetchmany(self, size: int | None = None) -> list[tuple[Any, ...]]: ...
+    def close(self) -> None: ...
+
+
+@runtime_checkable
+class ConnectionProtocol(Protocol):
+    """Protocol defining interface for database connections."""
+
+    isolation_level: str | None
+    row_factory: Any
+
+    def cursor(self) -> CursorProtocol: ...
+    def execute(self, sql: str, parameters: list[Any] | None = None) -> CursorProtocol: ...
+    def executemany(self, sql: str, seq_of_parameters: list[list[Any]]) -> CursorProtocol: ...
+    def commit(self) -> None: ...
+    def rollback(self) -> None: ...
+    def close(self) -> None: ...
+
+
+@runtime_checkable
+class RowProtocol(Protocol):
+    """Protocol defining interface for row objects."""
+
+    def __getitem__(self, key: int | str) -> object: ...
+    def keys(self) -> list[str]: ...
 
 
 """
@@ -46,8 +107,21 @@ When sqlite3 is not available, it provides REAL, functional Python-based
 implementations for database operations used in Intellicrack.
 """
 
+# Module-level type declarations for cross-branch assignment compatibility
+_sqlite3_real: types.ModuleType | None
+Error: type[Exception]
+DatabaseError: type[Exception]
+IntegrityError: type[Exception]
+OperationalError: type[Exception]
+ProgrammingError: type[Exception]
+Cursor: type[CursorProtocol]
+Connection: type[ConnectionProtocol]
+Row: type[RowProtocol]
+connect: Callable[..., Any]
+PARSE_DECLTYPES: int
+PARSE_COLNAMES: int
+
 if TYPE_CHECKING:
-    import sqlite3 as sqlite3_module_type
     from sqlite3 import Connection, Cursor, Row
 
 HAS_SQLITE3: bool = False
@@ -63,7 +137,7 @@ try:
 
 except ImportError as e:
     logger.error("SQLite3 not available, using fallback implementations: %s", e)
-    _sqlite3_real = None  # type: ignore[assignment]
+    _sqlite3_real = None
 
 if _sqlite3_real is not None:
     from sqlite3 import (
@@ -87,7 +161,7 @@ if _sqlite3_real is not None:
 
 else:
 
-    class FallbackError(Exception):  # type: ignore[unreachable]
+    class FallbackError(Exception):
         """Base exception for database errors."""
 
         pass
@@ -112,11 +186,11 @@ else:
 
         pass
 
-    Error = FallbackError  # type: ignore[misc]
-    DatabaseError = FallbackDatabaseError  # type: ignore[misc]
-    IntegrityError = FallbackIntegrityError  # type: ignore[misc]
-    OperationalError = FallbackOperationalError  # type: ignore[misc]
-    ProgrammingError = FallbackProgrammingError  # type: ignore[misc]
+    Error = FallbackError
+    DatabaseError = FallbackDatabaseError
+    IntegrityError = FallbackIntegrityError
+    OperationalError = FallbackOperationalError
+    ProgrammingError = FallbackProgrammingError
 
     class FallbackTable:
         """In-memory table implementation.
@@ -975,9 +1049,6 @@ else:
         def close(self) -> None:
             """Close cursor.
 
-            Args:
-                None
-
             Returns:
                 None
 
@@ -1008,7 +1079,7 @@ else:
             """
             self.close()
 
-    Cursor = FallbackCursor  # type: ignore[misc]
+    Cursor = FallbackCursor
 
     class FallbackConnection:
         """Database connection implementation.
@@ -1082,9 +1153,6 @@ else:
         def commit(self) -> None:
             """Commit transaction.
 
-            Args:
-                None
-
             Returns:
                 None
 
@@ -1094,9 +1162,6 @@ else:
         def rollback(self) -> None:
             """Rollback transaction.
 
-            Args:
-                None
-
             Returns:
                 None
 
@@ -1105,9 +1170,6 @@ else:
 
         def close(self) -> None:
             """Close connection.
-
-            Args:
-                None
 
             Returns:
                 None
@@ -1151,7 +1213,7 @@ else:
                 self.rollback()
             self.close()
 
-    Connection = FallbackConnection  # type: ignore[misc]
+    Connection = FallbackConnection
 
     class FallbackRow:
         """Row object that supports both index and column name access.
@@ -1213,9 +1275,9 @@ else:
             """
             return [desc[0] for desc in self.cursor.description or []]
 
-    Row = FallbackRow  # type: ignore[misc]
+    Row = FallbackRow
 
-    def connect(database: str = ":memory:", **kwargs: object) -> FallbackConnection:  # type: ignore[no-redef]
+    def connect(database: str = ":memory:", **kwargs: object) -> FallbackConnection:
         """Connect to database.
 
         Args:
@@ -1254,8 +1316,8 @@ else:
         """
         logger.info("Converter registration not supported in fallback mode")
 
-    PARSE_DECLTYPES: int = 1  # type: ignore[no-redef]
-    PARSE_COLNAMES: int = 2  # type: ignore[no-redef]
+    PARSE_DECLTYPES = 1
+    PARSE_COLNAMES = 2
 
     class FallbackSQLite3ModuleType:
         """Fallback sqlite3 module.
@@ -1282,7 +1344,12 @@ else:
         """
 
         def __init__(self) -> None:
-            """Initialize fallback sqlite3 module."""
+            """Initialize fallback sqlite3 module.
+
+            Returns:
+                None
+
+            """
             self.connect = connect
             self.register_adapter = register_adapter
             self.register_converter = register_converter

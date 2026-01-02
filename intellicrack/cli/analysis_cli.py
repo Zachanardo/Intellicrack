@@ -1,4 +1,13 @@
-"""Command-line interface for running binary analysis.
+"""Command-line interface for running comprehensive binary analysis.
+
+This module provides a CLI interface for performing multi-faceted analysis of binary
+files, including static binary structure analysis, protection mechanism detection,
+vulnerability scanning, and string extraction. Supports both single-file and batch
+analysis modes with configurable analysis options and multiple report formats.
+
+The AnalysisCLI class serves as the main interface, orchestrating various analysis
+engines and aggregating results into comprehensive reports. It detects file types
+(PE/ELF) and applies platform-specific analysis routines accordingly.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -43,10 +52,28 @@ logger = logging.getLogger(__name__)
 
 
 class AnalysisCLI:
-    """Command-line interface for binary analysis."""
+    """Command-line interface for binary analysis.
+
+    Provides a comprehensive CLI for performing binary analysis including static
+    analysis, protection mechanism detection, vulnerability scanning, and report
+    generation. Supports both single-file and batch-mode analysis with configurable
+    options for each analysis component.
+
+    Attributes:
+        logger: Configured logger instance for CLI operations.
+        binary_analyzer: BinaryAnalyzer instance for static binary analysis.
+        protection_analyzer: ProtectionAnalyzer for detecting protection mechanisms.
+        vulnerability_scanner: Advanced vulnerability detection engine.
+        report_generator: Report generator for various output formats.
+    """
 
     def __init__(self) -> None:
-        """Initialize the CLI."""
+        """Initialize the CLI.
+
+        Sets up logging infrastructure and instantiates core analysis components
+        including binary analyzer, protection analyzer, vulnerability scanner,
+        and report generator.
+        """
         self.logger = self._setup_logging()
         self.binary_analyzer = BinaryAnalyzer()
         self.protection_analyzer = ProtectionAnalyzer()
@@ -55,7 +82,14 @@ class AnalysisCLI:
 
     @staticmethod
     def _setup_logging() -> logging.Logger:
-        """Set up logging configuration."""
+        """Set up logging configuration.
+
+        Configures both console and file handlers with appropriate logging levels
+        and formatting for the analysis CLI.
+
+        Returns:
+            Configured logger instance with console and file handlers.
+        """
         logger = logging.getLogger("AnalysisCLI")
         logger.setLevel(logging.INFO)
 
@@ -80,7 +114,23 @@ class AnalysisCLI:
         return logger
 
     def analyze_binary(self, file_path: str, options: dict[str, Any]) -> dict[str, Any]:
-        """Perform comprehensive binary analysis."""
+        """Perform comprehensive binary analysis.
+
+        Analyzes the target binary file by executing multiple analysis engines including
+        binary structure analysis, protection detection, vulnerability scanning, and
+        string extraction. The results are aggregated and returned as a structured report.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+            options: Dictionary of analysis options controlling which analyses to perform.
+
+        Returns:
+            Analysis results containing timestamp, findings, vulnerabilities,
+                protections, metadata, and recommendations.
+
+        Raises:
+            FileNotFoundError: If the specified file does not exist.
+        """
         self.logger.info("Starting analysis of: %s", file_path)
 
         if not os.path.exists(file_path):
@@ -116,7 +166,17 @@ class AnalysisCLI:
         return results
 
     def _perform_binary_analysis(self, file_path: str, options: dict[str, Any], results: dict[str, Any]) -> None:
-        """Helper to perform binary analysis."""
+        """Perform binary structure and static analysis.
+
+        Executes the binary analyzer on the target file if enabled in options,
+        extracting information about the binary structure, sections, and metadata.
+        Any errors are logged and recorded in the results.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+            options: Analysis options dictionary with binary_analysis flag.
+            results: Results dictionary to update with findings and metadata.
+        """
         if options.get("binary_analysis", True):
             self.logger.info("Performing binary analysis...")
             try:
@@ -134,7 +194,16 @@ class AnalysisCLI:
                 )
 
     def _perform_protection_analysis(self, file_path: str, options: dict[str, Any], results: dict[str, Any]) -> None:
-        """Helper to perform protection analysis."""
+        """Analyze protection and DRM mechanisms in the binary.
+
+        Detects and analyzes copy protection, DRM, code obfuscation, and licensing
+        protection mechanisms present in the target binary.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+            options: Analysis options dictionary with protection_analysis flag.
+            results: Results dictionary to update with protections and findings.
+        """
         if options.get("protection_analysis", True):
             self.logger.info("Analyzing protection mechanisms...")
             try:
@@ -154,7 +223,17 @@ class AnalysisCLI:
                 self.logger.exception("Protection analysis failed: %s", e)
 
     def _perform_vulnerability_scan(self, file_path: str, options: dict[str, Any], results: dict[str, Any]) -> None:
-        """Helper to perform vulnerability scanning."""
+        """Scan for vulnerabilities in the binary.
+
+        Identifies potential security vulnerabilities, exploitable weaknesses, and
+        software flaws in the target binary that could be leveraged in exploitation
+        or protection bypass scenarios.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+            options: Analysis options dictionary with vulnerability_scan flag.
+            results: Results dictionary to update with vulnerabilities and recommendations.
+        """
         if options.get("vulnerability_scan", True):
             self.logger.info("Scanning for vulnerabilities...")
             try:
@@ -169,7 +248,18 @@ class AnalysisCLI:
                 self.logger.exception("Vulnerability scanning failed: %s", e)
 
     def _perform_pe_analysis(self, file_path: str, file_type: str, options: dict[str, Any], results: dict[str, Any]) -> None:
-        """Helper to perform PE-specific analysis."""
+        """Perform Windows PE-specific binary analysis.
+
+        Analyzes PE (Portable Executable) format binaries specific to Windows,
+        including import tables, suspicious API usage, and PE structure analysis.
+        Only executes if the file type is detected as PE.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+            file_type: Detected file type (PE, ELF, etc.).
+            options: Analysis options dictionary with pe_analysis flag.
+            results: Results dictionary to update with PE-specific findings.
+        """
         if file_type == "PE" and options.get("pe_analysis", True):
             self.logger.info("Performing PE-specific analysis...")
             try:
@@ -189,7 +279,18 @@ class AnalysisCLI:
                 self.logger.exception("PE analysis failed: %s", e)
 
     def _perform_elf_analysis(self, file_path: str, file_type: str, options: dict[str, Any], results: dict[str, Any]) -> None:
-        """Helper to perform ELF-specific analysis."""
+        """Perform Unix/Linux ELF-specific binary analysis.
+
+        Analyzes ELF (Executable and Linkable Format) binaries specific to Unix-like
+        systems, including security features, symbol tables, and section analysis.
+        Only executes if the file type is detected as ELF.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+            file_type: Detected file type (PE, ELF, etc.).
+            options: Analysis options dictionary with elf_analysis flag.
+            results: Results dictionary to update with ELF-specific findings.
+        """
         if file_type == "ELF" and options.get("elf_analysis", True):
             self.logger.info("Performing ELF-specific analysis...")
             try:
@@ -204,7 +305,17 @@ class AnalysisCLI:
                 self.logger.exception("ELF analysis failed: %s", e)
 
     def _perform_string_extraction(self, file_path: str, options: dict[str, Any], results: dict[str, Any]) -> None:
-        """Helper to perform string extraction."""
+        """Extract and analyze strings from the binary.
+
+        Extracts printable ASCII and Unicode strings from the binary file and
+        identifies interesting strings related to licensing, passwords, URLs, and
+        other indicators relevant to protection analysis.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+            options: Analysis options dictionary with extract_strings flag.
+            results: Results dictionary to update with string extraction results.
+        """
         if options.get("extract_strings", True):
             self.logger.info("Extracting strings...")
             try:
@@ -224,7 +335,17 @@ class AnalysisCLI:
 
     @staticmethod
     def _calculate_hash(file_path: str) -> str:
-        """Calculate SHA256 hash of file."""
+        """Calculate SHA256 hash of file.
+
+        Computes the SHA256 cryptographic hash of the target file, reading in
+        4KB blocks for efficient processing of large files.
+
+        Args:
+            file_path: Path to the file to hash.
+
+        Returns:
+            Hexadecimal representation of the SHA256 hash.
+        """
         sha256_hash = hashlib.sha256()
         with open(file_path, "rb") as f:
             for byte_block in iter(lambda: f.read(4096), b""):
@@ -233,7 +354,20 @@ class AnalysisCLI:
 
     @staticmethod
     def _format_findings(data: dict[str, Any], source: str) -> list[dict[str, Any]]:
-        """Format findings from analysis data."""
+        """Format findings from analysis data.
+
+        Converts raw analysis results into a standardized findings format,
+        extracting simple scalar values and creating structured finding objects
+        with type, description, and impact level.
+
+        Args:
+            data: Dictionary of raw analysis data to format.
+            source: Name of the analysis source for categorization.
+
+        Returns:
+            List of formatted finding dictionaries with type, description,
+                and impact fields.
+        """
         findings: list[dict[str, Any]] = []
 
         if isinstance(data, dict):
@@ -250,7 +384,18 @@ class AnalysisCLI:
 
     @staticmethod
     def _check_suspicious_apis(imports: dict[str, list[str]]) -> list[str]:
-        """Check for suspicious API calls."""
+        """Check for suspicious API calls.
+
+        Scans imported functions from the PE import table for known suspicious or
+        potentially dangerous Windows API functions that could indicate malicious
+        behavior, code injection, or protection bypass techniques.
+
+        Args:
+            imports: Dictionary mapping module names to lists of imported function names.
+
+        Returns:
+            List of suspicious API names found in the imports.
+        """
         suspicious_apis = [
             "VirtualProtect",
             "VirtualAlloc",
@@ -279,7 +424,19 @@ class AnalysisCLI:
 
     @staticmethod
     def _extract_strings(file_path: str, min_length: int = 4) -> list[str]:
-        """Extract printable strings from binary."""
+        """Extract printable strings from binary.
+
+        Extracts both ASCII and Unicode (UTF-16LE) strings from the binary file,
+        returning only strings that meet the minimum length requirement. Strings
+        are extracted by scanning for consecutive printable characters.
+
+        Args:
+            file_path: Path to the binary file to scan.
+            min_length: Minimum string length to include in results (default: 4).
+
+        Returns:
+            List of extracted printable strings from the binary.
+        """
         MIN_PRINTABLE_ASCII = 32
         MAX_PRINTABLE_ASCII = 126
 
@@ -318,7 +475,19 @@ class AnalysisCLI:
 
     @staticmethod
     def _find_interesting_strings(strings: list[str]) -> list[str]:
-        """Find potentially interesting strings."""
+        """Find potentially interesting strings.
+
+        Filters extracted strings to identify those with patterns relevant to
+        software licensing, protection analysis, and vulnerability research,
+        including licensing keywords, credentials, URLs, and suspicious API calls.
+
+        Args:
+            strings: List of extracted strings from the binary.
+
+        Returns:
+            List of strings matching interesting patterns related to
+                licensing, security, and exploitation.
+        """
         interesting_patterns = [
             "password",
             "passwd",
@@ -357,7 +526,20 @@ class AnalysisCLI:
         return interesting
 
     def generate_report(self, results: dict[str, Any], format: str, output_file: str | None = None) -> str:
-        """Generate analysis report."""
+        """Generate analysis report.
+
+        Creates a formatted report from the analysis results in the specified format
+        (JSON, HTML, PDF, XML, CSV, Markdown, or text). The report is saved to disk
+        and the path is returned.
+
+        Args:
+            results: Dictionary of analysis results containing findings and metadata.
+            format: Report format (json, html, pdf, xml, csv, markdown, txt).
+            output_file: Optional custom output file path. If not provided, auto-generated.
+
+        Returns:
+            Path to the generated report file.
+        """
         self.logger.info("Generating %s report...", format)
 
         report_path = self.report_generator.generate_report(results, format=format, output_file=output_file)
@@ -366,7 +548,19 @@ class AnalysisCLI:
         return report_path
 
     def run_batch_analysis(self, file_list: list[str], options: dict[str, Any]) -> list[dict[str, Any]]:
-        """Run analysis on multiple files."""
+        """Run analysis on multiple files.
+
+        Performs comprehensive analysis on a batch of files, aggregating results
+        and handling errors gracefully. Each file is analyzed with the specified
+        options, and results or error information are collected for each file.
+
+        Args:
+            file_list: List of file paths to analyze.
+            options: Dictionary of analysis options for all files.
+
+        Returns:
+            List of analysis results or error records, one per file.
+        """
         results: list[dict[str, Any]] = []
 
         for file_path in file_list:
@@ -388,7 +582,12 @@ class AnalysisCLI:
 
 
 def main() -> None:
-    """Run main entry point for CLI."""
+    """Run main entry point for CLI.
+
+    Parses command-line arguments and initiates binary analysis based on user input.
+    Supports single file analysis, batch processing, and various report formats.
+    Handles both interactive and batch modes with configurable analysis options.
+    """
     parser = argparse.ArgumentParser(
         description="Intellicrack Binary Analysis CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,

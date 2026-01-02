@@ -827,7 +827,7 @@ except ImportError as e:
             object: CPUFreq object with current, min, max attributes, or list thereof.
         """
 
-        class CPUFreq:  # noqa: B903 - Must match psutil API for compatibility
+        class CPUFreq:
             """CPU frequency information container."""
 
             def __init__(self, current: float = 0.0, min: float = 0.0, max: float = 0.0) -> None:
@@ -1005,7 +1005,7 @@ except ImportError as e:
             list[object]: List of DiskPartition objects.
         """
 
-        class DiskPartition:  # noqa: B903 - Must match psutil API for compatibility
+        class DiskPartition:
             """Disk partition information container."""
 
             def __init__(self, device: str, mountpoint: str, fstype: str, opts: str) -> None:
@@ -1268,7 +1268,7 @@ except ImportError as e:
                 *args: Positional arguments passed to subprocess.Popen.
                 **kwargs: Keyword arguments passed to subprocess.Popen.
             """
-            super().__init__(*args, **kwargs)  # type: ignore[call-overload]
+            super().__init__(*args, **kwargs)
             self._process: FallbackProcess | None = FallbackProcess(self.pid) if self.pid else None
 
         def as_dict(self, attrs: list[str] | None = None) -> dict[str, object]:

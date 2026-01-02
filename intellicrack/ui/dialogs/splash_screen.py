@@ -49,9 +49,16 @@ class SplashScreen(QSplashScreen):
     def __init__(self, pixmap_path: str | None = None) -> None:
         """Initialize the splash screen.
 
-        Args:
-            pixmap_path: Path to splash image (optional)
+        Creates a customizable splash screen widget with a progress bar and
+        status label. If no pixmap path is provided, generates a default
+        dark gray splash screen with Intellicrack branding.
 
+        Args:
+            pixmap_path: Path to splash image file. If None or path does
+                not exist, a default splash screen is generated.
+
+        Returns:
+            None
         """
         # Create default pixmap if none provided
         if pixmap_path and os.path.exists(pixmap_path):
@@ -98,25 +105,45 @@ class SplashScreen(QSplashScreen):
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint)
 
     def update_progress(self, value: int, message: str) -> None:
-        """Update progress bar and status message."""
+        """Update progress bar and status message.
+
+        Args:
+            value: Progress value (0-100).
+            message: Status message to display.
+
+        Returns:
+            None
+        """
         self.progress_bar.setValue(value)
         self.status_label.setText(message)
         QApplication.processEvents()
 
     def set_progress(self, value: int, message: str = "") -> None:
-        """Set progress value and optional message."""
+        """Set progress value and optional message.
+
+        Args:
+            value: Progress value (0-100).
+            message: Status message to display. Defaults to empty string.
+
+        Returns:
+            None
+        """
         self.progress_updated.emit(value, message)
 
 
 def create_progress_splash_screen(image_path: str | None = None) -> SplashScreen:
     """Create and return a progress splash screen.
 
+    Factory function to instantiate a SplashScreen widget with optional
+    custom image support. Provides a convenient interface for creating
+    application splash screens with progress tracking capabilities.
+
     Args:
-        image_path: Optional path to splash image
+        image_path: Optional path to splash image file. If None or invalid,
+            a default splash screen is generated.
 
     Returns:
-        SplashScreen instance
-
+        A configured SplashScreen instance ready for display.
     """
     return SplashScreen(image_path)
 

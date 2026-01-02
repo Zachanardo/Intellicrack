@@ -9,7 +9,6 @@ import os
 import sys
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 from PyQt6.QtCore import QTimer
@@ -17,6 +16,9 @@ from PyQt6.QtWidgets import QApplication
 
 from intellicrack.ui.main_app import IntellicrackApp
 from tests.base_test import IntellicrackTestBase
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture(scope="module")
@@ -28,18 +30,45 @@ def qapp() -> QApplication:
         yield QApplication.instance()
 
 
+class FakeModelManager:
+    """Fake ModelManager for testing without AI dependencies."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        pass
+
+    def load_model(self, model_name: str) -> None:
+        pass
+
+    def cleanup(self) -> None:
+        pass
+
+
+class FakeDashboardManager:
+    """Fake DashboardManager for testing without dashboard dependencies."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        pass
+
+    def start(self) -> None:
+        pass
+
+    def stop(self) -> None:
+        pass
+
+
 @pytest.fixture
-def main_app(qapp: QApplication) -> IntellicrackApp:
+def main_app(qapp: QApplication, monkeypatch: pytest.MonkeyPatch) -> IntellicrackApp:
     """Create IntellicrackApp instance for testing."""
     os.environ["QT_QPA_PLATFORM"] = "offscreen"
     os.environ["INTELLICRACK_TESTING"] = "1"
     os.environ["DISABLE_AI_WORKERS"] = "1"
 
-    with patch("intellicrack.ui.main_app.ModelManager"):
-        with patch("intellicrack.ui.main_app.DashboardManager"):
-            app = IntellicrackApp()
-            yield app
-            app.close()
+    monkeypatch.setattr("intellicrack.ui.main_app.ModelManager", FakeModelManager)
+    monkeypatch.setattr("intellicrack.ui.main_app.DashboardManager", FakeDashboardManager)
+
+    app = IntellicrackApp()
+    yield app
+    app.close()
 
 
 class TestIntellicrackAppInitialization(IntellicrackTestBase):
@@ -186,7 +215,7 @@ class TestIntellicrackAppBinaryLoading(IntellicrackTestBase):
 
     def test_on_binary_loaded_with_real_pe_binary(self, main_app: IntellicrackApp) -> None:
         """_on_binary_loaded works with realistic PE binary metadata."""
-        test_binary_path = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/7zip.exe")
+        test_binary_path = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "7zip.exe"
         if not test_binary_path.exists():
             pytest.skip("Test binary not available")
 

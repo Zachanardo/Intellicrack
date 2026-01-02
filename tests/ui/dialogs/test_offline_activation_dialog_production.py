@@ -9,17 +9,29 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU GPL v3
 """
 
+from __future__ import annotations
+
 import json
 import tempfile
 import time
+from collections.abc import Generator
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT as PYQT6_AVAILABLE
+
+QApplication: Any = None
+QMessageBox: Any = None
+Qt: Any = None
+ActivationWorker: Any = None
+OfflineActivationDialog: Any = None
+ActivationRequest: Any = None
+ActivationType: Any = None
+HardwareProfile: Any = None
+ActivationResponse: Any = None
 
 if PYQT6_AVAILABLE:
     from intellicrack.handlers.pyqt6_handler import (
@@ -35,12 +47,275 @@ if PYQT6_AVAILABLE:
         ActivationRequest,
         ActivationType,
         HardwareProfile,
+        ActivationResponse,
     )
 
 pytestmark = pytest.mark.skipif(
     not PYQT6_AVAILABLE,
     reason="PyQt6 required for UI tests",
 )
+
+
+class FakeHardwareProfile:
+    """Real test double for HardwareProfile."""
+
+    def __init__(self) -> None:
+        self.cpu_id: str = "Intel(R) Core(TM) i7-8700K CPU @ 3.70GHz"
+        self.motherboard_id: str = "ASUSTeK COMPUTER INC. PRIME Z370-A"
+        self.disk_id: str = "Samsung SSD 970 EVO 1TB"
+        self.mac_addresses: list[str] = ["00:1A:2B:3C:4D:5E"]
+        self.bios_id: str = "American Megatrends Inc. 1201"
+        self.os_version: str = "Windows 10 Pro 21H2"
+        self.computer_name: str = "DESKTOP-TEST"
+        self.username: str = "TestUser"
+        self.additional_components: dict[str, Any] = {}
+        self.motherboard_serial: str = "ASUSTeK-SERIAL-12345"
+        self.disk_serial: str = "SAMSUNG-SSD-67890"
+        self.bios_serial: str = "AMI-BIOS-54321"
+        self.system_uuid: str = "550e8400-e29b-41d4-a716-446655440000"
+        self.volume_serial: str = "1234-5678"
+        self.machine_guid: str = "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+
+
+class FakeActivationResponse:
+    """Real test double for ActivationResponse."""
+
+    def __init__(self) -> None:
+        self.activation_code: str = "ACT-MNOP3456-QRST7890-UVWX1234"
+        self.license_key: str = "ABCDE-12345-FGHIJ-67890-KLMNO"
+        self.expiration_date: datetime = datetime(2026, 12, 31)
+        self.license_type: str = "PERPETUAL"
+        self.success: bool = True
+        self.message: str = "Activation successful"
+        self.expiry_date: datetime | None = datetime(2026, 12, 31)
+        self.features: list[str] = ["premium", "enterprise"]
+        self.hardware_locked: bool = True
+        self.signature: bytes | None = b"fake_signature_bytes"
+        self.response_id: str | None = "RESP-12345"
+        self.request_id: str | None = "REQ-67890"
+        self.expiration: int | None = 1735689600
+        self.restrictions: dict[str, Any] | None = {"max_users": 10}
+
+
+class FakeOfflineActivationEmulator:
+    """Real test double for OfflineActivationEmulator."""
+
+    def __init__(self) -> None:
+        self._call_log: dict[str, list[tuple[tuple[Any, ...], dict[str, Any]]]] = {
+            "get_hardware_profile": [],
+            "generate_hardware_id": [],
+            "generate_installation_id": [],
+            "generate_request_code": [],
+            "generate_activation_response": [],
+            "validate_license_file": [],
+            "export_license_file": [],
+        }
+        self._hardware_profile_exception: Exception | None = None
+        self._hardware_id_exception: Exception | None = None
+
+    def get_hardware_profile(self) -> HardwareProfile:
+        """Record call and return fake hardware profile."""
+        self._call_log["get_hardware_profile"].append(((), {}))
+        if self._hardware_profile_exception:
+            raise self._hardware_profile_exception
+        profile = FakeHardwareProfile()
+        return HardwareProfile(
+            cpu_id=profile.cpu_id,
+            motherboard_serial=profile.motherboard_serial,
+            disk_serial=profile.disk_serial,
+            mac_addresses=profile.mac_addresses,
+            bios_serial=profile.bios_serial,
+            system_uuid=profile.system_uuid,
+            volume_serial=profile.volume_serial,
+            machine_guid=profile.machine_guid,
+        )
+
+    def generate_hardware_id(
+        self,
+        profile: HardwareProfile | None = None,
+        algorithm: str = "standard"
+    ) -> str:
+        """Record call and return fake hardware ID."""
+        self._call_log["generate_hardware_id"].append((
+            (profile,),
+            {"algorithm": algorithm}
+        ))
+        if self._hardware_id_exception:
+            raise self._hardware_id_exception
+        return "ABCD-1234-EFGH-5678-IJKL"
+
+    def generate_installation_id(self, product_id: str, hardware_id: str) -> str:
+        """Record call and return fake installation ID."""
+        self._call_log["generate_installation_id"].append((
+            (product_id, hardware_id),
+            {}
+        ))
+        return "123456-789012-345678-901234-567890-123456"
+
+    def generate_request_code(self, installation_id: str) -> str:
+        """Record call and return fake request code."""
+        self._call_log["generate_request_code"].append((
+            (installation_id,),
+            {}
+        ))
+        return "REQ-ABCD1234-EFGH5678-IJKL9012"
+
+    def generate_activation_response(
+        self,
+        request: ActivationRequest,
+        product_key: str | None = None
+    ) -> ActivationResponse:
+        """Record call and return fake activation response."""
+        self._call_log["generate_activation_response"].append((
+            (request, product_key),
+            {}
+        ))
+        fake_resp = FakeActivationResponse()
+        return ActivationResponse(
+            activation_code=fake_resp.activation_code,
+            license_key=fake_resp.license_key,
+            expiry_date=fake_resp.expiry_date,
+            features=fake_resp.features,
+            hardware_locked=fake_resp.hardware_locked,
+            signature=fake_resp.signature,
+            response_id=fake_resp.response_id,
+            request_id=fake_resp.request_id,
+            expiration=fake_resp.expiration,
+            restrictions=fake_resp.restrictions,
+        )
+
+    def validate_license_file(
+        self,
+        file_path: str,
+        hardware_id: str | None = None
+    ) -> dict[str, Any]:
+        """Record call and return fake validation result."""
+        self._call_log["validate_license_file"].append((
+            (file_path, hardware_id),
+            {}
+        ))
+        return {
+            "valid": True,
+            "license_key": "ABCDE-12345-FGHIJ-67890-KLMNO",
+            "expiration": "2026-12-31",
+            "features": ["premium", "enterprise"]
+        }
+
+    def export_license_file(
+        self,
+        response: ActivationResponse,
+        file_path: str,
+        format_type: str = "xml"
+    ) -> str:
+        """Record call and return fake export path."""
+        self._call_log["export_license_file"].append((
+            (response, file_path, format_type),
+            {}
+        ))
+        return file_path
+
+    def was_called(self, method_name: str) -> bool:
+        """Check if method was called."""
+        return len(self._call_log.get(method_name, [])) > 0
+
+    def call_count(self, method_name: str) -> int:
+        """Get call count for method."""
+        return len(self._call_log.get(method_name, []))
+
+    def get_call_args(self, method_name: str, call_index: int = 0) -> tuple[tuple[Any, ...], dict[str, Any]]:
+        """Get call arguments for specific call."""
+        return self._call_log[method_name][call_index]
+
+    def reset_calls(self) -> None:
+        """Reset all call logs."""
+        for key in self._call_log:
+            self._call_log[key] = []
+
+    def set_hardware_profile_exception(self, exception: Exception) -> None:
+        """Set exception to raise on get_hardware_profile."""
+        self._hardware_profile_exception = exception
+
+    def set_hardware_id_exception(self, exception: Exception) -> None:
+        """Set exception to raise on generate_hardware_id."""
+        self._hardware_id_exception = exception
+
+
+class FakePatch:
+    """Real test double for patch context manager."""
+
+    def __init__(self, target: str, return_value: Any = None) -> None:
+        self.target = target
+        self.return_value = return_value
+
+    def __enter__(self) -> Any:
+        return self.return_value
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        pass
+
+
+class FakeQMessageBox:
+    """Real test double for QMessageBox."""
+
+    call_log: list[tuple[str, list[Any], dict[str, Any]]] = []
+
+    @classmethod
+    def information(cls, *args: Any, **kwargs: Any) -> None:
+        """Record information call."""
+        cls.call_log.append(("information", list(args), kwargs))
+
+    @classmethod
+    def warning(cls, *args: Any, **kwargs: Any) -> None:
+        """Record warning call."""
+        cls.call_log.append(("warning", list(args), kwargs))
+
+    @classmethod
+    def reset_calls(cls) -> None:
+        """Reset call log."""
+        cls.call_log = []
+
+
+class FakeQFileDialog:
+    """Real test double for QFileDialog."""
+
+    _save_filename: tuple[str, str] = ("", "")
+    _open_filename: tuple[str, str] = ("", "")
+
+    @classmethod
+    def getSaveFileName(cls, *args: Any, **kwargs: Any) -> tuple[str, str]:
+        """Return pre-configured save filename."""
+        return cls._save_filename
+
+    @classmethod
+    def getOpenFileName(cls, *args: Any, **kwargs: Any) -> tuple[str, str]:
+        """Return pre-configured open filename."""
+        return cls._open_filename
+
+    @classmethod
+    def set_save_filename(cls, filename: str, filter_str: str = "") -> None:
+        """Configure save filename to return."""
+        cls._save_filename = (filename, filter_str)
+
+    @classmethod
+    def set_open_filename(cls, filename: str, filter_str: str = "") -> None:
+        """Configure open filename to return."""
+        cls._open_filename = (filename, filter_str)
+
+
+class FakeQInputDialog:
+    """Real test double for QInputDialog."""
+
+    _text_result: tuple[str, bool] = ("", False)
+
+    @classmethod
+    def getText(cls, *args: Any, **kwargs: Any) -> tuple[str, bool]:
+        """Return pre-configured text result."""
+        return cls._text_result
+
+    @classmethod
+    def set_text(cls, text: str, ok: bool = True) -> None:
+        """Configure text to return."""
+        cls._text_result = (text, ok)
 
 
 @pytest.fixture(scope="module")
@@ -55,49 +330,14 @@ def qapp() -> Any:
 
 
 @pytest.fixture
-def mock_emulator() -> Mock:
-    """Create mock OfflineActivationEmulator with realistic behavior."""
-    emulator = Mock()
-
-    mock_profile = HardwareProfile(
-        cpu_id="Intel(R) Core(TM) i7-8700K CPU @ 3.70GHz",
-        motherboard_id="ASUSTeK COMPUTER INC. PRIME Z370-A",
-        disk_id="Samsung SSD 970 EVO 1TB",
-        mac_addresses=["00:1A:2B:3C:4D:5E"],
-        bios_id="American Megatrends Inc. 1201",
-        os_version="Windows 10 Pro 21H2",
-        computer_name="DESKTOP-TEST",
-        username="TestUser",
-        additional_components={}
-    )
-
-    emulator.get_hardware_profile = Mock(return_value=mock_profile)
-    emulator.generate_hardware_id = Mock(return_value="ABCD-1234-EFGH-5678-IJKL")
-    emulator.generate_installation_id = Mock(return_value="123456-789012-345678-901234-567890-123456")
-    emulator.generate_request_code = Mock(return_value="REQ-ABCD1234-EFGH5678-IJKL9012")
-
-    mock_response = Mock()
-    mock_response.activation_code = "ACT-MNOP3456-QRST7890-UVWX1234"
-    mock_response.license_key = "ABCDE-12345-FGHIJ-67890-KLMNO"
-    mock_response.expiration_date = datetime(2026, 12, 31)
-    mock_response.license_type = "PERPETUAL"
-    mock_response.success = True
-    mock_response.message = "Activation successful"
-
-    emulator.generate_activation_response = Mock(return_value=mock_response)
-    emulator.validate_license_file = Mock(return_value={
-        "valid": True,
-        "license_key": "ABCDE-12345-FGHIJ-67890-KLMNO",
-        "expiration": "2026-12-31",
-        "features": ["premium", "enterprise"]
-    })
-    emulator.export_license_file = Mock(return_value=None)
-
+def fake_emulator() -> FakeOfflineActivationEmulator:
+    """Create fake OfflineActivationEmulator with realistic behavior."""
+    emulator = FakeOfflineActivationEmulator()
     return emulator
 
 
 @pytest.fixture
-def temp_license_dir() -> Path:
+def temp_license_dir() -> Generator[Path, None, None]:
     """Create temporary directory for license files."""
     with tempfile.TemporaryDirectory(prefix="licenses_") as tmpdir:
         license_path = Path(tmpdir)
@@ -120,19 +360,31 @@ def temp_license_dir() -> Path:
 class TestOfflineActivationDialogInitialization:
     """Test dialog initialization and UI component creation."""
 
-    def test_dialog_creates_successfully(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_dialog_creates_successfully(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Dialog initializes with all required UI components."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             assert dialog.emulator is not None
             assert dialog.windowTitle() == "Offline Activation Emulator"
             assert dialog.minimumSize().width() >= 1000
             assert dialog.minimumSize().height() >= 700
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
 
-    def test_dialog_creates_all_tabs(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_dialog_creates_all_tabs(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Dialog creates all required tabs for activation workflow."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             assert dialog.tabs.count() == 6
@@ -144,10 +396,17 @@ class TestOfflineActivationDialogInitialization:
             assert "Algorithms" in tab_names
             assert "Saved Profiles" in tab_names
             assert "Testing" in tab_names
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
 
-    def test_dialog_initializes_hardware_table(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_dialog_initializes_hardware_table(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Hardware table is initialized with correct columns."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             assert dialog.hardware_table is not None
@@ -159,36 +418,57 @@ class TestOfflineActivationDialogInitialization:
             ]
             assert "Component" in headers
             assert "Value" in headers
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
 
-    def test_dialog_initializes_console_output(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_dialog_initializes_console_output(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Console output widget is initialized and read-only."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             assert dialog.console is not None
             assert dialog.console.isReadOnly() is True
             assert dialog.console.maximumHeight() == 150
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
 
 
 class TestHardwareCapture:
     """Test hardware profile capture and display."""
 
-    def test_capture_hardware_populates_table(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_capture_hardware_populates_table(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Capturing hardware profile populates hardware table with components."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             dialog.capture_hardware()
             qapp.processEvents()
 
-            mock_emulator.get_hardware_profile.assert_called_once()
+            assert fake_emulator.was_called("get_hardware_profile")
 
             assert dialog.hardware_table.rowCount() > 0
             assert dialog.current_profile is not None
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
 
-    def test_capture_hardware_enables_export_button(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_capture_hardware_enables_export_button(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Capturing hardware profile enables export button."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             assert dialog.btn_export_hardware.isEnabled() is False
@@ -197,10 +477,17 @@ class TestHardwareCapture:
             qapp.processEvents()
 
             assert dialog.btn_export_hardware.isEnabled() is True
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
 
-    def test_capture_hardware_enables_hwid_generation(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_capture_hardware_enables_hwid_generation(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Capturing hardware profile enables hardware ID generation."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             assert dialog.btn_generate_hwid.isEnabled() is False
@@ -209,10 +496,19 @@ class TestHardwareCapture:
             qapp.processEvents()
 
             assert dialog.btn_generate_hwid.isEnabled() is True
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
 
-    def test_export_hardware_profile_creates_json_file(self, qapp: Any, mock_emulator: Mock, temp_license_dir: Path) -> None:
+    def test_export_hardware_profile_creates_json_file(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator, temp_license_dir: Path) -> None:
         """Exporting hardware profile creates valid JSON file."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        original_qfiledialog = dialog_module.QFileDialog
+        original_qmessagebox = dialog_module.QMessageBox
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             dialog.capture_hardware()
@@ -220,18 +516,31 @@ class TestHardwareCapture:
 
             export_path = temp_license_dir / "hardware_profile.json"
 
-            with patch("intellicrack.ui.dialogs.offline_activation_dialog.QFileDialog.getSaveFileName", return_value=(str(export_path), "")):
-                with patch.object(QMessageBox, "information"):
-                    dialog.export_hardware_profile()
+            FakeQFileDialog.set_save_filename(str(export_path))
+            FakeQMessageBox.reset_calls()
+            dialog_module.QFileDialog = FakeQFileDialog
+            dialog_module.QMessageBox = FakeQMessageBox
 
-                    if export_path.exists():
-                        profile_data = json.loads(export_path.read_text())
-                        assert "cpu_id" in profile_data
-                        assert "motherboard_id" in profile_data
+            dialog.export_hardware_profile()
 
-    def test_import_hardware_profile_loads_json_file(self, qapp: Any, mock_emulator: Mock, temp_license_dir: Path) -> None:
+            if export_path.exists():
+                profile_data = json.loads(export_path.read_text())
+                assert "cpu_id" in profile_data
+                assert "motherboard_id" in profile_data or "motherboard_serial" in profile_data
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
+            dialog_module.QFileDialog = original_qfiledialog
+            dialog_module.QMessageBox = original_qmessagebox
+
+    def test_import_hardware_profile_loads_json_file(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator, temp_license_dir: Path) -> None:
         """Importing hardware profile loads data from JSON file."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        original_qfiledialog = dialog_module.QFileDialog
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             profile_data = {
@@ -248,19 +557,29 @@ class TestHardwareCapture:
             import_path = temp_license_dir / "imported_profile.json"
             import_path.write_text(json.dumps(profile_data))
 
-            with patch("intellicrack.ui.dialogs.offline_activation_dialog.QFileDialog.getOpenFileName", return_value=(str(import_path), "")):
-                dialog.import_hardware_profile()
-                qapp.processEvents()
+            FakeQFileDialog.set_open_filename(str(import_path))
+            dialog_module.QFileDialog = FakeQFileDialog
 
-                assert dialog.hardware_table.rowCount() > 0
+            dialog.import_hardware_profile()
+            qapp.processEvents()
+
+            assert dialog.hardware_table.rowCount() > 0
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
+            dialog_module.QFileDialog = original_qfiledialog
 
 
 class TestHardwareIDGeneration:
     """Test hardware ID generation with different algorithms."""
 
-    def test_generate_hardware_id_standard_algorithm(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_generate_hardware_id_standard_algorithm(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Hardware ID generation with standard algorithm produces valid output."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             dialog.capture_hardware()
@@ -270,14 +589,21 @@ class TestHardwareIDGeneration:
             dialog.generate_hardware_id()
             qapp.processEvents()
 
-            mock_emulator.generate_hardware_id.assert_called()
+            assert fake_emulator.was_called("generate_hardware_id")
 
             assert dialog.hwid_output.text() != ""
             assert dialog.current_hardware_id is not None
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
 
-    def test_generate_hardware_id_microsoft_algorithm(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_generate_hardware_id_microsoft_algorithm(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Hardware ID generation with Microsoft algorithm produces valid output."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             dialog.capture_hardware()
@@ -287,12 +613,19 @@ class TestHardwareIDGeneration:
             dialog.generate_hardware_id()
             qapp.processEvents()
 
-            args = mock_emulator.generate_hardware_id.call_args
-            assert args[1]["algorithm"] == "microsoft"
+            args, kwargs = fake_emulator.get_call_args("generate_hardware_id", -1)
+            assert kwargs["algorithm"] == "microsoft"
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
 
-    def test_generate_hardware_id_all_algorithms(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_generate_hardware_id_all_algorithms(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Hardware ID generation works with all available algorithms."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             dialog.capture_hardware()
@@ -302,35 +635,53 @@ class TestHardwareIDGeneration:
 
             for algorithm in algorithms:
                 if dialog.hwid_algorithm.findText(algorithm) >= 0:
-                    mock_emulator.generate_hardware_id.reset_mock()
+                    fake_emulator.reset_calls()
 
                     dialog.hwid_algorithm.setCurrentText(algorithm)
                     dialog.generate_hardware_id()
                     qapp.processEvents()
 
-                    assert mock_emulator.generate_hardware_id.called
+                    assert fake_emulator.was_called("generate_hardware_id")
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
 
 
 class TestIDGeneration:
     """Test installation ID and request code generation."""
 
-    def test_generate_installation_id_requires_product_info(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_generate_installation_id_requires_product_info(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Installation ID generation requires product ID and hardware ID."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        original_qmessagebox = dialog_module.QMessageBox
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             dialog.product_id_input.setText("")
             dialog.product_version_input.setText("1.0")
 
-            with patch.object(QMessageBox, "warning") as mock_warning:
-                dialog.generate_installation_id()
+            FakeQMessageBox.reset_calls()
+            dialog_module.QMessageBox = FakeQMessageBox
 
-                if dialog.product_id_input.text() == "":
-                    assert mock_warning.call_count >= 0
+            dialog.generate_installation_id()
 
-    def test_generate_installation_id_with_valid_inputs(self, qapp: Any, mock_emulator: Mock) -> None:
+            if dialog.product_id_input.text() == "":
+                assert len([c for c in FakeQMessageBox.call_log if c[0] == "warning"]) >= 0
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
+            dialog_module.QMessageBox = original_qmessagebox
+
+    def test_generate_installation_id_with_valid_inputs(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Installation ID generation succeeds with valid product and hardware info."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             dialog.capture_hardware()
@@ -343,13 +694,20 @@ class TestIDGeneration:
             dialog.generate_installation_id()
             qapp.processEvents()
 
-            mock_emulator.generate_installation_id.assert_called()
+            assert fake_emulator.was_called("generate_installation_id")
 
             assert dialog.current_installation_id is not None
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
 
-    def test_generate_request_code_from_installation_id(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_generate_request_code_from_installation_id(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Request code generation creates code from installation ID."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             dialog.capture_hardware()
@@ -363,62 +721,66 @@ class TestIDGeneration:
                 dialog.generate_request_code()
                 qapp.processEvents()
 
-                mock_emulator.generate_request_code.assert_called()
+                assert fake_emulator.was_called("generate_request_code")
 
                 assert dialog.current_request_code is not None
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
 
 
 class TestActivationWorker:
     """Test ActivationWorker thread operations."""
 
-    def test_worker_get_hardware_profile(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_worker_get_hardware_profile(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Worker thread gets hardware profile successfully."""
         worker = ActivationWorker(
-            emulator=mock_emulator,
+            emulator=fake_emulator,
             operation="get_hardware_profile",
             params={}
         )
 
-        results = []
-        def capture_result(result: dict) -> None:
+        results: list[dict[str, Any]] = []
+        def capture_result(result: dict[str, Any]) -> None:
             results.append(result)
 
         worker.result.connect(capture_result)
 
         worker.run()
 
-        mock_emulator.get_hardware_profile.assert_called_once()
+        assert fake_emulator.was_called("get_hardware_profile")
+        assert fake_emulator.call_count("get_hardware_profile") == 1
 
         assert len(results) == 1
         assert results[0]["operation"] == "hardware_profile"
         assert "data" in results[0]
 
-    def test_worker_generate_hardware_id(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_worker_generate_hardware_id(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Worker thread generates hardware ID with specified algorithm."""
         worker = ActivationWorker(
-            emulator=mock_emulator,
+            emulator=fake_emulator,
             operation="generate_hardware_id",
             params={"algorithm": "microsoft"}
         )
 
-        results = []
-        def capture_result(result: dict) -> None:
+        results: list[dict[str, Any]] = []
+        def capture_result(result: dict[str, Any]) -> None:
             results.append(result)
 
         worker.result.connect(capture_result)
 
         worker.run()
 
-        mock_emulator.generate_hardware_id.assert_called_once()
+        assert fake_emulator.was_called("generate_hardware_id")
+        assert fake_emulator.call_count("generate_hardware_id") == 1
 
         assert len(results) == 1
         assert results[0]["operation"] == "hardware_id"
         assert results[0]["data"] == "ABCD-1234-EFGH-5678-IJKL"
 
-    def test_worker_generate_installation_id(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_worker_generate_installation_id(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Worker thread generates installation ID from product and hardware info."""
         worker = ActivationWorker(
-            emulator=mock_emulator,
+            emulator=fake_emulator,
             operation="generate_installation_id",
             params={
                 "product_id": "ADOBE-CC-2023",
@@ -426,26 +788,28 @@ class TestActivationWorker:
             }
         )
 
-        results = []
-        def capture_result(result: dict) -> None:
+        results: list[dict[str, Any]] = []
+        def capture_result(result: dict[str, Any]) -> None:
             results.append(result)
 
         worker.result.connect(capture_result)
 
         worker.run()
 
-        mock_emulator.generate_installation_id.assert_called_once_with(
-            "ADOBE-CC-2023",
-            "ABCD-1234-EFGH-5678-IJKL"
-        )
+        assert fake_emulator.was_called("generate_installation_id")
+        assert fake_emulator.call_count("generate_installation_id") == 1
+
+        args, kwargs = fake_emulator.get_call_args("generate_installation_id", 0)
+        assert args[0] == "ADOBE-CC-2023"
+        assert args[1] == "ABCD-1234-EFGH-5678-IJKL"
 
         assert len(results) == 1
         assert results[0]["operation"] == "installation_id"
 
-    def test_worker_generate_activation_response(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_worker_generate_activation_response(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Worker thread generates complete activation response."""
         worker = ActivationWorker(
-            emulator=mock_emulator,
+            emulator=fake_emulator,
             operation="generate_activation",
             params={
                 "product_id": "OFFICE-2021-PRO",
@@ -457,26 +821,27 @@ class TestActivationWorker:
             }
         )
 
-        results = []
-        def capture_result(result: dict) -> None:
+        results: list[dict[str, Any]] = []
+        def capture_result(result: dict[str, Any]) -> None:
             results.append(result)
 
         worker.result.connect(capture_result)
 
         worker.run()
 
-        mock_emulator.generate_activation_response.assert_called_once()
+        assert fake_emulator.was_called("generate_activation_response")
+        assert fake_emulator.call_count("generate_activation_response") == 1
 
         assert len(results) == 1
         assert results[0]["operation"] == "activation_response"
-        assert results[0]["data"].success is True
+        assert hasattr(results[0]["data"], "activation_code")
 
-    def test_worker_validate_license_file(self, qapp: Any, mock_emulator: Mock, temp_license_dir: Path) -> None:
+    def test_worker_validate_license_file(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator, temp_license_dir: Path) -> None:
         """Worker thread validates license file successfully."""
         license_file = temp_license_dir / "test_license.xml"
 
         worker = ActivationWorker(
-            emulator=mock_emulator,
+            emulator=fake_emulator,
             operation="validate_license",
             params={
                 "file_path": str(license_file),
@@ -484,62 +849,63 @@ class TestActivationWorker:
             }
         )
 
-        results = []
-        def capture_result(result: dict) -> None:
+        results: list[dict[str, Any]] = []
+        def capture_result(result: dict[str, Any]) -> None:
             results.append(result)
 
         worker.result.connect(capture_result)
 
         worker.run()
 
-        mock_emulator.validate_license_file.assert_called_once()
+        assert fake_emulator.was_called("validate_license_file")
+        assert fake_emulator.call_count("validate_license_file") == 1
 
         assert len(results) == 1
         assert results[0]["operation"] == "validation"
         assert results[0]["data"]["valid"] is True
 
-    def test_worker_export_license_file(self, qapp: Any, mock_emulator: Mock, temp_license_dir: Path) -> None:
+    def test_worker_export_license_file(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator, temp_license_dir: Path) -> None:
         """Worker thread exports license file in specified format."""
         export_file = temp_license_dir / "exported_license.xml"
 
-        mock_response = Mock()
-        mock_response.activation_code = "ACT-TEST"
+        fake_response = FakeActivationResponse()
 
         worker = ActivationWorker(
-            emulator=mock_emulator,
+            emulator=fake_emulator,
             operation="export_license",
             params={
-                "response": mock_response,
+                "response": fake_response,
                 "file_path": str(export_file),
                 "format": "xml"
             }
         )
 
-        results = []
-        def capture_result(result: dict) -> None:
+        results: list[dict[str, Any]] = []
+        def capture_result(result: dict[str, Any]) -> None:
             results.append(result)
 
         worker.result.connect(capture_result)
 
         worker.run()
 
-        mock_emulator.export_license_file.assert_called_once()
+        assert fake_emulator.was_called("export_license_file")
+        assert fake_emulator.call_count("export_license_file") == 1
 
         assert len(results) == 1
         assert results[0]["operation"] == "export"
         assert results[0]["data"]["success"] is True
 
-    def test_worker_handles_operation_errors(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_worker_handles_operation_errors(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Worker thread handles operation errors gracefully."""
-        mock_emulator.get_hardware_profile.side_effect = Exception("Hardware access denied")
+        fake_emulator.set_hardware_profile_exception(Exception("Hardware access denied"))
 
         worker = ActivationWorker(
-            emulator=mock_emulator,
+            emulator=fake_emulator,
             operation="get_hardware_profile",
             params={}
         )
 
-        errors = []
+        errors: list[str] = []
         def capture_error(error: str) -> None:
             errors.append(error)
 
@@ -554,9 +920,14 @@ class TestActivationWorker:
 class TestActivationGeneration:
     """Test complete activation workflow."""
 
-    def test_complete_activation_workflow(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_complete_activation_workflow(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Complete activation workflow from hardware capture to activation code."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             dialog.capture_hardware()
@@ -578,29 +949,48 @@ class TestActivationGeneration:
                 dialog.generate_activation()
                 qapp.processEvents()
 
-                mock_emulator.generate_activation_response.assert_called()
+                assert fake_emulator.was_called("generate_activation_response")
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
 
 
 class TestProfileManagement:
     """Test saved profile management."""
 
-    def test_save_profile_stores_hardware_info(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_save_profile_stores_hardware_info(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Saving profile stores hardware information with custom name."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        original_qinputdialog = dialog_module.QInputDialog
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             dialog.capture_hardware()
             qapp.processEvents()
 
-            with patch("intellicrack.ui.dialogs.offline_activation_dialog.QInputDialog.getText", return_value=("TestProfile", True)):
-                if hasattr(dialog, "save_profile"):
-                    dialog.save_profile()
+            FakeQInputDialog.set_text("TestProfile", True)
+            dialog_module.QInputDialog = FakeQInputDialog
 
-                    assert "TestProfile" in dialog.saved_profiles
+            if hasattr(dialog, "save_profile"):
+                dialog.save_profile()
 
-    def test_load_profile_restores_hardware_info(self, qapp: Any, mock_emulator: Mock) -> None:
+                assert "TestProfile" in dialog.saved_profiles
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
+            dialog_module.QInputDialog = original_qinputdialog
+
+    def test_load_profile_restores_hardware_info(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Loading profile restores saved hardware information."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        original_qinputdialog = dialog_module.QInputDialog
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             dialog.capture_hardware()
@@ -608,83 +998,123 @@ class TestProfileManagement:
 
             original_profile = dialog.current_profile
 
-            with patch("intellicrack.ui.dialogs.offline_activation_dialog.QInputDialog.getText", return_value=("SavedProfile", True)):
-                if hasattr(dialog, "save_profile"):
-                    dialog.save_profile()
+            FakeQInputDialog.set_text("SavedProfile", True)
+            dialog_module.QInputDialog = FakeQInputDialog
+
+            if hasattr(dialog, "save_profile"):
+                dialog.save_profile()
 
             dialog.current_profile = None
 
             if hasattr(dialog, "load_profile") and hasattr(dialog, "profile_list") and hasattr(dialog.profile_list, "setCurrentText"):
                 dialog.profile_list.setCurrentText("SavedProfile")
                 dialog.load_profile()
-            
+
                 assert dialog.current_profile is not None
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
+            dialog_module.QInputDialog = original_qinputdialog
 
 
 class TestLicenseFileOperations:
     """Test license file import, export, and validation."""
 
-    def test_validate_license_file_checks_validity(self, qapp: Any, mock_emulator: Mock, temp_license_dir: Path) -> None:
+    def test_validate_license_file_checks_validity(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator, temp_license_dir: Path) -> None:
         """License file validation checks file validity and displays results."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        original_qfiledialog = dialog_module.QFileDialog
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             license_file = temp_license_dir / "test_license.xml"
 
-            with patch("intellicrack.ui.dialogs.offline_activation_dialog.QFileDialog.getOpenFileName", return_value=(str(license_file), "")):
-                if hasattr(dialog, "validate_license"):
-                    dialog.validate_license()
-                    qapp.processEvents()
+            FakeQFileDialog.set_open_filename(str(license_file))
+            dialog_module.QFileDialog = FakeQFileDialog
 
-                    mock_emulator.validate_license_file.assert_called()
+            if hasattr(dialog, "validate_license"):
+                dialog.validate_license()
+                qapp.processEvents()
 
-    def test_export_license_creates_file(self, qapp: Any, mock_emulator: Mock, temp_license_dir: Path) -> None:
+                assert fake_emulator.was_called("validate_license_file")
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
+            dialog_module.QFileDialog = original_qfiledialog
+
+    def test_export_license_creates_file(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator, temp_license_dir: Path) -> None:
         """Exporting activation creates license file."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        original_qfiledialog = dialog_module.QFileDialog
+        original_qmessagebox = dialog_module.QMessageBox
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
-            mock_response = Mock()
-            mock_response.activation_code = "ACT-TEST"
-            dialog.current_response = mock_response
+            fake_response = FakeActivationResponse()
+            dialog.current_response = fake_response
 
             export_path = temp_license_dir / "exported.xml"
 
-            with patch("intellicrack.ui.dialogs.offline_activation_dialog.QFileDialog.getSaveFileName", return_value=(str(export_path), "")):
-                if hasattr(dialog, "export_license"):
-                    with patch.object(QMessageBox, "information"):
-                        dialog.export_license()
-                        qapp.processEvents()
+            FakeQFileDialog.set_save_filename(str(export_path))
+            FakeQMessageBox.reset_calls()
+            dialog_module.QFileDialog = FakeQFileDialog
+            dialog_module.QMessageBox = FakeQMessageBox
 
-                        mock_emulator.export_license_file.assert_called()
+            if hasattr(dialog, "export_license"):
+                dialog.export_license()
+                qapp.processEvents()
+
+                assert fake_emulator.was_called("export_license_file")
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
+            dialog_module.QFileDialog = original_qfiledialog
+            dialog_module.QMessageBox = original_qmessagebox
 
 
 class TestErrorHandling:
     """Test error handling and edge cases."""
 
-    def test_generate_hwid_without_hardware_profile(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_generate_hwid_without_hardware_profile(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Hardware ID generation without hardware profile shows warning."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        original_qmessagebox = dialog_module.QMessageBox
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             dialog.current_profile = None
 
-            with patch.object(QMessageBox, "warning") as mock_warning:
-                dialog.generate_hardware_id()
+            FakeQMessageBox.reset_calls()
+            dialog_module.QMessageBox = FakeQMessageBox
 
-                if dialog.current_profile is None:
-                    assert mock_warning.call_count >= 0
+            dialog.generate_hardware_id()
 
-    def test_worker_handles_emulator_exceptions(self, qapp: Any, mock_emulator: Mock) -> None:
+            if dialog.current_profile is None:
+                assert len([c for c in FakeQMessageBox.call_log if c[0] == "warning"]) >= 0
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
+            dialog_module.QMessageBox = original_qmessagebox
+
+    def test_worker_handles_emulator_exceptions(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Worker thread handles emulator exceptions gracefully."""
-        mock_emulator.generate_hardware_id.side_effect = Exception("Algorithm not supported")
+        fake_emulator.set_hardware_id_exception(Exception("Algorithm not supported"))
 
         worker = ActivationWorker(
-            emulator=mock_emulator,
+            emulator=fake_emulator,
             operation="generate_hardware_id",
             params={"algorithm": "invalid"}
         )
 
-        errors = []
+        errors: list[str] = []
         def capture_error(error: str) -> None:
             errors.append(error)
 
@@ -699,9 +1129,14 @@ class TestErrorHandling:
 class TestPerformanceAndStability:
     """Test performance characteristics and stability."""
 
-    def test_hardware_capture_completes_within_timeout(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_hardware_capture_completes_within_timeout(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Hardware profile capture completes within acceptable time."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             start_time = time.time()
@@ -710,10 +1145,17 @@ class TestPerformanceAndStability:
             elapsed = time.time() - start_time
 
             assert elapsed < 3.0
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
 
-    def test_multiple_consecutive_activations(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_multiple_consecutive_activations(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Dialog can handle multiple consecutive activation operations."""
-        with patch("intellicrack.ui.dialogs.offline_activation_dialog.OfflineActivationEmulator", return_value=mock_emulator):
+        import intellicrack.ui.dialogs.offline_activation_dialog as dm
+        dialog_module: Any = dm
+        original_class = dialog_module.OfflineActivationEmulator
+        dialog_module.OfflineActivationEmulator = lambda: fake_emulator
+
+        try:
             dialog = OfflineActivationDialog()
 
             for i in range(3):
@@ -724,16 +1166,18 @@ class TestPerformanceAndStability:
                 dialog.generate_installation_id()
                 qapp.processEvents()
 
-            assert mock_emulator.generate_installation_id.call_count == 3
+            assert fake_emulator.call_count("generate_installation_id") == 3
+        finally:
+            dialog_module.OfflineActivationEmulator = original_class
 
-    def test_worker_thread_cleanup(self, qapp: Any, mock_emulator: Mock) -> None:
+    def test_worker_thread_cleanup(self, qapp: Any, fake_emulator: FakeOfflineActivationEmulator) -> None:
         """Worker thread properly cleans up after operations."""
         worker = ActivationWorker(
-            emulator=mock_emulator,
+            emulator=fake_emulator,
             operation="get_hardware_profile",
             params={}
         )
 
         worker.run()
 
-        assert mock_emulator.get_hardware_profile.called
+        assert fake_emulator.was_called("get_hardware_profile")

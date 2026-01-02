@@ -42,11 +42,14 @@ def secure_hash(data: str | bytes, algorithm: str = "sha256") -> str:
     """Generate a secure hash of the given data.
 
     Args:
-        data: Data to hash
-        algorithm: Hash algorithm (sha256, sha512, etc.)
+        data: Data to hash.
+        algorithm: Hash algorithm (sha256, sha512, etc.).
 
     Returns:
-        Hex digest of the hash
+        Hex digest of the hash.
+
+    Raises:
+        ValueError: If the specified algorithm is not supported.
 
     """
     logger.debug("Generating secure hash for data (type: %s) using algorithm: %s", type(data), algorithm)
@@ -78,16 +81,18 @@ def secure_subprocess(
     """Execute a subprocess command securely.
 
     Args:
-        command: Command to execute
-        shell: Whether to use shell (discouraged)
-        timeout: Command timeout in seconds
-        **kwargs: Additional arguments for subprocess.run
+        command: Command to execute.
+        shell: Whether to use shell (discouraged).
+        timeout: Command timeout in seconds.
+        **kwargs: Additional arguments for subprocess.run.
 
     Returns:
-        CompletedProcess instance
+        CompletedProcess instance with stdout and stderr captured as strings.
 
     Raises:
-        SecurityError: If shell=True without whitelist
+        SecurityError: If shell=True without whitelist.
+        FileNotFoundError: If the command is not found in the system PATH.
+        subprocess.TimeoutExpired: If the command execution exceeds the timeout.
 
     """
     logger.debug("Executing secure_subprocess command: %s, shell: %s, timeout: %s", command, shell, timeout)
@@ -138,6 +143,9 @@ def secure_yaml_load(data: str) -> object:
     Returns:
         Parsed YAML data as Python object (dict, list, or scalar)
 
+    Raises:
+        yaml.YAMLError: If the YAML string is malformed or invalid.
+
     """
     logger.debug("Safely loading YAML data.")
     return yaml.safe_load(data)
@@ -152,6 +160,9 @@ def secure_json_load(data: str) -> object:
 
     Returns:
         Parsed JSON data as Python object (dict, list, or scalar)
+
+    Raises:
+        json.JSONDecodeError: If the JSON string is malformed or invalid.
 
     """
     logger.debug("Safely loading JSON data.")

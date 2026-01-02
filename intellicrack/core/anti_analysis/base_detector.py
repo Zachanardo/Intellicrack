@@ -42,7 +42,11 @@ class BaseDetector(ABC):
     """
 
     def __init__(self) -> None:
-        """Initialize the base detector with logging and detection methods registry."""
+        """Initialize the base detector with logging and detection methods registry.
+
+        Sets up logging for the anti-analysis module and initializes the detection
+        methods registry as an empty dictionary to be populated by subclasses.
+        """
         self.logger = logging.getLogger("IntellicrackLogger.AntiAnalysis")
         self.detection_methods: dict[str, Callable[[], tuple[bool, float, Any]]] = {}
 
@@ -103,17 +107,25 @@ class BaseDetector(ABC):
 
     @abstractmethod
     def get_aggressive_methods(self) -> list[str]:
-        """Get list of method names that are considered aggressive."""
+        """Get list of method names that are considered aggressive.
+
+        Returns:
+            List of method names to treat as aggressive.
+        """
 
     @abstractmethod
     def get_detection_type(self) -> str:
-        """Get the type of detection this class performs."""
+        """Get the type of detection this class performs.
+
+        Returns:
+            String describing the detection type.
+        """
 
     def get_running_processes(self) -> tuple[str, list[str]]:
         """Get list of running processes based on platform.
 
         Returns:
-            Tuple of (raw_output, process_list)
+            Raw process output and parsed list of process names.
 
         """
         try:

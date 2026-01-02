@@ -171,6 +171,7 @@ class TestLoadingProgress:
         )
 
         assert progress.state == LoadingState.FAILED
+        assert progress.details is not None
         assert progress.details["error_type"] == "NetworkError"
         assert progress.details["retry_count"] == 3
 
@@ -186,6 +187,7 @@ class TestLoadingProgress:
         )
 
         assert progress.state == LoadingState.CANCELLED
+        assert progress.details is not None
         assert progress.details["cleanup_complete"] is True
 
     def test_loading_progress_percentage_boundaries(self) -> None:
@@ -240,6 +242,7 @@ class TestLoadingProgress:
             timestamp=time.time(),
         )
 
+        assert progress.details is not None
         assert progress.details["memory_allocated_mb"] == 8192
         assert progress.details["gpu_utilization_percent"] == 85
         assert progress.details["quantization_applied"] == "4-bit"
@@ -268,6 +271,8 @@ class TestLoadingProgress:
             timestamp=time2,
         )
 
+        assert progress1.timestamp is not None
+        assert progress2.timestamp is not None
         assert progress2.timestamp > progress1.timestamp
 
     def test_loading_progress_initialization_details(self) -> None:
@@ -290,6 +295,7 @@ class TestLoadingProgress:
         )
 
         assert progress.state == LoadingState.INITIALIZING
+        assert progress.details is not None
         assert progress.details["tokenizer_loaded"] is True
         assert progress.details["attention_implementation"] == "flash_attention_2"
 

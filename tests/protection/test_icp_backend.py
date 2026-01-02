@@ -24,9 +24,9 @@ import sqlite3
 import struct
 import tempfile
 import time
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -45,8 +45,84 @@ from intellicrack.protection.icp_backend import (
 )
 
 
+class FakeICPResult:
+    """Test double for ICP detection result."""
+
+    def __init__(
+        self,
+        name: str,
+        type: str,
+        version: str = "",
+        info: str = "",
+        string: str = "",
+    ) -> None:
+        self.name = name
+        self.type = type
+        self.version = version
+        self.info = info
+        self.string = string
+
+
+class FakeICPModule:
+    """Test double for ICP native module."""
+
+    def __init__(self) -> None:
+        self.scan_called = False
+        self.last_file_path: str | None = None
+        self.last_flags: int | None = None
+        self.scan_result: str = ""
+
+    def scan_file(self, file_path: str, flags: int = 0) -> str:
+        """Simulate ICP file scan."""
+        self.scan_called = True
+        self.last_file_path = file_path
+        self.last_flags = flags
+
+        if not os.path.exists(file_path):
+            return ""
+
+        with open(file_path, "rb") as f:
+            data = f.read(4096)
+
+        if data.startswith(b"MZ"):
+            pe_offset = struct.unpack("<I", data[0x3C:0x40])[0] if len(data) >= 0x40 else 0
+            if pe_offset + 6 < len(data) and data[pe_offset:pe_offset + 4] == b"PE\x00\x00":
+                machine = struct.unpack("<H", data[pe_offset + 4:pe_offset + 6])[0]
+                if machine == 0x8664:
+                    result = "PE64"
+                else:
+                    result = "PE32"
+
+                if b"UPX0" in data or b"UPX!" in data:
+                    result += "\n    Packer: UPX"
+                if b"VMProtect" in data or b".vmp0" in data:
+                    result += "\n    Protector: VMProtect"
+
+                self.scan_result = result
+                return result
+
+        if data.startswith(b"\x7fELF"):
+            if len(data) > 4 and data[4] == 0x02:
+                self.scan_result = "ELF64"
+                return "ELF64"
+            else:
+                self.scan_result = "ELF32"
+                return "ELF32"
+
+        self.scan_result = "Binary"
+        return "Binary"
+
+
+class FakeNativeLibrary:
+    """Test double for native ICP library."""
+
+    def __init__(self) -> None:
+        self.lib = None
+        self.functions: dict[str, Any] = {}
+
+
 @pytest.fixture
-def temp_binary_pe32() -> Path:
+def temp_binary_pe32() -> Generator[Path, None, None]:
     """Create temporary PE32 binary for testing."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".exe")
     pe_header = (
@@ -72,7 +148,7 @@ def temp_binary_pe32() -> Path:
 
 
 @pytest.fixture
-def temp_binary_pe64() -> Path:
+def temp_binary_pe64() -> Generator[Path, None, None]:
     """Create temporary PE64 binary for testing."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".exe")
     pe_header = (
@@ -98,7 +174,7 @@ def temp_binary_pe64() -> Path:
 
 
 @pytest.fixture
-def temp_binary_elf64() -> Path:
+def temp_binary_elf64() -> Generator[Path, None, None]:
     """Create temporary ELF64 binary for testing."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix="")
     elf_header = (
@@ -124,7 +200,7 @@ def temp_binary_elf64() -> Path:
 
 
 @pytest.fixture
-def temp_binary_upx_packed() -> Path:
+def temp_binary_upx_packed() -> Generator[Path, None, None]:
     """Create temporary UPX-packed binary for testing."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".exe")
     pe_header = (
@@ -150,7 +226,7 @@ def temp_binary_upx_packed() -> Path:
 
 
 @pytest.fixture
-def temp_binary_vmprotect() -> Path:
+def temp_binary_vmprotect() -> Generator[Path, None, None]:
     """Create temporary VMProtect-protected binary for testing."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".exe")
     pe_header = (
@@ -176,7 +252,7 @@ def temp_binary_vmprotect() -> Path:
 
 
 @pytest.fixture
-def temp_binary_high_entropy() -> Path:
+def temp_binary_high_entropy() -> Generator[Path, None, None]:
     """Create temporary high-entropy binary for testing."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".bin")
 
@@ -194,7 +270,7 @@ def temp_binary_high_entropy() -> Path:
 
 
 @pytest.fixture
-def temp_binary_low_entropy() -> Path:
+def temp_binary_low_entropy() -> Generator[Path, None, None]:
     """Create temporary low-entropy binary for testing."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".bin")
     low_entropy_data = b"A" * 2048 + b"B" * 2048
@@ -209,7 +285,7 @@ def temp_binary_low_entropy() -> Path:
 
 
 @pytest.fixture
-def temp_binary_with_strings() -> Path:
+def temp_binary_with_strings() -> Generator[Path, None, None]:
     """Create temporary binary with embedded strings for testing."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".exe")
 
@@ -237,13 +313,19 @@ def temp_binary_with_strings() -> Path:
 
 
 @pytest.fixture
-def temp_cache_dir() -> Path:
+def temp_cache_dir() -> Generator[Path, None, None]:
     """Create temporary cache directory for testing."""
     temp_dir = tempfile.mkdtemp(prefix="icp_cache_test_")
     yield Path(temp_dir)
 
     import shutil
     shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+@pytest.fixture
+def fake_icp_module() -> FakeICPModule:
+    """Create fake ICP module for testing."""
+    return FakeICPModule()
 
 
 class TestICPDetection:
@@ -269,14 +351,15 @@ class TestICPDetection:
 
     def test_icp_detection_from_icp_result(self) -> None:
         """ICPDetection created from ICP result object."""
-        mock_result = MagicMock()
-        mock_result.name = "VMProtect"
-        mock_result.type = "Protector"
-        mock_result.version = "3.5"
-        mock_result.info = "VMProtect protection detected"
-        mock_result.string = ".vmp0"
+        fake_result = FakeICPResult(
+            name="VMProtect",
+            type="Protector",
+            version="3.5",
+            info="VMProtect protection detected",
+            string=".vmp0",
+        )
 
-        detection = ICPDetection.from_icp_result(mock_result)
+        detection = ICPDetection.from_icp_result(fake_result)
 
         assert detection.name == "VMProtect"
         assert detection.type == "Protector"
@@ -546,6 +629,189 @@ class TestResultCache:
         assert len(hash1) == 64
 
 
+class TestICPBackendWithFakes:
+    """Test ICPBackend with fake ICP module."""
+
+    def test_detect_file_type_from_bytes_pe32(self) -> None:
+        """ICPBackend detects PE32 file type from bytes."""
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
+            backend = ICPBackend()
+
+            pe_header = bytearray(300)
+            pe_header[:2] = b"MZ"
+            struct.pack_into("<I", pe_header, 0x3C, 0x80)
+            pe_header[0x80:0x84] = b"PE\x00\x00"
+            struct.pack_into("<H", pe_header, 0x84, 0x014C)
+
+            file_type = backend._detect_file_type_from_bytes(bytes(pe_header))
+            assert file_type == "PE32"
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
+
+    def test_detect_file_type_from_bytes_pe64(self) -> None:
+        """ICPBackend detects PE64 file type from bytes."""
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
+            backend = ICPBackend()
+
+            pe_header = bytearray(300)
+            pe_header[:2] = b"MZ"
+            struct.pack_into("<I", pe_header, 0x3C, 0x80)
+            pe_header[0x80:0x84] = b"PE\x00\x00"
+            struct.pack_into("<H", pe_header, 0x84, 0x8664)
+
+            file_type = backend._detect_file_type_from_bytes(bytes(pe_header))
+            assert file_type == "PE64"
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
+
+    def test_detect_file_type_from_bytes_elf64(self) -> None:
+        """ICPBackend detects ELF64 file type from bytes."""
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
+            backend = ICPBackend()
+
+            elf64_bytes = b"\x7fELF\x02\x01\x01" + b"\x00" * 100
+
+            file_type = backend._detect_file_type_from_bytes(elf64_bytes)
+            assert file_type == "ELF64"
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
+
+    def test_scan_chunk_for_protections_upx(self) -> None:
+        """ICPBackend detects UPX in binary chunks."""
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
+            backend = ICPBackend()
+
+            chunk = b"\x00" * 100 + b"UPX0" + b"\x00" * 100
+            detections = backend._scan_chunk_for_protections(chunk, 0)
+
+            assert len(detections) > 0
+            assert any(d.name == "UPX" for d in detections)
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
+
+    def test_scan_chunk_for_protections_vmprotect(self) -> None:
+        """ICPBackend detects VMProtect in binary chunks."""
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
+            backend = ICPBackend()
+
+            chunk = b"\x00" * 100 + b"VMProtect" + b"\x00" * 100
+            detections = backend._scan_chunk_for_protections(chunk, 0)
+
+            assert len(detections) > 0
+            assert any(d.name == "VMProtect" for d in detections)
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
+
+    def test_get_file_entropy(self, temp_binary_high_entropy: Path) -> None:
+        """ICPBackend calculates file entropy correctly."""
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
+            backend = ICPBackend()
+
+            entropy = backend.get_file_entropy(str(temp_binary_high_entropy))
+
+            assert entropy > 7.0
+            assert entropy <= 8.0
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
+
+    def test_extract_strings(self, temp_binary_with_strings: Path) -> None:
+        """ICPBackend extracts strings from binary."""
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
+            backend = ICPBackend()
+
+            strings = backend.extract_strings(str(temp_binary_with_strings), min_length=4)
+
+            assert len(strings) > 0
+            string_values = [s["string"] for s in strings]
+            assert any("LicenseKey" in s for s in string_values)
+            assert any("SerialNumber" in s for s in string_values)
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
+
+    def test_extract_strings_min_length(self, temp_binary_with_strings: Path) -> None:
+        """ICPBackend respects minimum string length."""
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
+            backend = ICPBackend()
+
+            strings_min4 = backend.extract_strings(str(temp_binary_with_strings), min_length=4)
+            strings_min10 = backend.extract_strings(str(temp_binary_with_strings), min_length=10)
+
+            assert len(strings_min10) <= len(strings_min4)
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
+
+    def test_get_scan_flags_normal(self) -> None:
+        """ICPBackend generates correct scan flags for normal mode."""
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
+            backend = ICPBackend()
+            flags = backend._get_icp_scan_flags(ScanMode.NORMAL)
+            assert flags == 0x0000
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
+
+    def test_get_scan_flags_deep(self) -> None:
+        """ICPBackend generates correct scan flags for deep mode."""
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
+            backend = ICPBackend()
+            flags = backend._get_icp_scan_flags(ScanMode.DEEP)
+            assert flags == 0x0003
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
+
+    def test_get_scan_flags_heuristic(self) -> None:
+        """ICPBackend generates correct scan flags for heuristic mode."""
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
+            backend = ICPBackend()
+            flags = backend._get_icp_scan_flags(ScanMode.HEURISTIC)
+            assert flags == 0x000C
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
+
+
 class TestICPBackend:
     """Test ICPBackend main functionality."""
 
@@ -564,128 +830,32 @@ class TestICPBackend:
 
     def test_icp_backend_initialization_no_cache(self) -> None:
         """ICPBackend initializes without cache."""
-        with patch("intellicrack.protection.icp_backend._icp_module", None):
-            with patch.object(NativeICPLibrary, "__init__", return_value=None):
-                with patch.object(NativeICPLibrary, "lib", MagicMock()):
-                    backend = ICPBackend(enable_cache=False)
-                    assert backend.cache is None
+        import intellicrack.protection.icp_backend as icp_backend_module
 
-    def test_detect_file_type_from_bytes_pe32(self) -> None:
-        """ICPBackend detects PE32 file type from bytes."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
-            backend = ICPBackend()
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", None)
+            original_init = NativeICPLibrary.__init__
 
-            pe_header = bytearray(300)
-            pe_header[:2] = b"MZ"
-            struct.pack_into("<I", pe_header, 0x3C, 0x80)
-            pe_header[0x80:0x84] = b"PE\x00\x00"
-            struct.pack_into("<H", pe_header, 0x84, 0x014C)
+            def fake_init(self: NativeICPLibrary, lib_path: str | None = None) -> None:
+                object.__setattr__(self, "lib", FakeNativeLibrary())
+                object.__setattr__(self, "functions", {})
 
-            file_type = backend._detect_file_type_from_bytes(bytes(pe_header))
-            assert file_type == "PE32"
+            setattr(NativeICPLibrary, "__init__", fake_init)
+            backend = ICPBackend(enable_cache=False)
+            assert backend.cache is None
 
-    def test_detect_file_type_from_bytes_pe64(self) -> None:
-        """ICPBackend detects PE64 file type from bytes."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
-            backend = ICPBackend()
-
-            pe_header = bytearray(300)
-            pe_header[:2] = b"MZ"
-            struct.pack_into("<I", pe_header, 0x3C, 0x80)
-            pe_header[0x80:0x84] = b"PE\x00\x00"
-            struct.pack_into("<H", pe_header, 0x84, 0x8664)
-
-            file_type = backend._detect_file_type_from_bytes(bytes(pe_header))
-            assert file_type == "PE64"
-
-    def test_detect_file_type_from_bytes_elf64(self) -> None:
-        """ICPBackend detects ELF64 file type from bytes."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
-            backend = ICPBackend()
-
-            elf64_bytes = b"\x7fELF\x02\x01\x01" + b"\x00" * 100
-
-            file_type = backend._detect_file_type_from_bytes(elf64_bytes)
-            assert file_type == "ELF64"
-
-    def test_scan_chunk_for_protections_upx(self) -> None:
-        """ICPBackend detects UPX in binary chunks."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
-            backend = ICPBackend()
-
-            chunk = b"\x00" * 100 + b"UPX0" + b"\x00" * 100
-            detections = backend._scan_chunk_for_protections(chunk, 0)
-
-            assert len(detections) > 0
-            assert any(d.name == "UPX" for d in detections)
-
-    def test_scan_chunk_for_protections_vmprotect(self) -> None:
-        """ICPBackend detects VMProtect in binary chunks."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
-            backend = ICPBackend()
-
-            chunk = b"\x00" * 100 + b"VMProtect" + b"\x00" * 100
-            detections = backend._scan_chunk_for_protections(chunk, 0)
-
-            assert len(detections) > 0
-            assert any(d.name == "VMProtect" for d in detections)
-
-    def test_get_file_entropy(self, temp_binary_high_entropy: Path) -> None:
-        """ICPBackend calculates file entropy correctly."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
-            backend = ICPBackend()
-
-            entropy = backend.get_file_entropy(str(temp_binary_high_entropy))
-
-            assert entropy > 7.0
-            assert entropy <= 8.0
-
-    def test_extract_strings(self, temp_binary_with_strings: Path) -> None:
-        """ICPBackend extracts strings from binary."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
-            backend = ICPBackend()
-
-            strings = backend.extract_strings(str(temp_binary_with_strings), min_length=4)
-
-            assert len(strings) > 0
-            string_values = [s["string"] for s in strings]
-            assert any("LicenseKey" in s for s in string_values)
-            assert any("SerialNumber" in s for s in string_values)
-
-    def test_extract_strings_min_length(self, temp_binary_with_strings: Path) -> None:
-        """ICPBackend respects minimum string length."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
-            backend = ICPBackend()
-
-            strings_min4 = backend.extract_strings(str(temp_binary_with_strings), min_length=4)
-            strings_min10 = backend.extract_strings(str(temp_binary_with_strings), min_length=10)
-
-            assert len(strings_min10) <= len(strings_min4)
-
-    def test_get_scan_flags_normal(self) -> None:
-        """ICPBackend generates correct scan flags for normal mode."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
-            backend = ICPBackend()
-            flags = backend._get_icp_scan_flags(ScanMode.NORMAL)
-            assert flags == 0x0000
-
-    def test_get_scan_flags_deep(self) -> None:
-        """ICPBackend generates correct scan flags for deep mode."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
-            backend = ICPBackend()
-            flags = backend._get_icp_scan_flags(ScanMode.DEEP)
-            assert flags == 0x0003
-
-    def test_get_scan_flags_heuristic(self) -> None:
-        """ICPBackend generates correct scan flags for heuristic mode."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
-            backend = ICPBackend()
-            flags = backend._get_icp_scan_flags(ScanMode.HEURISTIC)
-            assert flags == 0x000C
+            setattr(NativeICPLibrary, "__init__", original_init)
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
 
     def test_error_recovery_state(self) -> None:
         """ICPBackend tracks error recovery state."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
             backend = ICPBackend()
 
             backend.error_count = 5
@@ -699,17 +869,29 @@ class TestICPBackend:
             backend.reset_error_state()
             assert backend.error_count == 0
             assert backend.last_error is None
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
 
     def test_cache_invalidation(self, temp_binary_pe64: Path) -> None:
         """ICPBackend invalidates cache correctly."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
             backend = ICPBackend()
 
             backend.invalidate_cache(str(temp_binary_pe64))
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
 
     def test_get_available_scan_modes(self) -> None:
         """ICPBackend returns all available scan modes."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
             backend = ICPBackend()
 
             modes = backend.get_available_scan_modes()
@@ -719,6 +901,8 @@ class TestICPBackend:
             assert "heuristic" in modes
             assert "aggressive" in modes
             assert "all" in modes
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
 
 
 class TestICPBackendAsync:
@@ -727,40 +911,58 @@ class TestICPBackendAsync:
     @pytest.mark.asyncio
     async def test_analyze_file_nonexistent(self) -> None:
         """ICPBackend handles nonexistent file gracefully."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
             backend = ICPBackend()
 
             result = await backend.analyze_file("/nonexistent/file.exe", ScanMode.NORMAL)
 
             assert result.error is not None
             assert "not found" in result.error.lower()
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
 
     @pytest.mark.asyncio
     async def test_analyze_file_timeout(self, temp_binary_pe64: Path) -> None:
         """ICPBackend handles analysis timeout."""
-        mock_module = MagicMock()
+        import intellicrack.protection.icp_backend as icp_backend_module
 
-        with patch("intellicrack.protection.icp_backend._icp_module", mock_module):
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
             backend = ICPBackend()
             backend.default_scan_timeout = 0.001
 
-            async def slow_scan(*args: Any, **kwargs: Any) -> str:
+            original_perform_scan = getattr(backend, "_perform_native_scan")
+
+            async def slow_scan(*args: Any, **kwargs: Any) -> ICPScanResult:
                 await asyncio.sleep(1.0)
-                return "PE64"
+                return ICPScanResult(file_path=str(temp_binary_pe64))
 
-            with patch.object(backend, "_perform_native_scan", side_effect=slow_scan):
-                result = await backend.analyze_file(str(temp_binary_pe64), ScanMode.NORMAL)
+            object.__setattr__(backend, "_perform_native_scan", slow_scan)
+            result = await backend.analyze_file(str(temp_binary_pe64), ScanMode.NORMAL)
 
-                assert result.error is not None
-                assert "timed out" in result.error.lower()
+            assert result.error is not None
+            assert "timed out" in result.error.lower()
+
+            object.__setattr__(backend, "_perform_native_scan", original_perform_scan)
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
 
     @pytest.mark.asyncio
     async def test_batch_analyze(self, temp_binary_pe64: Path, temp_binary_pe32: Path) -> None:
         """ICPBackend performs batch analysis."""
-        mock_module = MagicMock()
-        mock_module.scan_file.return_value = "PE64\n    Packer: UPX"
+        import intellicrack.protection.icp_backend as icp_backend_module
 
-        with patch("intellicrack.protection.icp_backend._icp_module", mock_module):
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            fake_module = FakeICPModule()
+            fake_module.scan_result = "PE64\n    Packer: UPX"
+            setattr(icp_backend_module, "_icp_module", fake_module)
+
             backend = ICPBackend()
 
             files = [str(temp_binary_pe64), str(temp_binary_pe32)]
@@ -769,6 +971,8 @@ class TestICPBackendAsync:
             assert len(results) == 2
             assert str(temp_binary_pe64) in results
             assert str(temp_binary_pe32) in results
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
 
 
 class TestICPBackendSupplemental:
@@ -776,7 +980,11 @@ class TestICPBackendSupplemental:
 
     def test_merge_supplemental_detections_yara(self) -> None:
         """ICPBackend merges YARA pattern findings."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
             backend = ICPBackend()
 
             scan_result = ICPScanResult(file_path="test.exe")
@@ -798,10 +1006,16 @@ class TestICPBackendSupplemental:
             assert len(scan_result.file_infos) > 0
             assert len(scan_result.all_detections) > 0
             assert any(d.name == "Anti_Debug_Check" for d in scan_result.all_detections)
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
 
     def test_calculate_threat_score_packed(self) -> None:
         """ICPBackend calculates threat score for packed files."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
             backend = ICPBackend()
 
             base_analysis = {"is_packed": True, "entropy": 6.5, "packers": ["UPX"]}
@@ -812,10 +1026,16 @@ class TestICPBackendSupplemental:
             assert threat["score"] > 0.0
             assert "level" in threat
             assert "indicators" in threat
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
 
     def test_calculate_threat_score_high_entropy(self) -> None:
         """ICPBackend detects high entropy threat."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
             backend = ICPBackend()
 
             base_analysis = {"is_packed": False, "entropy": 7.8, "packers": []}
@@ -825,10 +1045,16 @@ class TestICPBackendSupplemental:
 
             assert threat["score"] > 1.0
             assert any("entropy" in indicator.lower() for indicator in threat["indicators"])
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
 
     def test_generate_bypass_recommendations_packed(self) -> None:
         """ICPBackend generates bypass recommendations for packed files."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
             backend = ICPBackend()
 
             base_analysis = {"is_packed": True, "packers": ["UPX", "VMProtect"]}
@@ -839,6 +1065,8 @@ class TestICPBackendSupplemental:
             assert len(recommendations) == 2
             assert any("UPX" in rec["target"] for rec in recommendations)
             assert any("VMProtect" in rec["target"] for rec in recommendations)
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
 
 
 class TestSingletonAndHelpers:
@@ -846,23 +1074,34 @@ class TestSingletonAndHelpers:
 
     def test_get_icp_backend_singleton(self) -> None:
         """get_icp_backend returns singleton instance."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
             backend1 = get_icp_backend()
             backend2 = get_icp_backend()
 
             assert backend1 is backend2
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
 
     @pytest.mark.asyncio
     async def test_analyze_with_icp_helper(self, temp_binary_pe64: Path) -> None:
         """analyze_with_icp helper function works."""
-        mock_module = MagicMock()
-        mock_module.scan_file.return_value = "PE64"
+        import intellicrack.protection.icp_backend as icp_backend_module
 
-        with patch("intellicrack.protection.icp_backend._icp_module", mock_module):
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            fake_module = FakeICPModule()
+            setattr(icp_backend_module, "_icp_module", fake_module)
+
             result = await analyze_with_icp(str(temp_binary_pe64))
 
             assert result is not None
             assert isinstance(result, ICPScanResult)
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
 
 
 class TestEdgeCases:
@@ -874,10 +1113,16 @@ class TestEdgeCases:
         temp_file.close()
 
         try:
-            with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
+            import intellicrack.protection.icp_backend as icp_backend_module
+
+            original_module = getattr(icp_backend_module, "_icp_module", None)
+            try:
+                setattr(icp_backend_module, "_icp_module", FakeICPModule())
                 backend = ICPBackend()
                 entropy = backend.get_file_entropy(temp_file.name)
                 assert entropy == 0.0
+            finally:
+                setattr(icp_backend_module, "_icp_module", original_module)
         finally:
             os.unlink(temp_file.name)
 
@@ -888,10 +1133,16 @@ class TestEdgeCases:
         temp_file.close()
 
         try:
-            with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
+            import intellicrack.protection.icp_backend as icp_backend_module
+
+            original_module = getattr(icp_backend_module, "_icp_module", None)
+            try:
+                setattr(icp_backend_module, "_icp_module", FakeICPModule())
                 backend = ICPBackend()
                 file_type = backend._detect_file_type_from_bytes(b"MZ" + b"\x00" * 10)
                 assert file_type == "PE"
+            finally:
+                setattr(icp_backend_module, "_icp_module", original_module)
         finally:
             os.unlink(temp_file.name)
 
@@ -902,20 +1153,27 @@ class TestEdgeCases:
         temp_file.close()
 
         try:
-            with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
+            import intellicrack.protection.icp_backend as icp_backend_module
+
+            original_module = getattr(icp_backend_module, "_icp_module", None)
+            try:
+                setattr(icp_backend_module, "_icp_module", FakeICPModule())
                 backend = ICPBackend()
                 entropy = backend.get_file_entropy(temp_file.name)
                 assert entropy >= 0.0
+            finally:
+                setattr(icp_backend_module, "_icp_module", original_module)
         finally:
             os.unlink(temp_file.name)
 
     def test_icp_detection_no_version(self) -> None:
         """ICPDetection handles missing version gracefully."""
-        mock_result = MagicMock(spec=[])
-        mock_result.name = "TestProtector"
-        mock_result.type = "Protector"
+        class FakeResultMinimal:
+            name = "TestProtector"
+            type = "Protector"
 
-        detection = ICPDetection.from_icp_result(mock_result)
+        fake_result = FakeResultMinimal()
+        detection = ICPDetection.from_icp_result(fake_result)
 
         assert detection.name == "TestProtector"
         assert detection.version == ""
@@ -936,7 +1194,11 @@ class TestPerformance:
 
     def test_entropy_calculation_performance(self, temp_binary_high_entropy: Path) -> None:
         """Entropy calculation completes within reasonable time."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
             backend = ICPBackend()
 
             start = time.time()
@@ -944,10 +1206,16 @@ class TestPerformance:
             duration = time.time() - start
 
             assert duration < 1.0
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
 
     def test_string_extraction_performance(self, temp_binary_with_strings: Path) -> None:
         """String extraction completes within reasonable time."""
-        with patch("intellicrack.protection.icp_backend._icp_module", MagicMock()):
+        import intellicrack.protection.icp_backend as icp_backend_module
+
+        original_module = getattr(icp_backend_module, "_icp_module", None)
+        try:
+            setattr(icp_backend_module, "_icp_module", FakeICPModule())
             backend = ICPBackend()
 
             start = time.time()
@@ -955,6 +1223,8 @@ class TestPerformance:
             duration = time.time() - start
 
             assert duration < 2.0
+        finally:
+            setattr(icp_backend_module, "_icp_module", original_module)
 
     def test_cache_hit_performance(self, temp_cache_dir: Path, temp_binary_pe64: Path) -> None:
         """Cache hit is faster than cache miss."""

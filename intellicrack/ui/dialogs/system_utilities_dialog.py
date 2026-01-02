@@ -73,7 +73,12 @@ class SystemUtilitiesWorker(QThread):
     error_occurred = pyqtSignal(str)
 
     def __init__(self, operation: str, **kwargs: object) -> None:
-        """Initialize the system utilities worker with operation type and parameters."""
+        """Initialize the system utilities worker with operation type and parameters.
+
+        Args:
+            operation: The type of operation to execute.
+            **kwargs: Additional operation-specific parameters.
+        """
         super().__init__()
         self.operation = operation
         self.kwargs = kwargs
@@ -81,7 +86,11 @@ class SystemUtilitiesWorker(QThread):
         self._logger: Logger = module_logger
 
     def run(self) -> None:
-        """Execute the system utility operation."""
+        """Execute the system utility operation.
+
+        Runs the background worker thread with the specified operation type.
+        Catches and logs exceptions during execution.
+        """
         try:
             if self.operation == "extract_icon":
                 self._extract_icon()
@@ -98,7 +107,11 @@ class SystemUtilitiesWorker(QThread):
             self.error_occurred.emit(str(e))
 
     def _extract_icon(self) -> None:
-        """Extract icon from executable."""
+        """Extract icon from executable.
+
+        Internal method that performs icon extraction from the specified executable
+        file using the system utilities module. Emits progress and completion signals.
+        """
         try:
             from ...utils.system.system_utils import extract_executable_icon
 
@@ -119,7 +132,11 @@ class SystemUtilitiesWorker(QThread):
             self.error_occurred.emit(f"Icon extraction failed: {e!s}")
 
     def _get_system_info(self) -> None:
-        """Get comprehensive system information."""
+        """Get comprehensive system information.
+
+        Internal method that gathers detailed system information including
+        hardware, software, and network details. Emits progress and completion signals.
+        """
         try:
             from ...utils.system.system_utils import get_system_info
 
@@ -135,7 +152,11 @@ class SystemUtilitiesWorker(QThread):
             self.error_occurred.emit(f"System info collection failed: {e!s}")
 
     def _check_dependencies(self) -> None:
-        """Check system dependencies."""
+        """Check system dependencies.
+
+        Internal method that verifies the availability of required system dependencies
+        including Python, pip, and git. Emits progress and completion signals.
+        """
         try:
             from ...utils.system.system_utils import check_dependencies
 
@@ -156,7 +177,11 @@ class SystemUtilitiesWorker(QThread):
             self.error_occurred.emit(f"Dependency check failed: {e!s}")
 
     def _get_process_list(self) -> None:
-        """Get running process list."""
+        """Get running process list.
+
+        Internal method that retrieves the list of currently running processes
+        with their details. Emits progress and completion signals.
+        """
         try:
             from ...utils.system.system_utils import get_process_list
 
@@ -172,7 +197,11 @@ class SystemUtilitiesWorker(QThread):
             self.error_occurred.emit(f"Process enumeration failed: {e!s}")
 
     def _optimize_memory(self) -> None:
-        """Optimize system memory usage."""
+        """Optimize system memory usage.
+
+        Internal method that performs memory optimization with configurable options.
+        Emits progress and completion signals.
+        """
         try:
             from ...utils.system.system_utils import optimize_memory_usage
 
@@ -188,7 +217,11 @@ class SystemUtilitiesWorker(QThread):
             self.error_occurred.emit(f"Memory optimization failed: {e!s}")
 
     def stop(self) -> None:
-        """Stop the worker thread."""
+        """Stop the worker thread.
+
+        Sets the should_stop flag to signal the worker thread to terminate
+        its operation gracefully.
+        """
         self.should_stop = True
 
 
@@ -196,7 +229,11 @@ class SystemUtilitiesDialog(QDialog):
     """System Utilities Dialog with various system tools."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the system utilities dialog with UI components and system monitoring capabilities."""
+        """Initialize the system utilities dialog with UI components and system monitoring capabilities.
+
+        Args:
+            parent: Parent widget for this dialog, if any.
+        """
         super().__init__(parent)
         self._logger: Logger = module_logger
         self.worker: SystemUtilitiesWorker | None = None
@@ -242,7 +279,14 @@ class SystemUtilitiesDialog(QDialog):
         self.connect_signals()
 
     def setup_ui(self) -> None:
-        """Set up the user interface."""
+        """Set up the user interface.
+
+        Creates all tabs and footer components with their layouts and
+        initializes signal-slot connections.
+
+        Returns:
+            None
+        """
         layout = QVBoxLayout(self)
 
         self.tabs = QTabWidget()
@@ -258,7 +302,14 @@ class SystemUtilitiesDialog(QDialog):
         self.setup_footer(layout)
 
     def setup_icon_tab(self) -> None:
-        """Set up icon extraction tab."""
+        """Set up icon extraction tab.
+
+        Creates the icon extraction tab with file browsing, output options,
+        format and size selection, and icon preview area.
+
+        Returns:
+            None
+        """
         icon_widget = QWidget()
         layout = QVBoxLayout(icon_widget)
 
@@ -326,7 +377,14 @@ class SystemUtilitiesDialog(QDialog):
             self.tabs.addTab(icon_widget, "Icon Extraction")
 
     def setup_sysinfo_tab(self) -> None:
-        """Set up system information tab."""
+        """Set up system information tab.
+
+        Creates the system information tab with refresh and export buttons,
+        and a read-only text display for system details.
+
+        Returns:
+            None
+        """
         sysinfo_widget = QWidget()
         layout = QVBoxLayout(sysinfo_widget)
 
@@ -356,7 +414,14 @@ class SystemUtilitiesDialog(QDialog):
             self.tabs.addTab(sysinfo_widget, "System Info")
 
     def setup_dependencies_tab(self) -> None:
-        """Set up dependency checker tab."""
+        """Set up dependency checker tab.
+
+        Creates the dependencies tab with check and install buttons,
+        and a table for displaying dependency status.
+
+        Returns:
+            None
+        """
         deps_widget = QWidget()
         layout = QVBoxLayout(deps_widget)
 
@@ -396,7 +461,14 @@ class SystemUtilitiesDialog(QDialog):
             self.tabs.addTab(deps_widget, "Dependencies")
 
     def setup_process_tab(self) -> None:
-        """Set up process manager tab."""
+        """Set up process manager tab.
+
+        Creates the process manager tab with refresh and kill buttons,
+        search filter, and process list table.
+
+        Returns:
+            None
+        """
         process_widget = QWidget()
         layout = QVBoxLayout(process_widget)
 
@@ -444,7 +516,14 @@ class SystemUtilitiesDialog(QDialog):
             self.tabs.addTab(process_widget, "Process Manager")
 
     def setup_memory_tab(self) -> None:
-        """Set up memory optimizer tab."""
+        """Set up memory optimizer tab.
+
+        Creates the memory optimizer tab with memory information display,
+        optimization options, and results output area.
+
+        Returns:
+            None
+        """
         memory_widget = QWidget()
         layout = QVBoxLayout(memory_widget)
 
@@ -500,7 +579,14 @@ class SystemUtilitiesDialog(QDialog):
             self.tabs.addTab(memory_widget, "Memory Optimizer")
 
     def setup_footer(self, layout: QVBoxLayout) -> None:
-        """Set up footer with status and progress."""
+        """Set up footer with status and progress.
+
+        Args:
+            layout: The main layout to add the footer to.
+
+        Returns:
+            None
+        """
         footer_layout = QVBoxLayout()
 
         self.progress_bar = QProgressBar()
@@ -523,11 +609,26 @@ class SystemUtilitiesDialog(QDialog):
         layout.addLayout(footer_layout)
 
     def connect_signals(self) -> None:
-        """Connect internal signals."""
-        pass
+        """Connect internal signals.
+
+        Establishes connections between internal signals and slots for proper
+        event handling and state management within the dialog.
+
+        Returns:
+            None
+        """
+        if self.process_filter is not None:
+            self.process_filter.textChanged.connect(self.filter_processes)
 
     def browse_icon_file(self) -> None:
-        """Browse for executable file."""
+        """Browse for executable file.
+
+        Opens a file dialog allowing the user to select an executable file for
+        icon extraction. Updates the icon file input field with the selected path.
+
+        Returns:
+            None
+        """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Executable File",
@@ -538,7 +639,14 @@ class SystemUtilitiesDialog(QDialog):
             self.icon_file_edit.setText(file_path)
 
     def browse_icon_output(self) -> None:
-        """Browse for output directory."""
+        """Browse for output directory.
+
+        Opens a directory dialog allowing the user to select an output directory for
+        extracted icons. Updates the output directory input field with the selected path.
+
+        Returns:
+            None
+        """
         if dir_path := QFileDialog.getExistingDirectory(
             self,
             "Select Output Directory",
@@ -547,7 +655,14 @@ class SystemUtilitiesDialog(QDialog):
                 self.icon_output_edit.setText(dir_path)
 
     def extract_icon(self) -> None:
-        """Extract icon from executable."""
+        """Extract icon from executable.
+
+        Initiates the icon extraction process by creating a background worker thread.
+        Validates input paths, updates UI status indicators, and handles extraction results.
+
+        Returns:
+            None
+        """
         if self.icon_file_edit is None:
             return
         file_path = self.icon_file_edit.text().strip()
@@ -588,7 +703,17 @@ class SystemUtilitiesDialog(QDialog):
         self.worker.start()
 
     def on_icon_extracted(self, result: dict[str, Any]) -> None:
-        """Handle icon extraction completion."""
+        """Handle icon extraction completion.
+
+        Args:
+            result: Dictionary containing extraction results including the output path.
+
+        Returns:
+            None
+
+        Processes the extracted icon by loading and displaying it in the preview area,
+        updates status labels, and re-enables UI controls.
+        """
         self.current_results["icon_extraction"] = result
 
         output_path = result.get("output_path", "")
@@ -616,7 +741,14 @@ class SystemUtilitiesDialog(QDialog):
             self.extract_icon_btn.setEnabled(True)
 
     def get_system_info(self) -> None:
-        """Get comprehensive system information."""
+        """Get comprehensive system information.
+
+        Initiates a background worker thread to gather detailed system information.
+        Updates UI status indicators while the operation is in progress.
+
+        Returns:
+            None
+        """
         if self.status_label is not None:
             self.status_label.setText("Gathering system information...")
         if self.progress_bar is not None:
@@ -631,7 +763,17 @@ class SystemUtilitiesDialog(QDialog):
         self.worker.start()
 
     def on_system_info_received(self, result: dict[str, Any]) -> None:
-        """Handle system information reception."""
+        """Handle system information reception.
+
+        Args:
+            result: Dictionary containing system information data.
+
+        Returns:
+            None
+
+        Processes received system information, formats it for display, updates the
+        system info display area, and restores UI control state.
+        """
         self.current_results["system_info"] = result
 
         info_text = self.format_system_info(result)
@@ -647,7 +789,14 @@ class SystemUtilitiesDialog(QDialog):
 
     @staticmethod
     def format_system_info(info: dict[str, Any]) -> str:
-        """Format system information for display."""
+        """Format system information for display.
+
+        Args:
+            info: Dictionary containing system information data.
+
+        Returns:
+            str: Formatted string containing system information organized by section.
+        """
         text = "System Information\n"
         text += "=" * 50 + "\n\n"
 
@@ -684,7 +833,14 @@ class SystemUtilitiesDialog(QDialog):
         return text
 
     def export_system_info(self) -> None:
-        """Export system information to file."""
+        """Export system information to file.
+
+        Opens a save dialog to export the current system information as either
+        JSON or plain text. Handles file operations and displays status messages.
+
+        Returns:
+            None
+        """
         if "system_info" not in self.current_results:
             QMessageBox.warning(self, "Warning", "No system information to export. Refresh first.")
             return
@@ -713,7 +869,14 @@ class SystemUtilitiesDialog(QDialog):
                 QMessageBox.critical(self, "Export Error", f"Failed to export: {e!s}")
 
     def check_dependencies(self) -> None:
-        """Check system dependencies."""
+        """Check system dependencies.
+
+        Initiates a background worker thread to verify system dependencies.
+        Updates UI status indicators while the operation is in progress.
+
+        Returns:
+            None
+        """
         if self.status_label is not None:
             self.status_label.setText("Checking dependencies...")
         if self.progress_bar is not None:
@@ -728,7 +891,17 @@ class SystemUtilitiesDialog(QDialog):
         self.worker.start()
 
     def on_dependencies_checked(self, result: dict[str, Any]) -> None:
-        """Handle dependency check completion."""
+        """Handle dependency check completion.
+
+        Args:
+            result: Dictionary containing dependency check results.
+
+        Returns:
+            None
+
+        Processes dependency results, populates the dependencies table with status
+        information, and updates UI control state.
+        """
         self.current_results["dependencies"] = result
 
         dependencies_raw = result.get("dependencies", {})
@@ -769,7 +942,14 @@ class SystemUtilitiesDialog(QDialog):
             self.deps_check_btn.setEnabled(True)
 
     def install_dependencies(self) -> None:
-        """Install missing dependencies."""
+        """Install missing dependencies.
+
+        Displays information about dependency installation options. Can be extended
+        to implement automatic installation via pip or system package managers.
+
+        Returns:
+            None
+        """
         QMessageBox.information(
             self,
             "Install Dependencies",
@@ -781,7 +961,14 @@ class SystemUtilitiesDialog(QDialog):
         )
 
     def get_process_list(self) -> None:
-        """Get list of running processes."""
+        """Get list of running processes.
+
+        Initiates a background worker thread to enumerate all running processes.
+        Updates UI status indicators while the operation is in progress.
+
+        Returns:
+            None
+        """
         if self.status_label is not None:
             self.status_label.setText("Enumerating processes...")
         if self.progress_bar is not None:
@@ -796,7 +983,17 @@ class SystemUtilitiesDialog(QDialog):
         self.worker.start()
 
     def on_process_list_received(self, result: dict[str, Any]) -> None:
-        """Handle process list reception."""
+        """Handle process list reception.
+
+        Args:
+            result: Dictionary containing process information.
+
+        Returns:
+            None
+
+        Processes the received process list, populates the process table with
+        process details, and updates UI control state.
+        """
         self.current_results["processes"] = result
 
         processes_raw = result.get("processes", [])
@@ -823,7 +1020,17 @@ class SystemUtilitiesDialog(QDialog):
             self.process_refresh_btn.setEnabled(True)
 
     def filter_processes(self, filter_text: str) -> None:
-        """Filter process table by name."""
+        """Filter process table by name.
+
+        Args:
+            filter_text: The text to search for in process names.
+
+        Returns:
+            None
+
+        Filters the process table to show only processes whose names match the
+        provided filter text (case-insensitive).
+        """
         if self.process_table is None:
             return
         for i in range(self.process_table.rowCount()):
@@ -832,7 +1039,14 @@ class SystemUtilitiesDialog(QDialog):
                 self.process_table.setRowHidden(i, not show_row)
 
     def on_process_selection_changed(self) -> None:
-        """Handle process selection change."""
+        """Handle process selection change.
+
+        Updates the kill button enabled state based on whether a process is selected
+        in the process table.
+
+        Returns:
+            None
+        """
         if self.process_table is None:
             return
         if self.process_kill_btn is not None:
@@ -840,7 +1054,14 @@ class SystemUtilitiesDialog(QDialog):
             self.process_kill_btn.setEnabled(has_selection)
 
     def kill_selected_process(self) -> None:
-        """Kill the selected process."""
+        """Kill the selected process.
+
+        Terminates the currently selected process after requesting user confirmation.
+        Displays success or error messages and refreshes the process list.
+
+        Returns:
+            None
+        """
         if self.process_table is None:
             return
         selected_rows = {item.row() for item in self.process_table.selectedItems()}
@@ -878,7 +1099,14 @@ class SystemUtilitiesDialog(QDialog):
                     QMessageBox.critical(self, "Error", f"Failed to kill process: {e!s}")
 
     def optimize_memory(self) -> None:
-        """Optimize system memory."""
+        """Optimize system memory.
+
+        Initiates a background worker thread to optimize system memory usage
+        with configured options. Updates UI status indicators during operation.
+
+        Returns:
+            None
+        """
         if self.status_label is not None:
             self.status_label.setText("Optimizing memory...")
         if self.progress_bar is not None:
@@ -893,7 +1121,17 @@ class SystemUtilitiesDialog(QDialog):
         self.worker.start()
 
     def on_memory_optimized(self, result: dict[str, Any]) -> None:
-        """Handle memory optimization completion."""
+        """Handle memory optimization completion.
+
+        Args:
+            result: Dictionary containing memory optimization results.
+
+        Returns:
+            None
+
+        Processes optimization results, displays them in the results text area,
+        and updates UI control state.
+        """
         self.current_results["memory_optimization"] = result
 
         results_text = "Memory Optimization Results:\n"
@@ -913,14 +1151,34 @@ class SystemUtilitiesDialog(QDialog):
             self.optimize_memory_btn.setEnabled(True)
 
     def on_progress_updated(self, value: int, message: str) -> None:
-        """Handle progress updates."""
+        """Handle progress updates.
+
+        Args:
+            value: Progress percentage (0-100).
+            message: Status message to display.
+
+        Returns:
+            None
+
+        Updates the progress bar value and status label with the provided values.
+        """
         if self.progress_bar is not None:
             self.progress_bar.setValue(value)
         if self.status_label is not None:
             self.status_label.setText(message)
 
     def on_error(self, error_msg: str) -> None:
-        """Handle worker thread errors."""
+        """Handle worker thread errors.
+
+        Args:
+            error_msg: The error message from the worker thread.
+
+        Returns:
+            None
+
+        Displays an error dialog, updates status label, hides progress bar,
+        and re-enables all UI controls.
+        """
         QMessageBox.critical(self, "Error", error_msg)
         if self.status_label is not None:
             self.status_label.setText("Error occurred")
@@ -939,7 +1197,17 @@ class SystemUtilitiesDialog(QDialog):
             self.optimize_memory_btn.setEnabled(True)
 
     def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
-        """Handle dialog close event."""
+        """Handle dialog close event.
+
+        Args:
+            event: The close event or None.
+
+        Returns:
+            None
+
+        Stops the background worker thread if running and properly cleans up
+        resources before closing the dialog.
+        """
         if self.worker is not None and self.worker.isRunning():
             self.worker.stop()
             self.worker.wait()
@@ -948,6 +1216,14 @@ class SystemUtilitiesDialog(QDialog):
 
 
 def show_system_utilities_dialog(parent: QWidget | None = None) -> int:
-    """Show the system utilities dialog."""
+    """Show the system utilities dialog.
+
+    Args:
+        parent: Parent widget for the dialog, if any.
+
+    Returns:
+        int: The dialog execution result code (QDialog.Accepted or
+            QDialog.Rejected).
+    """
     dialog = SystemUtilitiesDialog(parent)
     return dialog.exec()

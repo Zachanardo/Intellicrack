@@ -93,7 +93,7 @@ class QEMUSnapshot:
     performance_metrics: dict[str, Any] = field(default_factory=dict)
 
 
-class SecureHostKeyPolicy(MissingHostKeyPolicy):  # type: ignore[misc]
+class SecureHostKeyPolicy(MissingHostKeyPolicy):
     """Secure host key policy that maintains a known_hosts file for QEMU VMs."""
 
     def __init__(self, known_hosts_path: Path) -> None:
@@ -1261,7 +1261,7 @@ class QEMUManager:
             Dictionary containing base image paths and settings
 
         """
-        result: dict[str, Any] = self.config.get("vm_framework.base_images", {})  # type: ignore[assignment]
+        result: dict[str, Any] = self.config.get("vm_framework.base_images", {})
         return result
 
     def update_base_image_configuration(self, platform: str, paths: list[str]) -> None:

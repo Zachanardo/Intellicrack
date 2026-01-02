@@ -495,7 +495,7 @@ class TestConfigManagerGlobalInstance:
 def _isolated_config_env(tmp_path: Path):
     """Context manager for isolated config environment."""
     class _ConfigContext:
-        def __enter__(self):
+        def __enter__(self) -> None:
             os.environ["INTELLICRACK_ROOT"] = str(tmp_path)
             _reset_config_singleton()
             return self

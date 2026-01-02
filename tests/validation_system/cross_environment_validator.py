@@ -9,6 +9,7 @@ import time
 import hashlib
 import logging
 import platform
+import statistics
 import subprocess
 import multiprocessing
 from pathlib import Path
@@ -44,9 +45,9 @@ class EnvironmentInfo:
     virtualization_platform: str
     security_software: list[str]
     network_configuration: dict[str, Any]
-    timestamp: str = None
+    timestamp: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp is None:
             self.timestamp = datetime.now().isoformat()
 
@@ -63,9 +64,9 @@ class EnvironmentTestResult:
     error_messages: list[str]
     test_duration_seconds: float
     resource_usage: dict[str, Any]
-    timestamp: str = None
+    timestamp: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp is None:
             self.timestamp = datetime.now().isoformat()
 
@@ -82,9 +83,9 @@ class CrossEnvironmentResult:
     environment_results: list[EnvironmentTestResult]
     inconsistent_behaviors: list[dict[str, Any]]
     error_messages: list[str]
-    timestamp: str = None
+    timestamp: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp is None:
             self.timestamp = datetime.now().isoformat()
 
@@ -92,7 +93,7 @@ class CrossEnvironmentResult:
 class CrossEnvironmentValidator:
     """Validates Intellicrack's consistency across different environments."""
 
-    def __init__(self, base_dir: str = "C:\\Intellicrack\\tests\\validation_system"):
+    def __init__(self, base_dir: str = "C:\\Intellicrack\\tests\\validation_system") -> None:
         self.base_dir = Path(base_dir)
         self.logs_dir = self.base_dir / "logs"
         self.reports_dir = self.base_dir / "reports"
@@ -140,8 +141,8 @@ class CrossEnvironmentValidator:
         try:
             if not psutil:
                 # Fallback to platform info
-                return (platform.processor(), os.cpu_count())
-            cpu_count = psutil.cpu_count(logical=False) or psutil.cpu_count()
+                return (platform.processor(), os.cpu_count() or 1)
+            cpu_count = psutil.cpu_count(logical=False) or psutil.cpu_count() or 1
             cpu_freq = psutil.cpu_freq()
             cpu_info = f"{platform.processor()} @ {cpu_freq.max}MHz" if cpu_freq else platform.processor()
             return (cpu_info, cpu_count)
@@ -163,7 +164,7 @@ class CrossEnvironmentValidator:
             if wmi:
                 c = wmi.WMI()
                 if gpus := c.Win32_VideoController():
-                    return gpus[0].Name
+                    return str(gpus[0].Name)
                 else:
                     return "No GPU detected"
             else:
@@ -252,8 +253,9 @@ class CrossEnvironmentValidator:
     def _get_network_info(self) -> dict[str, Any]:
         """Get network configuration information."""
         try:
-            network_info = {
-                "interfaces": [],
+            interfaces_list: list[dict[str, str]] = []
+            network_info: dict[str, Any] = {
+                "interfaces": interfaces_list,
                 "active_connections": 0,
                 "firewall_enabled": True  # Assume firewall is enabled
             }
@@ -264,7 +266,7 @@ class CrossEnvironmentValidator:
                 for interface_name, interface_addresses in interfaces.items():
                     for address in interface_addresses:
                         if str(address.family) == 'AddressFamily.AF_INET':
-                            network_info["interfaces"].append({
+                            interfaces_list.append({
                                 "name": interface_name,
                                 "ip": address.address
                             })
@@ -374,14 +376,14 @@ class CrossEnvironmentValidator:
                 if environment_info.security_software:
                     cmd.extend(["--security-software", ",".join(environment_info.security_software)])
 
-                result = subprocess.run(
+                proc_result = subprocess.run(
                     cmd,
                     capture_output=True,
                     text=True,
                     timeout=300  # 5 minute timeout
                 )
 
-                if result.returncode == 0:
+                if proc_result.returncode == 0:
                     # Check if the cracked binary exists and works
                     cracked_binary = temp_dir / f"cracked_{binary_name}"
                     if cracked_binary.exists():
@@ -394,25 +396,25 @@ class CrossEnvironmentValidator:
                         error_messages.append("Cracked binary not found")
                 else:
                     test_passed = False
-                    error_messages.append(f"Intellicrack failed: {result.stderr}")
+                    error_messages.append(f"Intellicrack failed: {proc_result.stderr}")
             else:
                 # Real Intellicrack execution without binary parameter fallback
                 logger.warning("No binary path provided - executing Intellicrack environment validation")
                 try:
                     # Execute Intellicrack in environment test mode
-                    result = subprocess.run([
+                    proc_result = subprocess.run([
                         sys.executable, "-m", "intellicrack",
-                        "--environment-test", environment.os_version,
+                        "--environment-test", environment_info.os_version,
                         "--validate-capabilities",
                         "--no-gui"
                     ], capture_output=True, text=True, timeout=60)
 
-                    test_passed = result.returncode == 0
+                    test_passed = proc_result.returncode == 0
                     success_rate = 1.0 if test_passed else 0.0
 
                     if not test_passed:
-                        error_messages.append(f"Intellicrack environment validation failed: {result.stderr}")
-                        logger.error(f"Environment validation failed: {result.stderr}")
+                        error_messages.append(f"Intellicrack environment validation failed: {proc_result.stderr}")
+                        logger.error(f"Environment validation failed: {proc_result.stderr}")
 
                 except subprocess.TimeoutExpired:
                     test_passed = False
@@ -820,7 +822,7 @@ class CrossEnvironmentValidator:
         logger.info(f"Cross-environment validation report saved to {report_path}")
         return str(report_path)
 
-    def _test_in_sandbox_environment(self, binary_path: str, software_name: str, config: dict[str, Any]) -> CrossEnvironmentTestResult:
+    def _test_in_sandbox_environment(self, binary_path: str, software_name: str, config: dict[str, Any]) -> EnvironmentTestResult | None:
         """Test binary in Windows Sandbox environment with real isolation."""
         try:
             # Create Windows Sandbox configuration file
@@ -859,28 +861,32 @@ class CrossEnvironmentValidator:
                 architecture="x64",
                 cpu_model="Virtualized",
                 cpu_cores=2,
-                total_memory_gb=4,
+                total_memory_gb=4.0,
                 gpu_info="Software Rendering",
                 virtualization_platform=config["virtualization"],
                 security_software=["Windows Defender"],
-                network_configuration="Virtualized NAT"
+                network_configuration={"type": "Virtualized NAT", "interfaces": []}
             )
 
-            return CrossEnvironmentTestResult(
-                environment=env_info,
+            return EnvironmentTestResult(
+                software_name=software_name,
+                binary_path=binary_path,
+                binary_hash=self._calculate_hash(binary_path),
+                environment_info=env_info,
                 test_passed=test_passed,
                 success_rate=1.0 if test_passed else 0.0,
-                resource_usage={"sandbox_isolated": True},
-                error_messages=[] if test_passed else [f"Sandbox test failed: {process.stderr}"]
+                error_messages=[] if test_passed else [f"Sandbox test failed: {process.stderr}"],
+                test_duration_seconds=0.0,
+                resource_usage={"sandbox_isolated": True}
             )
 
         except Exception as e:
             logger.error(f"Sandbox testing failed: {e}")
             return None
 
-    def _test_with_security_variations(self, binary_path: str, software_name: str, current_env: EnvironmentInfo) -> list[CrossEnvironmentTestResult]:
+    def _test_with_security_variations(self, binary_path: str, software_name: str, current_env: EnvironmentInfo) -> list[EnvironmentTestResult]:
         """Test with different security software configurations using real security tools."""
-        results = []
+        results: list[EnvironmentTestResult] = []
 
         # Test with Windows Defender in different modes
         defender_configs = [
@@ -929,12 +935,16 @@ class CrossEnvironmentValidator:
                     network_configuration=current_env.network_configuration
                 )
 
-                test_result = CrossEnvironmentTestResult(
-                    environment=env_info,
+                test_result = EnvironmentTestResult(
+                    software_name=software_name,
+                    binary_path=binary_path,
+                    binary_hash=self._calculate_hash(binary_path),
+                    environment_info=env_info,
                     test_passed=test_passed,
                     success_rate=1.0 if test_passed else 0.0,
-                    resource_usage={"security_config": config['mode']},
-                    error_messages=[] if test_passed else [f"Security test failed: {result.stderr}"]
+                    error_messages=[] if test_passed else [f"Security test failed: {result.stderr}"],
+                    test_duration_seconds=0.0,
+                    resource_usage={"security_config": config['mode']}
                 )
 
                 results.append(test_result)

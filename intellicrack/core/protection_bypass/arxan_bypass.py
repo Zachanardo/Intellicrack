@@ -24,9 +24,16 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import struct
+import types
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
+
+capstone: types.ModuleType | None
+frida: types.ModuleType | None
+keystone: types.ModuleType | None
+lief: types.ModuleType | None
+pefile: types.ModuleType | None
 
 from intellicrack.core.analysis.arxan_analyzer import (
     ArxanAnalysisResult,
@@ -39,37 +46,42 @@ from intellicrack.core.analysis.arxan_analyzer import (
 from intellicrack.core.protection_detection.arxan_detector import ArxanDetector
 
 
-if TYPE_CHECKING:
-    from types import ModuleType
-
-    import pefile as pefile_type
-
 try:
-    import capstone
+    import capstone as _capstone
+
+    capstone = _capstone
 except ImportError:
     capstone = None
 CAPSTONE_AVAILABLE = capstone is not None
 
 try:
-    import frida
+    import frida as _frida
+
+    frida = _frida
 except ImportError:
-    frida = None  # type: ignore[assignment]
+    frida = None
 FRIDA_AVAILABLE = frida is not None
 
 try:
-    import keystone
+    import keystone as _keystone
+
+    keystone = _keystone
 except ImportError:
     keystone = None
 KEYSTONE_AVAILABLE = keystone is not None
 
 try:
-    import lief
+    import lief as _lief
+
+    lief = _lief
 except ImportError:
-    lief = None  # type: ignore[assignment]
+    lief = None
 LIEF_AVAILABLE = lief is not None
 
 try:
-    import pefile
+    import pefile as _pefile
+
+    pefile = _pefile
 except ImportError:
     pefile = None
 PEFILE_AVAILABLE = pefile is not None
@@ -153,13 +165,17 @@ class ArxanBypass:
         """Bypass Arxan protection.
 
         Args:
-            binary_path: Path to protected binary
-            output_path: Path for patched binary (None = auto-generate)
-            runtime_bypass: Enable Frida runtime bypass
-            process_name: Process name for Frida attachment
+            binary_path: Path to protected binary.
+            output_path: Path for patched binary (None = auto-generate).
+            runtime_bypass: Enable Frida runtime bypass.
+            process_name: Process name for Frida attachment.
 
         Returns:
-            ArxanBypassResult with bypass details
+            ArxanBypassResult with bypass details and patches applied.
+
+        Raises:
+            FileNotFoundError: If binary file cannot be found at the
+                specified path.
 
         """
         binary_path = Path(binary_path)
@@ -653,7 +669,13 @@ class ArxanBypass:
 
 
 def main() -> None:
-    """Test entry point for Arxan bypass."""
+    """Test entry point for Arxan bypass.
+
+    Raises:
+        FileNotFoundError: If the specified binary file cannot be found.
+        Exception: If binary bypass operation fails.
+
+    """
     import argparse
     import json
 

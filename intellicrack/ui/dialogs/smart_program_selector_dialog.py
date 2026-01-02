@@ -19,10 +19,10 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import os
 import sys
-from typing import TYPE_CHECKING, cast
 
 from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT as HAS_QT,
+    QCloseEvent,
     QDialog,
     QHBoxLayout,
     QLabel,
@@ -80,14 +80,22 @@ class ProgramDiscoveryWorker(QThread):
     finished = pyqtSignal()
 
     def __init__(self, discovery_paths: list[str]) -> None:
-        """Initialize the program discovery worker with specified paths."""
+        """Initialize the program discovery worker with specified paths.
+
+        Args:
+            discovery_paths: Paths to scan for programs.
+        """
         super().__init__()
         self.discovery_paths: list[str] = discovery_paths
         self.running: bool = True
         self.logger = logger
 
     def run(self) -> None:
-        """Run program discovery in background thread."""
+        """Run program discovery in background thread.
+
+        Scans configured discovery paths for executable programs and
+        emits signals with progress updates and discovered programs.
+        """
         if not HAS_PROGRAM_DISCOVERY:
             self.progress_updated.emit("Program discovery not available")
             self.finished.emit()
@@ -114,7 +122,10 @@ class ProgramDiscoveryWorker(QThread):
         self.finished.emit()
 
     def stop(self) -> None:
-        """Stop the discovery process."""
+        """Stop the discovery process.
+
+        Sets the running flag to false to cleanly stop the worker thread.
+        """
         self.running = False
 
 
@@ -122,7 +133,11 @@ class SmartProgramSelectorDialog(QDialog):
     """Smart program selector dialog with intelligent discovery."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the smart program selector dialog with UI components and discovery functionality."""
+        """Initialize the smart program selector dialog with UI components and discovery functionality.
+
+        Args:
+            parent: Parent widget for this dialog.
+        """
         super().__init__(parent)
         self.setWindowTitle("Smart Program Selector")
         self.setModal(True)
@@ -142,7 +157,14 @@ class SmartProgramSelectorDialog(QDialog):
             self.connect_signals()
 
     def setup_ui(self) -> None:
-        """Set up the user interface."""
+        """Set up the user interface.
+
+        Creates and configures all UI components including labels, list widget,
+        progress text display, and action buttons.
+
+        Returns:
+            None
+        """
         layout: QVBoxLayout = QVBoxLayout(self)
 
         title_label: QLabel = QLabel("Select a Program for Analysis")
@@ -168,14 +190,29 @@ class SmartProgramSelectorDialog(QDialog):
         layout.addLayout(button_layout)
 
     def connect_signals(self) -> None:
-        """Connect UI signals."""
+        """Connect UI signals.
+
+        Establishes signal connections between UI buttons and their corresponding
+        handler methods.
+
+        Returns:
+            None
+        """
         if HAS_QT and self.scan_button is not None and self.analyze_button is not None and self.cancel_button is not None:
             self.scan_button.clicked.connect(self.start_program_discovery)
             self.analyze_button.clicked.connect(self.analyze_selected_program)
             self.cancel_button.clicked.connect(self.reject)
 
     def start_program_discovery(self) -> None:
-        """Start program discovery process."""
+        """Start program discovery process.
+
+        Initiates background program discovery by creating and starting a
+        ProgramDiscoveryWorker thread with configured discovery paths.
+        Disables the scan button during discovery.
+
+        Returns:
+            None
+        """
         if not HAS_PROGRAM_DISCOVERY:
             if self.progress_text is not None:
                 self.progress_text.append("Program discovery not available")
@@ -193,7 +230,12 @@ class SmartProgramSelectorDialog(QDialog):
             self.scan_button.setEnabled(False)
 
     def get_discovery_paths(self) -> list[str]:
-        """Get paths to scan for programs."""
+        """Get paths to scan for programs.
+
+        Returns:
+            List of existing directory paths to scan for programs on the
+            current platform (Windows, Linux, or macOS).
+        """
         paths: list[str] = []
 
         if sys.platform.startswith("win"):
@@ -251,7 +293,17 @@ class SmartProgramSelectorDialog(QDialog):
         return [path for path in paths if os.path.exists(path)]
 
     def handle_programs_found(self, programs: list[object]) -> None:
-        """Handle discovered programs."""
+        """Handle discovered programs.
+
+        Populates the programs list widget with discovered ProgramInfo objects,
+        displaying their names and discovery methods.
+
+        Args:
+            programs: List of discovered program objects from discovery worker.
+
+        Returns:
+            None
+        """
         if self.programs_list is None:
             return
 
@@ -264,19 +316,43 @@ class SmartProgramSelectorDialog(QDialog):
                 self.programs_list.addItem(item)
 
     def update_progress(self, message: str) -> None:
-        """Update progress display."""
+        """Update progress display.
+
+        Appends a message to the progress text area to provide feedback during
+        program discovery operations.
+
+        Args:
+            message: Progress message to display.
+
+        Returns:
+            None
+        """
         if self.progress_text is not None:
             self.progress_text.append(message)
 
     def discovery_finished(self) -> None:
-        """Handle discovery completion."""
+        """Handle discovery completion.
+
+        Re-enables the scan button and appends a completion message to the
+        progress text area when program discovery finishes.
+
+        Returns:
+            None
+        """
         if self.scan_button is not None:
             self.scan_button.setEnabled(True)
         if self.progress_text is not None:
             self.progress_text.append("Discovery completed.")
 
     def analyze_selected_program(self) -> None:
-        """Analyze the selected program."""
+        """Analyze the selected program.
+
+        Retrieves the currently selected program from the list widget and
+        accepts the dialog if a selection is present.
+
+        Returns:
+            None
+        """
         if self.programs_list is not None:
             current_item = self.programs_list.currentItem()
             if current_item is not None:
@@ -284,12 +360,46 @@ class SmartProgramSelectorDialog(QDialog):
                 self.accept()
 
     def get_selected_program(self) -> ProgramInfo | None:
-        """Get the selected program."""
+        """Get the selected program.
+
+        Returns:
+            The selected ProgramInfo object, or None if no program was selected.
+        """
         return self.selected_program
+
+    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+        """Handle dialog close with proper thread cleanup.
+
+        Ensures any running discovery worker is properly terminated before
+        closing the dialog to prevent resource leaks.
+
+        Args:
+            event: Close event from Qt framework.
+
+        Returns:
+            None
+        """
+        if self.discovery_worker is not None and self.discovery_worker.isRunning():
+            self.discovery_worker.quit()
+            if not self.discovery_worker.wait(2000):
+                self.discovery_worker.terminate()
+                self.discovery_worker.wait()
+            self.discovery_worker = None
+        super().closeEvent(event)
 
 
 def show_smart_program_selector(parent: QWidget | None = None) -> object | None:
-    """Show the smart program selector dialog."""
+    """Show the smart program selector dialog.
+
+    Creates and displays the smart program selector dialog, returning the
+    selected program if accepted by the user.
+
+    Args:
+        parent: Parent widget for the dialog.
+
+    Returns:
+        The selected ProgramInfo object if accepted, or None if canceled.
+    """
     if not HAS_QT:
         return None
 

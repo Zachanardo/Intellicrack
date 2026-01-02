@@ -18,13 +18,12 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
-from typing import Any, cast
+from typing import Any
 
 from intellicrack.core.config_manager import IntellicrackConfig, get_config
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QComboBox,
-    QDialogButtonBox,
     QFormLayout,
     QGroupBox,
     QLineEdit,
@@ -50,7 +49,15 @@ class PreferencesDialog(BaseDialog):
     preferences_changed = pyqtSignal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the PreferencesDialog with default values."""
+        """Initialize the PreferencesDialog with default values.
+
+        Args:
+            parent: Parent widget for this dialog, or None for top-level widget.
+
+        Returns:
+            None
+
+        """
         super().__init__(parent, "Preferences")
         self.config: IntellicrackConfig = get_config()
         self.resize(600, 500)
@@ -73,7 +80,15 @@ class PreferencesDialog(BaseDialog):
             self.apply_btn.clicked.connect(self.apply_preferences)
 
     def setup_content(self, layout: QVBoxLayout) -> None:
-        """Set up the preferences UI."""
+        """Set up the preferences UI.
+
+        Args:
+            layout: The parent layout to add the preferences UI to.
+
+        Returns:
+            None
+
+        """
         self.tab_widget = QTabWidget()
         layout.addWidget(self.tab_widget)
 
@@ -85,7 +100,13 @@ class PreferencesDialog(BaseDialog):
         self.tab_widget.addTab(self.create_hex_viewer_tab(), "Hex Viewer")
 
     def create_general_tab(self) -> QWidget:
-        """Create the general preferences tab."""
+        """Create the general preferences tab.
+
+        Returns:
+            QWidget: A widget containing the general preferences UI with
+                theme selection, auto-save options, and backup configuration.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -117,7 +138,14 @@ class PreferencesDialog(BaseDialog):
         return widget
 
     def create_execution_tab(self) -> QWidget:
-        """Create the script execution preferences tab."""
+        """Create the script execution preferences tab.
+
+        Returns:
+            QWidget: A widget containing the script execution preferences UI
+                with QEMU testing settings, script timeout, and output capture
+                configuration.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -175,7 +203,14 @@ class PreferencesDialog(BaseDialog):
         return widget
 
     def create_security_tab(self) -> QWidget:
-        """Create the security preferences tab."""
+        """Create the security preferences tab.
+
+        Returns:
+            QWidget: A widget containing the security preferences UI with
+                security warnings, patch confirmation, sandboxing, and
+                protection analysis options.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -216,7 +251,14 @@ class PreferencesDialog(BaseDialog):
         return widget
 
     def create_ai_tab(self) -> QWidget:
-        """Create the AI settings tab."""
+        """Create the AI settings tab.
+
+        Returns:
+            QWidget: A widget containing the AI settings UI with model
+                selection, API key configuration, token limits, and behavior
+                options for AI-assisted script generation.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -265,7 +307,14 @@ class PreferencesDialog(BaseDialog):
         return widget
 
     def create_hex_viewer_tab(self) -> QWidget:
-        """Create the Hex Viewer preferences tab."""
+        """Create the Hex Viewer preferences tab.
+
+        Returns:
+            QWidget: A widget containing the Hex Viewer preferences UI with
+                display, font, performance, and search settings for optimizing
+                hex file viewing and analysis.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -405,12 +454,22 @@ class PreferencesDialog(BaseDialog):
         return widget
 
     def on_hex_viewer_setting_changed(self) -> None:
-        """Handle immediate saving of hex viewer settings when auto-save is enabled."""
+        """Handle immediate saving of hex viewer settings when auto-save is enabled.
+
+        Saves hex viewer settings to configuration if auto-save is enabled.
+
+        """
         if self.config.get("general_preferences.auto_save", True):
             self.save_hex_viewer_settings()
 
     def save_hex_viewer_settings(self) -> None:
-        """Save hex viewer settings to configuration."""
+        """Save hex viewer settings to configuration.
+
+        Persists all hex viewer preferences to the central config, including
+        display, font, performance, and search settings. Saves to disk if
+        auto-save is enabled.
+
+        """
         # Display settings
         self.config.set("hex_viewer.ui.bytes_per_row", self.hex_bytes_per_row.value())
         self.config.set("hex_viewer.ui.group_size", int(self.hex_group_size.currentText()))
@@ -440,7 +499,13 @@ class PreferencesDialog(BaseDialog):
             self.preferences_changed.emit()
 
     def load_preferences(self) -> None:
-        """Load preferences from central config."""
+        """Load preferences from central config.
+
+        Loads all preference settings from the central configuration and
+        updates the UI controls to reflect these values. Called on dialog
+        initialization to populate the preferences interface.
+
+        """
         theme: Any = self.config.get("general_preferences.theme", "Dark")
         self.theme_combo.setCurrentText(str(theme) if theme else "Dark")
 
@@ -506,10 +571,13 @@ class PreferencesDialog(BaseDialog):
     def validate_preferences(self) -> tuple[bool, str]:
         """Validate preference values before saving.
 
+        Checks all preference values against acceptable ranges and constraints.
+        Validates QEMU settings, script timeout, AI settings, and API key format.
+
         Returns:
-            tuple[bool, str]: A tuple containing (is_valid, error_message) where is_valid
-                indicates if preferences passed validation and error_message contains
-                concatenated validation errors or empty string if valid.
+            A tuple containing (is_valid, error_message) where is_valid indicates
+            if preferences passed validation and error_message contains concatenated
+            validation errors or empty string if valid.
 
         """
         errors = []
@@ -545,7 +613,19 @@ class PreferencesDialog(BaseDialog):
         return (False, "\n".join(errors)) if errors else (True, "")
 
     def save_preferences(self) -> bool:
-        """Save preferences to central config."""
+        """Save preferences to central config.
+
+        Validates all preference values and saves them to the central config.
+        Shows an error dialog if validation fails. Emits preferences_changed
+        signal upon successful save. Persists all settings including general
+        preferences, execution settings, security options, AI configuration,
+        and hex viewer preferences to disk.
+
+        Returns:
+            bool: True if preferences were saved successfully, False if
+                validation failed.
+
+        """
         # Validate preferences first
         is_valid, error_msg = self.validate_preferences()
         if not is_valid:
@@ -600,7 +680,12 @@ class PreferencesDialog(BaseDialog):
         return True
 
     def apply_preferences(self) -> None:
-        """Apply preferences without closing dialog."""
+        """Apply preferences without closing dialog.
+
+        Saves the current preference values using save_preferences() and
+        leaves the dialog open. If validation fails, no changes are applied.
+
+        """
         result = self.save_preferences()
         if result is False:
             # Validation failed, save_preferences already showed error dialog
@@ -608,7 +693,13 @@ class PreferencesDialog(BaseDialog):
         # Successfully saved preferences
 
     def accept_preferences(self) -> None:
-        """Save preferences and close dialog."""
+        """Save preferences and close dialog.
+
+        Saves the current preference values using save_preferences() and
+        closes the dialog if validation succeeds. If validation fails, the
+        dialog remains open.
+
+        """
         result = self.save_preferences()
         if result is False:
             # Validation failed, don't close dialog

@@ -25,7 +25,7 @@ import logging
 from typing import Any
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Attempt to import available ML modules
 PatternEvolutionTracker: Any
@@ -33,7 +33,7 @@ try:
     from .pattern_evolution_tracker import PatternEvolutionTracker
 
     logger.debug("Pattern evolution tracker loaded successfully")
-    HAS_PATTERN_TRACKER = True
+    HAS_PATTERN_TRACKER: bool = True
 except ImportError as e:
     logger.warning("Pattern evolution tracker not available: %s", e)
     PatternEvolutionTracker = None
@@ -43,8 +43,12 @@ except ImportError as e:
 def get_ml_capabilities() -> list[str]:
     """Get list of available ML capabilities.
 
+    Retrieves a list of ML capabilities currently available in the Intellicrack
+    system based on successfully imported ML modules.
+
     Returns:
-        List of available ML capabilities.
+        A list of strings representing available ML capabilities (e.g.,
+        "pattern_evolution" if the pattern evolution tracker is available).
 
     """
     capabilities = []
@@ -53,7 +57,7 @@ def get_ml_capabilities() -> list[str]:
     return capabilities
 
 
-__all__ = []
+__all__: list[str] = []
 if HAS_PATTERN_TRACKER:
     __all__.append("PatternEvolutionTracker")
 

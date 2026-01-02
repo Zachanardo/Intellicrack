@@ -11,10 +11,13 @@ import re
 import time
 import traceback
 from collections import Counter
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.utils.logger import logger
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 """
@@ -375,7 +378,19 @@ class ParallelProcessingManager:
             logger.exception("Worker %s error: %s", worker_id, e)
 
     def _task_find_patterns(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
-        """Process a pattern-finding task."""
+        """Find patterns in a binary file chunk.
+
+        Args:
+            worker_id: ID of the worker process performing the task.
+            task: Task dictionary containing parameters for pattern matching.
+            binary_path: Path to the binary file to analyze.
+            chunk_size: Size of file chunks in bytes.
+
+        Returns:
+            dict[str, Any]: Dictionary containing matched patterns with their
+                positions and metadata.
+
+        """
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         patterns = task["params"].get("patterns", [])
         chunk_start = task["params"].get("chunk_start", 0)
@@ -412,7 +427,19 @@ class ParallelProcessingManager:
         return {"matches": matches, "patterns_found": len(matches)}
 
     def _task_analyze_entropy(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
-        """Process an entropy analysis task."""
+        """Analyze entropy in a binary file chunk using sliding windows.
+
+        Args:
+            worker_id: ID of the worker process performing the task.
+            task: Task dictionary containing entropy analysis parameters.
+            binary_path: Path to the binary file to analyze.
+            chunk_size: Size of file chunks in bytes.
+
+        Returns:
+            dict[str, Any]: Dictionary containing entropy metrics and
+                high-entropy region information.
+
+        """
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         chunk_start = task["params"].get("chunk_start", 0)
         chunk_end = task["params"].get("chunk_end", None)
@@ -457,7 +484,15 @@ class ParallelProcessingManager:
         }
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data."""
+        """Calculate Shannon entropy of binary data.
+
+        Args:
+            data: Binary data to analyze.
+
+        Returns:
+            float: Shannon entropy value as a float between 0 and 8.
+
+        """
         if not data:
             return 0.0
 
@@ -466,7 +501,19 @@ class ParallelProcessingManager:
         return -sum((count / total) * math.log2(count / total) for count in counts.values())
 
     def _task_analyze_section(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:  # pylint: disable=unused-argument
-        """Process a section analysis task."""
+        """Analyze a PE section for entropy, strings, and characteristics.
+
+        Args:
+            worker_id: ID of the worker process performing the task.
+            task: Task dictionary containing section analysis parameters.
+            binary_path: Path to the binary file to analyze.
+            chunk_size: Size of file chunks for processing.
+
+        Returns:
+            dict[str, Any]: Dictionary containing section analysis results
+                including entropy and strings.
+
+        """
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         section_name = task["params"].get("section_name", None)
 
@@ -565,7 +612,20 @@ class ParallelProcessingManager:
             return {"error": str(e), "section_name": section_name}
 
     def _task_symbolic_execution(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:  # pylint: disable=unused-argument
-        """Process a symbolic execution task."""
+        """Execute symbolic execution analysis on a target function.
+
+        Args:
+            worker_id: ID of the worker process performing the task.
+            task: Task dictionary containing symbolic execution parameters.
+            binary_path: Path to the binary file to analyze.
+            chunk_size: Size of chunks for exploration (unused in symbolic
+                execution).
+
+        Returns:
+            dict[str, Any]: Dictionary containing symbolic execution results
+                and vulnerabilities found.
+
+        """
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         target_function = task["params"].get("target_function", None)
         max_states = task["params"].get("max_states", 100)
@@ -599,8 +659,8 @@ class ParallelProcessingManager:
 
             logger.info("Resolved %s to address 0x%d", target_function, target_address)
 
-            initial_state: Any = proj.factory.call_state(target_address)  # type: ignore[no-untyped-call]
-            execution_mgr: Any = proj.factory.simgr(initial_state)  # type: ignore[no-untyped-call]
+            initial_state: Any = proj.factory.call_state(target_address)
+            execution_mgr: Any = proj.factory.simgr(initial_state)
 
             # Chunk-based exploration with timeout
             start_time = time.time()
@@ -682,7 +742,19 @@ class ParallelProcessingManager:
             }
 
     def _task_generic(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
-        """Process a generic task."""
+        """Process a generic binary chunk analysis task.
+
+        Args:
+            worker_id: ID of the worker process performing the task.
+            task: Task dictionary containing task parameters.
+            binary_path: Path to the binary file to analyze.
+            chunk_size: Size of file chunks in bytes.
+
+        Returns:
+            dict[str, Any]: Dictionary containing chunk analysis results and
+                metadata.
+
+        """
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         chunk_start = task["params"].get("chunk_start", 0)
 
@@ -1034,7 +1106,7 @@ class ParallelProcessingManager:
             return None
 
     def cleanup(self) -> None:
-        """Clean up resources."""
+        """Clean up processing resources and stop all workers."""
         self.stop_processing()
 
 

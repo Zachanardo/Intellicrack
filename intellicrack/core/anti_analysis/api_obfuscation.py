@@ -26,14 +26,6 @@ import zlib
 from typing import Any
 
 
-"""
-API Obfuscation
-
-Implements techniques to obfuscate API calls and evade
-API monitoring and hooking.
-"""
-
-
 class APIObfuscator:
     """Obfuscate API calls to evade monitoring and analysis."""
 
@@ -76,12 +68,24 @@ class APIObfuscator:
     def obfuscate_api_calls(self, code: str, method: str = "hash_lookup") -> str:
         """Obfuscate API calls in code.
 
+        Transforms source code containing direct API calls into obfuscated
+        versions using the specified method. Supported methods include hash-based
+        resolution and dynamic runtime resolution. Returns original code on
+        unrecognized method or failure.
+
         Args:
-            code: Source code with API calls
-            method: Obfuscation method to use
+            code: Source code containing API calls to obfuscate.
+            method: Obfuscation method to use ("hash_lookup",
+                "dynamic_resolution", etc.). Defaults to "hash_lookup".
 
         Returns:
-            Obfuscated code
+            Obfuscated code string with transformed API calls, or
+            original code if method is unrecognized or error occurs.
+
+        Raises:
+            ValueError: Raised internally when an unknown obfuscation method
+                is provided. The exception is caught and original code is
+                returned instead.
 
         """
         try:
@@ -106,13 +110,19 @@ class APIObfuscator:
     def resolve_api(self, dll_name: str, api_name: str, method: str = "normal") -> int | None:
         """Resolve API address using specified method.
 
+        Resolves the memory address of an API function using the specified
+        resolution method (normal, dynamic, hash-based, ordinal). Caches
+        results to optimize repeated lookups. Returns None if resolution fails.
+
         Args:
-            dll_name: DLL containing the API
-            api_name: API function name
-            method: Resolution method
+            dll_name: str: Name of the DLL containing the API function.
+            api_name: str: Name of the API function to resolve.
+            method: str: Resolution method ("normal", "dynamic_resolution",
+                "hash_lookup", "ordinal_lookup"). Defaults to "normal".
 
         Returns:
-            API address or None
+            int | None: Memory address of the resolved API function, or None
+                if resolution fails or method is unrecognized.
 
         """
         try:
@@ -146,7 +156,21 @@ class APIObfuscator:
             return None
 
     def _normal_resolve(self, dll_name: str, api_name: str) -> int | None:
-        """Resolve API normally using GetProcAddress."""
+        """Resolve API normally using GetProcAddress.
+
+        Performs standard Windows API resolution using GetModuleHandleW and
+        GetProcAddress. Loads the DLL if not already loaded. Returns None if
+        not running on Windows or if resolution fails.
+
+        Args:
+            dll_name: Name of the DLL containing the API.
+            api_name: Name of the API function to resolve.
+
+        Returns:
+            Address of the API function, or None if resolution
+            fails or not running on Windows.
+
+        """
         try:
             import platform
 
@@ -168,7 +192,23 @@ class APIObfuscator:
         return None
 
     def _resolve_by_hash(self, dll_name: str, api_hash: int) -> int | None:
-        """Resolve API by hash value using advanced anti-analysis techniques."""
+        """Resolve API by hash value using advanced anti-analysis techniques.
+
+        Resolves an API function by matching its hash against exported function
+        hashes. Parses PE export table directly from memory to enumerate exports,
+        calculates hashes using multiple algorithms (DJB2, FNV-1a, CRC32, custom),
+        and returns the matching function address. Includes export table validation
+        and anti-analysis detection.
+
+        Args:
+            dll_name: Name of the DLL containing the API.
+            api_hash: Hash value of the API name to match.
+
+        Returns:
+            Address of the API function if hash match found, or None
+            if resolution fails or export table is invalid.
+
+        """
         try:
             import platform
 
@@ -265,7 +305,21 @@ class APIObfuscator:
             return None
 
     def _resolve_by_ordinal(self, dll_name: str, ordinal: int) -> int | None:
-        """Resolve API by ordinal number with anti-analysis evasion."""
+        """Resolve API by ordinal number with anti-analysis evasion.
+
+        Resolves an API function using its ordinal number by directly parsing
+        the PE export table. Handles forwarded exports and includes PE header
+        validation. Falls back to GetProcAddress if PE parsing fails.
+
+        Args:
+            dll_name: Name of the DLL containing the API.
+            ordinal: Ordinal number of the API to resolve.
+
+        Returns:
+            Address of the API function if found, or None if
+            ordinal is out of range or resolution fails.
+
+        """
         try:
             import platform
 
@@ -346,7 +400,21 @@ class APIObfuscator:
             return None
 
     def _dynamic_resolve(self, dll_name: str, api_name: str) -> int | None:
-        """Dynamically resolve API at runtime."""
+        """Dynamically resolve API at runtime.
+
+        Obfuscates the resolution process by shuffling string characters and
+        reconstructing them before standard resolution. Evades static analysis
+        of hardcoded API names in binary code.
+
+        Args:
+            dll_name: Name of the DLL containing the API.
+            api_name: Name of the API function to resolve.
+
+        Returns:
+            Memory address of the resolved API function, or None
+            if resolution fails.
+
+        """
         try:
             # Obfuscate the resolution process
 
@@ -384,12 +452,17 @@ class APIObfuscator:
     def _indirect_call(self, api_address: int, *args: object) -> object:
         """Make indirect API call through function pointer.
 
+        Creates a ctypes function prototype dynamically based on argument count
+        and invokes the function at the specified address. Supports 0 to many
+        arguments, each treated as void pointers.
+
         Args:
-            api_address: Address of the API function to call
-            *args: Variable arguments to pass to the API function
+            api_address: Memory address of the API function to call.
+            *args: Variable arguments to pass to the API function.
 
         Returns:
-            Result of the API call, or None if the call fails
+            Result of the API call, or None if function creation or
+            invocation fails.
 
         """
         try:
@@ -416,17 +489,54 @@ class APIObfuscator:
             return None
 
     def _obfuscated_string(self, string: str) -> bytes:
-        """Obfuscate string using XOR encryption."""
+        """Obfuscate string using XOR encryption.
+
+        Encrypts a string using single-byte XOR encryption with a random key.
+        Returns the key prepended to the encrypted bytes for deobfuscation.
+
+        Args:
+            string: String to obfuscate.
+
+        Returns:
+            XOR-encrypted string with random encryption key prepended
+            as first byte.
+
+        """
         key = secrets.randbelow(255) + 1
         obfuscated = bytes((ord(c) ^ key) for c in string)
         return struct.pack("B", key) + obfuscated
 
     def _deobfuscate_string(self, data: bytes) -> str:
-        """Deobfuscate XOR encrypted string."""
+        """Deobfuscate XOR encrypted string.
+
+        Decrypts a previously obfuscated string by extracting the XOR key
+        from the first byte and XORing remaining bytes. Returns empty string
+        if data is malformed.
+
+        Args:
+            data: Obfuscated bytes with XOR key as first byte.
+
+        Returns:
+            Deobfuscated plaintext string, or empty string if data is
+            too short or invalid.
+
+        """
         return "" if len(data) < 2 else "".join(chr(b ^ data[0]) for b in data[1:])
 
     def _djb2_hash(self, string: str) -> int:
-        """DJB2 hash algorithm commonly used in protected software."""
+        """DJB2 hash algorithm commonly used in protected software.
+
+        Implements the DJB2 (Daniel J. Bernstein) hash function, a fast and
+        simple algorithm frequently used in malware and protection mechanisms
+        for API obfuscation and name hashing.
+
+        Args:
+            string: String to hash.
+
+        Returns:
+            32-bit DJB2 hash value.
+
+        """
         hash_value = 5381
         for char in string:
             hash_value = ((hash_value << 5) + hash_value) + ord(char)
@@ -434,7 +544,19 @@ class APIObfuscator:
         return hash_value
 
     def _fnv1a_hash(self, string: str) -> int:
-        """FNV-1a hash algorithm for API obfuscation."""
+        """FNV-1a hash algorithm for API obfuscation.
+
+        Implements the FNV-1a (Fowler-Noll-Vo) hash function with 32-bit output,
+        commonly used in anti-analysis code and licensing protection mechanisms
+        for fast API name hashing.
+
+        Args:
+            string: String to hash.
+
+        Returns:
+            32-bit FNV-1a hash value.
+
+        """
         hash_value = 0x811C9DC5  # FNV offset basis
         for char in string:
             hash_value ^= ord(char)
@@ -443,13 +565,34 @@ class APIObfuscator:
         return hash_value
 
     def _crc32_hash(self, string: str) -> int:
-        """CRC32 hash for API name obfuscation."""
-        import zlib
+        """CRC32 hash for API name obfuscation.
 
+        Calculates CRC32 checksum of a string for use in API resolution and
+        licensing check obfuscation. Uses the standard polynomial for CRC32.
+
+        Args:
+            string: String to hash.
+
+        Returns:
+            32-bit CRC32 hash value.
+
+        """
         return zlib.crc32(string.encode("ascii")) & 0xFFFFFFFF
 
     def _custom_hash(self, string: str) -> int:
-        """Apply custom hash algorithm for advanced evasion."""
+        """Apply custom hash algorithm for advanced evasion.
+
+        Implements a proprietary hash function combining bit rotation, XOR,
+        and multiplication operations. Designed for unpredictability and
+        evasion of static hash database lookups.
+
+        Args:
+            string: String to hash.
+
+        Returns:
+            32-bit custom hash value.
+
+        """
         hash_value = 0
         for i, char in enumerate(string):
             hash_value = ((hash_value << 3) ^ (hash_value >> 5)) + ord(char)
@@ -458,7 +601,20 @@ class APIObfuscator:
         return hash_value
 
     def _resolve_forwarded_export(self, forward_str: str) -> int | None:
-        """Resolve forwarded exports like 'NTDLL.RtlInitUnicodeString'."""
+        """Resolve forwarded exports like 'NTDLL.RtlInitUnicodeString'.
+
+        Handles PE forwarded exports which redirect to other DLLs. Parses the
+        forwarding string to extract DLL and API names, then performs normal
+        resolution on the target function.
+
+        Args:
+            forward_str: Forwarded export string in format 'DLL.API'.
+
+        Returns:
+            Address of the forwarded API function, or None if
+            forwarding string is invalid or resolution fails.
+
+        """
         try:
             if "." not in forward_str:
                 return None
@@ -474,11 +630,32 @@ class APIObfuscator:
             return None
 
     def _calculate_hash(self, string: str) -> int:
-        """Calculate CRC32 hash of string."""
+        """Calculate CRC32 hash of string.
+
+        Calculates the CRC32 hash of a string, converting the result to an
+        unsigned 32-bit integer. Used as default hash method for API resolution.
+
+        Args:
+            string: String to hash.
+
+        Returns:
+            32-bit unsigned CRC32 hash value.
+
+        """
         return ctypes.c_uint32(zlib.crc32(string.encode())).value
 
     def _generate_hash_lookup_code(self) -> str:
-        """Generate code that uses hash-based API resolution."""
+        """Generate code that uses hash-based API resolution.
+
+        Creates C code demonstrating hash-based API resolution technique. The
+        generated code includes CRC32 implementation, export table parsing,
+        and hash matching for obfuscated API lookups.
+
+        Returns:
+            C code string implementing hash-based API resolution with
+            function caching and hash value matching.
+
+        """
         return """
 // Hash-based API Resolution
 #include <windows.h>
@@ -532,7 +709,17 @@ HANDLE thread = pCreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)mem, NULL, 0, NUL
 """
 
     def _generate_dynamic_resolution_code(self) -> str:
-        """Generate code with dynamic API resolution."""
+        """Generate code with dynamic API resolution.
+
+        Creates C code demonstrating dynamic API resolution at runtime. The
+        generated code obfuscates API names using XOR encryption, builds
+        names dynamically, and caches resolved function pointers.
+
+        Returns:
+            C code string implementing dynamic API resolution with
+            string deobfuscation and function caching.
+
+        """
         return """
 // Dynamic API Resolution
 #include <windows.h>
@@ -612,7 +799,21 @@ LPVOID mem = pVirtualAlloc(NULL, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_
 """
 
     def generate_call_obfuscation(self, api_name: str) -> str:
-        """Generate obfuscated call for specific API."""
+        """Generate obfuscated call for specific API.
+
+        Creates C code demonstrating hash-based API resolution and indirect
+        calling techniques for the specified API function. The generated code
+        includes hash calculation, resolution through export table parsing,
+        and indirect function invocation to evade API monitoring and analysis.
+
+        Args:
+            api_name: Name of the API function to generate obfuscated call for.
+
+        Returns:
+            C code string with obfuscated API call including hash
+            calculation, resolution, and indirect invocation.
+
+        """
         # Calculate hash
         api_hash = self._calculate_hash(api_name)
 
@@ -627,7 +828,13 @@ if (p{api_name}) {{
 """
 
     def _load_api_databases(self) -> None:
-        """Load known API hash databases."""
+        """Load known API hash databases.
+
+        Initializes API hash and address lookup databases with common Windows
+        APIs and their calculated hashes using multiple algorithms (DJB2, FNV-1a,
+        CRC32, custom). On failure, initializes empty databases.
+
+        """
         try:
             # Common Windows APIs with their hash values
             common_apis = [
@@ -687,12 +894,18 @@ if (p{api_name}) {{
     def _resolve_encrypted_strings(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Resolve encrypted API strings.
 
+        Scans binary code for encrypted API string patterns and attempts to
+        decrypt them using stored decryption keys. Identifies PUSH instructions
+        and checks for matching entries in the encrypted strings database.
+
         Args:
-            code: Code containing encrypted API strings
-            params: Parameters for decryption
+            code: Binary code containing encrypted API strings.
+            params: Parameters including optional 'key' for decryption.
 
         Returns:
-            Tuple of (resolved code, metadata)
+            Tuple of (resolved code bytes, metadata dict containing method, key,
+            resolved_count, and patterns list) or (original code, error dict)
+            on failure.
 
         """
         try:
@@ -731,12 +944,18 @@ if (p{api_name}) {{
     def _resolve_dynamic_imports(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Resolve dynamically loaded API imports.
 
+        Identifies dynamically loaded APIs in binary code by detecting GetProcAddress
+        calling patterns. Looks for CALL DWORD PTR instructions and matches addresses
+        against known API locations.
+
         Args:
-            code: Code containing dynamic imports
-            params: Parameters for resolution
+            code: Binary code containing dynamic import patterns.
+            params: Parameters for resolution (currently unused).
 
         Returns:
-            Tuple of (resolved code, metadata)
+            Tuple of (unmodified code bytes, metadata dict containing method,
+            resolved_count, and imports list) or (original code, error dict)
+            on failure.
 
         """
         try:
@@ -766,12 +985,18 @@ if (p{api_name}) {{
     def _resolve_redirected_apis(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Resolve redirected API calls.
 
+        Detects API redirection patterns in binary code, specifically JMP rel32
+        instructions that target known API addresses. Useful for analyzing
+        hooking and API trampolining techniques.
+
         Args:
-            code: Code containing redirected APIs
-            params: Parameters for resolution
+            code: Binary code containing API redirection patterns.
+            params: Parameters for resolution (currently unused).
 
         Returns:
-            Tuple of (resolved code, metadata)
+            Tuple of (unmodified code bytes, metadata dict containing method,
+            resolved_count, and redirections list) or (original code, error dict)
+            on failure.
 
         """
         try:
@@ -808,12 +1033,18 @@ if (p{api_name}) {{
     def _generate_indirect_calls(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Generate indirect API calls through function pointers.
 
+        Transforms direct API calls into indirect calls through function pointers.
+        Replaces CALL instructions with MOV+CALL register sequences or double-indirect
+        patterns. Marks larger sequences for later expansion.
+
         Args:
-            code: Original code bytes
-            params: Parameters for indirect call generation
+            code: Original code bytes to transform.
+            params: Parameters for indirect call generation (currently unused).
 
         Returns:
-            Tuple of (modified code, metadata)
+            Tuple of (modified code bytes, metadata dict containing method,
+            modified_count, and calls list) or (original code, error dict)
+            on failure.
 
         """
         try:
@@ -892,12 +1123,18 @@ if (p{api_name}) {{
     def _generate_trampoline_calls(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Generate trampoline-based API calls.
 
+        Redirects API calls through trampoline code appended to the end of the
+        original code. Each trampoline preserves return address and jumps to the
+        actual target. Modifies CALL instructions to point to trampolines instead.
+
         Args:
-            code: Original code bytes
-            params: Parameters for trampoline generation
+            code: Original code bytes to transform.
+            params: Parameters for trampoline generation (currently unused).
 
         Returns:
-            Tuple of (modified code with trampolines, metadata)
+            Tuple of (modified code with trampolines appended, metadata dict
+            containing method, trampoline_count, trampolines list, and new_size)
+            or (original code, error dict) on failure.
 
         """
         try:
@@ -955,13 +1192,18 @@ if (p{api_name}) {{
     def _generate_decryption_shellcode(self, offset: int, size: int, key: int) -> bytearray:
         """Generate x86/x64 assembly decryption shellcode for runtime decryption.
 
+        Generates x86 assembly code that performs XOR decryption of a binary
+        section at runtime. Saves and restores registers, loops through the
+        encrypted data, and jumps back to execute decrypted code.
+
         Args:
-            offset: Offset of encrypted section
-            size: Size of encrypted section
-            key: XOR encryption key
+            offset: Offset of the encrypted section in code.
+            size: Size of the encrypted section in bytes.
+            key: XOR encryption key (single byte, masked to 8 bits).
 
         Returns:
-            Assembly shellcode bytes for runtime decryption
+            x86 assembly shellcode bytes for inline decryption
+            that can be inserted before encrypted code.
 
         """
         shellcode = bytearray()
@@ -1048,12 +1290,19 @@ if (p{api_name}) {{
     def _generate_encrypted_payloads(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Generate encrypted API call payloads.
 
+        Identifies API call patterns in binary code and encrypts them with XOR.
+        Generates inline decryption shellcode for each encrypted section and
+        prepends it before the encrypted code.
+
         Args:
-            code: Original code bytes
-            params: Parameters for encryption
+            code: Original code bytes to encrypt.
+            params: Parameters including optional 'key' for XOR encryption.
+                Random key generated if not provided.
 
         Returns:
-            Tuple of (code with encrypted payloads, metadata)
+            Tuple of (modified code with decryption shellcode prepended,
+            metadata dict containing method, encryption_key, encrypted_count,
+            and sections list) or (original code, error dict) on failure.
 
         """
         try:
@@ -1102,12 +1351,19 @@ if (p{api_name}) {{
     def _generate_polymorphic_wrappers(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Generate polymorphic wrappers for API calls.
 
+        Creates polymorphic variants of API call instructions by wrapping them
+        with different instruction sequences (register variations, LEA vs MOV,
+        arithmetic obfuscation) and random padding. Selects random variant for
+        each wrapper to evade signature detection.
+
         Args:
-            code: Original code bytes
-            params: Parameters for polymorphic generation
+            code: Original code bytes to wrap.
+            params: Parameters for polymorphic generation (currently unused).
 
         Returns:
-            Tuple of (code with polymorphic wrappers, metadata)
+            Tuple of (unmodified code bytes, metadata dict containing method,
+            wrapper_count, wrappers list, and variants_available) or
+            (original code, error dict) on failure.
 
         """
         try:
@@ -1165,12 +1421,19 @@ if (p{api_name}) {{
     def _resolve_delayed_imports(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Resolve delayed/lazy loaded API imports.
 
+        Identifies delayed import thunks and runtime-loaded API patterns in
+        binary code. Detects JMP DWORD PTR delayed import patterns, LoadLibrary
+        sequences, and __delayLoadHelper2 function calls. Matches against known
+        API addresses in the database.
+
         Args:
-            code: Code containing delayed imports
-            params: Parameters for resolution
+            code: Binary code containing delayed import patterns.
+            params: Parameters for resolution (currently unused).
 
         Returns:
-            Tuple of (resolved code, metadata)
+            Tuple of (unmodified code bytes, metadata dict containing method,
+            resolved_count, and imports list) or (original code, error dict)
+            on failure.
 
         """
         try:

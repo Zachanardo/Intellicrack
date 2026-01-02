@@ -26,14 +26,18 @@ class IntellicrackError(Exception):
 class ConfigurationError(IntellicrackError):
     """Raised when configuration is missing, invalid, or incomplete."""
 
-    def __init__(self, message: str, service_name: str | None = None, config_key: str | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        service_name: str | None = None,
+        config_key: str | None = None,
+    ) -> None:
         """Initialize configuration error.
 
         Args:
-            message: Error message
-            service_name: Name of the service with configuration issue
-            config_key: Configuration key that caused the error
-
+            message: Error message.
+            service_name: Name of the service with configuration issue.
+            config_key: Configuration key that caused the error.
         """
         super().__init__(message)
         self.service_name = service_name
@@ -43,14 +47,18 @@ class ConfigurationError(IntellicrackError):
 class ServiceUnavailableError(IntellicrackError):
     """Raised when a required service is unavailable."""
 
-    def __init__(self, message: str, service_name: str, url: str | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        service_name: str,
+        url: str | None = None,
+    ) -> None:
         """Initialize service unavailable error.
 
         Args:
-            message: Error message
-            service_name: Name of the unavailable service
-            url: URL that was unreachable
-
+            message: Error message.
+            service_name: Name of the unavailable service.
+            url: URL that was unreachable.
         """
         super().__init__(message)
         self.service_name = service_name
@@ -60,14 +68,18 @@ class ServiceUnavailableError(IntellicrackError):
 class ToolNotFoundError(IntellicrackError):
     """Raised when a required tool is not found or configured."""
 
-    def __init__(self, message: str, tool_name: str, search_paths: list[str] | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        tool_name: str,
+        search_paths: list[str] | None = None,
+    ) -> None:
         """Initialize tool not found error.
 
         Args:
-            message: Error message
-            tool_name: Name of the missing tool
-            search_paths: Paths that were searched
-
+            message: Error message.
+            tool_name: Name of the missing tool.
+            search_paths: Paths that were searched.
         """
         super().__init__(message)
         self.tool_name = tool_name
@@ -77,14 +89,18 @@ class ToolNotFoundError(IntellicrackError):
 class ValidationError(IntellicrackError):
     """Raised when data validation fails."""
 
-    def __init__(self, message: str, field_name: str | None = None, value: str | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        field_name: str | None = None,
+        value: str | None = None,
+    ) -> None:
         """Initialize validation error.
 
         Args:
-            message: Error message
-            field_name: Name of the field that failed validation
-            value: Value that failed validation
-
+            message: Error message.
+            field_name: Name of the field that failed validation.
+            value: Value that failed validation.
         """
         super().__init__(message)
         self.field_name = field_name
@@ -98,14 +114,18 @@ class SecurityError(IntellicrackError):
 class AnalysisError(IntellicrackError):
     """Raised when binary analysis fails."""
 
-    def __init__(self, message: str, binary_path: str | None = None, analysis_type: str | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        binary_path: str | None = None,
+        analysis_type: str | None = None,
+    ) -> None:
         """Initialize analysis error.
 
         Args:
-            message: Error message
-            binary_path: Path to binary that failed analysis
-            analysis_type: Type of analysis that failed
-
+            message: Error message.
+            binary_path: Path to binary that failed analysis.
+            analysis_type: Type of analysis that failed.
         """
         super().__init__(message)
         self.binary_path = binary_path
@@ -115,14 +135,18 @@ class AnalysisError(IntellicrackError):
 class ExploitationError(IntellicrackError):
     """Raised when exploitation operations fail."""
 
-    def __init__(self, message: str, target: str | None = None, technique: str | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        target: str | None = None,
+        technique: str | None = None,
+    ) -> None:
         """Initialize exploitation error.
 
         Args:
-            message: Error message
-            target: Target that failed exploitation
-            technique: Exploitation technique that failed
-
+            message: Error message.
+            target: Target that failed exploitation.
+            technique: Exploitation technique that failed.
         """
         super().__init__(message)
         self.target = target
@@ -132,14 +156,18 @@ class ExploitationError(IntellicrackError):
 class NetworkError(IntellicrackError):
     """Raised when network operations fail."""
 
-    def __init__(self, message: str, host: str | None = None, port: int | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        host: str | None = None,
+        port: int | None = None,
+    ) -> None:
         """Initialize network error.
 
         Args:
-            message: Error message
-            host: Host that failed connection
-            port: Port that failed connection
-
+            message: Error message.
+            host: Host that failed connection.
+            port: Port that failed connection.
         """
         super().__init__(message)
         self.host = host

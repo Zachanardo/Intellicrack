@@ -232,7 +232,8 @@ class VMDetector(BaseDetector):
             aggressive: Use more aggressive detection methods that might be detected
 
         Returns:
-            Detection results with confidence scores
+            dict[str, Any]: Detection results with confidence scores containing is_vm,
+                confidence, vm_type, detections, and evasion_score keys
 
         """
         results: dict[str, Any] = {
@@ -274,7 +275,17 @@ class VMDetector(BaseDetector):
             return results
 
     def _execute_cpuid(self, leaf: int, subleaf: int = 0) -> tuple[int, int, int, int] | None:
-        """Execute CPUID instruction and return EAX, EBX, ECX, EDX registers."""
+        """Execute CPUID instruction and return EAX, EBX, ECX, EDX registers.
+
+        Args:
+            leaf: CPUID leaf index to query
+            subleaf: CPUID subleaf index (default 0)
+
+        Returns:
+            tuple[int, int, int, int] | None: Tuple of (EAX, EBX, ECX, EDX) register values,
+                or None if execution fails
+
+        """
         cache_key = (leaf, subleaf)
         if cache_key in self._cpuid_cache:
             return self._cpuid_cache[cache_key]
@@ -467,7 +478,12 @@ class VMDetector(BaseDetector):
             return None
 
     def _check_cpuid_hypervisor_bit(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check CPUID leaf 0x1 for hypervisor bit (ECX bit 31)."""
+        """Check CPUID leaf 0x1 for hypervisor bit (ECX bit 31).
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"hypervisor_bit": False, "leaf": 0x1, "ecx_value": None}
 
         try:
@@ -487,7 +503,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_cpuid_vendor_strings(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check CPUID hypervisor vendor strings (leaves 0x40000000-0x400000FF)."""
+        """Check CPUID hypervisor vendor strings (leaves 0x40000000-0x400000FF).
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"vendor_string": None, "vm_type": None, "hypervisor_leaves": []}
 
         try:
@@ -521,7 +542,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_cpuid_timing(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check CPUID instruction execution timing for VM overhead."""
+        """Check CPUID instruction execution timing for VM overhead.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"avg_time_ns": 0, "variance": 0, "samples": 0, "anomaly_detected": False}
 
         try:
@@ -556,7 +582,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_hypervisor_brand(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check hypervisor brand string."""
+        """Check hypervisor brand string.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"brand": None}
 
         try:
@@ -581,7 +612,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_hardware_signatures(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for VM-specific hardware signatures."""
+        """Check for VM-specific hardware signatures.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"detected_hardware": []}
 
         try:
@@ -642,7 +678,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_process_list(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for VM-specific processes."""
+        """Check for VM-specific processes.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"detected_processes": []}
 
         try:
@@ -668,7 +709,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_registry_keys(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for VM-specific registry keys (Windows only)."""
+        """Check for VM-specific registry keys (Windows only).
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"detected_keys": []}
 
         if platform.system() != "Windows":
@@ -705,7 +751,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_file_system(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for VM-specific files and directories."""
+        """Check for VM-specific files and directories.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"detected_files": []}
 
         try:
@@ -728,7 +779,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_rdtsc_timing(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check RDTSC instruction timing for VM detection."""
+        """Check RDTSC instruction timing for VM detection.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {
             "avg_delta": 0,
             "variance": 0,
@@ -872,7 +928,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_sleep_timing(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check sleep timing discrepancies for VM detection."""
+        """Check sleep timing discrepancies for VM detection.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"expected_ms": 0.0, "actual_ms": 0.0, "discrepancy": 0.0}
 
         try:
@@ -906,7 +967,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_instruction_timing(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check instruction execution timing for VM overhead."""
+        """Check instruction execution timing for VM overhead.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"baseline_ns": 0, "test_ns": 0, "overhead_pct": 0.0}
 
         try:
@@ -948,7 +1014,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_network_adapters(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for VM-specific MAC address prefixes."""
+        """Check for VM-specific MAC address prefixes.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"detected_macs": []}
 
         try:
@@ -1004,7 +1075,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_bios_info(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check BIOS information for VM signatures."""
+        """Check BIOS information for VM signatures.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"bios_vendor": None}
 
         try:
@@ -1039,7 +1115,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_device_drivers(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for VM-specific device drivers."""
+        """Check for VM-specific device drivers.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"detected_drivers": []}
 
         try:
@@ -1102,7 +1183,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_cpu_model_detection(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check CPU model for VM-specific identifiers."""
+        """Check CPU model for VM-specific identifiers.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"cpu_model": None, "vm_indicators": []}
 
         try:
@@ -1169,7 +1255,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_hardware_fingerprint(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check hardware fingerprint for VM characteristics."""
+        """Check hardware fingerprint for VM characteristics.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {
             "total_ram_mb": 0,
             "cpu_cores": 0,
@@ -1223,7 +1314,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_disk_serial_numbers(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check disk serial numbers for VM patterns."""
+        """Check disk serial numbers for VM patterns.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"disk_serials": [], "vm_patterns_found": []}
 
         try:
@@ -1299,7 +1395,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_mac_address_patterns(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check MAC address patterns for VM vendors."""
+        """Check MAC address patterns for VM vendors.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"mac_addresses": [], "vm_macs": []}
 
         try:
@@ -1364,7 +1465,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_cpuid_feature_flags(self) -> tuple[bool, float, dict[str, Any]]:
-        """Analyze CPUID feature flags for VM-specific indicators."""
+        """Analyze CPUID feature flags for VM-specific indicators.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {
             "hypervisor_present": False,
             "feature_flags": {},
@@ -1423,7 +1529,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_cpuid_extended_leaves(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check CPUID extended leaves for hypervisor information."""
+        """Check CPUID extended leaves for hypervisor information.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"leaves": [], "hypervisor_info": {}, "vm_detected": False}
 
         try:
@@ -1466,7 +1577,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_cpuid_brand_string(self) -> tuple[bool, float, dict[str, Any]]:
-        """Extract and analyze CPU brand string for VM indicators."""
+        """Extract and analyze CPU brand string for VM indicators.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"brand_string": "", "vm_indicators": []}
 
         try:
@@ -1498,7 +1614,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_rdtsc_vmexit_detection(self) -> tuple[bool, float, dict[str, Any]]:
-        """Detect VM exits by measuring RDTSC instruction pairs for large deltas."""
+        """Detect VM exits by measuring RDTSC instruction pairs for large deltas.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {
             "vmexit_candidates": [],
             "max_delta": 0,
@@ -1620,7 +1741,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_paravirt_instructions(self) -> tuple[bool, float, dict[str, Any]]:
-        """Test for paravirtualization instructions (VMCALL, VMMCALL, VMFUNC)."""
+        """Test for paravirtualization instructions (VMCALL, VMMCALL, VMFUNC).
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"instructions_tested": [], "exceptions_caught": [], "paravirt_detected": False}
 
         try:
@@ -1680,7 +1806,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_acpi_tables(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check ACPI tables for VM signatures."""
+        """Check ACPI tables for VM signatures.
+
+        Returns:
+            Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"acpi_tables": [], "vm_signatures_found": []}
 
         try:
@@ -1745,7 +1876,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_pci_devices(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check PCI devices for VM-specific controllers."""
+        """Check PCI devices for VM-specific controllers.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"pci_devices": [], "vm_devices": []}
 
         try:
@@ -1809,7 +1945,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_memory_artifacts(self) -> tuple[bool, float, dict[str, Any]]:
-        """Scan process memory for hypervisor signatures."""
+        """Scan process memory for hypervisor signatures.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"signatures_found": [], "memory_regions_scanned": 0}
 
         try:
@@ -1894,7 +2035,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_performance_counters(self) -> tuple[bool, float, dict[str, Any]]:
-        """Analyze performance counters for VM overhead patterns."""
+        """Analyze performance counters for VM overhead patterns.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {"counter_anomalies": [], "baseline": {}, "current": {}}
 
         try:
@@ -1934,7 +2080,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_tsc_frequency_analysis(self) -> tuple[bool, float, dict[str, Any]]:
-        """Analyze TSC frequency for VM timing artifacts."""
+        """Analyze TSC frequency for VM timing artifacts.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {
             "tsc_frequency_hz": 0,
             "measurement_variance": 0,
@@ -2018,7 +2169,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_cache_timing(self) -> tuple[bool, float, dict[str, Any]]:
-        """Analyze CPU cache timing for VM artifacts."""
+        """Analyze CPU cache timing for VM artifacts.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple of (detected, confidence, details)
+
+        """
         details: dict[str, Any] = {
             "l1_cache_timing_ns": 0,
             "l2_cache_timing_ns": 0,
@@ -2090,7 +2246,12 @@ class VMDetector(BaseDetector):
         return False, 0.0, details
 
     def get_hardware_fingerprint(self) -> HardwareFingerprint:
-        """Collect comprehensive hardware fingerprint."""
+        """Collect comprehensive hardware fingerprint.
+
+        Returns:
+            HardwareFingerprint: Hardware fingerprint data containing CPU, RAM, disk, and network info
+
+        """
         if self._hardware_fingerprint is not None:
             return self._hardware_fingerprint
 
@@ -2170,7 +2331,12 @@ class VMDetector(BaseDetector):
         return fingerprint
 
     def analyze_timing_patterns(self) -> dict[str, TimingMeasurement]:
-        """Perform comprehensive timing analysis across multiple operations."""
+        """Perform comprehensive timing analysis across multiple operations.
+
+        Returns:
+            dict[str, TimingMeasurement]: Dictionary mapping operation names to timing measurements
+
+        """
         measurements: dict[str, TimingMeasurement] = {}
 
         operations: dict[str, Callable[[], Any]] = {
@@ -2209,7 +2375,15 @@ class VMDetector(BaseDetector):
         return measurements
 
     def _identify_vm_type(self, detections: dict[str, Any]) -> str:
-        """Identify the specific VM type based on detections."""
+        """Identify the specific VM type based on detections.
+
+        Args:
+            detections: Dictionary of detection results from individual methods
+
+        Returns:
+            str: Identified VM type or 'unknown'
+
+        """
         vm_scores: dict[str, float] = {}
 
         for method, result in detections.items():
@@ -2224,13 +2398,29 @@ class VMDetector(BaseDetector):
         return max(vm_scores, key=lambda k: vm_scores[k]) if vm_scores else "unknown"
 
     def _calculate_evasion_score(self, detections: dict[str, Any]) -> int:
-        """Calculate how difficult it is to evade detection."""
+        """Calculate how difficult it is to evade detection.
+
+        Args:
+            detections: Dictionary of detection results from individual methods
+
+        Returns:
+            int: Evasion difficulty score
+
+        """
         hard_to_evade = ["cpuid", "hardware_signatures", "hypervisor_brand"]
 
         return self.calculate_detection_score(detections, hard_to_evade)
 
     def generate_evasion_code(self, target_vm: str | None = None) -> str:
-        """Generate code to evade VM detection."""
+        """Generate code to evade VM detection.
+
+        Args:
+            target_vm: Specific VM type to target, or None for generic code
+
+        Returns:
+            str: Evasion code template
+
+        """
         if target_vm:
             self.logger.debug("Generating evasion code specifically for %s", target_vm)
         else:
@@ -2273,7 +2463,12 @@ if (IsRunningInVM()) {
 """
 
     def get_aggressive_methods(self) -> list[str]:
-        """Get list of method names that are considered aggressive."""
+        """Get list of method names that are considered aggressive.
+
+        Returns:
+            list[str]: List of aggressive detection method names
+
+        """
         return [
             "cpuid_timing",
             "rdtsc_timing",
@@ -2287,7 +2482,12 @@ if (IsRunningInVM()) {
         ]
 
     def get_detection_type(self) -> str:
-        """Get the type of detection this class performs."""
+        """Get the type of detection this class performs.
+
+        Returns:
+            str: Detection type string ('virtual_machine')
+
+        """
         return "virtual_machine"
 
     def generate_bypass(self, vm_type: str) -> dict[str, Any]:
@@ -2300,7 +2500,8 @@ if (IsRunningInVM()) {
             vm_type: Type of VM detected (e.g., 'vmware', 'virtualbox', 'hyperv')
 
         Returns:
-            Dictionary containing bypass strategies and implementation
+            dict[str, Any]: Dictionary containing bypass strategies, techniques, implementation details,
+                requirements, and risks
 
         """
         self.logger.info("Generating VM detection bypass for: %s", vm_type)
@@ -2450,7 +2651,15 @@ if (IsRunningInVM()) {
         return bypass_config
 
     def _generate_vm_bypass_script(self, vm_type: str) -> str:
-        """Generate Frida script for VM detection bypass."""
+        """Generate Frida script for VM detection bypass.
+
+        Args:
+            vm_type: Type of VM to generate bypass script for
+
+        Returns:
+            str: Frida JavaScript bypass script
+
+        """
         if vm_type.lower() == "vmware":
             return r"""
 // VMware Detection Bypass Script
@@ -2510,7 +2719,15 @@ Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {
 """
 
     def _get_registry_mods(self, vm_type: str) -> list[dict[str, str]]:
-        """Get registry modifications for VM bypass."""
+        """Get registry modifications for VM bypass.
+
+        Args:
+            vm_type: Type of VM to get registry modifications for
+
+        Returns:
+            list[dict[str, str]]: List of registry modification dictionaries with action, key, and description
+
+        """
         mods: list[dict[str, str]] = []
 
         if vm_type.lower() == "vmware":
@@ -2543,7 +2760,15 @@ Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {
         return mods
 
     def _get_file_operations(self, vm_type: str) -> list[dict[str, str]]:
-        """Get file operations for VM bypass."""
+        """Get file operations for VM bypass.
+
+        Args:
+            vm_type: Type of VM to get file operations for
+
+        Returns:
+            list[dict[str, str]]: List of file operation dictionaries with action, path, and description
+
+        """
         ops: list[dict[str, str]] = []
 
         if vm_type.lower() == "vmware":

@@ -127,6 +127,7 @@ from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 
 from intellicrack.core.certificate.cert_chain_generator import CertificateChain
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -138,9 +139,8 @@ class CertificateCache:
 
         Args:
             cache_dir: Directory to store cached certificates
-                      (defaults to ~/.intellicrack/cert_cache/)
-            max_entries: Maximum number of cached certificates before LRU eviction
-
+                      (defaults to ~/.intellicrack/cert_cache/).
+            max_entries: Maximum number of cached certificates before LRU eviction.
         """
         if cache_dir is None:
             cache_dir = Path.home() / ".intellicrack" / "cert_cache"
@@ -153,7 +153,11 @@ class CertificateCache:
         self._initialize_cache()
 
     def _initialize_cache(self) -> None:
-        """Create cache directory and metadata file if they don't exist."""
+        """Create cache directory and metadata file if they don't exist.
+
+        Creates the cache directory structure and initializes an empty metadata
+        file if needed.
+        """
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         if not self.metadata_file.exists():
@@ -215,6 +219,9 @@ class CertificateCache:
 
         Returns:
             CertificateChain if cached and valid, None otherwise
+
+        Raises:
+            TypeError: If cached key is not an RSAPrivateKey instance.
 
         """
         with self.lock:
@@ -306,7 +313,12 @@ class CertificateCache:
                 return False
 
     def _evict_if_needed(self) -> None:
-        """Evict least recently used entries if cache exceeds max size."""
+        """Evict least recently used entries if cache exceeds max size.
+
+        Removes the least recently accessed cache entries when the number of
+        cached certificates exceeds the maximum configured limit. Deletes all
+        files associated with evicted entries from disk.
+        """
         metadata = self._load_metadata()
 
         if len(metadata) < self.max_entries:

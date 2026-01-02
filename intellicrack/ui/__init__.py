@@ -19,7 +19,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
-from types import ModuleType
 from typing import TYPE_CHECKING, Any
 
 
@@ -45,7 +44,23 @@ _lazy_imports: dict[str, Any] = {}
 
 
 def __getattr__(name: str) -> Any:
-    """Lazy load UI module attributes to prevent circular imports."""
+    """Lazy load UI module attributes to prevent circular imports.
+
+    Provides lazy loading functionality for UI module attributes to prevent
+    circular import issues while maintaining access to dialogs, widgets, and
+    integration components. Attributes are cached in _lazy_imports after first
+    access.
+
+    Args:
+        name: The attribute name being requested.
+
+    Returns:
+        The lazily-loaded module attribute or None if import fails.
+
+    Raises:
+        AttributeError: If the requested attribute name does not correspond
+            to any available lazy-loadable UI component.
+    """
     if name in _lazy_imports:
         return _lazy_imports[name]
 

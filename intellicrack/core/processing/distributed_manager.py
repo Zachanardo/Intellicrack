@@ -30,8 +30,10 @@ import hmac
 import json
 import logging
 import os
+import io
 import pickle  # noqa: S403
 import platform
+from typing import cast
 import socket
 import struct
 import threading
@@ -96,6 +98,89 @@ class NodeStatus(Enum):
     OFFLINE = "offline"
 
 
+class DistributedRestrictedUnpickler(pickle.Unpickler):  # noqa: S301
+    """Restricted unpickler for distributed analysis message deserialization.
+
+    Only allows safe classes needed for distributed task communication.
+    Prevents arbitrary code execution from malicious pickle payloads.
+    """
+
+    ALLOWED_MODULES: frozenset[str] = frozenset({
+        "builtins",
+        "collections",
+        "datetime",
+        "uuid",
+        "enum",
+        "intellicrack.core.processing.distributed_manager",
+    })
+
+    ALLOWED_CLASSES: frozenset[str] = frozenset({
+        "dict",
+        "list",
+        "tuple",
+        "set",
+        "frozenset",
+        "str",
+        "int",
+        "float",
+        "bool",
+        "bytes",
+        "type",
+        "NoneType",
+        "OrderedDict",
+        "defaultdict",
+        "UUID",
+        "datetime",
+        "date",
+        "time",
+        "timedelta",
+        "TaskPriority",
+        "TaskStatus",
+        "NodeStatus",
+        "AnalysisTask",
+        "WorkerNode",
+        "ClusterConfig",
+    })
+
+    def find_class(self, module: str, name: str) -> type[object]:
+        """Restrict unpickling to whitelisted safe classes.
+
+        Args:
+            module: Module name containing the class.
+            name: Name of the class to unpickle.
+
+        Returns:
+            The class object if allowed.
+
+        Raises:
+            pickle.UnpicklingError: If class is not in whitelist.
+
+        """
+        if module in self.ALLOWED_MODULES and name in self.ALLOWED_CLASSES:
+            result: type[object] = cast("type[object]", super().find_class(module, name))
+            return result
+
+        if module.startswith("intellicrack.") and name in self.ALLOWED_CLASSES:
+            result = cast("type[object]", super().find_class(module, name))
+            return result
+
+        error_msg = f"Blocked unpickling of unsafe class: {module}.{name}"
+        raise pickle.UnpicklingError(error_msg)
+
+
+def restricted_pickle_loads(data: bytes) -> object:
+    """Safely deserialize pickle data using RestrictedUnpickler.
+
+    Args:
+        data: Pickled bytes to deserialize.
+
+    Returns:
+        Deserialized object restricted to safe types.
+
+    """
+    return DistributedRestrictedUnpickler(io.BytesIO(data)).load()
+
+
 @dataclass
 class AnalysisTask:
     """Distributed analysis task representation."""
@@ -125,7 +210,7 @@ class AnalysisTask:
             other: Object to compare with.
 
         Returns:
-            bool: True if this task has higher priority or earlier creation time.
+            True if this task has higher priority or earlier creation time.
 
         Raises:
             TypeError: If other is not an AnalysisTask instance.
@@ -237,7 +322,11 @@ class DistributedAnalysisManager:
         self.logger.info("Distributed manager initialized in %s mode (Node ID: %s)", self.mode, self.node_id)
 
     def _register_self_as_worker(self) -> None:
-        """Register this instance as a worker node."""
+        """Register this instance as a worker node.
+
+        Initializes worker node with platform information and capabilities.
+
+        """
         worker_count = self.config.get("num_workers", multiprocessing.cpu_count() if MULTIPROCESSING_AVAILABLE else 4)
 
         worker_node = WorkerNode(
@@ -279,7 +368,7 @@ class DistributedAnalysisManager:
         """Get local IP address for network communication.
 
         Returns:
-            str: Local IP address or loopback address if unreachable.
+            Local IP address or loopback address if unreachable.
 
         """
         try:
@@ -300,7 +389,7 @@ class DistributedAnalysisManager:
             module_name: Name of the module to check.
 
         Returns:
-            bool: True if module is available, False otherwise.
+            True if module is available, False otherwise.
 
         """
         try:
@@ -316,7 +405,7 @@ class DistributedAnalysisManager:
             port: Port number for network communication (default: from config or 9876)
 
         Returns:
-            bool: True if cluster started successfully
+            True if cluster started successfully.
 
         """
         if self.running:
@@ -491,8 +580,7 @@ class DistributedAnalysisManager:
         for receiving tasks and reporting results.
 
         Raises:
-            OSError: If connection to coordinator fails.
-            ConnectionError: If coordinator registration fails.
+            ConnectionError: If connection to coordinator fails.
 
         """
         coordinator_host = self.config.get("coordinator_host", "localhost")
@@ -581,7 +669,6 @@ class DistributedAnalysisManager:
 
         Raises:
             OSError: If socket send operation fails.
-            pickle.PickleError: If message serialization fails.
 
         """
         try:
@@ -601,7 +688,7 @@ class DistributedAnalysisManager:
             sock: Socket to receive message from.
 
         Returns:
-            dict[str, Any] | None: Deserialized message or None if error or closed.
+            Deserialized message or None if error or closed.
 
         """
         try:
@@ -622,7 +709,7 @@ class DistributedAnalysisManager:
                 self.logger.exception("HMAC verification failed - potential data tampering detected")
                 return None
 
-            return pickle.loads(data) if data else None  # noqa: S301
+            return restricted_pickle_loads(data) if data else None
         except (OSError, pickle.PickleError, struct.error) as e:
             self.logger.exception("Error receiving message: %s", e)
             return None
@@ -635,7 +722,7 @@ class DistributedAnalysisManager:
             length: Number of bytes to receive.
 
         Returns:
-            bytes | None: Received bytes or None if socket closes before length received.
+            Received bytes or None if socket closes before length received.
 
         """
         data = b""
@@ -810,7 +897,7 @@ class DistributedAnalysisManager:
         """Get list of available worker nodes.
 
         Returns:
-            list[WorkerNode]: Worker nodes that are ready and have capacity.
+            Worker nodes that are ready and have capacity.
 
         """
         with self.nodes_lock:
@@ -831,7 +918,7 @@ class DistributedAnalysisManager:
             available_nodes: List of available worker nodes.
 
         Returns:
-            WorkerNode | None: Best node for the task or None if no nodes available.
+            Best node for the task or None if no nodes available.
 
         """
         if not available_nodes:
@@ -891,7 +978,7 @@ class DistributedAnalysisManager:
             node_id: Unique identifier for the requesting worker node.
 
         Returns:
-            AnalysisTask | None: Next task to execute or None if queue is empty.
+            Next task to execute or None if queue is empty.
 
         """
         with self.task_lock:
@@ -969,7 +1056,7 @@ class DistributedAnalysisManager:
             task: Task containing analysis parameters.
 
         Returns:
-            dict[str, Any]: Analysis results.
+            Analysis results.
 
         Raises:
             FileNotFoundError: If binary path does not exist.
@@ -1012,7 +1099,7 @@ class DistributedAnalysisManager:
             params: Dictionary with patterns, chunk_start, and chunk_size.
 
         Returns:
-            dict[str, Any]: Results with matched patterns and offsets.
+            Results with matched patterns and offsets.
 
         """
         import re
@@ -1054,7 +1141,7 @@ class DistributedAnalysisManager:
             params: Dictionary with chunk_start, chunk_size, and window_size.
 
         Returns:
-            dict[str, Any]: Entropy measurements and high-entropy regions.
+            Entropy measurements and high-entropy regions.
 
         """
         import math
@@ -1105,7 +1192,7 @@ class DistributedAnalysisManager:
             params: Dictionary with optional section_name filter.
 
         Returns:
-            dict[str, Any]: Section information with entropy and characteristics.
+            Section information with entropy and characteristics.
 
         """
         try:
@@ -1151,7 +1238,7 @@ class DistributedAnalysisManager:
             params: Dictionary with chunk_start, chunk_size, and min_length.
 
         Returns:
-            dict[str, Any]: Extracted strings with offsets and lengths.
+            Extracted strings with offsets and lengths.
 
         """
         chunk_start = params.get("chunk_start", 0)
@@ -1202,7 +1289,7 @@ class DistributedAnalysisManager:
             params: Analysis parameters (currently unused).
 
         Returns:
-            dict[str, Any]: Import table with DLL names and function lists.
+            Import table with DLL names and function lists.
 
         """
         try:
@@ -1243,7 +1330,18 @@ class DistributedAnalysisManager:
             return {"error": str(e)}
 
     def _task_crypto_detection(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
-        """Execute cryptographic constant detection task."""
+        """Execute cryptographic constant detection task.
+
+        Searches for known cryptographic algorithm signatures.
+
+        Args:
+            binary_path: Path to binary file.
+            params: Dictionary with chunk_start and chunk_size.
+
+        Returns:
+            Detected algorithms and their offsets.
+
+        """
         chunk_start = params.get("chunk_start", 0)
         chunk_size = params.get("chunk_size", 1024 * 1024)
 
@@ -1277,7 +1375,19 @@ class DistributedAnalysisManager:
         }
 
     def _task_frida_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
-        """Execute Frida-based dynamic analysis task."""
+        """Execute Frida-based dynamic analysis task.
+
+        Returns status message indicating Frida analysis requires active runtime
+        execution environment with process instrumentation capabilities.
+
+        Args:
+            binary_path: Path to binary file.
+            params: Analysis parameters.
+
+        Returns:
+            Status with error message and binary path.
+
+        """
         return {
             "task_type": "frida_analysis",
             "error": "Frida analysis requires runtime execution environment",
@@ -1285,7 +1395,18 @@ class DistributedAnalysisManager:
         }
 
     def _task_radare2_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
-        """Execute radare2-based analysis task."""
+        """Execute radare2-based analysis task.
+
+        Performs static analysis using radare2 to extract functions and strings.
+
+        Args:
+            binary_path: Path to binary file.
+            params: Analysis parameters.
+
+        Returns:
+            Function and string lists from analysis.
+
+        """
         try:
             import r2pipe
 
@@ -1312,7 +1433,18 @@ class DistributedAnalysisManager:
             return {"error": str(e)}
 
     def _task_angr_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
-        """Execute angr-based symbolic analysis task."""
+        """Execute angr-based symbolic analysis task.
+
+        Performs static symbolic analysis using angr to extract CFG and functions.
+
+        Args:
+            binary_path: Path to binary file.
+            params: Analysis parameters.
+
+        Returns:
+            Function count, basic block count, and architecture.
+
+        """
         try:
             import angr
 
@@ -1353,7 +1485,18 @@ class DistributedAnalysisManager:
             return {"error": str(e)}
 
     def _task_generic_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
-        """Execute generic binary analysis task."""
+        """Execute generic binary analysis task.
+
+        Performs basic analysis including file size and binary format detection.
+
+        Args:
+            binary_path: Path to binary file.
+            params: Analysis parameters.
+
+        Returns:
+            File size, type (PE/ELF/Unknown), and parameters.
+
+        """
         file_size = os.path.getsize(binary_path)
 
         with open(binary_path, "rb") as f:
@@ -1373,7 +1516,15 @@ class DistributedAnalysisManager:
         }
 
     def _handle_task_result(self, task_id: str, result: dict[str, Any]) -> None:
-        """Handle successful task completion."""
+        """Handle successful task completion.
+
+        Updates task status, stores result, and updates node metrics.
+
+        Args:
+            task_id: Unique identifier for the completed task.
+            result: Task result dictionary.
+
+        """
         with self.task_lock:
             if task_id in self.tasks:
                 task = self.tasks[task_id]
@@ -1401,7 +1552,15 @@ class DistributedAnalysisManager:
                 self.logger.info("Task %s completed successfully", task_id)
 
     def _handle_task_failure(self, task_id: str, error: str) -> None:
-        """Handle task failure and schedule retry if applicable."""
+        """Handle task failure and schedule retry if applicable.
+
+        Updates task status, records error, and requeues for retry if below max retries.
+
+        Args:
+            task_id: Unique identifier for the failed task.
+            error: Error message describing the failure.
+
+        """
         with self.task_lock:
             if task_id in self.tasks:
                 task = self.tasks[task_id]
@@ -1440,14 +1599,14 @@ class DistributedAnalysisManager:
         """Submit a task for distributed analysis.
 
         Args:
-            task_type: Type of analysis task
-            binary_path: Path to binary file
-            params: Task-specific parameters
-            priority: Task priority level
-            timeout: Task timeout in seconds
+            task_type: Type of analysis task.
+            binary_path: Path to binary file.
+            params: Task-specific parameters.
+            priority: Task priority level.
+            timeout: Task timeout in seconds.
 
         Returns:
-            str: Task ID
+            str: Unique task identifier.
 
         """
         task_id = str(uuid.uuid4())
@@ -1481,13 +1640,19 @@ class DistributedAnalysisManager:
     ) -> list[str]:
         """Submit a complete binary analysis as multiple distributed tasks.
 
+        Submits multiple analysis tasks covering imports, sections, and chunked
+        entropy, string extraction, and cryptographic detection across the binary.
+
         Args:
-            binary_path: Path to binary file
-            chunk_size: Size of chunks for parallel processing
-            priority: Task priority level
+            binary_path: Path to binary file.
+            chunk_size: Size of chunks for parallel processing.
+            priority: Task priority level.
 
         Returns:
-            list[str]: List of task IDs
+            list[str]: List of task IDs for submitted analysis tasks.
+
+        Raises:
+            FileNotFoundError: If binary file does not exist.
 
         """
         if not os.path.exists(binary_path):
@@ -1515,10 +1680,10 @@ class DistributedAnalysisManager:
         """Get status of a specific task.
 
         Args:
-            task_id: Task ID
+            task_id: Unique identifier for the task.
 
         Returns:
-            dict: Task status information or None if not found
+            Task status information or None if task not found.
 
         """
         with self.task_lock:
@@ -1542,11 +1707,11 @@ class DistributedAnalysisManager:
         """Get result of a completed task, optionally waiting for completion.
 
         Args:
-            task_id: Task ID
-            timeout: Maximum time to wait in seconds (None = no wait)
+            task_id: Unique identifier for the task.
+            timeout: Maximum time to wait in seconds.
 
         Returns:
-            dict: Task result or None if not completed
+            Task result or None if not completed or timed out.
 
         """
         start_time = time.time()
@@ -1572,11 +1737,11 @@ class DistributedAnalysisManager:
         """Wait for all tasks (or specified tasks) to complete.
 
         Args:
-            task_ids: List of task IDs to wait for (None = all tasks)
-            timeout: Maximum time to wait in seconds
+            task_ids: List of task IDs to wait for.
+            timeout: Maximum time to wait in seconds.
 
         Returns:
-            dict: Completion summary
+            Completion summary with status and timing.
 
         """
         start_time = time.time()
@@ -1631,7 +1796,7 @@ class DistributedAnalysisManager:
         """Get current cluster status and statistics.
 
         Returns:
-            dict: Cluster status information
+            Comprehensive cluster status with nodes and tasks.
 
         """
         with self.nodes_lock:
@@ -1675,7 +1840,7 @@ class DistributedAnalysisManager:
         """Get summary of all completed results.
 
         Returns:
-            dict: Results summary
+            dict[str, Any]: Summary with result counts and grouping by task type.
 
         """
         with self.task_lock:
@@ -1695,10 +1860,10 @@ class DistributedAnalysisManager:
         """Export all results to a JSON file.
 
         Args:
-            output_path: Path to output file
+            output_path: Path to write JSON results file.
 
         Returns:
-            bool: True if successful
+            bool: True if export successful, False on error.
 
         """
         try:
@@ -1732,7 +1897,12 @@ class DistributedAnalysisManager:
             return False
 
     def shutdown(self) -> None:
-        """Shutdown the distributed manager and cleanup resources."""
+        """Shutdown the distributed manager and cleanup resources.
+
+        Stops background threads, closes network connections, and cleans up
+        internal state for graceful shutdown.
+
+        """
         self.logger.info("Shutting down distributed manager...")
         self.running = False
 
@@ -1762,12 +1932,12 @@ def create_distributed_manager(
     """Create a DistributedAnalysisManager instance.
 
     Args:
-        mode: Execution mode - "local", "cluster", or "auto"
-        config: Configuration dictionary
-        enable_networking: Enable network-based clustering
+        mode: Execution mode.
+        config: Configuration dictionary.
+        enable_networking: Enable network-based clustering.
 
     Returns:
-        DistributedAnalysisManager: Configured manager instance
+        DistributedAnalysisManager: Configured manager instance.
 
     """
     return DistributedAnalysisManager(mode=mode, config=config, enable_networking=enable_networking)

@@ -33,7 +33,6 @@ from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
-    import numpy as np
     import numpy.typing as npt
 
 logger = logging.getLogger(__name__)
@@ -912,7 +911,7 @@ class HeadlessTrainingInterface:
         """
         import numpy as np
 
-        return np.maximum(0, x)  # type: ignore[no-any-return]
+        return np.maximum(0, x)
 
     def _sigmoid(self, x: "npt.NDArray[Any]") -> "npt.NDArray[Any]":
         """Sigmoid activation function.
@@ -928,7 +927,7 @@ class HeadlessTrainingInterface:
 
         # Clip values to prevent overflow
         x_clipped = np.clip(x, -500, 500)
-        return 1.0 / (1.0 + np.exp(-x_clipped))  # type: ignore[no-any-return]
+        return 1.0 / (1.0 + np.exp(-x_clipped))
 
     def _save_trained_model(self, config: dict[str, Any]) -> str:
         """Save trained model to disk.

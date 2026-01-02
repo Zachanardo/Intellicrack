@@ -27,18 +27,17 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-import gc
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol, TypeVar, cast
+from __future__ import annotations
 
-from intellicrack.utils.type_safety import get_typed_item, validate_type
+import types
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any, Protocol, TypeVar, cast
+
+from intellicrack.utils.type_safety import validate_type
 
 from ..utils.logger import get_logger
-from .model_sharding import ModelShardingManager, get_sharding_manager
-
-
-if TYPE_CHECKING:
-    pass
+from .model_sharding import get_sharding_manager
 
 
 class ShardingManagerProtocol(Protocol):
@@ -156,6 +155,21 @@ class QuantizeConfigProtocol(Protocol):
 ModelType = TypeVar("ModelType")
 ConfigType = TypeVar("ConfigType")
 
+# Module-level type declarations for optional dependencies
+torch: types.ModuleType | None
+Module: type[Any]
+bnb: types.ModuleType | None
+AutoGPTQForCausalLM: type[Any] | None
+BaseQuantizeConfig: type[Any] | None
+AutoModelForCausalLM: type[Any] | None
+AutoTokenizer: type[Any] | None
+BitsAndBytesConfig: type[Any] | None
+GPTQConfig: type[Any] | None
+PeftModel: type[Any] | None
+LoraConfig: type[Any] | None
+get_peft_model: Callable[..., Any] | None
+prepare_model_for_kbit_training: Callable[..., Any] | None
+
 try:
     import torch
     from torch.nn import Module
@@ -171,8 +185,8 @@ try:
         GPU_AUTOLOADER_AVAILABLE = False
 
 except ImportError:
-    torch = None  # type: ignore[assignment]
-    Module = Any  # type: ignore[misc,assignment]
+    torch = None
+    Module = Any
     HAS_TORCH = False
     GPU_AUTOLOADER_AVAILABLE = False
 
@@ -187,12 +201,12 @@ try:
 except (ImportError, AttributeError) as e:
     # AttributeError can occur if bitsandbytes has internal import issues
     logger.debug("Optional dependency bitsandbytes not available: %s", e)
-    bnb = None  # type: ignore[assignment]
+    bnb = None
     HAS_BITSANDBYTES = False
 except Exception as e:
     # Catch any other errors from bitsandbytes initialization
     logger.debug("Error initializing bitsandbytes: %s", e)
-    bnb = None  # type: ignore[assignment]
+    bnb = None
     HAS_BITSANDBYTES = False
 
 try:
@@ -215,10 +229,10 @@ try:
     HAS_TRANSFORMERS = True
 except ImportError as e:
     logger.exception("Import error in quantization_manager: %s", e)
-    AutoModelForCausalLM = None  # type: ignore[assignment,misc]
-    AutoTokenizer = None  # type: ignore[assignment,misc]
-    BitsAndBytesConfig = None  # type: ignore[assignment,misc]
-    GPTQConfig = None  # type: ignore[assignment,misc]
+    AutoModelForCausalLM = None
+    AutoTokenizer = None
+    BitsAndBytesConfig = None
+    GPTQConfig = None
     HAS_TRANSFORMERS = False
 
 try:
@@ -227,10 +241,10 @@ try:
     HAS_PEFT = True
 except ImportError as e:
     logger.exception("Import error in quantization_manager: %s", e)
-    PeftModel = None  # type: ignore[assignment,misc]
-    LoraConfig = None  # type: ignore[assignment,misc]
-    get_peft_model = None  # type: ignore[assignment]
-    prepare_model_for_kbit_training = None  # type: ignore[assignment]
+    PeftModel = None
+    LoraConfig = None
+    get_peft_model = None
+    prepare_model_for_kbit_training = None
     HAS_PEFT = False
 
 
@@ -279,10 +293,10 @@ class QuantizationManager:
                 info_dict = validate_type(gpu_info["info"], dict)
                 device_count = info_dict.get("device_count", 1)
                 if isinstance(device_count, int) and device_count > 1:
-                    self.sharding_manager = cast(ShardingManagerProtocol, get_sharding_manager())
+                    self.sharding_manager = cast("ShardingManagerProtocol", get_sharding_manager())
                     logger.info("Multi-GPU sharding enabled with %d devices", device_count)
         elif HAS_TORCH and torch is not None and torch.cuda.device_count() > 1:
-            self.sharding_manager = cast(ShardingManagerProtocol, get_sharding_manager())
+            self.sharding_manager = cast("ShardingManagerProtocol", get_sharding_manager())
             logger.info("Multi-GPU sharding enabled with %d devices", torch.cuda.device_count())
 
     def load_quantized_model(
@@ -416,7 +430,7 @@ class QuantizationManager:
 
         try:
             # Configure 8-bit quantization
-            quantization_config: Any = BitsAndBytesConfig(  # type: ignore[no-untyped-call]
+            quantization_config: Any = BitsAndBytesConfig(
                 load_in_8bit=True,
                 bnb_8bit_compute_dtype=torch.float16,
                 bnb_8bit_use_double_quant=True,
@@ -485,7 +499,7 @@ class QuantizationManager:
 
         try:
             # Configure 4-bit quantization
-            quantization_config: Any = BitsAndBytesConfig(  # type: ignore[no-untyped-call]
+            quantization_config: Any = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_compute_dtype=torch.float16,
                 bnb_4bit_use_double_quant=True,
@@ -522,7 +536,7 @@ class QuantizationManager:
 
             # Prepare for training if needed
             if kwargs.get("prepare_for_training") and HAS_PEFT and prepare_model_for_kbit_training is not None:
-                model = prepare_model_for_kbit_training(model)  # type: ignore[no-untyped-call]
+                model = prepare_model_for_kbit_training(model)
 
             logger.info("Successfully loaded 4-bit quantized model")
             return validate_type(model, Any)
@@ -626,7 +640,7 @@ class QuantizationManager:
             )
 
             if device == "cpu":
-                model = model.to(device)  # type: ignore[arg-type]
+                model = model.to(device)
             elif use_sharding and self.sharding_manager:
                 # Apply multi-GPU sharding
                 max_mem_param = kwargs.get("max_memory")
@@ -692,7 +706,7 @@ class QuantizationManager:
                 device_map=device_map_param,
             )
 
-            if merge_adapter := kwargs.get("merge_adapter"):
+            if kwargs.get("merge_adapter"):
                 model = model.merge_and_unload()
 
             logger.info("Successfully loaded LoRA adapter from %s", adapter_path_obj)
@@ -727,7 +741,7 @@ class QuantizationManager:
             if quant_type == "int8":
                 # Apply INT8 dynamic quantization using torch.ao.quantization
                 if hasattr(torch, "ao") and hasattr(torch.ao, "quantization"):
-                    quantized_model = torch.ao.quantization.quantize_dynamic(  # type: ignore[no-untyped-call]
+                    quantized_model = torch.ao.quantization.quantize_dynamic(
                         model,
                         {torch.nn.Linear},
                         dtype=torch.qint8,
@@ -737,7 +751,7 @@ class QuantizationManager:
                     logger.warning("torch.ao.quantization not available, skipping quantization")
             elif quant_type == "fp16":
                 # Convert to FP16
-                model = cast(TorchModelProtocol, model).half()
+                model = cast("TorchModelProtocol", model).half()
 
             logger.info("Applied %s dynamic quantization", quant_type)
             return model
@@ -847,7 +861,7 @@ class QuantizationManager:
             lora_alpha=lora_alpha,
             target_modules=target_modules,
             lora_dropout=lora_dropout,
-            bias=bias_value,  # type: ignore[arg-type]
+            bias=bias_value,
             task_type=task_type_value,
             inference_mode=inference_mode_value,
         )
@@ -936,7 +950,7 @@ class QuantizationManager:
 
         try:
             # Prepare model for quantization
-            for name, module in cast(TorchModelProtocol, model).named_modules():
+            for name, module in cast("TorchModelProtocol", model).named_modules():
                 # Prepare model for quantization
                 if quantization_bits == 8:
                     if isinstance(module, torch.nn.Linear):
@@ -963,7 +977,7 @@ class QuantizationManager:
 
                             # Copy weights using Int8Params
                             if hasattr(bnb.nn, "Int8Params"):
-                                weight_params = bnb.nn.Int8Params(  # type: ignore[attr-defined]
+                                weight_params = bnb.nn.Int8Params(
                                     module.weight.data.clone(),
                                     requires_grad=False,
                                     has_fp16_weights=has_fp16_weights,
@@ -1003,7 +1017,7 @@ class QuantizationManager:
                                 quant_type_param = kwargs.get("quant_type", "fp4")
                                 quant_type_str = quant_type_param if isinstance(quant_type_param, str) else "fp4"
 
-                                weight_params_4bit = bnb.nn.Params4bit(  # type: ignore[attr-defined]
+                                weight_params_4bit = bnb.nn.Params4bit(
                                     module.weight.data.clone(),
                                     requires_grad=False,
                                     compress_statistics=compress_stats,
@@ -1136,7 +1150,7 @@ class QuantizationManager:
                 )
             else:
                 # Convert BaseQuantizeConfig to GPTQConfig parameters
-                config_typed = cast(QuantizeConfigProtocol, config)
+                config_typed = cast("QuantizeConfigProtocol", config)
                 gptq_config = GPTQConfig(
                     bits=config_typed.bits,
                     group_size=config_typed.group_size,

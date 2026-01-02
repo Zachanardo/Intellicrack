@@ -68,7 +68,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class PythonSyntaxHighlighter(QSyntaxHighlighter if HAS_PYQT and QSyntaxHighlighter else object):  # type: ignore[misc]
+class PythonSyntaxHighlighter(QSyntaxHighlighter if HAS_PYQT and QSyntaxHighlighter else object):
     """Syntax highlighter for Python code."""
 
     def __init__(self, document: QTextDocument | None = None) -> None:
@@ -180,7 +180,7 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter if HAS_PYQT and QSyntaxHighligh
             super().setDocument(document)
 
 
-class FindReplaceDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ignore[misc]
+class FindReplaceDialog(QDialog if HAS_PYQT and QDialog else object):
     """Find and replace dialog."""
 
     def __init__(self, parent: TextEditorDialog | QWidget | None = None) -> None:
@@ -308,7 +308,7 @@ class FindReplaceDialog(QDialog if HAS_PYQT and QDialog else object):  # type: i
             super().hide()
 
 
-class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ignore[misc]
+class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):
     """Advanced text editor dialog for Intellicrack."""
 
     if HAS_PYQT:
@@ -862,9 +862,9 @@ class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ig
 
         Args:
             format_type: The export format type selected.
+            dialog: The export dialog to close after export.
             include_highlighting: Whether to include syntax highlighting.
             include_line_numbers: Whether to include line numbers.
-            dialog: The export dialog to close after export.
 
         """
         if not HAS_PYQT:
@@ -1151,7 +1151,7 @@ class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ig
 
         Args:
             content: The Python code content to highlight.
-            include_line_numbers: Whether to include line numbers in output.
+            include_line_numbers: Whether to include line numbers in the output.
 
         Returns:
             The HTML-formatted content with syntax highlighting applied.

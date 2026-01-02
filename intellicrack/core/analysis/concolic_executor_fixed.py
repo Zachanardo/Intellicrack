@@ -15,20 +15,16 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
+
+Module Summary:
+    Provides unified concolic execution engine supporting multiple symbolic
+    execution backends (angr primary, simconcolic fallback) for analyzing
+    binary protection mechanisms and discovering license bypass paths.
 """
 
 import logging
 from typing import Any
 
-
-"""
-Concolic Execution Engine for Precise Path Exploration
-
-This module provides a unified interface for symbolic execution using:
-1. angr (primary, cross-platform)
-2. manticore (secondary, Linux-only)
-3. simconcolic (fallback)
-"""
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -63,7 +59,21 @@ MANTICORE_AVAILABLE: bool = False
 
 
 class ConcolicExecutionEngine:
-    """Unified concolic execution engine supporting multiple backends."""
+    """Unified concolic execution engine supporting multiple backends.
+
+    Provides a unified interface for symbolic execution using angr (primary)
+    or simconcolic (fallback). Handles path exploration, constraint solving,
+    and license bypass discovery for binary analysis and licensing protection
+    cracking research.
+
+    Attributes:
+        binary_path: Path to the binary file being analyzed.
+        max_iterations: Maximum number of path exploration iterations.
+        timeout: Execution timeout in seconds.
+        logger: Logger instance for this engine.
+        symbolic_engine: Name of the active symbolic execution engine.
+        symbolic_engine_name: Human-readable name of the engine.
+    """
 
     def __init__(self, binary_path: str, max_iterations: int = 100, timeout: int = 300) -> None:
         """Initialize the concolic execution engine.
@@ -73,10 +83,9 @@ class ConcolicExecutionEngine:
         Automatically selects the best available engine for the platform.
 
         Args:
-            binary_path: Path to the binary to analyze
-            max_iterations: Maximum number of exploration iterations
-            timeout: Execution timeout in seconds
-
+            binary_path: Path to the binary to analyze.
+            max_iterations: Maximum number of exploration iterations.
+            timeout: Execution timeout in seconds.
         """
         self.binary_path = binary_path
         self.max_iterations = max_iterations
@@ -93,11 +102,28 @@ class ConcolicExecutionEngine:
 
     @property
     def manticore_available(self) -> bool:
-        """Legacy property for backward compatibility."""
+        """Legacy property for backward compatibility.
+
+        Returns:
+            True if a symbolic execution engine is available.
+        """
         return self.symbolic_engine is not None
 
     def explore_paths(self, target_address: int | None = None, avoid_addresses: list[int] | None = None) -> dict[str, Any]:
-        """Explore paths using the available symbolic execution engine."""
+        """Explore paths using the available symbolic execution engine.
+
+        Performs path exploration and constraint solving to find inputs that
+        reach target addresses while avoiding specified addresses. Supports
+        multiple symbolic execution engines (angr, simconcolic).
+
+        Args:
+            target_address: Address to reach during path exploration.
+            avoid_addresses: Addresses to avoid during path exploration.
+
+        Returns:
+            Exploration results containing paths explored, target status, and
+            discovered inputs.
+        """
         if not self.symbolic_engine:
             return {"error": "No symbolic execution engine available. Install angr (recommended)."}
 
@@ -109,7 +135,20 @@ class ConcolicExecutionEngine:
         return {"error": "Unknown symbolic execution engine"}
 
     def _explore_paths_angr(self, target_address: int | None, avoid_addresses: list[int] | None) -> dict[str, Any]:
-        """Explore paths using angr."""
+        """Explore paths using angr symbolic execution engine.
+
+        Leverages angr's CFG analysis and path exploration to find inputs
+        that satisfy target and avoid constraints. Generates symbolic stdin
+        and extracts constraint solutions.
+
+        Args:
+            target_address: Address to reach during exploration.
+            avoid_addresses: Addresses to avoid during exploration.
+
+        Returns:
+            Results including paths explored, target status, avoided addresses
+            count, and discovered inputs.
+        """
         try:
             self.logger.info("Starting angr symbolic execution on %s", self.binary_path)
 
@@ -129,7 +168,7 @@ class ConcolicExecutionEngine:
 
             # Create symbolic execution state manager for path exploration
             # This is angr's real symbolic execution engine that analyzes actual binary paths
-            exec_manager: Any = project.factory.simgr(state)  # type: ignore[no-untyped-call]
+            exec_manager: Any = project.factory.simgr(state)
 
             # Set up find and avoid addresses
             find_addrs: list[int] = [target_address] if target_address else []
@@ -166,7 +205,20 @@ class ConcolicExecutionEngine:
             return {"error": str(e), "engine": "angr"}
 
     def _explore_paths_simconcolic(self, target_address: int | None, avoid_addresses: list[int] | None) -> dict[str, Any]:
-        """Fallback simconcolic implementation."""
+        """Explore paths using simconcolic fallback engine.
+
+        Uses simconcolic binary analyzer to perform concolic execution when
+        angr is unavailable. Extracts symbolic input information from execution
+        states.
+
+        Args:
+            target_address: Address to reach during exploration.
+            avoid_addresses: Addresses to avoid during exploration.
+
+        Returns:
+            Results including paths explored, target status, and input symbols
+            extracted from execution states.
+        """
         if not SIMCONCOLIC_AVAILABLE:
             return {
                 "success": False,
@@ -217,7 +269,16 @@ class ConcolicExecutionEngine:
             }
 
     def find_license_bypass(self) -> dict[str, Any]:
-        """Find license bypass using available engine."""
+        """Find license bypass using available engine.
+
+        Analyzes the binary for license validation routines and attempts to
+        find paths that bypass license checks. Identifies common license
+        patterns and cross-references.
+
+        Returns:
+            Analysis results including license check addresses, string
+            references, bypass findings, and patterns discovered.
+        """
         if self.symbolic_engine == "angr":
             return self._find_license_bypass_angr()
         if self.symbolic_engine == "simconcolic":
@@ -225,7 +286,16 @@ class ConcolicExecutionEngine:
         return {"error": "No suitable symbolic execution engine for license bypass"}
 
     def _find_license_bypass_angr(self) -> dict[str, Any]:
-        """Find license bypass using angr."""
+        """Find license bypass using angr analysis.
+
+        Performs CFG analysis to identify license check functions and string
+        references. Searches for common licensing patterns and builds
+        cross-reference information to locate validation routines.
+
+        Returns:
+            Analysis results with license addresses, string references, bypass
+            findings, and patterns discovered.
+        """
         try:
             project = angr.Project(self.binary_path, auto_load_libs=False)
 
@@ -283,9 +353,9 @@ class ConcolicExecutionEngine:
                 sym_license_key = claripy.BVS("license_key", license_key_size * 8)
                 # Store it in symbolic memory for the program to use
                 license_key_addr: int = 0x10000000
-                state.memory.store(license_key_addr, sym_license_key)  # type: ignore[no-untyped-call]
+                state.memory.store(license_key_addr, sym_license_key)
 
-            exec_mgr: Any = project.factory.simgr(state)  # type: ignore[no-untyped-call]
+            exec_mgr: Any = project.factory.simgr(state)
 
             # Explore avoiding license checks
             exec_mgr.explore(avoid=license_addrs[:5])

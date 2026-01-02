@@ -176,7 +176,7 @@ class FridaScriptManager:
         return f"{brand}-{family}-{model}-{cpuid_hash}"
 
     def _load_script_configs(self) -> None:
-        """Load all script configurations."""
+        """Load all script configurations from the scripts directory."""
         # Define production script configurations
         script_configs = {
             "memory_dumper.js": FridaScriptConfig(
@@ -319,7 +319,7 @@ class FridaScriptManager:
         self._load_custom_scripts()
 
     def _load_custom_scripts(self) -> None:
-        """Load custom scripts not in the predefined list."""
+        """Load custom scripts not in the predefined list from the scripts directory."""
         for script_file in self.scripts_dir.glob("*.js"):
             if script_file.name not in self.scripts:
                 if metadata := self._parse_script_metadata(script_file):
@@ -333,7 +333,17 @@ class FridaScriptManager:
                     self.scripts[script_file.name] = config
 
     def _parse_script_metadata(self, script_path: Path) -> dict[str, Any] | None:
-        """Parse metadata from script header."""
+        """Parse metadata from script header comments.
+
+        Args:
+            script_path: Path to the script file to parse.
+
+        Returns:
+            Dictionary containing parsed metadata or None if parsing fails.
+                Returns a dict with keys such as 'name', 'category', 'description',
+                and 'parameters' extracted from script header metadata comments.
+
+        """
         try:
             with open(script_path, encoding="utf-8") as f:
                 content = f.read()
@@ -364,14 +374,19 @@ class FridaScriptManager:
         """Execute a Frida script.
 
         Args:
-            script_name: Name of the script to execute
-            target: Target process (path for spawn, pid/name for attach)
-            mode: "spawn" or "attach"
-            parameters: Script parameters to override defaults
-            output_callback: Callback for real-time output
+            script_name: Name of the script to execute.
+            target: Target process (path for spawn, pid/name for attach).
+            mode: Execution mode, either "spawn" or "attach". Defaults to "spawn".
+            parameters: Script parameters to override defaults.
+            output_callback: Callback function for real-time output handling.
 
         Returns:
-            ScriptResult with execution details
+            ScriptResult with execution details including messages, errors, data,
+                and execution timing information.
+
+        Raises:
+            ValueError: If script name is unknown or script does not support
+                the specified mode (spawn or attach).
 
         """
         if script_name not in self.scripts:
@@ -458,7 +473,18 @@ class FridaScriptManager:
             return result
 
     def _create_parameter_injection(self, parameters: dict[str, Any]) -> str:
-        """Create JavaScript code to inject parameters."""
+        """Create JavaScript code to inject parameters into Frida scripts.
+
+        Args:
+            parameters: Dictionary of parameter names and values to inject.
+                Keys are parameter names and values can be strings, bools, None,
+                lists, dicts, or other serializable types.
+
+        Returns:
+            JavaScript code string containing variable declarations for each
+                parameter in the format 'var <name> = <value>;'.
+
+        """
         js_params = []
 
         for key, value in parameters.items():
@@ -487,10 +513,10 @@ class FridaScriptManager:
         """Handle messages from Frida script.
 
         Args:
-            result: ScriptResult object to accumulate execution results
-            message: Message dictionary from Frida containing type and payload
-            data: Optional binary data attached to the message (e.g., memory dumps)
-            callback: Optional callback function for real-time output handling
+            result: ScriptResult object to accumulate execution results.
+            message: Message dictionary from Frida containing type and payload.
+            data: Optional binary data attached to the message (e.g., memory dumps).
+            callback: Optional callback function for real-time output handling.
 
         """
         try:
@@ -523,7 +549,13 @@ class FridaScriptManager:
             logger.exception("Failed to handle message: %s", e)
 
     def stop_script(self, session_id: str) -> None:
-        """Stop a running script."""
+        """Stop a running script session.
+
+        Args:
+            session_id: Identifier of the script session to stop, typically
+                in format 'script_name_target_timestamp'.
+
+        """
         if session_id in self.active_sessions:
             try:
                 session = self.active_sessions[session_id]
@@ -534,20 +566,53 @@ class FridaScriptManager:
                 logger.exception("Failed to stop script: %s", e)
 
     def get_script_categories(self) -> list[ScriptCategory]:
-        """Get all available script categories."""
+        """Get all available script categories.
+
+        Returns:
+            List of unique script categories (ScriptCategory enum values) from
+                all loaded scripts.
+
+        """
         categories = {config.category for config in self.scripts.values()}
         return list(categories)
 
     def get_scripts_by_category(self, category: ScriptCategory) -> list[str]:
-        """Get scripts in a specific category."""
+        """Get scripts in a specific category.
+
+        Args:
+            category: Script category (ScriptCategory enum value) to filter by.
+
+        Returns:
+            List of script names (strings) in the specified category.
+
+        """
         return [name for name, config in self.scripts.items() if config.category == category]
 
     def get_script_config(self, script_name: str) -> FridaScriptConfig | None:
-        """Get configuration for a script."""
+        """Get configuration for a script.
+
+        Args:
+            script_name: Name of the script to retrieve configuration for.
+
+        Returns:
+            FridaScriptConfig object for the script containing configuration details,
+                or None if the script name is not found in loaded scripts.
+
+        """
         return self.scripts.get(script_name)
 
     def export_results(self, session_id: str, output_path: Path) -> None:
-        """Export script results to file."""
+        """Export script results to file.
+
+        Args:
+            session_id: Identifier of the script session to export results for.
+            output_path: Path object specifying where to write the exported
+                results file (JSON format).
+
+        Raises:
+            ValueError: If no results exist for the specified session ID.
+
+        """
         if session_id not in self.results:
             raise ValueError(f"No results for session: {session_id}")
 
@@ -583,7 +648,22 @@ class FridaScriptManager:
         category: ScriptCategory,
         parameters: dict[str, Any] | None = None,
     ) -> FridaScriptConfig:
-        """Create a custom Frida script."""
+        """Create a custom Frida script.
+
+        Args:
+            name: Name for the custom script.
+            code: JavaScript code content for the script.
+            category: Script category (ScriptCategory enum value) for classification
+                and organization.
+            parameters: Optional dictionary of script parameters and defaults.
+                Keys are parameter names and values are default values.
+
+        Returns:
+            FridaScriptConfig object for the newly created custom script,
+                containing configuration details including path, category, and
+                parameters.
+
+        """
         script_path = self.scripts_dir / f"custom_{name}.js"
 
         # Add metadata header

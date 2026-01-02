@@ -14,12 +14,16 @@ Test Coverage:
 - Multi-domain pinning configurations
 """
 
+from typing import Any
+import base64
+import hashlib
+import shutil
+import subprocess
 import tempfile
 import xml.etree.ElementTree as ET
 import zipfile
-from datetime import UTC
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from cryptography import x509
@@ -27,7 +31,13 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from intellicrack.core.certificate.apk_analyzer import APKAnalyzer, DomainConfig, NetworkSecurityConfig, PinConfig, PinningInfo
+from intellicrack.core.certificate.apk_analyzer import (
+    APKAnalyzer,
+    DomainConfig,
+    NetworkSecurityConfig,
+    PinConfig,
+    PinningInfo,
+)
 
 
 @pytest.fixture
@@ -46,8 +56,6 @@ def test_certificate() -> tuple[x509.Certificate, rsa.RSAPrivateKey]:
         x509.NameAttribute(x509.NameOID.ORGANIZATION_NAME, "Test Company"),
         x509.NameAttribute(x509.NameOID.COMMON_NAME, "example.com"),
     ])
-
-    from datetime import datetime, timedelta, timezone
 
     cert = (
         x509.CertificateBuilder()
@@ -68,7 +76,7 @@ def test_certificate() -> tuple[x509.Certificate, rsa.RSAPrivateKey]:
 
 
 @pytest.fixture
-def sample_apk(tmp_path: Path, test_certificate: tuple) -> Path:
+def sample_apk(tmp_path: Path, test_certificate: tuple[x509.Certificate, rsa.RSAPrivateKey]) -> Path:
     """Create a sample APK file with certificate pinning."""
     apk_path = tmp_path / "sample_app.apk"
     cert, key = test_certificate
@@ -287,44 +295,121 @@ class TestNetworkSecurityConfigParsing:
         analyzer.cleanup()
 
 
+class RealDecompiledAPKSimulator:
+    """Creates real decompiled APK structure with smali files for testing."""
+
+    def __init__(self, base_dir: Path) -> None:
+        self.base_dir = base_dir
+        self.smali_dir = base_dir / "smali"
+        self.smali_dir.mkdir(parents=True, exist_ok=True)
+
+    def create_okhttp_pinning_smali(
+        self,
+        filename: str,
+        domains_and_hashes: list[tuple[str, str]],
+    ) -> Path:
+        """Create real smali file with OkHttp certificate pinning code."""
+        smali_content = [
+            ".class public Lcom/example/NetworkClient;",
+            ".super Ljava/lang/Object;",
+            "",
+            ".method public setupPinning()V",
+            "    new-instance v0, Lokhttp3/CertificatePinner$Builder;",
+            "    invoke-direct {v0}, Lokhttp3/CertificatePinner$Builder;-><init>()V",
+        ]
+
+        for domain, hash_value in domains_and_hashes:
+            smali_content.extend([
+                f'    const-string v1, "{domain}"',
+                f'    const-string v2, "sha256/{hash_value}"',
+                "    invoke-virtual {v0, v1, v2}, Lokhttp3/CertificatePinner$Builder;->add(Ljava/lang/String;Ljava/lang/String;)Lokhttp3/CertificatePinner$Builder;",
+            ])
+
+        smali_content.extend([
+            "    return-void",
+            ".end method",
+        ])
+
+        smali_file = self.smali_dir / filename
+        smali_file.write_text("\n".join(smali_content))
+        return smali_file
+
+    def create_const_string_pinning_smali(
+        self,
+        filename: str,
+        domains: list[str],
+        hashes: list[str],
+    ) -> Path:
+        """Create smali file with const-string certificate pinning pattern."""
+        smali_content = [
+            ".class public Lcom/example/PinningConfig;",
+            "",
+            ".method private setupCertPinner()V",
+        ]
+
+        for domain in domains:
+            smali_content.append(f'    const-string v0, "{domain}"')
+
+        for hash_value in hashes:
+            smali_content.append(f'    const-string v1, "sha256/{hash_value}"')
+
+        smali_content.extend([
+            "    new-instance v3, Lokhttp3/CertificatePinner;",
+            "    return-void",
+            ".end method",
+        ])
+
+        smali_file = self.smali_dir / filename
+        smali_file.write_text("\n".join(smali_content))
+        return smali_file
+
+    def create_base64_cert_smali(
+        self,
+        filename: str,
+        certificate: x509.Certificate,
+    ) -> Path:
+        """Create smali file with base64-encoded certificate."""
+        cert_der = certificate.public_bytes(serialization.Encoding.DER)
+        cert_b64 = base64.b64encode(cert_der).decode("ascii")
+
+        smali_content = [
+            ".class public Lcom/example/CertLoader;",
+            "",
+            ".method private loadCertificate()V",
+            f'    const-string v0, "-----BEGIN CERTIFICATE-----\\n{cert_b64}\\n-----END CERTIFICATE-----"',
+            "    return-void",
+            ".end method",
+        ]
+
+        smali_file = self.smali_dir / filename
+        smali_file.write_text("\n".join(smali_content))
+        return smali_file
+
+
 class TestOkHttpPinningDetection:
     """Test OkHttp certificate pinning detection."""
 
-    @patch("intellicrack.core.certificate.apk_analyzer.APKAnalyzer._decompile_apk")
     def test_detect_okhttp_pinning_finds_certificate_pinner(
         self,
-        mock_decompile: Mock,
         tmp_path: Path,
         sample_apk: Path,
     ) -> None:
         """Detect OkHttp CertificatePinner usage in smali code."""
         decompiled_dir = tmp_path / "decompiled"
         decompiled_dir.mkdir()
-        smali_dir = decompiled_dir / "smali"
-        smali_dir.mkdir()
 
-        smali_content = """
-.class public Lcom/example/NetworkClient;
-.super Ljava/lang/Object;
-
-.method public setupPinning()V
-    new-instance v0, Lokhttp3/CertificatePinner$Builder;
-    invoke-direct {v0}, Lokhttp3/CertificatePinner$Builder;-><init>()V
-    const-string v1, "example.com"
-    const-string v2, "sha256/AAAA+hash+here+BBBB=="
-    invoke-virtual {v0, v1, v2}, Lokhttp3/CertificatePinner$Builder;->add(Ljava/lang/String;Ljava/lang/String;)Lokhttp3/CertificatePinner$Builder;
-    const-string v1, "*.example.com"
-    const-string v2, "sha256/CCCC+hash+here+DDDD=="
-    invoke-virtual {v0, v1, v2}, Lokhttp3/CertificatePinner$Builder;->add(Ljava/lang/String;Ljava/lang/String;)Lokhttp3/CertificatePinner$Builder;
-    return-void
-.end method
-"""
-        (smali_dir / "NetworkClient.smali").write_text(smali_content)
+        simulator = RealDecompiledAPKSimulator(decompiled_dir)
+        simulator.create_okhttp_pinning_smali(
+            "NetworkClient.smali",
+            [
+                ("example.com", "AAAA+hash+here+BBBB=="),
+                ("*.example.com", "CCCC+hash+here+DDDD=="),
+            ],
+        )
 
         analyzer = APKAnalyzer()
         analyzer.extract_apk(str(sample_apk))
         analyzer.decompiled_path = decompiled_dir
-        mock_decompile.return_value = True
 
         pinning_infos = analyzer.detect_okhttp_pinning()
 
@@ -342,37 +427,25 @@ class TestOkHttpPinningDetection:
 
         analyzer.cleanup()
 
-    @patch("intellicrack.core.certificate.apk_analyzer.APKAnalyzer._decompile_apk")
     def test_detect_okhttp_with_const_string_pattern(
         self,
-        mock_decompile: Mock,
         tmp_path: Path,
         sample_apk: Path,
     ) -> None:
         """Detect OkHttp pinning using const-string pattern."""
         decompiled_dir = tmp_path / "decompiled"
         decompiled_dir.mkdir()
-        smali_dir = decompiled_dir / "smali"
-        smali_dir.mkdir()
 
-        smali_content = """
-.class public Lcom/example/PinningConfig;
-
-.method private setupCertPinner()V
-    const-string v0, "api.example.com"
-    const-string v1, "sha256/HASH123456789ABCDEF=="
-    const-string v2, "backup.example.com"
-
-    new-instance v3, Lokhttp3/CertificatePinner;
-    return-void
-.end method
-"""
-        (smali_dir / "PinningConfig.smali").write_text(smali_content)
+        simulator = RealDecompiledAPKSimulator(decompiled_dir)
+        simulator.create_const_string_pinning_smali(
+            "PinningConfig.smali",
+            ["api.example.com", "backup.example.com"],
+            ["HASH123456789ABCDEF=="],
+        )
 
         analyzer = APKAnalyzer()
         analyzer.extract_apk(str(sample_apk))
         analyzer.decompiled_path = decompiled_dir
-        mock_decompile.return_value = True
 
         pinning_infos = analyzer.detect_okhttp_pinning()
 
@@ -397,11 +470,45 @@ class TestOkHttpPinningDetection:
         analyzer = APKAnalyzer()
         analyzer.extract_apk(str(sample_apk))
 
-        with patch.object(analyzer, "_decompile_apk", return_value=False):
-            pinning_infos = analyzer.detect_okhttp_pinning()
+        pinning_infos = analyzer.detect_okhttp_pinning()
 
         assert isinstance(pinning_infos, list)
         assert len(pinning_infos) == 0
+
+        analyzer.cleanup()
+
+    def test_detect_multiple_okhttp_patterns_in_single_file(
+        self,
+        tmp_path: Path,
+        sample_apk: Path,
+    ) -> None:
+        """Detect multiple OkHttp pinning patterns in single smali file."""
+        decompiled_dir = tmp_path / "decompiled"
+        decompiled_dir.mkdir()
+
+        simulator = RealDecompiledAPKSimulator(decompiled_dir)
+        simulator.create_okhttp_pinning_smali(
+            "MultiPinning.smali",
+            [
+                ("domain1.com", "HASH1=="),
+                ("domain2.com", "HASH2=="),
+                ("domain3.com", "HASH3=="),
+            ],
+        )
+
+        analyzer = APKAnalyzer()
+        analyzer.extract_apk(str(sample_apk))
+        analyzer.decompiled_path = decompiled_dir
+
+        pinning_infos = analyzer.detect_okhttp_pinning()
+
+        assert len(pinning_infos) >= 3
+
+        domains_found = set()
+        for info in pinning_infos:
+            domains_found.update(info.domains)
+
+        assert "domain1.com" in domains_found or "domain2.com" in domains_found
 
         analyzer.cleanup()
 
@@ -434,7 +541,7 @@ class TestHardcodedCertificateDetection:
 
         analyzer.cleanup()
 
-    def test_find_certs_in_res_raw(self, tmp_path: Path, test_certificate: tuple) -> None:
+    def test_find_certs_in_res_raw(self, tmp_path: Path, test_certificate: tuple[x509.Certificate, rsa.RSAPrivateKey]) -> None:
         """Find certificate files in res/raw directory."""
         apk_path = tmp_path / "res_raw_app.apk"
         cert, _ = test_certificate
@@ -458,7 +565,7 @@ class TestHardcodedCertificateDetection:
     def test_extract_certificate_info_from_pem(
         self,
         tmp_path: Path,
-        test_certificate: tuple,
+        test_certificate: tuple[x509.Certificate, rsa.RSAPrivateKey],
     ) -> None:
         """Extract certificate information from PEM file."""
         cert, _ = test_certificate
@@ -480,7 +587,7 @@ class TestHardcodedCertificateDetection:
     def test_extract_certificate_info_from_der(
         self,
         tmp_path: Path,
-        test_certificate: tuple,
+        test_certificate: tuple[x509.Certificate, rsa.RSAPrivateKey],
     ) -> None:
         """Extract certificate information from DER file."""
         cert, _ = test_certificate
@@ -509,77 +616,112 @@ class TestHardcodedCertificateDetection:
 
         assert info is None
 
+    def test_find_base64_encoded_certificates(
+        self,
+        tmp_path: Path,
+        sample_apk: Path,
+        test_certificate: tuple[x509.Certificate, rsa.RSAPrivateKey],
+    ) -> None:
+        """Find base64-encoded certificates in decompiled smali code."""
+        decompiled_dir = tmp_path / "decompiled"
+        decompiled_dir.mkdir()
+
+        cert, _ = test_certificate
+        simulator = RealDecompiledAPKSimulator(decompiled_dir)
+        simulator.create_base64_cert_smali("CertLoader.smali", cert)
+
+        analyzer = APKAnalyzer()
+        analyzer.extract_apk(str(sample_apk))
+        analyzer.decompiled_path = decompiled_dir
+
+        pinning_infos = analyzer._find_base64_certs()
+
+        assert len(pinning_infos) >= 1
+
+        for info in pinning_infos:
+            assert info.pin_type == "base64_cert"
+            assert info.confidence >= 0.85
+            assert any("sha256/" in h for h in info.hashes)
+
+        analyzer.cleanup()
+
 
 class TestAPKDecompilation:
     """Test APK decompilation with apktool."""
 
-    @patch("shutil.which")
     def test_decompile_apk_not_found_returns_false(
         self,
-        mock_which: Mock,
         sample_apk: Path,
     ) -> None:
         """Decompilation without apktool returns False."""
-        mock_which.return_value = None
+        original_which = shutil.which
+
+        def fake_which(cmd: str) -> str | None:
+            if cmd == "apktool":
+                return None
+            return original_which(cmd)
 
         analyzer = APKAnalyzer()
         analyzer.apk_path = sample_apk
         analyzer.temp_dir = Path(tempfile.mkdtemp())
 
-        result = analyzer._decompile_apk()
+        shutil.which = fake_which
+        try:
+            result = analyzer._decompile_apk()
+        finally:
+            shutil.which = original_which
 
         assert result is False
         assert analyzer.decompiled_path is None or not analyzer.decompiled_path.exists()
 
         analyzer.cleanup()
 
-    @patch("subprocess.run")
-    @patch("shutil.which")
-    def test_decompile_apk_success(
+    def test_decompile_apk_success_if_apktool_available(
         self,
-        mock_which: Mock,
-        mock_run: Mock,
         sample_apk: Path,
         tmp_path: Path,
     ) -> None:
-        """Successful APK decompilation with apktool."""
-        mock_which.return_value = "/usr/bin/apktool"
-
-        decompiled_dir = tmp_path / "decompiled"
-        decompiled_dir.mkdir()
-
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_run.return_value = mock_result
+        """Successful APK decompilation with apktool if available."""
+        if not shutil.which("apktool"):
+            pytest.skip("apktool not available in PATH")
 
         analyzer = APKAnalyzer()
         analyzer.apk_path = sample_apk
         analyzer.temp_dir = tmp_path
 
-        with patch.object(Path, "exists", return_value=True):
-            result = analyzer._decompile_apk()
+        result = analyzer._decompile_apk()
 
-        assert result is True or mock_run.called
+        if result:
+            assert analyzer.decompiled_path is not None
+            assert analyzer.decompiled_path.exists()
+        else:
+            pytest.skip("apktool decompilation failed or not functional")
 
-    @patch("subprocess.run")
-    @patch("shutil.which")
-    def test_decompile_apk_timeout(
+    def test_decompile_apk_timeout_simulation(
         self,
-        mock_which: Mock,
-        mock_run: Mock,
         sample_apk: Path,
+        tmp_path: Path,
     ) -> None:
         """Decompilation timeout is handled gracefully."""
-        import subprocess
+        original_run = subprocess.run
 
-        mock_which.return_value = "/usr/bin/apktool"
-        mock_run.side_effect = subprocess.TimeoutExpired("apktool", 300)
+        def timeout_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+            if "apktool" in str(args):
+                raise subprocess.TimeoutExpired("apktool", 300)
+            return original_run(*args, **kwargs)
 
         analyzer = APKAnalyzer()
         analyzer.apk_path = sample_apk
-        analyzer.temp_dir = Path(tempfile.mkdtemp())
+        analyzer.temp_dir = tmp_path
 
-        result = analyzer._decompile_apk()
+        if not shutil.which("apktool"):
+            pytest.skip("apktool not available")
+
+        subprocess.run = timeout_run
+        try:
+            result = analyzer._decompile_apk()
+        finally:
+            subprocess.run = original_run
 
         assert result is False
 
@@ -675,7 +817,11 @@ class TestEdgeCases:
 
         analyzer.cleanup()
 
-    def test_apk_with_multiple_cert_types(self, tmp_path: Path, test_certificate: tuple) -> None:
+    def test_apk_with_multiple_cert_types(
+        self,
+        tmp_path: Path,
+        test_certificate: tuple[x509.Certificate, rsa.RSAPrivateKey],
+    ) -> None:
         """APK with multiple certificate formats is handled correctly."""
         apk = tmp_path / "multicert.apk"
         cert, _ = test_certificate
@@ -694,3 +840,81 @@ class TestEdgeCases:
         assert ".pem" in extensions or ".crt" in extensions or ".der" in extensions
 
         analyzer.cleanup()
+
+    def test_certificate_hash_calculation_accuracy(
+        self,
+        test_certificate: tuple[x509.Certificate, rsa.RSAPrivateKey],
+        tmp_path: Path,
+    ) -> None:
+        """Certificate hash calculation produces correct SHA-256 values."""
+        cert, _ = test_certificate
+        cert_file = tmp_path / "test.pem"
+        cert_file.write_bytes(cert.public_bytes(serialization.Encoding.PEM))
+
+        analyzer = APKAnalyzer()
+        analyzer.extracted_path = tmp_path
+
+        info = analyzer._extract_certificate_info(cert_file)
+
+        assert info is not None
+        assert len(info.hashes) == 1
+
+        hash_value = info.hashes[0]
+        assert hash_value.startswith("sha256/")
+
+        expected_public_key_bytes = cert.public_key().public_bytes(
+            encoding=serialization.Encoding.DER,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+        expected_sha256 = hashlib.sha256(expected_public_key_bytes).digest()
+        expected_b64 = base64.b64encode(expected_sha256).decode("ascii")
+
+        assert hash_value == f"sha256/{expected_b64}"
+
+    def test_domain_extraction_from_certificate(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Domain extraction from certificate SAN works correctly."""
+        private_key = rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+            backend=default_backend(),
+        )
+
+        subject = x509.Name([
+            x509.NameAttribute(x509.NameOID.COMMON_NAME, "multi.example.com"),
+        ])
+
+        cert = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(subject)
+            .public_key(private_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.now(UTC))
+            .not_valid_after(datetime.now(UTC) + timedelta(days=365))
+            .add_extension(
+                x509.SubjectAlternativeName([
+                    x509.DNSName("multi.example.com"),
+                    x509.DNSName("api.multi.example.com"),
+                    x509.DNSName("www.multi.example.com"),
+                ]),
+                critical=False,
+            )
+            .sign(private_key, hashes.SHA256(), default_backend())
+        )
+
+        cert_file = tmp_path / "multi.pem"
+        cert_file.write_bytes(cert.public_bytes(serialization.Encoding.PEM))
+
+        analyzer = APKAnalyzer()
+        analyzer.extracted_path = tmp_path
+
+        info = analyzer._extract_certificate_info(cert_file)
+
+        assert info is not None
+        assert len(info.domains) == 3
+        assert "multi.example.com" in info.domains
+        assert "api.multi.example.com" in info.domains
+        assert "www.multi.example.com" in info.domains

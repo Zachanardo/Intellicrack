@@ -40,28 +40,6 @@ from intellicrack.handlers.pyqt6_handler import (
 from intellicrack.utils.logger import logger
 
 
-"""
-Visual Patch Editor Dialog
-
-Copyright (C) 2025 Zachary Flint
-
-This file is part of Intellicrack.
-
-Intellicrack is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Intellicrack is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
-"""
-
-
 try:
     from intellicrack.handlers.pefile_handler import pefile
 
@@ -96,8 +74,24 @@ class VisualPatchEditorDialog(QDialog):
             patches: List of patch dictionaries to edit
             parent: Parent widget
 
+        Raises:
+            RuntimeError: If critical dependencies (pefile, capstone) are not available.
+
         """
         super().__init__(parent)
+
+        missing_deps: list[str] = []
+        if not HAS_PEFILE:
+            missing_deps.append("pefile")
+        if not HAS_CAPSTONE:
+            missing_deps.append("capstone")
+
+        if missing_deps:
+            error_msg = f"Visual Patch Editor requires missing dependencies: {', '.join(missing_deps)}"
+            logger.error(error_msg)
+            QMessageBox.critical(parent, "Missing Dependencies", error_msg)
+            raise RuntimeError(error_msg)
+
         self.binary_path: str = binary_path
         self.patches: list[dict[str, Any]] = patches.copy() if patches else []
         self.original_patches: list[dict[str, Any]] = patches.copy() if patches else []
@@ -111,7 +105,11 @@ class VisualPatchEditorDialog(QDialog):
         self.populate_patch_list()
 
     def init_ui(self) -> None:
-        """Initialize the user interface."""
+        """Initialize the user interface.
+
+        Sets up the visual components of the patch editor dialog including
+        layout, buttons, and interactive elements for patch management.
+        """
         layout = QVBoxLayout(self)
 
         # Header with binary info
@@ -243,7 +241,11 @@ class VisualPatchEditorDialog(QDialog):
         layout.addWidget(self.status_label)
 
     def populate_patch_list(self) -> None:
-        """Populate the patch list with current patches."""
+        """Populate the patch list with current patches.
+
+        Clears the patch list widget and adds items for each patch in the
+        patches list, storing the patch index as user data for retrieval.
+        """
         self.patch_list.clear()
 
         for i, patch in enumerate(self.patches):
@@ -260,10 +262,12 @@ class VisualPatchEditorDialog(QDialog):
     def patch_selected(self, current: QListWidgetItem | None, previous: QListWidgetItem | None) -> None:
         """Handle patch selection in the list.
 
+        Updates the form fields and preview panes to display the selected patch's
+        details including address, bytes, description, disassembly, and byte preview.
+
         Args:
             current: The currently selected list widget item.
             previous: The previously selected list widget item.
-
         """
         _ = previous
         if not current:
@@ -298,7 +302,10 @@ class VisualPatchEditorDialog(QDialog):
         self.update_byte_preview(address, new_bytes)
 
     def clear_patch_form(self) -> None:
-        """Clear the patch form."""
+        """Clear the patch form.
+
+        Resets all form input fields and preview panes to empty state.
+        """
         self.address_edit.clear()
         self.bytes_edit.clear()
         self.description_edit.clear()
@@ -307,7 +314,11 @@ class VisualPatchEditorDialog(QDialog):
         self.patched_bytes_view.clear()
 
     def update_current_patch(self) -> None:
-        """Update the currently selected patch with form values."""
+        """Update the currently selected patch with form values.
+
+        Validates the address and bytes from the form fields, updates the patch data,
+        and refreshes the display. Shows warning dialogs for invalid input.
+        """
         current_item = self.patch_list.currentItem()
         if not current_item:
             return
@@ -363,7 +374,16 @@ class VisualPatchEditorDialog(QDialog):
         self.status_label.setText(f"Updated patch {index + 1}")
 
     def update_disassembly_view(self, address: int) -> None:
-        """Update the disassembly view for the given address."""
+        """Update the disassembly view for the given address.
+
+        Reads the binary file, disassembles code around the target address,
+        and displays it with context. Uses capstone for disassembly and pefile
+        for PE file parsing. Caches results for performance.
+
+        Args:
+            address: The memory address to disassemble, used to locate the target
+                section in the binary file for generating disassembly context.
+        """
         if not HAS_PEFILE or not HAS_CAPSTONE:
             self.disasm_view.setText("Disassembly not available - missing dependencies")
             return
@@ -422,7 +442,17 @@ class VisualPatchEditorDialog(QDialog):
             self.disasm_view.setText(f"Error disassembling: {e}")
 
     def update_byte_preview(self, address: int, new_bytes: bytes) -> None:
-        """Update the byte preview for the given address and new bytes."""
+        """Update the byte preview for the given address and new bytes.
+
+        Reads original bytes from the binary file and displays them alongside
+        the new bytes in hexadecimal format for visual comparison.
+
+        Args:
+            address: The memory address to preview, used to locate the target
+                bytes in the binary file for comparison purposes.
+            new_bytes: The new bytes to display in the patched view, shown
+                alongside original bytes for visual side-by-side comparison.
+        """
         if not HAS_PEFILE:
             self.original_bytes_view.setText("Byte preview not available - missing pefile")
             self.patched_bytes_view.setText("Byte preview not available - missing pefile")
@@ -466,7 +496,11 @@ class VisualPatchEditorDialog(QDialog):
             self.patched_bytes_view.setText(f"Error: {e}")
 
     def add_new_patch(self) -> None:
-        """Add a new empty patch."""
+        """Add a new empty patch.
+
+        Creates a new patch with default values (address=0, empty bytes, generic description),
+        adds it to the patches list, and selects it in the UI for immediate editing.
+        """
         # Create a new patch with default values
         new_patch = {
             "address": 0,
@@ -489,7 +523,11 @@ class VisualPatchEditorDialog(QDialog):
         self.status_label.setText("Added new patch")
 
     def remove_selected_patch(self) -> None:
-        """Remove the selected patch."""
+        """Remove the selected patch.
+
+        Prompts the user for confirmation before deleting the selected patch from
+        the patches list and refreshing the UI.
+        """
         current_item = self.patch_list.currentItem()
         if not current_item:
             return
@@ -521,7 +559,11 @@ class VisualPatchEditorDialog(QDialog):
         self.status_label.setText(f"Removed patch {index + 1}")
 
     def duplicate_selected_patch(self) -> None:
-        """Duplicate the selected patch."""
+        """Duplicate the selected patch.
+
+        Creates a copy of the currently selected patch with a modified description
+        indicating it is a duplicate, adds it to the patches list, and selects it.
+        """
         current_item = self.patch_list.currentItem()
         if not current_item:
             return
@@ -549,7 +591,11 @@ class VisualPatchEditorDialog(QDialog):
         self.status_label.setText(f"Duplicated patch {index + 1}")
 
     def test_patches(self) -> None:
-        """Test the current patches without applying them."""
+        """Test the current patches without applying them.
+
+        Validates all patches by checking for valid addresses and non-empty byte data,
+        then displays the validation results in a dialog window.
+        """
         if not self.patches:
             QMessageBox.information(self, "No Patches", "No patches to test.")
             return
@@ -571,7 +617,15 @@ class VisualPatchEditorDialog(QDialog):
         self.show_test_results(validation_results)
 
     def show_test_results(self, results: list[str]) -> None:
-        """Show patch test results."""
+        """Show patch test results.
+
+        Creates and displays a modal dialog window containing the test results
+        in a read-only text display with a close button.
+
+        Args:
+            results: List of test result messages to display, each message is
+                joined with newlines to create the final result text view.
+        """
         # Create a dialog to show results
         dialog = QDialog(self)
         dialog.setWindowTitle("Patch Test Results")
@@ -598,17 +652,18 @@ class VisualPatchEditorDialog(QDialog):
         """Get the current list of patches.
 
         Returns:
-            List of patch dictionaries
-
+            A copy of the patches list containing all patch dictionaries.
         """
         return self.patches.copy()
 
     def has_unsaved_changes(self) -> bool:
         """Check if there are unsaved changes.
 
-        Returns:
-            True if patches have been modified
+        Compares the current patches list with the original patches to determine
+        if any modifications have been made since the dialog opened.
 
+        Returns:
+            True if patches have been modified, False otherwise.
         """
         return self.patches != self.original_patches
 
@@ -616,13 +671,15 @@ class VisualPatchEditorDialog(QDialog):
 def create_visual_patch_editor(binary_path: str, patches: list[dict[str, Any]], parent: QWidget | None = None) -> VisualPatchEditorDialog:
     """Create a VisualPatchEditorDialog.
 
+    Factory function that instantiates and returns a configured visual patch editor dialog
+    for managing binary patches with all UI elements initialized.
+
     Args:
-        binary_path: Path to binary file
-        patches: List of patch dictionaries
-        parent: Parent widget
+        binary_path: Path to binary file to be edited.
+        patches: List of patch dictionaries to load into the editor.
+        parent: Parent widget for dialog modality and ownership.
 
     Returns:
-        Configured dialog instance
-
+        A fully initialized VisualPatchEditorDialog instance ready for display.
     """
     return VisualPatchEditorDialog(binary_path, patches, parent)

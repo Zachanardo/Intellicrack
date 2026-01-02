@@ -5,6 +5,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from typing import Any
 
 from intellicrack.core.processing.distributed_manager import (
     DistributedAnalysisManager,
@@ -17,12 +18,15 @@ from intellicrack.core.processing.distributed_manager import (
 class TestDistributedAnalysisManager(unittest.TestCase):
     """Test cases for distributed analysis manager."""
 
-    def setUp(self):
+    test_binary: str
+    manager: DistributedAnalysisManager | None
+
+    def setUp(self) -> None:
         """Set up test fixtures."""
         self.test_binary = self._create_test_binary()
         self.manager = None
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         """Clean up test resources."""
         if self.manager:
             self.manager.shutdown()
@@ -40,7 +44,7 @@ class TestDistributedAnalysisManager(unittest.TestCase):
             f.write(b"\xFF" * 256)
         return path
 
-    def test_manager_initialization_local_mode(self):
+    def test_manager_initialization_local_mode(self) -> None:
         """Test manager initialization in local mode."""
         self.manager = create_distributed_manager(mode="local", enable_networking=False)
 
@@ -49,14 +53,14 @@ class TestDistributedAnalysisManager(unittest.TestCase):
         self.assertFalse(self.manager.enable_networking)
         self.assertTrue(self.manager.is_coordinator)
 
-    def test_manager_initialization_cluster_mode(self):
+    def test_manager_initialization_cluster_mode(self) -> None:
         """Test manager initialization in cluster mode."""
         self.manager = create_distributed_manager(mode="cluster", enable_networking=False)
 
         self.assertIsNotNone(self.manager)
         self.assertEqual(self.manager.mode, "cluster")
 
-    def test_submit_single_task(self):
+    def test_submit_single_task(self) -> None:
         """Test submitting a single analysis task."""
         self.manager = create_distributed_manager(mode="local", enable_networking=False)
         self.manager.start_cluster(port=9877)
@@ -71,9 +75,10 @@ class TestDistributedAnalysisManager(unittest.TestCase):
         self.assertIsNotNone(task_id)
         status = self.manager.get_task_status(task_id)
         self.assertIsNotNone(status)
-        self.assertEqual(status["task_type"], "pattern_search")
+        if status is not None:
+            self.assertEqual(status["task_type"], "pattern_search")
 
-    def test_pattern_search_task(self):
+    def test_pattern_search_task(self) -> None:
         """Test pattern search task execution."""
         self.manager = create_distributed_manager(mode="local", enable_networking=False)
         self.manager.start_cluster(port=9878)
@@ -92,10 +97,11 @@ class TestDistributedAnalysisManager(unittest.TestCase):
         result = self.manager.get_task_result(task_id, timeout=10.0)
 
         self.assertIsNotNone(result)
-        self.assertIn("task_type", result)
-        self.assertEqual(result["task_type"], "pattern_search")
+        if result is not None:
+            self.assertIn("task_type", result)
+            self.assertEqual(result["task_type"], "pattern_search")
 
-    def test_entropy_analysis_task(self):
+    def test_entropy_analysis_task(self) -> None:
         """Test entropy analysis task execution."""
         self.manager = create_distributed_manager(mode="local", enable_networking=False)
         self.manager.start_cluster(port=9879)
@@ -114,10 +120,11 @@ class TestDistributedAnalysisManager(unittest.TestCase):
         result = self.manager.get_task_result(task_id, timeout=10.0)
 
         self.assertIsNotNone(result)
-        self.assertIn("overall_entropy", result)
-        self.assertIn("windows", result)
+        if result is not None:
+            self.assertIn("overall_entropy", result)
+            self.assertIn("windows", result)
 
-    def test_string_extraction_task(self):
+    def test_string_extraction_task(self) -> None:
         """Test string extraction task execution."""
         self.manager = create_distributed_manager(mode="local", enable_networking=False)
         self.manager.start_cluster(port=9880)
@@ -136,10 +143,11 @@ class TestDistributedAnalysisManager(unittest.TestCase):
         result = self.manager.get_task_result(task_id, timeout=10.0)
 
         self.assertIsNotNone(result)
-        self.assertIn("strings", result)
-        self.assertGreater(result["total_strings"], 0)
+        if result is not None:
+            self.assertIn("strings", result)
+            self.assertGreater(result["total_strings"], 0)
 
-    def test_crypto_detection_task(self):
+    def test_crypto_detection_task(self) -> None:
         """Test cryptographic constant detection task."""
         self.manager = create_distributed_manager(mode="local", enable_networking=False)
         self.manager.start_cluster(port=9881)
@@ -157,9 +165,10 @@ class TestDistributedAnalysisManager(unittest.TestCase):
         result = self.manager.get_task_result(task_id, timeout=10.0)
 
         self.assertIsNotNone(result)
-        self.assertIn("detections", result)
+        if result is not None:
+            self.assertIn("detections", result)
 
-    def test_submit_multiple_tasks(self):
+    def test_submit_multiple_tasks(self) -> None:
         """Test submitting multiple tasks."""
         self.manager = create_distributed_manager(mode="local", enable_networking=False)
         self.manager.start_cluster(port=9882)
@@ -183,7 +192,7 @@ class TestDistributedAnalysisManager(unittest.TestCase):
         completion = self.manager.wait_for_completion(task_ids, timeout=30.0)
         self.assertEqual(completion["status"], "completed")
 
-    def test_submit_binary_analysis(self):
+    def test_submit_binary_analysis(self) -> None:
         """Test submitting complete binary analysis."""
         self.manager = create_distributed_manager(mode="local", enable_networking=False)
         self.manager.start_cluster(port=9883)
@@ -201,7 +210,7 @@ class TestDistributedAnalysisManager(unittest.TestCase):
         completion = self.manager.wait_for_completion(task_ids, timeout=60.0)
         self.assertIn(completion["status"], ["completed", "timeout"])
 
-    def test_task_priority_ordering(self):
+    def test_task_priority_ordering(self) -> None:
         """Test that tasks are executed in priority order."""
         self.manager = create_distributed_manager(mode="local", enable_networking=False)
         self.manager.start_cluster(port=9884)
@@ -228,7 +237,7 @@ class TestDistributedAnalysisManager(unittest.TestCase):
         self.assertIsNotNone(high_status)
         self.assertIsNotNone(low_status)
 
-    def test_get_cluster_status(self):
+    def test_get_cluster_status(self) -> None:
         """Test getting cluster status."""
         self.manager = create_distributed_manager(mode="local", enable_networking=False)
         self.manager.start_cluster(port=9885)
@@ -242,7 +251,7 @@ class TestDistributedAnalysisManager(unittest.TestCase):
         self.assertIn("performance", status)
         self.assertGreater(status["node_count"], 0)
 
-    def test_export_results(self):
+    def test_export_results(self) -> None:
         """Test exporting results to JSON."""
         self.manager = create_distributed_manager(mode="local", enable_networking=False)
         self.manager.start_cluster(port=9886)
@@ -274,7 +283,7 @@ class TestDistributedAnalysisManager(unittest.TestCase):
             if os.path.exists(output_file):
                 os.remove(output_file)
 
-    def test_results_summary(self):
+    def test_results_summary(self) -> None:
         """Test getting results summary."""
         self.manager = create_distributed_manager(mode="local", enable_networking=False)
         self.manager.start_cluster(port=9887)
@@ -292,7 +301,7 @@ class TestDistributedAnalysisManager(unittest.TestCase):
         self.assertIn("total_results", summary)
         self.assertIn("results_by_type", summary)
 
-    def test_graceful_shutdown(self):
+    def test_graceful_shutdown(self) -> None:
         """Test graceful shutdown of distributed manager."""
         self.manager = create_distributed_manager(mode="local", enable_networking=False)
         self.manager.start_cluster(port=9888)
@@ -308,7 +317,7 @@ class TestDistributedAnalysisManager(unittest.TestCase):
         self.manager.shutdown()
         self.assertFalse(self.manager.running)
 
-    def test_nonexistent_binary(self):
+    def test_nonexistent_binary(self) -> None:
         """Test handling of nonexistent binary file."""
         self.manager = create_distributed_manager(mode="local", enable_networking=False)
         self.manager.start_cluster(port=9889)

@@ -21,17 +21,11 @@ from __future__ import annotations
 import json
 import logging
 import os
-import sys
 import time
 import traceback
-from collections.abc import Collection, Sequence
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from intellicrack.utils.logger import logger
-
-
-if TYPE_CHECKING:
-    from types import ModuleType
 
 from ...utils.tools.radare2_utils import R2Exception, r2_session
 from .radare2_ai_integration import R2AIEngine
@@ -117,8 +111,7 @@ except ImportError as e:
                 """Initialize directed graph.
 
                 Args:
-                    data: Optional dictionary containing graph data for initialization
-
+                    data: Optional dictionary containing graph data for initialization.
                 """
                 self._nodes: dict[object, bool] = {}
                 self._edges: dict[object, set[object]] = {}
@@ -140,7 +133,6 @@ except ImportError as e:
                         - 'edges': Iterable of (u, v) or (u, v, attrs) tuples
                         - 'adjacency': Dict mapping nodes to lists of neighbor dicts
                         Or another DiGraph instance to merge.
-
                 """
                 if isinstance(data, _IntellicrackNetworkX.DiGraph):
                     for node in data._nodes:
@@ -209,9 +201,8 @@ except ImportError as e:
                 """Add node to graph with optional attributes.
 
                 Args:
-                    node: Node identifier to add
-                    **attrs: Optional attributes to attach to the node
-
+                    node: Node identifier to add.
+                    **attrs: Optional attributes to attach to the node.
                 """
                 self._nodes[node] = True
                 if attrs:
@@ -221,10 +212,9 @@ except ImportError as e:
                 """Add edge to graph with optional attributes.
 
                 Args:
-                    u: Source node identifier
-                    v: Target node identifier
-                    **attrs: Optional attributes to attach to the edge
-
+                    u: Source node identifier.
+                    v: Target node identifier.
+                    **attrs: Optional attributes to attach to the edge.
                 """
                 if u not in self._nodes:
                     self.add_node(u)
@@ -432,9 +422,12 @@ except ImportError as e:
             def _strongconnect(node: object) -> None:
                 """Recursively find strongly connected components.
 
-                Args:
-                    node: The current node to process
+                Uses Tarjan's algorithm recursively to identify all strongly connected
+                components. Modifies the outer scope variables: index, lowlinks, stack,
+                on_stack, and components.
 
+                Args:
+                    node: The current node to process.
                 """
                 index[node] = index_counter[0]
                 lowlinks[node] = index_counter[0]
@@ -715,12 +708,18 @@ except ImportError as e:
         ) -> None:
             """Draw graph with basic functionality.
 
-            Args:
-                graph: The directed graph to draw
-                pos: Optional positions dictionary for nodes
-                ax: Optional matplotlib axes object
-                **kwargs: Additional keyword arguments for drawing
+            Renders the directed graph visualization using matplotlib and NetworkX.
+            Automatically computes positions if not provided, then draws nodes and edges
+            with optional customization parameters.
 
+            Args:
+                graph: The directed graph to draw.
+                pos: Optional positions dictionary for nodes. If not provided,
+                    spring layout is used.
+                ax: Optional matplotlib axes object for drawing. If not provided,
+                    creates a new figure.
+                **kwargs: Additional keyword arguments for drawing customization
+                    (e.g., node_color, node_size, font_size, arrows).
             """
             try:
                 import matplotlib.pyplot as plt
@@ -748,10 +747,12 @@ except ImportError as e:
                 def write_dot(graph: _IntellicrackNetworkX.DiGraph, path: str) -> None:
                     """Write graph in DOT format.
 
-                    Args:
-                        graph: The directed graph to export
-                        path: File path where to write the DOT file
+                    Exports the directed graph to GraphViz DOT format, writing nodes
+                    and edges as text file suitable for visualization with Graphviz tools.
 
+                    Args:
+                        graph: The directed graph to export.
+                        path: File path where to write the DOT file.
                     """
                     with open(path, "w", encoding="utf-8") as f:
                         f.write("digraph G {\n")
@@ -868,7 +869,13 @@ class CFGExplorer:
     """
 
     def __init__(self, binary_path: str | None = None, radare2_path: str | None = None) -> None:
-        """Initialize the enhanced CFG explorer."""
+        """Initialize the enhanced CFG explorer.
+
+        Args:
+            binary_path: Optional path to binary file for analysis
+            radare2_path: Optional custom path to radare2 executable
+
+        """
         self.binary_path = binary_path
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
@@ -894,7 +901,19 @@ class CFGExplorer:
             self._initialize_analysis_engines()
 
     def _initialize_analysis_engines(self) -> None:
-        """Initialize all analysis engines with current binary path."""
+        """Initialize all analysis engines with current binary path.
+
+        Creates instances of decompiler, vulnerability, AI, string, import/export,
+        and scripting analysis engines for the loaded binary. Engines are stored as
+        instance attributes for use by analysis methods.
+
+        Returns:
+            None: Analysis engines are initialized and stored as instance attributes.
+
+        Raises:
+            No exceptions are raised; failures are logged and engines set to None.
+
+        """
         if not self.binary_path:
             return
 
@@ -910,7 +929,21 @@ class CFGExplorer:
             self.logger.warning("Failed to initialize some analysis engines: %s", e)
 
     def load_binary(self, binary_path: str | None = None) -> bool:
-        """Load a binary file and extract its enhanced CFG with advanced analysis."""
+        """Load a binary file and extract its enhanced CFG with advanced analysis.
+
+        Loads the binary, extracts functions, builds control flow graphs, analyzes
+        licensing patterns, and performs comprehensive security analysis.
+
+        Args:
+            binary_path: Optional new binary path to load
+
+        Returns:
+            True if binary loaded and analyzed successfully, False otherwise
+
+        Raises:
+            No exceptions are raised; errors return False or show error dialogs.
+
+        """
         if binary_path:
             self.binary_path = binary_path
             self._initialize_analysis_engines()
@@ -996,7 +1029,24 @@ class CFGExplorer:
             return False
 
     def _create_enhanced_function_graph(self, graph_data: dict[str, Any], r2: Any, function_addr: int) -> Any:
-        """Create enhanced function graph with comprehensive node data."""
+        """Create enhanced function graph with comprehensive node data.
+
+        Builds a control flow graph from radare2 basic block data with detailed
+        node attributes including instruction types, security-relevant operations,
+        and licensing-related patterns.
+
+        Args:
+            graph_data: Dictionary containing basic block information from radare2
+            r2: radare2 session object for additional function metadata
+            function_addr: Address of the function being analyzed
+
+        Returns:
+            NetworkX DiGraph with enhanced node and edge attributes
+
+        Raises:
+            No exceptions are raised; errors are handled internally and logged.
+
+        """
         function_graph = nx.DiGraph()
 
         if r2 and function_addr:
@@ -1063,7 +1113,19 @@ class CFGExplorer:
         return function_graph
 
     def _classify_block_type(self, block: dict[str, Any]) -> str:
-        """Classify block type based on its characteristics."""
+        """Classify block type based on its characteristics.
+
+        Analyzes block instructions to determine block classification for control
+        flow analysis (return, call, conditional, jump, or basic).
+
+        Args:
+            block: Block dictionary with operations data from radare2
+
+        Returns:
+            str: Classification of the basic block type ('empty', 'return', 'call',
+                'conditional', 'jump', or 'basic')
+
+        """
         ops_data = block.get("ops", [])
         ops: list[dict[str, Any]] = ops_data if isinstance(ops_data, list) else []
 
@@ -1081,7 +1143,18 @@ class CFGExplorer:
         return "basic"
 
     def _calculate_block_complexity(self, block: dict[str, Any]) -> float:
-        """Calculate complexity score for a basic block."""
+        """Calculate complexity score for a basic block.
+
+        Computes a weighted complexity score based on instruction types,
+        including penalties for calls, jumps, math operations, and cryptographic operations.
+
+        Args:
+            block: Block dictionary with operations data from radare2
+
+        Returns:
+            Float complexity score for the block
+
+        """
         ops_data = block.get("ops", [])
         ops: list[dict[str, Any]] = ops_data if isinstance(ops_data, list) else []
 
@@ -1105,7 +1178,22 @@ class CFGExplorer:
         return complexity
 
     def _build_call_graph(self, r2: Any) -> None:
-        """Build inter-function call graph."""
+        """Build inter-function call graph.
+
+        Extracts cross-references from radare2 and builds a call graph showing
+        which functions call which other functions. Updates the call_graph attribute
+        with inter-function dependency information.
+
+        Args:
+            r2: radare2 session object for extracting cross-references.
+
+        Returns:
+            None: call_graph attribute is updated with function call relationships.
+
+        Raises:
+            No exceptions are raised; errors are logged and call graph construction skipped.
+
+        """
         try:
             xrefs = r2._execute_command("axtj", expect_json=True)
 
@@ -1135,7 +1223,17 @@ class CFGExplorer:
             self.logger.debug("Failed to build call graph: %s", e)
 
     def _find_function_by_address(self, address: int) -> str | None:
-        """Find function name containing the given address."""
+        """Find function name containing the given address.
+
+        Searches loaded functions to locate the one containing the given address.
+
+        Args:
+            address: Address to search for in function ranges
+
+        Returns:
+            Function name if found, None otherwise
+
+        """
         for func_name, func_data in self.functions.items():
             func_addr = func_data.get("addr", 0)
             func_size = func_data.get("size", 0)
@@ -1146,7 +1244,18 @@ class CFGExplorer:
         return None
 
     def _perform_advanced_analysis(self) -> None:
-        """Perform advanced analysis using integrated engines."""
+        """Perform advanced analysis using integrated engines.
+
+        Executes string analysis, import/export analysis, AI-enhanced analysis,
+        function similarity calculations, and license analysis workflows.
+
+        Returns:
+            None: Results are stored in analysis_cache, function_similarities, and cross_references attributes.
+
+        Raises:
+            No exceptions are raised; errors are logged and analysis continues with available data.
+
+        """
         if not self.binary_path:
             return
 
@@ -1180,7 +1289,19 @@ class CFGExplorer:
             self.logger.warning("Advanced analysis partially failed: %s", e)
 
     def _calculate_function_similarities(self) -> None:
-        """Calculate similarities between functions using graph metrics."""
+        """Calculate similarities between functions using graph metrics.
+
+        Computes pairwise structural similarity scores between all loaded functions
+        based on node count, edge count, and cyclomatic complexity.
+
+        Returns:
+            None: Similarity scores are stored in function_similarities dictionary as key:value pairs
+            where key is "func1:func2" and value is similarity score (0.0-1.0).
+
+        Raises:
+            No exceptions are raised; errors are logged and processing continues.
+
+        """
         if not NETWORKX_AVAILABLE:
             return
 
@@ -1202,7 +1323,19 @@ class CFGExplorer:
                     self.logger.debug("Failed to calculate similarity between %s and %s: %s", func1, func2, e)
 
     def _calculate_graph_similarity(self, graph1: Any, graph2: Any) -> float:
-        """Calculate similarity between two function graphs."""
+        """Calculate similarity between two function graphs.
+
+        Computes a similarity metric (0.0-1.0) based on structural properties
+        including node count ratio, edge count ratio, and cyclomatic complexity.
+
+        Args:
+            graph1: First function graph to compare
+            graph2: Second function graph to compare
+
+        Returns:
+            Float similarity score from 0.0 (no similarity) to 1.0 (identical)
+
+        """
         if graph1.number_of_nodes() == 0 or graph2.number_of_nodes() == 0:
             return 0.0
 
@@ -1224,11 +1357,24 @@ class CFGExplorer:
         return float((node_ratio + edge_ratio + complexity_ratio) / 3.0)
 
     def get_function_list(self) -> list[str]:
-        """Get a list of all functions in the binary."""
+        """Get a list of all functions in the binary.
+
+        Returns:
+            List of function names extracted from the loaded binary
+
+        """
         return list(self.functions.keys())
 
     def set_current_function(self, function_name: str) -> bool:
-        """Set the current function for analysis."""
+        """Set the current function for analysis.
+
+        Args:
+            function_name: Name of function to set as current
+
+        Returns:
+            True if function found and set, False otherwise
+
+        """
         if function_name in self.functions:
             self.current_function = function_name
             self.graph = self.functions[function_name]["graph"]
@@ -1237,7 +1383,12 @@ class CFGExplorer:
         return False
 
     def get_functions(self) -> list[dict[str, Any]]:
-        """Get list of functions (alias for get_function_list)."""
+        """Get list of functions (alias for get_function_list).
+
+        Returns:
+            List of dictionaries with function name and address information
+
+        """
         return [
             {
                 "name": func_name,
@@ -1247,7 +1398,16 @@ class CFGExplorer:
         ]
 
     def analyze_function(self, function_name: str) -> dict[str, Any] | None:
-        """Analyze a specific function (compatibility method)."""
+        """Analyze a specific function (compatibility method).
+
+        Args:
+            function_name: Name of function to analyze
+
+        Returns:
+            Dictionary with analysis results including complexity metrics and license patterns,
+            or None if function not found
+
+        """
         if not self.set_current_function(function_name):
             return None
 
@@ -1270,21 +1430,54 @@ class CFGExplorer:
         }
 
     def visualize_cfg(self, function_name: str | None = None) -> bool:
-        """Visualize CFG (compatibility method)."""
+        """Visualize CFG (compatibility method).
+
+        Args:
+            function_name: Optional function name to visualize
+
+        Returns:
+            True if visualization exported successfully, False otherwise
+
+        """
         if function_name and not self.set_current_function(function_name):
             return False
         return self.export_graph_image("cfg_visualization.png")
 
     def export_dot(self, output_file: str) -> bool:
-        """Export DOT file (alias for export_dot_file)."""
+        """Export DOT file (alias for export_dot_file).
+
+        Args:
+            output_file: Path for output DOT file
+
+        Returns:
+            True if export succeeded, False otherwise
+
+        """
         return self.export_dot_file(output_file)
 
     def analyze(self, binary_path: str | None = None) -> bool:
-        """Analyze binary (compatibility method)."""
+        """Analyze binary (compatibility method).
+
+        Args:
+            binary_path: Optional binary path to analyze
+
+        Returns:
+            True if analysis started successfully, False otherwise
+
+        """
         return self.load_binary(binary_path) if binary_path else True
 
     def get_complexity_metrics(self) -> dict[str, Any]:
-        """Get complexity metrics for the current function."""
+        """Get complexity metrics for the current function.
+
+        Returns:
+            Dictionary with node count, edge count, and cyclomatic complexity,
+            or error message if no graph loaded
+
+        Raises:
+            No exceptions are raised; errors return dictionary with error message.
+
+        """
         if not self.graph or not NETWORKX_AVAILABLE:
             return {"error": "No graph or NetworkX not available"}
 
@@ -1299,7 +1492,18 @@ class CFGExplorer:
             return {"error": str(e)}
 
     def get_graph_layout(self, layout_type: str = "spring") -> dict[Any, Any] | None:
-        """Get a layout for the current function graph."""
+        """Get a layout for the current function graph.
+
+        Args:
+            layout_type: Layout algorithm to use ('spring', 'circular', or 'dot')
+
+        Returns:
+            Dictionary mapping nodes to (x, y) coordinate tuples, or None if error
+
+        Raises:
+            No exceptions are raised; errors return None and are logged as warnings.
+
+        """
         if not self.graph:
             self.logger.exception("No graph loaded")
             return None
@@ -1322,7 +1526,19 @@ class CFGExplorer:
         return layout
 
     def get_graph_data(self, layout_type: str = "spring") -> dict[str, Any] | None:
-        """Get graph data for visualization."""
+        """Get graph data for visualization.
+
+        Args:
+            layout_type: Layout algorithm to use ('spring', 'circular', or 'dot')
+
+        Returns:
+            Dictionary with nodes, edges, and function name for visualization,
+            or None if error
+
+        Raises:
+            No exceptions are raised; errors return None and are logged as exceptions.
+
+        """
         if not self.graph:
             self.logger.exception("No graph loaded")
             return None
@@ -1362,7 +1578,13 @@ class CFGExplorer:
         }
 
     def get_advanced_analysis_results(self) -> dict[str, Any]:
-        """Get comprehensive advanced analysis results."""
+        """Get comprehensive advanced analysis results.
+
+        Returns:
+            Dictionary with analysis cache, function similarities, call graph metrics,
+            vulnerability patterns, license analysis, complexity analysis, and cross-references
+
+        """
         return {
             "analysis_cache": self.analysis_cache,
             "function_similarities": self.function_similarities,
@@ -1374,7 +1596,17 @@ class CFGExplorer:
         }
 
     def get_call_graph_metrics(self) -> dict[str, Any]:
-        """Get call graph analysis metrics."""
+        """Get call graph analysis metrics.
+
+        Returns:
+            Dictionary with call graph metrics including function count, call count,
+            strongly connected components, PageRank scores, entry points, leaf functions,
+            recursive functions, and centrality measures
+
+        Raises:
+            No exceptions are raised; errors return empty dictionary and are logged.
+
+        """
         if not self.call_graph or not NETWORKX_AVAILABLE:
             return {}
 
@@ -1400,7 +1632,15 @@ class CFGExplorer:
             return {}
 
     def _find_recursive_functions(self) -> list[Any]:
-        """Find functions that call themselves directly or indirectly."""
+        """Find functions that call themselves directly or indirectly.
+
+        Returns:
+            List of function names that have recursive calls
+
+        Raises:
+            No exceptions are raised; errors are logged and processing continues.
+
+        """
         recursive_funcs: list[Any] = []
 
         if not self.call_graph:
@@ -1417,7 +1657,16 @@ class CFGExplorer:
         return list(set(recursive_funcs))
 
     def get_vulnerability_patterns(self) -> dict[str, Any]:
-        """Get vulnerability patterns from advanced analysis."""
+        """Get vulnerability patterns from advanced analysis.
+
+        Returns:
+            Dictionary with lists of buffer overflow, format string, integer overflow,
+            use-after-free, and license bypass vulnerability patterns
+
+        Raises:
+            No exceptions are raised; errors are handled gracefully.
+
+        """
         patterns: dict[str, list[dict[str, Any]]] = {
             "buffer_overflow_candidates": [],
             "format_string_candidates": [],
@@ -1470,7 +1719,16 @@ class CFGExplorer:
         return patterns
 
     def get_license_validation_analysis(self) -> dict[str, Any]:
-        """Get comprehensive license validation analysis."""
+        """Get comprehensive license validation analysis.
+
+        Returns:
+            Dictionary with license functions, validation mechanisms, bypass opportunities,
+            and license-related function analysis
+
+        Raises:
+            No exceptions are raised; errors are handled gracefully.
+
+        """
         analysis: dict[str, Any] = {
             "license_functions": [],
             "validation_mechanisms": [],
@@ -1509,7 +1767,16 @@ class CFGExplorer:
         return analysis
 
     def get_code_complexity_analysis(self) -> dict[str, Any]:
-        """Get comprehensive code complexity analysis."""
+        """Get comprehensive code complexity analysis.
+
+        Returns:
+            Dictionary with per-function complexity metrics, overall statistics,
+            and list of high-complexity functions
+
+        Raises:
+            No exceptions are raised; errors are handled gracefully.
+
+        """
         complexity_data: dict[str, Any] = {
             "function_complexities": {},
             "overall_metrics": {},
@@ -1573,7 +1840,17 @@ class CFGExplorer:
         return complexity_data
 
     def _calculate_cyclomatic_complexity(self, graph: Any) -> int:
-        """Calculate cyclomatic complexity of a function graph."""
+        """Calculate cyclomatic complexity of a function graph.
+
+        Uses the formula: edges - nodes + 2 for connected graphs.
+
+        Args:
+            graph: Control flow graph to analyze
+
+        Returns:
+            Integer cyclomatic complexity score (minimum 1)
+
+        """
         if not graph or graph.number_of_nodes() == 0:
             return 1
 
@@ -1586,7 +1863,16 @@ class CFGExplorer:
             return 1
 
     def get_cross_reference_analysis(self) -> dict[str, Any]:
-        """Get cross-reference analysis between functions."""
+        """Get cross-reference analysis between functions.
+
+        Returns:
+            Dictionary with function dependencies, dependency depth, circular dependencies,
+            and isolated functions
+
+        Raises:
+            No exceptions are raised; errors are logged and processing continues.
+
+        """
         xref_analysis: dict[str, Any] = {
             "function_dependencies": {},
             "dependency_depth": {},
@@ -1621,7 +1907,15 @@ class CFGExplorer:
         return xref_analysis
 
     def find_license_check_patterns(self) -> list[dict[str, Any]]:
-        """Find potential license check patterns in the CFG."""
+        """Find potential license check patterns in the CFG.
+
+        Scans the current function for license-related keywords and conditional checks
+        that may indicate licensing validation logic.
+
+        Returns:
+            List of dictionaries describing potential license check patterns found
+
+        """
         if not self.graph:
             self.logger.exception("No graph loaded")
             return []
@@ -1674,7 +1968,23 @@ class CFGExplorer:
         return license_patterns
 
     def generate_interactive_html(self, function_name: str, license_patterns: list[dict[str, Any]], output_file: str) -> bool:
-        """Generate an interactive HTML visualization of the CFG."""
+        """Generate an interactive HTML visualization of the CFG.
+
+        Creates an interactive HTML file showing the control flow graph with license
+        pattern annotations using vis.js for network visualization.
+
+        Args:
+            function_name: Name of function to visualize
+            license_patterns: List of license pattern dictionaries to annotate
+            output_file: Path for output HTML file
+
+        Returns:
+            True if generation succeeded, False otherwise
+
+        Raises:
+            No exceptions are raised; errors return False and are logged as exceptions.
+
+        """
         try:
             graph_data = self.get_graph_data(layout_type="spring")
             if not graph_data:
@@ -1886,7 +2196,22 @@ class CFGExplorer:
             return False
 
     def export_graph_image(self, output_file: str, format: str = "png") -> bool:  # pylint: disable=redefined-builtin
-        """Export the CFG as an image file."""
+        """Export the CFG as an image file.
+
+        Creates a visual representation of the control flow graph using matplotlib
+        and NetworkX spring layout, then saves it as an image.
+
+        Args:
+            output_file: Path for output image file
+            format: Image format ('png', 'jpg', 'pdf', etc.)
+
+        Returns:
+            True if export succeeded, False otherwise
+
+        Raises:
+            No exceptions are raised; errors return False and are logged as exceptions.
+
+        """
         if not MATPLOTLIB_AVAILABLE or not NETWORKX_AVAILABLE:
             self.logger.exception("Matplotlib or NetworkX not available for image export")
             return False
@@ -1928,7 +2253,21 @@ class CFGExplorer:
             return False
 
     def export_dot_file(self, output_file: str) -> bool:
-        """Export the CFG as a DOT file."""
+        """Export the CFG as a DOT file.
+
+        Exports the current function's control flow graph in GraphViz DOT format
+        for use with external visualization tools.
+
+        Args:
+            output_file: Path for output DOT file
+
+        Returns:
+            True if export succeeded, False otherwise
+
+        Raises:
+            No exceptions are raised; errors return False and are logged as exceptions.
+
+        """
         if not NETWORKX_AVAILABLE:
             self.logger.exception("NetworkX not available for DOT export")
             return False
@@ -1948,6 +2287,9 @@ class CFGExplorer:
 
         Returns:
             Dictionary containing comprehensive CFG analysis results
+
+        Raises:
+            No exceptions are raised; errors are collected in results dictionary.
 
         """
         results: dict[str, Any] = {
@@ -2082,7 +2424,15 @@ class CFGExplorer:
         return results
 
     def _generate_similarity_clusters(self) -> list[list[str]]:
-        """Generate clusters of similar functions."""
+        """Generate clusters of similar functions.
+
+        Returns:
+            List of function clusters, each cluster containing function names
+
+        Raises:
+            No exceptions are raised; errors are handled gracefully.
+
+        """
         clusters: list[list[str]] = []
         processed: set[str] = set()
 
@@ -2109,7 +2459,18 @@ class CFGExplorer:
         return clusters
 
     def _generate_analysis_summary(self, results: dict[str, Any]) -> dict[str, Any]:
-        """Generate comprehensive analysis summary."""
+        """Generate summary of analysis results.
+
+        Args:
+            results: Dictionary with analysis results
+
+        Returns:
+            Dictionary containing summary information extracted from results
+
+        Raises:
+            No exceptions are raised; errors are handled gracefully.
+
+        """
         summary: dict[str, Any] = {
             "total_functions": results.get("functions_analyzed", 0),
             "license_related_functions": 0,
@@ -2211,7 +2572,15 @@ class CFGExplorer:
         return summary
 
     def _show_error_dialog(self, title: str, message: str) -> None:
-        """Show error dialog to user when in GUI mode."""
+        """Show error dialog to user when in GUI mode.
+
+        Displays an error message dialog using PyQt6 if available, and logs the error
+        regardless. Gracefully handles cases where PyQt6 is not available.
+
+        Args:
+            title: Dialog title for error message.
+            message: Error message to display in dialog.
+        """
         if PYQT_AVAILABLE:
             try:
                 QMessageBox.critical(None, title, message)
@@ -2235,7 +2604,10 @@ class CFGExplorer:
             output_path: Path to save the JSON file
 
         Returns:
-            bool: True if export successful, False otherwise
+            True if export successful, False otherwise
+
+        Raises:
+            No exceptions are raised; errors return False and are logged as exceptions.
 
         """
         try:
@@ -2414,8 +2786,21 @@ class CFGExplorer:
 def run_deep_cfg_analysis(app: Any) -> None:
     """Run deep CFG analysis.
 
+    Performs deep control flow graph analysis on the application's loaded binary,
+    including disassembly, graph construction, vulnerability detection, and
+    interactive visualization generation. Emits analysis progress and results
+    to the application UI via update_output and analyze_status attributes.
+
     Args:
-        app: Application instance with binary path and output methods
+        app: Application instance with binary path and output methods. Should have
+            binary_path attribute and optionally update_output and analyze_status
+            signals/methods for UI updates.
+
+    Returns:
+        None: Results are emitted to the application UI and saved to output files.
+
+    Raises:
+        No exceptions are raised; errors are logged and reported to UI.
 
     """
     if not hasattr(app, "binary_path") or not app.binary_path:
@@ -2429,10 +2814,26 @@ def run_deep_cfg_analysis(app: Any) -> None:
         app.analyze_status.setText("Running CFG analysis...")
 
     def _emit_output(msg: str) -> None:
+        """Emit output message to application UI.
+
+        Sends a formatted message to the application's update_output signal/method
+        if available. Used to display analysis progress and results.
+
+        Args:
+            msg: Message to emit to the UI.
+        """
         if hasattr(app, "update_output"):
             app.update_output.emit(log_message(msg))
 
     def _set_status(msg: str) -> None:
+        """Set status message in application UI.
+
+        Updates the analyze_status label/widget with the provided message if available.
+        Used to display current analysis stage or status.
+
+        Args:
+            msg: Status message to set in the UI status widget.
+        """
         if hasattr(app, "analyze_status"):
             app.analyze_status.setText(msg)
 
@@ -2570,8 +2971,21 @@ def run_deep_cfg_analysis(app: Any) -> None:
 def run_cfg_explorer(app: Any) -> None:
     """Initialize and run the CFG explorer with GUI integration.
 
+    Initializes a CFGExplorer instance for the loaded binary, loads the binary,
+    presents function selection dialog, analyzes the selected function for license
+    patterns, and displays results in the application UI.
+
     Args:
-        app: Application instance with binary path and output methods
+        app: Application instance with binary path and output methods. Should have
+            binary_path attribute, update_output signal/method, and parent widget
+            for dialog display.
+
+    Returns:
+        None: Results are displayed in the application UI and stored in
+        app.cfg_explorer_instance attribute.
+
+    Raises:
+        No exceptions are raised; errors are logged and reported to UI.
 
     """
     if not PYQT_AVAILABLE:
@@ -2579,6 +2993,14 @@ def run_cfg_explorer(app: Any) -> None:
         return
 
     def _emit_output(msg: str) -> None:
+        """Emit output message to application UI.
+
+        Sends a formatted message to the application's update_output signal/method
+        if available. Used to display explorer status and analysis results.
+
+        Args:
+            msg: Message to emit to the UI.
+        """
         if hasattr(app, "update_output"):
             app.update_output.emit(log_message(msg))
 
@@ -2647,7 +3069,15 @@ def run_cfg_explorer(app: Any) -> None:
 
 
 def log_message(message: str) -> str:
-    """Format log message."""
+    """Format log message.
+
+    Args:
+        message: Message to format
+
+    Returns:
+        Formatted message string
+
+    """
     return message
 
 

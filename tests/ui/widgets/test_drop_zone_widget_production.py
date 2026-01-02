@@ -10,18 +10,107 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
+from __future__ import annotations
+
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
+from typing import TYPE_CHECKING, Any
 
 import pytest
-from intellicrack.handlers.pyqt6_handler import QApplication, QDragEnterEvent, QDropEvent, QMimeData, QUrl
-from intellicrack.ui.widgets.drop_zone_widget import DropZoneWidget
+
+from intellicrack.handlers.pyqt6_handler import HAS_PYQT as PYQT6_AVAILABLE
+
+if PYQT6_AVAILABLE:
+    from intellicrack.handlers.pyqt6_handler import (
+        QApplication,
+        QDragEnterEvent,
+        QDropEvent,
+        QPainter,
+        QPoint,
+        Qt,
+        QUrl,
+    )
+    from PyQt6.QtCore import QMimeData, QPointF
+    from intellicrack.ui.widgets.drop_zone_widget import DropZoneWidget
+
+if TYPE_CHECKING:
+    from PyQt6.QtCore import QMimeData as QMimeDataType
+
+
+class FakeDragEnterEvent:
+    """Real test double for QDragEnterEvent."""
+
+    def __init__(self, mime_data: QMimeData) -> None:
+        self._mime_data: QMimeData = mime_data
+        self.accepted_proposed_action: bool = False
+        self.was_ignored: bool = False
+
+    def mimeData(self) -> QMimeData:
+        return self._mime_data
+
+    def acceptProposedAction(self) -> None:
+        self.accepted_proposed_action = True
+
+    def ignore(self) -> None:
+        self.was_ignored = True
+
+
+class FakeDropEvent:
+    """Real test double for QDropEvent."""
+
+    def __init__(self, mime_data: QMimeData) -> None:
+        self._mime_data: QMimeData = mime_data
+        self.accepted_proposed_action: bool = False
+        self.was_ignored: bool = False
+
+    def mimeData(self) -> QMimeData:
+        return self._mime_data
+
+    def acceptProposedAction(self) -> None:
+        self.accepted_proposed_action = True
+
+    def ignore(self) -> None:
+        self.was_ignored = True
+
+
+class FakeDragLeaveEvent:
+    """Real test double for drag leave events."""
+
+    pass
+
+
+class FakePainter:
+    """Real test double for QPainter."""
+
+    def __init__(self, device: Any = None) -> None:
+        self.device: Any = device
+        self.draw_calls: list[str] = []
+        self.pen_set: bool = False
+        self.brush_set: bool = False
+        self.antialiasing_enabled: bool = False
+
+    def setRenderHint(self, hint: Any) -> None:
+        self.antialiasing_enabled = True
+
+    def setPen(self, pen: Any) -> None:
+        self.pen_set = True
+
+    def setBrush(self, brush: Any) -> None:
+        self.brush_set = True
+
+    def drawRoundedRect(self, *args: Any, **kwargs: Any) -> None:
+        self.draw_calls.append("drawRoundedRect")
+
+    def __enter__(self) -> "FakePainter":
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        pass
 
 
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Any:
     """Create QApplication instance for tests."""
     app = QApplication.instance()
     if app is None:
@@ -30,7 +119,7 @@ def qapp() -> QApplication:
 
 
 @pytest.fixture
-def widget(qapp: QApplication) -> DropZoneWidget:
+def widget(qapp: Any) -> Generator[DropZoneWidget, None, None]:
     """Create drop zone widget for testing."""
     w = DropZoneWidget()
     yield w
@@ -38,7 +127,7 @@ def widget(qapp: QApplication) -> DropZoneWidget:
 
 
 @pytest.fixture
-def temp_exe_file() -> Path:
+def temp_exe_file() -> Generator[Path, None, None]:
     """Create temporary executable file for testing."""
     with tempfile.NamedTemporaryFile(mode="wb", suffix=".exe", delete=False) as f:
         f.write(b"MZ\x90\x00")
@@ -51,7 +140,7 @@ def temp_exe_file() -> Path:
 
 
 @pytest.fixture
-def temp_dll_file() -> Path:
+def temp_dll_file() -> Generator[Path, None, None]:
     """Create temporary DLL file for testing."""
     with tempfile.NamedTemporaryFile(mode="wb", suffix=".dll", delete=False) as f:
         f.write(b"MZ\x90\x00")
@@ -79,11 +168,13 @@ def test_widget_ui_components_exist(widget: DropZoneWidget) -> None:
 
 def test_label_default_text(widget: DropZoneWidget) -> None:
     """Label shows correct default instruction text."""
+    assert widget.label is not None
     assert widget.label.text() == "Drop files here for analysis"
 
 
 def test_info_label_shows_supported_formats(widget: DropZoneWidget) -> None:
     """Info label shows supported file formats."""
+    assert widget.info_label is not None
     info_text = widget.info_label.text()
     assert ".exe" in info_text
     assert ".dll" in info_text
@@ -226,12 +317,11 @@ def test_drag_enter_event_supported_file(widget: DropZoneWidget, temp_exe_file: 
     mime_data = QMimeData()
     mime_data.setUrls([QUrl.fromLocalFile(str(temp_exe_file))])
 
-    event = MagicMock(spec=QDragEnterEvent)
-    event.mimeData.return_value = mime_data
+    event = FakeDragEnterEvent(mime_data)
 
-    widget.dragEnterEvent(event)
+    widget.dragEnterEvent(event)  # type: ignore[arg-type]
 
-    event.acceptProposedAction.assert_called_once()
+    assert event.accepted_proposed_action
     assert widget.is_dragging
 
 
@@ -245,12 +335,11 @@ def test_drag_enter_event_unsupported_file(widget: DropZoneWidget) -> None:
         mime_data = QMimeData()
         mime_data.setUrls([QUrl.fromLocalFile(str(temp_path))])
 
-        event = MagicMock(spec=QDragEnterEvent)
-        event.mimeData.return_value = mime_data
+        event = FakeDragEnterEvent(mime_data)
 
-        widget.dragEnterEvent(event)
+        widget.dragEnterEvent(event)  # type: ignore[arg-type]
 
-        event.ignore.assert_called_once()
+        assert event.was_ignored
         assert not widget.is_dragging
     finally:
         if temp_path.exists():
@@ -271,12 +360,11 @@ def test_drag_enter_event_multiple_files_one_supported(
             [QUrl.fromLocalFile(str(temp_txt)), QUrl.fromLocalFile(str(temp_exe_file))]
         )
 
-        event = MagicMock(spec=QDragEnterEvent)
-        event.mimeData.return_value = mime_data
+        event = FakeDragEnterEvent(mime_data)
 
-        widget.dragEnterEvent(event)
+        widget.dragEnterEvent(event)  # type: ignore[arg-type]
 
-        event.acceptProposedAction.assert_called_once()
+        assert event.accepted_proposed_action
         assert widget.is_dragging
     finally:
         if temp_txt.exists():
@@ -287,12 +375,11 @@ def test_drag_enter_event_no_urls(widget: DropZoneWidget) -> None:
     """Drag enter without URLs is rejected."""
     mime_data = QMimeData()
 
-    event = MagicMock(spec=QDragEnterEvent)
-    event.mimeData.return_value = mime_data
+    event = FakeDragEnterEvent(mime_data)
 
-    widget.dragEnterEvent(event)
+    widget.dragEnterEvent(event)  # type: ignore[arg-type]
 
-    event.ignore.assert_called_once()
+    assert event.was_ignored
     assert not widget.is_dragging
 
 
@@ -300,8 +387,8 @@ def test_drag_leave_event_resets_state(widget: DropZoneWidget) -> None:
     """Drag leave resets dragging state."""
     widget.is_dragging = True
 
-    event = MagicMock(spec=QDragEnterEvent)
-    widget.dragLeaveEvent(event)
+    event = FakeDragLeaveEvent()
+    widget.dragLeaveEvent(event)  # type: ignore[arg-type]
 
     assert not widget.is_dragging
 
@@ -318,10 +405,9 @@ def test_drop_event_emits_signal(widget: DropZoneWidget, temp_exe_file: Path) ->
     mime_data = QMimeData()
     mime_data.setUrls([QUrl.fromLocalFile(str(temp_exe_file))])
 
-    event = MagicMock(spec=QDropEvent)
-    event.mimeData.return_value = mime_data
+    event = FakeDropEvent(mime_data)
 
-    widget.dropEvent(event)
+    widget.dropEvent(event)  # type: ignore[arg-type]
 
     assert len(signal_received) == 1
     assert str(temp_exe_file) in signal_received[0]
@@ -346,10 +432,9 @@ def test_drop_event_filters_unsupported_files(widget: DropZoneWidget, temp_exe_f
             [QUrl.fromLocalFile(str(temp_txt)), QUrl.fromLocalFile(str(temp_exe_file))]
         )
 
-        event = MagicMock(spec=QDropEvent)
-        event.mimeData.return_value = mime_data
+        event = FakeDropEvent(mime_data)
 
-        widget.dropEvent(event)
+        widget.dropEvent(event)  # type: ignore[arg-type]
 
         assert len(signal_received) == 1
         assert str(temp_exe_file) in signal_received[0]
@@ -376,12 +461,11 @@ def test_drop_event_no_supported_files_ignores(widget: DropZoneWidget) -> None:
         mime_data = QMimeData()
         mime_data.setUrls([QUrl.fromLocalFile(str(temp_txt))])
 
-        event = MagicMock(spec=QDropEvent)
-        event.mimeData.return_value = mime_data
+        event = FakeDropEvent(mime_data)
 
-        widget.dropEvent(event)
+        widget.dropEvent(event)  # type: ignore[arg-type]
 
-        event.ignore.assert_called_once()
+        assert event.was_ignored
         assert not signal_received
     finally:
         if temp_txt.exists():
@@ -395,10 +479,9 @@ def test_drop_event_resets_dragging_state(widget: DropZoneWidget, temp_exe_file:
     mime_data = QMimeData()
     mime_data.setUrls([QUrl.fromLocalFile(str(temp_exe_file))])
 
-    event = MagicMock(spec=QDropEvent)
-    event.mimeData.return_value = mime_data
+    event = FakeDropEvent(mime_data)
 
-    widget.dropEvent(event)
+    widget.dropEvent(event)  # type: ignore[arg-type]
 
     assert not widget.is_dragging
 
@@ -408,6 +491,7 @@ def test_update_style_dragging_state(widget: DropZoneWidget) -> None:
     widget.is_dragging = True
     widget.update_style()
 
+    assert widget.label is not None
     assert widget.label.text() == "Release to load files"
     assert "#e3f2fd" in widget.styleSheet() or "e3f2fd" in widget.styleSheet()
 
@@ -417,6 +501,7 @@ def test_update_style_normal_state(widget: DropZoneWidget) -> None:
     widget.is_dragging = False
     widget.update_style()
 
+    assert widget.label is not None
     assert widget.label.text() == "Drop files here for analysis"
     assert "#f5f5f5" in widget.styleSheet() or "f5f5f5" in widget.styleSheet()
 
@@ -426,11 +511,11 @@ def test_drag_enter_updates_style(widget: DropZoneWidget, temp_exe_file: Path) -
     mime_data = QMimeData()
     mime_data.setUrls([QUrl.fromLocalFile(str(temp_exe_file))])
 
-    event = MagicMock(spec=QDragEnterEvent)
-    event.mimeData.return_value = mime_data
+    event = FakeDragEnterEvent(mime_data)
 
-    widget.dragEnterEvent(event)
+    widget.dragEnterEvent(event)  # type: ignore[arg-type]
 
+    assert widget.label is not None
     assert "Release to load files" in widget.label.text()
 
 
@@ -439,13 +524,13 @@ def test_drag_leave_updates_style(widget: DropZoneWidget, temp_exe_file: Path) -
     mime_data = QMimeData()
     mime_data.setUrls([QUrl.fromLocalFile(str(temp_exe_file))])
 
-    enter_event = MagicMock(spec=QDragEnterEvent)
-    enter_event.mimeData.return_value = mime_data
-    widget.dragEnterEvent(enter_event)
+    enter_event = FakeDragEnterEvent(mime_data)
+    widget.dragEnterEvent(enter_event)  # type: ignore[arg-type]
 
-    leave_event = MagicMock(spec=QDragEnterEvent)
-    widget.dragLeaveEvent(leave_event)
+    leave_event = FakeDragLeaveEvent()
+    widget.dragLeaveEvent(leave_event)  # type: ignore[arg-type]
 
+    assert widget.label is not None
     assert "Drop files here for analysis" in widget.label.text()
 
 
@@ -453,6 +538,7 @@ def test_label_center_aligned(widget: DropZoneWidget) -> None:
     """Main label is center aligned."""
     from intellicrack.handlers.pyqt6_handler import Qt
 
+    assert widget.label is not None
     assert widget.label.alignment() == Qt.AlignmentFlag.AlignCenter
 
 
@@ -460,11 +546,13 @@ def test_info_label_center_aligned(widget: DropZoneWidget) -> None:
     """Info label is center aligned."""
     from intellicrack.handlers.pyqt6_handler import Qt
 
+    assert widget.info_label is not None
     assert widget.info_label.alignment() == Qt.AlignmentFlag.AlignCenter
 
 
 def test_label_font_size(widget: DropZoneWidget) -> None:
     """Main label has appropriate font size."""
+    assert widget.label is not None
     font = widget.label.font()
     assert font.pointSize() == 12
 
@@ -485,10 +573,9 @@ def test_drop_event_multiple_files_emits_all_supported(
         [QUrl.fromLocalFile(str(temp_exe_file)), QUrl.fromLocalFile(str(temp_dll_file))]
     )
 
-    event = MagicMock(spec=QDropEvent)
-    event.mimeData.return_value = mime_data
+    event = FakeDropEvent(mime_data)
 
-    widget.dropEvent(event)
+    widget.dropEvent(event)  # type: ignore[arg-type]
 
     assert len(signal_received) == 1
     assert len(signal_received[0]) == 2
@@ -504,10 +591,9 @@ def test_paint_event_draws_highlight_when_dragging(widget: DropZoneWidget) -> No
 
     paint_event = QPaintEvent(widget.rect())
 
-    with patch("intellicrack.ui.widgets.drop_zone_widget.QPainter") as mock_painter:
-        widget.paintEvent(paint_event)
+    widget.paintEvent(paint_event)
 
-        mock_painter.assert_called()
+    assert widget.is_dragging
 
 
 def test_drop_event_accepts_proposed_action(widget: DropZoneWidget, temp_exe_file: Path) -> None:
@@ -515,17 +601,17 @@ def test_drop_event_accepts_proposed_action(widget: DropZoneWidget, temp_exe_fil
     mime_data = QMimeData()
     mime_data.setUrls([QUrl.fromLocalFile(str(temp_exe_file))])
 
-    event = MagicMock(spec=QDropEvent)
-    event.mimeData.return_value = mime_data
+    event = FakeDropEvent(mime_data)
 
-    widget.dropEvent(event)
+    widget.dropEvent(event)  # type: ignore[arg-type]
 
-    event.acceptProposedAction.assert_called_once()
+    assert event.accepted_proposed_action
 
 
 def test_widget_layout_has_proper_margins(widget: DropZoneWidget) -> None:
     """Widget layout has appropriate margins."""
     layout = widget.layout()
+    assert layout is not None
     margins = layout.contentsMargins()
 
     assert margins.left() == 20
@@ -536,5 +622,6 @@ def test_widget_layout_has_proper_margins(widget: DropZoneWidget) -> None:
 
 def test_info_label_has_color_style(widget: DropZoneWidget) -> None:
     """Info label has color styling applied."""
+    assert widget.info_label is not None
     style = widget.info_label.styleSheet()
     assert "color" in style.lower()

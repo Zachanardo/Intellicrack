@@ -28,7 +28,7 @@ from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 from intellicrack.utils.type_safety import validate_type
 
@@ -66,7 +66,7 @@ class MigrationValidator:
             config: Configuration dictionary to validate
 
         Returns:
-            Tuple of (is_valid, list_of_errors)
+            Tuple containing validation status and list of validation errors
 
         """
         required_sections = [
@@ -102,13 +102,23 @@ class MigrationValidator:
             config: Configuration dictionary to validate
 
         Returns:
-            Tuple of (is_valid, list_of_errors)
+            Tuple containing validation status and list of validation errors
 
         """
         errors = []
 
         # Check for None values in critical fields
         def check_none_values(data: object, path: str = "") -> None:
+            """Recursively check for unexpected None values in configuration.
+
+            Args:
+                data: Data structure to check for None values
+                path: Current path in the data structure for error reporting
+
+            Returns:
+                None
+
+            """
             if isinstance(data, dict):
                 for key, value in data.items():
                     new_path = f"{path}.{key}" if path else key
@@ -156,6 +166,9 @@ class MigrationBackup:
         Returns:
             Path to the backup file
 
+        Raises:
+            MigrationError: If backup creation fails.
+
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_file = self.backup_dir / f"config_backup_{timestamp}.json"
@@ -179,6 +192,9 @@ class MigrationBackup:
 
         Returns:
             Restored configuration data
+
+        Raises:
+            MigrationRollbackError: If backup restoration fails.
 
         """
         try:
@@ -234,7 +250,12 @@ class ConfigMigrationHandler:
             migration_name: Name of the migration for logging
 
         Returns:
-            Tuple of (success, migrated_config_data)
+            Tuple containing success status and migrated or rolled-back
+            configuration data
+
+        Raises:
+            MigrationError: If structure or data type validation fails after
+                migration and rollback is not possible.
 
         """
         self.migration_status = MigrationStatus.IN_PROGRESS
@@ -328,6 +349,9 @@ class ConfigMigrationHandler:
             message: Message to log
             level: Log level (info, warning, error, critical, debug)
 
+        Returns:
+            None
+
         """
         timestamp = datetime.now().isoformat()
         log_entry = {
@@ -342,7 +366,12 @@ class ConfigMigrationHandler:
         log_func(message)
 
     def save_migration_log(self) -> None:
-        """Save migration log to file."""
+        """Save migration log to file.
+
+        Returns:
+            None
+
+        """
         log_file = self.config_path.parent / "migration_log.json"
         try:
             with open(log_file, "w") as f:
@@ -355,7 +384,7 @@ class ConfigMigrationHandler:
         """Get a summary report of the migration.
 
         Returns:
-            Dictionary containing migration report
+            Dictionary containing migration status, error/warning counts, messages, and latest backup path
 
         """
         errors: list[dict[str, str]] = [entry for entry in self.migration_log if entry.get("level") in ["error", "critical"]]
@@ -389,17 +418,28 @@ class SafeMigrationWrapper:
         Returns:
             Migrated configuration data
 
+        Raises:
+            MigrationError: If migration times out or returns no result.
+            Exception: If the migration function raises any exception during
+                execution, it is re-raised after thread completion.
+
         """
         import threading
 
         result: list[dict[str, Any] | None] = [None]
-        exception: list[Exception | None] = [None]
+        caught_exc: list[Exception | None] = [None]
 
         def run_migration() -> None:
+            """Execute migration function and capture result or exception.
+
+            Returns:
+                None
+
+            """
             try:
                 result[0] = migration_func(config_data)
             except Exception as e:
-                exception[0] = e
+                caught_exc[0] = e
 
         thread = threading.Thread(target=run_migration)
         thread.start()
@@ -410,8 +450,9 @@ class SafeMigrationWrapper:
             logger.error(error_msg)
             raise MigrationError(error_msg)
 
-        if exception[0] is not None:
-            raise exception[0]
+        if caught_exc[0] is not None:
+            exc_to_raise: Exception = caught_exc[0]
+            raise exc_to_raise
 
         if result[0] is None:
             raise MigrationError("Migration function returned no result")
@@ -427,7 +468,7 @@ class SafeMigrationWrapper:
             migrated: Migrated configuration
 
         Returns:
-            True if validation passes
+            Validation status indicating whether critical sections were preserved
 
         """
         # Check that no critical sections were lost

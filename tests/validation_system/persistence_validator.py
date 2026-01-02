@@ -10,7 +10,7 @@ import logging
 import subprocess
 import winreg
 from pathlib import Path
-from typing import List
+from typing import Any, List
 from dataclasses import dataclass
 from datetime import datetime
 import psutil
@@ -35,9 +35,9 @@ class PersistenceTestResult:
     time_based_persistence: bool
     bypass_persistence_valid: bool
     error_messages: list[str]
-    timestamp: str = None
+    timestamp: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp is None:
             self.timestamp = datetime.now().isoformat()
 
@@ -45,7 +45,7 @@ class PersistenceTestResult:
 class PersistenceValidator:
     """Validates software persistence and stability after bypass application."""
 
-    def __init__(self, base_dir: str = "C:\\Intellicrack\\tests\\validation_system"):
+    def __init__(self, base_dir: str = "C:\\Intellicrack\\tests\\validation_system") -> None:
         self.base_dir = Path(base_dir)
         self.logs_dir = self.base_dir / "logs"
         self.reports_dir = self.base_dir / "reports"
@@ -183,7 +183,7 @@ class PersistenceValidator:
         reboot_persistence = False
         bypass_persistence_valid = False
 
-        persistence_indicators = {
+        persistence_indicators: dict[str, list[Any]] = {
             'registry_keys': [],
             'startup_entries': [],
             'file_modifications': [],
@@ -267,15 +267,15 @@ class PersistenceValidator:
 
             logger.info("Checking Windows services")
             try:
-                result = subprocess.run(
+                service_result = subprocess.run(
                     ['sc', 'query', 'type=', 'service', 'state=', 'all'],
                     capture_output=True,
                     text=True,
                     creationflags=subprocess.CREATE_NO_WINDOW
                 )
 
-                if result.returncode == 0:
-                    lines = result.stdout.split('\n')
+                if service_result.returncode == 0:
+                    lines = service_result.stdout.split('\n')
                     for line in lines:
                         if 'SERVICE_NAME:' in line:
                             service_name = line.split(':', 1)[1].strip()

@@ -65,67 +65,85 @@ build-rust-test:
 build-rust-optimized:
     @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[BUILD]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Building Optimized Launcher ===$e[0m`n"; Write-Step "Building release build..."; try { cargo build --release --manifest-path intellicrack-launcher/Cargo.toml 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "Cargo build failed with exit code $LASTEXITCODE" }; Write-Success "Build complete" } catch { Write-Fail "Build failed: $_"; exit 1 }; Write-Step "Copying to project root..."; $srcPath = "intellicrack-launcher\target\release\intellicrack-launcher.exe"; $destPath = "intellicrack-launcher.exe"; try { if (-not (Test-Path $srcPath)) { throw "Source file not found: $srcPath" }; Copy-Item -Path $srcPath -Destination $destPath -Force -ErrorAction Stop; if (-not (Test-Path $destPath)) { throw "Copy failed" }; $exeSize = [math]::Round((Get-Item $destPath).Length / 1KB, 1); Write-Success "Copied: $destPath ($exeSize KB)" } catch { Write-Fail "Copy failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Optimized Build Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
 
+# ==================== SANDBOX ====================
+
+# Launch interactive Windows Sandbox for Intellicrack testing (READ-ONLY)
+sandbox:
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType interactive }
+
+# Launch interactive Windows Sandbox with READ-WRITE access (changes persist to host)
+sandbox-rw:
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType interactive-rw }
+
+# Launch sandbox and run unit tests
+sandbox-test:
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType unit }
+
+# Launch sandbox and run all tests
+sandbox-test-all:
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType all }
+
+# Launch sandbox and run tests with coverage
+sandbox-test-coverage:
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType coverage }
+
+# Launch sandbox and run hardware spoofer registry tests
+sandbox-test-registry:
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType registry }
+
 # ==================== TESTING ====================
 
-# Quick unit tests - validates REAL functionality
+# Quick unit tests - runs in Windows Sandbox for isolation
 test:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[TEST]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Running Unit Tests ===$e[0m`n"; Write-Step "Checking pytest..."; try { $pytestVersion = pixi run pytest --version 2>&1 | Select-Object -First 1; Write-Success "pytest ready" } catch { Write-Fail "pytest not available: $_"; exit 1 }; Write-Step "Running unit tests..."; try { pixi run pytest tests/unit -v --tb=short 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "Tests failed with exit code $LASTEXITCODE" }; Write-Success "All unit tests passed" } catch { Write-Fail "Tests failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Tests Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType unit }
 
-# Full test suite - comprehensive REAL data validation
+# Full test suite - runs in Windows Sandbox for isolation
 test-all:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[TEST]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Running Full Test Suite ===$e[0m`n"; Write-Step "Running all tests..."; try { pixi run pytest tests/ -v 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "Tests failed with exit code $LASTEXITCODE" }; Write-Success "All tests passed" } catch { Write-Fail "Tests failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Full Test Suite Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType all }
 
-# Coverage report - ensures 95%+ REAL code coverage
+# Coverage report - runs in Windows Sandbox with 95%+ coverage requirement
 test-coverage:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[COVERAGE]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Running Tests with Coverage ===$e[0m`n"; Write-Step "Running tests with 95% coverage requirement..."; try { pixi run pytest --cov=intellicrack --cov-report=html --cov-report=term --cov-fail-under=95 tests/ 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "Tests or coverage failed with exit code $LASTEXITCODE" }; Write-Success "Coverage requirements met" } catch { Write-Fail "Coverage failed: $_"; exit 1 }; Write-Step "Coverage report generated at coverage_html_report/"; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Coverage Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType coverage }
 
-# Runs tests for a specific module using real data validation.
-
-# Executes unit tests for the specified module only.
+# Runs tests for a specific module in Windows Sandbox
 test-module module:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[TEST]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Testing Module: {{ module }} ===$e[0m`n"; try { pixi run pytest tests/unit/{{ module }} -v 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "Module tests failed with exit code $LASTEXITCODE" }; Write-Success "Module tests passed" } catch { Write-Fail "Tests failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Module Tests Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType module -Module "{{ module }}" }
 
-# Performance benchmarks on REAL operations
+# Benchmarks - runs in Windows Sandbox
 test-bench:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[BENCH]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Running Performance Benchmarks ===$e[0m`n"; try { pixi run pytest tests/performance --benchmark-only 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "Benchmarks failed with exit code $LASTEXITCODE" }; Write-Success "Benchmarks complete" } catch { Write-Fail "Benchmarks failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Benchmarks Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType bench }
 
-# Security tests with REAL attack vectors
-test-security:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[SECURITY]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Running Security Tests ===$e[0m`n"; try { pixi run pytest tests/security -v 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "Security tests failed with exit code $LASTEXITCODE" }; Write-Success "Security tests passed" } catch { Write-Fail "Security tests failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Security Tests Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
-
-# Integration tests with REAL workflows
+# Integration tests - runs in Windows Sandbox
 test-integration:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[INTEGRATION]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Running Integration Tests ===$e[0m`n"; try { pixi run pytest tests/integration -v -m integration 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "Integration tests failed with exit code $LASTEXITCODE" }; Write-Success "Integration tests passed" } catch { Write-Fail "Integration tests failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Integration Tests Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType integration }
 
-# Functional tests with REAL binaries
-test-functional:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[FUNCTIONAL]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Running Functional Tests ===$e[0m`n"; try { pixi run pytest tests/functional -v -m functional 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "Functional tests failed with exit code $LASTEXITCODE" }; Write-Success "Functional tests passed" } catch { Write-Fail "Functional tests failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Functional Tests Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+# End-to-end tests - runs in Windows Sandbox
+test-e2e:
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType e2e }
 
-# Quick smoke test
+# Quick smoke test - runs in Windows Sandbox
 test-smoke:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[SMOKE]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Running Smoke Tests ===$e[0m`n"; try { pixi run pytest tests/unit -k "not slow" --tb=short -v 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "Smoke tests failed with exit code $LASTEXITCODE" }; Write-Success "Smoke tests passed" } catch { Write-Fail "Smoke tests failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Smoke Tests Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType smoke }
 
-# Runs tests with coverage analysis for a specific module.
-
-# Measures and reports code coverage for the specified module.
+# Module tests with coverage - runs in Windows Sandbox
 test-module-cov module:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[COVERAGE]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Testing Module {{ module }} with Coverage ===$e[0m`n"; try { pixi run pytest --cov=intellicrack.{{ module }} --cov-report=term-missing tests/unit/{{ module }} 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "Module coverage tests failed with exit code $LASTEXITCODE" }; Write-Success "Module coverage complete" } catch { Write-Fail "Tests failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Module Coverage Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType module-cov -Module "{{ module }}" }
 
-# Generate HTML coverage report
+# HTML coverage report - runs in Windows Sandbox (uses coverage type)
 test-cov-html:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[COVERAGE]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Generating HTML Coverage Report ===$e[0m`n"; try { pixi run pytest --cov=intellicrack --cov-report=html tests/ 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "Coverage tests failed with exit code $LASTEXITCODE" }; Write-Success "HTML coverage report generated in coverage_html_report/" } catch { Write-Fail "Coverage failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Coverage Report Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType coverage }
 
-# Run tests in parallel
+# Parallel tests - runs in Windows Sandbox
 test-parallel:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[PARALLEL]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Running Tests in Parallel ===$e[0m`n"; try { pixi run pytest -n auto tests/ 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "Parallel tests failed with exit code $LASTEXITCODE" }; Write-Success "Parallel tests passed" } catch { Write-Fail "Tests failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Parallel Tests Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType parallel }
 
-# Test only failed tests from last run
+# Retest failed tests - runs in Windows Sandbox
 test-failed:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[RETEST]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Retesting Failed Tests ===$e[0m`n"; try { pixi run pytest --lf tests/ 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "Failed tests still failing with exit code $LASTEXITCODE" }; Write-Success "Previously failed tests now pass" } catch { Write-Fail "Tests still failing: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Retest Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType failed }
 
-# Test with verbose output
+# Verbose tests - runs in Windows Sandbox
 test-verbose:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[VERBOSE]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Running Verbose Tests ===$e[0m`n"; try { pixi run pytest -vvv tests/ 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "Tests failed with exit code $LASTEXITCODE" }; Write-Success "All tests passed" } catch { Write-Fail "Tests failed: $_"; exit 1 }; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Verbose Tests Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+    @gsudo { & "D:\Sandbox\shared\launch_sandbox_test.ps1" -TestType verbose }
 
 # Install test dependencies
 test-install:
@@ -143,7 +161,7 @@ lint:
 lint-fix:
     @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[LINT-FIX]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Fixing Lint Issues ===$e[0m`n"; Write-Step "Fixing code style issues..."; try { pixi run ruff check --fix intellicrack/ 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "ruff check --fix failed" } } catch { Write-Fail "Style fix failed: $_"; exit 1 }; Write-Step "Formatting code..."; try { pixi run ruff format intellicrack/ 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "ruff format failed" } } catch { Write-Fail "Format failed: $_"; exit 1 }; Write-Success "Lint issues fixed"; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Lint Fix Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
 
-# Detect dead code with vulture and output sorted findings (--min-confidence 60 to catch unused code that might be dead)
+# Detect dead code with vulture and output sorted findings
 vulture:
     @echo "[Vulture] Running..."
     @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run vulture intellicrack/ tests/ --min-confidence 60 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py vulture --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
@@ -409,9 +427,7 @@ yamlfmt:
     @echo "[YAML Format] Running..."
     @try { pixi run yarn prettier --write "**/*.yaml" "**/*.yml" --ignore-unknown --log-level warn 2>&1 | Out-Null; Write-Host "[YAMLFMT] Done" } catch { Write-Host "[YAMLFMT] Error: $_" -ForegroundColor Red }
 
-# Format TOML files with Prettier (respects .prettierignore, uses prettier-plugin-toml)
-
-# Note: prettier-plugin-toml introduces bad CR line endings on Windows, so we fix them after
+# Format TOML files with Prettier (uses prettier-plugin-toml)
 tomlfmt:
     @echo "[TOML Format] Running..."
     @try { pixi run yarn prettier --write "**/*.toml" --ignore-unknown --log-level warn 2>&1 | Out-Null; Get-ChildItem -Recurse -Filter *.toml -File | Where-Object { $_.FullName -notmatch '[\\/](node_modules|\.pixi|\.venv|tools|build|dist)[\\/]' } | ForEach-Object { $c = [System.IO.File]::ReadAllText($_.FullName); $c = $c -replace "`r(?!`n)", "`n" -replace "`r`n", "`n"; [System.IO.File]::WriteAllText($_.FullName, $c) }; Write-Host "[TOMLFMT] Done" } catch { Write-Host "[TOMLFMT] Error: $_" -ForegroundColor Red }

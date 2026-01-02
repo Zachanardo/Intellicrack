@@ -13,7 +13,6 @@ from ctypes import wintypes
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any
 
 import psutil
 
@@ -75,7 +74,7 @@ class TrialResetEngine:
         """Initialize common trial data storage locations.
 
         Returns:
-            dict[str, list[str]]: Dictionary mapping location category names to path templates.
+            Dictionary mapping location category names to path templates.
         """
         username = os.environ.get("USERNAME", "User")
 
@@ -1604,6 +1603,226 @@ class TimeManipulator:
 
         return False
 
+    def _is_64bit_process(self, hProcess: int) -> bool:
+        """Determine if a process is 64-bit.
+
+        Args:
+            hProcess: Handle to the target process.
+
+        Returns:
+            True if the process is 64-bit, False if 32-bit.
+        """
+        kernel32 = ctypes.windll.kernel32
+        is_wow64 = ctypes.c_bool()
+
+        # Check if this is a WOW64 process (32-bit on 64-bit Windows)
+        if hasattr(kernel32, 'IsWow64Process'):
+            if kernel32.IsWow64Process(hProcess, ctypes.byref(is_wow64)):
+                # If IsWow64Process returns TRUE, it's a 32-bit process on 64-bit Windows
+                # If it returns FALSE, check system architecture
+                if is_wow64.value:
+                    return False
+
+        # Check system architecture
+        import platform
+        is_64bit_os = platform.machine().endswith('64')
+
+        # If running on 64-bit OS and not WOW64, it's 64-bit
+        # If running on 32-bit OS, it's 32-bit
+        return is_64bit_os and not is_wow64.value
+
+    def _resolve_target_process_functions(
+        self,
+        hProcess: int,
+        pid: int,
+        kernel32_base: int,
+        function_names: list[bytes]
+    ) -> list[int | None]:
+        """Resolve function addresses in target process accounting for ASLR.
+
+        This method properly handles ASLR by:
+        1. Getting the kernel32.dll base address in the target process (already provided)
+        2. Loading kernel32.dll in the host process to parse its export table
+        3. Calculating function RVAs (Relative Virtual Addresses)
+        4. Adding the target process base address to get actual addresses
+
+        Args:
+            hProcess: Handle to the target process.
+            pid: Process ID of the target process.
+            kernel32_base: Base address of kernel32.dll in the target process.
+            function_names: List of function names to resolve (as bytes).
+
+        Returns:
+            List of resolved addresses (int) or None for functions that couldn't be resolved.
+        """
+        kernel32 = ctypes.windll.kernel32
+        resolved_addresses: list[int | None] = []
+
+        # Load kernel32.dll in host process to read its export table
+        host_kernel32_handle = kernel32.GetModuleHandleW("kernel32.dll")
+        if not host_kernel32_handle:
+            logger.warning("Failed to get kernel32.dll handle in host process")
+            return [None] * len(function_names)
+
+        # Get the base address of kernel32 in host process
+        class MODULEINFO(ctypes.Structure):
+            _fields_ = [
+                ("lpBaseOfDll", ctypes.c_void_p),
+                ("SizeOfImage", wintypes.DWORD),
+                ("EntryPoint", ctypes.c_void_p),
+            ]
+
+        psapi = ctypes.windll.psapi
+        host_module_info = MODULEINFO()
+
+        # Get host process handle
+        host_process = kernel32.GetCurrentProcess()
+
+        if not psapi.GetModuleInformation(
+            host_process,
+            host_kernel32_handle,
+            ctypes.byref(host_module_info),
+            ctypes.sizeof(MODULEINFO)
+        ):
+            logger.warning("Failed to get kernel32.dll module information in host process")
+            return [None] * len(function_names)
+
+        host_kernel32_base = host_module_info.lpBaseOfDll
+
+        # For each function, calculate RVA and rebase to target process
+        for func_name in function_names:
+            try:
+                # Get function address in host process
+                host_func_addr = kernel32.GetProcAddress(host_kernel32_handle, func_name)
+
+                if not host_func_addr:
+                    logger.warning("Failed to get address for '%s' in host process", func_name.decode())
+                    resolved_addresses.append(None)
+                    continue
+
+                # Calculate RVA (Relative Virtual Address)
+                func_rva = host_func_addr - host_kernel32_base
+
+                # Rebase to target process
+                target_func_addr = kernel32_base + func_rva
+
+                logger.debug(
+                    "Resolved '%s': Host=0x%X, RVA=0x%X, Target=0x%X",
+                    func_name.decode(),
+                    host_func_addr,
+                    func_rva,
+                    target_func_addr
+                )
+
+                resolved_addresses.append(target_func_addr)
+
+            except Exception as e:
+                logger.warning("Error resolving '%s': %s", func_name.decode(), e)
+                resolved_addresses.append(None)
+
+        return resolved_addresses
+
+    def _enumerate_process_modules(self, pid: int) -> dict[str, tuple[int, int]]:
+        """Enumerate all modules loaded in a target process.
+
+        This method uses EnumProcessModules and GetModuleInformation to enumerate
+        all DLLs loaded in the target process, which is essential for ASLR-aware
+        address resolution.
+
+        Args:
+            pid: Process ID to enumerate modules for.
+
+        Returns:
+            Dictionary mapping module names to (base_address, size) tuples.
+        """
+        kernel32 = ctypes.windll.kernel32
+        psapi = ctypes.windll.psapi
+
+        modules: dict[str, tuple[int, int]] = {}
+
+        # Open process with query and VM read permissions
+        PROCESS_QUERY_INFORMATION = 0x0400
+        PROCESS_VM_READ = 0x0010
+
+        hProcess = kernel32.OpenProcess(
+            PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+            False,
+            pid
+        )
+
+        if not hProcess:
+            error_code = kernel32.GetLastError()
+            logger.warning("Failed to open process %d for module enumeration (error %d)", pid, error_code)
+            return modules
+
+        try:
+            # Enumerate modules
+            max_modules = 1024
+            hModules = (wintypes.HMODULE * max_modules)()
+            needed = wintypes.DWORD()
+
+            if not psapi.EnumProcessModules(
+                hProcess,
+                ctypes.byref(hModules),
+                ctypes.sizeof(hModules),
+                ctypes.byref(needed)
+            ):
+                error_code = kernel32.GetLastError()
+                logger.warning("EnumProcessModules failed for PID %d (error %d)", pid, error_code)
+                return modules
+
+            module_count = min(needed.value // ctypes.sizeof(wintypes.HMODULE), max_modules)
+
+            # Get information for each module
+            for i in range(module_count):
+                hModule = hModules[i]
+
+                # Get module name
+                module_name_buffer = ctypes.create_unicode_buffer(260)
+                if psapi.GetModuleBaseNameW(
+                    hProcess,
+                    hModule,
+                    module_name_buffer,
+                    ctypes.sizeof(module_name_buffer)
+                ):
+                    module_name = module_name_buffer.value
+
+                    # Get module information
+                    class MODULEINFO(ctypes.Structure):
+                        _fields_ = [
+                            ("lpBaseOfDll", ctypes.c_void_p),
+                            ("SizeOfImage", wintypes.DWORD),
+                            ("EntryPoint", ctypes.c_void_p),
+                        ]
+
+                    module_info = MODULEINFO()
+                    if psapi.GetModuleInformation(
+                        hProcess,
+                        hModule,
+                        ctypes.byref(module_info),
+                        ctypes.sizeof(MODULEINFO)
+                    ):
+                        base_addr = module_info.lpBaseOfDll
+                        size = module_info.SizeOfImage
+
+                        modules[module_name.lower()] = (base_addr, size)
+
+                        logger.debug(
+                            "Found module '%s' at 0x%X (size: 0x%X) in PID %d",
+                            module_name,
+                            base_addr,
+                            size,
+                            pid
+                        )
+
+        except Exception as e:
+            logger.warning("Error enumerating modules for PID %d: %s", pid, e)
+
+        finally:
+            kernel32.CloseHandle(hProcess)
+
+        return modules
+
     def freeze_time_for_app(self, process_name: str, frozen_time: datetime.datetime) -> bool:
         """Freeze time for specific application.
 
@@ -1632,7 +1851,7 @@ class TimeManipulator:
                 name: Process name to search for.
 
             Returns:
-                list[int]: List of process IDs matching the name.
+                List of process IDs matching the name.
             """
             processes: list[int] = []
             logger.debug("Searching for process '%s' to freeze time.", name)
@@ -1680,7 +1899,7 @@ class TimeManipulator:
                 frozen_time: Frozen datetime to present to the process.
 
             Returns:
-                bool: True if injection was successful, False otherwise.
+                True if injection was successful, False otherwise.
             """
             logger.debug("Injecting time hooks into PID %s for frozen time: %s", pid, frozen_time)
             # Open process
@@ -1737,7 +1956,6 @@ class TimeManipulator:
                 )
 
                 # Calculate frozen tick count (milliseconds since system start)
-                from datetime import timezone
 
                 tick_count = int((frozen_time - datetime.datetime(2025, 1, 1, tzinfo=datetime.UTC)).total_seconds() * 1000)
                 logger.debug("Frozen tick count: %s", tick_count)
@@ -1926,7 +2144,7 @@ class TimeManipulator:
 
                     kernel32.CloseHandle(hSnapshot)
 
-                # Hook the functions in IAT
+                # Hook the functions using proper ASLR-aware address resolution
                 if kernel32_base:
                     # Function names to hook
                     functions_to_hook = [
@@ -1937,57 +2155,82 @@ class TimeManipulator:
                         (b"QueryPerformanceCounter", qpc_addr),
                     ]
 
-                    # This would require parsing PE structure to find IAT
-                    # For now, use inline hooks instead
+                    # Get function addresses in target process using ASLR-aware resolution
+                    target_func_addrs = self._resolve_target_process_functions(
+                        hProcess,
+                        pid,
+                        kernel32_base,
+                        [name for name, _ in functions_to_hook]
+                    )
 
-                    # Get function addresses in target process
-                    for func_name, hook_addr in functions_to_hook:
-                        # Get function address
-                        func_addr = kernel32.GetProcAddress(kernel32.GetModuleHandleW("kernel32.dll"), func_name.decode())
-
-                        if func_addr:
-                            logger.debug("Hooking function '%s' at 0x%X with hook at 0x%X", func_name.decode(), func_addr, hook_addr)
-                            # Write JMP hook
-                            jmp_code = bytearray(
-                                [
-                                    0xFF,
-                                    0x25,
-                                    0x00,
-                                    0x00,
-                                    0x00,
-                                    0x00,  # JMP [RIP+0]
-                                ],
+                    # Apply hooks to resolved addresses
+                    for (func_name, hook_addr), target_func_addr in zip(functions_to_hook, target_func_addrs, strict=True):
+                        if target_func_addr:
+                            logger.debug(
+                                "Hooking function '%s' at 0x%X (target process) with hook at 0x%X",
+                                func_name.decode(),
+                                target_func_addr,
+                                hook_addr
                             )
-                            jmp_code.extend(struct.pack("<Q", hook_addr))
+
+                            # Determine architecture and build appropriate JMP hook
+                            is_64bit = self._is_64bit_process(hProcess)
+
+                            if is_64bit:
+                                # 64-bit: JMP [RIP+0] followed by absolute address
+                                jmp_code = bytearray([0xFF, 0x25, 0x00, 0x00, 0x00, 0x00])
+                                jmp_code.extend(struct.pack("<Q", hook_addr))
+                            else:
+                                # 32-bit: JMP immediate
+                                offset = hook_addr - (target_func_addr + 5)
+                                jmp_code = bytearray([0xE9])
+                                jmp_code.extend(struct.pack("<i", offset))
 
                             # Change protection
                             old_protect = wintypes.DWORD()
-                            kernel32.VirtualProtectEx(
+                            if not kernel32.VirtualProtectEx(
                                 hProcess,
-                                func_addr,
+                                target_func_addr,
                                 len(jmp_code),
                                 PAGE_EXECUTE_READWRITE,
                                 ctypes.byref(old_protect),
-                            )
+                            ):
+                                logger.warning(
+                                    "Failed to change protection for '%s' at 0x%X",
+                                    func_name.decode(),
+                                    target_func_addr
+                                )
+                                continue
 
                             # Write hook
-                            kernel32.WriteProcessMemory(
+                            if not kernel32.WriteProcessMemory(
                                 hProcess,
-                                func_addr,
+                                target_func_addr,
                                 bytes(jmp_code),
                                 len(jmp_code),
                                 ctypes.byref(bytes_written),
-                            )
+                            ):
+                                logger.warning(
+                                    "Failed to write hook for '%s' at 0x%X",
+                                    func_name.decode(),
+                                    target_func_addr
+                                )
+                                continue
 
                             # Restore protection
                             kernel32.VirtualProtectEx(
                                 hProcess,
-                                func_addr,
+                                target_func_addr,
                                 len(jmp_code),
                                 old_protect,
                                 ctypes.byref(old_protect),
                             )
                             logger.debug("Successfully hooked '%s'.", func_name.decode())
+                        else:
+                            logger.warning(
+                                "Failed to resolve address for '%s' in target process",
+                                func_name.decode()
+                            )
 
                 return True
 

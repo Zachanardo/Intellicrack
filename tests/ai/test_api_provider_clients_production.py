@@ -45,7 +45,9 @@ class TestModelInfo:
         assert model.name == "GPT-4 Optimized"
         assert model.provider == "OpenAI"
         assert model.context_length == 128000
+        assert model.capabilities is not None
         assert "vision" in model.capabilities
+        assert model.pricing is not None
         assert model.pricing["input"] == 0.01
 
     def test_model_info_defaults(self) -> None:

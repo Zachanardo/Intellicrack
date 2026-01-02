@@ -19,10 +19,9 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
-from typing import Any, cast
+from typing import Any
 
-from intellicrack.handlers.pyqt6_handler import QMessageBox, QObject, QTabWidget, QWidget, pyqtSignal
-from intellicrack.utils.type_safety import validate_type
+from intellicrack.handlers.pyqt6_handler import QDialog, QMessageBox, QObject, QTabWidget, QWidget, pyqtSignal
 
 from ..utils.logger import get_logger
 from .enhanced_ui_integration import EnhancedAnalysisDashboard, integrate_enhanced_ui_with_existing_app
@@ -58,7 +57,12 @@ class R2UIManager(QObject):
     binary_loaded = pyqtSignal(str)
 
     def __init__(self, main_app: QWidget | None = None) -> None:
-        """Initialize the radare2 UI manager with main application integration."""
+        """Initialize the radare2 UI manager with main application integration.
+
+        Args:
+            main_app: Optional main application widget instance
+
+        """
         super().__init__()
         self.logger = logger
         self.main_app = main_app
@@ -66,6 +70,7 @@ class R2UIManager(QObject):
         self.current_results: dict[str, Any] = {}
         self.ui_components: dict[str, Any] = {}
         self.analysis_history: list[dict[str, Any]] = []
+        self._max_history_size: int = 100  # Limit history to prevent memory growth
         self.analysis_config: dict[str, Any] = {}
 
         # Initialize UI components
@@ -93,8 +98,8 @@ class R2UIManager(QObject):
 
             self.logger.info("UI components initialized successfully")
 
-        except Exception as e:
-            self.logger.exception("Failed to initialize UI components: %s", e)
+        except Exception:
+            self.logger.exception("Failed to initialize UI components")
 
     def _setup_signal_connections(self) -> None:
         """Set up signal connections between components."""
@@ -107,11 +112,20 @@ class R2UIManager(QObject):
 
             # Connect UI component signals if they exist
             if "r2_widget" in self.ui_components:
-                self.ui_components["r2_widget"]
+                r2_widget = self.ui_components["r2_widget"]
+                if hasattr(r2_widget, "progress_updated"):
+                    r2_widget.progress_updated.connect(self.analysis_progress.emit)
+                if hasattr(r2_widget, "status_updated"):
+                    r2_widget.status_updated.connect(self.status_updated.emit)
+                if hasattr(r2_widget, "analysis_completed"):
+                    r2_widget.analysis_completed.connect(self.analysis_completed.emit)
+                if hasattr(r2_widget, "error_occurred"):
+                    r2_widget.error_occurred.connect(self.analysis_failed.emit)
+                self.logger.debug("Connected R2IntegrationWidget signals")
             self.logger.info("Signal connections established")
 
-        except Exception as e:
-            self.logger.exception("Failed to setup signal connections: %s", e)
+        except Exception:
+            self.logger.exception("Failed to setup signal connections")
 
     def integrate_with_application(self, main_app: QWidget) -> bool:
         """Integrate all radare2 UI components with the main application.
@@ -145,9 +159,9 @@ class R2UIManager(QObject):
                         "Enhanced Analysis",
                     )
 
-                    setattr(main_app, "r2_ui_manager", self)
-                    setattr(main_app, "r2_widget", self.ui_components["r2_widget"])
-                    setattr(main_app, "enhanced_dashboard", self.ui_components["enhanced_dashboard"])
+                    main_app.r2_ui_manager = self
+                    main_app.r2_widget = self.ui_components["r2_widget"]
+                    main_app.enhanced_dashboard = self.ui_components["enhanced_dashboard"]
 
                     self.logger.info("Successfully integrated with tab widget")
 
@@ -158,7 +172,7 @@ class R2UIManager(QObject):
                 # Create tab widget if it doesn't exist
                 if not hasattr(main_app, "tab_widget"):
                     new_tab_widget = QTabWidget()
-                    setattr(main_app, "tab_widget", new_tab_widget)
+                    main_app.tab_widget = new_tab_widget
                     set_central_widget = getattr(main_app, "setCentralWidget", None)
                     if callable(set_central_widget):
                         set_central_widget(new_tab_widget)
@@ -175,7 +189,7 @@ class R2UIManager(QObject):
                         "Enhanced Analysis",
                     )
 
-                    setattr(main_app, "r2_ui_manager", self)
+                    main_app.r2_ui_manager = self
 
                     self.logger.info("Successfully integrated with central widget")
 
@@ -212,12 +226,17 @@ class R2UIManager(QObject):
             self.logger.exception("R2UIManager integration failed")
             return False
 
-        except Exception as e:
-            self.logger.exception("Failed to integrate with application: %s", e)
+        except Exception:
+            self.logger.exception("Failed to integrate with application")
             return False
 
     def _integrate_menu_items(self, main_app: QWidget) -> None:
-        """Integrate radare2 menu items with main application."""
+        """Integrate radare2 menu items with main application.
+
+        Args:
+            main_app: The main application widget instance
+
+        """
         try:
             if hasattr(main_app, "menuBar") and main_app.menuBar():
                 from .menu_utils import find_or_create_menu
@@ -250,11 +269,16 @@ class R2UIManager(QObject):
 
                 self.logger.info("Menu integration completed")
 
-        except Exception as e:
-            self.logger.exception("Menu integration failed: %s", e)
+        except Exception:
+            self.logger.exception("Menu integration failed")
 
     def _setup_binary_path_sync(self, main_app: QWidget) -> None:
-        """Set up binary path synchronization."""
+        """Set up binary path synchronization.
+
+        Args:
+            main_app: The main application widget instance
+
+        """
         try:
             # Connect to main app's binary path changes
             if hasattr(main_app, "binary_path"):
@@ -270,11 +294,16 @@ class R2UIManager(QObject):
 
             self.logger.info("Binary path synchronization setup completed")
 
-        except Exception as e:
-            self.logger.exception("Binary path sync setup failed: %s", e)
+        except Exception:
+            self.logger.exception("Binary path sync setup failed")
 
     def _integrate_status_bar(self, main_app: QWidget) -> None:
-        """Integrate with main application status bar."""
+        """Integrate with main application status bar.
+
+        Args:
+            main_app: The main application widget instance
+
+        """
         try:
             if hasattr(main_app, "statusBar") and main_app.statusBar():
                 # Connect our status updates to main app status bar
@@ -284,11 +313,16 @@ class R2UIManager(QObject):
 
                 self.logger.info("Status bar integration completed")
 
-        except Exception as e:
-            self.logger.exception("Status bar integration failed: %s", e)
+        except Exception:
+            self.logger.exception("Status bar integration failed")
 
     def set_binary_path(self, path: str) -> None:
-        """Set binary path for all components."""
+        """Set binary path for all components.
+
+        Args:
+            path: Path to the binary file to analyze
+
+        """
         try:
             self.binary_path = path
 
@@ -304,11 +338,20 @@ class R2UIManager(QObject):
 
             self.logger.info("Binary path set: %s", path)
 
-        except Exception as e:
-            self.logger.exception("Failed to set binary path: %s", e)
+        except Exception:
+            self.logger.exception("Failed to set binary path")
 
     def start_analysis(self, analysis_type: str, options: dict[str, Any] | None = None) -> bool:
-        """Start radare2 analysis of specified type."""
+        """Start radare2 analysis of specified type.
+
+        Args:
+            analysis_type: Type of analysis to perform
+            options: Optional configuration options for the analysis
+
+        Returns:
+            True if analysis started successfully, False otherwise
+
+        """
         try:
             if not self.binary_path:
                 parent_widget = self.main_app if isinstance(self.main_app, QWidget) else None
@@ -325,7 +368,7 @@ class R2UIManager(QObject):
                 if hasattr(r2_widget, "_start_analysis"):
                     r2_widget._start_analysis(analysis_type)
 
-                    # Add to analysis history
+                    # Add to analysis history with size limit
                     self.analysis_history.append(
                         {
                             "type": analysis_type,
@@ -334,6 +377,9 @@ class R2UIManager(QObject):
                             "options": options or {},
                         },
                     )
+                    # Enforce history size limit to prevent memory growth
+                    if len(self.analysis_history) > self._max_history_size:
+                        self.analysis_history = self.analysis_history[-self._max_history_size:]
 
                     # Emit signal
                     self.analysis_started.emit(analysis_type)
@@ -343,27 +389,36 @@ class R2UIManager(QObject):
             self.logger.error("R2 widget not available")
             return False
 
-        except Exception as e:
-            self.logger.exception("Failed to start analysis: %s", e)
-            self.analysis_failed.emit(str(e))
+        except Exception as exc:
+            self.logger.exception("Failed to start analysis")
+            self.analysis_failed.emit(str(exc))
             return False
 
     def show_configuration(self) -> None:
-        """Show radare2 configuration dialog."""
+        """Show radare2 configuration dialog.
+
+        Displays the configuration dialog and applies any changes made by the user.
+
+        """
         try:
             if "config_dialog" in self.ui_components:
                 dialog = self.ui_components["config_dialog"]
-                if hasattr(dialog, "exec") and hasattr(dialog, "Accepted") and hasattr(dialog, "get_configuration"):
-                    if dialog.exec() == dialog.Accepted:
+                if hasattr(dialog, "exec") and hasattr(dialog, "get_configuration"):
+                    if dialog.exec() == QDialog.DialogCode.Accepted:
                         config = dialog.get_configuration()
                         self._apply_configuration(config)
                         self.logger.info("Configuration updated")
 
-        except Exception as e:
-            self.logger.exception("Failed to show configuration: %s", e)
+        except Exception:
+            self.logger.exception("Failed to show configuration")
 
     def _apply_configuration(self, config: dict[str, Any]) -> None:
-        """Apply configuration to all components."""
+        """Apply configuration to all components.
+
+        Args:
+            config: Configuration dictionary to apply
+
+        """
         try:
             # Store configuration
             self.analysis_config = config
@@ -376,11 +431,19 @@ class R2UIManager(QObject):
 
             self.logger.info("Configuration applied to all components")
 
-        except Exception as e:
-            self.logger.exception("Failed to apply configuration: %s", e)
+        except Exception:
+            self.logger.exception("Failed to apply configuration")
 
     def export_results(self, file_path: str | None = None) -> bool:
-        """Export current analysis results."""
+        """Export current analysis results.
+
+        Args:
+            file_path: Optional path to export results to. If not provided, uses default path
+
+        Returns:
+            True if export successful, False otherwise
+
+        """
         try:
             if not self.current_results:
                 parent_widget = self.main_app if isinstance(self.main_app, QWidget) else None
@@ -447,17 +510,27 @@ class R2UIManager(QObject):
             self.logger.info("Results exported directly to: %s", export_path)
             return True
 
-        except Exception as e:
-            self.logger.exception("Failed to export results to %s: %s", file_path, e)
-            self.status_updated.emit(f"Export failed: {e!s}")
+        except Exception as exc:
+            self.logger.exception("Failed to export results to %s", file_path)
+            self.status_updated.emit(f"Export failed: {exc!s}")
             return False
 
     def get_analysis_history(self) -> list[dict[str, Any]]:
-        """Get analysis history."""
+        """Get analysis history.
+
+        Returns:
+            List of analysis history entries
+
+        """
         return self.analysis_history.copy()
 
     def get_current_results(self) -> dict[str, Any]:
-        """Get current analysis results."""
+        """Get current analysis results.
+
+        Returns:
+            Dictionary containing current analysis results
+
+        """
         return self.current_results.copy()
 
     def clear_results(self) -> None:
@@ -471,22 +544,42 @@ class R2UIManager(QObject):
                 results_viewer.results_data = {}
 
     def _get_r2_timestamp(self) -> str:
-        """Get current timestamp for radare2 operations."""
+        """Get current timestamp for radare2 operations.
+
+        Returns:
+            ISO format timestamp string
+
+        """
         from datetime import datetime
 
         return datetime.now().isoformat()
 
     # Signal handlers
     def _on_binary_loaded(self, path: str) -> None:
-        """Handle binary loaded signal."""
+        """Handle binary loaded signal.
+
+        Args:
+            path: Path to the loaded binary file
+
+        """
         self.status_updated.emit(f"Binary loaded: {os.path.basename(path)}")
 
     def _on_analysis_started(self, analysis_type: str) -> None:
-        """Handle analysis started signal."""
+        """Handle analysis started signal.
+
+        Args:
+            analysis_type: Type of analysis that started
+
+        """
         self.status_updated.emit(f"Starting {analysis_type} analysis...")
 
     def _on_analysis_completed(self, results: dict[str, Any]) -> None:
-        """Handle analysis completed signal."""
+        """Handle analysis completed signal.
+
+        Args:
+            results: Dictionary containing analysis results
+
+        """
         self.current_results = results
         self.status_updated.emit("Analysis completed successfully")
 
@@ -497,7 +590,12 @@ class R2UIManager(QObject):
                 results_viewer.display_results(results)
 
     def _on_analysis_failed(self, error: str) -> None:
-        """Handle analysis failed signal."""
+        """Handle analysis failed signal.
+
+        Args:
+            error: Error message describing the failure
+
+        """
         self.status_updated.emit(f"Analysis failed: {error}")
         parent_widget = self.main_app if isinstance(self.main_app, QWidget) else None
         QMessageBox.critical(
@@ -507,7 +605,11 @@ class R2UIManager(QObject):
         )
 
     def cleanup(self) -> None:
-        """Cleanup resources."""
+        """Cleanup resources.
+
+        Stops running analysis, clears references, and releases resources.
+
+        """
         try:
             # Stop any running analysis
             if "r2_widget" in self.ui_components:
@@ -527,12 +629,20 @@ class R2UIManager(QObject):
 
             self.logger.info("R2UIManager cleanup completed")
 
-        except Exception as e:
-            self.logger.exception("Cleanup failed: %s", e)
+        except Exception:
+            self.logger.exception("Cleanup failed")
 
 
 def create_r2_ui_manager(main_app: QWidget | None = None) -> R2UIManager:
-    """Create and return configured R2UIManager instance."""
+    """Create and return configured R2UIManager instance.
+
+    Args:
+        main_app: Optional main application widget instance
+
+    Returns:
+        Configured R2UIManager instance
+
+    """
     return R2UIManager(main_app)
 
 
@@ -560,8 +670,8 @@ def integrate_radare2_ui_comprehensive(main_app: QWidget) -> R2UIManager | None:
         logger.exception("Comprehensive radare2 UI integration failed")
         return None
 
-    except Exception as e:
-        logger.exception("Failed to integrate radare2 UI comprehensively: %s", e)
+    except Exception:
+        logger.exception("Failed to integrate radare2 UI comprehensively")
         return None
 
 

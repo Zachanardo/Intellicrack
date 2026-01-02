@@ -25,7 +25,7 @@ import platform
 import shutil
 import time
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any
 
 import psutil
 
@@ -457,7 +457,7 @@ class DebuggerDetector(BaseDetector):
             process: The psutil.Process object to analyze.
 
         Returns:
-            True if the process shows debugger capabilities, False otherwise.
+            True if process exhibits debugger capabilities, False otherwise.
 
         """
         try:
@@ -553,6 +553,9 @@ class DebuggerDetector(BaseDetector):
         Args:
             path: File path to save signatures. If None, uses default data directory.
 
+        Notes:
+            Creates the directory if it does not exist.
+
         """
         import json
         import os
@@ -569,10 +572,11 @@ class DebuggerDetector(BaseDetector):
         """Perform debugger detection using multiple techniques.
 
         Args:
-            aggressive: Use more aggressive detection methods
+            aggressive: Use more aggressive detection methods.
 
         Returns:
-            Detection results with details
+            Dictionary containing debugger detection results including
+            is_debugged flag, confidence score, and detailed analysis.
 
         """
         results: dict[str, Any] = {
@@ -621,9 +625,8 @@ class DebuggerDetector(BaseDetector):
         is being debugged.
 
         Returns:
-            Tuple of (detected, confidence, details) where detected is True if
-            a debugger is found, confidence is a float 0.0-1.0, and details
-            contains debug information.
+            Tuple containing detection status, confidence level (0.0-1.0),
+            and details dictionary with API result.
 
         """
         details: dict[str, bool] = {"api_result": False}
@@ -648,9 +651,8 @@ class DebuggerDetector(BaseDetector):
         debugger is attached to the current process.
 
         Returns:
-            Tuple of (detected, confidence, details) where detected is True if
-            a debugger is found, confidence is a float 0.0-1.0, and details
-            contains debug information.
+            Tuple containing detection status, confidence level (0.0-1.0),
+            and details dictionary with remote debugger presence flag.
 
         """
         details: dict[str, bool] = {"remote_debugger": False}
@@ -679,8 +681,9 @@ class DebuggerDetector(BaseDetector):
         NtGlobalFlag for debug heap indicators.
 
         Returns:
-            Tuple of (detected, confidence, details) containing PEB debug
-            flag information.
+            Tuple containing detection status, confidence level, and details
+            dictionary with PEB flag information including being_debugged
+            and nt_global_flag values.
 
         """
         details: dict[str, bool | int | str] = {"being_debugged": False, "nt_global_flag": 0}
@@ -791,8 +794,9 @@ class DebuggerDetector(BaseDetector):
             details: Mutable dictionary to store debugging indicator results.
 
         Returns:
-            Tuple of (detected, confidence, details) containing non-Windows
-            debug detection results.
+            Tuple containing detection status, confidence level, and details
+            dictionary with non-Windows debug detection results including
+            tracer_pid and debugger process information.
 
         """
         try:
@@ -853,8 +857,8 @@ class DebuggerDetector(BaseDetector):
         flags and other debugging indicators.
 
         Returns:
-            Tuple of (detected, confidence, details) containing NtGlobalFlag
-            analysis results.
+            Tuple containing detection status, confidence level, and details
+            dictionary with NtGlobalFlag values and active debug flags.
 
         """
         details: dict[str, int | list[str] | bool] = {"flags": 0}
@@ -963,8 +967,8 @@ class DebuggerDetector(BaseDetector):
         which indicates a debugger has modified the heap.
 
         Returns:
-            Tuple of (detected, confidence, details) containing heap flag
-            analysis results.
+            Tuple containing detection status, confidence level, and details
+            dictionary with heap flags and force flags information.
 
         """
         details: dict[str, int] = {"heap_flags": 0, "force_flags": 0}
@@ -999,8 +1003,8 @@ class DebuggerDetector(BaseDetector):
         to detect if a debugger is attached.
 
         Returns:
-            Tuple of (detected, confidence, details) containing debug port
-            information.
+            Tuple containing detection status, confidence level, and details
+            dictionary with debug port information.
 
         """
         details: dict[str, int] = {"debug_port": 0}
@@ -1040,8 +1044,8 @@ class DebuggerDetector(BaseDetector):
         set by debuggers.
 
         Returns:
-            Tuple of (detected, confidence, details) containing hardware
-            breakpoint information.
+            Tuple containing detection status, confidence level, and details
+            dictionary with hardware breakpoint information.
 
         """
         details: dict[str, Any] = {
@@ -1073,8 +1077,9 @@ class DebuggerDetector(BaseDetector):
             details: Mutable dictionary to store breakpoint detection results.
 
         Returns:
-            Tuple of (detected, confidence, details) containing Windows debug
-            register analysis.
+            Tuple containing detection status, elapsed time, and details
+            dictionary with Windows debug register analysis including DR0-DR7
+            values and active breakpoints.
 
         """
         start_time = time.time()
@@ -1179,8 +1184,9 @@ class DebuggerDetector(BaseDetector):
             details: Mutable dictionary to store breakpoint detection results.
 
         Returns:
-            Tuple of (detected, confidence, details) containing Linux debug
-            register analysis.
+            Tuple containing detection status, elapsed time, and details
+            dictionary with Linux debug register analysis including ptrace
+            availability and debug register values.
 
         """
         start_time = time.time()
@@ -1301,8 +1307,8 @@ class DebuggerDetector(BaseDetector):
         instructions indicating debugger breakpoints.
 
         Returns:
-            Tuple of (detected, confidence, details) containing INT3 scan
-            results.
+            Tuple containing detection status, confidence level, and details
+            dictionary with INT3 scan results including count and locations.
 
         """
         details: dict[str, int | list[str]] = {"int3_count": 0, "locations": []}
@@ -1328,8 +1334,8 @@ class DebuggerDetector(BaseDetector):
             details: Mutable dictionary to store scan results.
 
         Returns:
-            Tuple of (detected, confidence, details) containing INT3
-            breakpoint locations.
+            Tuple containing detection status, confidence level, and details
+            dictionary with INT3 breakpoint locations found in memory.
 
         """
         try:
@@ -1437,8 +1443,8 @@ class DebuggerDetector(BaseDetector):
             details: Mutable dictionary to store scan results.
 
         Returns:
-            Tuple of (detected, confidence, details) containing INT3
-            breakpoint locations.
+            Tuple containing detection status, confidence level, and details
+            dictionary with INT3 breakpoint locations and count found in memory.
 
         """
         try:
@@ -1528,8 +1534,8 @@ class DebuggerDetector(BaseDetector):
         slow down execution significantly.
 
         Returns:
-            Tuple of (detected, confidence, details) containing timing
-            analysis results.
+            Tuple containing detection status, confidence level, and details
+            dictionary with execution timing and anomaly detection results.
 
         """
         details: dict[str, bool | float | int] = {"timing_anomaly": False, "execution_time": 0}
@@ -1565,8 +1571,8 @@ class DebuggerDetector(BaseDetector):
         to detect debugger attachment.
 
         Returns:
-            Tuple of (detected, confidence, details) containing parent process
-            analysis results.
+            Tuple containing detection status, confidence level, and details
+            dictionary with parent process name information.
 
         """
         details: dict[str, str | None] = {"parent_process": None}
@@ -1597,8 +1603,8 @@ class DebuggerDetector(BaseDetector):
         by debuggers to analyze other processes.
 
         Returns:
-            Tuple of (detected, confidence, details) containing privilege
-            check results.
+            Tuple containing detection status, confidence level, and details
+            dictionary with debug privilege information.
 
         """
         details: dict[str, bool] = {"has_debug_privilege": False}
@@ -1633,8 +1639,8 @@ class DebuggerDetector(BaseDetector):
         that intercept and manage exceptions.
 
         Returns:
-            Tuple of (detected, confidence, details) containing exception
-            handling test results.
+            Tuple containing detection status, confidence level, and details
+            dictionary with exception handling test results.
 
         """
         details: dict[str, bool] = {"exception_handled": False}
@@ -1673,8 +1679,8 @@ class DebuggerDetector(BaseDetector):
         already being debugged via ptrace.
 
         Returns:
-            Tuple of (detected, confidence, details) containing ptrace
-            detection results.
+            Tuple containing detection status, confidence level, and details
+            dictionary with ptrace operation result.
 
         """
         details: dict[str, int] = {"ptrace_result": -1}
@@ -1706,8 +1712,8 @@ class DebuggerDetector(BaseDetector):
         debuggers on Linux systems.
 
         Returns:
-            Tuple of (detected, confidence, details) containing TracerPid
-            information.
+            Tuple containing detection status, confidence level, and details
+            dictionary with TracerPid information.
 
         """
         details: dict[str, int] = {"tracer_pid": 0}
@@ -1734,8 +1740,8 @@ class DebuggerDetector(BaseDetector):
         debugger signatures on Linux systems.
 
         Returns:
-            Tuple of (detected, confidence, details) containing parent process
-            information.
+            Tuple containing detection status, confidence level, and details
+            dictionary with parent process name information.
 
         """
         details: dict[str, str | None] = {"parent_process": None}
@@ -1765,8 +1771,8 @@ class DebuggerDetector(BaseDetector):
         breakpoint instructions indicating debugger attachment.
 
         Returns:
-            Tuple of (detected, confidence, details) containing breakpoint
-            detection results.
+            Tuple containing detection status, confidence level, and details
+            dictionary with breakpoint detection results.
 
         """
         details: dict[str, bool] = {"breakpoint_found": False}
@@ -1795,11 +1801,11 @@ class DebuggerDetector(BaseDetector):
 
         Args:
             detections: Dictionary containing detection results from various
-                tests.
+                detection tests.
 
         Returns:
-            String identifying the debugger type (e.g., "OllyDbg", "GDB",
-            "Kernel Debugger").
+            String identifying the debugger type such as OllyDbg, x64dbg,
+            GDB, LLDB, Kernel Debugger, or User-mode Debugger.
 
         """
         # Analyze detection patterns to identify debugger
@@ -1834,10 +1840,10 @@ class DebuggerDetector(BaseDetector):
 
         Args:
             detections: Dictionary containing detection results from various
-                tests.
+                detection tests.
 
         Returns:
-            Integer score (0-100) representing anti-debug effectiveness.
+            Integer score from 0-100 representing anti-debug effectiveness.
 
         """
         # Methods that are hard to bypass
@@ -1857,7 +1863,8 @@ class DebuggerDetector(BaseDetector):
                 contains "all", generates code for all techniques.
 
         Returns:
-            String containing C code implementing anti-debugging functions.
+            String containing production-ready C code implementing
+            anti-debugging detection and response functions.
 
         """
         if not techniques:
@@ -1950,8 +1957,8 @@ if (IsBeingDebugged()) {
         """Get list of method names that are considered aggressive.
 
         Returns:
-            List of method names that are considered more aggressive or
-            potentially disruptive to debugger operations.
+            List of method names that employ more aggressive or potentially
+            disruptive detection techniques.
 
         """
         return ["timing_checks", "exception_handling"]

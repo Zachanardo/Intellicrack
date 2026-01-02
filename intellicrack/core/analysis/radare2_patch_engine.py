@@ -14,6 +14,23 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
+
+This module provides comprehensive binary patching capabilities using
+Radare2 as the backend analysis and manipulation engine. Supports multiple
+architectures and patch types for software licensing protection analysis.
+
+Classes:
+    PatchType: Enumeration of supported patch types.
+    PatchInstruction: Represents a single atomic patch operation.
+    PatchSet: Groups related patches for batch application.
+    Radare2PatchEngine: Main patching engine implementation.
+
+Example:
+    >>> engine = Radare2PatchEngine(Path("binary"), write_mode=True)
+    >>> nop_patch = engine.create_nop_sled(0x1000, 10)
+    >>> patch_set = engine.create_patch_set("disable_checks", [nop_patch])
+    >>> engine.apply_patch_set("disable_checks")
+    >>> engine.close()
 """
 
 import json
@@ -47,7 +64,22 @@ class PatchType(Enum):
 
 @dataclass
 class PatchInstruction:
-    """Represents a single patch instruction."""
+    """Represents a single patch instruction to be applied to a binary.
+
+    Contains the address, original bytecode, new bytecode, patch type,
+    and metadata for a single atomic patch operation.
+
+    Attributes:
+        address (int): Target address in the binary where the patch is
+            applied.
+        original_bytes (bytes): Original bytecode at the target address
+            before patching.
+        patch_bytes (bytes): New bytecode to write at the target address.
+        patch_type (PatchType): Type of patch (NOP, jump, etc.).
+        description (str): Human-readable description of the patch.
+        metadata (dict[str, Any]): Additional metadata about the patch,
+            such as target addresses or instruction types.
+    """
 
     address: int
     original_bytes: bytes
@@ -59,7 +91,23 @@ class PatchInstruction:
 
 @dataclass
 class PatchSet:
-    """Collection of related patches."""
+    """Collection of related patches for a target binary.
+
+    Groups multiple patch instructions into a named set with metadata
+    about the target binary, architecture, and application state.
+
+    Attributes:
+        name (str): Name of the patch set (used as identifier).
+        patches (list[PatchInstruction]): List of patch instructions
+            in this set.
+        target_binary (Path): Path to the binary this patch set targets.
+        architecture (str): Architecture of the target binary (x86, arm64,
+            etc.).
+        checksum_original (str): SHA256 checksum of the original binary.
+        checksum_patched (str | None): SHA256 checksum after patches
+            applied. None if not yet applied.
+        applied (bool): Whether all patches in the set have been applied.
+    """
 
     name: str
     patches: list[PatchInstruction]
@@ -71,7 +119,20 @@ class PatchSet:
 
 
 class Radare2PatchEngine:
-    """Advanced binary patching engine using Radare2."""
+    """Advanced binary patching engine using Radare2.
+
+    Provides comprehensive patching capabilities for multiple architectures
+    including x86, x86_64, ARM, ARM64, MIPS, and PowerPC. Supports NOP
+    sleds, jump modifications, return value patching, conditional jump
+    inversions, and inline assembly patching. Manages patch sets and
+    tracks binary checksums for integrity validation.
+
+    Attributes:
+        NOP_INSTRUCTIONS (dict): Architecture-specific NOP bytecode.
+        JUMP_OPCODES (dict): Jump instruction opcodes by architecture.
+        CONDITIONAL_INVERSIONS (dict): Mapping of conditional jump
+            opcodes to their inverted forms.
+    """
 
     # Architecture-specific NOP instructions
     NOP_INSTRUCTIONS = {
@@ -117,10 +178,21 @@ class Radare2PatchEngine:
     def __init__(self, binary_path: Path, write_mode: bool = False) -> None:
         """Initialize the patch engine.
 
-        Args:
-            binary_path: Path to the binary to patch
-            write_mode: If True, opens in write mode for applying patches
+        Opens a Radare2 connection to the binary and performs initial
+        analysis. Extracts architecture information that is used for
+        architecture-specific patch generation.
 
+        Args:
+            binary_path (Path): Path to the binary file to patch.
+            write_mode (bool): If True, opens in write mode for applying
+                patches. Defaults to False (read-only).
+
+        Returns:
+            None
+
+        Raises:
+            RuntimeError: If Radare2 connection fails or binary analysis
+                fails.
         """
         self.binary_path = binary_path
         self.write_mode = write_mode
@@ -132,7 +204,18 @@ class Radare2PatchEngine:
         self._init_r2()
 
     def _init_r2(self) -> None:
-        """Initialize Radare2 connection."""
+        """Initialize Radare2 connection and analyze the binary.
+
+        Opens a Radare2 pipe connection to the target binary, performs
+        initial analysis (aaa), and extracts architecture information.
+
+        Returns:
+            None
+
+        Raises:
+            RuntimeError: If r2pipe connection fails or binary analysis
+                fails.
+        """
         try:
             flags = ["-w"] if self.write_mode else []
             self.r2 = r2pipe.open(str(self.binary_path), flags=flags)
@@ -160,13 +243,16 @@ class Radare2PatchEngine:
     def create_nop_sled(self, address: int, length: int) -> PatchInstruction:
         """Create a NOP sled at the specified address.
 
+        Generates a sequence of NOP (no-operation) instructions to fill
+        a specified range of bytes. Handles remainder bytes by using
+        multi-byte NOPs for x86/x86_64 architectures.
+
         Args:
-            address: Starting address for NOP sled
-            length: Number of bytes to NOP
+            address (int): Starting address for the NOP sled.
+            length (int): Number of bytes to fill with NOPs.
 
         Returns:
-            PatchInstruction for the NOP sled
-
+            PatchInstruction: Patch instruction representing the NOP sled.
         """
         # Get architecture-specific NOP
         arch: str = self.architecture if self.architecture is not None else "x86"
@@ -197,7 +283,20 @@ class Radare2PatchEngine:
         )
 
     def _get_multibyte_nop(self, length: int) -> bytes:
-        """Get multi-byte NOP for x86/x64."""
+        """Get multi-byte NOP instruction for x86/x86_64 architectures.
+
+        Returns Intel-recommended multi-byte NOP instructions that are
+        optimal for filling code gaps while maintaining proper alignment
+        and instruction decode efficiency.
+
+        Args:
+            length (int): Number of bytes needed for the NOP instruction.
+
+        Returns:
+            bytes: Multi-byte NOP instruction bytes matching the requested
+                length. Falls back to single-byte NOPs if length exceeds
+                9 bytes.
+        """
         # Intel recommended multi-byte NOPs
         multibyte_nops = {
             1: b"\x90",  # NOP
@@ -214,16 +313,26 @@ class Radare2PatchEngine:
         return multibyte_nops.get(length, b"\x90" * length)
 
     def modify_jump(self, address: int, target: int, jump_type: str = "jmp") -> PatchInstruction:
-        """Modify a jump instruction to point to a new target.
+        """Modify a jump instruction to point to a new target address.
+
+        Generates architecture-specific jump/call instructions with proper
+        offset calculation. Handles short jumps, near jumps, and far jumps
+        depending on distance and architecture. Falls back to Radare2
+        assembler for unknown architectures.
 
         Args:
-            address: Address of the jump instruction
-            target: New target address
-            jump_type: Type of jump ("jmp", "call", etc.)
+            address (int): Address of the jump instruction to modify.
+            target (int): New target address for the jump.
+            jump_type (str): Type of jump instruction ("jmp", "call", etc.).
+                Defaults to "jmp".
 
         Returns:
-            PatchInstruction for the jump modification
+            PatchInstruction: Jump modification patch instruction with
+                metadata containing target and jump type.
 
+        Raises:
+            RuntimeError: If r2pipe is not initialized when assembling
+                for unknown architectures.
         """
         patch_bytes = b""
         arch: str = self.architecture if self.architecture is not None else "x86"
@@ -348,7 +457,19 @@ class Radare2PatchEngine:
         )
 
     def _create_indirect_jump(self, target: int) -> bytes:
-        """Create an indirect jump for unknown architectures."""
+        """Create an indirect jump instruction for unknown architectures.
+
+        Generates a generic indirect jump pattern by loading target address
+        into a register and jumping to that register. This provides a
+        fallback mechanism for architectures without built-in support.
+
+        Args:
+            target (int): Target address for the jump instruction.
+
+        Returns:
+            bytes: Indirect jump instruction bytes compatible with the
+                architecture bitness (32-bit or 64-bit).
+        """
         # Generic pattern: load address to register, jump to register
         # This is architecture-specific but provides a fallback
         bits: int = self.bits if self.bits is not None else 32
@@ -359,29 +480,44 @@ class Radare2PatchEngine:
         return struct.pack("<BI", 0xFF, target)
 
     def redirect_call(self, address: int, new_function: int) -> PatchInstruction:
-        """Redirect a function call to a different function.
+        """Redirect a function call to a different function address.
+
+        Modifies a call instruction at the specified address to invoke a
+        different function instead. Internally uses modify_jump with
+        "call" jump type.
 
         Args:
-            address: Address of the call instruction
-            new_function: Address of the new function to call
+            address (int): Address of the call instruction to modify.
+            new_function (int): Address of the new function to call.
 
         Returns:
-            PatchInstruction for the call redirection
-
+            PatchInstruction: Call redirection patch instruction.
         """
         return self.modify_jump(address, new_function, "call")
 
     def patch_return_value(self, function_address: int, return_value: int, value_size: int = 4) -> list[PatchInstruction]:
-        """Patch a function to return a specific value.
+        """Patch a function to return a specific value immediately.
+
+        Replaces function prologue with architecture-specific code to load
+        a return value into the appropriate register and return. Handles
+        multi-byte return values on 64-bit architectures. May append NOP
+        sled if function is longer than generated patch code.
 
         Args:
-            function_address: Address of the function
-            return_value: Value to return
-            value_size: Size of return value in bytes
+            function_address (int): Starting address of the function to patch.
+            return_value (int): Value to load into return register.
+            value_size (int): Size of return value in bytes. Defaults to 4.
 
         Returns:
-            List of patches to apply
+            list[PatchInstruction]: List of patch instructions required
+                to implement the return value patch. May contain multiple
+                instructions for NOP padding.
 
+        Raises:
+            ValueError: If the return value size is unsupported for the
+                target architecture.
+            RuntimeError: If r2pipe is not initialized when using generic
+                fallback patching.
         """
         patches: list[PatchInstruction] = []
         arch: str = self.architecture if self.architecture is not None else "x86"
@@ -605,14 +741,23 @@ class Radare2PatchEngine:
         return patches
 
     def invert_conditional_jump(self, address: int) -> PatchInstruction:
-        """Invert a conditional jump (JE -> JNE, etc.).
+        """Invert a conditional jump instruction.
+
+        Flips the condition of a conditional jump instruction (e.g., JE
+        becomes JNE). Supports both single-byte conditional jumps and
+        two-byte extended conditional jumps with 0x0F prefix. Uses
+        CONDITIONAL_INVERSIONS mapping to find the inverted opcode.
 
         Args:
-            address: Address of the conditional jump
+            address (int): Address of the conditional jump instruction.
 
         Returns:
-            PatchInstruction for the inverted jump
+            PatchInstruction: Conditional jump inversion patch instruction
+                with inverted opcode.
 
+        Raises:
+            ValueError: If jump instruction opcode is not recognized in
+                CONDITIONAL_INVERSIONS mapping.
         """
         # Read the jump instruction
         original_bytes = self._read_bytes(address, 2)
@@ -642,15 +787,18 @@ class Radare2PatchEngine:
         )
 
     def patch_function_prologue(self, address: int, new_prologue: bytes) -> PatchInstruction:
-        """Replace function prologue with custom code.
+        """Replace a function prologue with custom code.
+
+        Overwrites the function prologue at the specified address with
+        custom bytecode. Useful for skipping stack frame setup or
+        modifying register initialization at function entry.
 
         Args:
-            address: Function address
-            new_prologue: New prologue bytes
+            address (int): Function address (prologue start).
+            new_prologue (bytes): New prologue bytecode to write.
 
         Returns:
-            PatchInstruction for the prologue replacement
-
+            PatchInstruction: Prologue replacement patch instruction.
         """
         # Read original prologue
         original_bytes = self._read_bytes(address, len(new_prologue))
@@ -664,15 +812,18 @@ class Radare2PatchEngine:
         )
 
     def patch_function_epilogue(self, function_address: int, new_epilogue: bytes) -> PatchInstruction:
-        """Replace function epilogue with custom code.
+        """Replace a function epilogue with custom code.
+
+        Locates the function epilogue at the end of the specified function
+        and replaces it with custom bytecode. Epilogue address is calculated
+        by subtracting epilogue length from function size.
 
         Args:
-            function_address: Function address
-            new_epilogue: New epilogue bytes
+            function_address (int): Starting address of the function.
+            new_epilogue (bytes): New epilogue bytecode to write.
 
         Returns:
-            PatchInstruction for the epilogue replacement
-
+            PatchInstruction: Epilogue replacement patch instruction.
         """
         # Find function epilogue
         function_size = self._get_function_size(function_address)
@@ -690,15 +841,20 @@ class Radare2PatchEngine:
         )
 
     def create_jump_table_patch(self, table_address: int, entries: list[int]) -> list[PatchInstruction]:
-        """Modify a jump table with new entries.
+        """Modify a jump table with new entry addresses.
+
+        Creates a series of patch instructions to replace jump table
+        entries with new target addresses. Entry size is automatically
+        determined based on architecture bitness (4 bytes for 32-bit,
+        8 bytes for 64-bit).
 
         Args:
-            table_address: Address of the jump table
-            entries: New jump table entries
+            table_address (int): Address of the jump table.
+            entries (list[int]): List of new jump table entry addresses.
 
         Returns:
-            List of patches for the jump table
-
+            list[PatchInstruction]: List of patch instructions, one per
+                table entry, in sequential memory layout.
         """
         patches: list[PatchInstruction] = []
         bits: int = self.bits if self.bits is not None else 32
@@ -728,13 +884,23 @@ class Radare2PatchEngine:
     def create_inline_patch(self, address: int, assembly_code: str) -> PatchInstruction:
         """Create an inline patch using assembly code.
 
+        Assembles the provided assembly code using Radare2's assembler
+        and creates a patch instruction. Validates that assembly succeeds
+        before returning the patch instruction.
+
         Args:
-            address: Address to patch
-            assembly_code: Assembly code to assemble and patch
+            address (int): Address to apply the inline patch.
+            assembly_code (str): Assembly code to assemble and patch at
+                the address.
 
         Returns:
-            PatchInstruction for the inline patch
+            PatchInstruction: Inline patch instruction with assembled
+                bytecode and assembly metadata.
 
+        Raises:
+            RuntimeError: If r2pipe is not initialized.
+            ValueError: If assembly code fails to assemble or produces
+                invalid output.
         """
         if self.r2 is None:
             raise RuntimeError("r2pipe not initialized")
@@ -760,14 +926,18 @@ class Radare2PatchEngine:
         )
 
     def apply_patch(self, patch: PatchInstruction) -> bool:
-        """Apply a single patch to the binary.
+        """Apply a single patch instruction to the binary.
+
+        Writes patch bytecode to the specified address using Radare2's
+        write command. Requires write_mode to be enabled. Logs success
+        and failure details.
 
         Args:
-            patch: Patch to apply
+            patch (PatchInstruction): Patch instruction to apply.
 
         Returns:
-            True if successful
-
+            bool: True if patch was applied successfully, False if not in
+                write mode or Radare2 is not initialized.
         """
         if not self.write_mode:
             logger.exception("Cannot apply patch: not in write mode")
@@ -790,14 +960,18 @@ class Radare2PatchEngine:
             return False
 
     def apply_patch_set(self, patch_set_name: str) -> bool:
-        """Apply a complete patch set.
+        """Apply a complete patch set to the binary.
+
+        Applies all patch instructions in the named patch set sequentially.
+        Updates patch_set.applied flag and calculates patched checksum upon
+        successful application of all patches.
 
         Args:
-            patch_set_name: Name of the patch set to apply
+            patch_set_name (str): Name of the patch set to apply.
 
         Returns:
-            True if all patches applied successfully
-
+            bool: True if all patches in the set were applied successfully,
+                False if patch set not found or any patch failed.
         """
         if patch_set_name not in self.patch_sets:
             logger.exception("Unknown patch set: %s", patch_set_name)
@@ -818,14 +992,18 @@ class Radare2PatchEngine:
         return success
 
     def revert_patch(self, patch: PatchInstruction) -> bool:
-        """Revert a single patch.
+        """Revert a single patch instruction.
+
+        Restores the original bytecode for a patch instruction at its
+        address. Requires write_mode to be enabled. Logs success and
+        failure details.
 
         Args:
-            patch: Patch to revert
+            patch (PatchInstruction): Patch instruction to revert.
 
         Returns:
-            True if successful
-
+            bool: True if patch was reverted successfully, False if not in
+                write mode or Radare2 is not initialized.
         """
         if not self.write_mode:
             logger.exception("Cannot revert patch: not in write mode")
@@ -848,15 +1026,19 @@ class Radare2PatchEngine:
             return False
 
     def create_patch_set(self, name: str, patches: list[PatchInstruction]) -> PatchSet:
-        """Create a named patch set.
+        """Create a named patch set and register it with the engine.
+
+        Creates a PatchSet object containing the provided patches and
+        registers it in the patch_sets dictionary. Automatically calculates
+        and stores the original binary checksum.
 
         Args:
-            name: Name for the patch set
-            patches: List of patches in the set
+            name (str): Name for the patch set (used as dictionary key).
+            patches (list[PatchInstruction]): List of patch instructions
+                to include in the set.
 
         Returns:
-            Created PatchSet
-
+            PatchSet: Newly created and registered PatchSet object.
         """
         arch: str = self.architecture if self.architecture is not None else "unknown"
 
@@ -872,12 +1054,21 @@ class Radare2PatchEngine:
         return patch_set
 
     def export_patch_set(self, patch_set_name: str, output_path: Path) -> None:
-        """Export a patch set to a file.
+        """Export a patch set to a JSON file.
+
+        Serializes a registered patch set to JSON format including all
+        patch instructions, metadata, architecture info, and checksums.
+        Each patch is exported with addresses and bytecode in hex format.
 
         Args:
-            patch_set_name: Name of the patch set
-            output_path: Path to save the patch set
+            patch_set_name (str): Name of the patch set to export.
+            output_path (Path): Path where the JSON file will be saved.
 
+        Returns:
+            None
+
+        Raises:
+            ValueError: If patch set with the specified name not found.
         """
         if patch_set_name not in self.patch_sets:
             raise ValueError(f"Unknown patch set: {patch_set_name}")
@@ -908,7 +1099,21 @@ class Radare2PatchEngine:
             json.dump(export_data, f, indent=2)
 
     def _read_bytes(self, address: int, size: int) -> bytes:
-        """Read bytes from the binary."""
+        """Read bytes from the binary at the specified address.
+
+        Uses Radare2's pxj command to read raw binary data at the given
+        address as a JSON array of bytes and converts to bytes object.
+
+        Args:
+            address (int): Starting address to read from.
+            size (int): Number of bytes to read.
+
+        Returns:
+            bytes: Raw bytes read from the binary at the specified address.
+
+        Raises:
+            RuntimeError: If r2pipe is not initialized.
+        """
         if self.r2 is None:
             raise RuntimeError("r2pipe not initialized")
 
@@ -916,7 +1121,22 @@ class Radare2PatchEngine:
         return bytes(result)
 
     def _get_function_size(self, address: int) -> int:
-        """Get the size of a function."""
+        """Get the size of a function in bytes.
+
+        Queries Radare2's function analysis (afij) to determine the size
+        of the function at the specified address. Returns 0 if no function
+        is found at the address.
+
+        Args:
+            address (int): Starting address of the function.
+
+        Returns:
+            int: Size of the function in bytes, or 0 if no function found
+                at the address.
+
+        Raises:
+            RuntimeError: If r2pipe is not initialized.
+        """
         if self.r2 is None:
             raise RuntimeError("r2pipe not initialized")
 
@@ -927,7 +1147,21 @@ class Radare2PatchEngine:
         return 0
 
     def _calculate_checksum(self) -> str:
-        """Calculate binary checksum."""
+        """Calculate the SHA256 checksum of the binary.
+
+        Uses Radare2's ph sha256 command to compute a cryptographic hash
+        of the current binary state. Useful for validating patch integrity
+        before and after modifications.
+
+        Args:
+            (none)
+
+        Returns:
+            str: SHA256 checksum of the binary as a hex string.
+
+        Raises:
+            RuntimeError: If r2pipe is not initialized.
+        """
         if self.r2 is None:
             raise RuntimeError("r2pipe not initialized")
 
@@ -935,7 +1169,18 @@ class Radare2PatchEngine:
         return result.strip()
 
     def close(self) -> None:
-        """Close Radare2 connection."""
+        """Close Radare2 connection and cleanup resources.
+
+        Closes the r2pipe connection and releases all associated resources.
+        Should be called when finished with patch engine to ensure proper
+        cleanup.
+
+        Args:
+            (none)
+
+        Returns:
+            None
+        """
         if self.r2 is not None:
             self.r2.quit()
             self.r2 = None

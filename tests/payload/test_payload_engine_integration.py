@@ -8,8 +8,9 @@ import sys
 import os
 import struct
 import logging
+from typing import Any
 
-def test_payload_engine_integration():
+def test_payload_engine_integration() -> bool:
     """Test complete integration of PayloadEngine with ShellcodeGenerator."""
 
     print("Day 2.2 Integration Test: PayloadEngine + ShellcodeGenerator")
@@ -22,7 +23,7 @@ def test_payload_engine_integration():
         X64 = type('X64', (), {'value': 'x64'})()
 
     class MockShellcodeGenerator:
-        def generate_reverse_shell(self, arch, host, port):
+        def generate_reverse_shell(self, arch: Any, host: str, port: int) -> bytes:
             # Generate realistic test shellcode based on architecture
             if hasattr(arch, 'value') and arch.value == "x64":
                 # x64 reverse shell stub: connect back to 127.0.0.1:4444
@@ -34,10 +35,10 @@ def test_payload_engine_integration():
 
 
     class MockPayloadEngine:
-        def __init__(self):
+        def __init__(self) -> None:
             self.deployment_methods = ["remote_thread", "dll_injection", "process_hollowing"]
 
-        def generate_payload(self, payload_type, shellcode, **kwargs):
+        def generate_payload(self, payload_type: str, shellcode: bytes, **kwargs: Any) -> dict[str, Any]:
             """Generate optimized payload using PayloadEngine capabilities."""
             try:
                 if payload_type == "buffer_overflow":
@@ -112,7 +113,7 @@ def test_payload_engine_integration():
                     "deployment_ready": False
                 }
 
-        def deploy_exploit(self, payload_info, deployment_method="remote_thread"):
+        def deploy_exploit(self, payload_info: dict[str, Any], deployment_method: str = "remote_thread") -> dict[str, Any]:
             """Deploy exploit using PayloadEngine delivery mechanisms."""
             try:
                 payload = payload_info.get("payload", b"")
@@ -168,16 +169,16 @@ def test_payload_engine_integration():
 
 
     class TestVulnEngineIntegrated:
-        def __init__(self):
+        def __init__(self) -> None:
             self.binary_path = "test.exe"
-            self.shellcode_generator = MockLicenseBypassCodeGenerator()
+            self.shellcode_generator = MockShellcodeGenerator()
             self.payload_engine = MockPayloadEngine()
             self.logger = logging.getLogger("test")
 
-        def _detect_architecture(self):
+        def _detect_architecture(self) -> str:
             return "x86"  # Default for testing
 
-        def _generate_bof_payload(self, vuln):
+        def _generate_bof_payload(self, vuln: dict[str, Any]) -> dict[str, Any]:
             """Generate BOF payload using integrated ShellcodeGenerator + PayloadEngine."""
             func_name = vuln.get("function", {}).get("name", "unknown")
             offset = vuln.get("offset", 0)
@@ -216,7 +217,7 @@ def test_payload_engine_integration():
                 self.logger.error(f"Integrated BOF generation failed: {e}")
                 return {"error": str(e), "type": "failed"}
 
-        def _generate_format_string_payload(self, vuln):
+        def _generate_format_string_payload(self, vuln: dict[str, Any]) -> dict[str, Any]:
             """Generate format string payload using integrated components."""
             func_name = vuln.get("function", {}).get("name", "unknown")
             offset = vuln.get("offset", 0)
@@ -257,7 +258,7 @@ def test_payload_engine_integration():
                 self.logger.error(f"Integrated format string generation failed: {e}")
                 return {"error": str(e), "type": "failed"}
 
-        def deploy_exploit(self, payload_result, method="remote_thread"):
+        def deploy_exploit(self, payload_result: dict[str, Any], method: str = "remote_thread") -> dict[str, Any]:
             """Deploy exploit using PayloadEngine delivery."""
             try:
                 if "optimized_payload" in payload_result:

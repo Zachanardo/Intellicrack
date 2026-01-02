@@ -64,7 +64,7 @@ def create_custom_header_view(orientation: Qt.Orientation, parent: QWidget | Non
         parent: Parent widget
 
     Returns:
-        Configured QHeaderView instance
+        Configured header view instance
 
     """
     header = QHeaderView(orientation, parent)
@@ -136,14 +136,25 @@ class ModelDownloadThread(QThread):
     log_message = pyqtSignal(str)
 
     def __init__(self, model_url: str, model_name: str) -> None:
-        """Initialize the ModelDownloadThread with default values."""
+        """Initialize the ModelDownloadThread with default values.
+
+        Args:
+            model_url: URL to download the model from
+            model_name: Name of the model
+
+        """
         super().__init__()
         self.model_url = model_url
         self.model_name = model_name
         self.is_cancelled = False
 
     def run(self) -> None:
-        """Download the model."""
+        """Download the model from URL.
+
+        Downloads the model file in chunks and emits progress updates.
+        Handles cancellation and errors gracefully.
+
+        """
         try:
             import requests
 
@@ -182,7 +193,12 @@ class ModelDownloadThread(QThread):
             self.download_finished.emit(self.model_name, False)
 
     def cancel(self) -> None:
-        """Cancel the download."""
+        """Cancel the download.
+
+        Sets the cancellation flag which will stop the download thread
+        on the next iteration.
+
+        """
         self.is_cancelled = True
 
 
@@ -190,7 +206,12 @@ class ModelManagerDialog(BaseDialog):
     """Dialog for managing local GGUF models."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the ModelManagerDialog with default values."""
+        """Initialize the ModelManagerDialog with default values.
+
+        Args:
+            parent: Parent widget
+
+        """
         super().__init__(parent, "Local GGUF Model Manager")
         self.setMinimumSize(900, 700)
         self.resize(1000, 800)
@@ -404,7 +425,12 @@ class ModelManagerDialog(BaseDialog):
         layout.addWidget(progress_group)
 
     def setup_server_tab(self, tab_widget: QWidget) -> None:
-        """Set up the server control tab."""
+        """Set up the server control tab.
+
+        Args:
+            tab_widget: Tab widget to populate with server control interface
+
+        """
         layout = QVBoxLayout(tab_widget)
 
         # Server status
@@ -573,7 +599,12 @@ Server URL: {gguf_manager.get_server_url()}"""
             self.model_info_text.setPlainText("No model currently loaded")
 
     def load_model(self, model_name: str) -> None:
-        """Load a specific model."""
+        """Load a specific model.
+
+        Args:
+            model_name: Name of the model to load
+
+        """
         try:
             if success := gguf_manager.load_model(
                 model_name,
@@ -679,7 +710,13 @@ Server URL: {gguf_manager.get_server_url()}"""
                 QMessageBox.critical(self, "Error", f"Error adding model: {e}")
 
     def download_model(self, model_url: str, model_name: str) -> None:
-        """Download a model."""
+        """Download a model.
+
+        Args:
+            model_url: URL to download the model from
+            model_name: Name of the model to download
+
+        """
         if model_name in self.download_threads:
             QMessageBox.information(self, "Info", f"Model '{model_name}' is already being downloaded.")
             return
@@ -767,7 +804,14 @@ Server URL: {gguf_manager.get_server_url()}"""
         self.custom_url_input.clear()
 
     def on_download_finished(self, model_name: str, success: bool, progress_widget: QWidget) -> None:
-        """Handle download completion."""
+        """Handle download completion.
+
+        Args:
+            model_name: Name of the model that was downloaded
+            success: Whether the download was successful
+            progress_widget: The progress widget to remove
+
+        """
         if model_name in self.download_threads:
             del self.download_threads[model_name]
 
@@ -782,7 +826,12 @@ Server URL: {gguf_manager.get_server_url()}"""
             self.add_download_log(f"FAIL {model_name} download failed!")
 
     def add_download_log(self, message: str) -> None:
-        """Add a message to the download log."""
+        """Add a message to the download log.
+
+        Args:
+            message: Message to append to the download log
+
+        """
         self.download_log.append(message)
 
     def start_server(self) -> None:

@@ -5,37 +5,38 @@ These tests validate Intellicrack works on genuine StarForce-protected software.
 Tests SKIP if real binaries unavailable. Tests FAIL if detection/analysis/bypass doesn't work.
 """
 
-import unittest
 import json
+import unittest
 from pathlib import Path
-import hashlib
+from typing import Any, ClassVar
 
-from intellicrack.core.protection_detection.starforce_detector import (
-    StarForceDetector,
-    StarForceDetection
-)
 from intellicrack.core.analysis.starforce_analyzer import StarForceAnalyzer
 from intellicrack.core.protection_bypass.starforce_bypass import StarForceBypass
+from intellicrack.core.protection_detection.starforce_detector import (
+    StarForceDetection,
+    StarForceDetector,
+)
 
 
 class RealBinaryTestBase(unittest.TestCase):
     """Base class for real binary tests."""
 
-    BINARY_ROOT = Path(__file__).parent / 'binaries'
-    MANIFEST_ROOT = Path(__file__).parent / 'manifests'
+    BINARY_ROOT: ClassVar[Path] = Path(__file__).parent / 'binaries'
+    MANIFEST_ROOT: ClassVar[Path] = Path(__file__).parent / 'manifests'
 
     @classmethod
-    def load_manifest(cls, manifest_file):
+    def load_manifest(cls, manifest_file: str) -> list[dict[str, Any]]:
         """Load test binary manifest."""
         manifest_path = cls.MANIFEST_ROOT / manifest_file
         if not manifest_path.exists():
             return []
 
         with open(manifest_path) as f:
-            return json.load(f)
+            result: list[dict[str, Any]] = json.load(f)
+            return result
 
     @classmethod
-    def get_real_binaries(cls, protection_dir):
+    def get_real_binaries(cls, protection_dir: str) -> list[Path]:
         """Get list of real binaries in directory."""
         binary_dir = cls.BINARY_ROOT / protection_dir
         if not binary_dir.exists():
@@ -47,8 +48,17 @@ class RealBinaryTestBase(unittest.TestCase):
 class TestStarForceReal(RealBinaryTestBase):
     """Real tests against actual StarForce protected binaries."""
 
+    manifest: ClassVar[list[dict[str, Any]]]
+    v3_binaries: ClassVar[list[Path]]
+    v4_binaries: ClassVar[list[Path]]
+    v5_binaries: ClassVar[list[Path]]
+    all_binaries: ClassVar[list[Path]]
+    detector: StarForceDetector
+    analyzer: StarForceAnalyzer
+    bypass: StarForceBypass
+
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         """Load StarForce test binaries."""
         cls.manifest = cls.load_manifest('starforce_samples.json')
         cls.v3_binaries = cls.get_real_binaries('starforce/v3')
@@ -61,13 +71,13 @@ class TestStarForceReal(RealBinaryTestBase):
             print(f"Place protected executables in: {cls.BINARY_ROOT / 'starforce'}")
             print("See tests/integration/real_binary_tests/README.md for sources")
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Initialize components for each test."""
         self.detector = StarForceDetector()
         self.analyzer = StarForceAnalyzer()
         self.bypass = StarForceBypass()
 
-    def test_detect_real_starforce_from_manifest(self):
+    def test_detect_real_starforce_from_manifest(self) -> None:
         """Test detection on real StarForce binaries from manifest."""
         if not self.manifest:
             self.skipTest("No StarForce manifest entries - add binaries and manifests to enable test")
@@ -98,7 +108,7 @@ class TestStarForceReal(RealBinaryTestBase):
                         self.assertIn(driver, result.drivers,
                             f"Expected driver {driver} not detected in {entry['name']}")
 
-    def test_detect_real_starforce_v3(self):
+    def test_detect_real_starforce_v3(self) -> None:
         """Test detection on all real StarForce v3 binaries."""
         if not self.v3_binaries:
             self.skipTest("No StarForce v3 binaries found - place protected .exe files in binaries/starforce/v3/")
@@ -114,7 +124,7 @@ class TestStarForceReal(RealBinaryTestBase):
                     self.assertEqual(result.version.major, 3,
                         f"Binary in v3 directory detected as version {result.version.major}")
 
-    def test_detect_real_starforce_v4(self):
+    def test_detect_real_starforce_v4(self) -> None:
         """Test detection on all real StarForce v4 binaries."""
         if not self.v4_binaries:
             self.skipTest("No StarForce v4 binaries found")
@@ -126,7 +136,7 @@ class TestStarForceReal(RealBinaryTestBase):
                 self.assertTrue(result.detected or result.confidence > 0.5,
                     f"FAILED: Detector did not detect StarForce in {binary_path.name}")
 
-    def test_detect_real_starforce_v5(self):
+    def test_detect_real_starforce_v5(self) -> None:
         """Test detection on all real StarForce v5 binaries."""
         if not self.v5_binaries:
             self.skipTest("No StarForce v5 binaries found")
@@ -138,7 +148,7 @@ class TestStarForceReal(RealBinaryTestBase):
                 self.assertTrue(result.detected or result.confidence > 0.5,
                     f"FAILED: Detector did not detect StarForce in {binary_path.name}")
 
-    def test_analyze_real_starforce_drivers(self):
+    def test_analyze_real_starforce_drivers(self) -> None:
         """Test analysis on real StarForce driver files."""
         driver_dir = self.BINARY_ROOT / 'drivers'
         if not driver_dir.exists():
@@ -152,16 +162,17 @@ class TestStarForceReal(RealBinaryTestBase):
 
         for driver_path in starforce_drivers:
             with self.subTest(driver=driver_path.name):
-                result = self.analyzer.analyze_driver(driver_path)
+                result = self.analyzer.analyze(driver_path)
 
                 self.assertIsNotNone(result,
                     f"FAILED: Analyzer returned None for real driver {driver_path.name}")
 
-    def test_bypass_real_starforce(self):
+    def test_bypass_real_starforce(self) -> None:
         """Test bypass on real StarForce binaries."""
         if not self.manifest:
             self.skipTest("No StarForce manifest entries")
 
+        import shutil
         import tempfile
 
         for entry in self.manifest:
@@ -177,9 +188,10 @@ class TestStarForceReal(RealBinaryTestBase):
 
                 with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp:
                     output_path = Path(tmp.name)
+                    shutil.copy2(binary_path, output_path)
 
                 try:
-                    result = self.bypass.remove_protection(binary_path, output_path)
+                    result = self.bypass.bypass_license_validation(output_path)
 
                     self.assertIsNotNone(result)
 

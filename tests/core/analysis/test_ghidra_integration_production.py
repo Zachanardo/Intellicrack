@@ -17,6 +17,9 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
 import pytest
 
 from intellicrack.core.analysis.ghidra_binary_integration import GhidraBinaryIntegration
@@ -35,23 +38,15 @@ from intellicrack.utils.ghidra_common import (
     cleanup_ghidra_project,
 )
 
-GHIDRA_PATH = Path("D:/Intellicrack/tools/ghidra")
+GHIDRA_PATH = PROJECT_ROOT / "tools" / "ghidra"
 GHIDRA_HEADLESS = GHIDRA_PATH / "support" / "analyzeHeadless.bat"
 
 GHIDRA_AVAILABLE = GHIDRA_HEADLESS.exists()
 
 pytestmark = pytest.mark.skipif(
     not GHIDRA_AVAILABLE,
-    reason="Ghidra not installed at D:/Intellicrack/tools/ghidra"
+    reason=f"Ghidra not installed at {PROJECT_ROOT / "tools" / "ghidra"}"
 )
-
-
-@pytest.fixture
-def temp_workspace(tmp_path: Path) -> Path:
-    """Provide temporary workspace for test files."""
-    workspace = tmp_path / "ghidra_test_workspace"
-    workspace.mkdir(parents=True, exist_ok=True)
-    return workspace
 
 
 @pytest.fixture

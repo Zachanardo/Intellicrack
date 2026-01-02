@@ -74,7 +74,12 @@ class CacheManager:
         self._cleanup_expired()
 
     def _load_index(self) -> dict[str, dict[str, object]]:
-        """Load the cache index from disk."""
+        """Load the cache index from disk.
+
+        Returns:
+            The loaded cache index, or an empty dict if loading fails.
+
+        """
         if os.path.exists(self.index_file):
             try:
                 with open(self.index_file) as f:
@@ -87,7 +92,12 @@ class CacheManager:
         return {}
 
     def _save_index(self) -> None:
-        """Save the cache index to disk."""
+        """Save the cache index to disk.
+
+        Returns:
+            None
+
+        """
         try:
             with open(self.index_file, "w") as f:
                 json.dump(self.cache_index, f, indent=2)
@@ -95,7 +105,15 @@ class CacheManager:
             logger.warning("Failed to save cache index", exc_info=True)
 
     def _get_cache_file_path(self, key: str) -> str:
-        """Get the file path for a cache key."""
+        """Get the file path for a cache key.
+
+        Args:
+            key: The cache key to get the file path for.
+
+        Returns:
+            The file path for the cache key.
+
+        """
         # Create a hash of the key to use as filename
         key_hash = hashlib.sha256(key.encode()).hexdigest()
         return os.path.join(self.cache_dir, f"{key_hash}.cache")
@@ -175,14 +193,27 @@ class CacheManager:
             return False
 
     def clear_cache(self) -> None:
-        """Clear all cache entries."""
+        """Clear all cache entries.
+
+        Returns:
+            None
+
+        """
         for key in list(self.cache_index):
             self._remove_entry(key)
 
         self._save_index()
 
     def _remove_entry(self, key: str) -> None:
-        """Remove a cache entry."""
+        """Remove a cache entry.
+
+        Args:
+            key: The cache key to remove.
+
+        Returns:
+            None
+
+        """
         if key in self.cache_index:
             cache_file = self._get_cache_file_path(key)
             if os.path.exists(cache_file):
@@ -194,7 +225,12 @@ class CacheManager:
             del self.cache_index[key]
 
     def _cleanup_expired(self) -> None:
-        """Remove expired cache entries."""
+        """Remove expired cache entries.
+
+        Returns:
+            None
+
+        """
         current_time = time.time()
         expired_keys: list[str] = []
         for key, entry in self.cache_index.items():
@@ -224,7 +260,12 @@ class CacheManager:
         return total_size / (1024 * 1024)  # Convert bytes to MB
 
     def _manage_cache_size(self) -> None:
-        """Remove oldest entries until cache is under the maximum size."""
+        """Remove oldest entries until cache is under the maximum size.
+
+        Returns:
+            None
+
+        """
         if self._check_cache_size() <= self.max_size_mb:
             return
 
@@ -263,6 +304,9 @@ class RateLimiter:
 
         Args:
             config: Rate limit configuration
+
+        Returns:
+            None
 
         """
         self.config = config or RateLimitConfig()
@@ -326,6 +370,9 @@ class RateLimiter:
 
         Args:
             resource: The resource identifier
+
+        Returns:
+            None
 
         """
         current_time = time.time()
@@ -673,7 +720,8 @@ class APIRepositoryBase(ModelRepositoryInterface):
         """Authenticate with the repository.
 
         Returns:
-            A tuple of (success, message) where success is a boolean indicating if the
-            authentication was successful, and message is a string with details.
+            A tuple of (success, message) where success is a boolean indicating
+                if the authentication was successful, and message is a string
+                with details.
 
         """

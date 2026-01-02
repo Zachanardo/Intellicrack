@@ -1,4 +1,8 @@
-"""Dependency feedback system for Intellicrack.
+"""Comprehensive dependency feedback system for missing libraries and tools.
+
+This module provides user-friendly feedback when dependencies are missing,
+including installation instructions, alternative suggestions, and graceful
+degradation.
 
 This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
@@ -15,11 +19,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
-
-Comprehensive dependency feedback system for missing libraries and tools.
-
-This module provides user-friendly feedback when dependencies are missing,
-including installation instructions, alternative suggestions, and graceful degradation.
 """
 
 import platform
@@ -181,14 +180,22 @@ class DependencyFeedback:
     }
 
     def __init__(self) -> None:
-        """Initialize dependency feedback system."""
+        """Initialize the DependencyFeedback system."""
         self.system = platform.system()
         self.missing_critical: list[str] = []
         self.missing_optional: list[str] = []
         self.available_alternatives: dict[str, list[str]] = {}
 
     def get_dependency_status(self, dependency_name: str) -> dict[str, object]:
-        """Get comprehensive status information for a dependency."""
+        """Get comprehensive status information for a dependency.
+
+        Args:
+            dependency_name: Name of the dependency to check.
+
+        Returns:
+            Dictionary containing availability status, metadata, feedback message,
+            and alternatives.
+        """
         if dependency_name not in self.DEPENDENCY_INFO:
             return {
                 "available": False,
@@ -240,7 +247,16 @@ class DependencyFeedback:
         }
 
     def _generate_feedback_message(self, name: str, info: dict[str, object], available: bool) -> str:
-        """Generate comprehensive feedback message for a dependency."""
+        """Generate comprehensive feedback message for a dependency.
+
+        Args:
+            name: Name of the dependency.
+            info: Dependency information dictionary.
+            available: Whether the dependency is currently available.
+
+        Returns:
+            User-friendly feedback message about the dependency status.
+        """
         dep_name = info.get("name", name)
         if not isinstance(dep_name, str):
             dep_name = name
@@ -278,7 +294,12 @@ class DependencyFeedback:
         return "\n".join(message_parts)
 
     def check_all_dependencies(self) -> dict[str, object]:
-        """Check status of all known dependencies."""
+        """Check status of all known dependencies.
+
+        Returns:
+            Dictionary with critical_missing, optional_missing, available lists
+            and summary information.
+        """
         critical_missing: list[str] = []
         optional_missing: list[str] = []
         available: list[str] = []
@@ -314,7 +335,14 @@ class DependencyFeedback:
         return results
 
     def get_installation_batch_script(self, missing_deps: list[str]) -> str:
-        """Generate batch installation script for missing dependencies."""
+        """Generate batch installation script for missing dependencies.
+
+        Args:
+            missing_deps: List of dependency names to install.
+
+        Returns:
+            Shell script content with installation commands.
+        """
         if not missing_deps:
             return "# All dependencies are available!"
 
@@ -342,7 +370,14 @@ class DependencyFeedback:
         return "\n".join(script_lines)
 
     def get_category_alternatives(self, category: str) -> list[str]:
-        """Get alternative tools for a specific category."""
+        """Get alternative tools for a specific category.
+
+        Args:
+            category: Category name to find alternatives for.
+
+        Returns:
+            List of alternative tool names in the specified category.
+        """
         alternatives: list[str] = []
         for dep_info in self.DEPENDENCY_INFO.values():
             if dep_info.get("category") == category:
@@ -352,7 +387,15 @@ class DependencyFeedback:
         return list(set(alternatives))
 
     def generate_missing_dependency_report(self, missing_deps: list[str]) -> str:
-        """Generate comprehensive report for missing dependencies."""
+        """Generate comprehensive report for missing dependencies.
+
+        Args:
+            missing_deps: List of missing dependency names.
+
+        Returns:
+            Formatted report with categorized missing dependencies and installation
+            instructions.
+        """
         if not missing_deps:
             return "OK All required dependencies are available!"
 
@@ -396,7 +439,16 @@ class DependencyFeedback:
         return "\n".join(report_lines)
 
     def suggest_alternatives(self, missing_dep: str, task_context: str = "") -> str:
-        """Suggest alternatives for a specific missing dependency in context."""
+        """Suggest alternatives for a specific missing dependency in context.
+
+        Args:
+            missing_dep: Name of the missing dependency.
+            task_context: Optional context about the task requiring the dependency.
+                Defaults to empty string.
+
+        Returns:
+            Formatted list of alternative tools and suggestions.
+        """
         if missing_dep not in self.DEPENDENCY_INFO:
             return f"No alternatives found for unknown dependency: {missing_dep}"
 
@@ -431,7 +483,13 @@ class DependencyFeedback:
         return "\n".join(suggestion_lines)
 
     def log_dependency_status(self, dep_name: str, context: str = "") -> None:
-        """Log dependency status with appropriate level."""
+        """Log dependency status with appropriate level.
+
+        Args:
+            dep_name: Name of the dependency to log.
+            context: Optional context about where dependency is needed.
+                Defaults to empty string.
+        """
         status = self.get_dependency_status(dep_name)
 
         if status.get("available"):
@@ -448,7 +506,16 @@ class DependencyFeedback:
                 logger.warning("Optional dependency %s missing for %s", dep_name, context)
 
     def create_user_friendly_error(self, dep_name: str, operation: str, error: Exception) -> str:
-        """Create user-friendly error message with helpful guidance."""
+        """Create user-friendly error message with helpful guidance.
+
+        Args:
+            dep_name: Name of the missing dependency.
+            operation: Description of the operation that failed.
+            error: Exception that was raised.
+
+        Returns:
+            User-friendly error message with installation and alternative suggestions.
+        """
         status = self.get_dependency_status(dep_name)
         message = status.get("message", "")
         if not isinstance(message, str):
@@ -479,7 +546,16 @@ dependency_feedback = DependencyFeedback()
 
 
 def check_dependency(name: str, context: str = "") -> bool:
-    """Quick check if dependency is available with logging."""
+    """Quick check if dependency is available with logging.
+
+    Args:
+        name: Name of the dependency to check.
+        context: Optional context about where dependency is needed.
+            Defaults to empty string.
+
+    Returns:
+        True if the dependency is available, False otherwise.
+    """
     status = dependency_feedback.get_dependency_status(name)
     dependency_feedback.log_dependency_status(name, context)
     available = status.get("available", False)
@@ -487,10 +563,28 @@ def check_dependency(name: str, context: str = "") -> bool:
 
 
 def get_user_friendly_error(dep_name: str, operation: str, error: Exception) -> str:
-    """Get user-friendly error message for missing dependency."""
+    """Get user-friendly error message for missing dependency.
+
+    Args:
+        dep_name: Name of the missing dependency.
+        operation: Description of the operation that failed.
+        error: Exception that was raised.
+
+    Returns:
+        User-friendly error message with helpful guidance.
+    """
     return dependency_feedback.create_user_friendly_error(dep_name, operation, error)
 
 
 def suggest_alternatives(missing_dep: str, context: str = "") -> str:
-    """Suggest alternatives for missing dependency."""
+    """Suggest alternatives for missing dependency.
+
+    Args:
+        missing_dep: Name of the missing dependency.
+        context: Optional context about the task requiring the dependency.
+            Defaults to empty string.
+
+    Returns:
+        Formatted list of alternative tools and suggestions.
+    """
     return dependency_feedback.suggest_alternatives(missing_dep, context)

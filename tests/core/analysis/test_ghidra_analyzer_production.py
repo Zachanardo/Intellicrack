@@ -26,6 +26,9 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
 import pytest
 
 from intellicrack.core.analysis.ghidra_analyzer import (
@@ -39,7 +42,7 @@ from intellicrack.core.analysis.ghidra_analyzer import (
     run_advanced_ghidra_analysis,
 )
 
-GHIDRA_PATH = Path("D:/Intellicrack/tools/ghidra")
+GHIDRA_PATH = PROJECT_ROOT / "tools" / "ghidra"
 GHIDRA_HEADLESS = GHIDRA_PATH / "support" / "analyzeHeadless.bat"
 WINDOWS_CALC = Path("C:/Windows/System32/calc.exe")
 WINDOWS_NOTEPAD = Path("C:/Windows/System32/notepad.exe")
@@ -52,14 +55,6 @@ pytestmark = pytest.mark.skipif(
     not GHIDRA_AVAILABLE or not WINDOWS_BINARIES_AVAILABLE,
     reason="Ghidra not installed or Windows binaries not available"
 )
-
-
-@pytest.fixture
-def temp_workspace(tmp_path: Path) -> Path:
-    """Provide temporary workspace for test files."""
-    workspace = tmp_path / "ghidra_test_workspace"
-    workspace.mkdir(parents=True, exist_ok=True)
-    return workspace
 
 
 @pytest.fixture

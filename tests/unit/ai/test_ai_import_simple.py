@@ -2,17 +2,12 @@
 """Simple test for AI script generation classes."""
 
 import pytest
-import sys
-import os
-
-# Add the project root to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 class TestAIImportSimple:
     """Test basic AI imports and functionality."""
 
-    def test_core_imports(self):
+    def test_core_imports(self) -> None:
         """Test that core AI classes can be imported successfully."""
         from intellicrack.ai.ai_script_generator import (
             ScriptGenerationResult,
@@ -25,7 +20,7 @@ class TestAIImportSimple:
         assert ScriptType is not None
         assert DynamicScriptGenerator is not None
 
-    def test_script_type_enum(self):
+    def test_script_type_enum(self) -> None:
         """Test that ScriptType enum works correctly."""
         from intellicrack.ai.ai_script_generator import ScriptType
 
@@ -33,7 +28,7 @@ class TestAIImportSimple:
         assert script_type.value is not None
         assert isinstance(script_type.value, str)
 
-    def test_script_generation_result(self):
+    def test_script_generation_result(self) -> None:
         """Test that ScriptGenerationResult can be created."""
         from intellicrack.ai.ai_script_generator import ScriptGenerationResult
 
@@ -41,7 +36,7 @@ class TestAIImportSimple:
         assert result.success is True
         assert result.content == "test"
 
-    def test_dynamic_script_generator_creation(self):
+    def test_dynamic_script_generator_creation(self) -> None:
         """Test that DynamicScriptGenerator can be instantiated."""
         from intellicrack.ai.ai_script_generator import DynamicScriptGenerator
 

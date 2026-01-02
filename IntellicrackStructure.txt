@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sat, Dec 27, 2025 03:24:20 PM
+Generated: Thu, Jan 01, 2026 06:15:17 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -10,11 +10,13 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 ----------------------------------------
 
 ├── __pycache__/
+│   ├── __init__.cpython-312.pyc
 │   ├── config.cpython-312.pyc
 │   ├── config.cpython-314.pyc
 │   └── main.cpython-312.pyc
 ├── ai/
 │   ├── __pycache__/
+│   │   ├── __init__.cpython-312.pyc
 │   │   ├── ai_script_generator.cpython-312.pyc
 │   │   ├── background_loader.cpython-314.pyc
 │   │   ├── coordination_layer.cpython-312.pyc
@@ -29,6 +31,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── llm_config_as_code.cpython-312.pyc
 │   │   ├── llm_config_manager.cpython-314.pyc
 │   │   ├── llm_fallback_chains.cpython-312.pyc
+│   │   ├── local_gguf_server.cpython-312.pyc
 │   │   ├── local_gguf_server.cpython-314.pyc
 │   │   ├── lora_adapter_manager.cpython-312.pyc
 │   │   ├── model_batch_tester.cpython-312.pyc
@@ -858,6 +861,8 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── protocol_signatures.json
 │   │   ├── README.md
 │   │   └── sample_signatures.sg
+│   ├── templates/
+│   │   └── report_manager/
 │   ├── training_samples/
 │   │   ├── VMProtect/
 │   │   │   ├── 4ba3efd3a532ec4dfcb53e65e4aedec1306bf70ad8a6d749c98b20db4941579f.exe
@@ -1246,6 +1251,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── radare2_ui_manager.cpython-312.pyc
 │   │   ├── shared_ui_layouts.cpython-312.pyc
 │   │   ├── symbolic_execution.cpython-312.pyc
+│   │   ├── tooltip_helper.cpython-312.pyc
 │   │   ├── traffic_analyzer.cpython-312.pyc
 │   │   ├── ui_manager.cpython-312.pyc
 │   │   ├── ui_manager.cpython-314.pyc
@@ -1520,6 +1526,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── misc_utils.py
 │   │   ├── path_discovery.py
 │   │   ├── plugin_paths.py
+│   │   ├── secure_serialization.py
 │   │   ├── siphash24_replacement.py
 │   │   ├── string_utils.py
 │   │   └── type_validation.py

@@ -14,9 +14,9 @@ Tests MUST fail when LLM integration is broken or non-functional.
 
 import os
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -83,7 +83,7 @@ def mock_pytorch_model(temp_model_dir: Path) -> Path:
 
 
 @pytest.fixture
-def cleanup_llm_manager() -> None:
+def cleanup_llm_manager() -> Generator[None, None, None]:
     """Cleanup LLM manager after tests."""
     yield
     shutdown_llm_manager()
@@ -216,13 +216,13 @@ class TestBaseLLMBackend:
 class TestOpenAIBackend:
     """Test OpenAI backend with real API integration."""
 
-    def test_openai_backend_initialization_without_api_key_fails(self) -> None:
+    def test_openai_backend_initialization_without_api_key_fails(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """OpenAI backend fails initialization without API key."""
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key=None)
-        with patch.dict(os.environ, {}, clear=True):
-            backend = OpenAIBackend(config)
-            result = backend.initialize()
-            assert result is False
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        backend = OpenAIBackend(config)
+        result = backend.initialize()
+        assert result is False
 
     def test_openai_backend_initialization_with_invalid_key_fails(self) -> None:
         """OpenAI backend fails with invalid API key."""
@@ -310,7 +310,7 @@ class TestOpenAIBackend:
         backend.shutdown()
 
         assert response is not None
-        assert response.content is not None or response.tool_calls is not None
+        assert response.content or response.tool_calls is not None
 
     def test_openai_chat_without_initialization_raises(self) -> None:
         """OpenAI backend raises error when chat called without initialization."""
@@ -325,13 +325,13 @@ class TestOpenAIBackend:
 class TestAnthropicBackend:
     """Test Anthropic Claude backend with real API integration."""
 
-    def test_anthropic_backend_initialization_without_api_key_fails(self) -> None:
+    def test_anthropic_backend_initialization_without_api_key_fails(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Anthropic backend fails initialization without API key."""
         config = LLMConfig(provider=LLMProvider.ANTHROPIC, model_name="claude-3-5-sonnet-20241022", api_key=None)
-        with patch.dict(os.environ, {}, clear=True):
-            backend = AnthropicBackend(config)
-            result = backend.initialize()
-            assert result is False
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        backend = AnthropicBackend(config)
+        result = backend.initialize()
+        assert result is False
 
     @pytest.mark.skipif(not HAS_ANTHROPIC_KEY, reason="Anthropic API key not available")
     def test_anthropic_backend_real_initialization(self) -> None:
@@ -485,44 +485,59 @@ class TestLLMManager:
         manager2 = LLMManager()
         assert manager1 is manager2
 
-    def test_llm_manager_registers_backend(self, cleanup_llm_manager: None) -> None:
+    def test_llm_manager_registers_backend(self, cleanup_llm_manager: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """LLM manager successfully registers backend configuration."""
         manager = LLMManager(enable_lazy_loading=False, enable_background_loading=False)
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
-            result = manager.register_llm("test-openai", config)
-            assert result is True
-            assert "test-openai" in manager.get_available_llms()
+        class FakeOpenAIBackend(OpenAIBackend):
+            def initialize(self) -> bool:
+                self.is_initialized = True
+                return True
 
-    def test_llm_manager_sets_active_backend(self, cleanup_llm_manager: None) -> None:
+        monkeypatch.setattr("intellicrack.ai.llm_backends.OpenAIBackend", FakeOpenAIBackend)
+        result = manager.register_llm("test-openai", config)
+        assert result is True
+        assert "test-openai" in manager.get_available_llms()
+
+    def test_llm_manager_sets_active_backend(self, cleanup_llm_manager: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """LLM manager sets and retrieves active backend."""
         manager = LLMManager(enable_lazy_loading=False, enable_background_loading=False)
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
-            manager.register_llm("test-openai", config)
-            result = manager.set_active_llm("test-openai")
-            assert result is True
-            assert manager.active_backend == "test-openai"
+        class FakeOpenAIBackend(OpenAIBackend):
+            def initialize(self) -> bool:
+                self.is_initialized = True
+                return True
 
-    def test_llm_manager_chat_with_active_backend(self, cleanup_llm_manager: None) -> None:
+        monkeypatch.setattr("intellicrack.ai.llm_backends.OpenAIBackend", FakeOpenAIBackend)
+        manager.register_llm("test-openai", config)
+        result = manager.set_active_llm("test-openai")
+        assert result is True
+        assert manager.active_backend == "test-openai"
+
+    def test_llm_manager_chat_with_active_backend(self, cleanup_llm_manager: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """LLM manager routes chat to active backend."""
         manager = LLMManager(enable_lazy_loading=False, enable_background_loading=False)
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
 
-        mock_response = LLMResponse(content="Test response", finish_reason="stop")
+        class FakeOpenAIBackend(OpenAIBackend):
+            def initialize(self) -> bool:
+                self.is_initialized = True
+                return True
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
-            with patch.object(OpenAIBackend, "chat", return_value=mock_response):
-                manager.register_llm("test-openai", config)
-                messages = [LLMMessage(role="user", content="test")]
-                response = manager.chat(messages)
+            def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None, temperature: float | None = None, max_tokens: int | None = None, stream: bool = False) -> LLMResponse:
+                return LLMResponse(content="Test response", finish_reason="stop")
 
-                assert response is not None
-                assert response.content == "Test response"
+        monkeypatch.setattr("intellicrack.ai.llm_backends.OpenAIBackend", FakeOpenAIBackend)
+        manager.register_llm("test-openai", config)
+        messages = [LLMMessage(role="user", content="test")]
+        response = manager.chat(messages)
 
-    def test_llm_manager_generates_exploitation_script(self, cleanup_llm_manager: None) -> None:
+        assert response is not None
+        assert response.content == "Test response"
+
+    def test_llm_manager_generates_exploitation_script(self, cleanup_llm_manager: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """LLM manager generates license bypass exploitation scripts."""
         manager = LLMManager(enable_lazy_loading=False, enable_background_loading=False)
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
@@ -536,23 +551,28 @@ def patch_license_check(binary_path):
         f.write(data)
 """
 
-        mock_response = LLMResponse(content=script_code, finish_reason="stop")
+        class FakeOpenAIBackend(OpenAIBackend):
+            def initialize(self) -> bool:
+                self.is_initialized = True
+                return True
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
-            with patch.object(OpenAIBackend, "chat", return_value=mock_response):
-                manager.register_llm("test-openai", config)
+            def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None, temperature: float | None = None, max_tokens: int | None = None, stream: bool = False) -> LLMResponse:
+                return LLMResponse(content=script_code, finish_reason="stop")
 
-                result = manager.generate_script_content(
-                    prompt="Generate a license bypass patcher",
-                    script_type="Python",
-                    context_data={"target": "test.exe", "protection": "basic"},
-                )
+        monkeypatch.setattr("intellicrack.ai.llm_backends.OpenAIBackend", FakeOpenAIBackend)
+        manager.register_llm("test-openai", config)
 
-                assert result is not None
-                assert "def patch_license_check" in result
-                assert "0x1000" in result
+        result = manager.generate_script_content(
+            prompt="Generate a license bypass patcher",
+            script_type="Python",
+            context_data={"target": "test.exe", "protection": "basic"},
+        )
 
-    def test_llm_manager_refines_script_with_error_feedback(self, cleanup_llm_manager: None) -> None:
+        assert result is not None
+        assert "def patch_license_check" in result
+        assert "0x1000" in result
+
+    def test_llm_manager_refines_script_with_error_feedback(self, cleanup_llm_manager: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """LLM manager refines scripts based on test failures."""
         manager = LLMManager(enable_lazy_loading=False, enable_background_loading=False)
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
@@ -571,25 +591,30 @@ def patch_license_check(binary_path):
         return False
 """
 
-        mock_response = LLMResponse(content=refined_script, finish_reason="stop")
+        class FakeOpenAIBackend(OpenAIBackend):
+            def initialize(self) -> bool:
+                self.is_initialized = True
+                return True
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
-            with patch.object(OpenAIBackend, "chat", return_value=mock_response):
-                manager.register_llm("test-openai", config)
+            def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None, temperature: float | None = None, max_tokens: int | None = None, stream: bool = False) -> LLMResponse:
+                return LLMResponse(content=refined_script, finish_reason="stop")
 
-                original = "def patch_license_check(binary_path):\n    pass"
-                result = manager.refine_script_content(
-                    original_script=original,
-                    error_feedback="Function does nothing, needs implementation",
-                    test_results={"passed": False, "error": "NotImplementedError"},
-                    script_type="Python",
-                )
+        monkeypatch.setattr("intellicrack.ai.llm_backends.OpenAIBackend", FakeOpenAIBackend)
+        manager.register_llm("test-openai", config)
 
-                assert result is not None
-                assert "try:" in result
-                assert "except" in result
+        original = "def patch_license_check(binary_path):\n    pass"
+        result = manager.refine_script_content(
+            original_script=original,
+            error_feedback="Function does nothing, needs implementation",
+            test_results={"passed": False, "error": "NotImplementedError"},
+            script_type="Python",
+        )
 
-    def test_llm_manager_analyzes_protection_patterns(self, cleanup_llm_manager: None) -> None:
+        assert result is not None
+        assert "try:" in result
+        assert "except" in result
+
+    def test_llm_manager_analyzes_protection_patterns(self, cleanup_llm_manager: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """LLM manager analyzes binary data to identify protection patterns."""
         manager = LLMManager(enable_lazy_loading=False, enable_background_loading=False)
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
@@ -600,80 +625,105 @@ def patch_license_check(binary_path):
             "bypass_strategies": ["Patch signature validation", "Hook license validation function"],
         }
 
-        mock_response = LLMResponse(content=str(analysis_result), finish_reason="stop")
+        class FakeOpenAIBackend(OpenAIBackend):
+            def initialize(self) -> bool:
+                self.is_initialized = True
+                return True
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
-            with patch.object(OpenAIBackend, "chat", return_value=mock_response):
-                manager.register_llm("test-openai", config)
+            def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None, temperature: float | None = None, max_tokens: int | None = None, stream: bool = False) -> LLMResponse:
+                return LLMResponse(content=str(analysis_result), finish_reason="stop")
 
-                binary_data = {"entropy": 7.8, "sections": [".text", ".data", ".vmp0"], "imports": ["CryptVerifySignature"]}
+        monkeypatch.setattr("intellicrack.ai.llm_backends.OpenAIBackend", FakeOpenAIBackend)
+        manager.register_llm("test-openai", config)
 
-                result = manager.analyze_protection_patterns(binary_data)
+        binary_data = {"entropy": 7.8, "sections": [".text", ".data", ".vmp0"], "imports": ["CryptVerifySignature"]}
 
-                assert result is not None
-                assert "analysis" in result or "protection_types" in str(result)
+        result = manager.analyze_protection_patterns(binary_data)
 
-    def test_llm_manager_validates_script_syntax(self, cleanup_llm_manager: None) -> None:
+        assert result is not None
+        assert "analysis" in result or "protection_types" in str(result)
+
+    def test_llm_manager_validates_script_syntax(self, cleanup_llm_manager: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """LLM manager validates generated script syntax and quality."""
         manager = LLMManager(enable_lazy_loading=False, enable_background_loading=False)
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
 
         validation_result = '{"valid": true, "errors": [], "warnings": ["Consider adding error handling"], "suggestions": ["Use context manager for file operations"]}'
 
-        mock_response = LLMResponse(content=validation_result, finish_reason="stop")
+        class FakeOpenAIBackend(OpenAIBackend):
+            def initialize(self) -> bool:
+                self.is_initialized = True
+                return True
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
-            with patch.object(OpenAIBackend, "chat", return_value=mock_response):
-                manager.register_llm("test-openai", config)
+            def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None, temperature: float | None = None, max_tokens: int | None = None, stream: bool = False) -> LLMResponse:
+                return LLMResponse(content=validation_result, finish_reason="stop")
 
-                script = "def test():\n    with open('file.txt') as f:\n        return f.read()"
-                result = manager.validate_script_syntax(script, "Python")
+        monkeypatch.setattr("intellicrack.ai.llm_backends.OpenAIBackend", FakeOpenAIBackend)
+        manager.register_llm("test-openai", config)
 
-                assert result["valid"] is True
-                assert "errors" in result
+        script = "def test():\n    with open('file.txt') as f:\n        return f.read()"
+        result = manager.validate_script_syntax(script, "Python")
 
-    def test_llm_manager_shutdown_cleans_up_backends(self, cleanup_llm_manager: None) -> None:
+        assert result["valid"] is True
+        assert "errors" in result
+
+    def test_llm_manager_shutdown_cleans_up_backends(self, cleanup_llm_manager: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """LLM manager shutdown properly cleans up all backends."""
         manager = LLMManager(enable_lazy_loading=False, enable_background_loading=False)
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
-            manager.register_llm("test-openai", config)
-            assert len(manager.backends) > 0
+        class FakeOpenAIBackend(OpenAIBackend):
+            def initialize(self) -> bool:
+                self.is_initialized = True
+                return True
 
-            manager.shutdown()
+        monkeypatch.setattr("intellicrack.ai.llm_backends.OpenAIBackend", FakeOpenAIBackend)
+        manager.register_llm("test-openai", config)
+        assert len(manager.backends) > 0
 
-            assert len(manager.backends) == 0
-            assert manager.active_backend is None
+        manager.shutdown()
 
-    def test_llm_manager_get_llm_info(self, cleanup_llm_manager: None) -> None:
+        assert len(manager.backends) == 0
+        assert manager.active_backend is None
+
+    def test_llm_manager_get_llm_info(self, cleanup_llm_manager: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """LLM manager returns detailed backend information."""
         manager = LLMManager(enable_lazy_loading=False, enable_background_loading=False)
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test", context_length=8192)
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
-            manager.register_llm("test-openai", config)
-            info = manager.get_llm_info("test-openai")
+        class FakeOpenAIBackend(OpenAIBackend):
+            def initialize(self) -> bool:
+                self.is_initialized = True
+                return True
 
-            assert info is not None
-            assert info["id"] == "test-openai"
-            assert info["provider"] == "openai"
-            assert info["model_name"] == "gpt-4"
-            assert info["context_length"] == 8192
+        monkeypatch.setattr("intellicrack.ai.llm_backends.OpenAIBackend", FakeOpenAIBackend)
+        manager.register_llm("test-openai", config)
+        info = manager.get_llm_info("test-openai")
 
-    def test_llm_manager_register_tools_for_llm(self, cleanup_llm_manager: None) -> None:
+        assert info is not None
+        assert info["id"] == "test-openai"
+        assert info["provider"] == "openai"
+        assert info["model_name"] == "gpt-4"
+        assert info["context_length"] == 8192
+
+    def test_llm_manager_register_tools_for_llm(self, cleanup_llm_manager: None, monkeypatch: pytest.MonkeyPatch) -> None:
         """LLM manager registers tools for specific backend."""
         manager = LLMManager(enable_lazy_loading=False, enable_background_loading=False)
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
-            manager.register_llm("test-openai", config)
+        class FakeOpenAIBackend(OpenAIBackend):
+            def initialize(self) -> bool:
+                self.is_initialized = True
+                return True
 
-            tools = [{"name": "analyze_binary", "description": "Analyze binary protection"}]
-            manager.register_tools_for_llm("test-openai", tools)
+        monkeypatch.setattr("intellicrack.ai.llm_backends.OpenAIBackend", FakeOpenAIBackend)
+        manager.register_llm("test-openai", config)
 
-            backend = manager.backends["test-openai"]
-            assert backend.tools == tools
+        tools = [{"name": "analyze_binary", "description": "Analyze binary protection"}]
+        manager.register_tools_for_llm("test-openai", tools)
+
+        backend = manager.backends["test-openai"]
+        assert backend.tools == tools
 
 
 class TestConfigCreators:

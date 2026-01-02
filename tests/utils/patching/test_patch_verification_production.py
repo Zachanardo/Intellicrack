@@ -12,7 +12,6 @@ import shutil
 import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -44,17 +43,31 @@ FIXTURES_DIR = Path(__file__).parent.parent.parent / "fixtures"
 PE_BINARIES = FIXTURES_DIR / "binaries" / "pe" / "legitimate"
 
 
-class MockApp:
-    """Mock application instance for testing."""
+class FakeStatusWidget:
+    """Fake status widget for testing UI updates."""
+
+    def __init__(self) -> None:
+        """Initialize fake status widget."""
+        self._text: str = ""
+
+    def text(self) -> str:
+        """Get current status text."""
+        return self._text
+
+    def setText(self, text: str) -> None:
+        """Set status text."""
+        self._text = text
+
+
+class FakeApp:
+    """Fake application instance for testing."""
 
     def __init__(self, binary_path: str) -> None:
-        """Initialize mock app with binary path."""
-        self.binary_path = binary_path
+        """Initialize fake app with binary path."""
+        self.binary_path: str = binary_path
         self.messages: list[str] = []
         self.analyze_results: list[str] = []
-        self.analyze_status = MagicMock()
-        self.analyze_status.text = MagicMock(return_value="")
-        self.analyze_status.setText = MagicMock()
+        self.analyze_status: FakeStatusWidget = FakeStatusWidget()
 
     def update_output(self, message: object) -> None:
         """Capture output messages."""
@@ -97,7 +110,7 @@ class TestPatchVerification:
             }
         ]
 
-        app = MockApp(str(tiny_exe))
+        app = FakeApp(str(tiny_exe))
         results = verify_patches(app, str(patched_path), instructions)
 
         assert len(results) > 0
@@ -131,7 +144,7 @@ class TestPatchVerification:
             }
         ]
 
-        app = MockApp(str(tiny_exe))
+        app = FakeApp(str(tiny_exe))
         results = verify_patches(app, str(patched_path), instructions)
 
         assert len(results) > 0
@@ -167,7 +180,7 @@ class TestPatchVerification:
                     }
                 )
 
-        app = MockApp(str(test_exe))
+        app = FakeApp(str(test_exe))
         results = verify_patches(app, str(patched_path), instructions)
 
         assert len(results) > 0
@@ -193,7 +206,7 @@ class TestPatchVerification:
             }
         ]
 
-        app = MockApp(str(test_exe))
+        app = FakeApp(str(test_exe))
         results = verify_patches(app, str(patched_path), instructions)
 
         assert len(results) > 0
@@ -333,7 +346,7 @@ class TestPatchVerificationEdgeCases:
         patched_path = tmp_path / "patched.exe"
         shutil.copy2(test_exe, patched_path)
 
-        app = MockApp(str(test_exe))
+        app = FakeApp(str(test_exe))
         results = verify_patches(app, str(patched_path), [])
 
         assert len(results) > 0
@@ -356,7 +369,7 @@ class TestPatchVerificationEdgeCases:
             }
         ]
 
-        app = MockApp(str(test_exe))
+        app = FakeApp(str(test_exe))
         results = verify_patches(app, str(patched_path), instructions)
 
         assert len(results) > 0
@@ -382,7 +395,7 @@ class TestPatchVerificationEdgeCases:
             }
         ]
 
-        app = MockApp(str(test_exe))
+        app = FakeApp(str(test_exe))
         results = verify_patches(app, str(patched_path), instructions)
 
         assert len(results) > 0
@@ -411,7 +424,7 @@ class TestPatchVerificationEdgeCases:
             }
         ]
 
-        app = MockApp(str(test_exe))
+        app = FakeApp(str(test_exe))
         verify_patches(app, str(patched_path), instructions)
 
         patched_pe = pefile.PE(str(patched_path))
@@ -552,7 +565,7 @@ class TestPatchVerificationIntegration:
             }
         ]
 
-        app = MockApp(str(test_exe))
+        app = FakeApp(str(test_exe))
         results = verify_patches(app, str(patched_path), instructions)
 
         assert len(results) > 0
@@ -595,7 +608,7 @@ class TestPatchVerificationIntegration:
                     }
                 )
 
-        app = MockApp(str(test_exe))
+        app = FakeApp(str(test_exe))
         results = verify_patches(app, str(patched_path), instructions)
 
         assert len(results) > 0

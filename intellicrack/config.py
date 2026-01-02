@@ -49,14 +49,34 @@ _get_new_config: Callable[[], IntellicrackConfigProtocol] | None = None
 
 
 def _ensure_config_manager_imported() -> Callable[[], IntellicrackConfigProtocol]:
-    """Lazy import of config_manager to avoid circular dependencies."""
+    """Lazy import of config_manager to avoid circular dependencies.
+
+    Imports the IntellicrackConfig factory function from the core.config_manager
+    module on first call and caches it globally. Subsequent calls return the cached
+    function. This pattern prevents circular import issues that would occur if
+    config_manager were imported at module load time.
+
+    Returns:
+        Callable[[], IntellicrackConfigProtocol]: Function that returns a new
+                                                  config instance.
+
+    Raises:
+        ImportError: If config_manager module cannot be imported.
+        RuntimeError: If config_manager import fails unexpectedly.
+
+    Note:
+        This function uses lazy initialization with caching to improve performance
+        on subsequent calls and avoid circular dependency issues at module load
+        time.
+
+    """
     global _get_new_config
     if _get_new_config is None:
         logger.debug("Lazily importing config_manager for the first time.")
         try:
             from .core.config_manager import get_config as imported_get_config
 
-            _get_new_config = imported_get_config  # type: ignore[assignment]
+            _get_new_config = imported_get_config
             logger.debug("config_manager imported successfully.")
         except ImportError as e:
             logger.critical("Failed to import config_manager: %s", e, exc_info=True)
@@ -87,10 +107,13 @@ def _get_modern_config() -> IntellicrackConfigProtocol:
 
     This internal function implements a singleton pattern to ensure only one
     configuration instance exists throughout the application lifetime. It lazily
-    initializes the modern IntellicrackConfig on first access.
+    initializes the modern IntellicrackConfig on first access. The returned
+    instance conforms to the IntellicrackConfigProtocol interface.
 
     Returns:
-        IntellicrackConfig: The global modern configuration instance
+        IntellicrackConfigProtocol: The global modern configuration instance
+                                    providing access to tool paths, directories,
+                                    and configuration values.
 
     Note:
         This is an internal function used by the legacy compatibility layer.
@@ -117,12 +140,12 @@ def find_tool(tool_name: str, required_executables: list[str] | None = None) -> 
     modern system fails, it falls back to a basic PATH search.
 
     Args:
-        tool_name: Name of the tool to find (e.g., 'ghidra', 'radare2', 'frida')
+        tool_name: Name of the tool to find (e.g., 'ghidra', 'radare2', 'frida').
         required_executables: Optional list of required executables for the tool
-                            (currently used for logging only)
+                              (currently used for logging only).
 
     Returns:
-        Path to the tool executable or None if not found
+        str | None: Path to the tool executable if found, None if not found.
 
     Examples:
         >>> find_tool("ghidra")
@@ -170,20 +193,27 @@ def get_system_path(path_type: str) -> str | None:
 
     This function provides a unified interface to retrieve various system paths
     like output directories, cache locations, and user folders. It uses the modern
-    configuration system and falls back to OS-specific defaults if needed.
+    configuration system and falls back to OS-specific defaults if needed. When the
+    modern configuration system fails to provide a path, the function attempts to
+    retrieve the path using platform-appropriate fallback mechanisms before returning
+    None.
 
     Args:
-        path_type: Type of system path to retrieve. Valid values:
-                  - "output": Output directory for results
-                  - "cache": Cache directory for temporary data
-                  - "logs": Log files directory
-                  - "temp": Temporary files directory
-                  - "desktop": User's desktop folder (fallback only)
-                  - "documents": User's documents folder (fallback only)
-                  - "downloads": User's downloads folder (fallback only)
+        path_type: Type of system path to retrieve. Valid values are "output"
+                   for the output directory, "cache" for temporary data cache,
+                   "logs" for log files, "temp" for temporary files, "desktop"
+                   for user's desktop folder (fallback only), "documents" for
+                   user's documents folder (fallback only), and "downloads" for
+                   user's downloads folder (fallback only).
 
     Returns:
-        Path string or None if not found
+        str | None: Path string if found in modern config or fallback mechanisms,
+                    None otherwise.
+
+    Raises:
+        ValueError: If path is not found in modern config, triggering fallback
+                    mechanism. This is used internally for control flow and does
+                    not reach the caller if a fallback path exists.
 
     Examples:
         >>> get_system_path("output")
@@ -248,14 +278,15 @@ class ConfigManager:
     API interface while delegating to the modern configuration system for
     actual functionality.
 
-    The ConfigManager acts as a bridge between legacy code expecting dictionary-style
-    configuration access and the modern object-oriented configuration system. It
-    automatically translates legacy keys to modern configuration paths and provides
-    fallback values for backward compatibility.
+    The ConfigManager acts as a bridge between legacy code expecting dictionary-
+    style configuration access and the modern object-oriented configuration system.
+    It automatically translates legacy keys to modern configuration paths and
+    provides fallback values for backward compatibility.
 
     Attributes:
-        config_path: Path to the configuration file (for compatibility)
-        _modern_config: Internal reference to the modern IntellicrackConfig instance
+        config_path: Path to the configuration file (for compatibility).
+        _modern_config: Internal reference to the modern IntellicrackConfig
+                        instance.
 
     Examples:
         >>> config = ConfigManager()
@@ -275,8 +306,8 @@ class ConfigManager:
 
         Args:
             config_path: Optional path to configuration file. This parameter is
-                        maintained for backward compatibility but is largely ignored
-                        as the modern system uses platform-specific config locations.
+                         maintained for backward compatibility but is largely ignored
+                         as the modern system uses platform-specific config locations.
 
         """
         logger.debug("Initializing ConfigManager. Provided config_path: '%s'.", config_path)
@@ -293,7 +324,7 @@ class ConfigManager:
         structure expected by older code while pulling data from the new system.
 
         Returns:
-            Dict[str, Any]: Complete configuration dictionary with all sections
+            dict[str, Any]: Complete configuration dictionary with all sections
                            including paths, tools, analysis settings, etc.
 
         Note:
@@ -313,12 +344,12 @@ class ConfigManager:
         necessary.
 
         Returns:
-            Dict[str, Any]: Legacy-formatted configuration dictionary with
-                           all expected sections and keys
+            dict[str, Any]: Legacy-formatted configuration dictionary with all
+                            expected sections and keys.
 
         Note:
-            This method is called by the config property and should not be
-            used directly by external code.
+            This method is called by the config property and should not be used
+            directly by external code.
 
         """
         logger.debug("Building legacy configuration dictionary from modern config.")
@@ -400,19 +431,47 @@ class ConfigManager:
         return legacy_config
 
     def load_config(self) -> dict[str, Any]:
-        """Load configuration - delegates to modern system."""
+        """Load configuration - delegates to modern system.
+
+        Returns:
+            dict[str, Any]: Complete configuration dictionary.
+
+        """
         logger.debug("ConfigManager.load_config() called (delegating to modern system).")
         return self.config
 
     def save_config(self) -> bool:
-        """Save configuration - delegates to modern system."""
+        """Save configuration - delegates to modern system.
+
+        Returns:
+            bool: True if saved successfully (always True for backward compatibility).
+
+        """
         # Modern config auto-saves, so this is just compatibility
         # Always return True for backward compatibility
         logger.debug("ConfigManager.save_config() called (modern config auto-saves).")
         return True
 
     def get(self, key: str, default: object = None) -> object:
-        """Get configuration value with legacy key support."""
+        """Get configuration value with legacy key support.
+
+        Retrieves a configuration value by key, with special handling for legacy
+        key names that map to the modern configuration system. If the key is not
+        found in the modern config, falls back to the legacy-compatible configuration
+        dictionary.
+
+        Args:
+            key: Configuration key to retrieve. Special legacy keys include
+                 'ghidra_path', 'radare2_path', 'frida_path', 'log_dir',
+                 'output_dir', and 'temp_dir'.
+            default: Default value if key not found in either modern or legacy
+                     config. Defaults to None if not provided.
+
+        Returns:
+            object: Configuration value if found, or default parameter if not
+                    found.
+
+        """
         logger.debug("ConfigManager.get() called for key: '%s'.", key)
         # Handle legacy key mappings
         if key == "ghidra_path":
@@ -451,27 +510,70 @@ class ConfigManager:
         return result
 
     def set(self, key: str, value: object) -> None:
-        """Set configuration value."""
+        """Set configuration value.
+
+        Updates a configuration value in the modern configuration system. The change
+        is delegated to the underlying modern config instance which handles persistence
+        and caching of configuration changes.
+
+        Args:
+            key: Configuration key to set. Should be a valid configuration key path.
+            value: Value to set for the given key.
+
+        """
         logger.debug("ConfigManager.set() called for key: '%s', value: '%s'.", key, value)
         # Update modern config
         self._modern_config.set(key, value)
         logger.debug("Key '%s' set in modern config.", key)
 
     def update(self, updates: dict[str, Any]) -> None:
-        """Update multiple configuration values."""
+        """Update multiple configuration values.
+
+        Applies multiple configuration updates in batch by calling set() for each
+        key-value pair in the provided dictionary. This is more convenient than
+        calling set() multiple times individually.
+
+        Args:
+            updates: Dictionary of configuration updates where keys are configuration
+                    keys and values are the new values to set.
+
+        """
         logger.debug("ConfigManager.update() called with updates: %s.", updates)
         for key, value in updates.items():
             self.set(key, value)
         logger.debug("ConfigManager updates applied.")
 
     def get_model_repositories(self) -> dict[str, Any]:
-        """Get model repository configuration."""
+        """Get model repository configuration.
+
+        Retrieves the complete model repository configuration section from the config,
+        which contains settings for where machine learning models are stored and how
+        they are accessed. Returns an empty dictionary if the section is missing or
+        not a valid dictionary.
+
+        Returns:
+            dict[str, Any]: Model repository configuration dictionary with entries for
+                           each configured repository (e.g., 'local', 'remote').
+
+        """
         logger.debug("ConfigManager.get_model_repositories() called.")
         result = self.config.get("model_repositories", {})
         return result if isinstance(result, dict) else {}
 
     def is_repository_enabled(self, repo_name: str) -> bool:
-        """Check if a model repository is enabled."""
+        """Check if a model repository is enabled.
+
+        Checks the model repository configuration to determine whether a specific
+        repository is enabled. Returns False if the repository doesn't exist or if
+        the 'enabled' field is not a valid boolean.
+
+        Args:
+            repo_name: Name of the repository to check (e.g., 'local', 'remote').
+
+        Returns:
+            bool: True if repository exists and enabled field is True, False otherwise.
+
+        """
         logger.debug("ConfigManager.is_repository_enabled() called for repo: '%s'.", repo_name)
         repos = self.get_model_repositories()
         repo = repos.get(repo_name, {})
@@ -486,72 +588,192 @@ class ConfigManager:
         return enabled
 
     def get_ghidra_path(self) -> str | None:
-        """Get the Ghidra installation path."""
+        """Get the Ghidra installation path.
+
+        Retrieves the path to the Ghidra installation directory from the modern
+        configuration system. Ghidra is used for binary analysis and reverse engineering
+        tasks within Intellicrack.
+
+        Returns:
+            str | None: Path to Ghidra installation directory if found, None if not configured.
+
+        """
         logger.debug("ConfigManager.get_ghidra_path() called.")
         return self._modern_config.get_tool_path("ghidra")
 
     def get_tool_path(self, tool_name: str) -> str | None:
-        """Get path for any tool."""
+        """Get path for any tool.
+
+        Retrieves the installation path for any configured external tool (Ghidra, Radare2,
+        Frida, etc.) from the modern configuration system. The result is validated to
+        ensure it is either a string path or None.
+
+        Args:
+            tool_name: Name of the tool to look up (e.g., 'ghidra', 'radare2', 'frida').
+
+        Returns:
+            str | None: Path to the tool if found and valid, None otherwise.
+
+        """
         logger.debug("ConfigManager.get_tool_path() called for tool: '%s'.", tool_name)
         result = self._modern_config.get_tool_path(tool_name)
         return result if isinstance(result, (str, type(None))) else None
 
     def is_tool_available(self, tool_name: str) -> bool:
-        """Check if a tool is available."""
+        """Check if a tool is available.
+
+        Checks whether a specific external tool is installed and available for use.
+        This method queries the modern configuration system to determine tool availability.
+
+        Args:
+            tool_name: Name of the tool to check (e.g., 'ghidra', 'radare2', 'frida').
+
+        Returns:
+            bool: True if tool is available and configured, False otherwise.
+
+        """
         logger.debug("ConfigManager.is_tool_available() called for tool: '%s'.", tool_name)
         available = self._modern_config.is_tool_available(tool_name)
         logger.debug("Tool '%s' availability: %s.", tool_name, available)
         return available
 
     def get_logs_dir(self) -> object:
-        """Get logs directory."""
+        """Get logs directory.
+
+        Retrieves the directory path where application logs are stored. This directory
+        is managed by the modern configuration system and is platform-specific.
+
+        Returns:
+            object: Logs directory path object.
+
+        """
         logger.debug("ConfigManager.get_logs_dir() called.")
         return self._modern_config.get_logs_dir()
 
     def get_output_dir(self) -> object:
-        """Get output directory."""
+        """Get output directory.
+
+        Retrieves the directory path where analysis results and outputs are stored.
+        This directory is managed by the modern configuration system.
+
+        Returns:
+            object: Output directory path object.
+
+        """
         logger.debug("ConfigManager.get_output_dir() called.")
         return self._modern_config.get_output_dir()
 
     def get_cache_dir(self) -> object:
-        """Get cache directory."""
+        """Get cache directory.
+
+        Retrieves the directory path where cached data and temporary files are stored.
+        This directory is managed by the modern configuration system.
+
+        Returns:
+            object: Cache directory path object.
+
+        """
         logger.debug("ConfigManager.get_cache_dir() called.")
         return self._modern_config.get_cache_dir()
 
     def validate_config(self) -> bool:
-        """Validate the current configuration."""
+        """Validate the current configuration.
+
+        Validates the current configuration state. The modern configuration system
+        handles the actual validation. This method always returns True for backward
+        compatibility with legacy code.
+
+        Returns:
+            bool: True to indicate configuration is valid (always True for backward compatibility).
+
+        """
         logger.debug("ConfigManager.validate_config() called (delegating to modern system).")
         # Basic validation - modern config handles the real validation
         # Always return True for backward compatibility
         return True
 
     def items(self) -> object:
-        """Return items from the configuration dictionary."""
+        """Return items from the configuration dictionary.
+
+        Provides a view of all key-value pairs in the configuration dictionary,
+        allowing iteration over configuration entries.
+
+        Returns:
+            object: Items view of configuration dictionary.
+
+        """
         logger.debug("ConfigManager.items() called.")
         return self.config.items()
 
     def keys(self) -> object:
-        """Return keys from the configuration dictionary."""
+        """Return keys from the configuration dictionary.
+
+        Provides a view of all keys in the configuration dictionary, allowing
+        iteration over configuration key names.
+
+        Returns:
+            object: Keys view of configuration dictionary.
+
+        """
         logger.debug("ConfigManager.keys() called.")
         return self.config.keys()
 
     def values(self) -> object:
-        """Return values from the configuration dictionary."""
+        """Return values from the configuration dictionary.
+
+        Provides a view of all values in the configuration dictionary, allowing
+        iteration over configuration values.
+
+        Returns:
+            object: Values view of configuration dictionary.
+
+        """
         logger.debug("ConfigManager.values() called.")
         return self.config.values()
 
     def __getitem__(self, key: str) -> object:
-        """Allow dictionary-style access."""
+        """Allow dictionary-style access.
+
+        Provides dictionary-style access to configuration values using square bracket
+        notation, delegating to the get() method for key lookup and type conversion.
+
+        Args:
+            key: Configuration key to access.
+
+        Returns:
+            object: Configuration value.
+
+        """
         logger.debug("ConfigManager.__getitem__() called for key: '%s'.", key)
         return self.get(key)
 
     def __setitem__(self, key: str, value: object) -> None:
-        """Allow dictionary-style setting."""
+        """Allow dictionary-style setting.
+
+        Provides dictionary-style setting of configuration values using square bracket
+        notation, delegating to the set() method for key assignment.
+
+        Args:
+            key: Configuration key to set.
+            value: Value to set for the given key.
+
+        """
         logger.debug("ConfigManager.__setitem__() called for key: '%s', value: '%s'.", key, value)
         self.set(key, value)
 
     def __contains__(self, key: str) -> bool:
-        """Check if key exists in configuration."""
+        """Check if key exists in configuration.
+
+        Provides support for the 'in' operator to check whether a configuration key
+        exists in the configuration dictionary.
+
+        Args:
+            key: Configuration key to check.
+
+        Returns:
+            bool: True if key exists in configuration, False otherwise.
+
+        """
         logger.debug("ConfigManager.__contains__() called for key: '%s'.", key)
         return key in self.config
 
@@ -566,15 +788,19 @@ def load_config(config_path: str | None = None) -> dict[str, Any]:
     This function initializes the global configuration manager if not already
     present and returns a legacy-compatible configuration dictionary. It's
     maintained for backward compatibility with code expecting a dictionary-based
-    configuration system.
+    configuration system. The returned dictionary is a snapshot of the current
+    configuration state and is rebuilt on each call to reflect any changes.
 
     Args:
-        config_path: Path to configuration file (ignored in modern system as
-                    it uses platform-specific locations automatically)
+        config_path: Path to configuration file (ignored in modern system as it
+                     uses platform-specific locations automatically). Provided for
+                     backward compatibility only.
 
     Returns:
-        Configuration dictionary for legacy compatibility containing all
-        configuration sections and values
+        dict[str, Any]: Configuration dictionary for legacy compatibility
+                        containing all configuration sections and values including
+                        paths, tools, analysis settings, logging, performance, and
+                        UI configuration.
 
     Examples:
         >>> config = load_config()
@@ -598,7 +824,7 @@ def get_config() -> ConfigManager:
     """Get the global configuration manager instance.
 
     Returns:
-        ConfigManager instance (legacy wrapper)
+        ConfigManager: The global configuration manager instance (legacy wrapper)
 
     """
     global _config_manager  # pylint: disable=global-statement
@@ -612,8 +838,14 @@ def get_config() -> ConfigManager:
 def save_config() -> bool:
     """Save the global configuration.
 
+    Saves the current configuration state to the configuration file. This function
+    delegates to the modern configuration system which handles automatic persistence
+    of configuration changes. It ensures the global ConfigManager instance is
+    initialized before attempting to save.
+
     Returns:
-        True if saved successfully, False otherwise
+        bool: True if saved successfully, False if the global ConfigManager was not
+              initialized and cannot be used.
 
     """
     logger.debug("Global save_config() called.")
@@ -633,12 +865,25 @@ class _LazyConfig(dict[str, Any]):
     """Lazy-loading configuration dictionary that initializes on first access."""
 
     def __init__(self) -> None:
+        """Initialize lazy-loading configuration dictionary.
+
+        Creates a new lazy-loading configuration dictionary that defers
+        initialization until first access to minimize startup time.
+
+        """
         super().__init__()
         self._initialized = False
         logger.debug("_LazyConfig instance created.")
 
     def _ensure_loaded(self) -> None:
-        """Load configuration if not already loaded."""
+        """Load configuration if not already loaded.
+
+        This internal method ensures the configuration dictionary is populated by
+        calling load_config() on first access. Subsequent calls are skipped if
+        already loaded. Any errors during loading are logged but do not raise
+        exceptions.
+
+        """
         if not self._initialized:
             logger.debug("LazyConfig: Configuration not loaded, triggering load.")
             try:
@@ -654,37 +899,106 @@ class _LazyConfig(dict[str, Any]):
             logger.debug("LazyConfig: Configuration already loaded.")
 
     def __getitem__(self, key: str) -> object:
+        """Get item from lazy-loaded configuration.
+
+        Ensures the configuration is loaded, then retrieves the value for the given
+        key from the underlying dictionary.
+
+        Args:
+            key: Configuration key to access.
+
+        Returns:
+            object: Configuration value for the given key.
+
+        """
         self._ensure_loaded()
         logger.debug("LazyConfig: Accessing item with key '%s'.", key)
         return super().__getitem__(key)
 
     def __setitem__(self, key: str, value: object) -> None:
+        """Set item in lazy-loaded configuration.
+
+        Ensures the configuration is loaded, then sets the given key-value pair in
+        the underlying dictionary.
+
+        Args:
+            key: Configuration key to set.
+            value: Value to set for the given key.
+
+        Returns:
+            None
+
+        """
         self._ensure_loaded()
         logger.debug("LazyConfig: Setting item with key '%s' to value '%s'.", key, value)
-        return super().__setitem__(key, value)
+        super().__setitem__(key, value)
 
     def __contains__(self, key: object) -> bool:
+        """Check if key exists in lazy-loaded configuration.
+
+        Performs a containment check on the lazy-loaded configuration dictionary,
+        ensuring the configuration is loaded before checking for key existence.
+
+        Args:
+            key: Configuration key to check.
+
+        Returns:
+            bool: True if key exists in configuration, False otherwise.
+
+        """
         self._ensure_loaded()
         if isinstance(key, str):
             logger.debug("LazyConfig: Checking containment for key '%s'.", key)
         return super().__contains__(key)
 
     def get(self, key: str, default: object = None) -> object:
+        """Get item from lazy-loaded configuration with default fallback.
+
+        Ensures the configuration is loaded, then retrieves the value for the given
+        key or returns the default if the key does not exist.
+
+        Args:
+            key: Configuration key to retrieve.
+            default: Default value if key not found. Defaults to None if not
+                     provided.
+
+        Returns:
+            object: Configuration value if found, or default value if not found.
+
+        """
         self._ensure_loaded()
         logger.debug("LazyConfig: Getting item with key '%s'.", key)
         return super().get(key, default)
 
-    def keys(self) -> KeysView[str]:  # type: ignore[override]
+    def keys(self) -> KeysView[str]:
+        """Get keys from lazy-loaded configuration.
+
+        Returns:
+            KeysView[str]: Keys view of configuration dictionary.
+
+        """
         self._ensure_loaded()
         logger.debug("LazyConfig: Getting keys.")
         return super().keys()
 
-    def values(self) -> ValuesView[Any]:  # type: ignore[override]
+    def values(self) -> ValuesView[Any]:
+        """Get values from lazy-loaded configuration.
+
+        Returns:
+            ValuesView[Any]: Values view of configuration dictionary.
+
+        """
         self._ensure_loaded()
         logger.debug("LazyConfig: Getting values.")
         return super().values()
 
-    def items(self) -> ItemsView[str, Any]:  # type: ignore[override]
+    def items(self) -> ItemsView[str, Any]:
+        """Get items from lazy-loaded configuration.
+
+        Returns:
+            ItemsView[str, Any]: Items view of configuration dictionary.
+
+        """
         self._ensure_loaded()
         logger.debug("LazyConfig: Getting items.")
         return super().items()

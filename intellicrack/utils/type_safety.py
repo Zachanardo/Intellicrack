@@ -1,5 +1,8 @@
 """Type safety utilities for runtime validation.
 
+This module provides runtime type checking and validation functions for
+ensuring type safety when working with dynamic data structures and kwargs.
+
 Copyright (C) 2025 Zachary Flint
 This file is part of Intellicrack.
 """
@@ -18,14 +21,19 @@ def get_typed_item(
 ) -> T:
     """Safely get an item from a dictionary with runtime type checking.
 
+    Retrieves a value from the dictionary and verifies it matches the
+    expected type. Raises TypeError if the value exists but has an
+    unexpected type, or KeyError if the key is missing and no default
+    is provided.
+
     Args:
-        data: Dictionary to retrieve from
-        key: Key to lookup
-        expected_type: Expected type of the value
-        default: Default value if key is missing
+        data: Dictionary to retrieve from.
+        key: Key to lookup in the dictionary.
+        expected_type: Expected type of the value.
+        default: Default value if key is missing. Defaults to None.
 
     Returns:
-        The value with the guaranteed type.
+        The value cast to type T with guaranteed type match.
 
     Raises:
         TypeError: If the value exists but is not of the expected type.
@@ -57,16 +65,19 @@ def get_typed_item(
 def validate_type[T](value: Any, expected_type: type[T], name: str = "value") -> T:
     """Validate that a value is of the expected type.
 
+    Checks if a value is an instance of the expected type and raises
+    TypeError if not. Used for runtime type validation during execution.
+
     Args:
-        value: The value to check
-        expected_type: The expected type
-        name: Name of the variable for error message
+        value: The value to check.
+        expected_type: The expected type to validate against.
+        name: Name of the variable for error message. Defaults to "value".
 
     Returns:
-        The value cast to T.
+        The value cast to type T if validation succeeds.
 
     Raises:
-        TypeError: If value is not of expected_type.
+        TypeError: If value is not an instance of expected_type.
 
     """
     if not isinstance(value, expected_type):
@@ -82,14 +93,18 @@ def get_kwarg_typed(
 ) -> T:
     """Safely extract a typed value from kwargs with validation.
 
+    Retrieves a value from kwargs dictionary and validates its type.
+    Returns the default value if the key is missing, or the validated
+    value if present and type-correct.
+
     Args:
-        kwargs: The keyword arguments dict
-        key: Key to retrieve
-        expected_type: Expected type of the value
-        default: Default value if key is missing (also determines type)
+        kwargs: The keyword arguments dictionary to extract from.
+        key: Key to retrieve from kwargs.
+        expected_type: Expected type of the value.
+        default: Default value if key is missing. Also determines type T.
 
     Returns:
-        The validated value or default.
+        The validated value if key exists and type matches, or default.
 
     Raises:
         TypeError: If value exists but is not of expected_type.
@@ -106,12 +121,15 @@ def get_kwarg_typed(
 def ensure_dict(value: object, name: str = "value") -> dict[str, Any]:
     """Ensure a value is a dict, raising TypeError if not.
 
+    Validates that a value is a dictionary instance and returns it.
+    Raises TypeError with a descriptive message if validation fails.
+
     Args:
-        value: Value to check
-        name: Name for error message
+        value: Value to check.
+        name: Name for error message. Defaults to "value".
 
     Returns:
-        The value as a dict.
+        The value cast to dict[str, Any] if validation succeeds.
 
     Raises:
         TypeError: If value is not a dict.
@@ -125,12 +143,15 @@ def ensure_dict(value: object, name: str = "value") -> dict[str, Any]:
 def ensure_list(value: object, name: str = "value") -> list[Any]:
     """Ensure a value is a list, raising TypeError if not.
 
+    Validates that a value is a list instance and returns it.
+    Raises TypeError with a descriptive message if validation fails.
+
     Args:
-        value: Value to check
-        name: Name for error message
+        value: Value to check.
+        name: Name for error message. Defaults to "value".
 
     Returns:
-        The value as a list.
+        The value cast to list[Any] if validation succeeds.
 
     Raises:
         TypeError: If value is not a list.

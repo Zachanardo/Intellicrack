@@ -21,7 +21,7 @@ from collections.abc import Callable, Generator
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, ParamSpec, cast
+from typing import TYPE_CHECKING, Any, Literal, ParamSpec
 
 from intellicrack.utils.type_safety import validate_type
 
@@ -92,6 +92,9 @@ class ResourceUsage:
 
         Args:
             process: psutil Process instance to update from
+
+        Returns:
+            None
 
         """
         with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied):
@@ -208,6 +211,9 @@ class ProcessResource(ManagedResource):
 
         Attempts graceful termination first, then forceful termination if needed.
 
+        Returns:
+            None
+
         """
         if self.process.poll() is None:
             # Try graceful termination first
@@ -223,7 +229,12 @@ class ProcessResource(ManagedResource):
                 logger.exception("Error terminating process %s: %s", self.resource_id, e)
 
     def update_usage(self) -> None:
-        """Update resource usage statistics from process metrics."""
+        """Update resource usage statistics from process metrics.
+
+        Returns:
+            None
+
+        """
         if self.psutil_process:
             self.usage.update(self.psutil_process)
 
@@ -253,6 +264,9 @@ class VMResource(ManagedResource):
         """Clean up the virtual machine.
 
         Attempts graceful QEMU shutdown via monitor socket, then forceful kill if needed.
+
+        Returns:
+            None
 
         """
         # Use QEMU monitor command to shutdown gracefully
@@ -334,6 +348,9 @@ class ResourceManager:
 
         Periodically checks resource limits and removes stale resources.
 
+        Returns:
+            None
+
         """
         while True:
             try:
@@ -347,6 +364,9 @@ class ResourceManager:
         """Check and enforce resource limits.
 
         Logs warnings when limits are exceeded.
+
+        Returns:
+            None
 
         """
         with self._lock:
@@ -371,6 +391,9 @@ class ResourceManager:
 
         Removes process resources that are no longer running.
 
+        Returns:
+            None
+
         """
         with self._lock:
             stale_resources = [
@@ -389,6 +412,9 @@ class ResourceManager:
 
         Returns:
             Resource ID
+
+        Raises:
+            RuntimeError: If resource limits have been exceeded.
 
         """
         with self._lock:
@@ -422,8 +448,8 @@ class ResourceManager:
         Args:
             resource_id: ID of the resource to release
 
-        Raises:
-            Exception: If resource cleanup fails (still raised after logging)
+        Returns:
+            None
 
         """
         with self._lock:
@@ -541,6 +567,9 @@ class ResourceManager:
 
         Iterates through all resources and calls release_resource on each one.
 
+        Returns:
+            None
+
         """
         with self._lock:
             logger.info("Cleaning up %s resources", len(self._resources))
@@ -555,7 +584,12 @@ class ResourceManager:
                     logger.exception("Error cleaning up resource %s: %s", resource_id, e)
 
     def __enter__(self) -> "ResourceManager":
-        """Context manager entry."""
+        """Enter resource manager context.
+
+        Returns:
+            This ResourceManager instance
+
+        """
         return self
 
     def __exit__(
@@ -564,7 +598,17 @@ class ResourceManager:
         exc_val: BaseException | None,
         exc_tb: types.TracebackType | None,
     ) -> Literal[False]:
-        """Context manager exit with cleanup."""
+        """Exit resource manager context with cleanup.
+
+        Args:
+            exc_type: Exception type if an exception occurred
+            exc_val: Exception value if an exception occurred
+            exc_tb: Exception traceback if an exception occurred
+
+        Returns:
+            False to propagate any exceptions that occurred
+
+        """
         self.cleanup_all()
         if exc_type:
             logger.exception("Exception in resource manager context: %s: %s", exc_type.__name__, exc_val)
@@ -695,6 +739,9 @@ class ResourceManager:
 
         Args:
             **limits: Keyword arguments with limit names and values
+
+        Returns:
+            None
 
         """
         with self._lock:
@@ -858,7 +905,12 @@ class ResourceContext:
         self._entered = False
 
     def __enter__(self) -> "ResourceContext":
-        """Enter resource context."""
+        """Enter resource context.
+
+        Returns:
+            This ResourceContext instance
+
+        """
         self._entered = True
         return self
 
@@ -868,7 +920,17 @@ class ResourceContext:
         exc_val: BaseException | None,
         exc_tb: types.TracebackType | None,
     ) -> Literal[False]:
-        """Exit resource context with cleanup."""
+        """Exit resource context with cleanup.
+
+        Args:
+            exc_type: Exception type if an exception occurred
+            exc_val: Exception value if an exception occurred
+            exc_tb: Exception traceback if an exception occurred
+
+        Returns:
+            False to propagate any exceptions that occurred
+
+        """
         if self._entered:
             self.cleanup_all()
         return False
@@ -890,6 +952,9 @@ class ResourceContext:
 
         Returns:
             Resource ID string
+
+        Raises:
+            RuntimeError: If not used within a context manager.
 
         """
         if not self._entered:
@@ -929,7 +994,12 @@ class ResourceContext:
         return cleaned_count
 
     def get_resource_count(self) -> int:
-        """Get number of active resources in this context."""
+        """Get number of active resources in this context.
+
+        Returns:
+            Number of resources currently managed by this context
+
+        """
         return len(self.managed_resources)
 
 
@@ -968,12 +1038,13 @@ class AutoCleanupResource:
             Returns:
                 Result from wrapped function
 
+            Raises:
+                Any exception raised by the wrapped function
+
             """
             with ResourceContext(self.resource_manager, f"auto_{func.__name__}") as ctx:
-                # Execute function
                 result = func(*args, **kwargs)
 
-                # If result is a resource handle, register it
                 if result is not None:
                     ctx.register_resource(
                         self.resource_type,
@@ -1031,6 +1102,9 @@ class FallbackHandler:
         Initializes fallback implementations for common binary analysis and
         system administration tools.
 
+        Returns:
+            None
+
         """
         # Binary analysis fallbacks
         self.fallback_registry["strings"] = self._strings_fallback
@@ -1080,7 +1154,7 @@ class FallbackHandler:
         if tool_name in self.fallback_registry:
             try:
                 fallback_func = validate_type(self.fallback_registry[tool_name], Any)
-                return fallback_func(*args, **kwargs)  # type: ignore[operator,no-any-return]
+                return fallback_func(*args, **kwargs)
             except Exception as e:
                 logger.exception("Fallback for %s failed: %s", tool_name, e)
                 return None
@@ -1179,6 +1253,10 @@ class FallbackHandler:
         Returns:
             Analysis output string
 
+        Raises:
+            ImportError: If required analysis libraries are not available
+            Exception: If file analysis fails
+
         """
         try:
             result: list[str] = []
@@ -1215,7 +1293,7 @@ class FallbackHandler:
                     raise ImportError("pyelftools not available")
 
                 with open(binary_path, "rb") as f:
-                    elf_file: Any = validate_type(ELFFile, Any)(f)  # type: ignore[operator]
+                    elf_file: Any = validate_type(ELFFile, Any)(f)
 
                     if "-h" in (options or []):
                         result.extend((
@@ -1257,7 +1335,7 @@ class FallbackHandler:
 
             result: list[str] = []
             with open(binary_path, "rb") as f:
-                elf_file: Any = validate_type(ELFFile, Any)(f)  # type: ignore[operator]
+                elf_file: Any = validate_type(ELFFile, Any)(f)
 
                 if "-h" in (options or []):
                     # ELF header
@@ -1443,6 +1521,9 @@ class FallbackHandler:
             tool_name: Name of the tool to register fallback for
             fallback_func: Callable function to use as fallback
 
+        Returns:
+            None
+
         """
         self.fallback_registry[tool_name] = fallback_func
         logger.info("Registered fallback for %s", tool_name)
@@ -1465,7 +1546,7 @@ fallback_handler = FallbackHandler()
 
 
 def get_fallback_handler() -> FallbackHandler:
-    """Get the global fallback handler.
+    """Get the global fallback handler instance.
 
     Returns:
         Global FallbackHandler instance
@@ -1489,7 +1570,14 @@ def execute_with_fallback(
         fallback_kwargs: Optional keyword arguments for fallback function
 
     Returns:
-        Dictionary with status, output, and method information
+        Dictionary with status, output, and method information.
+            Keys include: status (success/fallback/error), output or error,
+            and method (primary/fallback/none)
+
+    Raises:
+        CalledProcessError: If primary command fails (caught internally)
+        FileNotFoundError: If command not found (caught internally)
+        TimeoutExpired: If command timeout exceeded (caught internally)
 
     """
     try:
@@ -1566,10 +1654,26 @@ def validate_external_dependencies() -> dict[str, Any]:
 
 
 def setup_resource_monitoring() -> None:
-    """Set up comprehensive resource monitoring."""
+    """Set up comprehensive resource monitoring.
+
+    Starts a background thread that periodically logs resource statistics,
+    health checks, and validates external tool dependencies.
+
+    Returns:
+        None
+
+    """
 
     def log_resource_stats() -> None:
-        """Periodic resource statistics logging."""
+        """Log periodic resource statistics.
+
+        Logs resource usage stats, health status, and tool validation
+        to identify potential resource issues.
+
+        Returns:
+            None
+
+        """
         try:
             stats = resource_manager.get_resource_usage_stats()
             health = resource_manager.health_check()
@@ -1583,7 +1687,6 @@ def setup_resource_monitoring() -> None:
             if health["status"] != "healthy":
                 logger.warning("Resource health: %s - Issues: %s", health["status"], health["issues"])
 
-            # Log tool validation periodically
             validation = validate_external_dependencies()
             if validation["missing_required_tools"]:
                 logger.warning("Missing required tools: %s", validation["missing_required_tools"])
@@ -1591,17 +1694,24 @@ def setup_resource_monitoring() -> None:
         except Exception as e:
             logger.exception("Failed to log resource stats: %s", e)
 
-    # Start monitoring thread (skip during testing)
     import threading
 
     def monitoring_loop() -> None:
+        """Run continuous resource monitoring loop.
+
+        Runs monitoring checks every 5 minutes with error recovery.
+
+        Returns:
+            None
+
+        """
         while True:
             try:
-                time.sleep(300)  # Log every 5 minutes
+                time.sleep(300)
                 log_resource_stats()
             except Exception as e:
                 logger.exception("Resource monitoring error: %s", e)
-                time.sleep(60)  # Wait before retrying
+                time.sleep(60)
 
     if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
         monitoring_thread = threading.Thread(target=monitoring_loop, daemon=True)
@@ -1623,7 +1733,12 @@ _resource_manager: ResourceManager | None = None
 
 
 def get_resource_manager() -> ResourceManager:
-    """Get the global resource manager instance."""
+    """Get the global resource manager instance.
+
+    Returns:
+        Global ResourceManager instance, creating it if necessary
+
+    """
     global _resource_manager
     if _resource_manager is None:
         _resource_manager = ResourceManager()

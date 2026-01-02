@@ -19,12 +19,13 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import ParamSpec, TypeVar
 
 from intellicrack.utils.logger import logger
 
 
-F = TypeVar("F", bound=Callable[..., Any])
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 try:
@@ -38,7 +39,11 @@ class EmulatorStatusWidget(QWidget):
     """Widget showing emulator status with visual indicators."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the emulator status widget with UI components and status tracking."""
+        """Initialize the emulator status widget with UI components and status tracking.
+
+        Args:
+            parent: Parent widget for this status widget.
+        """
         super().__init__(parent)
         self.qemu_label: QLabel
         self.qemu_status: QLabel
@@ -57,12 +62,12 @@ class EmulatorStatusWidget(QWidget):
 
         # QEMU status
         self.qemu_label = QLabel("QEMU:")
-        self.qemu_status = QLabel("⭕ Not Running")
+        self.qemu_status = QLabel("\u2b55 Not Running")  # Red circle
         self.qemu_status.setStyleSheet("color: #ff6b6b;")  # Red
 
         # Qiling status
         self.qiling_label = QLabel("Qiling:")
-        self.qiling_status = QLabel("⭕ Not Ready")
+        self.qiling_status = QLabel("\u2b55 Not Ready")  # Red circle
         self.qiling_status.setStyleSheet("color: #ff6b6b;")  # Red
 
         layout.addWidget(self.qemu_label)
@@ -72,8 +77,16 @@ class EmulatorStatusWidget(QWidget):
         layout.addWidget(self.qiling_status)
         layout.addStretch()
 
-    def update_emulator_status(self, emulator_type: str, is_running: bool, message: str) -> None:
-        """Update the status display for an emulator."""
+    def update_emulator_status(
+        self, emulator_type: str, *, is_running: bool, message: str
+    ) -> None:
+        """Update the status display for an emulator.
+
+        Args:
+            emulator_type: Type of emulator (QEMU or Qiling).
+            is_running: Whether the emulator is currently running.
+            message: Status message to display in the tooltip.
+        """
         self.emulator_status[emulator_type] = {
             "running": is_running,
             "message": message,
@@ -81,19 +94,19 @@ class EmulatorStatusWidget(QWidget):
 
         if emulator_type == "QEMU":
             if is_running:
-                self.qemu_status.setText("OK Running")
+                self.qemu_status.setText("\u2705 Running")  # Green checkmark
                 self.qemu_status.setStyleSheet("color: #51cf66;")  # Green
             else:
-                self.qemu_status.setText("⭕ Not Running")
+                self.qemu_status.setText("\u2b55 Not Running")  # Red circle
                 self.qemu_status.setStyleSheet("color: #ff6b6b;")  # Red
             self.qemu_status.setToolTip(message)
 
         elif emulator_type == "Qiling":
             if is_running:
-                self.qiling_status.setText("OK Ready")
+                self.qiling_status.setText("\u2705 Ready")  # Green checkmark
                 self.qiling_status.setStyleSheet("color: #51cf66;")  # Green
             else:
-                self.qiling_status.setText("⭕ Not Ready")
+                self.qiling_status.setText("\u2b55 Not Ready")  # Red circle
                 self.qiling_status.setStyleSheet("color: #ff6b6b;")  # Red
             self.qiling_status.setToolTip(message)
 
@@ -102,8 +115,7 @@ def add_emulator_tooltips(widget_dict: dict[str, QWidget]) -> None:
     """Add informative tooltips to emulator-dependent widgets.
 
     Args:
-        widget_dict: Dictionary mapping feature names to their widgets
-
+        widget_dict: Dictionary mapping feature names to their widgets.
     """
     tooltips = {
         "start_qemu": "Start or stop the QEMU virtual machine emulator.\nRequired for: Full system analysis, DNS monitoring, snapshot comparisons.",
@@ -125,13 +137,12 @@ def show_emulator_warning(parent: QWidget, emulator_type: str, feature_name: str
     """Show a warning dialog when an emulator is required but not running.
 
     Args:
-        parent: Parent widget for the dialog
-        emulator_type: Type of emulator (QEMU/Qiling)
-        feature_name: Name of the feature requiring the emulator
+        parent: Parent widget for the dialog.
+        emulator_type: Type of emulator (QEMU/Qiling).
+        feature_name: Name of the feature requiring the emulator.
 
     Returns:
-        True if user wants to proceed with auto-start, False otherwise
-
+        bool: True if user wants to proceed with auto-start, False otherwise.
     """
     msg = QMessageBox(parent)
     msg.setIcon(QMessageBox.Icon.Warning)
@@ -173,58 +184,102 @@ class EmulatorRequiredDecorator:
     """
 
     @staticmethod
-    def requires_qemu(func: F) -> F:
-        """Decorate functions requiring QEMU."""
+    def requires_qemu(func: Callable[P, R]) -> Callable[P, R | None]:
+        """Decorate functions requiring QEMU.
 
-        def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
+        Args:
+            func: Function to decorate that requires QEMU to be running.
+
+        Returns:
+            Callable: Decorated function that ensures QEMU is running before
+                execution.
+        """
+
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R | None:
+            """Wrapper function that ensures QEMU is running.
+
+            Args:
+                *args: Positional arguments to pass to the decorated function.
+                **kwargs: Keyword arguments to pass to the decorated function.
+
+            Returns:
+                R | None: Result of the decorated function or None if QEMU
+                    startup fails.
+            """
             from ..core.processing.emulator_manager import get_emulator_manager
 
-            if not isinstance(self, QWidget):
+            if not args:
+                return None
+            self_arg = args[0]
+            if not isinstance(self_arg, QWidget):
                 return None
 
-            binary_path = getattr(self, "binary_path", None)
+            binary_path = getattr(self_arg, "binary_path", None)
             if not binary_path:
-                QMessageBox.warning(self, "No Binary", "Please select a binary file first.")
+                QMessageBox.warning(self_arg, "No Binary", "Please select a binary file first.")
                 return None
 
             manager = get_emulator_manager()
             if not manager.qemu_running:
                 feature_name = func.__name__.replace("_", " ").title()
-                if show_emulator_warning(self, "QEMU", feature_name):
+                if show_emulator_warning(self_arg, "QEMU", feature_name):
                     if not manager.ensure_qemu_running(binary_path):
-                        QMessageBox.critical(self, "QEMU Error", "Failed to start QEMU. Check the logs for details.")
+                        QMessageBox.critical(
+                            self_arg, "QEMU Error", "Failed to start QEMU. Check the logs for details."
+                        )
                         return None
                 else:
                     return None
 
-            return func(self, *args, **kwargs)
+            return func(*args, **kwargs)
 
-        return wrapper  # type: ignore[return-value]
+        return wrapper
 
     @staticmethod
-    def requires_qiling(func: F) -> F:
-        """Decorate functions requiring Qiling."""
+    def requires_qiling(func: Callable[P, R]) -> Callable[P, R | None]:
+        """Decorate functions requiring Qiling.
 
-        def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
+        Args:
+            func: Function to decorate that requires Qiling to be ready.
+
+        Returns:
+            Callable: Decorated function that ensures Qiling is initialized
+                before execution.
+        """
+
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R | None:
+            """Wrapper function that ensures Qiling is ready.
+
+            Args:
+                *args: Positional arguments to pass to the decorated function.
+                **kwargs: Keyword arguments to pass to the decorated function.
+
+            Returns:
+                R | None: Result of the decorated function or None if Qiling
+                    initialization fails.
+            """
             from ..core.processing.emulator_manager import get_emulator_manager
 
-            if not isinstance(self, QWidget):
+            if not args:
+                return None
+            self_arg = args[0]
+            if not isinstance(self_arg, QWidget):
                 return None
 
-            binary_path = getattr(self, "binary_path", None)
+            binary_path = getattr(self_arg, "binary_path", None)
             if not binary_path:
-                QMessageBox.warning(self, "No Binary", "Please select a binary file first.")
+                QMessageBox.warning(self_arg, "No Binary", "Please select a binary file first.")
                 return None
 
             manager = get_emulator_manager()
             if not manager.ensure_qiling_ready(binary_path):
                 QMessageBox.critical(
-                    self,
+                    self_arg,
                     "Qiling Error",
                     "Failed to initialize Qiling. Ensure it's installed: pip install qiling",
                 )
                 return None
 
-            return func(self, *args, **kwargs)
+            return func(*args, **kwargs)
 
-        return wrapper  # type: ignore[return-value]
+        return wrapper

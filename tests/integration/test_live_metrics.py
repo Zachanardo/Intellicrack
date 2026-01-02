@@ -4,15 +4,12 @@ import sys
 import time
 from pathlib import Path
 
-# Add intellicrack to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
 from intellicrack.handlers.pyqt6_handler import QApplication, QMainWindow, QVBoxLayout, QWidget, QHBoxLayout
 from intellicrack.ui.widgets.cpu_status_widget import CPUStatusWidget
 from intellicrack.ui.widgets.gpu_status_widget import GPUStatusWidget
 
 
-def test_live_metrics():
+def test_live_metrics() -> int:
     """Test that CPU and GPU metrics update live."""
     print("=" * 60)
     print("Testing Live CPU/GPU Metrics")
@@ -47,13 +44,15 @@ def test_live_metrics():
     print("\n3. Testing initial data collection...")
 
     # Check CPU widget has monitoring thread
-    if hasattr(cpu_widget, 'monitor_thread') and cpu_widget.monitor_thread.isRunning():
+    cpu_thread = getattr(cpu_widget, 'monitor_thread', None)
+    if cpu_thread is not None and cpu_thread.isRunning():
         print("OK CPU monitoring thread is running")
     else:
         print("FAIL CPU monitoring thread not running")
 
     # Check GPU widget has monitoring thread
-    if hasattr(gpu_widget, 'monitor_thread') and gpu_widget.monitor_thread.isRunning():
+    gpu_thread = getattr(gpu_widget, 'monitor_thread', None)
+    if gpu_thread is not None and gpu_thread.isRunning():
         print("OK GPU monitoring thread is running")
     else:
         print("FAIL GPU monitoring thread not running")
@@ -97,11 +96,11 @@ def test_live_metrics():
     # Create timer to check for updates
     from intellicrack.handlers.pyqt6_handler import QTimer
 
-    update_count = [0, 0]  # CPU updates, GPU updates
-    last_cpu_value = [0]
-    last_gpu_value = [0]
+    update_count: list[int] = [0, 0]  # CPU updates, GPU updates
+    last_cpu_value: list[int] = [0]
+    last_gpu_value: list[int] = [0]
 
-    def check_cpu_updates():
+    def check_cpu_updates() -> None:
         """Check if CPU values are updating."""
         if hasattr(cpu_widget, 'total_cpu_bar'):
             current = cpu_widget.total_cpu_bar.value()
@@ -110,7 +109,7 @@ def test_live_metrics():
                 last_cpu_value[0] = current
                 print(f"   CPU updated: {current}%")
 
-    def check_gpu_updates():
+    def check_gpu_updates() -> None:
         """Check if GPU values are updating."""
         if hasattr(gpu_widget, 'utilization_bar'):
             current = gpu_widget.utilization_bar.value()
@@ -129,7 +128,7 @@ def test_live_metrics():
     QTimer.singleShot(10000, check_timer.stop)
     QTimer.singleShot(10500, lambda: print_results(update_count))
 
-    def print_results(counts):
+    def print_results(counts: list[int]) -> None:
         """Print test results."""
         print("\n" + "=" * 60)
         print("Test Results:")

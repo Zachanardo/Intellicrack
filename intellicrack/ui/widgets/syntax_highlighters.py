@@ -26,7 +26,11 @@ class PythonHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for Python code."""
 
     def __init__(self, parent: QObject | None = None) -> None:
-        """Initialize Python syntax highlighter with comprehensive language support."""
+        """Initialize Python syntax highlighter with comprehensive language support.
+
+        Args:
+            parent: Parent widget for this syntax highlighter, or None.
+        """
         super().__init__(parent)
 
         # Define highlighting rules
@@ -203,7 +207,18 @@ class PythonHighlighter(QSyntaxHighlighter):
         self.triple_single_quote_format.setForeground(QColor("#CE9178"))  # Orange
 
     def highlightBlock(self, text: str | None) -> None:
-        """Apply syntax highlighting to block."""
+        """Apply syntax highlighting to block.
+
+        Applies syntax highlighting rules and multi-line string handling to a
+        single text block, including keyword, string, comment, number, function,
+        class, and decorator highlighting.
+
+        Args:
+            text: The text block to highlight, or None.
+
+        Returns:
+            None.
+        """
         if text is None:
             return
 
@@ -222,7 +237,21 @@ class PythonHighlighter(QSyntaxHighlighter):
         self.match_multiline_string(text, QRegularExpression("'''"), 2, self.triple_single_quote_format)
 
     def match_multiline_string(self, text: str, expression: QRegularExpression, state: int, format: QTextCharFormat) -> None:
-        """Handle multi-line string highlighting."""
+        """Handle multi-line string highlighting.
+
+        Applies highlighting format to multi-line strings that may span across
+        text blocks, tracking state to handle strings that begin in one block
+        and end in another.
+
+        Args:
+            text: The text block to process.
+            expression: Regular expression pattern to match multi-line delimiters.
+            state: Block state identifier for tracking across blocks.
+            format: Text format to apply to matches.
+
+        Returns:
+            None.
+        """
         if self.previousBlockState() == state:
             start_index = 0
             add = 0
@@ -254,7 +283,11 @@ class JavaScriptHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for JavaScript/Frida code."""
 
     def __init__(self, parent: QObject | None = None) -> None:
-        """Initialize JavaScript syntax highlighter with ES6+ language support."""
+        """Initialize JavaScript syntax highlighter with ES6+ language support.
+
+        Args:
+            parent: Parent widget for this syntax highlighter, or None.
+        """
         super().__init__(parent)
 
         # Define highlighting rules
@@ -452,7 +485,18 @@ class JavaScriptHighlighter(QSyntaxHighlighter):
         self.multiline_comment_format.setFontItalic(True)
 
     def highlightBlock(self, text: str | None) -> None:
-        """Apply syntax highlighting to block."""
+        """Apply syntax highlighting to block.
+
+        Applies syntax highlighting rules and multi-line comment handling to a
+        single text block, including keyword, literal, string, comment, number,
+        function, operator, and destructuring syntax highlighting.
+
+        Args:
+            text: The text block to highlight, or None.
+
+        Returns:
+            None.
+        """
         if text is None:
             return
 

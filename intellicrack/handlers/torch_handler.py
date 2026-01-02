@@ -84,7 +84,7 @@ def _detect_and_fix_intel_arc() -> bool:
     Arc GPUs. This is a known compatibility issue that requires CPU-only mode.
 
     Returns:
-        bool: True if Intel Arc GPU detected and CUDA disabled, False otherwise.
+        True if Intel Arc GPU detected and CUDA disabled, False otherwise.
 
     """
     # Check if UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS is set (Intel Arc indicator)
@@ -118,12 +118,8 @@ def _safe_torch_import(
         timeout: Timeout in seconds for import operation (currently unused).
 
     Returns:
-        tuple[bool, dict[str, object] | None, Exception | None]: Success flag,
-            dictionary of torch modules (if successful) or None, and exception
-            (if failed) or None.
-
-    Raises:
-        No exceptions are raised; they are captured and returned in the tuple.
+        Success flag, dictionary of torch modules (if successful) or None, and
+        exception (if failed) or None.
 
     """
     try:
@@ -226,14 +222,19 @@ if not HAS_TORCH:
             self.device: object | None = device
 
         def __repr__(self) -> str:
-            """Return string representation of fallback tensor."""
+            """Return string representation of fallback tensor.
+
+            Returns:
+                String representation of the tensor.
+
+            """
             return f"FallbackTensor({self.data})"
 
         def cuda(self) -> FallbackTensor:
             """Move to CUDA (no-op in fallback).
 
             Returns:
-                FallbackTensor: Self (no actual device transfer).
+                Self (no actual device transfer).
 
             """
             return self
@@ -242,7 +243,7 @@ if not HAS_TORCH:
             """Move to CPU (no-op in fallback).
 
             Returns:
-                FallbackTensor: Self (no actual device transfer).
+                Self (no actual device transfer).
 
             """
             return self
@@ -251,7 +252,7 @@ if not HAS_TORCH:
             """Convert to numpy array representation.
 
             Returns:
-                object: The underlying data object.
+                The underlying data object.
 
             """
             return self.data
@@ -268,7 +269,7 @@ if not HAS_TORCH:
             """Check CUDA availability.
 
             Returns:
-                bool: Always False in fallback mode.
+                Always False in fallback mode.
 
             """
             return False
@@ -278,7 +279,7 @@ if not HAS_TORCH:
             """Get count of CUDA devices.
 
             Returns:
-                int: Always 0 in fallback mode.
+                Always 0 in fallback mode.
 
             """
             return 0
@@ -291,7 +292,7 @@ if not HAS_TORCH:
                 device: Device index (unused in fallback).
 
             Returns:
-                str: Always "CPU Fallback" in fallback mode.
+                Always "CPU Fallback" in fallback mode.
 
             """
             return "CPU Fallback"
@@ -350,7 +351,7 @@ if not HAS_TORCH:
             **kwargs: Additional keyword arguments (passed to FallbackTensor).
 
         Returns:
-            FallbackTensor: Wrapped tensor object.
+            Wrapped tensor object.
 
         """
         return FallbackTensor(data, **kwargs)
@@ -382,7 +383,7 @@ if not HAS_TORCH:
             **kwargs: Additional keyword arguments (unused in fallback).
 
         Returns:
-            dict[str, object]: Empty dictionary in fallback mode.
+            Empty dictionary in fallback mode.
 
         """
         return {}

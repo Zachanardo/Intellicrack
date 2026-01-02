@@ -15,7 +15,6 @@ import os
 import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 from intellicrack.handlers.pyqt6_handler import QApplication, QMessageBox
@@ -51,6 +50,82 @@ def dialog(qapp: QApplication) -> PluginDialogBase:
     dlg.logger = logging.getLogger(__name__)
     yield dlg
     dlg.deleteLater()
+
+
+class FakeDialogMethod:
+    """Real test double for dialog accept/reject methods."""
+
+    def __init__(self) -> None:
+        self.called: bool = False
+        self.call_count: int = 0
+
+    def __call__(self) -> None:
+        """Track method invocation."""
+        self.called = True
+        self.call_count += 1
+
+
+class FakeFileDialog:
+    """Real test double for QFileDialog."""
+
+    def __init__(self, return_path: str = "", file_filter: str = "") -> None:
+        self.return_path = return_path
+        self.file_filter = file_filter
+
+    def getOpenFileName(
+        self,
+        parent: Any = None,
+        caption: str = "",
+        directory: str = "",
+        filter_str: str = ""
+    ) -> tuple[str, str]:
+        """Return configured path and filter."""
+        return (self.return_path, self.file_filter)
+
+
+class FakeMessageBox:
+    """Real test double for QMessageBox warning dialogs."""
+
+    def __init__(self) -> None:
+        self.called: bool = False
+        self.call_count: int = 0
+        self.last_title: str = ""
+        self.last_message: str = ""
+
+    def warning(
+        self,
+        parent: Any,
+        title: str,
+        message: str,
+        buttons: Any = None,
+        default_button: Any = None
+    ) -> Any:
+        """Track warning dialog invocations."""
+        self.called = True
+        self.call_count += 1
+        self.last_title = title
+        self.last_message = message
+        return None
+
+
+class FakeLogger:
+    """Real test double for logger."""
+
+    def __init__(self) -> None:
+        self.info_called: bool = False
+        self.debug_called: bool = False
+        self.info_messages: list[str] = []
+        self.debug_messages: list[str] = []
+
+    def info(self, message: str, *args: Any, **kwargs: Any) -> None:
+        """Track info log calls."""
+        self.info_called = True
+        self.info_messages.append(str(message))
+
+    def debug(self, message: str, *args: Any, **kwargs: Any) -> None:
+        """Track debug log calls."""
+        self.debug_called = True
+        self.debug_messages.append(str(message))
 
 
 def test_dialog_initialization_without_plugin(dialog: PluginDialogBase) -> None:
@@ -98,43 +173,49 @@ def test_plugin_label_bold_style(dialog: PluginDialogBase) -> None:
     assert "font-weight: bold" in style.lower()
 
 
-def test_ok_button_accepts_dialog(dialog: PluginDialogBase) -> None:
+def test_ok_button_accepts_dialog(dialog: PluginDialogBase, monkeypatch: pytest.MonkeyPatch) -> None:
     """OK button click accepts dialog."""
-    with patch.object(dialog, "accept") as mock_accept:
-        dialog.ok_button.click()
-        mock_accept.assert_called_once()
+    fake_accept = FakeDialogMethod()
+    monkeypatch.setattr(dialog, "accept", fake_accept)
+    dialog.ok_button.click()
+    assert fake_accept.called
+    assert fake_accept.call_count == 1
 
 
-def test_cancel_button_rejects_dialog(dialog: PluginDialogBase) -> None:
+def test_cancel_button_rejects_dialog(dialog: PluginDialogBase, monkeypatch: pytest.MonkeyPatch) -> None:
     """Cancel button click rejects dialog."""
-    with patch.object(dialog, "reject") as mock_reject:
-        dialog.cancel_button.click()
-        mock_reject.assert_called_once()
+    fake_reject = FakeDialogMethod()
+    monkeypatch.setattr(dialog, "reject", fake_reject)
+    dialog.cancel_button.click()
+    assert fake_reject.called
+    assert fake_reject.call_count == 1
 
 
-def test_browse_plugin_opens_file_dialog(dialog: PluginDialogBase, temp_plugin_file: Path) -> None:
+def test_browse_plugin_opens_file_dialog(dialog: PluginDialogBase, temp_plugin_file: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Browse button opens file dialog and loads selected plugin."""
-    with patch(
+    fake_dialog = FakeFileDialog(str(temp_plugin_file), "")
+    monkeypatch.setattr(
         "intellicrack.ui.dialogs.plugin_dialog_base.QFileDialog.getOpenFileName",
-        return_value=(str(temp_plugin_file), ""),
-    ):
-        dialog.browse_plugin()
+        fake_dialog.getOpenFileName
+    )
+    dialog.browse_plugin()
 
-        assert dialog.plugin_path == str(temp_plugin_file)
-        assert dialog.plugin_label.text() == temp_plugin_file.name
+    assert dialog.plugin_path == str(temp_plugin_file)
+    assert dialog.plugin_label.text() == temp_plugin_file.name
 
 
-def test_browse_plugin_cancelled_does_nothing(dialog: PluginDialogBase) -> None:
+def test_browse_plugin_cancelled_does_nothing(dialog: PluginDialogBase, monkeypatch: pytest.MonkeyPatch) -> None:
     """Cancelling browse dialog does not change plugin."""
     original_path = dialog.plugin_path
 
-    with patch(
+    fake_dialog = FakeFileDialog("", "")
+    monkeypatch.setattr(
         "intellicrack.ui.dialogs.plugin_dialog_base.QFileDialog.getOpenFileName",
-        return_value=("", ""),
-    ):
-        dialog.browse_plugin()
+        fake_dialog.getOpenFileName
+    )
+    dialog.browse_plugin()
 
-        assert dialog.plugin_path == original_path
+    assert dialog.plugin_path == original_path
 
 
 def test_load_plugin_success(dialog: PluginDialogBase, temp_plugin_file: Path) -> None:
@@ -146,15 +227,17 @@ def test_load_plugin_success(dialog: PluginDialogBase, temp_plugin_file: Path) -
     assert dialog.plugin_label.text() == temp_plugin_file.name
 
 
-def test_load_plugin_nonexistent_file_shows_warning(dialog: PluginDialogBase) -> None:
+def test_load_plugin_nonexistent_file_shows_warning(dialog: PluginDialogBase, monkeypatch: pytest.MonkeyPatch) -> None:
     """Loading nonexistent plugin file shows warning."""
-    with patch.object(QMessageBox, "warning") as mock_warning:
-        result = dialog.load_plugin("C:/nonexistent/plugin.py")
+    fake_messagebox = FakeMessageBox()
+    monkeypatch.setattr(QMessageBox, "warning", fake_messagebox.warning)
 
-        assert result is False
-        mock_warning.assert_called_once()
-        args = mock_warning.call_args[0]
-        assert "not found" in args[2].lower()
+    result = dialog.load_plugin("C:/nonexistent/plugin.py")
+
+    assert result is False
+    assert fake_messagebox.called
+    assert fake_messagebox.call_count == 1
+    assert "not found" in fake_messagebox.last_message.lower()
 
 
 def test_load_plugin_updates_plugin_label(dialog: PluginDialogBase, temp_plugin_file: Path) -> None:
@@ -165,12 +248,14 @@ def test_load_plugin_updates_plugin_label(dialog: PluginDialogBase, temp_plugin_
     assert temp_plugin_file.parent.name not in dialog.plugin_label.text()
 
 
-def test_load_plugin_calls_on_plugin_loaded(dialog: PluginDialogBase, temp_plugin_file: Path) -> None:
+def test_load_plugin_calls_on_plugin_loaded(dialog: PluginDialogBase, temp_plugin_file: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Loading plugin calls on_plugin_loaded hook."""
-    with patch.object(dialog, "on_plugin_loaded") as mock_on_loaded:
-        dialog.load_plugin(str(temp_plugin_file))
+    fake_on_loaded = FakeDialogMethod()
+    monkeypatch.setattr(dialog, "on_plugin_loaded", fake_on_loaded)
+    dialog.load_plugin(str(temp_plugin_file))
 
-        mock_on_loaded.assert_called_once_with(str(temp_plugin_file))
+    assert fake_on_loaded.called
+    assert fake_on_loaded.call_count == 1
 
 
 def test_on_plugin_loaded_stores_metadata(dialog: PluginDialogBase, temp_plugin_file: Path) -> None:
@@ -283,26 +368,26 @@ def test_on_plugin_loaded_stores_last_loaded_plugin(
     assert dialog._last_loaded_plugin == str(temp_plugin_file)
 
 
-def test_on_plugin_loaded_logs_info_message(dialog: PluginDialogBase, temp_plugin_file: Path) -> None:
+def test_on_plugin_loaded_logs_info_message(dialog: PluginDialogBase, temp_plugin_file: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """on_plugin_loaded logs successful load at info level."""
-    with patch.object(dialog.logger, "info") as mock_info:
-        dialog.on_plugin_loaded(str(temp_plugin_file))
+    fake_logger = FakeLogger()
+    monkeypatch.setattr(dialog, "logger", fake_logger)
+    dialog.on_plugin_loaded(str(temp_plugin_file))
 
-        mock_info.assert_called()
-        args = str(mock_info.call_args)
-        assert temp_plugin_file.name in args
+    assert fake_logger.info_called
+    assert any(temp_plugin_file.name in msg for msg in fake_logger.info_messages)
 
 
 def test_on_plugin_loaded_logs_debug_message(
-    dialog: PluginDialogBase, temp_plugin_file: Path
+    dialog: PluginDialogBase, temp_plugin_file: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """on_plugin_loaded logs path at debug level."""
-    with patch.object(dialog.logger, "debug") as mock_debug:
-        dialog.on_plugin_loaded(str(temp_plugin_file))
+    fake_logger = FakeLogger()
+    monkeypatch.setattr(dialog, "logger", fake_logger)
+    dialog.on_plugin_loaded(str(temp_plugin_file))
 
-        mock_debug.assert_called()
-        args = str(mock_debug.call_args)
-        assert str(temp_plugin_file) in args
+    assert fake_logger.debug_called
+    assert any(str(temp_plugin_file) in msg for msg in fake_logger.debug_messages)
 
 
 def test_multiple_plugin_loads_tracked_separately(dialog: PluginDialogBase, temp_plugin_file: Path) -> None:
@@ -406,26 +491,35 @@ def test_load_plugin_with_absolute_path(dialog: PluginDialogBase, temp_plugin_fi
     assert dialog.plugin_path == absolute_path
 
 
-def test_load_plugin_with_relative_path(dialog: PluginDialogBase) -> None:
+def test_load_plugin_with_relative_path(dialog: PluginDialogBase, monkeypatch: pytest.MonkeyPatch) -> None:
     """Loading plugin with relative path that doesn't exist fails."""
-    with patch.object(QMessageBox, "warning"):
-        result = dialog.load_plugin("./relative/plugin.py")
+    fake_messagebox = FakeMessageBox()
+    monkeypatch.setattr(QMessageBox, "warning", fake_messagebox.warning)
 
-        assert result is False
+    result = dialog.load_plugin("./relative/plugin.py")
+
+    assert result is False
 
 
-def test_plugin_file_filter_includes_python_files(dialog: PluginDialogBase) -> None:
+def test_plugin_file_filter_includes_python_files(dialog: PluginDialogBase, monkeypatch: pytest.MonkeyPatch) -> None:
     """File dialog filter includes Python files."""
-    with patch(
-        "intellicrack.ui.dialogs.plugin_dialog_base.QFileDialog.getOpenFileName"
-    ) as mock_dialog:
-        mock_dialog.return_value = ("", "")
+    call_args_captured: list[tuple[Any, ...]] = []
 
-        dialog.browse_plugin()
+    def capture_getOpenFileName(*args: Any, **kwargs: Any) -> tuple[str, str]:
+        """Capture call arguments and return empty."""
+        call_args_captured.append(args)
+        return ("", "")
 
-        call_args = mock_dialog.call_args[0]
-        filter_string = call_args[3]
-        assert "*.py" in filter_string
+    monkeypatch.setattr(
+        "intellicrack.ui.dialogs.plugin_dialog_base.QFileDialog.getOpenFileName",
+        capture_getOpenFileName
+    )
+
+    dialog.browse_plugin()
+
+    assert len(call_args_captured) > 0
+    filter_string = call_args_captured[0][3]
+    assert "*.py" in filter_string
 
 
 def test_on_plugin_loaded_handles_no_dependent_widgets(

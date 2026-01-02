@@ -120,7 +120,7 @@ import time
 import types
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any
 
 import frida
 
@@ -239,6 +239,8 @@ class FridaCertificateHooks:
         Raises:
             ValueError: If script_name is not in AVAILABLE_SCRIPTS.
             FileNotFoundError: If the script file doesn't exist on disk.
+            OSError: If file read operation fails due to I/O errors.
+            Exception: If any other error occurs during file reading.
 
         """
         if script_name not in self.AVAILABLE_SCRIPTS:
@@ -552,6 +554,10 @@ class FridaCertificateHooks:
         Returns:
             BypassStatus object containing comprehensive bypass state information.
 
+        Raises:
+            RuntimeError: If RPC call fails or cannot be executed.
+            TypeError: If RPC response is not a dictionary as expected.
+
         """
         if not self._script_loaded or self.script is None:
             return BypassStatus(
@@ -624,7 +630,9 @@ class FridaCertificateHooks:
             Result returned by the RPC function.
 
         Raises:
-            RuntimeError: If no script is loaded or RPC function not found.
+            RuntimeError: If no script is loaded, RPC function not found, or
+                RPC call execution fails.
+            AttributeError: If RPC function not found in script exports.
 
         """
         if not self._script_loaded or self.script is None:
@@ -760,8 +768,14 @@ class FridaCertificateHooks:
         return self._script_loaded
 
     def __enter__(self) -> "FridaCertificateHooks":
-        """Enter context manager."""
+        """Enter context manager.
+
+        Returns:
+            The FridaCertificateHooks instance for use in the with statement.
+
+        """
         return self
+
 
     def __exit__(
         self,
@@ -769,5 +783,16 @@ class FridaCertificateHooks:
         exc_val: BaseException | None,
         exc_tb: types.TracebackType | None,
     ) -> None:
-        """Exit context manager and detach from process."""
+        """Exit context manager and detach from process.
+
+        Args:
+            exc_type: Type of exception that occurred in the with block, if any.
+            exc_val: Exception instance that occurred in the with block, if any.
+            exc_tb: Traceback object for the exception, if any.
+
+        Returns:
+            None. Exceptions are not suppressed and propagate normally.
+
+        """
         self.detach()
+

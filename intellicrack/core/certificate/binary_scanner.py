@@ -91,7 +91,19 @@ except ImportError:
 
 
 class ContextInfo:
-    """Information about the context surrounding an API call."""
+    """Information about the context surrounding an API call.
+
+    Stores detailed information about a specific code address including the
+    function name, surrounding disassembly code, and cross-references to
+    other parts of the binary.
+
+    Attributes:
+        address: Memory address of the code location.
+        function_name: Name of the containing function.
+        surrounding_code: Disassembly code around the address.
+        cross_references: List of addresses that reference this location.
+
+    """
 
     def __init__(
         self,
@@ -103,10 +115,10 @@ class ContextInfo:
         """Initialize context information.
 
         Args:
-            address: Memory address of the API call
-            function_name: Name of the function containing the call
-            surrounding_code: Disassembly around the call site
-            cross_references: List of addresses that reference this location
+            address: Memory address of the API call.
+            function_name: Name of the function containing the call.
+            surrounding_code: Disassembly around the call site.
+            cross_references: List of addresses that reference this location.
 
         """
         self.address = address
@@ -116,13 +128,28 @@ class ContextInfo:
 
 
 class BinaryScanner:
-    """Scans binaries for certificate validation API usage."""
+    """Scans binaries for certificate validation API usage.
+
+    Analyzes PE, ELF, and Mach-O binaries to detect certificate validation
+    APIs, SSL/TLS libraries, and certificate-related strings. Supports both
+    static analysis (imports, strings) and dynamic analysis (radare2 disassembly).
+
+    Attributes:
+        binary_path: Path to the binary file being scanned.
+        binary: Parsed binary object from LIEF (PE, ELF, or Mach-O).
+        r2_handle: radare2 session handle for disassembly analysis.
+
+    """
 
     def __init__(self, binary_path: str) -> None:
         """Initialize binary scanner.
 
         Args:
-            binary_path: Path to the binary to scan
+            binary_path: Path to the binary to scan.
+
+        Raises:
+            FileNotFoundError: If the binary file does not exist.
+            RuntimeError: If binary parsing with LIEF fails.
 
         """
         self.binary_path = Path(binary_path)
@@ -142,7 +169,7 @@ class BinaryScanner:
         """Scan binary imports and return imported DLL/library names.
 
         Returns:
-            List of imported library names
+            List of imported library names.
 
         """
         if not self.binary:
@@ -174,10 +201,10 @@ class BinaryScanner:
         """Identify SSL/TLS libraries from imports.
 
         Args:
-            imports: List of imported libraries (if None, will scan imports)
+            imports: List of imported libraries (if None, will scan imports).
 
         Returns:
-            List of detected TLS library names
+            List of detected TLS library names.
 
         """
         if imports is None:
@@ -207,7 +234,7 @@ class BinaryScanner:
         """Extract all strings from binary.
 
         Returns:
-            List of strings found in binary
+            List of strings found in binary.
 
         """
         strings = []
@@ -233,10 +260,10 @@ class BinaryScanner:
         """Find certificate-related strings in binary.
 
         Args:
-            strings: List of strings to search (if None, will scan strings)
+            strings: List of strings to search (if None, will scan strings).
 
         Returns:
-            List of certificate-related strings
+            List of certificate-related strings.
 
         """
         if strings is None:
@@ -270,7 +297,7 @@ class BinaryScanner:
         """Initialize radare2 connection.
 
         Returns:
-            True if successful, False otherwise
+            True if successful, False otherwise.
 
         """
         if not R2PIPE_AVAILABLE:
@@ -291,10 +318,10 @@ class BinaryScanner:
         """Find all calls to a specific API using radare2.
 
         Args:
-            api_name: Name of the API to search for
+            api_name: Name of the API to search for.
 
         Returns:
-            List of addresses where the API is called
+            List of addresses where the API is called.
 
         """
         if not self._init_radare2() or self.r2_handle is None:
@@ -318,10 +345,10 @@ class BinaryScanner:
         """Fallback method to find API calls using LIEF.
 
         Args:
-            api_name: Name of the API to search for
+            api_name: Name of the API to search for.
 
         Returns:
-            List of addresses (may be import table addresses)
+            List of addresses (may be import table addresses).
 
         """
         if not self.binary:
@@ -338,10 +365,11 @@ class BinaryScanner:
         """Analyze the context surrounding a code address.
 
         Args:
-            address: Address to analyze
+            address: Address to analyze.
 
         Returns:
-            ContextInfo object with context information
+            Context information with function name, surrounding code, and
+            cross-references.
 
         """
         if not self._init_radare2() or self.r2_handle is None:
@@ -375,10 +403,10 @@ class BinaryScanner:
         """Calculate confidence score for certificate validation detection.
 
         Args:
-            context: Context information for the API call
+            context: Context information for the API call.
 
         Returns:
-            Confidence score between 0.0 and 1.0
+            Confidence score between 0.0 and 1.0.
 
         """
         confidence = 0.0
@@ -409,7 +437,12 @@ class BinaryScanner:
         return min(confidence, 1.0)
 
     def close(self) -> None:
-        """Clean up resources."""
+        """Clean up resources and close radare2 connection.
+
+        Closes the radare2 connection if it was initialized. Handles any
+        errors that occur during shutdown gracefully.
+
+        """
         if self.r2_handle:
             try:
                 self.r2_handle.quit()
@@ -422,7 +455,7 @@ class BinaryScanner:
         """Enter context manager.
 
         Returns:
-            BinaryScanner: This instance for use in a with statement
+            This instance for use in a with statement.
 
         """
         return self
@@ -436,9 +469,9 @@ class BinaryScanner:
         """Exit context manager.
 
         Args:
-            exc_type: Exception type if an error occurred
-            exc_val: Exception value if an error occurred
-            exc_tb: Exception traceback if an error occurred
+            exc_type: Exception type if an error occurred.
+            exc_val: Exception value if an error occurred.
+            exc_tb: Exception traceback if an error occurred.
 
         """
         self.close()

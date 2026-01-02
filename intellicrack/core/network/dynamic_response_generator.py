@@ -1,19 +1,5 @@
-"""Dynamic response generator for creating intelligent network responses."""
+"""Dynamic response generator for creating intelligent network responses.
 
-import hashlib
-import json
-import logging
-import re
-import struct
-import time
-import uuid
-from dataclasses import dataclass
-from typing import Any
-
-from intellicrack.utils.logger import logger
-
-
-"""
 Dynamic Response Generator for License Server Protocols
 
 Copyright (C) 2025 Zachary Flint
@@ -33,6 +19,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
+
+import hashlib
+import json
+import logging
+import re
+import struct
+import time
+import uuid
+from dataclasses import dataclass
+from typing import Any
+
+from intellicrack.utils.logger import logger
 
 
 @dataclass
@@ -70,7 +68,16 @@ class FlexLMProtocolHandler:
         self.logger = logging.getLogger("IntellicrackLogger.FlexLMHandler")
 
     def parse_request(self, data: bytes) -> dict[str, Any] | None:
-        """Parse FlexLM license request."""
+        """Parse FlexLM license request.
+
+        Args:
+            data: Raw request data from FlexLM protocol client.
+
+        Returns:
+            Parsed request information containing command, features, version,
+            hostid, and vendor fields, or None if parsing fails.
+
+        """
         try:
             text_data = data.decode("utf-8", errors="ignore")
 
@@ -117,7 +124,15 @@ class FlexLMProtocolHandler:
             return None
 
     def generate_response(self, context: ResponseContext) -> bytes:
-        """Generate FlexLM license response."""
+        """Generate FlexLM license response.
+
+        Args:
+            context: Request context containing protocol information and request data.
+
+        Returns:
+            FlexLM-formatted license response data.
+
+        """
         try:
             parsed = self.parse_request(context.request_data)
 
@@ -155,7 +170,16 @@ class HASPProtocolHandler:
         self.logger = logging.getLogger("IntellicrackLogger.HASPHandler")
 
     def parse_request(self, data: bytes) -> dict[str, Any] | None:
-        """Parse HASP license request."""
+        """Parse HASP license request.
+
+        Args:
+            data: Raw request data from HASP/Sentinel protocol client.
+
+        Returns:
+            Parsed request with format (json/binary/text), data, and optional
+            header information, or None if parsing fails.
+
+        """
         try:
             # Check if it's JSON format
             if data.startswith(b"{"):
@@ -184,7 +208,15 @@ class HASPProtocolHandler:
             return None
 
     def generate_response(self, context: ResponseContext) -> bytes:
-        """Generate HASP license response."""
+        """Generate HASP license response.
+
+        Args:
+            context: Request context containing protocol information and request data.
+
+        Returns:
+            HASP-formatted license response in appropriate format (JSON/binary/text).
+
+        """
         try:
             parsed = self.parse_request(context.request_data)
 
@@ -222,7 +254,16 @@ class AdobeProtocolHandler:
         self.logger = logging.getLogger("IntellicrackLogger.AdobeHandler")
 
     def parse_request(self, data: bytes) -> dict[str, Any] | None:
-        """Parse Adobe license request."""
+        """Parse Adobe license request.
+
+        Args:
+            data: Raw request data from Adobe activation protocol client.
+
+        Returns:
+            Parsed request with type, product, serial, machine_id, and optional
+            JSON data, or None if parsing fails.
+
+        """
         try:
             text_data = data.decode("utf-8", errors="ignore")
 
@@ -271,7 +312,15 @@ class AdobeProtocolHandler:
             return None
 
     def generate_response(self, context: ResponseContext) -> bytes:
-        """Generate Adobe license response."""
+        """Generate Adobe license response.
+
+        Args:
+            context: Request context containing protocol information and request data.
+
+        Returns:
+            Adobe-formatted license response in JSON or XML format.
+
+        """
         try:
             parsed = self.parse_request(context.request_data)
 
@@ -314,7 +363,16 @@ class MicrosoftKMSHandler:
         self.logger = logging.getLogger("IntellicrackLogger.KMSHandler")
 
     def parse_request(self, data: bytes) -> dict[str, Any] | None:
-        """Parse Microsoft KMS request."""
+        """Parse Microsoft KMS request.
+
+        Args:
+            data: Raw request data from KMS client in RPC or text format.
+
+        Returns:
+            Parsed request with format (rpc/text), version, packet_type,
+            fragment_flags, and payload, or None if parsing fails.
+
+        """
         try:
             # KMS uses RPC protocol
             if len(data) >= 16:
@@ -341,7 +399,15 @@ class MicrosoftKMSHandler:
             return None
 
     def generate_response(self, context: ResponseContext) -> bytes:
-        """Generate Microsoft KMS response."""
+        """Generate Microsoft KMS response.
+
+        Args:
+            context: Request context containing protocol information and request data.
+
+        Returns:
+            KMS-formatted response with RPC header or fallback activation response.
+
+        """
         try:
             parsed = self.parse_request(context.request_data)
 
@@ -367,7 +433,16 @@ class AutodeskProtocolHandler:
         self.logger = logging.getLogger("IntellicrackLogger.AutodeskHandler")
 
     def parse_request(self, data: bytes) -> dict[str, Any] | None:
-        """Parse Autodesk license request."""
+        """Parse Autodesk license request.
+
+        Args:
+            data: Raw request data from Autodesk Network License Manager client.
+
+        Returns:
+            Parsed request with type, product, version, and other extracted
+            fields, or None if parsing fails.
+
+        """
         try:
             text_data = data.decode("utf-8", errors="ignore")
 
@@ -399,7 +474,15 @@ class AutodeskProtocolHandler:
             return None
 
     def generate_response(self, context: ResponseContext) -> bytes:
-        """Generate Autodesk license response."""
+        """Generate Autodesk license response.
+
+        Args:
+            context: Request context containing protocol information and request data.
+
+        Returns:
+            Autodesk-formatted JSON license response with activation status.
+
+        """
         try:
             self.logger.debug("Generating Autodesk response for %s:%s", context.source_ip, context.source_port)
 
@@ -478,10 +561,12 @@ class DynamicResponseGenerator:
         """Generate a response for the given context.
 
         Args:
-            context: Request context information
+            context: Request context information containing protocol, request data,
+                and client details.
 
         Returns:
-            GeneratedResponse: Generated response data
+            Container with response_data, response_type, generation_method,
+            confidence score, and metadata.
 
         """
         start_time = time.time()
@@ -590,14 +675,30 @@ class DynamicResponseGenerator:
                 self.stats["average_response_time"] = (current_avg * (total_requests - 1) + response_time) / total_requests
 
     def _generate_cache_key(self, context: ResponseContext) -> str:
-        """Generate cache key for request."""
+        """Generate cache key for request.
+
+        Args:
+            context: Request context containing protocol and request data.
+
+        Returns:
+            SHA256-based cache key (32 characters).
+
+        """
         # Use SHA256 instead of MD5 for better security
         request_hash = hashlib.sha256(context.request_data).hexdigest()
         key_data = f"{context.protocol_type}:{context.target_port}:{request_hash}"
         return hashlib.sha256(key_data.encode()).hexdigest()[:32]
 
     def _get_cached_response(self, cache_key: str) -> bytes | None:
-        """Get cached response if still valid."""
+        """Get cached response if still valid.
+
+        Args:
+            cache_key: Cache key generated by _generate_cache_key.
+
+        Returns:
+            Cached response data if found and not expired, None otherwise.
+
+        """
         if cache_key in self.response_cache:
             response_data, timestamp = self.response_cache[cache_key]
             if time.time() - timestamp < self.cache_ttl:
@@ -607,7 +708,13 @@ class DynamicResponseGenerator:
         return None
 
     def _cache_response(self, cache_key: str, response_data: bytes) -> None:
-        """Cache response data."""
+        """Cache response data.
+
+        Args:
+            cache_key: Cache key generated by _generate_cache_key.
+            response_data: Response bytes to cache.
+
+        """
         self.response_cache[cache_key] = (response_data, time.time())
 
         # Limit cache size
@@ -618,7 +725,13 @@ class DynamicResponseGenerator:
                 del self.response_cache[old_key]
 
     def _learn_from_request(self, context: ResponseContext, response_data: bytes) -> None:
-        """Learn patterns from successful request/response pairs."""
+        """Learn patterns from successful request/response pairs.
+
+        Args:
+            context: Request context containing protocol and client information.
+            response_data: Generated response bytes.
+
+        """
         try:
             protocol = context.protocol_type
             if protocol not in self.learned_patterns:
@@ -648,7 +761,15 @@ class DynamicResponseGenerator:
             self.logger.debug("Learning error: %s", e, exc_info=True)
 
     def _extract_patterns(self, data: bytes) -> list[str]:
-        """Extract patterns from data for learning."""
+        """Extract patterns from data for learning.
+
+        Args:
+            data: Binary or text data to analyze for patterns.
+
+        Returns:
+            List of extracted pattern strings (limited to 20 items).
+
+        """
         patterns = []
 
         try:
@@ -678,7 +799,15 @@ class DynamicResponseGenerator:
         return patterns[:20]  # Limit pattern count
 
     def _generate_adaptive_response(self, context: ResponseContext) -> bytes | None:
-        """Generate response based on learned patterns."""
+        """Generate response based on learned patterns.
+
+        Args:
+            context: Request context containing protocol information.
+
+        Returns:
+            Generated response based on pattern matching, or None if no match found.
+
+        """
         try:
             protocol = context.protocol_type
             if protocol not in self.learned_patterns:
@@ -708,7 +837,16 @@ class DynamicResponseGenerator:
         return None
 
     def _calculate_similarity(self, patterns1: list[str], patterns2: list[str]) -> float:
-        """Calculate similarity between pattern lists."""
+        """Calculate similarity between pattern lists.
+
+        Args:
+            patterns1: First list of patterns.
+            patterns2: Second list of patterns.
+
+        Returns:
+            Similarity score between 0.0 and 1.0.
+
+        """
         if not patterns1 or not patterns2:
             return 0.0
 
@@ -718,7 +856,16 @@ class DynamicResponseGenerator:
         return matches / total if total > 0 else 0.0
 
     def _synthesize_response(self, response_patterns: list[str], context: ResponseContext) -> bytes:
-        """Synthesize response from learned patterns."""
+        """Synthesize response from learned patterns.
+
+        Args:
+            response_patterns: List of learned response patterns.
+            context: Request context for timestamp and client information.
+
+        Returns:
+            Synthesized response based on patterns.
+
+        """
         try:
             if json_patterns := [p for p in response_patterns if p.startswith("{")]:
                 template = json_patterns[0]
@@ -746,7 +893,15 @@ class DynamicResponseGenerator:
             return self._create_intelligent_fallback(context)
 
     def _generate_generic_response(self, context: ResponseContext) -> bytes:
-        """Generate generic response based on request characteristics."""
+        """Generate generic response based on request characteristics.
+
+        Args:
+            context: Request context containing request data and protocol type.
+
+        Returns:
+            Generic response formatted based on request analysis.
+
+        """
         try:
             # Analyze request data for clues
             request_text = context.request_data.decode("utf-8", errors="ignore").lower()
@@ -783,6 +938,13 @@ class DynamicResponseGenerator:
 
         This method creates appropriate fallback responses for different protocols
         to ensure clients receive valid responses even during error conditions.
+
+        Args:
+            context: Request context with protocol type and target port information.
+
+        Returns:
+            Protocol-specific fallback response suitable for error conditions.
+
         """
         try:
             # HTTP/HTTPS Protocol
@@ -867,7 +1029,15 @@ class DynamicResponseGenerator:
             return b"ERROR\n"
 
     def _create_intelligent_fallback(self, context: ResponseContext) -> bytes:
-        """Create an intelligent fallback response based on context."""
+        """Create an intelligent fallback response based on context.
+
+        Args:
+            context: Request context with request data and header information.
+
+        Returns:
+            Intelligent fallback response based on request analysis.
+
+        """
         try:
             # Analyze request for protocol hints
             request_str = context.request_data.decode("utf-8", errors="ignore")
@@ -928,11 +1098,22 @@ class DynamicResponseGenerator:
             return self._create_protocol_aware_fallback(context)
 
     def get_statistics(self) -> dict[str, Any]:
-        """Get response generation statistics."""
+        """Get response generation statistics.
+
+        Returns:
+            Copy of statistics dictionary containing total requests,
+            successful/failed responses, protocols handled, and average response time.
+
+        """
         return self.stats.copy()
 
     def export_learning_data(self) -> dict[str, Any]:
-        """Export learning data for backup/analysis."""
+        """Export learning data for backup/analysis.
+
+        Returns:
+            Dictionary containing learned patterns, statistics, and cache size.
+
+        """
         return {
             "learned_patterns": self.learned_patterns,
             "statistics": self.stats,
@@ -940,7 +1121,12 @@ class DynamicResponseGenerator:
         }
 
     def import_learning_data(self, data: dict[str, Any]) -> None:
-        """Import learning data from previous sessions."""
+        """Import learning data from previous sessions.
+
+        Args:
+            data: Dictionary containing learned patterns from previous sessions.
+
+        """
         try:
             if "learned_patterns" in data:
                 self.learned_patterns.update(data["learned_patterns"])

@@ -75,7 +75,13 @@ class MonitorEvent:
     call_stack: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert event to dictionary."""
+        """Convert event to dictionary.
+
+        Returns:
+            Dictionary representation of the monitoring event with timestamp, source,
+            event type, severity, details, process info, and call stack.
+
+        """
         return {
             "timestamp": self.timestamp,
             "source": self.source.value,

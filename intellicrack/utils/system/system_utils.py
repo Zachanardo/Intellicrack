@@ -51,8 +51,8 @@ try:
     PIL_AVAILABLE = True
 except ImportError as e:
     logger.exception("Import error in system_utils: %s", e)
-    ImageModule = None  # type: ignore[assignment]
-    ImageDrawModule = None  # type: ignore[assignment]
+    ImageModule = None
+    ImageDrawModule = None
     PIL_AVAILABLE = False
 
 
@@ -67,7 +67,7 @@ def get_targetprocess_pid(binary_path: str) -> int | None:
         binary_path: Path to the binary file
 
     Returns:
-        Optional[int]: Process ID if found, None otherwise
+        Process ID if found, None otherwise
 
     """
     if psutil is None:
@@ -142,7 +142,7 @@ def get_system_info() -> dict[str, Any]:
     """Get comprehensive system information.
 
     Returns:
-        dict: System information including OS, architecture, CPU, memory, etc.
+        System information including OS, architecture, CPU, memory, etc.
 
     """
     info = {
@@ -176,7 +176,7 @@ def check_dependencies(dependencies: dict[str, str]) -> tuple[bool, dict[str, bo
         dependencies: Dict mapping module names to descriptions
 
     Returns:
-        tuple: (all_satisfied, results) where results maps module names to availability
+        Tuple of (all_satisfied, results) where results maps module names to availability
 
     """
     results = {}
@@ -210,11 +210,10 @@ def run_command(
         timeout: Command timeout in seconds
 
     Returns:
-        subprocess.CompletedProcess: Command result
+        Command result
 
     Raises:
         subprocess.TimeoutExpired: If command times out
-        subprocess.CalledProcessError: If command fails
 
     """
     try:
@@ -247,17 +246,32 @@ def run_command(
 
 
 def is_windows() -> bool:
-    """Check if running on Windows."""
+    """Check if running on Windows.
+
+    Returns:
+        True if running on Windows, False otherwise
+
+    """
     return platform.system().lower() == "windows"
 
 
 def is_linux() -> bool:
-    """Check if running on Linux."""
+    """Check if running on Linux.
+
+    Returns:
+        True if running on Linux, False otherwise
+
+    """
     return platform.system().lower() == "linux"
 
 
 def is_macos() -> bool:
-    """Check if running on macOS."""
+    """Check if running on macOS.
+
+    Returns:
+        True if running on macOS, False otherwise
+
+    """
     return platform.system().lower() == "darwin"
 
 
@@ -265,7 +279,7 @@ def get_process_list() -> list[dict[str, Any]]:
     """Get list of running processes.
 
     Returns:
-        list: List of process info dictionaries
+        List of process info dictionaries
 
     """
     # Use the consolidated process listing function
@@ -280,7 +294,7 @@ def kill_process(pid: int, force: bool = False) -> bool:
         force: Whether to force kill (SIGKILL vs SIGTERM)
 
     Returns:
-        bool: True if successful
+        True if successful
 
     """
     if psutil is None:
@@ -316,7 +330,7 @@ def get_environment_variable(name: str, default: str | None = None) -> str | Non
         default: Default value if not found
 
     Returns:
-        Optional[str]: Variable value or default
+        Variable value or default
 
     """
     return os.environ.get(name, default)
@@ -329,6 +343,9 @@ def set_environment_variable(name: str, value: str) -> None:
         name: Variable name
         value: Variable value
 
+    Raises:
+        TypeError: If name or value is not a string
+
     """
     os.environ[name] = value
     logger.debug("Set environment variable: %s=%s", name, value)
@@ -338,7 +355,10 @@ def get_temp_directory() -> Path:
     """Get system temporary directory.
 
     Returns:
-        Path: Temporary directory path
+        Temporary directory path
+
+    Raises:
+        OSError: If temporary directory cannot be determined
 
     """
     import tempfile
@@ -350,7 +370,10 @@ def get_home_directory() -> Path:
     """Get user's home directory.
 
     Returns:
-        Path: Home directory path
+        Home directory path
+
+    Raises:
+        RuntimeError: If home directory cannot be determined
 
     """
     return Path.home()
@@ -360,7 +383,7 @@ def check_admin_privileges() -> bool:
     """Check if running with administrator/root privileges.
 
     Returns:
-        bool: True if running with elevated privileges
+        True if running with elevated privileges
 
     """
     try:
@@ -383,7 +406,7 @@ def is_admin() -> bool:
     """Alias for check_admin_privileges() for compatibility.
 
     Returns:
-        bool: True if running with elevated privileges
+        True if running with elevated privileges
 
     """
     return check_admin_privileges()
@@ -397,7 +420,7 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
         shell: Whether to run through shell
 
     Returns:
-        bool: True if command executed successfully
+        True if command executed successfully
 
     """
     _ = shell
@@ -443,7 +466,11 @@ def extract_executable_icon(exe_path: str, output_path: str | None = None) -> st
         output_path: Output path for the icon (optional)
 
     Returns:
-        Optional[str]: Path to the extracted icon file, or None if failed
+        Path to the extracted icon file, or None if failed
+
+    Raises:
+        OSError: If file operations fail
+        ValueError: If icon data is corrupted or invalid
 
     """
     if not PIL_AVAILABLE:
@@ -582,7 +609,7 @@ def optimize_memory_usage() -> dict[str, Any]:
     """Optimize system memory usage by clearing caches and garbage collection.
 
     Returns:
-        Dict[str, Any]: Memory statistics before and after optimization
+        Memory statistics before and after optimization
 
     """
     import gc

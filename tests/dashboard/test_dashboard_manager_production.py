@@ -11,7 +11,7 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 
@@ -72,13 +72,13 @@ def dashboard_config() -> dict[str, Any]:
 
 
 @pytest.fixture
-def dashboard_manager(dashboard_config: dict[str, Any]) -> DashboardManager:
+def dashboard_manager(dashboard_config: dict[str, Any]) -> Generator[DashboardManager, None, None]:
     """Create dashboard manager for testing.
 
     Args:
         dashboard_config: Dashboard configuration
 
-    Returns:
+    Yields:
         DashboardManager: Initialized dashboard manager
     """
     manager = create_dashboard_manager(dashboard_config)
@@ -230,6 +230,7 @@ class TestDataSourceManagement:
 
         dashboard_manager.add_data_source(source)
 
+        assert source.data_callback is not None
         result = source.data_callback()
 
         assert callback_invoked
@@ -368,7 +369,7 @@ class TestAnalysisEventProcessing:
 
         dashboard_manager.process_analysis_event("vulnerability", "ghidra", event_data)
 
-        events = dashboard_manager.dashboard.get_events()
+        events = list(dashboard_manager.dashboard.events)
         assert len(events) > 0
 
         latest_event = events[-1]
@@ -388,7 +389,7 @@ class TestAnalysisEventProcessing:
 
         dashboard_manager.process_analysis_event("protection", "radare2", event_data)
 
-        events = dashboard_manager.dashboard.get_events()
+        events = list(dashboard_manager.dashboard.events)
         latest_event = events[-1]
         assert latest_event.event_type == DashboardEventType.PROTECTION_DETECTED
         assert latest_event.tool == "radare2"
@@ -403,7 +404,7 @@ class TestAnalysisEventProcessing:
 
         dashboard_manager.process_analysis_event("error", "lief", event_data)
 
-        events = dashboard_manager.dashboard.get_events()
+        events = list(dashboard_manager.dashboard.events)
         latest_event = events[-1]
         assert latest_event.event_type == DashboardEventType.ERROR_OCCURRED
 
@@ -423,9 +424,11 @@ class TestAnalysisEventProcessing:
         current_data = vuln_widget.get_current_data()
 
         if current_data and current_data.values:
-            rows = current_data.values.get("rows", [])
+            values = dict(current_data.values) if isinstance(current_data.values, dict) else {}
+            raw_rows = values.get("rows", [])
+            rows = list(raw_rows) if isinstance(raw_rows, (list, tuple)) else []
             assert len(rows) > 0
-            latest_row = rows[-1]
+            latest_row = dict(rows[-1]) if isinstance(rows[-1], dict) else {}
             assert latest_row["Type"] == "serial_bypass"
             assert latest_row["Severity"] == "critical"
             assert latest_row["Tool"] == "frida"

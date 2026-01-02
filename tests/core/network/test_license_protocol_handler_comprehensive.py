@@ -16,11 +16,7 @@ from typing import Any
 
 import pytest
 
-from intellicrack.core.network.license_protocol_handler import (
-    FlexLMProtocolHandler,
-    HASPProtocolHandler,
-    LicenseProtocolHandler,
-)
+from intellicrack.core.network.license_protocol_handler import FlexLMProtocolHandler, HASPProtocolHandler, LicenseProtocolHandler
 
 
 class TestLicenseProtocolHandlerInitialization:
@@ -680,7 +676,7 @@ class TestHASPProtocolHandlerCommands:
         request = struct.pack("<II", 0x01, 0x00)
         response = handler.generate_response(request)
 
-        status, handle = struct.unpack("<II", response)
+        _status, handle = struct.unpack("<II", response)
 
         assert "handle" in handler.session_data
         assert handler.session_data["handle"] == handle
@@ -1182,7 +1178,7 @@ class TestProtocolHandlerShutdown:
     """Test protocol handler shutdown operations."""
 
     def test_shutdown_clears_all_data(self) -> None:
-        """shutdown clears all handler data."""
+        """Shutdown clears all handler data."""
         handler = FlexLMProtocolHandler()
 
         handler.generate_response(b"HELLO\n")
@@ -1195,7 +1191,7 @@ class TestProtocolHandlerShutdown:
         assert len(handler.captured_requests) == 0
 
     def test_shutdown_when_not_running_succeeds(self) -> None:
-        """shutdown succeeds when handler not running."""
+        """Shutdown succeeds when handler not running."""
         handler = FlexLMProtocolHandler()
 
         handler.shutdown()
@@ -1548,7 +1544,7 @@ class TestHASPRealProxyConnections:
             client.close()
 
             assert len(response) == 8
-            status, handle = struct.unpack("<II", response)
+            status, _handle = struct.unpack("<II", response)
             assert status == 0x00000000
 
             time.sleep(0.1)

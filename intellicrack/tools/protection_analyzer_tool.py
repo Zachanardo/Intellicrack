@@ -58,12 +58,11 @@ class ProtectionAnalyzerTool:
         """Perform comprehensive protection analysis on a binary.
 
         Args:
-            binary_path: Path to the binary to analyze
-            detailed: Whether to include detailed technical information
+            binary_path: Path to the binary to analyze.
+            detailed: Whether to include detailed technical information.
 
         Returns:
-            Comprehensive analysis results formatted for both human and LLM consumption
-
+            dict[str, Any]: Comprehensive analysis results formatted for both human and LLM consumption.
         """
         if not os.path.exists(binary_path):
             return {"success": False, "error": f"File not found: {binary_path}"}
@@ -182,7 +181,14 @@ class ProtectionAnalyzerTool:
             return {"success": False, "error": str(e)}
 
     def _get_file_info(self, binary_path: str) -> dict[str, Any]:
-        """Get basic file information."""
+        """Get basic file information.
+
+        Args:
+            binary_path: Path to the binary file.
+
+        Returns:
+            dict[str, Any]: File information including path, name, size, extension, and directory.
+        """
         path = Path(binary_path)
         return {
             "path": str(path.absolute()),
@@ -194,7 +200,14 @@ class ProtectionAnalyzerTool:
         }
 
     def _format_size(self, size: int) -> str:
-        """Format size in human readable form."""
+        """Format size in human readable form.
+
+        Args:
+            size: Size in bytes.
+
+        Returns:
+            str: Human-readable size string (e.g., "1.50 MB").
+        """
         size_float: float = float(size)
         for unit in ["B", "KB", "MB", "GB"]:
             if size_float < 1024.0:
@@ -203,7 +216,14 @@ class ProtectionAnalyzerTool:
         return f"{size_float:.2f} TB"
 
     def _build_protection_analysis(self, die_result: ProtectionAnalysis) -> dict[str, Any]:
-        """Build the main protection analysis section."""
+        """Build the main protection analysis section.
+
+        Args:
+            die_result: Protection analysis result from detector.
+
+        Returns:
+            dict[str, Any]: Comprehensive protection analysis organized by detection type.
+        """
         detections_by_type: dict[str, list[dict[str, Any]]] = {}
         for detection in die_result.detections:
             det_type = detection.type.value
@@ -242,7 +262,14 @@ class ProtectionAnalyzerTool:
         }
 
     def _get_protection_summary(self, die_result: ProtectionAnalysis) -> str:
-        """Get a summary of all protections detected."""
+        """Get a summary of all protections detected.
+
+        Args:
+            die_result: Protection analysis result from detector.
+
+        Returns:
+            str: Human-readable summary of detected protections.
+        """
         if not die_result.detections:
             return "No protections detected"
 
@@ -264,7 +291,14 @@ class ProtectionAnalyzerTool:
         return ", ".join(protection_names)
 
     def _get_bypass_difficulty(self, die_result: ProtectionAnalysis) -> str:
-        """Estimate bypass difficulty based on detections."""
+        """Estimate bypass difficulty based on detections.
+
+        Args:
+            die_result: Protection analysis result from detector.
+
+        Returns:
+            str: Difficulty level (None, Low, Medium, High, Very High).
+        """
         if not die_result.detections:
             return "None"
 
@@ -285,7 +319,14 @@ class ProtectionAnalyzerTool:
         return max_difficulty
 
     def _get_technical_details(self, die_result: ProtectionAnalysis) -> dict[str, Any]:
-        """Extract technical details from DIE analysis."""
+        """Extract technical details from DIE analysis.
+
+        Args:
+            die_result: Protection analysis result from detector.
+
+        Returns:
+            dict[str, Any]: Technical details including binary characteristics, sections, and imports.
+        """
         details: dict[str, Any] = {
             "binary_characteristics": {
                 "file_type": die_result.file_type,
@@ -309,7 +350,14 @@ class ProtectionAnalyzerTool:
         return details
 
     def _get_protection_indicators_from_die(self, die_result: ProtectionAnalysis) -> list[str]:
-        """Get specific indicators from DIE detections."""
+        """Get specific indicators from DIE detections.
+
+        Args:
+            die_result: Protection analysis result from detector.
+
+        Returns:
+            list[str]: List of specific protection indicators detected in the binary.
+        """
         indicators: list[str] = []
 
         if die_result.is_packed:
@@ -361,7 +409,14 @@ class ProtectionAnalyzerTool:
         return list(set(indicators))
 
     def _get_bypass_guidance(self, die_result: ProtectionAnalysis) -> dict[str, Any]:
-        """Provide bypass guidance based on DIE detections."""
+        """Provide bypass guidance based on DIE detections.
+
+        Args:
+            die_result: Protection analysis result from detector.
+
+        Returns:
+            dict[str, Any]: Bypass guidance including approach, technique, and difficulty score.
+        """
         if not die_result.detections:
             return {
                 "approach": "No bypass needed",
@@ -414,7 +469,14 @@ class ProtectionAnalyzerTool:
         return guidance
 
     def _difficulty_to_score(self, difficulty: str) -> int:
-        """Convert difficulty to numeric score (0-10)."""
+        """Convert difficulty to numeric score (0-10).
+
+        Args:
+            difficulty: Difficulty level as string.
+
+        Returns:
+            int: Numeric difficulty score from 0 to 10.
+        """
         scores: dict[str, int] = {
             "None": 0,
             "Trivial": 1,
@@ -428,7 +490,14 @@ class ProtectionAnalyzerTool:
         return scores.get(difficulty, 5)
 
     def _estimate_bypass_time(self, protection_name: str) -> str:
-        """Estimate bypass time based on protection."""
+        """Estimate bypass time based on protection.
+
+        Args:
+            protection_name: Name of the protection scheme.
+
+        Returns:
+            str: Estimated time to bypass the protection.
+        """
         name_lower = protection_name.lower()
 
         if any(p in name_lower for p in ["upx", "aspack", "pecompact"]):
@@ -443,7 +512,14 @@ class ProtectionAnalyzerTool:
             return "Varies"
 
     def _get_analysis_tips(self, detection: DetectionResult) -> list[str]:
-        """Get analysis tips for a specific detection."""
+        """Get analysis tips for a specific detection.
+
+        Args:
+            detection: Detection result with protection information.
+
+        Returns:
+            list[str]: List of analysis tips specific to the detected protection.
+        """
         tips: list[str] = []
 
         if detection.type == ProtectionType.PACKER:
@@ -474,7 +550,14 @@ class ProtectionAnalyzerTool:
         return tips[:5]
 
     def _get_tool_recommendations(self, die_result: ProtectionAnalysis) -> list[dict[str, str]]:
-        """Recommend tools based on DIE detections."""
+        """Recommend tools based on DIE detections.
+
+        Args:
+            die_result: Protection analysis result from detector.
+
+        Returns:
+            list[dict[str, str]]: List of recommended tools with names and purposes.
+        """
         tools: list[dict[str, str]] = []
         seen: set[str] = set()
 
@@ -518,7 +601,14 @@ class ProtectionAnalyzerTool:
         return all_tools[:8]
 
     def _build_llm_context(self, die_result: ProtectionAnalysis) -> dict[str, Any]:
-        """Build context specifically formatted for LLM consumption."""
+        """Build context specifically formatted for LLM consumption.
+
+        Args:
+            die_result: Protection analysis result from detector.
+
+        Returns:
+            dict[str, Any]: Context formatted for LLM processing and analysis.
+        """
         protection_summary = self._get_protection_summary(die_result)
 
         context: dict[str, Any] = {
@@ -576,7 +666,14 @@ class ProtectionAnalyzerTool:
         return context
 
     def _get_llm_specific_guidance(self, protection_name: str) -> str:
-        """Get LLM-specific guidance for the protection."""
+        """Get LLM-specific guidance for the protection.
+
+        Args:
+            protection_name: Name of the protection scheme.
+
+        Returns:
+            str: LLM-specific guidance for analyzing the protection.
+        """
         name_lower = protection_name.lower()
 
         if "hasp" in name_lower or "sentinel" in name_lower:
@@ -599,7 +696,14 @@ class ProtectionAnalyzerTool:
             return f"Protection: {protection_name}. Analyze specific implementation for bypass approach."
 
     def _should_analyze_license_patterns(self, result: ProtectionAnalysis) -> bool:
-        """Determine if license pattern analysis would be beneficial."""
+        """Determine if license pattern analysis would be beneficial.
+
+        Args:
+            result: Protection analysis result from detector.
+
+        Returns:
+            bool: True if license pattern analysis should be performed.
+        """
         if hasattr(result, "imports"):
             license_imports = [
                 "license",
@@ -622,7 +726,15 @@ class ProtectionAnalyzerTool:
         return False
 
     def _analyze_license_patterns(self, binary_path: str, result: ProtectionAnalysis) -> dict[str, Any]:
-        """Analyze license patterns using AI assistant."""
+        """Analyze license patterns using AI assistant.
+
+        Args:
+            binary_path: Path to the binary file.
+            result: Protection analysis result from detector.
+
+        Returns:
+            dict[str, Any]: License pattern analysis results.
+        """
         try:
             strings_data = self._extract_strings_from_binary(binary_path)
 
@@ -661,7 +773,14 @@ class ProtectionAnalyzerTool:
             return {"error": str(e)}
 
     def _extract_strings_from_binary(self, binary_path: str) -> dict[str, Any]:
-        """Extract strings from binary with focus on license-related patterns."""
+        """Extract strings from binary with focus on license-related patterns.
+
+        Args:
+            binary_path: Path to the binary file.
+
+        Returns:
+            dict[str, Any]: Extracted license-related strings and metadata.
+        """
         try:
             try:
                 from ..core.analysis.radare2_strings import R2StringAnalyzer
@@ -722,7 +841,14 @@ class ProtectionAnalyzerTool:
             return {"license_related_strings": [], "total_strings": 0, "error": str(e)}
 
     def _get_license_protection_context(self, result: ProtectionAnalysis) -> dict[str, Any]:
-        """Get additional context for license protection analysis."""
+        """Get additional context for license protection analysis.
+
+        Args:
+            result: Protection analysis result from detector.
+
+        Returns:
+            dict[str, Any]: Additional context for license protection analysis.
+        """
         context: dict[str, Any] = {
             "has_network_apis": False,
             "has_crypto_apis": False,
@@ -754,7 +880,14 @@ class ProtectionAnalyzerTool:
         return context
 
     def format_for_display(self, analysis: dict[str, Any]) -> str:
-        """Format analysis results for human-readable display."""
+        """Format analysis results for human-readable display.
+
+        Args:
+            analysis: Analysis results dictionary.
+
+        Returns:
+            str: Formatted analysis report for display.
+        """
         if not analysis.get("success"):
             return f"Analysis failed: {analysis.get('error', 'Unknown error')}"
 
@@ -825,7 +958,11 @@ class ProtectionAnalyzerTool:
 
 
 def register_protection_analyzer_tool() -> dict[str, Any]:
-    """Register this tool for LLM usage."""
+    """Register this tool for LLM usage.
+
+    Returns:
+        dict[str, Any]: Tool registration configuration for LLM integration.
+    """
     def handler(params: dict[str, Any]) -> dict[str, Any]:
         return ProtectionAnalyzerTool().analyze(params["file_path"], params.get("detailed", True))
 

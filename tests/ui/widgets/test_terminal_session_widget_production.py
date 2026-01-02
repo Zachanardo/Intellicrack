@@ -16,11 +16,13 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU GPL v3
 """
 
+from __future__ import annotations
+
 import sys
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any
-from unittest.mock import Mock, patch
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -34,6 +36,18 @@ if PYQT6_AVAILABLE:
     from intellicrack.ui.widgets.terminal_session_widget import (
         TerminalSessionWidget,
     )
+
+if TYPE_CHECKING:
+    from intellicrack.ui.widgets.embedded_terminal_widget import EmbeddedTerminalWidget
+
+
+def qwait(ms: int) -> None:
+    """Wait for ms milliseconds, processing Qt events.
+
+    Wrapper for QTest.qWait with proper typing since stubs are incorrect.
+    """
+    if PYQT6_AVAILABLE:
+        QTest.qWait(ms)  # type: ignore[arg-type, call-arg]
 
 pytestmark = pytest.mark.skipif(
     not PYQT6_AVAILABLE,
@@ -53,7 +67,7 @@ def qapp() -> Any:
 
 
 @pytest.fixture
-def temp_output_dir() -> Path:
+def temp_output_dir() -> Generator[Path, None, None]:
     """Create temporary directory for output files."""
     with tempfile.TemporaryDirectory(prefix="terminal_test_") as tmpdir:
         yield Path(tmpdir)
@@ -135,7 +149,7 @@ class TestTerminalSessionWidget:
         initial_count = widget.tab_widget.count()
 
         widget.close_session(session_id)
-        QTest.qWait(100)
+        qwait(100)
 
         final_count = widget.tab_widget.count()
         assert final_count == initial_count - 1
@@ -150,7 +164,7 @@ class TestTerminalSessionWidget:
         initial_count = widget.tab_widget.count()
 
         widget.close_current_session()
-        QTest.qWait(100)
+        qwait(100)
 
         final_count = widget.tab_widget.count()
         assert final_count == initial_count - 1
@@ -187,7 +201,7 @@ class TestTerminalSessionWidget:
 
         session_id = widget.create_new_session()
         widget.close_session(session_id)
-        QTest.qWait(100)
+        qwait(100)
 
         assert session_id in closed_sessions
 
@@ -207,7 +221,7 @@ class TestTerminalSessionWidget:
         session1 = widget.create_new_session(name="Session 1")
         session2 = widget.create_new_session(name="Session 2")
 
-        QTest.qWait(100)
+        qwait(100)
 
         assert active_sessions
 
@@ -221,7 +235,7 @@ class TestTerminalSessionWidget:
         for i in range(5):
             session_id = widget.create_new_session(name=f"Terminal {i}")
             session_ids.append(session_id)
-            QTest.qWait(50)
+            qwait(50)
 
         assert widget.tab_widget.count() >= 5
 
@@ -235,10 +249,10 @@ class TestTerminalSessionWidget:
         session2 = widget.create_new_session(name="Tab 2")
 
         widget.tab_widget.setCurrentIndex(0)
-        QTest.qWait(100)
+        qwait(100)
 
         widget.tab_widget.setCurrentIndex(1)
-        QTest.qWait(100)
+        qwait(100)
 
         widget.close()
 
@@ -251,7 +265,7 @@ class TestTerminalSessionWidget:
 
         if initial_count > 1:
             widget.tab_widget.tabCloseRequested.emit(0)
-            QTest.qWait(100)
+            qwait(100)
 
             assert widget.tab_widget.count() == initial_count - 1
 
@@ -303,7 +317,7 @@ class TestTerminalSessionWidget:
         if hasattr(widget, "rename_session"):
             new_name = "New Name"
             widget.rename_session(session_id, new_name)
-            QTest.qWait(100)
+            qwait(100)
 
         widget.close()
 
@@ -318,13 +332,11 @@ class TestTerminalSessionExecution:
         session_id = widget.create_new_session()
 
         if hasattr(widget, "get_session"):
-            session = widget.get_session(session_id)
-            if session and "widget" in session:
-                terminal = session["widget"]
-
+            terminal = widget.get_session(session_id)
+            if terminal is not None:
                 if hasattr(terminal, "execute_command"):
                     terminal.execute_command("echo Test Output")
-                    QTest.qWait(1000)
+                    qwait(1000)
 
         widget.close()
 
@@ -335,17 +347,15 @@ class TestTerminalSessionExecution:
         session_id = widget.create_new_session()
 
         if hasattr(widget, "get_session"):
-            session = widget.get_session(session_id)
-            if session and "widget" in session:
-                terminal = session["widget"]
-
+            terminal = widget.get_session(session_id)
+            if terminal is not None:
                 if hasattr(terminal, "execute_command"):
                     if sys.platform == "win32":
                         terminal.execute_command("echo Hello World")
                     else:
                         terminal.execute_command("echo 'Hello World'")
 
-                    QTest.qWait(1000)
+                    qwait(1000)
 
         widget.close()
 
@@ -361,13 +371,11 @@ class TestTerminalSessionExecution:
         session_id = widget.create_new_session()
 
         if hasattr(widget, "get_session"):
-            session = widget.get_session(session_id)
-            if session and "widget" in session:
-                terminal = session["widget"]
-
+            terminal = widget.get_session(session_id)
+            if terminal is not None:
                 if hasattr(terminal, "execute_command"):
                     terminal.execute_command(str(test_script_windows))
-                    QTest.qWait(1000)
+                    qwait(1000)
 
         widget.close()
 
@@ -378,17 +386,15 @@ class TestTerminalSessionExecution:
         session_id = widget.create_new_session()
 
         if hasattr(widget, "get_session"):
-            session = widget.get_session(session_id)
-            if session and "widget" in session:
-                terminal = session["widget"]
-
+            terminal = widget.get_session(session_id)
+            if terminal is not None:
                 if hasattr(terminal, "execute_command"):
                     for i in range(10):
                         if sys.platform == "win32":
                             terminal.execute_command(f"echo Line {i}")
                         else:
                             terminal.execute_command(f"echo 'Line {i}'")
-                        QTest.qWait(100)
+                        qwait(100)
 
         widget.close()
 
@@ -399,17 +405,15 @@ class TestTerminalSessionExecution:
         session_id = widget.create_new_session()
 
         if hasattr(widget, "get_session"):
-            session = widget.get_session(session_id)
-            if session and "widget" in session:
-                terminal = session["widget"]
-
+            terminal = widget.get_session(session_id)
+            if terminal is not None:
                 if hasattr(terminal, "execute_command"):
                     if sys.platform == "win32":
                         terminal.execute_command("cmd /c echo Error >&2")
                     else:
                         terminal.execute_command("echo 'Error' >&2")
 
-                    QTest.qWait(1000)
+                    qwait(1000)
 
         widget.close()
 
@@ -424,10 +428,8 @@ class TestTerminalSessionProcessManagement:
         session_id = widget.create_new_session()
 
         if hasattr(widget, "get_session"):
-            session = widget.get_session(session_id)
-            if session and "widget" in session:
-                terminal = session["widget"]
-
+            terminal = widget.get_session(session_id)
+            if terminal is not None:
                 if hasattr(terminal, "process_started"):
                     process_pids: list[int] = []
 
@@ -435,7 +437,7 @@ class TestTerminalSessionProcessManagement:
 
                 if hasattr(terminal, "execute_command"):
                     terminal.execute_command("echo Test")
-                    QTest.qWait(1000)
+                    qwait(1000)
 
         widget.close()
 
@@ -446,10 +448,8 @@ class TestTerminalSessionProcessManagement:
         session_id = widget.create_new_session()
 
         if hasattr(widget, "get_session"):
-            session = widget.get_session(session_id)
-            if session and "widget" in session:
-                terminal = session["widget"]
-
+            terminal = widget.get_session(session_id)
+            if terminal is not None:
                 if hasattr(terminal, "process_finished"):
                     finished_processes: list[tuple[int, int]] = []
 
@@ -459,7 +459,7 @@ class TestTerminalSessionProcessManagement:
 
                 if hasattr(terminal, "execute_command"):
                     terminal.execute_command("echo Done")
-                    QTest.qWait(1500)
+                    qwait(1500)
 
         widget.close()
 
@@ -470,21 +470,19 @@ class TestTerminalSessionProcessManagement:
         session_id = widget.create_new_session()
 
         if hasattr(widget, "get_session"):
-            session = widget.get_session(session_id)
-            if session and "widget" in session:
-                terminal = session["widget"]
-
+            terminal = widget.get_session(session_id)
+            if terminal is not None:
                 if hasattr(terminal, "execute_command"):
                     if sys.platform == "win32":
                         terminal.execute_command("ping -n 60 127.0.0.1")
                     else:
                         terminal.execute_command("sleep 60")
 
-                    QTest.qWait(500)
+                    qwait(500)
 
                 if hasattr(terminal, "terminate_process"):
                     terminal.terminate_process()
-                    QTest.qWait(500)
+                    qwait(500)
 
         widget.close()
 
@@ -495,21 +493,19 @@ class TestTerminalSessionProcessManagement:
         session_id = widget.create_new_session()
 
         if hasattr(widget, "get_session"):
-            session = widget.get_session(session_id)
-            if session and "widget" in session:
-                terminal = session["widget"]
-
+            terminal = widget.get_session(session_id)
+            if terminal is not None:
                 if hasattr(terminal, "execute_command"):
                     if sys.platform == "win32":
                         terminal.execute_command("cmd /c exit 1")
                     else:
                         terminal.execute_command("exit 1")
 
-                    QTest.qWait(1000)
+                    qwait(1000)
 
                 if hasattr(terminal, "execute_command"):
                     terminal.execute_command("echo Recovered")
-                    QTest.qWait(1000)
+                    qwait(1000)
 
         widget.close()
 
@@ -536,7 +532,7 @@ class TestTerminalSessionEdgeCases:
 
         for session_id in session_ids:
             widget.close_session(session_id)
-            QTest.qWait(100)
+            qwait(100)
 
         widget.close()
 
@@ -546,7 +542,7 @@ class TestTerminalSessionEdgeCases:
 
         for i in range(10):
             widget.create_new_session(name=f"Rapid {i}")
-            QTest.qWait(10)
+            qwait(10)
 
         assert widget.tab_widget.count() >= 10
 
@@ -561,13 +557,11 @@ class TestTerminalSessionEdgeCases:
         session_id = widget.create_new_session()
 
         if hasattr(widget, "get_session"):
-            session = widget.get_session(session_id)
-            if session and "widget" in session:
-                terminal = session["widget"]
-
+            terminal = widget.get_session(session_id)
+            if terminal is not None:
                 if hasattr(terminal, "execute_command"):
                     terminal.execute_command(str(test_script_long_running))
-                    QTest.qWait(500)
+                    qwait(500)
 
         widget.close()
 
@@ -582,17 +576,15 @@ class TestTerminalSessionEdgeCases:
 
         for i, session_id in enumerate(sessions):
             if hasattr(widget, "get_session"):
-                session = widget.get_session(session_id)
-                if session and "widget" in session:
-                    terminal = session["widget"]
-
+                terminal = widget.get_session(session_id)
+                if terminal is not None:
                     if hasattr(terminal, "execute_command"):
                         if sys.platform == "win32":
                             terminal.execute_command(f"echo Session {i}")
                         else:
                             terminal.execute_command(f"echo 'Session {i}'")
 
-        QTest.qWait(2000)
+        qwait(2000)
 
         widget.close()
 

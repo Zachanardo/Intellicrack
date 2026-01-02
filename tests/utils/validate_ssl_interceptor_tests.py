@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 
-def validate_ssl_interceptor_tests():
+def validate_ssl_interceptor_tests() -> bool:
     """Validate SSL interceptor test suite structure and imports."""
 
     print(" SSL INTERCEPTOR TEST VALIDATION")
@@ -128,7 +128,7 @@ def validate_ssl_interceptor_tests():
         return False
 
 
-def validate_source_module():
+def validate_source_module() -> bool:
     """Validate the source SSL interceptor module can be imported."""
 
     print(f"\n SOURCE MODULE VALIDATION")

@@ -5,11 +5,12 @@ CRITICAL: This base class enforces REAL data usage and provides utilities
 for validating that features actually work, not just return mock data.
 """
 
-import pytest
 import hashlib
+import time
 from pathlib import Path
-import subprocess
-import sys
+from typing import Any, Callable
+
+import pytest
 
 
 class IntellicrackTestBase:
@@ -23,20 +24,24 @@ class IntellicrackTestBase:
     """
 
     @classmethod
-    def setup_class(cls):
+    def setup_class(cls) -> None:
         """Setup that runs once for the test class."""
         cls.validate_test_environment()
 
     @classmethod
-    def validate_test_environment(cls):
+    def validate_test_environment(cls) -> None:
         """Ensure test environment has real dependencies."""
         # Check for Intellicrack installation
         try:
-            import intellicrack
+            import intellicrack  # noqa: F401
         except ImportError:
             pytest.fail("Intellicrack must be properly installed for real testing")
 
-    def assert_real_output(self, output, error_msg="Output appears to be mock/placeholder data"):
+    def assert_real_output(
+        self,
+        output: Any,
+        error_msg: str = "Output appears to be mock/placeholder data"
+    ) -> None:
         """
         Validate that output is real, not mocked or placeholder.
 
@@ -66,7 +71,7 @@ class IntellicrackTestBase:
         if output_str in {"success", "ok", "done", "true", "false", "{}", "[]"}:
             pytest.fail(f"{error_msg}: Output is suspiciously simple: {output}")
 
-    def assert_binary_analysis_real(self, analysis_result):
+    def assert_binary_analysis_real(self, analysis_result: dict[str, Any]) -> None:
         """Validate that binary analysis produced real results."""
         assert analysis_result is not None, "Analysis returned None"
 
@@ -92,7 +97,7 @@ class IntellicrackTestBase:
                 assert "size" in section, "Section missing size"
                 assert section["size"] > 0, "Section size cannot be 0"
 
-    def assert_exploit_works(self, exploit_code):
+    def assert_exploit_works(self, exploit_code: str) -> None:
         """Validate that generated exploit is real working code."""
         assert exploit_code is not None, "Exploit code is None"
         assert len(exploit_code) > 0, "Exploit code is empty"
@@ -114,7 +119,11 @@ class IntellicrackTestBase:
 
         assert has_shellcode, "Exploit doesn't contain real shellcode or assembly"
 
-    def assert_ai_script_executable(self, script_code, script_type="frida"):
+    def assert_ai_script_executable(
+        self,
+        script_code: str,
+        script_type: str = "frida"
+    ) -> None:
         """Validate that AI-generated script is real executable code."""
         assert script_code is not None, "Script code is None"
         assert len(script_code) > 50, "Script too short to be real"
@@ -134,7 +143,7 @@ class IntellicrackTestBase:
             assert "import ghidra" in script_code or "currentProgram" in script_code, \
                 "Missing Ghidra imports or API"
 
-    def assert_network_response_valid(self, response_data):
+    def assert_network_response_valid(self, response_data: dict[str, Any] | Any) -> None:
         """Validate that network response is real protocol data."""
         assert response_data is not None, "Response data is None"
 
@@ -149,7 +158,12 @@ class IntellicrackTestBase:
                 "license", "token", "session", "auth", "timestamp", "signature"
             ]), "Response missing protocol-specific fields"
 
-    def run_and_capture_output(self, func, *args, **kwargs):
+    def run_and_capture_output(
+        self,
+        func: Callable[..., Any],
+        *args: Any,
+        **kwargs: Any
+    ) -> Any:
         """
         Run a function and capture its output, ensuring it's real.
 
@@ -166,12 +180,17 @@ class IntellicrackTestBase:
                 pytest.fail(f"Function {func.__name__} returned placeholder error: {e}")
             raise
 
-    def validate_file_hash(self, file_path, expected_hash=None):
+    def validate_file_hash(
+        self,
+        file_path: str | Path,
+        expected_hash: str | None = None
+    ) -> str:
         """Validate file integrity with hash."""
-        if not Path(file_path).exists():
+        path = Path(file_path)
+        if not path.exists():
             pytest.fail(f"File {file_path} does not exist")
 
-        with open(file_path, 'rb') as f:
+        with open(path, 'rb') as f:
             file_hash = hashlib.sha256(f.read()).hexdigest()
 
         if expected_hash:
@@ -179,11 +198,14 @@ class IntellicrackTestBase:
 
         return file_hash
 
-    def assert_performance_acceptable(self, func, max_time=2.0, iterations=1):
+    def assert_performance_acceptable(
+        self,
+        func: Callable[[], Any],
+        max_time: float = 2.0,
+        iterations: int = 1
+    ) -> None:
         """Ensure function performs within acceptable time limits."""
-        import time
-
-        total_time = 0
+        total_time = 0.0
         for _ in range(iterations):
             start = time.time()
             func()

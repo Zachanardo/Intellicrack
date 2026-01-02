@@ -18,13 +18,13 @@ from intellicrack.core.monitoring.base_monitor import BaseMonitor, EventSeverity
 
 
 try:
-    from scapy.all import IP, TCP, UDP, Raw, sniff  # type: ignore[attr-defined]
+    from scapy.all import IP, TCP, UDP, Raw, sniff
     from scapy.packet import Packet
 
     SCAPY_AVAILABLE = True
 except ImportError:
     SCAPY_AVAILABLE = False
-    Packet = Any  # type: ignore[assignment,misc]
+    Packet = Any
 
 
 class NetworkMonitor(BaseMonitor):
@@ -58,7 +58,7 @@ class NetworkMonitor(BaseMonitor):
         """Start network monitoring.
 
         Returns:
-            True if started successfully.
+            True if started successfully, False otherwise.
 
         """
         if not SCAPY_AVAILABLE:

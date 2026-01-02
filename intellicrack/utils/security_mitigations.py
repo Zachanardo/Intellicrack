@@ -24,7 +24,6 @@ import sys
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from types import ModuleType
-from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -49,7 +48,18 @@ def mitigate_future_vulnerability() -> None:
             fromlist: Sequence[str] | None = (),
             level: int = 0,
         ) -> ModuleType:
-            """Prevent automatic import of test.py by future package."""
+            """Prevent automatic import of test.py by future package.
+
+            Args:
+                name: Name of the module to import.
+                globals: Global namespace dictionary for the import.
+                locals: Local namespace dictionary for the import.
+                fromlist: List of names to import from the module.
+                level: Relative import level (0 for absolute import).
+
+            Returns:
+                The imported module object.
+            """
             if name == "test" and globals is not None:
                 if isinstance(globals, dict) and "__name__" in globals:
                     caller_module_raw = globals["__name__"]

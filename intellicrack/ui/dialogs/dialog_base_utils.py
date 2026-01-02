@@ -30,11 +30,11 @@ def create_standard_control_layout(
     Args:
         buttons_config: List of tuples containing (button_text, enabled_state, callback_function).
             Each tuple specifies a button's text, initial enabled state, and optional click callback.
-        include_progress: Whether to include a progress bar in the layout. Defaults to True.
+        include_progress: Whether to include a progress bar in the layout.
 
     Returns:
-        A tuple containing the control layout, a dictionary mapping button keys to QPushButton objects,
-        and an optional QProgressBar (None if include_progress is False).
+        A tuple containing the control layout, a dictionary mapping button keys to QPushButton
+        objects, and an optional QProgressBar (None if include_progress is False).
 
     """
     control_layout = QHBoxLayout()

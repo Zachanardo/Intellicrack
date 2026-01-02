@@ -29,10 +29,10 @@ import platform
 import threading
 import time
 from collections import defaultdict
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol, TypedDict
+from typing import Any, Protocol
 
 from ...utils.logger import get_logger
 
@@ -44,15 +44,26 @@ class SecretsManagerProtocol(Protocol):
     """Protocol for secrets manager module."""
 
     def get_secret(self, key: str) -> str | None:
-        """Get a secret by key."""
-        pass
+        """Get a secret by key.
+
+        Args:
+            key: The secret key to retrieve.
+
+        """
+        ...
 
     def set_secret(self, key: str, value: str) -> None:
-        """Set a secret by key."""
-        pass
+        """Set a secret by key.
+
+        Args:
+            key: The secret key to set.
+            value: The secret value to store.
+
+        """
+        ...
 
 
-_secrets_manager_module: Any = None
+_secrets_manager_module: SecretsManagerProtocol | None = None
 
 
 def _get_secrets_manager() -> SecretsManagerProtocol:
@@ -67,7 +78,7 @@ def _get_secrets_manager() -> SecretsManagerProtocol:
         from ...utils import secrets_manager as _imported_secrets_manager
 
         _secrets_manager_module = _imported_secrets_manager
-    return _secrets_manager_module  # type: ignore[no-any-return]
+    return _secrets_manager_module
 
 
 def get_secret(key: str) -> str | None:
@@ -90,9 +101,6 @@ def set_secret(key: str, value: str) -> None:
     Args:
         key: Secret key to set.
         value: Secret value to store.
-
-    Returns:
-        The result of the set_secret operation.
 
     """
     manager = _get_secrets_manager()
@@ -644,10 +652,14 @@ class AuditLogger:
         """Log credential access attempts.
 
         Args:
-            credential_type: Type of credential being accessed
-            purpose: Purpose for credential access
-            success: Whether access was successful
-            severity: Override default severity level (defaults to context-appropriate level)
+            credential_type: Type of credential being accessed.
+            purpose: Purpose for credential access.
+            success: Whether access was successful.
+            severity: Override default severity level (defaults to
+                context-appropriate level).
+
+        Returns:
+            None.
 
         """
         # Determine appropriate severity level based on context
@@ -1003,6 +1015,9 @@ class PerformanceMonitor:
             timer_id: The timer ID returned by start_timer().
             metadata: Optional metadata dictionary (currently unused).
 
+        Returns:
+            None.
+
         """
         end_time = time.time()
         with self._lock:
@@ -1048,6 +1063,9 @@ class PerformanceMonitor:
             value: Amount to increment by (default 1).
             tags: Optional dictionary of tags for metric categorization.
 
+        Returns:
+            None.
+
         """
         with self._lock:
             metric_key = f"counter.{metric}"
@@ -1066,6 +1084,9 @@ class PerformanceMonitor:
             metric: Name of the gauge metric.
             value: Numeric value to record.
             tags: Optional dictionary of tags for metric categorization.
+
+        Returns:
+            None.
 
         """
         with self._lock:
@@ -1318,6 +1339,9 @@ class TelemetryCollector:
 
         Args:
             metrics: Dictionary of collected metrics.
+
+        Returns:
+            None.
 
         """
         try:
@@ -1591,9 +1615,6 @@ def setup_comprehensive_logging() -> None:
     and integrates the audit logger for security event tracking. This function
     should be called explicitly from the main application to avoid circular
     import issues during module initialization.
-
-    Raises:
-        Exception: Logs errors during setup but does not raise.
 
     """
     try:

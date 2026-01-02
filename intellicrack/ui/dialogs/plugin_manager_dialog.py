@@ -18,15 +18,19 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import os
 import shutil
 import zipfile
 from pathlib import Path
+from typing import Any
 
 # Optional imports with graceful fallbacks
 from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT,
     QCheckBox,
+    QCloseEvent,
     QComboBox,
     QDialog,
     QFileDialog,
@@ -50,7 +54,11 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 from intellicrack.utils.logger import logger
+from intellicrack.utils.url_validation import is_safe_url
 
+
+PluginInstallThread: type[Any]
+PluginManagerDialog: type[Any]
 
 # Additional imports specific to plugin manager
 if not HAS_PYQT:
@@ -68,7 +76,11 @@ if not HAS_PYQT:
         """
 
         def __init__(self, parent: object | None = None) -> None:
-            """Initialize fallback plugin manager dialog for non-GUI environments."""
+            """Initialize fallback plugin manager dialog for non-GUI environments.
+
+            Args:
+                parent: Parent widget reference (unused in fallback mode).
+            """
             self.parent = parent
 
             # Initialize UI attributes
@@ -101,8 +113,7 @@ if not HAS_PYQT:
             """Execute the dialog modally (no-op when PyQt6 is not available).
 
             Returns:
-                int: Always returns 0
-
+                Always returns 0.
             """
             return 0
 
@@ -110,28 +121,40 @@ if not HAS_PYQT:
             """Execute the dialog modally - PyQt6 style method (no-op when PyQt6 is not available).
 
             Returns:
-                int: Always returns 0
-
+                Always returns 0.
             """
             return 0
 
 else:
 
-    class PluginInstallThread(QThread):  # type: ignore[no-redef]
-        """Thread for installing plugins without blocking the UI."""
+    class PluginInstallThread(QThread):
+        """Thread for installing plugins without blocking the UI.
+
+        This class manages asynchronous plugin installation to prevent UI freezing
+        during file extraction and validation operations.
+        """
 
         progress_updated = pyqtSignal(int)
         status_updated = pyqtSignal(str)
         installation_finished = pyqtSignal(bool, str)
 
         def __init__(self, plugin_path: str, install_dir: str) -> None:
-            """Initialize plugin installation thread with source path and destination directory."""
+            """Initialize plugin installation thread with source path and destination directory.
+
+            Args:
+                plugin_path: Path to the plugin file to install (can be .py or .zip).
+                install_dir: Destination directory where the plugin will be installed.
+            """
             super().__init__()
             self.plugin_path = plugin_path
             self.install_dir = install_dir
 
         def run(self) -> None:
-            """Install plugin in background thread."""
+            """Install plugin in background thread.
+
+            Extracts plugin files, validates them, and emits progress signals.
+            Handles both single Python files and ZIP archives.
+            """
             try:
                 self.status_updated.emit("Extracting plugin...")
                 self.progress_updated.emit(25)
@@ -160,11 +183,20 @@ else:
                 logger.error("Error in plugin_manager_dialog: %s", e, exc_info=True)
                 self.installation_finished.emit(False, f"Installation failed: {e!s}")
 
-    class PluginManagerDialog(QDialog):  # type: ignore[no-redef]
-        """Dialog for managing Intellicrack plugins."""
+    class PluginManagerDialog(QDialog):
+        """Dialog for managing Intellicrack plugins.
+
+        Provides comprehensive plugin management including installation, configuration,
+        development, and testing of Intellicrack plugins for licensing analysis.
+        """
 
         def __init__(self, parent: QWidget | None = None, app_context: object | None = None) -> None:
-            """Initialize plugin manager dialog with plugin discovery and management capabilities."""
+            """Initialize plugin manager dialog with plugin discovery and management capabilities.
+
+            Args:
+                parent: Parent widget reference.
+                app_context: Application context with configuration and plugin settings.
+            """
             super().__init__(parent)
             self.setWindowTitle("Plugin Manager")
             self.setMinimumSize(900, 600)
@@ -236,7 +268,11 @@ else:
                     self.app_context.config["plugin_manager_shown_before"] = True
 
         def setup_ui(self) -> None:
-            """Set up the user interface."""
+            """Set up the user interface.
+
+            Creates and configures all UI components including tabs for installed plugins,
+            file installation, and plugin development with dialog buttons.
+            """
             self.setWindowTitle("Plugin Manager")
             self.setModal(True)
             self.resize(800, 600)
@@ -279,7 +315,11 @@ else:
             layout.addLayout(button_layout)
 
         def setup_connections(self) -> None:
-            """Set up signal-slot connections."""
+            """Set up signal-slot connections.
+
+            Connects repository selection changes and configures auto-refresh timer
+            based on application settings.
+            """
             # Repository selection changes
             if hasattr(self, "repo_combo"):
                 self.repo_combo.currentTextChanged.connect(self.on_repository_changed)
@@ -291,15 +331,180 @@ else:
                 self.auto_refresh_timer.start(300000)  # 5 minutes
 
         def on_repository_changed(self, repository_name: str) -> None:
-            """Handle repository selection change."""
+            """Handle repository selection change.
+
+            Loads plugins from the selected repository. For local repositories,
+            scans the local plugins directory. For remote repositories, fetches
+            the plugin list from the repository URL.
+
+            Args:
+                repository_name: Name of the selected repository.
+            """
             try:
-                # Repository change handled - available plugins functionality removed
-                pass
+                logger.info("Repository changed to: %s", repository_name)
+
+                if not repository_name:
+                    return
+
+                repo_url = self.repositories.get(repository_name)
+                if not repo_url:
+                    logger.warning("Unknown repository: %s", repository_name)
+                    return
+
+                if repository_name == "Local Repository":
+                    self._load_local_repository()
+                else:
+                    self._load_remote_repository(repository_name, repo_url)
+
             except Exception as e:
                 logger.error("Failed to load repository %s: %s", repository_name, e, exc_info=True)
+                if hasattr(self, "status_label") and self.status_label is not None:
+                    self.status_label.setText(f"Error loading repository: {repository_name}")
+
+        def _load_local_repository(self) -> None:
+            """Load plugins from the local repository directory.
+
+            Scans the plugins directory for available local plugins and
+            updates the installed plugins list.
+            """
+            try:
+                logger.debug("Loading local repository from: %s", self.plugins_dir)
+
+                if not os.path.exists(self.plugins_dir):
+                    os.makedirs(self.plugins_dir, exist_ok=True)
+                    logger.info("Created plugins directory: %s", self.plugins_dir)
+
+                self.load_installed_plugins()
+
+                if hasattr(self, "status_label") and self.status_label is not None:
+                    plugin_count = len(self.installed_plugins) if hasattr(self, "installed_plugins") else 0
+                    self.status_label.setText(f"Local repository: {plugin_count} plugins found")
+
+                logger.info("Loaded %d plugins from local repository", len(self.installed_plugins) if hasattr(self, "installed_plugins") else 0)
+
+            except Exception as e:
+                logger.error("Failed to load local repository: %s", e, exc_info=True)
+
+        def _load_remote_repository(self, repository_name: str, repo_url: str) -> None:
+            """Load plugins from a remote repository.
+
+            Fetches the plugin list from the remote repository URL and
+            displays available plugins for installation.
+
+            Args:
+                repository_name: Human-readable name of the repository.
+                repo_url: URL of the repository API endpoint.
+            """
+            try:
+                logger.info("Loading remote repository: %s from %s", repository_name, repo_url)
+
+                if hasattr(self, "status_label") and self.status_label is not None:
+                    self.status_label.setText(f"Loading {repository_name}...")
+
+                if not repo_url.startswith(("http://", "https://")):
+                    logger.warning("Invalid repository URL: %s", repo_url)
+                    if hasattr(self, "status_label") and self.status_label is not None:
+                        self.status_label.setText("Invalid repository URL")
+                    return
+
+                import json
+                import urllib.request
+
+                # Validate URL for SSRF protection
+                if not is_safe_url(repo_url):
+                    logger.warning("URL blocked by SSRF protection: %s", repo_url)
+                    if hasattr(self, "status_label") and self.status_label is not None:
+                        self.status_label.setText("URL blocked by security policy")
+                    return
+
+                headers = {"User-Agent": "Intellicrack-Plugin-Manager/1.0"}
+                request = urllib.request.Request(repo_url, headers=headers)
+
+                try:
+                    with urllib.request.urlopen(request, timeout=10) as response:
+                        data = json.loads(response.read().decode("utf-8"))
+
+                    plugins_found = []
+                    if isinstance(data, list):
+                        for item in data:
+                            if isinstance(item, dict):
+                                name = item.get("name", "")
+                                if name.endswith(".py") or item.get("type") == "dir":
+                                    plugin_info = {
+                                        "name": name.replace(".py", "") if name.endswith(".py") else name,
+                                        "url": item.get("download_url", item.get("html_url", "")),
+                                        "type": "file" if name.endswith(".py") else "directory",
+                                        "size": item.get("size", 0),
+                                        "sha": item.get("sha", ""),
+                                    }
+                                    plugins_found.append(plugin_info)
+
+                    logger.info("Found %d plugins in %s", len(plugins_found), repository_name)
+
+                    if hasattr(self, "status_label") and self.status_label is not None:
+                        self.status_label.setText(f"{repository_name}: {len(plugins_found)} plugins available")
+
+                    self._display_remote_plugins(plugins_found)
+
+                except urllib.error.HTTPError as e:
+                    logger.warning("HTTP error accessing repository %s: %s", repository_name, e)
+                    if hasattr(self, "status_label") and self.status_label is not None:
+                        self.status_label.setText(f"Repository unavailable: HTTP {e.code}")
+                except urllib.error.URLError as e:
+                    logger.warning("Network error accessing repository %s: %s", repository_name, e)
+                    if hasattr(self, "status_label") and self.status_label is not None:
+                        self.status_label.setText("Network error - check connection")
+                except json.JSONDecodeError as e:
+                    logger.warning("Invalid response from repository %s: %s", repository_name, e)
+                    if hasattr(self, "status_label") and self.status_label is not None:
+                        self.status_label.setText("Invalid repository response")
+
+            except Exception as e:
+                logger.error("Failed to load remote repository %s: %s", repository_name, e, exc_info=True)
+
+        def _display_remote_plugins(self, plugins: list[dict[str, object]]) -> None:
+            """Display remote plugins in the UI.
+
+            Shows the list of available plugins from the remote repository
+            in the plugin details area.
+
+            Args:
+                plugins: List of plugin information dictionaries.
+            """
+            try:
+                if not plugins:
+                    if hasattr(self, "plugin_details") and self.plugin_details is not None:
+                        self.plugin_details.setPlainText("No plugins found in this repository.")
+                    return
+
+                details_text = "Available Plugins:\n" + "=" * 40 + "\n\n"
+
+                for plugin in plugins:
+                    name = plugin.get("name", "Unknown")
+                    ptype = plugin.get("type", "unknown")
+                    size = plugin.get("size", 0)
+                    size_kb = size / 1024 if isinstance(size, (int, float)) else 0
+
+                    details_text += f"Plugin: {name}\n"
+                    details_text += f"  Type: {ptype}\n"
+                    if size_kb > 0:
+                        details_text += f"  Size: {size_kb:.1f} KB\n"
+                    details_text += "\n"
+
+                if hasattr(self, "plugin_details") and self.plugin_details is not None:
+                    self.plugin_details.setPlainText(details_text)
+
+                logger.debug("Displayed %d remote plugins", len(plugins))
+
+            except Exception as e:
+                logger.error("Failed to display remote plugins: %s", e, exc_info=True)
 
         def auto_refresh_plugins(self) -> None:
-            """Auto-refresh plugin lists."""
+            """Auto-refresh plugin lists.
+
+            Periodically reloads the list of installed plugins to reflect changes
+            made externally or by other processes.
+            """
             try:
                 self.refresh_plugin_lists()
                 logger.debug("Auto-refreshed plugin lists")
@@ -307,14 +512,21 @@ else:
                 logger.warning("Auto-refresh failed: %s", e)
 
         def refresh_plugin_lists(self) -> None:
-            """Refresh installed plugin lists."""
+            """Refresh installed plugin lists.
+
+            Loads the current list of installed plugins and updates the UI.
+            """
             try:
                 self.load_installed_plugins()
             except Exception as e:
                 logger.error("Failed to refresh plugin lists: %s", e, exc_info=True)
 
         def check_for_updates(self) -> None:
-            """Check for plugin updates."""
+            """Check for plugin updates.
+
+            Compares installed plugin versions with latest versions from repositories
+            and notifies the user of available updates using semantic versioning comparison.
+            """
             try:
                 from packaging import version
 
@@ -380,7 +592,17 @@ else:
                 logger.warning("Update check failed: %s", e)
 
         def _get_plugin_repository_url(self, plugin_info: dict[str, object]) -> str | None:
-            """Determine repository URL for a plugin."""
+            """Determine repository URL for a plugin.
+
+            Extracts repository URL from plugin metadata or returns a default
+            repository URL based on plugin naming conventions.
+
+            Args:
+                plugin_info: Dictionary containing plugin metadata including name and path.
+
+            Returns:
+                str | None: Repository URL for the plugin, or None if determination fails.
+            """
             try:
                 plugin_name_raw = plugin_info.get("name", "")
                 plugin_name = str(plugin_name_raw) if plugin_name_raw else ""
@@ -414,14 +636,33 @@ else:
                 return None
 
         def _fetch_latest_version(self, repo_url: str, plugin_name: str) -> dict[str, object] | None:
-            """Fetch latest version information from repository."""
+            """Fetch latest version information from repository.
+
+            Attempts to retrieve version information from GitHub releases, tags, or
+            manifest files depending on repository type.
+
+            Args:
+                repo_url: URL of the plugin repository.
+                plugin_name: Name of the plugin to check.
+
+            Returns:
+                Dictionary with version, description, and published_at fields,
+                    or None if version information cannot be retrieved.
+            """
             try:
                 from urllib.parse import urlparse
 
                 import requests
 
                 def _is_valid_github_host(hostname: str | None) -> bool:
-                    """Validate hostname is genuinely GitHub-owned."""
+                    """Validate hostname is genuinely GitHub-owned.
+
+                    Args:
+                        hostname: The hostname to validate against known GitHub domains.
+
+                    Returns:
+                        True if hostname is a valid GitHub domain, False otherwise.
+                    """
                     if hostname is None:
                         return False
                     github_domains = {"github.com", "api.github.com", "raw.githubusercontent.com"}
@@ -502,7 +743,11 @@ else:
                 return None
 
         def show_welcome_message(self) -> None:
-            """Show welcome message for first-time users."""
+            """Show welcome message for first-time users.
+
+            Displays a welcome dialog explaining available plugin management features
+            and tabs for new users of the plugin manager.
+            """
             welcome_msg = QMessageBox(self)
             welcome_msg.setWindowTitle("Welcome to Plugin Manager")
             welcome_msg.setIcon(QMessageBox.Icon.Information)
@@ -519,7 +764,11 @@ else:
             welcome_msg.exec()
 
         def load_settings(self) -> None:
-            """Load plugin manager settings."""
+            """Load plugin manager settings.
+
+            Loads plugin configurations and repository settings from the application
+            configuration object if available.
+            """
             try:
                 if hasattr(self.app_context, "config"):
                     config = self.app_context.config
@@ -536,7 +785,14 @@ else:
                 logger.debug("Failed to load plugin settings: %s", e)
 
         def setup_installed_tab(self, tab: QWidget) -> None:
-            """Set up the installed plugins tab."""
+            """Set up the installed plugins tab.
+
+            Creates UI components for displaying, enabling, disabling, removing,
+            and configuring installed plugins.
+
+            Args:
+                tab: QWidget that will contain the installed plugins interface.
+            """
             layout = QVBoxLayout(tab)
 
             # Header
@@ -585,7 +841,14 @@ else:
             self.installed_list.itemSelectionChanged.connect(self.on_installed_selection_changed)
 
         def setup_install_tab(self, tab: QWidget) -> None:
-            """Set up the install from file tab."""
+            """Set up the install from file tab.
+
+            Creates UI components for selecting plugin files, configuring installation
+            options, and displaying installation progress.
+
+            Args:
+                tab: QWidget that will contain the file installation interface.
+            """
             layout = QVBoxLayout(tab)
 
             # File selection
@@ -635,7 +898,14 @@ else:
             layout.addStretch()
 
         def setup_development_tab(self, tab: QWidget) -> None:
-            """Set up the plugin development tab."""
+            """Set up the plugin development tab.
+
+            Creates UI components for creating new plugin templates, testing plugins,
+            and viewing test output during plugin development.
+
+            Args:
+                tab: QWidget that will contain the plugin development interface.
+            """
             layout = QVBoxLayout(tab)
 
             # Template selection
@@ -696,7 +966,11 @@ else:
             layout.addStretch()
 
         def load_installed_plugins(self) -> None:
-            """Load list of installed plugins."""
+            """Load list of installed plugins.
+
+            Scans the plugins directory and populates the installed plugins list with
+            plugin information, status, and visual styling.
+            """
             self.installed_plugins = []
             self.installed_list.clear()
 
@@ -724,7 +998,18 @@ else:
                 logger.error("Error loading installed plugins: %s", e, exc_info=True)
 
         def get_plugin_info(self, plugin_path: str) -> dict[str, object]:
-            """Extract information about a plugin."""
+            """Extract information about a plugin.
+
+            Reads plugin metadata from file headers or directory structure
+            and returns standardized plugin information dictionary.
+
+            Args:
+                plugin_path: Path to plugin file or directory.
+
+            Returns:
+                Plugin metadata including name, version, description,
+                    type, and enabled status.
+            """
             info: dict[str, object] = {
                 "name": os.path.basename(plugin_path),
                 "path": plugin_path,
@@ -759,7 +1044,11 @@ else:
             return info
 
         def on_installed_selection_changed(self) -> None:
-            """Handle selection change in installed plugins list."""
+            """Handle selection change in installed plugins list.
+
+            Updates the plugin information display when a different plugin is selected
+            in the installed plugins list.
+            """
             if current_item := self.installed_list.currentItem():
                 plugin_info = current_item.data(0)
                 info_text = f"""Plugin: {plugin_info["name"]}
@@ -777,7 +1066,10 @@ Description: {plugin_info.get("description", "No description available")}"""
             """Handle selection change in available plugins list - functionality removed."""
 
         def enable_selected_plugin(self) -> None:
-            """Enable the selected plugin."""
+            """Enable the selected plugin.
+
+            Marks the selected plugin as enabled and updates its visual styling in the list.
+            """
             if current_item := self.installed_list.currentItem():
                 plugin_info = current_item.data(0)
                 plugin_info["enabled"] = True
@@ -787,7 +1079,10 @@ Description: {plugin_info.get("description", "No description available")}"""
                 QMessageBox.information(self, "Success", f"Plugin '{plugin_info['name']}' enabled")
 
         def disable_selected_plugin(self) -> None:
-            """Disable the selected plugin."""
+            """Disable the selected plugin.
+
+            Marks the selected plugin as disabled and updates its visual styling to gray.
+            """
             if current_item := self.installed_list.currentItem():
                 plugin_info = current_item.data(0)
                 plugin_info["enabled"] = False
@@ -799,7 +1094,11 @@ Description: {plugin_info.get("description", "No description available")}"""
                 QMessageBox.information(self, "Success", f"Plugin '{plugin_info['name']}' disabled")
 
         def remove_selected_plugin(self) -> None:
-            """Remove the selected plugin."""
+            """Remove the selected plugin.
+
+            Prompts for confirmation and deletes the selected plugin file or directory
+            from the plugins folder.
+            """
             if current_item := self.installed_list.currentItem():
                 plugin_info = current_item.data(0)
                 reply = QMessageBox.question(
@@ -823,7 +1122,11 @@ Description: {plugin_info.get("description", "No description available")}"""
                         QMessageBox.critical(self, "Error", f"Failed to remove plugin: {e!s}")
 
         def configure_selected_plugin(self) -> None:
-            """Configure the selected plugin."""
+            """Configure the selected plugin.
+
+            Opens a configuration dialog allowing users to modify plugin settings
+            including enabled status, auto-update, timeouts, and custom arguments.
+            """
             current_item = self.installed_list.currentItem()
             if current_item:
                 plugin_info = current_item.data(0)
@@ -1077,11 +1380,23 @@ Path: {plugin_info.get("path", "Unknown")}"""
                 config_dialog.exec()
 
         def install_selected_plugin(self) -> None:
-            """Install the selected available plugin - functionality removed."""
+            """Install the selected available plugin - functionality removed.
+
+            Note: Available plugins functionality has been removed.
+            """
             QMessageBox.information(self, "Information", "Available plugins functionality has been removed.")
 
         def _check_dependencies(self, dependencies: list[str]) -> list[str]:
-            """Check which dependencies are missing."""
+            """Check which dependencies are missing.
+
+            Attempts to import each dependency and returns a list of missing ones.
+
+            Args:
+                dependencies: List of dependency package names to check.
+
+            Returns:
+                List of missing dependency names.
+            """
             missing = []
 
             for dep in dependencies:
@@ -1136,7 +1451,15 @@ Path: {plugin_info.get("path", "Unknown")}"""
             return missing
 
         def _start_remote_plugin_installation(self, plugin_info: dict[str, object]) -> None:
-            """Start the remote plugin installation process."""
+            """Start the remote plugin installation process.
+
+            Handles installation of both local and remote plugins, downloading when necessary
+            and extracting plugin files to the plugins directory.
+
+            Args:
+                plugin_info: Dictionary containing plugin metadata including source,
+                    install_path or download_url, and plugin name.
+            """
             plugin_name_raw = plugin_info["name"]
             plugin_name = str(plugin_name_raw) if plugin_name_raw else "unnamed"
             source = plugin_info.get("source", "remote")
@@ -1295,7 +1618,18 @@ Path: {plugin_info.get("path", "Unknown")}"""
                     QMessageBox.information(self, "Success", f"Plugin '{plugin_name}' has been installed successfully!")
 
         def _create_fallback_plugin(self, plugin_info: dict[str, object]) -> None:
-            """Create a realistic plugin file for fallback plugins."""
+            """Create a realistic plugin file for fallback plugins.
+
+            Generates and saves plugin template code based on the plugin category when
+            remote download is not available.
+
+            Args:
+                plugin_info: Dictionary containing plugin metadata including name, version,
+                    author, description, and category.
+
+            Raises:
+                Exception: If plugin file creation fails.
+            """
             plugin_name_raw = plugin_info["name"]
             plugin_name = str(plugin_name_raw) if plugin_name_raw else "unnamed"
             plugin_version_raw = plugin_info.get("version", "1.0.0")
@@ -1330,7 +1664,20 @@ Path: {plugin_info.get("path", "Unknown")}"""
                 raise
 
         def _generate_analysis_plugin_code(self, name: str, version: str, author: str, description: str) -> str:
-            """Generate analysis plugin code."""
+            """Generate analysis plugin code.
+
+            Creates Python source code for an analysis plugin that performs entropy detection,
+            packer signature matching, and PE section analysis.
+
+            Args:
+                name: Plugin name for identification.
+                version: Plugin version string.
+                author: Author name to include in plugin metadata.
+                description: Plugin description for documentation.
+
+            Returns:
+                Complete Python plugin source code.
+            """
             class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
 """
@@ -1526,7 +1873,7 @@ class {class_name}Plugin:
             # Basic file info
             file_info = {{
                 'size': len(file_data),
-                'md5': hashlib.md5(file_data).hexdigest(),
+                'md5': hashlib.md5(file_data, usedforsecurity=False).hexdigest(),
                 'sha256': hashlib.sha256(file_data).hexdigest()
             }}
 
@@ -1628,7 +1975,20 @@ PLUGIN_INFO = {{
 '''
 
         def _generate_exploitation_plugin_code(self, name: str, version: str, author: str, description: str) -> str:
-            """Generate exploitation plugin code."""
+            """Generate exploitation plugin code.
+
+            Creates Python source code for an exploitation plugin that detects license
+            validation patterns and provides bypass strategies.
+
+            Args:
+                name: Plugin name for identification.
+                version: Plugin version string.
+                author: Author name to include in plugin metadata.
+                description: Plugin description for documentation.
+
+            Returns:
+                Complete Python plugin source code.
+            """
             class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
 """
@@ -1694,7 +2054,20 @@ PLUGIN_INFO = {{
 '''
 
         def _generate_network_plugin_code(self, name: str, version: str, author: str, description: str) -> str:
-            """Generate network plugin code."""
+            """Generate network plugin code.
+
+            Creates Python source code for a network plugin that analyzes network
+            communication patterns and extracts network-related strings.
+
+            Args:
+                name: Plugin name for identification.
+                version: Plugin version string.
+                author: Author name to include in plugin metadata.
+                description: Plugin description for documentation.
+
+            Returns:
+                Complete Python plugin source code.
+            """
             class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
 """
@@ -1755,7 +2128,20 @@ PLUGIN_INFO = {{
 '''
 
         def _generate_generic_plugin_code(self, name: str, version: str, author: str, description: str) -> str:
-            """Generate generic plugin code."""
+            """Generate generic plugin code.
+
+            Creates Python source code for a generic utility plugin that performs
+            basic file analysis and system introspection.
+
+            Args:
+                name: Plugin name for identification.
+                version: Plugin version string.
+                author: Author name to include in plugin metadata.
+                description: Plugin description for documentation.
+
+            Returns:
+                Complete Python plugin source code.
+            """
             class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
 """
@@ -1807,14 +2193,33 @@ PLUGIN_INFO = {{
 '''
 
         def preview_selected_plugin(self) -> None:
-            """Preview the selected available plugin - functionality removed."""
+            """Preview the selected available plugin - functionality removed.
+
+            Note: Available plugins functionality has been removed.
+            """
             QMessageBox.information(self, "Information", "Available plugins functionality has been removed.")
 
         def _install_from_preview(self, plugin_info: dict[str, object], preview_dialog: object) -> None:
-            """Install plugin directly from preview dialog - functionality removed."""
+            """Install plugin directly from preview dialog - functionality removed.
+
+            Note: Available plugins functionality has been removed.
+
+            Args:
+                plugin_info: Dictionary containing plugin metadata and configuration information.
+                preview_dialog: Dialog object for displaying plugin preview and installation options.
+            """
 
         def _generate_preview_analysis_code(self, plugin_name: str) -> str:
-            """Generate preview code for analysis plugins."""
+            """Generate preview code for analysis plugins.
+
+            Creates sample analysis plugin code demonstrating entropy and packer detection.
+
+            Args:
+                plugin_name: Name of the plugin for code generation.
+
+            Returns:
+                Preview plugin source code as a string.
+            """
             return f'''# {plugin_name} - Analysis Plugin Preview
 
 import hashlib
@@ -1852,7 +2257,17 @@ class Plugin:
 # ... (additional methods)'''
 
         def _generate_preview_exploitation_code(self, plugin_name: str) -> str:
-            """Generate preview code for exploitation plugins."""
+            """Generate preview code for exploitation plugins.
+
+            Creates sample exploitation plugin code demonstrating license pattern detection
+            and bypass strategy generation.
+
+            Args:
+                plugin_name: Name of the plugin for code generation.
+
+            Returns:
+                Preview plugin source code as a string.
+            """
             return f'''# {plugin_name} - Exploitation Plugin Preview
 
 import logging
@@ -1891,7 +2306,17 @@ class Plugin:
 # ... (bypass implementation)'''
 
         def _generate_preview_network_code(self, plugin_name: str) -> str:
-            """Generate preview code for network plugins."""
+            """Generate preview code for network plugins.
+
+            Creates sample network plugin code demonstrating network string extraction
+            and communication pattern analysis.
+
+            Args:
+                plugin_name: Name of the plugin for code generation.
+
+            Returns:
+                Preview plugin source code as a string.
+            """
             return f'''# {plugin_name} - Network Plugin Preview
 
 import socket
@@ -1928,7 +2353,17 @@ class Plugin:
 # ... (network analysis methods)'''
 
         def _generate_preview_generic_code(self, plugin_name: str) -> str:
-            """Generate preview code for generic plugins."""
+            """Generate preview code for generic plugins.
+
+            Creates sample generic plugin code demonstrating basic file information extraction
+            and plugin initialization.
+
+            Args:
+                plugin_name: Name of the plugin for code generation.
+
+            Returns:
+                Preview plugin source code as a string.
+            """
             return f'''# {plugin_name} - Generic Plugin Preview
 
 import os
@@ -1963,7 +2398,11 @@ def create_plugin():
     return Plugin()'''
 
         def browse_plugin_file(self) -> None:
-            """Browse for a plugin file to install."""
+            """Browse for a plugin file to install.
+
+            Opens a file dialog allowing users to select a Python or ZIP plugin file
+            for installation.
+            """
             file_path, _ = QFileDialog.getOpenFileName(
                 self,
                 "Select Plugin File",
@@ -1975,7 +2414,11 @@ def create_plugin():
                 self.file_path_edit.setText(file_path)
 
         def install_from_file(self) -> None:
-            """Install plugin from selected file."""
+            """Install plugin from selected file.
+
+            Validates the selected plugin file and starts the installation thread
+            to extract and install the plugin asynchronously.
+            """
             plugin_file = self.file_path_edit.text().strip()
             if not plugin_file:
                 QMessageBox.warning(self, "Warning", "Please select a plugin file first")
@@ -1989,17 +2432,25 @@ def create_plugin():
             install_dir = os.path.join(self.plugins_dir, os.path.splitext(os.path.basename(plugin_file))[0])
             os.makedirs(install_dir, exist_ok=True)
 
-            self.install_thread = PluginInstallThread(plugin_file, install_dir)  # type: ignore[call-arg]
-            self.install_thread.progress_updated.connect(self.progress_bar.setValue)  # type: ignore[attr-defined]
-            self.install_thread.status_updated.connect(self.status_label.setText)  # type: ignore[attr-defined]
-            self.install_thread.installation_finished.connect(self.on_installation_finished)  # type: ignore[attr-defined]
+            self.install_thread = PluginInstallThread(plugin_file, install_dir)
+            self.install_thread.progress_updated.connect(self.progress_bar.setValue)
+            self.install_thread.status_updated.connect(self.status_label.setText)
+            self.install_thread.installation_finished.connect(self.on_installation_finished)
 
             self.progress_bar.setVisible(True)
             self.progress_bar.setValue(0)
-            self.install_thread.start()  # type: ignore[attr-defined]
+            self.install_thread.start()
 
         def on_installation_finished(self, success: bool, message: str) -> None:
-            """Handle installation completion."""
+            """Handle installation completion.
+
+            Called when plugin installation thread finishes. Updates UI and reloads
+            plugin list if installation was successful.
+
+            Args:
+                success: Boolean indicating whether installation succeeded.
+                message: Status message describing installation result.
+            """
             self.progress_bar.setVisible(False)
 
             if success:
@@ -2015,7 +2466,11 @@ def create_plugin():
                 self.status_label.setText("Installation failed")
 
         def create_plugin_template(self) -> None:
-            """Create a new plugin template."""
+            """Create a new plugin template.
+
+            Generates and saves a new plugin template based on user-specified name,
+            type, and author, then refreshes the installed plugins list.
+            """
             plugin_name = self.plugin_name_edit.text().strip()
             if not plugin_name:
                 QMessageBox.warning(self, "Warning", "Please enter a plugin name")
@@ -2073,7 +2528,7 @@ class {plugin_name.replace(" ", "")}Plugin:
             app_instance: Main application instance
 
         Returns:
-            bool: True if initialization successful
+            True if initialization successful
         \"\"\"
         try:
             self.app = app_instance
@@ -2233,7 +2688,7 @@ class {plugin_name.replace(" ", "")}Plugin:
             # File hash calculation
             with open(binary_path, 'rb') as f:
                 file_data = f.read()
-                md5_hash = hashlib.md5(file_data).hexdigest()
+                md5_hash = hashlib.md5(file_data, usedforsecurity=False).hexdigest()
                 sha256_hash = hashlib.sha256(file_data).hexdigest()
 
             findings.append(f'MD5: {{md5_hash}}')
@@ -2394,7 +2849,7 @@ class {plugin_name.replace(" ", "")}Plugin:
         Execute the main plugin functionality.
 
         Returns:
-            dict: Execution results
+            Execution results
         \"\"\"
         logger.debug(f"Plugin {{self.name}} execute called with args: {{args}}, kwargs: {{kwargs}}")
 
@@ -2478,7 +2933,7 @@ class {plugin_name.replace(" ", "")}Plugin:
         Cleanup plugin resources.
 
         Returns:
-            bool: True if cleanup successful
+            True if cleanup successful
         \"\"\"
         try:
             # Clean up temporary files
@@ -2613,7 +3068,11 @@ if __name__ == '__main__':
                 QMessageBox.critical(self, "Error", f"Failed to create template: {e!s}")
 
         def browse_test_plugin(self) -> None:
-            """Browse for a plugin file to test."""
+            """Browse for a plugin file to test.
+
+            Opens a file dialog allowing users to select a Python plugin file from
+            the plugins directory for testing.
+            """
             file_path, _ = QFileDialog.getOpenFileName(
                 self,
                 "Select Plugin to Test",
@@ -2625,7 +3084,11 @@ if __name__ == '__main__':
                 self.test_file_edit.setText(file_path)
 
         def test_plugin(self) -> None:
-            """Test the selected plugin."""
+            """Test the selected plugin.
+
+            Performs syntax checking and component validation on the selected plugin file,
+            displaying test results in the test output text area.
+            """
             plugin_file = self.test_file_edit.text().strip()
             if not plugin_file:
                 QMessageBox.warning(self, "Warning", "Please select a plugin file to test")
@@ -2673,12 +3136,45 @@ if __name__ == '__main__':
                 self.test_output.append(f"ERROR Test failed: {e}")
 
         def refresh_plugins(self) -> None:
-            """Refresh installed plugin lists."""
+            """Refresh installed plugin lists.
+
+            Reloads the list of installed plugins from the plugins directory.
+            """
             self.load_installed_plugins()
 
         def refresh_available_plugins(self) -> None:
-            """Refresh the available plugins list - functionality removed."""
+            """Refresh the available plugins list - functionality removed.
+
+            Note: Available plugins functionality has been removed.
+            """
+
+        def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+            """Handle dialog close with proper thread cleanup.
+
+            Ensures any running threads are properly terminated before
+            closing the dialog to prevent resource leaks.
+
+            Args:
+                event: Close event from Qt framework.
+            """
+            if self.install_thread is not None and self.install_thread.isRunning():
+                self.install_thread.quit()
+                if not self.install_thread.wait(2000):
+                    self.install_thread.terminate()
+                    self.install_thread.wait()
+                self.install_thread = None
+            if self.discovery_thread is not None and self.discovery_thread.isRunning():
+                self.discovery_thread.quit()
+                if not self.discovery_thread.wait(2000):
+                    self.discovery_thread.terminate()
+                    self.discovery_thread.wait()
+                self.discovery_thread = None
+            super().closeEvent(event)
 
         def exec_(self) -> int:
-            """Execute dialog."""
+            """Execute dialog.
+
+            Returns:
+                Dialog result code.
+            """
             return super().exec() if HAS_PYQT else 0

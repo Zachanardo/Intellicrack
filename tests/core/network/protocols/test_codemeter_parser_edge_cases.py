@@ -536,7 +536,7 @@ class TestCodeMeterSessionManagement:
             response = parser.generate_response(request)
 
             assert response.status == 0x00000000
-            session_id = response.license_data["session_id"]
+            session_id = response.license_info["session_id"]
             session_hashes.append(session_id)
 
         assert len(set(session_hashes)) == 10
@@ -560,7 +560,7 @@ class TestCodeMeterSessionManagement:
         )
 
         login_response = parser.generate_response(login_request)
-        session_id = login_response.license_data["session_id"]
+        session_id = login_response.license_info["session_id"]
 
         logout_request = CodeMeterRequest(
             command=0x1001,
@@ -599,7 +599,7 @@ class TestCodeMeterSessionManagement:
         )
 
         login_response = parser.generate_response(login_request)
-        session_id = login_response.license_data["session_id"]
+        session_id = login_response.license_info["session_id"]
 
         time.sleep(0.1)
 

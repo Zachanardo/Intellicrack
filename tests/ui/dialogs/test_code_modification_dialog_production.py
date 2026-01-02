@@ -19,8 +19,7 @@ Licensed under GNU GPL v3
 import difflib
 import tempfile
 from pathlib import Path
-from typing import Any
-from unittest.mock import Mock, patch
+from typing import Any, Callable, Optional, Tuple
 
 import pytest
 
@@ -40,6 +39,34 @@ pytestmark = pytest.mark.skipif(
     not PYQT6_AVAILABLE,
     reason="PyQt6 required for UI tests",
 )
+
+
+class FakeFileDialog:
+    """Real file dialog test double with configurable responses."""
+
+    def __init__(self) -> None:
+        self.save_file_name: Optional[str] = None
+        self.file_filter: str = ""
+        self.get_save_file_name_called: int = 0
+
+    def configure_save_response(self, file_path: str, file_filter: str) -> None:
+        """Configure the response for getSaveFileName."""
+        self.save_file_name = file_path
+        self.file_filter = file_filter
+
+    def getSaveFileName(
+        self,
+        parent: Any,
+        caption: str,
+        directory: str = "",
+        filter: str = "",
+        initial_filter: str = "",
+    ) -> Tuple[str, str]:
+        """Fake getSaveFileName implementation."""
+        self.get_save_file_name_called += 1
+        if self.save_file_name:
+            return (self.save_file_name, self.file_filter)
+        return ("", "")
 
 
 @pytest.fixture(scope="module")
@@ -140,6 +167,12 @@ def temp_output_dir() -> Path:
     """Create temporary directory for test files."""
     with tempfile.TemporaryDirectory(prefix="code_mod_test_") as tmpdir:
         yield Path(tmpdir)
+
+
+@pytest.fixture
+def fake_file_dialog() -> FakeFileDialog:
+    """Create fake file dialog for testing."""
+    return FakeFileDialog()
 
 
 class TestDiffSyntaxHighlighter:
@@ -342,7 +375,12 @@ class TestCodeModificationDialog:
         dialog.close()
 
     def test_save_modified_code(
-        self, qapp: Any, temp_output_dir: Path, sample_python_code_modified: str
+        self,
+        qapp: Any,
+        temp_output_dir: Path,
+        sample_python_code_modified: str,
+        monkeypatch: pytest.MonkeyPatch,
+        fake_file_dialog: FakeFileDialog,
     ) -> None:
         """Dialog saves modified code to file."""
         dialog = CodeModificationDialog()
@@ -353,17 +391,25 @@ class TestCodeModificationDialog:
             dialog.modified_text.setPlainText(sample_python_code_modified)
 
         if hasattr(dialog, "save_modified_file"):
-            with patch(
-                "intellicrack.handlers.pyqt6_handler.QFileDialog.getSaveFileName"
-            ) as mock_dialog:
-                mock_dialog.return_value = (str(output_file), "Python Files (*.py)")
+            fake_file_dialog.configure_save_response(
+                str(output_file), "Python Files (*.py)"
+            )
 
-                dialog.save_modified_file()
-                QTest.qWait(200)
+            from intellicrack.handlers import pyqt6_handler
+
+            monkeypatch.setattr(
+                pyqt6_handler.QFileDialog,
+                "getSaveFileName",
+                fake_file_dialog.getSaveFileName,
+            )
+
+            dialog.save_modified_file()
+            QTest.qWait(200)
 
         if output_file.exists():
             saved_content = output_file.read_text()
             assert "PATCHED" in saved_content
+            assert fake_file_dialog.get_save_file_name_called > 0
 
         dialog.close()
 

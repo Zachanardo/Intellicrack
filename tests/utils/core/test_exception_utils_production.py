@@ -199,7 +199,11 @@ class TestExceptionHandling:
         try:
             exception_handled = False
 
-            def mock_excepthook(exc_type, exc_value, exc_traceback):
+            def mock_excepthook(
+                exc_type: type[BaseException],
+                exc_value: BaseException,
+                exc_traceback: object
+            ) -> None:
                 nonlocal exception_handled
                 exception_handled = True
 

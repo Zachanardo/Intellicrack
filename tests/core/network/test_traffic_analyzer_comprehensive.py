@@ -580,7 +580,7 @@ class TestPayloadAnalysis:
 
     def test_check_payload_empty_data(self, analyzer: NetworkTrafficAnalyzer) -> None:
         """Analyzer handles empty payloads without errors."""
-        empty_payloads = [b"", b"\x00", bytes()]
+        empty_payloads = [b"", b"\x00", b""]
 
         conn_key = "empty_test"
 
@@ -604,7 +604,6 @@ class TestTrafficAnalysis:
         assert results["license_connections"] == 0
         assert len(results["license_servers"]) == 0
         assert len(results["license_conn_details"]) == 0
-
 
 
 class TestCaptureControl:
@@ -1041,4 +1040,3 @@ class TestRealWorldScenarios:
 
         assert results["packets_analyzed"] == 0
         assert isinstance(results["protocols_detected"], list)
-

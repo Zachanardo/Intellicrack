@@ -357,14 +357,6 @@ class TestBinaryFileAnalysis:
         """Provide entropy analyzer instance."""
         return EntropyAnalyzer()
 
-    @pytest.fixture
-    def temp_workspace(self) -> Path:
-        """Provide temporary workspace for test files."""
-        temp_dir = tempfile.mkdtemp(prefix="entropy_test_")
-        yield Path(temp_dir)
-        import shutil
-        shutil.rmtree(temp_dir, ignore_errors=True)
-
     def test_analyze_entropy_returns_complete_results(self, analyzer: EntropyAnalyzer, temp_workspace: Path) -> None:
         """Analysis must return all required result fields."""
         test_file = temp_workspace / "test.bin"
@@ -579,27 +571,28 @@ class TestErrorHandlingAndEdgeCases:
         entropy = analyzer.calculate_entropy(all_bytes)
         assert abs(entropy - 8.0) < 0.0001, "All byte values MUST produce 8.0 entropy"
 
-    def test_permission_denied_error_handling(self, analyzer: EntropyAnalyzer) -> None:
+    def test_permission_denied_error_handling(self, analyzer: EntropyAnalyzer, monkeypatch: pytest.MonkeyPatch) -> None:
         """Permission errors must be caught and returned in result."""
-        with tempfile.NamedTemporaryFile(delete=False) as tf:
-            tf.write(b"test")
-            tf.flush()
-            temp_path = tf.name
 
-        import os
-        import stat
+        class PermissionDeniedFileOpener:
+            """Test double that simulates permission denied errors on file open."""
 
-        try:
-            os.chmod(temp_path, stat.S_IRUSR)
+            def __init__(self) -> None:
+                self.call_count: int = 0
+                self.called_paths: list[str] = []
 
-            from unittest.mock import patch, mock_open
-            with patch("builtins.open", side_effect=PermissionError("Access denied")):
-                result = analyzer.analyze_entropy(temp_path)
+            def __call__(self, path: Any, mode: str = 'r', **kwargs: Any) -> None:
+                self.call_count += 1
+                self.called_paths.append(str(path))
+                raise PermissionError("Access denied")
 
-            assert "error" in result, "Permission error MUST be returned in result"
-        finally:
-            os.chmod(temp_path, stat.S_IRUSR | stat.S_IWUSR)
-            Path(temp_path).unlink()
+        opener = PermissionDeniedFileOpener()
+        monkeypatch.setattr("builtins.open", opener)
+
+        result = analyzer.analyze_entropy("test_file.bin")
+
+        assert "error" in result, "Permission error MUST be returned in result"
+        assert opener.call_count > 0, "File opener MUST have been called"
 
     def test_unicode_path_handling(self, analyzer: EntropyAnalyzer) -> None:
         """Unicode file paths must be handled correctly."""

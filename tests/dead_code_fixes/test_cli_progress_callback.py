@@ -8,9 +8,33 @@ analysis functions to provide real-time progress updates.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
-from unittest.mock import MagicMock
 
 import pytest
+
+
+class FakeProgress:
+    """Real test double for progress tracking."""
+
+    def __init__(self) -> None:
+        self.update_calls: list[tuple[int, int, str]] = []
+        self.called: bool = False
+
+    def update(self, task_id: int, completed: int, description: str) -> None:
+        self.update_calls.append((task_id, completed, description))
+        self.called = True
+
+
+class FakeProgressManager:
+    """Real test double for ProgressManager."""
+
+    def __init__(self) -> None:
+        self.task_ids: dict[str, int] = {}
+        self.progress: FakeProgress = FakeProgress()
+        self.updates: list[tuple[int, int, str]] = []
+
+    def start_analysis(self, binary_path: str, analysis_types: list[str]) -> None:
+        for i, analysis_type in enumerate(analysis_types):
+            self.task_ids[analysis_type] = i
 
 
 class TestProgressCallbackWiring:
@@ -127,33 +151,23 @@ class TestProgressCallbackWiring:
 
     def test_progress_manager_integration(self) -> None:
         """Test progress_callback integration with ProgressManager."""
-
-        class MockProgressManager:
-            def __init__(self) -> None:
-                self.task_ids: dict[str, int] = {}
-                self.progress: MagicMock | None = MagicMock()
-                self.updates: list[tuple[int, int, str]] = []
-
-            def start_analysis(self, binary_path: str, analysis_types: list[str]) -> None:
-                for i, analysis_type in enumerate(analysis_types):
-                    self.task_ids[analysis_type] = i
-
-        progress_manager = MockProgressManager()
+        progress_manager = FakeProgressManager()
         progress_manager.start_analysis("/test/binary", ["Basic Analysis", "GPU Processing"])
 
         def progress_callback(step: str, progress: float, message: str = "") -> None:
             if step in progress_manager.task_ids:
                 task_id = progress_manager.task_ids[step]
-                if progress_manager.progress:
-                    progress_manager.progress.update(
-                        task_id,
-                        completed=int(progress * 100),
-                        description=f"{step}: {message}" if message else step,
-                    )
+                progress_manager.progress.update(
+                    task_id,
+                    completed=int(progress * 100),
+                    description=f"{step}: {message}" if message else step,
+                )
 
         progress_callback("Basic Analysis", 0.5, "Processing")
 
-        assert progress_manager.progress.update.called
+        assert progress_manager.progress.called
+        assert len(progress_manager.progress.update_calls) == 1
+        assert progress_manager.progress.update_calls[0] == (0, 50, "Basic Analysis: Processing")
 
     def test_progress_percentage_conversion(self) -> None:
         """Test that float progress converts to percentage correctly."""

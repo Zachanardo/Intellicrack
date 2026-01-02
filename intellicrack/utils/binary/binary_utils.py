@@ -40,15 +40,15 @@ def compute_file_hash(
 
     Calculates the cryptographic hash of the specified file using the given algorithm, reading it
     in chunks to handle large files efficiently. Can provide progress updates
-    through a signal mechanism for _UI integration.
+    through a signal mechanism for UI integration.
 
     Args:
-        file_path: Path to the file to hash
+        file_path: Path to the file to hash.
         algorithm: The hashing algorithm to use (e.g., 'sha256', 'md5'). Defaults to 'sha256'.
-        progress_signal: Optional signal to emit progress updates (0-100%)
+        progress_signal: Optional callable to emit progress updates (0-100%).
 
     Returns:
-        str: Hexadecimal representation of the computed hash, empty string on error
+        Hexadecimal representation of the computed hash, empty string on error.
 
     """
     try:
@@ -95,14 +95,17 @@ def compute_file_hash(
 
 
 def get_file_hash(file_path: str | Path, algorithm: str = "sha256") -> str:
-    """Perform wrapper for compute_file_hash without progress callback.
+    """Compute file hash without progress callback.
+
+    Wrapper for compute_file_hash that computes the hash of a file without
+    providing progress updates.
 
     Args:
-        file_path: Path to the file to hash
-        algorithm: The hashing algorithm to use
+        file_path: Path to the file to hash.
+        algorithm: The hashing algorithm to use. Defaults to 'sha256'.
 
     Returns:
-        str: Hexadecimal hash string
+        Hexadecimal hash string.
 
     """
     return compute_file_hash(file_path, algorithm)
@@ -112,16 +115,14 @@ def read_binary(file_path: str | Path, chunk_size: int = 8192) -> bytes:
     """Read a binary file in chunks.
 
     Args:
-        file_path: Path to the binary file
-        chunk_size: Size of chunks to read (default: 8192)
+        file_path: Path to the binary file.
+        chunk_size: Size of chunks to read. Defaults to 8192.
 
     Returns:
-        bytes: File contents
+        File contents as bytes.
 
     Raises:
-        FileNotFoundError: If file doesn't exist
-        PermissionError: If file cannot be read
-
+        FileNotFoundError: If file does not exist.
     """
     try:
         file_path = Path(file_path)
@@ -147,12 +148,12 @@ def write_binary(file_path: str | Path, data: bytes, create_backup: bool = True)
     """Write binary data to a file with optional backup.
 
     Args:
-        file_path: Path to write to
-        data: Binary data to write
-        create_backup: Whether to create a backup of existing file
+        file_path: Path to write to.
+        data: Binary data to write.
+        create_backup: Whether to create a backup of existing file. Defaults to True.
 
     Returns:
-        bool: True if successful, False otherwise
+        True if write succeeds, False otherwise.
 
     """
     try:
@@ -180,11 +181,15 @@ def write_binary(file_path: str | Path, data: bytes, create_backup: bool = True)
 def analyze_binary_format(file_path: str | Path) -> dict[str, Any]:
     """Analyze the format of a binary file.
 
+    Detects binary file format (PE, ELF, Mach-O, ZIP/APK) by examining magic
+    numbers and headers.
+
     Args:
-        file_path: Path to the binary file
+        file_path: Path to the binary file.
 
     Returns:
-        dict: Format information including type, architecture, etc.
+        Format information dictionary with keys: path, size, type, architecture,
+        or error key if analysis fails.
 
     """
     try:
@@ -244,11 +249,11 @@ def is_binary_file(file_path: str | Path, sample_size: int = 8192) -> bool:
     """Check if a file is binary by looking for null bytes.
 
     Args:
-        file_path: Path to check
-        sample_size: Number of bytes to sample
+        file_path: Path to check.
+        sample_size: Number of bytes to sample. Defaults to 8192.
 
     Returns:
-        bool: True if file appears to be binary
+        True if file appears to be binary, False otherwise.
 
     """
     try:
@@ -261,14 +266,17 @@ def is_binary_file(file_path: str | Path, sample_size: int = 8192) -> bool:
 
 
 def get_file_entropy(file_path: str | Path, block_size: int = 256) -> float:
-    """Calculate the entropy of a file (useful for detecting encryption/packing).
+    """Calculate the entropy of a file for detecting encryption/packing.
+
+    Computes Shannon entropy to identify encrypted, compressed, or packed content
+    by analyzing byte distribution within a file block.
 
     Args:
-        file_path: Path to the file
-        block_size: Size of blocks to analyze
+        file_path: Path to the file.
+        block_size: Size of blocks to analyze. Defaults to 256.
 
     Returns:
-        float: Entropy value (0-8)
+        Entropy value between 0.0 and 8.0, or 0.0 if file is empty or read fails.
 
     """
     try:
@@ -304,11 +312,14 @@ def get_file_entropy(file_path: str | Path, block_size: int = 256) -> float:
 def check_suspicious_pe_sections(pe_obj: object) -> list[str]:
     """Check for suspicious PE sections that are both writable and executable.
 
+    Identifies PE file sections with both writable and executable characteristics,
+    which indicate potential code injection or protection mechanisms.
+
     Args:
-        pe_obj: A pefile PE object
+        pe_obj: A pefile PE object with sections attribute.
 
     Returns:
-        list[str]: List of suspicious section names
+        List of suspicious section names (writable and executable sections).
 
     """
     suspicious_sections = []
@@ -329,14 +340,15 @@ def check_suspicious_pe_sections(pe_obj: object) -> list[str]:
 def validate_binary_path(binary_path: str, logger_instance: logging.Logger | None = None) -> bool:
     """Validate that a binary path exists and log appropriate error.
 
-    This is the common pattern extracted from duplicate code in analysis modules.
+    Common validation pattern extracted from duplicate code in analysis modules.
+    Verifies binary file existence and logs errors with provided or module logger.
 
     Args:
-        binary_path: Path to binary file to validate
-        logger_instance: Logger instance to use (optional)
+        binary_path: Path to binary file to validate.
+        logger_instance: Logger instance to use. Defaults to module logger.
 
     Returns:
-        bool: True if binary exists, False otherwise
+        True if binary exists and is readable, False otherwise.
 
     """
     use_logger = logger_instance or logger

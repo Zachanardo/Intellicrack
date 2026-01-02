@@ -82,13 +82,27 @@ class ProtocolToolWindow(QWidget):
     signals = ProtocolToolSignals()
 
     def __new__(cls, *args: object, **kwargs: object) -> "ProtocolToolWindow":
-        """Ensure a singleton instance of the ProtocolToolWindow."""
+        """Ensure a singleton instance of the ProtocolToolWindow.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            The singleton instance of the ProtocolToolWindow.
+
+        """
         if not cls._instance:
             cls._instance = super().__new__(cls, *args, **kwargs)
         return cls._instance
 
     def __init__(self, app_instance: object | None = None) -> None:
-        """Initialize the Protocol Tool window with a sophisticated UI."""
+        """Initialize the Protocol Tool window with a sophisticated UI.
+
+        Args:
+            app_instance: Reference to the main application instance for communication.
+
+        """
         # Only initialize UI components once for the singleton instance
         if not hasattr(self, "_initialized"):
             super().__init__()
@@ -103,7 +117,12 @@ class ProtocolToolWindow(QWidget):
             ProtocolToolWindow.signals.tool_launched.emit("Protocol Tool UI ready.")
 
     def _setup_ui(self) -> None:
-        """Set up the layout and widgets for the Protocol Tool."""
+        """Set up the layout and widgets for the Protocol Tool.
+
+        Initializes all UI components including labels, text editors, line edits, and buttons,
+        and arranges them in appropriate layouts for the protocol tool window.
+
+        """
         main_layout = QVBoxLayout(self)
 
         # Title/Status Label
@@ -153,12 +172,25 @@ class ProtocolToolWindow(QWidget):
         main_layout.addLayout(button_layout)
 
     def _connect_signals(self) -> None:
-        """Connect internal UI signals to their slots."""
+        """Connect internal UI signals to their slots.
+
+        Establishes connections between protocol tool signals and their corresponding slot methods
+        for updating the UI when protocol analysis state changes.
+
+        """
         # Example: Connect a custom signal to update description
         ProtocolToolWindow.signals.description_updated.connect(self.update_description)
 
     def _on_input_submitted(self) -> None:
-        """Handle user input from the QLineEdit with real protocol processing."""
+        """Handle user input from the QLineEdit with real protocol processing.
+
+        Processes protocol commands entered by the user and executes appropriate actions
+        such as analyzing protocols, parsing raw data, or sending protocol commands.
+
+        Returns:
+            None.
+
+        """
         if command := self.input_line_edit.text().strip():
             self.output_text_edit.append(f"> {command}")
             self.input_line_edit.clear()
@@ -204,7 +236,12 @@ class ProtocolToolWindow(QWidget):
             self.output_text_edit.append("[WARNING] Input cannot be empty.")
 
     def _on_start_analysis(self) -> None:
-        """Handle the 'Start Analysis' button click with real protocol analysis."""
+        """Handle the 'Start Analysis' button click with real protocol analysis.
+
+        Executes comprehensive protocol fingerprinting and traffic interception to detect
+        active network protocols and license validation attempts.
+
+        """
         self.output_text_edit.append("[INFO] Starting comprehensive protocol analysis...")
         self.description_label.setText("Performing deep analysis...")
         logger.info("Comprehensive protocol analysis initiated.")
@@ -237,13 +274,22 @@ class ProtocolToolWindow(QWidget):
             self.description_label.setText("Analysis failed")
 
     def _on_clear_log(self) -> None:
-        """Clear the output log area."""
+        """Clear the output log area.
+
+        Clears all displayed text from the output log and displays a confirmation message.
+
+        """
         self.output_text_edit.clear()
         self.output_text_edit.append("Protocol analysis output cleared.")
         logger.info("Protocol tool log cleared.")
 
     def update_description(self, description: str) -> None:
-        """Update the description label in the Protocol Tool window."""
+        """Update the description label in the Protocol Tool window.
+
+        Args:
+            description: The new description text to display.
+
+        """
         self.description_label.setText(description)
         logger.info("Protocol tool description updated to: %s", description)
         ProtocolToolWindow.signals.description_updated.emit(description)
@@ -253,7 +299,16 @@ class ProtocolToolWindow(QWidget):
                 update_signal.emit(f"Protocol tool description updated: {description}")
 
     def _execute_protocol_analysis(self, protocol_name: str, hex_data: str) -> None:
-        """Execute real protocol analysis on hex data."""
+        """Execute real protocol analysis on hex data.
+
+        Args:
+            protocol_name: The name of the protocol to analyze.
+            hex_data: The hexadecimal data to analyze.
+
+        Returns:
+            None.
+
+        """
         try:
             # Clean hex data
             hex_data = hex_data.replace(" ", "").replace("0x", "")
@@ -316,7 +371,15 @@ class ProtocolToolWindow(QWidget):
             logger.exception("Protocol analysis error: %s", e)
 
     def _parse_raw_data(self, hex_data: str) -> None:
-        """Auto-detect and parse protocol from raw hex data."""
+        """Auto-detect and parse protocol from raw hex data.
+
+        Args:
+            hex_data: The hexadecimal data to parse.
+
+        Returns:
+            None.
+
+        """
         try:
             # Clean hex data
             hex_data = hex_data.replace(" ", "").replace("0x", "")
@@ -364,7 +427,13 @@ class ProtocolToolWindow(QWidget):
             logger.exception("Raw data parse error: %s", e)
 
     def _send_protocol_command(self, protocol_name: str, command_data: str) -> None:
-        """Send a protocol command to a license server."""
+        """Send a protocol command to a license server.
+
+        Args:
+            protocol_name: The name of the protocol to send.
+            command_data: The command data including host and port information.
+
+        """
         try:
             self.output_text_edit.append(f"[SEND] Protocol: {protocol_name}, Command: {command_data}")
 
@@ -394,7 +463,11 @@ class ProtocolToolWindow(QWidget):
             logger.exception("Protocol send error: %s", e)
 
     def _list_available_protocols(self) -> None:
-        """List all available protocol parsers."""
+        """List all available protocol parsers.
+
+        Displays all loaded protocol parser modules and their descriptions in the output log.
+
+        """
         self.output_text_edit.append("[PROTOCOLS] Available protocol parsers:")
 
         available_parsers = protocols.get_available_parsers()
@@ -410,7 +483,12 @@ class ProtocolToolWindow(QWidget):
         self.output_text_edit.append(f"[TOTAL] {len(available_parsers)} parsers available")
 
     def closeEvent(self, event: QCloseEvent | None) -> None:
-        """Handle the close event for the window."""
+        """Handle the close event for the window.
+
+        Args:
+            event: The close event that triggered this handler.
+
+        """
         logger.info("Protocol Tool window closing.")
         ProtocolToolWindow.signals.tool_closed.emit("Protocol Tool closed.")
         # Clean up resources if necessary

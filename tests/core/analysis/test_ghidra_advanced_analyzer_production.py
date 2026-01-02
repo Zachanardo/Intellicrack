@@ -51,12 +51,6 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture
-def temp_workspace(tmp_path: Path) -> Path:
-    """Provide temporary workspace for test binaries."""
-    return tmp_path
-
-
-@pytest.fixture
 def sample_pe_binary(temp_workspace: Path) -> Path:
     """Use real Windows system binary for testing."""
     system_binary = Path("C:/Windows/System32/notepad.exe")

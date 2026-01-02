@@ -15,8 +15,8 @@ Tests validate real background model loading including:
 import os
 import threading
 import time
+from collections.abc import Generator
 from typing import Any
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -29,59 +29,95 @@ from intellicrack.ai.background_loader import (
     get_background_loader,
     load_model_with_progress,
 )
+from intellicrack.ai.llm_backends import (
+    LLMBackend,
+    LLMConfig,
+    LLMMessage,
+    LLMProvider,
+    LLMResponse,
+)
+from intellicrack.ai.llm_manager import LLMManager
 from intellicrack.ai.llm_types import LoadingProgress, LoadingState, ProgressCallback
 
 
-class MockLLMBackend:
-    """Mock LLM backend for testing."""
+def create_test_config(
+    model_name: str = "test-model",
+    provider: str = "openai",
+) -> LLMConfig:
+    """Create a test LLMConfig with the specified provider."""
+    provider_map = {
+        "openai": LLMProvider.OPENAI,
+        "anthropic": LLMProvider.ANTHROPIC,
+        "ollama": LLMProvider.OLLAMA,
+        "local": LLMProvider.LOCAL_GGUF,
+    }
+    provider_enum = provider_map.get(provider, LLMProvider.OPENAI)
+    return LLMConfig(
+        provider=provider_enum,
+        model_name=model_name,
+    )
 
-    def __init__(self, config: Any) -> None:
-        """Initialize mock backend."""
-        self.config = config
+
+class FakeProgressCallback(ProgressCallback):
+    """Real test double for progress callbacks with call tracking."""
+
+    def __init__(self) -> None:
+        """Initialize fake callback."""
+        self.progress_calls: list[LoadingProgress] = []
+        self.completion_calls: list[tuple[str, bool, str | None]] = []
+
+    def on_progress(self, progress: LoadingProgress) -> None:
+        """Track progress updates."""
+        self.progress_calls.append(progress)
+
+    def on_completed(
+        self, model_id: str, success: bool, error: str | None = None
+    ) -> None:
+        """Track completion updates."""
+        self.completion_calls.append((model_id, success, error))
+
+    def reset(self) -> None:
+        """Reset tracked calls."""
+        self.progress_calls.clear()
+        self.completion_calls.clear()
+
+
+class FakeLLMBackend(LLMBackend):
+    """Test backend for background loading tests."""
+
+    def __init__(self, config: LLMConfig) -> None:
+        """Initialize fake backend."""
+        super().__init__(config)
         self.initialized = False
 
     def initialize(self) -> bool:
-        """Mock initialization."""
+        """Simulate initialization with delay."""
         time.sleep(0.1)
         self.initialized = True
+        self.is_initialized = True
         return True
 
-
-class MockLLMConfig:
-    """Mock LLM configuration."""
-
-    def __init__(self, model_name: str, provider: str = "openai") -> None:
-        """Initialize mock config."""
-        self.model_name = model_name
-        self.provider = Mock(value=provider)
-
-
-class MockLLMManager:
-    """Mock LLM manager for testing."""
-
-    def __init__(self) -> None:
-        """Initialize mock manager."""
-        self.models: dict[str, Any] = {}
-
-    def register_model(self, model_id: str, backend: Any) -> None:
-        """Register a model."""
-        self.models[model_id] = backend
+    def chat(
+        self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None
+    ) -> LLMResponse:
+        """Return mock response."""
+        return LLMResponse(content="Mock response", finish_reason="stop")
 
 
 @pytest.fixture
-def mock_backend_class() -> type:
-    """Create mock backend class."""
-    return MockLLMBackend
+def fake_backend_class() -> type:
+    """Create fake backend class."""
+    return FakeLLMBackend
 
 
 @pytest.fixture
-def mock_config() -> MockLLMConfig:
-    """Create mock LLM config."""
-    return MockLLMConfig(model_name="test-model")
+def fake_config() -> LLMConfig:
+    """Create fake LLM config."""
+    return create_test_config(model_name="test-model")
 
 
 @pytest.fixture
-def background_loader() -> BackgroundModelLoader:
+def background_loader() -> Generator[BackgroundModelLoader, None, None]:
     """Create background model loader for testing."""
     os.environ["INTELLICRACK_TESTING"] = "1"
     loader = BackgroundModelLoader(max_concurrent_loads=2)
@@ -94,19 +130,19 @@ class TestLoadingTask:
     """Test individual loading task functionality."""
 
     def test_loading_task_initialization(
-        self, mock_backend_class: type, mock_config: MockLLMConfig
+        self, fake_backend_class: type, fake_config: LLMConfig
     ) -> None:
         """Loading task initializes with correct default state."""
         task = LoadingTask(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
             priority=5,
         )
 
         assert task.model_id == "test-model"
-        assert task.backend_class == mock_backend_class
-        assert task.config == mock_config
+        assert task.backend_class == fake_backend_class
+        assert task.config == fake_config
         assert task.priority == 5
         assert task.state == LoadingState.PENDING
         assert task.progress == 0.0
@@ -115,13 +151,13 @@ class TestLoadingTask:
         assert task.cancelled is False
 
     def test_update_progress_updates_state(
-        self, mock_backend_class: type, mock_config: MockLLMConfig
+        self, fake_backend_class: type, fake_config: LLMConfig
     ) -> None:
         """Update progress updates task state correctly."""
         task = LoadingTask(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
         )
 
         task.update_progress(0.5, "Loading model", LoadingState.LOADING)
@@ -131,13 +167,13 @@ class TestLoadingTask:
         assert task.state == LoadingState.LOADING
 
     def test_update_progress_clamps_values(
-        self, mock_backend_class: type, mock_config: MockLLMConfig
+        self, fake_backend_class: type, fake_config: LLMConfig
     ) -> None:
         """Update progress clamps values to valid range."""
         task = LoadingTask(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
         )
 
         task.update_progress(1.5, "Over 100%")
@@ -147,54 +183,54 @@ class TestLoadingTask:
         assert task.progress == 0.0
 
     def test_update_progress_invokes_callback(
-        self, mock_backend_class: type, mock_config: MockLLMConfig
+        self, fake_backend_class: type, fake_config: LLMConfig
     ) -> None:
         """Update progress invokes progress callback."""
-        callback = Mock(spec=ProgressCallback)
+        callback = FakeProgressCallback()
 
         task = LoadingTask(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
             callback=callback,
         )
 
         task.start_time = time.time()
         task.update_progress(0.5, "Loading", LoadingState.LOADING)
 
-        callback.on_progress.assert_called_once()
-        call_args = callback.on_progress.call_args[0][0]
-        assert isinstance(call_args, LoadingProgress)
-        assert call_args.model_id == "test-model"
-        assert call_args.progress == 0.5
+        assert len(callback.progress_calls) == 1
+        progress_update = callback.progress_calls[0]
+        assert isinstance(progress_update, LoadingProgress)
+        assert progress_update.model_id == "test-model"
+        assert progress_update.progress == 0.5
 
     def test_mark_completed_success(
-        self, mock_backend_class: type, mock_config: MockLLMConfig
+        self, fake_backend_class: type, fake_config: LLMConfig
     ) -> None:
         """Mark completed with success updates task state."""
         task = LoadingTask(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
         )
 
-        mock_backend = MockLLMBackend(mock_config)
-        task.mark_completed(True, result=mock_backend)
+        fake_backend = FakeLLMBackend(fake_config)
+        task.mark_completed(True, result=fake_backend)
 
         assert task.state == LoadingState.COMPLETED
         assert task.progress == 1.0
-        assert task.result == mock_backend
+        assert task.result == fake_backend
         assert task.error is None
         assert task.end_time is not None
 
     def test_mark_completed_failure(
-        self, mock_backend_class: type, mock_config: MockLLMConfig
+        self, fake_backend_class: type, fake_config: LLMConfig
     ) -> None:
         """Mark completed with failure updates task state."""
         task = LoadingTask(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
         )
 
         task.mark_completed(False, error="Initialization failed")
@@ -205,30 +241,34 @@ class TestLoadingTask:
         assert task.error == "Initialization failed"
 
     def test_mark_completed_invokes_callback(
-        self, mock_backend_class: type, mock_config: MockLLMConfig
+        self, fake_backend_class: type, fake_config: LLMConfig
     ) -> None:
         """Mark completed invokes completion callback."""
-        callback = Mock(spec=ProgressCallback)
+        callback = FakeProgressCallback()
 
         task = LoadingTask(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
             callback=callback,
         )
 
         task.mark_completed(True)
 
-        callback.on_completed.assert_called_once_with("test-model", True, None)
+        assert len(callback.completion_calls) == 1
+        model_id, success, error = callback.completion_calls[0]
+        assert model_id == "test-model"
+        assert success is True
+        assert error is None
 
     def test_cancel_task(
-        self, mock_backend_class: type, mock_config: MockLLMConfig
+        self, fake_backend_class: type, fake_config: LLMConfig
     ) -> None:
         """Cancel task marks it as cancelled."""
         task = LoadingTask(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
         )
 
         task.cancel()
@@ -237,24 +277,25 @@ class TestLoadingTask:
         assert task.state == LoadingState.CANCELLED
 
     def test_cancel_task_invokes_callback(
-        self, mock_backend_class: type, mock_config: MockLLMConfig
+        self, fake_backend_class: type, fake_config: LLMConfig
     ) -> None:
         """Cancel task invokes callback with cancelled status."""
-        callback = Mock(spec=ProgressCallback)
+        callback = FakeProgressCallback()
 
         task = LoadingTask(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
             callback=callback,
         )
 
         task.cancel()
 
-        callback.on_completed.assert_called_once()
-        call_args = callback.on_completed.call_args[0]
-        assert call_args[1] is False
-        assert "Cancel" in call_args[2]
+        assert len(callback.completion_calls) == 1
+        model_id, success, error = callback.completion_calls[0]
+        assert success is False
+        assert error is not None
+        assert "Cancel" in error
 
 
 class TestConsoleProgressCallback:
@@ -373,14 +414,14 @@ class TestBackgroundModelLoader:
 
     def test_submit_loading_task(
         self, background_loader: BackgroundModelLoader,
-        mock_backend_class: type,
-        mock_config: MockLLMConfig,
+        fake_backend_class: type,
+        fake_config: LLMConfig,
     ) -> None:
         """Submitting loading task creates task correctly."""
         task = background_loader.submit_loading_task(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
             priority=5,
         )
 
@@ -391,15 +432,15 @@ class TestBackgroundModelLoader:
 
     def test_submit_multiple_tasks(
         self, background_loader: BackgroundModelLoader,
-        mock_backend_class: type,
+        fake_backend_class: type,
     ) -> None:
         """Submitting multiple tasks queues them correctly."""
-        configs = [MockLLMConfig(f"model-{i}") for i in range(5)]
+        configs = [create_test_config(model_name=f"model-{i}") for i in range(5)]
 
         for i, config in enumerate(configs):
             background_loader.submit_loading_task(
                 model_id=f"model-{i}",
-                backend_class=mock_backend_class,
+                backend_class=fake_backend_class,
                 config=config,
                 priority=i,
             )
@@ -408,14 +449,14 @@ class TestBackgroundModelLoader:
 
     def test_cancel_pending_task(
         self, background_loader: BackgroundModelLoader,
-        mock_backend_class: type,
-        mock_config: MockLLMConfig,
+        fake_backend_class: type,
+        fake_config: LLMConfig,
     ) -> None:
         """Cancelling pending task removes it from queue."""
         task = background_loader.submit_loading_task(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
         )
 
         result = background_loader.cancel_task("test-model")
@@ -434,14 +475,14 @@ class TestBackgroundModelLoader:
 
     def test_get_task_status_pending(
         self, background_loader: BackgroundModelLoader,
-        mock_backend_class: type,
-        mock_config: MockLLMConfig,
+        fake_backend_class: type,
+        fake_config: LLMConfig,
     ) -> None:
         """Get task status returns pending task correctly."""
         task = background_loader.submit_loading_task(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
         )
 
         status = background_loader.get_task_status("test-model")
@@ -459,15 +500,15 @@ class TestBackgroundModelLoader:
 
     def test_get_all_tasks(
         self, background_loader: BackgroundModelLoader,
-        mock_backend_class: type,
+        fake_backend_class: type,
     ) -> None:
         """Get all tasks returns all pending, active, and completed tasks."""
-        configs = [MockLLMConfig(f"model-{i}") for i in range(3)]
+        configs = [create_test_config(model_name=f"model-{i}") for i in range(3)]
 
         for i, config in enumerate(configs):
             background_loader.submit_loading_task(
                 model_id=f"model-{i}",
-                backend_class=mock_backend_class,
+                backend_class=fake_backend_class,
                 config=config,
             )
 
@@ -480,15 +521,15 @@ class TestBackgroundModelLoader:
 
     def test_get_loading_statistics(
         self, background_loader: BackgroundModelLoader,
-        mock_backend_class: type,
+        fake_backend_class: type,
     ) -> None:
         """Get loading statistics returns correct counts."""
-        configs = [MockLLMConfig(f"model-{i}") for i in range(3)]
+        configs = [create_test_config(model_name=f"model-{i}") for i in range(3)]
 
         for i, config in enumerate(configs):
             background_loader.submit_loading_task(
                 model_id=f"model-{i}",
-                backend_class=mock_backend_class,
+                backend_class=fake_backend_class,
                 config=config,
             )
 
@@ -500,18 +541,18 @@ class TestBackgroundModelLoader:
         assert stats["pending"] == 3
 
     def test_shutdown_cancels_pending_tasks(
-        self, mock_backend_class: type,
+        self, fake_backend_class: type,
     ) -> None:
         """Shutdown cancels all pending tasks."""
         os.environ["INTELLICRACK_TESTING"] = "1"
         loader = BackgroundModelLoader(max_concurrent_loads=2)
 
-        configs = [MockLLMConfig(f"model-{i}") for i in range(3)]
+        configs = [create_test_config(model_name=f"model-{i}") for i in range(3)]
 
         for i, config in enumerate(configs):
             loader.submit_loading_task(
                 model_id=f"model-{i}",
-                backend_class=mock_backend_class,
+                backend_class=fake_backend_class,
                 config=config,
             )
 
@@ -529,10 +570,10 @@ class TestIntegratedBackgroundLoader:
     def test_integrated_loader_initialization(self) -> None:
         """Integrated loader initializes correctly."""
         os.environ["INTELLICRACK_TESTING"] = "1"
-        mock_manager = MockLLMManager()
-        loader = IntegratedBackgroundLoader(mock_manager, max_concurrent_loads=2)
+        fake_manager = LLMManager()
+        loader = IntegratedBackgroundLoader(fake_manager, max_concurrent_loads=2)
 
-        assert loader.llm_manager == mock_manager
+        assert loader.llm_manager == fake_manager
         assert loader.background_loader is not None
         assert len(loader.progress_callbacks) == 0
 
@@ -542,10 +583,10 @@ class TestIntegratedBackgroundLoader:
     def test_add_progress_callback(self) -> None:
         """Adding progress callback registers it correctly."""
         os.environ["INTELLICRACK_TESTING"] = "1"
-        mock_manager = MockLLMManager()
-        loader = IntegratedBackgroundLoader(mock_manager)
+        fake_manager = LLMManager()
+        loader = IntegratedBackgroundLoader(fake_manager)
 
-        callback = Mock(spec=ProgressCallback)
+        callback = FakeProgressCallback()
         loader.add_progress_callback(callback)
 
         assert callback in loader.progress_callbacks
@@ -556,10 +597,10 @@ class TestIntegratedBackgroundLoader:
     def test_remove_progress_callback(self) -> None:
         """Removing progress callback unregisters it."""
         os.environ["INTELLICRACK_TESTING"] = "1"
-        mock_manager = MockLLMManager()
-        loader = IntegratedBackgroundLoader(mock_manager)
+        fake_manager = LLMManager()
+        loader = IntegratedBackgroundLoader(fake_manager)
 
-        callback = Mock(spec=ProgressCallback)
+        callback = FakeProgressCallback()
         loader.add_progress_callback(callback)
         loader.remove_progress_callback(callback)
 
@@ -569,17 +610,17 @@ class TestIntegratedBackgroundLoader:
         del os.environ["INTELLICRACK_TESTING"]
 
     def test_load_model_in_background(
-        self, mock_backend_class: type, mock_config: MockLLMConfig
+        self, fake_backend_class: type, fake_config: LLMConfig
     ) -> None:
         """Loading model in background creates task."""
         os.environ["INTELLICRACK_TESTING"] = "1"
-        mock_manager = MockLLMManager()
-        loader = IntegratedBackgroundLoader(mock_manager)
+        fake_manager = LLMManager()
+        loader = IntegratedBackgroundLoader(fake_manager)
 
         task = loader.load_model_in_background(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
             priority=5,
         )
 
@@ -590,17 +631,17 @@ class TestIntegratedBackgroundLoader:
         del os.environ["INTELLICRACK_TESTING"]
 
     def test_get_loading_progress(
-        self, mock_backend_class: type, mock_config: MockLLMConfig
+        self, fake_backend_class: type, fake_config: LLMConfig
     ) -> None:
         """Get loading progress returns task status."""
         os.environ["INTELLICRACK_TESTING"] = "1"
-        mock_manager = MockLLMManager()
-        loader = IntegratedBackgroundLoader(mock_manager)
+        fake_manager = LLMManager()
+        loader = IntegratedBackgroundLoader(fake_manager)
 
         loader.load_model_in_background(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
         )
 
         progress = loader.get_loading_progress("test-model")
@@ -612,17 +653,17 @@ class TestIntegratedBackgroundLoader:
         del os.environ["INTELLICRACK_TESTING"]
 
     def test_cancel_loading(
-        self, mock_backend_class: type, mock_config: MockLLMConfig
+        self, fake_backend_class: type, fake_config: LLMConfig
     ) -> None:
         """Cancel loading cancels the task."""
         os.environ["INTELLICRACK_TESTING"] = "1"
-        mock_manager = MockLLMManager()
-        loader = IntegratedBackgroundLoader(mock_manager)
+        fake_manager = LLMManager()
+        loader = IntegratedBackgroundLoader(fake_manager)
 
         loader.load_model_in_background(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
         )
 
         result = loader.cancel_loading("test-model")
@@ -633,17 +674,17 @@ class TestIntegratedBackgroundLoader:
         del os.environ["INTELLICRACK_TESTING"]
 
     def test_get_statistics(
-        self, mock_backend_class: type, mock_config: MockLLMConfig
+        self, fake_backend_class: type, fake_config: LLMConfig
     ) -> None:
         """Get statistics returns loading statistics."""
         os.environ["INTELLICRACK_TESTING"] = "1"
-        mock_manager = MockLLMManager()
-        loader = IntegratedBackgroundLoader(mock_manager)
+        fake_manager = LLMManager()
+        loader = IntegratedBackgroundLoader(fake_manager)
 
         loader.load_model_in_background(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
         )
 
         stats = loader.get_statistics()
@@ -660,15 +701,15 @@ class TestThreadSafety:
     """Test thread safety of background loader."""
 
     def test_concurrent_task_submission(
-        self, background_loader: BackgroundModelLoader, mock_backend_class: type
+        self, background_loader: BackgroundModelLoader, fake_backend_class: type
     ) -> None:
         """Concurrent task submissions are handled safely."""
         def submit_tasks(start_id: int, count: int) -> None:
             for i in range(count):
-                config = MockLLMConfig(f"model-{start_id + i}")
+                config = create_test_config(model_name=f"model-{start_id + i}")
                 background_loader.submit_loading_task(
                     model_id=f"model-{start_id + i}",
-                    backend_class=mock_backend_class,
+                    backend_class=fake_backend_class,
                     config=config,
                 )
 
@@ -684,15 +725,15 @@ class TestThreadSafety:
         assert len(background_loader.pending_tasks) == 30
 
     def test_concurrent_status_checks(
-        self, background_loader: BackgroundModelLoader, mock_backend_class: type
+        self, background_loader: BackgroundModelLoader, fake_backend_class: type
     ) -> None:
         """Concurrent status checks don't cause race conditions."""
-        configs = [MockLLMConfig(f"model-{i}") for i in range(10)]
+        configs = [create_test_config(model_name=f"model-{i}") for i in range(10)]
 
         for i, config in enumerate(configs):
             background_loader.submit_loading_task(
                 model_id=f"model-{i}",
-                backend_class=mock_backend_class,
+                backend_class=fake_backend_class,
                 config=config,
             )
 
@@ -716,15 +757,15 @@ class TestGlobalLoaderFunctions:
     """Test global loader factory functions."""
 
     def test_load_model_with_progress_in_test_mode(
-        self, mock_backend_class: type, mock_config: MockLLMConfig
+        self, fake_backend_class: type, fake_config: LLMConfig
     ) -> None:
         """Load model with progress uses synchronous fallback in test mode."""
         os.environ["INTELLICRACK_TESTING"] = "1"
 
         task = load_model_with_progress(
             model_id="test-model",
-            backend_class=mock_backend_class,
-            config=mock_config,
+            backend_class=fake_backend_class,
+            config=fake_config,
         )
 
         assert task.model_id == "test-model"

@@ -58,7 +58,7 @@ def log_message(message: str) -> str:
         message: The message text to format with a timestamp prefix.
 
     Returns:
-        str: The formatted message with timestamp.
+        Formatted message string with timestamp prefix.
 
     """
     return f"[{time.strftime('%H:%M:%S')}] {message}"
@@ -72,7 +72,7 @@ def wrapper_find_file(app_instance: Any, parameters: dict[str, Any]) -> dict[str
         parameters: Dictionary containing 'filename' key to search for.
 
     Returns:
-        dict: Result with status and path if found.
+        Result dictionary with status and path if found.
 
     """
     logger.debug("Entered wrapper_find_file with parameters: %s", parameters)
@@ -112,7 +112,7 @@ def wrapper_load_binary(app_instance: Any, parameters: dict[str, Any]) -> dict[s
         parameters: Dictionary containing 'path' key for binary file location.
 
     Returns:
-        dict: Binary information from app_instance.binary_info.
+        Binary information from app_instance.binary_info.
 
     """
     logger.debug("Entered wrapper_load_binary with parameters: %s", parameters)
@@ -154,7 +154,7 @@ def wrapper_list_relevant_files(app_instance: Any, parameters: dict[str, Any]) -
         parameters: Dictionary of parameters (unused in current implementation).
 
     Returns:
-        dict: List of relevant files.
+        List of relevant files with metadata.
 
     """
     try:
@@ -203,7 +203,7 @@ def wrapper_read_file_chunk(app_instance: Any, parameters: dict[str, Any]) -> di
             and 'size' (optional, default 1024).
 
     Returns:
-        dict: File chunk data with status, data, size, and offset.
+        File chunk data with status, data, size, and offset.
 
     """
     logger.debug("Entered wrapper_read_file_chunk with parameters: %s", parameters)
@@ -246,7 +246,7 @@ def wrapper_get_file_metadata(app_instance: Any, parameters: dict[str, Any]) -> 
         parameters: Dictionary containing 'path' key for the file.
 
     Returns:
-        dict: File metadata including size, timestamps, and attributes.
+        File metadata including size, timestamps, and attributes.
 
     """
     logger.debug("Entered wrapper_get_file_metadata with parameters: %s", parameters)
@@ -294,7 +294,7 @@ def wrapper_run_static_analysis(app_instance: Any, parameters: dict[str, Any]) -
         parameters: Dictionary of parameters (unused in current implementation).
 
     Returns:
-        dict: Static analysis results.
+        Static analysis results.
 
     """
     logger.debug(f"Running static analysis with parameters: {parameters}")
@@ -327,7 +327,7 @@ def wrapper_deep_license_analysis(app_instance: Any, parameters: dict[str, Any])
         parameters: Dictionary of parameters (unused in current implementation).
 
     Returns:
-        dict: License analysis results.
+        License analysis results.
 
     """
     logger.debug(f"Running deep license analysis with parameters: {parameters}")
@@ -356,7 +356,7 @@ def wrapper_detect_protections(app_instance: Any, parameters: dict[str, Any]) ->
         parameters: Dictionary of parameters (unused in current implementation).
 
     Returns:
-        dict: Protection detection results.
+        Protection detection results.
 
     """
     logger.debug(f"Detecting protections with parameters: {parameters}")
@@ -393,7 +393,7 @@ def wrapper_disassemble_address(app_instance: Any, parameters: dict[str, Any]) -
             (optional, default 10).
 
     Returns:
-        dict: Disassembly listing with status and instructions.
+        Disassembly listing with status and instructions.
 
     """
     logger.debug("Entering wrapper_disassemble_address with parameters: %s", parameters)
@@ -504,7 +504,7 @@ def wrapper_get_cfg(app_instance: Any, parameters: dict[str, Any]) -> dict[str, 
         parameters: Dictionary containing optional 'function_address' key.
 
     Returns:
-        dict: Control flow graph data.
+        Control flow graph data.
 
     """
     logger.debug("Entered wrapper_get_cfg with parameters: %s", parameters)
@@ -549,7 +549,7 @@ def wrapper_launch_target(app_instance: Any, parameters: dict[str, Any]) -> dict
         parameters: Dictionary containing optional 'args' and 'suspended' keys.
 
     Returns:
-        dict: Launch status and process information.
+        Launch status and process information.
 
     """
     logger.debug(f"Launching target with parameters: {parameters}")
@@ -680,7 +680,7 @@ def wrapper_attach_target(app_instance: Any, parameters: dict[str, Any]) -> dict
         parameters: Dictionary containing 'process_id' key.
 
     Returns:
-        dict: Attach status.
+        Attach status and process information.
 
     """
     logger.debug("Entered wrapper_attach_target with parameters: %s", parameters)
@@ -763,7 +763,7 @@ def wrapper_run_frida_script(app_instance: Any, parameters: dict[str, Any]) -> d
             'process_id' and 'process_name' keys.
 
     Returns:
-        dict: Script execution results.
+        Script execution results and output.
 
     """
     logger.debug("Entered wrapper_run_frida_script with parameters: %s", parameters)
@@ -895,7 +895,7 @@ def wrapper_detach(app_instance: Any, parameters: dict[str, Any]) -> dict[str, A
         parameters: Dictionary containing optional 'process_id' key.
 
     Returns:
-        dict: Detach status.
+        Detach status and results.
 
     """
     logger.debug(f"Detaching with parameters: {parameters}")
@@ -982,7 +982,7 @@ def wrapper_propose_patch(app_instance: Any, parameters: dict[str, Any]) -> dict
         parameters: Dictionary containing optional 'analysis_results' key.
 
     Returns:
-        dict: Proposed patches with analysis methods and confidence scores.
+        Proposed patches with analysis methods and confidence scores.
 
     """
     logger.debug(f"Proposing patches with parameters: {parameters}")
@@ -1069,7 +1069,7 @@ def _analyze_static_patterns(binary_path: str) -> list[dict[str, Any]]:
         binary_path: Path to the binary file to analyze.
 
     Returns:
-        list: List of patch proposals based on identified patterns.
+        Patch proposals based on identified patterns.
 
     """
     patches = []
@@ -1146,7 +1146,7 @@ def _analyze_license_strings(binary_path: str) -> list[dict[str, Any]]:
         binary_path: Path to the binary file to analyze.
 
     Returns:
-        list: List of patch proposals based on identified license strings.
+        Patch proposals based on identified license strings.
 
     """
     patches = []
@@ -1209,7 +1209,7 @@ def _analyze_imports(binary_path: str) -> list[dict[str, Any]]:
         binary_path: Path to the binary file to analyze.
 
     Returns:
-        list: List of import-based patch proposals.
+        Import-based patch proposals.
 
     """
     patches = []
@@ -1229,7 +1229,7 @@ def _try_pefile_import_analysis(binary_path: str) -> list[dict[str, Any]]:
         binary_path: Path to the PE binary file to analyze.
 
     Returns:
-        list: List of import patches or empty list if analysis fails.
+        Import patches or empty list if analysis fails.
 
     """
     patches = []
@@ -1270,7 +1270,7 @@ def _extract_import_patches(pe: Any, detected_apis: dict[str, list[str]]) -> lis
         detected_apis: Dictionary mapping API categories to function names.
 
     Returns:
-        list: List of import hook patch proposals.
+        Import hook patch proposals.
 
     """
     patches = []
@@ -1286,7 +1286,7 @@ def _extract_import_patches(pe: Any, detected_apis: dict[str, list[str]]) -> lis
             imp: Import object with address information.
 
         Returns:
-            dict: Patch proposal if function is in detected APIs, None otherwise.
+            Patch proposal dictionary if function is in detected APIs, None otherwise.
 
         """
         for _, funcs in detected_apis.items():
@@ -1320,7 +1320,7 @@ def _analyze_disassembly(binary_path: str) -> list[dict[str, Any]]:
         binary_path: Path to the binary file to analyze.
 
     Returns:
-        list: List of instruction-based patch proposals.
+        Instruction-based patch proposals.
 
     """
     patches = []
@@ -1386,7 +1386,7 @@ def _convert_vulnerabilities_to_patches(vulnerabilities: list[dict[str, Any]]) -
         vulnerabilities: List of vulnerability findings from analysis.
 
     Returns:
-        list: List of patch proposals based on vulnerabilities.
+        Patch proposals based on vulnerabilities.
 
     """
     return [
@@ -1412,7 +1412,7 @@ def _deduplicate_and_rank_patches(patches: list[dict[str, Any]]) -> list[dict[st
         patches: List of patch proposals that may contain duplicates.
 
     Returns:
-        list: Deduplicated and ranked list of patches.
+        Deduplicated and ranked patches.
 
     """
     # Simple deduplication by address
@@ -1435,7 +1435,7 @@ def _calculate_patch_confidence(patch: dict[str, Any]) -> float:
         patch: Patch proposal dictionary with analysis method and type.
 
     Returns:
-        float: Confidence score between 0.0 and 1.0.
+        Confidence score between 0.0 and 1.0.
 
     """
     confidence = 0.5  # Base confidence
@@ -1465,7 +1465,7 @@ def _assess_patch_risk(patch: dict[str, Any]) -> int:
         patch: Patch proposal dictionary with type information.
 
     Returns:
-        int: Risk level (1=low, 2=medium, 3=high).
+        Risk level (1=low, 2=medium, 3=high).
 
     """
     if patch.get("type") in ["string_modification", "conditional_bypass"]:
@@ -1481,7 +1481,7 @@ def _assess_compatibility(patch: dict[str, Any], binary_path: str) -> str:
         binary_path: Path to the binary being patched.
 
     Returns:
-        str: Compatibility level (high, medium, or low).
+        Compatibility level (high, medium, or low).
 
     """
     logger.debug(f"Assessing patch compatibility for binary: {binary_path}")
@@ -1501,7 +1501,7 @@ def _get_binary_info(binary_path: str) -> dict[str, Any]:
         binary_path: Path to the binary file.
 
     Returns:
-        dict: Binary information including size, format, and modification time.
+        Binary information including size, format, and modification time.
 
     """
     try:
@@ -1528,7 +1528,7 @@ def _generate_fallback_patches(binary_path: str) -> dict[str, Any]:
         binary_path: Path to the binary file.
 
     Returns:
-        dict: Fallback patch proposals and analysis results.
+        Fallback patch proposals and analysis results.
 
     """
     patches = [
@@ -1588,7 +1588,7 @@ def wrapper_get_proposed_patches(app_instance: Any, parameters: dict[str, Any]) 
         parameters: Dictionary containing optional 'filter_type' and 'include_metadata' keys.
 
     Returns:
-        dict: List of proposed patches with filtering and metadata options.
+        Proposed patches with filtering and metadata options.
 
     """
     try:
@@ -1637,7 +1637,7 @@ def wrapper_apply_confirmed_patch(app_instance: Any, parameters: dict[str, Any])
         parameters: Dictionary containing 'patch_id' key.
 
     Returns:
-        dict: Patch application results including backup path on success.
+        Patch application results including backup path on success.
 
     """
     logger.debug("Entered wrapper_apply_confirmed_patch with parameters: %s", parameters)
@@ -1747,7 +1747,7 @@ def wrapper_generate_launcher_script(app_instance: Any, parameters: dict[str, An
         parameters: Dictionary containing optional 'output_path' key (default: launcher.bat).
 
     Returns:
-        dict: Launcher script generation results.
+        Launcher script generation results.
 
     """
     logger.debug("Entered wrapper_generate_launcher_script with parameters: %s", parameters)
@@ -1790,7 +1790,7 @@ def dispatch_tool(app_instance: Any, tool_name: str, parameters: dict[str, Any])
         parameters: Parameters to pass to the tool.
 
     Returns:
-        dict: Tool execution results.
+        Tool execution results.
 
     """
     logger.info("Dispatching tool: %s with parameters: %s", tool_name, parameters)
@@ -1834,7 +1834,7 @@ def run_external_tool(args: list[str]) -> str:
         args: Command line arguments including tool name and parameters.
 
     Returns:
-        str: Combined stdout, stderr, and exit code output.
+        Combined stdout, stderr, and exit code output.
 
     """
     import subprocess
@@ -1880,7 +1880,7 @@ def wrapper_deep_runtime_monitoring(app_instance: Any, parameters: dict[str, Any
         parameters: Dict containing 'binary_path' and optional 'timeout'.
 
     Returns:
-        dict: Monitoring results with logs and status.
+        Monitoring results with logs and status.
 
     """
     try:
@@ -1967,8 +1967,8 @@ def run_ghidra_headless(
             (default 2G), script_params (dict).
 
     Returns:
-        dict: Comprehensive analysis results including symbols, functions, strings,
-            cross-references, entry points, imports, exports, segments, and analysis time.
+        Comprehensive analysis results including symbols, functions, strings,
+        cross-references, entry points, imports, exports, segments, and analysis time.
 
     """
     import shutil
@@ -2213,7 +2213,7 @@ def _create_comprehensive_analysis_script(output_dir: str, export_format: str, e
         params: Additional parameters to pass to the script.
 
     Returns:
-        str: Path to the created analysis script file.
+        Path to the created analysis script file.
 
     """
     logger.debug(f"Creating analysis script with format: {export_format}, selection: {export_selection}, params: {list(params.keys())}")
@@ -2466,7 +2466,7 @@ def _parse_ghidra_output(results: dict[str, Any], output: str) -> dict[str, Any]
         output: Ghidra stdout output to parse.
 
     Returns:
-        dict: Updated results dictionary with parsed analysis data.
+        Updated results dictionary with parsed analysis data.
 
     """
     lines = output.split("\n")
@@ -2511,7 +2511,7 @@ def _load_analysis_exports(results: dict[str, Any], output_dir: str, export_form
         export_format: Format of exported files (json, xml, etc.).
 
     Returns:
-        dict: Updated results dictionary with loaded analysis data.
+        Updated results dictionary with loaded analysis data.
 
     """
     logger.debug(f"Loading analysis exports from {output_dir} with format: {export_format}")

@@ -40,14 +40,25 @@ except ImportError:
 
 @dataclass
 class GhidraScript:
-    """Represents a Ghidra script configuration."""
+    """Represents a Ghidra script configuration.
+
+    Attributes:
+        name: Script name identifier.
+        path: Path to the script file.
+        language: Programming language of the script ("python" or "java").
+        parameters: Dictionary of script parameters and values.
+        output_format: Expected output format ("json", "xml", or "text").
+        timeout: Maximum execution time in seconds. Defaults to 300.
+        requires_project: Whether script requires a Ghidra project. Defaults to True.
+        description: Human-readable script description. Defaults to empty string.
+    """
 
     name: str
     path: Path
-    language: str  # "python" or "java"
+    language: str
     parameters: dict[str, Any]
-    output_format: str  # "json", "xml", "text"
-    timeout: int = 300  # seconds
+    output_format: str
+    timeout: int = 300
     requires_project: bool = True
     description: str = ""
 
@@ -56,7 +67,12 @@ class GhidraScriptRunner:
     """Manages Ghidra script execution with dynamic script discovery."""
 
     def __init__(self, ghidra_path: Path) -> None:
-        """Initialize the GhidraScriptRunner with the Ghidra path."""
+        """Initialize the GhidraScriptRunner with the Ghidra path.
+
+        Args:
+            ghidra_path: Path to the Ghidra installation directory containing
+                the headless analyzer and script libraries.
+        """
         self.ghidra_path = ghidra_path
         self.headless_path = self._get_headless_path()
         self.scripts_dir = ghidra_path / "Ghidra" / "Features" / "Base" / "ghidra_scripts"
@@ -68,13 +84,26 @@ class GhidraScriptRunner:
         self._discover_all_scripts()
 
     def _get_headless_path(self) -> Path:
-        """Get path to headless analyzer."""
+        """Get path to the Ghidra headless analyzer executable.
+
+        Resolves the platform-specific headless analyzer executable path,
+        returning analyzeHeadless.bat on Windows or analyzeHeadless on Unix-like
+        systems.
+
+        Returns:
+            Path: Path to the Ghidra headless analyzer executable in the
+                Ghidra installation's support directory.
+        """
         if os.name == "nt":
             return self.ghidra_path / "support" / "analyzeHeadless.bat"
         return self.ghidra_path / "support" / "analyzeHeadless"
 
     def _discover_all_scripts(self) -> None:
-        """Dynamically discover all Ghidra scripts from intellicrack scripts directory."""
+        """Dynamically discover all Ghidra scripts from intellicrack scripts directory.
+
+        Scans the intellicrack scripts directory for Python and Java Ghidra scripts
+        and parses their metadata to register them as available scripts.
+        """
         if not self.intellicrack_scripts_dir.exists():
             logger.warning("Intellicrack scripts directory not found: %s", self.intellicrack_scripts_dir)
             return
@@ -105,8 +134,20 @@ class GhidraScriptRunner:
     def _parse_script_metadata(self, script_path: Path) -> dict[str, Any]:
         """Parse metadata from script header comments.
 
-        Supports both Python (#) and Java (//, /*) style comments.
-        Looks for @key: value patterns in the first 100 lines.
+        Extracts metadata annotations from Ghidra script files by scanning the
+        first 100 lines for @key: value patterns in comments. Supports both
+        Python (#) and Java (//, /*) style comments. Metadata keys are
+        normalized to lowercase and include description, output_format, timeout,
+        parameters, and requires_project.
+
+        Args:
+            script_path: Path to the script file to parse for metadata
+                annotations.
+
+        Returns:
+            dict[str, Any]: Dictionary containing parsed metadata key-value
+                pairs extracted from script header comments. Returns an empty
+                dictionary if parsing fails or no metadata is found.
         """
         metadata = {}
 
@@ -140,19 +181,38 @@ class GhidraScriptRunner:
         project_path: Path | None = None,
         use_terminal: bool = False,
     ) -> dict[str, Any]:
-        """Run a Ghidra script on a binary.
+        """Run a Ghidra script on a binary with optional parameter customization.
+
+        Executes a registered Ghidra script against a binary file, managing
+        temporary project creation, parameter passing, and output collection.
+        Results are parsed based on the script's configured output format
+        (json, xml, or text).
 
         Args:
-            binary_path: Path to binary to analyze
-            script_name: Name of script to run
-            output_dir: Optional output directory
-            parameters: Optional script parameters
-            project_path: Optional existing project path
-            use_terminal: If True, show analysis progress in terminal (default: False)
+            binary_path: Path to the binary file to analyze with the script.
+            script_name: Name of the registered script to execute. Must match
+                a discovered or custom script name.
+            output_dir: Optional output directory for script results. If not
+                provided, a temporary directory is created and cleaned up.
+            parameters: Optional dictionary of script-specific parameters to
+                override defaults defined in the script metadata.
+            project_path: Optional path to an existing Ghidra project. If not
+                provided, a temporary project is created for this execution.
+            use_terminal: If True and terminal manager is available, show script
+                execution progress in terminal; otherwise capture output.
 
         Returns:
-            Dictionary with analysis results
+            dict[str, Any]: Dictionary containing execution results with keys:
+                'execution' (metadata about the script run),
+                'stdout' (captured standard output),
+                'stderr' (captured standard error),
+                'files' (list of output files generated),
+                'data' (parsed output for json format),
+                or 'error' if execution failed.
 
+        Raises:
+            ValueError: If the specified script_name is not found in discovered
+                or custom scripts and does not correspond to a valid file path.
         """
         # Get script configuration
         script = self._get_script(script_name)
@@ -273,7 +333,28 @@ class GhidraScriptRunner:
         output_dir: Path,
         share_project: bool = True,
     ) -> dict[str, Any]:
-        """Run multiple scripts in sequence, optionally sharing project."""
+        """Run multiple Ghidra scripts in sequence with optional project sharing.
+
+        Executes a chain of scripts against a single binary, optionally reusing
+        the same Ghidra project across all script executions to improve performance.
+        Stops execution if any script in the chain fails.
+
+        Args:
+            binary_path: Path to the binary file to analyze with all scripts in
+                the chain.
+            script_names: List of script names to execute in sequence. Scripts
+                are run in the order specified.
+            output_dir: Directory to store output from all scripts. Each script
+                gets its own subdirectory within this directory.
+            share_project: If True, creates a shared Ghidra project and reuses
+                it for all scripts. If False, creates a temporary project for
+                each script execution. Defaults to True.
+
+        Returns:
+            dict[str, Any]: Dictionary mapping script names (str) to their
+                execution result dictionaries (dict[str, Any]). Results follow
+                the same format as run_script() return values.
+        """
         results = {}
         project_path = None
 
@@ -317,7 +398,28 @@ class GhidraScriptRunner:
         language: str = "python",
         parameters: dict[str, Any] | None = None,
     ) -> GhidraScript:
-        """Create a custom Ghidra script."""
+        """Create and register a custom Ghidra script.
+
+        Creates a new Ghidra script file in the user's .ghidra/scripts directory
+        with appropriate metadata header, writes the provided code, and registers
+        the script for execution.
+
+        Args:
+            name: Name identifier for the custom script. Used to create the
+                script file and as the script key in the custom_scripts registry.
+            code: Complete script code to write to the file. Code should be
+                valid Python or Java depending on the language parameter.
+            language: Programming language for the script ("python" or "java").
+                Defaults to "python". Determines file extension (.py or .java).
+            parameters: Optional dictionary of script parameters and their
+                default values. Parameters are included in the script metadata
+                header for documentation. Defaults to None.
+
+        Returns:
+            GhidraScript: GhidraScript object configured for the created script,
+                registered in the custom_scripts dictionary and ready for
+                execution via run_script().
+        """
         # Create custom scripts directory
         custom_dir = Path.home() / ".ghidra" / "scripts"
         custom_dir.mkdir(parents=True, exist_ok=True)
@@ -355,7 +457,21 @@ class GhidraScriptRunner:
         return script
 
     def _get_script(self, name: str) -> GhidraScript | None:
-        """Get script by name (case-insensitive)."""
+        """Retrieve a script by name with flexible matching and fallback.
+
+        Attempts to find a script by name using multiple matching strategies:
+        first exact lowercase match, then exact name match, then case-insensitive
+        comparison, and finally direct file path resolution if name is a valid file.
+
+        Args:
+            name: Script name to look up. Can be a script key, script name, or
+                file path. Matching is performed in order of specificity.
+
+        Returns:
+            GhidraScript | None: GhidraScript object if found through any
+                matching strategy, None if no matching script is found. Returns
+                None and logs a warning if no match is located.
+        """
         name_lower = name.lower()
 
         if name_lower in self.discovered_scripts:
@@ -387,7 +503,29 @@ class GhidraScriptRunner:
         return None
 
     def _parse_script_output(self, output_dir: Path, format: str, stdout: str, stderr: str) -> dict[str, Any]:
-        """Parse script output based on format."""
+        """Parse script output based on configured format.
+
+        Extracts and parses script output from the output directory, including
+        standard output/error streams and format-specific output files. Handles
+        json, xml, and text formats with appropriate parsing and file collection.
+
+        Args:
+            output_dir: Directory containing script output files generated during
+                execution.
+            format: Expected output format ("json", "xml", or "text"). Determines
+                how output files are parsed and included in results.
+            stdout: Standard output stream captured from script execution.
+            stderr: Standard error stream captured from script execution.
+
+        Returns:
+            dict[str, Any]: Dictionary containing parsed output with keys:
+                'stdout' (standard output string),
+                'stderr' (standard error string),
+                'files' (list of output file paths),
+                'data' (parsed json if format is json),
+                'text_files' (list of text files if format is text),
+                'xml_file' (first xml file if format is xml).
+        """
         results: dict[str, Any] = {"stdout": stdout, "stderr": stderr, "files": []}
 
         # List output files
@@ -414,7 +552,17 @@ class GhidraScriptRunner:
         return results
 
     def list_available_scripts(self) -> list[dict[str, str | int]]:
-        """List all dynamically discovered scripts."""
+        """List all dynamically discovered Ghidra scripts with metadata.
+
+        Generates a list of all discovered scripts including their metadata
+        such as name, programming language, description, and timeout settings.
+
+        Returns:
+            list[dict[str, str | int]]: List of dictionaries containing script
+                metadata. Each dictionary includes keys: 'name' (script key),
+                'actual_name' (script name), 'language' (python/java),
+                'description', 'path' (relative path), and 'timeout' (seconds).
+        """
         return [
             {
                 "name": name,
@@ -428,7 +576,22 @@ class GhidraScriptRunner:
         ]
 
     def validate_script(self, script_path: Path) -> bool:
-        """Validate a Ghidra script."""
+        """Validate a Ghidra script for correct format and syntax.
+
+        Performs validation checks on a Ghidra script file including existence
+        verification, file extension validation, and Python syntax compilation
+        if the script is a Python script.
+
+        Args:
+            script_path: Path to the script file to validate. Must be a .py or
+                .java file.
+
+        Returns:
+            bool: True if the script file exists, has a valid extension (.py or
+                .java), and (for Python scripts) contains valid, compilable code.
+                Returns False if any validation check fails or an exception occurs
+                during validation.
+        """
         try:
             if not script_path.exists():
                 return False
@@ -453,8 +616,7 @@ class GhidraScriptRunner:
         intellicrack scripts directory to find all available Ghidra scripts.
 
         Returns:
-            Number of scripts discovered after refresh.
-
+            int: Number of scripts discovered after refresh.
         """
         self.discovered_scripts.clear()
         self._discover_all_scripts()

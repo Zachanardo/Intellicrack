@@ -150,7 +150,9 @@ class TestWebSocketEventStreamProduction:
         """Client connections are tracked correctly."""
         await event_stream.start()
 
-        server_port = event_stream.server.sockets[0].getsockname()[1]
+        assert event_stream.server is not None
+        sockets = list(event_stream.server.sockets)
+        server_port = sockets[0].getsockname()[1]
 
         try:
             async with websockets.connect(f"ws://localhost:{server_port}") as websocket:
@@ -176,7 +178,9 @@ class TestWebSocketEventStreamProduction:
         """Welcome message is sent to new clients."""
         await event_stream.start()
 
-        server_port = event_stream.server.sockets[0].getsockname()[1]
+        assert event_stream.server is not None
+        sockets = list(event_stream.server.sockets)
+        server_port = sockets[0].getsockname()[1]
 
         try:
             async with websockets.connect(f"ws://localhost:{server_port}") as websocket:
@@ -203,7 +207,9 @@ class TestWebSocketEventStreamProduction:
         """Subscribe command adds event subscriptions."""
         await event_stream.start()
 
-        server_port = event_stream.server.sockets[0].getsockname()[1]
+        assert event_stream.server is not None
+        sockets = list(event_stream.server.sockets)
+        server_port = sockets[0].getsockname()[1]
 
         try:
             async with websockets.connect(f"ws://localhost:{server_port}") as websocket:
@@ -237,7 +243,9 @@ class TestWebSocketEventStreamProduction:
         """Filter command sets event filters."""
         await event_stream.start()
 
-        server_port = event_stream.server.sockets[0].getsockname()[1]
+        assert event_stream.server is not None
+        sockets = list(event_stream.server.sockets)
+        server_port = sockets[0].getsockname()[1]
 
         try:
             async with websockets.connect(f"ws://localhost:{server_port}") as websocket:
@@ -270,7 +278,9 @@ class TestWebSocketEventStreamProduction:
         """Statistics command returns server statistics."""
         await event_stream.start()
 
-        server_port = event_stream.server.sockets[0].getsockname()[1]
+        assert event_stream.server is not None
+        sockets = list(event_stream.server.sockets)
+        server_port = sockets[0].getsockname()[1]
 
         try:
             async with websockets.connect(f"ws://localhost:{server_port}") as websocket:
@@ -295,7 +305,9 @@ class TestWebSocketEventStreamProduction:
         """Unsubscribe command removes event subscriptions."""
         await event_stream.start()
 
-        server_port = event_stream.server.sockets[0].getsockname()[1]
+        assert event_stream.server is not None
+        sockets = list(event_stream.server.sockets)
+        server_port = sockets[0].getsockname()[1]
 
         try:
             async with websockets.connect(f"ws://localhost:{server_port}") as websocket:
@@ -332,7 +344,9 @@ class TestWebSocketEventStreamProduction:
         """Invalid JSON messages return error response."""
         await event_stream.start()
 
-        server_port = event_stream.server.sockets[0].getsockname()[1]
+        assert event_stream.server is not None
+        sockets = list(event_stream.server.sockets)
+        server_port = sockets[0].getsockname()[1]
 
         try:
             async with websockets.connect(f"ws://localhost:{server_port}") as websocket:
@@ -360,7 +374,9 @@ class TestWebSocketEventStreamProduction:
         """Unknown commands return error response."""
         await event_stream.start()
 
-        server_port = event_stream.server.sockets[0].getsockname()[1]
+        assert event_stream.server is not None
+        sockets = list(event_stream.server.sockets)
+        server_port = sockets[0].getsockname()[1]
 
         try:
             async with websockets.connect(f"ws://localhost:{server_port}") as websocket:
@@ -389,7 +405,9 @@ class TestWebSocketEventStreamProduction:
         """Client disconnections are cleaned up properly."""
         await event_stream.start()
 
-        server_port = event_stream.server.sockets[0].getsockname()[1]
+        assert event_stream.server is not None
+        sockets = list(event_stream.server.sockets)
+        server_port = sockets[0].getsockname()[1]
 
         try:
             async with websockets.connect(f"ws://localhost:{server_port}") as websocket:
@@ -483,7 +501,9 @@ class TestWebSocketEventStreamProduction:
         """Server handles multiple concurrent client connections."""
         await event_stream.start()
 
-        server_port = event_stream.server.sockets[0].getsockname()[1]
+        assert event_stream.server is not None
+        sockets = list(event_stream.server.sockets)
+        server_port = sockets[0].getsockname()[1]
 
         try:
             async with websockets.connect(f"ws://localhost:{server_port}") as ws1:
@@ -509,7 +529,9 @@ class TestWebSocketEventStreamProduction:
         """History command returns recent events."""
         await event_stream.start()
 
-        server_port = event_stream.server.sockets[0].getsockname()[1]
+        assert event_stream.server is not None
+        sockets = list(event_stream.server.sockets)
+        server_port = sockets[0].getsockname()[1]
 
         try:
             async with websockets.connect(f"ws://localhost:{server_port}") as websocket:

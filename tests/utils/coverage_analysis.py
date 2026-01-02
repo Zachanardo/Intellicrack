@@ -13,7 +13,7 @@ sys.path.insert(0, project_root)
 # Import the module under test
 from intellicrack.utils.exploitation.payload_result_handler import PayloadResultHandler
 
-def analyze_coverage():
+def analyze_coverage() -> float:
     """Analyze test coverage for PayloadResultHandler."""
     print("=== PAYLOAD RESULT HANDLER COVERAGE ANALYSIS ===\n")
 
@@ -98,7 +98,7 @@ def analyze_coverage():
 
     return coverage_percentage
 
-def test_functionality():
+def test_functionality() -> bool:
     """Test basic functionality to verify tests work."""
     print("\n=== FUNCTIONALITY VERIFICATION ===\n")
 
@@ -106,7 +106,7 @@ def test_functionality():
     print("🔬 Testing basic success case...")
     messages = []
 
-    def capture_output(msg):
+    def capture_output(msg: str) -> None:
         messages.append(msg)
 
     result = {
@@ -148,7 +148,7 @@ def test_functionality():
     messages.clear()
     saves = []
 
-    def capture_save(payload, metadata):
+    def capture_save(payload: bytes, metadata: dict[str, object]) -> None:
         saves.append((payload, metadata))
 
     result = {

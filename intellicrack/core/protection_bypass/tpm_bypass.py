@@ -1,6 +1,28 @@
 """TPM 2.0 Bypass Module - Advanced techniques for bypassing Trusted Platform Module protections.
 
-Implements attestation bypass, sealed key extraction, and remote attestation spoofing.
+Implements comprehensive TPM 1.2 and 2.0 protection analysis and bypass capabilities including
+attestation bypass, sealed key extraction, PCR manipulation, remote attestation spoofing, binary
+patching, and runtime Frida-based injection for defeating TPM-based software licensing protection.
+
+Key Features:
+    - TPM 2.0 and TPM 1.2 support with full command set implementation
+    - Virtualized TPM engine for command processing without hardware access
+    - PCR (Platform Configuration Register) manipulation and spoofing
+    - Sealed key extraction from NVRAM and persistent storage
+    - Attestation data forging with proper PKCS#1 v1.5 signatures
+    - Remote attestation spoofing with AIK certificate generation
+    - Windows TBS (TPM Base Services) hooking for command interception
+    - Physical memory access for cold boot attacks and key extraction
+    - BitLocker VMK extraction and Windows Hello bypass
+    - Binary patching for TPM API calls and licensing checks
+    - Frida-based runtime PCR manipulation and command interception
+    - Support for both x86 and ARM TPM implementations
+
+Module Functions:
+    detect_tpm_usage: Detect if binary uses TPM protection mechanisms
+    analyze_tpm_protection: Comprehensive TPM protection mechanism analysis
+    bypass_tpm_protection: Patch binaries to remove TPM checks
+    tpm_research_tools: Get available TPM bypass tools and methods
 """
 
 from __future__ import annotations
@@ -16,11 +38,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
-
-
-if TYPE_CHECKING:
-    from types import ModuleType
+from typing import Any
 
 
 def _import_crypto() -> tuple[
@@ -297,7 +315,17 @@ class TPM12CommandCode(IntEnum):
 
 @dataclass
 class PCRBank:
-    """PCR bank configuration."""
+    """PCR bank configuration.
+
+    Stores Platform Configuration Register values for a specific hash algorithm
+    with selection mask indicating which PCRs are used.
+
+    Attributes:
+        algorithm: TPM 2.0 algorithm identifier (SHA256, SHA1, etc.).
+        pcr_values: List of 24 PCR values as bytes for each register.
+        selection_mask: Bitmask indicating active PCRs (0xFFFFFF for all 24).
+
+    """
 
     algorithm: TPM2Algorithm
     pcr_values: list[bytes]
@@ -306,7 +334,22 @@ class PCRBank:
 
 @dataclass
 class AttestationData:
-    """TPM attestation data structure."""
+    """TPM attestation data structure.
+
+    Complete attestation response structure containing all components needed to
+    satisfy remote verification of TPM quotes and platform configuration.
+
+    Attributes:
+        magic: TPM magic bytes (0xFF544347 for valid attestation).
+        type: Attestation type identifier.
+        qualified_signer: Hash of attestation identity key.
+        extra_data: Nonce or challenge response data.
+        clock_info: Timestamp and counter information.
+        firmware_version: TPM firmware version identifier.
+        attested_data: PCR selections and digest data.
+        signature: PKCS#1 v1.5 signature over attestation data.
+
+    """
 
     magic: bytes
     type: int
@@ -1527,12 +1570,16 @@ class TPMBypassEngine:
     def intercept_tpm_command(self, command_code: TPM2CommandCode, hook_function: Callable[[bytes], bytes | None]) -> bool:
         """Install hook to intercept TPM commands.
 
+        Registers a callback function to intercept and optionally modify TPM command
+        submissions for specified command codes to bypass licensing verification checks.
+
         Args:
-            command_code: TPM command code to intercept
-            hook_function: Callback function for interception
+            command_code: TPM command code to intercept.
+            hook_function: Callback function for interception that returns modified
+                command bytes or None to pass through unchanged.
 
         Returns:
-            True if hook installed successfully
+            True if hook installed successfully, False otherwise.
 
         """
         with self.command_lock:
@@ -1543,8 +1590,11 @@ class TPMBypassEngine:
     def hook_tbs_submit_command(self) -> bool:
         """Install Windows TBS (TPM Base Services) command submission hook.
 
+        Patches Windows TBS function to intercept TPM command submissions at the
+        driver interface level to modify or spoof responses without direct hardware access.
+
         Returns:
-            True if TBS hooks installed successfully
+            True if TBS hooks installed successfully, False if unavailable or fails.
 
         """
         if not HAS_WIN32:
@@ -1624,13 +1674,19 @@ class TPMBypassEngine:
     ) -> bytes | None:
         """Unseal TPM-sealed key by bypassing authorization.
 
+        Extracts plaintext key material from TPM-sealed blobs using multiple
+        decryption strategies including AES-CBC/ECB with common TPM keys.
+
         Args:
-            sealed_blob: TPM sealed key blob
-            auth_value: Authorization value (password/HMAC)
-            pcr_policy: PCR policy requirements
+            sealed_blob: TPM sealed key blob bytes to decrypt.
+            auth_value: Authorization value (password/HMAC) for key derivation,
+                defaults to empty bytes.
+            pcr_policy: PCR policy requirements mapping PCR indices to required
+                values, None if not needed.
 
         Returns:
-            Unsealed key data or None
+            Unsealed key data bytes or None if decryption fails or blob format
+            unsupported.
 
         """
         if not HAS_CRYPTO:
@@ -1925,11 +1981,15 @@ class TPMBypassEngine:
         def pcr_extend_hook(command: bytes) -> bytes | None:
             """Process hooked PCR_Extend command.
 
+            Intercepts PCR extend operations to either block extends or modify the
+            extend value to prevent updates that would invalidate licensing checks.
+
             Args:
                 command: Raw TPM PCR_Extend command bytes.
 
             Returns:
-                Modified command or success response, or None to pass through.
+                Modified command or success response, or None to pass through
+                unchanged to underlying TPM.
 
             """
             if len(command) < 14:
@@ -2453,9 +2513,12 @@ class TPMBypassEngine:
             def on_message(message: dict[str, Any], data: Any) -> None:
                 """Handle Frida script messages.
 
+                Processes messages from injected Frida script including logging,
+                error handling, and optional callback invocation for external handlers.
+
                 Args:
-                    message: Frida message dictionary with type and payload.
-                    data: Associated message data or None.
+                    message: Frida message dictionary with type and payload fields.
+                    data: Associated message data bytes or None.
 
                 """
                 if message.get("type") == "send":
@@ -2512,9 +2575,12 @@ class TPMBypassEngine:
             def on_message(message: dict[str, Any], data: Any) -> None:
                 """Handle Frida PCR script messages.
 
+                Processes PCR manipulation script messages including log output,
+                errors, and forwarding to external message handlers if registered.
+
                 Args:
-                    message: Frida message dictionary with type and payload.
-                    data: Associated message data or None.
+                    message: Frida message dictionary with type and payload fields.
+                    data: Associated message data bytes or None.
 
                 """
                 if message.get("type") == "send":
@@ -2718,7 +2784,8 @@ class TPMBypassEngine:
     def detach_frida(self) -> None:
         """Detach Frida session and cleanup.
 
-        Unloads Frida scripts and detaches from target process, releasing resources.
+        Unloads Frida scripts and detaches from target process, releasing all
+        resources and terminating runtime injection capabilities.
 
         """
         try:
@@ -2937,11 +3004,15 @@ class TPMBypassEngine:
             def intercept_unseal(command: bytes) -> bytes | None:
                 """Intercept Unseal command.
 
+                Captures TPM Unseal command and returns fabricated success response
+                with random key material to bypass authorization requirements.
+
                 Args:
                     command: TPM Unseal command bytes.
 
                 Returns:
-                    Success response with random unsealed data or None.
+                    Success response with random unsealed data bytes or None if
+                    command format invalid.
 
                 """
                 if len(command) >= 10:
@@ -2960,11 +3031,15 @@ class TPMBypassEngine:
             def intercept_quote(command: bytes) -> bytes | None:
                 """Intercept Quote command.
 
+                Captures TPM Quote command and returns forged attestation response
+                with fabricated PCR digest and signature to bypass remote verification.
+
                 Args:
                     command: TPM Quote command bytes.
 
                 Returns:
-                    Forged attestation response or None.
+                    Forged attestation response bytes with valid structure or None if
+                    command format invalid.
 
                 """
                 if len(command) >= 10:

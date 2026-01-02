@@ -8,7 +8,7 @@ import r2pipe
 import sys
 import os
 
-def test_r2pipe_integration():
+def test_r2pipe_integration() -> bool:
     """Test r2pipe functionality with real binary analysis."""
     test_binary = r"C:\Windows\System32\notepad.exe"
     radare2_path = r"D:\Intellicrack\tools\radare2_extracted\radare2-5.9.4-w64\bin\radare2.exe"

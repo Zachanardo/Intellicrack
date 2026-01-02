@@ -157,7 +157,7 @@ class ValidationAnalyzer:
             arch: Architecture ("x64" or "x86")
 
         Returns:
-            ValidationAnalysis with detected algorithm and constraints
+            Analysis result with detected algorithm and constraints.
 
         """
         if arch == "x86":
@@ -202,7 +202,7 @@ class ValidationAnalyzer:
             max_instructions: Maximum instructions to disassemble
 
         Returns:
-            List of Capstone instruction objects
+            List of Capstone instruction objects.
 
         """
         instructions = []
@@ -226,7 +226,7 @@ class ValidationAnalyzer:
             binary_code: Original binary data for scanning
 
         Returns:
-            List of detected cryptographic primitives
+            List of detected cryptographic primitives.
 
         """
         primitives = []
@@ -311,7 +311,7 @@ class ValidationAnalyzer:
             instructions: List of disassembled instructions
 
         Returns:
-            List of identified API function names
+            List of identified API function names.
 
         """
         api_calls: list[str] = []
@@ -344,7 +344,7 @@ class ValidationAnalyzer:
             instructions: List of disassembled instructions
 
         Returns:
-            List of extracted constraints
+            List of extracted constraints.
 
         """
         constraints = []
@@ -415,7 +415,7 @@ class ValidationAnalyzer:
             instructions: List of disassembled instructions
 
         Returns:
-            List of patchable locations
+            List of patchable locations.
 
         """
         patch_points = []
@@ -487,7 +487,7 @@ class ValidationAnalyzer:
             constraints: Extracted constraints
 
         Returns:
-            Tuple of (algorithm type, confidence score)
+            Algorithm type and confidence score.
 
         """
         if not crypto_primitives and not api_calls:
@@ -544,7 +544,7 @@ class ValidationAnalyzer:
             instructions: Disassembled instructions for reference
 
         Returns:
-            Dictionary of named constants
+            Dictionary of named constants.
 
         """
         constants = {}
@@ -585,7 +585,7 @@ class ValidationAnalyzer:
             patch_points: List of patchable locations
 
         Returns:
-            List of recommendation strings
+            List of recommendation strings.
 
         """
         recommendations: list[str] = []
@@ -685,7 +685,15 @@ class ConstraintExtractor:
         return constraints
 
     def _extract_string_constraints(self) -> list[KeyConstraint]:
-        """Extract constraints from string patterns in the binary."""
+        """Extract constraints from string patterns in the binary.
+
+        Scans the binary for license-related keywords and format patterns
+        that may indicate key structure or validation requirements.
+
+        Returns:
+            List of extracted string pattern constraints.
+
+        """
         constraints: list[KeyConstraint] = []
 
         if not self._binary_data:
@@ -735,7 +743,16 @@ class ConstraintExtractor:
         return constraints
 
     def _extract_crypto_constraints(self) -> list[KeyConstraint]:
-        """Extract constraints from cryptographic constants."""
+        """Extract constraints from cryptographic constants.
+
+        Identifies cryptographic algorithm signatures and constants in the
+        binary that indicate which hashing or encryption algorithms are used
+        for license validation.
+
+        Returns:
+            List of cryptographic algorithm constraints.
+
+        """
         constraints: list[KeyConstraint] = []
 
         if not self._binary_data:
@@ -785,7 +802,15 @@ class ConstraintExtractor:
         return constraints
 
     def _extract_format_constraints(self) -> list[KeyConstraint]:
-        """Extract key format constraints from binary patterns."""
+        """Extract key format constraints from binary patterns.
+
+        Analyzes the binary for separator characters and patterns that
+        indicate the expected format and structure of license keys.
+
+        Returns:
+            List of key format constraints.
+
+        """
         constraints: list[KeyConstraint] = []
 
         if not self._binary_data:
@@ -812,7 +837,15 @@ class ConstraintExtractor:
         return constraints
 
     def _extract_length_constraints(self) -> list[KeyConstraint]:
-        """Extract key length constraints from comparison operations."""
+        """Extract key length constraints from comparison operations.
+
+        Scans for length validation checks in the binary that indicate
+        expected license key lengths.
+
+        Returns:
+            List of key length constraints.
+
+        """
         constraints: list[KeyConstraint] = []
 
         if not self._binary_data or not self._md:
@@ -856,7 +889,7 @@ class ConstraintExtractor:
         """Analyze and extract validation algorithms from constraints.
 
         Returns:
-            List of extracted validation algorithms
+            List of extracted validation algorithms.
 
         """
         constraints = self.extract_constraints()
@@ -873,6 +906,18 @@ class ConstraintExtractor:
         return self.algorithms
 
     def _group_constraints_by_algorithm(self, constraints: list[KeyConstraint]) -> dict[str, list[KeyConstraint]]:
+        """Group extracted constraints by their associated algorithm type.
+
+        Organizes constraints into algorithm-specific groups to facilitate
+        algorithm detection and selection.
+
+        Args:
+            constraints: List of extracted constraints to group.
+
+        Returns:
+            Constraints grouped by algorithm name.
+
+        """
         groups: dict[str, list[KeyConstraint]] = {}
 
         for constraint in constraints:
@@ -888,6 +933,19 @@ class ConstraintExtractor:
         return groups
 
     def _build_algorithm(self, algo_type: str, constraints: list[KeyConstraint]) -> ExtractedAlgorithm | None:
+        """Build an algorithm object from type and constraints.
+
+        Constructs an ExtractedAlgorithm instance based on the identified
+        algorithm type and its associated constraints.
+
+        Args:
+            algo_type: The type of algorithm to build.
+            constraints: List of constraints associated with the algorithm.
+
+        Returns:
+            The built algorithm or None if unsupported.
+
+        """
         if algo_type == "crc":
             return self._build_crc_algorithm(constraints)
         if algo_type in {"md5", "sha1", "sha256"}:
@@ -899,6 +957,18 @@ class ConstraintExtractor:
         return self._build_generic_algorithm(constraints)
 
     def _build_crc_algorithm(self, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
+        """Build a CRC32 validation algorithm.
+
+        Constructs a CRC32-based algorithm from extracted constraints,
+        including polynomial detection and validation function setup.
+
+        Args:
+            constraints: List of constraints associated with CRC32.
+
+        Returns:
+            The constructed CRC32 algorithm.
+
+        """
         polynomial = 0xEDB88320
 
         for constraint in constraints:
@@ -906,6 +976,15 @@ class ConstraintExtractor:
                 polynomial = 0xEDB88320 if "reversed" in str(constraint.value) else 0x04C11DB7
 
         def crc32_validate(key: str) -> int:
+            """Validate key using CRC32 checksum.
+
+            Args:
+                key: The license key to validate.
+
+            Returns:
+                The CRC32 checksum value.
+
+            """
             return zlib.crc32(key.encode()) & 0xFFFFFFFF
 
         return ExtractedAlgorithm(
@@ -918,6 +997,19 @@ class ConstraintExtractor:
         )
 
     def _build_hash_algorithm(self, algo_type: str, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
+        """Build a hash-based validation algorithm.
+
+        Constructs a hash algorithm (MD5, SHA1, or SHA256) from extracted
+        constraints with appropriate validation function.
+
+        Args:
+            algo_type: The hash algorithm type (md5, sha1, or sha256).
+            constraints: List of constraints associated with the hash.
+
+        Returns:
+            The constructed hash algorithm.
+
+        """
         hash_functions = {
             "md5": hashlib.md5,
             "sha1": hashlib.sha1,
@@ -927,6 +1019,15 @@ class ConstraintExtractor:
         hash_func = hash_functions.get(algo_type, hashlib.sha256)
 
         def hash_validate(key: str) -> str:
+            """Validate key using hash algorithm.
+
+            Args:
+                key: The license key to validate.
+
+            Returns:
+                The hex digest of the hash.
+
+            """
             return hash_func(key.encode()).hexdigest()
 
         return ExtractedAlgorithm(
@@ -939,7 +1040,28 @@ class ConstraintExtractor:
         )
 
     def _build_multiplicative_algorithm(self, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
+        """Build a multiplicative hash validation algorithm.
+
+        Constructs a multiplicative hash-based algorithm for key validation
+        using a constant multiplier.
+
+        Args:
+            constraints: List of constraints associated with the algorithm.
+
+        Returns:
+            The constructed multiplicative algorithm.
+
+        """
         def multiplicative_validate(key: str) -> int:
+            """Validate key using multiplicative hash.
+
+            Args:
+                key: The license key to validate.
+
+            Returns:
+                The multiplicative hash value.
+
+            """
             result = 0
             multiplier = 31
             for char in key:
@@ -956,9 +1078,30 @@ class ConstraintExtractor:
         )
 
     def _build_modular_algorithm(self, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
+        """Build a modular arithmetic validation algorithm.
+
+        Constructs a modular arithmetic-based algorithm for license key
+        validation using a constant modulus.
+
+        Args:
+            constraints: List of constraints associated with the algorithm.
+
+        Returns:
+            The constructed modular algorithm.
+
+        """
         modulus = 97
 
         def modular_validate(key: str) -> int:
+            """Validate key using modular arithmetic.
+
+            Args:
+                key: The license key to validate.
+
+            Returns:
+                The modular arithmetic result.
+
+            """
             numeric = "".join(c if c.isdigit() else str(ord(c) - ord("A") + 10) for c in key)
             return int(numeric) % modulus
 
@@ -972,6 +1115,18 @@ class ConstraintExtractor:
         )
 
     def _build_generic_algorithm(self, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
+        """Build a generic fallback validation algorithm.
+
+        Creates a basic algorithm when no specific algorithm type can be
+        determined from constraints.
+
+        Args:
+            constraints: List of extracted constraints.
+
+        Returns:
+            ExtractedAlgorithm: A generic algorithm with default parameters.
+
+        """
         return ExtractedAlgorithm(
             algorithm_name="Generic",
             parameters={},
@@ -982,6 +1137,18 @@ class ConstraintExtractor:
         )
 
     def _create_generic_algorithm(self, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
+        """Create a generic algorithm for fallback key generation.
+
+        Wraps the algorithm building logic to provide a clean interface for
+        creating a generic algorithm when no specific algorithm is identified.
+
+        Args:
+            constraints: List of extracted constraints.
+
+        Returns:
+            ExtractedAlgorithm: A generic algorithm with default settings.
+
+        """
         return self._build_generic_algorithm(constraints)
 
 
@@ -999,7 +1166,19 @@ class KeySynthesizer:
         algorithm: ExtractedAlgorithm,
         target_data: dict[str, Any] | None = None,
     ) -> GeneratedSerial:
-        """Synthesize a license key from the extracted algorithm."""
+        """Synthesize a license key from the extracted algorithm.
+
+        Creates a license key based on the algorithm's validation function
+        and constraints, optionally using target data as a seed.
+
+        Args:
+            algorithm: The algorithm to use for key generation.
+            target_data: Optional dictionary of target data to influence generation.
+
+        Returns:
+            GeneratedSerial: The synthesized license key.
+
+        """
         if algorithm.validation_function:
             return self._synthesize_with_validation(algorithm, target_data)
         return self._synthesize_from_constraints(algorithm, target_data)
@@ -1009,6 +1188,19 @@ class KeySynthesizer:
         algorithm: ExtractedAlgorithm,
         target_data: dict[str, Any] | None = None,
     ) -> GeneratedSerial:
+        """Synthesize a key using the algorithm's validation function.
+
+        Generates candidate keys and validates them against the algorithm's
+        validation function, returning the first valid candidate or a default.
+
+        Args:
+            algorithm: The algorithm with validation function to use.
+            target_data: Optional target data to seed generation.
+
+        Returns:
+            GeneratedSerial: A valid synthesized serial or default fallback.
+
+        """
         constraints = self._build_serial_constraints(algorithm)
 
         if target_data:
@@ -1038,6 +1230,19 @@ class KeySynthesizer:
         algorithm: ExtractedAlgorithm,
         target_data: dict[str, Any] | None = None,
     ) -> GeneratedSerial:
+        """Synthesize a key from algorithm constraints only.
+
+        Generates a key using only the algorithm's constraint specifications
+        without validation, used when no validation function is available.
+
+        Args:
+            algorithm: The algorithm with constraints to use.
+            target_data: Optional target data to seed generation.
+
+        Returns:
+            GeneratedSerial: The synthesized serial based on constraints.
+
+        """
         constraints = self._build_serial_constraints(algorithm)
 
         seed_value: int | None = None
@@ -1048,6 +1253,18 @@ class KeySynthesizer:
         return self.generator.generate_serial(constraints, seed=seed_value)
 
     def _build_serial_constraints(self, algorithm: ExtractedAlgorithm) -> SerialConstraints:
+        """Build serial number constraints from an algorithm.
+
+        Extracts and interprets algorithm-specific constraints to create
+        a SerialConstraints object for key generation.
+
+        Args:
+            algorithm: The algorithm to extract constraints from.
+
+        Returns:
+            SerialConstraints: The configured serial generation constraints.
+
+        """
         length = 16
         format_type = algorithm.key_format or SerialFormat.ALPHANUMERIC
         groups = 1
@@ -1089,7 +1306,7 @@ class KeySynthesizer:
             unique: Whether keys should be unique
 
         Returns:
-            List of generated serial keys
+            list[GeneratedSerial]: List of generated serial keys.
 
         """
         keys = []
@@ -1127,7 +1344,7 @@ class KeySynthesizer:
             hardware_id: Optional hardware identifier
 
         Returns:
-            Generated serial key for the user
+            GeneratedSerial: Generated serial key for the user.
 
         """
         user_data = {"username": username}
@@ -1142,7 +1359,18 @@ class KeySynthesizer:
         return key
 
     def synthesize_with_z3(self, constraints: list[KeyConstraint]) -> str | None:
-        """Synthesize a key using Z3 constraint solver."""
+        """Synthesize a key using Z3 constraint solver.
+
+        Uses the Z3 SMT solver to find a key that satisfies all extracted
+        constraints from the validation routine.
+
+        Args:
+            constraints: List of constraints extracted from validation code.
+
+        Returns:
+            str | None: A synthesized key satisfying constraints, or None if unsatisfiable.
+
+        """
         self.solver.reset()
 
         key_length = next(
@@ -1202,7 +1430,21 @@ class LicenseKeygen:
         self.generator = SerialNumberGenerator()
 
     def crack_license_from_binary(self, count: int = 1) -> list[GeneratedSerial]:
-        """Crack license keys from binary analysis."""
+        """Crack license keys from binary analysis.
+
+        Analyzes the binary file to extract validation algorithms and
+        generates valid license keys based on detected constraints.
+
+        Args:
+            count: Number of license keys to generate.
+
+        Returns:
+            list[GeneratedSerial]: List of generated valid license keys.
+
+        Raises:
+            ValueError: If binary path is not provided or no algorithms detected.
+
+        """
         if not self.analyzer:
             raise ValueError("Binary path required for analysis")
 
@@ -1220,7 +1462,19 @@ class LicenseKeygen:
         algorithm_name: str,
         **kwargs: object,
     ) -> GeneratedSerial:
-        """Generate a key from a known algorithm."""
+        """Generate a key from a known algorithm.
+
+        Creates a license key using a specific algorithm by name, supporting
+        CRC32, Luhn, Microsoft, and UUID formats.
+
+        Args:
+            algorithm_name: Name of the algorithm (crc32, luhn, microsoft, uuid).
+            **kwargs: Optional parameters like length and groups.
+
+        Returns:
+            GeneratedSerial: The generated serial key.
+
+        """
         length_arg = kwargs.get("length", 16)
         length_val = int(length_arg) if isinstance(length_arg, (int, float, str)) else 16
 
@@ -1264,7 +1518,19 @@ class LicenseKeygen:
         product_id: str,
         count: int = 100,
     ) -> list[GeneratedSerial]:
-        """Generate volume license keys."""
+        """Generate volume license keys.
+
+        Creates multiple RSA-signed license keys for volume licensing scenarios,
+        with enterprise-level features and unlimited usage rights.
+
+        Args:
+            product_id: The product identifier for the licenses.
+            count: Number of volume licenses to generate.
+
+        Returns:
+            list[GeneratedSerial]: List of generated volume license keys.
+
+        """
         from cryptography.hazmat.primitives.asymmetric import rsa
 
         private_key = rsa.generate_private_key(
@@ -1289,7 +1555,19 @@ class LicenseKeygen:
         hardware_id: str,
         product_id: str,
     ) -> GeneratedSerial:
-        """Generate a hardware-locked license key."""
+        """Generate a hardware-locked license key.
+
+        Creates a license key that is cryptographically bound to a specific
+        hardware identifier, preventing license portability.
+
+        Args:
+            hardware_id: The hardware identifier to bind the key to.
+            product_id: The product identifier for the license.
+
+        Returns:
+            GeneratedSerial: A hardware-locked serial key.
+
+        """
         combined_data = f"{product_id}:{hardware_id}".encode()
         hash_result = hashlib.sha256(combined_data).hexdigest()
 
@@ -1311,7 +1589,19 @@ class LicenseKeygen:
         product_id: str,
         days_valid: int = 30,
     ) -> GeneratedSerial:
-        """Generate a time-limited license key."""
+        """Generate a time-limited license key.
+
+        Creates a time-based license key with an expiration date, commonly
+        used for trial or subscription-based licensing.
+
+        Args:
+            product_id: The product identifier for the license.
+            days_valid: Number of days the license remains valid.
+
+        Returns:
+            GeneratedSerial: A time-limited serial key.
+
+        """
         import secrets
 
         secret_key = secrets.token_bytes(32)
@@ -1327,7 +1617,19 @@ class LicenseKeygen:
         base_product: str,
         features: list[str],
     ) -> GeneratedSerial:
-        """Generate a feature-encoded license key."""
+        """Generate a feature-encoded license key.
+
+        Creates a license key with embedded feature flags that control
+        access to specific product capabilities.
+
+        Args:
+            base_product: The base product identifier.
+            features: List of features to enable in the key.
+
+        Returns:
+            GeneratedSerial: A feature-encoded serial key.
+
+        """
         base_serial = self.generate_key_from_algorithm("alphanumeric", length=16, groups=4).serial
 
         return self.generator.generate_feature_encoded(
@@ -1342,7 +1644,21 @@ class LicenseKeygen:
         validation_func: Callable[[str], bool],
         charset: str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
     ) -> str | None:
-        """Brute force a partial license key."""
+        """Brute force a partial license key.
+
+        Attempts to complete a partial license key by testing all possible
+        character combinations at specified positions against a validation function.
+
+        Args:
+            partial_key: The partial license key with unknown positions.
+            missing_positions: List of character positions to brute force.
+            validation_func: Function that validates a complete key.
+            charset: Character set to use for brute forcing.
+
+        Returns:
+            str | None: A valid completed key or None if no solution found.
+
+        """
         import itertools
 
         key_list = list(partial_key)
@@ -1367,7 +1683,19 @@ class LicenseKeygen:
         valid_keys: list[str],
         invalid_keys: list[str] | None = None,
     ) -> dict[str, Any]:
-        """Reverse engineer key generation algorithm."""
+        """Reverse engineer key generation algorithm.
+
+        Analyzes valid and invalid keys to identify patterns and constraints
+        in the underlying key generation algorithm.
+
+        Args:
+            valid_keys: List of known valid license keys.
+            invalid_keys: Optional list of known invalid keys for contrast analysis.
+
+        Returns:
+            dict[str, Any]: Dictionary containing identified algorithm patterns.
+
+        """
         return self.generator.reverse_engineer_algorithm(
             valid_keys,
             invalid_keys,

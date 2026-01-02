@@ -45,8 +45,8 @@ from intellicrack.types.analysis import (
     ImportInfo,
     MachOAnalysisResult,
     MachOHeaderInfo,
-    MachOSegmentInfo,
     MachOSectionInfo,
+    MachOSegmentInfo,
     OptimizedAnalysisResult,
     PEAnalysisResult,
     PerformanceMetrics,
@@ -76,9 +76,6 @@ class OrchestratorLike(Protocol):
 
         Args:
             request: The script generation request description
-
-        Returns:
-            Dictionary containing the result of processing the request
 
         """
         pass
@@ -174,12 +171,12 @@ def analyze_binary_optimized(binary_path: str, detailed: bool = True, use_perfor
     """Optimized binary analysis with performance management for large files.
 
     Args:
-        binary_path: Path to the binary file
-        detailed: Whether to perform detailed analysis
-        use_performance_optimizer: Whether to use performance optimizations
+        binary_path: Path to the binary file.
+        detailed: Whether to perform detailed analysis.
+        use_performance_optimizer: Whether to use performance optimizations.
 
     Returns:
-        BinaryAnalysisResult or OptimizedAnalysisResult containing analysis results
+        Analysis result containing binary analysis findings and metrics.
 
     """
     if not os.path.exists(binary_path):
@@ -196,7 +193,16 @@ def analyze_binary_optimized(binary_path: str, detailed: bool = True, use_perfor
 
 
 def _analyze_with_performance_optimizer(binary_path: str, detailed: bool) -> BinaryAnalysisResult | OptimizedAnalysisResult:
-    """Analyze binary using performance optimizer."""
+    """Analyze binary using performance optimizer.
+
+    Args:
+        binary_path: Path to the binary file to analyze
+        detailed: Whether to perform detailed analysis
+
+    Returns:
+        Analysis results from optimizer or fallback analyzer.
+
+    """
     if create_performance_optimizer_func is None:
         return analyze_binary(binary_path, detailed)
 
@@ -257,12 +263,12 @@ def analyze_binary(binary_path: str, detailed: bool = True, enable_ai_integratio
     Identifies the binary format and performs appropriate analysis.
 
     Args:
-        binary_path: Path to the binary file
-        detailed: Whether to perform detailed analysis
-        enable_ai_integration: Whether to enable AI script generation integration
+        binary_path: Path to the binary file.
+        detailed: Whether to perform detailed analysis.
+        enable_ai_integration: Whether to enable AI script generation integration.
 
     Returns:
-        BinaryAnalysisResult containing analysis results
+        Binary analysis result with format-specific findings and AI suggestions.
 
     """
     if not binary_path:
@@ -297,11 +303,11 @@ def _integrate_ai_script_generation(analysis_results: BinaryAnalysisResult, bina
     """Integrate AI script generation workflow with binary analysis results.
 
     Args:
-        analysis_results: Results from binary analysis
-        binary_path: Path to the analyzed binary
+        analysis_results: Results from binary analysis.
+        binary_path: Path to the analyzed binary.
 
     Returns:
-        Enhanced analysis results with AI script generation suggestions
+        Enhanced analysis results with AI script generation suggestions.
 
     """
     try:
@@ -344,7 +350,16 @@ def _integrate_ai_script_generation(analysis_results: BinaryAnalysisResult, bina
 
 
 def _generate_ai_script_suggestions(analysis_results: BinaryAnalysisResult, binary_path: str) -> AIScriptSuggestion | None:
-    """Generate AI script suggestions based on analysis results."""
+    """Generate AI script suggestions based on analysis results.
+
+    Args:
+        analysis_results: BinaryAnalysisResult containing binary analysis findings
+        binary_path: Path to the analyzed binary
+
+    Returns:
+        AI script generation suggestions or None if analysis fails.
+
+    """
     logger.debug("Generating AI script suggestions for binary: %s", binary_path)
     frida_scripts: list[FridaScriptSuggestion] = []
     ghidra_scripts: list[GhidraScriptSuggestion] = []
@@ -430,7 +445,15 @@ def _generate_ai_script_suggestions(analysis_results: BinaryAnalysisResult, bina
 
 
 def _get_recommended_ai_actions(analysis_results: BinaryAnalysisResult) -> list[str]:
-    """Get recommended AI actions based on analysis results."""
+    """Get recommended AI actions based on analysis results.
+
+    Args:
+        analysis_results: BinaryAnalysisResult containing binary analysis findings
+
+    Returns:
+        List of recommended AI actions for exploitation or analysis.
+
+    """
     actions: list[str] = [
         "Generate comprehensive Frida hooks for key functions",
         "Create Ghidra scripts for static analysis automation",
@@ -460,7 +483,15 @@ def _get_recommended_ai_actions(analysis_results: BinaryAnalysisResult) -> list[
 
 
 def _identify_auto_generation_candidates(analysis_results: BinaryAnalysisResult) -> list[AIAutoGenerationCandidate]:
-    """Identify candidates for automatic script generation."""
+    """Identify candidates for automatic script generation.
+
+    Args:
+        analysis_results: BinaryAnalysisResult containing binary analysis findings
+
+    Returns:
+        List of candidates for automatic bypass script generation.
+
+    """
     candidates: list[AIAutoGenerationCandidate] = []
 
     try:
@@ -520,6 +551,9 @@ def _trigger_autonomous_script_generation(orchestrator: Any, analysis_results: B
         analysis_results: BinaryAnalysisResult containing analysis findings
         binary_path: Path to the binary being analyzed
 
+    Returns:
+        None
+
     """
     try:
         from ...ai.script_generation_agent import AIAgent
@@ -570,10 +604,10 @@ def identify_binary_format(binary_path: str) -> str:
     """Identify the format of a binary file.
 
     Args:
-        binary_path: Path to the binary file
+        binary_path: Path to the binary file.
 
     Returns:
-        String indicating the format (PE, ELF, MACHO, UNKNOWN)
+        String indicating the format (PE, ELF, MACHO, UNKNOWN).
 
     """
     try:
@@ -625,11 +659,11 @@ def analyze_pe(binary_path: str, detailed: bool = True) -> PEAnalysisResult:
     """Analyze a PE (Windows) binary.
 
     Args:
-        binary_path: Path to the binary file
-        detailed: Whether to perform detailed analysis
+        binary_path: Path to the binary file.
+        detailed: Whether to perform detailed analysis.
 
     Returns:
-        PEAnalysisResult containing PE analysis results
+        PE analysis result with sections, imports, exports, and suspicious indicators.
 
     """
     _ = detailed
@@ -718,11 +752,11 @@ def analyze_elf(binary_path: str, detailed: bool = True) -> ELFAnalysisResult:
     """Analyze an ELF (Linux) binary.
 
     Args:
-        binary_path: Path to the binary file
-        detailed: Whether to perform detailed analysis
+        binary_path: Path to the binary file.
+        detailed: Whether to perform detailed analysis.
 
     Returns:
-        ELFAnalysisResult containing ELF analysis results
+        ELF analysis result with sections, symbols, and libraries.
 
     """
     if LIEF_AVAILABLE and lief_module is not None:
@@ -736,7 +770,19 @@ def analyze_elf(binary_path: str, detailed: bool = True) -> ELFAnalysisResult:
 
 
 def analyze_elf_with_lief(binary_path: str, detailed: bool) -> ELFAnalysisResult:
-    """Analyze ELF using LIEF library."""
+    """Analyze ELF using LIEF library.
+
+    Args:
+        binary_path: Path to the ELF binary file.
+        detailed: Whether to perform detailed analysis.
+
+    Returns:
+        Comprehensive ELF binary analysis results.
+
+    Raises:
+        ImportError: If LIEF module is not available or lief.parse is not accessible.
+
+    """
     _ = detailed
     if lief_module is None:
         return ELFAnalysisResult(error="LIEF not available")
@@ -820,7 +866,16 @@ def analyze_elf_with_lief(binary_path: str, detailed: bool) -> ELFAnalysisResult
 
 
 def analyze_elf_with_pyelftools(binary_path: str, detailed: bool) -> ELFAnalysisResult:
-    """Analyze ELF using pyelftools."""
+    """Analyze ELF using pyelftools.
+
+    Args:
+        binary_path: Path to the ELF binary file.
+        detailed: Whether to perform detailed analysis.
+
+    Returns:
+        Comprehensive ELF binary analysis results.
+
+    """
     _ = detailed
     if ELFFile_class is None:
         return ELFAnalysisResult(error="pyelftools not available")
@@ -864,11 +919,11 @@ def analyze_macho(binary_path: str, detailed: bool = True) -> MachOAnalysisResul
     """Analyze a Mach-O (macOS) binary.
 
     Args:
-        binary_path: Path to the binary file
-        detailed: Whether to perform detailed analysis
+        binary_path: Path to the binary file.
+        detailed: Whether to perform detailed analysis.
 
     Returns:
-        MachOAnalysisResult containing Mach-O analysis results
+        Mach-O analysis result with headers, segments, and libraries.
 
     """
     if LIEF_AVAILABLE and lief_module is not None:
@@ -882,7 +937,19 @@ def analyze_macho(binary_path: str, detailed: bool = True) -> MachOAnalysisResul
 
 
 def analyze_macho_with_lief(binary_path: str, detailed: bool) -> MachOAnalysisResult:
-    """Analyze Mach-O using LIEF library."""
+    """Analyze Mach-O using LIEF library.
+
+    Args:
+        binary_path: Path to the Mach-O binary file.
+        detailed: Whether to perform detailed analysis.
+
+    Returns:
+        Comprehensive Mach-O binary analysis results.
+
+    Raises:
+        ImportError: If LIEF module is not available or lief.parse is not accessible.
+
+    """
     _ = detailed
     if lief_module is None:
         return MachOAnalysisResult(error="LIEF not available")
@@ -952,7 +1019,16 @@ def analyze_macho_with_lief(binary_path: str, detailed: bool) -> MachOAnalysisRe
 
 
 def analyze_macho_with_macholib(binary_path: str, detailed: bool) -> MachOAnalysisResult:
-    """Analyze Mach-O using macholib."""
+    """Analyze Mach-O using macholib.
+
+    Args:
+        binary_path: Path to the Mach-O binary file.
+        detailed: Whether to perform detailed analysis.
+
+    Returns:
+        Comprehensive Mach-O binary analysis results.
+
+    """
     _ = detailed
     if MachO_class is None:
         return MachOAnalysisResult(error="macholib not available")
@@ -991,11 +1067,11 @@ def analyze_patterns(binary_path: str, patterns: list[bytes] | None = None) -> d
     """Analyze patterns in a binary file.
 
     Args:
-        binary_path: Path to the binary file
-        patterns: List of byte patterns to search for (default: common patterns)
+        binary_path: Path to the binary file.
+        patterns: List of byte patterns to search for (default: common patterns).
 
     Returns:
-        Dict containing pattern analysis results
+        Dict containing pattern analysis results.
 
     """
     if patterns is None:
@@ -1073,12 +1149,12 @@ def analyze_traffic(pcap_file: str | None = None, interface: str | None = None, 
     """Analyze network traffic for license-related communications.
 
     Args:
-        pcap_file: Path to PCAP file to analyze (optional)
-        interface: Network interface to capture from (optional)
-        duration: Duration to capture in seconds (default: 60)
+        pcap_file: Path to PCAP file to analyze (optional).
+        interface: Network interface to capture from (optional).
+        duration: Duration to capture in seconds (default: 60).
 
     Returns:
-        Dict containing traffic analysis results
+        Dict containing traffic analysis results.
 
     """
     _ = duration
@@ -1259,7 +1335,12 @@ def analyze_traffic(pcap_file: str | None = None, interface: str | None = None, 
 
 
 def _try_import_scapy() -> bool:
-    """Try to import scapy."""
+    """Try to import scapy.
+
+    Returns:
+        True if scapy is available, False otherwise.
+
+    """
     try:
         import scapy.all as scapy
 
@@ -1273,7 +1354,12 @@ def _try_import_scapy() -> bool:
 
 
 def _try_import_pyshark() -> bool:
-    """Try to import pyshark."""
+    """Try to import pyshark.
+
+    Returns:
+        True if pyshark is available, False otherwise.
+
+    """
     try:
         import pyshark
 
@@ -1288,7 +1374,17 @@ def _try_import_pyshark() -> bool:
 
 
 def _is_suspicious_connection(src_ip: str, dst_ip: str, port: int) -> bool:
-    """Check if connection is suspicious."""
+    """Check if connection is suspicious.
+
+    Args:
+        src_ip: Source IP address.
+        dst_ip: Destination IP address.
+        port: Destination port number.
+
+    Returns:
+        True if connection exhibits suspicious characteristics.
+
+    """
     # Log connection details for debugging
     logger.debug("Checking connection from %s to %s:%s", src_ip, dst_ip, port)
 
@@ -1306,7 +1402,16 @@ def _is_suspicious_connection(src_ip: str, dst_ip: str, port: int) -> bool:
 
 
 def _get_suspicious_reason(ip: str, port: int) -> str:
-    """Get reason why connection is suspicious."""
+    """Get reason why connection is suspicious.
+
+    Args:
+        ip: IP address involved in suspicious connection.
+        port: Port involved in suspicious connection.
+
+    Returns:
+        Human-readable reason for suspicion.
+
+    """
     # Include IP in analysis for more specific reasons
     if port in {4444, 4445, 8888, 9999, 1337, 31337}:
         return f"Common backdoor port {port} to {ip}"
@@ -1321,7 +1426,15 @@ def _get_suspicious_reason(ip: str, port: int) -> str:
 
 
 def get_machine_type(machine: int) -> str:
-    """Convert PE machine type to string."""
+    """Convert PE machine type to string.
+
+    Args:
+        machine: PE machine type identifier.
+
+    Returns:
+        Human-readable machine type string.
+
+    """
     machine_types = {0x14C: "x86", 0x8664: "x64", 0x1C0: "ARM", 0xAA64: "ARM64", 0x200: "IA64"}
     return machine_types.get(machine, f"Unknown (0x{machine:x})")
 
@@ -1330,10 +1443,10 @@ def get_basic_file_info(file_path: str) -> BasicFileInfo:
     """Get basic file information.
 
     Args:
-        file_path: Path to the file
+        file_path: Path to the file.
 
     Returns:
-        BasicFileInfo model with file metadata
+        BasicFileInfo model with file metadata.
 
     """
     try:
@@ -1350,7 +1463,14 @@ def get_basic_file_info(file_path: str) -> BasicFileInfo:
 
 
 def check_suspicious_import(func_name: str, dll_name: str, suspicious_list: list[str]) -> None:
-    """Check for suspicious imports and add to list."""
+    """Check for suspicious imports and add to list.
+
+    Args:
+        func_name: Function name to check for suspicious patterns
+        dll_name: DLL name containing the function
+        suspicious_list: List to append suspicious findings to
+
+    """
     suspicious_imports = {
         "VirtualProtect": "Memory protection modification",
         "WriteProcessMemory": "Process memory manipulation",
@@ -1371,15 +1491,22 @@ def _analyze_pe_resources_typed(pe: PEFile) -> list[ResourceInfo]:
     """Analyze PE resources returning typed ResourceInfo models.
 
     Args:
-        pe: PE file object from pefile module
+        pe: PE file object from pefile module.
 
     Returns:
-        List of ResourceInfo models containing type, size, language information
+        List of ResourceInfo models containing type, size, language information.
 
     """
     resources: list[ResourceInfo] = []
 
     def walk_resources(directory: ResourceDirectory, level: int = 0) -> None:
+        """Recursively walk and collect PE resources.
+
+        Args:
+            directory: Resource directory entry to traverse.
+            level: Current depth level in resource tree hierarchy.
+
+        """
         logger.debug("Walking resources at level %s", level)
 
         for entry in directory.entries:
@@ -1404,10 +1531,10 @@ def analyze_pe_resources(pe: PEFile) -> list[dict[str, Any]]:
     """Analyze PE resources.
 
     Args:
-        pe: PE file object from pefile module
+        pe: PE file object from pefile module.
 
     Returns:
-        List of resource dictionaries containing type, size, language information
+        List of resource dictionaries containing type, size, language information.
 
     """
     resources: list[dict[str, Any]] = []
@@ -1416,8 +1543,8 @@ def analyze_pe_resources(pe: PEFile) -> list[dict[str, Any]]:
         """Recursively walk resource directory tree.
 
         Args:
-            directory: Resource directory entry to traverse
-            level: Current depth level in resource tree hierarchy
+            directory: Resource directory entry to traverse.
+            level: Current depth level in resource tree hierarchy.
 
         """
         logger.debug("Walking resources at level %s", level)
@@ -1445,10 +1572,10 @@ def extract_binary_info(binary_path: str) -> dict[str, Any]:
     """Extract basic binary information.
 
     Args:
-        binary_path: Path to the binary file
+        binary_path: Path to the binary file.
 
     Returns:
-        Dict containing basic binary information
+        Dict containing basic binary information.
 
     """
     basic_info = get_basic_file_info(binary_path)
@@ -1473,10 +1600,10 @@ def extract_binary_features(binary_path: str) -> dict[str, Any]:
     """Extract features from binary for ML analysis.
 
     Args:
-        binary_path: Path to the binary file
+        binary_path: Path to the binary file.
 
     Returns:
-        Dict containing extracted features
+        Dict containing extracted features.
 
     """
     features = {
@@ -1527,12 +1654,12 @@ def extract_patterns_from_binary(binary_path: str, pattern_size: int = 16, min_f
     """Extract frequently occurring byte patterns from binary.
 
     Args:
-        binary_path: Path to the binary file
-        pattern_size: Size of patterns to extract
-        min_frequency: Minimum frequency for a pattern to be included
+        binary_path: Path to the binary file.
+        pattern_size: Size of patterns to extract.
+        min_frequency: Minimum frequency for a pattern to be included.
 
     Returns:
-        List of (pattern, frequency) tuples
+        List of (pattern, frequency) tuples.
 
     """
     patterns: dict[bytes, int] = {}
@@ -1568,11 +1695,11 @@ def scan_binary(binary_path: str, signatures: dict[str, bytes] | None = None) ->
     """Scan binary for known signatures.
 
     Args:
-        binary_path: Path to the binary file
-        signatures: Dict of signature name to byte pattern
+        binary_path: Path to the binary file.
+        signatures: Dict of signature name to byte pattern.
 
     Returns:
-        Dict containing scan results
+        Dict containing scan results.
 
     """
     if signatures is None:
@@ -1618,11 +1745,11 @@ def _optimized_basic_analysis(data: bytes, chunk_info: dict[str, Any] | None = N
     """Optimized basic binary analysis for chunks.
 
     Args:
-        data: Binary data chunk to analyze
-        chunk_info: Metadata about the chunk being analyzed
+        data: Binary data chunk to analyze.
+        chunk_info: Metadata about the chunk being analyzed.
 
     Returns:
-        Dictionary with analysis status, findings, and chunk information
+        Dictionary with analysis status, findings, and chunk information.
 
     """
     try:
@@ -1652,11 +1779,11 @@ def _optimized_string_analysis(data: bytes, chunk_info: dict[str, Any] | None = 
     """Optimized string analysis for chunks.
 
     Args:
-        data: Binary data chunk to analyze
-        chunk_info: Metadata about the chunk being analyzed
+        data: Binary data chunk to analyze.
+        chunk_info: Metadata about the chunk being analyzed.
 
     Returns:
-        Dictionary with extracted strings and license-related keywords
+        Dictionary with extracted strings and license-related keywords.
 
     """
     try:
@@ -1711,11 +1838,11 @@ def _optimized_entropy_analysis(data: bytes, chunk_info: dict[str, Any] | None =
     """Optimized entropy analysis for chunks.
 
     Args:
-        data: Binary data chunk to analyze
-        chunk_info: Metadata about the chunk being analyzed
+        data: Binary data chunk to analyze.
+        chunk_info: Metadata about the chunk being analyzed.
 
     Returns:
-        Dictionary with calculated entropy value and compression/encryption classification
+        Dictionary with calculated entropy value and compression/encryption classification.
 
     """
     try:
@@ -1756,11 +1883,11 @@ def _optimized_section_analysis(data: bytes, chunk_info: dict[str, Any] | None =
     """Optimized section analysis for chunks.
 
     Args:
-        data: Binary data chunk to analyze
-        chunk_info: Metadata about the chunk being analyzed
+        data: Binary data chunk to analyze.
+        chunk_info: Metadata about the chunk being analyzed.
 
     Returns:
-        Dictionary with detected section headers and findings
+        Dictionary with detected section headers and findings.
 
     """
     try:
@@ -1799,11 +1926,11 @@ def _optimized_import_analysis(data: bytes, chunk_info: dict[str, Any] | None = 
     """Optimized import analysis for chunks.
 
     Args:
-        data: Binary data chunk to analyze
-        chunk_info: Metadata about the chunk being analyzed
+        data: Binary data chunk to analyze.
+        chunk_info: Metadata about the chunk being analyzed.
 
     Returns:
-        Dictionary with detected DLL imports and suspicious function calls
+        Dictionary with detected DLL imports and suspicious function calls.
 
     """
     try:
@@ -1852,11 +1979,11 @@ def _optimized_pattern_analysis(data: bytes, chunk_info: dict[str, Any] | None =
     """Optimized pattern analysis for chunks.
 
     Args:
-        data: Binary data chunk to analyze
-        chunk_info: Metadata about the chunk being analyzed
+        data: Binary data chunk to analyze.
+        chunk_info: Metadata about the chunk being analyzed.
 
     Returns:
-        Dictionary with detected binary patterns and special markers
+        Dictionary with detected binary patterns and special markers.
 
     """
     try:
@@ -1902,11 +2029,11 @@ def get_quick_disassembly(binary_path: str, max_instructions: int = 50) -> list[
     """Get quick disassembly of binary entry point for UI display.
 
     Args:
-        binary_path: Path to binary file
-        max_instructions: Maximum number of instructions to disassemble
+        binary_path: Path to binary file.
+        max_instructions: Maximum number of instructions to disassemble.
 
     Returns:
-        List of disassembly lines
+        List of disassembly lines.
 
     """
     try:
@@ -1958,7 +2085,15 @@ def get_quick_disassembly(binary_path: str, max_instructions: int = 50) -> list[
 
 
 def _get_basic_disassembly_info(binary_path: str) -> list[str]:
-    """Get basic binary information when disassembly isn't available."""
+    """Get basic binary information when disassembly isn't available.
+
+    Args:
+        binary_path: Path to the binary file
+
+    Returns:
+        List of text lines with binary information and analysis suggestions.
+
+    """
     try:
         info = extract_binary_info(binary_path)
 
@@ -1994,7 +2129,15 @@ def _get_basic_disassembly_info(binary_path: str) -> list[str]:
 
 
 def _get_pe_entry_point(binary_path: str) -> int:
-    """Get PE entry point offset."""
+    """Get PE entry point offset.
+
+    Args:
+        binary_path: Path to the PE binary file
+
+    Returns:
+        Entry point offset or default 0x1000 if extraction fails.
+
+    """
     try:
         if PEFILE_AVAILABLE and pefile_module is not None:
             pe = pefile_module.PE(binary_path)
@@ -2006,7 +2149,15 @@ def _get_pe_entry_point(binary_path: str) -> int:
 
 
 def _get_elf_entry_point(binary_path: str) -> int:
-    """Get ELF entry point offset."""
+    """Get ELF entry point offset.
+
+    Args:
+        binary_path: Path to the ELF binary file
+
+    Returns:
+        Entry point offset or default 0x1000 if extraction fails.
+
+    """
     try:
         if PYELFTOOLS_AVAILABLE and ELFFile_class is not None:
             with open(binary_path, "rb") as f:
@@ -2028,13 +2179,13 @@ def disassemble_with_objdump(
     """Provide objdump disassembly fallback function.
 
     Args:
-        binary_path: Path to binary file
-        extra_args: Additional objdump arguments (e.g., ['--no-show-raw-insn'])
-        timeout: Command timeout in seconds
-        parse_func: Optional function to parse objdump output (accepts stdout string, returns list of instructions)
+        binary_path: Path to binary file.
+        extra_args: Additional objdump arguments (e.g., ['--no-show-raw-insn']).
+        timeout: Command timeout in seconds.
+        parse_func: Optional function to parse objdump output (accepts stdout string, returns list of instructions).
 
     Returns:
-        List of parsed instructions or None if objdump fails
+        List of parsed instructions or None if objdump fails.
 
     """
     try:

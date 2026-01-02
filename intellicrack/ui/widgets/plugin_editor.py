@@ -50,7 +50,14 @@ class PluginValidator:
 
     @staticmethod
     def validate_syntax(code: str) -> tuple[bool, list[str]]:
-        """Validate Python syntax."""
+        """Validate Python syntax.
+
+        Args:
+            code: The Python code to validate.
+
+        Returns:
+            A tuple containing a boolean indicating validity and a list of error messages.
+        """
         errors = []
         try:
             ast.parse(code)
@@ -62,7 +69,14 @@ class PluginValidator:
 
     @staticmethod
     def validate_structure(code: str) -> tuple[bool, list[str]]:
-        """Validate plugin structure requirements."""
+        """Validate plugin structure requirements.
+
+        Args:
+            code: The Python code to validate.
+
+        Returns:
+            A tuple containing a boolean indicating validity and a list of structure error messages.
+        """
         from ...utils.validation.import_validator import PluginStructureValidator
 
         # Plugin editor checks for both 'run' and 'get_metadata' methods
@@ -73,7 +87,14 @@ class PluginValidator:
 
     @staticmethod
     def validate_imports(code: str) -> tuple[bool, list[str]]:
-        """Check if imports are available."""
+        """Check if imports are available.
+
+        Args:
+            code: The Python code to validate.
+
+        Returns:
+            A tuple containing a boolean indicating import validity and a list of import warning messages.
+        """
         from ...utils.validation.import_validator import validate_imports
 
         return validate_imports(code)
@@ -88,7 +109,11 @@ class PluginEditor(QWidget):
     save_requested = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize plugin editor with validation and UI setup."""
+        """Initialize plugin editor with validation and UI setup.
+
+        Args:
+            parent: The parent widget.
+        """
         super().__init__(parent)
         self.current_file: str | None = None
         self.validator: PluginValidator = PluginValidator()
@@ -215,7 +240,10 @@ class PluginEditor(QWidget):
         self.editor.customContextMenuRequested.connect(self.show_context_menu)
 
     def new_file(self) -> None:
-        """Create a new file."""
+        """Create a new file.
+
+        Prompts the user to save unsaved changes before creating a new file.
+        """
         doc: QTextDocument | None = self.editor.document()
         if doc and doc.isModified():
             reply = QMessageBox.question(
@@ -235,7 +263,11 @@ class PluginEditor(QWidget):
         self.status_bar.showMessage("New file created")
 
     def open_file(self) -> None:
-        """Open a file."""
+        """Open a file.
+
+        Opens a file dialog to select a plugin file and loads it into the editor.
+        Automatically detects syntax highlighting based on file extension.
+        """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Open Plugin",
@@ -267,7 +299,11 @@ class PluginEditor(QWidget):
                 QMessageBox.critical(self, "Error", f"Failed to open file:\n{e!s}")
 
     def save_file(self) -> None:
-        """Save the current file."""
+        """Save the current file.
+
+        Saves the current editor content to disk. Prompts for a file path if no file is
+        currently open.
+        """
         if not self.current_file:
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
@@ -294,7 +330,10 @@ class PluginEditor(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to save file:\n{e!s}")
 
     def on_text_changed(self) -> None:
-        """Handle text changes."""
+        """Handle text changes.
+
+        Emits text_changed signal, starts validation timer, and updates code outline.
+        """
         self.text_changed.emit()
 
         # Start validation timer
@@ -305,7 +344,11 @@ class PluginEditor(QWidget):
         self.update_code_outline()
 
     def change_syntax(self, syntax: str) -> None:
-        """Change syntax highlighting."""
+        """Change syntax highlighting.
+
+        Args:
+            syntax: The syntax type to apply ("Python", "JavaScript", or "Plain Text").
+        """
         doc: QTextDocument | None = self.editor.document()
         if not doc:
             return
@@ -317,7 +360,10 @@ class PluginEditor(QWidget):
             self.highlighter = None
 
     def perform_validation(self) -> None:
-        """Validate the current code."""
+        """Validate the current code.
+
+        Validates Python code syntax, structure, and imports. Emits validation_complete signal with results.
+        """
         self.validation_list.clear()
 
         code = self.editor.toPlainText()
@@ -367,7 +413,11 @@ class PluginEditor(QWidget):
         self.validation_complete.emit(results)
 
     def update_code_outline(self) -> None:
-        """Update the code outline."""
+        """Update the code outline.
+
+        Parses the current Python code and updates the outline panel with classes and
+        functions.
+        """
         self.outline_list.clear()
 
         code = self.editor.toPlainText()
@@ -396,7 +446,11 @@ class PluginEditor(QWidget):
             logger.debug("Failed to parse code for outline: %s", e)
 
     def show_context_menu(self, position: QPoint) -> None:
-        """Show context menu."""
+        """Show context menu.
+
+        Args:
+            position: The position where the context menu should appear.
+        """
         menu = QMenu(self)
 
         if cut_action := menu.addAction("Cut"):
@@ -420,8 +474,10 @@ class PluginEditor(QWidget):
         menu.exec(self.editor.mapToGlobal(position))
 
     def show_find_dialog(self) -> None:
-        """Show find/replace dialog."""
-        # Simple find implementation
+        """Show find/replace dialog.
+
+        Displays a find dialog to search for text in the editor and highlights matches.
+        """
         from intellicrack.handlers.pyqt6_handler import QInputDialog
 
         text, ok = QInputDialog.getText(self, "Find", "Find text:")
@@ -435,9 +491,17 @@ class PluginEditor(QWidget):
                 self.editor.find(text)
 
     def get_code(self) -> str:
-        """Get the current code."""
+        """Get the current code.
+
+        Returns:
+            The current editor content as plain text.
+        """
         return self.editor.toPlainText()
 
     def set_code(self, code: str) -> None:
-        """Set the editor code."""
+        """Set the editor code.
+
+        Args:
+            code: The code to display in the editor.
+        """
         self.editor.setPlainText(code)

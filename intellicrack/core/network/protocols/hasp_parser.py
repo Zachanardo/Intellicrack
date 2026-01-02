@@ -24,8 +24,9 @@ import secrets
 import socket
 import struct
 import time
-import xml.etree.ElementTree as ET  # noqa: S405
 from dataclasses import dataclass, field
+
+from defusedxml import ElementTree as ET
 from datetime import UTC
 from enum import IntEnum
 from pathlib import Path
@@ -306,7 +307,7 @@ class HASPCrypto:
             vendor_code: Vendor code for key derivation
 
         Returns:
-            bytes: Derived AES-256 session key
+            Derived AES-256 session key.
 
         """
         key_material = f"{session_id}:{vendor_code}:{time.time()}".encode()
@@ -322,7 +323,7 @@ class HASPCrypto:
             session_id: Session ID for key lookup
 
         Returns:
-            bytes: IV concatenated with ciphertext
+            IV concatenated with ciphertext.
 
         """
         if session_id not in self.aes_keys:
@@ -353,7 +354,7 @@ class HASPCrypto:
             session_id: Session ID for key lookup
 
         Returns:
-            bytes: Decrypted plaintext
+            Decrypted plaintext.
 
         """
         if len(data) < 16:
@@ -390,7 +391,7 @@ class HASPCrypto:
             session_id: Session ID for key lookup
 
         Returns:
-            bytes: RSA signature
+            RSA signature.
 
         """
         if session_id not in self.rsa_keys:
@@ -416,7 +417,7 @@ class HASPCrypto:
             session_id: Session ID for key lookup
 
         Returns:
-            bool: True if signature is valid, False otherwise
+            True if signature is valid, False otherwise.
 
         """
         try:
@@ -446,7 +447,7 @@ class HASPCrypto:
             seed: LFSR seed for keystream generation
 
         Returns:
-            bytes: Encrypted data
+            Encrypted data.
 
         """
         key_stream = self._generate_hasp4_keystream(seed, len(data))
@@ -465,7 +466,7 @@ class HASPCrypto:
             seed: LFSR seed for keystream generation
 
         Returns:
-            bytes: Decrypted data
+            Decrypted data.
 
         """
         return self.hasp4_encrypt(data, seed)
@@ -478,7 +479,7 @@ class HASPCrypto:
             length: Number of bytes to generate
 
         Returns:
-            bytes: Keystream bytes
+            Keystream bytes.
 
         """
         state = seed & 0xFFFFFFFF
@@ -501,7 +502,7 @@ class HASPCrypto:
             session_id: Session ID for RSA key lookup
 
         Returns:
-            bytes: Key length, encrypted key, IV, and ciphertext
+            Key length, encrypted key, IV, and ciphertext.
 
         """
         session_key = secrets.token_bytes(32)
@@ -547,7 +548,7 @@ class HASPCrypto:
             session_id: Session ID for RSA key lookup
 
         Returns:
-            bytes: Decrypted plaintext
+            Decrypted plaintext.
 
         """
         if len(data) < 2:
@@ -761,7 +762,7 @@ class HASPSentinelParser:
         """Generate realistic HASP hardware fingerprint.
 
         Returns:
-            dict[str, Any]: Hardware information dictionary
+            Hardware information dictionary.
 
         """
         hasp_id = secrets.randbelow(900000) + 100000
@@ -789,7 +790,7 @@ class HASPSentinelParser:
             data: Raw HASP request packet
 
         Returns:
-            HASPRequest | None: Parsed request object or None if invalid
+            Parsed request object or None if invalid.
 
         """
         self.logger.debug("Starting HASP request parsing, data length: %d", len(data))
@@ -914,7 +915,7 @@ class HASPSentinelParser:
             data: Raw TLV parameter data
 
         Returns:
-            dict[str, Any]: Parsed parameters
+            Parsed parameters.
 
         """
         params: dict[str, Any] = {}
@@ -965,7 +966,7 @@ class HASPSentinelParser:
             request: Parsed HASP request
 
         Returns:
-            HASPResponse: HASP response object
+            HASP response object.
 
         """
         command_handlers: dict[HASPCommandType, Callable[[HASPRequest], HASPResponse]] = {
@@ -1013,7 +1014,7 @@ class HASPSentinelParser:
             response: HASP response to sign
 
         Returns:
-            bytes: Serialized response data for signing
+            Serialized response data for signing.
 
         """
         data = struct.pack("<I", response.status)
@@ -1705,14 +1706,14 @@ class HASPSentinelParser:
             feature: HASP feature to check
 
         Returns:
-            bool: True if feature is expired, False otherwise
+            True if feature is expired, False otherwise.
 
         """
         if feature.expiry == "permanent":
             return False
 
         try:
-            from datetime import datetime, timezone
+            from datetime import datetime
 
             expiry_date = datetime.strptime(feature.expiry, "%d-%b-%Y").replace(tzinfo=UTC)
             return datetime.now(UTC) > expiry_date
@@ -1726,7 +1727,7 @@ class HASPSentinelParser:
             feature: HASP feature for expiry calculation
 
         Returns:
-            dict[str, Any]: Expiry information
+            Expiry information.
 
         """
         if feature.expiry == "permanent":
@@ -1737,7 +1738,7 @@ class HASPSentinelParser:
             }
 
         try:
-            from datetime import datetime, timezone
+            from datetime import datetime
 
             expiry_date = datetime.strptime(feature.expiry, "%d-%b-%Y").replace(tzinfo=UTC)
             now = datetime.now(UTC)
@@ -1762,7 +1763,7 @@ class HASPSentinelParser:
             response: HASP response object
 
         Returns:
-            Serialized response bytes
+            Serialized response bytes.
 
         """
         try:
@@ -1833,7 +1834,7 @@ class HASPSentinelParser:
         """Get list of active sessions.
 
         Returns:
-            List of active session information dictionaries
+            List of active session information dictionaries.
 
         """
         return [
@@ -1995,7 +1996,7 @@ class HASPPacketAnalyzer:
             ip_bytes: IP address as bytes
 
         Returns:
-            str: Dotted decimal IP address
+            Dotted decimal IP address.
 
         """
         return ".".join(str(b) for b in ip_bytes)
@@ -2009,7 +2010,7 @@ class HASPPacketAnalyzer:
             dport: Destination port
 
         Returns:
-            bool: True if packet is HASP-related, False otherwise
+            True if packet is HASP-related, False otherwise.
 
         """
         if sport in {1947, 475} or dport in {1947, 475}:
@@ -2035,7 +2036,7 @@ class HASPPacketAnalyzer:
             payload: Raw packet payload
 
         Returns:
-            str: Packet type name
+            Packet type name.
 
         """
         if HASPNetworkProtocol.DISCOVERY_MAGIC in payload:
@@ -2073,7 +2074,7 @@ class HASPPacketAnalyzer:
         """Extract license information from captured packets.
 
         Returns:
-            dict[str, Any]: License information with servers, features, and encryption types
+            License information with servers, features, and encryption types.
 
         """
         discovered_servers: list[dict[str, Any]] = []
@@ -2119,7 +2120,7 @@ class HASPPacketAnalyzer:
             payload: SERVER_READY packet payload
 
         Returns:
-            dict[str, Any]: Server information or None if invalid
+            Server information or None if invalid.
 
         """
         try:
@@ -2147,7 +2148,7 @@ class HASPPacketAnalyzer:
             request_packet: Captured HASP request packet
 
         Returns:
-            bytes: Spoofed response packet
+            Spoofed response packet.
 
         """
         if not request_packet.parsed_request:
@@ -2214,7 +2215,7 @@ class HASPUSBEmulator:
         """Generate realistic USB device information.
 
         Returns:
-            dict[str, Any]: USB device information
+            USB device information.
 
         """
         return {
@@ -2279,7 +2280,7 @@ class HASPUSBEmulator:
             length: Number of bytes to read
 
         Returns:
-            bytes: Memory contents
+            Memory contents.
 
         """
         feature_id = 100
@@ -2343,7 +2344,7 @@ class HASPUSBEmulator:
         """Handle USB get info request.
 
         Returns:
-            bytes: Device information packed as 4 unsigned ints
+            Device information packed as 4 unsigned ints.
 
         """
         return struct.pack(
@@ -2358,7 +2359,7 @@ class HASPUSBEmulator:
         """Handle USB RTC read.
 
         Returns:
-            bytes: Current time as 32-bit unsigned int
+            Current time as 32-bit unsigned int.
 
         """
         current_time = int(time.time())
@@ -2368,7 +2369,7 @@ class HASPUSBEmulator:
         """Get USB device descriptor for emulation.
 
         Returns:
-            USB device descriptor dictionary
+            USB device descriptor dictionary.
 
         """
         return {

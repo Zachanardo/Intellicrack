@@ -56,7 +56,13 @@ class DebuggerBypass:
     """
 
     def __init__(self) -> None:
-        """Initialize user-mode debugger bypass system."""
+        """Initialize user-mode debugger bypass system.
+
+        Initializes the debugger bypass engine with platform-specific
+        mechanisms. On Windows, loads kernel32, ntdll, and user32 DLLs.
+        On Linux, prepares ptrace and timing-based bypass methods.
+
+        """
         self.logger: logging.Logger = logging.getLogger("IntellicrackLogger.DebuggerBypass")
         self.hooks_installed: bool = False
         self.original_functions: dict[str, int] = {}
@@ -74,7 +80,14 @@ class DebuggerBypass:
             self._init_linux_bypass()
 
     def _init_windows_bypass(self) -> None:
-        """Initialize Windows-specific bypass mechanisms."""
+        """Initialize Windows-specific bypass mechanisms.
+
+        Loads Windows API functions from kernel32, ntdll, and user32
+        and registers available bypass methods for anti-debugging checks.
+        Populates the bypass_methods dictionary with Windows-specific
+        techniques.
+
+        """
         try:
             self.kernel32 = ctypes.windll.kernel32
             self.ntdll = ctypes.windll.ntdll
@@ -99,7 +112,13 @@ class DebuggerBypass:
             self.logger.exception("Failed to initialize Windows bypass: %s", e, exc_info=True)
 
     def _init_linux_bypass(self) -> None:
-        """Initialize Linux-specific bypass mechanisms."""
+        """Initialize Linux-specific bypass mechanisms.
+
+        Registers available bypass methods for Linux anti-debugging checks
+        including ptrace detection, /proc/self/status inspection, timing
+        checks, and LD_PRELOAD environment variable manipulation.
+
+        """
         try:
             self.bypass_methods = {
                 "ptrace": self._bypass_ptrace_linux,
@@ -120,10 +139,13 @@ class DebuggerBypass:
         They cannot affect kernel-level debugging detection or system-wide behavior.
 
         Args:
-            methods: List of specific bypass methods to install, or None for all
+            methods: List of specific bypass method names to install, or None
+                to install all available methods. Defaults to None.
 
         Returns:
-            Dict mapping method names to success status
+            Dictionary mapping method names (str) to installation success
+            status (bool). Each key is a bypass method name and the value
+            indicates whether that method was successfully installed.
 
         """
         results: dict[str, bool] = {}
@@ -153,7 +175,17 @@ class DebuggerBypass:
         return results
 
     def _bypass_isdebuggerpresent(self) -> bool:
-        """Bypass IsDebuggerPresent API detection."""
+        """Bypass IsDebuggerPresent API detection.
+
+        Clears the BeingDebugged flag in the Process Environment Block
+        using WriteProcessMemory to neutralize IsDebuggerPresent checks.
+        This modifies the PEB at offset +2 for the current process.
+
+        Returns:
+            True if the BeingDebugged flag was successfully cleared,
+            False if bypass failed or platform is not Windows.
+
+        """
         try:
             if platform.system() != "Windows":
                 return False
@@ -202,7 +234,17 @@ class DebuggerBypass:
             return False
 
     def _bypass_checkremotedebuggerpresent(self) -> bool:
-        """Bypass CheckRemoteDebuggerPresent detection."""
+        """Bypass CheckRemoteDebuggerPresent detection.
+
+        Delegates to the _bypass_isdebuggerpresent method since both
+        APIs check the same PEB BeingDebugged flag. Clearing this flag
+        neutralizes both detection mechanisms.
+
+        Returns:
+            True if the PEB flag was successfully cleared, False if
+            bypass failed or platform is not Windows.
+
+        """
         try:
             if platform.system() != "Windows":
                 return False
@@ -214,7 +256,20 @@ class DebuggerBypass:
             return False
 
     def _bypass_peb_flags(self) -> bool:
-        """Bypass PEB flags detection."""
+        """Bypass PEB flags detection.
+
+        Clears multiple debug-related flags in the Process Environment Block:
+        - BeingDebugged flag at offset +2
+        - NtGlobalFlag at offset +0x68 (32-bit) or +0xBC (64-bit)
+        - Heap flags (Flags and ForceFlags) at appropriate offsets
+        This comprehensive approach neutralizes multiple PEB-based detection
+        mechanisms used by anti-debugging routines.
+
+        Returns:
+            True if all PEB flags were successfully cleared, False if
+            bypass failed or platform is not Windows.
+
+        """
         try:
             if platform.system() != "Windows":
                 return False
@@ -310,7 +365,18 @@ class DebuggerBypass:
             return False
 
     def _bypass_ntglobalflag(self) -> bool:
-        """Bypass NtGlobalFlag detection."""
+        """Bypass NtGlobalFlag detection.
+
+        Delegates to the _bypass_peb_flags method which comprehensively
+        clears the NtGlobalFlag and related PEB debugging indicators.
+        NtGlobalFlag is located at PEB offset +0x68 (32-bit) or +0xBC
+        (64-bit) and contains flags indicating debugger attachment.
+
+        Returns:
+            True if the NtGlobalFlag was successfully cleared, False if
+            bypass failed or platform is not Windows.
+
+        """
         try:
             return self._bypass_peb_flags()
         except Exception as e:
@@ -318,7 +384,18 @@ class DebuggerBypass:
             return False
 
     def _bypass_debug_port(self) -> bool:
-        """Bypass debug port detection via user-mode NtQueryInformationProcess hooking."""
+        """Bypass debug port detection via user-mode NtQueryInformationProcess hooking.
+
+        Prepares hook code for NtQueryInformationProcess to intercept
+        requests for ProcessDebugPort (information class 7) and return
+        zero (no debug port) instead of the actual debug port information.
+        The hook code is generated for the current CPU architecture.
+
+        Returns:
+            True if the hook was successfully prepared, False if hook
+            generation failed or platform is not Windows.
+
+        """
         try:
             if platform.system() != "Windows":
                 return False
@@ -346,7 +423,20 @@ class DebuggerBypass:
             return False
 
     def _generate_ntquery_hook(self) -> bytes:
-        """Generate hook code for NtQueryInformationProcess."""
+        """Generate hook code for NtQueryInformationProcess.
+
+        Generates native machine code for hooking NtQueryInformationProcess
+        that intercepts ProcessDebugPort (information class 7) requests.
+        For 64-bit systems, generates x86-64 assembly code. For 32-bit
+        systems, generates x86 assembly code. The hook checks if the request
+        is for information class 7, and if so, zeros the output buffer
+        instead of retrieving the actual debug port.
+
+        Returns:
+            Bytes object containing the generated hook code for the current
+            CPU architecture, or empty bytes if code generation failed.
+
+        """
         try:
             return (
                 bytes([
@@ -403,7 +493,19 @@ class DebuggerBypass:
             return b""
 
     def _bypass_hardware_breakpoints(self) -> bool:
-        """Bypass hardware breakpoint detection by clearing debug registers."""
+        """Bypass hardware breakpoint detection by clearing debug registers.
+
+        Clears all debug registers (DR0-DR7) in the CONTEXT structure
+        of the current thread. On Windows, uses GetThreadContext and
+        SetThreadContext to clear the registers. On non-Windows platforms,
+        delegates to _bypass_hardware_breakpoints_linux using ptrace.
+
+        Returns:
+            True if all debug registers were successfully cleared, False
+            if the bypass failed or the operation is not supported on the
+            current platform.
+
+        """
         try:
             if platform.system() != "Windows":
                 return self._bypass_hardware_breakpoints_linux()
@@ -447,7 +549,18 @@ class DebuggerBypass:
             return False
 
     def _bypass_hardware_breakpoints_linux(self) -> bool:
-        """Bypass hardware breakpoints on Linux."""
+        """Bypass hardware breakpoints on Linux.
+
+        Uses ptrace with PTRACE_POKEUSER to clear all debug registers
+        (DR0-DR7) in the current process. The register offsets are for
+        x86/x86-64 architecture. This prevents hardware breakpoint-based
+        debugger detection on Linux systems.
+
+        Returns:
+            True if the operation completed (whether registers were
+            successfully cleared or not), False if libc cannot be loaded.
+
+        """
         try:
             libc_path = ctypes.util.find_library("c")
             if not libc_path:
@@ -473,7 +586,19 @@ class DebuggerBypass:
             return False
 
     def _bypass_timing(self) -> bool:
-        """Bypass timing-based detection by hooking time functions."""
+        """Bypass timing-based detection by hooking time functions.
+
+        Delegates to platform-specific timing bypass implementations.
+        On Windows, hooks QueryPerformanceCounter and GetTickCount.
+        On Linux, hooks time and gettimeofday functions. This prevents
+        timing-based anti-debugging techniques that measure execution time
+        or detect debugger-induced delays.
+
+        Returns:
+            True if timing functions were successfully hooked, False if
+            the bypass failed.
+
+        """
         try:
             if platform.system() == "Windows":
                 return self._bypass_timing_windows()
@@ -484,7 +609,18 @@ class DebuggerBypass:
             return False
 
     def _bypass_timing_windows(self) -> bool:
-        """Bypass Windows timing checks."""
+        """Bypass Windows timing checks.
+
+        Stores function addresses for QueryPerformanceCounter and
+        GetTickCount to enable future hook installation. Also captures
+        the baseline timing using perf_counter() for consistent time
+        reporting across the debugged process.
+
+        Returns:
+            True if the timing functions were successfully located and
+            their addresses stored, False if the operation failed.
+
+        """
         try:
             import time
 
@@ -504,7 +640,19 @@ class DebuggerBypass:
             return False
 
     def _bypass_timing_linux(self) -> bool:
-        """Bypass Linux timing checks."""
+        """Bypass Linux timing checks.
+
+        Stores function addresses for time and gettimeofday functions
+        from libc to enable future hook installation. Also captures
+        the baseline timing using time.time() for consistent time
+        reporting across the debugged process.
+
+        Returns:
+            True if the timing functions were successfully located and
+            their addresses stored, False if libc cannot be loaded or
+            the operation failed.
+
+        """
         try:
             import time
 
@@ -530,7 +678,17 @@ class DebuggerBypass:
             return False
 
     def _bypass_exception_handling(self) -> bool:
-        """Bypass exception-based detection."""
+        """Bypass exception-based detection.
+
+        Sets an unhandled exception filter to null, neutralizing exceptions
+        that some anti-debugging mechanisms use to detect debugger presence.
+        This prevents the debugger from being invoked on unhandled exceptions.
+
+        Returns:
+            True if the exception filter was successfully set, False if
+            operation failed or platform is not Windows.
+
+        """
         try:
             if platform.system() != "Windows":
                 return False
@@ -548,7 +706,19 @@ class DebuggerBypass:
             return False
 
     def _bypass_window_detection(self) -> bool:
-        """Bypass debugger window detection."""
+        """Bypass debugger window detection.
+
+        Searches for and hides windows corresponding to common debuggers
+        (OllyDbg, WinDbg, IDA, x64dbg, Ghidra, Binary Ninja, etc.) using
+        FindWindowA and ShowWindow APIs. This prevents debugger detection
+        via window enumeration techniques.
+
+        Returns:
+            True if the window detection bypass completed (regardless of
+            whether debugger windows were found), False if platform is not
+            Windows or the operation failed.
+
+        """
         try:
             if platform.system() != "Windows":
                 return False
@@ -576,7 +746,19 @@ class DebuggerBypass:
             return False
 
     def _bypass_process_detection(self) -> bool:
-        """Bypass debugger process name detection."""
+        """Bypass debugger process name detection.
+
+        Attempts to mask the current process name by checking if the
+        executable name matches common debuggers (python, pythonw, ida,
+        x64dbg, ollydbg). If a match is found, tries to replace the
+        process name with explorer.exe using psutil.
+
+        Returns:
+            True if a debugger process name was successfully masked or if
+            the platform is not Windows and no masking was attempted,
+            False if the bypass failed.
+
+        """
         try:
             if platform.system() == "Windows":
                 import psutil
@@ -600,7 +782,18 @@ class DebuggerBypass:
             return False
 
     def _bypass_ptrace_linux(self) -> bool:
-        """Bypass ptrace detection on Linux."""
+        """Bypass ptrace detection on Linux.
+
+        Checks /proc/self/status for the TracerPid field. If the process
+        is being traced (TracerPid is not 0), attempts to detach from the
+        tracer using ptrace(PTRACE_DETACH, 0, 0, 0). This breaks the
+        debugger-debuggee relationship and prevents ptrace-based detection.
+
+        Returns:
+            True if ptrace detachment was completed (or not necessary),
+            False if the operation failed or libc cannot be loaded.
+
+        """
         try:
             libc_path = ctypes.util.find_library("c")
             if not libc_path:
@@ -627,7 +820,18 @@ class DebuggerBypass:
             return False
 
     def _bypass_proc_status(self) -> bool:
-        """Bypass /proc/self/status TracerPid detection."""
+        """Bypass /proc/self/status TracerPid detection.
+
+        Delegates to _bypass_ptrace_linux which comprehensively handles
+        detection and neutralization of ptrace-based debugging on Linux.
+        This includes checking /proc/self/status and detaching from any
+        active tracer.
+
+        Returns:
+            True if the ptrace detection was successfully neutralized,
+            False if the operation failed or libc cannot be loaded.
+
+        """
         try:
             return self._bypass_ptrace_linux()
         except Exception as e:
@@ -635,7 +839,18 @@ class DebuggerBypass:
             return False
 
     def _bypass_ld_preload(self) -> bool:
-        """Bypass LD_PRELOAD-based debugging detection."""
+        """Bypass LD_PRELOAD-based debugging detection.
+
+        Clears the LD_PRELOAD environment variable which can be used to
+        inject debugging code. Also filters LD_LIBRARY_PATH to remove
+        directories containing "debug" in their name to prevent loading
+        debug-instrumented libraries.
+
+        Returns:
+            True if the environment variables were successfully cleaned
+            (or were not set), False if the operation failed.
+
+        """
         try:
             if "LD_PRELOAD" in os.environ:
                 del os.environ["LD_PRELOAD"]
@@ -656,6 +871,15 @@ class DebuggerBypass:
     def enable_hypervisor_debugging(self) -> bool:
         """Enable hypervisor-based debugging for stealth.
 
+        Checks if the system supports hardware virtualization and sets
+        the hypervisor_enabled flag. This is a user-mode operation that
+        only sets a flag indicating hypervisor debugging is available.
+
+        Returns:
+            True if the system supports hardware virtualization and the
+            hypervisor debugging flag was successfully enabled, False if
+            hypervisor support is not detected or the operation failed.
+
         Note:
             This checks for hypervisor support but does not install actual
             kernel-mode hypervisor hooks, which would require a kernel driver.
@@ -675,7 +899,17 @@ class DebuggerBypass:
             return False
 
     def _check_hypervisor_support(self) -> bool:
-        """Check if system supports hardware virtualization."""
+        """Check if system supports hardware virtualization.
+
+        On Windows, executes systeminfo command and checks for Hyper-V
+        or Hypervisor keywords in the output. On Linux, reads /proc/cpuinfo
+        and checks for VMX (Intel) or SVM (AMD) virtualization support.
+
+        Returns:
+            True if hardware virtualization support is detected, False if
+            virtualization is not available or the operation failed.
+
+        """
         try:
             if platform.system() == "Windows":
                 import subprocess
@@ -700,7 +934,16 @@ class DebuggerBypass:
             return False
 
     def remove_bypasses(self) -> bool:
-        """Remove all installed bypasses."""
+        """Remove all installed bypasses.
+
+        Clears the hooks_installed flag and removes all stored original
+        function addresses. This resets the bypass engine to a clean state.
+
+        Returns:
+            True if all bypasses were successfully removed, False if the
+            operation failed.
+
+        """
         try:
             self.hooks_installed = False
             self.original_functions.clear()
@@ -712,7 +955,21 @@ class DebuggerBypass:
             return False
 
     def get_bypass_status(self) -> dict[str, Any]:
-        """Get status of installed bypasses."""
+        """Get status of installed bypasses.
+
+        Retrieves a snapshot of the current bypass state including whether
+        hooks are installed, the count of active hooks, hypervisor status,
+        current platform, and a list of hooked function names.
+
+        Returns:
+            Dictionary with the following keys:
+            - hooks_installed (bool): Whether any bypasses are currently active
+            - active_hooks (int): Count of installed hooks
+            - hypervisor_enabled (bool): Whether hypervisor debugging is enabled
+            - platform (str): Current operating system (Windows/Linux/etc.)
+            - hooked_functions (list[str]): Names of hooked functions
+
+        """
         return {
             "hooks_installed": self.hooks_installed,
             "active_hooks": len(self.original_functions),
@@ -722,17 +979,24 @@ class DebuggerBypass:
         }
 
 
-def install_anti_antidebug(methods: list[str] | None = None) -> dict[str, bool]:
+def install_anti_antidebug(
+    methods: list[str] | None = None,
+) -> dict[str, bool]:
     """Install anti-anti-debug bypasses using user-mode techniques.
 
-    All bypasses operate in user-mode (Ring 3) and modify only the current process.
-    Kernel-mode anti-debugging mechanisms require a kernel driver to bypass.
+    Creates a DebuggerBypass instance and installs specified bypass methods
+    to neutralize anti-debugging checks. All bypasses operate in user-mode
+    (Ring 3) and modify only the current process. Kernel-mode anti-debugging
+    mechanisms require a kernel driver to bypass.
 
     Args:
-        methods: List of specific methods to install, or None for all
+        methods: List of specific bypass method names to install, or None
+            to install all available methods. Defaults to None.
 
     Returns:
-        Dict mapping method names to success status
+        Dictionary mapping method names (str) to installation success
+        status (bool). Each key is a bypass method name and the value
+        indicates whether that method was successfully installed.
 
     """
     bypass: DebuggerBypass = DebuggerBypass()

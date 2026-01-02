@@ -9,15 +9,17 @@ Tests the migration of:
 Ensures data integrity and backward compatibility during migration.
 """
 
+from __future__ import annotations
+
 import json
+import pathlib
 import shutil
 import tempfile
 import unittest
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from typing import Any, Callable
 
-from intellicrack.ai.llm_config_manager import LLMConfigManager, get_llm_config_manager
+from intellicrack.ai.llm_config_manager import LLMConfigManager
 from intellicrack.ai.llm_integration import LLMConfig, LLMProvider
 from intellicrack.core.config_manager import IntellicrackConfig
 
@@ -25,37 +27,34 @@ from intellicrack.core.config_manager import IntellicrackConfig
 class TestLLMConfigMigration(unittest.TestCase):
     """Test suite for LLM configuration migration to central config."""
 
-    def setUp(self):
+    temp_dir: str
+    llm_config_dir: Path
+    central_config_dir: Path
+    _original_home: Callable[[], Path]
+
+    def setUp(self) -> None:
         """Set up test environment with temporary directories."""
-        # Create temporary directories for testing
         self.temp_dir = tempfile.mkdtemp()
         self.llm_config_dir = Path(self.temp_dir) / ".intellicrack" / "llm_configs"
         self.llm_config_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create temporary central config directory
         self.central_config_dir = Path(self.temp_dir) / ".intellicrack" / "config"
         self.central_config_dir.mkdir(parents=True, exist_ok=True)
 
-        # Store original home directory
-        self.original_home = Path.home
+        self._original_home = pathlib.Path.home
+        temp_dir_path = Path(self.temp_dir)
+        setattr(pathlib.Path, "home", staticmethod(lambda: temp_dir_path))
 
-        # Patch Path.home to use temp directory
-        self.home_patcher = patch("pathlib.Path.home")
-        self.mock_home = self.home_patcher.start()
-        self.mock_home.return_value = Path(self.temp_dir)
-
-    def tearDown(self):
+    def tearDown(self) -> None:
         """Clean up test environment."""
-        # Stop patches
-        self.home_patcher.stop()
+        setattr(pathlib.Path, "home", self._original_home)
 
-        # Remove temporary directory
         if Path(self.temp_dir).exists():
             shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    def create_test_models_json(self):
+    def create_test_models_json(self) -> dict[str, Any]:
         """Create test models.json in old format."""
-        models_data = {
+        models_data: dict[str, Any] = {
             "gpt4-turbo": {
                 "provider": "openai",
                 "model_name": "gpt-4-turbo-preview",
@@ -104,9 +103,9 @@ class TestLLMConfigMigration(unittest.TestCase):
         models_file.write_text(json.dumps(models_data, indent=2))
         return models_data
 
-    def create_test_profiles_json(self):
+    def create_test_profiles_json(self) -> dict[str, Any]:
         """Create test profiles.json in old format."""
-        profiles_data = {
+        profiles_data: dict[str, Any] = {
             "fast": {
                 "name": "Fast Generation",
                 "description": "Quick responses with less deliberation",
@@ -138,9 +137,9 @@ class TestLLMConfigMigration(unittest.TestCase):
         profiles_file.write_text(json.dumps(profiles_data, indent=2))
         return profiles_data
 
-    def create_test_metrics_json(self):
+    def create_test_metrics_json(self) -> dict[str, Any]:
         """Create test metrics.json in old format."""
-        metrics_data = {
+        metrics_data: dict[str, Any] = {
             "gpt4-turbo": {
                 "history": [
                     {"tokens_generated": 512, "generation_time": 2.3, "memory_mb": 450, "timestamp": "2024-01-15T11:00:00"},
@@ -190,7 +189,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         metrics_file.write_text(json.dumps(metrics_data, indent=2))
         return metrics_data
 
-    def test_11_1_1_create_test_configs_old_format(self):
+    def test_11_1_1_create_test_configs_old_format(self) -> None:
         """Task 11.1.1: Create test LLM configs in old format."""
         # Create test configuration files
         models_data = self.create_test_models_json()
@@ -225,7 +224,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         print(f"OK Created test profiles.json with {len(loaded_profiles)} profiles")
         print(f"OK Created test metrics.json with {len(loaded_metrics)} models' metrics")
 
-    def test_11_1_2_run_migration_verify_integrity(self):
+    def test_11_1_2_run_migration_verify_integrity(self) -> None:
         """Task 11.1.2: Run migration and verify data integrity."""
         # First create the test files
         models_data = self.create_test_models_json()
@@ -250,9 +249,12 @@ class TestLLMConfigMigration(unittest.TestCase):
                 print("OK Backup of metrics.json created")
 
         # Verify data migrated to central config
-        migrated_models = config.get("llm_configuration.models", {})
-        migrated_profiles = config.get("llm_configuration.profiles", {})
-        migrated_metrics = config.get("llm_configuration.metrics", {})
+        raw_models = config.get("llm_configuration.models", {})
+        raw_profiles = config.get("llm_configuration.profiles", {})
+        raw_metrics = config.get("llm_configuration.metrics", {})
+        migrated_models: dict[str, Any] = raw_models if isinstance(raw_models, dict) else {}
+        migrated_profiles: dict[str, Any] = raw_profiles if isinstance(raw_profiles, dict) else {}
+        migrated_metrics: dict[str, Any] = raw_metrics if isinstance(raw_metrics, dict) else {}
 
         # Verify models migration
         self.assertEqual(len(migrated_models), len(models_data), f"Should have migrated all {len(models_data)} models")
@@ -306,7 +308,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         print(f"OK Successfully migrated metrics for {len(migrated_metrics)} models")
         print("OK Data integrity verified - all fields preserved correctly")
 
-    def test_11_1_3_model_loading_after_migration(self):
+    def test_11_1_3_model_loading_after_migration(self) -> None:
         """Task 11.1.3: Test model loading after migration."""
         # Create test files and run migration
         models_data = self.create_test_models_json()
@@ -314,7 +316,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         self.create_test_metrics_json()
 
         # Initialize config (triggers migration)
-        config = IntellicrackConfig()
+        _config = IntellicrackConfig()
 
         # Create LLMConfigManager and test loading
         llm_manager = LLMConfigManager(config_dir=str(self.llm_config_dir))
@@ -323,6 +325,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         for model_id in models_data:
             loaded_config = llm_manager.load_model_config(model_id)
             self.assertIsNotNone(loaded_config, f"Should load config for {model_id}")
+            assert loaded_config is not None
 
             original = models_data[model_id]
 
@@ -351,7 +354,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         print(f"OK All {len(models_data)} models load correctly after migration")
         print("OK Model loading functionality fully verified")
 
-    def test_11_1_4_profile_application_after_migration(self):
+    def test_11_1_4_profile_application_after_migration(self) -> None:
         """Task 11.1.4: Test profile application after migration."""
         # Create test files and run migration
         self.create_test_models_json()
@@ -359,7 +362,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         self.create_test_metrics_json()
 
         # Initialize config (triggers migration)
-        config = IntellicrackConfig()
+        _config = IntellicrackConfig()
 
         # Create LLMConfigManager
         llm_manager = LLMConfigManager(config_dir=str(self.llm_config_dir))
@@ -374,6 +377,7 @@ class TestLLMConfigMigration(unittest.TestCase):
             # Get profile
             loaded_profile = llm_manager.get_profile(profile_id)
             self.assertIsNotNone(loaded_profile, f"Should load profile {profile_id}")
+            assert loaded_profile is not None
             self.assertEqual(loaded_profile["name"], profile_data["name"])
 
             # Apply profile to config
@@ -389,10 +393,11 @@ class TestLLMConfigMigration(unittest.TestCase):
             )
 
             # Verify custom params applied
-            if "top_p" in profile_settings:
-                self.assertEqual(modified_config.custom_params.get("top_p"), profile_settings["top_p"])
-            if "frequency_penalty" in profile_settings:
-                self.assertEqual(modified_config.custom_params.get("frequency_penalty"), profile_settings["frequency_penalty"])
+            if modified_config.custom_params is not None:
+                if "top_p" in profile_settings:
+                    self.assertEqual(modified_config.custom_params.get("top_p"), profile_settings["top_p"])
+                if "frequency_penalty" in profile_settings:
+                    self.assertEqual(modified_config.custom_params.get("frequency_penalty"), profile_settings["frequency_penalty"])
 
             print(f"OK Successfully applied profile '{profile_id}' after migration")
 
@@ -403,13 +408,14 @@ class TestLLMConfigMigration(unittest.TestCase):
         # Test custom exploit profile specifically
         exploit_profile = llm_manager.get_profile("custom_exploit")
         self.assertIsNotNone(exploit_profile, "Should have custom exploit profile")
+        assert exploit_profile is not None
         self.assertEqual(exploit_profile["name"], "Exploit Analysis")
         self.assertEqual(exploit_profile["settings"]["max_tokens"], 8192)
 
         print(f"OK All {len(profiles_data)} profiles apply correctly after migration")
         print("OK Profile application functionality fully verified")
 
-    def test_11_1_5_metrics_tracking_after_migration(self):
+    def test_11_1_5_metrics_tracking_after_migration(self) -> None:
         """Task 11.1.5: Test metrics tracking after migration."""
         # Create test files and run migration
         self.create_test_models_json()
@@ -417,7 +423,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         metrics_data = self.create_test_metrics_json()
 
         # Initialize config (triggers migration)
-        config = IntellicrackConfig()
+        _config = IntellicrackConfig()
 
         # Create LLMConfigManager
         llm_manager = LLMConfigManager(config_dir=str(self.llm_config_dir))
@@ -426,6 +432,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         for model_id, original_metrics in metrics_data.items():
             loaded_metrics = llm_manager.get_metrics(model_id)
             self.assertIsNotNone(loaded_metrics, f"Should load metrics for {model_id}")
+            assert loaded_metrics is not None
 
             # Verify history preserved
             self.assertEqual(
@@ -439,12 +446,13 @@ class TestLLMConfigMigration(unittest.TestCase):
             print(f"OK Metrics for {model_id} loaded correctly after migration")
 
         # Test adding new metrics
-        new_metrics = {"tokens_generated": 1024, "generation_time": 3.5, "memory_mb": 500}
+        new_metrics: dict[str, Any] = {"tokens_generated": 1024, "generation_time": 3.5, "memory_mb": 500}
 
         llm_manager.save_metrics("gpt4-turbo", new_metrics)
 
         # Verify new metrics added
         updated_metrics = llm_manager.get_metrics("gpt4-turbo")
+        assert updated_metrics is not None
         self.assertEqual(
             len(updated_metrics["history"]),
             4,  # Was 3, now 4
@@ -463,32 +471,33 @@ class TestLLMConfigMigration(unittest.TestCase):
         print("OK New metrics can be added after migration")
 
         # Test metrics for new model
-        new_model_metrics = {"tokens_generated": 512, "generation_time": 2.0, "memory_mb": 400}
+        new_model_metrics: dict[str, Any] = {"tokens_generated": 512, "generation_time": 2.0, "memory_mb": 400}
 
         llm_manager.save_metrics("new_model", new_model_metrics)
         new_loaded = llm_manager.get_metrics("new_model")
         self.assertIsNotNone(new_loaded)
+        assert new_loaded is not None
         self.assertEqual(len(new_loaded["history"]), 1)
 
         print("OK Metrics for new models can be created after migration")
         print("OK Metrics tracking fully functional after migration")
 
-    def test_production_readiness_checks(self):
+    def test_production_readiness_checks(self) -> None:
         """Comprehensive production readiness verification."""
         # Create test environment
         self.create_test_models_json()
         self.create_test_profiles_json()
         self.create_test_metrics_json()
 
-        config = IntellicrackConfig()
+        _config = IntellicrackConfig()
         llm_manager = LLMConfigManager(config_dir=str(self.llm_config_dir))
 
         # Test concurrent access (thread safety)
         import threading
 
-        errors = []
+        errors: list[str] = []
 
-        def concurrent_access():
+        def concurrent_access() -> None:
             try:
                 # Simultaneous read/write operations
                 llm_manager.load_model_config("gpt4-turbo")
@@ -511,7 +520,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         corrupted_file.write_text("{ invalid json ]")
 
         # Should handle gracefully
-        result = llm_manager._load_json_file(str(corrupted_file), {})
+        result = llm_manager._load_json_file(corrupted_file, {})
         self.assertEqual(result, {}, "Should return empty dict for corrupted JSON")
         print("OK Handles corrupted JSON files gracefully")
 
@@ -526,6 +535,7 @@ class TestLLMConfigMigration(unittest.TestCase):
 
         llm_manager.save_model_config("no_key_model", config_no_key)
         loaded_no_key = llm_manager.load_model_config("no_key_model")
+        assert loaded_no_key is not None
         self.assertIsNone(loaded_no_key.api_key, "Should handle missing API keys")
         print("OK Handles missing API keys correctly")
 
@@ -534,18 +544,19 @@ class TestLLMConfigMigration(unittest.TestCase):
             llm_manager.save_metrics("test_model", {"tokens_generated": i * 10, "generation_time": i * 0.1})
 
         final_metrics = llm_manager.get_metrics("test_model")
+        assert final_metrics is not None
         self.assertLessEqual(len(final_metrics["history"]), 100, "Should limit history to 100 entries")
         print("OK Metrics history limited to 100 entries")
 
         # Test export/import with API key redaction
-        export_path = self.temp_dir / "export.json"
+        export_path = Path(self.temp_dir) / "export.json"
         llm_manager.export_config(str(export_path), include_api_keys=False)
 
         with open(export_path) as f:
-            exported = json.load(f)
+            exported: dict[str, Any] = json.load(f)
 
         # Verify API keys redacted
-        for model_id, model_config in exported["configs"].items():
+        for _model_id, model_config in exported["configs"].items():
             if model_config.get("api_key"):
                 self.assertEqual(model_config["api_key"], "***REDACTED***", "API keys should be redacted in export")
 

@@ -12,7 +12,7 @@ import tempfile
 from pathlib import Path
 
 
-def test_ssl_interceptor_basic_functionality():
+def test_ssl_interceptor_basic_functionality() -> bool:
     """Test basic SSL interceptor functionality."""
 
     print(" SSL INTERCEPTOR BASIC FUNCTIONALITY TEST")
@@ -122,7 +122,7 @@ def test_ssl_interceptor_basic_functionality():
         return False
 
 
-def test_ssl_interceptor_license_scenarios():
+def test_ssl_interceptor_license_scenarios() -> bool:
     """Test SSL interceptor with license verification scenarios."""
 
     print(f"\n🏢 LICENSE VERIFICATION SCENARIOS TEST")
@@ -197,7 +197,7 @@ def test_ssl_interceptor_license_scenarios():
         return False
 
 
-def test_ssl_interceptor_security_features():
+def test_ssl_interceptor_security_features() -> bool:
     """Test SSL interceptor security research features."""
 
     print(f"\n🔐 SECURITY RESEARCH FEATURES TEST")

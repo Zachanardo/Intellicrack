@@ -14,8 +14,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Generator
-from unittest.mock import MagicMock, Mock, patch
+from typing import Any, Callable, Generator, Optional
 
 import pytest
 
@@ -32,6 +31,136 @@ from intellicrack.core.patching.windows_activator import (
 
 
 WINDOWS_ONLY = platform.system() == "Windows"
+
+
+class FakeCompletedProcess:
+    """Test double for subprocess.CompletedProcess."""
+
+    def __init__(
+        self,
+        args: list[str],
+        returncode: int,
+        stdout: str = "",
+        stderr: str = "",
+    ) -> None:
+        self.args = args
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+
+
+class FakeSubprocessRunner:
+    """Test double for subprocess.run function."""
+
+    def __init__(self) -> None:
+        self.call_count: int = 0
+        self.last_args: Optional[list[str]] = None
+        self.last_kwargs: Optional[dict[str, Any]] = None
+        self.return_value: Optional[FakeCompletedProcess] = None
+        self.side_effect: Optional[Exception] = None
+        self.calls: list[tuple[list[str], dict[str, Any]]] = []
+
+    def __call__(self, args: list[str], **kwargs: Any) -> FakeCompletedProcess:
+        self.call_count += 1
+        self.last_args = args
+        self.last_kwargs = kwargs
+        self.calls.append((args.copy(), kwargs.copy()))
+
+        if self.side_effect is not None:
+            raise self.side_effect
+
+        if self.return_value is not None:
+            return self.return_value
+
+        return FakeCompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    def reset(self) -> None:
+        """Reset call tracking."""
+        self.call_count = 0
+        self.last_args = None
+        self.last_kwargs = None
+        self.calls = []
+
+
+class FakePopenProcess:
+    """Test double for subprocess.Popen process object."""
+
+    def __init__(self, returncode: int = 0) -> None:
+        self.returncode_value: int = returncode
+
+    def wait(self) -> int:
+        return self.returncode_value
+
+
+class FakePopenRunner:
+    """Test double for subprocess.Popen function."""
+
+    def __init__(self, returncode: int = 0) -> None:
+        self.call_count: int = 0
+        self.last_args: Optional[list[str]] = None
+        self.last_kwargs: Optional[dict[str, Any]] = None
+        self.process: FakePopenProcess = FakePopenProcess(returncode)
+
+    def __call__(self, args: list[str], **kwargs: Any) -> FakePopenProcess:
+        self.call_count += 1
+        self.last_args = args
+        self.last_kwargs = kwargs
+        return self.process
+
+
+class FakeWindowsActivatorPrerequisites:
+    """Test double for WindowsActivator.check_prerequisites method."""
+
+    def __init__(self, success: bool = True, issues: Optional[list[str]] = None) -> None:
+        self.success = success
+        self.issues = issues if issues is not None else []
+        self.call_count: int = 0
+
+    def __call__(self) -> tuple[bool, list[str]]:
+        self.call_count += 1
+        return (self.success, self.issues)
+
+
+class FakeOfficeVersionDetector:
+    """Test double for WindowsActivator._detect_office_version method."""
+
+    def __init__(self, version: str = "") -> None:
+        self.version = version
+        self.call_count: int = 0
+
+    def __call__(self) -> str:
+        self.call_count += 1
+        return self.version
+
+
+class FakeOfficeC2RActivator:
+    """Test double for WindowsActivator._activate_office_c2r method."""
+
+    def __init__(self, success: bool = True, method: str = "C2R") -> None:
+        self.success = success
+        self.method = method
+        self.call_count: int = 0
+        self.last_version: Optional[str] = None
+
+    def __call__(self, version: str) -> dict[str, Any]:
+        self.call_count += 1
+        self.last_version = version
+        return {"success": self.success, "method": self.method}
+
+
+class FakeOfficeMSIActivator:
+    """Test double for WindowsActivator._activate_office_msi method."""
+
+    def __init__(self, success: bool = True, method: str = "MSI") -> None:
+        self.success = success
+        self.method = method
+        self.call_count: int = 0
+        self.last_version: Optional[str] = None
+
+    def __call__(self, version: str) -> dict[str, Any]:
+        self.call_count += 1
+        self.last_version = version
+        return {"success": self.success, "method": self.method}
 
 
 @pytest.fixture
@@ -124,7 +253,7 @@ class TestHWIDGeneration:
 
         assert hwid1 == hwid2
 
-    def test_generate_hwid_fallback_without_wmi(self, windows_activator: WindowsActivator, monkeypatch) -> None:
+    def test_generate_hwid_fallback_without_wmi(self, windows_activator: WindowsActivator, monkeypatch: Any) -> None:
         """generate_hwid uses fallback method when WMI is unavailable."""
         import intellicrack.core.patching.windows_activator as wa_module
 
@@ -202,15 +331,17 @@ class TestActivationStatusChecking:
         assert "activated" in status
         assert isinstance(status["activated"], bool)
 
-    def test_get_activation_status_handles_subprocess_errors(self, windows_activator: WindowsActivator) -> None:
+    def test_get_activation_status_handles_subprocess_errors(self, windows_activator: WindowsActivator, monkeypatch: Any) -> None:
         """get_activation_status handles subprocess errors gracefully."""
-        with patch("subprocess.run") as mock_run:
-            mock_run.side_effect = OSError("Subprocess error")
+        fake_run = FakeSubprocessRunner()
+        fake_run.side_effect = OSError("Subprocess error")
 
-            status = windows_activator.get_activation_status()
+        monkeypatch.setattr("subprocess.run", fake_run)
 
-            assert status["status"] == ActivationStatus.ERROR.value
-            assert "error" in status
+        status = windows_activator.get_activation_status()
+
+        assert status["status"] == ActivationStatus.ERROR.value
+        assert "error" in status
 
 
 class TestWindowsActivation:
@@ -227,202 +358,266 @@ class TestWindowsActivation:
         assert "prerequisites not met" in result["error"].lower()
         assert "issues" in result
 
-    def test_activate_windows_supports_hwid_method(self, windows_activator: WindowsActivator, mock_activation_script: Path) -> None:
+    def test_activate_windows_supports_hwid_method(self, windows_activator: WindowsActivator, mock_activation_script: Path, monkeypatch: Any) -> None:
         """activate_windows supports HWID activation method."""
         windows_activator.script_path = mock_activation_script
 
-        with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
-            result = windows_activator.activate_windows(ActivationMethod.HWID)
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(windows_activator, "check_prerequisites", fake_prereq)
 
-            assert isinstance(result, dict)
-            assert "method" in result
-            assert result["method"] == "hwid"
+        result = windows_activator.activate_windows(ActivationMethod.HWID)
 
-    def test_activate_windows_supports_kms38_method(self, windows_activator: WindowsActivator, mock_activation_script: Path) -> None:
+        assert isinstance(result, dict)
+        assert "method" in result
+        assert result["method"] == "hwid"
+
+    def test_activate_windows_supports_kms38_method(self, windows_activator: WindowsActivator, mock_activation_script: Path, monkeypatch: Any) -> None:
         """activate_windows supports KMS38 activation method."""
         windows_activator.script_path = mock_activation_script
 
-        with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
-            result = windows_activator.activate_windows(ActivationMethod.KMS38)
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(windows_activator, "check_prerequisites", fake_prereq)
 
-            assert isinstance(result, dict)
-            assert "method" in result
-            assert result["method"] == "kms38"
+        result = windows_activator.activate_windows(ActivationMethod.KMS38)
 
-    def test_activate_windows_supports_online_kms_method(self, windows_activator: WindowsActivator, mock_activation_script: Path) -> None:
+        assert isinstance(result, dict)
+        assert "method" in result
+        assert result["method"] == "kms38"
+
+    def test_activate_windows_supports_online_kms_method(self, windows_activator: WindowsActivator, mock_activation_script: Path, monkeypatch: Any) -> None:
         """activate_windows supports Online KMS (Ohook) activation method."""
         windows_activator.script_path = mock_activation_script
 
-        with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
-            result = windows_activator.activate_windows(ActivationMethod.ONLINE_KMS)
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(windows_activator, "check_prerequisites", fake_prereq)
 
-            assert isinstance(result, dict)
-            assert "method" in result
-            assert result["method"] == "ohook"
+        result = windows_activator.activate_windows(ActivationMethod.ONLINE_KMS)
 
-    def test_activate_windows_returns_detailed_result(self, windows_activator: WindowsActivator, mock_activation_script: Path) -> None:
+        assert isinstance(result, dict)
+        assert "method" in result
+        assert result["method"] == "ohook"
+
+    def test_activate_windows_returns_detailed_result(self, windows_activator: WindowsActivator, mock_activation_script: Path, monkeypatch: Any) -> None:
         """activate_windows returns detailed activation result."""
         windows_activator.script_path = mock_activation_script
 
-        with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
-            result = windows_activator.activate_windows(ActivationMethod.HWID)
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(windows_activator, "check_prerequisites", fake_prereq)
 
-            assert "success" in result
-            assert "method" in result
-            assert "return_code" in result
-            assert "stdout" in result
-            assert "stderr" in result
+        result = windows_activator.activate_windows(ActivationMethod.HWID)
 
-    def test_activate_windows_handles_script_failure(self, windows_activator: WindowsActivator, mock_activation_script_failure: Path) -> None:
+        assert "success" in result
+        assert "method" in result
+        assert "return_code" in result
+        assert "stdout" in result
+        assert "stderr" in result
+
+    def test_activate_windows_handles_script_failure(self, windows_activator: WindowsActivator, mock_activation_script_failure: Path, monkeypatch: Any) -> None:
         """activate_windows handles script execution failure."""
         windows_activator.script_path = mock_activation_script_failure
 
-        with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
-            result = windows_activator.activate_windows(ActivationMethod.HWID)
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(windows_activator, "check_prerequisites", fake_prereq)
 
-            assert result["success"] is False
-            assert result["return_code"] != 0
+        result = windows_activator.activate_windows(ActivationMethod.HWID)
 
-    def test_activate_windows_handles_timeout(self, windows_activator: WindowsActivator, tmp_path: Path) -> None:
+        assert result["success"] is False
+        assert result["return_code"] != 0
+
+    def test_activate_windows_handles_timeout(self, windows_activator: WindowsActivator, tmp_path: Path, monkeypatch: Any) -> None:
         """activate_windows handles subprocess timeout."""
         script_path = tmp_path / "WindowsActivator.cmd"
         script_path.write_text("@echo off\ntimeout /t 1000\n")
 
         windows_activator.script_path = script_path
 
-        with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
-            with patch("subprocess.run") as mock_run:
-                mock_run.side_effect = subprocess.TimeoutExpired("cmd", 300)
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(windows_activator, "check_prerequisites", fake_prereq)
 
-                result = windows_activator.activate_windows(ActivationMethod.HWID)
+        fake_run = FakeSubprocessRunner()
+        fake_run.side_effect = subprocess.TimeoutExpired("cmd", 300)
+        monkeypatch.setattr("subprocess.run", fake_run)
 
-                assert result["success"] is False
-                assert "timed out" in result["error"].lower()
+        result = windows_activator.activate_windows(ActivationMethod.HWID)
 
-    def test_activate_alias_method_works(self, windows_activator: WindowsActivator, mock_activation_script: Path) -> None:
+        assert result["success"] is False
+        assert "timed out" in result["error"].lower()
+
+    def test_activate_alias_method_works(self, windows_activator: WindowsActivator, mock_activation_script: Path, monkeypatch: Any) -> None:
         """activate alias method works correctly."""
         windows_activator.script_path = mock_activation_script
 
-        with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
-            result = windows_activator.activate(method="hwid")
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(windows_activator, "check_prerequisites", fake_prereq)
 
-            assert isinstance(result, dict)
-            assert "method" in result
+        result = windows_activator.activate(method="hwid")
+
+        assert isinstance(result, dict)
+        assert "method" in result
 
 
 class TestActivationReset:
     """Test activation reset functionality."""
 
     @pytest.mark.skipif(not WINDOWS_ONLY, reason="Windows-specific functionality")
-    def test_reset_activation_executes_slmgr_rearm(self, windows_activator: WindowsActivator) -> None:
+    def test_reset_activation_executes_slmgr_rearm(self, windows_activator: WindowsActivator, monkeypatch: Any) -> None:
         """reset_activation executes slmgr /rearm command."""
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value = Mock(returncode=0, stdout="Success", stderr="")
+        fake_run = FakeSubprocessRunner()
+        fake_run.return_value = FakeCompletedProcess(
+            args=["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/rearm"],
+            returncode=0,
+            stdout="Success",
+            stderr=""
+        )
+        monkeypatch.setattr("subprocess.run", fake_run)
 
-            result = windows_activator.reset_activation()
+        result = windows_activator.reset_activation()
 
-            assert mock_run.called
-            args = mock_run.call_args[0][0]
-            assert "slmgr.vbs" in args
-            assert "/rearm" in args
+        assert fake_run.call_count > 0
+        assert fake_run.last_args is not None
+        args = fake_run.last_args
+        assert "slmgr.vbs" in args
+        assert "/rearm" in args
 
     @pytest.mark.skipif(not WINDOWS_ONLY, reason="Windows-specific functionality")
-    def test_reset_activation_returns_result_structure(self, windows_activator: WindowsActivator) -> None:
+    def test_reset_activation_returns_result_structure(self, windows_activator: WindowsActivator, monkeypatch: Any) -> None:
         """reset_activation returns proper result structure."""
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value = Mock(returncode=0, stdout="Success", stderr="")
+        fake_run = FakeSubprocessRunner()
+        fake_run.return_value = FakeCompletedProcess(
+            args=["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/rearm"],
+            returncode=0,
+            stdout="Success",
+            stderr=""
+        )
+        monkeypatch.setattr("subprocess.run", fake_run)
 
-            result = windows_activator.reset_activation()
+        result = windows_activator.reset_activation()
 
-            assert "success" in result
-            assert "return_code" in result
-            assert "stdout" in result
-            assert "stderr" in result
+        assert "success" in result
+        assert "return_code" in result
+        assert "stdout" in result
+        assert "stderr" in result
 
-    def test_reset_activation_handles_errors(self, windows_activator: WindowsActivator) -> None:
+    def test_reset_activation_handles_errors(self, windows_activator: WindowsActivator, monkeypatch: Any) -> None:
         """reset_activation handles subprocess errors."""
-        with patch("subprocess.run") as mock_run:
-            mock_run.side_effect = OSError("Subprocess error")
+        fake_run = FakeSubprocessRunner()
+        fake_run.side_effect = OSError("Subprocess error")
+        monkeypatch.setattr("subprocess.run", fake_run)
 
-            result = windows_activator.reset_activation()
+        result = windows_activator.reset_activation()
 
-            assert result["success"] is False
-            assert "error" in result
+        assert result["success"] is False
+        assert "error" in result
 
 
 class TestProductKeyInfo:
     """Test product key information retrieval."""
 
     @pytest.mark.skipif(not WINDOWS_ONLY, reason="Windows-specific functionality")
-    def test_get_product_key_info_executes_slmgr_dli(self, windows_activator: WindowsActivator) -> None:
+    def test_get_product_key_info_executes_slmgr_dli(self, windows_activator: WindowsActivator, monkeypatch: Any) -> None:
         """get_product_key_info executes slmgr /dli command."""
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value = Mock(returncode=0, stdout="Product info", stderr="")
+        fake_run = FakeSubprocessRunner()
+        fake_run.return_value = FakeCompletedProcess(
+            args=["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/dli"],
+            returncode=0,
+            stdout="Product info",
+            stderr=""
+        )
+        monkeypatch.setattr("subprocess.run", fake_run)
 
-            result = windows_activator.get_product_key_info()
+        result = windows_activator.get_product_key_info()
 
-            assert mock_run.called
-            args = mock_run.call_args[0][0]
-            assert "slmgr.vbs" in args
-            assert "/dli" in args
+        assert fake_run.call_count > 0
+        assert fake_run.last_args is not None
+        args = fake_run.last_args
+        assert "slmgr.vbs" in args
+        assert "/dli" in args
 
     @pytest.mark.skipif(not WINDOWS_ONLY, reason="Windows-specific functionality")
-    def test_get_product_key_info_returns_product_info(self, windows_activator: WindowsActivator) -> None:
+    def test_get_product_key_info_returns_product_info(self, windows_activator: WindowsActivator, monkeypatch: Any) -> None:
         """get_product_key_info returns product information."""
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value = Mock(returncode=0, stdout="License Status: Licensed", stderr="")
+        fake_run = FakeSubprocessRunner()
+        fake_run.return_value = FakeCompletedProcess(
+            args=["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/dli"],
+            returncode=0,
+            stdout="License Status: Licensed",
+            stderr=""
+        )
+        monkeypatch.setattr("subprocess.run", fake_run)
 
-            result = windows_activator.get_product_key_info()
+        result = windows_activator.get_product_key_info()
 
-            assert result["success"] is True
-            assert "product_info" in result
-            assert "License Status" in result["product_info"]
+        assert result["success"] is True
+        assert "product_info" in result
+        assert "License Status" in result["product_info"]
 
 
 class TestOfficeActivation:
     """Test Microsoft Office activation functionality."""
 
-    def test_activate_office_detects_office_version(self, windows_activator: WindowsActivator) -> None:
+    def test_activate_office_detects_office_version(self, windows_activator: WindowsActivator, monkeypatch: Any) -> None:
         """activate_office detects installed Office version."""
-        with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
-            with patch.object(windows_activator, "_detect_office_version", return_value="2016"):
-                with patch("subprocess.run") as mock_run:
-                    mock_run.return_value = Mock(returncode=0, stdout="Success", stderr="")
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(windows_activator, "check_prerequisites", fake_prereq)
 
-                    result = windows_activator.activate_office(office_version="auto")
+        fake_detector = FakeOfficeVersionDetector(version="2016")
+        monkeypatch.setattr(windows_activator, "_detect_office_version", fake_detector)
 
-                    assert isinstance(result, dict)
+        fake_run = FakeSubprocessRunner()
+        fake_run.return_value = FakeCompletedProcess(
+            args=["ospp.vbs"],
+            returncode=0,
+            stdout="Success",
+            stderr=""
+        )
+        monkeypatch.setattr("subprocess.run", fake_run)
 
-    def test_activate_office_handles_no_installation(self, windows_activator: WindowsActivator) -> None:
+        result = windows_activator.activate_office(office_version="auto")
+
+        assert isinstance(result, dict)
+
+    def test_activate_office_handles_no_installation(self, windows_activator: WindowsActivator, monkeypatch: Any) -> None:
         """activate_office handles case when Office is not installed."""
-        with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
-            with patch.object(windows_activator, "_detect_office_version", return_value=""):
-                result = windows_activator.activate_office(office_version="auto")
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(windows_activator, "check_prerequisites", fake_prereq)
 
-                assert result["success"] is False
-                assert "No Microsoft Office installation detected" in result["error"]
+        fake_detector = FakeOfficeVersionDetector(version="")
+        monkeypatch.setattr(windows_activator, "_detect_office_version", fake_detector)
 
-    def test_activate_office_c2r_method(self, windows_activator: WindowsActivator, tmp_path: Path) -> None:
+        result = windows_activator.activate_office(office_version="auto")
+
+        assert result["success"] is False
+        assert "No Microsoft Office installation detected" in result["error"]
+
+    def test_activate_office_c2r_method(self, windows_activator: WindowsActivator, tmp_path: Path, monkeypatch: Any) -> None:
         """activate_office uses C2R activation method."""
         script_path = tmp_path / "OfficeActivator.cmd"
         script_path.write_text("@echo off\necho Success\n")
 
-        with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
-            with patch.object(windows_activator, "_activate_office_c2r") as mock_c2r:
-                mock_c2r.return_value = {"success": True, "method": "C2R"}
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(windows_activator, "check_prerequisites", fake_prereq)
 
-                result = windows_activator.activate_office(office_version="2016")
+        fake_c2r = FakeOfficeC2RActivator(success=True, method="C2R")
+        monkeypatch.setattr(windows_activator, "_activate_office_c2r", fake_c2r)
 
-                assert mock_c2r.called
+        result = windows_activator.activate_office(office_version="2016")
 
-    def test_activate_office_msi_fallback(self, windows_activator: WindowsActivator) -> None:
+        assert fake_c2r.call_count > 0
+
+    def test_activate_office_msi_fallback(self, windows_activator: WindowsActivator, monkeypatch: Any) -> None:
         """activate_office falls back to MSI method when C2R fails."""
-        with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
-            with patch.object(windows_activator, "_activate_office_c2r", return_value={"success": False}):
-                with patch.object(windows_activator, "_activate_office_msi", return_value={"success": True}):
-                    result = windows_activator.activate_office(office_version="2016")
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(windows_activator, "check_prerequisites", fake_prereq)
 
-                    assert result["success"] is True
+        fake_c2r = FakeOfficeC2RActivator(success=False)
+        monkeypatch.setattr(windows_activator, "_activate_office_c2r", fake_c2r)
+
+        fake_msi = FakeOfficeMSIActivator(success=True)
+        monkeypatch.setattr(windows_activator, "_activate_office_msi", fake_msi)
+
+        result = windows_activator.activate_office(office_version="2016")
+
+        assert result["success"] is True
 
     def test_detect_office_version_from_registry(self, windows_activator: WindowsActivator) -> None:
         """_detect_office_version detects Office from registry."""
@@ -433,14 +628,20 @@ class TestOfficeActivation:
 
         assert isinstance(version, str)
 
-    def test_get_office_status_checks_activation(self, windows_activator: WindowsActivator) -> None:
+    def test_get_office_status_checks_activation(self, windows_activator: WindowsActivator, monkeypatch: Any) -> None:
         """_get_office_status checks Office activation status."""
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value = Mock(returncode=0, stdout="LICENSE STATUS: ---LICENSED---", stderr="")
+        fake_run = FakeSubprocessRunner()
+        fake_run.return_value = FakeCompletedProcess(
+            args=["ospp.vbs"],
+            returncode=0,
+            stdout="LICENSE STATUS: ---LICENSED---",
+            stderr=""
+        )
+        monkeypatch.setattr("subprocess.run", fake_run)
 
-            status = windows_activator._get_office_status()
+        status = windows_activator._get_office_status()
 
-            assert "status" in status
+        assert "status" in status
 
 
 class TestInteractiveActivation:
@@ -455,31 +656,35 @@ class TestInteractiveActivation:
         assert result["success"] is False
         assert "prerequisites not met" in result["error"].lower()
 
-    def test_activate_windows_interactive_calls_output_callback(self, windows_activator: WindowsActivator, mock_activation_script: Path) -> None:
+    def test_activate_windows_interactive_calls_output_callback(self, windows_activator: WindowsActivator, mock_activation_script: Path, monkeypatch: Any) -> None:
         """activate_windows_interactive calls output callback with messages."""
         windows_activator.script_path = mock_activation_script
-        output_lines = []
+        output_lines: list[tuple[str, bool]] = []
 
         def callback(line: str, is_stderr: bool) -> None:
             output_lines.append((line, is_stderr))
 
-        with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
-            result = windows_activator.activate_windows_interactive(output_callback=callback)
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(windows_activator, "check_prerequisites", fake_prereq)
 
-            assert output_lines
+        result = windows_activator.activate_windows_interactive(output_callback=callback)
 
-    def test_activate_windows_interactive_returns_complete_result(self, windows_activator: WindowsActivator, mock_activation_script: Path) -> None:
+        assert output_lines
+
+    def test_activate_windows_interactive_returns_complete_result(self, windows_activator: WindowsActivator, mock_activation_script: Path, monkeypatch: Any) -> None:
         """activate_windows_interactive returns complete result structure."""
         windows_activator.script_path = mock_activation_script
 
-        with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
-            result = windows_activator.activate_windows_interactive()
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(windows_activator, "check_prerequisites", fake_prereq)
 
-            assert "success" in result
-            assert "method" in result
-            assert "return_code" in result
-            assert "stdout" in result
-            assert "stderr" in result
+        result = windows_activator.activate_windows_interactive()
+
+        assert "success" in result
+        assert "method" in result
+        assert "return_code" in result
+        assert "stdout" in result
+        assert "stderr" in result
 
 
 class TestTerminalActivation:
@@ -496,28 +701,31 @@ class TestTerminalActivation:
         assert "prerequisites not met" in result["error"].lower()
 
     @pytest.mark.skipif(not WINDOWS_ONLY, reason="Windows-specific functionality")
-    def test_activate_windows_in_terminal_returns_result(self, windows_activator: WindowsActivator, mock_activation_script: Path) -> None:
+    def test_activate_windows_in_terminal_returns_result(self, windows_activator: WindowsActivator, mock_activation_script: Path, monkeypatch: Any) -> None:
         """activate_windows_in_terminal returns activation result."""
         windows_activator.script_path = mock_activation_script
 
-        with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
-            with patch("subprocess.Popen") as mock_popen:
-                mock_process = Mock()
-                mock_process.wait.return_value = 0
-                mock_popen.return_value = mock_process
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(windows_activator, "check_prerequisites", fake_prereq)
 
-                result = windows_activator.activate_windows_in_terminal()
+        fake_popen = FakePopenRunner(returncode=0)
+        monkeypatch.setattr("subprocess.Popen", fake_popen)
 
-                assert "success" in result
-                assert "method" in result
+        result = windows_activator.activate_windows_in_terminal()
 
-    def test_activate_windows_in_terminal_handles_non_windows(self, windows_activator: WindowsActivator) -> None:
+        assert "success" in result
+        assert "method" in result
+
+    def test_activate_windows_in_terminal_handles_non_windows(self, windows_activator: WindowsActivator, monkeypatch: Any) -> None:
         """activate_windows_in_terminal handles non-Windows platform."""
-        with patch("os.name", "posix"):
-            with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
-                result = windows_activator.activate_windows_in_terminal()
+        monkeypatch.setattr("os.name", "posix")
 
-                assert result["success"] is False
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(windows_activator, "check_prerequisites", fake_prereq)
+
+        result = windows_activator.activate_windows_in_terminal()
+
+        assert result["success"] is False
 
 
 class TestWindowsActivatorInteractive:
@@ -537,7 +745,7 @@ class TestWindowsActivatorInteractive:
         activator.script_path = mock_activation_script
         interactive = WindowsActivatorInteractive(activator)
 
-        output_lines = []
+        output_lines: list[tuple[str, bool]] = []
 
         def callback(line: str, is_stderr: bool) -> None:
             output_lines.append((line, is_stderr))
@@ -558,21 +766,27 @@ class TestConvenienceFunctions:
         assert isinstance(status, dict)
         assert "status" in status
 
-    def test_activate_windows_hwid_convenience_function(self, mock_activation_script: Path) -> None:
+    def test_activate_windows_hwid_convenience_function(self, mock_activation_script: Path, monkeypatch: Any) -> None:
         """activate_windows_hwid convenience function works."""
-        with patch.object(WindowsActivator, "script_path", mock_activation_script):
-            with patch.object(WindowsActivator, "check_prerequisites", return_value=(True, [])):
-                result = activate_windows_hwid()
+        monkeypatch.setattr(WindowsActivator, "script_path", mock_activation_script)
 
-                assert isinstance(result, dict)
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(WindowsActivator, "check_prerequisites", fake_prereq)
 
-    def test_activate_windows_kms_convenience_function(self, mock_activation_script: Path) -> None:
+        result = activate_windows_hwid()
+
+        assert isinstance(result, dict)
+
+    def test_activate_windows_kms_convenience_function(self, mock_activation_script: Path, monkeypatch: Any) -> None:
         """activate_windows_kms convenience function works."""
-        with patch.object(WindowsActivator, "script_path", mock_activation_script):
-            with patch.object(WindowsActivator, "check_prerequisites", return_value=(True, [])):
-                result = activate_windows_kms()
+        monkeypatch.setattr(WindowsActivator, "script_path", mock_activation_script)
 
-                assert isinstance(result, dict)
+        fake_prereq = FakeWindowsActivatorPrerequisites(success=True, issues=[])
+        monkeypatch.setattr(WindowsActivator, "check_prerequisites", fake_prereq)
+
+        result = activate_windows_kms()
+
+        assert isinstance(result, dict)
 
 
 class TestActivationMethodEnum:

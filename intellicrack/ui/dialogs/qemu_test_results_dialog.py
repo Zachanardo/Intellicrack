@@ -27,6 +27,7 @@ from typing import Any
 from intellicrack.handlers.pyqt6_handler import (
     QDialog,
     QDialogButtonBox,
+    QCloseEvent,
     QFont,
     QLabel,
     QProgressBar,
@@ -59,7 +60,24 @@ logger = get_logger(__name__)
 
 @dataclass
 class TestResults:
-    """Container for real test results from QEMU execution."""
+    """Container for real test results from QEMU execution.
+
+    Stores all collected data from a script execution in QEMU sandbox,
+    including execution status, output, errors, and monitored activity.
+
+    Attributes:
+        success: Whether the script execution completed successfully.
+        duration: Total execution time in seconds.
+        output: Standard output captured from script execution.
+        errors: List of error messages encountered during execution.
+        warnings: List of warning messages from script execution.
+        memory_changes: List of memory modifications detected during execution.
+        api_calls: List of API function calls intercepted during execution.
+        network_activity: List of network connections made during execution.
+        file_operations: List of file system operations during execution.
+        process_state: Final state of the process (running/terminated/crashed).
+        exit_code: Exit code returned by the script execution.
+    """
 
     success: bool
     duration: float
@@ -75,7 +93,20 @@ class TestResults:
 
 
 class QEMUExecutionThread(QThread):
-    """Thread for running scripts in QEMU and capturing real output."""
+    """Thread for running scripts in QEMU and capturing real output.
+
+    Executes scripts in isolated QEMU virtual machine environments while
+    capturing output, progress, and final results. Signals are emitted
+    for real-time UI updates during script execution.
+
+    Attributes:
+        output_update: Signal emitted for each output line captured
+            during execution. Carries the output string.
+        progress_update: Signal emitted with progress percentage and
+            status message during execution phases.
+        execution_complete: Signal emitted when execution finishes,
+            carrying the final TestResults object.
+    """
 
     output_update = pyqtSignal(str)
     progress_update = pyqtSignal(int, str)
@@ -89,7 +120,15 @@ class QEMUExecutionThread(QThread):
         binary_path: str,
         script_type: str,
     ) -> None:
-        """Initialize the QEMUExecutionThread with default values."""
+        """Initialize the QEMUExecutionThread with default values.
+
+        Args:
+            qemu_manager: QEMUManager instance for VM operations.
+            snapshot_id: Identifier for the VM snapshot to use for testing.
+            script_content: The script code to execute in the VM.
+            binary_path: Path to the binary being tested.
+            script_type: Type of script (e.g., 'frida', 'ghidra', 'generic').
+        """
         super().__init__()
         self.qemu_manager = qemu_manager
         self.snapshot_id = snapshot_id
@@ -99,7 +138,12 @@ class QEMUExecutionThread(QThread):
         self.start_time: float = 0.0
 
     def run(self) -> None:
-        """Execute script in QEMU and capture real results."""
+        """Execute script in QEMU and capture real results.
+
+        Handles script execution in QEMU by dispatching to appropriate handlers
+        based on script type, captures output and errors, and emits results
+        via signals for UI updates.
+        """
         self.start_time = time.time()
 
         try:
@@ -136,12 +180,20 @@ class QEMUExecutionThread(QThread):
             self.execution_complete.emit(error_results)
 
     def _execute_frida_script(self) -> ExecutionResult:
-        # Type will be validated at runtime
-        """Execute Frida script and capture real output."""
+        """Execute Frida script and capture real output.
+
+        Returns:
+            ExecutionResult containing success status, output, errors, exit code,
+            and runtime duration.
+        """
         self.progress_update.emit(30, "Loading target binary in VM...")
 
-        # Real execution with output streaming
         def output_callback(line: str) -> None:
+            """Emit output line to UI for real-time display.
+
+            Args:
+                line: Output line from script execution.
+            """
             self.output_update.emit(line)
 
         # Execute with real-time output capture
@@ -169,6 +221,11 @@ class QEMUExecutionThread(QThread):
         self.output_update.emit("[*] Initializing Ghidra headless analysis...")
 
         def output_callback(line: str) -> None:
+            """Emit output line to UI for real-time display.
+
+            Args:
+                line: Output line from Ghidra analysis.
+            """
             self.output_update.emit(line)
 
         self.progress_update.emit(40, "Uploading binary and script to VM...")
@@ -239,6 +296,11 @@ class QEMUExecutionThread(QThread):
         self.output_update.emit("[*] Executing generic script in QEMU sandbox...")
 
         def output_callback(line: str) -> None:
+            """Emit output line to UI for real-time display.
+
+            Args:
+                line: Output line from generic script execution.
+            """
             self.output_update.emit(line)
 
         self.progress_update.emit(40, "Uploading binary and script to VM...")
@@ -316,7 +378,14 @@ class QEMUExecutionThread(QThread):
             )
 
     def _parse_execution_results(self, result: ExecutionResult) -> TestResults:
-        """Parse real execution results into structured format."""
+        """Parse real execution results into structured format.
+
+        Args:
+            result: The ExecutionResult from script execution in QEMU.
+
+        Returns:
+            TestResults containing parsed execution data organized into categories.
+        """
         duration = time.time() - self.start_time
 
         # Parse output for specific patterns
@@ -371,7 +440,12 @@ class QEMUExecutionThread(QThread):
 
 
 class QEMUTestResultsDialog(QDialog):
-    """Dialog showing real QEMU test execution results."""
+    """Dialog displaying real QEMU sandbox test execution results.
+
+    Shows execution output, analysis results, memory changes, and API calls
+    from running a script in an isolated QEMU virtual machine environment.
+    Provides options to export results, modify scripts, or run on host.
+    """
 
     def __init__(
         self,
@@ -379,7 +453,7 @@ class QEMUTestResultsDialog(QDialog):
         script_info: dict[str, Any] | None = None,
         qemu_manager: QEMUManager | None = None,
     ) -> None:
-        """Initialize the QEMUTestResultsDialog with default values.
+        """Initialize the QEMUTestResultsDialog with configuration and start execution.
 
         Args:
             parent: Parent widget for this dialog, or None for top-level window.
@@ -387,7 +461,6 @@ class QEMUTestResultsDialog(QDialog):
                 script_content, and script_type for QEMU execution.
             qemu_manager: QEMUManager instance for handling virtual machine operations, or None
                 to create a new instance.
-
         """
         super().__init__(parent)
         self.script_info = script_info or {}
@@ -399,7 +472,11 @@ class QEMUTestResultsDialog(QDialog):
         self.start_execution()
 
     def setup_ui(self) -> None:
-        """Create the UI for showing real test results."""
+        """Create the UI for showing real test results.
+
+        Initializes all UI components including status widget, tab widget with
+        output, analysis, memory changes, and API calls tabs, and action buttons.
+        """
         self.setWindowTitle("QEMU Test Results")
         self.setMinimumSize(800, 600)
 
@@ -435,7 +512,11 @@ class QEMUTestResultsDialog(QDialog):
         layout.addWidget(self.button_box)
 
     def _create_status_widget(self) -> QWidget:
-        """Create status display widget."""
+        """Create status display widget.
+
+        Returns:
+            QWidget containing the status display with progress bar and duration label.
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -456,7 +537,11 @@ class QEMUTestResultsDialog(QDialog):
         return widget
 
     def _create_output_tab(self) -> QWidget:
-        """Create real-time output display."""
+        """Create real-time output display.
+
+        Returns:
+            QWidget containing a text edit for real-time script output display.
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -468,7 +553,11 @@ class QEMUTestResultsDialog(QDialog):
         return widget
 
     def _create_analysis_tab(self) -> QWidget:
-        """Create analysis summary tab."""
+        """Create analysis summary tab.
+
+        Returns:
+            QWidget containing a tree view for displaying analysis summaries.
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -479,7 +568,11 @@ class QEMUTestResultsDialog(QDialog):
         return widget
 
     def _create_memory_tab(self) -> QWidget:
-        """Create memory changes display."""
+        """Create memory changes display.
+
+        Returns:
+            QWidget containing a tree view for displaying memory change events.
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -490,7 +583,11 @@ class QEMUTestResultsDialog(QDialog):
         return widget
 
     def _create_api_tab(self) -> QWidget:
-        """Create API calls display."""
+        """Create API calls display.
+
+        Returns:
+            QWidget containing a tree view for displaying API calls made during execution.
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -501,7 +598,12 @@ class QEMUTestResultsDialog(QDialog):
         return widget
 
     def _create_buttons(self) -> QDialogButtonBox:
-        """Create action buttons."""
+        """Create action buttons.
+
+        Returns:
+            QDialogButtonBox containing action buttons for running on host, modifying
+            scripts, exporting results, and closing the dialog.
+        """
         button_box = QDialogButtonBox()
 
         # Run on Host button (enabled after successful test)
@@ -528,7 +630,12 @@ class QEMUTestResultsDialog(QDialog):
         return button_box
 
     def start_execution(self) -> None:
-        """Start script execution in QEMU."""
+        """Start script execution in QEMU.
+
+        Creates a test snapshot and spawns an execution thread that runs
+        the script in an isolated QEMU environment, emitting progress
+        and output updates to UI elements.
+        """
         # Create snapshot for testing
         snapshot_id = self.qemu_manager.create_script_test_snapshot(
             self.script_info.get("binary_path", ""),
@@ -553,7 +660,11 @@ class QEMUTestResultsDialog(QDialog):
         self.execution_thread.start()
 
     def update_output(self, line: str) -> None:
-        """Update real-time output display."""
+        """Update real-time output display.
+
+        Args:
+            line: The output line to append to the display.
+        """
         self.output_text.append(line)
         # Auto-scroll to bottom
         cursor = self.output_text.textCursor()
@@ -561,12 +672,21 @@ class QEMUTestResultsDialog(QDialog):
         self.output_text.setTextCursor(cursor)
 
     def update_progress(self, value: int, message: str) -> None:
-        """Update progress bar."""
+        """Update progress bar.
+
+        Args:
+            value: Progress percentage (0-100).
+            message: Status message to display alongside the progress.
+        """
         self.progress_bar.setValue(value)
         self.progress_bar.setFormat(f"{message} - {value}%")
 
     def display_results(self, results: TestResults) -> None:
-        """Display the real test results."""
+        """Display the real test results.
+
+        Args:
+            results: The TestResults object containing execution output and analysis.
+        """
         self.test_results = results
 
         # Update status
@@ -592,7 +712,11 @@ class QEMUTestResultsDialog(QDialog):
         self._populate_api_calls(results)
 
     def _populate_analysis(self, results: TestResults) -> None:
-        """Populate analysis tree with real results."""
+        """Populate analysis tree with real results.
+
+        Args:
+            results: The TestResults object to extract analysis data from.
+        """
         self.analysis_tree.clear()
 
         # Summary
@@ -629,7 +753,11 @@ class QEMUTestResultsDialog(QDialog):
         self.analysis_tree.expandAll()
 
     def _populate_memory_changes(self, results: TestResults) -> None:
-        """Populate memory changes with real data."""
+        """Populate memory changes with real data.
+
+        Args:
+            results: The TestResults object containing memory change information.
+        """
         self.memory_tree.clear()
 
         for change in results.memory_changes:
@@ -644,7 +772,11 @@ class QEMUTestResultsDialog(QDialog):
             self.memory_tree.addTopLevelItem(item)
 
     def _populate_api_calls(self, results: TestResults) -> None:
-        """Populate API calls with real data."""
+        """Populate API calls with real data.
+
+        Args:
+            results: The TestResults object containing API call information.
+        """
         self.api_tree.clear()
 
         for call in results.api_calls:
@@ -659,18 +791,31 @@ class QEMUTestResultsDialog(QDialog):
             self.api_tree.addTopLevelItem(item)
 
     def run_on_host(self) -> None:
-        """User chose to run the script on host after reviewing results."""
+        """Execute the script on the host system after sandbox validation.
+
+        Sets the result action to indicate that the script should be run on
+        the host machine after the test results have been reviewed.
+        """
         self.accept()
         # Return indicator to run on host
         self.result_action = "run_on_host"
 
     def modify_script(self) -> None:
-        """User wants to modify the script based on results."""
+        """Allow user to modify the script based on sandbox test results.
+
+        Sets the result action to indicate that the script should be edited
+        before re-execution or deployment to the host.
+        """
         self.accept()
         self.result_action = "modify_script"
 
     def export_results(self) -> None:
-        """Export test results to file."""
+        """Save QEMU test results to a JSON file on disk.
+
+        Serializes all test execution results including output, errors,
+        warnings, memory changes, API calls, and metadata to a JSON file
+        selected by the user through a file save dialog.
+        """
         if not self.test_results:
             return
 
@@ -705,3 +850,21 @@ class QEMUTestResultsDialog(QDialog):
             with open(filename, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2)
             logger.info("Exported test results to %s", filename)
+
+    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+        """Handle dialog close with proper thread cleanup.
+
+        Ensures any running execution thread is properly terminated before
+        closing the dialog to prevent resource leaks.
+
+        Args:
+            event: Close event from Qt framework.
+
+        """
+        if self.execution_thread is not None and self.execution_thread.isRunning():
+            self.execution_thread.quit()
+            if not self.execution_thread.wait(2000):
+                self.execution_thread.terminate()
+                self.execution_thread.wait()
+            self.execution_thread = None
+        super().closeEvent(event)

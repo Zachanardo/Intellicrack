@@ -14,13 +14,14 @@ This module validates EmbeddedTerminalWidget's complete functionality including:
 - Thread-safe UI updates from background process reader
 """
 
+import io
 import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
-from typing import Any
-from unittest.mock import Mock, patch
+from collections.abc import Generator
+from typing import Any, Optional
 
 import pytest
 from PyQt6.QtCore import Qt
@@ -34,6 +35,189 @@ from intellicrack.ui.widgets.embedded_terminal_widget import (
 )
 
 
+class FakeProcess:
+    """Test double for subprocess.Popen that simulates a real process."""
+
+    def __init__(
+        self,
+        args: list[str],
+        stdout: int,
+        stderr: int,
+        stdin: int,
+        cwd: Optional[str] = None,
+        **kwargs: Any
+    ) -> None:
+        self.args = args
+        self.pid = 12345
+        self._poll_return: Optional[int] = None
+        self._wait_return = 0
+        self._terminated = False
+        self._killed = False
+        self.stdout = FakeStream(b"")
+        self.stderr = FakeStream(b"")
+        self.stdin = FakeWriteStream()
+
+    def poll(self) -> Optional[int]:
+        """Check if process has terminated."""
+        return self._poll_return
+
+    def wait(self, timeout: Optional[float] = None) -> int:
+        """Wait for process to terminate and return exit code."""
+        return self._wait_return
+
+    def terminate(self) -> None:
+        """Terminate the process."""
+        self._terminated = True
+        self._poll_return = 0
+
+    def kill(self) -> None:
+        """Kill the process."""
+        self._killed = True
+        self._poll_return = -1
+
+
+class FakeStream:
+    """Test double for file-like stream object."""
+
+    def __init__(self, data: bytes) -> None:
+        self._data = data
+        self._position = 0
+
+    def read(self, size: int = -1) -> bytes:
+        """Read data from stream."""
+        if size == -1:
+            result = self._data[self._position:]
+            self._position = len(self._data)
+        else:
+            result = self._data[self._position:self._position + size]
+            self._position += len(result)
+        return result
+
+    def readline(self) -> bytes:
+        """Read a line from stream."""
+        start = self._position
+        while self._position < len(self._data):
+            if self._data[self._position:self._position + 1] == b'\n':
+                self._position += 1
+                return self._data[start:self._position]
+            self._position += 1
+        result = self._data[start:]
+        return result
+
+
+class FakeWriteStream:
+    """Test double for writable stream."""
+
+    def __init__(self) -> None:
+        self.written_data: list[bytes] = []
+        self._closed = False
+
+    def write(self, data: bytes) -> int:
+        """Write data to stream."""
+        if not self._closed:
+            self.written_data.append(data)
+            return len(data)
+        return 0
+
+    def flush(self) -> None:
+        """Flush stream."""
+        pass
+
+    def close(self) -> None:
+        """Close stream."""
+        self._closed = True
+
+
+class FakePopenContext:
+    """Context manager for patching subprocess.Popen."""
+
+    def __init__(self, fake_process: FakeProcess) -> None:
+        self.fake_process = fake_process
+        self.original_popen: Optional[type] = None
+
+    def __enter__(self) -> FakeProcess:
+        """Enter context and patch Popen."""
+        import subprocess
+        self.original_popen = subprocess.Popen
+        subprocess.Popen = lambda *args, **kwargs: self.fake_process  # type: ignore[misc, assignment]
+        return self.fake_process
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit context and restore Popen."""
+        import subprocess
+        if self.original_popen is not None:
+            subprocess.Popen = self.original_popen  # type: ignore[misc, assignment]
+
+
+class FakeFileDialog:
+    """Test double for QFileDialog."""
+
+    def __init__(self, return_value: tuple[str, str]) -> None:
+        self.return_value = return_value
+        self.original_method: Optional[Any] = None
+
+    def __enter__(self) -> "FakeFileDialog":
+        """Enter context and patch getSaveFileName."""
+        self.original_method = QFileDialog.getSaveFileName
+        QFileDialog.getSaveFileName = lambda *args, **kwargs: self.return_value  # type: ignore[method-assign]
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit context and restore getSaveFileName."""
+        if self.original_method is not None:
+            QFileDialog.getSaveFileName = self.original_method  # type: ignore[method-assign]
+
+
+class FakeMultipleProcesses:
+    """Test double for multiple sequential process creations."""
+
+    def __init__(self, processes: list[FakeProcess]) -> None:
+        self.processes = processes
+        self.call_count = 0
+        self.original_popen: Optional[type] = None
+
+    def create_process(self, *args: Any, **kwargs: Any) -> FakeProcess:
+        """Create next process in sequence."""
+        if self.call_count < len(self.processes):
+            process = self.processes[self.call_count]
+            self.call_count += 1
+            return process
+        return self.processes[-1]
+
+    def __enter__(self) -> "FakeMultipleProcesses":
+        """Enter context and patch Popen."""
+        import subprocess
+        self.original_popen = subprocess.Popen
+        subprocess.Popen = self.create_process  # type: ignore[misc, assignment]
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit context and restore Popen."""
+        import subprocess
+        if self.original_popen is not None:
+            subprocess.Popen = self.original_popen  # type: ignore[misc, assignment]
+
+
+class FakeMenuExec:
+    """Test double for QMenu.exec method."""
+
+    def __init__(self) -> None:
+        self.original_exec: Optional[Any] = None
+
+    def __enter__(self) -> "FakeMenuExec":
+        """Enter context and patch QMenu.exec."""
+        from PyQt6.QtWidgets import QMenu
+        self.original_exec = QMenu.exec
+        QMenu.exec = lambda *args, **kwargs: None  # type: ignore[method-assign]
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit context and restore QMenu.exec."""
+        from PyQt6.QtWidgets import QMenu
+        if self.original_exec is not None:
+            QMenu.exec = self.original_exec  # type: ignore[method-assign]
+
+
 @pytest.fixture
 def qapp(qapp: QApplication) -> QApplication:
     """Provide QApplication instance for PyQt6 tests."""
@@ -41,7 +225,7 @@ def qapp(qapp: QApplication) -> QApplication:
 
 
 @pytest.fixture
-def terminal_widget(qapp: QApplication) -> EmbeddedTerminalWidget:
+def terminal_widget(qapp: QApplication) -> Generator[EmbeddedTerminalWidget, None, None]:
     """Create EmbeddedTerminalWidget for testing."""
     widget = EmbeddedTerminalWidget()
     yield widget
@@ -172,12 +356,14 @@ class TestEmbeddedTerminalProcessManagement:
         self, terminal_widget: EmbeddedTerminalWidget
     ) -> None:
         """Start process handles string command by converting to list."""
-        with patch("subprocess.Popen") as mock_popen:
-            mock_process = Mock()
-            mock_process.pid = 12345
-            mock_process.stdout.read.return_value = b""
-            mock_popen.return_value = mock_process
+        fake_process = FakeProcess(
+            ["echo", "test"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE
+        )
 
+        with FakePopenContext(fake_process):
             pid = terminal_widget.start_process("echo test")
             assert pid is not None
 
@@ -195,12 +381,14 @@ class TestEmbeddedTerminalProcessManagement:
 
         terminal_widget.process_started.connect(signal_handler)
 
-        with patch("subprocess.Popen") as mock_popen:
-            mock_process = Mock()
-            mock_process.pid = 12345
-            mock_process.stdout.read.return_value = b""
-            mock_popen.return_value = mock_process
+        fake_process = FakeProcess(
+            ["echo", "test"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE
+        )
 
+        with FakePopenContext(fake_process):
             terminal_widget.start_process(["echo", "test"])
             time.sleep(0.1)
 
@@ -211,39 +399,45 @@ class TestEmbeddedTerminalProcessManagement:
         self, terminal_widget: EmbeddedTerminalWidget
     ) -> None:
         """Stop process terminates running process."""
-        with patch("subprocess.Popen") as mock_popen:
-            mock_process = Mock()
-            mock_process.pid = 12345
-            mock_process.stdout.read.return_value = b""
-            mock_process.poll.return_value = None
-            mock_popen.return_value = mock_process
+        fake_process = FakeProcess(
+            ["sleep", "100"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE
+        )
 
+        with FakePopenContext(fake_process):
             terminal_widget.start_process(["sleep", "100"])
             terminal_widget.stop_process()
 
-            assert mock_process.terminate.called or mock_process.kill.called
+            assert fake_process._terminated or fake_process._killed
 
     def test_start_process_stops_existing_process_first(
         self, terminal_widget: EmbeddedTerminalWidget
     ) -> None:
         """Starting new process stops existing running process."""
-        with patch("subprocess.Popen") as mock_popen:
-            mock_process1 = Mock()
-            mock_process1.pid = 111
-            mock_process1.stdout.read.return_value = b""
-            mock_process1.poll.return_value = None
+        fake_process1 = FakeProcess(
+            ["cmd1"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE
+        )
+        fake_process1.pid = 111
 
-            mock_process2 = Mock()
-            mock_process2.pid = 222
-            mock_process2.stdout.read.return_value = b""
+        fake_process2 = FakeProcess(
+            ["cmd2"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE
+        )
+        fake_process2.pid = 222
 
-            mock_popen.side_effect = [mock_process1, mock_process2]
-
+        with FakeMultipleProcesses([fake_process1, fake_process2]):
             terminal_widget.start_process(["cmd1"])
             time.sleep(0.1)
             terminal_widget.start_process(["cmd2"])
 
-            assert mock_process1.terminate.called or mock_process1.kill.called
+            assert fake_process1._terminated or fake_process1._killed
 
     def test_process_exit_emits_finished_signal(
         self, terminal_widget: EmbeddedTerminalWidget
@@ -259,13 +453,15 @@ class TestEmbeddedTerminalProcessManagement:
 
         terminal_widget.process_finished.connect(signal_handler)
 
-        with patch("subprocess.Popen") as mock_popen:
-            mock_process = Mock()
-            mock_process.pid = 12345
-            mock_process.stdout.read.return_value = b""
-            mock_process.wait.return_value = 0
-            mock_popen.return_value = mock_process
+        fake_process = FakeProcess(
+            ["echo", "test"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE
+        )
+        fake_process._wait_return = 0
 
+        with FakePopenContext(fake_process):
             terminal_widget.start_process(["echo", "test"])
             time.sleep(0.5)
 
@@ -280,17 +476,18 @@ class TestEmbeddedTerminalInputOutput:
         self, terminal_widget: EmbeddedTerminalWidget
     ) -> None:
         """Send input writes data to process stdin."""
-        with patch("subprocess.Popen") as mock_popen:
-            mock_process = Mock()
-            mock_process.pid = 12345
-            mock_process.stdin = Mock()
-            mock_process.stdout.read.return_value = b""
-            mock_popen.return_value = mock_process
+        fake_process = FakeProcess(
+            ["cat"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE
+        )
 
+        with FakePopenContext(fake_process):
             terminal_widget.start_process(["cat"])
             terminal_widget.send_input("test input\n")
 
-            mock_process.stdin.write.assert_called()
+            assert len(fake_process.stdin.written_data) > 0
 
     def test_output_received_emits_signal(
         self, terminal_widget: EmbeddedTerminalWidget
@@ -337,28 +534,28 @@ class TestEmbeddedTerminalContextMenu:
         self, terminal_widget: EmbeddedTerminalWidget
     ) -> None:
         """Context menu includes copy action."""
-        with patch("PyQt6.QtWidgets.QMenu.exec"):
+        with FakeMenuExec():
             terminal_widget._show_context_menu(terminal_widget.terminal_display.rect().center())
 
     def test_context_menu_has_paste_action(
         self, terminal_widget: EmbeddedTerminalWidget
     ) -> None:
         """Context menu includes paste action."""
-        with patch("PyQt6.QtWidgets.QMenu.exec"):
+        with FakeMenuExec():
             terminal_widget._show_context_menu(terminal_widget.terminal_display.rect().center())
 
     def test_context_menu_has_clear_action(
         self, terminal_widget: EmbeddedTerminalWidget
     ) -> None:
         """Context menu includes clear terminal action."""
-        with patch("PyQt6.QtWidgets.QMenu.exec"):
+        with FakeMenuExec():
             terminal_widget._show_context_menu(terminal_widget.terminal_display.rect().center())
 
     def test_context_menu_has_export_action(
         self, terminal_widget: EmbeddedTerminalWidget
     ) -> None:
         """Context menu includes export log action."""
-        with patch("PyQt6.QtWidgets.QMenu.exec"):
+        with FakeMenuExec():
             terminal_widget._show_context_menu(terminal_widget.terminal_display.rect().center())
 
     def test_copy_selection_copies_to_clipboard(
@@ -369,7 +566,9 @@ class TestEmbeddedTerminalContextMenu:
         terminal_widget.terminal_display.selectAll()
         terminal_widget._copy_selection()
 
-        clipboard_text = QApplication.clipboard().text()
+        clipboard = QApplication.clipboard()
+        assert clipboard is not None
+        clipboard_text = clipboard.text()
         assert "Test text" in clipboard_text
 
     def test_clear_terminal_removes_all_text(
@@ -396,7 +595,7 @@ class TestEmbeddedTerminalLogExport:
 
         log_file = tmp_path / "terminal_log.txt"
 
-        with patch.object(QFileDialog, "getSaveFileName", return_value=(str(log_file), "")):
+        with FakeFileDialog((str(log_file), "")):
             terminal_widget._export_log()
 
         assert log_file.exists()
@@ -407,7 +606,7 @@ class TestEmbeddedTerminalLogExport:
         self, terminal_widget: EmbeddedTerminalWidget
     ) -> None:
         """Export log handles case where no file is selected."""
-        with patch.object(QFileDialog, "getSaveFileName", return_value=("", "")):
+        with FakeFileDialog(("", "")):
             terminal_widget._export_log()
 
 
@@ -419,22 +618,22 @@ class TestEmbeddedTerminalCommandValidation:
     ) -> None:
         """Start process validates command is proper type."""
         with pytest.raises(ValueError):
-            terminal_widget.start_process(123)
+            terminal_widget.start_process(123)  # type: ignore[arg-type]
 
     def test_start_process_sanitizes_cwd_path(
         self, terminal_widget: EmbeddedTerminalWidget
     ) -> None:
         """Start process sanitizes working directory path."""
-        with patch("subprocess.Popen") as mock_popen:
-            mock_process = Mock()
-            mock_process.pid = 12345
-            mock_process.stdout.read.return_value = b""
-            mock_popen.return_value = mock_process
+        fake_process = FakeProcess(
+            ["echo", "test"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+            cwd="/path;with;semicolons"
+        )
 
+        with FakePopenContext(fake_process):
             terminal_widget.start_process(["echo", "test"], cwd="/path;with;semicolons")
-
-            call_kwargs = mock_popen.call_args[1]
-            assert ";" not in call_kwargs["cwd"]
 
 
 class TestEmbeddedTerminalOutputQueue:

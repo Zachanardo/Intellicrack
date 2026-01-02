@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -27,13 +29,20 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, cast
+from typing import Any
 
 from intellicrack.utils.logger import logger
 from intellicrack.utils.type_safety import validate_type
 
 from ..utils.logger import get_logger
 
+ModelManager: type[Any] | None
+IntellicrackAIAssistant: type[Any] | None
+LLMManager: type[Any] | None
+get_llm_manager: Callable[..., Any] | None
+LLMMessage: type[Any] | None
+LLMResponse: type[Any] | None
+AIBinaryBridge: type[Any] | None
 
 # Local imports
 try:
@@ -46,13 +55,13 @@ try:
 except ImportError as e:
     logger.exception("Import error in orchestrator: %s", e)
     IMPORTS_AVAILABLE = False
-    ModelManager = None  # type: ignore[assignment, misc]
-    IntellicrackAIAssistant = None  # type: ignore[assignment, misc]
-    LLMManager = None  # type: ignore[assignment, misc]
-    get_llm_manager = None  # type: ignore[assignment]
-    LLMMessage = None  # type: ignore[assignment, misc]
-    LLMResponse = None  # type: ignore[assignment, misc]
-    AIBinaryBridge = None  # type: ignore[assignment, misc]
+    ModelManager = None
+    IntellicrackAIAssistant = None
+    LLMManager = None
+    get_llm_manager = None
+    LLMMessage = None
+    LLMResponse = None
+    AIBinaryBridge = None
 
 logger = get_logger(__name__)
 

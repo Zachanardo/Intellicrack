@@ -16,14 +16,21 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
+
+This module provides security hardening capabilities for virtual machine execution
+and script-based analysis, including resource monitoring and VM security management.
 """
 
 import logging
+from typing import Any
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
-# Import security modules with error handling
+ResourceMonitor: Any = None
+VMSecurityManager: Any = None
+secure_vm_execution: Any = None
+
 try:
     from .vm_security import ResourceMonitor, VMSecurityManager, secure_vm_execution
 except ImportError as e:
@@ -32,28 +39,26 @@ except ImportError as e:
     VMSecurityManager = None
     secure_vm_execution = None
 
-# Also try to import from parent security modules
 try:
     from ..security_enforcement import *
 except ImportError as e:
     logger.warning("Failed to import security_enforcement: %s", e)
 
 try:
-    from ..security_utils import *  # type: ignore[assignment]
+    from ..security_utils import *
 except ImportError as e:
     logger.warning("Failed to import security_utils: %s", e)
 
-__all__ = []
+__all__: list[str] = []
 
 if VMSecurityManager is not None:
     __all__.extend(["ResourceMonitor", "VMSecurityManager", "secure_vm_execution"])
 
-# Add other security modules to __all__ if available
 try:
     from .. import security_enforcement
 
     if hasattr(security_enforcement, "__all__"):
-        __all__.extend(security_enforcement.__all__)  # type: ignore[union-attr]
+        __all__.extend(security_enforcement.__all__)
 except (ImportError, AttributeError):
     pass
 

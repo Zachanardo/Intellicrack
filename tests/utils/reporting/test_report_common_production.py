@@ -10,11 +10,19 @@ import tempfile
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock
 
 import pytest
 
 from intellicrack.utils.reporting.report_common import ensure_html_extension, generate_analysis_report
+
+
+class FakeApplication:
+    """Real test double for application instance."""
+
+    def __init__(self) -> None:
+        """Initialize fake application."""
+        self.dialogs_shown: list[tuple[str, str]] = []
+        self.questions_asked: list[tuple[str, str]] = []
 
 
 class TestEnsureHTMLExtension:
@@ -65,120 +73,106 @@ class TestEnsureHTMLExtension:
         assert result_mixed.endswith(".html") or result_mixed.endswith(".Html")
 
 
-class TestGenerateAnalysisReportWithMocks:
-    """Test report generation workflow with mocked UI."""
+class TestGenerateAnalysisReportWorkflows:
+    """Test report generation workflow with real test doubles."""
 
-    def test_returns_none_when_user_declines(self) -> None:
+    def test_returns_none_when_user_declines(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Returns None when user declines report generation."""
-        mock_app = Mock()
+        fake_app = FakeApplication()
+
+        def fake_ask_yes_no(parent: object, title: str, question: str) -> bool:
+            fake_app.questions_asked.append((title, question))
+            return False
+
+        def fake_show_file_dialog(parent: object, title: str, file_filter: str = "") -> str:
+            return ""
 
         try:
-            from intellicrack.utils import ui_common
-            original_ask = getattr(ui_common, "ask_yes_no_question", None)
+            from intellicrack.utils.ui import ui_helpers
+            monkeypatch.setattr(ui_helpers, "ask_yes_no_question", fake_ask_yes_no)
+            monkeypatch.setattr(ui_helpers, "show_file_dialog", fake_show_file_dialog)
 
-            def mock_ask(*args: Any, **kwargs: Any) -> bool:
-                return False
+            result = generate_analysis_report(
+                fake_app,
+                "test analysis",
+                {"data": "test"},
+                None
+            )
 
-            if hasattr(ui_common, "ask_yes_no_question"):
-                ui_common.ask_yes_no_question = mock_ask
-
-                result = generate_analysis_report(
-                    mock_app,
-                    "test analysis",
-                    {"data": "test"},
-                    None
-                )
-
-                if original_ask:
-                    ui_common.ask_yes_no_question = original_ask
-
-                assert result is None
-            else:
-                pytest.skip("UI common not available")
+            assert result is None
+            assert len(fake_app.questions_asked) == 1
+            assert fake_app.questions_asked[0][0] == "Generate Report"
 
         except ImportError:
-            pytest.skip("UI common not available")
+            pytest.skip("UI helpers not available")
 
-    def test_returns_none_when_no_filename_selected(self) -> None:
+    def test_returns_none_when_no_filename_selected(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Returns None when user cancels file selection."""
-        mock_app = Mock()
+        fake_app = FakeApplication()
+
+        def fake_ask_yes_no(parent: object, title: str, question: str) -> bool:
+            fake_app.questions_asked.append((title, question))
+            return True
+
+        def fake_show_file_dialog(parent: object, title: str, file_filter: str = "") -> str:
+            fake_app.dialogs_shown.append((title, file_filter))
+            return ""
 
         try:
-            from intellicrack.utils import ui_common
-            original_ask = getattr(ui_common, "ask_yes_no_question", None)
-            original_show = getattr(ui_common, "show_file_dialog", None)
+            from intellicrack.utils.ui import ui_helpers
+            monkeypatch.setattr(ui_helpers, "ask_yes_no_question", fake_ask_yes_no)
+            monkeypatch.setattr(ui_helpers, "show_file_dialog", fake_show_file_dialog)
 
-            def mock_ask(*args: Any, **kwargs: Any) -> bool:
-                return True
+            result = generate_analysis_report(
+                fake_app,
+                "test analysis",
+                {"data": "test"},
+                None
+            )
 
-            def mock_show(*args: Any, **kwargs: Any) -> str:
-                return ""
-
-            if hasattr(ui_common, "ask_yes_no_question") and hasattr(ui_common, "show_file_dialog"):
-                ui_common.ask_yes_no_question = mock_ask
-                ui_common.show_file_dialog = mock_show
-
-                result = generate_analysis_report(
-                    mock_app,
-                    "test analysis",
-                    {"data": "test"},
-                    None
-                )
-
-                if original_ask:
-                    ui_common.ask_yes_no_question = original_ask
-                if original_show:
-                    ui_common.show_file_dialog = original_show
-
-                assert result is None
-            else:
-                pytest.skip("UI common not available")
+            assert result is None
+            assert len(fake_app.questions_asked) == 1
+            assert len(fake_app.dialogs_shown) == 1
+            assert fake_app.dialogs_shown[0][0] == "Save Report"
 
         except ImportError:
-            pytest.skip("UI common not available")
+            pytest.skip("UI helpers not available")
 
-    def test_adds_html_extension_to_filename(self) -> None:
+    def test_adds_html_extension_to_filename(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Automatically adds .html extension to filename."""
-        mock_app = Mock()
+        fake_app = FakeApplication()
+        generator_calls: list[tuple[str, Any]] = []
+
+        def fake_ask_yes_no(parent: object, title: str, question: str) -> bool:
+            return True
+
+        def fake_show_file_dialog(parent: object, title: str, file_filter: str = "") -> str:
+            return "report_without_extension"
+
+        def fake_generator(filename: str, data: Any) -> str:
+            generator_calls.append((filename, data))
+            assert filename.endswith(".html")
+            return filename
 
         try:
-            from intellicrack.utils import ui_common
-            original_ask = getattr(ui_common, "ask_yes_no_question", None)
-            original_show = getattr(ui_common, "show_file_dialog", None)
+            from intellicrack.utils.ui import ui_helpers
+            monkeypatch.setattr(ui_helpers, "ask_yes_no_question", fake_ask_yes_no)
+            monkeypatch.setattr(ui_helpers, "show_file_dialog", fake_show_file_dialog)
 
-            def mock_ask(*args: Any, **kwargs: Any) -> bool:
-                return True
+            result = generate_analysis_report(
+                fake_app,
+                "test analysis",
+                {"data": "test"},
+                fake_generator
+            )
 
-            def mock_show(*args: Any, **kwargs: Any) -> str:
-                return "report_without_extension"
-
-            def mock_generator(filename: str, data: Any) -> str:
-                assert filename.endswith(".html")
-                return filename
-
-            if hasattr(ui_common, "ask_yes_no_question") and hasattr(ui_common, "show_file_dialog"):
-                ui_common.ask_yes_no_question = mock_ask
-                ui_common.show_file_dialog = mock_show
-
-                result = generate_analysis_report(
-                    mock_app,
-                    "test analysis",
-                    {"data": "test"},
-                    mock_generator
-                )
-
-                if original_ask:
-                    ui_common.ask_yes_no_question = original_ask
-                if original_show:
-                    ui_common.show_file_dialog = original_show
-
-                if result:
-                    assert result.endswith(".html")
-            else:
-                pytest.skip("UI common not available")
+            assert result is not None
+            assert result.endswith(".html")
+            assert len(generator_calls) == 1
+            assert generator_calls[0][0].endswith(".html")
 
         except ImportError:
-            pytest.skip("UI common not available")
+            pytest.skip("UI helpers not available")
 
 
 class TestDefaultReportGeneration:
@@ -345,49 +339,39 @@ class TestReportTypeHandling:
 class TestCustomGeneratorFunction:
     """Test custom report generator function."""
 
-    def test_calls_custom_generator_when_provided(self) -> None:
+    def test_calls_custom_generator_when_provided(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Calls custom generator function when provided."""
-        called = []
+        fake_app = FakeApplication()
+        generator_calls: list[tuple[str, Any]] = []
 
-        def custom_generator(filename: str, data: Any) -> str:
-            called.append((filename, data))
+        def fake_custom_generator(filename: str, data: Any) -> str:
+            generator_calls.append((filename, data))
             return filename
 
-        mock_app = Mock()
+        def fake_ask_yes_no(parent: object, title: str, question: str) -> bool:
+            return True
+
+        def fake_show_file_dialog(parent: object, title: str, file_filter: str = "") -> str:
+            return "custom.html"
 
         try:
-            from intellicrack.utils import ui_common
-            original_ask = getattr(ui_common, "ask_yes_no_question", None)
-            original_show = getattr(ui_common, "show_file_dialog", None)
+            from intellicrack.utils.ui import ui_helpers
+            monkeypatch.setattr(ui_helpers, "ask_yes_no_question", fake_ask_yes_no)
+            monkeypatch.setattr(ui_helpers, "show_file_dialog", fake_show_file_dialog)
 
-            def mock_ask(*args: Any, **kwargs: Any) -> bool:
-                return True
+            generate_analysis_report(
+                fake_app,
+                "test",
+                {"data": "value"},
+                fake_custom_generator
+            )
 
-            def mock_show(*args: Any, **kwargs: Any) -> str:
-                return "custom.html"
-
-            if hasattr(ui_common, "ask_yes_no_question") and hasattr(ui_common, "show_file_dialog"):
-                ui_common.ask_yes_no_question = mock_ask
-                ui_common.show_file_dialog = mock_show
-
-                generate_analysis_report(
-                    mock_app,
-                    "test",
-                    {"data": "value"},
-                    custom_generator
-                )
-
-                if original_ask:
-                    ui_common.ask_yes_no_question = original_ask
-                if original_show:
-                    ui_common.show_file_dialog = original_show
-
-                assert called
-            else:
-                pytest.skip("UI common not available")
+            assert len(generator_calls) == 1
+            assert generator_calls[0][0] == "custom.html"
+            assert generator_calls[0][1] == {"data": "value"}
 
         except ImportError:
-            pytest.skip("UI common not available")
+            pytest.skip("UI helpers not available")
 
 
 class TestReportDataFormatting:

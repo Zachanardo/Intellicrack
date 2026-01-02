@@ -5,11 +5,7 @@ it's properly shared across all other tabs.
 """
 
 import sys
-import os
 from pathlib import Path
-
-# Add intellicrack to path
-sys.path.insert(0, str(Path(__file__).parent))
 
 from intellicrack.handlers.pyqt6_handler import QApplication
 from intellicrack.core.app_context import AppContext

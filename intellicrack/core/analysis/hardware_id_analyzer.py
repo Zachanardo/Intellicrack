@@ -9,7 +9,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 import ctypes
 import ctypes.wintypes
-import hashlib
 import logging
 import math
 import re
@@ -103,7 +102,11 @@ class HardwareIDAnalyzer:
     """Analyzes binaries for hardware ID based license protection mechanisms."""
 
     def __init__(self, binary_path: str | Path) -> None:
-        """Initialize hardware ID analyzer with target binary."""
+        """Initialize hardware ID analyzer with target binary.
+
+        Args:
+            binary_path (str | Path): Path to the binary file to analyze.
+        """
         self.binary_path = Path(binary_path)
         self.binary_data = self.binary_path.read_bytes()
         self.pe = pefile.PE(data=self.binary_data, fast_load=False)
@@ -123,7 +126,13 @@ class HardwareIDAnalyzer:
         self._init_yara_rules()
 
     def _init_yara_rules(self) -> None:
-        """Initialize YARA rules for detecting HWID collection patterns."""
+        """Initialize YARA rules for detecting HWID collection patterns.
+
+        Compiles YARA rules for detecting CPUID instructions, WMI queries, disk
+        serial access, MAC address collection, SMBIOS table access, registry
+        queries for machine GUID, HWID hashing patterns, USB device enumeration,
+        and node-locked license validation routines.
+        """
         rules_source = r"""
         rule CPUID_Instruction {
             meta:
@@ -242,7 +251,23 @@ class HardwareIDAnalyzer:
         self.yara_rules = yara.compile(source=rules_source)
 
     def analyze_hwid_protection(self) -> dict[str, Any]:
-        """Perform comprehensive analysis of hardware ID protection mechanisms."""
+        """Perform comprehensive analysis of hardware ID protection mechanisms.
+
+        Analyzes the binary to detect hardware ID collection, validation, and
+        node-locking mechanisms using YARA patterns, API imports, code analysis,
+        and pattern matching.
+
+        Returns:
+            dict[str, Any]: Dictionary containing analysis results with keys:
+                - has_hwid_protection (bool): Whether HWID protection detected
+                - hwid_types_detected (list[str]): Types of HWIDs found
+                - algorithms_used (list[str]): Detection algorithms applied
+                - api_imports (list[str]): Relevant API imports found
+                - validation_count (int): Number of validation routines
+                - node_locked (bool): Whether node-locking detected
+                - obfuscation_level (str): Level of obfuscation (none/low/medium/high)
+                - bypass_difficulty (str): Estimated bypass difficulty
+        """
         results: dict[str, Any] = {
             "has_hwid_protection": False,
             "hwid_types_detected": [],
@@ -284,7 +309,11 @@ class HardwareIDAnalyzer:
         return results
 
     def _scan_imports(self) -> None:
-        """Scan IAT for hardware ID related API imports."""
+        """Scan IAT for hardware ID related API imports.
+
+        Scans the import address table for HWID-related Windows API calls and
+        creates HWIDCheck entries for each discovered API.
+        """
         hwid_apis = {
             "GetVolumeInformationW": (HWIDType.VOLUME_SERIAL, HWIDAlgorithm.DEVICEIOCONTROL),
             "GetVolumeInformationA": (HWIDType.VOLUME_SERIAL, HWIDAlgorithm.DEVICEIOCONTROL),
@@ -321,7 +350,11 @@ class HardwareIDAnalyzer:
                         self.hwid_checks.append(check)
 
     def _scan_yara_patterns(self) -> None:
-        """Scan binary with YARA rules for HWID patterns."""
+        """Scan binary with YARA rules for HWID patterns.
+
+        Executes compiled YARA rules against the binary data to detect HWID
+        collection patterns and creates HWIDCheck entries for matches.
+        """
         matches = self.yara_rules.match(data=self.binary_data)
 
         for match in matches:
@@ -367,7 +400,11 @@ class HardwareIDAnalyzer:
                 self.hwid_checks.append(check)
 
     def _analyze_code_sections(self) -> None:
-        """Analyze executable code sections for HWID collection patterns."""
+        """Analyze executable code sections for HWID collection patterns.
+
+        Scans all executable code sections for CPUID patterns, IOCTL patterns,
+        and hash initialization patterns used in HWID collection routines.
+        """
         for section in self.pe.sections:
             if section.Characteristics & 0x20000000:
                 section_data = section.get_data()
@@ -378,7 +415,16 @@ class HardwareIDAnalyzer:
                 self._find_hash_patterns(section_data, section_va)
 
     def _find_cpuid_patterns(self, data: bytes, base_va: int) -> None:
-        """Find CPUID instruction patterns in code section."""
+        """Find CPUID instruction patterns in code section.
+
+        Searches for CPUID instruction bytes in code section data and creates
+        HWIDCheck entries for each detected occurrence with disassembly context
+        and entropy analysis.
+
+        Args:
+            data (bytes): Binary data to scan for CPUID patterns.
+            base_va (int): Base virtual address of the code section.
+        """
         cpuid_pattern = rb"\x0f\xa2"
 
         offset = 0
@@ -404,7 +450,15 @@ class HardwareIDAnalyzer:
             offset = pos + 2
 
     def _find_ioctl_patterns(self, data: bytes, base_va: int) -> None:
-        """Find DeviceIoControl patterns for disk serial queries."""
+        """Find DeviceIoControl patterns for disk serial queries.
+
+        Searches for IOCTL control codes in code section data and creates
+        HWIDCheck entries for disk serial enumeration routines.
+
+        Args:
+            data (bytes): Binary data to scan for IOCTL patterns.
+            base_va (int): Base virtual address of the code section.
+        """
         ioctl_codes = [
             b"\x00\x14\x2d\x00",
             b"\x00\x04\x74\x00",
@@ -429,7 +483,15 @@ class HardwareIDAnalyzer:
                 offset = pos + 4
 
     def _find_hash_patterns(self, data: bytes, base_va: int) -> None:
-        """Find cryptographic hash initialization patterns for HWID fingerprinting."""
+        """Find cryptographic hash initialization patterns for HWID fingerprinting.
+
+        Searches for hash algorithm initialization constants (MD5, SHA1, SHA256)
+        in code section data and creates HWIDCheck entries for detected patterns.
+
+        Args:
+            data (bytes): Binary data to scan for hash initialization patterns.
+            base_va (int): Base virtual address of the code section.
+        """
         hash_patterns = {
             b"\x01\x23\x45\x67\x89\xab\xcd\xef": "MD5",
             b"\x67\x45\x23\x01\xef\xcd\xab\x89": "SHA1",
@@ -456,7 +518,11 @@ class HardwareIDAnalyzer:
                 offset = pos + len(pattern)
 
     def _detect_cpuid_usage(self) -> None:
-        """Detect direct CPUID instruction usage for CPU ID collection."""
+        """Detect direct CPUID instruction usage for CPU ID collection.
+
+        Searches for CPUID instruction patterns in code sections and creates
+        HWIDCheck entries for detected CPU ID collection routines.
+        """
         for section in self.pe.sections:
             if section.Characteristics & 0x20000000:
                 section_data = section.get_data()
@@ -480,7 +546,11 @@ class HardwareIDAnalyzer:
                         self.hwid_checks.append(check)
 
     def _detect_wmi_queries(self) -> None:
-        """Detect WMI query patterns for hardware information."""
+        """Detect WMI query patterns for hardware information.
+
+        Scans binary for WMI query strings and creates HWIDCheck entries for
+        detected hardware information retrieval routines.
+        """
         wmi_strings = [
             b"SELECT * FROM Win32_Processor",
             b"SELECT * FROM Win32_BaseBoard",
@@ -516,7 +586,11 @@ class HardwareIDAnalyzer:
                 offset = pos + len(wmi_string)
 
     def _detect_registry_access(self) -> None:
-        """Detect registry access for MachineGuid and hardware IDs."""
+        """Detect registry access for MachineGuid and hardware IDs.
+
+        Scans binary for registry path strings and creates HWIDCheck entries for
+        detected registry-based hardware ID retrieval routines.
+        """
         registry_paths = [
             b"SOFTWARE\\Microsoft\\Cryptography",
             b"MachineGuid",
@@ -542,7 +616,11 @@ class HardwareIDAnalyzer:
                 offset = pos + len(reg_path)
 
     def _detect_smbios_access(self) -> None:
-        """Detect SMBIOS/DMI table access for hardware serial numbers."""
+        """Detect SMBIOS/DMI table access for hardware serial numbers.
+
+        Scans binary for SMBIOS/DMI signature patterns and creates HWIDCheck
+        entries for detected SMBIOS table parsing routines.
+        """
         smbios_signatures = [b"_SM_", b"_SM3_", b"_DMI_"]
 
         for signature in smbios_signatures:
@@ -563,7 +641,11 @@ class HardwareIDAnalyzer:
                 offset = pos + len(signature)
 
     def _detect_device_io_control(self) -> None:
-        """Detect DeviceIoControl calls for disk and USB device queries."""
+        """Detect DeviceIoControl calls for disk and USB device queries.
+
+        Scans binary for DeviceIoControl constants and creates HWIDCheck entries
+        for detected disk and USB device enumeration routines.
+        """
         ioctl_constants = {
             0x002D1400: HWIDType.DISK_SERIAL,
             0x00070400: HWIDType.DISK_SERIAL,
@@ -589,7 +671,11 @@ class HardwareIDAnalyzer:
                 offset = pos + 4
 
     def _detect_validation_routines(self) -> None:
-        """Detect HWID validation comparison routines."""
+        """Detect HWID validation comparison routines.
+
+        Scans executable code sections for comparison instructions that validate
+        collected HWID values and assesses obfuscation levels.
+        """
         for section in self.pe.sections:
             if section.Characteristics & 0x20000000:
                 section_data = section.get_data()
@@ -619,7 +705,11 @@ class HardwareIDAnalyzer:
                         self.validation_patterns.append(validation)
 
     def _detect_node_locking(self) -> None:
-        """Detect node-locked license patterns with multiple HWID checks."""
+        """Detect node-locked license patterns with multiple HWID checks.
+
+        Groups HWID checks by offset proximity and detects node-locking patterns
+        that validate multiple hardware identifiers against system state.
+        """
         if len(self.hwid_checks) < 2:
             return
 
@@ -651,7 +741,17 @@ class HardwareIDAnalyzer:
                     self.node_lock_patterns.append(pattern)
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data."""
+        """Calculate Shannon entropy of data.
+
+        Computes the Shannon entropy for a given byte sequence to determine
+        randomness and obfuscation levels.
+
+        Args:
+            data (bytes): Binary data to calculate entropy for.
+
+        Returns:
+            float: Shannon entropy value (0.0 to 8.0).
+        """
         if not data:
             return 0.0
 
@@ -669,7 +769,17 @@ class HardwareIDAnalyzer:
         return entropy
 
     def _assess_obfuscation(self, code: bytes) -> int:
-        """Assess obfuscation level of code sequence (0-10 scale)."""
+        """Assess obfuscation level of code sequence (0-10 scale).
+
+        Evaluates code obfuscation by analyzing entropy, junk instructions,
+        function calls, and conditional jumps to estimate protection strength.
+
+        Args:
+            code (bytes): Binary code to assess for obfuscation.
+
+        Returns:
+            int: Obfuscation score from 0 to 10.
+        """
         score = 0
 
         if len(code) < 8:
@@ -699,7 +809,17 @@ class HardwareIDAnalyzer:
         return min(score, 10)
 
     def _contains_crypto_constants(self, data: bytes) -> bool:
-        """Check if data contains cryptographic constants."""
+        """Check if data contains cryptographic constants.
+
+        Searches for common cryptographic initialization vectors and constants
+        that indicate hash or encryption operations in HWID generation.
+
+        Args:
+            data (bytes): Binary data to check for crypto constants.
+
+        Returns:
+            bool: True if cryptographic constants are found, False otherwise.
+        """
         crypto_patterns = [
             b"\x01\x23\x45\x67",
             b"\x67\x45\x23\x01",
@@ -710,7 +830,18 @@ class HardwareIDAnalyzer:
         return any(pattern in data for pattern in crypto_patterns)
 
     def _assess_bypass_difficulty(self, obfuscation_score: int) -> str:
-        """Assess difficulty of bypassing HWID check based on obfuscation."""
+        """Assess difficulty of bypassing HWID check based on obfuscation.
+
+        Maps obfuscation scores to practical bypass difficulty levels for
+        security research and analysis purposes.
+
+        Args:
+            obfuscation_score (int): Obfuscation score from 0 to 10.
+
+        Returns:
+            str: Bypass difficulty level (very_hard, hard, medium, easy, or
+                trivial).
+        """
         if obfuscation_score >= 8:
             return "very_hard"
         elif obfuscation_score >= 6:
@@ -722,7 +853,18 @@ class HardwareIDAnalyzer:
         return "trivial"
 
     def extract_hwid_from_system(self, hwid_type: HWIDType) -> str | None:
-        """Extract actual hardware ID from current system."""
+        """Extract actual hardware ID from current system.
+
+        Retrieves the specified hardware ID from the running Windows system
+        using WMI, registry, or Windows API calls based on the HWID type.
+
+        Args:
+            hwid_type (HWIDType): Type of hardware ID to extract.
+
+        Returns:
+            str | None: The extracted hardware ID value or None if extraction
+                failed.
+        """
         try:
             if hwid_type == HWIDType.CPU_ID:
                 return self._get_cpu_id()
@@ -744,42 +886,81 @@ class HardwareIDAnalyzer:
             return None
 
     def _get_cpu_id(self) -> str:
-        """Get CPU ID from system."""
+        """Get CPU ID from system.
+
+        Queries WMI to retrieve the ProcessorId property from Win32_Processor.
+
+        Returns:
+            str: CPU ID from WMI or empty string if not available.
+        """
         for cpu in self.wmi_conn.Win32_Processor():
             processor_id: str = str(cpu.ProcessorId) if cpu.ProcessorId else ""
             return processor_id
         return ""
 
     def _get_disk_serial(self) -> str:
-        """Get primary disk serial number."""
+        """Get primary disk serial number.
+
+        Queries WMI to retrieve the SerialNumber property from Win32_DiskDrive.
+
+        Returns:
+            str: Disk serial number from WMI or empty string if not available.
+        """
         return next(
             (disk.SerialNumber for disk in self.wmi_conn.Win32_DiskDrive() if disk.SerialNumber),
             "",
         )
 
     def _get_mac_address(self) -> str:
-        """Get primary MAC address."""
+        """Get primary MAC address.
+
+        Queries WMI to retrieve the MACAddress property from Win32_NetworkAdapter.
+
+        Returns:
+            str: MAC address from WMI or empty string if not available.
+        """
         return next(
             (adapter.MACAddress for adapter in self.wmi_conn.Win32_NetworkAdapter() if adapter.MACAddress),
             "",
         )
 
     def _get_motherboard_serial(self) -> str:
-        """Get motherboard serial number."""
+        """Get motherboard serial number.
+
+        Queries WMI to retrieve the SerialNumber property from Win32_BaseBoard.
+
+        Returns:
+            str: Motherboard serial number from WMI or empty string if not
+                available.
+        """
         return next(
             (board.SerialNumber for board in self.wmi_conn.Win32_BaseBoard() if board.SerialNumber),
             "",
         )
 
     def _get_bios_serial(self) -> str:
-        """Get BIOS serial number."""
+        """Get BIOS serial number.
+
+        Queries WMI to retrieve the SerialNumber property from Win32_BIOS.
+
+        Returns:
+            str: BIOS serial number from WMI or empty string if not available.
+        """
         return next(
             (bios.SerialNumber for bios in self.wmi_conn.Win32_BIOS() if bios.SerialNumber),
             "",
         )
 
     def _get_volume_serial(self) -> str:
-        """Get C: volume serial number."""
+        """Get C: volume serial number.
+
+        Calls Windows API GetVolumeInformationW to retrieve the volume serial
+        number of the C: drive.
+
+        Returns:
+            str: Volume serial number in hex format or empty string if not
+                available.
+        """
         volume_serial = ctypes.wintypes.DWORD()
         if self.kernel32.GetVolumeInformationW(
             "C:\\",
@@ -795,7 +976,15 @@ class HardwareIDAnalyzer:
         return ""
 
     def _get_machine_guid(self) -> str:
-        """Get Windows Machine GUID from registry."""
+        """Get Windows Machine GUID from registry.
+
+        Reads the MachineGuid value from the Windows registry at
+        HKLM\\SOFTWARE\\Microsoft\\Cryptography.
+
+        Returns:
+            str: Machine GUID from Windows registry or empty string if not
+                available.
+        """
         import winreg
 
         try:
@@ -806,7 +995,22 @@ class HardwareIDAnalyzer:
             return ""
 
     def generate_bypass_report(self) -> dict[str, Any]:
-        """Generate comprehensive report on HWID protection bypass strategies."""
+        """Generate comprehensive report on HWID protection bypass strategies.
+
+        Creates a detailed bypass analysis report including detected HWID checks,
+        validation routines, node-locking patterns, and recommended bypass
+        strategies for security research purposes.
+
+        Returns:
+            dict[str, Any]: Report dictionary with keys:
+                - total_hwid_checks (int): Number of HWID checks detected
+                - unique_hwid_types (list[str]): Types of HWIDs found
+                - validation_points (int): Number of validation routines
+                - node_lock_detected (bool): Whether node-locking detected
+                - bypass_strategies (list[dict]): Recommended bypass approaches
+                - patch_locations (list[dict]): Addresses for binary patching
+                - hook_targets (list[str]): API functions to hook for bypassing
+        """
         report: dict[str, Any] = {
             "total_hwid_checks": len(self.hwid_checks),
             "unique_hwid_types": list({check.hwid_type.value for check in self.hwid_checks}),
@@ -846,18 +1050,42 @@ class HardwareIDAnalyzer:
         return report
 
     def get_hwid_checks(self) -> list[HWIDCheck]:
-        """Return all detected HWID checks."""
+        """Return all detected HWID checks.
+
+        Retrieves the complete list of hardware ID checks found during binary
+        analysis.
+
+        Returns:
+            list[HWIDCheck]: List of all detected hardware ID checks.
+        """
         return self.hwid_checks
 
     def get_validation_patterns(self) -> list[HWIDValidation]:
-        """Return all detected validation patterns."""
+        """Return all detected validation patterns.
+
+        Retrieves the complete list of HWID validation routines found during
+        binary analysis.
+
+        Returns:
+            list[HWIDValidation]: List of all detected validation patterns.
+        """
         return self.validation_patterns
 
     def get_node_lock_patterns(self) -> list[NodeLockPattern]:
-        """Return all detected node-lock patterns."""
+        """Return all detected node-lock patterns.
+
+        Retrieves the complete list of node-locking patterns found during
+        binary analysis.
+
+        Returns:
+            list[NodeLockPattern]: List of all detected node-lock patterns.
+        """
         return self.node_lock_patterns
 
     def close(self) -> None:
-        """Clean up resources."""
+        """Clean up resources.
+
+        Closes the PE file object and releases associated memory.
+        """
         if self.pe:
             self.pe.close()

@@ -7,7 +7,7 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Tuple, cast
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from enum import Enum
@@ -35,10 +35,10 @@ class VersionSupport:
     unsupported_features: list[str]
     known_limitations: list[str]
     bypass_success_rate: float
-    last_tested: str = None
+    last_tested: str | None = None
     notes: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.last_tested is None:
             self.last_tested = datetime.now().isoformat()
 
@@ -54,9 +54,9 @@ class IncompatibilityReport:
     recommended_action: str
     supported_versions: list[str]
     severity: str  # 'critical', 'high', 'medium', 'low'
-    timestamp: str = None
+    timestamp: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp is None:
             self.timestamp = datetime.now().isoformat()
 
@@ -74,9 +74,9 @@ class CompatibilityTestResult:
     features_failed: list[str]
     error_messages: list[str]
     incompatibility_report: IncompatibilityReport | None
-    timestamp: str = None
+    timestamp: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp is None:
             self.timestamp = datetime.now().isoformat()
 
@@ -84,7 +84,7 @@ class CompatibilityTestResult:
 class VersionCompatibilityVerifier:
     """Verifies version compatibility and handles explicit incompatibility reporting."""
 
-    def __init__(self, base_dir: str = "C:\\Intellicrack\\tests\\validation_system"):
+    def __init__(self, base_dir: str = "C:\\Intellicrack\\tests\\validation_system") -> None:
         self.base_dir = Path(base_dir)
         self.compatibility_db_path = self.base_dir / "version_compatibility_db.json"
         self.reports_dir = self.base_dir / "reports" / "compatibility"
@@ -103,7 +103,7 @@ class VersionCompatibilityVerifier:
         if self.compatibility_db_path.exists():
             try:
                 with open(self.compatibility_db_path) as f:
-                    return json.load(f)
+                    return cast(dict[str, Any], json.load(f))
             except Exception as e:
                 logger.warning(f"Failed to load compatibility DB: {e}. Creating new one.")
 

@@ -77,7 +77,7 @@ class HexHighlight:
             metadata: Additional metadata dictionary for the highlight (default: None)
 
         Raises:
-            ValueError: If color format is invalid, alpha is out of range, or range is invalid
+            ValueError: If color format is invalid, alpha is outside 0-255 range, or start/end range is invalid
 
         """
         self.id: int = HexHighlight._id_counter
@@ -159,7 +159,7 @@ class HexHighlight:
             color = "".join(c + c for c in color)
 
         r, g, b = tuple(int(color[i : i + 2], 16) for i in (0, 2, 4))
-        a = int(self.alpha * 255)
+        a = self.alpha
 
         return (r, g, b, a)
 

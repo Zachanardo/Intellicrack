@@ -7,8 +7,7 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from typing import Any
-from unittest.mock import MagicMock, patch
+from typing import Any, Callable
 
 import pytest
 
@@ -24,6 +23,36 @@ from intellicrack.utils.ui.ui_utils import (
     show_message,
     update_progress,
 )
+
+
+class FakeParentWidget:
+    """Real test double for parent widget with message/input history."""
+
+    def __init__(self, class_name: str = "TestWidget") -> None:
+        self.__class__.__name__ = class_name
+        self.message_history: list[dict[str, Any]] = []
+        self.input_history: list[dict[str, Any]] = []
+
+
+class FakeInputFunction:
+    """Real test double for builtins.input function."""
+
+    def __init__(self, responses: list[str | Exception]) -> None:
+        self.responses = responses
+        self.call_index = 0
+        self.prompts: list[str] = []
+
+    def __call__(self, prompt: str = "") -> str:
+        self.prompts.append(prompt)
+        if self.call_index >= len(self.responses):
+            raise RuntimeError("FakeInputFunction: No more responses available")
+
+        response = self.responses[self.call_index]
+        self.call_index += 1
+
+        if isinstance(response, Exception):
+            raise response
+        return response
 
 
 class TestMessageType:
@@ -167,8 +196,7 @@ class TestShowMessage:
 
     def test_show_message_with_parent(self, caplog: pytest.LogCaptureFixture) -> None:
         """Test message display includes parent context."""
-        parent = MagicMock()
-        parent.__class__.__name__ = "TestWidget"
+        parent = FakeParentWidget("TestWidget")
 
         show_message("Message with parent", MessageType.INFO, parent=parent)
 
@@ -176,8 +204,7 @@ class TestShowMessage:
 
     def test_show_message_stores_in_parent_history(self) -> None:
         """Test message is stored in parent history if available."""
-        parent = MagicMock()
-        parent.message_history = []
+        parent = FakeParentWidget()
 
         show_message("Historical message", MessageType.WARNING, "Test", parent)
 
@@ -189,54 +216,67 @@ class TestShowMessage:
 class TestGetUserInput:
     """Test get_user_input function."""
 
-    def test_get_user_input_with_response(self) -> None:
+    def test_get_user_input_with_response(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test getting user input returns sanitized response."""
-        with patch("builtins.input", return_value="test response"):
-            result = get_user_input("Enter value")
+        fake_input = FakeInputFunction(["test response"])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-            assert result == "test response"
+        result = get_user_input("Enter value")
 
-    def test_get_user_input_with_default(self) -> None:
+        assert result == "test response"
+
+    def test_get_user_input_with_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test empty input returns default value."""
-        with patch("builtins.input", return_value=""):
-            result = get_user_input("Enter value", default="default_value")
+        fake_input = FakeInputFunction([""])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-            assert result == "default_value"
+        result = get_user_input("Enter value", default="default_value")
 
-    def test_get_user_input_sanitizes_newlines(self) -> None:
+        assert result == "default_value"
+
+    def test_get_user_input_sanitizes_newlines(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test input sanitization removes dangerous characters."""
-        with patch("builtins.input", return_value="test\nvalue\rwith\0nulls"):
-            result = get_user_input("Enter value")
+        fake_input = FakeInputFunction(["test\nvalue\rwith\0nulls"])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-            assert "\n" not in result
-            assert "\r" not in result
-            assert "\0" not in result
+        result = get_user_input("Enter value")
 
-    def test_get_user_input_with_parent(self) -> None:
+        assert "\n" not in result
+        assert "\r" not in result
+        assert "\0" not in result
+
+    def test_get_user_input_with_parent(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test input with parent stores in history."""
-        parent = MagicMock()
-        parent.input_history = []
-        parent.__class__.__name__ = "TestParent"
+        parent = FakeParentWidget("TestParent")
+        fake_input = FakeInputFunction(["test"])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-        with patch("builtins.input", return_value="test"):
-            result = get_user_input("Test prompt", parent=parent)
+        result = get_user_input("Test prompt", parent=parent)
 
-            assert len(parent.input_history) == 1
-            assert parent.input_history[0]["result"] == "test"
+        assert len(parent.input_history) == 1
+        assert parent.input_history[0]["result"] == "test"
 
-    def test_get_user_input_keyboard_interrupt(self) -> None:
+    def test_get_user_input_keyboard_interrupt(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test keyboard interrupt returns None."""
-        with patch("builtins.input", side_effect=KeyboardInterrupt()):
-            result = get_user_input("Enter value")
+        fake_input = FakeInputFunction([KeyboardInterrupt()])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-            assert result is None
+        result = get_user_input("Enter value")
 
-    def test_get_user_input_eof_error(self) -> None:
+        assert result is None
+
+    def test_get_user_input_eof_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test EOF error returns None."""
-        with patch("builtins.input", side_effect=EOFError()):
-            result = get_user_input("Enter value")
+        fake_input = FakeInputFunction([EOFError()])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-            assert result is None
+        result = get_user_input("Enter value")
+
+        assert result is None
 
 
 class TestUpdateProgress:
@@ -275,71 +315,86 @@ class TestUpdateProgress:
 class TestConfirmAction:
     """Test confirm_action function."""
 
-    def test_confirm_action_yes(self) -> None:
+    def test_confirm_action_yes(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test confirmation returns True for yes."""
-        with patch("builtins.input", return_value="y"):
-            result = confirm_action("Proceed?")
+        fake_input = FakeInputFunction(["y"])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-            assert result is True
+        result = confirm_action("Proceed?")
 
-    def test_confirm_action_yes_full(self) -> None:
+        assert result is True
+
+    def test_confirm_action_yes_full(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test confirmation accepts 'yes'."""
-        with patch("builtins.input", return_value="yes"):
-            result = confirm_action("Proceed?")
+        fake_input = FakeInputFunction(["yes"])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-            assert result is True
+        result = confirm_action("Proceed?")
 
-    def test_confirm_action_no(self) -> None:
+        assert result is True
+
+    def test_confirm_action_no(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test confirmation returns False for no."""
-        with patch("builtins.input", return_value="n"):
-            result = confirm_action("Proceed?")
+        fake_input = FakeInputFunction(["n"])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-            assert result is False
+        result = confirm_action("Proceed?")
 
-    def test_confirm_action_invalid_input(self) -> None:
+        assert result is False
+
+    def test_confirm_action_invalid_input(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test invalid input returns False."""
-        with patch("builtins.input", return_value="maybe"):
-            result = confirm_action("Proceed?")
+        fake_input = FakeInputFunction(["maybe"])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-            assert result is False
+        result = confirm_action("Proceed?")
 
-    def test_confirm_action_keyboard_interrupt(self) -> None:
+        assert result is False
+
+    def test_confirm_action_keyboard_interrupt(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test keyboard interrupt returns False."""
-        with patch("builtins.input", side_effect=KeyboardInterrupt()):
-            result = confirm_action("Proceed?")
+        fake_input = FakeInputFunction([KeyboardInterrupt()])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-            assert result is False
+        result = confirm_action("Proceed?")
+
+        assert result is False
 
 
 class TestSelectFromList:
     """Test select_from_list function."""
 
-    def test_select_single_item(self) -> None:
+    def test_select_single_item(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test selecting single item from list."""
         items = ["Option 1", "Option 2", "Option 3"]
+        fake_input = FakeInputFunction(["2"])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-        with patch("builtins.input", return_value="2"):
-            result = select_from_list(items)
+        result = select_from_list(items)
 
-            assert result == ["Option 2"]
+        assert result == ["Option 2"]
 
-    def test_select_multiple_items(self) -> None:
+    def test_select_multiple_items(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test selecting multiple items."""
         items = ["A", "B", "C", "D"]
+        fake_input = FakeInputFunction(["1,3,4"])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-        with patch("builtins.input", return_value="1,3,4"):
-            result = select_from_list(items, allow_multiple=True)
+        result = select_from_list(items, allow_multiple=True)
 
-            assert result == ["A", "C", "D"]
+        assert result == ["A", "C", "D"]
 
-    def test_select_all_items(self) -> None:
+    def test_select_all_items(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test selecting all items with 'all' keyword."""
         items = ["X", "Y", "Z"]
+        fake_input = FakeInputFunction(["all"])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-        with patch("builtins.input", return_value="all"):
-            result = select_from_list(items, allow_multiple=True)
+        result = select_from_list(items, allow_multiple=True)
 
-            assert result == items
+        assert result == items
 
     def test_select_empty_list(self) -> None:
         """Test selecting from empty list returns None."""
@@ -347,32 +402,35 @@ class TestSelectFromList:
 
         assert result is None
 
-    def test_select_invalid_index(self) -> None:
+    def test_select_invalid_index(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test invalid index returns None."""
         items = ["A", "B", "C"]
+        fake_input = FakeInputFunction(["10"])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-        with patch("builtins.input", return_value="10"):
-            result = select_from_list(items)
+        result = select_from_list(items)
 
-            assert result is None
+        assert result is None
 
-    def test_select_non_numeric_input(self) -> None:
+    def test_select_non_numeric_input(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test non-numeric input returns None."""
         items = ["A", "B", "C"]
+        fake_input = FakeInputFunction(["abc"])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-        with patch("builtins.input", return_value="abc"):
-            result = select_from_list(items)
+        result = select_from_list(items)
 
-            assert result is None
+        assert result is None
 
-    def test_select_keyboard_interrupt(self) -> None:
+    def test_select_keyboard_interrupt(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test keyboard interrupt returns None."""
         items = ["A", "B"]
+        fake_input = FakeInputFunction([KeyboardInterrupt()])
+        monkeypatch.setattr("builtins.input", fake_input)
 
-        with patch("builtins.input", side_effect=KeyboardInterrupt()):
-            result = select_from_list(items)
+        result = select_from_list(items)
 
-            assert result is None
+        assert result is None
 
 
 class TestCreateStatusBarMessage:

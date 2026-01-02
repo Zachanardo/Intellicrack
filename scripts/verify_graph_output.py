@@ -47,7 +47,7 @@ def verify_html(file_path):
     if len(nodes_with_pos) == 0:
         print("FAIL: No nodes have pre-calculated X/Y coordinates! Browser will define layout (slow).")
     elif len(nodes_with_pos) < len(nodes_data) * 0.9:
-         print(f"WARNING: Only {len(nodes_with_pos)}/{len(nodes_data)} nodes have positions.")
+        print(f"WARNING: Only {len(nodes_with_pos)}/{len(nodes_data)} nodes have positions.")
     else:
         print(f"PASS: {len(nodes_with_pos)}/{len(nodes_data)} nodes have pre-calculated static positions.")
 

@@ -281,6 +281,7 @@ class TestEnvironmentVariableSubstitution:
 
         result = config_manager._substitute_env_vars(config)
 
+        assert isinstance(result, dict)
         assert result["api_key"] == "test-key-12345"
 
         del os.environ["TEST_API_KEY"]
@@ -291,6 +292,7 @@ class TestEnvironmentVariableSubstitution:
 
         result = config_manager._substitute_env_vars(config)
 
+        assert isinstance(result, dict)
         assert result["api_key"] == "default_value"
 
     def test_substitute_env_vars_nested_objects(self, config_manager: ConfigAsCodeManager) -> None:
@@ -305,8 +307,13 @@ class TestEnvironmentVariableSubstitution:
 
         result = config_manager._substitute_env_vars(config)
 
-        assert result["models"]["primary"]["model_name"] == "gpt-4"
-        assert result["models"]["primary"]["api_key"] == "default"
+        assert isinstance(result, dict)
+        models = result["models"]
+        assert isinstance(models, dict)
+        primary = models["primary"]
+        assert isinstance(primary, dict)
+        assert primary["model_name"] == "gpt-4"
+        assert primary["api_key"] == "default"
 
         del os.environ["TEST_MODEL"]
 
@@ -318,8 +325,11 @@ class TestEnvironmentVariableSubstitution:
 
         result = config_manager._substitute_env_vars(config)
 
-        assert result["endpoints"][0] == "http://localhost:11434"
-        assert result["endpoints"][1] == "http://fallback:8080"
+        assert isinstance(result, dict)
+        endpoints = result["endpoints"]
+        assert isinstance(endpoints, list)
+        assert endpoints[0] == "http://localhost:11434"
+        assert endpoints[1] == "http://fallback:8080"
 
         del os.environ["ENDPOINT"]
 
@@ -553,6 +563,7 @@ class TestEdgeCases:
 
         result = config_manager._substitute_env_vars(config)
 
+        assert isinstance(result, dict)
         assert result["value"] == ""
 
     def test_save_config_handles_datetime_objects(self, config_manager: ConfigAsCodeManager) -> None:

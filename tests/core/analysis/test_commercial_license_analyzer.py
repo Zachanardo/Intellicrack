@@ -229,13 +229,6 @@ def create_x64_binary() -> bytes:
 
 
 @pytest.fixture
-def temp_workspace() -> Path:
-    """Provide temporary workspace for test files."""
-    with tempfile.TemporaryDirectory(prefix="intellicrack_license_test_") as tmp:
-        yield Path(tmp)
-
-
-@pytest.fixture
 def flexlm_binary(temp_workspace: Path) -> Path:
     """Create temporary FlexLM protected binary."""
     binary_path = temp_workspace / "flexlm_app.exe"

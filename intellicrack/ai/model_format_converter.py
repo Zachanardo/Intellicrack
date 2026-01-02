@@ -18,15 +18,26 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
+import types
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, cast
 
 from intellicrack.handlers.numpy_handler import numpy as np
-from intellicrack.utils.type_safety import ensure_dict, get_kwarg_typed, get_typed_item, validate_type
+from intellicrack.utils.type_safety import get_kwarg_typed, get_typed_item, validate_type
 
 from ..utils.logger import get_logger
 
+# Module-level type declarations for optional dependencies
+torch: types.ModuleType | None
+onnx: types.ModuleType | None
+ort: types.ModuleType | None
+AutoConfig: type[Any] | None
+AutoModel: type[Any] | None
+AutoModelForCausalLM: type[Any] | None
+AutoTokenizer: type[Any] | None
 
 GPU_AUTOLOADER_AVAILABLE = False
 get_device: Callable[[], str] | None = None
@@ -50,32 +61,32 @@ try:
     try:
         from ..utils.gpu_autoloader import to_device as _to_device
 
-        to_device = _to_device  # type: ignore[assignment]
+        to_device = _to_device
     except (ImportError, AttributeError):
         pass
 
     try:
-        from ..utils.gpu_autoloader import memory_allocated as _memory_allocated  # type: ignore[attr-defined]
+        from ..utils.gpu_autoloader import memory_allocated as _memory_allocated
 
         memory_allocated = _memory_allocated
     except (ImportError, AttributeError):
         pass
 
     try:
-        from ..utils.gpu_autoloader import memory_reserved as _memory_reserved  # type: ignore[attr-defined]
+        from ..utils.gpu_autoloader import memory_reserved as _memory_reserved
 
         memory_reserved = _memory_reserved
     except (ImportError, AttributeError):
         pass
 
     try:
-        from ..utils.gpu_autoloader import empty_cache as _empty_cache  # type: ignore[attr-defined]
+        from ..utils.gpu_autoloader import empty_cache as _empty_cache
 
         empty_cache = _empty_cache
     except (ImportError, AttributeError):
         pass
 
-    gpu_autoloader = _gpu_autoloader  # type: ignore[assignment]
+    gpu_autoloader = _gpu_autoloader
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
     pass
@@ -85,7 +96,7 @@ try:
 
     HAS_TORCH = True
 except ImportError:
-    torch = None  # type: ignore[assignment]
+    torch = None
     HAS_TORCH = False
 
 logger = get_logger(__name__)
@@ -111,7 +122,7 @@ try:
     HAS_ONNX = True
 except ImportError as e:
     logger.exception("Import error in model_format_converter: %s", e)
-    onnx = None  # type: ignore[assignment]
+    onnx = None
     ort = None
     HAS_ONNX = False
 
@@ -121,10 +132,10 @@ try:
     HAS_TRANSFORMERS = True
 except ImportError as e:
     logger.exception("Import error in model_format_converter: %s", e)
-    AutoConfig = None  # type: ignore[misc, assignment]
-    AutoModel = None  # type: ignore[misc, assignment]
-    AutoModelForCausalLM = None  # type: ignore[misc, assignment]
-    AutoTokenizer = None  # type: ignore[misc, assignment]
+    AutoConfig = None
+    AutoModel = None
+    AutoModelForCausalLM = None
+    AutoTokenizer = None
     HAS_TRANSFORMERS = False
 
 safe_open: Any = None
@@ -382,7 +393,7 @@ class ModelFormatConverter:
                 input_shape_tuple = validate_type(input_shape_val, tuple, "input_shape")
                 sample_input = torch.randn(*input_shape_tuple)
 
-            model.eval()  # type: ignore[no-untyped-call]
+            model.eval()
 
             if GPU_AUTOLOADER_AVAILABLE and to_device and device != "cpu":
                 try:
@@ -623,7 +634,7 @@ class ModelFormatConverter:
                         logger.exception("input_spec required for Keras models")
                         return None
 
-                    @tf.function  # type: ignore[untyped-decorator]
+                    @tf.function
                     def inference_func(x: Any) -> Any:
                         return model(x)
 

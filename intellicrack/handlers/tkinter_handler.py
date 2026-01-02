@@ -305,6 +305,9 @@ except ImportError as e:
             Args:
                 **kwargs: Configuration options to set.
 
+            Returns:
+                None.
+
             """
             return self.configure(**kwargs)
 

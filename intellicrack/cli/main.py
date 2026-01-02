@@ -10,7 +10,11 @@ from intellicrack.cli.cli import cli
 
 
 def main() -> None:
-    """Execute the CLI."""
+    """Execute the CLI entry point.
+
+    Delegates to the click-based CLI implementation which handles all
+    command-line argument parsing and command execution.
+    """
     cli()
 
 

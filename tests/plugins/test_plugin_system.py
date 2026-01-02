@@ -16,12 +16,8 @@ import tempfile
 import time
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
-
-PROJECT_ROOT = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
 
 try:
     from intellicrack.plugins.plugin_system import (
@@ -58,6 +54,62 @@ except ImportError:
     LIEF_AVAILABLE = False
 
 
+class FakeUpdateOutput:
+    """Real test double for update_output signal."""
+
+    def __init__(self) -> None:
+        self.messages: list[str] = []
+
+    def emit(self, message: str) -> None:
+        """Record emitted messages."""
+        self.messages.append(message)
+
+    def clear(self) -> None:
+        """Clear recorded messages."""
+        self.messages.clear()
+
+    def get_all_text(self) -> str:
+        """Get all messages as single string."""
+        return "\n".join(self.messages)
+
+    def contains(self, text: str) -> bool:
+        """Check if any message contains text."""
+        return any(text in msg for msg in self.messages)
+
+    def count(self) -> int:
+        """Count emitted messages."""
+        return len(self.messages)
+
+
+class FakeApp:
+    """Real test double for application object."""
+
+    def __init__(self, binary_path: str | None = None) -> None:
+        self.binary_path = binary_path
+        self.update_output = FakeUpdateOutput()
+        self.frida_sessions: dict[str, tuple[Any, Any]] = {}
+
+    def set_binary(self, path: str) -> None:
+        """Set binary path."""
+        self.binary_path = path
+
+    def clear_output(self) -> None:
+        """Clear output messages."""
+        self.update_output.clear()
+
+    def get_output_text(self) -> str:
+        """Get all output text."""
+        return self.update_output.get_all_text()
+
+    def has_output_containing(self, text: str) -> bool:
+        """Check if output contains text."""
+        return self.update_output.contains(text)
+
+    def output_count(self) -> int:
+        """Count output messages."""
+        return self.update_output.count()
+
+
 @pytest.fixture
 def temp_plugin_dir(tmp_path: Path) -> Path:
     """Create temporary plugin directory structure."""
@@ -79,13 +131,9 @@ def temp_binary(tmp_path: Path) -> str:
 
 
 @pytest.fixture
-def mock_app() -> MagicMock:
-    """Create mock application object."""
-    app = MagicMock()
-    app.binary_path = None
-    app.update_output = MagicMock()
-    app.update_output.emit = MagicMock()
-    return app
+def fake_app() -> FakeApp:
+    """Create fake application object."""
+    return FakeApp()
 
 
 @pytest.fixture
@@ -283,108 +331,108 @@ class TestLoadPlugins:
 class TestRunPlugin:
     """Test run_plugin function for built-in plugins."""
 
-    def test_run_plugin_requires_binary(self, mock_app: MagicMock) -> None:
+    def test_run_plugin_requires_binary(self, fake_app: FakeApp) -> None:
         """run_plugin emits error when no binary selected."""
-        mock_app.binary_path = None
+        fake_app.binary_path = None
 
-        run_plugin(mock_app, "HWID Spoofer")
+        run_plugin(fake_app, "HWID Spoofer")
 
-        mock_app.update_output.emit.assert_called_once()
-        call_args = mock_app.update_output.emit.call_args[0][0]
-        assert "No binary selected" in call_args
+        assert fake_app.output_count() == 1
+        assert fake_app.has_output_containing("No binary selected")
 
     def test_run_plugin_hwid_spoofer_generates_script(
-        self, mock_app: MagicMock, temp_binary: str
+        self, fake_app: FakeApp, temp_binary: str
     ) -> None:
         """run_plugin generates HWID spoofing script."""
-        mock_app.binary_path = temp_binary
+        fake_app.set_binary(temp_binary)
 
-        run_plugin(mock_app, "HWID Spoofer")
+        run_plugin(fake_app, "HWID Spoofer")
 
-        assert mock_app.update_output.emit.call_count >= 1
-        first_call = mock_app.update_output.emit.call_args_list[0][0][0]
-        assert "Running HWID Spoofer" in first_call
+        assert fake_app.output_count() >= 1
+        first_message = fake_app.update_output.messages[0]
+        assert "Running HWID Spoofer" in first_message
 
     def test_run_plugin_anti_debugger_generates_script(
-        self, mock_app: MagicMock, temp_binary: str
+        self, fake_app: FakeApp, temp_binary: str
     ) -> None:
         """run_plugin generates anti-debugger bypass script."""
-        mock_app.binary_path = temp_binary
+        fake_app.set_binary(temp_binary)
 
-        run_plugin(mock_app, "Anti-Debugger")
+        run_plugin(fake_app, "Anti-Debugger")
 
-        assert mock_app.update_output.emit.call_count >= 1
-        first_call = mock_app.update_output.emit.call_args_list[0][0][0]
-        assert "Running Anti-Debugger" in first_call
+        assert fake_app.output_count() >= 1
+        first_message = fake_app.update_output.messages[0]
+        assert "Running Anti-Debugger" in first_message
 
     def test_run_plugin_time_bomb_defuser_generates_script(
-        self, mock_app: MagicMock, temp_binary: str
+        self, fake_app: FakeApp, temp_binary: str
     ) -> None:
         """run_plugin generates time bomb defuser script."""
-        mock_app.binary_path = temp_binary
+        fake_app.set_binary(temp_binary)
 
-        run_plugin(mock_app, "Time Bomb Defuser")
+        run_plugin(fake_app, "Time Bomb Defuser")
 
-        assert mock_app.update_output.emit.call_count >= 1
-        first_call = mock_app.update_output.emit.call_args_list[0][0][0]
-        assert "Running Time Bomb Defuser" in first_call
+        assert fake_app.output_count() >= 1
+        first_message = fake_app.update_output.messages[0]
+        assert "Running Time Bomb Defuser" in first_message
 
     def test_run_plugin_telemetry_blocker_generates_script(
-        self, mock_app: MagicMock, temp_binary: str
+        self, fake_app: FakeApp, temp_binary: str
     ) -> None:
         """run_plugin generates telemetry blocking script."""
-        mock_app.binary_path = temp_binary
+        fake_app.set_binary(temp_binary)
 
-        run_plugin(mock_app, "Telemetry Blocker")
+        run_plugin(fake_app, "Telemetry Blocker")
 
-        assert mock_app.update_output.emit.call_count >= 1
-        first_call = mock_app.update_output.emit.call_args_list[0][0][0]
-        assert "Running Telemetry Blocker" in first_call
+        assert fake_app.output_count() >= 1
+        first_message = fake_app.update_output.messages[0]
+        assert "Running Telemetry Blocker" in first_message
 
     def test_run_plugin_unknown_plugin_reports_error(
-        self, mock_app: MagicMock, temp_binary: str
+        self, fake_app: FakeApp, temp_binary: str
     ) -> None:
         """run_plugin reports error for unknown plugin."""
-        mock_app.binary_path = temp_binary
+        fake_app.set_binary(temp_binary)
 
-        run_plugin(mock_app, "Nonexistent Plugin")
+        run_plugin(fake_app, "Nonexistent Plugin")
 
-        mock_app.update_output.emit.assert_called()
-        last_call = mock_app.update_output.emit.call_args[0][0]
-        assert "Unknown plugin" in last_call
+        assert fake_app.has_output_containing("Unknown plugin")
 
 
 @pytest.mark.skipif(not PLUGIN_SYSTEM_AVAILABLE, reason="Plugin system not available")
 class TestRunCustomPlugin:
     """Test run_custom_plugin function."""
 
-    def test_run_custom_plugin_requires_binary(self, mock_app: MagicMock) -> None:
+    def test_run_custom_plugin_requires_binary(self, fake_app: FakeApp) -> None:
         """run_custom_plugin requires binary path."""
-        mock_app.binary_path = None
-        plugin_info: dict[str, object] = {"name": "Test", "instance": MagicMock()}
+        fake_app.binary_path = None
 
-        run_custom_plugin(mock_app, plugin_info)
+        class FakePluginInstance:
+            pass
 
-        mock_app.update_output.emit.assert_called_once()
-        assert "No binary selected" in mock_app.update_output.emit.call_args[0][0]
+        plugin_info: dict[str, object] = {"name": "Test", "instance": FakePluginInstance()}
+
+        run_custom_plugin(fake_app, plugin_info)
+
+        assert fake_app.output_count() == 1
+        assert fake_app.has_output_containing("No binary selected")
 
     def test_run_custom_plugin_requires_instance(
-        self, mock_app: MagicMock, temp_binary: str
+        self, fake_app: FakeApp, temp_binary: str
     ) -> None:
         """run_custom_plugin requires valid plugin instance."""
-        mock_app.binary_path = temp_binary
+        fake_app.set_binary(temp_binary)
         plugin_info: dict[str, object] = {"name": "Test", "instance": None}
 
-        run_custom_plugin(mock_app, plugin_info)
+        run_custom_plugin(fake_app, plugin_info)
 
-        mock_app.update_output.emit.assert_called()
-        assert "Invalid plugin instance" in mock_app.update_output.emit.call_args[0][0]
+        assert fake_app.has_output_containing("Invalid plugin instance")
 
     def test_run_custom_plugin_executes_analyze(
-        self, mock_app: MagicMock, temp_binary: str, temp_plugin_dir: Path, simple_plugin: Path
+        self, fake_app: FakeApp, temp_binary: str, temp_plugin_dir: Path, simple_plugin: Path
     ) -> None:
         """run_custom_plugin executes analyze method with real plugin."""
-        mock_app.binary_path = temp_binary
+        fake_app.set_binary(temp_binary)
 
         sys.path.insert(0, str(temp_plugin_dir / "custom_modules"))
         module = importlib.import_module("test_simple_plugin")
@@ -397,18 +445,17 @@ class TestRunCustomPlugin:
             "description": "Test",
         }
 
-        run_custom_plugin(mock_app, plugin_info)
+        run_custom_plugin(fake_app, plugin_info)
 
-        assert mock_app.update_output.emit.call_count >= 2
-        calls = [call[0][0] for call in mock_app.update_output.emit.call_args_list]
-        assert any("Running Simple Test Plugin" in call for call in calls)
-        assert any("Analysis result: Success" in call for call in calls)
+        assert fake_app.output_count() >= 2
+        assert fake_app.has_output_containing("Running Simple Test Plugin")
+        assert fake_app.has_output_containing("Analysis result: Success")
 
     def test_run_custom_plugin_handles_error_in_analyze(
-        self, mock_app: MagicMock, temp_binary: str, temp_plugin_dir: Path, error_plugin: Path
+        self, fake_app: FakeApp, temp_binary: str, temp_plugin_dir: Path, error_plugin: Path
     ) -> None:
         """run_custom_plugin handles plugin errors gracefully."""
-        mock_app.binary_path = temp_binary
+        fake_app.set_binary(temp_binary)
 
         sys.path.insert(0, str(temp_plugin_dir / "custom_modules"))
         module = importlib.import_module("test_error_plugin")
@@ -419,16 +466,15 @@ class TestRunCustomPlugin:
             "instance": instance,
         }
 
-        run_custom_plugin(mock_app, plugin_info)
+        run_custom_plugin(fake_app, plugin_info)
 
-        calls = [call[0][0] for call in mock_app.update_output.emit.call_args_list]
-        assert any("Error running plugin" in call for call in calls)
+        assert fake_app.has_output_containing("Error running plugin")
 
     def test_run_custom_plugin_without_analyze_method(
-        self, mock_app: MagicMock, temp_binary: str
+        self, fake_app: FakeApp, temp_binary: str
     ) -> None:
         """run_custom_plugin handles plugins without analyze method."""
-        mock_app.binary_path = temp_binary
+        fake_app.set_binary(temp_binary)
 
         class NoAnalyzePlugin:
             pass
@@ -438,10 +484,9 @@ class TestRunCustomPlugin:
             "instance": NoAnalyzePlugin(),
         }
 
-        run_custom_plugin(mock_app, plugin_info)
+        run_custom_plugin(fake_app, plugin_info)
 
-        calls = [call[0][0] for call in mock_app.update_output.emit.call_args_list]
-        assert any("does not have an analyze method" in call for call in calls)
+        assert fake_app.has_output_containing("does not have an analyze method")
 
 
 @pytest.mark.skipif(not PLUGIN_SYSTEM_AVAILABLE, reason="Plugin system not available")
@@ -505,7 +550,7 @@ class TestCreatePluginTemplate:
 
         assert "class TestPluginPlugin" in template
         assert "def __init__(self)" in template
-        assert "self.name = \"Test Plugin\"" in template
+        assert 'self.name = "Test Plugin"' in template
         assert "def analyze(self, binary_path)" in template
         assert "def register()" in template
 

@@ -28,9 +28,10 @@ import base64
 import os
 import re
 import sys
-from typing import Any, Optional
+from typing import Any
 
 from intellicrack.utils.logger import logger
+from intellicrack.utils.url_validation import is_safe_url
 
 
 # PDFKit availability detection and import handling
@@ -95,7 +96,6 @@ except ImportError as e:
 
             Returns:
                 Bytes of PDF content if output_path is None, True if written to file successfully.
-
             """
             # Initialize PDF structure
             self.objects = []
@@ -147,7 +147,6 @@ except ImportError as e:
 
             Returns:
                 The assigned object number for this PDF object.
-
             """
             self.object_count += 1
             self.objects.append(obj_dict)
@@ -162,7 +161,6 @@ except ImportError as e:
             Args:
                 content: Text content to place on the page.
                 font_obj: Object number of the font resource to use.
-
             """
             # Create content stream
             stream = self._create_content_stream(content)
@@ -192,7 +190,6 @@ except ImportError as e:
 
             Returns:
                 Bytes representing the PDF content stream with text operators.
-
             """
             stream = b"BT\n"  # Begin text
             stream += b"/F1 12 Tf\n"  # Set font
@@ -220,7 +217,6 @@ except ImportError as e:
 
             Returns:
                 List of text strings, one per PDF page.
-
             """
             # Strip HTML tags for basic conversion
             text = re.sub(r"<[^>]+>", "", html)
@@ -260,7 +256,6 @@ except ImportError as e:
 
             Returns:
                 List of text strings, one per PDF page.
-
             """
             # Split into pages
             lines = text.split("\n")
@@ -287,7 +282,6 @@ except ImportError as e:
 
             Returns:
                 Complete PDF file as bytes.
-
             """
             pdf = b"%PDF-1.4\n"
             pdf += b"%\xe2\xe3\xcf\xd3\n"  # Binary marker
@@ -346,7 +340,6 @@ except ImportError as e:
 
             Returns:
                 String representation in PDF dictionary format.
-
             """
             if not isinstance(d, dict):
                 return str(d)
@@ -376,7 +369,6 @@ except ImportError as e:
 
             Args:
                 options: Optional dictionary of option overrides.
-
             """
             self.options: dict[str, Any] = options or {}
 
@@ -408,7 +400,6 @@ except ImportError as e:
 
             Args:
                 wkhtmltopdf: Optional explicit path to wkhtmltopdf executable.
-
             """
             self.wkhtmltopdf: str | None = wkhtmltopdf
 
@@ -455,7 +446,6 @@ except ImportError as e:
 
         Returns:
             Bytes of PDF if output_path is None, True if written to file, False on error.
-
         """
         try:
             # Use fallback generator
@@ -496,13 +486,26 @@ except ImportError as e:
 
         Returns:
             Bytes of PDF if output_path is None, True if written to file, False on error.
-
         """
         # Try to fetch content from URL
         try:
             import urllib.request
 
-            with urllib.request.urlopen(url) as response:  # noqa: S310  # Legitimate URL content fetching for PDF generation in security research tool
+            # Validate URL for SSRF protection
+            if not is_safe_url(url):
+                logger.error("URL blocked by SSRF protection: %s", url)
+                error_result: bytes | bool = from_string(
+                    f"<h1>Error</h1><p>URL blocked by security policy: {url}</p>",
+                    output_path,
+                    options,
+                    toc,
+                    cover,
+                    configuration,
+                    cover_first,
+                )
+                return error_result
+
+            with urllib.request.urlopen(url) as response:
                 html = response.read().decode("utf-8")
             result: bytes | bool = from_string(html, output_path, options, toc, cover, configuration, cover_first)
             return result
@@ -544,7 +547,6 @@ except ImportError as e:
 
         Returns:
             Bytes of PDF if output_path is None, True if written to file, False on error.
-
         """
         try:
             # Read file content
@@ -575,7 +577,6 @@ except ImportError as e:
 
         Returns:
             PDFConfiguration instance.
-
         """
         return PDFConfiguration(**kwargs)
 
@@ -594,7 +595,6 @@ except ImportError as e:
 
             Args:
                 filename: Optional file path to save PDF. If None, returns bytes.
-
             """
             self.filename: str | None = filename
             self.pages: list[list[dict[str, Any]]] = []
@@ -614,7 +614,6 @@ except ImportError as e:
             Args:
                 name: Font name (e.g., "Helvetica", "Times").
                 size: Font size in points.
-
             """
             self.font_name = name
             self.font_size = size
@@ -628,7 +627,6 @@ except ImportError as e:
                 x: X coordinate in points.
                 y: Y coordinate in points.
                 text: Text string to draw.
-
             """
             self.current_page.append({
                 "type": "text",
@@ -648,7 +646,6 @@ except ImportError as e:
                 x: Center X coordinate in points.
                 y: Y coordinate in points.
                 text: Text string to draw.
-
             """
             # Approximate centering
             offset = len(text) * self.font_size * 0.25
@@ -663,7 +660,6 @@ except ImportError as e:
                 x: Right X coordinate in points.
                 y: Y coordinate in points.
                 text: Text string to draw.
-
             """
             # Approximate right alignment
             offset = len(text) * self.font_size * 0.5
@@ -679,7 +675,6 @@ except ImportError as e:
                 y1: Starting Y coordinate in points.
                 x2: Ending X coordinate in points.
                 y2: Ending Y coordinate in points.
-
             """
             self.current_page.append({"type": "line", "x1": x1, "y1": y1, "x2": x2, "y2": y2})
 
@@ -695,7 +690,6 @@ except ImportError as e:
                 height: Rectangle height in points.
                 stroke: Whether to stroke the outline (1 for yes, 0 for no).
                 fill: Whether to fill the rectangle (1 for yes, 0 for no).
-
             """
             self.current_page.append({
                 "type": "rect",
@@ -718,7 +712,6 @@ except ImportError as e:
                 radius: Circle radius in points.
                 stroke: Whether to stroke the outline (1 for yes, 0 for no).
                 fill: Whether to fill the circle (1 for yes, 0 for no).
-
             """
             self.current_page.append({"type": "circle", "x": x, "y": y, "radius": radius, "stroke": stroke, "fill": fill})
 
@@ -740,7 +733,6 @@ except ImportError as e:
 
             Returns:
                 Bytes if filename is None, None if written to file.
-
             """
             if self.current_page:
                 self.pages.append(self.current_page)
@@ -787,7 +779,6 @@ except ImportError as e:
 
             Args:
                 content: HTML or text content for the page.
-
             """
             self.pages.append(content)
 
@@ -798,7 +789,6 @@ except ImportError as e:
 
             Args:
                 title: Document title string.
-
             """
             self.title = title
 
@@ -809,7 +799,6 @@ except ImportError as e:
 
             Args:
                 author: Author name string.
-
             """
             self.author = author
 
@@ -820,7 +809,6 @@ except ImportError as e:
 
             Args:
                 subject: Subject description string.
-
             """
             self.subject = subject
 
@@ -831,7 +819,6 @@ except ImportError as e:
 
             Args:
                 keyword: Keyword string to add.
-
             """
             self.keywords.append(keyword)
 
@@ -846,7 +833,6 @@ except ImportError as e:
 
             Returns:
                 Bytes of PDF if output_path is None, True if written to file.
-
             """
             # Build HTML content
             html = f"""
@@ -886,7 +872,6 @@ except ImportError as e:
                 filename: File path to save the PDF.
                 pagesize: Tuple of (width, height) in points. Defaults to letter size.
                 **kwargs: Additional configuration options (title, author, etc.).
-
             """
             self.filename: str = filename
             self.pagesize: tuple[int, int] = pagesize
@@ -934,7 +919,6 @@ except ImportError as e:
             Args:
                 text: Text content of the paragraph.
                 style: Optional style object (compatibility parameter).
-
             """
             self.text: str = text
             self.style: dict[str, Any] | None = style
@@ -968,7 +952,6 @@ except ImportError as e:
                 data: List of rows, each row is a list of cell values.
                 colWidths: Optional list of column widths in points.
                 rowHeights: Optional list of row heights in points.
-
             """
             self.data: list[list[Any]] = data
             self.colWidths: list[int] | None = colWidths
@@ -1005,7 +988,6 @@ except ImportError as e:
                 filename: File path to the image file.
                 width: Optional width in pixels.
                 height: Optional height in pixels.
-
             """
             self.filename: str = filename
             self.width: int | None = width

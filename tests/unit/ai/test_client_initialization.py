@@ -4,10 +4,9 @@ Test script to verify that the client initialization patterns work correctly.
 """
 
 import os
-import sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-def test_client_initialization():
+
+def test_client_initialization() -> None:
     """Test if client initialization patterns match real LLM libraries."""
 
     print("=== Testing Client Initialization Patterns ===\n")

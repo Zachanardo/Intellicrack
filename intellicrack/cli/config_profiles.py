@@ -43,17 +43,17 @@ from intellicrack.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-"""
-Configuration Profile System for Intellicrack CLI
-Allows saving and loading of analysis configurations
-"""
-
 
 class ConfigProfile:
     """Represents a saved configuration profile."""
 
     def __init__(self, name: str, description: str = "") -> None:
-        """Initialize configuration profile with settings and metadata."""
+        """Initialize configuration profile with settings and metadata.
+
+        Args:
+            name: The name of the configuration profile.
+            description: A description of the profile's purpose and contents.
+        """
         self.name = name
         self.description = description
         self.created_at = datetime.now()
@@ -65,7 +65,13 @@ class ConfigProfile:
         self.custom_scripts: list[str] = []
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert profile to dictionary."""
+        """Convert profile to dictionary.
+
+        Returns:
+            dict[str, Any]: Dictionary containing all profile data with keys for name,
+                description, created_at, last_used, settings, analysis_options,
+                output_format, plugins_enabled, and custom_scripts.
+        """
         return {
             "name": self.name,
             "description": self.description,
@@ -80,7 +86,15 @@ class ConfigProfile:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ConfigProfile":
-        """Create profile from dictionary."""
+        """Create profile from dictionary.
+
+        Args:
+            data: Dictionary containing profile data with required keys for name,
+                description, created_at, and optional keys for other profile settings.
+
+        Returns:
+            ConfigProfile: A new ConfigProfile instance populated from the dictionary data.
+        """
         profile = cls(data["name"], data.get("description", ""))
         profile.created_at = datetime.fromisoformat(data["created_at"])
         last_used_value = data.get("last_used")
@@ -113,7 +127,12 @@ class ProfileManager:
     """
 
     def __init__(self, profile_dir: str | None = None) -> None:
-        """Initialize profile manager with central config delegation."""
+        """Initialize profile manager with central config delegation.
+
+        Args:
+            profile_dir: Optional path to directory for legacy profile file migration.
+                Defaults to ~/.intellicrack/profiles if not provided.
+        """
         self.console = Console()
         self.central_config = IntellicrackConfig()
 
@@ -181,7 +200,12 @@ class ProfileManager:
             logger.exception("Failed to migrate CLI profiles: %s", e)
 
     def _load_profiles(self) -> dict[str, ConfigProfile]:
-        """Load all profiles from central config."""
+        """Load all profiles from central config.
+
+        Returns:
+            dict[str, ConfigProfile]: Dictionary mapping profile names to ConfigProfile
+                instances loaded from the central configuration.
+        """
         profiles: dict[str, ConfigProfile] = {}
 
         # Get profiles from central config
@@ -211,7 +235,11 @@ class ProfileManager:
         return profiles
 
     def save_profile(self, profile: ConfigProfile) -> None:
-        """Save profile to central config."""
+        """Save profile to central config.
+
+        Args:
+            profile: The ConfigProfile instance to save to the central configuration.
+        """
         # Get current CLI config
         cli_config_raw = self.central_config.get("cli_configuration", {})
         if not isinstance(cli_config_raw, dict):
@@ -236,7 +264,14 @@ class ProfileManager:
         self.console.print(f"[green]Profile '{profile.name}' saved successfully![/green]")
 
     def delete_profile(self, name: str) -> bool:
-        """Delete a profile from central config."""
+        """Delete a profile from central config.
+
+        Args:
+            name: The name of the profile to delete.
+
+        Returns:
+            bool: True if the profile was successfully deleted, False if not found.
+        """
         if name not in self.profiles:
             return False
 
@@ -262,7 +297,14 @@ class ProfileManager:
         return True
 
     def get_profile(self, name: str) -> ConfigProfile | None:
-        """Get a profile by name."""
+        """Get a profile by name.
+
+        Args:
+            name: The name of the profile to retrieve.
+
+        Returns:
+            ConfigProfile | None: The requested ConfigProfile instance, or None if not found.
+        """
         profile = self.profiles.get(name)
         if profile is not None:
             profile.last_used = datetime.now()
@@ -294,7 +336,11 @@ class ProfileManager:
         self.console.print(table)
 
     def create_profile_interactive(self) -> ConfigProfile:
-        """Create a new profile interactively."""
+        """Create a new profile interactively.
+
+        Returns:
+            ConfigProfile: A new ConfigProfile instance created through interactive prompts.
+        """
         self.console.print("\n[bold cyan]Create New Configuration Profile[/bold cyan]\n")
 
         # Get basic info
@@ -361,8 +407,7 @@ class ProfileManager:
             args: Namespace object containing command-line arguments to modify.
 
         Returns:
-            Modified namespace object with profile settings applied.
-
+            argparse.Namespace: Modified namespace object with profile settings applied.
         """
         profile = self.get_profile(profile_name)
         if not profile:
@@ -400,8 +445,7 @@ def create_default_profiles() -> ProfileManager:
     - license_check: Focused profile for license and protection mechanisms
 
     Returns:
-        ProfileManager instance with default profiles created and saved.
-
+        ProfileManager: Instance with default profiles created and saved.
     """
     manager = ProfileManager()
 

@@ -7,14 +7,14 @@ when functionality is broken.
 import ast
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 def analyze_test_file(test_file_path: Path) -> dict[str, Any]:
     """Analyze test file for quality metrics."""
     content = test_file_path.read_text(encoding="utf-8")
 
-    metrics = {
+    metrics: dict[str, Any] = {
         "total_lines": len(content.splitlines()),
         "test_classes": 0,
         "test_methods": 0,
@@ -90,35 +90,45 @@ def analyze_test_file(test_file_path: Path) -> dict[str, Any]:
             metrics["skip_usage"] += 1
 
         for api in windows_api_patterns:
-            if api in line and api not in metrics["windows_apis"]:
-                metrics["windows_apis"].append(api)
+            windows_apis = cast(list[str], metrics["windows_apis"])
+            if api in line and api not in windows_apis:
+                windows_apis.append(api)
                 metrics["real_api_calls"] += 1
 
         for capability in offensive_capability_patterns:
-            if capability in line and capability not in metrics["offensive_capabilities"]:
-                metrics["offensive_capabilities"].append(capability)
+            offensive_caps = cast(list[str], metrics["offensive_capabilities"])
+            if capability in line and capability not in offensive_caps:
+                offensive_caps.append(capability)
 
     return metrics
 
 
-def validate_test_quality(metrics: dict[str, Any]) -> bool:
+def validate_test_quality(metrics: dict[str, Any]) -> tuple[bool, dict[str, bool]]:
     """Validate test quality against production standards."""
-    validation_results = {
-        "has_multiple_test_classes": metrics["test_classes"] >= 10,
-        "has_many_tests": metrics["test_methods"] >= 40,
-        "has_sufficient_assertions": metrics["assertions"] >= 100,
-        "no_mocks": metrics["mock_usage"] == 0,
-        "no_stubs": metrics["stub_usage"] == 0,
+    test_classes = cast(int, metrics["test_classes"])
+    test_methods = cast(int, metrics["test_methods"])
+    assertions = cast(int, metrics["assertions"])
+    mock_usage = cast(int, metrics["mock_usage"])
+    stub_usage = cast(int, metrics["stub_usage"])
+    windows_apis = cast(list[str], metrics["windows_apis"])
+    offensive_capabilities = cast(list[str], metrics["offensive_capabilities"])
+    type_annotations = cast(int, metrics["type_annotations"])
+    total_lines = cast(int, metrics["total_lines"])
+
+    validation_results: dict[str, bool] = {
+        "has_multiple_test_classes": test_classes >= 10,
+        "has_many_tests": test_methods >= 40,
+        "has_sufficient_assertions": assertions >= 100,
+        "no_mocks": mock_usage == 0,
+        "no_stubs": stub_usage == 0,
     }
 
-    validation_results["uses_real_windows_apis"] = len(metrics["windows_apis"]) >= 8
+    validation_results["uses_real_windows_apis"] = len(windows_apis) >= 8
     validation_results["tests_offensive_capabilities"] = (
-        len(metrics["offensive_capabilities"]) >= 8
+        len(offensive_capabilities) >= 8
     )
-    validation_results["has_type_annotations"] = (
-        metrics["type_annotations"] >= metrics["test_methods"]
-    )
-    validation_results["comprehensive_coverage"] = metrics["total_lines"] >= 1000
+    validation_results["has_type_annotations"] = type_annotations >= test_methods
+    validation_results["comprehensive_coverage"] = total_lines >= 1000
 
     all_passed = all(validation_results.values())
 
@@ -156,13 +166,15 @@ def main() -> None:
     print()
 
     print("OFFENSIVE CAPABILITY VALIDATION:")
-    print(f"  Windows APIs Used:  {len(metrics['windows_apis'])}")
-    for api in sorted(metrics["windows_apis"]):
+    windows_apis = cast(list[str], metrics["windows_apis"])
+    offensive_capabilities = cast(list[str], metrics["offensive_capabilities"])
+    print(f"  Windows APIs Used:  {len(windows_apis)}")
+    for api in sorted(windows_apis):
         print(f"    - {api}")
     print()
 
-    print(f"  Offensive Capabilities Tested: {len(metrics['offensive_capabilities'])}")
-    for capability in sorted(metrics["offensive_capabilities"])[:10]:
+    print(f"  Offensive Capabilities Tested: {len(offensive_capabilities)}")
+    for capability in sorted(offensive_capabilities)[:10]:
         print(f"    - {capability}")
     print()
 
@@ -193,9 +205,12 @@ def main() -> None:
     print("  5. Tests run against actual processes")
     print()
 
-    assertions_per_test = metrics["assertions"] / metrics["test_methods"]
+    assertions = cast(int, metrics["assertions"])
+    test_methods = cast(int, metrics["test_methods"])
+    total_lines = cast(int, metrics["total_lines"])
+    assertions_per_test = assertions / test_methods if test_methods > 0 else 0.0
     print(f"Assertions per test: {assertions_per_test:.2f}")
-    print(f"Lines per test: {metrics['total_lines'] / metrics['test_methods']:.1f}")
+    print(f"Lines per test: {total_lines / test_methods:.1f}" if test_methods > 0 else "Lines per test: N/A")
     print()
 
 

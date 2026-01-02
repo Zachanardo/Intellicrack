@@ -12,7 +12,6 @@ import tempfile
 from io import BytesIO, StringIO
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock, patch
 
 import pytest
 

@@ -4,9 +4,8 @@ import logging
 import os
 import subprocess
 import tempfile
-import traceback
 from subprocess import Popen
-from typing import Any, cast
+from typing import Any
 
 from intellicrack.data import CA_CERT_PATH, CA_KEY_PATH
 from intellicrack.utils.logger import logger
@@ -90,7 +89,7 @@ class SSLTLSInterceptor:
         """Generate a CA certificate for SSL/TLS interception.
 
         Returns:
-            tuple: (certificate, key) as PEM bytes, or (None, None) if failed
+            Tuple of (certificate, key) as PEM bytes, or (None, None) if failed
 
         """
         if not CRYPTOGRAPHY_AVAILABLE:
@@ -119,7 +118,7 @@ class SSLTLSInterceptor:
         """Start the SSL/TLS interceptor.
 
         Returns:
-            bool: True if started successfully, False otherwise
+            True if started successfully, False otherwise
 
         """
         try:
@@ -279,7 +278,7 @@ def response(flow: http.HTTPFlow) -> None:
         """Stop the SSL/TLS interceptor.
 
         Returns:
-            bool: True if stopped successfully, False otherwise
+            True if stopped successfully, False otherwise
 
         """
         try:
@@ -302,7 +301,7 @@ def response(flow: http.HTTPFlow) -> None:
             executable: Name of the executable
 
         Returns:
-            str: Path to the executable, or None if not found
+            Path to the executable, or None if not found
 
         """
         from ...utils.core.path_discovery import find_tool
@@ -319,7 +318,7 @@ def response(flow: http.HTTPFlow) -> None:
         """Get the captured traffic log.
 
         Returns:
-            list: List of captured traffic entries
+            List of captured traffic entries
 
         """
         return self.traffic_log.copy()
@@ -352,7 +351,7 @@ def response(flow: http.HTTPFlow) -> None:
         """Get the list of target hosts.
 
         Returns:
-            list: List of target hostnames
+            List of target hostnames
 
         """
         target_hosts = validate_type(self.config["target_hosts"], list)
@@ -368,7 +367,7 @@ def response(flow: http.HTTPFlow) -> None:
             config: Configuration dictionary with settings to update
 
         Returns:
-            bool: True if configuration was successful, False otherwise
+            True if configuration was successful, False otherwise
 
         """
         try:
@@ -474,7 +473,7 @@ def response(flow: http.HTTPFlow) -> None:
             return False
 
     def get_config(self) -> dict[str, Any]:
-        """Get current configuration.
+        """Get current configuration with sensitive data redacted.
 
         Returns the current configuration of the SSL/TLS interceptor with
         sensitive information like private keys redacted for security.
@@ -486,7 +485,12 @@ def response(flow: http.HTTPFlow) -> None:
         return self._get_safe_config()
 
     def _get_safe_config(self) -> dict[str, Any]:
-        """Get configuration with sensitive data redacted."""
+        """Get configuration with sensitive data redacted.
+
+        Returns:
+            Dictionary containing current configuration with sensitive information redacted
+
+        """
         safe_config = self.config.copy()
 
         # Redact sensitive information

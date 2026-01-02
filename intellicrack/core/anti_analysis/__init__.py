@@ -48,21 +48,51 @@ class AntiAnalysisEngine:
     """Engine for anti-analysis and evasion techniques."""
 
     def __init__(self) -> None:
-        """Initialize the anti-analysis engine with detection components."""
+        """Initialize the anti-analysis engine with detection components.
+
+        Returns:
+            None
+        """
         self.debugger_detector = DebuggerDetector()
         self.vm_detector = VMDetector()
         self.sandbox_detector = SandboxDetector()
 
     def detect_virtual_environment(self) -> dict[str, Any]:
-        """Detect if running in a virtual environment."""
+        """Detect if running in a virtual environment.
+
+        Returns:
+            dict[str, Any]: Dictionary containing detection results with the
+                following keys: 'is_virtual' (bool), 'vm_type' (str),
+                'confidence' (float), and 'indicators' (list[str]) listing
+                detected virtualization indicators such as memory patterns,
+                registry entries, or system artifact signatures.
+        """
         return self.vm_detector.detect_vm()
 
     def detect_debugger(self) -> dict[str, Any]:
-        """Detect if a debugger is attached."""
+        """Detect if a debugger is attached.
+
+        Returns:
+            dict[str, Any]: Dictionary containing detection results with the
+                following keys: 'is_debugged' (bool), 'debugger_type' (str),
+                'confidence' (float), and 'detection_methods' (list[str])
+                listing the debugging detection techniques used such as
+                exception handling hooks, interrupt vectors, or kernel
+                debugger flags.
+        """
         return self.debugger_detector.detect_debugger()
 
     def detect_sandbox(self) -> dict[str, Any]:
-        """Detect if running in a sandbox."""
+        """Detect if running in a sandbox.
+
+        Returns:
+            dict[str, Any]: Dictionary containing detection results with the
+                following keys: 'is_sandboxed' (bool), 'sandbox_type' (str),
+                'confidence' (float), and 'detected_mechanisms' (list[str])
+                listing identified sandbox implementations such as file system
+                restrictions, API hooking patterns, or behavior monitoring
+                indicators.
+        """
         return self.sandbox_detector.detect_sandbox()
 
 

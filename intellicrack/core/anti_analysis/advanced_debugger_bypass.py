@@ -29,11 +29,7 @@ import struct
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
-
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
+from typing import Any
 
 
 @dataclass
@@ -104,7 +100,12 @@ class UserModeNTAPIHooker:
             self.logger.exception("Failed to initialize Linux user-mode hooks: %s", e)
 
     def hook_ntquery_information_process(self) -> bool:
-        """Hide debugger by hooking NtQueryInformationProcess in user-mode."""
+        """Hide debugger by hooking NtQueryInformationProcess in user-mode.
+
+        Returns:
+            True if hook installation succeeded, False otherwise.
+
+        """
         try:
             if platform.system() != "Windows":
                 return False
@@ -140,7 +141,15 @@ class UserModeNTAPIHooker:
             return False
 
     def _generate_ntquery_hook_shellcode(self, original_addr: int) -> bytes:
-        """Generate shellcode for NtQueryInformationProcess hook."""
+        """Generate shellcode for NtQueryInformationProcess hook.
+
+        Args:
+            original_addr: Address of the original NT API function.
+
+        Returns:
+            Generated x86/x64 shellcode for the hook.
+
+        """
         if platform.machine().endswith("64"):
             shellcode = bytearray(
                 [
@@ -178,7 +187,12 @@ class UserModeNTAPIHooker:
         return bytes(shellcode)
 
     def hook_ntset_information_thread(self) -> bool:
-        """Prevent ThreadHideFromDebugger by hooking NtSetInformationThread."""
+        """Prevent ThreadHideFromDebugger by hooking NtSetInformationThread.
+
+        Returns:
+            True if hook installation succeeded, False otherwise.
+
+        """
         try:
             if platform.system() != "Windows":
                 return False
@@ -214,7 +228,15 @@ class UserModeNTAPIHooker:
             return False
 
     def _generate_ntset_thread_hook_shellcode(self, original_addr: int) -> bytes:
-        """Generate shellcode for NtSetInformationThread hook."""
+        """Generate shellcode for NtSetInformationThread hook.
+
+        Args:
+            original_addr: Address of the original NT API function.
+
+        Returns:
+            Generated x86/x64 shellcode for the hook.
+
+        """
         if platform.machine().endswith("64"):
             shellcode = bytearray([0x48, 0x83, 0xFA, 0x11, 0x74, 0x0C, 0x48, 0xB8])
             shellcode.extend(struct.pack("<Q", original_addr + 16))
@@ -229,7 +251,12 @@ class UserModeNTAPIHooker:
         return bytes(shellcode)
 
     def hook_ntquery_system_information(self) -> bool:
-        """Hide debugger processes by hooking NtQuerySystemInformation."""
+        """Hide debugger processes by hooking NtQuerySystemInformation.
+
+        Returns:
+            True if hook installation succeeded, False otherwise.
+
+        """
         try:
             if platform.system() != "Windows":
                 return False
@@ -265,7 +292,15 @@ class UserModeNTAPIHooker:
             return False
 
     def _generate_ntsystem_hook_shellcode(self, original_addr: int) -> bytes:
-        """Generate shellcode for NtQuerySystemInformation hook."""
+        """Generate shellcode for NtQuerySystemInformation hook.
+
+        Args:
+            original_addr: Address of the original NT API function.
+
+        Returns:
+            Generated x86/x64 shellcode for the hook.
+
+        """
         if platform.machine().endswith("64"):
             shellcode = bytearray([0x48, 0x83, 0xF9, 0x23, 0x74, 0x0C, 0x48, 0xB8])
             shellcode.extend(struct.pack("<Q", original_addr + 16))
@@ -280,7 +315,17 @@ class UserModeNTAPIHooker:
         return bytes(shellcode)
 
     def _install_inline_hook(self, target_addr: int, hook_code: bytes, original_bytes: bytes) -> bool:
-        """Install inline hook by patching memory."""
+        """Install inline hook by patching memory.
+
+        Args:
+            target_addr: Address where the hook will be installed.
+            hook_code: Shellcode to install at the target address.
+            original_bytes: Original bytes at the target address for restoration.
+
+        Returns:
+            True if hook installation succeeded, False otherwise.
+
+        """
         try:
             if platform.system() != "Windows":
                 return False
@@ -315,7 +360,16 @@ class UserModeNTAPIHooker:
             return False
 
     def _read_memory(self, address: int, size: int) -> bytes:
-        """Read memory from target address."""
+        """Read memory from target address.
+
+        Args:
+            address: Memory address to read from.
+            size: Number of bytes to read.
+
+        Returns:
+            Data read from the specified address, empty bytes on failure.
+
+        """
         try:
             if platform.system() != "Windows":
                 return b""
@@ -334,7 +388,12 @@ class UserModeNTAPIHooker:
             return b""
 
     def remove_all_hooks(self) -> bool:
-        """Remove all installed hooks."""
+        """Remove all installed hooks.
+
+        Returns:
+            True if all hooks were removed successfully, False otherwise.
+
+        """
         try:
             for hook_info in self.hooks.values():
                 if hook_info.active:
@@ -349,7 +408,15 @@ class UserModeNTAPIHooker:
             return False
 
     def _remove_hook(self, hook_info: HookInfo) -> bool:
-        """Remove a specific hook."""
+        """Remove a specific hook.
+
+        Args:
+            hook_info: Hook information object containing target address and original bytes.
+
+        Returns:
+            True if hook removal succeeded, False otherwise.
+
+        """
         try:
             if platform.system() != "Windows":
                 return False
@@ -398,7 +465,12 @@ class HypervisorDebugger:
         self.vmcs_shadowing = False
 
     def check_virtualization_support(self) -> dict[str, bool]:
-        """Check if CPU supports hardware virtualization."""
+        """Check if CPU supports hardware virtualization.
+
+        Returns:
+            Dictionary with keys 'vmx', 'svm', 'ept', 'vpid' indicating support.
+
+        """
         try:
             support_info = {"vmx": False, "svm": False, "ept": False, "vpid": False}
 
@@ -414,7 +486,12 @@ class HypervisorDebugger:
             return {"vmx": False, "svm": False, "ept": False, "vpid": False}
 
     def _check_windows_vt_support(self) -> dict[str, bool]:
-        """Check Windows virtualization support via CPUID."""
+        """Check Windows virtualization support via CPUID.
+
+        Returns:
+            Dictionary with virtualization feature support status.
+
+        """
         try:
             cpuid_eax1_ecx = self._get_cpuid(1, 0)[2]
             support = {"vmx": bool(cpuid_eax1_ecx & (1 << 5))}
@@ -437,7 +514,12 @@ class HypervisorDebugger:
             return {"vmx": False, "svm": False, "ept": False, "vpid": False}
 
     def _check_linux_vt_support(self) -> dict[str, bool]:
-        """Check Linux virtualization support via /proc/cpuinfo."""
+        """Check Linux virtualization support via /proc/cpuinfo.
+
+        Returns:
+            Dictionary with virtualization feature support status.
+
+        """
         try:
             with Path("/proc/cpuinfo").open() as f:
                 cpuinfo = f.read()
@@ -453,7 +535,16 @@ class HypervisorDebugger:
             return {"vmx": False, "svm": False, "ept": False, "vpid": False}
 
     def _get_cpuid(self, eax: int, ecx: int) -> tuple[int, int, int, int]:
-        """Execute CPUID instruction."""
+        """Execute CPUID instruction.
+
+        Args:
+            eax: EAX register value for CPUID function selection.
+            ecx: ECX register value for CPUID sub-function selection.
+
+        Returns:
+            CPUID results in (EAX, EBX, ECX, EDX) order.
+
+        """
         try:
             if platform.system() == "Windows":
                 cpuid_func = ctypes.CDLL("msvcrt").__cpuid
@@ -466,7 +557,15 @@ class HypervisorDebugger:
             return (0, 0, 0, 0)
 
     def _read_msr(self, msr_index: int) -> int:
-        """Read Model-Specific Register."""
+        """Read Model-Specific Register.
+
+        Args:
+            msr_index: MSR address/index to read.
+
+        Returns:
+            Value of the MSR, or 0 on failure.
+
+        """
         try:
             if platform.system() == "Windows":
                 return 0
@@ -482,7 +581,12 @@ class HypervisorDebugger:
             return 0
 
     def setup_vmcs_shadowing(self) -> bool:
-        """Set up VMCS shadowing to hide debugging VMCS structures."""
+        """Set up VMCS shadowing to hide debugging VMCS structures.
+
+        Returns:
+            True if VMCS shadowing setup succeeded, False otherwise.
+
+        """
         try:
             vt_support = self.check_virtualization_support()
 
@@ -499,7 +603,12 @@ class HypervisorDebugger:
             return False
 
     def setup_ept_hooks(self) -> bool:
-        """Set up Extended Page Table hooks for memory access monitoring."""
+        """Set up Extended Page Table hooks for memory access monitoring.
+
+        Returns:
+            True if EPT hooks setup succeeded, False otherwise.
+
+        """
         try:
             vt_support = self.check_virtualization_support()
 
@@ -516,7 +625,15 @@ class HypervisorDebugger:
             return False
 
     def manipulate_hardware_breakpoints(self, breakpoints: dict[int, int]) -> bool:
-        """Manipulate hardware breakpoints via hypervisor."""
+        """Manipulate hardware breakpoints via hypervisor.
+
+        Args:
+            breakpoints: Dictionary mapping debug register indices (0-3) to addresses.
+
+        Returns:
+            True if breakpoint manipulation succeeded, False otherwise.
+
+        """
         try:
             if not self.vmx_enabled:
                 self.logger.warning("VMX not enabled, using standard DR manipulation")
@@ -544,7 +661,12 @@ class TimingNeutralizer:
         self.hooked_functions: dict[str, int] = {}
 
     def neutralize_rdtsc(self) -> bool:
-        """Neutralize RDTSC/RDTSCP timing checks."""
+        """Neutralize RDTSC/RDTSCP timing checks.
+
+        Returns:
+            True if RDTSC neutralization succeeded, False otherwise.
+
+        """
         try:
             if platform.system() != "Windows":
                 return self._neutralize_rdtsc_linux()
@@ -560,7 +682,12 @@ class TimingNeutralizer:
             return False
 
     def _neutralize_rdtsc_linux(self) -> bool:
-        """Neutralize RDTSC on Linux using LD_PRELOAD."""
+        """Neutralize RDTSC on Linux using LD_PRELOAD.
+
+        Returns:
+            True if RDTSC neutralization succeeded, False otherwise.
+
+        """
         try:
             self.base_timestamp = time.time_ns()
             self.logger.info("RDTSC neutralization initialized (Linux)")
@@ -571,7 +698,12 @@ class TimingNeutralizer:
             return False
 
     def _read_tsc(self) -> int:
-        """Read Time Stamp Counter."""
+        """Read Time Stamp Counter.
+
+        Returns:
+            Current timestamp in nanoseconds, or 0 on failure.
+
+        """
         try:
             if platform.system() == "Windows":
                 return int(time.perf_counter() * 1000000000)
@@ -581,7 +713,12 @@ class TimingNeutralizer:
             return 0
 
     def hook_query_performance_counter(self) -> bool:
-        """Provide consistent timing by hooking QueryPerformanceCounter."""
+        """Provide consistent timing by hooking QueryPerformanceCounter.
+
+        Returns:
+            True if hook installation succeeded, False otherwise.
+
+        """
         try:
             if platform.system() != "Windows":
                 return False
@@ -604,7 +741,12 @@ class TimingNeutralizer:
             return False
 
     def hook_get_tick_count(self) -> bool:
-        """Provide consistent timing by hooking GetTickCount/GetTickCount64."""
+        """Provide consistent timing by hooking GetTickCount/GetTickCount64.
+
+        Returns:
+            True if hook installation succeeded, False otherwise.
+
+        """
         try:
             if platform.system() != "Windows":
                 return False
@@ -630,7 +772,15 @@ class TimingNeutralizer:
             return False
 
     def normalize_timing(self, execution_time_ms: float) -> float:
-        """Normalize execution time to appear consistent."""
+        """Normalize execution time to appear consistent.
+
+        Args:
+            execution_time_ms: Execution time in milliseconds.
+
+        Returns:
+            Normalized execution time in milliseconds.
+
+        """
         try:
             normalized = execution_time_ms
 
@@ -647,7 +797,12 @@ class TimingNeutralizer:
             return execution_time_ms
 
     def remove_timing_hooks(self) -> bool:
-        """Remove all timing hooks."""
+        """Remove all timing hooks.
+
+        Returns:
+            True if all timing hooks were removed successfully, False otherwise.
+
+        """
         try:
             self.hooked_functions.clear()
             self.logger.info("All timing hooks removed")
@@ -687,7 +842,7 @@ class AdvancedDebuggerBypass:
         (if supported), and timing attack neutralization.
 
         Returns:
-            Dictionary containing results of each bypass technique installation
+            Results of each bypass technique installation with overall success status.
 
         """
         results: dict[str, Any] = {
@@ -750,7 +905,7 @@ class AdvancedDebuggerBypass:
         ScyllaHide's anti-debugging protections.
 
         Returns:
-            Dictionary of bypass technique names and their installation status
+            Bypass technique names and their installation status.
 
         """
         results: dict[str, bool | str] = {}
@@ -781,7 +936,15 @@ class AdvancedDebuggerBypass:
             return {"error": str(e)}
 
     def defeat_anti_debug_technique(self, technique_name: str) -> bool:
-        """Defeat a specific anti-debug technique."""
+        """Defeat a specific anti-debug technique.
+
+        Args:
+            technique_name: Name of the anti-debug technique to defeat.
+
+        Returns:
+            True if the technique was defeated, False otherwise.
+
+        """
         technique_handlers = {
             "PEB.BeingDebugged": self._defeat_peb_being_debugged,
             "PEB.NtGlobalFlag": self._defeat_ntglobalflag,
@@ -804,7 +967,12 @@ class AdvancedDebuggerBypass:
             return False
 
     def _defeat_peb_being_debugged(self) -> bool:
-        """Defeat PEB.BeingDebugged checks."""
+        """Defeat PEB.BeingDebugged checks.
+
+        Returns:
+            True if the check was defeated, False otherwise.
+
+        """
         try:
             if platform.system() != "Windows":
                 return False
@@ -819,11 +987,21 @@ class AdvancedDebuggerBypass:
             return False
 
     def _defeat_ntglobalflag(self) -> bool:
-        """Defeat NtGlobalFlag checks."""
+        """Defeat NtGlobalFlag checks.
+
+        Returns:
+            True if the check was defeated, False otherwise.
+
+        """
         return self._defeat_peb_being_debugged()
 
     def _defeat_hardware_breakpoints(self) -> bool:
-        """Defeat hardware breakpoint detection."""
+        """Defeat hardware breakpoint detection.
+
+        Returns:
+            True if the detection was defeated, False otherwise.
+
+        """
         try:
             from intellicrack.core.anti_analysis.debugger_bypass import DebuggerBypass
 
@@ -835,7 +1013,12 @@ class AdvancedDebuggerBypass:
             return False
 
     def remove_all_bypasses(self) -> bool:
-        """Remove all installed bypasses."""
+        """Remove all installed bypasses.
+
+        Returns:
+            True if all bypasses were removed successfully, False otherwise.
+
+        """
         try:
             self.kernel_hooks.remove_all_hooks()
             self.timing_neutralizer.remove_timing_hooks()
@@ -852,8 +1035,8 @@ class AdvancedDebuggerBypass:
         """Get current bypass status and installed techniques.
 
         Returns:
-            Dictionary containing status of all bypass techniques including
-            user-mode hooks, hypervisor features, and timing neutralization
+            Status of all bypass techniques including user-mode hooks,
+            hypervisor features, and timing neutralization.
 
         """
         return {
@@ -875,10 +1058,10 @@ def install_advanced_bypass(scyllahide_resistant: bool = True) -> dict[str, Any]
     hypervisor-based debugging (if supported), and timing attack neutralization.
 
     Args:
-        scyllahide_resistant: Use ScyllaHide-resistant techniques
+        scyllahide_resistant: Use ScyllaHide-resistant techniques.
 
     Returns:
-        Dict with installation results and status
+        Installation results and status for all enabled bypass techniques.
 
     Note:
         All hooks operate in user-mode (Ring 3). Kernel-mode interception would

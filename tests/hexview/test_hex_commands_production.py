@@ -4,6 +4,7 @@ Tests REAL command execution, undo/redo functionality with actual binary data.
 """
 
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -71,7 +72,7 @@ class TestReplaceCommand:
 
         assert cmd1.can_merge_with(cmd2) is True
 
-        merged = cmd1.merge_with(cmd2)
+        merged = cast(ReplaceCommand, cmd1.merge_with(cmd2))
         assert merged.offset == 100
         assert merged.new_data == b"AAAABBBB"
 
@@ -93,7 +94,7 @@ class TestInsertCommand:
 
         assert cmd1.can_merge_with(cmd2) is True
 
-        merged = cmd1.merge_with(cmd2)
+        merged = cast(InsertCommand, cmd1.merge_with(cmd2))
         assert merged.offset == 100
         assert merged.data == b"AAABBB"
 
@@ -123,7 +124,7 @@ class TestDeleteCommand:
 
         assert cmd1.can_merge_with(cmd2) is True
 
-        merged = cmd1.merge_with(cmd2)
+        merged = cast(DeleteCommand, cmd1.merge_with(cmd2))
         assert merged.offset == 100
         assert merged.length == 20
 

@@ -7,7 +7,7 @@ for real-time display in the Intellicrack GUI.
 
 import threading
 from datetime import datetime
-from unittest.mock import Mock, patch
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pytest
 
@@ -32,6 +32,41 @@ from intellicrack.utils.log_message import (
     register_message_callback,
     unregister_message_callback,
 )
+
+
+class FakeLogger:
+    """Real test double for logging.Logger."""
+
+    def __init__(self) -> None:
+        self.log_calls: List[Tuple[int, str, Dict[str, Any]]] = []
+        self.should_fail: bool = False
+
+    def log(self, level: int, message: str, **kwargs: Any) -> None:
+        """Record log call with level, message, and extras."""
+        if self.should_fail:
+            raise Exception("Logging error")
+        self.log_calls.append((level, message, kwargs))
+
+    def reset(self) -> None:
+        """Clear recorded calls."""
+        self.log_calls.clear()
+        self.should_fail = False
+
+    def get_last_call(self) -> Optional[Tuple[int, str, Dict[str, Any]]]:
+        """Get most recent log call."""
+        return self.log_calls[-1] if self.log_calls else None
+
+    def get_all_calls(self) -> List[Tuple[int, str, Dict[str, Any]]]:
+        """Get all log calls."""
+        return self.log_calls.copy()
+
+
+@pytest.fixture
+def fake_logger(monkeypatch: pytest.MonkeyPatch) -> FakeLogger:
+    """Provide fake logger and inject it into log_message module."""
+    logger = FakeLogger()
+    monkeypatch.setattr("intellicrack.utils.log_message.main_logger", logger)
+    return logger
 
 
 class TestMessageLevelEnum:
@@ -75,160 +110,155 @@ class TestMessageCategoryEnum:
 class TestLogMessage:
     """Test core log_message functionality."""
 
-    def test_logs_basic_message(self) -> None:
+    def test_logs_basic_message(self, fake_logger: FakeLogger) -> None:
         """log_message logs basic message at INFO level."""
-        with patch("intellicrack.utils.log_message.main_logger") as mock_logger:
-            log_message("Test message")
+        log_message("Test message")
 
-            mock_logger.log.assert_called_once()
-            call_args = mock_logger.log.call_args
-            assert "Test message" in str(call_args)
+        assert len(fake_logger.log_calls) == 1
+        level, message, kwargs = fake_logger.get_last_call()
+        assert "Test message" in message
 
-    def test_accepts_string_level(self) -> None:
+    def test_accepts_string_level(self, fake_logger: FakeLogger) -> None:
         """log_message accepts string level parameter."""
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_message("Test", level="ERROR")
+        log_message("Test", level="ERROR")
+        assert len(fake_logger.log_calls) == 1
 
-    def test_accepts_enum_level(self) -> None:
+    def test_accepts_enum_level(self, fake_logger: FakeLogger) -> None:
         """log_message accepts MessageLevel enum."""
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_message("Test", level=MessageLevel.WARNING)
+        log_message("Test", level=MessageLevel.WARNING)
+        assert len(fake_logger.log_calls) == 1
 
-    def test_accepts_string_category(self) -> None:
+    def test_accepts_string_category(self, fake_logger: FakeLogger) -> None:
         """log_message accepts string category parameter."""
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_message("Test", category="ANALYSIS")
+        log_message("Test", category="ANALYSIS")
+        assert len(fake_logger.log_calls) == 1
 
-    def test_accepts_enum_category(self) -> None:
+    def test_accepts_enum_category(self, fake_logger: FakeLogger) -> None:
         """log_message accepts MessageCategory enum."""
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_message("Test", category=MessageCategory.SECURITY)
+        log_message("Test", category=MessageCategory.SECURITY)
+        assert len(fake_logger.log_calls) == 1
 
-    def test_includes_context_in_message(self) -> None:
+    def test_includes_context_in_message(self, fake_logger: FakeLogger) -> None:
         """log_message includes context dictionary in message."""
-        with patch("intellicrack.utils.log_message.main_logger") as mock_logger:
-            log_message(
-                "Test",
-                context={"key1": "value1", "key2": 42},
-            )
+        log_message(
+            "Test",
+            context={"key1": "value1", "key2": 42},
+        )
 
-            call_args = str(mock_logger.log.call_args)
-            assert "Context:" in call_args
-            assert "key1=value1" in call_args or "key2=42" in call_args
+        level, message, kwargs = fake_logger.get_last_call()
+        assert "Context:" in message
+        assert "key1=value1" in message or "key2=42" in message
 
-    def test_includes_source_in_message(self) -> None:
+    def test_includes_source_in_message(self, fake_logger: FakeLogger) -> None:
         """log_message includes source identifier in message."""
-        with patch("intellicrack.utils.log_message.main_logger") as mock_logger:
-            log_message("Test", source="test_module.test_function")
+        log_message("Test", source="test_module.test_function")
 
-            call_args = str(mock_logger.log.call_args)
-            assert "Source:" in call_args
-            assert "test_module.test_function" in call_args
+        level, message, kwargs = fake_logger.get_last_call()
+        assert "Source:" in message
+        assert "test_module.test_function" in message
 
-    def test_includes_exception_in_message(self) -> None:
+    def test_includes_exception_in_message(self, fake_logger: FakeLogger) -> None:
         """log_message includes exception information in message."""
         test_exception = ValueError("Test error")
 
-        with patch("intellicrack.utils.log_message.main_logger") as mock_logger:
-            log_message("Test", exception=test_exception)
+        log_message("Test", exception=test_exception)
 
-            call_args = str(mock_logger.log.call_args)
-            assert "Exception:" in call_args
-            assert "ValueError" in call_args
+        level, message, kwargs = fake_logger.get_last_call()
+        assert "Exception:" in message
+        assert "ValueError" in message
 
-    def test_uses_custom_timestamp(self) -> None:
+    def test_uses_custom_timestamp(self, fake_logger: FakeLogger) -> None:
         """log_message accepts custom timestamp."""
         custom_time = datetime(2025, 1, 1, 12, 0, 0)
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            clear_message_queue()
-            log_message("Test", timestamp=custom_time)
+        clear_message_queue()
+        log_message("Test", timestamp=custom_time)
 
-            queue = get_message_queue()
-            assert len(queue) == 1
-            assert "2025-01-01" in queue[0]["timestamp"]
+        queue = get_message_queue()
+        assert len(queue) == 1
+        assert "2025-01-01" in queue[0]["timestamp"]
 
 
 class TestMessageQueueManagement:
     """Test message queue functionality."""
 
-    def test_message_added_to_queue_when_persist_true(self) -> None:
+    def test_message_added_to_queue_when_persist_true(
+        self, fake_logger: FakeLogger
+    ) -> None:
         """Messages are added to queue when persist=True."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_message("Test message", persist=True)
+        log_message("Test message", persist=True)
 
-            queue = get_message_queue()
-            assert len(queue) == 1
-            assert queue[0]["message"] == "Test message"
+        queue = get_message_queue()
+        assert len(queue) == 1
+        assert queue[0]["message"] == "Test message"
 
-    def test_message_not_added_to_queue_when_persist_false(self) -> None:
+    def test_message_not_added_to_queue_when_persist_false(
+        self, fake_logger: FakeLogger
+    ) -> None:
         """Messages are not added to queue when persist=False."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_message("Test message", persist=False)
+        log_message("Test message", persist=False)
 
-            queue = get_message_queue()
-            assert len(queue) == 0
+        queue = get_message_queue()
+        assert len(queue) == 0
 
-    def test_queue_stores_complete_message_info(self) -> None:
+    def test_queue_stores_complete_message_info(self, fake_logger: FakeLogger) -> None:
         """Message queue stores complete message information."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_message(
-                "Test",
-                level=MessageLevel.ERROR,
-                category=MessageCategory.ANALYSIS,
-                context={"key": "value"},
-                source="test_source",
-            )
+        log_message(
+            "Test",
+            level=MessageLevel.ERROR,
+            category=MessageCategory.ANALYSIS,
+            context={"key": "value"},
+            source="test_source",
+        )
 
-            queue = get_message_queue()
-            entry = queue[0]
+        queue = get_message_queue()
+        entry = queue[0]
 
-            assert entry["level"] == "ERROR"
-            assert entry["category"] == "ANALYSIS"
-            assert entry["message"] == "Test"
-            assert entry["context"] == {"key": "value"}
-            assert entry["source"] == "test_source"
+        assert entry["level"] == "ERROR"
+        assert entry["category"] == "ANALYSIS"
+        assert entry["message"] == "Test"
+        assert entry["context"] == {"key": "value"}
+        assert entry["source"] == "test_source"
 
-    def test_queue_limits_size_to_prevent_memory_issues(self) -> None:
+    def test_queue_limits_size_to_prevent_memory_issues(
+        self, fake_logger: FakeLogger
+    ) -> None:
         """Message queue limits size to prevent memory issues."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            for i in range(1100):
-                log_message(f"Message {i}")
+        for i in range(1100):
+            log_message(f"Message {i}")
 
-            queue = get_message_queue()
-            assert len(queue) <= 1000
+        queue = get_message_queue()
+        assert len(queue) <= 1000
 
-    def test_clear_message_queue_empties_queue(self) -> None:
+    def test_clear_message_queue_empties_queue(self, fake_logger: FakeLogger) -> None:
         """clear_message_queue removes all messages from queue."""
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_message("Message 1")
-            log_message("Message 2")
+        log_message("Message 1")
+        log_message("Message 2")
 
-            clear_message_queue()
-            queue = get_message_queue()
+        clear_message_queue()
+        queue = get_message_queue()
 
-            assert len(queue) == 0
+        assert len(queue) == 0
 
-    def test_get_message_queue_returns_copy(self) -> None:
+    def test_get_message_queue_returns_copy(self, fake_logger: FakeLogger) -> None:
         """get_message_queue returns a copy, not the original queue."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_message("Test")
+        log_message("Test")
 
-            queue1 = get_message_queue()
-            queue2 = get_message_queue()
+        queue1 = get_message_queue()
+        queue2 = get_message_queue()
 
-            assert queue1 is not queue2
-            assert queue1 == queue2
+        assert queue1 is not queue2
+        assert queue1 == queue2
 
 
 class TestCallbackManagement:
@@ -243,9 +273,9 @@ class TestCallbackManagement:
         register_message_callback(test_callback)
         unregister_message_callback(test_callback)
 
-    def test_callback_receives_notifications(self) -> None:
+    def test_callback_receives_notifications(self, fake_logger: FakeLogger) -> None:
         """Registered callback receives message notifications."""
-        callback_data = []
+        callback_data: List[Tuple[str, str, str]] = []
 
         def test_callback(level: str, category: str, message: str) -> None:
             callback_data.append((level, category, message))
@@ -253,12 +283,11 @@ class TestCallbackManagement:
         register_message_callback(test_callback)
 
         try:
-            with patch("intellicrack.utils.log_message.main_logger"):
-                log_message(
-                    "Test message",
-                    level=MessageLevel.WARNING,
-                    category=MessageCategory.SECURITY,
-                )
+            log_message(
+                "Test message",
+                level=MessageLevel.WARNING,
+                category=MessageCategory.SECURITY,
+            )
 
             assert len(callback_data) == 1
             assert callback_data[0][0] == "WARNING"
@@ -267,9 +296,11 @@ class TestCallbackManagement:
         finally:
             unregister_message_callback(test_callback)
 
-    def test_unregister_callback_removes_callback(self) -> None:
+    def test_unregister_callback_removes_callback(
+        self, fake_logger: FakeLogger
+    ) -> None:
         """unregister_message_callback removes callback from list."""
-        callback_data = []
+        callback_data: List[Tuple[str, str, str]] = []
 
         def test_callback(level: str, category: str, message: str) -> None:
             callback_data.append((level, category, message))
@@ -277,14 +308,13 @@ class TestCallbackManagement:
         register_message_callback(test_callback)
         unregister_message_callback(test_callback)
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_message("Test after unregister")
+        log_message("Test after unregister")
 
         assert not callback_data
 
-    def test_callback_not_added_twice(self) -> None:
+    def test_callback_not_added_twice(self, fake_logger: FakeLogger) -> None:
         """Callback is not added multiple times."""
-        call_count = 0
+        call_count: int = 0
 
         def test_callback(level: str, category: str, message: str) -> None:
             nonlocal call_count
@@ -294,14 +324,15 @@ class TestCallbackManagement:
         register_message_callback(test_callback)
 
         try:
-            with patch("intellicrack.utils.log_message.main_logger"):
-                log_message("Test")
+            log_message("Test")
 
             assert call_count == 1
         finally:
             unregister_message_callback(test_callback)
 
-    def test_callback_errors_do_not_break_logging(self) -> None:
+    def test_callback_errors_do_not_break_logging(
+        self, fake_logger: FakeLogger
+    ) -> None:
         """Errors in callbacks do not prevent logging."""
 
         def failing_callback(level: str, category: str, message: str) -> None:
@@ -310,14 +341,15 @@ class TestCallbackManagement:
         register_message_callback(failing_callback)
 
         try:
-            with patch("intellicrack.utils.log_message.main_logger"):
-                log_message("Test message")
+            log_message("Test message")
         finally:
             unregister_message_callback(failing_callback)
 
-    def test_messages_not_sent_to_callbacks_when_notify_false(self) -> None:
+    def test_messages_not_sent_to_callbacks_when_notify_false(
+        self, fake_logger: FakeLogger
+    ) -> None:
         """Messages are not sent to callbacks when notify_ui=False."""
-        callback_data = []
+        callback_data: List[str] = []
 
         def test_callback(level: str, category: str, message: str) -> None:
             callback_data.append(message)
@@ -325,8 +357,7 @@ class TestCallbackManagement:
         register_message_callback(test_callback)
 
         try:
-            with patch("intellicrack.utils.log_message.main_logger"):
-                log_message("Test", notify_ui=False)
+            log_message("Test", notify_ui=False)
 
             assert not callback_data
         finally:
@@ -336,160 +367,154 @@ class TestCallbackManagement:
 class TestConvenienceFunctions:
     """Test convenience logging functions."""
 
-    def test_log_debug_logs_at_debug_level(self) -> None:
+    def test_log_debug_logs_at_debug_level(self, fake_logger: FakeLogger) -> None:
         """log_debug logs message at DEBUG level."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_debug("Debug message")
+        log_debug("Debug message")
 
-            queue = get_message_queue()
-            assert queue[0]["level"] == "DEBUG"
+        queue = get_message_queue()
+        assert queue[0]["level"] == "DEBUG"
 
-    def test_log_info_logs_at_info_level(self) -> None:
+    def test_log_info_logs_at_info_level(self, fake_logger: FakeLogger) -> None:
         """log_info logs message at INFO level."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_info("Info message")
+        log_info("Info message")
 
-            queue = get_message_queue()
-            assert queue[0]["level"] == "INFO"
+        queue = get_message_queue()
+        assert queue[0]["level"] == "INFO"
 
-    def test_log_warning_logs_at_warning_level(self) -> None:
+    def test_log_warning_logs_at_warning_level(self, fake_logger: FakeLogger) -> None:
         """log_warning logs message at WARNING level."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_warning("Warning message")
+        log_warning("Warning message")
 
-            queue = get_message_queue()
-            assert queue[0]["level"] == "WARNING"
+        queue = get_message_queue()
+        assert queue[0]["level"] == "WARNING"
 
-    def test_log_error_logs_at_error_level(self) -> None:
+    def test_log_error_logs_at_error_level(self, fake_logger: FakeLogger) -> None:
         """log_error logs message at ERROR level."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_error("Error message")
+        log_error("Error message")
 
-            queue = get_message_queue()
-            assert queue[0]["level"] == "ERROR"
+        queue = get_message_queue()
+        assert queue[0]["level"] == "ERROR"
 
-    def test_log_critical_logs_at_critical_level(self) -> None:
+    def test_log_critical_logs_at_critical_level(self, fake_logger: FakeLogger) -> None:
         """log_critical logs message at CRITICAL level."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_critical("Critical message")
+        log_critical("Critical message")
 
-            queue = get_message_queue()
-            assert queue[0]["level"] == "CRITICAL"
+        queue = get_message_queue()
+        assert queue[0]["level"] == "CRITICAL"
 
 
 class TestCategorySpecificFunctions:
     """Test category-specific logging functions."""
 
-    def test_log_analysis_uses_analysis_category(self) -> None:
+    def test_log_analysis_uses_analysis_category(
+        self, fake_logger: FakeLogger
+    ) -> None:
         """log_analysis logs with ANALYSIS category."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_analysis("Analysis message")
+        log_analysis("Analysis message")
 
-            queue = get_message_queue()
-            assert queue[0]["category"] == "ANALYSIS"
+        queue = get_message_queue()
+        assert queue[0]["category"] == "ANALYSIS"
 
-    def test_log_ui_uses_ui_category(self) -> None:
+    def test_log_ui_uses_ui_category(self, fake_logger: FakeLogger) -> None:
         """log_ui logs with UI category."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_ui("UI message")
+        log_ui("UI message")
 
-            queue = get_message_queue()
-            assert queue[0]["category"] == "UI"
+        queue = get_message_queue()
+        assert queue[0]["category"] == "UI"
 
-    def test_log_security_uses_security_category(self) -> None:
+    def test_log_security_uses_security_category(self, fake_logger: FakeLogger) -> None:
         """log_security logs with SECURITY category."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_security("Security message")
+        log_security("Security message")
 
-            queue = get_message_queue()
-            assert queue[0]["category"] == "SECURITY"
+        queue = get_message_queue()
+        assert queue[0]["category"] == "SECURITY"
 
-    def test_log_performance_uses_performance_category(self) -> None:
+    def test_log_performance_uses_performance_category(
+        self, fake_logger: FakeLogger
+    ) -> None:
         """log_performance logs with PERFORMANCE category."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_performance("Performance message")
+        log_performance("Performance message")
 
-            queue = get_message_queue()
-            assert queue[0]["category"] == "PERFORMANCE"
+        queue = get_message_queue()
+        assert queue[0]["category"] == "PERFORMANCE"
 
-    def test_log_binary_processing_uses_binary_processing_category(self) -> None:
+    def test_log_binary_processing_uses_binary_processing_category(
+        self, fake_logger: FakeLogger
+    ) -> None:
         """log_binary_processing logs with BINARY_PROCESSING category."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_binary_processing("Binary message")
+        log_binary_processing("Binary message")
 
-            queue = get_message_queue()
-            assert queue[0]["category"] == "BINARY_PROCESSING"
+        queue = get_message_queue()
+        assert queue[0]["category"] == "BINARY_PROCESSING"
 
-    def test_category_functions_accept_custom_level(self) -> None:
+    def test_category_functions_accept_custom_level(
+        self, fake_logger: FakeLogger
+    ) -> None:
         """Category-specific functions accept custom level parameter."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_analysis("Test", level=MessageLevel.ERROR)
+        log_analysis("Test", level=MessageLevel.ERROR)
 
-            queue = get_message_queue()
-            assert queue[0]["level"] == "ERROR"
-            assert queue[0]["category"] == "ANALYSIS"
+        queue = get_message_queue()
+        assert queue[0]["level"] == "ERROR"
+        assert queue[0]["category"] == "ANALYSIS"
 
 
 class TestLegacyAliases:
     """Test legacy compatibility aliases."""
 
-    def test_log_msg_works_as_alias(self) -> None:
+    def test_log_msg_works_as_alias(self, fake_logger: FakeLogger) -> None:
         """log_msg works as legacy alias for log_message."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_msg("Legacy message")
+        log_msg("Legacy message")
 
-            queue = get_message_queue()
-            assert len(queue) == 1
-            assert queue[0]["message"] == "Legacy message"
+        queue = get_message_queue()
+        assert len(queue) == 1
+        assert queue[0]["message"] == "Legacy message"
 
-    def test_message_log_works_as_alias(self) -> None:
+    def test_message_log_works_as_alias(self, fake_logger: FakeLogger) -> None:
         """message_log works as legacy alias for log_message."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            message_log("Legacy message")
+        message_log("Legacy message")
 
-            queue = get_message_queue()
-            assert len(queue) == 1
-            assert queue[0]["message"] == "Legacy message"
+        queue = get_message_queue()
+        assert len(queue) == 1
+        assert queue[0]["message"] == "Legacy message"
 
 
 class TestThreadSafety:
     """Test thread safety of logging system."""
 
-    def test_message_queue_is_thread_safe(self) -> None:
+    def test_message_queue_is_thread_safe(self, fake_logger: FakeLogger) -> None:
         """Message queue operations are thread-safe."""
         clear_message_queue()
-        threads = []
+        threads: List[threading.Thread] = []
 
         def log_from_thread(thread_id: int) -> None:
-            with patch("intellicrack.utils.log_message.main_logger"):
-                for i in range(10):
-                    log_message(f"Thread {thread_id} message {i}")
+            for i in range(10):
+                log_message(f"Thread {thread_id} message {i}")
 
         for i in range(5):
             thread = threading.Thread(target=log_from_thread, args=(i,))
@@ -504,7 +529,7 @@ class TestThreadSafety:
 
     def test_callback_registration_is_thread_safe(self) -> None:
         """Callback registration is thread-safe."""
-        callbacks = []
+        callbacks: List[Callable[[str, str, str], None]] = []
 
         def register_from_thread(thread_id: int) -> None:
             def callback(level: str, category: str, message: str) -> None:
@@ -513,7 +538,7 @@ class TestThreadSafety:
             callbacks.append(callback)
             register_message_callback(callback)
 
-        threads = []
+        threads: List[threading.Thread] = []
         for i in range(5):
             thread = threading.Thread(target=register_from_thread, args=(i,))
             threads.append(thread)
@@ -529,86 +554,83 @@ class TestThreadSafety:
 class TestRealWorldScenarios:
     """Test realistic production usage scenarios."""
 
-    def test_binary_analysis_logging(self) -> None:
+    def test_binary_analysis_logging(self, fake_logger: FakeLogger) -> None:
         """Test logging during binary analysis workflow."""
         clear_message_queue()
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_analysis("Starting binary analysis", source="binary_analyzer")
-            log_binary_processing(
-                "Loaded PE file",
-                context={"file_size": 1024000, "architecture": "x64"},
-            )
-            log_security(
-                "Found suspicious API calls",
-                level=MessageLevel.WARNING,
-                context={"apis": ["CreateProcess", "VirtualAlloc"]},
-            )
-            log_analysis("Analysis complete")
+        log_analysis("Starting binary analysis", source="binary_analyzer")
+        log_binary_processing(
+            "Loaded PE file",
+            context={"file_size": 1024000, "architecture": "x64"},
+        )
+        log_security(
+            "Found suspicious API calls",
+            level=MessageLevel.WARNING,
+            context={"apis": ["CreateProcess", "VirtualAlloc"]},
+        )
+        log_analysis("Analysis complete")
 
-            queue = get_message_queue()
-            assert len(queue) == 4
-            assert queue[1]["context"]["file_size"] == 1024000
+        queue = get_message_queue()
+        assert len(queue) == 4
+        assert queue[1]["context"]["file_size"] == 1024000
 
-    def test_error_logging_with_exception(self) -> None:
+    def test_error_logging_with_exception(self, fake_logger: FakeLogger) -> None:
         """Test error logging with exception information."""
         clear_message_queue()
 
         try:
             raise ValueError("Invalid license key format")
         except ValueError as e:
-            with patch("intellicrack.utils.log_message.main_logger"):
-                log_error(
-                    "License validation failed",
-                    exception=e,
-                    context={"key": "ABC-123-XYZ"},
-                )
+            log_error(
+                "License validation failed",
+                exception=e,
+                context={"key": "ABC-123-XYZ"},
+            )
 
-                queue = get_message_queue()
-                assert queue[0]["exception"] is not None
-                assert "ValueError" in queue[0]["exception"]
+            queue = get_message_queue()
+            assert queue[0]["exception"] is not None
+            assert "ValueError" in queue[0]["exception"]
 
 
 class TestEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_handles_empty_message(self) -> None:
+    def test_handles_empty_message(self, fake_logger: FakeLogger) -> None:
         """Logging handles empty message string."""
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_message("")
+        log_message("")
+        assert len(fake_logger.log_calls) == 1
 
-    def test_handles_very_long_message(self) -> None:
+    def test_handles_very_long_message(self, fake_logger: FakeLogger) -> None:
         """Logging handles very long messages."""
         long_message = "A" * 10000
 
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_message(long_message)
+        log_message(long_message)
+        assert len(fake_logger.log_calls) == 1
 
-    def test_handles_empty_context(self) -> None:
+    def test_handles_empty_context(self, fake_logger: FakeLogger) -> None:
         """Logging handles empty context dictionary."""
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_message("Test", context={})
+        log_message("Test", context={})
+        assert len(fake_logger.log_calls) == 1
 
-    def test_handles_none_values_in_context(self) -> None:
+    def test_handles_none_values_in_context(self, fake_logger: FakeLogger) -> None:
         """Logging handles None values in context."""
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_message("Test", context={"key": None})
+        log_message("Test", context={"key": None})
+        assert len(fake_logger.log_calls) == 1
 
-    def test_handles_complex_context_values(self) -> None:
+    def test_handles_complex_context_values(self, fake_logger: FakeLogger) -> None:
         """Logging handles complex objects in context."""
-        with patch("intellicrack.utils.log_message.main_logger"):
-            log_message(
-                "Test",
-                context={
-                    "list": [1, 2, 3],
-                    "dict": {"nested": "value"},
-                    "tuple": (1, 2),
-                },
-            )
+        log_message(
+            "Test",
+            context={
+                "list": [1, 2, 3],
+                "dict": {"nested": "value"},
+                "tuple": (1, 2),
+            },
+        )
+        assert len(fake_logger.log_calls) == 1
 
-    def test_handles_logging_system_failure(self) -> None:
+    def test_handles_logging_system_failure(self, fake_logger: FakeLogger) -> None:
         """Logging handles failures in underlying logging system."""
-        with patch("intellicrack.utils.log_message.main_logger") as mock_logger:
-            mock_logger.log.side_effect = Exception("Logging error")
+        fake_logger.should_fail = True
 
-            log_message("Test message")
+        log_message("Test message")

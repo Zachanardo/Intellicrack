@@ -134,6 +134,9 @@ class FridaOperationLogger:
         Complexity:
             Time: O(1) constant time for logger setup
             Space: O(1) constant space for logger instances
+
+        Side Effects:
+            Sets up four file handlers for operation, hook, performance, and bypass logging.
         """
         # Operation logger
         self.op_logger = logging.getLogger("frida.operations")
@@ -795,8 +798,8 @@ class HookBatcher:
         """Initialize the hook batcher.
 
         Args:
-            max_batch_size: Maximum number of hooks to batch together
-            batch_timeout_ms: Default timeout in milliseconds for batching
+            max_batch_size: Maximum number of hooks to batch together.
+            batch_timeout_ms: Default timeout in milliseconds for batching.
 
         Side Effects:
             - Initializes thread-safe queue
@@ -1041,7 +1044,7 @@ class FridaPerformanceOptimizer:
 
         # High CPU usage - be very selective
         if usage["cpu_percent"] > 80:
-            return importance == HookCategory.CRITICAL  # type: ignore[comparison-overlap]
+            return importance == HookCategory.CRITICAL
 
         # Check if this hook is frequently called
         hook_key = f"{module}!{function}"

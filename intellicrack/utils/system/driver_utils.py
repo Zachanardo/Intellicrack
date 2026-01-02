@@ -35,7 +35,7 @@ def get_driver_path(driver_name: str) -> str:
         driver_name: Name of the driver file
 
     Returns:
-        Full path to the driver
+        str: Full path to the driver
 
     """
     # Try to use path discovery if available

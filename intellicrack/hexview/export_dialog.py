@@ -21,7 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
-from typing import Any, Protocol
+from typing import Protocol
 
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -56,7 +56,16 @@ class FileHandlerProtocol(Protocol):
         ...
 
     def read_data(self, offset: int, size: int) -> bytes | None:
-        """Read data from file."""
+        """Read data from file.
+
+        Args:
+            offset: Starting byte offset in the file.
+            size: Number of bytes to read.
+
+        Returns:
+            Binary data read from the file, or None if the read fails.
+
+        """
         ...
 
 
@@ -99,7 +108,12 @@ class ExportDialog(QDialog):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """Initialize UI components."""
+        """Initialize UI components.
+
+        Builds the export dialog interface with format selection, options,
+        and file output settings.
+
+        """
         layout = QVBoxLayout()
 
         # Data source selection
@@ -208,6 +222,9 @@ class ExportDialog(QDialog):
     def on_format_changed(self, format_name: str) -> None:
         """Handle format selection change.
 
+        Updates the UI options and file extension based on the selected
+        export format.
+
         Args:
             format_name: Selected format name
 
@@ -237,7 +254,12 @@ class ExportDialog(QDialog):
             self.file_path_edit.setText(f"{base_name}.{ext}")
 
     def browse_file(self) -> None:
-        """Show file save dialog."""
+        """Show file save dialog.
+
+        Opens a file save dialog and updates the output file path with
+        the user's selection.
+
+        """
         format_name = self.format_combo.currentText()
         ext = self.FORMATS.get(format_name, "bin")
 
@@ -262,7 +284,12 @@ class ExportDialog(QDialog):
             self.file_path_edit.setText(file_path)
 
     def export_data(self) -> None:
-        """Export the data in the selected format."""
+        """Export the data in the selected format.
+
+        Converts the selected data to the chosen export format and writes
+        it to the specified file. Shows dialogs for errors and confirmation.
+
+        """
         if not self.file_path_edit.text():
             QMessageBox.warning(self, "No File", "Please specify an output file.")
             return
@@ -320,8 +347,11 @@ class ExportDialog(QDialog):
     def get_export_data(self) -> bytes | None:
         """Get the data to export based on selection.
 
+        Retrieves data from either the current selection or the entire file
+        depending on the user's choice in the UI.
+
         Returns:
-            Bytes to export or None if unavailable
+            Bytes to export or None if unavailable or selection is invalid.
 
         """
         if not self.hex_viewer or not hasattr(self.hex_viewer, "file_handler"):

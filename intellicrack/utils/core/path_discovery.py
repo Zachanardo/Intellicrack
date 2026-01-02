@@ -29,7 +29,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, Protocol
 
 
 if TYPE_CHECKING:
@@ -43,11 +43,28 @@ class ConfigManager(Protocol):
     """Protocol for config manager interface."""
 
     def get(self, key: str) -> Any:
-        """Get config value."""
+        """Get config value.
+
+        Args:
+            key: Configuration key to retrieve.
+
+        Returns:
+            Configuration value or None if not found.
+
+        """
         return None
 
     def set(self, key: str, value: Any) -> None:
-        """Set config value."""
+        """Set config value.
+
+        Args:
+            key: Configuration key to set.
+            value: Configuration value to store.
+
+        Returns:
+            None
+
+        """
         return
 
 
@@ -369,7 +386,16 @@ class PathDiscovery:
         return None
 
     def _generic_tool_search(self, tool_name: str, executables: list[str] | None = None) -> str | None:
-        """Provide search for tools not in specification."""
+        """Provide search for tools not in specification.
+
+        Args:
+            tool_name: Name of the tool to search for.
+            executables: Optional list of executable names to search for.
+
+        Returns:
+            Path to the tool executable or None if not found.
+
+        """
         if not executables:
             executables = [tool_name]
             if self.is_windows:
@@ -420,7 +446,15 @@ class PathDiscovery:
         return None
 
     def _search_env_vars(self, env_vars: list[str]) -> str | None:
-        """Search using environment variables."""
+        """Search using environment variables.
+
+        Args:
+            env_vars: List of environment variable names to search.
+
+        Returns:
+            Path to executable found in environment variables or None.
+
+        """
         for var in env_vars:
             path = os.environ.get(var)
             if path and os.path.exists(path):
@@ -434,14 +468,30 @@ class PathDiscovery:
         return None
 
     def _search_path(self, executables: list[str]) -> str | None:
-        """Search in system PATH."""
+        """Search in system PATH.
+
+        Args:
+            executables: List of executable names to search for.
+
+        Returns:
+            Path to first executable found in system PATH or None.
+
+        """
         for exe in executables:
             if path := shutil.which(exe):
                 return path
         return None
 
     def _search_common_locations(self, spec: dict[str, Any]) -> str | None:
-        """Search in common installation locations."""
+        """Search in common installation locations.
+
+        Args:
+            spec: Tool specification dictionary containing search paths and executables.
+
+        Returns:
+            Path to executable found in common locations or None.
+
+        """
         search_paths_raw = spec.get("search_paths", {})
         executables_raw = spec.get("executables", {})
 
@@ -475,7 +525,15 @@ class PathDiscovery:
         return None
 
     def _search_registry(self, tool_name: str) -> str | None:
-        """Search Windows registry for installed software."""
+        """Search Windows registry for installed software.
+
+        Args:
+            tool_name: Name of the tool to search for in registry.
+
+        Returns:
+            Path to tool found in Windows registry or None.
+
+        """
         if not self.is_windows:
             return None
 
@@ -547,61 +605,116 @@ class PathDiscovery:
         return handler() if (handler := self.system_paths.get(path_type)) else None
 
     def _get_windows_system_dir(self) -> str | None:
-        """Get Windows system directory."""
+        """Get Windows system directory.
+
+        Returns:
+            Path to Windows system directory or None on non-Windows platforms.
+
+        """
         return os.environ.get("SYSTEMROOT", r"C:\Windows") if self.is_windows else None
 
     def _get_windows_system32_dir(self) -> str | None:
-        """Get Windows System32 directory."""
+        """Get Windows System32 directory.
+
+        Returns:
+            Path to Windows System32 directory or None on non-Windows platforms.
+
+        """
         if not self.is_windows:
             return None
         system_root = self._get_windows_system_dir()
         return os.path.join(system_root, "System32") if system_root else None
 
     def _get_windows_drivers_dir(self) -> str | None:
-        """Get Windows drivers directory."""
+        """Get Windows drivers directory.
+
+        Returns:
+            Path to Windows drivers directory or None on non-Windows platforms.
+
+        """
         if not self.is_windows:
             return None
         system32 = self._get_windows_system32_dir()
         return os.path.join(system32, "drivers") if system32 else None
 
     def _get_program_files_dir(self) -> str | None:
-        """Get Program Files directory."""
+        """Get Program Files directory.
+
+        Returns:
+            Path to Program Files directory or None on non-Windows platforms.
+
+        """
         if not self.is_windows:
             return None
         return os.environ.get("PROGRAMFILES", r"C:\Program Files")
 
     def _get_program_files_x86_dir(self) -> str | None:
-        """Get Program Files (x86) directory."""
+        """Get Program Files (x86) directory.
+
+        Returns:
+            Path to Program Files (x86) directory or None on non-Windows platforms.
+
+        """
         if not self.is_windows:
             return None
         return os.environ.get("PROGRAMFILES(X86)", r"C:\Program Files (x86)")
 
     def _get_appdata_dir(self) -> str | None:
-        """Get AppData directory."""
+        """Get AppData directory.
+
+        Returns:
+            Path to AppData directory or None on non-Windows platforms.
+
+        """
         return os.environ.get("APPDATA") if self.is_windows else None
 
     def _get_localappdata_dir(self) -> str | None:
-        """Get LocalAppData directory."""
+        """Get LocalAppData directory.
+
+        Returns:
+            Path to LocalAppData directory or None on non-Windows platforms.
+
+        """
         return os.environ.get("LOCALAPPDATA") if self.is_windows else None
 
     def _get_programdata_dir(self) -> str | None:
-        """Get ProgramData directory."""
+        """Get ProgramData directory.
+
+        Returns:
+            Path to ProgramData directory or None on non-Windows platforms.
+
+        """
         if not self.is_windows:
             return None
         return os.environ.get("PROGRAMDATA", r"C:\ProgramData")
 
     def _get_user_home(self) -> str:
-        """Get user home directory."""
+        """Get user home directory.
+
+        Returns:
+            Path to user home directory.
+
+        """
         return os.path.expanduser("~")
 
     def _get_temp_dir(self) -> str:
-        """Get temporary directory."""
+        """Get temporary directory.
+
+        Returns:
+            Path to temporary directory.
+
+        """
         import tempfile
 
         return tempfile.gettempdir()
 
     def _get_startup_dir(self) -> str | None:
-        """Get startup directory."""
+        """Get startup directory.
+
+        Returns:
+            Path to startup directory or None on non-Windows platforms.
+
+        """
         if self.is_windows:
             if appdata := self._get_appdata_dir():
                 return os.path.join(appdata, "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
@@ -609,7 +722,15 @@ class PathDiscovery:
 
     # Validation methods
     def _validate_ghidra(self, path: str) -> bool:
-        """Validate Ghidra installation."""
+        """Validate Ghidra installation.
+
+        Args:
+            path: Path to Ghidra executable or directory.
+
+        Returns:
+            True if installation is valid, False otherwise.
+
+        """
         ghidra_dir = os.path.dirname(path) if os.path.isfile(path) else path
         # Check for Ghidra-specific directories
         required_dirs = ["support", "Ghidra"]
@@ -623,7 +744,15 @@ class PathDiscovery:
         return True
 
     def _validate_radare2(self, path: str) -> bool:
-        """Validate radare2 installation."""
+        """Validate radare2 installation.
+
+        Args:
+            path: Path to radare2 executable.
+
+        Returns:
+            True if installation is valid, False otherwise.
+
+        """
         try:
             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [path, "-v"],
@@ -638,7 +767,15 @@ class PathDiscovery:
             return False
 
     def _validate_frida(self, path: str) -> bool:
-        """Validate Frida installation."""
+        """Validate Frida installation.
+
+        Args:
+            path: Path to Frida executable.
+
+        Returns:
+            True if installation is valid, False otherwise.
+
+        """
         try:
             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [path, "--version"],
@@ -653,7 +790,15 @@ class PathDiscovery:
             return False
 
     def _validate_python(self, path: str) -> bool:
-        """Validate Python installation."""
+        """Validate Python installation.
+
+        Args:
+            path: Path to Python executable.
+
+        Returns:
+            True if installation is valid, False otherwise.
+
+        """
         try:
             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [path, "--version"],
@@ -668,12 +813,25 @@ class PathDiscovery:
             return False
 
     def _validate_wireshark(self, path: str) -> bool:
-        """Validate Wireshark installation."""
+        """Validate Wireshark installation.
+
+        Args:
+            path: Path to Wireshark executable.
+
+        Returns:
+            True if executable exists, False otherwise.
+
+        """
         # For GUI executables, just check if file exists
         return os.path.isfile(path)
 
     def get_cuda_path(self) -> str | None:
-        """Find CUDA installation path."""
+        """Find CUDA installation path.
+
+        Returns:
+            Path to CUDA installation directory or None if not found.
+
+        """
         if not self.is_windows:
             # Linux/Mac CUDA paths
             cuda_paths = [
@@ -793,12 +951,29 @@ def get_path_discovery(config_manager: ConfigManager | None = None) -> PathDisco
 
 
 def find_tool(tool_name: str, required_executables: list[str] | None = None) -> str | None:
-    """Find a tool."""
+    """Find a tool.
+
+    Args:
+        tool_name: Name of the tool to find.
+        required_executables: Optional list of specific executables to search for.
+
+    Returns:
+        Path to the tool executable or None if not found.
+
+    """
     return get_path_discovery().find_tool(tool_name, required_executables)
 
 
 def get_system_path(path_type: str) -> str | None:
-    """Get system paths."""
+    """Get system paths.
+
+    Args:
+        path_type: Type of system path to retrieve.
+
+    Returns:
+        System path or None if not available.
+
+    """
     return get_path_discovery().get_system_path(path_type)
 
 

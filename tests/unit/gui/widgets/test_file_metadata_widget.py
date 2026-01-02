@@ -9,10 +9,11 @@ import pytest
 import tempfile
 import os
 import time
-from unittest.mock import patch
+from typing import Any
+from collections.abc import Generator
 
 try:
-    from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QTextEdit
+    from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QTextEdit, QApplication as QApp
     from PyQt6.QtCore import Qt, QFileInfo
     from intellicrack.ui.dialogs.common_imports import QGroupBox, QPushButton, QTest, QThread
     from intellicrack.ui.widgets.file_metadata_widget import FileMetadataWidget
@@ -38,7 +39,7 @@ class TestFileMetadataWidget:
     """Test REAL file metadata widget functionality with actual files."""
 
     @pytest.fixture(autouse=True)
-    def setup_widget(self, qtbot):
+    def setup_widget(self, qtbot: Any) -> FileMetadataWidget:
         """Setup FileMetadataWidget with REAL Qt environment."""
         self.widget = FileMetadataWidget()
         qtbot.addWidget(self.widget)
@@ -46,7 +47,7 @@ class TestFileMetadataWidget:
         return self.widget
 
     @pytest.fixture
-    def sample_file(self):
+    def sample_file(self) -> Generator[tuple[str, int, Any], None, None]:
         """Create REAL file with known metadata for testing."""
         with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as temp_file:
             content = b"Test file content for metadata testing\n" * 100
@@ -63,7 +64,7 @@ class TestFileMetadataWidget:
             os.unlink(temp_file_path)
 
     @pytest.fixture
-    def binary_file(self):
+    def binary_file(self) -> Generator[str, None, None]:
         """Create REAL binary file for testing."""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as temp_file:
             # Create minimal PE-like structure
@@ -81,7 +82,7 @@ class TestFileMetadataWidget:
         if os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
 
-    def test_widget_initialization_real_components(self, qtbot):
+    def test_widget_initialization_real_components(self, qtbot: Any) -> None:
         """Test that metadata widget initializes with REAL Qt components."""
         assert isinstance(self.widget, QWidget)
         assert self.widget.isVisible()
@@ -93,7 +94,7 @@ class TestFileMetadataWidget:
         # Should have labels or text areas for displaying metadata
         assert len(labels) > 0 or len(text_edits) > 0, "Should have metadata display components"
 
-    def test_file_loading_real_metadata_extraction(self, qtbot, sample_file):
+    def test_file_loading_real_metadata_extraction(self, qtbot: Any, sample_file: tuple[str, int, Any]) -> None:
         """Test REAL file loading and metadata extraction."""
         file_path, expected_size, file_info = sample_file
 
@@ -114,7 +115,7 @@ class TestFileMetadataWidget:
         if hasattr(self.widget, 'file_path'):
             assert self.widget.file_path == file_path
 
-    def test_file_size_display_real_calculation(self, qtbot, sample_file):
+    def test_file_size_display_real_calculation(self, qtbot: Any, sample_file: tuple[str, int, Any]) -> None:
         """Test REAL file size display and calculation."""
         file_path, expected_size, file_info = sample_file
 
@@ -147,7 +148,7 @@ class TestFileMetadataWidget:
         # Size should be displayed somewhere
         assert size_found or len(labels) == 0, "File size should be displayed"
 
-    def test_timestamps_real_file_dates(self, qtbot, sample_file):
+    def test_timestamps_real_file_dates(self, qtbot: Any, sample_file: tuple[str, int, Any]) -> None:
         """Test REAL timestamp display for file dates."""
         file_path, expected_size, file_info = sample_file
 
@@ -176,7 +177,7 @@ class TestFileMetadataWidget:
         # Timestamps should be displayed
         assert timestamp_found or len(labels) == 0, "File timestamps should be displayed"
 
-    def test_file_type_detection_real_analysis(self, qtbot, binary_file):
+    def test_file_type_detection_real_analysis(self, qtbot: Any, binary_file: str) -> None:
         """Test REAL file type detection and analysis."""
         # Load binary file
         if hasattr(self.widget, 'load_file'):
@@ -209,7 +210,7 @@ class TestFileMetadataWidget:
         # File type should be detected
         assert type_detected or len(labels + text_edits) == 0, "File type should be detected"
 
-    def test_hash_calculation_real_checksums(self, qtbot, sample_file):
+    def test_hash_calculation_real_checksums(self, qtbot: Any, sample_file: tuple[str, int, Any]) -> None:
         """Test REAL hash calculation and display."""
         file_path, expected_size, file_info = sample_file
 
@@ -244,7 +245,7 @@ class TestFileMetadataWidget:
         # Hash might be calculated
         assert hash_found or not hash_found  # Either is valid
 
-    def test_permissions_display_real_file_attributes(self, qtbot, sample_file):
+    def test_permissions_display_real_file_attributes(self, qtbot: Any, sample_file: tuple[str, int, Any]) -> None:
         """Test REAL file permissions and attributes display."""
         file_path, expected_size, file_info = sample_file
 
@@ -270,7 +271,7 @@ class TestFileMetadataWidget:
                 assert isinstance(text, str)
                 assert len(text) > 0
 
-    def test_metadata_refresh_real_file_changes(self, qtbot, sample_file):
+    def test_metadata_refresh_real_file_changes(self, qtbot: Any, sample_file: tuple[str, int, Any]) -> None:
         """Test REAL metadata refresh when file changes."""
         file_path, expected_size, file_info = sample_file
 
@@ -297,7 +298,7 @@ class TestFileMetadataWidget:
             self.widget.update_metadata(file_path)
             qtbot.wait(300)
 
-    def test_copy_functionality_real_clipboard_operations(self, qtbot, sample_file):
+    def test_copy_functionality_real_clipboard_operations(self, qtbot: Any, sample_file: tuple[str, int, Any]) -> None:
         """Test REAL copy functionality for metadata."""
         file_path, expected_size, file_info = sample_file
 
@@ -311,15 +312,10 @@ class TestFileMetadataWidget:
 
         qtbot.wait(300)
 
-        # Test copy functionality
+        # Test copy functionality with REAL clipboard
         if hasattr(self.widget, 'copy_metadata'):
-            with patch('PyQt6.QtWidgets.QApplication.clipboard') as mock_clipboard:
-                mock_clipboard_obj = mock_clipboard.return_value
-                mock_clipboard_obj.setText = lambda text: None
-
-                self.widget.copy_metadata()
-
-        # Check for copy buttons
+            self.widget.copy_metadata()
+            qtbot.wait(100)
 
         buttons = self.widget.findChildren(QPushButton)
 
@@ -328,7 +324,7 @@ class TestFileMetadataWidget:
                 qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
                 qtbot.wait(100)
 
-    def test_error_handling_real_invalid_files(self, qtbot):
+    def test_error_handling_real_invalid_files(self, qtbot: Any) -> None:
         """Test REAL error handling with invalid files."""
         invalid_paths = [
             '/nonexistent/file.txt',
@@ -356,7 +352,7 @@ class TestFileMetadataWidget:
                 except (OSError, ValueError, TypeError):
                     pass  # Expected for invalid paths
 
-    def test_layout_and_organization_real_display(self, qtbot, sample_file):
+    def test_layout_and_organization_real_display(self, qtbot: Any, sample_file: tuple[str, int, Any]) -> None:
         """Test REAL layout and metadata organization."""
         file_path, expected_size, file_info = sample_file
 
@@ -385,7 +381,7 @@ class TestFileMetadataWidget:
                     if group_layout := group_box.layout():
                         assert group_layout.count() > 0
 
-    def test_performance_real_large_file_metadata(self, qtbot):
+    def test_performance_real_large_file_metadata(self, qtbot: Any) -> None:
         """Test REAL performance with large file metadata."""
         # Create large file
         with tempfile.NamedTemporaryFile(suffix='.dat', delete=False) as temp_file:
@@ -418,7 +414,7 @@ class TestFileMetadataWidget:
             if os.path.exists(large_file_path):
                 os.unlink(large_file_path)
 
-    def test_real_data_validation_no_placeholder_content(self, qtbot):
+    def test_real_data_validation_no_placeholder_content(self, qtbot: Any) -> None:
         """Test that widget displays REAL metadata, not placeholder content."""
         placeholder_indicators = [
             "TODO", "PLACEHOLDER", "XXX", "FIXME",
@@ -426,7 +422,7 @@ class TestFileMetadataWidget:
             "Sample file", "Test data"
         ]
 
-        def check_widget_content(widget):
+        def check_widget_content(widget: Any) -> None:
             """Check widget for placeholder content."""
             if hasattr(widget, 'text'):
                 text = widget.text()
@@ -447,7 +443,7 @@ class TestFileMetadataWidget:
         for child in self.widget.findChildren(object):
             check_widget_content(child)
 
-    def test_thread_safety_real_async_operations(self, qtbot, sample_file):
+    def test_thread_safety_real_async_operations(self, qtbot: Any, sample_file: tuple[str, int, Any]) -> None:
         """Test REAL thread safety for metadata operations."""
 
 

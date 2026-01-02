@@ -6,9 +6,8 @@ import os
 import random
 import struct
 import time
-import traceback
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any
 
 from intellicrack.utils.logger import logger
 
@@ -594,7 +593,7 @@ class SymbolicExecutionEngine:
                 containing type, address, and type-specific vulnerability details.
 
         Returns:
-            dict[str, Any]: Dictionary containing exploit information with keys: type (str), payload (str),
+            Dictionary containing exploit information with keys: type (str), payload (str),
             instructions (str), and type-specific fields (e.g., technique, gadgets, chain).
         """
         if not self.angr_available:
@@ -664,7 +663,7 @@ class SymbolicExecutionEngine:
                 and process_info fields needed for exploit construction.
 
         Returns:
-            dict[str, Any]: Dictionary with exploit details: type, payload (hex), technique, instructions,
+            Dictionary with exploit details: type, payload (hex), technique, instructions,
             and heap_layout specifying spray count, chunk size, and target addresses.
         """
         import struct
@@ -731,7 +730,7 @@ class SymbolicExecutionEngine:
                 and vtable_offset, plus process_info for address calculations.
 
         Returns:
-            dict[str, Any]: Dictionary containing exploit sequences with spray actions, UAF trigger
+            Dictionary containing exploit sequences with spray actions, UAF trigger
             steps, vtable hijacking details, and instructions for executing the exploit.
         """
         import struct
@@ -999,7 +998,7 @@ class SymbolicExecutionEngine:
                 timing window size and other race condition specific details.
 
         Returns:
-            dict[str, Any]: Dictionary with race exploit threads, synchronization method, timing
+            Dictionary with race exploit threads, synchronization method, timing
             window parameters, and C/assembly code implementing the race condition.
         """
         import struct
@@ -1131,7 +1130,7 @@ int main() {{
                 and symbol table analysis.
 
         Returns:
-            dict[str, Any]: Dictionary with exploit setup, trigger operations, payload hex string,
+            Dictionary with exploit setup, trigger operations, payload hex string,
             instructions, and type confusion specific fields: source_type, target_type,
             gadget information, and reliability score.
         """
@@ -2905,7 +2904,7 @@ int main() {{
     def _detect_path_traversal_patterns(
         self, binary_data: bytes, strings: list[dict[str, Any]], disasm_info: dict[str, Any]
     ) -> list[dict[str, Any]]:
-        """Detect potential path traversal vulnerabilities.
+        r"""Detect potential path traversal vulnerabilities.
 
         Searches for path traversal sequences (../, ..\\, encoded variants) that could
         enable attackers to access files outside intended directories through directory escape.
@@ -3441,7 +3440,7 @@ int main() {{
             start_address: Memory address to start symbolic execution from.
 
         Returns:
-            tuple[Any, Any]: Tuple of (angr project, initial program state).
+            Tuple of (angr project, initial program state).
 
         Raises:
             ValueError: If start address is outside valid binary address range.

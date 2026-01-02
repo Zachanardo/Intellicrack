@@ -10,7 +10,6 @@ import os
 import tempfile
 from pathlib import Path
 from typing import Any, Dict
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -450,14 +449,14 @@ class TestEnvironmentVariableIntegration:
         config = get_config()
         assert config is not None
 
-    def test_config_respects_env_vars(self) -> None:
+    def test_config_respects_env_vars(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Configuration system respects environment variables."""
         test_var = "INTELLICRACK_TEST_VAR_12345"
         test_value = "production_test_value"
 
-        with patch.dict(os.environ, {test_var: test_value}):
-            value = os.environ.get(test_var)
-            assert value == test_value
+        monkeypatch.setenv(test_var, test_value)
+        value = os.environ.get(test_var)
+        assert value == test_value
 
 
 class TestModernConfigIntegration:

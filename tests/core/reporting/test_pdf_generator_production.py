@@ -168,17 +168,18 @@ def test_pdf_generator_output_directory_creation(tmp_path: Path) -> None:
 
 def test_pdf_generator_with_application_instance(tmp_path: Path) -> None:
     """PDF generator integrates with application instance correctly."""
-    from unittest.mock import Mock
-
     from intellicrack.core.reporting.pdf_generator import PDFReportGenerator
 
-    mock_app = Mock()
-    mock_app.binary_path = "C:\\test\\binary.exe"
-    mock_app.analyze_results = ["Result 1", "Result 2"]
+    class FakeApplication:
+        def __init__(self) -> None:
+            self.binary_path: str = "C:\\test\\binary.exe"
+            self.analyze_results: list[str] = ["Result 1", "Result 2"]
 
-    generator = PDFReportGenerator(output_dir=str(tmp_path), app_instance=mock_app)
+    fake_app = FakeApplication()
 
-    assert generator.app == mock_app
+    generator = PDFReportGenerator(output_dir=str(tmp_path), app_instance=fake_app)
+
+    assert generator.app == fake_app
 
 
 def test_pdf_generator_title_and_metadata(pdf_generator: Any) -> None:

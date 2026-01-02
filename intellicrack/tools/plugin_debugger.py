@@ -34,7 +34,14 @@ from typing import Any, Callable
 
 
 class BreakpointType(Enum):
-    """Types of breakpoints."""
+    """Enumeration of breakpoint types for the plugin debugger.
+
+    Attributes:
+        LINE: Line-based breakpoints that trigger on specific line numbers.
+        FUNCTION: Function-based breakpoints that trigger on function entry.
+        CONDITIONAL: Conditional breakpoints that trigger when an expression evaluates to true.
+        EXCEPTION: Exception breakpoints that trigger when exceptions are raised.
+    """
 
     LINE = "line"
     FUNCTION = "function"
@@ -44,7 +51,22 @@ class BreakpointType(Enum):
 
 @dataclass
 class Breakpoint:
-    """Represents a breakpoint."""
+    """Represents a debugger breakpoint configuration.
+
+    This dataclass stores all metadata and state associated with a single breakpoint,
+    including its type, location, conditional expression, and hit tracking.
+
+    Attributes:
+        id: Unique identifier for the breakpoint.
+        type: The type of breakpoint (line, function, conditional, or exception).
+        file: Path to the file where the breakpoint is set.
+        line: Line number for line-based breakpoints.
+        function: Function name for function-based breakpoints.
+        condition: Python expression that must evaluate to true for conditional breakpoints.
+        enabled: Whether the breakpoint is currently active.
+        hit_count: Number of times this breakpoint has been hit.
+        ignore_count: Number of times to ignore hits before breaking.
+    """
 
     id: int
     type: BreakpointType
@@ -59,7 +81,19 @@ class Breakpoint:
 
 @dataclass
 class StackFrame:
-    """Represents a stack frame."""
+    """Represents a single frame in the call stack during debugging.
+
+    This dataclass captures the state of a single frame in the execution stack,
+    including local and global variables, source code, and location information.
+
+    Attributes:
+        filename: Path to the source file of the frame.
+        lineno: Line number where the frame is currently executing.
+        function: Name of the function executing in this frame.
+        locals: Dictionary of local variables in this frame.
+        globals: Dictionary of global variables accessible to this frame.
+        code: Source code line being executed in this frame.
+    """
 
     filename: str
     lineno: int
@@ -70,7 +104,15 @@ class StackFrame:
 
 
 class DebuggerState(Enum):
-    """Debugger states."""
+    """Enumeration of debugger execution states.
+
+    Attributes:
+        IDLE: Initial state before any debugging begins.
+        RUNNING: Debugger is executing code without pausing.
+        PAUSED: Debugger has paused execution at a breakpoint or command.
+        STEPPING: Debugger is in single-step mode (step into, over, or out).
+        TERMINATED: Debugging session has ended.
+    """
 
     IDLE = "idle"
     RUNNING = "running"
@@ -83,10 +125,20 @@ TraceFunction = Callable[[types.FrameType, str, Any], "TraceFunction | None"] | 
 
 
 class PluginDebugger:
-    """Advanced debugger for Intellicrack plugins."""
+    """Advanced debugger for analyzing and debugging Intellicrack plugins.
+
+    Provides comprehensive debugging capabilities including breakpoints (line, function, conditional, exception),
+    single-stepping, watch expressions, variable inspection, and call history tracking. Integrates with
+    sys.settrace for real-time execution monitoring.
+    """
 
     def __init__(self) -> None:
-        """Initialize plugin debugger with state tracking, breakpoints, and trace monitoring."""
+        """Initialize the plugin debugger with state tracking, breakpoints, and trace monitoring.
+
+        Sets up initial debugger state (IDLE), empty breakpoint registry, command and output queues,
+        history tracking for calls/returns/exceptions, and configuration for watch expressions and
+        exception filtering.
+        """
         self._logger = logging.getLogger(__name__)
         self.breakpoints: dict[int, Breakpoint] = {}
         self.next_breakpoint_id: int = 1
@@ -114,7 +166,14 @@ class PluginDebugger:
         self._plugin_path: str = ""
 
     def load_plugin(self, plugin_path: str) -> None:
-        """Load a plugin for debugging."""
+        """Load and compile a plugin file for debugging.
+
+        Reads the plugin source code, parses it into an AST, compiles it to bytecode,
+        and creates a module object to hold the plugin's namespace during execution.
+
+        Args:
+            plugin_path: Absolute path to the plugin Python file to load.
+        """
         import ast
 
         with open(plugin_path, encoding="utf-8") as f:
@@ -138,7 +197,21 @@ class PluginDebugger:
         condition: str | None = None,
         type: BreakpointType = BreakpointType.LINE,
     ) -> int:
-        """Add a breakpoint."""
+        """Create and register a new breakpoint with the debugger.
+
+        Creates a breakpoint object with the specified parameters and adds it to the
+        breakpoint registry with a unique identifier. The breakpoint is enabled by default.
+
+        Args:
+            file: Path to the file where the breakpoint applies.
+            line: Line number for line-based breakpoints.
+            function: Function name for function-based breakpoints.
+            condition: Python expression for conditional breakpoints.
+            type: Type of breakpoint (LINE, FUNCTION, CONDITIONAL, or EXCEPTION).
+
+        Returns:
+            int: Unique identifier assigned to the breakpoint.
+        """
         bp = Breakpoint(
             id=self.next_breakpoint_id,
             type=type,
@@ -154,26 +227,51 @@ class PluginDebugger:
         return bp.id
 
     def remove_breakpoint(self, bp_id: int) -> None:
-        """Remove a breakpoint."""
+        """Remove a breakpoint from the debugger by its identifier.
+
+        Args:
+            bp_id: Unique identifier of the breakpoint to remove.
+        """
         if bp_id in self.breakpoints:
             del self.breakpoints[bp_id]
 
     def enable_breakpoint(self, bp_id: int) -> None:
-        """Enable a breakpoint."""
+        """Enable a previously disabled breakpoint by its identifier.
+
+        Args:
+            bp_id: Unique identifier of the breakpoint to enable.
+        """
         if bp_id in self.breakpoints:
             self.breakpoints[bp_id].enabled = True
 
     def disable_breakpoint(self, bp_id: int) -> None:
-        """Disable a breakpoint."""
+        """Disable an enabled breakpoint without removing it.
+
+        Args:
+            bp_id: Unique identifier of the breakpoint to disable.
+        """
         if bp_id in self.breakpoints:
             self.breakpoints[bp_id].enabled = False
 
     def set_exception_breakpoint(self, enabled: bool) -> None:
-        """Enable/disable break on exceptions."""
+        """Enable or disable breaking on all unhandled exceptions.
+
+        Args:
+            enabled: True to break on exceptions, False to ignore them.
+        """
         self.exception_breakpoint = enabled
 
     def run(self, binary_path: str | None = None, options: dict[str, Any] | None = None) -> None:
-        """Run the plugin with debugging."""
+        """Execute the loaded plugin with full debugging support enabled.
+
+        Installs the trace function via sys.settrace, executes the plugin bytecode in a
+        controlled namespace, and manages exception handling. Output is sent to the output
+        queue for retrieval by the debugger client.
+
+        Args:
+            binary_path: Optional path to a binary file for the plugin to analyze.
+            options: Optional dictionary of configuration options for the plugin.
+        """
         self.state = DebuggerState.RUNNING
 
         sys.settrace(self._trace_dispatch)
@@ -206,7 +304,20 @@ class PluginDebugger:
     def _trace_dispatch(
         self, frame: types.FrameType, event: str, arg: Any
     ) -> TraceFunction:
-        """Run trace dispatch function."""
+        """Route trace events to appropriate handlers based on event type.
+
+        Dispatches events from sys.settrace to specific handlers for lines, function calls,
+        returns, and exceptions. Processes pending debugger commands from the command queue
+        between trace events.
+
+        Args:
+            frame: The stack frame where the event occurred.
+            event: Event type: "line", "call", "return", "exception", etc.
+            arg: Event-specific argument (varies by event type).
+
+        Returns:
+            TraceFunction: The trace function to use for subsequent events.
+        """
         if self.state == DebuggerState.TERMINATED:
             return None
 
@@ -228,7 +339,19 @@ class PluginDebugger:
         return self._trace_dispatch
 
     def _trace_line(self, frame: types.FrameType, arg: Any) -> TraceFunction:
-        """Handle line event."""
+        """Handle line execution events and check breakpoints.
+
+        Checks for line and conditional breakpoints at the current location. Handles
+        single-stepping in "step into" mode. Outputs trace information if verbose mode
+        is enabled.
+
+        Args:
+            frame: The stack frame executing the line.
+            arg: Event argument (unused for line events but included for trace signature).
+
+        Returns:
+            TraceFunction: The trace function to use for subsequent events.
+        """
         filename = frame.f_code.co_filename
         lineno = frame.f_lineno
 
@@ -272,7 +395,19 @@ class PluginDebugger:
         return self._trace_dispatch
 
     def _trace_call(self, frame: types.FrameType, arg: Any) -> TraceFunction:
-        """Handle call event."""
+        """Handle function call events and check function breakpoints.
+
+        Records function call information in call history, checks for function-based
+        breakpoints at the entry point, and outputs trace information if call tracing
+        is enabled.
+
+        Args:
+            frame: The stack frame of the called function.
+            arg: Event argument (typically the function object or arguments).
+
+        Returns:
+            TraceFunction: The trace function to use for subsequent events.
+        """
         self.call_stack.append(frame)
 
         if arg is not None:
@@ -303,7 +438,19 @@ class PluginDebugger:
         return self._trace_dispatch
 
     def _trace_return(self, frame: types.FrameType, arg: Any) -> TraceFunction:
-        """Handle return event."""
+        """Handle function return events and track return values.
+
+        Records return values and types in return history, checks for watched return
+        patterns, removes the frame from the call stack, and handles "step out"
+        single-stepping.
+
+        Args:
+            frame: The stack frame of the returning function.
+            arg: The return value from the function.
+
+        Returns:
+            TraceFunction: The trace function to use for subsequent events.
+        """
         if self.call_stack and self.call_stack[-1] == frame:
             self.call_stack.pop()
 
@@ -337,7 +484,18 @@ class PluginDebugger:
         return self._trace_dispatch
 
     def _trace_exception(self, frame: types.FrameType, arg: Any) -> TraceFunction:
-        """Handle exception event."""
+        """Handle exception events and filter by type.
+
+        Records exception information in exception history, applies exception filters,
+        and triggers exception breakpoint handling if enabled.
+
+        Args:
+            frame: The stack frame where the exception occurred.
+            arg: Tuple of (exception_type, exception_value, traceback).
+
+        Returns:
+            TraceFunction: The trace function to use for subsequent events.
+        """
         if arg is not None:
             exc_type, exc_value, exc_tb = arg
 
@@ -364,7 +522,15 @@ class PluginDebugger:
         return self._trace_dispatch
 
     def _pause_at_breakpoint(self, frame: types.FrameType, breakpoint: Breakpoint) -> None:
-        """Pause execution at breakpoint."""
+        """Notify about a breakpoint hit and pause execution.
+
+        Queues breakpoint information and delegates to _pause_execution to wait for
+        debugger commands.
+
+        Args:
+            frame: The stack frame where the breakpoint was hit.
+            breakpoint: The breakpoint object that was triggered.
+        """
         self.output_queue.put(
             (
                 "breakpoint",
@@ -382,7 +548,16 @@ class PluginDebugger:
         self._pause_execution(frame)
 
     def _pause_execution(self, frame: types.FrameType) -> None:
-        """Pause execution and wait for commands."""
+        """Pause execution and block until debugger commands resume execution.
+
+        Updates the debugger state to PAUSED, captures the current stack frames and
+        watched variables, and blocks in a loop waiting for commands from the command
+        queue. Processes commands until the state changes to RUNNING, STEPPING, or
+        TERMINATED.
+
+        Args:
+            frame: The current stack frame where execution is paused.
+        """
         self.state = DebuggerState.PAUSED
         self.current_frame = frame
         self._update_stack_frames()
@@ -407,7 +582,16 @@ class PluginDebugger:
                 continue
 
     def _handle_command(self, command: dict[str, Any]) -> None:
-        """Handle debugger command."""
+        """Process a debugger command and update debugger state accordingly.
+
+        Interprets commands such as continue, step_into, step_over, step_out, pause,
+        terminate, evaluate, set_variable, watch, and unwatch. Updates the debugger
+        state and delegates to appropriate handlers for complex commands.
+
+        Args:
+            command: Dictionary with "type" key specifying the command, plus additional
+                keys for command-specific arguments.
+        """
         cmd_type = command.get("type")
 
         if cmd_type == "continue":
@@ -454,7 +638,12 @@ class PluginDebugger:
                 self._remove_watch(expression)
 
     def _update_stack_frames(self) -> None:
-        """Update stack frames."""
+        """Capture and update the current call stack frames.
+
+        Walks the frame chain from the current frame, extracting location information,
+        source code lines, and frame metadata. Queues the updated stack information
+        for transmission to the debugger client.
+        """
         self.stack_frames = []
 
         frame: types.FrameType | None = self.current_frame
@@ -495,7 +684,12 @@ class PluginDebugger:
         )
 
     def _update_watched_variables(self) -> None:
-        """Update watched variables."""
+        """Evaluate and update values of all watched expressions.
+
+        Evaluates each watched expression in the context of the current frame,
+        serializes the results, and queues the updated watch values for transmission
+        to the debugger client.
+        """
         if not self.current_frame:
             return
 
@@ -512,7 +706,14 @@ class PluginDebugger:
         self.output_queue.put(("watches", watched_values))
 
     def _evaluate_expression(self, expression: str) -> None:
-        """Evaluate expression in current context."""
+        """Evaluate a Python expression in the context of the current frame.
+
+        Evaluates the expression string in the local and global scope of the current
+        execution frame and queues the result for transmission to the client.
+
+        Args:
+            expression: Python expression string to evaluate.
+        """
         if not self.current_frame:
             self.output_queue.put(("eval_result", {"expression": expression, "error": "No active frame"}))
             return
@@ -525,7 +726,15 @@ class PluginDebugger:
             self.output_queue.put(("eval_result", {"expression": expression, "error": str(e)}))
 
     def _set_variable(self, name: str, value: str) -> None:
-        """Set variable value in current context."""
+        """Set a variable's value in the current execution frame.
+
+        Parses the value string as Python code, evaluates it, and assigns it to the
+        named variable in either the local or global scope of the current frame.
+
+        Args:
+            name: Name of the variable to set.
+            value: Python expression string representing the new value.
+        """
         if not self.current_frame:
             return
 
@@ -546,12 +755,26 @@ class PluginDebugger:
             self.output_queue.put(("error", f"Failed to set variable: {e!s}"))
 
     def _add_watch(self, expression: str) -> None:
-        """Add watch expression."""
+        """Add a watch expression for continuous monitoring.
+
+        Registers a Python expression to be evaluated and displayed whenever execution
+        pauses. Updates the watched variables immediately.
+
+        Args:
+            expression: Python expression string to watch.
+        """
         self.watched_variables[expression] = None
         self._update_watched_variables()
 
     def _remove_watch(self, expression: str) -> None:
-        """Remove watch expression."""
+        """Remove a watch expression from monitoring.
+
+        Unregisters a previously added watch expression and updates the watched
+        variables display.
+
+        Args:
+            expression: Python expression string to stop watching.
+        """
         if expression in self.watched_variables:
             del self.watched_variables[expression]
             self._update_watched_variables()
@@ -559,7 +782,16 @@ class PluginDebugger:
     def _handle_exception(
         self, exception: Exception, frame: types.FrameType | None = None
     ) -> None:
-        """Handle exception breakpoint."""
+        """Handle an exception by pausing and queuing exception details.
+
+        Formats a traceback of the exception and optionally pauses execution at the
+        specified frame to allow inspection of the exception context.
+
+        Args:
+            exception: The exception instance to handle.
+            frame: Optional stack frame where exception occurred. If provided, execution
+                is paused at this frame.
+        """
         tb = traceback.format_exc()
 
         self.output_queue.put(
@@ -573,7 +805,18 @@ class PluginDebugger:
             self._pause_execution(frame)
 
     def _serialize_value(self, value: Any) -> Any:
-        """Serialize value for transmission."""
+        """Serialize a Python value for transmission to the debugger client.
+
+        Converts values to JSON-serializable forms: primitives are returned unchanged,
+        collections are recursively serialized (limited to first 100 items), and other
+        objects are converted to their string representation.
+
+        Args:
+            value: The Python value to serialize.
+
+        Returns:
+            Serialized form of the value suitable for transmission.
+        """
         if isinstance(value, (str, int, float, bool, type(None))):
             return value
         elif isinstance(value, (list, tuple)):
@@ -586,7 +829,20 @@ class PluginDebugger:
     def get_source_code(
         self, filename: str, start_line: int = 1, end_line: int | None = None
     ) -> list[dict[str, Any]]:
-        """Get source code lines."""
+        """Retrieve source code lines with breakpoint information.
+
+        Reads source code lines from a file within the specified range and annotates
+        each line with its number and whether an enabled breakpoint is set on that line.
+
+        Args:
+            filename: Path to the source file.
+            start_line: Starting line number (1-indexed, default 1).
+            end_line: Ending line number (1-indexed), defaults to end of file.
+
+        Returns:
+            list[dict[str, Any]]: List of dictionaries with keys "line" (number),
+                "code" (source text), and "breakpoint" (bool).
+        """
         lines: list[dict[str, Any]] = []
 
         if os.path.exists(filename):
@@ -612,7 +868,19 @@ class PluginDebugger:
         return lines
 
     def get_variables(self, frame_index: int = 0) -> dict[str, Any]:
-        """Get variables for a specific frame."""
+        """Retrieve all variables (local and global) from a specific stack frame.
+
+        Returns a dictionary containing all variables from the specified frame's local
+        and global scopes. Each variable entry includes its serialized value, type name,
+        and scope designation.
+
+        Args:
+            frame_index: Index into the stack_frames list (0 = most recent frame).
+
+        Returns:
+            dict[str, Any]: Dictionary mapping variable names to metadata dicts with
+                keys "value" (serialized), "type" (type name), and "scope" ("local" or "global").
+        """
         if frame_index >= len(self.stack_frames):
             return {}
 
@@ -639,7 +907,12 @@ class PluginDebugger:
 
 
 class DebuggerThread(threading.Thread):
-    """Thread for running debugger."""
+    """Thread for executing plugin debugging in a separate execution context.
+
+    Extends threading.Thread to run the PluginDebugger in a separate thread, allowing
+    asynchronous execution of plugins while the main thread monitors and controls
+    execution via queues.
+    """
 
     def __init__(
         self,
@@ -648,7 +921,14 @@ class DebuggerThread(threading.Thread):
         binary_path: str | None = None,
         options: dict[str, Any] | None = None,
     ) -> None:
-        """Initialize debugger thread with plugin path, binary path, and execution options."""
+        """Initialize the debugger thread with plugin and execution parameters.
+
+        Args:
+            debugger: The PluginDebugger instance to execute.
+            plugin_path: Path to the plugin Python file to debug.
+            binary_path: Optional path to a binary file for the plugin to analyze.
+            options: Optional dictionary of configuration options for the plugin.
+        """
         super().__init__()
         self.debugger = debugger
         self.plugin_path = plugin_path
@@ -656,6 +936,11 @@ class DebuggerThread(threading.Thread):
         self.options = options
 
     def run(self) -> None:
-        """Run the debugger."""
+        """Load the plugin and execute it with full debugging support.
+
+        Loads the plugin from the file path and begins execution with the configured
+        binary path and options. This method is called when the thread is started via
+        the start() method inherited from threading.Thread.
+        """
         self.debugger.load_plugin(self.plugin_path)
         self.debugger.run(self.binary_path, self.options)

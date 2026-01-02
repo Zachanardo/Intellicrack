@@ -18,7 +18,6 @@ import re
 import sys
 import time
 from collections import defaultdict
-from collections.abc import Hashable, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -38,7 +37,23 @@ logger = logging.getLogger(__name__)
 
 
 class DataType(Enum):
-    """Types of data for correlation."""
+    """Types of data for correlation.
+
+    Enumeration of different data types that can be extracted from binaries
+    and correlated across analysis tools.
+
+    Attributes:
+        FUNCTION: Function symbol or code region.
+        VARIABLE: Variable or data symbol.
+        STRING: String constant found in binary.
+        ADDRESS: Raw memory address or location.
+        IMPORT: Imported function or library reference.
+        EXPORT: Exported function or symbol.
+        STRUCTURE: Structure or composite type definition.
+        CONSTANT: Numeric or constant value.
+        PATTERN: Binary pattern or signature match.
+
+    """
 
     FUNCTION = "function"
     VARIABLE = "variable"
@@ -53,7 +68,22 @@ class DataType(Enum):
 
 @dataclass
 class CorrelationItem:
-    """Item for correlation."""
+    """Item for correlation.
+
+    Represents a single data item that can be correlated across different
+    binary analysis tools with confidence scoring and metadata.
+
+    Attributes:
+        tool: Tool name identifier where item was discovered (e.g., 'ghidra').
+        data_type: Type of data item as DataType enum (function, variable, etc).
+        name: Identifier or name of the item.
+        address: Memory address of the item as integer value.
+        size: Size of the item in bytes as integer value.
+        attributes: Additional metadata as dictionary with string keys.
+        confidence: Confidence score between 0.0 and 1.0.
+        timestamp: Unix timestamp when item was created as float.
+
+    """
 
     tool: str
     data_type: DataType
@@ -67,7 +97,19 @@ class CorrelationItem:
 
 @dataclass
 class CorrelationResult:
-    """Result of correlation."""
+    """Result of correlation.
+
+    Contains the items that are correlated together with scoring information
+    and method metadata.
+
+    Attributes:
+        items: List of correlation items that matched together.
+        correlation_score: Overall correlation score between 0.0 and 1.0.
+        confidence: Confidence in the correlation between 0.0 and 1.0.
+        method: Name of the correlation method used as string.
+        metadata: Additional metadata from correlation process as dictionary.
+
+    """
 
     items: list[CorrelationItem]
     correlation_score: float
@@ -78,7 +120,20 @@ class CorrelationResult:
 
 @dataclass
 class AddressMapping:
-    """Address space mapping between tools."""
+    """Address space mapping between tools.
+
+    Represents the translation relationship between address spaces of two
+    different binary analysis tools.
+
+    Attributes:
+        tool1: First tool name identifier as string.
+        tool2: Second tool name identifier as string.
+        offset: Address offset to apply during translation as integer.
+        base1: Base address of first tool address space as integer.
+        base2: Base address of second tool address space as integer.
+        confidence: Confidence in the mapping between 0.0 and 1.0.
+
+    """
 
     tool1: str
     tool2: str
@@ -92,13 +147,35 @@ class FuzzyMatcher:
     """Fuzzy matching for names and patterns."""
 
     def __init__(self) -> None:
-        """Initialize the FuzzyMatcher with similarity thresholds."""
+        """Initialize the FuzzyMatcher with similarity thresholds.
+
+        Sets up default thresholds and weights for name similarity calculations
+        including Levenshtein distance, Jaro-Winkler, token-based, and substring
+        matching algorithms.
+
+        Returns:
+            None
+
+        """
         self.similarity_threshold = 0.7
         self.exact_match_boost = 0.2
         self.prefix_suffix_weight = 0.1
 
     def match_function_names(self, name1: str, name2: str) -> float:
-        """Match function names with fuzzy logic."""
+        """Match function names with fuzzy logic.
+
+        Uses multiple similarity metrics including Levenshtein distance,
+        Jaro-Winkler similarity, token-based comparison, and substring
+        matching to calculate overall name similarity.
+
+        Args:
+            name1: First function name to compare.
+            name2: Second function name to compare.
+
+        Returns:
+            Similarity score between 0.0 and 1.0.
+
+        """
         # Clean names
         clean_name1 = self._clean_function_name(name1)
         clean_name2 = self._clean_function_name(name2)
@@ -133,7 +210,18 @@ class FuzzyMatcher:
         return float(np.mean(scores))
 
     def _clean_function_name(self, name: str) -> str:
-        """Clean function name for comparison."""
+        """Clean function name for comparison.
+
+        Removes common prefixes and address suffixes, then converts to lowercase
+        for consistent comparison across different tools' naming conventions.
+
+        Args:
+            name: Function name to clean.
+
+        Returns:
+            Cleaned function name in lowercase without prefixes or suffixes.
+
+        """
         # Remove common prefixes
         prefixes = ["sub_", "loc_", "func_", "FUN_", "j_"]
         for prefix in prefixes:
@@ -146,7 +234,19 @@ class FuzzyMatcher:
         return name.lower()
 
     def _tokenize(self, name: str) -> list[str]:
-        """Tokenize name into components."""
+        """Tokenize name into components.
+
+        Splits name by common separators and camelCase boundaries to extract
+        individual tokens for comparison.
+
+        Args:
+            name: Name string to tokenize.
+
+        Returns:
+            List of lowercase tokens extracted from the name by splitting on
+            separators and camelCase boundaries.
+
+        """
         # Split by common separators
         tokens = re.split(r"[_\-\s]+", name)
 
@@ -158,7 +258,19 @@ class FuzzyMatcher:
         return [t.lower() for t in camel_tokens if t]
 
     def _calculate_token_similarity(self, tokens1: list[str], tokens2: list[str]) -> float:
-        """Calculate similarity between token lists."""
+        """Calculate similarity between token lists.
+
+        Combines Jaccard similarity with token ordering bonus to assess
+        how well two tokenized sequences match.
+
+        Args:
+            tokens1: First list of tokens to compare.
+            tokens2: Second list of tokens to compare.
+
+        Returns:
+            Similarity score between 0.0 and 1.0 combining Jaccard and ordering metrics.
+
+        """
         if not tokens1 or not tokens2:
             return 0.0
 
@@ -177,7 +289,19 @@ class FuzzyMatcher:
         return jaccard * 0.7 + order_bonus * 0.3
 
     def _substring_similarity(self, str1: str, str2: str) -> float:
-        """Calculate substring similarity."""
+        """Calculate substring similarity.
+
+        Computes similarity based on substring containment and longest common
+        substring matching.
+
+        Args:
+            str1: First string to compare.
+            str2: Second string to compare.
+
+        Returns:
+            Similarity score between 0.0 and 1.0 based on substring metrics.
+
+        """
         if not str1 or not str2:
             return 0.0
 
@@ -192,7 +316,18 @@ class FuzzyMatcher:
         return 0.0 if match.size == 0 else match.size / max(len(str1), len(str2))
 
     def _is_mangled(self, name: str) -> bool:
-        """Check if name is mangled."""
+        """Check if name is mangled.
+
+        Detects C++ Itanium ABI and MSVC mangled name patterns.
+
+        Args:
+            name: Name string to check for mangling patterns.
+
+        Returns:
+            True if name appears to be mangled according to C++ ABI standards,
+            False otherwise.
+
+        """
         # C++ mangling patterns
         if name.startswith("_Z") or name.startswith("?"):
             return True
@@ -201,7 +336,19 @@ class FuzzyMatcher:
         return bool("@@" in name or name.startswith("?"))
 
     def _match_mangled_names(self, name1: str, name2: str) -> float:
-        """Match mangled names."""
+        """Match mangled names.
+
+        Compares mangled names by extracting and matching class names, method
+        names, and parameter signatures.
+
+        Args:
+            name1: First mangled name to compare.
+            name2: Second mangled name to compare.
+
+        Returns:
+            Similarity score between 0.0 and 1.0 based on component matching.
+
+        """
         # Extract components from mangled names
         components1 = self._extract_mangled_components(name1)
         components2 = self._extract_mangled_components(name2)
@@ -227,7 +374,19 @@ class FuzzyMatcher:
         return class_score * 0.4 + method_score * 0.4 + param_score * 0.2
 
     def _extract_mangled_components(self, name: str) -> dict[str, Any]:
-        """Extract components from mangled name."""
+        """Extract components from mangled name.
+
+        Parses C++ Itanium ABI and MSVC mangled names to extract method
+        and class components.
+
+        Args:
+            name: Mangled name to parse.
+
+        Returns:
+            Dictionary with extracted components including 'method', 'class',
+            and 'params' keys where applicable.
+
+        """
         components = {}
 
         # C++ Itanium ABI mangling
@@ -245,7 +404,18 @@ class FuzzyMatcher:
         return components
 
     def _compare_parameter_lists(self, params1: list[str], params2: list[str]) -> float:
-        """Compare parameter lists."""
+        """Compare parameter lists.
+
+        Compares two parameter lists by matching individual parameter types.
+
+        Args:
+            params1: First parameter list to compare.
+            params2: Second parameter list to compare.
+
+        Returns:
+            Ratio of matching parameters to total parameters, between 0.0 and 1.0.
+
+        """
         if not params1 and not params2:
             return 1.0
         if not params1 or not params2:
@@ -255,7 +425,19 @@ class FuzzyMatcher:
         return matches / max(len(params1), len(params2))
 
     def _compare_types(self, type1: str, type2: str) -> float:
-        """Compare type strings."""
+        """Compare type strings.
+
+        Compares C/C++ type strings with normalization and equivalence checking
+        for common type aliases.
+
+        Args:
+            type1: First type string to compare.
+            type2: Second type string to compare.
+
+        Returns:
+            Similarity score between 0.0 and 1.0 based on type equivalence.
+
+        """
         # Normalize types
         type1 = re.sub(r"\s+", "", type1.lower())
         type2 = re.sub(r"\s+", "", type2.lower())
@@ -283,27 +465,85 @@ class AddressTranslator:
     """Translates addresses between different tools' address spaces."""
 
     def __init__(self) -> None:
-        """Initialize the AddressTranslator with empty mappings and base addresses."""
+        """Initialize the AddressTranslator with empty mappings and base addresses.
+
+        Creates empty containers for address mappings, base addresses, and
+        relocation records for multiple tools.
+
+        Returns:
+            None
+
+        """
         self.mappings: list[AddressMapping] = []
         self.base_addresses: dict[str, int] = {}
         self.relocations: dict[str, list[tuple[int, int]]] = {}
 
     def add_mapping(self, mapping: AddressMapping) -> None:
-        """Add address space mapping."""
+        """Add address space mapping.
+
+        Appends the provided address mapping to the internal list of mappings
+        for later use in address translation operations.
+
+        Args:
+            mapping: Address mapping configuration between two tools with offset,
+                base addresses, and confidence score.
+
+        Returns:
+            None
+
+        """
         self.mappings.append(mapping)
 
     def set_base_address(self, tool: str, base: int) -> None:
-        """Set base address for a tool."""
+        """Set base address for a tool.
+
+        Stores the base address for a specific tool in the internal mapping dictionary
+        for use in address translation between different tool address spaces.
+
+        Args:
+            tool: Tool name identifier string (e.g., 'ghidra', 'ida', 'radare2').
+            base: Base address for the tool as hexadecimal integer value.
+
+        Returns:
+            None
+
+        """
         self.base_addresses[tool] = base
 
     def add_relocation(self, tool: str, old_addr: int, new_addr: int) -> None:
-        """Add relocation entry."""
+        """Add relocation entry.
+
+        Records address relocation information for a tool, tracking how addresses
+        were moved during binary loading or processing.
+
+        Args:
+            tool: Tool name identifier string for the tool performing relocation.
+            old_addr: Original address before relocation as integer value.
+            new_addr: Address after relocation as integer value.
+
+        Returns:
+            None
+
+        """
         if tool not in self.relocations:
             self.relocations[tool] = []
         self.relocations[tool].append((old_addr, new_addr))
 
     def translate(self, address: int, from_tool: str, to_tool: str) -> int | None:
-        """Translate address between tools."""
+        """Translate address between tools.
+
+        Attempts translation using direct mappings, reverse mappings, or base
+        address calculations. Returns None if no translation path is found.
+
+        Args:
+            address: Address to translate as integer value.
+            from_tool: Source tool name identifier string (e.g., 'ghidra').
+            to_tool: Target tool name identifier string (e.g., 'ida').
+
+        Returns:
+            Translated address as integer, or None if translation is not possible.
+
+        """
         # Direct mapping exists
         for mapping in self.mappings:
             if mapping.tool1 == from_tool and mapping.tool2 == to_tool:
@@ -334,7 +574,19 @@ class AddressTranslator:
         return None
 
     def _apply_mapping(self, address: int, mapping: AddressMapping) -> int:
-        """Apply address mapping."""
+        """Apply address mapping.
+
+        Translates address using mapping configuration with bounds checking.
+        Checks if address falls within expected range and applies offset accordingly.
+
+        Args:
+            address: Address to translate as integer value.
+            mapping: Address mapping configuration with base addresses and offset.
+
+        Returns:
+            Translated address as integer value.
+
+        """
         # Check if address is in range
         if mapping.base1 <= address < mapping.base1 + 0x10000000:  # Assume max 256MB
             relative = address - mapping.base1
@@ -344,7 +596,20 @@ class AddressTranslator:
         return address + mapping.offset
 
     def correlate_by_pattern(self, addresses1: list[int], addresses2: list[int]) -> AddressMapping | None:
-        """Correlate address spaces by pattern matching."""
+        """Correlate address spaces by pattern matching.
+
+        Analyzes address delta patterns to identify corresponding regions between
+        two address spaces by comparing distance patterns between consecutive addresses.
+
+        Args:
+            addresses1: First list of addresses as integer values.
+            addresses2: Second list of addresses as integer values.
+
+        Returns:
+            Address mapping object if correlation is found with offset and confidence,
+            None if correlation is not found or inputs are empty.
+
+        """
         if not addresses1 or not addresses2:
             return None
 
@@ -385,7 +650,15 @@ class ConfidenceScorer:
     """Calculates confidence scores for correlations."""
 
     def __init__(self) -> None:
-        """Initialize the ConfidenceScorer with weighting factors for correlation scoring."""
+        """Initialize the ConfidenceScorer with weighting factors for correlation scoring.
+
+        Sets up weighted factors for combining multiple similarity metrics into
+        a single confidence score.
+
+        Returns:
+            None
+
+        """
         self.weights = {
             "name_similarity": 0.3,
             "address_proximity": 0.2,
@@ -395,7 +668,20 @@ class ConfidenceScorer:
         }
 
     def calculate_score(self, item1: CorrelationItem, item2: CorrelationItem) -> float:
-        """Calculate confidence score for correlation."""
+        """Calculate confidence score for correlation.
+
+        Combines name similarity, address proximity, size matching, attribute
+        matching, and pattern matching with weighted scoring to produce overall
+        confidence value.
+
+        Args:
+            item1: First correlation item to score.
+            item2: Second correlation item to score.
+
+        Returns:
+            Weighted confidence score between 0.0 and 1.0.
+
+        """
         # Name similarity
         fuzzy = FuzzyMatcher()
         scores = {"name_similarity": fuzzy.match_function_names(item1.name, item2.name)}
@@ -432,7 +718,19 @@ class ConfidenceScorer:
         return total_score / total_weight if total_weight > 0 else 0.0
 
     def _compare_attributes(self, attrs1: dict[str, Any], attrs2: dict[str, Any]) -> float:
-        """Compare attribute dictionaries."""
+        """Compare attribute dictionaries.
+
+        Compares common attributes between two dictionaries using type-specific
+        matching logic for each value type.
+
+        Args:
+            attrs1: First attributes dictionary to compare with string keys.
+            attrs2: Second attributes dictionary to compare with string keys.
+
+        Returns:
+            Ratio of matching attributes to common attributes, between 0.0 and 1.0.
+
+        """
         if not attrs1 and not attrs2:
             return 1.0
         if not attrs1 or not attrs2:
@@ -450,7 +748,8 @@ class ConfidenceScorer:
         """Check if values match.
 
         Compare two values for equality, with type-specific logic for numeric
-        and string types.
+        and string types. Applies tolerance-based comparison for numeric values
+        and similarity-based comparison for strings.
 
         Args:
             val1: First value to compare. Can be any type.
@@ -475,7 +774,20 @@ class ConfidenceScorer:
         return val1 == val2
 
     def _compare_patterns(self, item1: CorrelationItem, item2: CorrelationItem) -> float:
-        """Compare patterns between items."""
+        """Compare patterns between items.
+
+        Extracts or generates patterns from items and compares them using
+        token-based similarity metrics. Falls back to generation if patterns
+        not available in attributes.
+
+        Args:
+            item1: First correlation item to compare patterns from.
+            item2: Second correlation item to compare patterns from.
+
+        Returns:
+            Pattern similarity score between 0.0 and 1.0.
+
+        """
         # Extract patterns from attributes
         pattern1 = item1.attributes.get("pattern", "")
         pattern2 = item2.attributes.get("pattern", "")
@@ -492,7 +804,19 @@ class ConfidenceScorer:
         return self._pattern_similarity(pattern1, pattern2)
 
     def _generate_pattern(self, item: CorrelationItem) -> str:
-        """Generate pattern from item attributes."""
+        """Generate pattern from item attributes.
+
+        Creates a string pattern encoding the data type, size category, and
+        relevant attributes joined with underscores.
+
+        Args:
+            item: Correlation item to generate pattern from.
+
+        Returns:
+            Pattern string encoding item characteristics including data type,
+            size category, and attribute signatures.
+
+        """
         pattern_parts = [item.data_type.value]
 
         # Add size category
@@ -508,7 +832,19 @@ class ConfidenceScorer:
         return "_".join(pattern_parts)
 
     def _pattern_similarity(self, pattern1: str, pattern2: str) -> float:
-        """Calculate pattern similarity."""
+        """Calculate pattern similarity.
+
+        Computes Jaccard similarity between tokenized patterns by comparing
+        unique tokens separated by underscores.
+
+        Args:
+            pattern1: First pattern string to compare.
+            pattern2: Second pattern string to compare.
+
+        Returns:
+            Similarity score between 0.0 and 1.0 using Jaccard metric.
+
+        """
         # Tokenize patterns
         tokens1 = set(pattern1.split("_"))
         tokens2 = set(pattern2.split("_"))
@@ -524,13 +860,33 @@ class AnomalyDetector:
     """Detect anomalies in correlation data."""
 
     def __init__(self) -> None:
-        """Initialize the AnomalyDetector with isolation forest and threshold settings."""
+        """Initialize the AnomalyDetector with isolation forest and threshold settings.
+
+        Creates isolation forest model and configures IQR outlier detection thresholds.
+
+        Returns:
+            None
+
+        """
         self.isolation_forest = IsolationForest(contamination=0.1, random_state=42)
         self.threshold_multiplier = 2.0
         self.min_samples = 10
 
     def detect_anomalies(self, correlations: list[CorrelationResult]) -> list[CorrelationResult]:
-        """Detect anomalous correlations."""
+        """Detect anomalous correlations.
+
+        Uses isolation forest algorithm to identify statistically anomalous
+        correlation results based on extracted feature vectors. Returns empty
+        list if insufficient samples provided.
+
+        Args:
+            correlations: List of correlation results to analyze for anomalies.
+
+        Returns:
+            List of detected anomalous correlation results identified as outliers
+            by the isolation forest algorithm, empty list if insufficient data.
+
+        """
         if len(correlations) < self.min_samples:
             return []
 
@@ -548,7 +904,20 @@ class AnomalyDetector:
         return [correlations[i] for i, pred in enumerate(predictions) if pred == -1]
 
     def _extract_features(self, correlation: CorrelationResult) -> npt.NDArray[np.floating[Any]]:
-        """Extract numerical features from correlation."""
+        """Extract numerical features from correlation.
+
+        Extracts score, confidence, item count, address spread, size statistics,
+        and tool diversity metrics for anomaly detection using isolation forest.
+
+        Args:
+            correlation: Correlation result to extract features from.
+
+        Returns:
+            Numpy array of numerical features for isolation forest classification
+            containing score, confidence, item count, address statistics, and
+            size metrics.
+
+        """
         features: list[float] = [
             correlation.correlation_score,
             correlation.confidence,
@@ -573,7 +942,20 @@ class AnomalyDetector:
         return np.array(features)
 
     def detect_outliers_statistical(self, values: list[float]) -> list[int]:
-        """Detect statistical outliers using IQR method."""
+        """Detect statistical outliers using IQR method.
+
+        Uses interquartile range method with configurable threshold multiplier
+        to identify values outside expected statistical bounds. Returns empty
+        list if insufficient values provided.
+
+        Args:
+            values: List of numeric values to analyze as floats.
+
+        Returns:
+            List of indices of outlier values that fall outside IQR bounds,
+            empty list if fewer than 4 values provided.
+
+        """
         if len(values) < 4:
             return []
 
@@ -591,13 +973,38 @@ class PatternClusterer:
     """Clusters patterns in correlation data."""
 
     def __init__(self) -> None:
-        """Initialize the PatternClusterer with clustering algorithms and scaler."""
+        """Initialize the PatternClusterer with clustering algorithms and scaler.
+
+        Creates DBSCAN clustering model and standard scaler for feature normalization.
+
+        Returns:
+            None
+
+        """
         self.dbscan = DBSCAN(eps=0.3, min_samples=5)
         self.kmeans: KMeans | None = None
         self.scaler = StandardScaler()
 
     def cluster_patterns(self, items: list[CorrelationItem], method: str = "dbscan") -> dict[int, list[CorrelationItem]]:
-        """Cluster correlation items by patterns."""
+        """Cluster correlation items by patterns.
+
+        Groups items into clusters based on extracted pattern features using
+        either DBSCAN or K-means clustering after feature scaling. Returns
+        single cluster for items with fewer than 2 elements.
+
+        Args:
+            items: List of correlation items to cluster.
+            method: Clustering method name as string, either 'dbscan' or 'kmeans'.
+                Defaults to 'dbscan'.
+
+        Returns:
+            Dictionary mapping integer cluster labels to lists of correlation
+            items in each cluster. Empty items list returns single cluster.
+
+        Raises:
+            ValueError: If method is not 'dbscan' or 'kmeans'.
+
+        """
         if len(items) < 2:
             return {0: items}
 
@@ -631,7 +1038,20 @@ class PatternClusterer:
         return dict(clusters)
 
     def _extract_pattern_features(self, item: CorrelationItem) -> npt.NDArray[np.floating[Any]]:
-        """Extract pattern features from item."""
+        """Extract pattern features from item.
+
+        Extracts numerical features from item including data type encoding, address,
+        size, logarithmic size, name characteristics, and confidence score for
+        clustering operations.
+
+        Args:
+            item: Correlation item to extract features from.
+
+        Returns:
+            Numpy array of pattern features for clustering operations including
+            type encoding, addresses, size metrics, and name characteristics.
+
+        """
         # Data type encoding
         type_encoding = {
             DataType.FUNCTION: 0,
@@ -669,7 +1089,22 @@ class PatternClusterer:
         items: list[CorrelationItem],
         top_k: int = 5,
     ) -> list[tuple[CorrelationItem, float]]:
-        """Find items with similar patterns."""
+        """Find items with similar patterns.
+
+        Searches for items with patterns most similar to query using cosine
+        similarity on extracted pattern features after standardization. Returns
+        empty list if items list is empty.
+
+        Args:
+            query: Query correlation item to find matches for.
+            items: List of items to search within.
+            top_k: Number of top matches to return as integer. Defaults to 5.
+
+        Returns:
+            List of tuples containing similar items and their cosine similarity
+            scores, empty list if items list is empty.
+
+        """
         if not items:
             return []
 
@@ -700,8 +1135,15 @@ class MachineLearningCorrelator:
     def __init__(self, model_path: str | None = None) -> None:
         """Initialize the MachineLearningCorrelator with optional model path.
 
+        Creates a new correlator with scikit-learn classifiers. If model_path
+        exists, loads pre-trained model; otherwise initializes new classifier.
+
         Args:
-            model_path: Path to pre-trained model file. Defaults to None.
+            model_path: Path to pre-trained model file as string. Defaults to None,
+                which initializes a new classifier instead.
+
+        Returns:
+            None
 
         """
         self.model_path = model_path
@@ -716,7 +1158,15 @@ class MachineLearningCorrelator:
             self._initialize_model()
 
     def _initialize_model(self) -> None:
-        """Initialize ML model."""
+        """Initialize ML model.
+
+        Creates a new Random Forest classifier for correlation prediction with
+        100 estimators and maximum depth of 10.
+
+        Returns:
+            None
+
+        """
         self.classifier = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42)
 
     def train(
@@ -724,7 +1174,20 @@ class MachineLearningCorrelator:
         positive_pairs: list[tuple[CorrelationItem, CorrelationItem]],
         negative_pairs: list[tuple[CorrelationItem, CorrelationItem]],
     ) -> None:
-        """Train the correlation model."""
+        """Train the correlation model.
+
+        Trains Random Forest classifier using positive and negative example pairs
+        with feature scaling and logs training summary. Logs warning if no training
+        data provided.
+
+        Args:
+            positive_pairs: List of item pairs that should correlate as tuples.
+            negative_pairs: List of item pairs that should not correlate as tuples.
+
+        Returns:
+            None
+
+        """
         X = []
         y = []
 
@@ -758,7 +1221,21 @@ class MachineLearningCorrelator:
         logger.info("Trained model with %s positive and %s negative pairs", len(positive_pairs), len(negative_pairs))
 
     def predict(self, item1: CorrelationItem, item2: CorrelationItem) -> tuple[bool, float]:
-        """Predict if items are correlated."""
+        """Predict if items are correlated.
+
+        Uses trained Random Forest classifier to predict whether two correlation
+        items represent the same underlying entity across different tools. Returns
+        (False, 0.0) if model not trained.
+
+        Args:
+            item1: First correlation item to compare.
+            item2: Second correlation item to compare.
+
+        Returns:
+            Tuple of (is_correlated, probability) where is_correlated is bool for
+            correlation prediction and probability is confidence score between 0-1.
+
+        """
         if not self.classifier or not hasattr(self.classifier, "estimators_"):
             logger.warning("Model not trained")
             return False, 0.0
@@ -776,7 +1253,21 @@ class MachineLearningCorrelator:
         return bool(prediction), float(probability)
 
     def _extract_pair_features(self, item1: CorrelationItem, item2: CorrelationItem) -> npt.NDArray[np.floating[Any]]:
-        """Extract features from item pair."""
+        """Extract features from item pair.
+
+        Extracts 10 numerical features from a pair of items for ML classification:
+        name similarity, type match, size ratio, address distance, confidence
+        product, tool match, attribute overlap, timestamp difference, name length
+        ratio, and common prefix length for correlation prediction.
+
+        Args:
+            item1: First correlation item to extract features from.
+            item2: Second correlation item to extract features from.
+
+        Returns:
+            Numpy array of 10 numerical features for ML classification as floats.
+
+        """
         features: list[float] = []
 
         # Name similarity
@@ -812,7 +1303,18 @@ class MachineLearningCorrelator:
         return np.array(features)
 
     def save_model(self, path: str) -> None:
-        """Save trained model."""
+        """Save trained model.
+
+        Serializes classifier, scaler, and training metadata to disk using joblib
+        and logs the save operation. Overwrites existing file if present.
+
+        Args:
+            path: File path where model should be saved as string.
+
+        Returns:
+            None
+
+        """
         model_data = {
             "classifier": self.classifier,
             "scaler": self.scaler,
@@ -823,7 +1325,22 @@ class MachineLearningCorrelator:
         logger.info("Model saved to %s", path)
 
     def load_model(self, path: str) -> None:
-        """Load trained model."""
+        """Load trained model.
+
+        Deserializes classifier, scaler, and training metadata from disk using joblib.
+        Initializes default model if loading fails with exception logging.
+
+        Args:
+            path: File path to load model from as string.
+
+        Returns:
+            None
+
+        Raises:
+            Exception: Exceptions during model loading are caught and logged,
+                with default model initialized as fallback.
+
+        """
         try:
             model_data = joblib.load(path)
             self.classifier = model_data["classifier"]
@@ -840,7 +1357,14 @@ class IntelligentCorrelator:
     """Run intelligent correlation system."""
 
     def __init__(self) -> None:
-        """Initialize the IntelligentCorrelator with all required components."""
+        """Initialize the IntelligentCorrelator with all required components.
+
+        Creates instances of all correlation subsystems and empty correlation cache.
+
+        Returns:
+            None
+
+        """
         self.fuzzy_matcher = FuzzyMatcher()
         self.address_translator = AddressTranslator()
         self.confidence_scorer = ConfidenceScorer()
@@ -850,7 +1374,25 @@ class IntelligentCorrelator:
         self.correlation_cache: dict[str, CorrelationResult] = {}
 
     def correlate(self, items: list[CorrelationItem], method: str = "hybrid") -> list[CorrelationResult]:
-        """Correlate items using specified method."""
+        """Correlate items using specified method.
+
+        Routes correlation request to appropriate backend (fuzzy, ML, pattern clustering,
+        or hybrid combination) based on method parameter. Hybrid mode combines all
+        methods with weighted aggregation and deduplication.
+
+        Args:
+            items: List of correlation items to correlate.
+            method: Correlation method name as string: 'fuzzy', 'ml', 'pattern',
+                or 'hybrid'. Defaults to 'hybrid'.
+
+        Returns:
+            List of correlation results combining correlated items with confidence
+            scores from selected method.
+
+        Raises:
+            ValueError: If method is not one of 'fuzzy', 'ml', 'pattern', or 'hybrid'.
+
+        """
         if method == "fuzzy":
             return self._correlate_fuzzy(items)
         if method == "ml":
@@ -862,7 +1404,19 @@ class IntelligentCorrelator:
         raise ValueError(f"Unknown correlation method: {method}")
 
     def _correlate_fuzzy(self, items: list[CorrelationItem]) -> list[CorrelationResult]:
-        """Correlate using fuzzy matching."""
+        """Correlate using fuzzy matching.
+
+        Groups items by data type and performs pairwise fuzzy name matching
+        to find correlations exceeding similarity threshold with confidence scoring.
+
+        Args:
+            items: List of correlation items to correlate.
+
+        Returns:
+            List of correlation results from fuzzy matching above threshold,
+            empty list if no correlations found above threshold.
+
+        """
         results = []
 
         # Group items by type
@@ -895,7 +1449,19 @@ class IntelligentCorrelator:
         return results
 
     def _correlate_ml(self, items: list[CorrelationItem]) -> list[CorrelationResult]:
-        """Correlate using machine learning."""
+        """Correlate using machine learning.
+
+        Uses trained Random Forest classifier to predict correlations between
+        all item pairs and returns predictions above confidence threshold.
+
+        Args:
+            items: List of correlation items to correlate.
+
+        Returns:
+            List of correlation results from ML prediction for correlated pairs,
+            empty list if no correlations predicted.
+
+        """
         results = []
 
         # Check all pairs
@@ -919,7 +1485,19 @@ class IntelligentCorrelator:
         return results
 
     def _correlate_pattern(self, items: list[CorrelationItem]) -> list[CorrelationResult]:
-        """Correlate using pattern clustering."""
+        """Correlate using pattern clustering.
+
+        Groups items into clusters based on extracted features and converts
+        multi-item clusters into correlation results with confidence scoring.
+
+        Args:
+            items: List of correlation items to correlate.
+
+        Returns:
+            List of correlation results from pattern clustering for multi-item
+            clusters, empty list if no multi-item clusters found.
+
+        """
         results = []
 
         # Cluster items
@@ -943,7 +1521,19 @@ class IntelligentCorrelator:
         return results
 
     def _correlate_hybrid(self, items: list[CorrelationItem]) -> list[CorrelationResult]:
-        """Hybrid correlation using multiple methods."""
+        """Hybrid correlation using multiple methods.
+
+        Combines fuzzy matching, machine learning, and pattern clustering results
+        using weighted aggregation and deduplication for final correlations.
+
+        Args:
+            items: List of correlation items to correlate.
+
+        Returns:
+            List of hybrid correlation results with weighted combined scores from
+            all correlation methods.
+
+        """
         all_results = []
 
         # Apply all methods
@@ -976,7 +1566,19 @@ class IntelligentCorrelator:
         return all_results
 
     def _calculate_cluster_confidence(self, items: list[CorrelationItem]) -> float:
-        """Calculate confidence for a cluster of items."""
+        """Calculate confidence for a cluster of items.
+
+        Computes mean pairwise confidence scores for all items in cluster
+        using the confidence scorer. Returns 0.0 for clusters with fewer than 2 items.
+
+        Args:
+            items: List of correlation items in cluster.
+
+        Returns:
+            Mean confidence score for cluster between 0.0 and 1.0, 0.0 if fewer
+            than 2 items provided.
+
+        """
         if len(items) < 2:
             return 0.0
 
@@ -990,13 +1592,38 @@ class IntelligentCorrelator:
         return float(np.mean(similarities)) if similarities else 0.0
 
     def _create_result_key(self, items: list[CorrelationItem]) -> str:
-        """Create unique key for result items."""
+        """Create unique key for result items.
+
+        Generates deterministic string key from items sorted by tool, name, and address
+        for result deduplication and merging across methods.
+
+        Args:
+            items: List of correlation items to create key from.
+
+        Returns:
+            Unique string key representing the item set with pipe-separated
+            components in format 'tool:name:address|...'.
+
+        """
         sorted_items = sorted(items, key=lambda x: (x.tool, x.name, x.address))
         key_parts = [f"{item.tool}:{item.name}:{item.address}" for item in sorted_items]
         return "|".join(key_parts)
 
     def _combine_results(self, results: list[CorrelationResult]) -> CorrelationResult:
-        """Combine multiple correlation results."""
+        """Combine multiple correlation results.
+
+        Merges multiple correlation results for same item set using weighted
+        averaging based on method weights (fuzzy 0.3, ML 0.4, pattern 0.3) and
+        metadata aggregation. Returns first result unchanged if only one provided.
+
+        Args:
+            results: List of correlation results to combine.
+
+        Returns:
+            Single combined correlation result with weighted aggregated scores and
+            combined metadata from all input results.
+
+        """
         if len(results) == 1:
             return results[0]
 
@@ -1024,11 +1651,38 @@ class IntelligentCorrelator:
         )
 
     def detect_anomalies(self, correlations: list[CorrelationResult]) -> list[CorrelationResult]:
-        """Detect anomalous correlations."""
+        """Detect anomalous correlations.
+
+        Uses isolation forest algorithm to identify statistically anomalous
+        correlation results from the provided list using feature extraction.
+
+        Args:
+            correlations: List of correlation results to analyze.
+
+        Returns:
+            List of detected anomalous correlation results identified as statistical
+            outliers by isolation forest, empty list if insufficient data.
+
+        """
         return self.anomaly_detector.detect_anomalies(correlations)
 
     def translate_addresses(self, items: list[CorrelationItem], target_tool: str) -> list[CorrelationItem]:
-        """Translate addresses to target tool's address space."""
+        """Translate addresses to target tool's address space.
+
+        Translates correlation items from their native address spaces to target
+        tool's address space using address translator. Confidence reduced to 0.9x
+        for translated items to account for translation uncertainty. Items already
+        in target space are returned unchanged.
+
+        Args:
+            items: List of correlation items to translate.
+            target_tool: Target tool name identifier string to translate addresses to.
+
+        Returns:
+            List of correlation items with translated addresses in target tool space.
+            Items not translatable are excluded from results.
+
+        """
         translated = []
 
         for item in items:
@@ -1051,7 +1705,17 @@ class IntelligentCorrelator:
 
 
 def main() -> None:
-    """Demonstrate example usage of intelligent correlation."""
+    """Demonstrate example usage of intelligent correlation.
+
+    Runs test correlations or trains ML model with command-line arguments.
+    Test mode creates sample correlation items and demonstrates all correlation
+    methods. Training mode loads JSON data with positive/negative pairs and
+    trains the ML correlator. Supports optional model path argument.
+
+    Returns:
+        None
+
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description="Intelligent Correlation System")

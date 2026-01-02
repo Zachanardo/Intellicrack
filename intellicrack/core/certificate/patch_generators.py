@@ -136,7 +136,7 @@ def generate_always_succeed_x86() -> bytes:
     making any function appear to succeed immediately.
 
     Returns:
-        Machine code bytes for 'MOV EAX, 1; RET' (6 bytes).
+        Machine code bytes for MOV EAX, 1; RET instruction (6 bytes).
 
     """
     return bytes([
@@ -156,7 +156,7 @@ def generate_always_succeed_x64() -> bytes:
     making any function appear to succeed immediately on x64 systems.
 
     Returns:
-        Machine code bytes for 'MOV RAX, 1; RET' (8 bytes).
+        Machine code bytes for MOV RAX, 1; RET instruction (8 bytes).
 
     """
     return bytes([
@@ -178,7 +178,7 @@ def generate_always_succeed_arm32() -> bytes:
     returns from the function using the BX LR instruction.
 
     Returns:
-        Machine code bytes for 'MOV R0, #1; BX LR' (8 bytes).
+        Machine code bytes for MOV R0, #1; BX LR instruction (8 bytes).
 
     """
     return bytes([
@@ -200,7 +200,7 @@ def generate_always_succeed_arm64() -> bytes:
     returns from the function.
 
     Returns:
-        Machine code bytes for 'MOV X0, #1; RET' (8 bytes).
+        Machine code bytes for MOV X0, #1; RET instruction (8 bytes).
 
     """
     return bytes([
@@ -345,7 +345,7 @@ def generate_trampoline_x86(target_addr: int, hook_addr: int) -> bytes:
         hook_addr: Target address to jump to.
 
     Returns:
-        JMP instruction bytes (5 bytes for relative jump).
+        Relative JMP instruction bytes (5 bytes).
 
     """
     offset = hook_addr - (target_addr + 5)
@@ -366,7 +366,7 @@ def generate_trampoline_x64(target_addr: int, hook_addr: int) -> bytes:
         hook_addr: Target address to jump to.
 
     Returns:
-        Absolute or relative jump instruction bytes (5-14 bytes).
+        Jump instruction bytes (5 bytes for relative, 14 bytes for absolute).
 
     """
     offset = hook_addr - (target_addr + 5)
@@ -396,7 +396,7 @@ def wrap_patch_stdcall(patch: bytes, arg_count: int = 0) -> bytes:
 
     Args:
         patch: Original patch bytes.
-        arg_count: Number of arguments (for stack cleanup amount).
+        arg_count: Number of arguments for stack cleanup amount.
 
     Returns:
         Wrapped patch with modified RET instruction for stack cleanup.
@@ -421,7 +421,7 @@ def wrap_patch_cdecl(patch: bytes) -> bytes:
         patch: Original patch bytes.
 
     Returns:
-        Unmodified patch (cdecl requires no special wrapping).
+        Unmodified patch since cdecl requires no special wrapping.
 
     """
     return patch
@@ -437,7 +437,7 @@ def wrap_patch_fastcall(patch: bytes) -> bytes:
         patch: Original patch bytes.
 
     Returns:
-        Wrapped patch with RCX and RDX register preservation.
+        Patch with RCX and RDX register preservation via PUSH/POP.
 
     """
     push_regs = bytes([
@@ -464,7 +464,7 @@ def wrap_patch_x64_convention(patch: bytes) -> bytes:
         patch: Original patch bytes.
 
     Returns:
-        Wrapped patch with RCX, RDX, R8, R9 register preservation.
+        Patch with RCX, RDX, R8, R9 register preservation via PUSH/POP.
 
     """
     push_regs = bytes([

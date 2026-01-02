@@ -8,10 +8,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
 
-
-def create_test_pe_binary(test_dir: Path, arxan_sigs: list[bytes] = None) -> Path:
+def create_test_pe_binary(test_dir: Path, arxan_sigs: list[bytes] | None = None) -> Path:
     """Create minimal PE binary with optional Arxan signatures."""
     dos_header = b"MZ" + b"\x90" * 58 + struct.pack("<I", 0x80)
     pe_signature = b"PE\x00\x00"
@@ -42,7 +40,7 @@ def create_test_pe_binary(test_dir: Path, arxan_sigs: list[bytes] = None) -> Pat
     return test_file
 
 
-def test_arxan_detector():
+def test_arxan_detector() -> None:
     """Test ArxanDetector."""
     print("\n=== Testing ArxanDetector ===")
 
@@ -76,7 +74,7 @@ def test_arxan_detector():
     print("OK All ArxanDetector tests passed\n")
 
 
-def test_arxan_analyzer():
+def test_arxan_analyzer() -> None:
     """Test ArxanAnalyzer."""
     print("=== Testing ArxanAnalyzer ===")
 
@@ -122,7 +120,7 @@ def test_arxan_analyzer():
     print("OK All ArxanAnalyzer tests passed\n")
 
 
-def test_arxan_bypass():
+def test_arxan_bypass() -> None:
     """Test ArxanBypass."""
     print("=== Testing ArxanBypass ===")
 
@@ -149,7 +147,7 @@ def test_arxan_bypass():
     print("OK All ArxanBypass tests passed\n")
 
 
-def test_integration():
+def test_integration() -> None:
     """Test complete workflow."""
     print("=== Testing Complete Integration ===")
 
@@ -207,7 +205,7 @@ def test_integration():
     print("OK All integration tests passed\n")
 
 
-def main():
+def main() -> int:
     """Run all tests."""
     print("\n" + "=" * 60)
     print("Arxan TransformIT Support - Standalone Test Suite")

@@ -113,7 +113,7 @@ from pathlib import Path
 from typing import Any
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class FridaStealth:
@@ -128,7 +128,11 @@ class FridaStealth:
     """
 
     def __init__(self) -> None:
-        """Initialize Frida stealth module."""
+        """Initialize Frida stealth module.
+
+        Sets up stealth techniques tracking and platform detection for
+        targeted evasion of anti-Frida detection mechanisms.
+        """
         self.platform = platform.system()
         self.active_techniques: dict[str, bool] = {
             "thread_randomization": False,
@@ -151,11 +155,10 @@ class FridaStealth:
         - Memory scanning for Frida signatures
 
         Args:
-            pid: Target process ID (None for current process)
+            pid: Target process ID (None for current process).
 
         Returns:
-            List of detected anti-Frida techniques
-
+            list[str]: Detected anti-Frida technique names.
         """
         detected_techniques = []
 
@@ -192,13 +195,33 @@ class FridaStealth:
         return detected_techniques
 
     def _check_thread_enumeration(self, pid: int) -> bool:
-        """Check if target enumerates threads looking for Frida names."""
+        """Check if target enumerates threads looking for Frida names.
+
+        Args:
+            pid: Process ID to check for thread enumeration.
+
+        Returns:
+            True if thread enumeration detection found, False otherwise.
+
+        Raises:
+            Exception: If platform-specific checks fail (caught and logged).
+        """
         if self.platform == "Windows":
             return self._check_thread_enum_windows(pid)
         return self._check_thread_enum_linux(pid)
 
     def _check_thread_enum_windows(self, pid: int) -> bool:
-        """Check Windows thread enumeration."""
+        """Check Windows thread enumeration.
+
+        Args:
+            pid: Process ID to check for thread enumeration.
+
+        Returns:
+            True if thread enumeration detection found, False otherwise.
+
+        Raises:
+            Exception: If Windows API calls fail (caught and logged).
+        """
         try:
             kernel32 = ctypes.windll.kernel32
 
@@ -245,7 +268,17 @@ class FridaStealth:
             return False
 
     def _check_thread_enum_linux(self, pid: int) -> bool:
-        """Check Linux thread enumeration."""
+        """Check Linux thread enumeration.
+
+        Args:
+            pid: Process ID to check for thread enumeration.
+
+        Returns:
+            True if thread enumeration detection found, False otherwise.
+
+        Raises:
+            Exception: If thread directory operations fail (caught and logged).
+        """
         try:
             task_dir = f"/proc/{pid}/task"
             if not os.path.exists(task_dir):
@@ -270,7 +303,17 @@ class FridaStealth:
             return False
 
     def _check_dbus_detection(self, pid: int) -> bool:
-        """Check if process monitors D-Bus for Frida."""
+        """Check if process monitors D-Bus for Frida.
+
+        Args:
+            pid: Process ID to check for D-Bus monitoring.
+
+        Returns:
+            True if D-Bus monitoring detection found, False otherwise.
+
+        Raises:
+            Exception: If file descriptor operations fail (caught and logged).
+        """
         if self.platform != "Linux":
             return False
 
@@ -294,7 +337,17 @@ class FridaStealth:
             return False
 
     def _check_port_scanning(self, pid: int) -> bool:
-        """Check if process scans for Frida server ports."""
+        """Check if process scans for Frida server ports.
+
+        Args:
+            pid: Process ID to check for port scanning behavior.
+
+        Returns:
+            True if port scanning detection found, False otherwise.
+
+        Raises:
+            Exception: If network file operations fail (caught and logged).
+        """
         try:
             if self.platform == "Windows":
                 return False
@@ -327,7 +380,17 @@ class FridaStealth:
             return False
 
     def _check_named_pipe_detection(self, pid: int) -> bool:
-        """Check if process looks for Frida named pipes."""
+        """Check if process looks for Frida named pipes.
+
+        Args:
+            pid: Process ID to check for named pipe detection.
+
+        Returns:
+            True if named pipe detection found, False otherwise.
+
+        Raises:
+            Exception: If Windows API calls fail (caught and logged).
+        """
         if self.platform != "Windows":
             return False
 
@@ -363,7 +426,17 @@ class FridaStealth:
             return False
 
     def _check_memory_scanning(self, pid: int) -> bool:
-        """Check if process scans memory for Frida signatures."""
+        """Check if process scans memory for Frida signatures.
+
+        Args:
+            pid: Process ID to check for memory scanning.
+
+        Returns:
+            True if memory scanning detection found, False otherwise.
+
+        Raises:
+            Exception: If memory scanning fails (caught and logged).
+        """
         try:
             if self.platform == "Windows":
                 return self._check_memory_scan_windows(pid)
@@ -374,7 +447,17 @@ class FridaStealth:
             return False
 
     def _check_memory_scan_windows(self, pid: int) -> bool:
-        """Check Windows memory scanning."""
+        """Check Windows memory scanning.
+
+        Args:
+            pid: Process ID to scan for Frida memory artifacts.
+
+        Returns:
+            True if Frida memory artifacts found, False otherwise.
+
+        Raises:
+            Exception: If Windows API calls fail (caught and logged).
+        """
         try:
             kernel32 = ctypes.windll.kernel32
             psapi = ctypes.windll.psapi
@@ -433,7 +516,17 @@ class FridaStealth:
             return False
 
     def _check_memory_scan_linux(self, pid: int) -> bool:
-        """Check Linux memory scanning."""
+        """Check Linux memory scanning.
+
+        Args:
+            pid: Process ID to scan for Frida memory artifacts.
+
+        Returns:
+            True if Frida memory artifacts found, False otherwise.
+
+        Raises:
+            Exception: If memory map operations fail (caught and logged).
+        """
         try:
             maps_file = f"/proc/{pid}/maps"
             if not os.path.exists(maps_file):
@@ -459,8 +552,11 @@ class FridaStealth:
         - gum-js-loop -> application thread names
 
         Returns:
-            True if thread names were randomized successfully
+            True if thread names were randomized successfully.
 
+        Raises:
+            Exception: If thread randomization fails unexpectedly
+                (caught and logged).
         """
         logger.info("Randomizing Frida thread names")
 
@@ -494,7 +590,13 @@ class FridaStealth:
                 return False
 
     def _get_common_thread_names(self) -> list[str]:
-        """Get list of common, benign thread names."""
+        """Get list of common, benign thread names.
+
+        Returns:
+            Common thread names for the current platform. Windows includes
+            ThreadPoolWorker, IOCompletionPort, AsyncIO, etc. Linux includes
+            kworker, ksoftirqd, migration, rcu_sched, etc.
+        """
         if self.platform == "Windows":
             return [
                 "WorkerThread",
@@ -526,7 +628,20 @@ class FridaStealth:
         patterns: list[str],
         common_names: list[str],
     ) -> int:
-        """Randomize thread names on Linux."""
+        """Randomize thread names on Linux.
+
+        Args:
+            patterns: List of thread name patterns to look for and replace.
+            common_names: List of replacement thread names to assign to
+                matching threads.
+
+        Returns:
+            Number of threads renamed successfully.
+
+        Raises:
+            Exception: If thread enumeration or file operations fail
+                unexpectedly (caught and logged).
+        """
         renamed_count = 0
         pid = os.getpid()
         task_dir = f"/proc/{pid}/task"
@@ -570,7 +685,20 @@ class FridaStealth:
         patterns: list[str],
         common_names: list[str],
     ) -> int:
-        """Randomize thread names on Windows."""
+        """Randomize thread names on Windows.
+
+        Args:
+            patterns: List of thread name patterns to look for and replace.
+            common_names: List of replacement thread names to assign to
+                matching threads.
+
+        Returns:
+            Number of threads renamed successfully.
+
+        Raises:
+            Exception: If thread enumeration or API calls fail unexpectedly
+                (caught and logged).
+        """
         renamed_count = 0
 
         try:
@@ -652,8 +780,11 @@ class FridaStealth:
         - Filtering D-Bus socket detection
 
         Returns:
-            True if D-Bus hiding successful
+            True if D-Bus hiding successful.
 
+        Raises:
+            Exception: If D-Bus hiding fails unexpectedly (caught and
+                logged).
         """
         if self.platform != "Linux":
             logger.info("D-Bus hiding only applicable on Linux")
@@ -701,8 +832,11 @@ class FridaStealth:
         - Known Frida memory patterns
 
         Returns:
-            True if artifact hiding successful
+            True if artifact hiding successful.
 
+        Raises:
+            Exception: If artifact hiding fails unexpectedly (caught and
+                logged).
         """
         logger.info("Hiding Frida memory artifacts")
 
@@ -726,7 +860,18 @@ class FridaStealth:
             return False
 
     def _hide_artifacts_linux(self) -> int:
-        """Hide artifacts on Linux."""
+        """Hide artifacts on Linux.
+
+        Scans /proc/pid/maps for Frida-related artifacts and obfuscates
+        signatures in memory.
+
+        Returns:
+            Number of memory artifacts obfuscated.
+
+        Raises:
+            Exception: If memory scanning or file operations fail
+                unexpectedly (caught and logged).
+        """
         obfuscated_count = 0
         pid = os.getpid()
         maps_file = f"/proc/{pid}/maps"
@@ -760,7 +905,18 @@ class FridaStealth:
             return obfuscated_count
 
     def _hide_artifacts_windows(self) -> int:
-        """Hide artifacts on Windows."""
+        """Hide artifacts on Windows.
+
+        Enumerates loaded modules and obfuscates Frida-related module
+        signatures in memory.
+
+        Returns:
+            Number of memory artifacts obfuscated.
+
+        Raises:
+            Exception: If module enumeration or API calls fail unexpectedly
+                (caught and logged).
+        """
         obfuscated_count = 0
 
         try:
@@ -818,8 +974,10 @@ class FridaStealth:
         - Evade API call logging
 
         Returns:
-            True if syscall mode enabled successfully
+            True if syscall mode enabled successfully.
 
+        Raises:
+            Exception: If syscall mode setup fails (caught and logged).
         """
         if self.platform != "Windows":
             logger.info("Direct syscall mode only applicable on Windows")
@@ -849,11 +1007,13 @@ class FridaStealth:
         - Timing attacks
 
         Args:
-            pid: Target process ID (None for current process)
+            pid: Target process ID (None for current process).
 
         Returns:
-            True if anti-debugging bypass successful
+            True if anti-debugging bypass successful.
 
+        Raises:
+            Exception: If anti-debugging bypass fails (caught and logged).
         """
         if pid is None:
             pid = os.getpid()
@@ -880,7 +1040,18 @@ class FridaStealth:
             return False
 
     def _bypass_anti_debug_windows(self, pid: int) -> int:
-        """Bypass Windows anti-debugging."""
+        """Bypass Windows anti-debugging.
+
+        Args:
+            pid: Process ID to apply anti-debugging bypass to.
+
+        Returns:
+            Number of anti-debugging techniques bypassed.
+
+        Raises:
+            Exception: If Windows API calls or memory operations fail
+                (caught and logged).
+        """
         bypassed_count = 0
 
         try:
@@ -951,7 +1122,17 @@ class FridaStealth:
             return bypassed_count
 
     def _bypass_anti_debug_linux(self, pid: int) -> int:
-        """Bypass Linux anti-debugging."""
+        """Bypass Linux anti-debugging.
+
+        Args:
+            pid: Process ID to apply anti-debugging bypass to.
+
+        Returns:
+            Number of anti-debugging techniques bypassed.
+
+        Raises:
+            Exception: If status file operations fail (caught and logged).
+        """
         bypassed_count = 0
 
         try:
@@ -975,8 +1156,9 @@ class FridaStealth:
         """Get current stealth technique status.
 
         Returns:
-            Dictionary with active stealth techniques
-
+            Dictionary with active stealth techniques and status including
+            platform, active techniques, original thread names count, and
+            stealth level.
         """
         with self._lock:
             return {
@@ -987,7 +1169,15 @@ class FridaStealth:
             }
 
     def _calculate_stealth_level(self) -> str:
-        """Calculate overall stealth level."""
+        """Calculate overall stealth level.
+
+        Evaluates the number of active stealth techniques and returns
+        a stealth level indicator.
+
+        Returns:
+            Stealth level as 'none', 'low', 'medium', or 'high' based on
+            the count of active techniques.
+        """
         active_count = sum(bool(active) for active in self.active_techniques.values())
         total_techniques = len(self.active_techniques)
 
@@ -1001,8 +1191,10 @@ class FridaStealth:
         """Restore original thread names and state.
 
         Returns:
-            True if restoration successful
+            True if restoration successful.
 
+        Raises:
+            Exception: If thread restoration fails (caught and logged).
         """
         logger.info("Restoring original Frida state")
 

@@ -41,9 +41,7 @@ class TestLLMBackend(LLMBackend):
     def chat(
         self,
         messages: list[LLMMessage],
-        temperature: float | None = None,
-        max_tokens: int | None = None,
-        **kwargs: Any,
+        tools: list[dict[str, Any]] | None = None,
     ) -> LLMResponse:
         """Simulate chat with configurable failures."""
         self.call_count += 1
@@ -71,7 +69,6 @@ class TestLLMBackend(LLMBackend):
 
         return LLMResponse(
             content=f"Test response {self.call_count}",
-            role="assistant",
             model=self.config.model_name or "test-model",
             finish_reason="stop",
         )
@@ -376,12 +373,12 @@ class TestFallbackChain:
             call_times.append(time.time())
             raise Exception("Retry test")
 
-        test_chain.llm_manager.chat = track_time
+        object.__setattr__(test_chain.llm_manager, "chat", track_time)
 
         messages = [LLMMessage(role="user", content="Test")]
         test_chain.chat(messages)
 
-        test_chain.llm_manager.chat = original_chat
+        object.__setattr__(test_chain.llm_manager, "chat", original_chat)
 
         if len(call_times) >= 3:
             delay1 = call_times[1] - call_times[0]
@@ -398,12 +395,12 @@ class TestFallbackChain:
             call_count += 1
             raise Exception("401 Unauthorized")
 
-        test_chain.llm_manager.chat = side_effect
+        object.__setattr__(test_chain.llm_manager, "chat", side_effect)
 
         messages = [LLMMessage(role="user", content="Test")]
         test_chain.chat(messages)
 
-        test_chain.llm_manager.chat = original_chat
+        object.__setattr__(test_chain.llm_manager, "chat", original_chat)
 
         assert call_count < test_chain.max_retries
 

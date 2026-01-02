@@ -4,10 +4,9 @@ Test if the Anthropic client generation pattern works.
 """
 
 import os
-import sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-def test_anthropic_generation():
+
+def test_anthropic_generation() -> None:
     """Test if we can generate with Anthropic using the pattern in _try_anthropic_style."""
 
     print("=== Testing Anthropic Generation Pattern ===\n")

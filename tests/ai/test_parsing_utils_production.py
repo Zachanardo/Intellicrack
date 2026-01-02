@@ -264,7 +264,10 @@ class TestExtractStructuredContent:
 
         assert len(result) == 3
         assert all("match" in item for item in result)
-        assert all(re.match(r"0x[0-9A-Fa-f]+", item["match"]) for item in result)
+        for item in result:
+            match_val = item["match"]
+            assert isinstance(match_val, str)
+            assert re.match(r"0x[0-9A-Fa-f]+", match_val)
 
     def test_extract_with_capturing_groups(self) -> None:
         """Parser captures regex groups correctly."""
@@ -278,9 +281,14 @@ class TestExtractStructuredContent:
         result = ResponseLineParser.extract_structured_content(response, patterns)
 
         assert len(result) == 2
-        assert all(len(item["groups"]) == 3 for item in result)
-        assert result[0]["groups"][0] == "ABC"
-        assert result[0]["groups"][1] == "123"
+        for item in result:
+            groups = item["groups"]
+            assert isinstance(groups, tuple)
+            assert len(groups) == 3
+        first_groups = result[0]["groups"]
+        assert isinstance(first_groups, tuple)
+        assert first_groups[0] == "ABC"
+        assert first_groups[1] == "123"
 
     def test_extract_with_section_separators(self) -> None:
         """Parser tracks sections using separators."""
@@ -302,8 +310,17 @@ class TestExtractStructuredContent:
         )
 
         assert len(result) == 2
-        assert any("Vulnerabilities" in item["section"] for item in result)
-        assert any("Recommendations" in item["section"] for item in result)
+        has_vuln = False
+        has_rec = False
+        for item in result:
+            section = item["section"]
+            assert isinstance(section, str)
+            if "Vulnerabilities" in section:
+                has_vuln = True
+            if "Recommendations" in section:
+                has_rec = True
+        assert has_vuln
+        assert has_rec
 
     def test_extract_with_multiple_patterns(self) -> None:
         """Parser matches multiple different patterns."""

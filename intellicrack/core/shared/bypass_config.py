@@ -66,12 +66,23 @@ class BypassConfig:
 
     @staticmethod
     def get_available_bypasses() -> list[str]:
-        """Get list of available bypass types."""
+        """Get list of available bypass types.
+
+        Returns:
+            Available bypass type names.
+        """
         return list(BypassConfig.BYPASS_TYPES.keys())
 
     @staticmethod
     def analyze_bypass_capabilities(target_info: dict[str, Any]) -> dict[str, Any]:
-        """Analyze available bypass capabilities for a target."""
+        """Analyze available bypass capabilities for a target.
+
+        Args:
+            target_info: Target protection flags.
+
+        Returns:
+            Available bypasses, target info, and bypass count.
+        """
         bypasses = []
 
         for bypass_type, config in BypassConfig.BYPASS_TYPES.items():
@@ -87,7 +98,14 @@ class BypassConfig:
 
     @staticmethod
     def get_bypass_info(bypass_type: str) -> dict[str, Any]:
-        """Get detailed information about a specific bypass type."""
+        """Get detailed information about a specific bypass type.
+
+        Args:
+            bypass_type: Bypass type identifier to retrieve information for.
+
+        Returns:
+            Bypass configuration details.
+        """
         return BypassConfig.BYPASS_TYPES.get(
             bypass_type,
             {
@@ -100,12 +118,27 @@ class BypassConfig:
 
     @staticmethod
     def get_bypasses_by_difficulty(difficulty: str) -> list[str]:
-        """Get bypasses filtered by difficulty level."""
+        """Get bypasses filtered by difficulty level.
+
+        Args:
+            difficulty: Difficulty level to filter by.
+
+        Returns:
+            Bypass types matching the specified difficulty.
+        """
         return [bypass_type for bypass_type, config in BypassConfig.BYPASS_TYPES.items() if config["difficulty"] == difficulty]
 
     @staticmethod
     def get_recommended_bypasses(target_info: dict[str, Any], min_reliability: int = 6) -> list[str]:
-        """Get recommended bypasses based on target and reliability threshold."""
+        """Get recommended bypasses based on target and reliability threshold.
+
+        Args:
+            target_info: Target protection flags.
+            min_reliability: Minimum reliability threshold for bypass recommendation.
+
+        Returns:
+            Recommended bypass types meeting the reliability threshold.
+        """
         analysis = BypassConfig.analyze_bypass_capabilities(target_info)
         available_bypasses = analysis["bypasses_available"]
 

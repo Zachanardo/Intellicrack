@@ -15,12 +15,19 @@ import shutil
 import tempfile
 import time
 import zipfile
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT as PYQT6_AVAILABLE
+
+QApplication: Any = None
+QMessageBox: Any = None
+Qt: Any = None
+PluginInstallThread: Any = None
+PluginManagerDialog: Any = None
 
 if PYQT6_AVAILABLE:
     from intellicrack.handlers.pyqt6_handler import QApplication, QMessageBox, Qt
@@ -48,7 +55,7 @@ def qapp() -> Any:
 
 
 @pytest.fixture
-def temp_plugins_dir() -> Path:
+def temp_plugins_dir() -> Generator[Path, None, None]:
     """Create temporary directory for plugin testing."""
     with tempfile.TemporaryDirectory(prefix="plugin_manager_test_") as tmpdir:
         plugins_dir = Path(tmpdir) / "plugins"
@@ -57,7 +64,7 @@ def temp_plugins_dir() -> Path:
 
 
 @pytest.fixture
-def mock_app_context() -> object:
+def mock_app_context() -> Any:
     """Create mock app context with config."""
     class MockAppContext:
         def __init__(self) -> None:
@@ -340,7 +347,7 @@ class TestPluginManagerDialogInitialization:
     """Test plugin manager dialog initialization and setup."""
 
     def test_dialog_initializes_with_default_directories(
-        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: Any
     ) -> None:
         """Dialog creates required directories on initialization."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -351,7 +358,7 @@ class TestPluginManagerDialogInitialization:
         assert os.path.exists(dialog.temp_dir)
 
     def test_dialog_loads_plugin_categories(
-        self, qapp: Any, mock_app_context: object
+        self, qapp: Any, mock_app_context: Any
     ) -> None:
         """Dialog initializes with correct plugin categories."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -368,7 +375,7 @@ class TestPluginManagerDialogInitialization:
         assert dialog.plugin_categories == expected_categories
 
     def test_dialog_initializes_repositories(
-        self, qapp: Any, mock_app_context: object
+        self, qapp: Any, mock_app_context: Any
     ) -> None:
         """Dialog initializes with plugin repositories."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -383,7 +390,7 @@ class TestPluginDiscovery:
     """Test plugin discovery and loading functionality."""
 
     def test_discovers_installed_python_plugins(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: Any
     ) -> None:
         """Plugin manager discovers installed Python plugin files."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -402,7 +409,7 @@ class TestPluginDiscovery:
         temp_plugins_dir: Path,
         sample_analysis_plugin: Path,
         sample_exploitation_plugin: Path,
-        mock_app_context: object
+        mock_app_context: Any
     ) -> None:
         """Plugin manager discovers all installed plugins."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -417,7 +424,7 @@ class TestPluginDiscovery:
         assert 'License Checker Detector' in plugin_names
 
     def test_extracts_plugin_metadata_from_comments(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: Any
     ) -> None:
         """Plugin manager extracts metadata from plugin file comments."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -429,7 +436,7 @@ class TestPluginDiscovery:
         assert plugin_info['description'] == 'Calculate Shannon entropy to detect packing and encryption'
 
     def test_plugin_info_handles_missing_metadata(
-        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: Any
     ) -> None:
         """Plugin manager handles plugins with missing metadata gracefully."""
         plugin_file = temp_plugins_dir / "minimal_plugin.py"
@@ -447,7 +454,7 @@ class TestPluginInstallation:
     """Test plugin installation from files and archives."""
 
     def test_installs_plugin_from_python_file(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: Any
     ) -> None:
         """Plugin manager installs plugin from Python file."""
         source_plugin = temp_plugins_dir / "source_plugin.py"
@@ -474,7 +481,7 @@ class TestPluginInstallation:
         assert (install_dir / "source_plugin.py").exists()
 
     def test_installs_plugin_from_zip_archive(
-        self, qapp: Any, temp_plugins_dir: Path, sample_plugin_zip: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_plugin_zip: Path, mock_app_context: Any
     ) -> None:
         """Plugin manager extracts and installs plugin from ZIP archive."""
         install_dir = temp_plugins_dir / "installed_zip"
@@ -498,7 +505,7 @@ class TestPluginInstallation:
         assert (install_dir / "entropy_analyzer.py").exists()
 
     def test_validates_installed_plugin_has_python_files(
-        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: Any
     ) -> None:
         """Installation fails if archive contains no Python files."""
         invalid_zip = temp_plugins_dir / "invalid.zip"
@@ -526,7 +533,7 @@ class TestPluginInstallation:
         assert "no python files" in message.lower()
 
     def test_installation_handles_errors_gracefully(
-        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: Any
     ) -> None:
         """Installation thread handles errors and reports failure."""
         nonexistent_file = temp_plugins_dir / "nonexistent.py"
@@ -554,7 +561,7 @@ class TestPluginEnableDisable:
     """Test plugin enable/disable functionality."""
 
     def test_enables_plugin(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: Any
     ) -> None:
         """Plugin manager enables selected plugin."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -574,7 +581,7 @@ class TestPluginEnableDisable:
         assert updated_info['enabled'] is True
 
     def test_disables_plugin(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: Any
     ) -> None:
         """Plugin manager disables selected plugin."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -594,7 +601,7 @@ class TestPluginEnableDisable:
         assert updated_info['enabled'] is False
 
     def test_displays_disabled_plugins_differently(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: Any
     ) -> None:
         """Disabled plugins are displayed with different color."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -618,14 +625,14 @@ class TestPluginRemoval:
     """Test plugin removal functionality."""
 
     def test_removes_plugin_file(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: object, monkeypatch: Any
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: Any, monkeypatch: Any
     ) -> None:
         """Plugin manager removes plugin file when confirmed."""
         from intellicrack.handlers.pyqt6_handler import QMessageBox
 
         monkeypatch.setattr(
             QMessageBox, 'question',
-            lambda *args, **kwargs: QMessageBox.Yes
+            lambda *args, **kwargs: QMessageBox.StandardButton.Yes
         )
 
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -640,7 +647,7 @@ class TestPluginRemoval:
         assert not sample_analysis_plugin.exists()
 
     def test_removes_plugin_directory(
-        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: object, monkeypatch: Any
+        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: Any, monkeypatch: Any
     ) -> None:
         """Plugin manager removes plugin directory when confirmed."""
         from intellicrack.handlers.pyqt6_handler import QMessageBox
@@ -652,7 +659,7 @@ class TestPluginRemoval:
 
         monkeypatch.setattr(
             QMessageBox, 'question',
-            lambda *args, **kwargs: QMessageBox.Yes
+            lambda *args, **kwargs: QMessageBox.StandardButton.Yes
         )
 
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -670,7 +677,7 @@ class TestPluginConfiguration:
     """Test plugin configuration functionality."""
 
     def test_saves_plugin_configuration(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: Any
     ) -> None:
         """Plugin manager saves configuration for plugins."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -693,7 +700,7 @@ class TestPluginConfiguration:
         assert dialog.plugin_configs[plugin_name]['max_file_size'] == 50
 
     def test_loads_configuration_from_app_context(
-        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: Any
     ) -> None:
         """Plugin manager loads configurations from app context."""
         test_configs = {
@@ -715,7 +722,7 @@ class TestPluginTemplateCreation:
     """Test plugin template generation."""
 
     def test_creates_analysis_plugin_template(
-        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: Any
     ) -> None:
         """Plugin manager creates functional analysis plugin template."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -740,7 +747,7 @@ class TestPluginTemplateCreation:
         compile(template_code, str(template_file), 'exec')
 
     def test_creates_exploitation_plugin_template(
-        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: Any
     ) -> None:
         """Plugin manager creates functional exploitation plugin template."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -765,7 +772,7 @@ class TestPluginTesting:
     """Test plugin validation and testing functionality."""
 
     def test_validates_plugin_syntax(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: Any
     ) -> None:
         """Plugin tester validates plugin syntax successfully."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -780,7 +787,7 @@ class TestPluginTesting:
         assert "Plugin metadata found" in output
 
     def test_detects_syntax_errors(
-        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: Any
     ) -> None:
         """Plugin tester detects syntax errors in plugins."""
         invalid_plugin = temp_plugins_dir / "invalid_syntax.py"
@@ -795,7 +802,7 @@ class TestPluginTesting:
         assert "Syntax error" in output or "ERROR" in output
 
     def test_warns_about_missing_components(
-        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: Any
     ) -> None:
         """Plugin tester warns about missing required components."""
         incomplete_plugin = temp_plugins_dir / "incomplete.py"
@@ -814,13 +821,15 @@ class TestPluginExecution:
     """Test actual plugin execution functionality."""
 
     def test_executes_analysis_plugin_on_binary(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, test_binary_file: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, test_binary_file: Path, mock_app_context: Any
     ) -> None:
         """Plugin executes successfully on test binary."""
         import importlib.util
 
         spec = importlib.util.spec_from_file_location("test_plugin", sample_analysis_plugin)
+        assert spec is not None, "Failed to create module spec"
         module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None, "Spec has no loader"
         spec.loader.exec_module(module)
 
         plugin = module.create_plugin()
@@ -838,13 +847,15 @@ class TestPluginExecution:
         temp_plugins_dir: Path,
         sample_exploitation_plugin: Path,
         test_binary_file: Path,
-        mock_app_context: object
+        mock_app_context: Any
     ) -> None:
         """Exploitation plugin detects license patterns in binary."""
         import importlib.util
 
         spec = importlib.util.spec_from_file_location("exploit_plugin", sample_exploitation_plugin)
+        assert spec is not None, "Failed to create module spec"
         module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None, "Spec has no loader"
         spec.loader.exec_module(module)
 
         plugin = module.create_plugin()
@@ -856,13 +867,15 @@ class TestPluginExecution:
         assert any('Trial expired' in finding for finding in result['data']['findings'])
 
     def test_plugin_handles_nonexistent_file(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: Any
     ) -> None:
         """Plugin handles nonexistent file gracefully."""
         import importlib.util
 
         spec = importlib.util.spec_from_file_location("test_plugin", sample_analysis_plugin)
+        assert spec is not None, "Failed to create module spec"
         module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None, "Spec has no loader"
         spec.loader.exec_module(module)
 
         plugin = module.create_plugin()
@@ -876,7 +889,7 @@ class TestDependencyChecking:
     """Test plugin dependency validation."""
 
     def test_checks_available_dependencies(
-        self, qapp: Any, mock_app_context: object
+        self, qapp: Any, mock_app_context: Any
     ) -> None:
         """Plugin manager checks if dependencies are available."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -887,7 +900,7 @@ class TestDependencyChecking:
         assert len(missing) == 0
 
     def test_detects_missing_dependencies(
-        self, qapp: Any, mock_app_context: object
+        self, qapp: Any, mock_app_context: Any
     ) -> None:
         """Plugin manager detects missing dependencies."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -898,7 +911,7 @@ class TestDependencyChecking:
         assert 'nonexistent_package_xyz123' in missing
 
     def test_checks_common_plugin_dependencies(
-        self, qapp: Any, mock_app_context: object
+        self, qapp: Any, mock_app_context: Any
     ) -> None:
         """Plugin manager validates common plugin dependencies."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -913,7 +926,7 @@ class TestPluginCodeGeneration:
     """Test plugin code generation for different types."""
 
     def test_generates_valid_analysis_plugin_code(
-        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: Any
     ) -> None:
         """Generated analysis plugin code is valid and functional."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -934,7 +947,7 @@ class TestPluginCodeGeneration:
         compile(code, "generated_plugin.py", 'exec')
 
     def test_generates_valid_exploitation_plugin_code(
-        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: Any
     ) -> None:
         """Generated exploitation plugin code is valid and functional."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -954,7 +967,7 @@ class TestPluginCodeGeneration:
         compile(code, "generated_exploit.py", 'exec')
 
     def test_generates_valid_network_plugin_code(
-        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: Any
     ) -> None:
         """Generated network plugin code is valid and functional."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -978,7 +991,7 @@ class TestPluginRefresh:
     """Test plugin list refresh functionality."""
 
     def test_refreshes_plugin_list_after_installation(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: Any
     ) -> None:
         """Plugin list refreshes after new plugin installation."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -995,7 +1008,7 @@ class TestPluginRefresh:
         assert len(dialog.installed_plugins) == initial_count + 1
 
     def test_refresh_updates_plugin_info(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: Any
     ) -> None:
         """Refresh updates plugin information in list."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -1018,7 +1031,7 @@ class TestPluginInfoDisplay:
     """Test plugin information display."""
 
     def test_displays_plugin_info_on_selection(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: Any
     ) -> None:
         """Plugin info is displayed when plugin is selected."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -1034,7 +1047,7 @@ class TestPluginInfoDisplay:
         assert "file" in info_text.lower()
 
     def test_clears_info_when_no_selection(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: Any
     ) -> None:
         """Plugin info is cleared when no plugin is selected."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -1055,7 +1068,7 @@ class TestPluginManagerIntegration:
     """Integration tests for complete plugin workflows."""
 
     def test_complete_plugin_installation_workflow(
-        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: object
+        self, qapp: Any, temp_plugins_dir: Path, sample_analysis_plugin: Path, mock_app_context: Any
     ) -> None:
         """Complete workflow: install, enable, configure, test plugin."""
         dialog = PluginManagerDialog(parent=None, app_context=mock_app_context)
@@ -1088,7 +1101,7 @@ class TestPluginManagerIntegration:
         assert len(dialog.installed_plugins) > initial_count
 
     def test_plugin_lifecycle_from_creation_to_removal(
-        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: object, monkeypatch: Any
+        self, qapp: Any, temp_plugins_dir: Path, mock_app_context: Any, monkeypatch: Any
     ) -> None:
         """Complete plugin lifecycle: create, test, configure, remove."""
         from intellicrack.handlers.pyqt6_handler import QMessageBox
@@ -1113,7 +1126,7 @@ class TestPluginManagerIntegration:
 
         monkeypatch.setattr(
             QMessageBox, 'question',
-            lambda *args, **kwargs: QMessageBox.Yes
+            lambda *args, **kwargs: QMessageBox.StandardButton.Yes
         )
 
         dialog.installed_list.setCurrentRow(0)

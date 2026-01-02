@@ -28,14 +28,9 @@ from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
 
 import yara
 
-from intellicrack.utils.type_safety import get_typed_item, validate_type
-
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from intellicrack.core.debugging_engine import LicenseDebugger
-    from intellicrack.core.process_manipulation import LicenseAnalyzer
 
 
 class LicenseAnalyzerProtocol(Protocol):
@@ -44,12 +39,7 @@ class LicenseAnalyzerProtocol(Protocol):
     process_handle: int | None
 
     def enumerate_memory_regions(self) -> list[dict[str, Any]]:
-        """Enumerate all memory regions in the target process.
-
-        Returns:
-            List of dictionaries containing region base, size, and protection info.
-
-        """
+        """Enumerate all memory regions in the target process."""
         ...
 
     def read_process_memory(self, address: int, size: int) -> bytes | None:
@@ -59,19 +49,11 @@ class LicenseAnalyzerProtocol(Protocol):
             address: Virtual memory address to read from.
             size: Number of bytes to read.
 
-        Returns:
-            Bytes read from memory, or None if read fails.
-
         """
         ...
 
     def enumerate_modules(self) -> list[dict[str, Any]]:
-        """Enumerate all loaded modules in the target process.
-
-        Returns:
-            List of dictionaries containing module name, base address, and size.
-
-        """
+        """Enumerate all loaded modules in the target process."""
         ...
 
 
@@ -100,9 +82,6 @@ class DebuggerProtocol(Protocol):
             callback: Function to call when breakpoint triggers.
             apply_to_all_threads: Whether to apply to all process threads.
 
-        Returns:
-            True if breakpoint was set successfully.
-
         """
         ...
 
@@ -121,9 +100,6 @@ class DebuggerProtocol(Protocol):
             description: Human-readable description of the breakpoint.
             condition: Optional condition expression for conditional breakpoints.
 
-        Returns:
-            True if breakpoint was set successfully.
-
         """
         ...
 
@@ -133,9 +109,6 @@ class DebuggerProtocol(Protocol):
         Args:
             thread_id: Thread identifier to trace.
             max_instructions: Maximum number of instructions to trace.
-
-        Returns:
-            List of dictionaries containing instruction address, opcode, and operands.
 
         """
         ...
@@ -307,7 +280,12 @@ class YaraScanner:
             self._load_custom_rules()
 
     def _load_builtin_rules(self) -> None:
-        """Load built-in YARA rules."""
+        """Load built-in YARA rules.
+
+        Loads rule sources for packer, protector, crypto, license, anti-debug, and
+        compiler categories, compiling them into the compiled_rules dictionary.
+
+        """
         # Create built-in rules for each category
         builtin_rules = {
             RuleCategory.PACKER: self._create_packer_rules(),
@@ -326,7 +304,12 @@ class YaraScanner:
                 logger.exception("Failed to compile %s rules", category.value)
 
     def _create_packer_rules(self) -> str:
-        """Create YARA rules for packer detection."""
+        """Create YARA rules for packer detection.
+
+        Returns:
+            str: YARA rule source code for detecting common packers (UPX, ASPack, PECompact).
+
+        """
         return """
 rule UPX_Packer {
     meta:
@@ -375,7 +358,12 @@ rule PECompact_Packer {
 """
 
     def _create_protector_rules(self) -> str:
-        """Create YARA rules for protector detection."""
+        """Create YARA rules for protector detection.
+
+        Returns:
+            str: YARA rule source code for detecting software protectors (VMProtect, Themida, Denuvo, ASProtect).
+
+        """
         return """
 rule VMProtect_Protector {
     meta:
@@ -444,7 +432,12 @@ rule ASProtect_Protector {
 """
 
     def _create_crypto_rules(self) -> str:
-        """Create YARA rules for cryptographic algorithm detection."""
+        """Create YARA rules for cryptographic algorithm detection.
+
+        Returns:
+            str: YARA rule source code for detecting crypto algorithms (AES, RSA, SHA256, MD5).
+
+        """
         return """
 rule AES_Constants {
     meta:
@@ -502,7 +495,12 @@ rule MD5_Constants {
 """
 
     def _create_license_rules(self) -> str:
-        """Create YARA rules for license validation detection."""
+        """Create YARA rules for license validation detection.
+
+        Returns:
+            str: YARA rule source code for detecting license validation, serial checks, and activation mechanisms.
+
+        """
         return """
 rule License_Check_Patterns {
     meta:
@@ -885,7 +883,12 @@ rule SafeNet_Sentinel {
 """
 
     def _create_antidebug_rules(self) -> str:
-        """Create YARA rules for anti-debugging detection."""
+        """Create YARA rules for anti-debugging detection.
+
+        Returns:
+            str: YARA rule source code for detecting anti-debugging techniques.
+
+        """
         return """
 rule AntiDebug_IsDebuggerPresent {
     meta:
@@ -934,7 +937,12 @@ rule AntiDebug_Exception {
 """
 
     def _create_compiler_rules(self) -> str:
-        """Create YARA rules for compiler detection."""
+        """Create YARA rules for compiler detection.
+
+        Returns:
+            str: YARA rule source code for detecting compiler signatures.
+
+        """
         return """
 rule MSVC_Compiler {
     meta:
@@ -982,7 +990,12 @@ rule Delphi_Compiler {
 """
 
     def _load_custom_rules(self) -> None:
-        """Load custom YARA rules from directory."""
+        """Load custom YARA rules from directory.
+
+        Scans the rules_dir for .yar files and compiles them for use in scanning.
+        Failed rules are logged but do not prevent loading of other rules.
+
+        """
         for rule_file in self.rules_dir.glob("*.yar"):
             try:
                 rules = yara.compile(filepath=str(rule_file))
@@ -994,12 +1007,15 @@ rule Delphi_Compiler {
     def scan_file(self, file_path: Path, categories: list[RuleCategory] | None = None) -> list[YaraMatch]:
         """Scan a file with YARA rules.
 
+        Scans the target file against all compiled YARA rules in the specified categories,
+        returning a list of matches that include rule name, offset, matched strings, and confidence.
+
         Args:
-            file_path: Path to file to scan
-            categories: Categories to scan (None = all)
+            file_path: Path to file to scan.
+            categories: Categories to scan (None = all compiled rules and custom rules).
 
         Returns:
-            List of YARA matches
+            list[YaraMatch]: List of detected YARA rule matches with metadata.
 
         """
         matches = []
@@ -1055,12 +1071,15 @@ rule Delphi_Compiler {
     def scan_memory(self, pid: int, categories: list[RuleCategory] | None = None) -> list[YaraMatch]:
         """Scan process memory with YARA rules.
 
+        Attaches to a running process and scans its memory space against compiled YARA rules,
+        detecting protection mechanisms, licensing code, and other binary signatures.
+
         Args:
-            pid: Process ID to scan
-            categories: Categories to scan (None = all)
+            pid: Process ID to scan.
+            categories: Categories to scan (None = all compiled rules).
 
         Returns:
-            List of YARA matches
+            list[YaraMatch]: List of detected YARA rule matches in process memory.
 
         """
         matches = []
@@ -1096,11 +1115,16 @@ rule Delphi_Compiler {
     def detect_protections(self, file_path: Path) -> dict[str, Any]:
         """Detect protection schemes in a binary.
 
+        Performs comprehensive protection analysis including YARA-based and signature-based
+        detection for packers, protectors, cryptographic algorithms, license validators,
+        anti-debugging techniques, and compiler signatures.
+
         Args:
-            file_path: Path to binary file
+            file_path: Path to binary file to analyze.
 
         Returns:
-            Dictionary of detected protections
+            dict[str, Any]: Dictionary with keys for packers, protectors, crypto, license,
+                anti_debug, compiler, and signature_based detections.
 
         """
         protections: dict[str, list[dict[str, Any]] | dict[str, Any] | None] = {
@@ -1184,11 +1208,15 @@ rule Delphi_Compiler {
     def _detect_by_signatures(self, file_path: Path) -> list[dict[str, Any]]:
         """Detect protections using byte signatures.
 
+        Matches known protection signatures from PROTECTION_SIGNATURES dictionary against
+        the binary file, providing complementary detection to YARA-based analysis.
+
         Args:
-            file_path: Path to binary file
+            file_path: Path to binary file to analyze.
 
         Returns:
-            List of detected protections
+            list[dict[str, Any]]: List of protection signatures found, each containing
+                name, version, category, and matched offsets.
 
         """
         detections = []
@@ -1233,13 +1261,16 @@ rule Delphi_Compiler {
     def create_custom_rule(self, rule_name: str, rule_content: str, _category: RuleCategory = RuleCategory.CUSTOM) -> bool:
         """Create and compile a custom YARA rule.
 
+        Compiles the provided YARA rule source, validates syntax, and saves it to a .yar
+        file in the rules directory for persistence.
+
         Args:
-            rule_name: Name for the rule
-            rule_content: YARA rule content
-            category: Category for the rule
+            rule_name: Name for the rule.
+            rule_content: YARA rule source code.
+            _category: Category classification for the rule.
 
         Returns:
-            True if successful
+            bool: True if the rule was successfully created and compiled.
 
         """
         try:
@@ -1264,7 +1295,20 @@ rule Delphi_Compiler {
             return False
 
     def compile_rules(self, incremental: bool = False, timeout: int = 30) -> bool:
-        """Compile all loaded rules with performance optimization."""
+        """Compile all loaded rules with performance optimization.
+
+        Combines all built-in and custom rules into compiled YARA objects, with optional
+        incremental compilation to handle large rule sets. Uses hash-based caching to
+        avoid recompilation of unchanged rules.
+
+        Args:
+            incremental: If True, continue on rule compilation failures.
+            timeout: Maximum seconds allowed for compilation.
+
+        Returns:
+            bool: True if compilation succeeded, False otherwise.
+
+        """
         import hashlib
         import time
 
@@ -1334,7 +1378,21 @@ rule Delphi_Compiler {
         category: RuleCategory = RuleCategory.LICENSE,
         validate_syntax: bool = True,
     ) -> bool:
-        """Add a new YARA rule with validation and categorization."""
+        """Add a new YARA rule with validation and categorization.
+
+        Adds a new YARA rule to the built-in rules collection with optional syntax
+        validation, automatic metadata injection, and incremental recompilation.
+
+        Args:
+            rule_name: Name for the new rule.
+            rule_content: YARA rule source code.
+            category: RuleCategory classification for the rule.
+            validate_syntax: Whether to compile and test the rule before adding.
+
+        Returns:
+            bool: True if the rule was successfully added and compiled.
+
+        """
         import re
 
         try:
@@ -1383,7 +1441,19 @@ rule Delphi_Compiler {
             return False
 
     def remove_rule(self, rule_name: str, check_dependencies: bool = True) -> bool:
-        """Remove a YARA rule with dependency checking."""
+        """Remove a YARA rule with dependency checking.
+
+        Removes a rule from the built-in rules collection and optionally checks for
+        other rules that may reference it. Recompiles remaining rules after removal.
+
+        Args:
+            rule_name: Name of the rule to remove.
+            check_dependencies: Whether to warn about dependent rules.
+
+        Returns:
+            bool: True if the rule was successfully removed and rules recompiled.
+
+        """
         if rule_name not in self.builtin_rules:
             logger.warning("Rule '%s' not found", rule_name)
             return False
@@ -1415,7 +1485,21 @@ rule Delphi_Compiler {
         _scan_dlls: bool = True,
         scan_heap: bool = True,
     ) -> list[YaraMatch]:
-        """Scan a running process memory with advanced options."""
+        """Scan a running process memory with advanced options.
+
+        Performs memory scanning on a live process, with options to include DLL and heap regions.
+        Handles memory region enumeration and scanning across different protection contexts.
+
+        Args:
+            pid: Process ID to scan.
+            categories: RuleCategory types to apply in scanning.
+            _scan_dlls: Whether to scan DLL memory regions.
+            scan_heap: Whether to scan heap memory regions.
+
+        Returns:
+            list[YaraMatch]: List of matches found in process memory.
+
+        """
         import ctypes
         from ctypes import wintypes
 
@@ -1550,7 +1634,22 @@ rule Delphi_Compiler {
         add_wildcards: bool = True,
         add_case_variations: bool = True,
     ) -> str:
-        """Generate sophisticated YARA rules for licensing protection detection."""
+        """Generate sophisticated YARA rules for licensing protection detection.
+
+        Automatically creates YARA rules from provided strings, with support for regex
+        patterns, hex sequences, literal strings, and optional wildcards/case variations.
+
+        Args:
+            name: Name for the generated rule.
+            strings: List of patterns (strings, regex, or hex sequences).
+            condition: YARA condition expression connecting the patterns.
+            add_wildcards: Whether to add wildcards to hex patterns for flexibility.
+            add_case_variations: Whether to generate case-insensitive string patterns.
+
+        Returns:
+            str: Valid YARA rule source code ready for compilation.
+
+        """
         import re
 
         # Sanitize rule name
@@ -1655,18 +1754,45 @@ rule Delphi_Compiler {
         return rule_content
 
     def get_matches(self) -> list[YaraMatch]:
-        """Get all stored matches (thread-safe)."""
+        """Get all stored matches (thread-safe).
+
+        Returns a copy of all currently stored matches from scans to prevent
+        external modification of internal state.
+
+        Returns:
+            list[YaraMatch]: List of all matches found during scanning.
+
+        """
         with self._match_lock:
             return list(self._matches)  # Return copy to prevent external modification
 
     def clear_matches(self) -> None:
-        """Clear stored matches (thread-safe)."""
+        """Clear stored matches (thread-safe).
+
+        Clears all stored matches from the internal match collection in a thread-safe manner.
+
+        """
         with self._match_lock:
             self._matches = []
             logger.debug("Cleared all stored matches")
 
-    def _scan_memory_region(self, data: bytes, base_address: int, categories: list[RuleCategory] | None) -> list[YaraMatch]:
-        """Scan a memory region with filtered rules."""
+    def _scan_memory_region(
+        self, data: bytes, base_address: int, categories: list[RuleCategory] | None
+    ) -> list[YaraMatch]:
+        """Scan a memory region with filtered rules.
+
+        Internal method to scan a single memory region with YARA rules, handling
+        offset adjustment based on the region's base address.
+
+        Args:
+            data: Raw bytes of the memory region to scan.
+            base_address: Base address of the memory region in process space.
+            categories: RuleCategory types to apply, or None for all rules.
+
+        Returns:
+            list[YaraMatch]: Matches found in the region with correct offset adjustments.
+
+        """
         matches: list[YaraMatch] = []
 
         try:
@@ -1709,7 +1835,18 @@ rule Delphi_Compiler {
         return matches
 
     def _filter_rules_by_category(self, categories: list[RuleCategory]) -> str:
-        """Filter rules by category."""
+        """Filter rules by category.
+
+        Selects built-in rules that match the specified categories and returns them
+        as a combined YARA rule source string.
+
+        Args:
+            categories: List of RuleCategory types to filter by.
+
+        Returns:
+            str: Combined YARA rule source code for matching categories.
+
+        """
         filtered = [
             content
             for name, content in self.builtin_rules.items()
@@ -1718,7 +1855,18 @@ rule Delphi_Compiler {
         return "\n\n".join(filtered)
 
     def _get_rule_category(self, rule_name: str) -> RuleCategory:
-        """Get category for a rule."""
+        """Get category for a rule.
+
+        Retrieves the RuleCategory classification for a specific rule by name,
+        defaulting to CUSTOM if not found.
+
+        Args:
+            rule_name: Name of the rule to look up.
+
+        Returns:
+            RuleCategory: The category for the rule, or CUSTOM if not found.
+
+        """
         if rule_name in self._rule_categories:
             return self._rule_categories[rule_name]
         return RuleCategory.CUSTOM
@@ -1726,9 +1874,12 @@ rule Delphi_Compiler {
     def export_detections(self, detections: dict[str, Any], output_path: Path) -> None:
         """Export detection results to file.
 
+        Saves detection results to a JSON file with metadata and statistics,
+        including timestamp and count information for each detection type.
+
         Args:
-            detections: Detection results
-            output_path: Path to save results
+            detections: Detection results dictionary to export.
+            output_path: Path to save the JSON export file.
 
         """
         import time
@@ -1761,16 +1912,20 @@ rule Delphi_Compiler {
     ) -> list[YaraMatch]:
         """Scan process memory using LicenseAnalyzer for enhanced memory access.
 
+        Performs comprehensive memory scanning using a LicenseAnalyzer instance for
+        improved memory enumeration and region identification, with optional progress
+        reporting and match caching.
+
         Args:
-            license_analyzer: Connected LicenseAnalyzer instance
-            categories: Categories to scan (None = all)
-            scan_dlls: Whether to scan loaded DLLs
-            scan_heap: Whether to scan heap memory
-            use_cache: Whether to use match caching
-            progress_callback: Callback function for progress updates
+            license_analyzer: Connected LicenseAnalyzer instance for memory access.
+            categories: Categories to scan (None = all).
+            scan_dlls: Whether to scan loaded DLL memory regions.
+            scan_heap: Whether to scan heap memory regions.
+            use_cache: Whether to use match caching for performance.
+            progress_callback: Optional callback for progress reporting (scanned, total, status).
 
         Returns:
-            List of YARA matches
+            list[YaraMatch]: All matches found during comprehensive memory scanning.
 
         """
         if not hasattr(license_analyzer, "process_handle") or not license_analyzer.process_handle:
@@ -1916,7 +2071,19 @@ rule Delphi_Compiler {
             return matches
 
     def _is_dll_region(self, license_analyzer: LicenseAnalyzerProtocol, region: dict[str, Any]) -> bool:
-        """Check if memory region belongs to a DLL."""
+        """Check if memory region belongs to a DLL.
+
+        Determines whether a memory region corresponds to a loaded DLL by checking
+        MEM_IMAGE characteristics and comparing against enumerated module ranges.
+
+        Args:
+            license_analyzer: LicenseAnalyzer instance for module enumeration.
+            region: Memory region dict with base_address, size, type, and protect fields.
+
+        Returns:
+            bool: True if region is part of a loaded DLL.
+
+        """
         try:
             # Check if region has IMAGE characteristics
             if region.get("type") == 0x1000000:  # MEM_IMAGE
@@ -1935,7 +2102,19 @@ rule Delphi_Compiler {
         return False
 
     def _is_heap_region(self, _license_analyzer: LicenseAnalyzerProtocol, region: dict[str, Any]) -> bool:
-        """Check if memory region belongs to heap."""
+        """Check if memory region belongs to heap.
+
+        Determines whether a memory region is part of process heap by examining
+        protection attributes and memory type flags.
+
+        Args:
+            _license_analyzer: LicenseAnalyzer instance (unused, kept for API consistency).
+            region: Memory region dict with protect and type fields.
+
+        Returns:
+            bool: True if region appears to be heap memory.
+
+        """
         try:
             # Check for typical heap characteristics
             if region.get("protect") in {0x04, 0x08} and region.get("type") == 0x20000:
@@ -1947,7 +2126,19 @@ rule Delphi_Compiler {
         return False
 
     def _generate_cache_key(self, data: bytes, categories: list[RuleCategory] | None) -> str:
-        """Generate cache key for match results."""
+        """Generate cache key for match results.
+
+        Creates a unique cache key based on data hash and selected categories
+        to enable efficient caching of scan results.
+
+        Args:
+            data: Binary data to hash.
+            categories: Categories used in the scan, or None.
+
+        Returns:
+            str: SHA256 hash string for cache lookup.
+
+        """
         import hashlib
 
         # Create hash of data and categories
@@ -1964,14 +2155,17 @@ rule Delphi_Compiler {
     ) -> list[YaraMatch]:
         """Perform concurrent YARA scanning of process memory.
 
+        Uses ThreadPoolExecutor to scan multiple memory regions in parallel,
+        improving scanning performance on multi-core systems.
+
         Args:
-            pid: Process ID to scan
-            categories: Categories to scan
-            max_workers: Maximum concurrent workers
-            chunk_size: Size of memory chunks to scan
+            pid: Process ID to scan.
+            categories: Categories to scan (None = all).
+            max_workers: Maximum concurrent worker threads.
+            _chunk_size: Size of memory chunks to scan per iteration.
 
         Returns:
-            List of YARA matches
+            list[YaraMatch]: All matches found across memory regions.
 
         """
         from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -1991,6 +2185,15 @@ rule Delphi_Compiler {
 
             # Prepare scanning tasks
             def scan_region_chunk(region_info: dict[str, Any]) -> list[YaraMatch]:
+                """Scan a single memory region.
+
+                Args:
+                    region_info: Memory region dictionary with base_address and size.
+
+                Returns:
+                    List of matches found in the region.
+
+                """
                 region_matches: list[YaraMatch] = []
                 try:
                     base_addr = region_info["base_address"]
@@ -2063,20 +2266,29 @@ rule Delphi_Compiler {
     ) -> object:
         """Create a memory region filter for YARA scanning.
 
+        Creates a MemoryFilter instance with specified protection and size constraints
+        to selectively scan memory regions based on their characteristics.
+
         Args:
-            include_executable: Include executable regions
-            include_writable: Include writable regions
-            include_readonly: Include read-only regions
-            min_size: Minimum region size
-            max_size: Maximum region size (0 = no limit)
+            include_executable: Include executable memory regions.
+            include_writable: Include writable memory regions.
+            include_readonly: Include read-only memory regions.
+            min_size: Minimum region size in bytes to include.
+            max_size: Maximum region size in bytes (0 = no limit).
 
         Returns:
-            MemoryFilter instance
+            object: MemoryFilter instance with apply() method for filtering regions.
 
         """
 
         class MemoryFilter:
             def __init__(self, scanner: YaraScanner) -> None:
+                """Initialize memory filter with scanner reference.
+
+                Args:
+                    scanner: YaraScanner instance for access to filter configuration.
+
+                """
                 self.scanner = scanner
                 self.include_executable = include_executable
                 self.include_writable = include_writable
@@ -2085,7 +2297,15 @@ rule Delphi_Compiler {
                 self.max_size = max_size
 
             def apply(self, regions: list[dict[str, Any]]) -> list[dict[str, Any]]:
-                """Apply filter to memory regions."""
+                """Apply filter to memory regions.
+
+                Args:
+                    regions: List of memory region dictionaries to filter.
+
+                Returns:
+                    list[dict[str, Any]]: Filtered list of memory regions matching criteria.
+
+                """
                 filtered = []
                 for region in regions:
                     # Check protection flags
@@ -2124,8 +2344,11 @@ rule Delphi_Compiler {
     def get_scan_progress(self) -> dict[str, Any]:
         """Get current scanning progress information.
 
+        Returns thread-safe copy of scanning progress with scanned regions,
+        total regions, number of matches, and current status message.
+
         Returns:
-            Dictionary with progress details
+            dict[str, Any]: Progress dict with status, scanned, total, matches, current_region.
 
         """
         with self._scan_progress_lock:
@@ -2134,8 +2357,11 @@ rule Delphi_Compiler {
     def set_scan_progress_callback(self, callback: Callable[[int, int, str], None]) -> None:
         """Set callback for scan progress updates.
 
+        Registers a callback function to be invoked during scanning with progress information
+        including the number of regions scanned, total regions, and status message.
+
         Args:
-            callback: Function(current, total, status_msg) to call
+            callback: Callable that accepts (scanned_regions, total_regions, status_message).
 
         """
         self._progress_callback = callback
@@ -2143,9 +2369,12 @@ rule Delphi_Compiler {
     def enable_match_caching(self, max_cache_size: int = 100, ttl_seconds: int = 300) -> None:
         """Enable caching of YARA match results.
 
+        Activates LRU caching for scan results with configurable size and time-to-live
+        limits to improve performance on repeated scans of similar data.
+
         Args:
-            max_cache_size: Maximum number of cached results
-            ttl_seconds: Time to live for cache entries
+            max_cache_size: Maximum number of cached result sets to retain.
+            ttl_seconds: Time-to-live in seconds for cache entries before expiration.
 
         """
         from collections import OrderedDict
@@ -2158,7 +2387,11 @@ rule Delphi_Compiler {
         logger.info("Match caching enabled: max_size=%d, ttl=%ds", max_cache_size, ttl_seconds)
 
     def clear_match_cache(self) -> None:
-        """Clear the match result cache."""
+        """Clear the match result cache.
+
+        Removes all cached matches and timestamps, freeing memory used by caching.
+
+        """
         if hasattr(self, "_match_cache"):
             self._match_cache.clear()
             self._cache_timestamps.clear()
@@ -2167,11 +2400,14 @@ rule Delphi_Compiler {
     def optimize_rules_for_memory(self, memory_size: int) -> bool:
         """Optimize YARA rules for scanning large memory spaces.
 
+        Recompiles rules with fast matching optimization for memory sizes exceeding 1GB,
+        reducing memory usage and improving scan performance on large processes.
+
         Args:
-            memory_size: Expected memory size to scan
+            memory_size: Expected memory size in bytes to scan.
 
         Returns:
-            True if optimization successful
+            bool: True if optimization was applied or completed successfully.
 
         """
         try:
@@ -2198,7 +2434,18 @@ rule Delphi_Compiler {
             return False
 
     def _get_rule_source(self, category: RuleCategory) -> str | None:
-        """Get source code for rule category."""
+        """Get source code for rule category.
+
+        Retrieves the YARA rule source code for a specific rule category by calling
+        the appropriate rule creation method.
+
+        Args:
+            category: RuleCategory to retrieve source code for.
+
+        Returns:
+            str | None: YARA rule source code, or None if category not supported.
+
+        """
         source_methods = {
             RuleCategory.PACKER: self._create_packer_rules,
             RuleCategory.PROTECTOR: self._create_protector_rules,
@@ -2219,14 +2466,17 @@ rule Delphi_Compiler {
     ) -> str:
         """Convert binary pattern to YARA rule.
 
+        Transforms a raw binary sequence into a complete YARA rule with optional
+        wildcards for increased matching flexibility across binary variations.
+
         Args:
-            pattern: Binary pattern to convert
-            name: Rule name
-            add_wildcards: Whether to add wildcards for flexibility
-            context_bytes: Bytes of context to include
+            pattern: Binary pattern bytes to convert.
+            name: Name for the generated YARA rule.
+            add_wildcards: Whether to insert wildcards into hex pattern for flexibility.
+            context_bytes: Number of context bytes to document in rule metadata.
 
         Returns:
-            YARA rule string
+            str: Valid YARA rule source code ready for compilation.
 
         """
         import re
@@ -2285,16 +2535,19 @@ rule Delphi_Compiler {
     ) -> list[str]:
         """Automatically extract interesting strings from binary data.
 
+        Extracts and filters strings from binary data, prioritizing license-related keywords,
+        URLs, paths, and other notable patterns useful for rule generation.
+
         Args:
-            data: Binary data to analyze
-            min_length: Minimum string length
-            encoding: String encoding (auto, ascii, utf16le, utf16be)
-            filter_common: Filter out common strings
-            extract_urls: Extract URL patterns
-            extract_paths: Extract file path patterns
+            data: Binary data to analyze.
+            min_length: Minimum string length to extract.
+            encoding: String encoding mode (auto, ascii, utf16le, utf16be).
+            filter_common: Filter out common non-informative strings.
+            extract_urls: Extract URL patterns from the data.
+            extract_paths: Extract file system path patterns.
 
         Returns:
-            List of extracted strings
+            list[str]: List of extracted strings prioritized by relevance.
 
         """
         import re
@@ -2316,7 +2569,15 @@ rule Delphi_Compiler {
         }
 
         def is_interesting(s: str) -> bool:
-            """Check if string is interesting for rule generation."""
+            """Check if string is interesting for rule generation.
+
+            Args:
+                s: String value to evaluate for interestingness.
+
+            Returns:
+                bool: True if string contains license keywords or has high entropy.
+
+            """
             if len(s) < min_length:
                 return False
             if filter_common and s in common_strings:
@@ -2396,14 +2657,17 @@ rule Delphi_Compiler {
     def generate_hex_patterns(self, data: bytes, pattern_size: int = 16, step: int = 1, unique_only: bool = True) -> list[str]:
         """Generate hex patterns from binary data.
 
+        Uses a sliding window to extract fixed-size chunks from binary data, converting
+        them to hex string format for use in YARA rules.
+
         Args:
-            data: Binary data to process
-            pattern_size: Size of each pattern
-            step: Step size for sliding window
-            unique_only: Return only unique patterns
+            data: Binary data to process.
+            pattern_size: Size in bytes for each pattern window.
+            step: Stride for sliding window (1 = every byte, 2 = every other byte, etc.).
+            unique_only: Return only unique patterns (eliminates duplicates).
 
         Returns:
-            List of hex pattern strings
+            list[str]: List of hex pattern strings in format "XX XX XX ...".
 
         """
         patterns = []
@@ -2432,15 +2696,18 @@ rule Delphi_Compiler {
     ) -> str:
         """Generate YARA rule condition based on rule type.
 
+        Constructs a YARA condition expression with type-specific filesize limits,
+        PE format checks, and configurable string matching requirements.
+
         Args:
-            num_strings: Number of strings in the rule
-            rule_type: Type of rule (license, packer, protector, etc.)
-            add_filesize: Add filesize constraint
-            add_pe_check: Add PE file check
-            min_matches: Minimum string matches required
+            num_strings: Number of strings defined in the rule.
+            rule_type: Rule category (license, packer, protector, crypto, anti_debug).
+            add_filesize: Include filesize constraint appropriate to rule type.
+            add_pe_check: Include PE format check for Windows executables.
+            min_matches: Minimum number of strings that must match.
 
         Returns:
-            Condition string
+            str: YARA condition expression string ready for rule inclusion.
 
         """
         conditions = []
@@ -2497,11 +2764,15 @@ rule Delphi_Compiler {
     def extract_metadata(self, file_path: Path) -> dict[str, Any]:
         """Extract metadata from binary for rule generation.
 
+        Extracts comprehensive metadata including file hashes (SHA256), PE headers,
+        version information, debug data, and import/export tables for analysis and rule generation.
+
         Args:
-            file_path: Path to binary file
+            file_path: Path to binary file to analyze.
 
         Returns:
-            Dictionary of metadata
+            dict[str, Any]: Dictionary containing file size, hashes, compile time, version info,
+                sections, imports, exports, and other PE metadata.
 
         """
         import hashlib
@@ -2597,13 +2868,16 @@ rule Delphi_Compiler {
     def optimize_rule(self, rule_content: str, remove_redundant: bool = True, simplify_conditions: bool = True) -> str:
         """Optimize YARA rule for better performance.
 
+        Removes duplicate string definitions and simplifies logical conditions to
+        reduce rule complexity and improve matching performance.
+
         Args:
-            rule_content: Original rule content
-            remove_redundant: Remove redundant strings
-            simplify_conditions: Simplify complex conditions
+            rule_content: Original YARA rule source code.
+            remove_redundant: Remove duplicate string definitions.
+            simplify_conditions: Simplify redundant logical conditions.
 
         Returns:
-            Optimized rule content
+            str: Optimized YARA rule source code.
 
         """
         import re
@@ -2642,11 +2916,13 @@ rule Delphi_Compiler {
     def validate_rule_syntax(self, rule_content: str) -> tuple[bool, str | None]:
         """Validate YARA rule syntax.
 
+        Attempts to compile the rule to validate syntax and report any compilation errors.
+
         Args:
-            rule_content: Rule content to validate
+            rule_content: YARA rule source code to validate.
 
         Returns:
-            Tuple of (is_valid, error_message)
+            tuple[bool, str | None]: Tuple of (is_valid, error_message or None if valid).
 
         """
         try:
@@ -2667,14 +2943,17 @@ rule Delphi_Compiler {
     ) -> str:
         """Generate comprehensive YARA rule from sample file.
 
+        Analyzes a sample binary file to automatically generate detection rules, including
+        metadata extraction, string identification, and hex pattern generation.
+
         Args:
-            file_path: Path to sample file
-            rule_name: Name for the rule
-            category: Rule category
-            advanced_analysis: Perform advanced analysis
+            file_path: Path to sample binary file to analyze.
+            rule_name: Name for the generated YARA rule.
+            category: RuleCategory classification for the rule.
+            advanced_analysis: Extract and include detailed PE metadata if True.
 
         Returns:
-            Generated YARA rule
+            str: Generated YARA rule source code ready for compilation.
 
         """
         import re
@@ -2765,7 +3044,13 @@ rule Delphi_Compiler {
         return rule
 
     def initialize_patch_database(self) -> None:
-        """Initialize the patch suggestion database with known bypass patterns."""
+        """Initialize the patch suggestion database with known bypass patterns.
+
+        Populates the patch_database with protection-specific bypass techniques including
+        string replacements, instruction patches, API hooks, and section decryption methods
+        for common protectors (license validators, VMProtect, Themida, FlexLM, Sentinel HASP).
+
+        """
         self.patch_database = {
             # License validation bypasses
             "License_Check_Patterns": [
@@ -2916,12 +3201,16 @@ rule Delphi_Compiler {
     def get_patch_suggestions(self, matches: list[YaraMatch], min_confidence: float = 0.70) -> list[dict[str, Any]]:
         """Get patch suggestions based on YARA matches.
 
+        Analyzes matched YARA rules against the patch database to generate targeted
+        patch suggestions with confidence ratings, risk assessments, and complexity analysis.
+
         Args:
-            matches: List of YARA matches
-            min_confidence: Minimum confidence threshold
+            matches: List of YaraMatch objects from scanning.
+            min_confidence: Minimum confidence threshold (0.0-1.0) for suggestions.
 
         Returns:
-            List of patch suggestions
+            list[dict[str, Any]]: List of patch suggestions sorted by confidence,
+                including type, risk level, complexity, and generated patch data.
 
         """
         if not hasattr(self, "patch_database"):
@@ -2971,12 +3260,15 @@ rule Delphi_Compiler {
     def _generate_patch_data(self, patch: dict[str, Any], match: YaraMatch) -> dict[str, Any]:
         """Generate actual patch data based on patch type.
 
+        Creates patch-specific data structures for different bypass techniques including
+        string replacements, instruction patches, API hooks, and DLL hijacking.
+
         Args:
-            patch: Patch template
-            match: YARA match information
+            patch: Patch template from patch_database.
+            match: YaraMatch object containing offset and metadata.
 
         Returns:
-            Patch data dictionary
+            dict[str, Any]: Patch data with type, offset, and technique-specific parameters.
 
         """
         patch_data = {"type": patch["patch_type"], "offset": match.offset}
@@ -3016,12 +3308,15 @@ rule Delphi_Compiler {
     def _generate_hook_code(self, _api_name: str, return_value: int) -> bytes:
         """Generate hook code for API redirection.
 
+        Creates x86 shellcode that returns a specified value, used for hooking APIs
+        to bypass license validation checks.
+
         Args:
-            api_name: Name of API to hook
-            return_value: Value to return
+            _api_name: Name of API to hook (for reference).
+            return_value: Value for the hooked API to return.
 
         Returns:
-            Hook shellcode
+            bytes: x86 shellcode that returns the specified value and jumps back.
 
         """
         # x86 hook that returns specified value
@@ -3035,11 +3330,14 @@ rule Delphi_Compiler {
     def _generate_proxy_dll_code(self, dll_name: str) -> str:
         """Generate proxy DLL code template.
 
+        Creates C++ template code for a proxy DLL that intercepts and forwards calls
+        to the original DLL while allowing injection of bypass logic.
+
         Args:
-            dll_name: Name of DLL to proxy
+            dll_name: Name of the original DLL to proxy.
 
         Returns:
-            Proxy DLL source code
+            str: C++ source code template for a proxy DLL with DllMain hook.
 
         """
         return f"""// Proxy DLL for {dll_name}
@@ -3061,11 +3359,14 @@ extern "C" {{
     def _assess_patch_risk(self, patch: dict[str, Any]) -> str:
         """Assess risk level of a patch.
 
+        Classifies patch risk based on patch type, considering system stability and
+        detection likelihood impact.
+
         Args:
-            patch: Patch information
+            patch: Patch template from patch_database.
 
         Returns:
-            Risk level (low, medium, high)
+            str: Risk level classification (low, medium, high, or unknown).
 
         """
         high_risk_types = ["dll_hijack", "process_patch", "section_decrypt"]
@@ -3081,11 +3382,14 @@ extern "C" {{
     def _assess_patch_complexity(self, patch: dict[str, Any]) -> str:
         """Assess complexity of applying a patch.
 
+        Classifies the implementation complexity of applying a patch based on the
+        technique and tools required.
+
         Args:
-            patch: Patch information
+            patch: Patch template from patch_database.
 
         Returns:
-            Complexity level (simple, moderate, complex)
+            str: Complexity level classification (simple, moderate, complex, or unknown).
 
         """
         simple_types = ["string_replace", "nop_sequence", "conditional_jump"]
@@ -3101,12 +3405,15 @@ extern "C" {{
     def recommend_patch_sequence(self, suggestions: list[dict[str, Any]], target_success_rate: float = 0.80) -> list[dict[str, Any]]:
         """Recommend optimal patch sequence based on confidence and dependencies.
 
+        Analyzes patch suggestions to recommend an optimal application order,
+        considering confidence levels and cumulative success probability.
+
         Args:
-            suggestions: List of patch suggestions
-            target_success_rate: Target cumulative success rate
+            suggestions: List of patch suggestion dictionaries.
+            target_success_rate: Target cumulative success probability (0.0-1.0).
 
         Returns:
-            Ordered list of patches to apply
+            list[dict[str, Any]]: Ordered list of patches sorted by confidence and dependency.
 
         """
         # Group patches by category
@@ -3131,6 +3438,12 @@ extern "C" {{
         processed = set()
 
         def add_category_patches(category: str) -> None:
+            """Add patches from a category with dependency handling.
+
+            Args:
+                category: Patch category name to process.
+
+            """
             if category in processed:
                 return
             processed.add(category)
@@ -3164,12 +3477,15 @@ extern "C" {{
     def validate_patch(self, patch_data: dict[str, Any], target_file: Path) -> tuple[bool, str]:
         """Validate if a patch can be safely applied.
 
+        Checks that the target file contains the expected bytes at the patch offset
+        and that the replacement doesn't exceed the original size.
+
         Args:
-            patch_data: Patch information
-            target_file: File to patch
+            patch_data: Patch data with type, offset, original, and replacement fields.
+            target_file: Path to the file to be patched.
 
         Returns:
-            Tuple of (is_valid, error_message)
+            tuple[bool, str]: Tuple of (is_valid, error_message or empty string if valid).
 
         """
         try:
@@ -3193,13 +3509,16 @@ extern "C" {{
     def apply_patch(self, patch_data: dict[str, Any], target_file: Path, backup: bool = True) -> bool:
         """Apply a patch to target file.
 
+        Modifies the target file by writing replacement bytes at specified offsets,
+        with optional backup creation before patching.
+
         Args:
-            patch_data: Patch information
-            target_file: File to patch
-            backup: Create backup before patching
+            patch_data: Patch data with type, offset, and replacement fields.
+            target_file: Path to the file to patch.
+            backup: Create .bak backup file before patching.
 
         Returns:
-            True if successful
+            bool: True if patch was successfully applied.
 
         """
         import shutil
@@ -3238,11 +3557,14 @@ extern "C" {{
     def rollback_patch(self, target_file: Path) -> bool:
         """Rollback patch by restoring backup.
 
+        Restores a patched file to its original state by copying the .bak backup file
+        back to the original location.
+
         Args:
-            target_file: Patched file
+            target_file: Path to the patched file to rollback.
 
         Returns:
-            True if successful
+            bool: True if rollback was successful.
 
         """
         import shutil
@@ -3264,10 +3586,13 @@ extern "C" {{
     def track_patch_effectiveness(self, patch_id: str, success: bool, notes: str = "") -> None:
         """Track effectiveness of applied patches.
 
+        Records patch application results in the patch history for performance analysis
+        and future recommendation optimization.
+
         Args:
-            patch_id: Unique patch identifier
-            success: Whether patch was successful
-            notes: Additional notes
+            patch_id: Unique patch identifier.
+            success: Whether the patch was successfully applied and effective.
+            notes: Additional descriptive notes about the patch application result.
 
         """
         if not hasattr(self, "_patch_history"):
@@ -3286,8 +3611,11 @@ extern "C" {{
     def get_patch_metrics(self) -> dict[str, Any]:
         """Get patch effectiveness metrics.
 
+        Returns statistics on patch application success including success rate,
+        total patches applied, successful/failed counts, and overall statistics.
+
         Returns:
-            Dictionary of metrics
+            dict[str, Any]: Metrics including success_rate, total_patches, successful, failed, and statistics.
 
         """
         if not hasattr(self, "_patch_history"):
@@ -3307,8 +3635,11 @@ extern "C" {{
     def connect_to_debugger(self, debugger_instance: DebuggerProtocol) -> None:
         """Connect YaraScanner to a debugger instance for breakpoint integration.
 
+        Establishes a connection to a debugger instance to enable setting breakpoints
+        at YARA match locations for interactive debugging and analysis.
+
         Args:
-            debugger_instance: LicenseDebugger or compatible debugger instance
+            debugger_instance: Connected DebuggerProtocol (LicenseDebugger or compatible) instance.
 
         """
         self.debugger = debugger_instance
@@ -3323,13 +3654,16 @@ extern "C" {{
     ) -> list[dict[str, Any]]:
         """Set breakpoints at YARA match locations.
 
+        Creates debugger breakpoints at each YARA match location with appropriate type
+        (hardware for critical matches), optional conditions, and automated actions.
+
         Args:
-            matches: List of YARA matches
-            auto_enable: Automatically enable breakpoints
-            conditional: Create conditional breakpoints
+            matches: List of YaraMatch objects to set breakpoints for.
+            auto_enable: Automatically enable breakpoints upon creation.
+            conditional: Generate and apply conditional breakpoint expressions.
 
         Returns:
-            List of created breakpoints
+            list[dict[str, Any]]: List of created breakpoint records with IDs and metadata.
 
         """
         debugger = self.debugger
@@ -3401,11 +3735,14 @@ extern "C" {{
     def _determine_breakpoint_type(self, match: YaraMatch) -> str:
         """Determine appropriate breakpoint type based on match.
 
+        Selects hardware breakpoints for critical license/crypto checks, memory
+        breakpoints for data access patterns, and software breakpoints otherwise.
+
         Args:
-            match: YARA match information
+            match: YaraMatch object containing category and rule name.
 
         Returns:
-            Breakpoint type (hardware, software, memory)
+            str: Breakpoint type (hardware, software, or memory).
 
         """
         # Use hardware breakpoints for critical licensing checks
@@ -3427,11 +3764,14 @@ extern "C" {{
     def _generate_breakpoint_condition(self, match: YaraMatch) -> str:
         """Generate conditional breakpoint expression.
 
+        Creates category and rule-specific register conditions to break only when
+        specific protection checks occur or specific values are detected.
+
         Args:
-            match: YARA match information
+            match: YaraMatch object containing category and rule name.
 
         Returns:
-            Condition expression string
+            str: Debugger condition expression (e.g., "EAX != 0 && ECX == 0x50").
 
         """
         conditions = []
@@ -3472,11 +3812,14 @@ extern "C" {{
     def _generate_breakpoint_actions(self, match: YaraMatch) -> list[dict[str, Any]]:
         """Generate actions to perform when breakpoint is hit.
 
+        Creates automated actions appropriate to the match category, such as dumping
+        registers, memory inspection, or stepping through instructions.
+
         Args:
-            match: YARA match information
+            match: YaraMatch object containing category and rule name.
 
         Returns:
-            List of actions
+            list[dict[str, Any]]: List of action dictionaries with type and parameters.
 
         """
         actions: list[dict[str, Any]] = [{"type": "log", "message": f"Hit {match.rule_name} at {{EIP}}"}]
@@ -3508,9 +3851,12 @@ extern "C" {{
     def enable_match_tracing(self, matches: list[YaraMatch], trace_depth: int = 10) -> None:
         """Enable instruction tracing at match locations.
 
+        Activates execution tracing through the debugger to capture instruction-level
+        execution flow when matches are encountered.
+
         Args:
-            matches: List of YARA matches
-            trace_depth: Number of instructions to trace
+            matches: List of YaraMatch objects to enable tracing for.
+            trace_depth: Maximum number of instructions to trace from each match.
 
         """
         debugger = self.debugger
@@ -3537,9 +3883,12 @@ extern "C" {{
     def log_match_execution(self, match: YaraMatch, context: dict[str, Any]) -> None:
         """Log execution context when YARA match location is reached.
 
+        Records execution state including registers, stack, and instruction context to
+        the execution log with automatic log rotation when maximum size is exceeded.
+
         Args:
-            match: YARA match that triggered
-            context: Execution context (registers, stack, etc.)
+            match: YaraMatch object that triggered the logging.
+            context: Dictionary containing registers, stack, instruction, and other execution state.
 
         """
         import json
@@ -3573,9 +3922,12 @@ extern "C" {{
     def set_match_triggered_action(self, rule_name: str, action_callback: Callable[[YaraMatch, dict[str, Any]], object]) -> None:
         """Set a callback to execute when specific rule matches are hit.
 
+        Registers a user-defined callback function that will be invoked whenever the
+        specified YARA rule matches, enabling custom response logic.
+
         Args:
-            rule_name: Name of YARA rule
-            action_callback: Function to call when match is hit
+            rule_name: Name of the YARA rule to register action for.
+            action_callback: Callable accepting (match: YaraMatch, context: dict) returning any result.
 
         """
         if not hasattr(self, "_match_actions"):
@@ -3587,12 +3939,15 @@ extern "C" {{
     def trigger_match_action(self, match: YaraMatch, context: dict[str, Any]) -> object | None:
         """Trigger registered action for a match.
 
+        Executes the registered callback function for a match if one exists, capturing
+        and returning the result while handling any exceptions.
+
         Args:
-            match: YARA match that triggered
-            context: Execution context
+            match: YaraMatch object to trigger action for.
+            context: Execution context dictionary to pass to the callback.
 
         Returns:
-            Action result
+            object | None: Result from the callback, or None if no callback is registered or on error.
 
         """
         if not hasattr(self, "_match_actions"):
@@ -3613,12 +3968,15 @@ extern "C" {{
     def correlate_matches(self, matches: list[YaraMatch], _time_window: float = 1.0) -> dict[str, Any]:
         """Correlate YARA matches to identify related detections.
 
+        Groups matches by correlation criteria and identifies patterns suggesting
+        multiple related protection mechanisms or combined attack vectors.
+
         Args:
-            matches: List of YARA matches
-            time_window: Time window for correlation (seconds)
+            matches: List of YaraMatch objects to correlate.
+            _time_window: Time window for temporal correlation (seconds, unused).
 
         Returns:
-            Dictionary with correlations and patterns
+            dict[str, Any]: Dictionary containing correlations list and identified patterns.
 
         """
         # Group matches by time proximity
@@ -3654,12 +4012,15 @@ extern "C" {{
     def _check_match_correlation(self, match1: YaraMatch, match2: YaraMatch) -> str | None:
         """Check if two matches are correlated.
 
+        Analyzes whether two matches are related through proximity, category,
+        or shared protection mechanisms.
+
         Args:
-            match1: First YARA match
-            match2: Second YARA match
+            match1: First YaraMatch object.
+            match2: Second YaraMatch object.
 
         Returns:
-            Correlation type or None
+            str | None: Correlation type string if correlated, None otherwise.
 
         """
         # Check offset proximity
@@ -3690,11 +4051,14 @@ extern "C" {{
     def _analyze_correlation_patterns(self, correlations: list[dict[str, Any]]) -> dict[str, Any]:
         """Analyze patterns in correlated matches.
 
+        Identifies licensing schemes, counts protection layers, and assesses overall
+        complexity from correlated match groups.
+
         Args:
-            correlations: List of correlation groups
+            correlations: List of correlation group dictionaries.
 
         Returns:
-            Pattern analysis results
+            dict[str, Any]: Dictionary with licensing_scheme, complexity level, and protection_layers count.
 
         """
         # Count protection layers
@@ -3737,12 +4101,15 @@ extern "C" {{
     def generate_breakpoint_script(self, matches: list[YaraMatch], script_type: str = "gdb") -> str:
         """Generate debugger script for setting breakpoints.
 
+        Creates debugger-specific scripts for automated breakpoint setup at match locations,
+        supporting GDB, WinDbg, and x64dbg formats with condition expressions.
+
         Args:
-            matches: List of YARA matches
-            script_type: Type of script (gdb, windbg, x64dbg)
+            matches: List of YaraMatch objects to generate breakpoints for.
+            script_type: Debugger script format (gdb, windbg, or x64dbg).
 
         Returns:
-            Script content
+            str: Complete debugger script content ready for use.
 
         """
         script: list[str] = []

@@ -12,7 +12,7 @@ import sqlite3
 import tempfile
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 
@@ -63,7 +63,7 @@ class TestLiveDataPipeline:
     """Production tests for LiveDataPipeline."""
 
     @pytest.fixture
-    def temp_db_path(self) -> Path:
+    def temp_db_path(self) -> Generator[Path, None, None]:
         """Create temporary database path."""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             db_path = Path(tmp.name)
@@ -133,7 +133,8 @@ class TestLiveDataPipeline:
         for i in range(50):
             pipeline.add_event("source", "event", {"index": i}, priority=DataPriority.LOW)
 
-        assert pipeline.metrics["events_dropped"] > 0
+        dropped = pipeline.metrics["events_dropped"]
+        assert isinstance(dropped, (int, float)) and int(dropped) > 0
 
     def test_critical_events_bypass_throttling(self, pipeline: LiveDataPipeline) -> None:
         """Critical events bypass throttling."""
@@ -257,7 +258,8 @@ class TestLiveDataPipeline:
 
         pipeline.stop()
 
-        assert pipeline.metrics["events_processed"] > 0
+        processed = pipeline.metrics["events_processed"]
+        assert isinstance(processed, (int, float)) and int(processed) > 0
 
     def test_metrics_history_stored(self, temp_db_path: Path, pipeline: LiveDataPipeline) -> None:
         """Metrics are stored in database."""
@@ -327,7 +329,7 @@ class TestBufferingAndFlushing:
     """Test event buffering and flushing behavior."""
 
     @pytest.fixture
-    def pipeline(self) -> LiveDataPipeline:
+    def pipeline(self) -> Generator[LiveDataPipeline, None, None]:
         """Create pipeline with small buffer."""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             db_path = tmp.name
@@ -384,7 +386,7 @@ class TestAggregation:
     """Test data aggregation functionality."""
 
     @pytest.fixture
-    def pipeline(self) -> LiveDataPipeline:
+    def pipeline(self) -> Generator[LiveDataPipeline, None, None]:
         """Create pipeline with aggregation enabled."""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             db_path = tmp.name

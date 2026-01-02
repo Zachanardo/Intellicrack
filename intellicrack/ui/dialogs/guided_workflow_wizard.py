@@ -105,7 +105,7 @@ class GuidedWorkflowWizard(QWizard):
         """Initialize the guided workflow wizard.
 
         Args:
-            parent: Parent widget (typically the main application)
+            parent: Parent widget (typically the main application).
 
         """
         super().__init__(parent)
@@ -139,7 +139,12 @@ class GuidedWorkflowWizard(QWizard):
         self.finished.connect(self.on_finished)
 
     def create_intro_page(self) -> QWizardPage:
-        """Create the introduction page."""
+        """Create the introduction page.
+
+        Returns:
+            Introduction wizard page with welcome text and image.
+
+        """
         page = QWizardPage()
         page.setTitle("Welcome to Intellicrack")
         page.setSubTitle("This wizard will guide you through analyzing and patching your first binary")
@@ -180,7 +185,12 @@ class GuidedWorkflowWizard(QWizard):
         return page
 
     def create_file_selection_page(self) -> QWizardPage:
-        """Create the file selection page."""
+        """Create the file selection page.
+
+        Returns:
+            File selection wizard page for choosing a binary to analyze.
+
+        """
         page = QWizardPage()
         page.setTitle("Select Binary File")
         page.setSubTitle("Choose the executable file you want to analyze")
@@ -232,7 +242,12 @@ class GuidedWorkflowWizard(QWizard):
         return page
 
     def create_protection_detection_page(self) -> QWizardPage:
-        """Create the protection detection page."""
+        """Create the protection detection page.
+
+        Returns:
+            Protection detection wizard page for selecting which protection mechanisms to detect.
+
+        """
         page = QWizardPage()
         page.setTitle("Protection Detection")
         page.setSubTitle("Select which protection mechanisms to detect in the binary")
@@ -303,7 +318,12 @@ class GuidedWorkflowWizard(QWizard):
         return page
 
     def create_analysis_options_page(self) -> QWizardPage:
-        """Create the analysis options page."""
+        """Create the analysis options page.
+
+        Returns:
+            Analysis options wizard page for configuring analysis types and parameters.
+
+        """
         page = QWizardPage()
         page.setTitle("Analysis Options")
         page.setSubTitle("Configure how you want to analyze the selected binary")
@@ -373,7 +393,12 @@ class GuidedWorkflowWizard(QWizard):
         return page
 
     def create_patching_options_page(self) -> QWizardPage:
-        """Create the patching options page."""
+        """Create the patching options page.
+
+        Returns:
+            Patching options wizard page for configuring patch methods and targets.
+
+        """
         page = QWizardPage()
         page.setTitle("Patching Options")
         page.setSubTitle("Configure how you want to patch the binary")
@@ -446,7 +471,12 @@ class GuidedWorkflowWizard(QWizard):
         return page
 
     def create_advanced_analysis_page(self) -> QWizardPage:
-        """Create the advanced analysis options page."""
+        """Create the advanced analysis options page.
+
+        Returns:
+            Advanced analysis wizard page for configuring advanced analysis techniques.
+
+        """
         page = QWizardPage()
         page.setTitle("Advanced Analysis")
         page.setSubTitle("Configure advanced analysis techniques")
@@ -525,7 +555,12 @@ class GuidedWorkflowWizard(QWizard):
         return page
 
     def create_vulnerability_options_page(self) -> QWizardPage:
-        """Create the vulnerability detection page."""
+        """Create the vulnerability detection page.
+
+        Returns:
+            Vulnerability detection wizard page for configuring vulnerability scanning options.
+
+        """
         page = QWizardPage()
         page.setTitle("Vulnerability Detection")
         page.setSubTitle("Configure vulnerability detection options")
@@ -590,7 +625,12 @@ class GuidedWorkflowWizard(QWizard):
         return page
 
     def create_network_options_page(self) -> QWizardPage:
-        """Create the network analysis options page."""
+        """Create the network analysis options page.
+
+        Returns:
+            Network analysis wizard page for configuring network monitoring options.
+
+        """
         page = QWizardPage()
         page.setTitle("Network Analysis")
         page.setSubTitle("Configure network analysis and monitoring options")
@@ -649,7 +689,12 @@ class GuidedWorkflowWizard(QWizard):
         return page
 
     def create_ai_options_page(self) -> QWizardPage:
-        """Create the AI/ML options page."""
+        """Create the AI/ML options page.
+
+        Returns:
+            AI and machine learning wizard page for configuring AI-powered features.
+
+        """
         page = QWizardPage()
         page.setTitle("AI & Machine Learning")
         page.setSubTitle("Configure AI-powered analysis and automation features")
@@ -718,10 +763,29 @@ class GuidedWorkflowWizard(QWizard):
         return page
 
     def create_conclusion_page(self) -> QWizardPage:
-        """Create the conclusion page."""
+        """Create the conclusion page.
+
+        Returns:
+            Conclusion wizard page displaying summary of selections.
+
+        """
 
         class ConclusionPage(QWizardPage):
+            """Wizard page that displays the final summary of all user selections.
+
+            This page shows a comprehensive summary of protection detection options,
+            analysis configurations, patching settings, and AI features that the user
+            has selected through the wizard workflow. It serves as a final review
+            before executing the analysis and patching operations.
+            """
+
             def __init__(self, wizard: GuidedWorkflowWizard) -> None:
+                """Initialize the conclusion page.
+
+                Args:
+                    wizard: The parent wizard instance containing configuration.
+
+                """
                 super().__init__()
                 self._wizard = wizard
                 self.setTitle("Ready to Start")
@@ -747,12 +811,30 @@ class GuidedWorkflowWizard(QWizard):
                 self.setLayout(layout)
 
             def initializePage(self) -> None:
+                """Initialize the page when it becomes active.
+
+                Updates the summary text widget with current user selections from all
+                previous wizard pages, including protection detection options, analysis
+                settings, patching configurations, network options, and AI features.
+
+                """
                 self._wizard.update_summary()
 
         return ConclusionPage(self)
 
     def _build_protection_section(self) -> str:
-        """Build the Protection Detection section."""
+        """Build the Protection Detection section for the summary display.
+
+        Constructs an HTML list of protection mechanisms selected by the user,
+        including commercial protections, packing/obfuscation, hardware dongles,
+        TPM protection, network license verification, anti-debugging techniques,
+        checksum/integrity checks, and time-based limitations.
+
+        Returns:
+            HTML string containing protection detection selections formatted as
+            an HTML unordered list with section heading.
+
+        """
         protection_fields = [
             ("detect_commercial", "Commercial Protections"),
             ("detect_packing", "Packing/Obfuscation"),
@@ -769,7 +851,18 @@ class GuidedWorkflowWizard(QWizard):
         return "<h3>Protection Detection</h3>\n<ul>\n</ul>\n\n"
 
     def _build_analysis_section(self) -> str:
-        """Build the Analysis Options section."""
+        """Build the Analysis Options section for the summary display.
+
+        Constructs an HTML list of analysis configurations selected by the user,
+        including static analysis, dynamic analysis, symbolic execution, ML-assisted
+        analysis, protection detection, VM/debugging evasion detection, and the
+        configured analysis timeout value.
+
+        Returns:
+            HTML string containing analysis options selections formatted as an HTML
+            unordered list with section heading.
+
+        """
         analysis_fields = [
             ("static_analysis", "Static Analysis"),
             ("dynamic_analysis", "Dynamic Analysis"),
@@ -786,7 +879,18 @@ class GuidedWorkflowWizard(QWizard):
         return "<h3>Analysis Options</h3>\n<ul>\n" + "".join(items) + "</ul>\n\n"
 
     def _build_advanced_analysis_section(self) -> str:
-        """Build the Advanced Analysis section."""
+        """Build the Advanced Analysis section for the summary display.
+
+        Constructs an HTML list of advanced analysis techniques selected by the user,
+        including control flow graph analysis, taint analysis, concolic execution,
+        ROP gadget search, binary similarity search, section analysis, import/export
+        table analysis, Ghidra headless analysis, and Radare2 analysis.
+
+        Returns:
+            HTML string containing advanced analysis selections formatted as an HTML
+            unordered list with section heading.
+
+        """
         advanced_fields = [
             ("cfg_analysis", "Control Flow Graph Analysis"),
             ("taint_analysis", "Taint Analysis"),
@@ -804,7 +908,19 @@ class GuidedWorkflowWizard(QWizard):
         return "<h3>Advanced Analysis</h3>\n<ul>\n</ul>\n\n"
 
     def _build_vulnerability_section(self) -> str:
-        """Build the Vulnerability Detection section."""
+        """Build the Vulnerability Detection section for the summary display.
+
+        Constructs an HTML list of vulnerability detection and exploitation options
+        selected by the user, including static vulnerability scanning, ML-based
+        vulnerability prediction, buffer overflow detection, format string
+        vulnerability detection, race condition detection, proof-of-concept exploit
+        generation, ROP chain generation, and shellcode generation.
+
+        Returns:
+            HTML string containing vulnerability detection selections formatted as
+            an HTML unordered list with section heading.
+
+        """
         vuln_fields = [
             ("static_vuln_scan", "Static Vulnerability Scan"),
             ("ml_vuln_prediction", "ML-Based Vulnerability Prediction"),
@@ -821,7 +937,17 @@ class GuidedWorkflowWizard(QWizard):
         return "<h3>Vulnerability Detection</h3>\n<ul>\n</ul>\n\n"
 
     def _build_patching_section(self) -> str:
-        """Build the Patching Options section."""
+        """Build the Patching Options section for the summary display.
+
+        Constructs an HTML list of patching methods selected by the user,
+        including automatic patching, interactive patching, function hooking,
+        and memory patching techniques.
+
+        Returns:
+            HTML string containing patching options selections formatted as an HTML
+            unordered list with section heading.
+
+        """
         patching_fields = [
             ("auto_patch", "Automatic Patching"),
             ("interactive_patch", "Interactive Patching"),
@@ -834,7 +960,17 @@ class GuidedWorkflowWizard(QWizard):
         return "<h3>Patching Options</h3>\n<ul>\n</ul>\n\n"
 
     def _build_patch_targets_section(self) -> str:
-        """Build the Patch Targets section."""
+        """Build the Patch Targets section for the summary display.
+
+        Constructs an HTML list of patch targets selected by the user,
+        including license validation, time limitations, feature unlocking,
+        and anti-debugging measure targets.
+
+        Returns:
+            HTML string containing patch target selections formatted as an HTML
+            unordered list with section heading.
+
+        """
         target_fields = [
             ("license_check", "License Validation"),
             ("time_limit", "Time Limitations"),
@@ -847,7 +983,17 @@ class GuidedWorkflowWizard(QWizard):
         return "<h3>Patch Targets</h3>\n<ul>\n</ul>\n\n"
 
     def _build_network_section(self) -> str:
-        """Build the Network Analysis section."""
+        """Build the Network Analysis section for the summary display.
+
+        Constructs an HTML list of network analysis and monitoring options selected
+        by the user, including network traffic capture, protocol fingerprinting,
+        SSL/TLS interception, license server emulation, and cloud license hooking.
+
+        Returns:
+            HTML string containing network analysis selections formatted as an HTML
+            unordered list with section heading.
+
+        """
         network_fields = [
             ("traffic_capture", "Capture Network Traffic"),
             ("protocol_fingerprint", "Protocol Fingerprinting"),
@@ -861,7 +1007,18 @@ class GuidedWorkflowWizard(QWizard):
         return "<h3>Network Analysis</h3>\n<ul>\n</ul>\n\n"
 
     def _build_ai_ml_section(self) -> str:
-        """Build the AI & Machine Learning section."""
+        """Build the AI & Machine Learning section for the summary display.
+
+        Constructs an HTML list of AI-powered and machine learning features selected
+        by the user, including comprehensive AI analysis, AI patch suggestions,
+        AI code explanation, ML pattern learning, AI-assisted mode, distributed
+        processing, and GPU acceleration.
+
+        Returns:
+            HTML string containing AI and machine learning selections formatted as
+            an HTML unordered list with section heading.
+
+        """
         ai_fields = [
             ("ai_comprehensive", "Comprehensive AI Analysis"),
             ("ai_patch_suggest", "AI Patch Suggestions"),
@@ -877,7 +1034,16 @@ class GuidedWorkflowWizard(QWizard):
         return "<h3>AI & Machine Learning</h3>\n<ul>\n</ul>"
 
     def update_summary(self) -> None:
-        """Update the summary text with the selected options."""
+        """Update the summary text with the selected options.
+
+        Builds comprehensive HTML summary of all wizard selections from every page,
+        including binary file path, protection detection options, analysis
+        configurations, advanced analysis settings, vulnerability detection options,
+        patching methods, patch targets, network analysis options, and AI/ML
+        features. The formatted HTML is displayed in the conclusion page's summary
+        text widget for final user review before execution.
+
+        """
         binary_path = self.field("binary_path")
 
         # Build header
@@ -897,7 +1063,15 @@ class GuidedWorkflowWizard(QWizard):
         self.summary_text.setHtml(summary)
 
     def browse_file(self) -> None:
-        """Browse for a binary file."""
+        """Browse for a binary file to analyze.
+
+        Opens a native file dialog that allows the user to select an executable file
+        (.exe, .dll, .so, .dylib, or any file). Once a file is selected, the file
+        path is displayed in the file path field and detailed file information
+        (size, modification date, architecture, compilation date) is retrieved
+        and displayed in the file information label.
+
+        """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Binary File",
@@ -910,7 +1084,19 @@ class GuidedWorkflowWizard(QWizard):
             self.update_file_info(file_path)
 
     def update_file_info(self, file_path: str) -> None:
-        """Update the file information label."""
+        """Update the file information label with binary details.
+
+        Retrieves and displays detailed information about the selected binary file,
+        including file size, modification timestamp, and architecture information
+        (x86/32-bit or x64/64-bit). For PE format binaries, also attempts to extract
+        compilation timestamp using pefile library. Falls back to filename-based
+        architecture detection on Windows if pefile fails.
+
+        Args:
+            file_path: Path to the binary executable file to analyze and extract
+                information from.
+
+        """
         try:
             file_size = os.path.getsize(file_path)
             file_mod_time = datetime.datetime.fromtimestamp(Path(file_path).stat().st_mtime)
@@ -958,13 +1144,39 @@ class GuidedWorkflowWizard(QWizard):
             self.file_info_label.setText(f"Error getting file info: {e!s}")
 
     def format_size(self, size_bytes: int) -> str:
-        """Format a file size in bytes to a human-readable string."""
+        """Format a file size in bytes to a human-readable string.
+
+        Converts raw byte size into human-readable format with appropriate units
+        (bytes, KB, MB, GB) using the standard binary notation. Delegates to
+        the centralized format_bytes utility function from the string_utils module.
+
+        Args:
+            size_bytes: File size in bytes to format.
+
+        Returns:
+            Human-readable file size string with unit suffix (e.g., "1.5 MB").
+
+        """
         from ...utils.core.string_utils import format_bytes
 
         return format_bytes(size_bytes)
 
     def on_finished(self, result: int) -> None:
-        """Handle wizard completion."""
+        """Handle wizard completion and configure the parent application.
+
+        Processes the wizard completion by extracting all user selections and
+        configuring the parent application widget accordingly. If the wizard
+        was accepted (not cancelled), this method updates the parent widget's
+        binary path, loads the selected binary, and initiates static and dynamic
+        analysis if they were enabled in the wizard workflow. Emits status messages
+        to the parent widget's output signal and displays a completion message to
+        the user.
+
+        Args:
+            result: Result code from the wizard dialog indicating acceptance
+                or cancellation (QDialog.DialogCode.Accepted or Rejected).
+
+        """
         if result != QDialog.DialogCode.Accepted or self._parent_widget is None:
             return
 
@@ -1058,10 +1270,20 @@ class GuidedWorkflowWizard(QWizard):
         )
 
     def get_settings(self) -> dict[str, Any]:
-        """Get the current wizard settings.
+        """Get the current wizard settings from all pages.
+
+        Retrieves all user-selected settings from the wizard's wizard fields,
+        organizing them into a structured nested dictionary containing binary path,
+        analysis configurations (static, dynamic, symbolic, ML-assisted),
+        patching options (automatic, interactive, function hooking, memory patching),
+        and patching targets (license check, time limits, feature unlock,
+        anti-debug). This method provides a programmatic way to access all
+        configured options without navigating the wizard pages.
 
         Returns:
-            Dictionary containing all current settings
+            Dictionary containing all current wizard settings organized into top-level
+            keys for binary_path, analysis, and patching, with nested configuration
+            values for each analysis type, patching method, and target.
 
         """
         return {
@@ -1091,13 +1313,20 @@ class GuidedWorkflowWizard(QWizard):
 
 
 def create_guided_workflow_wizard(parent: QWidget | None = None) -> GuidedWorkflowWizard:
-    """Create a GuidedWorkflowWizard.
+    """Create and configure a GuidedWorkflowWizard instance.
+
+    Factory function that instantiates a new GuidedWorkflowWizard with the
+    specified parent widget. This provides a convenient API for creating
+    properly initialized wizard instances that guide users through binary
+    analysis and software protection patching workflows.
 
     Args:
-        parent: Parent widget
+        parent: Parent widget for the wizard dialog (typically the main
+            application window). Defaults to None for top-level window.
 
     Returns:
-        Configured wizard instance
+        Fully initialized GuidedWorkflowWizard instance ready for display
+        and user interaction.
 
     """
     return GuidedWorkflowWizard(parent)

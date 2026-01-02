@@ -29,7 +29,7 @@ import os
 import platform
 import subprocess
 import traceback
-from typing import Any, Protocol, cast
+from typing import Any, Protocol
 
 from intellicrack.utils.logger import logger
 from intellicrack.utils.resource_helper import get_resource_path
@@ -70,14 +70,22 @@ try:
 except ImportError as e:
     logger.exception("Import error in pdf_generator: %s", e)
     PYQT_AVAILABLE = False
-    QWidget = object  # type: ignore
+    QWidget = object
 
 
 class QtSignal(Protocol):
     """Protocol for PyQt signals."""
 
     def emit(self, *args: Any) -> None:
-        """Emit signal with arguments."""
+        """Emit signal with arguments.
+
+        Args:
+            *args: Variable arguments to emit with the signal
+
+        Returns:
+            None
+
+        """
         pass
 
 
@@ -91,7 +99,12 @@ class ApplicationInstance(Protocol):
     binary_info: dict[str, Any] | None
 
     def isWidgetType(self) -> bool:
-        """Check if instance is a QWidget."""
+        """Check if instance is a QWidget.
+
+        Returns:
+            True if instance is a QWidget, False otherwise
+
+        """
         pass
 
 
@@ -147,7 +160,14 @@ class PDFReportGenerator:
         self._check_available_backends()
 
     def _check_available_backends(self) -> None:
-        """Check which PDF generation backends are available."""
+        """Check which PDF generation backends are available.
+
+        Logs information about available PDF generation, visualization, and HTML-to-PDF conversion backends.
+
+        Returns:
+            None
+
+        """
         # Check for ReportLab
         if self.reportlab_available:
             self.logger.info("ReportLab PDF generation available")
@@ -193,6 +213,9 @@ class PDFReportGenerator:
             title: Title of the subsection
             content: Content text for the subsection
 
+        Returns:
+            None
+
         """
         if 0 <= section_index < len(self.sections):
             subsection = {
@@ -213,13 +236,16 @@ class PDFReportGenerator:
         """Generate a PDF report for the analysis results.
 
         Args:
-            binary_path: Path to the analyzed binary (can be obtained from app_instance if None)
-            analysis_results: Dictionary of analysis results (can be obtained from app_instance if None)
-            report_type: Type of report to generate ("comprehensive", "vulnerability", or "license")
+            binary_path: Path to the analyzed binary (can be obtained from
+                app_instance if None)
+            analysis_results: Dictionary of analysis results (can be
+                obtained from app_instance if None)
+            report_type: Type of report to generate ("comprehensive",
+                "vulnerability", or "license")
             output_path: Path to save the PDF report (optional)
 
         Returns:
-            Path to the generated PDF report, or None if generation failed
+            Path to the generated PDF report, or None if generation failed.
 
         """
         if not self.reportlab_available:
@@ -268,7 +294,7 @@ class PDFReportGenerator:
             output_path: Path to save the PDF report (optional)
 
         Returns:
-            Path to the generated PDF report, or None if generation failed
+            Path to the generated PDF report, or None if generation failed.
 
         """
         try:
@@ -331,7 +357,14 @@ class PDFReportGenerator:
 
             # Function to add page breaks between major sections
             def add_section_break() -> None:
-                """Add a page break for new sections."""
+                """Add a page break for new sections.
+
+                Appends a PageBreak element to the content list for report formatting.
+
+                Returns:
+                    None
+
+                """
                 content.append(PageBreak())
 
             # Title
@@ -470,7 +503,7 @@ class PDFReportGenerator:
             output_path: Path to save the PDF report (optional)
 
         Returns:
-            Path to the generated PDF report, or None if generation failed
+            Path to the generated PDF report, or None if generation failed.
 
         """
         # Similar to comprehensive report but focused on vulnerabilities
@@ -492,7 +525,7 @@ class PDFReportGenerator:
             output_path: Path to save the PDF report (optional)
 
         Returns:
-            Path to the generated PDF report, or None if generation failed
+            Path to the generated PDF report, or None if generation failed.
 
         """
         # Similar to comprehensive report but focused on license checks
@@ -507,10 +540,11 @@ class PDFReportGenerator:
             binary_path: Path to the analyzed binary
             elements: List of reportlab elements to append to
             styles: Dictionary of paragraph styles
-            colors: ReportLab colors module
+            colors: ReportLab colors module for styling chart elements
 
         Returns:
-            True if successful, False otherwise
+            True if analysis was successfully added to report, False
+            otherwise.
 
         """
         try:
@@ -629,10 +663,12 @@ class PDFReportGenerator:
         Args:
             binary_path: Path to the analyzed binary
             analysis_results: Dictionary of analysis results
-            report_type: Type of report to generate ("comprehensive", "summary", "technical", "executive")
+            report_type: Type of report to generate ("comprehensive",
+                "summary", "technical", "executive")
 
         Returns:
-            Path to the generated HTML report, or None if generation failed
+            Path to the generated HTML report, or None if generation
+            failed.
 
         """
         try:
@@ -787,13 +823,14 @@ class PDFReportGenerator:
         """Export analysis results in various formats.
 
         Args:
-            format_type: Export format ('pdf', 'html', 'json', 'xml', 'csv')
+            format_type: Export format ('pdf', 'html', 'json', 'xml',
+                'csv')
             binary_path: Path to analyzed binary
             analysis_results: Analysis results dictionary
             output_path: Output file path (optional)
 
         Returns:
-            bool: True if export successful, False otherwise
+            True if export successful, False otherwise.
 
         """
         try:
@@ -834,7 +871,18 @@ class PDFReportGenerator:
             return False
 
     def _export_json(self, binary_path: str, analysis_results: dict[str, Any], output_path: str | None = None) -> bool:
-        """Export analysis results as JSON."""
+        """Export analysis results as JSON.
+
+        Args:
+            binary_path: Path to analyzed binary
+            analysis_results: Dictionary of analysis results to export
+            output_path: Output file path (optional, auto-generated if
+                None)
+
+        Returns:
+            True if JSON export successful, False otherwise.
+
+        """
         try:
             import json
 
@@ -869,7 +917,18 @@ class PDFReportGenerator:
             return False
 
     def _export_xml(self, binary_path: str, analysis_results: dict[str, Any], output_path: str | None = None) -> bool:
-        """Export analysis results as XML."""
+        """Export analysis results as XML.
+
+        Args:
+            binary_path: Path to analyzed binary
+            analysis_results: Dictionary of analysis results to export
+            output_path: Output file path (optional, auto-generated if
+                None)
+
+        Returns:
+            True if XML export successful, False otherwise.
+
+        """
         try:
             # Create output path if not provided
             if output_path is None:
@@ -911,7 +970,18 @@ class PDFReportGenerator:
             return False
 
     def _export_csv(self, binary_path: str, analysis_results: dict[str, Any], output_path: str | None = None) -> bool:
-        """Export analysis results as CSV."""
+        """Export analysis results as CSV.
+
+        Args:
+            binary_path: Path to analyzed binary
+            analysis_results: Dictionary of analysis results to export
+            output_path: Output file path (optional, auto-generated if
+                None)
+
+        Returns:
+            True if CSV export successful, False otherwise.
+
+        """
         try:
             import csv
 
@@ -978,7 +1048,7 @@ class PDFReportGenerator:
             obj: Object to sanitize for JSON encoding
 
         Returns:
-            Sanitized object suitable for JSON serialization
+            Sanitized object suitable for JSON serialization.
 
         """
         if isinstance(obj, dict):
@@ -990,7 +1060,15 @@ class PDFReportGenerator:
         return str(obj)
 
     def _xml_escape(self, text: str) -> str:
-        """Escape XML special characters."""
+        """Escape XML special characters.
+
+        Args:
+            text: Text string to escape for XML content
+
+        Returns:
+            XML-escaped text string.
+
+        """
         text = text.replace("&", "&amp;")
         text = text.replace("<", "&lt;")
         text = text.replace(">", "&gt;")
@@ -1005,7 +1083,7 @@ class PDFReportGenerator:
             indent: Current indentation level (spaces)
 
         Returns:
-            List of XML element strings
+            List of XML element strings.
 
         """
         xml_lines = []
@@ -1038,6 +1116,9 @@ class PDFReportGenerator:
             section: Section name for CSV row classification
             parent_key: Parent key path for nested structures
 
+        Returns:
+            None
+
         """
         if isinstance(data, dict):
             for key, value in data.items():
@@ -1064,7 +1145,7 @@ class PDFReportGenerator:
             output_path: Optional output path for the PDF file
 
         Returns:
-            Path to the generated PDF file, or None if generation failed
+            Path to the generated PDF file, or None if generation failed.
 
         """
         if not output_path:
@@ -1115,8 +1196,11 @@ class PDFReportGenerator:
     def _find_wkhtmltopdf(self) -> str | None:
         """Find the wkhtmltopdf executable on the system.
 
+        Searches system PATH and common installation directories for
+        wkhtmltopdf on Windows, macOS, and Linux.
+
         Returns:
-            Path to wkhtmltopdf executable, or None if not found
+            Path to wkhtmltopdf executable, or None if not found.
 
         """
         import shutil
@@ -1150,7 +1234,7 @@ class PDFReportGenerator:
             output_path: Output path for the PDF file
 
         Returns:
-            Path to the generated PDF file, or None if conversion failed
+            Path to the generated PDF file, or None if conversion failed.
 
         """
         try:
@@ -1249,7 +1333,7 @@ class PDFReportGenerator:
             table_html: HTML table content string
 
         Returns:
-            List of row lists containing cell text
+            List of row lists containing cell text.
 
         """
         import re
@@ -1269,7 +1353,18 @@ class PDFReportGenerator:
         return table_data
 
     def _generate_analysis_summary(self, analysis_results: dict[str, Any] | list[Any]) -> dict[str, Any]:
-        """Generate summary of analysis results."""
+        """Generate summary of analysis results.
+
+        Args:
+            analysis_results: Dictionary or list of analysis results to
+                summarize
+
+        Returns:
+            Dictionary containing summary statistics with keys: total_items,
+            categories, findings_count, vulnerabilities_found,
+            license_checks.
+
+        """
         summary = {
             "total_items": 0,
             "categories": {},
@@ -1315,7 +1410,10 @@ def run_report_generation(app: ApplicationInstance) -> None:
     """Generate a report for the analysis results.
 
     Args:
-        app: Application instance
+        app: Application instance with binary_path and analyze_results
+
+    Returns:
+        None
 
     """
     if not PYQT_AVAILABLE:

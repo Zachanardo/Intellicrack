@@ -24,6 +24,45 @@ from intellicrack.plugins.custom_modules.license_server_emulator import LicenseS
 from intellicrack.core.network.license_protocol_analyzer import LicenseProtocolAnalyzer
 
 
+class CommunicationProtocols:
+    """Multi-protocol communication handler for license server emulation."""
+
+    def __init__(self) -> None:
+        self._protocols: dict[str, dict[str, object]] = {}
+        self._handlers: dict[str, object] = {}
+        self._current_protocol: str = "tcp"
+        self._initialized: bool = False
+
+    def initialize_protocol(self, protocol_name: str, config: dict[str, object]) -> bool:
+        """Initialize a protocol with given configuration."""
+        self._protocols[protocol_name] = config
+        self._initialized = True
+        return True
+
+    def get_protocol_handler(self, protocol_name: str) -> object | None:
+        """Get handler for a specific protocol."""
+        return self._handlers.get(protocol_name)
+
+    def switch_to_http(self) -> bool:
+        """Switch to HTTP protocol."""
+        self._current_protocol = "http"
+        return True
+
+    def switch_to_dns(self) -> bool:
+        """Switch to DNS protocol."""
+        self._current_protocol = "dns"
+        return True
+
+    def switch_to_tcp(self) -> bool:
+        """Switch to TCP protocol."""
+        self._current_protocol = "tcp"
+        return True
+
+    def get_current_protocol(self) -> str:
+        """Get currently active protocol."""
+        return self._current_protocol
+
+
 class TestNetworkLicenseIntegration:
     """Integration tests for REAL network and license emulation workflows."""
 

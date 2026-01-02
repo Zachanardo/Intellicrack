@@ -11,12 +11,10 @@ Licensed under GNU GPL v3.0
 from __future__ import annotations
 
 import ctypes
-import ctypes.wintypes
 import json
 import logging
 import subprocess
 import time
-from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -58,49 +56,133 @@ class Win32API:
 
     @classmethod
     def find_window(cls, class_name: str, window_name: str) -> int:
-        """Find window by class name and window title."""
+        """Find a window by its class name and window title.
+
+        Args:
+            class_name: The window class name to search for.
+            window_name: The window title to search for.
+
+        Returns:
+            int: The window handle (HWND) if found, zero if not found.
+
+        """
         result: int = cls.user32.FindWindowW(class_name, window_name)
         return result
 
     @classmethod
     def set_parent(cls, child_hwnd: int, parent_hwnd: int) -> int:
-        """Set parent window for embedding."""
+        """Set parent window for child window embedding.
+
+        Args:
+            child_hwnd: The window handle of the child window.
+            parent_hwnd: The window handle of the parent window.
+
+        Returns:
+            int: The previous parent window handle.
+
+        """
         result: int = cls.user32.SetParent(child_hwnd, parent_hwnd)
         return result
 
     @classmethod
     def set_window_long(cls, hwnd: int, index: int, new_long: int) -> int:
-        """Modify window style."""
+        """Modify a window's extended style or other properties.
+
+        Args:
+            hwnd: The window handle to modify.
+            index: The zero-based offset to the value to modify (e.g., GWL_STYLE).
+            new_long: The new value for the specified property.
+
+        Returns:
+            int: The previous value at the specified offset.
+
+        """
         result: int = cls.user32.SetWindowLongW(hwnd, index, new_long)
         return result
 
     @classmethod
     def get_window_long(cls, hwnd: int, index: int) -> int:
-        """Get window style."""
+        """Retrieve a window's extended style or other properties.
+
+        Args:
+            hwnd: The window handle to query.
+            index: The zero-based offset to the value to retrieve (e.g., GWL_STYLE).
+
+        Returns:
+            int: The value at the specified offset.
+
+        """
         result: int = cls.user32.GetWindowLongW(hwnd, index)
         return result
 
     @classmethod
     def move_window(cls, hwnd: int, x: int, y: int, width: int, height: int, repaint: bool = True) -> bool:
-        """Move and resize window."""
+        """Move and resize a window to the specified position and dimensions.
+
+        Args:
+            hwnd: The window handle to move and resize.
+            x: The new x-coordinate of the window's top-left corner.
+            y: The new y-coordinate of the window's top-left corner.
+            width: The new width of the window in pixels.
+            height: The new height of the window in pixels.
+            repaint: Whether to repaint the window. Defaults to True.
+
+        Returns:
+            bool: True if successful, False otherwise.
+
+        """
         result: bool = bool(cls.user32.MoveWindow(hwnd, x, y, width, height, repaint))
         return result
 
     @classmethod
     def show_window(cls, hwnd: int, cmd_show: int) -> bool:
-        """Show or hide window."""
+        """Show or hide a window.
+
+        Args:
+            hwnd: The window handle to show or hide.
+            cmd_show: The command specifying how to show the window (e.g., SW_SHOW, SW_HIDE).
+
+        Returns:
+            bool: True if the window was previously visible, False otherwise.
+
+        """
         result: bool = bool(cls.user32.ShowWindow(hwnd, cmd_show))
         return result
 
     @classmethod
     def set_window_pos(cls, hwnd: int, insert_after: int, x: int, y: int, cx: int, cy: int, flags: int) -> bool:
-        """Set window position and size."""
+        """Set window position, size, and z-order.
+
+        Args:
+            hwnd: The window handle to position.
+            insert_after: The window handle to position ahead of (or HWND_TOP).
+            x: The new x-coordinate of the window's top-left corner.
+            y: The new y-coordinate of the window's top-left corner.
+            cx: The new width of the window in pixels.
+            cy: The new height of the window in pixels.
+            flags: Positioning and sizing flags (e.g., SWP_NOSIZE, SWP_NOZORDER).
+
+        Returns:
+            bool: True if successful, False otherwise.
+
+        """
         result: bool = bool(cls.user32.SetWindowPos(hwnd, insert_after, x, y, cx, cy, flags))
         return result
 
     @classmethod
     def send_message(cls, hwnd: int, msg: int, wparam: int, lparam: int) -> int:
-        """Send Windows message to window."""
+        """Send a Windows message to a window.
+
+        Args:
+            hwnd: The window handle to send the message to.
+            msg: The message to send.
+            wparam: The first message parameter.
+            lparam: The second message parameter.
+
+        Returns:
+            int: The return value from the window's message handler.
+
+        """
         result: int = cls.user32.SendMessageW(hwnd, msg, wparam, lparam)
         return result
 
@@ -109,7 +191,12 @@ class AdobeInjectorProcess:
     """Manages the Adobe Injector AutoIt3 process."""
 
     def __init__(self, adobe_injector_path: Path) -> None:
-        """Initialize with path to Adobe Injector executable."""
+        """Initialize the Adobe Injector process manager.
+
+        Args:
+            adobe_injector_path: Path to the Adobe Injector executable file.
+
+        """
         self.adobe_injector_path = adobe_injector_path
         self.process: subprocess.Popen[bytes] | None = None
         self.hwnd: int | None = None
@@ -119,7 +206,19 @@ class AdobeInjectorProcess:
         self.output_callback: Any = None
 
     def start(self, silent: bool = False) -> bool:
-        """Start Adobe Injector process."""
+        """Start the Adobe Injector process.
+
+        Args:
+            silent: If True, start the process in silent mode. Defaults to False.
+
+        Returns:
+            bool: True if the process started and window was found, False otherwise.
+
+        Raises:
+            FileNotFoundError: If the Adobe Injector executable does not exist.
+            ValueError: If the command construction results in unsafe arguments.
+
+        """
         if not self.adobe_injector_path.exists():
             raise FileNotFoundError(f"Adobe Injector executable not found: {self.adobe_injector_path}")
 
@@ -155,7 +254,15 @@ class AdobeInjectorProcess:
             return False
 
     def _find_adobe_injector_window(self, max_attempts: int = 10) -> int | None:
-        """Find Adobe Injector window by title."""
+        """Find the Adobe Injector window by its title.
+
+        Args:
+            max_attempts: Maximum number of attempts to find the window. Defaults to 10.
+
+        Returns:
+            int | None: The window handle (HWND) if found, None otherwise.
+
+        """
         window_titles = ["Adobe Injector v", "GenP v"]  # Check both for compatibility
 
         for _attempt in range(max_attempts):
@@ -184,7 +291,15 @@ class AdobeInjectorProcess:
         return None
 
     def embed_in_widget(self, parent_widget: QWidget) -> bool:
-        """Embed Adobe Injector window inside a Qt widget."""
+        """Embed the Adobe Injector window inside a Qt widget.
+
+        Args:
+            parent_widget: The Qt widget to embed the Adobe Injector window into.
+
+        Returns:
+            bool: True if embedding was successful, False otherwise.
+
+        """
         if not self.hwnd:
             return False
 
@@ -215,18 +330,31 @@ class AdobeInjectorProcess:
             return False
 
     def resize_to_parent(self, width: int, height: int) -> None:
-        """Resize embedded window to match parent."""
+        """Resize the embedded window to match parent dimensions.
+
+        Args:
+            width: The new width in pixels.
+            height: The new height in pixels.
+
+        """
         if self.hwnd and self.embedded:
             Win32API.move_window(self.hwnd, 0, 0, width, height)
 
     def send_command(self, command: str) -> None:
-        """Send command to Adobe Injector process via IPC."""
+        """Send a command to the Adobe Injector process via IPC.
+
+        Args:
+            command: The command string to send to the process.
+
+        """
         if self.process and self.process.stdin:
             self.process.stdin.write(f"{command}\n".encode())
             self.process.stdin.flush()
 
     def terminate(self) -> None:
-        """Terminate Adobe Injector process."""
+        """Terminate Adobe Injector process.
+
+        """
         if self.process:
             self.process.terminate()
             self.process.wait(timeout=5)
@@ -254,6 +382,9 @@ class AdobeInjectorWidget(BaseWidget):
         Args:
             parent: Parent widget for this widget. Defaults to None.
 
+        Raises:
+            ImportError: If PyQt6 is not available.
+
         """
         if not PYQT6_AVAILABLE:
             raise ImportError("PyQt6 not available - AdobeInjectorWidget requires PyQt6")
@@ -270,7 +401,9 @@ class AdobeInjectorWidget(BaseWidget):
         self.init_adobe_injector()
 
     def setup_ui(self) -> None:
-        """Set up the UI layout."""
+        """Set up the UI layout.
+
+        """
         layout = QVBoxLayout(self)
 
         control_group = QGroupBox("Adobe Injector Control")
@@ -310,7 +443,9 @@ class AdobeInjectorWidget(BaseWidget):
         layout.addWidget(self.embed_container)
 
     def init_adobe_injector(self) -> None:
-        """Initialize Adobe Injector integration."""
+        """Initialize Adobe Injector integration.
+
+        """
         from intellicrack.utils.path_resolver import get_project_root
 
         adobe_injector_paths = [
@@ -331,7 +466,12 @@ class AdobeInjectorWidget(BaseWidget):
             self.launch_btn.setEnabled(False)
 
     def launch_injector(self) -> None:
-        """Launch and embed Adobe Injector."""
+        """Launch and embed Adobe Injector.
+
+        Returns:
+            None
+
+        """
         if not self.adobe_injector_path:
             if hasattr(self, "status_updated"):
                 self.status_updated.emit("Adobe Injector executable not found")
@@ -363,7 +503,9 @@ class AdobeInjectorWidget(BaseWidget):
                 self.status_updated.emit(f"Error: {e}")
 
     def terminate_injector(self) -> None:
-        """Terminate embedded Adobe Injector."""
+        """Terminate embedded Adobe Injector.
+
+        """
         adobe_process = self.adobe_injector_process
         if adobe_process is not None:
             adobe_process.terminate()
@@ -379,7 +521,12 @@ class AdobeInjectorWidget(BaseWidget):
                 self.status_updated.emit("Adobe Injector terminated")
 
     def apply_rebranding(self) -> None:
-        """Apply rebranding to Adobe Injector resources."""
+        """Apply rebranding to Adobe Injector resources.
+
+        Returns:
+            None
+
+        """
         if not self.adobe_injector_path:
             return
 
@@ -397,7 +544,12 @@ class AdobeInjectorWidget(BaseWidget):
             self.status_updated.emit("Rebranding configuration created")
 
     def resizeEvent(self, event: QResizeEvent | None) -> None:  # noqa: N802
-        """Handle widget resize to adjust embedded window."""
+        """Handle widget resize to adjust embedded window.
+
+        Args:
+            event: The resize event containing new size information.
+
+        """
         super().resizeEvent(event)
         adobe_process = self.adobe_injector_process
         if adobe_process is not None and adobe_process.embedded:
@@ -405,7 +557,12 @@ class AdobeInjectorWidget(BaseWidget):
             adobe_process.resize_to_parent(size.width(), size.height())
 
     def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
-        """Clean up on widget close."""
+        """Clean up the Adobe Injector process on widget close.
+
+        Args:
+            event: The close event.
+
+        """
         adobe_process = self.adobe_injector_process
         if adobe_process is not None:
             adobe_process.terminate()
@@ -435,8 +592,8 @@ class AutoIt3COMInterface:
             params: Dictionary of parameters for the action. Defaults to None.
 
         Returns:
-            True if successful, False if COM interface unavailable, or the text value
-            when action is 'get_text'.
+            True if successful, False if COM interface unavailable, or the text
+            value when action is 'get_text'.
 
         """
         if not self.available or self.autoit is None:
@@ -462,13 +619,23 @@ class IPCController:
     """Inter-Process Communication controller for Adobe Injector."""
 
     def __init__(self, adobe_injector_process: AdobeInjectorProcess) -> None:
-        """Initialize IPC controller."""
+        """Initialize the IPC controller for the Adobe Injector process.
+
+        Args:
+            adobe_injector_process: The AdobeInjectorProcess instance to control via IPC.
+
+        """
         self.process = adobe_injector_process
         self.pipe_name = r"\\.\pipe\IntellicrackAdobeInjector"
         self.pipe: Any = None
 
     def create_named_pipe(self) -> bool:
-        """Create named pipe for IPC."""
+        """Create a named pipe for IPC communication.
+
+        Returns:
+            bool: True if the named pipe was created successfully, False otherwise.
+
+        """
         try:
             import win32pipe
 
@@ -487,7 +654,12 @@ class IPCController:
             return False
 
     def send_command(self, command: dict[str, Any]) -> None:
-        """Send command via named pipe."""
+        """Send a command to the Adobe Injector via the named pipe.
+
+        Args:
+            command: A dictionary containing the command and its parameters.
+
+        """
         if self.pipe is not None:
             import win32file
 
@@ -495,7 +667,13 @@ class IPCController:
             win32file.WriteFile(self.pipe, message)
 
     def receive_response(self) -> dict[str, Any]:
-        """Receive response from named pipe."""
+        """Receive a response from the Adobe Injector via the named pipe.
+
+        Returns:
+            The decoded JSON response from the Adobe Injector, or an empty dict
+            if no response.
+
+        """
         if self.pipe is not None:
             import win32file
 

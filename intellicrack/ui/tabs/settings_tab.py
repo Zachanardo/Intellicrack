@@ -353,7 +353,7 @@ class SettingsTab(BaseTab):
         refresh_providers_btn = QPushButton("🔄")
         refresh_providers_btn.setMaximumWidth(40)
         refresh_providers_btn.setToolTip("Refresh available AI providers")
-        refresh_providers_btn.clicked.connect(self.populate_ai_providers)
+        refresh_providers_btn.clicked.connect(self._refresh_ai_providers_with_feedback)
         provider_layout.addWidget(refresh_providers_btn)
 
         provider_layout.addStretch()
@@ -1735,6 +1735,63 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
             self.ai_provider_combo.setCurrentText(current_selection)
         elif available_providers:
             self.ai_provider_combo.setCurrentIndex(0)
+
+    def _refresh_ai_providers_with_feedback(self) -> None:
+        """Refresh AI providers with error handling and user feedback.
+
+        This method wraps populate_ai_providers() to provide visual feedback
+        during the refresh operation and handle any errors that occur.
+        """
+        from PyQt6.QtWidgets import QApplication, QMessageBox
+
+        max_preview_count = 5
+
+        try:
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+
+            self.populate_ai_providers()
+
+            final_count = self.ai_provider_combo.count()
+
+            QApplication.restoreOverrideCursor()
+
+            if final_count > 0:
+                providers_list = [
+                    self.ai_provider_combo.itemText(i)
+                    for i in range(min(final_count, max_preview_count))
+                ]
+                preview = ", ".join(providers_list)
+                if final_count > max_preview_count:
+                    preview += f"... (+{final_count - max_preview_count} more)"
+
+                self.log_message(f"AI providers refreshed: {final_count} found ({preview})", "info")
+            else:
+                self.log_message("No AI providers found during refresh", "warning")
+
+        except AttributeError as e:
+            QApplication.restoreOverrideCursor()
+            self.logger.exception("AI provider combo not initialized")
+            QMessageBox.warning(
+                self,
+                "Refresh Error",
+                f"Failed to refresh AI providers: UI component not initialized.\n{e}",
+            )
+        except RuntimeError as e:
+            QApplication.restoreOverrideCursor()
+            self.logger.exception("Qt runtime error during AI provider refresh")
+            QMessageBox.warning(
+                self,
+                "Refresh Error",
+                f"Failed to refresh AI providers: {e}",
+            )
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.logger.exception("Unexpected error during AI provider refresh")
+            QMessageBox.critical(
+                self,
+                "Refresh Error",
+                f"Failed to refresh AI providers:\n{e}",
+            )
 
     def log_message(self, message: str, level: str = "info") -> None:
         """Log message to console or status.

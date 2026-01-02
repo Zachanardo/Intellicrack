@@ -24,7 +24,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import contextlib
 import hashlib
 import logging
-import struct
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
@@ -329,7 +328,11 @@ class FingerprintEngine:
     }
 
     def __init__(self) -> None:
-        """Initialize fingerprint engine."""
+        """Initialize fingerprint engine.
+
+        Sets up empty fingerprint databases for caching binary, protection,
+        and compiler fingerprints.
+        """
         self.fingerprint_db: dict[str, BinaryFingerprint] = {}
         self.protection_db: dict[str, ProtectionFingerprint] = {}
         self.compiler_db: dict[str, CompilerFingerprint] = {}
@@ -337,11 +340,15 @@ class FingerprintEngine:
     def generate_fingerprint(self, binary_path: str | Path) -> BinaryFingerprint:
         """Generate complete fingerprint for a binary.
 
+        Computes cryptographic hashes (MD5, SHA1, SHA256), fuzzy hashes
+        (ssdeep, TLSH), and PE-specific metadata for Windows binaries
+        including import/export tables, section hashes, and code sections.
+
         Args:
-            binary_path: Path to binary file
+            binary_path: Path to binary file to fingerprint.
 
         Returns:
-            Complete binary fingerprint
+            BinaryFingerprint containing all computed hashes and metadata.
         """
         binary_path = Path(binary_path)
         binary_data = binary_path.read_bytes()
@@ -413,11 +420,15 @@ class FingerprintEngine:
     def fingerprint_protection(self, binary_path: str | Path) -> list[ProtectionFingerprint]:
         """Identify and fingerprint protection schemes.
 
+        Analyzes binary for known protection mechanisms by matching section
+        names, imports, string signatures, and code patterns against a
+        comprehensive protection signature database.
+
         Args:
-            binary_path: Path to binary file
+            binary_path: Path to binary file to analyze.
 
         Returns:
-            List of detected protection fingerprints
+            List of detected protection fingerprints with confidence scores.
         """
         binary_path = Path(binary_path)
         binary_data = binary_path.read_bytes()
@@ -495,11 +506,15 @@ class FingerprintEngine:
     def fingerprint_compiler(self, binary_path: str | Path) -> CompilerFingerprint | None:
         """Identify and fingerprint compiler/linker.
 
+        Analyzes binary to detect compiler and linker information by examining
+        imports, sections, string signatures, and code patterns. Extracts
+        RICH header hash and runtime library information.
+
         Args:
-            binary_path: Path to binary file
+            binary_path: Path to binary file to analyze.
 
         Returns:
-            Compiler fingerprint if detected
+            CompilerFingerprint with best match if detected, otherwise None.
         """
         binary_path = Path(binary_path)
         binary_data = binary_path.read_bytes()
@@ -583,11 +598,15 @@ class FingerprintEngine:
     def fingerprint_license_system(self, binary_path: str | Path) -> list[LicenseSystemFingerprint]:
         """Identify and fingerprint license system implementation.
 
+        Detects license protection systems by analyzing DLL imports, API calls,
+        string signatures, and registry patterns. Supports FlexLM, HASP, SafeNet,
+        Wibu CodeMeter, and other commercial licensing frameworks.
+
         Args:
-            binary_path: Path to binary file
+            binary_path: Path to binary file to analyze.
 
         Returns:
-            List of detected license system fingerprints
+            List of detected license system fingerprints with confidence scores.
         """
         binary_path = Path(binary_path)
         binary_data = binary_path.read_bytes()
@@ -663,12 +682,17 @@ class FingerprintEngine:
     def compare_fingerprints(self, fp1: BinaryFingerprint, fp2: BinaryFingerprint) -> float:
         """Compare two binary fingerprints for similarity.
 
+        Computes multi-algorithm similarity score using cryptographic hashes,
+        fuzzy hashes (ssdeep/TLSH), import table hashes, and section name
+        comparisons. Returns average similarity across available algorithms.
+
         Args:
-            fp1: First fingerprint
-            fp2: Second fingerprint
+            fp1: First binary fingerprint to compare.
+            fp2: Second binary fingerprint to compare.
 
         Returns:
-            Similarity score (0.0 to 1.0)
+            Normalized similarity score between 0.0 (completely different)
+            and 1.0 (identical).
         """
         if fp1.sha256 == fp2.sha256:
             return 1.0
@@ -708,12 +732,16 @@ class FingerprintEngine:
     def _extract_strings(self, data: bytes, min_length: int = 4) -> set[str]:
         """Extract printable strings from binary data.
 
+        Scans binary data and extracts consecutive sequences of ASCII-printable
+        characters. Filters results to only include strings meeting minimum
+        length requirement.
+
         Args:
-            data: Binary data
-            min_length: Minimum string length
+            data: Binary data to scan for strings.
+            min_length: Minimum string length to include (default: 4).
 
         Returns:
-            Set of extracted strings
+            Set of extracted printable strings.
         """
         strings = set()
         current = []
@@ -734,11 +762,15 @@ class FingerprintEngine:
     def _calculate_section_entropy(self, pe: Any) -> list[float]:
         """Calculate entropy for each PE section.
 
+        Computes Shannon entropy for each section in a PE binary to identify
+        code sections, compressed data, and encryption patterns. Higher entropy
+        indicates more randomness typical of encrypted or compressed content.
+
         Args:
-            pe: pefile.PE object
+            pe: pefile.PE object representing loaded PE binary.
 
         Returns:
-            List of entropy values
+            List of entropy values corresponding to PE sections in order.
         """
         import math
 
@@ -760,11 +792,15 @@ class FingerprintEngine:
     def fingerprint_imports(self, binary_path: str | Path) -> dict[str, list[str]]:
         """Generate fingerprint of import table.
 
+        Extracts and fingerprints all DLL imports from a PE binary. Returns
+        a mapping of DLL names to their imported function lists for use in
+        protection and license system detection.
+
         Args:
-            binary_path: Path to binary file
+            binary_path: Path to binary file to analyze.
 
         Returns:
-            Dictionary mapping DLLs to imported functions
+            Dictionary mapping DLL names to lists of imported function names.
         """
         binary_path = Path(binary_path)
         binary_data = binary_path.read_bytes()
@@ -790,11 +826,17 @@ class FingerprintEngine:
     def fingerprint_sections(self, binary_path: str | Path) -> dict[str, dict[str, Any]]:
         """Generate fingerprints of PE sections.
 
+        Analyzes each PE section in a binary and extracts comprehensive
+        metadata including virtual addresses, sizes, characteristics, entropy,
+        and permission flags. Useful for detecting code injection and
+        protection mechanisms.
+
         Args:
-            binary_path: Path to binary file
+            binary_path: Path to binary file to analyze.
 
         Returns:
-            Dictionary mapping section names to their characteristics
+            Dictionary mapping section names to dicts containing section
+            metadata (addresses, sizes, hashes, entropy, flags).
         """
         binary_path = Path(binary_path)
         binary_data = binary_path.read_bytes()
@@ -829,11 +871,16 @@ class FingerprintEngine:
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy of data.
 
+        Computes Shannon entropy using byte frequency analysis to measure
+        randomness and disorder in binary data. Higher values (closer to 8.0
+        for bytes) indicate more randomness, typical of encryption or
+        compression.
+
         Args:
-            data: Binary data
+            data: Binary data to analyze for entropy.
 
         Returns:
-            Entropy value
+            Shannon entropy value as floating-point number.
         """
         import math
 

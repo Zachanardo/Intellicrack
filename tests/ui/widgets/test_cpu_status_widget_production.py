@@ -10,9 +10,10 @@ Licensed under GNU General Public License v3.0
 
 import platform
 import sys
+import threading
 import time
+from collections.abc import Generator
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -21,8 +22,27 @@ from intellicrack.handlers.pyqt6_handler import QApplication
 from intellicrack.ui.widgets.cpu_status_widget import CPUMonitorWorker, CPUStatusWidget
 
 
+class FakeCPUFrequency:
+    """Real test double for CPU frequency data."""
+
+    def __init__(self, current: float, min_freq: float = 0.0, max_freq: float = 0.0) -> None:
+        self.current: float = current
+        self.min: float = min_freq
+        self.max: float = max_freq
+
+
+class FakePlatformSystem:
+    """Real test double for platform.system() returning unknown OS."""
+
+    def __init__(self, return_value: str) -> None:
+        self.return_value: str = return_value
+
+    def __call__(self) -> str:
+        return self.return_value
+
+
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Generator[Any, None, None]:
     """Create QApplication instance for widget tests."""
     app = QApplication.instance()
     if app is None:
@@ -32,7 +52,7 @@ def qapp() -> QApplication:
 
 
 @pytest.fixture
-def cpu_monitor_worker() -> CPUMonitorWorker:
+def cpu_monitor_worker() -> Generator[CPUMonitorWorker, None, None]:
     """Create CPU monitor worker for testing."""
     worker = CPUMonitorWorker()
     yield worker
@@ -40,7 +60,7 @@ def cpu_monitor_worker() -> CPUMonitorWorker:
 
 
 @pytest.fixture
-def cpu_status_widget(qapp: QApplication) -> CPUStatusWidget:
+def cpu_status_widget(qapp: Any) -> Generator[CPUStatusWidget, None, None]:
     """Create CPU status widget for testing."""
     widget = CPUStatusWidget()
     yield widget
@@ -87,12 +107,16 @@ class TestCPUMonitorWorker:
         assert len(cpu_model) > 0
         assert cpu_model != "Unknown CPU"
 
-    def test_cpu_model_detection_fallback(self, cpu_monitor_worker: CPUMonitorWorker) -> None:
+    def test_cpu_model_detection_fallback(
+        self, cpu_monitor_worker: CPUMonitorWorker, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test CPU model detection fallback for unknown platforms."""
-        with patch("platform.system", return_value="UnknownOS"):
-            cpu_model = cpu_monitor_worker._get_cpu_model()
+        fake_platform = FakePlatformSystem("UnknownOS")
+        monkeypatch.setattr("platform.system", fake_platform)
 
-            assert cpu_model == "Unknown CPU"
+        cpu_model = cpu_monitor_worker._get_cpu_model()
+
+        assert cpu_model == "Unknown CPU"
 
     def test_collect_cpu_data_with_processes(
         self, cpu_monitor_worker: CPUMonitorWorker
@@ -181,17 +205,20 @@ class TestCPUStatusWidget:
         """Test monitoring thread starts on widget initialization."""
         time.sleep(0.5)
 
+        assert cpu_status_widget.monitor_thread is not None
         assert cpu_status_widget.monitor_thread.isRunning()
 
     def test_update_cpu_data_updates_labels(self, cpu_status_widget: CPUStatusWidget) -> None:
         """Test updating CPU data updates all display labels."""
+        fake_freq = FakeCPUFrequency(current=3600.0, min_freq=800.0, max_freq=4200.0)
+
         test_data: dict[str, Any] = {
             "cpu_model": "Intel Core i7-9700K",
             "cpu_count_physical": 8,
             "cpu_count_logical": 8,
             "cpu_percent_total": 45.2,
             "cpu_percent_cores": [40.0, 50.0, 45.0, 42.0, 48.0, 46.0, 44.0, 43.0],
-            "cpu_freq": MagicMock(current=3600.0),
+            "cpu_freq": fake_freq,
             "load_average": (1.5, 1.8, 2.0),
             "cpu_times_percent": {
                 "user": 30.5,
@@ -261,9 +288,12 @@ class TestCPUStatusWidget:
         cpu_status_widget.update_processes_table(processes)
 
         assert cpu_status_widget.processes_table.rowCount() == 3
-        assert cpu_status_widget.processes_table.item(0, 1).text() == "chrome.exe"
-        assert cpu_status_widget.processes_table.item(1, 1).text() == "python.exe"
-        assert "35.5" in cpu_status_widget.processes_table.item(0, 2).text()
+        item_0_1 = cpu_status_widget.processes_table.item(0, 1)
+        item_1_1 = cpu_status_widget.processes_table.item(1, 1)
+        item_0_2 = cpu_status_widget.processes_table.item(0, 2)
+        assert item_0_1 is not None and item_0_1.text() == "chrome.exe"
+        assert item_1_1 is not None and item_1_1.text() == "python.exe"
+        assert item_0_2 is not None and "35.5" in item_0_2.text()
 
     def test_set_bar_color_based_on_usage(self, cpu_status_widget: CPUStatusWidget) -> None:
         """Test progress bar color changes based on CPU usage thresholds."""
@@ -286,12 +316,14 @@ class TestCPUStatusWidget:
         """Test changing refresh interval updates monitor worker."""
         cpu_status_widget.set_refresh_interval(2000)
 
+        assert cpu_status_widget.monitor_worker is not None
         assert cpu_status_widget.monitor_worker.update_interval == 2000
 
     def test_stop_monitoring_terminates_thread(
         self, cpu_status_widget: CPUStatusWidget
     ) -> None:
         """Test stop_monitoring gracefully terminates monitoring thread."""
+        assert cpu_status_widget.monitor_thread is not None
         assert cpu_status_widget.monitor_thread.isRunning()
 
         cpu_status_widget.stop_monitoring()
@@ -360,7 +392,9 @@ class TestCPUMonitoringIntegration:
 
             table = widget.processes_table
             if table.rowCount() > 0:
-                pid = int(table.item(0, 0).text())
+                item = table.item(0, 0)
+                assert item is not None
+                pid = int(item.text())
                 assert pid > 0
 
                 try:
@@ -416,7 +450,6 @@ class TestCPUMonitoringIntegration:
                 while time.time() < end_time:
                     _ = sum(i * i for i in range(10000))
 
-            import threading
             thread = threading.Thread(target=cpu_intensive_task)
             thread.start()
 

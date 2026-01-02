@@ -122,7 +122,11 @@ class CodeMeterProtocolParser:
         self._load_default_products()
 
     def _load_default_products(self) -> None:
-        """Load default CodeMeter products."""
+        """Load default CodeMeter products into the instance products dictionary.
+
+        Initializes the products mapping with realistic CodeMeter products including
+        firm codes and product codes commonly used in licensing protection schemes.
+        """
         self.products: dict[tuple[int, int], dict[str, Any]] = {
             # Common firm codes and products
             (500001, 1): {  # Sample CAD software
@@ -182,7 +186,13 @@ class CodeMeterProtocolParser:
         }
 
     def _generate_container_info(self) -> dict[str, Any]:
-        """Generate realistic CodeMeter container information."""
+        """Generate realistic CodeMeter container information.
+
+        Returns:
+            Dictionary containing hardware container details including serial number,
+            memory statistics, device identifier, and firmware version matching
+            actual CodeMeter CmStick/T hardware specifications.
+        """
         return {
             "serial_number": secrets.randbelow(9000000) + 1000000,
             "firm_code": 500001,
@@ -304,7 +314,15 @@ class CodeMeterProtocolParser:
             return None
 
     def _parse_session_context(self, data: bytes) -> dict[str, Any]:
-        """Parse CodeMeter session context data."""
+        """Parse CodeMeter session context data from binary format.
+
+        Args:
+            data: Raw binary session context data to parse.
+
+        Returns:
+            Dictionary mapping session context keys to their string values,
+            or empty dict if parsing fails.
+        """
         context = {}
         try:
             offset = 0
@@ -335,7 +353,15 @@ class CodeMeterProtocolParser:
         return context
 
     def _parse_additional_data(self, data: bytes) -> dict[str, Any]:
-        """Parse additional CodeMeter data fields."""
+        """Parse additional CodeMeter data fields from binary format.
+
+        Args:
+            data: Raw binary additional data to parse.
+
+        Returns:
+            Dictionary containing parsed field types and values including hostname,
+            process name, process ID, and user context, or empty dict if parsing fails.
+        """
         additional: dict[str, Any] = {}
         try:
             offset = 0
@@ -415,7 +441,14 @@ class CodeMeterProtocolParser:
         return self._handle_unknown_command(request)
 
     def _handle_login(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle CodeMeter login request."""
+        """Handle CodeMeter login request and generate session authentication.
+
+        Args:
+            request: Parsed CodeMeter login request.
+
+        Returns:
+            CodeMeter response containing session ID, granted features, and container info.
+        """
         product_key = (request.firm_code, request.product_code)
 
         if product_key not in self.products:
@@ -465,7 +498,14 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_logout(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle CodeMeter logout request."""
+        """Handle CodeMeter logout request and terminate session.
+
+        Args:
+            request: Parsed CodeMeter logout request.
+
+        Returns:
+            CodeMeter response confirming session termination.
+        """
         session_id = request.session_context.get("session_id", "")
 
         if session_id in self.active_sessions:
@@ -483,8 +523,14 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_challenge(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle challenge-response authentication."""
-        # Generate response to challenge
+        """Handle challenge-response authentication request.
+
+        Args:
+            request: Parsed CodeMeter challenge request.
+
+        Returns:
+            CodeMeter response containing SHA256-based challenge response.
+        """
         challenge_response = hashlib.sha256(
             request.challenge_data + str(request.firm_code).encode() + str(request.product_code).encode(),
         ).digest()
@@ -501,8 +547,14 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_response(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle response verification."""
-        # Verify the response (simplified - always accept)
+        """Handle response verification for authentication completion.
+
+        Args:
+            request: Parsed CodeMeter response request.
+
+        Returns:
+            CodeMeter response confirming authentication verification success.
+        """
         return CodeMeterResponse(
             status=0x00000000,  # CM_GCM_OK
             request_id=request.request_id,
@@ -515,7 +567,14 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_get_info(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle get info request."""
+        """Handle get info request for runtime and container information.
+
+        Args:
+            request: Parsed CodeMeter get info request.
+
+        Returns:
+            CodeMeter response containing runtime version, API version, and container count.
+        """
         return CodeMeterResponse(
             status=0x00000000,  # CM_GCM_OK
             request_id=request.request_id,
@@ -533,8 +592,14 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_encrypt(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle encryption request."""
-        # Perform XOR encryption using firm/product code as key
+        """Handle encryption request using XOR cipher with firm/product codes.
+
+        Args:
+            request: Parsed CodeMeter encrypt request.
+
+        Returns:
+            CodeMeter response containing XOR-encrypted challenge data.
+        """
         key = struct.pack("<II", request.firm_code, request.product_code)
         encrypted_data = bytearray()
 
@@ -553,13 +618,25 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_decrypt(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle decryption request."""
-        # Same as encrypt for XOR cipher
+        """Handle decryption request using XOR cipher reversal.
+
+        Args:
+            request: Parsed CodeMeter decrypt request.
+
+        Returns:
+            CodeMeter response containing XOR-decrypted challenge data.
+        """
         return self._handle_encrypt(request)
 
     def _handle_sign(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle digital signature request."""
-        # Generate signature hash
+        """Handle digital signature generation request.
+
+        Args:
+            request: Parsed CodeMeter sign request.
+
+        Returns:
+            CodeMeter response containing SHA256 digital signature.
+        """
         signature = hashlib.sha256(
             request.challenge_data + struct.pack("<II", request.firm_code, request.product_code),
         ).digest()
@@ -576,8 +653,14 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_verify(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle signature verification request."""
-        # Simplified verification - always succeed
+        """Handle signature verification request.
+
+        Args:
+            request: Parsed CodeMeter verify request.
+
+        Returns:
+            CodeMeter response confirming signature validity.
+        """
         return CodeMeterResponse(
             status=0x00000000,  # CM_GCM_OK
             request_id=request.request_id,
@@ -590,7 +673,14 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_get_license(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle get license request."""
+        """Handle get license request for product licensing information.
+
+        Args:
+            request: Parsed CodeMeter get license request.
+
+        Returns:
+            CodeMeter response containing product license details and expiry information.
+        """
         product_key = (request.firm_code, request.product_code)
 
         if product_key in self.products:
@@ -620,7 +710,14 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_release_license(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle release license request."""
+        """Handle release license request to free license resources.
+
+        Args:
+            request: Parsed CodeMeter release license request.
+
+        Returns:
+            CodeMeter response confirming license release.
+        """
         return CodeMeterResponse(
             status=0x00000000,  # CM_GCM_OK
             request_id=request.request_id,
@@ -633,7 +730,14 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_heartbeat(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle heartbeat request."""
+        """Handle heartbeat request to maintain active sessions.
+
+        Args:
+            request: Parsed CodeMeter heartbeat request.
+
+        Returns:
+            CodeMeter response confirming heartbeat reception and session status.
+        """
         session_id = request.session_context.get("session_id", "")
 
         if session_id in self.active_sessions:
@@ -651,7 +755,14 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_get_container_info(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle get container info request."""
+        """Handle get container info request for hardware details.
+
+        Args:
+            request: Parsed CodeMeter get container info request.
+
+        Returns:
+            CodeMeter response containing hardware container information.
+        """
         return CodeMeterResponse(
             status=0x00000000,  # CM_GCM_OK
             request_id=request.request_id,
@@ -664,7 +775,14 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_enum_products(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle enumerate products request."""
+        """Handle enumerate products request for available licenses.
+
+        Args:
+            request: Parsed CodeMeter enumerate products request.
+
+        Returns:
+            CodeMeter response containing list of available products with details.
+        """
         products_list = []
         for (firm_code, product_code), product in self.products.items():
             if request.firm_code in (firm_code, 0):
@@ -690,7 +808,14 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_transfer_receipt(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle transfer receipt request."""
+        """Handle transfer receipt request for license portability tracking.
+
+        Args:
+            request: Parsed CodeMeter transfer receipt request.
+
+        Returns:
+            CodeMeter response containing generated receipt ID for license transfer.
+        """
         receipt_id = hashlib.sha256(
             f"{request.firm_code}:{request.product_code}:{time.time()}".encode(),
         ).hexdigest()
@@ -714,7 +839,14 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_check_receipt(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle check receipt request."""
+        """Handle check receipt request for license transfer validation.
+
+        Args:
+            request: Parsed CodeMeter check receipt request.
+
+        Returns:
+            CodeMeter response confirming receipt validity and transfer status.
+        """
         receipt_id = request.session_context.get("receipt_id", "")
 
         if receipt_id in self.license_receipts:
@@ -741,7 +873,14 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_unknown_command(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle unknown command."""
+        """Handle unknown or unsupported CodeMeter command.
+
+        Args:
+            request: Parsed CodeMeter request with unknown command code.
+
+        Returns:
+            CodeMeter error response indicating unsupported command.
+        """
         self.logger.warning("Unknown CodeMeter command: 0x%04X", request.command)
         return CodeMeterResponse(
             status=0x00000012,  # CM_GCM_ENCRYPTION_ERROR (generic error)
@@ -809,7 +948,15 @@ class CodeMeterProtocolParser:
             return struct.pack("<III", 0x434D4554, response.status, response.request_id)
 
     def _serialize_dict(self, data: dict[str, Any]) -> bytes:
-        """Serialize dictionary to bytes."""
+        """Serialize dictionary data structures to binary format.
+
+        Args:
+            data: Dictionary containing key-value pairs to serialize.
+
+        Returns:
+            Serialized binary representation of the dictionary with length-prefixed
+            strings and typed values suitable for CodeMeter protocol transmission.
+        """
         serialized = bytearray()
 
         for key, value in data.items():

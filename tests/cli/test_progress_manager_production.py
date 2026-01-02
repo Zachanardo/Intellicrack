@@ -176,7 +176,10 @@ def test_progress_manager_analysis_task_dataclass(progress_manager: Any) -> None
 
 def test_progress_manager_speed_column_rendering(progress_manager: Any) -> None:
     """SpeedColumn custom progress column renders speed metrics correctly."""
-    from rich.progress import Task
+    import threading
+    from typing import cast
+
+    from rich.progress import Task, TaskID
     from rich.text import Text
 
     from intellicrack.cli.progress_manager import SpeedColumn
@@ -184,14 +187,14 @@ def test_progress_manager_speed_column_rendering(progress_manager: Any) -> None:
     column = SpeedColumn()
 
     mock_task = Task(
-        id=1,
+        id=cast(TaskID, 1),
         description="Test",
         total=100,
         completed=50,
         visible=True,
         fields={"speed": 15.5},
         _get_time=time.time,
-        _lock=None,
+        _lock=threading.RLock(),
     )
 
     rendered = column.render(mock_task)

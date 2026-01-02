@@ -116,13 +116,30 @@ class WindowsServiceManager:
     SERVICE_CONTROL_INTERROGATE = 4
 
     def __init__(self) -> None:
-        """Initialize Windows service manager."""
+        """Initialize Windows service manager.
+
+        Sets up logging and initializes Windows API function signatures
+        for service management operations.
+
+        Returns:
+            None
+        """
         self.logger = logging.getLogger(__name__)
         self._advapi32: ctypes.WinDLL | None = None
         self._setup_winapi()
 
     def _setup_winapi(self) -> None:
-        """Set up Windows API functions."""
+        """Set up Windows API functions.
+
+        Initializes Windows API function signatures and types for service
+        management operations using the advapi32 library.
+
+        Returns:
+            None
+
+        Raises:
+            Exception: Caught and logged if advapi32 library is unavailable.
+        """
         try:
             self._advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
 
@@ -181,11 +198,13 @@ class WindowsServiceManager:
         """Get detailed information about a service.
 
         Args:
-            service_name: Name of the service
+            service_name: Name of the service.
 
         Returns:
-            ServiceInfo or None if service not found
+            Detailed service information object, or None if not found.
 
+        Raises:
+            Exception: Caught and logged if service enumeration fails.
         """
         if self._advapi32 is None:
             return None
@@ -244,7 +263,17 @@ class WindowsServiceManager:
         return None
 
     def _parse_dependencies(self, deps_ptr: wintypes.LPWSTR) -> list[str]:
-        """Parse double-null terminated dependency string."""
+        """Parse double-null terminated dependency string.
+
+        Args:
+            deps_ptr: Pointer to double-null terminated dependency string.
+
+        Returns:
+            List of dependency service names.
+
+        Raises:
+            Exception: Caught and logged if string parsing fails.
+        """
         if not deps_ptr:
             return []
 
@@ -266,12 +295,14 @@ class WindowsServiceManager:
         """Start a Windows service.
 
         Args:
-            service_name: Name of the service
-            args: Optional service arguments
+            service_name: Name of the service.
+            args: Optional service arguments.
 
         Returns:
-            True if successful
+            True if service started successfully, False otherwise.
 
+        Raises:
+            Exception: Caught and logged if service start operation fails.
         """
         if self._advapi32 is None:
             return False
@@ -315,11 +346,13 @@ class WindowsServiceManager:
         """Stop a Windows service.
 
         Args:
-            service_name: Name of the service
+            service_name: Name of the service.
 
         Returns:
-            True if successful
+            True if service stopped successfully, False otherwise.
 
+        Raises:
+            Exception: Caught and logged if service stop operation fails.
         """
         if self._advapi32 is None:
             return False
@@ -355,11 +388,13 @@ class WindowsServiceManager:
         """Pause a Windows service.
 
         Args:
-            service_name: Name of the service
+            service_name: Name of the service.
 
         Returns:
-            True if successful
+            True if service paused successfully, False otherwise.
 
+        Raises:
+            Exception: Caught and logged if service pause operation fails.
         """
         if self._advapi32 is None:
             return False
@@ -395,11 +430,13 @@ class WindowsServiceManager:
         """Continue a paused Windows service.
 
         Args:
-            service_name: Name of the service
+            service_name: Name of the service.
 
         Returns:
-            True if successful
+            True if service continued successfully, False otherwise.
 
+        Raises:
+            Exception: Caught and logged if service continue operation fails.
         """
         if self._advapi32 is None:
             return False
@@ -435,11 +472,13 @@ class WindowsServiceManager:
         """Delete a Windows service.
 
         Args:
-            service_name: Name of the service
+            service_name: Name of the service.
 
         Returns:
-            True if successful
+            True if service deleted successfully, False otherwise.
 
+        Raises:
+            Exception: Caught and logged if service deletion fails.
         """
         if self._advapi32 is None:
             return False
@@ -475,11 +514,13 @@ class WindowsServiceManager:
         """Get current state of a service.
 
         Args:
-            service_name: Name of the service
+            service_name: Name of the service.
 
         Returns:
-            ServiceState or None if service not found
+            Current service state, or None if service not found.
 
+        Raises:
+            Exception: Caught and logged if service state query fails.
         """
         if self._advapi32 is None:
             return None
@@ -515,10 +556,10 @@ class WindowsServiceManager:
         """Check if a service is running.
 
         Args:
-            service_name: Name of the service
+            service_name: Name of the service.
 
         Returns:
-            True if service is running
+            True if service is currently running, False otherwise.
 
         """
         state = self.get_service_state(service_name)
@@ -528,13 +569,15 @@ class WindowsServiceManager:
         """Wait for service to reach target state.
 
         Args:
-            service_name: Name of the service
-            target_state: Desired service state
-            timeout_ms: Timeout in milliseconds
+            service_name: Name of the service.
+            target_state: Desired service state.
+            timeout_ms: Timeout in milliseconds.
 
         Returns:
-            True if target state reached
+            True if target state reached before timeout, False otherwise.
 
+        Raises:
+            Exception: Caught and logged if service state polling fails.
         """
         import time
 

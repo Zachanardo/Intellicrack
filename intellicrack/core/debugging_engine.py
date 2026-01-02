@@ -10,14 +10,13 @@ Licensed under GNU GPL v3.0
 import ctypes
 import struct
 import threading
-import time
 from collections.abc import Callable
 from ctypes import wintypes
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar
 
-from intellicrack.utils.type_safety import get_typed_item, validate_type
+from intellicrack.utils.type_safety import get_typed_item
 
 
 try:
@@ -876,7 +875,19 @@ class LicenseDebugger:
             return False
 
     def hook_api(self, address: int, hook_handler: Callable[[object, object], None]) -> bool:
-        """Install a hook at a specific memory address."""
+        """Install a hook at a specific memory address.
+
+        Args:
+            address (int): Memory address where the hook will be installed.
+            hook_handler (Callable[[object, object], None]): Callback function to
+                invoke when the hook is triggered. The callback receives two
+                arguments: the debugger instance and the debug event.
+
+        Returns:
+            bool: True if the hook was successfully installed, False if
+                the process is not attached, the address is invalid, or hook
+                installation failed.
+        """
         if not self.process_handle:
             logger.exception("Cannot hook API: no process attached")
             return False
@@ -903,7 +914,16 @@ class LicenseDebugger:
             return False
 
     def analyze_pe_header(self) -> dict[str, Any] | None:
-        """Analyze the PE header of the attached process main module."""
+        """Analyze the PE header of the attached process main module.
+
+        Returns:
+            dict[str, Any] | None: A dictionary containing comprehensive PE header
+                information including machine type, section headers, entry point RVA,
+                image base address, checksum, subsystem type, import directory RVA,
+                TLS callbacks and configuration, and a list of all sections with their
+                attributes. Returns None if the process is not attached, the PE header
+                is invalid, or memory reads fail.
+        """
         if not self.process_handle:
             logger.exception("Cannot analyze PE header: no process attached")
             return None
@@ -993,7 +1013,14 @@ class LicenseDebugger:
             return None
 
     def _get_process_base_address(self) -> int | None:
-        """Get the base address of the main module."""
+        """Get the base address of the main module.
+
+        Returns:
+            int | None: The base address (void pointer as integer) of the main
+                module if enumeration succeeds, or None if the process is not
+                attached, the module enumeration fails, or a Windows API error
+                occurs.
+        """
         if not self.process_handle or not self.process_id:
             return None
         try:
@@ -5732,7 +5759,7 @@ class LicenseDebugger:
             self.kernel32.AddVectoredExceptionHandler.restype = wintypes.LPVOID
 
             # Create VEH callback function
-            @PVECTORED_EXCEPTION_HANDLER  # type: ignore[untyped-decorator]
+            @PVECTORED_EXCEPTION_HANDLER
             def veh_handler(exception_pointers: Any) -> int:
                 """Handle VEH callback.
 

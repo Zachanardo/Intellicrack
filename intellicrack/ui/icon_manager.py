@@ -9,7 +9,7 @@ Licensed under GNU General Public License v3.0
 
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from intellicrack.handlers.pyqt6_handler import QIcon
 
@@ -23,13 +23,13 @@ class IconManager:
     """
 
     # Icon paths mapping - using Unicode characters as fallback
-    ICON_MAP: dict[str, str] = {
+    ICON_MAP: ClassVar[dict[str, str]] = {
         # File operations
         "file_open": "📂",
-        "file_save": "",
-        "file_save_as": "",
+        "file_save": "💾",
+        "file_save_as": "💾",
         "file_new": "📄",
-        "file_close": "ERROR",
+        "file_close": "✖️",
         "file_export": "📤",
         "file_import": "📥",
         # Edit operations
@@ -38,8 +38,8 @@ class IconManager:
         "edit_cut": "✂️",
         "edit_undo": "↩️",
         "edit_redo": "↪️",
-        "edit_delete": "",
-        "edit_search": "",
+        "edit_delete": "🗑️",
+        "edit_search": "🔍",
         "edit_replace": "🔄",
         # Navigation
         "nav_back": "⬅️",
@@ -53,54 +53,54 @@ class IconManager:
         "action_stop": "⏹️",
         "action_pause": "⏸️",
         "action_restart": "🔄",
-        "action_generate": "[FAST]",
+        "action_generate": "⚡",
         "action_analyze": "🔬",
-        "action_debug": "",
+        "action_debug": "🐛",
         "action_test": "🧪",
         "action_build": "🔨",
-        "action_deploy": "",
+        "action_deploy": "🚀",
         # Status
-        "status_success": "OK",
-        "status_error": "ERROR",
-        "status_warning": "WARNING️",
-        "status_info": "i",
+        "status_success": "✅",
+        "status_error": "❌",
+        "status_warning": "⚠️",
+        "status_info": "🛈",
         "status_question": "❓",
         "status_loading": "⏳",
-        "status_ready": "OK",
+        "status_ready": "✅",
         "status_idle": "⏸️",
         # Tools
-        "tool_settings": "[CFG]️",
-        "tool_preferences": "",
+        "tool_settings": "⚙️",
+        "tool_preferences": "🔧",
         "tool_plugin": "🔌",
         "tool_terminal": "💻",
         "tool_console": "📟",
-        "tool_log": "",
-        "tool_monitor": "",
+        "tool_log": "📋",
+        "tool_monitor": "📊",
         "tool_network": "🌐",
         # Security
-        "security_lock": "",
+        "security_lock": "🔒",
         "security_unlock": "🔓",
         "security_key": "🔑",
         "security_shield": "🛡️",
-        "security_warning": "WARNING️",
-        "security_scan": "",
+        "security_warning": "⚠️",
+        "security_scan": "🔍",
         # AI/ML
         "ai_brain": "🧠",
-        "ai_robot": "",
-        "ai_generate": "[NEW]",
-        "ai_analyze": "",
+        "ai_robot": "🤖",
+        "ai_generate": "✨",
+        "ai_analyze": "🔬",
         "ai_model": "🧮",
         # Binary Analysis
         "binary_exe": "🔷",
-        "binary_dll": "",
+        "binary_dll": "📦",
         "binary_patch": "🩹",
         "binary_hex": "🔢",
         "binary_disasm": "📜",
-        "binary_memory": "",
+        "binary_memory": "💽",
         # Database
         "db_connect": "🔗",
         "db_disconnect": "🔗",
-        "db_query": "",
+        "db_query": "📝",
         "db_table": "📋",
         # Help
         "help_about": "i",
@@ -119,7 +119,7 @@ class IconManager:
         self.icon_path: Path = icon_path or Path(__file__).parent.parent / "assets" / "icons"
         self._icon_cache: dict[str, QIcon] = {}
 
-    def get_icon(self, icon_name: str, fallback: bool = True) -> QIcon:
+    def get_icon(self, icon_name: str, *, fallback: bool = True) -> QIcon:
         """Get an icon by name with fallback support.
 
         Args:
@@ -163,19 +163,46 @@ class IconManager:
 
         return QIcon()
 
-    def _create_text_icon(self, icon_name: str) -> QIcon:
+    def _create_text_icon(self, icon_name: str, size: int = 32) -> QIcon:
         """Create a text-based fallback icon.
 
+        Renders the icon text/emoji onto a QPixmap and converts it to a QIcon.
+
         Args:
-            icon_name: Name of the icon
+            icon_name: Name of the icon to create.
+            size: Size of the icon in pixels (default 32).
 
         Returns:
-            QIcon with text or emoji
+            QIcon with text or emoji representation rendered as an image.
 
         """
-        # Get the text/emoji for this icon
-        self.ICON_MAP.get(icon_name, "?")
-        return QIcon()
+        from PyQt6.QtCore import Qt
+        from PyQt6.QtGui import QColor, QFont, QPainter, QPixmap
+
+        text: str = self.ICON_MAP.get(icon_name, "?")
+
+        pixmap = QPixmap(size, size)
+        pixmap.fill(QColor(0, 0, 0, 0))
+
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.TextAntialiasing)
+
+        font = QFont()
+        font.setPointSize(int(size * 0.6))
+        painter.setFont(font)
+
+        painter.setPen(QColor(0, 0, 0))
+
+        painter.drawText(
+            pixmap.rect(),
+            Qt.AlignmentFlag.AlignCenter,
+            text,
+        )
+
+        painter.end()
+
+        return QIcon(pixmap)
 
     def get_icon_text(self, icon_name: str) -> str:
         """Get the text/emoji representation of an icon.
@@ -206,8 +233,10 @@ class IconManager:
         self._icon_cache.clear()
 
 
-# Singleton instance
-_icon_manager: IconManager | None = None
+class _IconManagerHolder:
+    """Singleton holder for IconManager instance."""
+
+    instance: IconManager | None = None
 
 
 def get_icon_manager() -> IconManager:
@@ -217,10 +246,9 @@ def get_icon_manager() -> IconManager:
         IconManager instance
 
     """
-    global _icon_manager
-    if _icon_manager is None:
-        _icon_manager = IconManager()
-    return _icon_manager
+    if _IconManagerHolder.instance is None:
+        _IconManagerHolder.instance = IconManager()
+    return _IconManagerHolder.instance
 
 
 def get_icon(icon_name: str) -> QIcon:
@@ -252,6 +280,7 @@ def get_icon_text(icon_name: str) -> str:
 def set_button_icon(
     button: Any,
     icon_name: str,
+    *,
     add_text_prefix: bool = True,
 ) -> None:
     """Set an icon on a button with optional text prefix.

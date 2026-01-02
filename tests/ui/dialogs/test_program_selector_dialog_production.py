@@ -15,8 +15,7 @@ This module validates ProgramSelectorDialog's complete functionality including:
 
 import tempfile
 from pathlib import Path
-from typing import Any
-from unittest.mock import Mock, patch
+from typing import Any, Optional
 
 import pytest
 from PyQt6.QtCore import Qt
@@ -29,6 +28,105 @@ from intellicrack.ui.dialogs.program_selector_dialog import (
     ProgramSelectorDialog,
     show_program_selector,
 )
+
+
+class FakeFileDialog:
+    """Real test double for QFileDialog with call tracking."""
+
+    def __init__(self) -> None:
+        self.get_open_filename_calls: list[dict[str, Any]] = []
+        self.return_value: tuple[str, str] = ("", "")
+
+    def set_return_value(self, file_path: str, selected_filter: str = "") -> None:
+        """Configure return value for getOpenFileName."""
+        self.return_value = (file_path, selected_filter)
+
+    @staticmethod
+    def getOpenFileName(
+        parent: Any = None,
+        caption: str = "",
+        directory: str = "",
+        filter: str = "",
+        initial_filter: str = "",
+    ) -> tuple[str, str]:
+        """Real implementation that returns configured value."""
+        instance = FakeFileDialog._instance
+        if instance is None:
+            return ("", "")
+
+        instance.get_open_filename_calls.append(
+            {
+                "parent": parent,
+                "caption": caption,
+                "directory": directory,
+                "filter": filter,
+                "initial_filter": initial_filter,
+            }
+        )
+        return instance.return_value
+
+    _instance: Optional["FakeFileDialog"] = None
+
+
+class FakeMessageBox:
+    """Real test double for QMessageBox with call tracking."""
+
+    def __init__(self) -> None:
+        self.warning_calls: list[dict[str, Any]] = []
+
+    @staticmethod
+    def warning(
+        parent: Any,
+        title: str,
+        text: str,
+        buttons: Any = None,
+        default_button: Any = None,
+    ) -> Any:
+        """Real implementation that tracks warning calls."""
+        instance = FakeMessageBox._instance
+        if instance is None:
+            return None
+
+        instance.warning_calls.append(
+            {
+                "parent": parent,
+                "title": title,
+                "text": text,
+                "buttons": buttons,
+                "default_button": default_button,
+            }
+        )
+        return None
+
+    _instance: Optional["FakeMessageBox"] = None
+
+
+class FakeProgramSelectorDialog:
+    """Real test double for ProgramSelectorDialog with call tracking."""
+
+    def __init__(self) -> None:
+        self.exec_calls: int = 0
+        self.exec_return_value: int = 0
+        self.get_selected_program_data_calls: int = 0
+        self.program_data: Optional[dict[str, Any]] = None
+
+    def exec(self) -> int:
+        """Real implementation that returns configured value."""
+        self.exec_calls += 1
+        return self.exec_return_value
+
+    def get_selected_program_data(self) -> Optional[dict[str, Any]]:
+        """Real implementation that returns configured program data."""
+        self.get_selected_program_data_calls += 1
+        return self.program_data
+
+    def set_exec_return_value(self, value: int) -> None:
+        """Configure return value for exec()."""
+        self.exec_return_value = value
+
+    def set_program_data(self, data: Optional[dict[str, Any]]) -> None:
+        """Configure return value for get_selected_program_data()."""
+        self.program_data = data
 
 
 @pytest.fixture
@@ -176,20 +274,36 @@ class TestFileSelectionPage:
         QApplication.processEvents()
         assert file_selection_page.isComplete()
 
-    def test_browse_for_file_opens_dialog(self, file_selection_page: FileSelectionPage) -> None:
+    def test_browse_for_file_opens_dialog(
+        self, file_selection_page: FileSelectionPage, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Browse button opens file selection dialog."""
-        with patch.object(QFileDialog, "getOpenFileName", return_value=("", "")):
-            file_selection_page.browse_for_file()
+        fake_dialog = FakeFileDialog()
+        fake_dialog.set_return_value("", "")
+        FakeFileDialog._instance = fake_dialog
+
+        monkeypatch.setattr(QFileDialog, "getOpenFileName", FakeFileDialog.getOpenFileName)
+        file_selection_page.browse_for_file()
+
+        assert len(fake_dialog.get_open_filename_calls) == 1
+        FakeFileDialog._instance = None
 
     def test_browse_for_file_sets_path(
-        self, file_selection_page: FileSelectionPage, temp_exe_file: Path
+        self,
+        file_selection_page: FileSelectionPage,
+        temp_exe_file: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Selecting file in browse dialog sets file path."""
-        with patch.object(
-            QFileDialog, "getOpenFileName", return_value=(str(temp_exe_file), "")
-        ):
-            file_selection_page.browse_for_file()
-            assert file_selection_page.file_path_edit.text() == str(temp_exe_file)
+        fake_dialog = FakeFileDialog()
+        fake_dialog.set_return_value(str(temp_exe_file), "")
+        FakeFileDialog._instance = fake_dialog
+
+        monkeypatch.setattr(QFileDialog, "getOpenFileName", FakeFileDialog.getOpenFileName)
+        file_selection_page.browse_for_file()
+
+        assert file_selection_page.file_path_edit.text() == str(temp_exe_file)
+        FakeFileDialog._instance = None
 
     def test_validate_file_path_updates_wizard_state(
         self,
@@ -347,14 +461,20 @@ class TestAnalysisPage:
         assert isinstance(result, list)
 
     def test_open_licensing_file_handles_invalid_item(
-        self, analysis_page: AnalysisPage
+        self, analysis_page: AnalysisPage, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Opening licensing file with invalid item handles gracefully."""
         from PyQt6.QtWidgets import QTreeWidgetItem
 
+        fake_msgbox = FakeMessageBox()
+        FakeMessageBox._instance = fake_msgbox
+
+        monkeypatch.setattr(QMessageBox, "warning", FakeMessageBox.warning)
+
         item = QTreeWidgetItem()
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            analysis_page.open_licensing_file(item)
+        analysis_page.open_licensing_file(item)
+
+        FakeMessageBox._instance = None
 
 
 class TestProgramSelectorDialogWorkflow:
@@ -431,24 +551,46 @@ class TestProgramSelectorConvenienceFunctions:
     """Test convenience functions for showing dialog."""
 
     def test_show_program_selector_returns_data_on_accept(
-        self, qapp: QApplication, temp_exe_file: Path
+        self, qapp: QApplication, temp_exe_file: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Show program selector returns data when dialog is accepted."""
-        with patch.object(ProgramSelectorDialog, "exec", return_value=1):
-            with patch.object(
-                ProgramSelectorDialog,
-                "get_selected_program_data",
-                return_value={"program_info": {"name": "test.exe", "path": str(temp_exe_file)}},
-            ):
-                result = show_program_selector()
-                assert result is not None
-                assert "program_info" in result
+        fake_dialog = FakeProgramSelectorDialog()
+        fake_dialog.set_exec_return_value(1)
+        fake_dialog.set_program_data(
+            {"program_info": {"name": "test.exe", "path": str(temp_exe_file)}}
+        )
 
-    def test_show_program_selector_returns_none_on_cancel(self, qapp: QApplication) -> None:
+        original_init = ProgramSelectorDialog.__init__
+
+        def fake_init(self: ProgramSelectorDialog) -> None:
+            self.exec = fake_dialog.exec
+            self.get_selected_program_data = fake_dialog.get_selected_program_data
+
+        monkeypatch.setattr(ProgramSelectorDialog, "__init__", fake_init)
+
+        result = show_program_selector()
+        assert result is not None
+        assert "program_info" in result
+        assert fake_dialog.exec_calls == 1
+        assert fake_dialog.get_selected_program_data_calls == 1
+
+    def test_show_program_selector_returns_none_on_cancel(
+        self, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Show program selector returns None when dialog is cancelled."""
-        with patch.object(ProgramSelectorDialog, "exec", return_value=0):
-            result = show_program_selector()
-            assert result is None
+        fake_dialog = FakeProgramSelectorDialog()
+        fake_dialog.set_exec_return_value(0)
+
+        def fake_init(self: ProgramSelectorDialog) -> None:
+            self.exec = fake_dialog.exec
+            self.get_selected_program_data = fake_dialog.get_selected_program_data
+
+        monkeypatch.setattr(ProgramSelectorDialog, "__init__", fake_init)
+
+        result = show_program_selector()
+        assert result is None
+        assert fake_dialog.exec_calls == 1
+        assert fake_dialog.get_selected_program_data_calls == 0
 
 
 class TestAnalysisPageLicensingFileDetection:

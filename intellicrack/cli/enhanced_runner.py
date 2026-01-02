@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Enhanced CLI Runner for Intellicrack Integrates progress visualization and improved user experience.
+"""Enhanced CLI Runner for Intellicrack.
+
+Integrates progress visualization and improved user experience.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -50,24 +52,51 @@ from intellicrack.utils.protection_detection import detect_all_protections
 
 logger = logging.getLogger(__name__)
 
-"""
-Enhanced CLI Runner for Intellicrack
-Integrates progress visualization and improved user experience
-"""
-
 
 class EnhancedCLIRunner:
-    """Enhanced CLI runner with progress visualization."""
+    """Enhanced CLI runner with progress visualization and parallel execution.
+
+    Orchestrates binary analysis operations with concurrent execution, real-time
+    progress tracking, and comprehensive result aggregation. Supports static,
+    dynamic, and behavioral analysis with configurable operation selection.
+    """
 
     def __init__(self) -> None:
-        """Initialize enhanced CLI runner with console, progress management, and logging."""
+        """Initialize enhanced CLI runner with console, progress management, and logging.
+
+        Sets up Rich console for formatted output, initializes progress manager
+        for operation tracking, and prepares result storage dictionary.
+
+        Returns:
+            None
+        """
         self.console = Console()
         self.progress_manager = ProgressManager()
         self.results: dict[str, Any] = {}
         self.logger = logging.getLogger(__name__)
 
     def run_with_progress(self, binary_path: str, operations: list[str]) -> dict[str, Any]:
-        """Run operations with progress visualization."""
+        """Run operations with progress visualization.
+
+        Executes specified analysis operations in parallel using ThreadPoolExecutor,
+        providing real-time progress updates for each operation. Aggregates results
+        from completed operations and handles exceptions gracefully.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+            operations: List of operation names to execute in parallel. Valid
+                operations include 'Static Analysis', 'Vulnerability Scan',
+                'Protection Detection', 'Dynamic Analysis', 'Network Analysis'.
+
+        Returns:
+            dict[str, Any]: Dictionary mapping operation names to their results.
+                Each operation result contains either analysis data or an error
+                key with error message if operation failed.
+
+        Raises:
+            Exception: Exceptions from individual operations are caught and
+                logged, stored in results under operation key with error field.
+        """
         self.console.print(f"\n[bold cyan]Analyzing:[/bold cyan] {binary_path}")
 
         # Start progress display
@@ -110,7 +139,24 @@ class EnhancedCLIRunner:
         return self.results
 
     def _run_static_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Run static analysis with progress updates."""
+        """Run static analysis with progress updates.
+
+        Performs static binary analysis including format detection, header parsing,
+        section extraction, and import analysis. Updates progress manager at each
+        analysis step and compiles comprehensive binary metadata.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            dict[str, Any]: Dictionary containing static analysis results including
+                format, file size, last modified timestamp, imports/exports, and
+                any errors encountered during analysis.
+
+        Raises:
+            Exception: Catches and logs exceptions from file access and analysis
+                operations, storing error information in returned dictionary.
+        """
         steps = [
             ("Loading binary", 10),
             ("Parsing headers", 20),
@@ -153,7 +199,6 @@ class EnhancedCLIRunner:
             elif step_name == "Analyzing structure" and progress == 60:
                 try:
                     # Get file size and basic stats
-                    import os
 
                     stat_info = Path(binary_path).stat()
                     file_size: int = stat_info.st_size
@@ -187,7 +232,25 @@ class EnhancedCLIRunner:
         return results
 
     def _run_vulnerability_scan(self, binary_path: str) -> dict[str, Any]:
-        """Run vulnerability scan with progress updates."""
+        """Run vulnerability scan with progress updates.
+
+        Executes comprehensive vulnerability scanning including detection of
+        buffer overflow risks, dangerous function usage, format string issues,
+        and injection vulnerabilities. Updates progress manager during each
+        scanning phase.
+
+        Args:
+            binary_path: Path to the binary file to scan.
+
+        Returns:
+            dict[str, Any]: Dictionary containing vulnerability data with
+                'vulnerabilities' key listing detected issues, or 'error' key
+                if scanning fails.
+
+        Raises:
+            Exception: Catches and logs exceptions from vulnerability engine
+                and file operations, returning error details in dictionary.
+        """
         try:
             engine = VulnerabilityEngine()
 
@@ -238,7 +301,25 @@ class EnhancedCLIRunner:
             return {"error": str(e)}
 
     def _run_protection_detection(self, binary_path: str) -> dict[str, Any]:
-        """Run protection detection with progress updates."""
+        """Run protection detection with progress updates.
+
+        Detects software licensing protections, packers, anti-debugging mechanisms,
+        and obfuscation techniques in the binary. Analyzes entropy patterns and
+        packer signatures to identify protection schemes. Updates progress at
+        each detection phase.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            dict[str, Any]: Dictionary containing detected protections with
+                'protections' key mapping protection types to details, or
+                'error' key if detection fails.
+
+        Raises:
+            Exception: Catches and logs exceptions from protection detection
+                engine and file operations, returning error details in dictionary.
+        """
         try:
             # Real protection detection with progress tracking
             detection_steps = [
@@ -287,7 +368,25 @@ class EnhancedCLIRunner:
             return {"error": str(e)}
 
     def _run_dynamic_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Run dynamic analysis with real behavioral monitoring."""
+        """Run dynamic analysis with real behavioral monitoring.
+
+        Monitors and analyzes binary behavior during execution including system
+        calls, file operations, network activity, and registry access. Sets up
+        sandbox environment, emulates binary execution, and collects behavioral
+        telemetry data with progress updates at each phase.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            dict[str, Any]: Dictionary containing behavior summary, syscalls list,
+                network connections, file access patterns, registry keys accessed,
+                system information, and binary type classification.
+
+        Raises:
+            Exception: Catches and logs exceptions from system monitoring and
+                emulation operations, storing error information in results.
+        """
         results: dict[str, Any] = {
             "behavior": [],
             "syscalls": [],
@@ -384,7 +483,25 @@ class EnhancedCLIRunner:
         return results
 
     def _run_network_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Run network analysis."""
+        """Run network analysis.
+
+        Analyzes network communication patterns in the binary including protocol
+        detection, endpoint identification, and suspicious indicator checking.
+        Scans for embedded network strings, API references, and security-relevant
+        patterns with progress updates for each analysis step.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            dict[str, Any]: Dictionary containing detected protocols, endpoints,
+                suspicious indicators, network-related patterns, and analyzer
+                metadata. Returns error dict if analysis fails.
+
+        Raises:
+            Exception: Catches and logs exceptions from network analyzer and
+                file operations, returning error details in dictionary.
+        """
         try:
             analyzer = NetworkTrafficAnalyzer()
 
@@ -481,7 +598,16 @@ class EnhancedCLIRunner:
             return {"error": str(e)}
 
     def display_results(self) -> None:
-        """Display analysis results in a beautiful format."""
+        """Display analysis results in a beautiful format.
+
+        Renders formatted panels for each operation result with color-coded
+        output and specialized formatting based on analysis type. Errors are
+        displayed in red, successful results in green with operation-specific
+        formatting.
+
+        Returns:
+            None
+        """
         self.console.print("\n[bold cyan]Analysis Results[/bold cyan]\n")
 
         for operation, result in self.results.items():
@@ -505,7 +631,20 @@ class EnhancedCLIRunner:
             self.console.print(panel)
 
     def _format_static_results(self, result: dict[str, Any]) -> str:
-        """Format static analysis results."""
+        """Format static analysis results.
+
+        Converts static analysis result dictionary into a human-readable string
+        with labeled fields including file type, architecture, and function
+        counts. Displays key metadata extracted during static binary analysis.
+
+        Args:
+            result: Dictionary containing static analysis results with optional
+                keys 'file_type', 'arch', 'imports', and 'exports'.
+
+        Returns:
+            str: Formatted string representation of static analysis results with
+                line-separated entries or default message if no data available.
+        """
         lines = []
         if "file_type" in result:
             lines.append(f"[yellow]File Type:[/yellow] {result.get('file_type', 'Unknown')}")
@@ -519,7 +658,21 @@ class EnhancedCLIRunner:
         return "\n".join(lines) if lines else "No static analysis data"
 
     def _format_vulnerability_results(self, result: dict[str, Any]) -> str:
-        """Format vulnerability scan results."""
+        """Format vulnerability scan results.
+
+        Transforms vulnerability scan results into a colored, human-readable
+        string showing found vulnerabilities with truncation for large result
+        sets. Displays count of vulnerabilities detected and lists first five
+        with indication of additional items.
+
+        Args:
+            result: Dictionary containing vulnerability scan data with
+                'vulnerabilities' key containing list of vulnerability entries.
+
+        Returns:
+            str: Formatted string with vulnerability count and sample list,
+                or success message if no vulnerabilities detected.
+        """
         vulns = result.get("vulnerabilities", [])
         if not vulns:
             return "[green]No vulnerabilities detected[/green]"
@@ -532,7 +685,21 @@ class EnhancedCLIRunner:
         return "\n".join(lines)
 
     def _format_protection_results(self, result: dict[str, Any]) -> str:
-        """Format protection detection results."""
+        """Format protection detection results.
+
+        Converts protection detection findings into a formatted string with
+        protection type and details. Displays detected anti-tampering, obfuscation,
+        and licensing protection mechanisms in yellow-highlighted format.
+
+        Args:
+            result: Dictionary containing protection detection data with
+                'protections' key containing mapping of protection types to
+                detail information.
+
+        Returns:
+            str: Formatted string with detected protection types and details,
+                or success message if no protections detected.
+        """
         protections = result.get("protections", {})
         if not protections:
             return "[green]No protections detected[/green]"
@@ -542,7 +709,21 @@ class EnhancedCLIRunner:
         return "\n".join(lines)
 
     def _format_generic_results(self, result: dict[str, Any]) -> str:
-        """Format generic results."""
+        """Format generic results.
+
+        Provides general-purpose formatting for analysis results not covered
+        by specialized formatters. Converts nested structures and lists into
+        human-readable labels with counts or direct values.
+
+        Args:
+            result: Dictionary containing analysis results with any keys
+                and values of various types (lists, dicts, strings, etc.).
+
+        Returns:
+            str: Formatted string with labeled entries showing counts for
+                lists/dicts or raw values for primitives, or default message
+                if no data available.
+        """
         lines = []
         for key, value in result.items():
             if isinstance(value, list):
@@ -556,7 +737,16 @@ class EnhancedCLIRunner:
 
 
 def main() -> None:
-    """Run main entry point for enhanced CLI."""
+    """Run main entry point for enhanced CLI.
+
+    Initializes the enhanced CLI runner with interactive prompts for binary
+    selection and operation choice. Performs parallel analysis operations on
+    the specified binary file and displays results. Optionally saves results
+    to JSON file if user chooses to export.
+
+    Returns:
+        None
+    """
     console = Console()
 
     # Show banner

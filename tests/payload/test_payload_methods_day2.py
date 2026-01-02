@@ -9,9 +9,6 @@ Zero tolerance for methods returning instructional text instead of functional co
 import os
 import sys
 
-# Add Intellicrack to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'intellicrack'))
-
 def test_bof_payload_generation():
     """Test BOF payload method generates actual shellcode bytes."""
     print("Testing _generate_bof_payload() method...")

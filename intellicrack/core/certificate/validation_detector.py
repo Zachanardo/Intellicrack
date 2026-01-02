@@ -174,12 +174,26 @@ class CertificateValidationDetector:
     ) -> list[ValidationFunction]:
         """Find all certificate validation functions in the binary.
 
+        Analyzes the binary to locate all calls to certificate validation APIs
+        from detected TLS libraries. For each call found, it analyzes the
+        surrounding context to calculate a confidence score and check for
+        licensing-related indicators.
+
         Args:
-            scanner: BinaryScanner instance
-            tls_libraries: List of detected TLS libraries
+            scanner: BinaryScanner instance for binary analysis and API
+                detection.
+            tls_libraries: List of detected TLS library names to search for
+                validation functions in.
 
         Returns:
-            List of ValidationFunction objects
+            List of ValidationFunction objects containing detected validation
+                functions with their addresses, API names, libraries, and
+                confidence scores.
+
+        Raises:
+            ValueError: If tls_libraries is empty or invalid.
+            RuntimeError: If binary scanning encounters errors during
+                analysis.
 
         """
         validation_functions = []
@@ -268,12 +282,18 @@ class CertificateValidationDetector:
     def _assess_patch_safety(self, address: int, context: ContextInfo) -> str:
         """Assess the risk level of patching at a specific address.
 
+        Analyzes the code context around the patch location to determine
+        the safety and risk level of applying a patch. Evaluates risk
+        indicators in the surrounding code and cross-references.
+
         Args:
-            address: Address of the function to patch
-            context: Context information
+            address: Address of the function to patch in the binary.
+            context: ContextInfo object containing surrounding code and
+                cross-reference information.
 
         Returns:
-            Risk level string: "low", "medium", or "high"
+            Risk level assessment as a string: "high", "medium", or "low"
+                indicating the safety of patching the location.
 
         """
         risk_indicators = {
@@ -337,7 +357,7 @@ class CertificateValidationDetector:
             validation_functions: List of detected validation functions
 
         Returns:
-            Risk level: "low", "medium", or "high"
+            Overall risk assessment for the bypass operation
 
         """
         if not validation_functions:
@@ -370,12 +390,25 @@ class CertificateValidationDetector:
     ) -> DetectionReport:
         """Detect validation functions using custom API signatures.
 
+        Performs certificate validation detection using a standard analysis
+        as a baseline, then supplements the results with additional detections
+        from custom API signatures. This allows for specialized or
+        proprietary API function detection beyond the standard library set.
+
         Args:
-            binary_path: Path to binary
-            custom_signatures: List of custom API signatures to search for
+            binary_path: Path to the binary file to analyze.
+            custom_signatures: List of custom APISignature objects defining
+                custom validation functions to search for in the binary.
 
         Returns:
-            DetectionReport with custom signature detection results
+            DetectionReport object containing all detected validation
+                functions from both standard and custom signatures, with
+                recommended bypass methods and risk assessments.
+
+        Raises:
+            FileNotFoundError: If the binary file does not exist.
+            RuntimeError: If binary parsing or scanning encounters errors
+                during custom signature detection.
 
         """
         logger.info("Detection with %d custom signatures", len(custom_signatures))

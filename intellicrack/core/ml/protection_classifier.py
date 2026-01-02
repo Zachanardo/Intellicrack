@@ -68,7 +68,6 @@ class ProtectionClassifier:
 
         Args:
             model_path: Path to pre-trained model directory. If None, will use default.
-
         """
         self.logger = logging.getLogger(__name__)
         self.feature_extractor = BinaryFeatureExtractor()
@@ -214,9 +213,7 @@ class ProtectionClassifier:
             ClassificationResult with prediction details
 
         Raises:
-            RuntimeError: If model is not loaded
-            ValueError: If feature extraction fails
-
+            RuntimeError: If model is not loaded.
         """
         if self.model is None or self.scaler is None or self.label_encoder is None:
             raise RuntimeError("Model not loaded. Train a model or load a pre-trained one.")
@@ -255,8 +252,7 @@ class ProtectionClassifier:
             output_path: Directory to save model files. Uses default if None.
 
         Raises:
-            RuntimeError: If model is not trained
-
+            RuntimeError: If model is not trained.
         """
         if self.model is None or self.scaler is None or self.label_encoder is None:
             raise RuntimeError("No model to save. Train a model first.")
@@ -293,8 +289,7 @@ class ProtectionClassifier:
             model_path: Directory containing model files. Uses default if None.
 
         Raises:
-            FileNotFoundError: If model files don't exist
-
+            FileNotFoundError: If model files don't exist.
         """
         if model_path is not None:
             self.model_path = Path(model_path)
@@ -327,8 +322,7 @@ class ProtectionClassifier:
             List of (feature_name, importance) tuples
 
         Raises:
-            RuntimeError: If model is not trained
-
+            RuntimeError: If model is not trained.
         """
         if self.model is None:
             raise RuntimeError("Model not loaded")

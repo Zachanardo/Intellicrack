@@ -14,11 +14,7 @@ from typing import Any
 
 import pytest
 
-from intellicrack.core.network.traffic_interception_engine import (
-    AnalyzedTraffic,
-    InterceptedPacket,
-    TrafficInterceptionEngine,
-)
+from intellicrack.core.network.traffic_interception_engine import AnalyzedTraffic, InterceptedPacket, TrafficInterceptionEngine
 
 
 @pytest.fixture

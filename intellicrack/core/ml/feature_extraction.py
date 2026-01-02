@@ -83,12 +83,21 @@ class BinaryFeatureExtractor:
     }
 
     def __init__(self) -> None:
-        """Initialize the feature extractor."""
+        """Initialize the feature extractor.
+
+        Sets up logging and pre-computes the ordered list of feature names
+        used for consistent feature vector construction across all extractions.
+        """
         self.logger = logging.getLogger(__name__)
         self.feature_names = self._get_feature_names()
 
     def _get_feature_names(self) -> list[str]:
-        """Get ordered list of all feature names."""
+        """Get ordered list of all feature names.
+
+        Returns:
+            list[str]: Ordered list of feature names matching the output of
+                extract_features.
+        """
         opcode_names = [f"opcode_freq_{i:02x}" for i in range(16)]
         return [
             "overall_entropy",
@@ -160,7 +169,14 @@ class BinaryFeatureExtractor:
             raise ValueError(f"Feature extraction failed: {e}") from e
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data."""
+        """Calculate Shannon entropy of data.
+
+        Args:
+            data: Raw binary data to analyze.
+
+        Returns:
+            float: Shannon entropy value. Returns 0.0 for empty input.
+        """
         if not data:
             return 0.0
 
@@ -176,7 +192,16 @@ class BinaryFeatureExtractor:
         return entropy
 
     def _extract_entropy_features(self, data: bytes) -> dict[str, float]:
-        """Extract entropy-based features."""
+        """Extract entropy-based features.
+
+        Args:
+            data: Raw binary data to analyze.
+
+        Returns:
+            dict[str, float]: Dictionary containing entropy-based features
+                including overall entropy, per-section entropy values, and
+                entropy statistics.
+        """
         features = {"overall_entropy": self._calculate_entropy(data)}
 
         try:
@@ -230,7 +255,16 @@ class BinaryFeatureExtractor:
         return features
 
     def _extract_pe_features(self, data: bytes) -> dict[str, float]:
-        """Extract PE structure features."""
+        """Extract PE structure features.
+
+        Args:
+            data: Raw binary data to analyze.
+
+        Returns:
+            dict[str, float]: Dictionary containing PE structure features
+                including TLS callbacks, overlay size, resource size, and entry
+                point section information.
+        """
         features = {}
 
         try:
@@ -257,7 +291,16 @@ class BinaryFeatureExtractor:
         return features
 
     def _extract_section_features(self, data: bytes) -> dict[str, float]:
-        """Extract section-related features."""
+        """Extract section-related features.
+
+        Args:
+            data: Raw binary data to analyze.
+
+        Returns:
+            dict[str, float]: Dictionary containing section metrics including
+                section count, executable section count, unusual section names,
+                and size ratios.
+        """
         features = {}
 
         try:
@@ -315,7 +358,16 @@ class BinaryFeatureExtractor:
         return features
 
     def _extract_import_features(self, data: bytes) -> dict[str, float]:
-        """Extract import table features."""
+        """Extract import table features.
+
+        Args:
+            data: Raw binary data to analyze.
+
+        Returns:
+            dict[str, float]: Dictionary containing import metrics including
+                total import count, unique DLL count, suspicious import count,
+                and packed status.
+        """
         features = {}
 
         try:
@@ -355,7 +407,20 @@ class BinaryFeatureExtractor:
         return features
 
     def _extract_signature_features(self, data: bytes) -> dict[str, float]:
-        """Extract protector signature features using sophisticated multi-factor detection."""
+        """Extract protector signature features using sophisticated multi-factor detection.
+
+        Analyzes binary data for multiple indicators of software protection including
+        section names, byte patterns, entry point signatures, timestamps, entropy levels,
+        and special section characteristics. Uses weighted scoring across all factors.
+
+        Args:
+            data: Raw binary data to analyze.
+
+        Returns:
+            dict[str, float]: Dictionary containing normalized signature scores
+                (0.0-1.0) for each protector including VMProtect, Themida,
+                Enigma, Obsidium, ASProtect, Armadillo, and UPX.
+        """
         features = {}
 
         try:
@@ -446,7 +511,20 @@ class BinaryFeatureExtractor:
         return features
 
     def _extract_opcode_features(self, data: bytes) -> dict[str, float]:
-        """Extract opcode frequency features from executable sections."""
+        """Extract opcode frequency features from executable sections.
+
+        Analyzes the first 10KB of executable code to extract high-level opcode
+        frequency distributions and estimates cyclomatic complexity based on
+        branch instruction patterns.
+
+        Args:
+            data: Raw binary data to analyze.
+
+        Returns:
+            dict[str, float]: Dictionary containing normalized opcode frequency
+                features (keys like opcode_freq_00, opcode_freq_10, etc.) and
+                high_cyclomatic_complexity flag.
+        """
         features = {f"opcode_freq_{i:02x}": 0.0 for i in range(16)}
 
         try:
@@ -477,7 +555,19 @@ class BinaryFeatureExtractor:
         return features
 
     def _estimate_cyclomatic_complexity(self, code: bytes) -> float:
-        """Estimate cyclomatic complexity from bytecode patterns."""
+        """Estimate cyclomatic complexity from bytecode patterns.
+
+        Analyzes x86/x64 bytecode for branch instructions to estimate code
+        complexity. Uses a heuristic approach based on control flow opcodes
+        rather than full static analysis.
+
+        Args:
+            code: Raw bytecode to analyze.
+
+        Returns:
+            float: Estimated cyclomatic complexity as count of branch
+                operations. Returns 0.0 for empty input.
+        """
         if not code:
             return 0.0
 
@@ -510,12 +600,21 @@ class BinaryFeatureExtractor:
     def _parse_pe_basic(self, data: bytes) -> dict[str, Any]:
         """Parse PE file without external dependencies.
 
+        Implements minimal PE parsing to extract sections, imports, and metadata
+        without requiring external PE parsing libraries. Handles both 32-bit and
+        64-bit PE files with graceful error handling for malformed binaries.
+
         Args:
-            data: Raw binary data
+            data: Raw binary data to parse as PE file.
 
         Returns:
-            Dictionary containing PE information
+            dict[str, Any]: Dictionary containing parsed PE information with
+                keys: sections, imports, has_tls, overlay_size, resource_size,
+                entry_point_section, timestamp, and entry_point_data.
 
+        Raises:
+            ValueError: If data is too small, has invalid PE signature, or
+                contains malformed header offsets.
         """
         if len(data) < 64:
             raise ValueError("Data too small to be PE file")

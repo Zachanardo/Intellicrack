@@ -59,8 +59,11 @@ class NetworkAnalysisPlugin:
             binary_path: Path to the binary file to analyze.
 
         Returns:
-            A list of analysis results including detected network indicators
-            and error messages if the analysis fails.
+            list[str]: A list of analysis results including detected network
+                indicators and error messages if the analysis fails.
+
+        Raises:
+            Exception: If an error occurs during binary file reading.
 
         """
         results = [f"Analyzing network capabilities of: {binary_path}"]
@@ -97,7 +100,23 @@ class NetworkAnalysisPlugin:
         return results
 
     def detect_socket_apis(self, binary_path: str) -> list[str]:
-        """Detect socket API usage in binary."""
+        """Detect socket API usage in binary.
+
+        Scans a binary file for references to socket API functions including
+        Windows socket APIs (WSA*), standard socket operations, and SSL/TLS APIs.
+
+        Args:
+            binary_path: Path to the binary file to scan.
+
+        Returns:
+            list[str]: A list of strings describing detected socket API
+                references and any errors encountered during scanning.
+
+        Raises:
+            Exception: If an error occurs during binary file reading or API
+                detection.
+
+        """
         results = []
 
         # Socket API function names to search for
@@ -155,7 +174,29 @@ class NetworkAnalysisPlugin:
         return results
 
     def create_socket_server(self, host: str = "127.0.0.1", port: int = 0) -> dict[str, Any]:
-        """Create a socket server for testing."""
+        """Create a socket server for testing.
+
+        Creates a TCP socket server bound to the specified host and port. If port
+        is 0, the OS will assign an available port. The server is configured to
+        listen for incoming connections and socket information is stored for
+        later cleanup.
+
+        Args:
+            host: IP address to bind the server to. Defaults to "127.0.0.1"
+                (localhost).
+            port: Port number to bind to. Use 0 to let the OS assign an
+                available port. Defaults to 0.
+
+        Returns:
+            dict[str, Any]: A dictionary with keys 'success' (bool), 'host',
+                'port', 'socket_info' (containing family, type, protocol,
+                address, state), 'message', and 'error' (if an exception
+                occurred).
+
+        Raises:
+            Exception: If socket creation, binding, or listening fails.
+
+        """
         result = {
             "success": False,
             "host": host,
@@ -200,7 +241,30 @@ class NetworkAnalysisPlugin:
         return result
 
     def scan_ports(self, target_host: str, start_port: int = 1, end_port: int = 1000, timeout: float = 0.5) -> list[dict[str, Any]]:
-        """Scan ports on target host using sockets."""
+        """Scan ports on target host using sockets.
+
+        Performs a TCP port scan on the target host, attempting to connect to each
+        port in the specified range. Open ports are identified and mapped to known
+        service names using the socket library and a fallback mapping for common
+        ports.
+
+        Args:
+            target_host: IP address or hostname of the target to scan.
+            start_port: Starting port number for the scan range. Defaults to 1.
+            end_port: Ending port number for the scan range (inclusive).
+                Defaults to 1000.
+            timeout: Socket connection timeout in seconds. Defaults to 0.5.
+
+        Returns:
+            list[dict[str, Any]]: A list of dictionaries, each containing
+                'port' (int), 'service' (str), 'state' ('open'), and
+                'protocol' ('tcp') for each open port found.
+
+        Raises:
+            TimeoutError: If socket connection times out during port scanning.
+            Exception: If an error occurs during port scanning operations.
+
+        """
         open_ports = []
 
         for port in range(start_port, end_port + 1):
@@ -258,7 +322,29 @@ class NetworkAnalysisPlugin:
         return open_ports
 
     def monitor_socket_activity(self, duration: int = 60) -> dict[str, Any]:
-        """Monitor real-time socket activity."""
+        """Monitor real-time socket activity.
+
+        Starts a background thread to monitor established network connections for
+        the specified duration. Tracks new connections and closed connections,
+        recording timestamps and connection details (local address, remote address,
+        PID).
+
+        Args:
+            duration: Duration in seconds to monitor socket activity. Defaults
+                to 60.
+
+        Returns:
+            dict[str, Any]: A dictionary with 'monitoring_started' (timestamp),
+                'duration', 'connections' (list of connection events), and
+                'statistics' (containing total_events, new_connections, and
+                closed_connections counts). Returns error dict if monitoring
+                is already in progress.
+
+        Raises:
+            Exception: If socket monitoring thread encounters an error during
+                execution.
+
+        """
         result = {
             "monitoring_started": time.time(),
             "duration": duration,
@@ -270,7 +356,13 @@ class NetworkAnalysisPlugin:
             return {"error": "Monitoring already in progress"}
 
         def monitor_thread() -> None:
-            """Thread function for monitoring."""
+            """Monitor socket activity in background thread.
+
+            Tracks established network connections, detecting new connections
+            and closed connections, and recording connection details including
+            timestamps, local addresses, remote addresses, and process IDs.
+
+            """
             self.monitoring = True
             start_time = time.time()
             connection_log = []
@@ -339,7 +431,29 @@ class NetworkAnalysisPlugin:
         return result
 
     def analyze_socket_traffic(self, capture_file: str | None = None) -> dict[str, Any]:
-        """Analyze socket traffic patterns."""
+        """Analyze socket traffic patterns.
+
+        Examines current network connections and identifies usage patterns such as
+        frequently used ports and most frequently connected IPs. Detects suspicious
+        activity including connections to known malicious ports and possible port
+        scanning behavior.
+
+        Args:
+            capture_file: Optional path to a capture file. Currently unused but
+                available for future integration with packet capture analysis.
+                Defaults to None.
+
+        Returns:
+            dict[str, Any]: A dictionary with 'analysis_time' (timestamp),
+                'patterns' (list of identified patterns with type, description,
+                and data), 'suspicious_activity' (list of suspicious items with
+                type, details, and severity), and 'error' (if an exception
+                occurred).
+
+        Raises:
+            Exception: If an error occurs during network connection analysis.
+
+        """
         result: dict[str, Any] = {
             "analysis_time": time.time(),
             "patterns": [],
@@ -417,7 +531,17 @@ class NetworkAnalysisPlugin:
         return result
 
     def cleanup_sockets(self) -> None:
-        """Clean up any active sockets."""
+        """Clean up any active sockets.
+
+        Closes all active sockets stored in the active_sockets dictionary and
+        stops the socket monitoring thread if it is running. This method should
+        be called during application shutdown or when sockets are no longer
+        needed.
+
+        Raises:
+            OSError: If an error occurs while closing a socket.
+
+        """
         for socket_name, sock in self.active_sockets.items():
             try:
                 sock.close()
@@ -446,8 +570,13 @@ class NetworkAnalysisPlugin:
                 Defaults to None, which monitors all system connections.
 
         Returns:
-            A list of formatted strings containing connection details, listening
-            ports, and network I/O statistics.
+            list[str]: A list of formatted strings containing connection
+                details, listening ports, and network I/O statistics.
+
+        Raises:
+            ImportError: If psutil library is not available.
+            Exception: If an error occurs during network monitoring or hostname
+                resolution.
 
         """
         results = [f"Starting network monitoring{f' for process: {target_process!s}' if target_process else ''}..."]
@@ -541,7 +670,27 @@ class NetworkAnalysisPlugin:
         return results
 
     def get_socket_info(self, sock: socket.socket) -> dict[str, Any]:
-        """Get detailed information about a socket."""
+        """Get detailed information about a socket.
+
+        Retrieves comprehensive information about a socket including family,
+        type, protocol, local address, peer address, and socket options
+        (SO_REUSEADDR, SO_KEEPALIVE, receive buffer, send buffer). Handles
+        exceptions gracefully if socket information cannot be retrieved.
+
+        Args:
+            sock: Socket object to retrieve information from.
+
+        Returns:
+            dict[str, Any]: A dictionary containing socket metadata with keys:
+                'family', 'type', 'proto', 'local_address', 'remote_address',
+                'reuse_addr', 'keep_alive', 'recv_buffer' (if available), and
+                'send_buffer' (if available).
+
+        Raises:
+            OSError: If an error occurs while retrieving socket options or
+                addresses.
+
+        """
         info = {
             "family": sock.family.name if hasattr(sock.family, "name") else str(sock.family),
             "type": sock.type.name if hasattr(sock.type, "name") else str(sock.type),
@@ -592,8 +741,8 @@ def register() -> NetworkAnalysisPlugin:
     This function is called by the plugin system during initialization.
 
     Returns:
-        An initialized NetworkAnalysisPlugin instance with cleanup handlers
-        registered via atexit.
+        NetworkAnalysisPlugin: An initialized NetworkAnalysisPlugin instance
+            with cleanup handlers registered via atexit.
 
     """
     plugin = NetworkAnalysisPlugin()

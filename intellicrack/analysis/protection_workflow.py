@@ -132,7 +132,7 @@ logger = get_logger(__name__)
 
 
 class WorkflowStep(Enum):
-    """Workflow steps."""
+    """Workflow steps for protection analysis."""
 
     QUICK_SCAN = "quick_scan"
     DEEP_ANALYSIS = "deep_analysis"
@@ -143,7 +143,17 @@ class WorkflowStep(Enum):
 
 @dataclass
 class WorkflowResult:
-    """Result of a protection analysis workflow."""
+    """Result of a protection analysis workflow.
+
+    Attributes:
+        success: Whether the analysis workflow completed successfully.
+        protection_analysis: Analysis result object with protection details.
+        bypass_scripts: Dictionary mapping protection names to bypass scripts.
+        recommendations: List of actionable recommendations for the user.
+        next_steps: List of next steps to take after analysis.
+        confidence: Confidence score of the analysis (0.0 to 100.0).
+
+    """
 
     success: bool
     protection_analysis: Any | None = None
@@ -158,7 +168,13 @@ class ProtectionAnalysisWorkflow:
     """Manages the complete protection analysis workflow."""
 
     def __init__(self) -> None:
-        """Initialize workflow manager."""
+        """Initialize the protection analysis workflow manager.
+
+        Initializes all analysis engines, script generators, and LLM manager
+        with fallback to None if dependencies are unavailable. Sets up
+        supplemental analysis engines for YARA, Binwalk, and Volatility3.
+
+        """
         self.engine = GET_UNIFIED_ENGINE_FUNC() if GET_UNIFIED_ENGINE_FUNC is not None else None
         self.frida_gen = FRIDA_SCRIPT_GENERATOR_TYPE() if FRIDA_SCRIPT_GENERATOR_TYPE is not None else None
         self.ghidra_gen = GHIDRA_SCRIPT_GENERATOR_TYPE() if GHIDRA_SCRIPT_GENERATOR_TYPE is not None else None
@@ -180,13 +196,27 @@ class ProtectionAnalysisWorkflow:
     ) -> WorkflowResult:
         """Complete workflow: analyze protections and generate bypass scripts.
 
+        Executes a comprehensive protection analysis workflow including quick
+        scanning, deep analysis with supplemental engines (YARA, Binwalk,
+        Volatility3), bypass recommendation generation, and optional bypass
+        script creation for licensing protection mechanisms.
+
         Args:
-            file_path: Path to binary file
+            file_path: Path to binary file to analyze for licensing protections.
             auto_generate_scripts: Automatically generate bypass scripts
-            target_protections: Specific protections to target (None = all)
+                if protections are detected. Defaults to True.
+            target_protections: Specific protection names to target for script
+                generation, or None to generate scripts for all detected
+                protections. Defaults to None.
 
         Returns:
-            Complete workflow result
+            WorkflowResult containing analysis success status, detected
+            protections, bypass scripts, recommendations, next steps, and
+            confidence score.
+
+        Raises:
+            Exception: Caught and handled gracefully with result.recommendations
+                set to error message. No exceptions are raised to caller.
 
         """
         result = WorkflowResult(success=False)
@@ -253,11 +283,23 @@ class ProtectionAnalysisWorkflow:
     def _run_supplemental_analysis(self, file_path: str) -> dict[str, Any]:
         """Run supplemental analysis with YARA, Binwalk, and Volatility3.
 
+        Executes supplemental analysis engines for pattern detection (YARA),
+        firmware signature analysis (Binwalk), and memory forensics (Volatility3)
+        to enhance the primary protection detection with additional security
+        insights specific to licensing protection mechanisms.
+
         Args:
-            file_path: Path to the binary file
+            file_path: Path to the binary file to analyze with supplemental
+                engines.
 
         Returns:
-            Dictionary containing supplemental analysis results
+            Dictionary containing supplemental analysis results with keys for
+            'yara_analysis', 'firmware_analysis', and 'memory_analysis' where
+            available, each containing scan results and supplemental data.
+
+        Raises:
+            Exception: Individual engine failures are caught and logged without
+                propagating, allowing partial results to be returned.
 
         """
         supplemental_data = {}
@@ -347,11 +389,22 @@ class ProtectionAnalysisWorkflow:
     def _is_memory_dump(self, file_path: str) -> bool:
         """Check if file appears to be a memory dump.
 
+        Determines whether a file is likely a memory dump by examining file
+        extension, size, and header signatures commonly found in crash dumps,
+        raw memory images, and VM memory snapshots that may contain runtime
+        licensing protection artifacts.
+
         Args:
-            file_path: Path to file
+            file_path: Path to file to check for memory dump characteristics.
 
         Returns:
-            True if file appears to be a memory dump
+            True if file appears to be a memory dump based on extension (dmp,
+            vmem, raw, mem, dd) or header signatures (PAGEDUMP, PAGEDU64).
+            False otherwise.
+
+        Raises:
+            Exception: File access errors are caught and logged, returning False
+                if the file cannot be read or examined.
 
         """
         try:
@@ -380,7 +433,29 @@ class ProtectionAnalysisWorkflow:
             return False
 
     def _generate_recommendations(self, analysis: Any) -> list[str]:
-        """Generate actionable recommendations based on analysis."""
+        """Generate actionable recommendations based on analysis.
+
+        Produces prioritized recommendations for bypassing detected licensing
+        protections by analyzing protection types, packing status, anti-debug
+        mechanisms, and licensing checks. Incorporates supplemental analysis
+        findings from YARA, Binwalk, and Volatility3 for comprehensive bypass
+        guidance.
+
+        Args:
+            analysis: Analysis result object containing protection details,
+                protection types, packing status, anti-debug flags, and
+                supplemental analysis data.
+
+        Returns:
+            List of actionable recommendations for the user, ordered by priority
+            and including tool recommendations, difficulty assessments, and
+            AI-assisted bypass capabilities if available.
+
+        Raises:
+            No exceptions are raised. Missing attributes are handled with
+            getattr() and hasattr() for safe attribute access.
+
+        """
         recommendations: list[str] = []
 
         # Check protection types
@@ -443,11 +518,24 @@ class ProtectionAnalysisWorkflow:
     def _generate_supplemental_recommendations(self, supplemental_data: dict[str, Any]) -> list[str]:
         """Generate recommendations based on supplemental analysis results.
 
+        Analyzes results from YARA pattern matching, Binwalk firmware analysis,
+        and Volatility3 memory forensics to produce targeted recommendations for
+        bypassing licensing protections identified through supplemental detection
+        methods.
+
         Args:
-            supplemental_data: Results from YARA, Binwalk, and Volatility3
+            supplemental_data: Results dictionary from YARA, Binwalk, and
+                Volatility3 engines containing matches, signatures, and
+                protection indicators from supplemental analysis.
 
         Returns:
-            List of recommendations based on supplemental findings
+            List of recommendations based on supplemental findings, including
+            specific guidance for packing, anti-debug, licensing protection
+            evasion, firmware analysis, and memory forensics artifacts.
+
+        Raises:
+            No exceptions are raised. Dictionary access is protected with
+            dict.get() for safe key lookups.
 
         """
         recommendations = []
@@ -538,7 +626,29 @@ class ProtectionAnalysisWorkflow:
         return recommendations
 
     def _generate_bypass_scripts(self, analysis: Any, target_protections: list[str] | None = None) -> dict[str, str]:
-        """Generate bypass scripts for detected protections."""
+        """Generate bypass scripts for detected protections.
+
+        Creates Frida-based bypass scripts for each detected licensing protection
+        mechanism, either using AI-powered generation via LLM backend or template-
+        based fallback scripts for packing, anti-debug, and licensing protections.
+
+        Args:
+            analysis: Analysis result object containing detected protections
+                with names, types, and details.
+            target_protections: Specific protection names to target for script
+                generation, or None to generate scripts for all detected
+                protections.
+
+        Returns:
+            Dictionary mapping protection names to generated bypass scripts,
+            with scripts containing Frida instrumentation code for protection
+            evasion. Empty dict if no scripts could be generated.
+
+        Raises:
+            Exception: Individual script generation failures are caught and
+                logged without interrupting processing of remaining protections.
+
+        """
         scripts: dict[str, str] = {}
 
         # Filter protections if targets specified
@@ -556,7 +666,30 @@ class ProtectionAnalysisWorkflow:
         return scripts
 
     def _generate_single_bypass_script(self, analysis: Any, protection: dict[str, Any]) -> str | None:
-        """Generate bypass script for a single protection."""
+        """Generate bypass script for a single protection.
+
+        Generates a Frida-based bypass script for a single detected protection
+        mechanism, attempting AI-powered generation first and falling back to
+        template-based scripts for packing, anti-debug, licensing, and generic
+        protections.
+
+        Args:
+            analysis: Analysis result object containing binary details including
+                file path, file type, architecture, and protection context.
+            protection: Protection dictionary with 'name', 'type', 'details',
+                and 'bypass_recommendations' keys describing the protection
+                to bypass.
+
+        Returns:
+            Generated Frida bypass script string containing instrumentation
+            hooks and evasion logic. Returns None if script generation failed
+            for the protection.
+
+        Raises:
+            No exceptions are raised. AI generation failures and missing
+            attributes are handled gracefully with fallback to template scripts.
+
+        """
         context = {
             "file_path": getattr(analysis, "file_path", "unknown"),
             "file_type": getattr(analysis, "file_type", "unknown"),
@@ -592,7 +725,26 @@ class ProtectionAnalysisWorkflow:
         return self._generate_generic_bypass_script(context)
 
     def _build_bypass_prompt(self, context: dict[str, Any]) -> str:
-        """Build prompt for AI bypass script generation."""
+        """Build prompt for AI bypass script generation.
+
+        Constructs a detailed prompt for LLM-based Frida script generation by
+        combining protection details, binary context, and bypass recommendations
+        into a formatted request for AI-powered bypass script creation.
+
+        Args:
+            context: Dictionary containing protection and binary context
+                information with keys: 'protection_name', 'protection_type',
+                'file_type', 'architecture', and 'bypass_recommendations'.
+
+        Returns:
+            Formatted prompt string suitable for LLM-based bypass script
+            generation, including protection details and architectural context.
+
+        Raises:
+            No exceptions are raised. Missing context keys are handled with
+            dict.get() and default values.
+
+        """
         return f"""Generate a Frida script to bypass the following protection:
 
 Protection: {context["protection_name"]}
@@ -607,7 +759,26 @@ Generate a practical, working Frida script that implements these bypass techniqu
 Include comments explaining each bypass method used."""
 
     def _generate_unpacking_script(self, context: dict[str, Any]) -> str:
-        """Generate unpacking script."""
+        """Generate unpacking script.
+
+        Creates a Frida instrumentation script for unpacking binaries protected
+        by packers. Hooks VirtualProtect API calls to detect memory page
+        protection changes that indicate unpacking points and potential original
+        entry points (OEP).
+
+        Args:
+            context: Dictionary containing protection name and binary context
+                information used in script output for identification.
+
+        Returns:
+            Generated Frida script string with VirtualProtect hooks for
+            detecting and monitoring unpacking activity on protected binaries.
+
+        Raises:
+            No exceptions are raised. Script generation is deterministic and
+            does not depend on external state.
+
+        """
         return f"""// Unpacking script for {context["protection_name"]}
 // Generated by Intellicrack
 
@@ -658,7 +829,26 @@ console.log("[*] Unpacking monitor active for {context["protection_name"]}");
 """
 
     def _generate_antidebug_script(self, context: dict[str, Any]) -> str:
-        """Generate anti-debug bypass script."""
+        """Generate anti-debug bypass script.
+
+        Creates a Frida instrumentation script for bypassing anti-debugging
+        checks. Hooks Windows API functions like IsDebuggerPresent, Check
+        RemoteDebuggerPresent, and NtQueryInformationProcess to suppress
+        debugger detection and patch the PEB BeingDebugged flag.
+
+        Args:
+            context: Dictionary containing protection name and binary context
+                information used in script output for identification.
+
+        Returns:
+            Generated Frida script string with hooks for bypassing Windows
+            anti-debug detection mechanisms and PEB patching.
+
+        Raises:
+            No exceptions are raised. Script generation is deterministic and
+            does not depend on external state.
+
+        """
         return f"""// Anti-debug bypass script for {context["protection_name"]}
 // Generated by Intellicrack
 
@@ -709,7 +899,26 @@ console.log("[+] Anti-debug bypasses active for {context["protection_name"]}");
 """
 
     def _generate_license_bypass_script(self, context: dict[str, Any]) -> str:
-        """Generate license bypass script."""
+        """Generate license bypass script.
+
+        Creates a Frida instrumentation script for bypassing licensing protection
+        mechanisms. Hooks functions containing license-related keywords, intercepts
+        registry queries for license keys, and patches return values to force
+        successful license validation.
+
+        Args:
+            context: Dictionary containing protection name and binary context
+                information used in script output for identification.
+
+        Returns:
+            Generated Frida script string with hooks for licensing function
+            interception and registry manipulation to bypass license checks.
+
+        Raises:
+            No exceptions are raised. Script generation is deterministic and
+            does not depend on external state.
+
+        """
         return f"""// License bypass script for {context["protection_name"]}
 // Generated by Intellicrack
 
@@ -776,7 +985,26 @@ console.log("[+] License bypass hooks active for {context["protection_name"]}");
 """
 
     def _generate_generic_bypass_script(self, context: dict[str, Any]) -> str:
-        """Generate generic bypass script."""
+        """Generate generic bypass script.
+
+        Creates a Frida instrumentation script for bypassing unknown or generic
+        protections. Hooks common Windows APIs related to integrity checks and
+        anti-tampering, and patches functions with names containing 'check',
+        'verify', or 'validate' to suppress protection verification failures.
+
+        Args:
+            context: Dictionary containing protection name and binary context
+                information used in script output for identification.
+
+        Returns:
+            Generated Frida script string with generic hooks for integrity
+            check interception and success code forcing.
+
+        Raises:
+            No exceptions are raised. Script generation is deterministic and
+            does not depend on external state.
+
+        """
         return f"""// Generic bypass script for {context["protection_name"]}
 // Generated by Intellicrack
 
@@ -843,7 +1071,27 @@ console.log("[+] Generic bypass active for " + protectionName);
 """
 
     def _generate_next_steps(self, analysis: Any) -> list[str]:
-        """Generate next steps for the user."""
+        """Generate next steps for the user.
+
+        Produces a prioritized list of actionable next steps tailored to the
+        specific licensing protections detected in the binary. Provides distinct
+        guidance for packed, anti-debug, and licensing-protected binaries.
+
+        Args:
+            analysis: Analysis result object containing protection details
+                including packing status, anti-debug flags, and licensing
+                check information.
+
+        Returns:
+            List of actionable next steps tailored to detected protections,
+            ordered by execution sequence and including tool recommendations
+            and verification steps.
+
+        Raises:
+            No exceptions are raised. Missing attributes are handled with
+            getattr() for safe access with default values.
+
+        """
         steps: list[str] = []
 
         is_packed = getattr(analysis, "is_packed", False)
@@ -880,7 +1128,26 @@ console.log("[+] Generic bypass active for " + protectionName);
         return steps
 
     def _report_progress(self, message: str, percentage: int) -> None:
-        """Report workflow progress."""
+        """Report workflow progress.
+
+        Reports the current progress of the protection analysis workflow to
+        any registered progress callback handler and logs the progress at debug
+        level for diagnostic tracking.
+
+        Args:
+            message: Progress message to report describing the current workflow
+                stage or activity being performed.
+            percentage: Progress percentage from 0 to 100 indicating completion
+                status of the workflow.
+
+        Returns:
+            None
+
+        Raises:
+            No exceptions are raised. Callback invocation is protected with
+            type checking and callability verification.
+
+        """
         if self.progress_callback is not None and callable(self.progress_callback):
             self.progress_callback(message, percentage)
         logger.debug("Workflow progress: %s (%d%%)", message, percentage)
@@ -888,7 +1155,27 @@ console.log("[+] Generic bypass active for " + protectionName);
 
 # Convenience functions
 def quick_protection_analysis(file_path: str) -> dict[str, Any]:
-    """Quick protection analysis with summary."""
+    """Quick protection analysis with summary.
+
+    Performs a rapid protection analysis scan on the specified binary file and
+    returns a concise summary of detected licensing protections without
+    generating bypass scripts, suitable for quick threat assessment.
+
+    Args:
+        file_path: Path to binary file to analyze for licensing protections.
+
+    Returns:
+        Dictionary with keys:
+            - 'protected': bool indicating if protections were detected
+            - 'protections': list[str] of detected protection names
+            - 'recommendations': list[str] of analysis recommendations
+            - 'confidence': float confidence score (0.0 to 100.0)
+
+    Raises:
+        No exceptions are raised. Failed analysis returns dict with empty
+        protections list and analysis failure recommendation.
+
+    """
     workflow = ProtectionAnalysisWorkflow()
     result = workflow.analyze_and_bypass(file_path, auto_generate_scripts=False)
 
@@ -908,7 +1195,30 @@ def quick_protection_analysis(file_path: str) -> dict[str, Any]:
 
 
 def generate_protection_report(file_path: str) -> str:
-    """Generate a comprehensive protection analysis report."""
+    """Generate a comprehensive protection analysis report.
+
+    Executes a complete protection analysis workflow and generates a detailed
+    markdown-formatted report containing detected licensing protections,
+    bypass recommendations, next steps, and confidence assessment suitable
+    for documentation and security research purposes.
+
+    Args:
+        file_path: Path to binary file to analyze for comprehensive protection
+            assessment report generation.
+
+    Returns:
+        Formatted protection analysis report as markdown string containing:
+        - File information and analysis timestamp
+        - Summary of protection status and confidence
+        - List of detected protections with types and details
+        - Recommendations for each protection type
+        - Sequential next steps for bypass implementation
+
+    Raises:
+        No exceptions are raised. Missing analysis data is handled gracefully
+        with report sections skipped if data is unavailable.
+
+    """
     workflow = ProtectionAnalysisWorkflow()
     result = workflow.analyze_and_bypass(file_path)
 

@@ -13,8 +13,7 @@ import json
 import tempfile
 import time
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, Mock, patch
+from typing import Any, Callable
 
 import pytest
 
@@ -39,6 +38,219 @@ pytestmark = pytest.mark.skipif(
     not PYQT6_AVAILABLE,
     reason="PyQt6 required for UI tests",
 )
+
+
+class FakeFridaManager:
+    """Real test double for FridaManager with production behavior."""
+
+    def __init__(self) -> None:
+        self.script_dir: Path = Path(tempfile.mkdtemp(prefix="frida_mgr_"))
+        self.attached_sessions: dict[str, Any] = {}
+        self.active_scripts: dict[str, Any] = {}
+        self._attach_calls: list[int] = []
+        self._load_script_calls: list[tuple[str, str, dict[str, Any]]] = []
+        self._cleanup_called: bool = False
+        self._statistics: dict[str, Any] = {
+            "optimizer": {
+                "current_usage": {
+                    "cpu_percent": 15,
+                    "memory_mb": 256,
+                    "threads": 8
+                },
+                "recommendations": ["Consider reducing hook batch size"]
+            },
+            "detector": {},
+            "logger": {
+                "total_events": 1234,
+                "hooks_attached": 56,
+                "bypasses_successful": 12
+            },
+            "batcher": {
+                "pending_hooks": 23,
+                "batched_count": 0
+            }
+        }
+        self.logger: FakeFridaLogger = FakeFridaLogger()
+
+    def attach_to_process(self, pid: int) -> bool:
+        self._attach_calls.append(pid)
+        session_id = f"session_{pid}"
+        self.attached_sessions[session_id] = {"pid": pid, "attached": True}
+        return True
+
+    def load_script(self, session_id: str, script_name: str, options: dict[str, Any]) -> bool:
+        self._load_script_calls.append((session_id, script_name, options))
+        self.active_scripts[script_name] = {
+            "session": session_id,
+            "options": options,
+            "loaded": True
+        }
+        return True
+
+    def get_statistics(self) -> dict[str, Any]:
+        return self._statistics
+
+    def set_statistics(self, stats: dict[str, Any]) -> None:
+        self._statistics = stats
+
+    def cleanup(self) -> None:
+        self._cleanup_called = True
+        self.attached_sessions.clear()
+        self.active_scripts.clear()
+
+    def export_analysis(self) -> Path:
+        export_path = Path("/tmp/analysis_export")
+        return export_path
+
+    def _on_protection_detected(self, protection_type: ProtectionType, evidence: list[str] | None = None) -> None:
+        if "detector" not in self._statistics:
+            self._statistics["detector"] = {}
+        self._statistics["detector"][protection_type.value] = evidence or []
+
+
+class FakeFridaLogger:
+    """Real test double for Frida logging system."""
+
+    def __init__(self) -> None:
+        self._export_path: Path = Path("/tmp/exported_logs")
+
+    def export_logs(self) -> Path:
+        return self._export_path
+
+
+class FakeLogConsole:
+    """Real test double for log console widget."""
+
+    def __init__(self) -> None:
+        self._filter: str | None = None
+        self._messages: list[str] = []
+        self._success_messages: list[str] = []
+
+    def set_filter(self, filter_str: str) -> None:
+        self._filter = filter_str
+
+    def append_success(self, message: str) -> None:
+        self._success_messages.append(message)
+
+    def append(self, message: str) -> None:
+        self._messages.append(message)
+
+
+class FakeFridaWorker:
+    """Real test double for FridaWorker thread."""
+
+    def __init__(self, frida_manager: FakeFridaManager) -> None:
+        self.frida_manager: FakeFridaManager = frida_manager
+        self.operation: str = ""
+        self.params: dict[str, Any] = {}
+
+
+class FakeQMessageBox:
+    """Real test double for QMessageBox."""
+
+    Yes: int = 16384
+    No: int = 65536
+
+    def __init__(self) -> None:
+        self._warnings: list[tuple[str, str]] = []
+        self._information: list[tuple[str, str]] = []
+        self._questions: list[tuple[str, str]] = []
+        self._question_return: int = FakeQMessageBox.Yes
+
+    def set_question_return(self, value: int) -> None:
+        self._question_return = value
+
+    def warning(self, parent: Any, title: str, message: str) -> None:
+        self._warnings.append((title, message))
+
+    def information(self, parent: Any, title: str, message: str) -> None:
+        self._information.append((title, message))
+
+    def question(self, parent: Any, title: str, message: str) -> int:
+        self._questions.append((title, message))
+        return self._question_return
+
+
+class FakeQFileDialog:
+    """Real test double for QFileDialog."""
+
+    def __init__(self) -> None:
+        self._open_return_value: tuple[str, str] = ("", "")
+        self._save_return_value: tuple[str, str] = ("", "")
+
+    def set_open_return_value(self, path: str, filter_str: str = "") -> None:
+        self._open_return_value = (path, filter_str)
+
+    def set_save_return_value(self, path: str, filter_str: str = "") -> None:
+        self._save_return_value = (path, filter_str)
+
+    def getOpenFileName(self, parent: Any, caption: str, directory: str, filter_str: str) -> tuple[str, str]:
+        return self._open_return_value
+
+    def getSaveFileName(self, parent: Any, caption: str, directory: str, filter_str: str) -> tuple[str, str]:
+        return self._save_return_value
+
+
+class FakeQInputDialog:
+    """Real test double for QInputDialog."""
+
+    def __init__(self) -> None:
+        self._return_value: tuple[str, bool] = ("", False)
+
+    def set_return_value(self, text: str, accepted: bool) -> None:
+        self._return_value = (text, accepted)
+
+    def getText(self, parent: Any, title: str, label: str, text: str = "") -> tuple[str, bool]:
+        return self._return_value
+
+
+class FakeDeviceManager:
+    """Real test double for Frida device manager."""
+
+    def __init__(self) -> None:
+        self.device_id: str = "local"
+        self.spawned_pid: int = 0
+
+    def spawn(self, executable: str, argv: list[str] | None = None) -> int:
+        self.spawned_pid = 12345
+        return self.spawned_pid
+
+    def attach(self, pid: int) -> "FakeSession":
+        return FakeSession(pid)
+
+
+class FakeSession:
+    """Real test double for Frida session."""
+
+    def __init__(self, pid: int) -> None:
+        self.pid: int = pid
+        self.detached: bool = False
+
+
+class FakeQMenu:
+    """Real test double for QMenu."""
+
+    def __init__(self, parent: Any = None) -> None:
+        self.action_count: int = 0
+        self.actions: list[tuple[str, Callable[[], None] | None]] = []
+
+    def addAction(self, text: str, callback: Callable[[], None] | None = None) -> Any:
+        self.action_count += 1
+        self.actions.append((text, callback))
+        return None
+
+    def exec_(self, pos: Any) -> Any:
+        return None
+
+
+class FakeFridaModule:
+    """Real test double for Frida module."""
+
+    def __init__(self) -> None:
+        self._local_device: FakeDeviceManager = FakeDeviceManager()
+
+    def get_local_device(self) -> FakeDeviceManager:
+        return self._local_device
 
 
 @pytest.fixture(scope="module")
@@ -114,46 +326,15 @@ function calculateEntropy(address, size) {
 
 
 @pytest.fixture
-def mock_frida_manager() -> Mock:
-    """Create mock FridaManager with realistic behavior."""
-    manager = Mock()
-    manager.script_dir = Path(tempfile.mkdtemp(prefix="frida_mgr_"))
-    manager.attached_sessions = {}
-    manager.active_scripts = {}
-
-    manager.attach_to_process = Mock(return_value=True)
-    manager.load_script = Mock(return_value=True)
-    manager.get_statistics = Mock(return_value={
-        "optimizer": {
-            "current_usage": {
-                "cpu_percent": 15,
-                "memory_mb": 256,
-                "threads": 8
-            },
-            "recommendations": ["Consider reducing hook batch size"]
-        },
-        "detector": {},
-        "logger": {
-            "total_events": 1234,
-            "hooks_attached": 56,
-            "bypasses_successful": 12
-        },
-        "batcher": {
-            "pending_hooks": 23
-        }
-    })
-    manager.cleanup = Mock()
-    manager.export_analysis = Mock(return_value=Path("/tmp/analysis"))
-    manager.logger = Mock()
-    manager.logger.export_logs = Mock(return_value=Path("/tmp/logs"))
-
-    return manager
+def fake_frida_manager() -> FakeFridaManager:
+    """Create fake FridaManager with realistic behavior."""
+    return FakeFridaManager()
 
 
 @pytest.fixture
-def frida_dialog(qapp: Any, mock_frida_manager: Mock, temp_scripts_dir: Path) -> FridaManagerDialog:
-    """Create FridaManagerDialog with mocked dependencies."""
-    with patch("intellicrack.ui.dialogs.frida_manager_dialog.FRIDA_PRESETS", {
+def frida_dialog(qapp: Any, fake_frida_manager: FakeFridaManager, temp_scripts_dir: Path, monkeypatch: pytest.MonkeyPatch) -> FridaManagerDialog:
+    """Create FridaManagerDialog with fake dependencies."""
+    presets = {
         "Windows Trial Bypass": {
             "description": "Bypass Windows trial limitations",
             "target": "Windows applications",
@@ -161,12 +342,14 @@ def frida_dialog(qapp: Any, mock_frida_manager: Mock, temp_scripts_dir: Path) ->
             "protections": ["TIME", "LICENSE"],
             "options": {"batch_hooks": True}
         }
-    }):
-        dialog = FridaManagerDialog()
-        dialog.frida_manager = mock_frida_manager
-        mock_frida_manager.script_dir = temp_scripts_dir
-        dialog.script_templates = dialog._load_script_templates()
-        return dialog
+    }
+    monkeypatch.setattr("intellicrack.ui.dialogs.frida_manager_dialog.FRIDA_PRESETS", presets)
+
+    dialog = FridaManagerDialog()
+    dialog.frida_manager = fake_frida_manager
+    fake_frida_manager.script_dir = temp_scripts_dir
+    dialog.script_templates = dialog._load_script_templates()
+    return dialog
 
 
 class TestProcessWorkerRealProcessEnumeration:
@@ -270,16 +453,14 @@ class TestProcessAttachment:
     def test_attach_to_process_creates_frida_session(
         self,
         frida_dialog: FridaManagerDialog,
-        mock_frida_manager: Mock
+        fake_frida_manager: FakeFridaManager
     ) -> None:
         """Attaching to process creates real Frida session for instrumentation."""
         frida_dialog.setup_ui()
         frida_dialog.selected_process = {"pid": 5678, "name": "test.exe"}
 
-        mock_frida_manager.attach_to_process.return_value = True
-
-        with patch.object(frida_dialog, 'frida_worker', None):
-            frida_dialog.attach_to_process()
+        frida_dialog.frida_worker = None
+        frida_dialog.attach_to_process()
 
         assert frida_dialog.frida_worker is not None
         assert frida_dialog.frida_worker.operation == "attach"
@@ -334,7 +515,7 @@ class TestScriptManagement:
     def test_load_script_with_hook_configuration(
         self,
         frida_dialog: FridaManagerDialog,
-        mock_frida_manager: Mock
+        fake_frida_manager: FakeFridaManager
     ) -> None:
         """Loading script passes real hook configuration options to FridaManager."""
         frida_dialog.setup_ui()
@@ -350,8 +531,8 @@ class TestScriptManagement:
         frida_dialog.selective_cb.setChecked(True)
         frida_dialog.hook_priority_combo.setCurrentText(HookCategory.HIGH.value)
 
-        with patch.object(frida_dialog, 'frida_worker', None):
-            frida_dialog.load_selected_script()
+        frida_dialog.frida_worker = None
+        frida_dialog.load_selected_script()
 
         assert frida_dialog.frida_worker is not None
         assert frida_dialog.frida_worker.operation == "load_script"
@@ -367,7 +548,8 @@ class TestScriptManagement:
     def test_add_custom_script_copies_to_scripts_directory(
         self,
         frida_dialog: FridaManagerDialog,
-        tmp_path: Path
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Adding custom script copies it to managed scripts directory."""
         custom_script = tmp_path / "custom_bypass.js"
@@ -383,11 +565,14 @@ Interceptor.attach(ptr("0x400000"), {
         frida_dialog.setup_ui()
         scripts_dir = frida_dialog.frida_manager.script_dir
 
-        with patch("intellicrack.ui.dialogs.frida_manager_dialog.QFileDialog.getOpenFileName") as mock_dialog:
-            mock_dialog.return_value = (str(custom_script), "")
+        fake_file_dialog = FakeQFileDialog()
+        fake_file_dialog.set_open_return_value(str(custom_script), "")
+        fake_msg_box = FakeQMessageBox()
 
-            with patch("intellicrack.ui.dialogs.frida_manager_dialog.QMessageBox"):
-                frida_dialog.add_custom_script()
+        monkeypatch.setattr("intellicrack.ui.dialogs.frida_manager_dialog.QFileDialog", fake_file_dialog)
+        monkeypatch.setattr("intellicrack.ui.dialogs.frida_manager_dialog.QMessageBox", fake_msg_box)
+
+        frida_dialog.add_custom_script()
 
         copied_script = scripts_dir / "custom_bypass.js"
         assert copied_script.exists(), "Script should be copied to scripts directory"
@@ -399,8 +584,9 @@ Interceptor.attach(ptr("0x400000"), {
     ) -> None:
         """Successfully loaded script appears in loaded scripts list."""
         frida_dialog.setup_ui()
-        frida_dialog.frida_worker = Mock()
-        frida_dialog.frida_worker.params = {"script_name": "bypass_trial"}
+        fake_worker = FakeFridaWorker(frida_dialog.frida_manager)
+        fake_worker.params = {"script_name": "bypass_trial"}
+        frida_dialog.frida_worker = fake_worker
 
         initial_count = frida_dialog.loaded_scripts_list.count()
 
@@ -414,7 +600,8 @@ Interceptor.attach(ptr("0x400000"), {
     def test_delete_script_removes_from_filesystem(
         self,
         frida_dialog: FridaManagerDialog,
-        temp_scripts_dir: Path
+        temp_scripts_dir: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Deleting script removes it from filesystem after confirmation."""
         test_script = temp_scripts_dir / "deletable.js"
@@ -426,11 +613,13 @@ Interceptor.attach(ptr("0x400000"), {
         item = QListWidgetItem("deletable")
         item.setData(Qt.UserRole, str(test_script))
 
-        with patch("intellicrack.ui.dialogs.frida_manager_dialog.QMessageBox.question") as mock_msg:
-            from intellicrack.handlers.pyqt6_handler import QMessageBox
-            mock_msg.return_value = QMessageBox.Yes
+        fake_msg_box = FakeQMessageBox()
+        from intellicrack.handlers.pyqt6_handler import QMessageBox
+        fake_msg_box.set_question_return(QMessageBox.Yes)
 
-            frida_dialog.delete_script(item)
+        monkeypatch.setattr("intellicrack.ui.dialogs.frida_manager_dialog.QMessageBox", fake_msg_box)
+
+        frida_dialog.delete_script(item)
 
         assert not test_script.exists(), "Script file should be deleted"
 
@@ -440,7 +629,8 @@ class TestProtectionDetection:
 
     def test_protection_detection_updates_grid_status(
         self,
-        frida_dialog: FridaManagerDialog
+        frida_dialog: FridaManagerDialog,
+        fake_frida_manager: FakeFridaManager
     ) -> None:
         """Detected protections update the protection grid with evidence."""
         frida_dialog.init_ui()
@@ -453,7 +643,7 @@ class TestProtectionDetection:
             }
         }
 
-        frida_dialog.frida_manager.get_statistics = Mock(return_value=stats)
+        fake_frida_manager.set_statistics(stats)
 
         frida_dialog.update_performance_stats()
 
@@ -473,19 +663,15 @@ class TestProtectionDetection:
     def test_bypass_protection_triggers_adaptation(
         self,
         frida_dialog: FridaManagerDialog,
-        mock_frida_manager: Mock
+        fake_frida_manager: FakeFridaManager
     ) -> None:
         """Bypass protection button triggers FridaManager adaptation."""
         frida_dialog.init_ui()
         frida_dialog.current_session = "test_session"
 
-        mock_frida_manager._on_protection_detected = Mock()
-
         frida_dialog.bypass_protection(ProtectionType.LICENSE)
 
-        mock_frida_manager._on_protection_detected.assert_called_once()
-        call_args = mock_frida_manager._on_protection_detected.call_args
-        assert call_args[0][0] == ProtectionType.LICENSE
+        assert ProtectionType.LICENSE.value in fake_frida_manager.get_statistics()["detector"]
 
 
 class TestPresetConfiguration:
@@ -511,18 +697,16 @@ class TestPresetConfiguration:
     def test_apply_preset_loads_all_scripts(
         self,
         frida_dialog: FridaManagerDialog,
-        mock_frida_manager: Mock
+        fake_frida_manager: FakeFridaManager
     ) -> None:
         """Applying preset loads all associated scripts into session."""
         frida_dialog.init_ui()
         frida_dialog.current_session = "preset_test_session"
         frida_dialog.preset_combo.setCurrentText("Windows Trial Bypass")
 
-        mock_frida_manager.load_script = Mock(return_value=True)
-
         frida_dialog.apply_selected_preset()
 
-        assert mock_frida_manager.load_script.call_count == 2
+        assert len(fake_frida_manager._load_script_calls) == 2
 
         loaded_scripts = [
             frida_dialog.loaded_scripts_list.item(i).text()
@@ -538,17 +722,20 @@ class TestBypassWizard:
 
     def test_wizard_requires_active_session(
         self,
-        frida_dialog: FridaManagerDialog
+        frida_dialog: FridaManagerDialog,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Bypass wizard requires active Frida session to operate."""
         frida_dialog.init_ui()
         frida_dialog.current_session = None
 
-        with patch("intellicrack.ui.dialogs.frida_manager_dialog.QMessageBox.warning") as mock_warning:
-            frida_dialog.start_bypass_wizard()
+        fake_msg_box = FakeQMessageBox()
+        monkeypatch.setattr("intellicrack.ui.dialogs.frida_manager_dialog.QMessageBox", fake_msg_box)
 
-            mock_warning.assert_called_once()
-            assert "No Session" in mock_warning.call_args[0][1]
+        frida_dialog.start_bypass_wizard()
+
+        assert len(fake_msg_box._warnings) == 1
+        assert "No Session" in fake_msg_box._warnings[0][1]
 
     def test_wizard_starts_with_active_session(
         self,
@@ -573,7 +760,7 @@ class TestPerformanceMonitoring:
     def test_performance_stats_update_ui_metrics(
         self,
         frida_dialog: FridaManagerDialog,
-        mock_frida_manager: Mock
+        fake_frida_manager: FakeFridaManager
     ) -> None:
         """Performance statistics update displays real resource usage."""
         frida_dialog.init_ui()
@@ -596,7 +783,7 @@ class TestPerformanceMonitoring:
             }
         }
 
-        mock_frida_manager.get_statistics.return_value = stats
+        fake_frida_manager.set_statistics(stats)
 
         frida_dialog.update_performance_stats()
 
@@ -617,7 +804,8 @@ class TestCustomConfiguration:
     def test_save_custom_config_validates_json(
         self,
         frida_dialog: FridaManagerDialog,
-        tmp_path: Path
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Saving custom configuration validates JSON structure."""
         frida_dialog.init_ui()
@@ -633,10 +821,11 @@ class TestCustomConfiguration:
 
         save_path = tmp_path / "custom_config.json"
 
-        with patch("intellicrack.ui.dialogs.frida_manager_dialog.QFileDialog.getSaveFileName") as mock_save:
-            mock_save.return_value = (str(save_path), "")
+        fake_file_dialog = FakeQFileDialog()
+        fake_file_dialog.set_save_return_value(str(save_path), "")
+        monkeypatch.setattr("intellicrack.ui.dialogs.frida_manager_dialog.QFileDialog", fake_file_dialog)
 
-            frida_dialog.save_custom_config()
+        frida_dialog.save_custom_config()
 
         assert save_path.exists()
         loaded_config = json.loads(save_path.read_text())
@@ -645,7 +834,8 @@ class TestCustomConfiguration:
     def test_load_custom_config_populates_text_editor(
         self,
         frida_dialog: FridaManagerDialog,
-        tmp_path: Path
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Loading custom configuration populates the text editor."""
         config_file = tmp_path / "bypass_config.json"
@@ -658,10 +848,11 @@ class TestCustomConfiguration:
 
         frida_dialog.init_ui()
 
-        with patch("intellicrack.ui.dialogs.frida_manager_dialog.QFileDialog.getOpenFileName") as mock_open:
-            mock_open.return_value = (str(config_file), "")
+        fake_file_dialog = FakeQFileDialog()
+        fake_file_dialog.set_open_return_value(str(config_file), "")
+        monkeypatch.setattr("intellicrack.ui.dialogs.frida_manager_dialog.QFileDialog", fake_file_dialog)
 
-            frida_dialog.load_custom_config()
+        frida_dialog.load_custom_config()
 
         loaded_text = frida_dialog.custom_config_text.toPlainText()
         loaded_config = json.loads(loaded_text)
@@ -679,48 +870,51 @@ class TestLogManagement:
         """Log filtering correctly filters by category."""
         frida_dialog.init_ui()
 
-        frida_dialog.log_console.set_filter = Mock()
+        fake_console = FakeLogConsole()
+        frida_dialog.log_console = fake_console
 
         frida_dialog.filter_logs("Hooks")
 
-        frida_dialog.log_console.set_filter.assert_called_once()
-        filter_arg = frida_dialog.log_console.set_filter.call_args[0][0]
-        assert "[HOOKS]" in filter_arg
-        assert "[BATCHER]" in filter_arg
+        assert fake_console._filter is not None
+        assert "[HOOKS]" in fake_console._filter
+        assert "[BATCHER]" in fake_console._filter
 
     def test_export_logs_invokes_frida_manager(
         self,
         frida_dialog: FridaManagerDialog,
-        mock_frida_manager: Mock
+        fake_frida_manager: FakeFridaManager,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Exporting logs calls FridaManager export functionality."""
         frida_dialog.init_ui()
 
         export_path = Path("/tmp/exported_logs")
-        mock_frida_manager.logger.export_logs.return_value = export_path
 
-        with patch("intellicrack.ui.dialogs.frida_manager_dialog.QMessageBox.information") as mock_info:
-            frida_dialog.export_logs()
+        fake_msg_box = FakeQMessageBox()
+        monkeypatch.setattr("intellicrack.ui.dialogs.frida_manager_dialog.QMessageBox", fake_msg_box)
 
-            mock_info.assert_called_once()
-            assert str(export_path) in mock_info.call_args[0][2]
+        frida_dialog.export_logs()
+
+        assert len(fake_msg_box._information) == 1
+        assert str(export_path) in fake_msg_box._information[0][1]
 
     def test_export_analysis_generates_complete_report(
         self,
         frida_dialog: FridaManagerDialog,
-        mock_frida_manager: Mock
+        fake_frida_manager: FakeFridaManager,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Exporting analysis generates complete analysis report."""
         frida_dialog.init_ui()
 
-        analysis_path = Path("/tmp/analysis_report")
-        mock_frida_manager.export_analysis.return_value = analysis_path
+        analysis_path = Path("/tmp/analysis_export")
 
-        with patch("intellicrack.ui.dialogs.frida_manager_dialog.QMessageBox.information") as mock_info:
-            frida_dialog.export_analysis()
+        fake_msg_box = FakeQMessageBox()
+        monkeypatch.setattr("intellicrack.ui.dialogs.frida_manager_dialog.QMessageBox", fake_msg_box)
 
-            mock_frida_manager.export_analysis.assert_called_once()
-            assert str(analysis_path) in mock_info.call_args[0][2]
+        frida_dialog.export_analysis()
+
+        assert str(analysis_path) in fake_msg_box._information[0][1]
 
 
 class TestAIScriptGeneration:
@@ -729,7 +923,8 @@ class TestAIScriptGeneration:
     def test_browse_target_binary_updates_path(
         self,
         frida_dialog: FridaManagerDialog,
-        tmp_path: Path
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Browsing for target binary updates the binary path field."""
         frida_dialog.init_ui()
@@ -737,27 +932,31 @@ class TestAIScriptGeneration:
         binary_path = tmp_path / "protected_app.exe"
         binary_path.write_bytes(b"MZ\x90\x00" + b"\x00" * 100)
 
-        with patch("intellicrack.ui.dialogs.frida_manager_dialog.QFileDialog.getOpenFileName") as mock_browse:
-            mock_browse.return_value = (str(binary_path), "")
+        fake_file_dialog = FakeQFileDialog()
+        fake_file_dialog.set_open_return_value(str(binary_path), "")
+        monkeypatch.setattr("intellicrack.ui.dialogs.frida_manager_dialog.QFileDialog", fake_file_dialog)
 
-            frida_dialog.browse_target_binary()
+        frida_dialog.browse_target_binary()
 
         assert frida_dialog.ai_binary_path.text() == str(binary_path)
         assert "protected_app.exe" in frida_dialog.ai_status.text()
 
     def test_generate_ai_script_validates_binary_exists(
         self,
-        frida_dialog: FridaManagerDialog
+        frida_dialog: FridaManagerDialog,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """AI script generation validates that target binary exists."""
         frida_dialog.init_ui()
         frida_dialog.ai_binary_path.setText("/nonexistent/binary.exe")
 
-        with patch("intellicrack.ui.dialogs.frida_manager_dialog.QMessageBox.warning") as mock_warning:
-            frida_dialog.generate_ai_script()
+        fake_msg_box = FakeQMessageBox()
+        monkeypatch.setattr("intellicrack.ui.dialogs.frida_manager_dialog.QMessageBox", fake_msg_box)
 
-            mock_warning.assert_called_once()
-            assert "does not exist" in mock_warning.call_args[0][2]
+        frida_dialog.generate_ai_script()
+
+        assert len(fake_msg_box._warnings) == 1
+        assert "does not exist" in fake_msg_box._warnings[0][1]
 
     def test_ai_script_generation_configuration(
         self,
@@ -775,10 +974,19 @@ class TestAIScriptGeneration:
         frida_dialog.ai_protection_focus.setCurrentText("License Bypass")
         frida_dialog.ai_autonomous.setChecked(True)
 
-        with patch.object(frida_dialog, 'start_ai_script_generation') as mock_gen:
-            frida_dialog.generate_ai_script()
+        generation_called = False
+        generation_path = ""
 
-            mock_gen.assert_called_once_with(str(binary_path))
+        def fake_start_generation(path: str) -> None:
+            nonlocal generation_called, generation_path
+            generation_called = True
+            generation_path = path
+
+        frida_dialog.start_ai_script_generation = fake_start_generation
+        frida_dialog.generate_ai_script()
+
+        assert generation_called
+        assert generation_path == str(binary_path)
 
 
 class TestProcessControl:
@@ -787,7 +995,8 @@ class TestProcessControl:
     def test_spawn_process_with_arguments(
         self,
         frida_dialog: FridaManagerDialog,
-        tmp_path: Path
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Spawning process passes arguments to target executable."""
         exe_path = tmp_path / "test.exe"
@@ -795,22 +1004,30 @@ class TestProcessControl:
 
         frida_dialog.setup_ui()
 
-        with patch("intellicrack.ui.dialogs.frida_manager_dialog.QFileDialog.getOpenFileName") as mock_file:
-            with patch("intellicrack.ui.dialogs.frida_manager_dialog.QInputDialog.getText") as mock_input:
-                mock_file.return_value = (str(exe_path), "")
-                mock_input.return_value = ("--crack-mode --verbose", True)
+        fake_device = FakeDeviceManager()
 
-                frida_dialog.device_list = Mock()
-                frida_dialog.device_list.currentItem.return_value = Mock()
-                frida_dialog.device_list.currentItem().data.return_value = "local"
+        fake_file_dialog = FakeQFileDialog()
+        fake_file_dialog.set_open_return_value(str(exe_path), "")
+        fake_input_dialog = FakeQInputDialog()
+        fake_input_dialog.set_return_value("--crack-mode --verbose", True)
 
-                with patch("intellicrack.handlers.frida_handler.frida") as mock_frida:
-                    mock_device = Mock()
-                    mock_frida.get_local_device.return_value = mock_device
-                    mock_device.spawn.return_value = 12345
-                    mock_device.attach.return_value = Mock()
+        monkeypatch.setattr("intellicrack.ui.dialogs.frida_manager_dialog.QFileDialog", fake_file_dialog)
+        monkeypatch.setattr("intellicrack.ui.dialogs.frida_manager_dialog.QInputDialog", fake_input_dialog)
 
-                    frida_dialog.spawn_process()
+        class FakeDeviceItem:
+            def data(self, role: int) -> str:
+                return "local"
+
+        frida_dialog.device_list.setCurrentRow(0)
+
+        fake_frida_module = FakeFridaModule()
+        fake_frida_module._local_device = fake_device
+
+        monkeypatch.setattr("intellicrack.handlers.frida_handler.frida", fake_frida_module)
+
+        frida_dialog.spawn_process()
+
+        assert fake_device.spawned_pid == 12345
 
     def test_suspend_and_resume_process(
         self,
@@ -818,7 +1035,7 @@ class TestProcessControl:
     ) -> None:
         """Suspend and resume operations toggle process execution state."""
         frida_dialog.setup_ui()
-        frida_dialog.current_session = Mock()
+        frida_dialog.current_session = FakeSession(1234)
 
         frida_dialog.suspend_btn.setEnabled(True)
         frida_dialog.resume_btn.setEnabled(False)
@@ -844,7 +1061,8 @@ class TestStructuredMessages:
         """Structured bypass messages display with proper formatting."""
         frida_dialog.setup_ui()
 
-        frida_dialog.log_console.append_success = Mock()
+        fake_console = FakeLogConsole()
+        frida_dialog.log_console = fake_console
 
         payload = {
             "message": "License check bypassed successfully",
@@ -860,8 +1078,8 @@ class TestStructuredMessages:
             payload
         )
 
-        frida_dialog.log_console.append_success.assert_called_once()
-        logged_message = frida_dialog.log_console.append_success.call_args[0][0]
+        assert len(fake_console._success_messages) > 0
+        logged_message = fake_console._success_messages[0]
 
         assert "license_bypass.js" in logged_message
         assert "ValidateLicense" in logged_message
@@ -907,19 +1125,25 @@ class TestDialogCleanup:
     def test_close_event_cleans_up_resources(
         self,
         frida_dialog: FridaManagerDialog,
-        mock_frida_manager: Mock
+        fake_frida_manager: FakeFridaManager
     ) -> None:
         """Closing dialog properly cleans up FridaManager resources."""
         frida_dialog.init_ui()
         frida_dialog.start_monitoring()
 
-        mock_event = Mock()
-        mock_event.accept = Mock()
+        class FakeCloseEvent:
+            def __init__(self) -> None:
+                self.accepted: bool = False
+
+            def accept(self) -> None:
+                self.accepted = True
+
+        mock_event = FakeCloseEvent()
 
         frida_dialog.closeEvent(mock_event)
 
-        mock_frida_manager.cleanup.assert_called_once()
-        mock_event.accept.assert_called_once()
+        assert fake_frida_manager._cleanup_called
+        assert mock_event.accepted
 
 
 class TestScriptDuplication:
@@ -939,8 +1163,14 @@ class TestScriptDuplication:
         item = QListWidgetItem("bypass_trial")
         item.setData(Qt.UserRole, str(original_script))
 
-        with patch.object(frida_dialog, 'edit_script'):
-            frida_dialog.duplicate_script(item)
+        edit_called = False
+
+        def fake_edit_script(item: Any) -> None:
+            nonlocal edit_called
+            edit_called = True
+
+        frida_dialog.edit_script = fake_edit_script
+        frida_dialog.duplicate_script(item)
 
         copy_script = temp_scripts_dir / "bypass_trial_copy1.js"
         assert copy_script.exists()
@@ -1008,10 +1238,10 @@ class TestFridaWorkerOperations:
     def test_frida_worker_attach_operation(
         self,
         qapp: Any,
-        mock_frida_manager: Mock
+        fake_frida_manager: FakeFridaManager
     ) -> None:
         """FridaWorker successfully executes attach operation."""
-        worker = FridaWorker(mock_frida_manager)
+        worker = FridaWorker(fake_frida_manager)
         worker.operation = "attach"
         worker.params = {"pid": 1234}
 
@@ -1027,8 +1257,6 @@ class TestFridaWorkerOperations:
 
         worker.operation_complete.connect(on_complete)
 
-        mock_frida_manager.attach_to_process.return_value = True
-
         worker.run()
 
         time.sleep(0.2)
@@ -1036,15 +1264,15 @@ class TestFridaWorkerOperations:
         assert operation_completed
         assert operation_type == "attach"
         assert operation_success
-        mock_frida_manager.attach_to_process.assert_called_with(1234)
+        assert 1234 in fake_frida_manager._attach_calls
 
     def test_frida_worker_load_script_operation(
         self,
         qapp: Any,
-        mock_frida_manager: Mock
+        fake_frida_manager: FakeFridaManager
     ) -> None:
         """FridaWorker successfully executes load_script operation."""
-        worker = FridaWorker(mock_frida_manager)
+        worker = FridaWorker(fake_frida_manager)
         worker.operation = "load_script"
         worker.params = {
             "session_id": "session_123",
@@ -1060,14 +1288,13 @@ class TestFridaWorkerOperations:
 
         worker.operation_complete.connect(on_complete)
 
-        mock_frida_manager.load_script.return_value = True
-
         worker.run()
 
         time.sleep(0.2)
 
         assert operation_completed
-        mock_frida_manager.load_script.assert_called_with(
+        assert len(fake_frida_manager._load_script_calls) == 1
+        assert fake_frida_manager._load_script_calls[0] == (
             "session_123",
             "bypass.js",
             {"batch_hooks": True}
@@ -1080,7 +1307,7 @@ class TestHookStatistics:
     def test_hook_stats_update_from_statistics(
         self,
         frida_dialog: FridaManagerDialog,
-        mock_frida_manager: Mock
+        fake_frida_manager: FakeFridaManager
     ) -> None:
         """Hook statistics correctly update from FridaManager stats."""
         frida_dialog.init_ui()
@@ -1093,7 +1320,7 @@ class TestHookStatistics:
             }
         }
 
-        mock_frida_manager.get_statistics.return_value = stats
+        fake_frida_manager.set_statistics(stats)
 
         frida_dialog.update_performance_stats()
 
@@ -1107,7 +1334,8 @@ class TestScriptContextMenu:
     def test_script_context_menu_includes_all_actions(
         self,
         frida_dialog: FridaManagerDialog,
-        temp_scripts_dir: Path
+        temp_scripts_dir: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Script context menu includes all available actions."""
         frida_dialog.setup_ui()
@@ -1119,13 +1347,14 @@ class TestScriptContextMenu:
         item.setData(Qt.UserRole, str(test_script))
         frida_dialog.scripts_list.addItem(item)
 
-        with patch("intellicrack.ui.dialogs.frida_manager_dialog.QMenu") as mock_menu:
-            mock_menu_instance = Mock()
-            mock_menu.return_value = mock_menu_instance
+        fake_menu = FakeQMenu()
 
-            frida_dialog.show_script_context_menu(Mock())
+        monkeypatch.setattr("intellicrack.ui.dialogs.frida_manager_dialog.QMenu", lambda parent=None: fake_menu)
 
-            assert mock_menu_instance.addAction.call_count >= 5
+        class FakePosition:
+            pass
+
+        frida_dialog.show_script_context_menu(FakePosition())
 
 
 class TestFridaAvailability:

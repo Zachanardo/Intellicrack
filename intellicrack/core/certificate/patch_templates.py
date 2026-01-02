@@ -107,7 +107,15 @@ logger.debug("Certificate patch templates module loaded")
 
 @dataclass
 class PatchTemplate:
-    """Template for patching a specific API function."""
+    """Predefined patch template for patching a specific API function.
+
+    Attributes:
+        name: Unique identifier for the patch template.
+        description: Human-readable description of what the patch does.
+        target_api: Name of the API function this template patches.
+        architecture: Target CPU architecture (x86 or x64).
+        patch_bytes: Ready-to-apply machine code bytes for the patch.
+    """
 
     name: str
     description: str
@@ -345,11 +353,11 @@ def select_template(api_name: str, arch: Architecture) -> PatchTemplate | None:
     """Select appropriate patch template for API and architecture.
 
     Args:
-        api_name: Name of the API function to patch
-        arch: Target architecture
+        api_name: Name of the API function to patch.
+        arch: Target architecture.
 
     Returns:
-        PatchTemplate if found, None otherwise
+        Matching patch template if found, None otherwise.
 
     """
     return next(
@@ -362,7 +370,7 @@ def get_all_templates() -> list[PatchTemplate]:
     """Get all available patch templates.
 
     Returns:
-        List of all PatchTemplate objects
+        All available patch templates.
 
     """
     return ALL_TEMPLATES.copy()
@@ -372,10 +380,10 @@ def get_templates_by_api(api_name: str) -> list[PatchTemplate]:
     """Get all templates for a specific API.
 
     Args:
-        api_name: Name of the API function
+        api_name: Name of the API function.
 
     Returns:
-        List of templates targeting this API
+        Templates targeting this API.
 
     """
     return [t for t in ALL_TEMPLATES if t.target_api == api_name]
@@ -385,10 +393,10 @@ def get_templates_by_arch(arch: Architecture) -> list[PatchTemplate]:
     """Get all templates for a specific architecture.
 
     Args:
-        arch: Target architecture
+        arch: Target architecture.
 
     Returns:
-        List of templates for this architecture
+        Templates for this architecture.
 
     """
     return [t for t in ALL_TEMPLATES if t.architecture == arch]

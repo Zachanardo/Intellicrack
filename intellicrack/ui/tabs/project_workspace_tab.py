@@ -45,8 +45,8 @@ from .base_tab import BaseTab
 logger = logging.getLogger(__name__)
 
 
-class DashboardTab(BaseTab):
-    """Dashboard Tab - Manages project files, binary information, and workspace overview.
+class ProjectWorkspaceTab(BaseTab):
+    """Project Workspace Tab - Manages project files, binary information, and workspace overview.
 
     Consolidates functionality from the previous Project & Dashboard tab.
     """
@@ -55,7 +55,12 @@ class DashboardTab(BaseTab):
     analysis_saved = pyqtSignal(str)
 
     def __init__(self, shared_context: Any = None, parent: QWidget | None = None) -> None:
-        """Initialize project workspace tab with file management and workspace overview."""
+        """Initialize project workspace tab with file management and workspace overview.
+
+        Args:
+            shared_context: Shared application context for cross-module communication.
+            parent: Parent widget for the tab.
+        """
         super().__init__(shared_context, parent)
         self.current_binary_path: str | None = None
         self.recent_files: list[str] = []
@@ -71,7 +76,11 @@ class DashboardTab(BaseTab):
         self.activity_log: QTextEdit
 
     def setup_content(self) -> None:
-        """Set up the complete Project Workspace tab content."""
+        """Set up the complete Project Workspace tab content.
+
+        Initializes the main layout with project controls on the left panel
+        and dashboard overview on the right panel.
+        """
         main_layout = QVBoxLayout(self)
 
         # Create horizontal splitter for left and right panels
@@ -91,7 +100,12 @@ class DashboardTab(BaseTab):
         main_layout.addWidget(splitter)
 
     def create_project_controls_panel(self) -> QWidget:
-        """Create the project controls panel."""
+        """Create the project controls panel.
+
+        Returns:
+            A widget containing project management, binary controls,
+            and analysis controls sections with relevant buttons.
+        """
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
@@ -166,7 +180,12 @@ class DashboardTab(BaseTab):
         return panel
 
     def create_dashboard_overview_panel(self) -> QWidget:
-        """Create the dashboard overview panel."""
+        """Create the dashboard overview panel.
+
+        Returns:
+            A widget containing binary information, quick statistics,
+            and project activity log sections.
+        """
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
@@ -233,7 +252,11 @@ class DashboardTab(BaseTab):
         return panel
 
     def create_new_project(self) -> None:
-        """Create a new project."""
+        """Create a new project.
+
+        Initializes a new project by clearing the current binary path,
+        resetting recent files, and clearing all analysis-related UI elements.
+        """
         self.log_activity("Creating new project...")
         self.current_binary_path = None
         self.recent_files = []
@@ -247,7 +270,12 @@ class DashboardTab(BaseTab):
         self.activity_log.clear()
 
     def open_project(self) -> None:
-        """Open an existing project."""
+        """Open an existing project.
+
+        Allows user to select and load an existing Intellicrack project file
+        (*.icp) which contains binary path and metadata. Displays appropriate
+        warnings if the binary file is missing or project format is invalid.
+        """
         import json
 
         file_dialog = QFileDialog()
@@ -275,7 +303,12 @@ class DashboardTab(BaseTab):
                 QMessageBox.critical(self, "Open Project", f"Failed to load project: {e!s}")
 
     def save_project(self) -> None:
-        """Save the current project."""
+        """Save the current project.
+
+        Allows user to save the current project to an Intellicrack project file
+        (*.icp) format. Project data includes the current binary path and recent files list.
+        Shows a message if no binary is loaded.
+        """
         import json
 
         if not self.current_binary_path:
@@ -303,7 +336,11 @@ class DashboardTab(BaseTab):
                 QMessageBox.critical(self, "Save Project", f"Failed to save project: {e!s}")
 
     def select_binary(self) -> None:
-        """Select a binary file for analysis."""
+        """Select a binary file for analysis.
+
+        Displays a file dialog for user to select a binary file and loads it
+        if a selection is made.
+        """
         file_dialog = QFileDialog()
         binary_file, _ = file_dialog.getOpenFileName(
             self,
@@ -315,7 +352,14 @@ class DashboardTab(BaseTab):
             self.load_binary(binary_file)
 
     def load_binary(self, file_path: str) -> None:
-        """Load a binary file and update the UI."""
+        """Load a binary file and update the UI.
+
+        Loads the binary file and updates the UI elements with binary information,
+        emits the binary_selected signal, and logs the activity.
+
+        Args:
+            file_path: Path to the binary file to load.
+        """
         self.current_binary_path = file_path
         self.add_to_recent_files(file_path)
 
@@ -330,7 +374,11 @@ class DashboardTab(BaseTab):
         self.log_activity(f"Loaded binary: {file_name}")
 
     def close_binary(self) -> None:
-        """Close the current binary."""
+        """Close the current binary.
+
+        Closes the currently loaded binary and resets all binary-related UI elements
+        to their default states. Logs the activity when a binary is closed.
+        """
         if self.current_binary_path:
             file_name: str = os.path.basename(self.current_binary_path)
             self.current_binary_path = None
@@ -343,7 +391,14 @@ class DashboardTab(BaseTab):
             self.log_activity(f"Closed binary: {file_name}")
 
     def add_to_recent_files(self, file_path: str) -> None:
-        """Add file to recent files list."""
+        """Add file to recent files list.
+
+        Args:
+            file_path: Path to the file to add to recent files.
+
+        Adds the file to the beginning of the recent files list, removes duplicates,
+        and maintains a maximum of 10 recent files.
+        """
         if file_path in self.recent_files:
             self.recent_files.remove(file_path)
         self.recent_files.insert(0, file_path)
@@ -351,7 +406,11 @@ class DashboardTab(BaseTab):
         self.update_recent_files_menu()
 
     def update_recent_files_menu(self) -> None:
-        """Update the recent files menu."""
+        """Update the recent files menu.
+
+        Clears and repopulates the recent files menu with actions for each file
+        in the recent files list.
+        """
         self.recent_files_menu.clear()
         for file_path in self.recent_files:
             file_name: str = os.path.basename(file_path)
@@ -360,12 +419,23 @@ class DashboardTab(BaseTab):
                 action.triggered.connect(lambda checked=False, path=file_path: self._handle_recent_file_click(checked, path))
 
     def _handle_recent_file_click(self, checked: bool, path: str) -> None:
-        """Handle recent file click from menu."""
+        """Handle recent file click from menu.
+
+        Loads the selected file when a recent file action is triggered from the menu.
+
+        Args:
+            checked: Boolean indicating if the action was checked (unused).
+            path: Path to the selected recent file.
+        """
         logger.debug("Recent file opened, checked state: %s for path: %s", checked, path)
         self.load_binary(path)
 
     def save_analysis_results(self) -> None:
-        """Save analysis results."""
+        """Save analysis results.
+
+        Allows user to save analysis results to a JSON file. Shows a message if no
+        binary is currently loaded.
+        """
         if not self.current_binary_path:
             QMessageBox.information(self, "Save Results", "No binary loaded to save results for.")
             return
@@ -382,7 +452,11 @@ class DashboardTab(BaseTab):
             self.analysis_saved.emit(results_file)
 
     def export_results(self) -> None:
-        """Export results in various formats."""
+        """Export results in various formats.
+
+        Allows user to export analysis results in CSV, JSON, or text format.
+        Shows a message if no binary is currently loaded.
+        """
         if not self.current_binary_path:
             QMessageBox.information(self, "Export Results", "No binary loaded to export results for.")
             return
@@ -410,7 +484,13 @@ class DashboardTab(BaseTab):
                 QMessageBox.critical(self, "Export Results", f"Failed to export results: {e!s}")
 
     def _export_as_csv(self, file_path: str) -> None:
-        """Export analysis results as CSV format."""
+        """Export analysis results as CSV format.
+
+        Args:
+            file_path: Path to the output CSV file.
+
+        Writes binary analysis information to a CSV file.
+        """
         with open(file_path, "w", encoding="utf-8") as f:
             f.write("Analysis Results Export\n")
             f.write(f"Binary: {self.current_binary_path}\n")
@@ -418,7 +498,13 @@ class DashboardTab(BaseTab):
             f.write(f"Architecture: {self.architecture_label.text()}\n")
 
     def _export_as_json(self, file_path: str) -> None:
-        """Export analysis results as JSON format."""
+        """Export analysis results as JSON format.
+
+        Args:
+            file_path: Path to the output JSON file.
+
+        Writes binary analysis information to a JSON file.
+        """
         import json
 
         export_data: dict[str, Any] = {
@@ -434,7 +520,13 @@ class DashboardTab(BaseTab):
             json.dump(export_data, f, indent=2)
 
     def _export_as_text(self, file_path: str) -> None:
-        """Export analysis results as text format."""
+        """Export analysis results as text format.
+
+        Args:
+            file_path: Path to the output text file.
+
+        Writes binary analysis information to a text file.
+        """
         with open(file_path, "w", encoding="utf-8") as f:
             f.write("INTELLICRACK ANALYSIS RESULTS\n")
             f.write("=" * 50 + "\n\n")
@@ -447,7 +539,11 @@ class DashboardTab(BaseTab):
             f.write(f"{self.patches_label.text()}\n")
 
     def clear_analysis(self) -> None:
-        """Clear current analysis results."""
+        """Clear current analysis results.
+
+        Prompts user for confirmation before clearing all analysis results and
+        resetting analysis-related UI elements.
+        """
         reply = QMessageBox.question(
             self,
             "Clear Analysis",
@@ -465,11 +561,21 @@ class DashboardTab(BaseTab):
             self.log_activity("Cleared analysis results")
 
     def clear_activity_log(self) -> None:
-        """Clear the activity log."""
+        """Clear the activity log.
+
+        Removes all entries from the project activity log display.
+        """
         self.activity_log.clear()
 
     def log_activity(self, message: str) -> None:
-        """Log activity to the activity log."""
+        """Log activity to the activity log.
+
+        Args:
+            message: The activity message to log.
+
+        Appends a timestamped activity message to the activity log text widget
+        and calls the parent class log method.
+        """
         from datetime import datetime
 
         timestamp = datetime.now().strftime("%H:%M:%S")
@@ -479,7 +585,14 @@ class DashboardTab(BaseTab):
         super().log_activity(message)
 
     def format_file_size(self, size_bytes: int) -> str:
-        """Format file size in human readable format."""
+        """Format file size in human readable format.
+
+        Args:
+            size_bytes: File size in bytes to format.
+
+        Returns:
+            Formatted file size with appropriate unit (B, KB, MB, GB).
+        """
         if size_bytes == 0:
             return "0 B"
         size_names = ["B", "KB", "MB", "GB"]

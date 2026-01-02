@@ -32,7 +32,8 @@ def create_certificate_builder() -> object:
     """Create a certificate builder with common settings.
 
     Returns:
-        Certificate builder object or None if cryptography not available
+        A certificate builder with subject, issuer, and serial number configured,
+        or None if the cryptography library is not available.
 
     """
     try:
@@ -85,10 +86,11 @@ def get_certificate_validity_dates(
     """Get certificate validity dates.
 
     Args:
-        valid_days: Number of days the certificate should be valid
+        valid_days: Number of days the certificate should be valid.
 
     Returns:
-        Tuple of (not_valid_before, not_valid_after) datetimes
+        A tuple containing the certificate's start date (not_valid_before) and
+        end date (not_valid_after).
 
     """
     not_valid_before = datetime.datetime.now(datetime.UTC)

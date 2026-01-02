@@ -40,8 +40,8 @@ class R2DecompilationEngine:
         """Initialize decompilation engine.
 
         Args:
-            binary_path: Path to binary file
-            radare2_path: Optional path to radare2 executable
+            binary_path: Path to binary file.
+            radare2_path: Optional path to radare2 executable.
 
         """
         self.binary_path = binary_path
@@ -53,11 +53,16 @@ class R2DecompilationEngine:
         """Decompile a single function with advanced analysis.
 
         Args:
-            address: Function address
-            optimize: Whether to apply optimization passes
+            address: Function address.
+            optimize: Whether to apply optimization passes.
 
         Returns:
-            Comprehensive decompilation results
+            Comprehensive decompilation results dictionary containing pseudocode,
+            graph data, variables, license patterns, and analysis metrics.
+
+        Raises:
+            R2Exception: Raised by underlying radare2 session operations (caught
+                and logged).
 
         """
         cache_key = f"{address}_{optimize}"
@@ -133,10 +138,14 @@ class R2DecompilationEngine:
         """Decompile all functions in the binary.
 
         Args:
-            limit: Optional limit on number of functions to decompile
+            limit: Optional limit on number of functions to decompile.
 
         Returns:
-            Dictionary of function addresses to decompilation results
+            Dictionary of function addresses to decompilation results.
+
+        Raises:
+            R2Exception: Raised by underlying radare2 session operations (caught
+                and logged).
 
         """
         results = {}
@@ -161,7 +170,20 @@ class R2DecompilationEngine:
         return results
 
     def _extract_variables(self, r2: R2Session | R2SessionPoolAdapter, address: int) -> list[dict[str, Any]]:
-        """Extract function variables and their types."""
+        """Extract function variables and their types.
+
+        Args:
+            r2: Radare2 session instance.
+            address: Function address to extract variables from.
+
+        Returns:
+            List of variable dictionaries with name, type, offset, kind, and size.
+
+        Raises:
+            R2Exception: Raised by radare2 session command execution (caught and
+                logged).
+
+        """
         variables: list[dict[str, Any]] = []
 
         try:
@@ -185,7 +207,18 @@ class R2DecompilationEngine:
         return variables
 
     def _detect_license_patterns(self, pseudocode: str) -> list[dict[str, Any]]:
-        """Detect license-related patterns in decompiled code."""
+        """Detect license-related patterns in decompiled code.
+
+        Args:
+            pseudocode: Decompiled pseudocode to analyze.
+
+        Returns:
+            List of detected license pattern dictionaries with type and confidence.
+
+        Raises:
+            No exceptions raised.
+
+        """
         patterns = []
 
         # License-related keywords
@@ -245,7 +278,18 @@ class R2DecompilationEngine:
         return patterns
 
     def _detect_vulnerability_patterns(self, pseudocode: str) -> list[dict[str, Any]]:
-        """Detect vulnerability patterns in decompiled code."""
+        """Detect vulnerability patterns in decompiled code.
+
+        Args:
+            pseudocode: Decompiled pseudocode to analyze.
+
+        Returns:
+            List of detected vulnerability pattern dictionaries with type and severity.
+
+        Raises:
+            No exceptions raised.
+
+        """
         patterns = []
 
         # Buffer overflow patterns
@@ -316,7 +360,19 @@ class R2DecompilationEngine:
         return patterns
 
     def _calculate_complexity(self, pseudocode: str, graph_data: dict[str, Any]) -> dict[str, Any]:
-        """Calculate complexity metrics for decompiled function."""
+        """Calculate complexity metrics for decompiled function.
+
+        Args:
+            pseudocode: Decompiled pseudocode to analyze.
+            graph_data: Control flow graph data dictionary.
+
+        Returns:
+            Dictionary of complexity metrics including lines of code and complexity measures.
+
+        Raises:
+            No exceptions raised.
+
+        """
         metrics = {
             "lines_of_code": 0,
             "cyclomatic_complexity": 1,
@@ -381,7 +437,18 @@ class R2DecompilationEngine:
         return metrics
 
     def _extract_api_calls(self, pseudocode: str) -> list[dict[str, Any]]:
-        """Extract API function calls from pseudocode."""
+        """Extract API function calls from pseudocode.
+
+        Args:
+            pseudocode: Decompiled pseudocode to analyze.
+
+        Returns:
+            List of detected API call dictionaries with function name and context.
+
+        Raises:
+            No exceptions raised.
+
+        """
         api_calls = []
 
         # Common API patterns
@@ -411,7 +478,20 @@ class R2DecompilationEngine:
         return api_calls
 
     def _get_string_references(self, r2: R2Session | R2SessionPoolAdapter, address: int) -> list[dict[str, Any]]:
-        """Get string references used by the function."""
+        """Get string references used by the function.
+
+        Args:
+            r2: Radare2 session instance.
+            address: Function address to extract strings from.
+
+        Returns:
+            List of string reference dictionaries with address and content.
+
+        Raises:
+            R2Exception: Raised by radare2 session command execution (caught and
+                logged).
+
+        """
         strings = []
 
         try:
@@ -442,7 +522,18 @@ class R2DecompilationEngine:
         return strings
 
     def _analyze_control_flow(self, graph_data: dict[str, Any] | list[Any]) -> dict[str, Any]:
-        """Analyze control flow from graph data."""
+        """Analyze control flow from graph data.
+
+        Args:
+            graph_data: Control flow graph data in dictionary or list format.
+
+        Returns:
+            Dictionary containing control flow analysis metrics including blocks and edges.
+
+        Raises:
+            No exceptions raised.
+
+        """
         flow_analysis = {
             "basic_blocks": 0,
             "edges": 0,
@@ -489,10 +580,13 @@ class R2DecompilationEngine:
         """Generate bypass suggestions based on decompilation analysis.
 
         Args:
-            function_results: Results from decompile_function
+            function_results: Results from decompile_function.
 
         Returns:
-            List of bypass suggestions
+            List of bypass suggestion dictionaries.
+
+        Raises:
+            No exceptions raised.
 
         """
         suggestions = []
@@ -571,7 +665,11 @@ class R2DecompilationEngine:
         """Analyze all functions in the binary to identify license-related functions.
 
         Returns:
-            Dictionary containing license functions and their analysis results
+            Dictionary containing license functions and their analysis results.
+
+        Raises:
+            R2Exception: Raised by underlying radare2 session operations (caught
+                and logged).
 
         """
         result: dict[str, Any] = {
@@ -686,7 +784,18 @@ class R2DecompilationEngine:
         return result
 
     def _should_analyze_function(self, func_name: str) -> bool:
-        """Determine if a function should be analyzed for license patterns."""
+        """Determine if a function should be analyzed for license patterns.
+
+        Args:
+            func_name: Name of the function to check.
+
+        Returns:
+            True if function should be analyzed; False otherwise.
+
+        Raises:
+            No exceptions raised.
+
+        """
         # Analyze functions with suspicious names even if they don't contain license keywords
         suspicious_patterns = [
             r"^check_",
@@ -704,7 +813,19 @@ class R2DecompilationEngine:
         return any(re.search(pattern, func_name.lower()) for pattern in suspicious_patterns)
 
     def _calculate_license_confidence(self, func_name: str, license_patterns: list[dict[str, Any]]) -> float:
-        """Calculate confidence score for license-related function."""
+        """Calculate confidence score for license-related function.
+
+        Args:
+            func_name: Name of the function to evaluate.
+            license_patterns: List of detected license patterns in the function.
+
+        Returns:
+            Confidence score between 0.0 and 1.0 inclusive.
+
+        Raises:
+            No exceptions raised.
+
+        """
         score = 0.0
 
         # Name-based scoring
@@ -733,7 +854,19 @@ class R2DecompilationEngine:
         return min(score, 1.0)
 
     def _get_confidence_reason(self, func_name: str, license_patterns: list[dict[str, Any]]) -> str:
-        """Get human-readable reason for high confidence."""
+        """Get human-readable reason for high confidence.
+
+        Args:
+            func_name: Name of the function being evaluated.
+            license_patterns: List of detected license patterns in the function.
+
+        Returns:
+            Human-readable string explaining confidence reasoning.
+
+        Raises:
+            No exceptions raised.
+
+        """
         reasons = []
 
         if any(keyword in func_name.lower() for keyword in ["license", "registration", "activation"]):
@@ -751,11 +884,14 @@ class R2DecompilationEngine:
         """Export comprehensive analysis report.
 
         Args:
-            output_path: Path to save report
-            analysis_results: Analysis results to export
+            output_path: Path to save report.
+            analysis_results: Analysis results to export.
 
         Returns:
-            Success status
+            True if export succeeded; False otherwise.
+
+        Raises:
+            Exception: Caught and logged if file write or JSON serialization fails.
 
         """
         try:
@@ -792,12 +928,15 @@ def analyze_binary_decompilation(binary_path: str, radare2_path: str | None = No
     """Perform comprehensive decompilation analysis of a binary.
 
     Args:
-        binary_path: Path to binary file
-        radare2_path: Optional path to radare2 executable
-        function_limit: Maximum number of functions to analyze
+        binary_path: Path to binary file.
+        radare2_path: Optional path to radare2 executable.
+        function_limit: Maximum number of functions to analyze.
 
     Returns:
-        Complete decompilation analysis results
+        Complete decompilation analysis results dictionary.
+
+    Raises:
+        No exceptions raised (all exceptions handled by R2DecompilationEngine).
 
     """
     engine = R2DecompilationEngine(binary_path, radare2_path)

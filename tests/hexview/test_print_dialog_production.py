@@ -5,8 +5,7 @@ validating actual print rendering functionality.
 """
 
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, Mock
+from typing import Any, Generator, cast
 
 import pytest
 from PyQt6.QtCore import QRectF
@@ -17,13 +16,73 @@ from PyQt6.QtWidgets import QApplication, QDialog
 from intellicrack.hexview.print_dialog import PrintOptionsDialog
 
 
+class FakeFileHandler:
+    """Real test double for file handler."""
+
+    def __init__(self, file_path: str = "test.bin", file_size: int = 1024) -> None:
+        self.file_path: str = file_path
+        self.file_size: int = file_size
+        self._data: bytes = b"\x00" * file_size
+
+    def read_data(self, offset: int, size: int) -> bytes:
+        """Read data from file at offset."""
+        return self._data[offset : offset + size]
+
+    def set_data(self, data: bytes) -> None:
+        """Set internal data for testing."""
+        self._data = data
+        self.file_size = len(data)
+
+
+class FakeHexViewer:
+    """Real test double for hex viewer."""
+
+    def __init__(
+        self,
+        file_path: str = "test.bin",
+        file_size: int = 1024,
+        selection_start: int = -1,
+        selection_end: int = -1,
+    ) -> None:
+        self.selection_start: int = selection_start
+        self.selection_end: int = selection_end
+        self.file_handler: FakeFileHandler = FakeFileHandler(file_path, file_size)
+
+
+class FakePainter:
+    """Real test double for QPainter."""
+
+    def __init__(self) -> None:
+        self.font_set_count: int = 0
+        self.draw_text_count: int = 0
+        self.set_fonts: list[QFont] = []
+        self.drawn_texts: list[tuple[Any, str]] = []
+
+    def setFont(self, font: QFont) -> None:
+        """Track font setting."""
+        self.font_set_count += 1
+        self.set_fonts.append(font)
+
+    def drawText(self, *args: Any) -> None:
+        """Track text drawing."""
+        self.draw_text_count += 1
+        self.drawn_texts.append(args)
+
+    @property
+    def called(self) -> bool:
+        """Check if any method was called."""
+        return self.font_set_count > 0 or self.draw_text_count > 0
+
+
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Generator[QApplication, None, None]:
     """Create QApplication instance for Qt tests."""
-    app = QApplication.instance()
-    if app is None:
+    existing = QApplication.instance()
+    if existing is not None and isinstance(existing, QApplication):
+        yield existing
+    else:
         app = QApplication([])
-    yield app
+        yield app
 
 
 @pytest.fixture
@@ -33,22 +92,17 @@ def print_dialog(qapp: QApplication) -> PrintOptionsDialog:
 
 
 @pytest.fixture
-def mock_hex_viewer() -> MagicMock:
-    """Create mock hex viewer with file handler."""
-    viewer = MagicMock()
-    viewer.selection_start = -1
-    viewer.selection_end = -1
-    viewer.file_handler = MagicMock()
-    viewer.file_handler.file_size = 1024
-    viewer.file_handler.file_path = "test.bin"
-    viewer.file_handler.read_data = MagicMock(return_value=b"\x00" * 1024)
-    return viewer
+def fake_hex_viewer() -> FakeHexViewer:
+    """Create fake hex viewer with file handler."""
+    return FakeHexViewer()
 
 
 @pytest.fixture
-def print_dialog_with_viewer(qapp: QApplication, mock_hex_viewer: MagicMock) -> PrintOptionsDialog:
-    """Create print dialog with mock hex viewer."""
-    return PrintOptionsDialog(hex_viewer=mock_hex_viewer)
+def print_dialog_with_viewer(
+    qapp: QApplication, fake_hex_viewer: FakeHexViewer
+) -> PrintOptionsDialog:
+    """Create print dialog with fake hex viewer."""
+    return PrintOptionsDialog(hex_viewer=cast(Any, fake_hex_viewer))
 
 
 @pytest.fixture
@@ -126,13 +180,10 @@ class TestSelectionHandling:
         """Selection checkbox disabled without active selection."""
         assert not print_dialog_with_viewer.selection_check.isEnabled()
 
-    def test_selection_enabled_with_selection(
-        self, qapp: QApplication, mock_hex_viewer: MagicMock
-    ) -> None:
+    def test_selection_enabled_with_selection(self, qapp: QApplication) -> None:
         """Selection checkbox enabled with active selection."""
-        mock_hex_viewer.selection_start = 100
-        mock_hex_viewer.selection_end = 200
-        dialog = PrintOptionsDialog(hex_viewer=mock_hex_viewer)
+        fake_viewer = FakeHexViewer(selection_start=100, selection_end=200)
+        dialog = PrintOptionsDialog(hex_viewer=cast(Any, fake_viewer))
 
         assert dialog.selection_check.isEnabled()
         assert "100 bytes" in dialog.selection_check.text()
@@ -207,7 +258,8 @@ class TestPrintDataRetrieval:
         self, print_dialog_with_viewer: PrintOptionsDialog, test_data: bytes
     ) -> None:
         """Getting all pages returns full file data."""
-        print_dialog_with_viewer.hex_viewer.file_handler.read_data.return_value = test_data
+        hex_viewer = cast(FakeHexViewer, print_dialog_with_viewer.hex_viewer)
+        hex_viewer.file_handler.set_data(test_data)
         print_dialog_with_viewer.all_pages_check.setChecked(True)
 
         data, offset = print_dialog_with_viewer.get_print_data()
@@ -215,22 +267,18 @@ class TestPrintDataRetrieval:
         assert data == test_data
         assert offset == 0
 
-    def test_get_print_data_selection(
-        self, qapp: QApplication, mock_hex_viewer: MagicMock, test_data: bytes
-    ) -> None:
+    def test_get_print_data_selection(self, qapp: QApplication, test_data: bytes) -> None:
         """Getting selection returns selected data range."""
-        mock_hex_viewer.selection_start = 100
-        mock_hex_viewer.selection_end = 200
-        mock_hex_viewer.file_handler.read_data.return_value = test_data[100:200]
+        fake_viewer = FakeHexViewer(selection_start=100, selection_end=200)
+        fake_viewer.file_handler.set_data(test_data)
 
-        dialog = PrintOptionsDialog(hex_viewer=mock_hex_viewer)
+        dialog = PrintOptionsDialog(hex_viewer=cast(Any, fake_viewer))
         dialog.selection_check.setChecked(True)
 
         data, offset = dialog.get_print_data()
 
         assert data == test_data[100:200]
         assert offset == 100
-        mock_hex_viewer.file_handler.read_data.assert_called_with(100, 100)
 
 
 class TestHexLineFormatting:
@@ -385,69 +433,49 @@ class TestRenderPage:
         self, print_dialog_with_viewer: PrintOptionsDialog, test_data: bytes
     ) -> None:
         """Basic page rendering completes without errors."""
-        mock_painter = Mock(spec=QPainter)
-        mock_painter.setFont = Mock()
-        mock_painter.drawText = Mock()
-
+        fake_painter = FakePainter()
         page_rect = QRectF(0, 0, 600, 800)
 
-        print_dialog_with_viewer.render_page(
-            mock_painter, page_rect, test_data, 0, 1, 1
-        )
+        print_dialog_with_viewer.render_page(cast(Any, fake_painter), page_rect, test_data, 0, 1, 1)
 
-        assert mock_painter.setFont.called
-        assert mock_painter.drawText.called
+        assert fake_painter.font_set_count > 0
+        assert fake_painter.draw_text_count > 0
 
     def test_render_page_with_header(
         self, print_dialog_with_viewer: PrintOptionsDialog, test_data: bytes
     ) -> None:
         """Page renders with header."""
-        mock_painter = Mock(spec=QPainter)
-        mock_painter.setFont = Mock()
-        mock_painter.drawText = Mock()
-
+        fake_painter = FakePainter()
         print_dialog_with_viewer.show_header_check.setChecked(True)
         page_rect = QRectF(0, 0, 600, 800)
 
-        print_dialog_with_viewer.render_page(
-            mock_painter, page_rect, test_data, 0, 1, 1
-        )
+        print_dialog_with_viewer.render_page(cast(Any, fake_painter), page_rect, test_data, 0, 1, 1)
 
-        assert mock_painter.drawText.called
+        assert fake_painter.draw_text_count > 0
 
     def test_render_page_without_header(
         self, print_dialog_with_viewer: PrintOptionsDialog, test_data: bytes
     ) -> None:
         """Page renders without header when disabled."""
-        mock_painter = Mock(spec=QPainter)
-        mock_painter.setFont = Mock()
-        mock_painter.drawText = Mock()
-
+        fake_painter = FakePainter()
         print_dialog_with_viewer.show_header_check.setChecked(False)
         page_rect = QRectF(0, 0, 600, 800)
 
-        print_dialog_with_viewer.render_page(
-            mock_painter, page_rect, test_data, 0, 1, 1
-        )
+        print_dialog_with_viewer.render_page(cast(Any, fake_painter), page_rect, test_data, 0, 1, 1)
 
-        assert mock_painter.drawText.called
+        assert fake_painter.draw_text_count > 0
 
     def test_render_page_with_footer(
         self, print_dialog_with_viewer: PrintOptionsDialog, test_data: bytes
     ) -> None:
         """Page renders with footer."""
-        mock_painter = Mock(spec=QPainter)
-        mock_painter.setFont = Mock()
-        mock_painter.drawText = Mock()
-
+        fake_painter = FakePainter()
         print_dialog_with_viewer.show_footer_check.setChecked(True)
         page_rect = QRectF(0, 0, 600, 800)
 
-        print_dialog_with_viewer.render_page(
-            mock_painter, page_rect, test_data, 0, 1, 1
-        )
+        print_dialog_with_viewer.render_page(cast(Any, fake_painter), page_rect, test_data, 0, 1, 1)
 
-        assert mock_painter.drawText.called
+        assert fake_painter.draw_text_count > 0
 
 
 class TestEdgeCases:

@@ -35,7 +35,7 @@ import lief
 import lief.ELF
 import pefile
 
-from ..core.analysis.frida_script_manager import FridaScriptConfig, FridaScriptManager, ScriptResult
+from ..core.analysis.frida_script_manager import FridaScriptManager, ScriptResult
 from ..core.logging.audit_logger import AuditEvent, AuditEventType, AuditSeverity, get_audit_logger
 from ..core.resources import ResourceManager, get_resource_manager
 from ..utils.logger import get_logger

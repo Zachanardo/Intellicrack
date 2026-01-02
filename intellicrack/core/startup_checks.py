@@ -42,12 +42,30 @@ class TensorFlowDeviceProtocol(Protocol):
 class TensorFlowExperimentalProtocol(Protocol):
     """Protocol for TensorFlow config.experimental interface."""
 
-    def list_physical_devices(self, device_type: str = "GPU") -> list[TensorFlowDeviceProtocol]:
-        """List physical devices."""
+    def list_physical_devices(
+        self, device_type: str = "GPU"
+    ) -> list[TensorFlowDeviceProtocol]:
+        """List physical devices.
+
+        Args:
+            device_type: Type of device to list (e.g., "GPU", "CPU").
+
+        Returns:
+            List of physical devices of the specified type.
+
+        """
         ...
 
     def get_memory_growth(self, device: TensorFlowDeviceProtocol) -> bool:
-        """Get memory growth setting for a device."""
+        """Get memory growth setting for a device.
+
+        Args:
+            device: The TensorFlow device to check.
+
+        Returns:
+            Whether memory growth is enabled for the device.
+
+        """
         ...
 
 
@@ -56,16 +74,44 @@ class TensorFlowConfigProtocol(Protocol):
 
     experimental: TensorFlowExperimentalProtocol
 
-    def set_visible_devices(self, devices: list[object], device_type: str) -> None:
-        """Set visible devices for TensorFlow."""
+    def set_visible_devices(
+        self, devices: list[object], device_type: str
+    ) -> None:
+        """Set visible devices for TensorFlow.
+
+        Args:
+            devices: List of devices to make visible.
+            device_type: Type of devices (e.g., "GPU", "CPU").
+
+        """
         ...
 
-    def get_visible_devices(self, device_type: str | None = None) -> list[object]:
-        """Get visible devices."""
+    def get_visible_devices(
+        self, device_type: str | None = None
+    ) -> list[object]:
+        """Get visible devices.
+
+        Args:
+            device_type: Type of devices to retrieve (e.g., "GPU", "CPU").
+
+        Returns:
+            List of visible devices.
+
+        """
         ...
 
-    def list_physical_devices(self, device_type: str = "GPU") -> list[object]:
-        """List physical devices."""
+    def list_physical_devices(
+        self, device_type: str = "GPU"
+    ) -> list[object]:
+        """List physical devices.
+
+        Args:
+            device_type: Type of devices to list (e.g., "GPU", "CPU").
+
+        Returns:
+            List of physical devices of the specified type.
+
+        """
         ...
 
 
@@ -77,7 +123,15 @@ class TensorFlowKerasProtocol(Protocol):
     optimizers: Any
 
     def __getattr__(self, name: str) -> Any:
-        """Allow any attribute access for full keras compatibility."""
+        """Allow any attribute access for full keras compatibility.
+
+        Args:
+            name: The name of the attribute to access.
+
+        Returns:
+            The attribute value.
+
+        """
         ...
 
 
@@ -88,13 +142,40 @@ class TensorFlowProtocol(Protocol):
     config: TensorFlowConfigProtocol
     keras: TensorFlowKerasProtocol
 
-    def constant(self, value: object, dtype: str | None = None, shape: tuple[int, ...] | None = None) -> Any:
-        """Create a constant tensor."""
+    def constant(
+        self,
+        value: object,
+        dtype: str | None = None,
+        shape: tuple[int, ...] | None = None,
+    ) -> Any:
+        """Create a constant tensor.
+
+        Args:
+            value: The tensor value(s).
+            dtype: Data type of the tensor.
+            shape: Shape of the tensor.
+
+        Returns:
+            A constant tensor object.
+
+        """
         ...
 
-    def reduce_sum(self, tensor: object, axis: int | None = None) -> Any:
-        """Reduce tensor by summing elements."""
+    def reduce_sum(
+        self, tensor: object, axis: int | None = None
+    ) -> Any:
+        """Reduce tensor by summing elements.
+
+        Args:
+            tensor: The tensor to reduce.
+            axis: Axis along which to sum the tensor.
+
+        Returns:
+            The reduced tensor result.
+
+        """
         ...
+
 
 # Configure TensorFlow environment ONCE at module level before any imports
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
@@ -112,8 +193,13 @@ def _get_tensorflow() -> tuple[TensorFlowProtocol | None, bool]:
     """Get TensorFlow module, importing only once.
 
     Returns:
-        A tuple containing the TensorFlow module object (or None if unavailable)
-        and a boolean indicating whether TensorFlow is successfully loaded.
+        A tuple where the first element is the TensorFlow module object (or None if
+        unavailable) and the second element indicates whether TensorFlow is
+        successfully loaded.
+
+    Raises:
+        AttributeError: If TensorFlow is missing required attributes (config or
+            __version__).
 
     """
     global _tf_import_attempted, _tf_module, _tf_available
@@ -126,7 +212,7 @@ def _get_tensorflow() -> tuple[TensorFlowProtocol | None, bool]:
 
             ensure_tensorflow_loaded()
             if tf is not None and hasattr(tf, "config") and hasattr(tf, "__version__"):
-                _tf_module = cast(TensorFlowProtocol, tf)
+                _tf_module = cast("TensorFlowProtocol", tf)
                 _tf_available = True
                 _tf_module.config.set_visible_devices([], "GPU")
                 logger.info("TensorFlow: Imported successfully (version: %s). GPU devices set to invisible.", _tf_module.__version__)
@@ -146,7 +232,17 @@ def _get_tensorflow() -> tuple[TensorFlowProtocol | None, bool]:
 
 @log_function_call
 def check_dependencies() -> dict[str, bool]:
-    """Check for required dependencies."""
+    """Check for required dependencies.
+
+    Validates availability of critical dependencies including Flask, QEMU,
+    TensorFlow, and llama-cpp-python. Performs basic functionality tests on
+    each dependency to ensure proper installation and configuration.
+
+    Returns:
+        Dictionary mapping dependency names (str) to boolean values indicating
+        whether each dependency is available and functional.
+
+    """
     logger.info("Checking application dependencies...")
     dependencies = {}
 
@@ -289,7 +385,16 @@ def check_dependencies() -> dict[str, bool]:
 
 @log_function_call
 def check_data_paths() -> dict[str, tuple[str, bool]]:
-    """Check and create required data paths."""
+    """Check and create required data paths.
+
+    Ensures core data directories exist and validates QEMU image directories.
+    Dynamically discovers available QEMU images and reports their locations.
+
+    Returns:
+        Dictionary mapping path names (str) to tuples containing the path string
+        and a boolean indicating whether the path exists.
+
+    """
     logger.info("Checking and ensuring data paths exist...")
     from ..utils.path_resolver import ensure_data_directories, get_qemu_images_dir
     from ..utils.qemu_image_discovery import get_qemu_discovery
@@ -329,7 +434,16 @@ def check_data_paths() -> dict[str, tuple[str, bool]]:
 
 @log_function_call
 def check_qemu_setup() -> bool:
-    """Check QEMU setup without auto-downloading."""
+    """Check QEMU setup without auto-downloading.
+
+    Verifies QEMU installation and validates presence of QEMU disk images.
+    Does not automatically download or create images.
+
+    Returns:
+        True if QEMU is properly set up with available disk images, False
+        otherwise.
+
+    """
     logger.info("Checking QEMU setup...")
     from ..utils.qemu_image_discovery import get_qemu_discovery
 
@@ -359,7 +473,16 @@ def check_qemu_setup() -> bool:
 
 @log_function_call
 def create_minimal_qemu_disk() -> Path | None:
-    """Create a real QEMU disk image automatically."""
+    """Create a real QEMU disk image automatically.
+
+    Generates a minimal QEMU disk image (qcow2 format) in the configured QEMU
+    images directory. Attempts to format with ext4 filesystem on Linux platforms.
+
+    Returns:
+        Path object pointing to the created QEMU disk image file, or None if
+        creation failed.
+
+    """
     logger.info("Attempting to create a minimal QEMU disk image.")
     from ..utils.path_resolver import get_qemu_images_dir
 
@@ -408,14 +531,35 @@ def create_minimal_qemu_disk() -> Path | None:
 
 @log_function_call
 def check_protection_models() -> bool:
-    """Check if protection detection models exist."""
+    """Check if protection detection models exist.
+
+    Verifies protection detection capabilities. This implementation uses the
+    native ICP Engine for protection analysis without requiring separate ML
+    models.
+
+    Returns:
+        Always returns True as protection detection uses native ICP Engine
+        without ML models.
+
+    """
     logger.info("Protection detection using native ICP Engine - ML models removed. Returning True.")
     return True
 
 
 @log_function_call
 def validate_tensorflow_models() -> dict[str, Any]:
-    """Validate TensorFlow and check model compatibility."""
+    """Validate TensorFlow and check model compatibility.
+
+    Performs comprehensive validation of TensorFlow installation including
+    version checking, GPU availability detection, model building capability,
+    and prediction testing with a test sequential model.
+
+    Returns:
+        Dictionary containing TensorFlow validation results with keys including
+        status (bool), version (str), gpu_available (bool), gpu_count (int),
+        keras_available (bool), and model_building (bool).
+
+    """
     logger.info("Validating TensorFlow installation and model compatibility.")
     try:
         tf, tf_available = _get_tensorflow()
@@ -498,7 +642,19 @@ def validate_tensorflow_models() -> dict[str, Any]:
 
 @log_function_call
 def perform_startup_checks() -> dict[str, Any]:
-    """Perform all startup checks."""
+    """Perform all startup checks.
+
+    Executes comprehensive startup verification including dependency validation,
+    data path verification, QEMU setup checks, and TensorFlow model validation.
+    Reports on missing critical dependencies and provides installation recommendations.
+
+    Returns:
+        Dictionary with keys "dependencies" (dict[str, bool]), "paths"
+        (dict[str, tuple[str, bool]]), "config_valid" (bool), and optionally
+        "tensorflow_validation" (dict[str, Any]) containing full startup check
+        results.
+
+    """
     logger.info("Initiating all Intellicrack startup checks.")
     # Validate configuration first
     from intellicrack.core.config_manager import get_config
@@ -559,7 +715,19 @@ def perform_startup_checks() -> dict[str, Any]:
 
 @log_function_call
 def get_system_health_report() -> dict[str, Any]:
-    """Generate a comprehensive system health report using all available dependencies."""
+    """Generate a comprehensive system health report using all available dependencies.
+
+    Collects detailed system information including platform details, Python version,
+    service availability (Flask, TensorFlow, llama-cpp-python), and disk space usage
+    metrics for the data directory. Validates each service and provides error details
+    if unavailable.
+
+    Returns:
+        Dictionary with keys "timestamp" (str), "platform" (str), "python_version"
+        (str), "services" (dict mapping service names to status dicts), and
+        "disk_space" (dict with usage metrics in GB).
+
+    """
     logger.info("Generating comprehensive system health report.")
     report: dict[str, Any] = {
         "timestamp": sys.version,
@@ -605,7 +773,7 @@ def get_system_health_report() -> dict[str, Any]:
             gpu_devices = tf.config.list_physical_devices("GPU")
             if gpu_devices:
                 try:
-                    gpu = cast(TensorFlowDeviceProtocol, gpu_devices[0])
+                    gpu = cast("TensorFlowDeviceProtocol", gpu_devices[0])
                     memory_info["gpu_memory_growth"] = tf.config.experimental.get_memory_growth(gpu)
                     logger.debug("ML Engine: GPU memory growth for %s: %s.", gpu.name, memory_info["gpu_memory_growth"])
                 except Exception as mem_e:

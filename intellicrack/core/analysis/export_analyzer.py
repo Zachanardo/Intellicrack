@@ -111,7 +111,18 @@ class ExportAnalyzer:
         self.logger = logging.getLogger(__name__)
 
     def analyze(self) -> None:
-        """Parse PE binary and extract all export information."""
+        """Parse PE binary and extract all export information.
+
+        Populates exports list, export_directory, base_address, and image_size
+        instance attributes with parsed PE binary data.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If binary does not have a valid PE format.
+            Exception: If file I/O or parsing errors occur during analysis.
+        """
         try:
             with open(self.binary_path, "rb") as f:
                 self.pe_data = f.read()
@@ -128,7 +139,14 @@ class ExportAnalyzer:
             raise
 
     def _validate_pe_format(self) -> bool:
-        """Validate that binary is a valid PE file."""
+        """Validate that binary is a valid PE file.
+
+        Checks for MZ header signature and valid PE offset/signature.
+
+        Returns:
+            True if binary has valid PE signature and format, False
+            otherwise.
+        """
         if len(self.pe_data) < 64:
             return False
 
@@ -143,7 +161,18 @@ class ExportAnalyzer:
         return self.pe_data[pe_offset : pe_offset + 4] == b"PE\x00\x00"
 
     def _parse_pe_headers(self) -> None:
-        """Parse PE headers to extract base address and image size."""
+        """Parse PE headers to extract base address and image size.
+
+        Sets base_address and image_size instance attributes from the
+        optional header in the PE binary.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If PE magic number is not recognized (not 0x010B or
+                0x020B).
+        """
         pe_offset: int = struct.unpack("<I", self.pe_data[0x3C:0x40])[0]
 
         coff_offset: int = pe_offset + 4
@@ -163,7 +192,14 @@ class ExportAnalyzer:
             raise ValueError(f"Unknown PE magic: {hex(magic)}")
 
     def _parse_export_directory(self) -> None:
-        """Parse export directory from PE optional header."""
+        """Parse export directory from PE optional header.
+
+        Populates export_directory instance attribute with export table
+        metadata including function RVAs, name RVAs, and ordinal values.
+
+        Returns:
+            None
+        """
         pe_offset: int = struct.unpack("<I", self.pe_data[0x3C:0x40])[0]
         coff_offset: int = pe_offset + 4
         optional_header_offset: int = coff_offset + 20
@@ -215,7 +251,14 @@ class ExportAnalyzer:
             self.export_directory = None
 
     def _parse_export_functions(self) -> None:
-        """Parse all exported functions from export directory."""
+        """Parse all exported functions from export directory.
+
+        Populates exports list with ExportEntry objects for each function,
+        including name resolution and forwarded export detection.
+
+        Returns:
+            None
+        """
         if not self.export_directory:
             return
 
@@ -306,7 +349,18 @@ class ExportAnalyzer:
             self.logger.exception("Failed to parse export functions: %s", e)
 
     def _is_forwarded_export(self, rva: int) -> bool:
-        """Check if export RVA points to forwarded export string."""
+        """Check if export RVA points to forwarded export string.
+
+        A forwarded export redirects to another DLL and is detected by
+        checking if the RVA falls within the export directory itself.
+
+        Args:
+            rva: Relative virtual address to check.
+
+        Returns:
+            True if RVA points within export directory (forwarded), False
+            otherwise.
+        """
         if not self.export_directory:
             return False
 
@@ -316,7 +370,18 @@ class ExportAnalyzer:
         return export_dir_rva <= rva < (export_dir_rva + export_dir_size)
 
     def _rva_to_offset(self, rva: int) -> int:
-        """Convert RVA to file offset using section table."""
+        """Convert RVA to file offset using section table.
+
+        Maps a relative virtual address (RVA) to a file offset by checking
+        which section the RVA falls into and calculating the file offset.
+
+        Args:
+            rva: Relative virtual address to convert.
+
+        Returns:
+            File offset corresponding to RVA, or 0 if RVA is invalid or
+            unmapped.
+        """
         if rva in {0, 4294967295}:
             return 0
 
@@ -343,7 +408,18 @@ class ExportAnalyzer:
         return 0
 
     def _read_string(self, offset: int) -> str:
-        """Read null-terminated ASCII string from offset."""
+        """Read null-terminated ASCII string from offset.
+
+        Reads ASCII bytes from the specified offset until a null terminator
+        is found.
+
+        Args:
+            offset: File offset to start reading from.
+
+        Returns:
+            Null-terminated string read from offset, or empty string if
+            invalid.
+        """
         if offset >= len(self.pe_data):
             return ""
 
@@ -357,15 +433,42 @@ class ExportAnalyzer:
             return ""
 
     def get_export_by_name(self, name: str) -> ExportEntry | None:
-        """Get export entry by function name."""
+        """Get export entry by function name.
+
+        Searches the exports list for an entry with the specified function
+        name.
+
+        Args:
+            name: Function name to search for.
+
+        Returns:
+            ExportEntry if found, None otherwise.
+        """
         return next((export for export in self.exports if export.name == name), None)
 
     def get_export_by_ordinal(self, ordinal: int) -> ExportEntry | None:
-        """Get export entry by ordinal."""
+        """Get export entry by ordinal.
+
+        Searches the exports list for an entry with the specified ordinal
+        number.
+
+        Args:
+            ordinal: Export ordinal number to search for.
+
+        Returns:
+            ExportEntry if found, None otherwise.
+        """
         return next((export for export in self.exports if export.ordinal == ordinal), None)
 
     def get_license_related_exports(self) -> list[ExportEntry]:
-        """Identify exports related to license validation and activation."""
+        """Identify exports related to license validation and activation.
+
+        Filters exports by checking for license-related keywords in export
+        names.
+
+        Returns:
+            List of ExportEntry objects matching license-related keywords.
+        """
         license_exports: list[ExportEntry] = []
 
         for export in self.exports:
@@ -380,7 +483,15 @@ class ExportAnalyzer:
         return license_exports
 
     def categorize_license_exports(self) -> dict[str, list[ExportEntry]]:
-        """Categorize license-related exports by function type."""
+        """Categorize license-related exports by function type.
+
+        Groups license-related exports into categories: validation,
+        activation, registration, serial, trial, and deactivation.
+
+        Returns:
+            Dictionary mapping category names to lists of matching
+            ExportEntry objects.
+        """
         categories: dict[str, list[ExportEntry]] = {
             "validation": [],
             "activation": [],
@@ -416,7 +527,14 @@ class ExportAnalyzer:
         return categories
 
     def get_crypto_related_exports(self) -> list[ExportEntry]:
-        """Identify exports related to cryptographic operations."""
+        """Identify exports related to cryptographic operations.
+
+        Filters exports by checking for cryptographic function keywords
+        such as encryption, hashing, and signing operations.
+
+        Returns:
+            List of ExportEntry objects matching crypto-related keywords.
+        """
         crypto_exports: list[ExportEntry] = []
 
         for export in self.exports:
@@ -431,7 +549,14 @@ class ExportAnalyzer:
         return crypto_exports
 
     def get_registry_related_exports(self) -> list[ExportEntry]:
-        """Identify exports related to registry operations."""
+        """Identify exports related to registry operations.
+
+        Filters exports by checking for Windows registry operation keywords
+        such as registry access, HKEY operations, and registry reads/writes.
+
+        Returns:
+            List of ExportEntry objects matching registry-related keywords.
+        """
         registry_exports: list[ExportEntry] = []
 
         for export in self.exports:
@@ -446,7 +571,14 @@ class ExportAnalyzer:
         return registry_exports
 
     def get_network_related_exports(self) -> list[ExportEntry]:
-        """Identify exports related to network operations."""
+        """Identify exports related to network operations.
+
+        Filters exports by checking for network operation keywords such as
+        socket, HTTP, and network connectivity functions.
+
+        Returns:
+            List of ExportEntry objects matching network-related keywords.
+        """
         network_exports: list[ExportEntry] = []
 
         for export in self.exports:
@@ -461,7 +593,18 @@ class ExportAnalyzer:
         return network_exports
 
     def is_mangled_name(self, name: str) -> bool:
-        """Check if export name is C++ mangled."""
+        """Check if export name is C++ mangled.
+
+        Detects MSVC-style mangling (starting with ?) and Itanium-style
+        mangling (starting with _Z).
+
+        Args:
+            name: Export name to check.
+
+        Returns:
+            True if name is mangled (MSVC or Itanium format), False
+            otherwise.
+        """
         if not name:
             return False
 
@@ -475,6 +618,13 @@ class ExportAnalyzer:
 
         This is a simplified demangler for MSVC name mangling.
         For production use, integrate with undname or similar tools.
+        Extracts the base name from MSVC-style mangled names.
+
+        Args:
+            name: Potentially mangled export name.
+
+        Returns:
+            Demangled name if mangled, original name otherwise.
         """
         if not self.is_mangled_name(name):
             return name
@@ -488,14 +638,34 @@ class ExportAnalyzer:
         return name
 
     def search_exports(self, search_term: str) -> list[ExportEntry]:
-        """Search exports by name substring."""
+        """Search exports by name substring.
+
+        Performs case-insensitive substring matching against all export
+        function names.
+
+        Args:
+            search_term: Substring to search for in export names.
+
+        Returns:
+            List of ExportEntry objects with matching names.
+        """
         search_lower: str = search_term.lower()
 
         results: list[ExportEntry] = [export for export in self.exports if export.name and search_lower in export.name.lower()]
         return results
 
     def filter_exports_by_pattern(self, pattern: str) -> list[ExportEntry]:
-        """Filter exports matching regex pattern."""
+        """Filter exports matching regex pattern.
+
+        Applies a regular expression pattern to filter exports by name,
+        allowing for flexible pattern-based matching.
+
+        Args:
+            pattern: Regex pattern to match against export names.
+
+        Returns:
+            List of ExportEntry objects with names matching the pattern.
+        """
         results: list[ExportEntry] = []
 
         try:
@@ -508,7 +678,15 @@ class ExportAnalyzer:
         return results
 
     def get_export_statistics(self) -> dict[str, Any]:
-        """Generate comprehensive export statistics."""
+        """Generate comprehensive export statistics.
+
+        Computes statistics including total exports, named vs ordinal-only,
+        forwarded exports, and categorization by license, crypto, registry,
+        and network keywords.
+
+        Returns:
+            Dictionary containing counts of exports by various categories.
+        """
         stats: dict[str, Any] = {
             "total_exports": len(self.exports),
             "named_exports": len([e for e in self.exports if e.name]),
@@ -528,7 +706,16 @@ class ExportAnalyzer:
         return stats
 
     def get_export_summary(self) -> dict[str, Any]:
-        """Generate export summary with API categorization."""
+        """Generate export summary with API categorization.
+
+        Creates a comprehensive summary including DLL metadata, base address,
+        and categorization of exports by type (file operations, memory,
+        process, registry, network, cryptography, and licensing).
+
+        Returns:
+            Dictionary with total export count, DLL name, base address, and
+            API categorization.
+        """
         summary: dict[str, Any] = {
             "total_exports": len(self.exports),
             "dll_name": Path(self.binary_path).name,
@@ -574,7 +761,18 @@ class ExportAnalyzer:
         return summary
 
     def analyze_export_usage(self, exports: list[ExportEntry]) -> dict[str, Any]:
-        """Analyze usage patterns of specific exports."""
+        """Analyze usage patterns of specific exports.
+
+        Categorizes provided exports into validation, activation, serial,
+        and trial functions with metadata including addresses and ordinals.
+
+        Args:
+            exports: List of ExportEntry objects to analyze.
+
+        Returns:
+            Dictionary mapping function categories to lists of matching
+            exports with metadata.
+        """
         analysis: dict[str, Any] = {
             "validation_functions": [],
             "activation_functions": [],
@@ -619,7 +817,16 @@ class ExportAnalyzer:
         return analysis
 
     def identify_bypass_targets(self) -> list[ExportEntry]:
-        """Identify exports that are high-priority bypass targets."""
+        """Identify exports that are high-priority bypass targets.
+
+        Filters exports matching high-priority keywords including validation,
+        verification, authentication, activation, registration, and trial-
+        related functions.
+
+        Returns:
+            List of ExportEntry objects matching high-priority keyword
+            patterns.
+        """
         targets: list[ExportEntry] = []
 
         high_priority_keywords: list[str] = [
@@ -648,7 +855,19 @@ class ExportAnalyzer:
 
     @staticmethod
     def compare_exports(analyzer1: "ExportAnalyzer", analyzer2: "ExportAnalyzer") -> dict[str, Any]:
-        """Compare exports between two versions of same DLL."""
+        """Compare exports between two versions of same DLL.
+
+        Identifies exports added in the second version, removed from the
+        first, and common exports between both versions.
+
+        Args:
+            analyzer1: First ExportAnalyzer instance.
+            analyzer2: Second ExportAnalyzer instance.
+
+        Returns:
+            Dictionary with added_exports, removed_exports, and common_exports
+            lists.
+        """
         exports1_names: set[str] = {e.name for e in analyzer1.exports if e.name}
         exports2_names: set[str] = {e.name for e in analyzer2.exports if e.name}
 
@@ -668,11 +887,15 @@ class ExportAnalyzer:
 def analyze_exports(binary_path: str) -> dict[str, Any]:
     """Convenience function to analyze exports from a PE binary.
 
+    Creates an ExportAnalyzer, performs analysis, and returns comprehensive
+    export data including list, statistics, summary, and license-related
+    exports.
+
     Args:
-        binary_path: Path to PE binary
+        binary_path: Path to PE binary.
 
     Returns:
-        Dictionary containing exports, statistics, and summary
+        Dictionary containing exports, statistics, and summary.
     """
     analyzer = ExportAnalyzer(binary_path)
     analyzer.analyze()

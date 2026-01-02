@@ -28,7 +28,6 @@ import subprocess
 import tempfile
 import threading
 import traceback
-import types
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypedDict, cast
 
@@ -145,7 +144,12 @@ class PatchApplicationResult(TypedDict, total=False):
 
 
 def _emit_output(app_instance: object | None, message: str) -> None:
-    """Safely emit output message to app instance if available."""
+    """Safely emit output message to app instance if available.
+
+    Args:
+        app_instance: Application instance with update_output signal/method (optional).
+        message: The message to emit.
+    """
     if app_instance is None:
         return
     update_output = getattr(app_instance, "update_output", None)
@@ -158,7 +162,12 @@ def _emit_output(app_instance: object | None, message: str) -> None:
 
 
 def _emit_status(app_instance: object | None, message: str) -> None:
-    """Safely emit status message to app instance if available."""
+    """Safely emit status message to app instance if available.
+
+    Args:
+        app_instance: Application instance with update_status signal/method (optional).
+        message: The status message to emit.
+    """
     if app_instance is None:
         return
     update_status = getattr(app_instance, "update_status", None)
@@ -171,7 +180,12 @@ def _emit_status(app_instance: object | None, message: str) -> None:
 
 
 def _emit_analysis_results(app_instance: object | None, message: str) -> None:
-    """Safely emit analysis results to app instance if available."""
+    """Safely emit analysis results to app instance if available.
+
+    Args:
+        app_instance: Application instance with update_analysis_results signal/method (optional).
+        message: The analysis results message to emit.
+    """
     if app_instance is None:
         return
     update_results = getattr(app_instance, "update_analysis_results", None)
@@ -184,7 +198,15 @@ def _emit_analysis_results(app_instance: object | None, message: str) -> None:
 
 
 def _get_binary_path(app_instance: object | None, binary_path: str | None = None) -> str | None:
-    """Get binary path from app instance or provided path."""
+    """Get binary path from app instance or provided path.
+
+    Args:
+        app_instance: Application instance with binary_path attribute (optional).
+        binary_path: Binary path string (optional).
+
+    Returns:
+        The binary path if found, None otherwise.
+    """
     if binary_path:
         return binary_path
     if app_instance is not None:
@@ -193,7 +215,15 @@ def _get_binary_path(app_instance: object | None, binary_path: str | None = None
 
 
 def get_resource_path(package: str, resource_path: str) -> str:
-    """Get the file path for a resource in a package."""
+    """Get the file path for a resource in a package.
+
+    Args:
+        package: The package name (e.g., 'intellicrack.scripts').
+        resource_path: The resource path relative to the package.
+
+    Returns:
+        The absolute file path to the resource.
+    """
     try:
         if hasattr(importlib_res, "files"):
             return str(importlib_res.files(package).joinpath(resource_path))
@@ -1063,6 +1093,9 @@ def process_ghidra_analysis_results(app: Any, json_path: str) -> None:
         app: Application instance for output updates.
         json_path: Path to the JSON results file.
 
+    Raises:
+        FileNotFoundError: If the JSON results file does not exist.
+        ValueError: If the JSON file is invalid or malformed.
     """
     try:
         # Validate file path
@@ -1337,8 +1370,12 @@ def run_memory_optimized_analysis(
         **kwargs: Additional configuration options.
 
     Returns:
-        Dictionary containing status, message, and memory-optimized analysis results.
+        Dictionary containing status, message, file_info, entropy, patterns_found, and memory_usage.
 
+    Raises:
+        OSError: If file operations fail or cannot be performed.
+        ValueError: If analysis data is invalid or malformed.
+        RuntimeError: If analysis operations encounter runtime errors.
     """
     logger.debug("Memory optimized analysis called with binary_path: %s, %s kwargs: %s", binary_path, len(kwargs), list(kwargs.keys()))
     from ...core.processing.memory_loader import MemoryOptimizedBinaryLoader
@@ -1612,6 +1649,15 @@ def run_selected_patching(app_instance: object | None = None, patch_type: str | 
         logger.info("Running selected patching: %s", patch_type)
 
         def run_memory_patching(app: object, **kw: object) -> dict[str, object]:
+            """Configure memory patching operation with target address and bytes.
+
+            Args:
+                app: Application instance for output updates.
+                **kw: Configuration options including 'address', 'bytes', 'pid', 'verify'.
+
+            Returns:
+                Configuration status and patch details.
+            """
             patch_addr_raw = kw.get("address", 0)
             patch_bytes_raw = kw.get("bytes", b"")
             process_id = kw.get("pid")
@@ -1631,6 +1677,15 @@ def run_selected_patching(app_instance: object | None = None, patch_type: str | 
             return result
 
         def run_import_patching(app: object, **kw: object) -> dict[str, object]:
+            """Configure import patching operation to redirect function calls.
+
+            Args:
+                app: Application instance for output updates.
+                **kw: Configuration options including 'dll', 'function', 'new_address', 'rebuild_iat'.
+
+            Returns:
+                Configuration status and import patch details.
+            """
             dll_name_raw = kw.get("dll", "")
             func_name_raw = kw.get("function", "")
             new_addr_raw = kw.get("new_address", 0)
@@ -1651,6 +1706,15 @@ def run_selected_patching(app_instance: object | None = None, patch_type: str | 
             return result
 
         def run_targeted_patching(app: object, **kw: object) -> dict[str, object]:
+            """Configure targeted patching operation to find and replace byte patterns.
+
+            Args:
+                app: Application instance for output updates.
+                **kw: Configuration options including 'pattern', 'replacement', 'max_patches', 'backup'.
+
+            Returns:
+                Configuration status and pattern patch details.
+            """
             target_pattern_raw = kw.get("pattern", b"")
             replacement_raw = kw.get("replacement", b"")
             max_patches_raw = kw.get("max_patches", -1)
@@ -1671,6 +1735,15 @@ def run_selected_patching(app_instance: object | None = None, patch_type: str | 
             return result
 
         def run_custom_patching(app: object, **kw: object) -> dict[str, object]:
+            """Configure custom patching operation using a script-based approach.
+
+            Args:
+                app: Application instance for output updates.
+                **kw: Configuration options including 'script', 'config', 'dry_run'.
+
+            Returns:
+                Configuration status and custom patching details.
+            """
             script_path_raw = kw.get("script", "")
             patch_config_raw = kw.get("config", {})
             dry_run_raw = kw.get("dry_run", False)
@@ -2093,7 +2166,6 @@ def _run_ghidra_thread(app: object, cmd: list[str], temp_dir: str) -> None:
         app: Application instance for output updates.
         cmd: Command list to execute Ghidra.
         temp_dir: Temporary directory path for Ghidra project.
-
     """
     try:
         # Run Ghidra
@@ -2272,7 +2344,7 @@ def run_frida_analysis(app_instance: object | None = None, binary_path: str | No
         **kwargs: Additional analysis options.
 
     Returns:
-        Dictionary with analysis results
+        dict[str, object]: Dictionary containing status, message, and analysis results.
 
     """
     try:
@@ -2459,7 +2531,7 @@ def run_dynamic_instrumentation(app_instance: object | None = None, binary_path:
         **kwargs: Additional options including script_path, process_id.
 
     Returns:
-        Dictionary with instrumentation results
+        dict[str, object]: Dictionary containing status, message, and instrumentation results.
 
     """
     try:
@@ -2552,7 +2624,7 @@ def run_comprehensive_analysis(app_instance: object | None = None, binary_path: 
         **kwargs: Additional configuration options.
 
     Returns:
-        Dictionary with comprehensive analysis results.
+        dict[str, object]: Dictionary containing status, message, and comprehensive analysis results.
 
     """
     logger.debug("Comprehensive analysis called with binary_path: %s, %s kwargs: %s", binary_path, len(kwargs), list(kwargs.keys()))
@@ -2581,7 +2653,7 @@ def run_ghidra_analysis(app_instance: object | None = None, binary_path: str | N
         **kwargs: Additional configuration options.
 
     Returns:
-        Dictionary with Ghidra analysis results.
+        dict[str, object]: Dictionary containing status, message, and Ghidra analysis results.
 
     """
     logger.debug("Ghidra analysis called with binary_path: %s, %s kwargs: %s", binary_path, len(kwargs), list(kwargs.keys()))
@@ -2755,6 +2827,12 @@ def run_frida_script(
             messages: list[dict[str, Any]] = []
 
             def on_message(message: Any, data: Any) -> None:
+                """Handle Frida script messages and errors.
+
+                Args:
+                    message: The message object from Frida script.
+                    data: Associated data from the script execution.
+                """
                 messages.append({"message": message, "data": data})
                 if isinstance(message, dict):
                     if message.get("type") == "send":
@@ -2992,7 +3070,14 @@ def run_autonomous_patching(app_instance: object | None = None, **kwargs: object
 
 
 def _autonomous_analyze_binary(target_binary: str) -> BinaryAnalysisResult:
-    """Analyze binary for autonomous patching."""
+    """Analyze binary for autonomous patching.
+
+    Args:
+        target_binary: Path to the target binary file.
+
+    Returns:
+        BinaryAnalysisResult: Analysis result containing success status, findings, and vulnerability count.
+    """
     findings: list[str] = []
     result: BinaryAnalysisResult = {"success": False, "findings": findings, "vulnerability_count": 0}
 
@@ -3030,12 +3115,20 @@ def _autonomous_analyze_binary(target_binary: str) -> BinaryAnalysisResult:
 
 
 def _autonomous_detect_targets(target_binary: str, analysis_result: BinaryAnalysisResult) -> TargetDetectionResult:
-    """Detect patching targets (license checks, vulnerabilities)."""
+    """Detect patching targets (license checks, vulnerabilities).
+
+    Args:
+        target_binary: Path to the target binary file.
+        analysis_result: Binary analysis result from _autonomous_analyze_binary.
+
+    Returns:
+        TargetDetectionResult: Detection result containing targets_found, license_checks, and vulnerabilities.
+    """
     logger.debug("Detecting targets for %s with analysis result keys: %s", target_binary, list(analysis_result.keys()))
     targets_found: list[str] = []
     license_checks: list[str] = []
     vulnerabilities_raw: list[dict[str, Any]] = []
-    result: TargetDetectionResult = {"targets_found": targets_found, "license_checks": license_checks, "vulnerabilities": cast(list[VulnerabilityInfo], vulnerabilities_raw)}
+    result: TargetDetectionResult = {"targets_found": targets_found, "license_checks": license_checks, "vulnerabilities": cast("list[VulnerabilityInfo]", vulnerabilities_raw)}
 
     try:
         # Use existing vulnerability detection
@@ -3069,7 +3162,16 @@ def _autonomous_detect_targets(target_binary: str, analysis_result: BinaryAnalys
 
 
 def _autonomous_generate_patches(target_binary: str, detection_result: TargetDetectionResult, strategy: str) -> PatchGenerationResult:
-    """Generate patches based on detected targets."""
+    """Generate patches based on detected targets.
+
+    Args:
+        target_binary: Path to the target binary file.
+        detection_result: Target detection result from _autonomous_detect_targets.
+        strategy: Patching strategy to apply (e.g., 'minimal', 'aggressive').
+
+    Returns:
+        PatchGenerationResult: Generation result containing patches list and patch_count.
+    """
     logger.debug("Generating patches for %s with strategy: %s, detection keys: %s", target_binary, strategy, list(detection_result.keys()))
     result: PatchGenerationResult = {"patches": [], "patch_count": 0}
 
@@ -3087,7 +3189,7 @@ def _autonomous_generate_patches(target_binary: str, detection_result: TargetDet
             if patch := _generate_license_patch(license_check, strategy):
                 patches.append(patch)
 
-        result["patches"] = cast(list[PatchInfo], patches)
+        result["patches"] = cast("list[PatchInfo]", patches)
         result["patch_count"] = len(patches)
 
     except Exception as e:
@@ -3097,7 +3199,15 @@ def _autonomous_generate_patches(target_binary: str, detection_result: TargetDet
 
 
 def _generate_vulnerability_patch(vulnerability: dict[str, Any], strategy: str) -> dict[str, Any] | None:
-    """Generate patch for specific vulnerability."""
+    """Generate patch for specific vulnerability.
+
+    Args:
+        vulnerability: Vulnerability information dictionary.
+        strategy: Patching strategy to apply.
+
+    Returns:
+        dict[str, Any] | None: Patch dictionary if operations could be generated, None otherwise.
+    """
     operations: list[dict[str, Any]] = []
     patch: dict[str, Any] = {
         "type": "vulnerability",
@@ -3131,7 +3241,15 @@ def _generate_vulnerability_patch(vulnerability: dict[str, Any], strategy: str) 
 
 
 def _generate_license_patch(license_check: str, strategy: str) -> dict[str, Any]:
-    """Generate patch for license check."""
+    """Generate patch for license check.
+
+    Args:
+        license_check: License check string to patch.
+        strategy: Patching strategy to apply.
+
+    Returns:
+        dict[str, Any]: Patch dictionary containing type, license_check, strategy, and operations.
+    """
     return {
         "type": "license",
         "license_check": license_check,
@@ -3148,7 +3266,14 @@ def _generate_license_patch(license_check: str, strategy: str) -> dict[str, Any]
 
 
 def _autonomous_backup_original(target_binary: str) -> BackupResult:
-    """Create backup of original binary."""
+    """Create backup of original binary.
+
+    Args:
+        target_binary: Path to the target binary file.
+
+    Returns:
+        BackupResult: Backup result containing success status and backup_path.
+    """
     result: BackupResult = {"success": False, "backup_path": ""}
 
     try:
@@ -3167,11 +3292,20 @@ def _autonomous_backup_original(target_binary: str) -> BackupResult:
 
 
 def _autonomous_apply_patches(target_binary: str, patches: list[PatchInfo], strategy: str) -> PatchApplicationResult:
-    """Apply generated patches to binary."""
+    """Apply generated patches to binary.
+
+    Args:
+        target_binary: Path to the target binary file.
+        patches: List of patches to apply.
+        strategy: Patching strategy to apply (e.g., 'minimal', 'aggressive').
+
+    Returns:
+        PatchApplicationResult: Application result containing applied_count, failed_count, and results.
+    """
     results_raw: list[dict[str, Any]] = []
     applied_count = 0
     failed_count = 0
-    result: PatchApplicationResult = {"applied_count": applied_count, "failed_count": failed_count, "results": cast(list[PatchInfo], results_raw)}
+    result: PatchApplicationResult = {"applied_count": applied_count, "failed_count": failed_count, "results": cast("list[PatchInfo]", results_raw)}
 
     try:
         for patch in patches:
@@ -3194,7 +3328,16 @@ def _autonomous_apply_patches(target_binary: str, patches: list[PatchInfo], stra
 
 
 def _apply_single_patch(target_binary: str, patch: dict[str, Any], strategy: str) -> dict[str, Any]:
-    """Apply a single patch to the binary."""
+    """Apply a single patch to the binary.
+
+    Args:
+        target_binary: Path to the target binary file.
+        patch: Patch dictionary containing operations to apply.
+        strategy: Patching strategy to apply.
+
+    Returns:
+        dict[str, Any]: Result dictionary containing success status and message.
+    """
     logger.debug("Applying single patch to %s with strategy: %s, patch type: %s", target_binary, strategy, patch.get("type", "unknown"))
     result = {"success": False, "message": ""}
 
@@ -3289,7 +3432,14 @@ def _apply_single_patch(target_binary: str, patch: dict[str, Any], strategy: str
 
 
 def _autonomous_verify_patches(target_binary: str) -> dict[str, Any]:
-    """Verify effectiveness of applied patches."""
+    """Verify effectiveness of applied patches.
+
+    Args:
+        target_binary: Path to the target binary file.
+
+    Returns:
+        dict[str, Any]: Verification result containing verification_passed, confidence, and tests.
+    """
     tests: list[str] = []
     result: dict[str, Any] = {"verification_passed": False, "tests": tests}
 
@@ -3310,7 +3460,14 @@ def _autonomous_verify_patches(target_binary: str) -> dict[str, Any]:
 
 
 def _generate_patch_statistics(result: dict[str, Any]) -> dict[str, Any]:
-    """Generate statistics from patching results."""
+    """Generate statistics from patching results.
+
+    Args:
+        result: Patching result dictionary.
+
+    Returns:
+        dict[str, Any]: Statistics dictionary containing total_patches_found, patches_applied, success_rate, analysis_phases_completed, and processing_time.
+    """
     return {
         "total_patches_found": len(result.get("patches_found", [])),
         "patches_applied": result.get("patches_applied", 0),
@@ -3321,7 +3478,14 @@ def _generate_patch_statistics(result: dict[str, Any]) -> dict[str, Any]:
 
 
 def _generate_autonomous_recommendations(result: dict[str, Any]) -> list[str]:
-    """Generate recommendations based on patching results."""
+    """Generate recommendations based on patching results.
+
+    Args:
+        result: Patching result dictionary.
+
+    Returns:
+        list[str]: List of recommendation strings based on patching outcome.
+    """
     recommendations = []
 
     if result.get("patches_applied", 0) == 0:
@@ -3348,7 +3512,6 @@ def run_ghidra_analysis_gui(app_instance: object | None = None, **kwargs: object
     Returns:
         Dictionary containing status, message, and Ghidra analysis results with
         license_analysis sub-section.
-
     """
     try:
         logger.info("Starting Ghidra GUI analysis")

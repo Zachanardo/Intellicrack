@@ -23,12 +23,12 @@ def run_process_with_output(cmd: list[str], encoding: str = "utf-8", timeout: in
     """Run a process and capture stdout/stderr.
 
     Args:
-        cmd: Command list to execute
-        encoding: Text encoding for output
-        timeout: Optional timeout in seconds
+        cmd: Command list to execute.
+        encoding: Text encoding for output.
+        timeout: Optional timeout in seconds.
 
     Returns:
-        tuple: (return_code, stdout, stderr)
+        Tuple containing return code, stdout, and stderr as strings.
 
     """
     from .subprocess_utils import create_popen_with_encoding
@@ -40,10 +40,10 @@ def run_ghidra_process(cmd: list[str]) -> tuple[int, str, str]:
     """Run Ghidra subprocess with standard configuration.
 
     Args:
-        cmd: Ghidra command list
+        cmd: Ghidra command list.
 
     Returns:
-        tuple: (return_code, stdout, stderr)
+        Tuple containing return code, stdout, and stderr as strings.
 
     """
     return run_process_with_output(cmd, encoding="utf-8")

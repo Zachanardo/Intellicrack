@@ -3,7 +3,9 @@
 Tests real entropy visualization and graph display functionality.
 """
 
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -15,7 +17,7 @@ from intellicrack.ui.widgets.entropy_graph_widget import EntropyGraphWidget
 
 
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Any:
     """Create QApplication instance."""
     app = QApplication.instance()
     if app is None:
@@ -24,7 +26,7 @@ def qapp() -> QApplication:
 
 
 @pytest.fixture
-def entropy_widget(qapp: QApplication) -> EntropyGraphWidget:
+def entropy_widget(qapp: Any) -> Generator[EntropyGraphWidget, None, None]:
     """Create entropy graph widget."""
     widget = EntropyGraphWidget()
     yield widget

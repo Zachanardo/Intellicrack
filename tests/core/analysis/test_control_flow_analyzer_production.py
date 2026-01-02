@@ -23,16 +23,6 @@ from intellicrack.core.analysis.control_flow_deobfuscation import (
 
 
 @pytest.fixture
-def temp_workspace() -> Path:
-    """Create temporary workspace for test binaries."""
-    import shutil
-
-    temp_dir = tempfile.mkdtemp(prefix="cfg_analysis_test_")
-    yield Path(temp_dir)
-    shutil.rmtree(temp_dir, ignore_errors=True)
-
-
-@pytest.fixture
 def simple_pe_binary(temp_workspace: Path) -> Path:
     """Create minimal PE binary with basic control flow."""
     binary_path = temp_workspace / "simple.exe"

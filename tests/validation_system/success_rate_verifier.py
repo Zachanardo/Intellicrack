@@ -10,7 +10,17 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TypedDict
+
+
+class TestScenarioDict(TypedDict):
+    """Type definition for test scenario dictionaries."""
+
+    version: str
+    total_attempts: int
+    successful_attempts: int
+    test_duration: float
+    failure_reasons: list[str]
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +46,7 @@ class VersionSuccessData:
     failure_reasons: list[str]
     notes: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.total_attempts > 0:
             self.success_rate = self.successful_attempts / self.total_attempts
         else:
@@ -55,7 +65,7 @@ class SuccessRateAnalysis:
     failure_analysis: dict[str, Any]
     recommendations: list[str]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.analysis_timestamp:
             self.analysis_timestamp = datetime.now().isoformat()
 
@@ -72,7 +82,7 @@ class SuccessRateReport:
     improvement_plan: list[str]
     generated_at: str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.generated_at:
             self.generated_at = datetime.now().isoformat()
         if not self.report_id:
@@ -87,7 +97,7 @@ class SuccessRateVerifier:
     Phase 2.5.2.4: Success rate must be ≥ 90% across versions or documented why not.
     """
 
-    def __init__(self, base_dir: Path | None = None):
+    def __init__(self, base_dir: Path | None = None) -> None:
         """Initialize success rate verifier."""
         self.base_dir = base_dir or Path("tests/validation_system")
         self.results_dir = self.base_dir / "success_rate_results"
@@ -110,11 +120,11 @@ class SuccessRateVerifier:
         In a real implementation, this would integrate with actual test execution.
         For validation framework, we simulate comprehensive test data.
         """
-        version_data = []
+        version_data: list[VersionSuccessData] = []
 
         # Simulate comprehensive version testing data
         # This would be replaced with actual test execution results in production
-        test_scenarios = [
+        test_scenarios: list[TestScenarioDict] = [
             {
                 "version": "v11.16.2",
                 "total_attempts": 25,
@@ -199,8 +209,8 @@ class SuccessRateVerifier:
 
     def _analyze_failures(self, version_data: list[VersionSuccessData], overall_rate: float) -> dict[str, Any]:
         """Analyze failure patterns across versions."""
-        failure_categories = {}
-        version_performance = []
+        failure_categories: dict[str, list[dict[str, str]]] = {}
+        version_performance: list[dict[str, Any]] = []
 
         for version in version_data:
             version_performance.append({
@@ -365,7 +375,7 @@ class SuccessRateVerifier:
         logger.info(f"Success rate verification completed: {compliance_status.name}")
         return report
 
-    def _save_success_rate_report(self, report: SuccessRateReport):
+    def _save_success_rate_report(self, report: SuccessRateReport) -> None:
         """Save success rate verification report to disk."""
         report_file = self.reports_dir / f"{report.report_id}.json"
 

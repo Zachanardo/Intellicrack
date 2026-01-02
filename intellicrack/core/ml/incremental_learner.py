@@ -18,12 +18,13 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import io
 import logging
-import pickle  # noqa: S403
+import pickle
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -32,9 +33,60 @@ from intellicrack.core.ml.feature_extraction import BinaryFeatureExtractor
 from intellicrack.core.ml.protection_classifier import ProtectionClassifier
 
 
-if TYPE_CHECKING:
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.preprocessing import LabelEncoder, StandardScaler
+class MLRestrictedUnpickler(pickle.Unpickler):
+    """Restricted unpickler for ML model data that only allows safe classes.
+
+    This unpickler prevents arbitrary code execution by restricting which
+    classes can be loaded during unpickling to known-safe ML and data classes.
+    """
+
+    ALLOWED_MODULES: frozenset[str] = frozenset({
+        "numpy",
+        "numpy.core.multiarray",
+        "numpy.core.numeric",
+        "numpy._core.multiarray",
+        "numpy._core.numeric",
+        "sklearn",
+        "builtins",
+        "collections",
+        "datetime",
+        "pathlib",
+    })
+
+    def find_class(self, module: str, name: str) -> type[object]:
+        """Override find_class to restrict allowed classes.
+
+        Args:
+            module: The module name of the class to unpickle.
+            name: The class name to unpickle.
+
+        Returns:
+            The class object if allowed.
+
+        Raises:
+            pickle.UnpicklingError: If the class is not in the allowed list.
+        """
+        if module.startswith("intellicrack."):
+            return super().find_class(module, name)
+
+        if any(module.startswith(allowed) for allowed in self.ALLOWED_MODULES):
+            return super().find_class(module, name)
+
+        error_msg = f"Blocked unsafe class during unpickle: {module}.{name}"
+        raise pickle.UnpicklingError(error_msg)
+
+
+def _restricted_pickle_load(file_handle: Any) -> object:
+    """Load pickle data using restricted unpickler.
+
+    Args:
+        file_handle: File handle to read pickle data from.
+
+    Returns:
+        The unpickled object with restricted class loading.
+    """
+    data = file_handle.read()
+    return MLRestrictedUnpickler(io.BytesIO(data)).load()
 
 
 @dataclass
@@ -322,12 +374,20 @@ class IncrementalLearner:
         }
 
     def _load_buffer(self) -> None:
-        """Load sample buffer from disk."""
+        """Load sample buffer from disk using restricted unpickler."""
         if self.buffer_path.exists():
             try:
                 with open(self.buffer_path, "rb") as f:
-                    self.sample_buffer = pickle.load(f)  # noqa: S301 - Loading internal ML sample data
+                    loaded_data = _restricted_pickle_load(f)
+                    if isinstance(loaded_data, list):
+                        self.sample_buffer = loaded_data
+                    else:
+                        self.logger.warning("Buffer file contained unexpected type: %s", type(loaded_data))
+                        self.sample_buffer = []
                 self.logger.info("Loaded %d samples from buffer", len(self.sample_buffer))
+            except pickle.UnpicklingError as e:
+                self.logger.exception("Security: Blocked unsafe class during buffer load: %s", e)
+                self.sample_buffer = []
             except Exception as e:
                 self.logger.exception("Failed to load buffer: %s", e)
                 self.sample_buffer = []

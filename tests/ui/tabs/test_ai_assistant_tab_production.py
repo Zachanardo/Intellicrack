@@ -12,12 +12,113 @@ Licensed under GNU GPL v3.0
 import sys
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock, patch
 
 import pytest
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from intellicrack.ui.tabs.ai_assistant_tab import AIAssistantTab
+
+
+class FakeAIEngine:
+    """Real test double for AI engine with configurable responses."""
+
+    def __init__(
+        self,
+        model: str = "GPT-4",
+        temperature: float = 0.7,
+        max_tokens: int = 2000,
+    ) -> None:
+        self.model = model
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        self.license_analysis_calls: list[dict[str, Any]] = []
+        self.vulnerability_analysis_calls: list[dict[str, Any]] = []
+        self.bypass_code_calls: list[dict[str, Any]] = []
+        self.query_calls: list[dict[str, Any]] = []
+        self.should_raise_error: bool = False
+        self.error_message: str = "API rate limit exceeded"
+        self.license_response: dict[str, Any] = {
+            "has_license": True,
+            "license_type": "serial_key",
+            "confidence": 0.85,
+            "patterns_found": ["serial validation", "key check"],
+        }
+        self.vulnerability_response: dict[str, Any] = {
+            "vulnerabilities": [
+                {
+                    "type": "buffer_overflow",
+                    "severity": "high",
+                    "location": "0x401000",
+                    "description": "Potential buffer overflow in string handling",
+                }
+            ],
+            "total_found": 1,
+        }
+        self.bypass_code_response: dict[str, Any] = {
+            "code": "MOV EAX, 1\nRET",
+            "language": "assembly",
+            "description": "NOP out license check",
+            "target_address": "0x401234",
+        }
+        self.query_response: dict[str, Any] = {
+            "response": "The license check appears to use RSA-2048 validation",
+            "confidence": 0.75,
+        }
+
+    def analyze_license_patterns(self, binary_path: str) -> dict[str, Any]:
+        """Simulate license pattern analysis."""
+        if self.should_raise_error:
+            raise Exception(self.error_message)
+        self.license_analysis_calls.append({"binary_path": binary_path})
+        return self.license_response
+
+    def analyze_vulnerabilities(self, binary_path: str) -> dict[str, Any]:
+        """Simulate vulnerability analysis."""
+        if self.should_raise_error:
+            raise Exception(self.error_message)
+        self.vulnerability_analysis_calls.append({"binary_path": binary_path})
+        return self.vulnerability_response
+
+    def generate_bypass_code(
+        self,
+        binary_path: str,
+        query: str,
+    ) -> dict[str, Any]:
+        """Simulate bypass code generation."""
+        if self.should_raise_error:
+            raise Exception(self.error_message)
+        self.bypass_code_calls.append({"binary_path": binary_path, "query": query})
+        return self.bypass_code_response
+
+    def query(self, prompt: str, binary_path: str | None = None) -> dict[str, Any]:
+        """Simulate generic query processing."""
+        if self.should_raise_error:
+            raise Exception(self.error_message)
+        self.query_calls.append({"prompt": prompt, "binary_path": binary_path})
+        return self.query_response
+
+
+class FakeQMessageBox:
+    """Real test double for QMessageBox."""
+
+    warning_calls: list[dict[str, Any]] = []
+
+    @classmethod
+    def warning(
+        cls,
+        parent: Any,
+        title: str,
+        message: str,
+    ) -> None:
+        """Track warning dialog calls."""
+        cls.warning_calls.append(
+            {"parent": parent, "title": title, "message": message}
+        )
+
+    @classmethod
+    def reset(cls) -> None:
+        """Reset tracked calls."""
+        cls.warning_calls = []
 
 
 @pytest.fixture
@@ -55,6 +156,18 @@ def mock_binary_path(tmp_path: Path) -> Path:
     return binary_path
 
 
+@pytest.fixture
+def fake_ai_engine() -> FakeAIEngine:
+    """Create fake AI engine instance."""
+    return FakeAIEngine()
+
+
+@pytest.fixture(autouse=True)
+def reset_fake_messagebox() -> None:
+    """Reset FakeQMessageBox before each test."""
+    FakeQMessageBox.reset()
+
+
 class TestAIAssistantTabModelSelection:
     """Tests for AI model selection and configuration."""
 
@@ -63,7 +176,10 @@ class TestAIAssistantTabModelSelection:
         ai_tab: AIAssistantTab,
     ) -> None:
         """Model selector contains all supported AI models."""
-        models = [ai_tab.model_selector.itemText(i) for i in range(ai_tab.model_selector.count())]
+        models = [
+            ai_tab.model_selector.itemText(i)
+            for i in range(ai_tab.model_selector.count())
+        ]
 
         assert "GPT-4" in models
         assert "GPT-3.5-Turbo" in models
@@ -98,84 +214,100 @@ class TestAIAssistantTabAnalysisExecution:
         self,
         ai_tab: AIAssistantTab,
         mock_binary_path: Path,
+        fake_ai_engine: FakeAIEngine,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """License analysis sends binary data to AI model for assessment."""
-        with patch("intellicrack.ui.tabs.ai_assistant_tab.AIEngine") as mock_ai:
-            mock_engine = Mock()
-            mock_engine.analyze_license_patterns.return_value = {
-                "has_license": True,
-                "license_type": "serial_key",
-                "confidence": 0.85,
-                "patterns_found": ["serial validation", "key check"],
-            }
-            mock_ai.return_value = mock_engine
 
-            ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-            ai_tab.analyze_license_patterns()
+        def fake_ai_engine_constructor(
+            model: str = "GPT-4",
+            temperature: float = 0.7,
+            max_tokens: int = 2000,
+        ) -> FakeAIEngine:
+            return fake_ai_engine
 
-            assert mock_engine.analyze_license_patterns.called
-            call_args = mock_engine.analyze_license_patterns.call_args
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.ai_assistant_tab.AIEngine",
+            fake_ai_engine_constructor,
+        )
 
-            assert call_args.kwargs["binary_path"] == str(mock_binary_path)
+        ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
+        ai_tab.analyze_license_patterns()
+
+        assert len(fake_ai_engine.license_analysis_calls) == 1
+        assert (
+            fake_ai_engine.license_analysis_calls[0]["binary_path"]
+            == str(mock_binary_path)
+        )
 
     def test_vulnerability_analysis_sends_binary_to_model(
         self,
         ai_tab: AIAssistantTab,
         mock_binary_path: Path,
+        fake_ai_engine: FakeAIEngine,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Vulnerability analysis sends binary to AI for security assessment."""
-        with patch("intellicrack.ui.tabs.ai_assistant_tab.AIEngine") as mock_ai:
-            mock_engine = Mock()
-            mock_engine.analyze_vulnerabilities.return_value = {
-                "vulnerabilities": [
-                    {
-                        "type": "buffer_overflow",
-                        "severity": "high",
-                        "location": "0x401000",
-                        "description": "Potential buffer overflow in string handling",
-                    }
-                ],
-                "total_found": 1,
-            }
-            mock_ai.return_value = mock_engine
 
-            ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-            ai_tab.analyze_vulnerabilities()
+        def fake_ai_engine_constructor(
+            model: str = "GPT-4",
+            temperature: float = 0.7,
+            max_tokens: int = 2000,
+        ) -> FakeAIEngine:
+            return fake_ai_engine
 
-            assert mock_engine.analyze_vulnerabilities.called
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.ai_assistant_tab.AIEngine",
+            fake_ai_engine_constructor,
+        )
+
+        ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
+        ai_tab.analyze_vulnerabilities()
+
+        assert len(fake_ai_engine.vulnerability_analysis_calls) == 1
 
     def test_code_generation_produces_patch_code(
         self,
         ai_tab: AIAssistantTab,
         mock_binary_path: Path,
+        fake_ai_engine: FakeAIEngine,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Code generation produces actual patch code for license bypass."""
-        with patch("intellicrack.ui.tabs.ai_assistant_tab.AIEngine") as mock_ai:
-            mock_engine = Mock()
-            mock_engine.generate_bypass_code.return_value = {
-                "code": "MOV EAX, 1\nRET",
-                "language": "assembly",
-                "description": "NOP out license check",
-                "target_address": "0x401234",
-            }
-            mock_ai.return_value = mock_engine
 
-            ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-            ai_tab.query_input.setText("Generate bypass for license check at 0x401234")
-            ai_tab.send_query()
+        def fake_ai_engine_constructor(
+            model: str = "GPT-4",
+            temperature: float = 0.7,
+            max_tokens: int = 2000,
+        ) -> FakeAIEngine:
+            return fake_ai_engine
 
-            assert mock_engine.generate_bypass_code.called
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.ai_assistant_tab.AIEngine",
+            fake_ai_engine_constructor,
+        )
+
+        ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
+        ai_tab.query_input.setText("Generate bypass for license check at 0x401234")
+        ai_tab.send_query()
+
+        assert len(fake_ai_engine.bypass_code_calls) == 1
 
     def test_analysis_without_binary_shows_error(
         self,
         ai_tab: AIAssistantTab,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Analysis without loaded binary shows appropriate error."""
         ai_tab.shared_context["current_binary_path"] = None
 
-        with patch("intellicrack.ui.tabs.ai_assistant_tab.QMessageBox.warning") as mock_warning:
-            ai_tab.analyze_license_patterns()
-            assert mock_warning.called
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.ai_assistant_tab.QMessageBox",
+            FakeQMessageBox,
+        )
+
+        ai_tab.analyze_license_patterns()
+        assert len(FakeQMessageBox.warning_calls) == 1
 
 
 class TestAIAssistantTabQueryProcessing:
@@ -185,38 +317,56 @@ class TestAIAssistantTabQueryProcessing:
         self,
         ai_tab: AIAssistantTab,
         mock_binary_path: Path,
+        fake_ai_engine: FakeAIEngine,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Custom query sends to model with binary context."""
-        with patch("intellicrack.ui.tabs.ai_assistant_tab.AIEngine") as mock_ai:
-            mock_engine = Mock()
-            mock_engine.query.return_value = {
-                "response": "The license check appears to use RSA-2048 validation",
-                "confidence": 0.75,
-            }
-            mock_ai.return_value = mock_engine
 
-            ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-            ai_tab.query_input.setText("What type of license protection is used?")
-            ai_tab.send_query()
+        def fake_ai_engine_constructor(
+            model: str = "GPT-4",
+            temperature: float = 0.7,
+            max_tokens: int = 2000,
+        ) -> FakeAIEngine:
+            return fake_ai_engine
 
-            assert mock_engine.query.called
-            call_args = mock_engine.query.call_args
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.ai_assistant_tab.AIEngine",
+            fake_ai_engine_constructor,
+        )
 
-            assert "What type of license protection is used?" in str(call_args)
+        ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
+        ai_tab.query_input.setText("What type of license protection is used?")
+        ai_tab.send_query()
+
+        assert len(fake_ai_engine.query_calls) == 1
+        assert "What type of license protection is used?" in str(
+            fake_ai_engine.query_calls[0]["prompt"]
+        )
 
     def test_empty_query_not_sent_to_model(
         self,
         ai_tab: AIAssistantTab,
+        fake_ai_engine: FakeAIEngine,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Empty query is not sent to AI model."""
-        with patch("intellicrack.ui.tabs.ai_assistant_tab.AIEngine") as mock_ai:
-            mock_engine = Mock()
-            mock_ai.return_value = mock_engine
 
-            ai_tab.query_input.setText("")
-            ai_tab.send_query()
+        def fake_ai_engine_constructor(
+            model: str = "GPT-4",
+            temperature: float = 0.7,
+            max_tokens: int = 2000,
+        ) -> FakeAIEngine:
+            return fake_ai_engine
 
-            assert not mock_engine.query.called
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.ai_assistant_tab.AIEngine",
+            fake_ai_engine_constructor,
+        )
+
+        ai_tab.query_input.setText("")
+        ai_tab.send_query()
+
+        assert len(fake_ai_engine.query_calls) == 0
 
 
 class TestAIAssistantTabResponseFormatting:
@@ -226,60 +376,82 @@ class TestAIAssistantTabResponseFormatting:
         self,
         ai_tab: AIAssistantTab,
         mock_binary_path: Path,
+        fake_ai_engine: FakeAIEngine,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """License analysis response is formatted for display."""
-        with patch("intellicrack.ui.tabs.ai_assistant_tab.AIEngine") as mock_ai:
-            mock_engine = Mock()
-            mock_engine.analyze_license_patterns.return_value = {
-                "has_license": True,
-                "license_type": "hardware_dongle",
-                "confidence": 0.92,
-                "patterns_found": ["HASP detection", "dongle check", "hardware ID"],
-                "bypass_difficulty": "high",
-            }
-            mock_ai.return_value = mock_engine
+        fake_ai_engine.license_response = {
+            "has_license": True,
+            "license_type": "hardware_dongle",
+            "confidence": 0.92,
+            "patterns_found": ["HASP detection", "dongle check", "hardware ID"],
+            "bypass_difficulty": "high",
+        }
 
-            ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-            ai_tab.analyze_license_patterns()
+        def fake_ai_engine_constructor(
+            model: str = "GPT-4",
+            temperature: float = 0.7,
+            max_tokens: int = 2000,
+        ) -> FakeAIEngine:
+            return fake_ai_engine
 
-            response_text = ai_tab.response_display.toPlainText()
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.ai_assistant_tab.AIEngine",
+            fake_ai_engine_constructor,
+        )
 
-            assert "license_type" in response_text
-            assert "hardware_dongle" in response_text
-            assert "0.92" in response_text or "92%" in response_text
+        ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
+        ai_tab.analyze_license_patterns()
+
+        response_text = ai_tab.response_display.toPlainText()
+
+        assert "license_type" in response_text
+        assert "hardware_dongle" in response_text
+        assert "0.92" in response_text or "92%" in response_text
 
     def test_vulnerability_response_shows_severity(
         self,
         ai_tab: AIAssistantTab,
         mock_binary_path: Path,
+        fake_ai_engine: FakeAIEngine,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Vulnerability analysis response shows severity ratings."""
-        with patch("intellicrack.ui.tabs.ai_assistant_tab.AIEngine") as mock_ai:
-            mock_engine = Mock()
-            mock_engine.analyze_vulnerabilities.return_value = {
-                "vulnerabilities": [
-                    {
-                        "type": "format_string",
-                        "severity": "critical",
-                        "location": "0x402000",
-                    },
-                    {
-                        "type": "integer_overflow",
-                        "severity": "medium",
-                        "location": "0x403000",
-                    },
-                ],
-                "total_found": 2,
-            }
-            mock_ai.return_value = mock_engine
+        fake_ai_engine.vulnerability_response = {
+            "vulnerabilities": [
+                {
+                    "type": "format_string",
+                    "severity": "critical",
+                    "location": "0x402000",
+                },
+                {
+                    "type": "integer_overflow",
+                    "severity": "medium",
+                    "location": "0x403000",
+                },
+            ],
+            "total_found": 2,
+        }
 
-            ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-            ai_tab.analyze_vulnerabilities()
+        def fake_ai_engine_constructor(
+            model: str = "GPT-4",
+            temperature: float = 0.7,
+            max_tokens: int = 2000,
+        ) -> FakeAIEngine:
+            return fake_ai_engine
 
-            response_text = ai_tab.response_display.toPlainText()
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.ai_assistant_tab.AIEngine",
+            fake_ai_engine_constructor,
+        )
 
-            assert "critical" in response_text
-            assert "medium" in response_text
+        ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
+        ai_tab.analyze_vulnerabilities()
+
+        response_text = ai_tab.response_display.toPlainText()
+
+        assert "critical" in response_text
+        assert "medium" in response_text
 
 
 class TestAIAssistantTabModelParameters:
@@ -298,27 +470,37 @@ class TestAIAssistantTabModelParameters:
         self,
         ai_tab: AIAssistantTab,
         mock_binary_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Model parameters are correctly passed to AI engine."""
-        with patch("intellicrack.ui.tabs.ai_assistant_tab.AIEngine") as mock_ai:
-            mock_engine = Mock()
-            mock_engine.query.return_value = {"response": "test"}
-            mock_ai.return_value = mock_engine
+        captured_params: dict[str, Any] = {}
 
-            ai_tab.model_selector.setCurrentText("GPT-4")
-            ai_tab.temperature_slider.setValue(70)
-            ai_tab.max_tokens_spin.setValue(1500)
+        def fake_ai_engine_constructor(
+            model: str = "GPT-4",
+            temperature: float = 0.7,
+            max_tokens: int = 2000,
+        ) -> FakeAIEngine:
+            captured_params["model"] = model
+            captured_params["temperature"] = temperature
+            captured_params["max_tokens"] = max_tokens
+            return FakeAIEngine(model=model, temperature=temperature, max_tokens=max_tokens)
 
-            ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-            ai_tab.query_input.setText("Test query")
-            ai_tab.send_query()
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.ai_assistant_tab.AIEngine",
+            fake_ai_engine_constructor,
+        )
 
-            assert mock_ai.called
-            call_kwargs = mock_ai.call_args.kwargs
+        ai_tab.model_selector.setCurrentText("GPT-4")
+        ai_tab.temperature_slider.setValue(70)
+        ai_tab.max_tokens_spin.setValue(1500)
 
-            assert call_kwargs.get("model") == "GPT-4"
-            assert call_kwargs.get("temperature") == 0.7
-            assert call_kwargs.get("max_tokens") == 1500
+        ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
+        ai_tab.query_input.setText("Test query")
+        ai_tab.send_query()
+
+        assert captured_params.get("model") == "GPT-4"
+        assert captured_params.get("temperature") == 0.7
+        assert captured_params.get("max_tokens") == 1500
 
 
 class TestAIAssistantTabErrorHandling:
@@ -328,19 +510,30 @@ class TestAIAssistantTabErrorHandling:
         self,
         ai_tab: AIAssistantTab,
         mock_binary_path: Path,
+        fake_ai_engine: FakeAIEngine,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Model errors are displayed to user."""
-        with patch("intellicrack.ui.tabs.ai_assistant_tab.AIEngine") as mock_ai:
-            mock_engine = Mock()
-            mock_engine.query.side_effect = Exception("API rate limit exceeded")
-            mock_ai.return_value = mock_engine
+        fake_ai_engine.should_raise_error = True
 
-            ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-            ai_tab.query_input.setText("Test query")
-            ai_tab.send_query()
+        def fake_ai_engine_constructor(
+            model: str = "GPT-4",
+            temperature: float = 0.7,
+            max_tokens: int = 2000,
+        ) -> FakeAIEngine:
+            return fake_ai_engine
 
-            response_text = ai_tab.response_display.toPlainText()
-            assert "error" in response_text.lower() or "failed" in response_text.lower()
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.ai_assistant_tab.AIEngine",
+            fake_ai_engine_constructor,
+        )
+
+        ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
+        ai_tab.query_input.setText("Test query")
+        ai_tab.send_query()
+
+        response_text = ai_tab.response_display.toPlainText()
+        assert "error" in response_text.lower() or "failed" in response_text.lower()
 
     def test_invalid_model_selection_handled(
         self,

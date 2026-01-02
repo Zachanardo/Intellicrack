@@ -33,13 +33,12 @@ from typing import TYPE_CHECKING, Any, cast
 if TYPE_CHECKING:
     import frida.core
 
-from intellicrack.utils.type_safety import validate_type
 
-
+frida: types.ModuleType | None
 try:
     import frida
 except ImportError:
-    frida = None  # type: ignore[assignment]
+    frida = None
 
 
 @dataclass
@@ -111,6 +110,9 @@ class StalkerSession:
             output_dir: Directory for trace output files
             message_callback: Optional callback for status messages
 
+        Raises:
+            ImportError: If Frida is not installed.
+
         """
         if frida is None:
             raise ImportError("Frida is not installed. Install with: pip install frida-tools")
@@ -137,11 +139,30 @@ class StalkerSession:
         self._is_active = False
 
     def _log(self, message: str) -> None:
-        """Log message via callback."""
+        """Log message via callback.
+
+        Args:
+            message: Message to log.
+
+        Returns:
+            None
+
+        """
         self.message_callback(f"[StalkerSession] {message}")
 
-    def _on_message(self, message: frida.core.ScriptPayloadMessage | frida.core.ScriptErrorMessage, data: bytes | None) -> None:
-        """Handle messages from Frida script."""
+    def _on_message(
+        self,
+        message: frida.core.ScriptPayloadMessage | frida.core.ScriptErrorMessage,
+        data: bytes | None,
+    ) -> None:
+        """Handle messages from Frida script.
+
+        Args:
+            message: Message payload from Frida script containing status or error
+                information.
+            data: Optional binary data attached to message.
+
+        """
         message_dict = cast("dict[str, Any]", message)
         try:
             if message_dict.get("type") == "send":
@@ -185,7 +206,15 @@ class StalkerSession:
             self._log(f"Message handler error: {e}")
 
     def _handle_api_call(self, payload: dict[str, Any]) -> None:
-        """Process API call event."""
+        """Process API call event.
+
+        Args:
+            payload: Event payload containing API call data.
+
+        Returns:
+            None
+
+        """
         data = payload.get("data", {})
         api_call = APICallEvent(
             api_name=data.get("api", "unknown"),
@@ -198,7 +227,15 @@ class StalkerSession:
         self.api_calls.append(api_call)
 
     def _handle_licensing_event(self, payload: dict[str, Any]) -> None:
-        """Process licensing-related event."""
+        """Process licensing-related event.
+
+        Args:
+            payload: Event payload containing licensing event data.
+
+        Returns:
+            None
+
+        """
         data = payload.get("data", {})
         caller = data.get("caller", {})
         key = f"{caller.get('module', 'unknown')}:{caller.get('offset', '0x0')}"
@@ -206,7 +243,15 @@ class StalkerSession:
         self._log(f"Licensing event: {data.get('api', '')} from {key}")
 
     def _handle_progress(self, payload: dict[str, Any]) -> None:
-        """Process progress update."""
+        """Process progress update.
+
+        Args:
+            payload: Event payload containing progress data.
+
+        Returns:
+            None
+
+        """
         instructions = payload.get("instructions", 0)
         blocks = payload.get("blocks", 0)
         coverage = payload.get("coverage_entries", 0)
@@ -222,7 +267,15 @@ class StalkerSession:
         )
 
     def _handle_trace_complete(self, payload: dict[str, Any]) -> None:
-        """Process complete trace data."""
+        """Process complete trace data.
+
+        Args:
+            payload: Event payload containing trace completion data.
+
+        Returns:
+            None
+
+        """
         data = payload.get("data", {})
 
         self.stats.total_instructions = data.get("total_instructions", 0)
@@ -249,7 +302,15 @@ class StalkerSession:
         self._save_trace_results(data)
 
     def _handle_function_trace(self, payload: dict[str, Any]) -> None:
-        """Process function trace data."""
+        """Process function trace data.
+
+        Args:
+            payload: Event payload containing function trace data.
+
+        Returns:
+            None
+
+        """
         function = payload.get("function", "unknown")
         trace_length = payload.get("trace_length", 0)
         trace_data = payload.get("trace", [])
@@ -273,7 +334,15 @@ class StalkerSession:
         self._save_json(output_file, {"function": function, "trace": trace_data})
 
     def _handle_module_coverage(self, payload: dict[str, Any]) -> None:
-        """Process module coverage data."""
+        """Process module coverage data.
+
+        Args:
+            payload: Event payload containing module coverage data.
+
+        Returns:
+            None
+
+        """
         module = payload.get("module", "unknown")
         blocks_covered = payload.get("blocks_covered", 0)
         coverage_pct = payload.get("coverage_percentage", 0.0)
@@ -284,13 +353,30 @@ class StalkerSession:
         self._save_json(output_file, payload)
 
     def _save_trace_results(self, data: dict[str, Any]) -> None:
-        """Save complete trace results to file."""
+        """Save complete trace results to file.
+
+        Args:
+            data: Trace results to save.
+
+        Returns:
+            None
+
+        """
         output_file = os.path.join(self.output_dir, "trace_results.json")
         self._save_json(output_file, data)
         self._log(f"Trace results saved to {output_file}")
 
     def _save_json(self, filepath: str, data: object) -> None:
-        """Save data to JSON file."""
+        """Save data to JSON file.
+
+        Args:
+            filepath: Path to output JSON file.
+            data: Data to serialize and save.
+
+        Returns:
+            None
+
+        """
         try:
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
@@ -301,7 +387,10 @@ class StalkerSession:
         """Start Stalker session and attach to process.
 
         Returns:
-            True if successfully started, False otherwise
+            True if successfully started, False otherwise.
+
+        Raises:
+            ImportError: If Frida is not installed.
 
         """
         try:
@@ -342,11 +431,11 @@ class StalkerSession:
         """Trace execution of a specific function.
 
         Args:
-            module_name: Name of module containing function
-            function_name: Name of function to trace
+            module_name: Name of module containing function.
+            function_name: Name of function to trace.
 
         Returns:
-            True if trace started successfully
+            True if trace started successfully, False otherwise.
 
         """
         if not self._is_active or not self.script:
@@ -365,10 +454,10 @@ class StalkerSession:
         """Collect code coverage for specific module.
 
         Args:
-            module_name: Name of module to analyze
+            module_name: Name of module to analyze.
 
         Returns:
-            True if coverage collection started
+            True if coverage collection started, False otherwise.
 
         """
         if not self._is_active or not self.script:
@@ -387,7 +476,7 @@ class StalkerSession:
         """Start Stalker tracing on current thread.
 
         Returns:
-            True if stalking started successfully
+            True if stalking started successfully, False otherwise.
 
         """
         if not self._is_active or not self.script:
@@ -406,7 +495,7 @@ class StalkerSession:
         """Stop Stalker tracing and collect results.
 
         Returns:
-            True if stalking stopped successfully
+            True if stalking stopped successfully, False otherwise.
 
         """
         if not self._is_active or not self.script:
@@ -429,7 +518,8 @@ class StalkerSession:
         """Get current tracing statistics.
 
         Returns:
-            Current statistics
+            Current tracing statistics object containing instruction count, block
+                count, coverage entries, licensing routine count, and API call count.
 
         """
         if self._is_active and self.script:
@@ -449,10 +539,10 @@ class StalkerSession:
         """Update Stalker configuration.
 
         Args:
-            config: Configuration dictionary
+            config: Configuration dictionary with Stalker settings.
 
         Returns:
-            True if configuration updated successfully
+            True if configuration updated successfully, False otherwise.
 
         """
         if not self._is_active or not self.script:
@@ -470,7 +560,7 @@ class StalkerSession:
         """Get list of identified licensing-related routines.
 
         Returns:
-            List of licensing routine identifiers
+            List of licensing routine identifiers extracted from traced execution.
 
         """
         return list(self.licensing_routines)
@@ -479,7 +569,8 @@ class StalkerSession:
         """Get summary of code coverage data.
 
         Returns:
-            Dictionary with coverage statistics
+            Dictionary containing total coverage entries, licensing entries count,
+                top hotspot blocks, and licensing-specific hotspots with hit counts.
 
         """
         if not self.coverage_data:
@@ -519,7 +610,8 @@ class StalkerSession:
         """Get summary of API calls.
 
         Returns:
-            Dictionary with API call statistics
+            Dictionary containing total API calls, unique API count, licensing
+                related calls, and top API list with call counts.
 
         """
         if not self.api_calls:
@@ -546,10 +638,11 @@ class StalkerSession:
         """Export all collected results to JSON file.
 
         Args:
-            output_path: Optional custom output path
+            output_path: Optional custom output path for results. If not provided,
+                a timestamped file will be created in the output directory.
 
         Returns:
-            Path to exported file
+            Absolute path to the exported JSON file containing all tracing results.
 
         """
         if output_path is None:
@@ -580,7 +673,14 @@ class StalkerSession:
         return output_path
 
     def cleanup(self) -> None:
-        """Clean up session resources."""
+        """Clean up session resources.
+
+        Detaches from the Frida session and sets the session to inactive state.
+
+        Returns:
+            None
+
+        """
         if self.session and not self.session.is_detached:
             try:
                 self.session.detach()
@@ -591,7 +691,12 @@ class StalkerSession:
         self._log("Session cleaned up")
 
     def __enter__(self) -> "StalkerSession":
-        """Context manager entry."""
+        """Context manager entry.
+
+        Returns:
+            The session instance for use within context manager block.
+
+        """
         self.start()
         return self
 
@@ -601,7 +706,17 @@ class StalkerSession:
         exc_val: BaseException | None,
         exc_tb: types.TracebackType | None,
     ) -> None:
-        """Context manager exit."""
+        """Context manager exit.
+
+        Args:
+            exc_type: Exception type if an exception occurred in the context.
+            exc_val: Exception value if an exception occurred in the context.
+            exc_tb: Exception traceback if an exception occurred in the context.
+
+        Returns:
+            None
+
+        """
         if self._is_active:
             self.stop_stalking()
         self.cleanup()

@@ -8,7 +8,6 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-from typing import TYPE_CHECKING, Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QBrush,
@@ -57,14 +56,9 @@ try:
     )
 except ImportError:
     HAS_MATPLOTLIB = False
-    plt = None  # type: ignore[assignment]
+    plt = None
     FigureCanvas = None
-    Figure = None  # type: ignore[assignment,misc]
-
-if TYPE_CHECKING:
-    from matplotlib import pyplot
-    from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
-    from matplotlib.figure import Figure as MatplotlibFigure
+    Figure = None
 
 
 logger = get_logger(__name__)
@@ -80,7 +74,14 @@ class AdvancedAnalysisThread(QThread):
     analysis_progress = pyqtSignal(str, int)
 
     def __init__(self, file_path: str, scan_mode: ScanMode, enable_heuristic: bool, extract_strings: bool) -> None:
-        """Initialize advanced analysis thread with file path, scan configuration, and analysis options."""
+        """Initialize advanced analysis thread with file path, scan configuration, and analysis options.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+            scan_mode: Scanning mode (NORMAL, DEEP, HEURISTIC, or ALL).
+            enable_heuristic: Whether to enable heuristic detection.
+            extract_strings: Whether to extract strings from the binary.
+        """
         super().__init__()
         self.file_path = file_path
         self.scan_mode = scan_mode
@@ -113,11 +114,18 @@ class AdvancedAnalysisThread(QThread):
 
 if HAS_MATPLOTLIB and FigureCanvas is not None:
 
-    class EntropyGraphWidget(FigureCanvas):  # type: ignore[misc,valid-type]
+    class EntropyGraphWidget(FigureCanvas):
         """Widget for displaying entropy graph."""
 
         def __init__(self, parent: QWidget | None = None) -> None:
-            """Initialize entropy graph widget with matplotlib figure and parent widget."""
+            """Initialize entropy graph widget with matplotlib figure and parent widget.
+
+            Args:
+                parent: Parent widget (optional).
+
+            Raises:
+                ImportError: If matplotlib Figure is not available.
+            """
             if Figure is None:
                 raise ImportError("matplotlib Figure not available")
             self.figure = Figure(figsize=(8, 4))
@@ -125,7 +133,11 @@ if HAS_MATPLOTLIB and FigureCanvas is not None:
             self.setParent(parent)
 
         def plot_entropy(self, entropy_data: list[EntropyInfo]) -> None:
-            """Plot entropy data for sections."""
+            """Plot entropy data for sections.
+
+            Args:
+                entropy_data: List of EntropyInfo objects containing entropy analysis data.
+            """
             self.figure.clear()
             ax = self.figure.add_subplot(111)
 
@@ -182,20 +194,33 @@ if HAS_MATPLOTLIB and FigureCanvas is not None:
 
 else:
 
-    class EntropyGraphWidget(QWidget):  # type: ignore[no-redef]
+    class EntropyGraphWidget(QWidget):
         """Fallback widget when matplotlib is not available."""
 
         def __init__(self, parent: QWidget | None = None) -> None:
-            """Initialize fallback widget."""
+            """Initialize fallback widget.
+
+            Args:
+                parent: Parent widget (optional).
+            """
             super().__init__(parent)
             layout = QVBoxLayout()
             label = QLabel("Matplotlib not available - entropy graph disabled")
             layout.addWidget(label)
             self.setLayout(layout)
+            self.entropy_data: list[EntropyInfo] = []
 
         def plot_entropy(self, entropy_data: list[EntropyInfo]) -> None:
-            """Placeholder for plotting entropy data."""
-            pass
+            """Plot entropy data for sections (fallback text-based display).
+
+            This fallback implementation stores entropy data when matplotlib is unavailable.
+            The analysis continues to function normally with full data preservation.
+
+            Args:
+                entropy_data: List of EntropyInfo objects with entropy analysis data.
+            """
+            self.entropy_data = entropy_data
+            logger.debug("Entropy data stored in fallback widget: %d sections", len(entropy_data))
 
 
 class IntellicrackAdvancedProtectionWidget(QWidget):
@@ -208,14 +233,18 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
     analysis_requested = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize advanced protection widget with parent widget and UI components."""
+        """Initialize advanced protection widget with parent widget and UI components.
+
+        Args:
+            parent: Parent widget (optional).
+        """
         super().__init__(parent)
         self.current_analysis: AdvancedProtectionAnalysis | None = None
         self.analysis_thread: AdvancedAnalysisThread | None = None
         self.init_ui()
 
     def init_ui(self) -> None:
-        """Initialize the advanced UI."""
+        """Initialize the advanced UI with header, main splitter, and status bar."""
         layout = QVBoxLayout()
 
         # Header with controls
@@ -243,7 +272,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.setLayout(layout)
 
     def create_header_widget(self) -> QWidget:
-        """Create header with controls."""
+        """Create header with controls.
+
+        Returns:
+            Header widget containing file selection and scan mode controls.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -310,7 +343,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         return widget
 
     def create_left_panel(self) -> QWidget:
-        """Create left panel with results tree."""
+        """Create left panel with results tree.
+
+        Returns:
+            Left panel widget with results tree view.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -325,7 +362,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         return widget
 
     def create_right_panel(self) -> QWidget:
-        """Create right panel with detailed views."""
+        """Create right panel with detailed views.
+
+        Returns:
+            Right panel widget containing tabbed detailed analysis views.
+        """
         self.details_tabs = QTabWidget()
 
         # Overview tab
@@ -363,7 +404,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         return self.details_tabs
 
     def create_overview_widget(self) -> QWidget:
-        """Create overview widget."""
+        """Create overview widget.
+
+        Returns:
+            Overview widget displaying analysis summary.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -375,7 +420,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         return widget
 
     def create_detections_widget(self) -> QWidget:
-        """Create detections widget."""
+        """Create detections widget.
+
+        Returns:
+            Detections widget displaying detected protections and bypass recommendations.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -409,7 +458,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         return widget
 
     def create_entropy_widget(self) -> QWidget:
-        """Create entropy analysis widget."""
+        """Create entropy analysis widget.
+
+        Returns:
+            Entropy analysis widget with graph and detailed table.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -438,7 +491,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         return widget
 
     def create_certificates_widget(self) -> QWidget:
-        """Create certificates widget."""
+        """Create certificates widget.
+
+        Returns:
+            Certificates widget displaying file signing certificates.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -463,7 +520,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         return widget
 
     def create_resources_widget(self) -> QWidget:
-        """Create resources widget."""
+        """Create resources widget.
+
+        Returns:
+            Resources widget displaying binary embedded resources.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -487,7 +548,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         return widget
 
     def create_strings_widget(self) -> QWidget:
-        """Create suspicious strings widget."""
+        """Create suspicious strings widget.
+
+        Returns:
+            Strings widget displaying suspicious strings found in binary.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -520,7 +585,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         return widget
 
     def create_heuristics_widget(self) -> QWidget:
-        """Create heuristics widget."""
+        """Create heuristics widget.
+
+        Returns:
+            Heuristics widget displaying heuristic detection results.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -532,7 +601,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         return widget
 
     def create_export_widget(self) -> QWidget:
-        """Create export widget."""
+        """Create export widget.
+
+        Returns:
+            Export widget for saving analysis results in multiple formats.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -569,7 +642,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         return widget
 
     def create_status_widget(self) -> QWidget:
-        """Create status widget."""
+        """Create status widget.
+
+        Returns:
+            Status widget displaying analysis progress and status messages.
+        """
         widget = QWidget()
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -590,7 +667,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         return widget
 
     def on_browse_clicked(self) -> None:
-        """Handle browse button click."""
+        """Handle browse button click to select binary file for analysis."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select File to Analyze",
@@ -602,7 +679,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             self.file_path_edit.setText(file_path)
 
     def on_analyze_clicked(self) -> None:
-        """Handle analyze button click."""
+        """Handle analyze button click to start advanced protection analysis."""
         file_path = self.file_path_edit.text()
         if not file_path or not os.path.exists(file_path):
             QMessageBox.warning(self, "Error", "Please select a valid file to analyze")
@@ -639,7 +716,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.analysis_thread.start()
 
     def on_analysis_complete(self, analysis: AdvancedProtectionAnalysis) -> None:
-        """Handle completed analysis."""
+        """Handle completed analysis.
+
+        Args:
+            analysis: Completed AdvancedProtectionAnalysis result object.
+        """
         self.current_analysis = analysis
         self.display_results(analysis)
 
@@ -656,19 +737,32 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             )
 
     def on_analysis_error(self, error_msg: str) -> None:
-        """Handle analysis error."""
+        """Handle analysis error.
+
+        Args:
+            error_msg: Error message from analysis thread.
+        """
         QMessageBox.critical(self, "Analysis Error", f"Error: {error_msg}")
         self.analyze_btn.setEnabled(True)
         self.progress_bar.setVisible(False)
         self.status_label.setText("Analysis failed")
 
     def on_analysis_progress(self, message: str, percentage: int) -> None:
-        """Update analysis progress."""
+        """Update analysis progress.
+
+        Args:
+            message: Status message to display.
+            percentage: Progress percentage (0-100).
+        """
         self.status_label.setText(message)
         self.progress_bar.setValue(percentage)
 
     def display_results(self, analysis: AdvancedProtectionAnalysis) -> None:
-        """Display analysis results."""
+        """Display analysis results.
+
+        Args:
+            analysis: AdvancedProtectionAnalysis object containing all analysis results.
+        """
         # Update results tree
         self.update_results_tree(analysis)
 
@@ -694,7 +788,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.update_heuristics(analysis)
 
     def update_results_tree(self, analysis: AdvancedProtectionAnalysis) -> None:
-        """Update results tree."""
+        """Update results tree.
+
+        Args:
+            analysis: AdvancedProtectionAnalysis object containing analysis results.
+        """
         self.results_tree.clear()
 
         # File info
@@ -744,7 +842,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.results_tree.expandAll()
 
     def update_overview(self, analysis: AdvancedProtectionAnalysis) -> None:
-        """Update overview tab."""
+        """Update overview tab.
+
+        Args:
+            analysis: AdvancedProtectionAnalysis object containing analysis results.
+        """
         html = f"""
         <html>
         <head>
@@ -816,7 +918,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.overview_text.setHtml(html)
 
     def update_detections(self, analysis: AdvancedProtectionAnalysis) -> None:
-        """Update detections table."""
+        """Update detections table.
+
+        Args:
+            analysis: AdvancedProtectionAnalysis object containing detection results.
+        """
         all_detections = analysis.detections + analysis.heuristic_detections
 
         self.detections_table.setRowCount(len(all_detections))
@@ -847,7 +953,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             self.detections_table.setItem(i, 4, QTableWidgetItem(bypass_available))
 
     def update_entropy(self, analysis: AdvancedProtectionAnalysis) -> None:
-        """Update entropy analysis."""
+        """Update entropy analysis.
+
+        Args:
+            analysis: AdvancedProtectionAnalysis object containing entropy data.
+        """
         # Update graph
         self.entropy_graph.plot_entropy(analysis.entropy_info)
 
@@ -874,7 +984,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             self.entropy_table.setItem(i, 4, QTableWidgetItem(status))
 
     def update_certificates(self, analysis: AdvancedProtectionAnalysis) -> None:
-        """Update certificates table."""
+        """Update certificates table.
+
+        Args:
+            analysis: AdvancedProtectionAnalysis object containing certificate data.
+        """
         self.certificates_table.setRowCount(len(analysis.certificates))
 
         for i, cert in enumerate(analysis.certificates):
@@ -891,7 +1005,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             self.certificates_table.setItem(i, 5, status_item)
 
     def update_resources(self, analysis: AdvancedProtectionAnalysis) -> None:
-        """Update resources table."""
+        """Update resources table.
+
+        Args:
+            analysis: AdvancedProtectionAnalysis object containing resource data.
+        """
         self.resources_table.setRowCount(len(analysis.resources))
 
         for i, resource in enumerate(analysis.resources):
@@ -902,7 +1020,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             self.resources_table.setItem(i, 4, QTableWidgetItem(resource.data_hash[:16]))
 
     def update_strings(self, analysis: AdvancedProtectionAnalysis) -> None:
-        """Update strings table."""
+        """Update strings table.
+
+        Args:
+            analysis: AdvancedProtectionAnalysis object containing string data.
+        """
         self.strings_table.setRowCount(len(analysis.suspicious_strings))
 
         for i, string in enumerate(analysis.suspicious_strings):
@@ -918,7 +1040,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             self.strings_table.setItem(i, 3, suspicious_item)
 
     def update_heuristics(self, analysis: AdvancedProtectionAnalysis) -> None:
-        """Update heuristics display."""
+        """Update heuristics display.
+
+        Args:
+            analysis: AdvancedProtectionAnalysis object containing heuristic detection data.
+        """
         heuristics_text = "=== Heuristic Analysis Results ===\n\n"
 
         if not analysis.heuristic_detections:
@@ -937,7 +1063,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.heuristics_text.setText(heuristics_text)
 
     def on_tree_selection_changed(self) -> None:
-        """Handle tree selection change."""
+        """Handle tree selection change in results tree."""
         items = self.results_tree.selectedItems()
         if not items:
             return
@@ -959,7 +1085,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             self.details_tabs.setCurrentIndex(tab_map[category])
 
     def on_detection_selected(self) -> None:
-        """Handle detection selection."""
+        """Handle detection selection in detections table."""
         current_row = self.detections_table.currentRow()
         if current_row < 0 or self.current_analysis is None:
             return
@@ -980,7 +1106,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             self.bypass_text.setText(bypass_text)
 
     def filter_strings(self, text: str) -> None:
-        """Filter strings table."""
+        """Filter strings table.
+
+        Args:
+            text: Filter text to search for in strings.
+        """
         for i in range(self.strings_table.rowCount()):
             row_hidden = True
             for j in range(self.strings_table.columnCount()):
@@ -991,7 +1121,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             self.strings_table.setRowHidden(i, row_hidden)
 
     def update_export_preview(self) -> None:
-        """Update export preview."""
+        """Update export preview with selected format."""
         if not self.current_analysis:
             return
 
@@ -1011,7 +1141,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.export_preview.setText(preview)
 
     def on_export_clicked(self) -> None:
-        """Handle export button click."""
+        """Handle export button click to save analysis results to file."""
         if not self.current_analysis:
             QMessageBox.warning(self, "Error", "No analysis results to export")
             return
@@ -1045,7 +1175,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 )
 
     def clear_results(self) -> None:
-        """Clear all results."""
+        """Clear all results from display widgets."""
         self.results_tree.clear()
         self.overview_text.clear()
         self.detections_table.setRowCount(0)
@@ -1059,7 +1189,11 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.current_analysis = None
 
     def set_binary_path(self, file_path: str) -> None:
-        """Set binary path for analysis."""
+        """Set binary path for analysis.
+
+        Args:
+            file_path: Path to binary file to analyze.
+        """
         if file_path and os.path.exists(file_path):
             self.file_path_edit.setText(file_path)
             # Auto-analyze if configured

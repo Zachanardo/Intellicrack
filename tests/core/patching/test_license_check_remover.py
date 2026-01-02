@@ -45,14 +45,6 @@ from intellicrack.core.patching.license_check_remover import (
 
 
 @pytest.fixture
-def temp_workspace() -> Path:
-    """Provide temporary directory for test operations."""
-    temp_dir = Path(tempfile.mkdtemp(prefix="intellicrack_lcr_test_"))
-    yield temp_dir
-    shutil.rmtree(temp_dir, ignore_errors=True)
-
-
-@pytest.fixture
 def simple_pe_x86(temp_workspace: Path) -> Path:
     """Create minimal x86 PE with license check pattern."""
     pe_path = temp_workspace / "simple_x86.exe"

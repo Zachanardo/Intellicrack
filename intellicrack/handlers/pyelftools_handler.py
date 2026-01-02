@@ -16,20 +16,36 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 
-This module provides a centralized abstraction layer for pyelftools imports.
-When pyelftools is not available, it provides functional ELF parsing
+Provide a centralized abstraction layer for pyelftools imports.
+
+This module enables ELF binary analysis with graceful fallback support.
+When pyelftools is available, it exports real implementations from the
+installed package. When unavailable, it provides functional ELF parsing
 implementations from the _pyelftools_fallback module.
+
+Attributes:
+    HAS_PYELFTOOLS: Flag indicating pyelftools availability.
+    PYELFTOOLS_VERSION: Version string of pyelftools or None if unavailable.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+import types
+from typing import Any
 
 from intellicrack.utils.logger import logger
 
 
-if TYPE_CHECKING:
-    from collections.abc import Iterator
+# Module-level type declarations for conditional imports
+_elftools_module: types.ModuleType | None
+Container: type[Any]
+Struct: type[Any]
+DW_TAG_compile_unit: Any
+ENUM_D_TAG: Any
+ENUM_E_TYPE: Any
+ENUM_SH_TYPE: Any
+elftools_instance: Any
+elffile_instance: type[Any]
 
 # Runtime availability check - must be done before conditional imports
 HAS_PYELFTOOLS: bool = False
@@ -43,7 +59,7 @@ try:
     HAS_PYELFTOOLS = True
     PYELFTOOLS_VERSION = getattr(_elftools_module, "__version__", "unknown")
 except ImportError as e:
-    _elftools_module = None  # type: ignore[assignment]
+    _elftools_module = None
     logger.info("PyElfTools not available, using fallback implementations: %s", e)
 
 # Conditional imports based on pyelftools availability
@@ -75,24 +91,24 @@ if _pyelftools_imported:
     # Handle construct module (may come from elftools or standalone)
     _construct_available = False
     try:
-        from elftools.construct import Container, Struct  # type: ignore[attr-defined]
+        from elftools.construct import Container, Struct
 
         _construct_available = True
     except (ImportError, AttributeError):
         try:
-            from construct import Container, Struct  # type: ignore[no-redef]
+            from construct import Container, Struct
 
             _construct_available = True
         except ImportError:
             pass
 
     if not _construct_available:
-        from intellicrack.handlers._pyelftools_fallback import Container, Struct  # type: ignore[assignment]
+        from intellicrack.handlers._pyelftools_fallback import Container, Struct
 
     # Handle DWARF constants
     _dwarf_constants_available = False
     try:
-        from elftools.dwarf.constants import DW_TAG_compile_unit  # type: ignore[attr-defined]
+        from elftools.dwarf.constants import DW_TAG_compile_unit
 
         _dwarf_constants_available = True
     except (ImportError, AttributeError):
@@ -104,14 +120,14 @@ if _pyelftools_imported:
     # Handle ELF enums
     _elf_enums_available = False
     try:
-        from elftools.elf.enums import ENUM_D_TAG, ENUM_E_TYPE, ENUM_SH_TYPE  # type: ignore[attr-defined]
+        from elftools.elf.enums import ENUM_D_TAG, ENUM_E_TYPE, ENUM_SH_TYPE
 
         _elf_enums_available = True
     except (ImportError, AttributeError):
         pass
 
     if not _elf_enums_available:
-        from intellicrack.handlers._pyelftools_fallback import ENUM_D_TAG, ENUM_E_TYPE, ENUM_SH_TYPE  # type: ignore[assignment]
+        from intellicrack.handlers._pyelftools_fallback import ENUM_D_TAG, ENUM_E_TYPE, ENUM_SH_TYPE
 
     # Module references
     elftools_instance: Any = _elftools_module
@@ -119,7 +135,7 @@ if _pyelftools_imported:
 
 else:
     # Fallback imports when pyelftools not available
-    from intellicrack.handlers._pyelftools_fallback import (  # type: ignore[assignment]
+    from intellicrack.handlers._pyelftools_fallback import (
         DIE,
         E_FLAGS,
         ENUM_D_TAG,
@@ -157,12 +173,19 @@ else:
     )
 
     class _FallbackElftoolsModule:
-        """Fallback elftools module reference."""
+        """Fallback elftools module reference when pyelftools is unavailable.
+
+        Provides a minimal module interface to maintain compatibility with
+        code that attempts to access elftools version information.
+
+        Attributes:
+            __version__: Version identifier for the fallback implementation.
+        """
 
         __version__: str = "fallback"
 
-    elftools_instance: Any = _FallbackElftoolsModule()  # type: ignore[no-redef]
-    elffile_instance: type[Any] = ELFFile  # type: ignore[no-redef]
+    elftools_instance: Any = _FallbackElftoolsModule()
+    elffile_instance: type[Any] = ELFFile
 
 
 __all__ = [

@@ -22,10 +22,26 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 
 
-logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from keystone import Ks as KsType
+
+logger: logging.Logger = logging.getLogger(__name__)
+
+KEYSTONE_AVAILABLE: bool
+KS_ARCH_X86: int | None
+KS_ARCH_ARM: int | None
+KS_ARCH_ARM64: int | None
+KS_MODE_32: int | None
+KS_MODE_64: int | None
+KS_MODE_ARM: int | None
+KS_MODE_THUMB: int | None
+Ks: type[KsType] | None
 
 try:
     from keystone import KS_ARCH_ARM, KS_ARCH_ARM64, KS_ARCH_X86, KS_MODE_32, KS_MODE_64, KS_MODE_ARM, KS_MODE_THUMB, Ks

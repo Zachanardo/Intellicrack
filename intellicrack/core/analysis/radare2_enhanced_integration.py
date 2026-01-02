@@ -144,7 +144,16 @@ class EnhancedR2Integration:
         self.logger.info("EnhancedR2Integration initialized for %s", binary_path)
 
     def _initialize_components(self) -> None:
-        """Initialize all analysis components with error handling."""
+        """Initialize all analysis components with error handling.
+
+        Initializes all available analysis components (decompiler, ESIL, strings,
+        signatures, imports, vulnerability, AI, bypass, diff, scripting, graph)
+        and handles any initialization failures gracefully.
+
+        Returns:
+            None.
+
+        """
         if not self.r2pipe_available:
             self.logger.warning("r2pipe not available, skipping component initialization")
             return
@@ -179,11 +188,15 @@ class EnhancedR2Integration:
     def run_comprehensive_analysis(self, analysis_types: list[str] | None = None) -> dict[str, Any]:
         """Run comprehensive analysis with error handling and recovery.
 
+        Executes all or specified analysis types, including parallel and sequential
+        analyses, with comprehensive error handling and performance tracking.
+
         Args:
-            analysis_types: List of analysis types to run, or None for all
+            analysis_types: List of analysis types to run, or None for all.
 
         Returns:
-            Dict containing all analysis results
+            Dictionary containing analysis results with metadata, components, errors,
+            and performance metrics.
 
         """
         if analysis_types is None:
@@ -242,7 +255,20 @@ class EnhancedR2Integration:
         )
 
     def _run_parallel_analysis(self, analysis_types: list[str]) -> dict[str, Any]:
-        """Run analyses in parallel for performance."""
+        """Run analyses in parallel for performance.
+
+        Executes multiple analysis types concurrently using a thread pool with
+        proper error handling and timeout management.
+
+        Args:
+            analysis_types: List of analysis type names to execute concurrently.
+                Supported types include 'strings', 'imports', and 'signatures'.
+
+        Returns:
+            Dictionary mapping analysis type names to their analysis result
+            dictionaries. Returns empty dict if no analyses complete successfully.
+
+        """
         results = {}
         max_workers = min(len(analysis_types), self.config.get("max_parallel_workers", 3))
 
@@ -270,7 +296,21 @@ class EnhancedR2Integration:
         return results
 
     def _run_single_analysis(self, analysis_type: str) -> dict[str, Any] | None:
-        """Run a single analysis with caching and error handling."""
+        """Run a single analysis with caching and error handling.
+
+        Executes a specific analysis type, checking cache first, handling failures
+        with recovery mechanisms, and recording performance metrics.
+
+        Args:
+            analysis_type: Name of the analysis type to execute. Valid types include
+                'decompiler', 'esil', 'strings', 'signatures', 'imports',
+                'vulnerability', 'ai', 'bypass', 'scripting', 'graph', and 'diff'.
+
+        Returns:
+            Dictionary containing analysis results with metadata and data, or None
+            if the requested component is not available or initialized.
+
+        """
         # Check cache first
         cache_key = f"{analysis_type}_{self.binary_path}"
         if cached_result := self._get_cached_result(cache_key):
@@ -376,7 +416,20 @@ class EnhancedR2Integration:
             return {"error": str(e), "failed_analysis": analysis_type}
 
     def _get_cached_result(self, cache_key: str) -> dict[str, Any] | None:
-        """Get cached result if still valid."""
+        """Get cached result if still valid.
+
+        Retrieves a cached analysis result if it exists and has not expired
+        based on the configured cache TTL.
+
+        Args:
+            cache_key: Unique cache key identifying the cached result, typically
+                formatted as '{analysis_type}_{binary_path}'.
+
+        Returns:
+            Cached result dictionary if found and not expired according to TTL,
+            None if cache key not found or result has expired.
+
+        """
         with self._lock:
             if cache_key in self.results_cache:
                 cached_data = self.results_cache[cache_key]
@@ -386,7 +439,17 @@ class EnhancedR2Integration:
         return None
 
     def _cache_result(self, cache_key: str, result: dict[str, Any]) -> None:
-        """Cache analysis result."""
+        """Cache analysis result.
+
+        Stores an analysis result in the results cache with current timestamp,
+        enforcing maximum cache size by removing oldest entries when needed.
+
+        Args:
+            cache_key: Unique cache key for storing the result, typically formatted
+                as '{analysis_type}_{binary_path}'.
+            result: Analysis result dictionary to store in cache with timestamp.
+
+        """
         with self._lock:
             self.results_cache[cache_key] = {
                 "result": result,
@@ -405,7 +468,18 @@ class EnhancedR2Integration:
                     del self.results_cache[key]
 
     def _record_analysis_time(self, analysis_type: str, duration: float, success: bool = True) -> None:
-        """Record analysis performance."""
+        """Record analysis performance.
+
+        Records the execution time and success/failure status of an analysis type
+        for performance tracking and optimization purposes.
+
+        Args:
+            analysis_type: Name of the analysis type whose performance is being recorded.
+            duration: Execution duration in seconds as a floating point number.
+            success: Boolean indicating whether analysis completed successfully
+                (default True). Set to False when analysis fails.
+
+        """
         with self._lock:
             analysis_times = self.performance_stats["analysis_times"]
             if analysis_type not in analysis_times:
@@ -427,7 +501,17 @@ class EnhancedR2Integration:
                 stats["times"] = stats["times"][-50:]
 
     def start_real_time_monitoring(self, callback: Callable[..., None] | None = None) -> None:
-        """Start real-time monitoring of analysis results."""
+        """Start real-time monitoring of analysis results.
+
+        Initiates a background thread that performs periodic lightweight analysis
+        and invokes the callback with results.
+
+        Args:
+            callback: Optional callable function that accepts monitoring update
+                dictionary with 'type', 'results', and 'timestamp' keys. If None,
+                monitoring runs without callback invocation.
+
+        """
         if self.monitoring_enabled and not self.monitoring_thread:
             self.monitoring_thread = threading.Thread(
                 target=self._monitoring_loop,
@@ -438,7 +522,11 @@ class EnhancedR2Integration:
             self.logger.info("Real-time monitoring started")
 
     def stop_real_time_monitoring(self) -> None:
-        """Stop real-time monitoring."""
+        """Stop real-time monitoring.
+
+        Terminates the real-time monitoring thread and disables monitoring.
+
+        """
         self.monitoring_enabled = False
         if self.monitoring_thread:
             self.monitoring_thread.join(timeout=5)
@@ -446,7 +534,17 @@ class EnhancedR2Integration:
             self.logger.info("Real-time monitoring stopped")
 
     def _monitoring_loop(self, callback: Callable[..., None] | None) -> None:
-        """Real-time monitoring loop."""
+        """Real-time monitoring loop.
+
+        Background thread loop that periodically runs lightweight analysis and
+        invokes the callback with monitoring updates.
+
+        Args:
+            callback: Optional callable function accepting monitoring update
+                dictionary with analysis results and metadata. Called periodically
+                with configurable interval from config['monitoring_interval'].
+
+        """
         while self.monitoring_enabled:
             try:
                 # Run lightweight analysis
@@ -468,7 +566,19 @@ class EnhancedR2Integration:
                 time.sleep(60)  # Wait longer on error
 
     def get_performance_stats(self) -> dict[str, Any]:
-        """Get comprehensive performance statistics."""
+        """Get comprehensive performance statistics.
+
+        Compiles and calculates performance metrics including cache hit rates,
+        analysis timing averages, and success rates.
+
+        Returns:
+            Dictionary with keys 'analysis_times' (analysis type metrics),
+            'cache_hits' (int), 'cache_misses' (int), 'errors_handled' (int),
+            'recoveries_successful' (int), and 'error_handler' (error statistics).
+            Each analysis type has 'times' list, 'successes', 'failures',
+            'avg_time', 'max_time', 'min_time', 'total_time', and 'success_rate'.
+
+        """
         with self._lock:
             stats: dict[str, Any] = dict(self.performance_stats)
 
@@ -499,7 +609,12 @@ class EnhancedR2Integration:
             return stats
 
     def optimize_performance(self) -> None:
-        """Optimize performance based on collected metrics."""
+        """Optimize performance based on collected metrics.
+
+        Dynamically adjusts cache TTL and resets circuit breakers based on
+        current performance statistics and success rates.
+
+        """
         stats = self.get_performance_stats()
 
         # Adjust cache TTL based on hit rate
@@ -525,13 +640,29 @@ class EnhancedR2Integration:
         self.logger.info("Performance optimized: cache_ttl=%s", self.cache_ttl)
 
     def clear_cache(self) -> None:
-        """Clear results cache."""
+        """Clear results cache.
+
+        Removes all cached analysis results from memory.
+
+        """
         with self._lock:
             self.results_cache.clear()
             self.logger.info("Results cache cleared")
 
     def get_health_status(self) -> dict[str, Any]:
-        """Get system health status."""
+        """Get system health status.
+
+        Evaluates the overall health of the R2 integration based on component
+        availability, cache performance, and error recovery rates.
+
+        Returns:
+            Dictionary with 'overall_health' status ('healthy', 'degraded', 'warning',
+            'critical'), component availability metrics, cache_health dict with
+            size and hit_rate, error_health dict with total_errors and recovery_rate.
+            Status is determined by r2pipe availability, component count, recovery
+            and hit rates.
+
+        """
         stats = self.get_performance_stats()
 
         health: dict[str, Any] = {
@@ -584,11 +715,14 @@ class EnhancedR2Integration:
     def set_secondary_binary(self, secondary_path: str) -> bool:
         """Set secondary binary for diff analysis.
 
+        Configures a secondary binary for comparison analysis with the primary
+        binary in the diff component.
+
         Args:
-            secondary_path: Path to the secondary binary
+            secondary_path: Path to the secondary binary.
 
         Returns:
-            True if successfully set, False otherwise
+            True if successfully set, False otherwise.
 
         """
         try:
@@ -605,8 +739,11 @@ class EnhancedR2Integration:
     def get_function_diffs(self) -> list[dict[str, Any]]:
         """Get function differences between primary and secondary binaries.
 
+        Analyzes differences between functions in the primary and secondary
+        binaries, including size changes and opcodes modifications.
+
         Returns:
-            List of function diff results
+            List of dictionaries containing function comparison results.
 
         """
         try:
@@ -638,11 +775,14 @@ class EnhancedR2Integration:
     def get_basic_block_diffs(self, function_name: str) -> list[dict[str, Any]]:
         """Get basic block differences for a specific function.
 
+        Analyzes differences between basic blocks within a specific function
+        across the primary and secondary binaries.
+
         Args:
-            function_name: Name of the function to analyze
+            function_name: Name of the function to analyze.
 
         Returns:
-            List of basic block diff results
+            List of dictionaries containing basic block comparison results.
 
         """
         try:
@@ -671,8 +811,12 @@ class EnhancedR2Integration:
     def get_performance_metrics(self) -> dict[str, Any]:
         """Get comprehensive performance metrics.
 
+        Aggregates all performance metrics from the performance monitor and
+        internal statistics into a unified report.
+
         Returns:
-            Dictionary containing performance metrics and statistics
+            Dictionary containing performance metrics including session data,
+            operation statistics, and performance statistics.
 
         """
         # Get metrics from the performance monitor
@@ -690,8 +834,11 @@ class EnhancedR2Integration:
     def export_performance_metrics(self, filepath: str) -> None:
         """Export performance metrics to a file.
 
+        Exports comprehensive performance metrics to a file at the specified path
+        for external analysis and reporting.
+
         Args:
-            filepath: Path to export file
+            filepath: Path to export file.
 
         """
         self.performance_monitor.export_metrics(filepath)
@@ -700,11 +847,14 @@ class EnhancedR2Integration:
     def generate_control_flow_graph(self, function_name: str) -> dict[str, Any]:
         """Generate control flow graph for a function.
 
+        Creates a control flow graph representation of a function including
+        nodes and edges for visualization.
+
         Args:
-            function_name: Name of the function
+            function_name: Name of the function.
 
         Returns:
-            Dictionary containing graph data
+            Dictionary containing graph nodes, edges, and metadata.
 
         """
         try:
@@ -745,11 +895,14 @@ class EnhancedR2Integration:
     def generate_call_graph(self, max_depth: int = 3) -> dict[str, Any]:
         """Generate function call graph.
 
+        Creates a call graph showing function calls and their relationships
+        up to a maximum depth.
+
         Args:
-            max_depth: Maximum depth for traversal
+            max_depth: Maximum depth for graph traversal.
 
         Returns:
-            Dictionary containing graph data
+            Dictionary containing graph nodes, edges, and metadata.
 
         """
         try:
@@ -790,11 +943,14 @@ class EnhancedR2Integration:
     def generate_xref_graph(self, address: int) -> dict[str, Any]:
         """Generate cross-reference graph for an address.
 
+        Creates a cross-reference graph showing all references to and from
+        a specific address.
+
         Args:
-            address: Address to analyze
+            address: Address to analyze.
 
         Returns:
-            Dictionary containing graph data
+            Dictionary containing graph nodes, edges, and metadata.
 
         """
         try:
@@ -833,12 +989,16 @@ class EnhancedR2Integration:
     def visualize_graph(self, graph_type: str, **kwargs: object) -> bool:
         """Visualize a graph.
 
+        Generates and visualizes a graph of the specified type with custom layout
+        and output options.
+
         Args:
-            graph_type: Type of graph ('cfg', 'call', 'xref', 'import')
-            **kwargs: Additional arguments for specific graph types
+            graph_type: Type of graph ('cfg', 'call', 'xref', 'import').
+            **kwargs: Additional arguments for specific graph types including
+                output_path and layout options.
 
         Returns:
-            True if successful
+            True if visualization successful, False otherwise.
 
         """
         try:
@@ -878,7 +1038,12 @@ class EnhancedR2Integration:
             return False
 
     def cleanup(self) -> None:
-        """Cleanup resources."""
+        """Cleanup resources.
+
+        Gracefully shuts down the integration by stopping monitoring, clearing
+        cache, ending performance session, and cleaning up components.
+
+        """
         try:
             self.stop_real_time_monitoring()
             self.clear_cache()
@@ -908,12 +1073,15 @@ class EnhancedR2Integration:
 def create_enhanced_r2_integration(binary_path: str, **config: object) -> EnhancedR2Integration:
     """Create enhanced radare2 integration instance.
 
+    Factory function to create a new EnhancedR2Integration instance with
+    the specified binary and configuration.
+
     Args:
-        binary_path: Path to binary file
-        **config: Configuration options
+        binary_path: Path to binary file.
+        **config: Configuration options.
 
     Returns:
-        EnhancedR2Integration instance
+        EnhancedR2Integration instance.
 
     """
     return EnhancedR2Integration(binary_path, config)

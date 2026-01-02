@@ -46,7 +46,13 @@ if sys.platform == "win32":
 
 
 def is_windows_available() -> bool:
-    """Check if Windows-specific functionality is available."""
+    """Check if Windows-specific functionality is available.
+
+    Returns:
+        bool: True if Windows-specific functionality is available, False
+            otherwise.
+
+    """
     return WINDOWS_AVAILABLE
 
 

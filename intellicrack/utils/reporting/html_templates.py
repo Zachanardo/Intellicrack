@@ -38,8 +38,8 @@ def get_base_html_template(
             Defaults to empty string.
 
     Returns:
-        HTML string containing the opening tags and structure of the document
-        with applied styles and scripts.
+        Opening tags and structure of the document with applied styles and
+        scripts.
 
     """
     return f"""<!DOCTYPE html>
@@ -78,7 +78,7 @@ def get_cfg_html_template(function_name: str) -> str:
             title and report header.
 
     Returns:
-        HTML string with D3.js library loaded and CFG visualization styles
+        HTML document with D3.js library loaded and CFG visualization styles
         applied.
 
     """
@@ -110,7 +110,7 @@ def get_traffic_html_template() -> str:
     and license communication protocol visualization with centered image display.
 
     Returns:
-        HTML string with traffic analysis styling applied.
+        HTML document with traffic analysis styling applied.
 
     """
     custom_css = """
@@ -131,7 +131,7 @@ def get_report_html_template(binary_name: str) -> str:
             page title and report header.
 
     Returns:
-        HTML string with analysis report styling applied.
+        HTML document with analysis report styling applied.
 
     """
     custom_css = """
@@ -144,5 +144,10 @@ def get_report_html_template(binary_name: str) -> str:
 
 
 def close_html() -> str:
-    """Get HTML closing tags."""
+    """Get HTML closing tags.
+
+    Returns:
+        HTML closing tags for body and html elements.
+
+    """
     return "</body></html>"

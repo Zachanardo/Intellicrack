@@ -21,16 +21,23 @@ class FirmwareAnalysisTool:
     """LLM tool for running firmware analysis using Binwalk"""
 
     def __init__(self) -> None:
-        """Initialize firmware analysis tool"""
+        """Initialize firmware analysis tool.
+
+        Initializes the firmware analyzer and prepares an empty analysis cache
+        for storing previously computed firmware analysis results.
+        """
         self.analyzer = get_firmware_analyzer()
         self.analysis_cache: dict[str, Any] = {}
 
     def get_tool_definition(self) -> dict[str, Any]:
-        """Get tool definition for LLM registration
+        """Get tool definition for LLM registration.
 
         Returns:
-            Tool definition dictionary
-
+            dict[str, Any]: Tool definition dictionary containing tool name,
+                description, and parameter schema for LLM integration. Schema
+                includes file_path, extract_files, analyze_security,
+                extraction_depth, include_strings, and detailed_output
+                parameters.
         """
         return {
             "name": "firmware_analysis",
@@ -75,14 +82,28 @@ class FirmwareAnalysisTool:
         }
 
     def execute(self, **kwargs: Any) -> dict[str, Any]:
-        """Execute firmware analysis
+        """Execute firmware analysis.
+
+        Performs comprehensive firmware analysis on the specified file using
+        Binwalk. Supports extraction of embedded files, security analysis,
+        and generation of bypass recommendations. Results are cached for
+        performance optimization.
 
         Args:
-            **kwargs: Tool parameters
+            **kwargs: Tool parameters including file_path (required), extract_files,
+                analyze_security, extraction_depth, include_strings, and
+                detailed_output flags.
 
         Returns:
-            Analysis results dictionary
+            dict[str, Any]: Analysis results containing success status, firmware
+                signatures, security findings, extraction summary, bypass
+                recommendations, and optional detailed analysis. Returns error
+                dictionary if analysis fails or Binwalk is unavailable.
 
+        Raises:
+            FileNotFoundError: Implicitly handled if file_path does not exist.
+            Exception: Caught and returned as error in result dictionary during
+                firmware analysis execution.
         """
         file_path = kwargs.get("file_path")
         if not file_path or not os.path.exists(file_path):
@@ -171,7 +192,25 @@ class FirmwareAnalysisTool:
             return {"success": False, "error": str(e)}
 
     def _format_signatures(self, signatures: list[Any]) -> list[dict[str, Any]]:
-        """Format firmware signatures for LLM consumption"""
+        """Format firmware signatures for LLM consumption.
+
+        Converts Binwalk firmware signature objects into structured dictionaries
+        suitable for LLM analysis. Each signature includes offset, name, type,
+        size, confidence, and flags indicating if it represents an executable
+        or filesystem component.
+
+        Args:
+            signatures: List of firmware signature objects to format. Each
+                signature must have offset, signature_name, description,
+                file_type, size, confidence, is_executable, and
+                is_filesystem attributes.
+
+        Returns:
+            list[dict[str, Any]]: List of formatted signature dictionaries
+                containing offset, name, description, file_type, size,
+                confidence, is_executable, and is_filesystem keys for each
+                firmware signature.
+        """
         formatted_signatures: list[dict[str, Any]] = []
 
         for sig in signatures:
@@ -190,7 +229,25 @@ class FirmwareAnalysisTool:
         return formatted_signatures
 
     def _assess_security_findings(self, findings: list[Any]) -> dict[str, Any]:
-        """Assess security implications of firmware findings"""
+        """Assess security implications of firmware findings.
+
+        Analyzes security findings from firmware analysis and calculates an
+        overall risk assessment. Categorizes findings by severity level,
+        computes a normalized security score (0-10), and identifies primary
+        concerns and immediate threats for LLM-based analysis.
+
+        Args:
+            findings: List of security finding objects to assess. Each finding
+                must have severity, is_critical, description, and other
+                attributes for severity-based categorization.
+
+        Returns:
+            dict[str, Any]: Assessment dictionary containing overall_risk_level
+                (critical/high/medium/low), critical_findings count,
+                high_findings count, medium_findings count, low_findings count,
+                security_score (0-10.0), primary_concerns list, and
+                immediate_threats list for critical findings.
+        """
         assessment: dict[str, Any] = {
             "overall_risk_level": "low",
             "critical_findings": 0,
@@ -245,7 +302,24 @@ class FirmwareAnalysisTool:
         return assessment
 
     def _format_extraction_summary(self, extractions: Any | None) -> dict[str, Any]:
-        """Format extraction summary for LLM consumption"""
+        """Format extraction summary for LLM consumption.
+
+        Converts Binwalk extraction results into a summarized format for LLM
+        analysis. Includes success status, file counts, extraction timing,
+        output directory, and any errors encountered during extraction.
+
+        Args:
+            extractions: Extraction results object containing extraction status,
+                file counts, timestamps, and error information, or None if no
+                extractions were performed during firmware analysis.
+
+        Returns:
+            dict[str, Any]: Summary dictionary containing extraction_successful
+                flag, total_files count, executable_files count, text_files
+                count, extraction_time, extraction_directory path, and
+                extraction_errors list. Returns minimal dict with success=False
+                if extractions object is None or extraction failed.
+        """
         if not extractions or not extractions.success:
             return {
                 "extraction_successful": False,
@@ -266,7 +340,27 @@ class FirmwareAnalysisTool:
         }
 
     def _generate_bypass_recommendations(self, analysis_result: Any) -> list[dict[str, Any]]:
-        """Generate bypass recommendations based on firmware analysis"""
+        """Generate bypass recommendations based on firmware analysis.
+
+        Analyzes firmware signatures and security findings to generate targeted
+        bypass recommendations. Identifies exploitation vectors including
+        embedded executables, hardcoded credentials, private keys, and
+        firmware-type-specific vulnerabilities for penetration testing
+        and licensing protection bypass analysis.
+
+        Args:
+            analysis_result: Firmware analysis result object containing
+                signatures, security_findings, firmware_type, has_extractions,
+                embedded_executables, and extracted data for comprehensive
+                bypass opportunity identification.
+
+        Returns:
+            list[dict[str, Any]]: List of recommendation dictionaries, each
+                containing target (vulnerability type), method (approach),
+                tools (recommended tools), difficulty (low/medium/high),
+                description (recommendation summary), and technical_details
+                (implementation-specific information).
+        """
         recommendations: list[dict[str, Any]] = []
 
         # Check for embedded executables
@@ -336,7 +430,25 @@ class FirmwareAnalysisTool:
         return recommendations
 
     def _format_extracted_files(self, extracted_files: list[Any]) -> list[dict[str, Any]]:
-        """Format extracted files information"""
+        """Format extracted files information.
+
+        Converts Binwalk extracted file objects into structured dictionaries
+        for LLM analysis. Limits output to first 20 files for performance.
+        Includes file metadata, hash, executable status, and security analysis
+        results for each extracted file.
+
+        Args:
+            extracted_files: List of extracted file objects containing file_path,
+                original_offset, file_type, size, hash, is_executable,
+                permissions, security_analysis, and extracted_strings
+                attributes.
+
+        Returns:
+            list[dict[str, Any]]: List of formatted file dictionaries (max 20)
+                containing file_path, original_offset, file_type, size, hash,
+                is_executable, permissions, security_analysis, and optional
+                interesting_strings (first 5 strings per file) keys.
+        """
         formatted_files: list[dict[str, Any]] = []
 
         for file_obj in extracted_files[:20]:  # Limit to first 20 files
@@ -360,7 +472,25 @@ class FirmwareAnalysisTool:
         return formatted_files
 
     def _extract_interesting_strings(self, extracted_files: list[Any]) -> list[dict[str, Any]]:
-        """Extract interesting strings from extracted files"""
+        """Extract interesting strings from extracted files.
+
+        Filters strings from extracted files for security-relevant keywords
+        including passwords, credentials, keys, API endpoints, and URLs.
+        Categorizes each string by type and limits output to 50 most
+        interesting items for LLM consumption.
+
+        Args:
+            extracted_files: List of extracted file objects containing
+                extracted_strings attributes. Each file object must have
+                file_path and extracted_strings (list of strings) attributes
+                for filtering and categorization.
+
+        Returns:
+            list[dict[str, Any]]: List of interesting string dictionaries
+                (max 50) containing string (truncated to 100 chars), file
+                (basename of source file), and category
+                (credentials/cryptographic/network/api/other) keys.
+        """
         interesting_strings: list[dict[str, Any]] = []
 
         for file_obj in extracted_files:
@@ -390,7 +520,25 @@ class FirmwareAnalysisTool:
         return interesting_strings[:50]  # Limit to 50 most interesting
 
     def _categorize_string(self, string: str) -> str:
-        """Categorize a string based on content"""
+        """Categorize a string based on content.
+
+        Analyzes string content to classify it into security-relevant categories
+        for easier identification of sensitive information during firmware
+        analysis. Uses keyword matching for credentials, cryptographic material,
+        network endpoints, and API references.
+
+        Args:
+            string: String to categorize. Analyzed for keywords indicating
+                credentials, cryptographic keys, network endpoints, or API
+                references.
+
+        Returns:
+            str: Category classification - 'credentials' for password/admin/root
+                keywords, 'cryptographic' for key/secret/token/cert keywords,
+                'network' for http/url/ftp/ssh keywords, 'api' for
+                api/endpoint/service keywords, or 'other' for unclassified
+                strings.
+        """
         string_lower = string.lower()
 
         if any(cred in string_lower for cred in ["password", "passwd", "admin", "root"]):
@@ -405,7 +553,25 @@ class FirmwareAnalysisTool:
             return "other"
 
     def _format_security_findings(self, findings: list[Any]) -> list[dict[str, Any]]:
-        """Format security findings for detailed analysis"""
+        """Format security findings for detailed analysis.
+
+        Converts firmware security finding objects into structured dictionaries
+        for LLM-based security analysis. Includes finding type, description,
+        location information, severity assessment, confidence level, and
+        remediation guidance.
+
+        Args:
+            findings: List of security finding objects to format. Each finding
+                must have finding_type, description, file_path, offset,
+                severity, confidence, evidence, remediation, and is_critical
+                attributes for comprehensive security analysis.
+
+        Returns:
+            list[dict[str, Any]]: List of formatted finding dictionaries
+                containing type, description, file_path, offset, severity,
+                confidence, evidence, remediation, and is_critical keys for
+                detailed security assessment and remediation planning.
+        """
         formatted_findings: list[dict[str, Any]] = []
 
         for finding in findings:
@@ -425,7 +591,25 @@ class FirmwareAnalysisTool:
         return formatted_findings
 
     def _analyze_embedded_components(self, signatures: list[Any]) -> dict[str, Any]:
-        """Analyze embedded components detected in firmware"""
+        """Analyze embedded components detected in firmware.
+
+        Categorizes firmware signatures by component type including filesystems,
+        executables, archives, certificates, and miscellaneous components.
+        Provides structured component analysis for LLM-based firmware
+        assessment and attack surface identification.
+
+        Args:
+            signatures: List of firmware signature objects to analyze. Each
+                signature must have file_type, signature_name, offset, size,
+                is_filesystem, and is_executable attributes for proper
+                categorization.
+
+        Returns:
+            dict[str, Any]: Dictionary with five component category keys
+                (filesystems, executables, archives, certificates, other),
+                each containing a list of dictionaries with type, name, offset,
+                and size for components matching that category.
+        """
         components: dict[str, Any] = {
             "filesystems": [],
             "executables": [],
@@ -484,7 +668,27 @@ class FirmwareAnalysisTool:
         return components
 
     def _classify_firmware(self, analysis_result: Any) -> dict[str, Any]:
-        """Classify firmware based on analysis results"""
+        """Classify firmware based on analysis results.
+
+        Performs detailed firmware classification by analyzing signatures to
+        determine complexity, architecture, security features, and component
+        presence. Supports ARM, MIPS, and x86 architecture detection.
+        Identifies bootloaders, filesystems, and encryption mechanisms.
+
+        Args:
+            analysis_result: Firmware analysis result object containing
+                firmware_type and signatures attributes. Signatures are analyzed
+                for architecture hints, bootloader presence, filesystem
+                components, and encryption indicators.
+
+        Returns:
+            dict[str, Any]: Classification dictionary containing primary_type,
+                complexity (simple/moderate/advanced), architecture
+                (ARM/MIPS/x86/unknown), bootloader_present flag,
+                filesystem_present flag, encryption_present flag, confidence
+                score, optional encryption_details list, and security_features
+                list of identified security mechanisms.
+        """
         classification: dict[str, Any] = {
             "primary_type": analysis_result.firmware_type.value,
             "complexity": "simple",
@@ -549,7 +753,27 @@ class FirmwareAnalysisTool:
         return classification
 
     def _analyze_attack_surface(self, analysis_result: Any) -> dict[str, Any]:
-        """Analyze potential attack surface of firmware"""
+        """Analyze potential attack surface of firmware.
+
+        Examines extracted firmware files for evidence of exposed network
+        interfaces, web services, debug mechanisms, and exposed services.
+        Calculates overall attack surface risk assessment based on interface
+        count for threat modeling and exploitation planning.
+
+        Args:
+            analysis_result: Firmware analysis result object containing
+                has_extractions flag and extractions object with extracted_files
+                list. Each file object must have extracted_strings attribute
+                for network/debug/API indicator detection.
+
+        Returns:
+            dict[str, Any]: Attack surface dictionary containing
+                network_interfaces count, web_interfaces count,
+                debug_interfaces count, exposed_services list (Remote access,
+                Web interface, etc.), potential_vulnerabilities list (Debug
+                interface, etc.), and risk_assessment (low/medium/high) based
+                on total interface count.
+        """
         attack_surface: dict[str, Any] = {
             "network_interfaces": 0,
             "web_interfaces": 0,
@@ -591,5 +815,13 @@ class FirmwareAnalysisTool:
 
 
 def create_firmware_analysis_tool() -> FirmwareAnalysisTool:
-    """Factory function to create firmware analysis tool"""
+    """Factory function to create firmware analysis tool.
+
+    Instantiates and returns a configured FirmwareAnalysisTool instance
+    ready for firmware analysis operations via LLM integration.
+
+    Returns:
+        FirmwareAnalysisTool: Initialized firmware analysis tool instance
+            with Binwalk analyzer and empty analysis cache.
+    """
     return FirmwareAnalysisTool()

@@ -111,7 +111,13 @@ class DashboardIntegration:
         self.logger.info("Dashboard integration initialized")
 
     def _initialize_custom_widgets(self) -> None:
-        """Initialize custom analysis widgets."""
+        """Initialize custom analysis widgets.
+
+        Sets up dashboard widgets for binary analysis overview, tool status,
+        bypass strategies, correlation matrix, memory usage, and analysis speed
+        monitoring.
+
+        """
         # Binary analysis overview
         self.dashboard_manager.add_widget(
             create_widget(
@@ -429,7 +435,12 @@ class DashboardIntegration:
         self.logger.info("Exported analysis report to %s", filepath)
 
     def shutdown(self) -> None:
-        """Shutdown dashboard integration."""
+        """Shutdown dashboard integration.
+
+        Stops the dashboard manager and clears all active analysis tracking
+        data. Should be called before application termination.
+
+        """
         self.logger.info("Shutting down dashboard integration")
 
         # Stop dashboard manager
@@ -444,11 +455,11 @@ class DashboardIntegration:
         """Handle Ghidra event.
 
         Processes and routes events from the Ghidra analyzer to the dashboard
-        and updates relevant widgets.
+        and updates relevant widgets based on the event type.
 
         Args:
-            event_type: Type of event (function_analyzed, etc.).
-            data: Event data dictionary.
+            event_type: Type of event from Ghidra analyzer (function_analyzed, etc.).
+            data: Event data dictionary containing event details.
 
         """
         self.dashboard_manager.process_analysis_event(event_type, "ghidra", data)
@@ -461,11 +472,11 @@ class DashboardIntegration:
         """Handle Frida event.
 
         Processes and routes events from the Frida analyzer to the dashboard
-        and updates hook status widgets.
+        and updates hook status widgets based on the event type.
 
         Args:
-            event_type: Type of event (hook_installed, etc.).
-            data: Event data dictionary.
+            event_type: Type of event from Frida analyzer (hook_installed, etc.).
+            data: Event data dictionary containing hook and instrumentation details.
 
         """
         self.dashboard_manager.process_analysis_event(event_type, "frida", data)
@@ -478,11 +489,11 @@ class DashboardIntegration:
         """Handle Radare2 event.
 
         Processes and routes events from the Radare2 analyzer to the dashboard
-        and updates graph visualization widgets.
+        and updates graph visualization widgets based on the event type.
 
         Args:
-            event_type: Type of event (graph_generated, etc.).
-            data: Event data dictionary.
+            event_type: Type of event from Radare2 analyzer (graph_generated, etc.).
+            data: Event data dictionary containing graph and analysis details.
 
         """
         self.dashboard_manager.process_analysis_event(event_type, "radare2", data)
@@ -494,10 +505,11 @@ class DashboardIntegration:
     def _handle_r2_performance(self, metrics: dict[str, object]) -> None:
         """Handle R2 performance metrics.
 
-        Updates dashboard with performance metrics from Radare2 analysis.
+        Updates dashboard with performance metrics from Radare2 analysis
+        including timing and resource usage data.
 
         Args:
-            metrics: Performance metrics dictionary.
+            metrics: Performance metrics dictionary containing timing and resource data.
 
         """
         self.dashboard_manager.dashboard.update_performance("radare2", metrics)
@@ -509,8 +521,8 @@ class DashboardIntegration:
         correlation matrices and unified findings visualization.
 
         Args:
-            event_type: Type of event (correlation_found, etc.).
-            data: Event data dictionary.
+            event_type: Type of event from orchestrator (correlation_found, etc.).
+            data: Event data dictionary containing correlation and orchestration details.
 
         """
         self.dashboard_manager.process_analysis_event(event_type, "cross_tool", data)
@@ -710,8 +722,11 @@ class DashboardIntegration:
     def _update_binary_overview(self, target: str) -> None:
         """Update binary overview widget.
 
+        Updates the binary overview widget with metadata about the target
+        binary file including name, path, size, and modification time.
+
         Args:
-            target: Target binary path
+            target: Target binary file path.
 
         """
         from ..dashboard_widgets import WidgetData
@@ -738,9 +753,12 @@ class DashboardIntegration:
     def _update_tool_status(self, tool: str, status: str) -> None:
         """Update tool status widget.
 
+        Updates the tool status widget to display the current status of all
+        integrated analysis tools (ghidra, frida, radare2, cross_tool).
+
         Args:
-            tool: Tool name
-            status: Tool status
+            tool: Tool name (ghidra, frida, radare2, or cross_tool).
+            status: Tool status string (Running or Idle).
 
         """
         from ..dashboard_widgets import WidgetData
@@ -767,11 +785,12 @@ class DashboardIntegration:
     def _update_function_analysis(self, tool: str, data: dict[str, object]) -> None:
         """Update function analysis widgets.
 
-        Updates the function analysis chart with new analysis results.
+        Updates the function analysis chart with new analysis results from
+        the analysis tool.
 
         Args:
             tool: Tool name performing analysis.
-            data: Function analysis data.
+            data: Function analysis data dictionary containing analysis results.
 
         """
         from ..dashboard_widgets import WidgetData
@@ -790,10 +809,11 @@ class DashboardIntegration:
     def _update_hook_status(self, data: dict[str, object]) -> None:
         """Update hook status display.
 
-        Displays hook installation events in the dashboard event timeline.
+        Displays hook installation events in the dashboard event timeline for
+        monitoring Frida instrumentation activities.
 
         Args:
-            data: Hook data including function name and address.
+            data: Hook data dictionary including function name and address.
 
         """
         # Create event for timeline
@@ -811,10 +831,11 @@ class DashboardIntegration:
     def _update_graph_widget(self, data: dict[str, object]) -> None:
         """Update graph visualization widget.
 
-        Updates the call graph or control flow graph visualization with new data.
+        Updates the call graph or control flow graph visualization with new
+        binary analysis data.
 
         Args:
-            data: Graph data including nodes and edges.
+            data: Graph data dictionary including nodes and edges.
 
         """
         from ..dashboard_widgets import WidgetData
@@ -829,10 +850,11 @@ class DashboardIntegration:
     def _update_correlation_matrix(self, data: dict[str, object]) -> None:
         """Update correlation matrix widget.
 
-        Updates the cross-tool correlation heatmap with new analysis correlations.
+        Updates the cross-tool correlation heatmap with new analysis correlations
+        from the orchestrator.
 
         Args:
-            data: Correlation data including matrix and tool list.
+            data: Correlation data dictionary including matrix and tool list.
 
         """
         from ..dashboard_widgets import WidgetData
@@ -848,11 +870,11 @@ class DashboardIntegration:
         """Update widgets based on findings.
 
         Updates visualizations with analysis findings (vulnerabilities,
-        protections, bypasses).
+        protections, bypasses) from tools.
 
         Args:
             finding_type: Type of finding (vulnerability, protection, bypass).
-            data: Finding data.
+            data: Finding data dictionary with detailed finding information.
 
         """
         from ..dashboard_widgets import WidgetData
@@ -878,10 +900,11 @@ class DashboardIntegration:
         """Process analysis results for visualization.
 
         Processes raw analysis results and distributes them to appropriate
-        widgets and event handlers for dashboard visualization.
+        widgets and event handlers for dashboard visualization. Extracts
+        functions, vulnerabilities, and protections for display.
 
         Args:
-            results: Analysis results dictionary.
+            results: Analysis results dictionary containing analysis findings.
 
         """
         if functions_obj := results.get("functions"):
@@ -904,14 +927,14 @@ class DashboardIntegration:
         """Summarize analysis results.
 
         Generates a concise summary of analysis results for report generation
-        and quick visualization.
+        and quick visualization by counting key findings.
 
         Args:
-            results: Full analysis results dictionary.
+            results: Full analysis results dictionary containing all analysis data.
 
         Returns:
             Summary dictionary with counts of functions, vulnerabilities,
-            protections, imports, and strings.
+            protections, imports, and strings found in the analysis.
 
         """
         functions_obj = results.get("functions", [])

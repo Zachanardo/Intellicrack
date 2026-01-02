@@ -16,7 +16,7 @@ import zipfile
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import lz4.frame
 import msgpack
@@ -27,12 +27,24 @@ from intellicrack.utils.type_safety import validate_type
 
 @dataclass
 class ProjectVersion:
-    """Represents a versioned state of a project."""
+    """Represents a versioned state of a project.
+
+    Attributes:
+        version_id: Unique identifier for this version.
+        timestamp: Creation timestamp of this version.
+        binary_hash: SHA256 hash of the binary at this version.
+        analysis_data: LZ4-compressed msgpack-serialized analysis data.
+        metadata: Additional metadata about the version.
+        parent_version: Version ID of the parent version, if any.
+        author: Username of the author who created this version.
+        description: Human-readable description of changes in this version.
+        tags: List of tags for organizing and categorizing versions.
+    """
 
     version_id: str
     timestamp: datetime
     binary_hash: str
-    analysis_data: bytes  # Compressed analysis result
+    analysis_data: bytes
     metadata: dict[str, Any]
     parent_version: str | None = None
     author: str = "intellicrack"
@@ -42,7 +54,20 @@ class ProjectVersion:
 
 @dataclass
 class GhidraProject:
-    """Represents a persistent Ghidra analysis project."""
+    """Represents a persistent Ghidra analysis project.
+
+    Attributes:
+        project_id: Unique identifier for this project.
+        name: Human-readable project name.
+        binary_path: Filesystem path to the analyzed binary.
+        created_at: Project creation timestamp.
+        modified_at: Timestamp of the last modification.
+        versions: List of all versions in this project's history.
+        current_version: Version ID of the currently active version.
+        collaborators: List of user IDs with access to this project.
+        settings: Project-specific configuration settings.
+        is_locked: Whether the project is locked against modifications.
+    """
 
     project_id: str
     name: str
@@ -60,7 +85,12 @@ class GhidraProjectManager:
     """Manages persistent Ghidra projects with versioning and collaboration."""
 
     def __init__(self, projects_dir: str | None = None) -> None:
-        """Initialize the GhidraProjectManager with an optional projects directory."""
+        """Initialize the GhidraProjectManager with an optional projects directory.
+
+        Args:
+            projects_dir: Optional directory path for storing projects. Defaults to
+                ~/.intellicrack/ghidra_projects if not specified.
+        """
         self.projects_dir = Path(projects_dir) if projects_dir else Path.home() / ".intellicrack" / "ghidra_projects"
         self.projects_dir.mkdir(parents=True, exist_ok=True)
         self.db_path = self.projects_dir / "projects.db"
@@ -68,7 +98,11 @@ class GhidraProjectManager:
         self._init_cache()
 
     def _init_database(self) -> None:
-        """Initialize SQLite database for project metadata."""
+        """Initialize SQLite database for project metadata.
+
+        Creates tables for projects, versions, collaborators, and analysis cache
+        if they do not already exist.
+        """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -136,11 +170,25 @@ class GhidraProjectManager:
         conn.close()
 
     def _init_cache(self) -> None:
-        """Initialize in-memory cache for frequently accessed data."""
+        """Initialize in-memory cache for frequently accessed data.
+
+        Sets up cache dictionaries for projects, versions, and analysis results
+        to improve performance of frequently accessed items.
+        """
         self.cache: dict[str, dict[str, Any]] = {"projects": {}, "versions": {}, "analysis_results": {}}
 
     def create_project(self, name: str, binary_path: str, initial_analysis: GhidraAnalysisResult | None = None) -> GhidraProject:
-        """Create a new Ghidra project with initial version."""
+        """Create a new Ghidra project with initial version.
+
+        Args:
+            name: Human-readable name for the project.
+            binary_path: Filesystem path to the binary to analyze.
+            initial_analysis: Optional initial GhidraAnalysisResult to save as the
+                first version. If not provided, an empty version is created.
+
+        Returns:
+            The newly created project object.
+        """
         project_id = self._generate_project_id(name, binary_path)
         binary_hash = self._compute_file_hash(binary_path)
 
@@ -196,7 +244,16 @@ class GhidraProjectManager:
         return project
 
     def load_project(self, project_id: str) -> GhidraProject | None:
-        """Load a project from persistent storage."""
+        """Load a project from persistent storage.
+
+        Attempts to load from in-memory cache first, then from the database.
+
+        Args:
+            project_id: The unique project identifier to load.
+
+        Returns:
+            The loaded project object, or None if the project does not exist.
+        """
         # Check cache first
         if project_id in self.cache["projects"]:
             cached_project = self.cache["projects"][project_id]
@@ -293,7 +350,23 @@ class GhidraProjectManager:
         description: str = "",
         tags: list[str] | None = None,
     ) -> ProjectVersion:
-        """Save a new version of the project."""
+        """Save a new version of the project.
+
+        Creates a new versioned snapshot of the analysis result, updating the
+        current version pointer.
+
+        Args:
+            project_id: The project identifier.
+            analysis_result: The GhidraAnalysisResult to save.
+            description: Optional description of changes in this version.
+            tags: Optional list of tags for organizing versions.
+
+        Returns:
+            The newly created version object.
+
+        Raises:
+            ValueError: If the project does not exist or is locked.
+        """
         project = self.load_project(project_id)
         if not project:
             raise ValueError(f"Project {project_id} not found")
@@ -336,7 +409,18 @@ class GhidraProjectManager:
         return version
 
     def load_version(self, project_id: str, version_id: str) -> GhidraAnalysisResult | None:
-        """Load a specific version of the analysis."""
+        """Load a specific version of the analysis.
+
+        Loads the analysis result for a specific version, decompressing it from
+        storage. Results are cached for subsequent accesses.
+
+        Args:
+            project_id: The project identifier.
+            version_id: The specific version to load.
+
+        Returns:
+            The decompressed analysis result, or None if the version does not exist.
+        """
         # Check cache
         cache_key = f"{project_id}_{version_id}"
         if cache_key in self.cache["analysis_results"]:
@@ -361,7 +445,24 @@ class GhidraProjectManager:
         return analysis_result
 
     def diff_versions(self, project_id: str, version1_id: str, version2_id: str) -> dict[str, Any]:
-        """Perform binary diffing between two versions."""
+        """Perform binary diffing between two versions.
+
+        Compares two versions of a binary, identifying added, removed, and modified
+        functions, strings, imports, and exports.
+
+        Args:
+            project_id: The project identifier.
+            version1_id: The first version to compare.
+            version2_id: The second version to compare.
+
+        Returns:
+            A dictionary containing analysis results with keys: added_functions,
+            removed_functions, modified_functions, added_strings, removed_strings,
+            imports_changes, exports_changes, and statistics.
+
+        Raises:
+            ValueError: If one or both versions do not exist.
+        """
         analysis1 = self.load_version(project_id, version1_id)
         analysis2 = self.load_version(project_id, version2_id)
 
@@ -445,7 +546,18 @@ class GhidraProjectManager:
         return diff_result
 
     def _function_changed(self, func1: GhidraFunction, func2: GhidraFunction) -> bool:
-        """Check if a function has changed between versions."""
+        """Check if a function has changed between versions.
+
+        Compares function size, signature, return type, decompiled code, and
+        parameters to detect any changes.
+
+        Args:
+            func1: The first function to compare.
+            func2: The second function to compare.
+
+        Returns:
+            True if any differences are detected, False otherwise.
+        """
         # Check basic properties
         if func1.size != func2.size or func1.signature != func2.signature or func1.return_type != func2.return_type:
             return True
@@ -458,7 +570,19 @@ class GhidraProjectManager:
         return func1.parameters != func2.parameters
 
     def _analyze_function_changes(self, func1: GhidraFunction, func2: GhidraFunction) -> dict[str, Any]:
-        """Analyze specific changes in a function."""
+        """Analyze specific changes in a function.
+
+        Compares two versions of a function and generates detailed change records
+        for size, signature, parameters, and decompiled code.
+
+        Args:
+            func1: The first function to compare.
+            func2: The second function to compare.
+
+        Returns:
+            A dictionary mapping change types to their details, including 'size',
+            'signature', 'parameters', and 'code_diff'.
+        """
         changes: dict[str, Any] = {}
 
         if func1.size != func2.size:
@@ -478,7 +602,19 @@ class GhidraProjectManager:
         return changes
 
     def _calculate_similarity(self, analysis1: GhidraAnalysisResult, analysis2: GhidraAnalysisResult) -> float:
-        """Calculate overall similarity between two analysis results."""
+        """Calculate overall similarity between two analysis results.
+
+        Computes Jaccard similarity based on the overlap of functions between
+        two analysis results.
+
+        Args:
+            analysis1: The first analysis result.
+            analysis2: The second analysis result.
+
+        Returns:
+            A value between 0.0 and 1.0 representing similarity, where 1.0 indicates
+            identical function sets.
+        """
         # Simple similarity based on function overlap
         funcs1 = set(analysis1.functions.keys())
         funcs2 = set(analysis2.functions.keys())
@@ -492,7 +628,23 @@ class GhidraProjectManager:
         return intersection / union if union > 0 else 0.0
 
     def export_project(self, project_id: str, export_path: str, include_all_versions: bool = False) -> Path:
-        """Export project to a portable archive."""
+        """Export project to a portable archive.
+
+        Creates a ZIP archive containing project metadata and version data files,
+        suitable for backup or transfer to another system.
+
+        Args:
+            project_id: The project identifier to export.
+            export_path: Filesystem path where the archive will be created.
+            include_all_versions: If True, exports all versions. If False, exports
+                only the current version.
+
+        Returns:
+            The Path object for the created archive.
+
+        Raises:
+            ValueError: If the project does not exist.
+        """
         project = self.load_project(project_id)
         if not project:
             raise ValueError(f"Project {project_id} not found")
@@ -537,7 +689,17 @@ class GhidraProjectManager:
         return export_path_obj
 
     def import_project(self, archive_path: str) -> GhidraProject:
-        """Import project from archive."""
+        """Import project from archive.
+
+        Loads a project from a previously exported ZIP archive. If the project ID
+        already exists, generates a new ID for the imported project.
+
+        Args:
+            archive_path: Filesystem path to the archive file.
+
+        Returns:
+            The imported project object.
+        """
         archive_path_obj = Path(archive_path)
 
         with zipfile.ZipFile(archive_path_obj, "r") as zipf:
@@ -602,7 +764,15 @@ class GhidraProjectManager:
             return project
 
     def add_collaborator(self, project_id: str, user_id: str, role: str = "viewer") -> None:
-        """Add a collaborator to the project."""
+        """Add a collaborator to the project.
+
+        Adds a user to the project's collaborators list with an optional role.
+
+        Args:
+            project_id: The project identifier.
+            user_id: The user identifier to add.
+            role: The role for the collaborator, defaults to "viewer".
+        """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -622,19 +792,41 @@ class GhidraProjectManager:
             self.cache["projects"][project_id].collaborators.append(user_id)
 
     def lock_project(self, project_id: str) -> None:
-        """Lock a project to prevent modifications."""
+        """Lock a project to prevent modifications.
+
+        Marks a project as locked, preventing new versions from being saved.
+
+        Args:
+            project_id: The project identifier to lock.
+        """
         if project := self.load_project(project_id):
             project.is_locked = True
             self._update_project_in_db(project)
 
     def unlock_project(self, project_id: str) -> None:
-        """Unlock a project to allow modifications."""
+        """Unlock a project to allow modifications.
+
+        Marks a project as unlocked, allowing new versions to be saved.
+
+        Args:
+            project_id: The project identifier to unlock.
+        """
         if project := self.load_project(project_id):
             project.is_locked = False
             self._update_project_in_db(project)
 
     def _compress_analysis(self, analysis: GhidraAnalysisResult) -> bytes:
-        """Compress analysis result for storage."""
+        """Compress analysis result for storage.
+
+        Serializes a GhidraAnalysisResult to msgpack format and compresses it
+        using LZ4 for efficient storage.
+
+        Args:
+            analysis: The GhidraAnalysisResult to compress.
+
+        Returns:
+            LZ4-compressed msgpack-serialized analysis data.
+        """
         # Convert to serializable format
         data = {
             "binary_path": analysis.binary_path,
@@ -660,7 +852,17 @@ class GhidraProjectManager:
         return validate_type(compressed, bytes)
 
     def _decompress_analysis(self, compressed_data: bytes) -> GhidraAnalysisResult:
-        """Decompress analysis result from storage."""
+        """Decompress analysis result from storage.
+
+        Decompresses LZ4-compressed data and deserializes msgpack to reconstruct
+        the GhidraAnalysisResult object.
+
+        Args:
+            compressed_data: LZ4-compressed msgpack-serialized data.
+
+        Returns:
+            The reconstructed analysis result.
+        """
         # Decompress
         decompressed = lz4.frame.decompress(compressed_data)
 
@@ -688,17 +890,45 @@ class GhidraProjectManager:
         )
 
     def _generate_project_id(self, name: str, binary_path: str) -> str:
-        """Generate unique project ID."""
+        """Generate unique project ID.
+
+        Creates a SHA256-based unique identifier from project name and binary path,
+        returning the first 16 hex characters.
+
+        Args:
+            name: Project name.
+            binary_path: Path to the binary file.
+
+        Returns:
+            A 16-character hexadecimal project identifier.
+        """
         unique_str = f"{name}_{binary_path}_{datetime.now().isoformat()}"
         return hashlib.sha256(unique_str.encode()).hexdigest()[:16]
 
     def _generate_version_id(self) -> str:
-        """Generate unique version ID."""
+        """Generate unique version ID.
+
+        Creates a SHA256-based unique identifier from current timestamp and
+        cryptographic random bytes, returning the first 16 hex characters.
+
+        Returns:
+            A 16-character hexadecimal version identifier.
+        """
         unique_str = f"{datetime.now().isoformat()}_{os.urandom(16).hex()}"
         return hashlib.sha256(unique_str.encode()).hexdigest()[:16]
 
     def _compute_file_hash(self, file_path: str) -> str:
-        """Compute SHA256 hash of file."""
+        """Compute SHA256 hash of file.
+
+        Computes the SHA256 hash of a file by reading it in 4KB blocks,
+        suitable for large files.
+
+        Args:
+            file_path: The path to the file to hash.
+
+        Returns:
+            The hexadecimal SHA256 hash string.
+        """
         sha256_hash = hashlib.sha256()
         with open(file_path, "rb") as f:
             for byte_block in iter(lambda: f.read(4096), b""):
@@ -706,7 +936,14 @@ class GhidraProjectManager:
         return sha256_hash.hexdigest()
 
     def _save_project_to_db(self, project: GhidraProject) -> None:
-        """Save project to database."""
+        """Save project to database.
+
+        Inserts or updates a project record in the SQLite database with current
+        project metadata and settings.
+
+        Args:
+            project: The GhidraProject object to save.
+        """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -735,7 +972,16 @@ class GhidraProjectManager:
         conn.close()
 
     def _save_version_to_db(self, project_id: str, version: ProjectVersion, data_path: str) -> None:
-        """Save version to database."""
+        """Save version to database.
+
+        Inserts or updates a version record in the SQLite database, storing
+        metadata and references to version data files.
+
+        Args:
+            project_id: The project identifier.
+            version: The ProjectVersion object to save.
+            data_path: The filesystem path where version data is stored.
+        """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -764,7 +1010,14 @@ class GhidraProjectManager:
         conn.close()
 
     def _update_project_in_db(self, project: GhidraProject) -> None:
-        """Update project in database."""
+        """Update project in database.
+
+        Updates an existing project record in the SQLite database with current
+        metadata, version information, and lock status.
+
+        Args:
+            project: The GhidraProject object with updated data.
+        """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 

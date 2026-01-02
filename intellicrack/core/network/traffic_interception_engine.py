@@ -65,7 +65,12 @@ class InterceptedPacket:
     flags: dict[str, bool]
 
     def __post_init__(self) -> None:
-        """Initialize flags if not provided."""
+        """Initialize flags if not provided.
+
+        Ensures the flags dictionary is properly initialized with default
+        TCP flag values when not explicitly set during dataclass construction.
+
+        """
         if not self.flags:
             self.flags = {"syn": False, "ack": False, "fin": False, "rst": False}
 
@@ -222,7 +227,15 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         self.capture_backend = self._initialize_capture_backend()
 
     def _initialize_capture_backend(self) -> str:
-        """Initialize the best available packet capture backend."""
+        """Initialize the best available packet capture backend.
+
+        Detects the operating system and available dependencies to select
+        the most appropriate packet capture implementation.
+
+        Returns:
+            str: Name of the selected capture backend ('scapy' or 'socket')
+
+        """
         # Check platform and available libraries
         if sys.platform == "win32":
             if HAS_SCAPY:
@@ -293,7 +306,15 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return False
 
     def stop_interception(self) -> bool:
-        """Stop traffic interception."""
+        """Stop traffic interception.
+
+        Gracefully halts all packet capture and analysis threads,
+        cleaning up resources.
+
+        Returns:
+            bool: True if stopped successfully, False otherwise
+
+        """
         try:
             self.running = False
 
@@ -312,7 +333,13 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return False
 
     def _capture_loop(self) -> None:
-        """Run main packet capture loop."""
+        """Run main packet capture loop.
+
+        Orchestrates packet capture by delegating to the appropriate backend
+        (Scapy or raw socket) based on the system configuration. Handles
+        exceptions and continues loop execution.
+
+        """
         try:
             if self.capture_backend == "scapy":
                 self._scapy_capture()
@@ -324,7 +351,13 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self.logger.exception("Capture loop error: %s", e)
 
     def _scapy_capture(self) -> None:
-        """Packet capture using Scapy."""
+        """Capture network packets using Scapy library.
+
+        Implements packet capture using the Scapy library with filtering for
+        license server ports. Processes captured packets and queues them for
+        analysis.
+
+        """
         if not HAS_SCAPY:
             return
 
@@ -337,7 +370,17 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
             # Define packet processing function
             def process_license_packet(packet: Any, IP: Any, TCP: Any) -> None:
-                """Process packets for license interception."""
+                """Process packets for license interception.
+
+                Extracts license-related information from intercepted TCP packets
+                and queues them for analysis.
+
+                Args:
+                    packet: Scapy packet object containing network data
+                    IP: Scapy IP layer class for packet inspection
+                    TCP: Scapy TCP layer class for packet inspection
+
+                """
                 if hasattr(packet, "__contains__") and TCP in packet:
                     tcp_layer = packet[TCP]
                     ip_layer = packet[IP]
@@ -374,7 +417,18 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
             # Start capture
             def stop_filter_fn(x: Any) -> bool:
-                """Stop filter function for scapy sniff."""
+                """Stop filter function for scapy sniff.
+
+                Determines whether to continue packet capture based on
+                the engine's running state.
+
+                Args:
+                    x: Packet object from Scapy sniff
+
+                Returns:
+                    bool: True to stop sniffing, False to continue
+
+                """
                 logger.debug("Packet in stop_filter: %s", x)
                 return not self.running
 
@@ -392,7 +446,13 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     # This provides better cross-platform compatibility and enhanced features
 
     def _socket_capture(self) -> None:
-        """Capture localhost traffic with basic socket-based approach."""
+        """Capture network traffic using raw sockets.
+
+        Establishes a raw socket for packet capture on Windows or Unix-like
+        systems. Falls back to connection monitoring if raw socket access
+        is not available.
+
+        """
         try:
             # Create raw socket for local traffic monitoring
             if sys.platform == "win32":
@@ -433,7 +493,12 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self._monitor_local_connections()
 
     def _monitor_local_connections(self) -> None:
-        """Monitor local connections when raw sockets aren't available."""
+        """Monitor local connections when raw sockets are unavailable.
+
+        Fallback monitoring mechanism that periodically checks for open
+        connections on license server ports using socket connection attempts.
+
+        """
         self.logger.info("Monitoring localhost connections for license traffic")
 
         while self.running:
@@ -471,7 +536,19 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 self.logger.debug("Connection monitoring error: %s", e)
 
     def _parse_raw_packet(self, raw_packet: bytes) -> None:
-        """Parse raw network packet."""
+        """Parse raw network packet.
+
+        Extracts IP and TCP headers from raw socket data and creates
+        InterceptedPacket objects for license-related traffic.
+
+        Args:
+            raw_packet: Raw packet bytes from socket recv()
+
+        Raises:
+            Exception: Logs debug messages for parsing errors, continues
+                on failure.
+
+        """
         try:
             if len(raw_packet) < 20:
                 return
@@ -529,7 +606,16 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self.logger.debug("Error parsing packet: %s", e)
 
     def _queue_packet(self, packet: InterceptedPacket) -> None:
-        """Add packet to analysis queue."""
+        """Add packet to analysis queue.
+
+        Thread-safely appends packets to the analysis queue and updates
+        packet capture statistics. Maintains a maximum queue size of 10000
+        packets.
+
+        Args:
+            packet: InterceptedPacket object to queue for analysis
+
+        """
         with self.queue_lock:
             self.packet_queue.append(packet)
 
@@ -547,7 +633,12 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 self.packet_queue.pop(0)
 
     def _analysis_loop(self) -> None:
-        """Run main packet analysis loop."""
+        """Run main packet analysis loop.
+
+        Continuously processes queued packets, invokes registered analysis
+        callbacks for license-related traffic, and handles errors gracefully.
+
+        """
         while self.running:
             try:
                 packets_to_analyze = []
@@ -572,7 +663,22 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 self.logger.exception("Analysis loop error: %s", e)
 
     def _analyze_packet(self, packet: InterceptedPacket) -> AnalyzedTraffic | None:
-        """Analyze packet for license-related content."""
+        """Analyze packet for license-related content.
+
+        Performs pattern matching, port-based detection, and heuristic analysis
+        to determine if a packet contains license-related communications.
+
+        Args:
+            packet: InterceptedPacket object to analyze
+
+        Returns:
+            AnalyzedTraffic object if packet is license-related with sufficient
+            confidence, None otherwise.
+
+        Raises:
+            Exception: Logs exception and returns None on analysis error.
+
+        """
         try:
             is_license_related = False
             protocol_type = "unknown"
@@ -650,16 +756,47 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return None
 
     def add_analysis_callback(self, callback: Callable[[AnalyzedTraffic], None]) -> None:
-        """Add callback for analyzed traffic."""
+        """Add callback for analyzed traffic.
+
+        Registers a callback function to be invoked when traffic is analyzed
+        and identified as license-related.
+
+        Args:
+            callback: Callable that accepts AnalyzedTraffic and returns None.
+
+        """
         self.analysis_callbacks.append(callback)
 
     def remove_analysis_callback(self, callback: Callable[[AnalyzedTraffic], None]) -> None:
-        """Remove analysis callback."""
+        """Remove analysis callback.
+
+        Deregisters a previously added callback function from the analysis
+        callback list.
+
+        Args:
+            callback: Callable to remove from the callback list.
+
+        """
         if callback in self.analysis_callbacks:
             self.analysis_callbacks.remove(callback)
 
     def set_dns_redirection(self, hostname: str, target_ip: str) -> bool:
-        """Set up DNS redirection for hostname."""
+        """Set up DNS redirection for hostname.
+
+        Configures DNS resolution redirection to route hostname queries to
+        a specified target IP address for traffic interception.
+
+        Args:
+            hostname: Hostname to redirect.
+            target_ip: Target IP address for the redirection.
+
+        Returns:
+            True if redirection configured successfully, False otherwise.
+
+        Raises:
+            Exception: Logs exception and returns False on configuration error.
+
+        """
         try:
             self.dns_redirections[hostname.lower()] = target_ip
             self.logger.info("DNS redirection setup: %s -> %s", hostname, target_ip)
@@ -669,7 +806,22 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return False
 
     def setup_transparent_proxy(self, target_host: str, target_port: int) -> bool:
-        """Set up transparent proxy for target server."""
+        """Set up transparent proxy for target server.
+
+        Configures transparent proxy routing to intercept traffic destined
+        for a license server and redirect it through the interception engine.
+
+        Args:
+            target_host: Hostname or IP address of the target license server.
+            target_port: Port number of the target license server.
+
+        Returns:
+            True if proxy configured successfully, False otherwise.
+
+        Raises:
+            Exception: Logs exception and returns False on configuration error.
+
+        """
         try:
             proxy_key = f"{target_host}:{target_port}"
             self.proxy_mappings[proxy_key] = (self.bind_interface, target_port)
@@ -680,7 +832,26 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return False
 
     def get_statistics(self) -> dict[str, Any]:
-        """Get traffic interception statistics."""
+        """Get traffic interception statistics.
+
+        Returns accumulated statistics about packet capture, license detection,
+        and interception engine performance.
+
+        Returns:
+            Dictionary containing:
+
+            - packets_captured: Total packets intercepted
+            - license_packets_detected: Packets identified as license-related
+            - protocols_detected: List of license protocols identified
+            - total_bytes: Total bytes captured
+            - uptime_seconds: Engine uptime in seconds
+            - packets_per_second: Capture rate
+            - active_connections: Count of active connections
+            - capture_backend: Name of capture backend in use
+            - dns_redirections: Count of DNS redirections
+            - proxy_mappings: Count of proxy mappings
+
+        """
         current_time = time.time()
         start_time = self.stats["start_time"]
         uptime = current_time - start_time if isinstance(start_time, (int, float)) else 0.0
@@ -709,7 +880,19 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         return stats
 
     def get_active_connections(self) -> list[dict[str, Any]]:
-        """Get list of active connections."""
+        """Get list of active connections.
+
+        Retrieves information about currently tracked license server connections.
+
+        Returns:
+            List of connection dictionaries containing:
+
+            - endpoint: Connection address (ip:port)
+            - duration: Connection duration in seconds
+            - last_activity: Timestamp of last activity
+            - packet_count: Number of packets exchanged
+
+        """
         connections: list[dict[str, Any]] = []
         current_time = time.time()
 
@@ -738,13 +921,20 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         and sends a protocol-appropriate command, returning the server's response.
 
         Args:
-            protocol_name: Name of the license protocol (flexlm, hasp, adobe, etc.)
-            host: Target server hostname or IP address
-            port: Target server port number
-            command: Raw command bytes to send
+            protocol_name: Name of the license protocol (flexlm, hasp, adobe,
+                etc.)
+            host: Target server hostname or IP address.
+            port: Target server port number.
+            command: Raw command bytes to send.
 
         Returns:
-            Server response bytes, or None if connection/send failed
+            Server response bytes, or None if connection/send failed.
+
+        Raises:
+            TimeoutError: If connection or receive timeout occurs, caught and
+                logged.
+            OSError: If socket operations fail, caught and logged.
+            Exception: Other exceptions caught and logged.
 
         """
         try:
@@ -832,12 +1022,15 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     def _wrap_protocol_command(self, protocol_name: str, command: bytes) -> bytes:
         """Wrap command bytes in protocol-specific packet format.
 
+        Adds protocol headers and formatting appropriate for the target
+        license protocol (FlexLM, HASP, Adobe, Autodesk, Microsoft KMS).
+
         Args:
-            protocol_name: Protocol identifier
-            command: Raw command data
+            protocol_name: Protocol identifier string.
+            command: Raw command data bytes.
 
         Returns:
-            Protocol-wrapped command bytes
+            Protocol-wrapped command bytes ready to send.
 
         """
         if protocol_name == "flexlm":
@@ -861,12 +1054,15 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     def _is_response_complete(self, protocol_name: str, data: bytes) -> bool:
         """Check if received response is complete for the protocol.
 
+        Analyzes protocol-specific data to determine if a complete response
+        has been received based on length fields or termination patterns.
+
         Args:
-            protocol_name: Protocol identifier
-            data: Received data so far
+            protocol_name: Protocol identifier string.
+            data: Received data so far in bytes.
 
         Returns:
-            True if response appears complete
+            True if response appears complete, False otherwise.
 
         """
         if not data:
@@ -894,10 +1090,12 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
         This method returns accumulated license traffic data that has been
         captured during interception. It analyzes the packet queue for
-        license-related communications.
+        license-related communications and falls back to port scanning if
+        no traffic has been captured.
 
         Returns:
             List of license traffic dictionaries containing:
+
             - protocol: Detected protocol name
             - server: Server address (ip:port)
             - timestamp: Time of capture
@@ -959,8 +1157,13 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     def _scan_for_active_license_servers(self) -> list[dict[str, Any]]:
         """Scan for active license servers when no traffic is captured.
 
+        Attempts to connect to known license server ports on localhost and
+        the bind interface to detect active servers. Returns detected servers
+        in the same format as capture_license_traffic.
+
         Returns:
-            List of detected license server entries
+            List of detected license server entries with protocol, server,
+            and connection details.
 
         """
         detected = []
@@ -997,11 +1200,15 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     def _identify_protocol_by_port(self, port: int) -> str:
         """Identify likely protocol based on port number.
 
+        Maps port numbers to known license protocols based on industry-standard
+        port assignments for FlexLM, HASP, Microsoft KMS, Autodesk, and HTTP(S).
+
         Args:
-            port: Port number to identify
+            port: Port number to identify.
 
         Returns:
-            Protocol name string
+            Protocol name string corresponding to the port, or 'unknown' if
+            the port is not recognized.
 
         """
         port_protocols = {

@@ -112,7 +112,7 @@ class BypassStrategySelector:
             target_state: Target state - "static" (not running) or "running"
 
         Returns:
-            Recommended BypassMethod
+            Optimal bypass method for the detected target configuration.
 
         """
         if not detection_report.validation_functions:
@@ -160,7 +160,7 @@ class BypassStrategySelector:
             risk_level: Risk level from detection
 
         Returns:
-            Recommended BypassMethod
+            Optimal bypass method for static target based on validation complexity.
 
         """
         if self._is_packed_binary(detection_report):
@@ -198,7 +198,7 @@ class BypassStrategySelector:
             num_libraries: Number of TLS libraries
 
         Returns:
-            Recommended BypassMethod
+            Optimal bypass method for running target based on library complexity.
 
         """
         if num_libraries >= 3:
@@ -266,7 +266,7 @@ class BypassStrategySelector:
             detection_report: Detection results
 
         Returns:
-            Risk level: "low", "medium", or "high"
+            Risk assessment as "low", "medium", or "high" based on validation complexity.
 
         """
         if not detection_report.validation_functions:
@@ -310,7 +310,7 @@ class BypassStrategySelector:
             failed_method: The method that failed
 
         Returns:
-            Alternative BypassMethod or None if no alternatives
+            Alternative bypass method to attempt, or None if no fallback exists.
 
         """
         fallback_chain = {

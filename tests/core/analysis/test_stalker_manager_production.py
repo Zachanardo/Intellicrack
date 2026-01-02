@@ -13,8 +13,7 @@ import os
 import tempfile
 import time
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, Mock, patch
+from typing import Any, Callable, Optional
 
 import pytest
 
@@ -25,6 +24,59 @@ from intellicrack.core.analysis.stalker_manager import (
     StalkerStats,
     TraceEvent,
 )
+
+
+class FakeFridaSession:
+    """Test double for Frida session object."""
+
+    def __init__(self, is_detached: bool = False, detach_should_fail: bool = False) -> None:
+        self.is_detached = is_detached
+        self.detach_should_fail = detach_should_fail
+        self.detach_called = False
+
+    def detach(self) -> None:
+        """Simulate session detachment."""
+        self.detach_called = True
+        if self.detach_should_fail:
+            raise Exception("Detach failed")
+        self.is_detached = True
+
+
+class FakeStalkerSessionWithMockSession(StalkerSession):
+    """Test double for StalkerSession with injectable session."""
+
+    def __init__(
+        self,
+        binary_path: str,
+        output_dir: str,
+        message_callback: Optional[Callable[[str], None]] = None,
+        fake_session: Optional[FakeFridaSession] = None,
+        start_return: bool = True,
+        stop_return: bool = True,
+    ) -> None:
+        super().__init__(
+            binary_path=binary_path,
+            output_dir=output_dir,
+            message_callback=message_callback,
+        )
+        if fake_session is not None:
+            self.session = fake_session
+        self._start_return = start_return
+        self._stop_return = stop_return
+        self.cleanup_called = False
+
+    def start(self) -> bool:
+        """Override start to return controlled value."""
+        return self._start_return
+
+    def stop_stalking(self) -> bool:
+        """Override stop_stalking to return controlled value."""
+        return self._stop_return
+
+    def cleanup(self) -> None:
+        """Track cleanup calls while executing real cleanup."""
+        self.cleanup_called = True
+        super().cleanup()
 
 
 @pytest.fixture
@@ -569,22 +621,22 @@ def test_save_json_handles_errors(test_binary: Path, temp_dir: Path) -> None:
 
 def test_context_manager_lifecycle(test_binary: Path, temp_dir: Path) -> None:
     """Context manager properly initializes and cleans up session."""
-    session = StalkerSession(
+    fake_session = FakeFridaSession(is_detached=False)
+
+    session = FakeStalkerSessionWithMockSession(
         binary_path=str(test_binary),
         output_dir=str(temp_dir),
+        fake_session=fake_session,
+        start_return=True,
+        stop_return=True,
     )
 
-    session.session = Mock()
-    session.session.is_detached = False
     session._is_active = True
 
-    with patch.object(session, "start", return_value=True):
-        with patch.object(session, "stop_stalking", return_value=True):
-            with patch.object(session, "cleanup") as mock_cleanup:
-                with session:
-                    pass
+    with session:
+        pass
 
-                mock_cleanup.assert_called_once()
+    assert session.cleanup_called
 
 
 def test_cleanup_detaches_session(test_binary: Path, temp_dir: Path) -> None:
@@ -594,14 +646,13 @@ def test_cleanup_detaches_session(test_binary: Path, temp_dir: Path) -> None:
         output_dir=str(temp_dir),
     )
 
-    mock_session = Mock()
-    mock_session.is_detached = False
-    session.session = mock_session
+    fake_session = FakeFridaSession(is_detached=False)
+    session.session = fake_session
     session._is_active = True
 
     session.cleanup()
 
-    mock_session.detach.assert_called_once()
+    assert fake_session.detach_called
     assert not session._is_active
 
 
@@ -612,10 +663,8 @@ def test_cleanup_handles_detach_errors(test_binary: Path, temp_dir: Path) -> Non
         output_dir=str(temp_dir),
     )
 
-    mock_session = Mock()
-    mock_session.is_detached = False
-    mock_session.detach.side_effect = Exception("Detach failed")
-    session.session = mock_session
+    fake_session = FakeFridaSession(is_detached=False, detach_should_fail=True)
+    session.session = fake_session
 
     session.cleanup()
 
@@ -657,14 +706,17 @@ def test_message_handler_with_error_type(test_binary: Path, temp_dir: Path) -> N
     assert any("Error" in msg for msg in messages_received)
 
 
-def test_session_requires_frida_installation() -> None:
+def test_session_requires_frida_installation(monkeypatch: pytest.MonkeyPatch) -> None:
     """Session initialization fails gracefully when Frida not installed."""
-    with patch("intellicrack.core.analysis.stalker_manager.frida", None):
-        with pytest.raises(ImportError, match="Frida is not installed"):
-            StalkerSession(
-                binary_path="/test/binary.exe",
-                output_dir="/test/output",
-            )
+    import intellicrack.core.analysis.stalker_manager as stalker_module
+
+    monkeypatch.setattr(stalker_module, "frida", None)
+
+    with pytest.raises(ImportError, match="Frida is not installed"):
+        StalkerSession(
+            binary_path="/test/binary.exe",
+            output_dir="/test/output",
+        )
 
 
 def test_trace_event_with_minimal_data() -> None:

@@ -1,4 +1,10 @@
-"""Copyright (C) 2025 Zachary Flint.
+"""Protection utilities for software licensing analysis and bypass.
+
+This module provides utilities for analyzing software protection mechanisms,
+detecting protection types, generating bypass strategies, and creating hooks
+and emulation configurations for licensing protection systems.
+
+Copyright (C) 2025 Zachary Flint.
 
 This file is part of Intellicrack.
 
@@ -20,7 +26,7 @@ import logging
 from typing import Any
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def inject_comprehensive_api_hooks(app: object, hook_types: list[str] | None = None) -> str:
@@ -757,19 +763,31 @@ def generate_hwid_spoof_config(target_hwid: str) -> dict[str, Any]:
             "Win32_DiskDrive": {"SerialNumber": f"DSK-{target_hwid[:10].upper()}"},
             "Win32_NetworkAdapter": {"MACAddress": f"{target_hwid[:2]}:{target_hwid[2:4]}:{target_hwid[4:6]}:00:00:01"},
         },
-        "implementation_script": f"""
+        "implementation_script": f'''
 # HWID Spoofing Script
 # Target HWID: {target_hwid}
 
 import winreg
 import subprocess
 
-def backup_registry():
-    # Backup current HWID values
+def backup_registry() -> None:
+    """Backup current HWID values from registry.
+
+    Exports the HKLM\\SOFTWARE\\Microsoft\\Cryptography registry key
+    to a file for restoration purposes.
+
+    """
     subprocess.run(['reg', 'export', 'HKLM\\SOFTWARE\\Microsoft\\Cryptography', 'hwid_backup.reg'])
 
-def apply_hwid_spoof():
-    # Apply registry modifications
+def apply_hwid_spoof() -> None:
+    """Apply hardware ID spoofing registry modifications.
+
+    Modifies the registry MachineGuid value to the spoofed HWID UUID.
+
+    Raises:
+        Exception: If registry modification fails.
+
+    """
     try:
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
                            r'SOFTWARE\\Microsoft\\Cryptography',
@@ -784,7 +802,7 @@ def apply_hwid_spoof():
 if __name__ == "__main__":
     backup_registry()
     apply_hwid_spoof()
-""",
+''',
         "restoration": {
             "backup_location": "hwid_backup.reg",
             "restore_script": """

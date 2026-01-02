@@ -25,14 +25,20 @@ from pathlib import Path
 from typing import Any
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Platform detection
-IS_WINDOWS = sys.platform.startswith("win")
-IS_LINUX = sys.platform.startswith("linux")
-IS_MACOS = sys.platform.startswith("darwin")
+IS_WINDOWS: bool = sys.platform.startswith("win")
+IS_LINUX: bool = sys.platform.startswith("linux")
+IS_MACOS: bool = sys.platform.startswith("darwin")
 
 # Windows COM interface imports
+HAS_WIN32: bool
+pythoncom: object
+win32com: object
+shell: object
+shellcon: object
+
 if IS_WINDOWS:
     try:
         import pythoncom
@@ -45,8 +51,11 @@ if IS_WINDOWS:
         HAS_WIN32 = False
         pythoncom = win32com = shell = shellcon = None
 else:
-    HAS_WIN32 = False
-    pythoncom = win32com = shell = shellcon = None
+    HAS_WIN32: bool = False
+    pythoncom: object = None
+    win32com: object = None
+    shell: object = None
+    shellcon: object = None
 
 
 class FileTypeInfo:
@@ -63,25 +72,25 @@ class FileTypeInfo:
         """Initialize file type information.
 
         Args:
-            extension: File extension (e.g., '.exe')
-            description: Human-readable description of file type
-            category: Category of file (e.g., 'executable', 'library')
-            supported: Whether this file type is supported for analysis
-            analyzer_hint: Hint for which analyzer to use
+            extension: File extension (e.g., '.exe').
+            description: Human-readable description of file type.
+            category: Category of file (e.g., 'executable', 'library').
+            supported: Whether this file type is supported for analysis.
+            analyzer_hint: Hint for which analyzer to use.
 
         """
-        self.extension = extension.lower()
-        self.description = description
-        self.category = category
-        self.supported = supported
-        self.analyzer_hint = analyzer_hint or "generic"
+        self.extension: str = extension.lower()
+        self.description: str = description
+        self.category: str = category
+        self.supported: bool = supported
+        self.analyzer_hint: str = analyzer_hint or "generic"
 
 
 class FileResolver:
     """Enhanced file resolution with support for shortcuts, installers, and multiple formats."""
 
     # Comprehensive file type registry
-    FILE_TYPES = {
+    FILE_TYPES: dict[str, FileTypeInfo] = {
         # Windows Executables
         ".exe": FileTypeInfo(".exe", "Windows Executable", "executable", True, "pe"),
         ".dll": FileTypeInfo(".dll", "Windows Dynamic Library", "library", True, "pe"),
@@ -131,17 +140,28 @@ class FileResolver:
     }
 
     def __init__(self) -> None:
-        """Initialize the file resolver."""
-        self.logger = logger
+        """Initialize the file resolver.
+
+        Initializes the FileResolver instance with a logger instance for
+        tracking resolution operations and errors.
+
+        """
+        self.logger: logging.Logger = logger
 
     def resolve_file_path(self, file_path: str | Path) -> tuple[str, dict[str, Any]]:
         """Resolve a file path, handling shortcuts and returning target information.
 
+        Resolves file paths including Windows shortcuts (.lnk), URL shortcuts
+        (.url), macOS aliases, and symbolic links. Returns the resolved path
+        and comprehensive metadata about the resolution.
+
         Args:
-            file_path: Path to resolve (may be shortcut or direct file)
+            file_path: Path to resolve (may be shortcut or direct file).
 
         Returns:
-            Tuple of (resolved_path, metadata_dict)
+            Tuple of (resolved_path, metadata_dict) where resolved_path is
+            the final target path as a string and metadata_dict contains
+            resolution information and file metadata.
 
         """
         file_path = Path(file_path)
@@ -191,7 +211,21 @@ class FileResolver:
         return str(file_path), metadata
 
     def get_file_type_info(self, file_path: str | Path) -> FileTypeInfo:
-        """Get file type information for a given path."""
+        """Get file type information for a given path.
+
+        Analyzes a file path and returns corresponding FileTypeInfo containing
+        the file extension, description, category, support status, and analyzer
+        hints.
+
+        Args:
+            file_path: Path to the file to analyze.
+
+        Returns:
+            FileTypeInfo object containing file type information, including
+            extension, description, category, supported status, and analyzer
+            hints.
+
+        """
         file_path = Path(file_path)
         extension = file_path.suffix.lower()
 
@@ -210,7 +244,18 @@ class FileResolver:
         return self.FILE_TYPES.get(extension, FileTypeInfo(extension, "Unknown File Type", "unknown", False))
 
     def get_supported_file_filters(self) -> str:
-        """Generate Qt file dialog filter string for all supported types."""
+        """Generate Qt file dialog filter string for all supported types.
+
+        Creates a formatted filter string for use with Qt file dialogs,
+        grouping all supported file types by category. Includes filters
+        for all supported files, individual categories, and a catch-all
+        filter.
+
+        Returns:
+            Formatted filter string for Qt file dialogs with all supported
+            file types grouped by category.
+
+        """
         categories: dict[str, list[str]] = {}
 
         # Group by category
@@ -249,7 +294,23 @@ class FileResolver:
         return ";;".join(filters)
 
     def _resolve_windows_shortcut(self, lnk_path: Path) -> tuple[str | None, dict[str, Any]]:
-        """Resolve Windows .lnk shortcut file."""
+        """Resolve Windows .lnk shortcut file.
+
+        Uses Windows COM interface via win32com to resolve Windows shortcut
+        (.lnk) files to their target executables. Extracts target path,
+        working directory, arguments, and other shortcut properties.
+
+        Args:
+            lnk_path: Path to the Windows shortcut file.
+
+        Returns:
+            Tuple of (resolved_target_path, metadata_dict) where
+            resolved_target_path is the target executable path or None if
+            resolution fails, and metadata_dict contains shortcut properties
+            including target path, working directory, arguments, and
+            description.
+
+        """
         if not IS_WINDOWS or not HAS_WIN32:
             return None, {"error": "Windows COM not available for shortcut resolution"}
 
@@ -287,7 +348,22 @@ class FileResolver:
             return None, {"error": f"Failed to resolve shortcut: {e!s}"}
 
     def _resolve_url_shortcut(self, url_path: Path) -> tuple[str | None, dict[str, Any]]:
-        """Resolve Windows .url internet shortcut file."""
+        """Resolve Windows .url internet shortcut file.
+
+        Parses Windows .url files (INI-style text files) to extract the
+        embedded URL. These files contain a [InternetShortcut] section with
+        a URL= parameter.
+
+        Args:
+            url_path: Path to the internet shortcut file.
+
+        Returns:
+            Tuple of (resolved_url, metadata_dict) where resolved_url is
+            the extracted URL string or None if parsing fails, and
+            metadata_dict contains shortcut metadata including the target
+            URL and shortcut type.
+
+        """
         try:
             # .url files are INI-style text files
             with open(url_path, encoding="utf-8") as f:
@@ -309,7 +385,18 @@ class FileResolver:
             return None, {"error": f"Failed to resolve URL shortcut: {e!s}"}
 
     def _is_macos_alias(self, file_path: Path) -> bool:
-        """Check if file is a macOS alias."""
+        """Check if file is a macOS alias.
+
+        Uses the 'file' command to detect macOS alias files by examining
+        the output for alias-specific strings.
+
+        Args:
+            file_path: Path to the file to check.
+
+        Returns:
+            True if file is a macOS alias, False otherwise.
+
+        """
         if not IS_MACOS:
             return False
 
@@ -331,7 +418,19 @@ class FileResolver:
             return False
 
     def _resolve_macos_alias(self, alias_path: Path) -> str | None:
-        """Resolve macOS alias to target path."""
+        """Resolve macOS alias to target path.
+
+        Uses AppleScript via osascript to resolve macOS alias files to their
+        target paths. Requires macOS and the Finder application.
+
+        Args:
+            alias_path: Path to the macOS alias file.
+
+        Returns:
+            Resolved target path as a string, or None if resolution fails
+            or the file is not a macOS alias.
+
+        """
         if not IS_MACOS:
             return None
 
@@ -364,7 +463,23 @@ class FileResolver:
         return None
 
     def get_file_metadata(self, file_path: str | Path) -> dict[str, Any]:
-        """Get comprehensive metadata for a file."""
+        """Get comprehensive metadata for a file.
+
+        Collects extensive metadata about a file including size, timestamps,
+        file type information, and platform-specific metadata. On Windows,
+        retrieves version information. On Linux, detects ELF format. On
+        macOS, detects Mach-O format and extended attributes.
+
+        Args:
+            file_path: Path to the file to analyze.
+
+        Returns:
+            Dictionary containing comprehensive file metadata including path,
+            name, size, timestamps, file type info, and platform-specific
+            metadata. Returns error dictionary if file not found or metadata
+            collection fails.
+
+        """
         file_path = Path(file_path)
 
         if not file_path.exists():
@@ -411,7 +526,19 @@ class FileResolver:
             return {"error": f"Failed to get metadata: {e!s}"}
 
     def _format_bytes(self, bytes_size: int) -> str:
-        """Format bytes into human readable string."""
+        """Format bytes into human readable string.
+
+        Converts byte size values into human-readable format with appropriate
+        units (B, KB, MB, GB, TB, PB).
+
+        Args:
+            bytes_size: Size in bytes to format.
+
+        Returns:
+            Formatted human-readable size string with appropriate unit
+            (e.g., '1.5 MB', '512.0 B').
+
+        """
         size_float: float = float(bytes_size)
         for unit in ["B", "KB", "MB", "GB", "TB"]:
             if size_float < 1024.0:
@@ -420,7 +547,19 @@ class FileResolver:
         return f"{size_float:.1f} PB"
 
     def _get_windows_metadata(self, file_path: Path) -> dict[str, Any]:
-        """Get Windows-specific file metadata."""
+        """Get Windows-specific file metadata.
+
+        Retrieves Windows-specific metadata including version information
+        for PE files (.exe, .dll, .sys) using win32api if available.
+
+        Args:
+            file_path: Path to the file to analyze.
+
+        Returns:
+            Dictionary containing Windows-specific metadata including version
+            information and PE format hints for executable files.
+
+        """
         metadata: dict[str, Any] = {}
 
         try:
@@ -448,7 +587,19 @@ class FileResolver:
         return metadata
 
     def _get_linux_metadata(self, file_path: Path) -> dict[str, Any]:
-        """Get Linux-specific file metadata."""
+        """Get Linux-specific file metadata.
+
+        Retrieves Linux-specific metadata by detecting ELF binary format and
+        executing the 'file' command to obtain detailed type information.
+
+        Args:
+            file_path: Path to the file to analyze.
+
+        Returns:
+            Dictionary containing Linux-specific metadata including ELF format
+            detection and file command output.
+
+        """
         metadata: dict[str, Any] = {}
 
         try:
@@ -479,7 +630,20 @@ class FileResolver:
         return metadata
 
     def _get_macos_metadata(self, file_path: Path) -> dict[str, Any]:
-        """Get macOS-specific file metadata."""
+        """Get macOS-specific file metadata.
+
+        Retrieves macOS-specific metadata by detecting Mach-O binary format
+        and extracting extended file attributes if the xattr module is
+        available.
+
+        Args:
+            file_path: Path to the file to analyze.
+
+        Returns:
+            Dictionary containing macOS-specific metadata including Mach-O
+            format detection and extended attributes if available.
+
+        """
         metadata: dict[str, Any] = {}
 
         try:
@@ -511,4 +675,4 @@ class FileResolver:
 
 
 # Create singleton instance
-file_resolver = FileResolver()
+file_resolver: FileResolver = FileResolver()

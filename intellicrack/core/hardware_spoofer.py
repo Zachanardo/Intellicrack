@@ -7,13 +7,12 @@ import datetime
 import platform
 import secrets
 import struct
-import subprocess
 import uuid
 import winreg
 from ctypes import POINTER, c_void_p
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, cast
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import netifaces
 
@@ -24,7 +23,6 @@ from intellicrack.utils.type_safety import validate_type
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from ctypes import _Pointer
 
 logger = get_logger(__name__)
 
@@ -65,11 +63,17 @@ class HardwareIdentifiers:
 class HardwareFingerPrintSpoofer:
     """Production-ready hardware fingerprint spoofing system."""
 
-    def __init__(self) -> None:
-        """Initialize the HardwareFingerPrintSpoofer with WMI client and spoof methods."""
+    def __init__(self, wmi_client: Any | None = None) -> None:
+        """Initialize the HardwareFingerPrintSpoofer with WMI client and spoof methods.
+
+        Args:
+            wmi_client: Optional pre-initialized WMI client. If not provided,
+                       will be lazily initialized on first use.
+        """
         self.original_hardware: HardwareIdentifiers | None = None
         self.spoofed_hardware: HardwareIdentifiers | None = None
-        self.wmi_client: Any = wmi.WMI() if platform.system() == "Windows" else None
+        self._wmi_client: Any = wmi_client
+        self._wmi_initialized: bool = wmi_client is not None
         self.spoof_methods: dict[str, Callable[..., None]] = self._initialize_spoof_methods()
         self.hooks_installed: bool = False
         self.original_exec_query: int | None = None
@@ -101,6 +105,35 @@ class HardwareFingerPrintSpoofer:
         self.original_GetIfTable: Any = None
         self.GetAdaptersInfo_hook: Any = None
         self.GetAdaptersAddresses_hook: Any = None
+
+    @property
+    def wmi_client(self) -> Any:
+        """Lazy-initialized WMI client with proper COM handling.
+
+        Returns:
+            WMI client instance, or None on non-Windows platforms.
+        """
+        if not self._wmi_initialized and platform.system() == "Windows":
+            try:
+                import pythoncom
+                pythoncom.CoInitialize()
+                self._wmi_client = wmi.WMI()
+                self._wmi_initialized = True
+            except Exception as e:
+                logger.warning("Failed to initialize WMI client: %s", e)
+                self._wmi_client = None
+                self._wmi_initialized = True
+        return self._wmi_client
+
+    @wmi_client.setter
+    def wmi_client(self, value: Any) -> None:
+        """Set the WMI client directly.
+
+        Args:
+            value: WMI client instance to use.
+        """
+        self._wmi_client = value
+        self._wmi_initialized = value is not None
 
     def _initialize_spoof_methods(self) -> dict[str, Callable[..., None]]:
         """Initialize spoofing methods for different hardware components.
@@ -361,10 +394,25 @@ class HardwareFingerPrintSpoofer:
         """
         try:
             if platform.system() == "Windows":
-                result = subprocess.run(["vol", "C:"], capture_output=True, text=True, check=False)
-                for line in result.stdout.split("\n"):
-                    if "Serial Number" in line:
-                        return line.split()[-1]
+                kernel32 = ctypes.windll.kernel32
+                volume_name_buffer = ctypes.create_unicode_buffer(256)
+                volume_serial = ctypes.c_ulong()
+                max_component_length = ctypes.c_ulong()
+                file_system_flags = ctypes.c_ulong()
+                file_system_name = ctypes.create_unicode_buffer(256)
+
+                result = kernel32.GetVolumeInformationW(
+                    ctypes.c_wchar_p("C:\\"),
+                    volume_name_buffer,
+                    ctypes.sizeof(volume_name_buffer),
+                    ctypes.byref(volume_serial),
+                    ctypes.byref(max_component_length),
+                    ctypes.byref(file_system_flags),
+                    file_system_name,
+                    ctypes.sizeof(file_system_name),
+                )
+                if result:
+                    return f"{volume_serial.value:08X}"
         except Exception as e:
             logger.debug("Failed to retrieve volume serial: %s", e)
         return "".join(secrets.choice("0123456789ABCDEF") for _ in range(8))
@@ -475,6 +523,9 @@ class HardwareFingerPrintSpoofer:
 
         Returns:
             Generated HardwareIdentifiers object with spoofed values.
+
+        Raises:
+            RuntimeError: If original hardware identifiers could not be captured.
 
         """
         preserve = preserve or []
@@ -865,7 +916,7 @@ class HardwareFingerPrintSpoofer:
             True if WMI hooks were successfully installed, False otherwise.
 
         """
-        from ctypes import byref, c_void_p, cast, sizeof
+        from ctypes import byref, c_void_p, sizeof
 
         CLSID_WbemLocator = "{4590F811-1D3A-11D0-891F-00AA004B2E24}"
         IID_IWbemLocator = "{DC12A687-737F-11CF-884D-00AA004B2E24}"
@@ -885,6 +936,16 @@ class HardwareFingerPrintSpoofer:
         iid = uuid.UUID(IID_IWbemLocator)
 
         class GUID(ctypes.Structure):
+            """Windows GUID structure for COM interface identification.
+
+            Attributes:
+                Data1: First component (32-bit unsigned integer).
+                Data2: Second component (16-bit unsigned integer).
+                Data3: Third component (16-bit unsigned integer).
+                Data4: Fourth component (8 bytes).
+
+            """
+
             _fields_: ClassVar[list[tuple[str, type]]] = [
                 ("Data1", ctypes.c_ulong),
                 ("Data2", ctypes.c_ushort),
@@ -1049,7 +1110,7 @@ class HardwareFingerPrintSpoofer:
             HRESULT status code (0 = S_OK, negative = error).
 
         """
-        from ctypes import c_void_p, cast, pointer
+        from ctypes import c_void_p, pointer
 
         HRESULT = ctypes.c_long
         S_OK = 0
@@ -1065,6 +1126,20 @@ class HardwareFingerPrintSpoofer:
                 return E_FAIL
 
             class SpoofedEnumeratorVTable(ctypes.Structure):
+                """Virtual method table for spoofed WMI enumerator COM object.
+
+                Attributes:
+                    QueryInterface: Query for interface support.
+                    AddRef: Increment reference count.
+                    Release: Decrement reference count.
+                    Reset: Reset enumerator to beginning.
+                    Next: Get next enumeration items.
+                    NextAsync: Asynchronously get next items.
+                    Clone: Clone the enumerator.
+                    Skip: Skip forward in enumeration.
+
+                """
+
                 _fields_: ClassVar[list[tuple[str, Any]]] = [
                     ("QueryInterface", ctypes.CFUNCTYPE(HRESULT, c_void_p, c_void_p, POINTER(c_void_p))),
                     ("AddRef", ctypes.CFUNCTYPE(ctypes.c_ulong, c_void_p)),
@@ -1080,6 +1155,17 @@ class HardwareFingerPrintSpoofer:
                 ]
 
             class SpoofedEnumerator(ctypes.Structure):
+                """Instance data for spoofed WMI enumerator COM object.
+
+                Attributes:
+                    lpVtbl: Pointer to virtual method table.
+                    ref_count: COM object reference count.
+                    current_index: Current enumeration position.
+                    hw_class: WMI hardware class name being enumerated.
+                    spoofed_data: List of spoofed hardware property dictionaries.
+
+                """
+
                 _fields_: ClassVar[list[tuple[str, Any]]] = [
                     ("lpVtbl", POINTER(SpoofedEnumeratorVTable)),
                     ("ref_count", ctypes.c_ulong),
@@ -1096,18 +1182,56 @@ class HardwareFingerPrintSpoofer:
             self._enumerator_ref = enumerator_instance
 
             def query_interface(this_ptr: c_void_p, riid: c_void_p, ppvObject: Any) -> int:
+                """Query interface for COM object.
+
+                Args:
+                    this_ptr: Pointer to COM object instance.
+                    riid: Interface identifier requested.
+                    ppvObject: Output pointer to interface.
+
+                Returns:
+                    S_OK (0) if interface supported, E_FAIL on error.
+
+                """
                 if ppvObject:
                     ppvObject.contents = this_ptr
                     return S_OK
                 return E_FAIL
 
             def add_ref(this_ptr: c_void_p) -> int:
+                """Increment reference count for COM object.
+
+                Args:
+                    this_ptr: Pointer to COM object instance.
+
+                Returns:
+                    New reference count value.
+
+                """
                 return 2
 
             def release(this_ptr: c_void_p) -> int:
+                """Decrement reference count for COM object.
+
+                Args:
+                    this_ptr: Pointer to COM object instance.
+
+                Returns:
+                    New reference count value.
+
+                """
                 return 1
 
             def reset(this_ptr: c_void_p) -> int:
+                """Reset enumerator to beginning.
+
+                Args:
+                    this_ptr: Pointer to enumerator instance.
+
+                Returns:
+                    S_OK (0) on success.
+
+                """
                 enumerator_instance.current_index = 0
                 return S_OK
 
@@ -1118,6 +1242,19 @@ class HardwareFingerPrintSpoofer:
                 apObjects: Any,
                 puReturned: Any,
             ) -> int:
+                """Get next item from enumerator.
+
+                Args:
+                    this_ptr: Pointer to enumerator instance.
+                    lTimeout: Timeout for waiting on result (unused).
+                    uCount: Number of items to retrieve.
+                    apObjects: Output array of retrieved objects.
+                    puReturned: Output count of returned items.
+
+                Returns:
+                    WBEM_S_NO_ERROR (0) if items returned, WBEM_S_FALSE (1) if no more items.
+
+                """
                 WBEM_S_NO_ERROR = 0
                 WBEM_S_FALSE = 1
 
@@ -1133,12 +1270,44 @@ class HardwareFingerPrintSpoofer:
                 return WBEM_S_NO_ERROR
 
             def next_async(this_ptr: c_void_p, uCount: ctypes.c_ulong, pSink: c_void_p) -> int:
+                """Asynchronously retrieve next items from enumerator.
+
+                Args:
+                    this_ptr: Pointer to enumerator instance.
+                    uCount: Number of items to retrieve.
+                    pSink: Sink for receiving results.
+
+                Returns:
+                    E_FAIL on error (not implemented).
+
+                """
                 return E_FAIL
 
             def clone(this_ptr: c_void_p, ppEnum_inner: Any) -> int:
+                """Create a clone of the enumerator.
+
+                Args:
+                    this_ptr: Pointer to enumerator instance.
+                    ppEnum_inner: Output pointer to cloned enumerator.
+
+                Returns:
+                    E_FAIL on error (not implemented).
+
+                """
                 return E_FAIL
 
             def skip(this_ptr: c_void_p, lTimeout: ctypes.c_long, nCount: ctypes.c_ulong) -> int:
+                """Skip forward in enumerator.
+
+                Args:
+                    this_ptr: Pointer to enumerator instance.
+                    lTimeout: Timeout for waiting on result (unused).
+                    nCount: Number of items to skip.
+
+                Returns:
+                    S_OK (0) on success.
+
+                """
                 enumerator_instance.current_index += nCount
                 return S_OK
 
@@ -1244,14 +1413,37 @@ class HardwareFingerPrintSpoofer:
         """
 
         def random_hex(length: int) -> str:
+            """Generate random hexadecimal string.
+
+            Args:
+                length: Desired length of the hex string in characters.
+
+            Returns:
+                Uppercase hexadecimal string of specified length.
+
+            """
             return secrets.token_hex(length // 2).upper()
 
         def random_mac() -> str:
+            """Generate realistic MAC address.
+
+            Returns:
+                str: MAC address string in XX:XX:XX:XX:XX:XX format with
+                    locally administered bit set (02:00:00:...).
+
+            """
             octets = [secrets.randbelow(256) for _ in range(6)]
             octets[0] = (octets[0] & 0xFE) | 0x02
             return ":".join(f"{b:02X}" for b in octets)
 
         def random_serial() -> str:
+            """Generate random serial number.
+
+            Returns:
+                12-character alphanumeric serial string for hardware
+                    identification spoofing.
+
+            """
             chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
             return "".join(secrets.choice(chars) for _ in range(12))
 
@@ -1282,7 +1474,7 @@ class HardwareFingerPrintSpoofer:
             True if registry hooks were successfully installed, False otherwise.
 
         """
-        from ctypes import byref, c_ulong, c_void_p, cast, create_string_buffer, wintypes
+        from ctypes import byref, c_ulong, c_void_p, create_string_buffer, wintypes
 
         advapi32 = ctypes.windll.advapi32
         kernel32 = ctypes.windll.kernel32
@@ -1523,7 +1715,7 @@ class HardwareFingerPrintSpoofer:
             True if kernel32.dll hooks were successfully installed, False otherwise.
 
         """
-        from ctypes import byref, c_ulong, c_void_p, cast, wintypes
+        from ctypes import byref, c_ulong, c_void_p, wintypes
 
         kernel32 = ctypes.windll.kernel32
 
@@ -1734,7 +1926,7 @@ class HardwareFingerPrintSpoofer:
             True if SetupAPI hooks were successfully installed, False otherwise.
 
         """
-        from ctypes import byref, c_ulong, c_void_p, cast, wintypes
+        from ctypes import byref, c_ulong, c_void_p, wintypes
 
         try:
             setupapi = ctypes.windll.setupapi
@@ -1939,7 +2131,7 @@ class HardwareFingerPrintSpoofer:
             True if IP Helper API hooks were successfully installed, False otherwise.
 
         """
-        from ctypes import byref, c_ulong, c_void_p, cast, wintypes
+        from ctypes import byref, c_ulong, c_void_p, wintypes
 
         try:
             iphlpapi = ctypes.windll.iphlpapi
@@ -1953,6 +2145,33 @@ class HardwareFingerPrintSpoofer:
         self.original_GetIfTable = iphlpapi.GetIfTable
 
         class IpAdapterInfo(ctypes.Structure):
+            """Windows IP adapter information structure.
+
+            This structure contains information about a network adapter
+            including its hardware address and DHCP configuration.
+
+            Attributes:
+                Next: Pointer to next adapter info in list.
+                ComboIndex: Adapter combo index.
+                AdapterName: Adapter name (260 chars max).
+                Description: Adapter description (132 chars max).
+                AddressLength: Hardware address length.
+                Address: Hardware address (8 bytes).
+                Index: Interface index.
+                Type: Adapter type.
+                DhcpEnabled: DHCP enabled flag.
+                CurrentIpAddress: Current IP address pointer.
+                IpAddressList: IP address list (436 bytes).
+                GatewayList: Gateway list (436 bytes).
+                DhcpServer: DHCP server address (436 bytes).
+                HaveWins: WINS server available flag.
+                PrimaryWinsServer: Primary WINS server (436 bytes).
+                SecondaryWinsServer: Secondary WINS server (436 bytes).
+                LeaseObtained: DHCP lease obtained time.
+                LeaseExpires: DHCP lease expiration time.
+
+            """
+
             pass
 
         IpAdapterInfo._fields_ = [
@@ -2184,6 +2403,22 @@ class HardwareFingerPrintSpoofer:
             return processes
 
         class PROCESSENTRY32(ctypes.Structure):
+            """Windows PROCESSENTRY32 structure for process enumeration.
+
+            Attributes:
+                dwSize: Structure size in bytes.
+                cntUsage: Reference count.
+                th32ProcessID: Process identifier.
+                th32DefaultHeapID: Default heap identifier.
+                th32ModuleID: Module identifier.
+                cntThreads: Thread count.
+                th32ParentProcessID: Parent process identifier.
+                pcPriClassBase: Base priority class.
+                dwFlags: Flags.
+                szExeFile: Executable file name (260 characters max).
+
+            """
+
             _fields_: ClassVar[list[tuple[str, type]]] = [
                 ("dwSize", wintypes.DWORD),
                 ("cntUsage", wintypes.DWORD),
@@ -2304,6 +2539,23 @@ class HardwareFingerPrintSpoofer:
         from ctypes import byref, c_void_p, create_string_buffer, sizeof, wintypes
 
         class SystemInfo(ctypes.Structure):
+            """Windows system information structure.
+
+            Attributes:
+                wProcessorArchitecture: Processor architecture.
+                wReserved: Reserved field.
+                dwPageSize: System page size in bytes.
+                lpMinimumApplicationAddress: Minimum application address.
+                lpMaximumApplicationAddress: Maximum application address.
+                dwActiveProcessorMask: Active processor mask.
+                dwNumberOfProcessors: Number of processors.
+                dwProcessorType: Processor type.
+                dwAllocationGranularity: Memory allocation granularity.
+                wProcessorLevel: Processor level.
+                wProcessorRevision: Processor revision.
+
+            """
+
             _fields_: ClassVar[list[tuple[str, type]]] = [
                 ("wProcessorArchitecture", wintypes.WORD),
                 ("wReserved", wintypes.WORD),
@@ -2322,6 +2574,19 @@ class HardwareFingerPrintSpoofer:
         kernel32.GetSystemInfo(byref(sysinfo))
 
         class MemoryBasicInformation(ctypes.Structure):
+            """Windows memory region information structure.
+
+            Attributes:
+                BaseAddress: Base address of memory region.
+                AllocationBase: Base address of allocation.
+                AllocationProtect: Initial allocation protection.
+                RegionSize: Region size in bytes.
+                State: Memory state (committed, reserved, free).
+                Protect: Current memory protection.
+                Type: Memory type (private, mapped, image).
+
+            """
+
             _fields_: ClassVar[list[tuple[str, type]]] = [
                 ("BaseAddress", c_void_p),
                 ("AllocationBase", c_void_p),

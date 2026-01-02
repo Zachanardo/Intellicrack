@@ -37,7 +37,15 @@ class AdvancedDynamicAnalyzer:
     """Comprehensive dynamic runtime analysis and vulnerability exploitation."""
 
     def __init__(self, binary_path: str | Path) -> None:
-        """Initialize the advanced dynamic analyzer with binary path configuration."""
+        """Initialize the advanced dynamic analyzer with binary path configuration.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Raises:
+            FileNotFoundError: If the binary file does not exist or is not a file.
+
+        """
         self.binary_path = Path(binary_path)
         self.logger = logging.getLogger("IntellicrackLogger.DynamicAnalyzer")
 
@@ -59,11 +67,14 @@ class AdvancedDynamicAnalyzer:
         process behavior monitoring. Optionally injects a payload during analysis.
 
         Args:
-            payload: Optional binary payload to inject during analysis
+            payload: Optional binary payload to inject during analysis.
 
         Returns:
-            dict: Analysis results from all stages, including subprocess execution,
-                 runtime analysis, and process behavior information
+            Analysis results from all stages, including subprocess execution,
+                runtime analysis, and process behavior information.
+
+        Raises:
+            Exception: If any analysis stage fails during execution.
 
         """
         self.logger.info("Running comprehensive dynamic analysis for %s. Payload provided: %s", self.binary_path, bool(payload))
@@ -87,8 +98,15 @@ class AdvancedDynamicAnalyzer:
         basic execution analysis without instrumentation.
 
         Returns:
-            dict: Execution results including success status, stdout/stderr output,
-                 and return code or error information
+            Execution results including success status, stdout/stderr output,
+                and return code or error information.
+
+        Raises:
+            subprocess.TimeoutExpired: If the subprocess execution exceeds the
+                10-second timeout.
+            OSError: If file operations fail during process execution.
+            ValueError: If invalid parameters are provided to subprocess.run.
+            RuntimeError: If an unexpected runtime error occurs during execution.
 
         """
         self.logger.info("Starting subprocess analysis for %s", self.binary_path)
@@ -129,11 +147,16 @@ class AdvancedDynamicAnalyzer:
         a custom payload. Provides detailed insights into the binary's runtime behavior.
 
         Args:
-            payload: Optional binary payload to inject during analysis
+            payload: Optional binary payload to inject during analysis.
 
         Returns:
-            dict: Runtime analysis results including intercepted function calls,
-                 detected license mechanisms, and injection status
+            Runtime analysis results including intercepted function calls,
+                detected license mechanisms, and injection status.
+
+        Raises:
+            OSError: If process spawning or Frida attachment fails.
+            RuntimeError: If script creation or execution fails.
+            Exception: If cleanup operations fail after analysis.
 
         """
         if not FRIDA_AVAILABLE or frida is None:
@@ -465,12 +488,16 @@ class AdvancedDynamicAnalyzer:
             def on_message(message: Any, _data: bytes | None) -> None:  # pylint: disable=unused-argument
                 """Handle messages from the Frida script during dynamic analysis.
 
-                Args:
-                    message: Message dictionary from Frida containing 'type' and 'payload'
-                    _data: Additional data from Frida message (typically binary payload, unused in this handler)
-
                 Processes different message types including analysis completion and
                 various activity tracking (file access, registry, network, licensing).
+
+                Args:
+                    message: Message dictionary from Frida containing 'type' and 'payload'.
+                    _data: Additional data from Frida message (typically binary payload,
+                        unused).
+
+                Returns:
+                    None: This is a callback function with no return value.
 
                 """
                 if not isinstance(message, dict) or message.get("type") != "send":
@@ -531,8 +558,13 @@ class AdvancedDynamicAnalyzer:
         behavior. Provides insights into how the application interacts with the system.
 
         Returns:
-            dict: Process behavior data including memory usage, open files,
-                 network connections, and thread information
+            Process behavior data including memory usage, open files,
+                network connections, and thread information.
+
+        Raises:
+            OSError: If process operations or file operations fail.
+            ValueError: If process data is invalid or malformed.
+            RuntimeError: If an unexpected runtime error occurs during monitoring.
 
         """
         if not PSUTIL_AVAILABLE or psutil is None:
@@ -594,11 +626,14 @@ class AdvancedDynamicAnalyzer:
         to find occurrences of license-related keywords, serial numbers, or other patterns.
 
         Args:
-            keywords: List of keywords to search for in memory
-            target_process: Optional process name to scan (defaults to binary_path)
+            keywords: List of keywords to search for in memory.
+            target_process: Optional process name to scan (defaults to binary_path).
 
         Returns:
-            Dictionary containing scan results with matches, addresses, and context
+            Dictionary containing scan results with matches, addresses, and context.
+
+        Raises:
+            Exception: If memory scanning fails or process access is denied.
 
         """
         self.logger.info("Starting memory keyword scan for: %s", keywords)
@@ -618,7 +653,19 @@ class AdvancedDynamicAnalyzer:
             }
 
     def _frida_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
-        """Perform memory scanning using Frida instrumentation."""
+        """Perform memory scanning using Frida instrumentation.
+
+        Args:
+            keywords: List of keywords to search for in memory.
+            target_process: Optional target process name to scan.
+
+        Returns:
+            Dictionary with scan results including matches, status, and scan count.
+
+        Raises:
+            Exception: If Frida script creation, attachment, or execution fails.
+
+        """
         if frida is None:
             return {
                 "status": "error",
@@ -720,6 +767,16 @@ class AdvancedDynamicAnalyzer:
             results: dict[str, Any] = {"matches": [], "status": "success", "scan_count": 0}
 
             def on_message(message: Any, data: bytes | None) -> None:
+                """Handle messages from Frida memory scan script.
+
+                Args:
+                    message: Message dictionary from Frida containing scan results.
+                    data: Additional binary data from Frida message.
+
+                Returns:
+                    None: This is a callback function with no return value.
+
+                """
                 if data:
                     self.logger.debug("Message data: %s bytes", len(data))
                 if isinstance(message, dict) and message.get("type") == "send":
@@ -773,7 +830,20 @@ class AdvancedDynamicAnalyzer:
             }
 
     def _psutil_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
-        """Perform real memory scanning using platform-specific memory reading."""
+        """Perform real memory scanning using platform-specific memory reading.
+
+        Args:
+            keywords: List of keywords to search for in memory.
+            target_process: Optional target process name to scan.
+
+        Returns:
+            Dictionary with scan status, matches, and memory information.
+
+        Raises:
+            OSError: If process operations fail or memory access is denied.
+            Exception: If platform-specific scanning fails or process cannot be found.
+
+        """
         import platform
 
         if psutil is None:
@@ -852,7 +922,20 @@ class AdvancedDynamicAnalyzer:
             }
 
     def _windows_memory_scan(self, pid: int, keywords: list[str]) -> list[dict[str, Any]]:
-        """Perform memory scanning on Windows using ReadProcessMemory."""
+        """Perform memory scanning on Windows using ReadProcessMemory.
+
+        Args:
+            pid: Process ID to scan.
+            keywords: List of keywords to search for in memory.
+
+        Returns:
+            List of dictionaries containing matches with address, keyword, and context.
+
+        Raises:
+            OSError: If process handle cannot be opened or memory read fails.
+            ctypes.ArgumentError: If invalid arguments are passed to ctypes functions.
+
+        """
         import ctypes
         from ctypes import wintypes
 
@@ -996,7 +1079,20 @@ class AdvancedDynamicAnalyzer:
         return matches
 
     def _linux_memory_scan(self, pid: int, keywords: list[str]) -> list[dict[str, Any]]:
-        """Perform memory scanning on Linux using /proc/pid/mem."""
+        """Perform memory scanning on Linux using /proc/pid/mem.
+
+        Args:
+            pid: Process ID to scan.
+            keywords: List of keywords to search for in memory.
+
+        Returns:
+            List of dictionaries containing matches with address, keyword, and context.
+
+        Raises:
+            OSError: If /proc filesystem files cannot be opened or read.
+            FileNotFoundError: If /proc/pid/mem or /proc/pid/maps does not exist.
+
+        """
         matches: list[dict[str, Any]] = []
 
         try:
@@ -1084,7 +1180,20 @@ class AdvancedDynamicAnalyzer:
         return matches
 
     def _macos_memory_scan(self, pid: int, keywords: list[str]) -> list[dict[str, Any]]:
-        """Perform memory scanning on macOS using task_for_pid and vm_read."""
+        """Perform memory scanning on macOS using task_for_pid and vm_read.
+
+        Args:
+            pid: Process ID to scan.
+            keywords: List of keywords to search for in memory.
+
+        Returns:
+            List of dictionaries containing matches with address, keyword, and context.
+
+        Raises:
+            OSError: If memory access or process attachment fails.
+            subprocess.SubprocessError: If LLDB script execution fails.
+
+        """
         matches: list[dict[str, Any]] = []
 
         try:
@@ -1157,7 +1266,21 @@ print(matches)
             return matches
 
     def _generic_memory_scan(self, process: Any, keywords: list[str]) -> list[dict[str, Any]]:
-        """Scan memory using process information."""
+        """Scan memory using process information.
+
+        Args:
+            process: Process object to scan.
+            keywords: List of keywords to search for in memory.
+
+        Returns:
+            List of dictionaries containing matches with address, keyword, and context.
+
+        Raises:
+            psutil.AccessDenied: If access to process memory is denied.
+            AttributeError: If process lacks required attributes for scanning.
+            Exception: If memory scanning fails during execution.
+
+        """
         matches: list[dict[str, Any]] = []
 
         if psutil is None:
@@ -1231,7 +1354,21 @@ print(matches)
         return matches
 
     def _fallback_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
-        """Fallback memory scanning using binary file analysis."""
+        """Fallback memory scanning using binary file analysis.
+
+        Args:
+            keywords: List of keywords to search for in memory.
+            target_process: Optional target process name (unused in fallback).
+
+        Returns:
+            Dictionary with scan status, matches, and scan type.
+
+        Raises:
+            FileNotFoundError: If the binary file does not exist.
+            OSError: If the binary file cannot be read.
+            Exception: If scanning fails during file processing.
+
+        """
         try:
             if target_process:
                 self.logger.info("Using fallback memory scan for process %s", target_process)
@@ -1296,12 +1433,17 @@ def run_dynamic_analysis(app: Any, binary_path: str | Path | None = None, payloa
     """Run dynamic analysis on a binary with app integration.
 
     Args:
-        app: Application instance with update_output signal
-        binary_path: Optional path to binary (uses app.binary_path if not provided)
-        payload: Optional payload to inject
+        app: Application instance with update_output signal.
+        binary_path: Optional path to binary (uses app.binary_path if not provided).
+        payload: Optional payload to inject.
 
     Returns:
-        Analysis results dictionary
+        Analysis results dictionary containing subprocess execution, runtime analysis,
+            and process behavior data.
+
+    Raises:
+        FileNotFoundError: If the binary path does not exist.
+        AttributeError: If app instance lacks required attributes.
 
     """
     # Use provided path or get from app
@@ -1377,11 +1519,16 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> list[str]
     behavior. Provides comprehensive runtime analysis of the target binary.
 
     Args:
-        binary_path: Path to the binary to monitor
-        timeout: Timeout in milliseconds (default: 30000)
+        binary_path: Path to the binary to monitor.
+        timeout: Timeout in milliseconds (default: 30000).
 
     Returns:
-        List[str]: Log messages from the monitoring session
+        Log messages from the monitoring session.
+
+    Raises:
+        OSError: If process creation or attachment fails.
+        ValueError: If Frida is not available or script execution fails.
+        RuntimeError: If an unexpected runtime error occurs during monitoring.
 
     """
     logs = [f"Starting runtime monitoring of {binary_path} (timeout: {timeout}ms)"]
@@ -1477,6 +1624,14 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> list[str]
             """Handle messages from a Frida script.
 
             Appends payloads from 'send' messages to the logs list.
+
+            Args:
+                message: Message dictionary from Frida.
+                _data: Additional binary data from Frida (unused).
+
+            Returns:
+                None: This is a callback function with no return value.
+
             """
             if isinstance(message, dict) and message.get("type") == "send":
                 payload = message.get("payload")
@@ -1511,10 +1666,13 @@ def create_dynamic_analyzer(binary_path: str | Path) -> AdvancedDynamicAnalyzer:
     """Create a dynamic analyzer instance.
 
     Args:
-        binary_path: Path to the target binary
+        binary_path: Path to the target binary.
 
     Returns:
-        AdvancedDynamicAnalyzer: Configured analyzer instance
+        Configured analyzer instance ready for dynamic analysis operations.
+
+    Raises:
+        FileNotFoundError: If the binary file does not exist.
 
     """
     return AdvancedDynamicAnalyzer(binary_path)
@@ -1524,11 +1682,15 @@ def run_quick_analysis(binary_path: str | Path, payload: bytes | None = None) ->
     """Run a quick comprehensive analysis on a binary.
 
     Args:
-        binary_path: Path to the target binary
-        payload: Optional payload to inject
+        binary_path: Path to the target binary.
+        payload: Optional payload to inject.
 
     Returns:
-        dict: Analysis results
+        Analysis results from all analysis stages.
+
+    Raises:
+        FileNotFoundError: If the binary file does not exist.
+        Exception: If analysis execution fails.
 
     """
     analyzer = create_dynamic_analyzer(binary_path)

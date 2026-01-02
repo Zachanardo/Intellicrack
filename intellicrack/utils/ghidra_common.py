@@ -51,7 +51,7 @@ def run_ghidra_plugin(
         timeout: Timeout in seconds
 
     Returns:
-        Tuple of (return_code, stdout, stderr)
+        tuple[int, str, str]: Tuple of (return_code, stdout, stderr)
 
     """
     try:
@@ -128,7 +128,20 @@ def _build_ghidra_command(
     script_path: str,
     overwrite: bool = True,
 ) -> list[str]:
-    """Build the Ghidra command line."""
+    """Build the Ghidra command line.
+
+    Args:
+        ghidra_path: Path to Ghidra executable
+        project_dir: Directory for Ghidra project
+        project_name: Name of the Ghidra project
+        binary_path: Path to binary to analyze
+        script_path: Path to the script to execute
+        overwrite: Whether to overwrite existing project
+
+    Returns:
+        list[str]: Command line arguments for Ghidra
+
+    """
     command = [
         ghidra_path,
         *[project_dir, project_name],
@@ -156,7 +169,7 @@ def create_ghidra_analysis_script(analysis_type: str = "basic") -> str:
         analysis_type: Type of analysis to perform
 
     Returns:
-        Script content as string
+        str: Script content as string
 
     """
     if analysis_type == "license_analysis":
@@ -169,7 +182,12 @@ def create_ghidra_analysis_script(analysis_type: str = "basic") -> str:
 
 
 def _create_basic_analysis_script() -> str:
-    """Create a basic Ghidra analysis script."""
+    """Create a basic Ghidra analysis script.
+
+    Returns:
+        str: Java script content for Ghidra basic analysis
+
+    """
     return """//Basic binary analysis script for Ghidra
 //@author Intellicrack
 //@category Analysis
@@ -279,7 +297,12 @@ public class BasicAnalysis extends GhidraScript {
 
 
 def _create_license_analysis_script() -> str:
-    """Create a license-focused analysis script."""
+    """Create a license-focused analysis script.
+
+    Returns:
+        str: Java script content for license validation analysis
+
+    """
     return """//License validation analysis script for Ghidra
 //@author Intellicrack
 //@category License
@@ -421,7 +444,12 @@ public class LicenseAnalysis extends GhidraScript {
 
 
 def _create_function_analysis_script() -> str:
-    """Create a function analysis script."""
+    """Create a function analysis script.
+
+    Returns:
+        str: Java script content for function analysis
+
+    """
     return """//Function analysis script for Ghidra
 //@author Intellicrack
 //@category Analysis
@@ -545,7 +573,12 @@ public class FunctionAnalysis extends GhidraScript {
 
 
 def _create_string_analysis_script() -> str:
-    """Create a string analysis script."""
+    """Create a string analysis script.
+
+    Returns:
+        str: Java script content for string analysis
+
+    """
     return """//String analysis script for Ghidra
 //@author Intellicrack
 //@category Analysis
@@ -728,7 +761,10 @@ def save_ghidra_script(script_content: str, script_name: str, output_dir: str) -
         output_dir: Directory to save the script
 
     Returns:
-        Path to the saved script file
+        str: Path to the saved script file
+
+    Raises:
+        Exception: If writing the script file fails
 
     """
     try:
@@ -759,7 +795,7 @@ def get_ghidra_project_info(project_dir: str, project_name: str) -> dict[str, An
         project_name: Name of the project
 
     Returns:
-        Dictionary with project information
+        dict[str, Any]: Dictionary with project information
 
     """
     info = {
@@ -796,7 +832,7 @@ def cleanup_ghidra_project(project_dir: str, project_name: str) -> bool:
         project_name: Name of the project
 
     Returns:
-        True if cleanup was successful
+        bool: True if cleanup was successful
 
     """
     try:

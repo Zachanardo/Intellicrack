@@ -30,6 +30,7 @@ import urllib.request
 from typing import TYPE_CHECKING, Any
 
 from intellicrack.utils.logger import logger
+from intellicrack.utils.url_validation import is_safe_url
 
 
 if TYPE_CHECKING:
@@ -174,12 +175,16 @@ except ImportError as e:
 
         async def __aexit__(
             self: _FallbackClientResponse,
-            *args: object,
+            exc_type: type[BaseException] | None,
+            exc_val: BaseException | None,
+            exc_tb: object,
         ) -> None:
             """Async context manager exit.
 
             Args:
-                *args: Exception information tuple.
+                exc_type: Exception type if an exception occurred.
+                exc_val: Exception value if an exception occurred.
+                exc_tb: Exception traceback if an exception occurred.
 
             """
 
@@ -316,6 +321,11 @@ except ImportError as e:
                 query_string = urllib.parse.urlencode(query, doseq=True)
                 url = urllib.parse.urlunparse(parsed._replace(query=query_string))
 
+            # Validate URL for SSRF protection
+            allow_local = kwargs.get("allow_local", False)
+            if not is_safe_url(url, allow_local=allow_local):
+                raise _FallbackClientError(f"URL blocked by SSRF protection: {url}")
+
             # Prepare headers
             req_headers = dict(self.headers)
             req_headers.update(headers)
@@ -333,13 +343,13 @@ except ImportError as e:
                     body = data if isinstance(data, bytes) else str(data).encode("utf-8")
 
             # Create request
-            req = urllib.request.Request(url, data=body, headers=req_headers, method=method)  # noqa: S310  # Legitimate HTTP request for security research tool
+            req = urllib.request.Request(url, data=body, headers=req_headers, method=method)
 
             try:
                 timeout_value: float | None = timeout.total if hasattr(timeout, "total") else None
 
                 def _execute_request() -> tuple[str, int, dict[str, Any], bytes]:
-                    with urllib.request.urlopen(req, timeout=timeout_value) as response:  # noqa: S310 - Controlled URL for analysis tooling
+                    with urllib.request.urlopen(req, timeout=timeout_value) as response:
                         return (
                             response.geturl(),
                             getattr(response, "status", response.getcode()),
@@ -521,12 +531,16 @@ except ImportError as e:
 
         async def __aexit__(
             self: _FallbackClientSession,
-            *args: object,
+            exc_type: type[BaseException] | None,
+            exc_val: BaseException | None,
+            exc_tb: object,
         ) -> None:
             """Async context manager exit.
 
             Args:
-                *args: Exception information tuple.
+                exc_type: Exception type if an exception occurred.
+                exc_val: Exception value if an exception occurred.
+                exc_tb: Exception traceback if an exception occurred.
 
             """
             await self.close()
@@ -583,10 +597,9 @@ except ImportError as e:
             """Get POST data.
 
             Returns:
-                Parsed form data.
+                Parsed form data as dictionary.
 
             """
-            # Parse form data
             text = await self.text()
             return urllib.parse.parse_qs(text)
 
@@ -825,6 +838,7 @@ except ImportError as e:
         # Simple HTTP server using built-in libraries
         class Handler(http.server.SimpleHTTPRequestHandler):
             def do_GET(self: Handler) -> None:
+                """Handle GET request."""
                 self.send_response(200)
                 self.end_headers()
                 self.wfile.write(b"AioHTTP fallback server running")

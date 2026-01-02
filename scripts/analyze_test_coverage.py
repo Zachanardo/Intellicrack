@@ -1,5 +1,4 @@
 """Analyze test coverage for Intellicrack."""
-import os
 from pathlib import Path
 
 

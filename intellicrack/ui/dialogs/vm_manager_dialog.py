@@ -29,7 +29,6 @@ from intellicrack.handlers.pyqt6_handler import (
     QDialog,
     QHBoxLayout,
     QHeaderView,
-    QItemSelectionModel,
     QMessageBox,
     QModelIndex,
     QPushButton,
@@ -44,14 +43,20 @@ from ...ai.qemu_manager import QEMUManager
 from ...utils.logger import get_logger
 
 
-logger = get_logger(__name__)
+logger: object = get_logger(__name__)
 
 
 class VMTableModel(QAbstractTableModel):
     """Table model for displaying VM information."""
 
     def __init__(self, vm_data: list[dict[str, Any]]) -> None:
-        """Initialize the VM table model with VM data for display in the table view."""
+        """Initialize the VM table model with VM data for display in the table view.
+
+        Args:
+            vm_data: List of dictionaries containing VM information to display in
+                the table.
+
+        """
         super().__init__()
         self.vm_data = vm_data
         self.headers = [
@@ -66,13 +71,29 @@ class VMTableModel(QAbstractTableModel):
         ]
 
     def rowCount(self, parent: QModelIndex | None = None) -> int:
-        """Return number of rows."""
+        """Return the number of rows in the table model.
+
+        Args:
+            parent: The parent model index (unused, required by Qt interface).
+
+        Returns:
+            The number of rows in the model as an integer.
+
+        """
         if parent is None:
             parent = QModelIndex()
         return len(self.vm_data)
 
     def columnCount(self, parent: QModelIndex | None = None) -> int:
-        """Return number of columns."""
+        """Return the number of columns in the table model.
+
+        Args:
+            parent: The parent model index (unused, required by Qt interface).
+
+        Returns:
+            The number of columns in the model as an integer.
+
+        """
         if parent is None:
             parent = QModelIndex()
         return len(self.headers)
@@ -137,7 +158,13 @@ class VMTableModel(QAbstractTableModel):
         return QVariant()
 
     def update_data(self, new_data: list[dict[str, Any]]) -> None:
-        """Update the model with new VM data."""
+        """Update the model with new VM data.
+
+        Args:
+            new_data: List of dictionaries containing updated VM information
+                with the same structure as the initial data.
+
+        """
         self.beginResetModel()
         self.vm_data = new_data
         self.endResetModel()
@@ -147,7 +174,13 @@ class VMManagerDialog(QDialog):
     """Dialog for managing QEMU virtual machines."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the VM Manager dialog for QEMU virtual machine management."""
+        """Initialize the VM Manager dialog for QEMU virtual machine management.
+
+        Args:
+            parent: The parent widget for this dialog, or None for a top-level
+                window.
+
+        """
         super().__init__(parent)
         self.qemu_manager = QEMUManager()
         self._init_ui()
@@ -210,7 +243,13 @@ class VMManagerDialog(QDialog):
         main_layout.addLayout(button_layout)
 
     def _load_vm_data(self) -> None:
-        """Load VM data and update the table."""
+        """Load VM data and update the table.
+
+        Fetches all VM information from the QEMU manager and populates the
+        table view with the VM data. Creates a new model if one doesn't exist,
+        otherwise updates the existing model.
+
+        """
         try:
             vm_info_list = self.qemu_manager.get_all_vm_info()
 
@@ -228,7 +267,13 @@ class VMManagerDialog(QDialog):
             QMessageBox.critical(self, "Error", f"Failed to load VM data: {e}")
 
     def _get_selected_vm_id(self) -> str | None:
-        """Get the snapshot ID of the currently selected VM."""
+        """Get the snapshot ID of the currently selected VM.
+
+        Returns:
+            The snapshot ID string of the selected VM, or None if no VM is
+                selected or if the selection is invalid.
+
+        """
         selection_model = self.vm_table.selectionModel()
         if selection_model is None or not selection_model.hasSelection():
             return None
@@ -247,7 +292,13 @@ class VMManagerDialog(QDialog):
         return None
 
     def _start_selected_vm(self) -> None:
-        """Start the selected VM."""
+        """Start the selected VM.
+
+        Attempts to start the currently selected VM. Shows a warning if no VM
+        is selected, and displays an error message if the start operation fails.
+        Refreshes the VM data after successful startup.
+
+        """
         snapshot_id = self._get_selected_vm_id()
         if not snapshot_id:
             QMessageBox.warning(self, "Warning", "Please select a VM to start.")
@@ -265,7 +316,13 @@ class VMManagerDialog(QDialog):
             QMessageBox.critical(self, "Error", f"Error starting VM: {e}")
 
     def _stop_selected_vm(self) -> None:
-        """Stop the selected VM."""
+        """Stop the selected VM.
+
+        Attempts to stop the currently selected VM. Shows a warning if no VM
+        is selected, and displays an error message if the stop operation fails.
+        Refreshes the VM data after successful shutdown.
+
+        """
         snapshot_id = self._get_selected_vm_id()
         if not snapshot_id:
             QMessageBox.warning(self, "Warning", "Please select a VM to stop.")
@@ -283,7 +340,14 @@ class VMManagerDialog(QDialog):
             QMessageBox.critical(self, "Error", f"Error stopping VM: {e}")
 
     def _delete_selected_vm(self) -> None:
-        """Delete the selected VM."""
+        """Delete the selected VM.
+
+        Attempts to delete the currently selected VM after confirmation.
+        Shows a warning if no VM is selected, and displays an error message
+        if the deletion operation fails. Refreshes the VM data after successful
+        deletion.
+
+        """
         snapshot_id = self._get_selected_vm_id()
         if not snapshot_id:
             QMessageBox.warning(self, "Warning", "Please select a VM to delete.")
@@ -313,7 +377,12 @@ class VMManagerDialog(QDialog):
             QMessageBox.critical(self, "Error", f"Error deleting VM: {e}")
 
     def _create_new_vm_dialog(self) -> None:
-        """Open dialog to create a new VM."""
+        """Open dialog to create a new VM.
+
+        Displays an informational dialog indicating that VM creation is
+        available through the main application's binary analysis features.
+
+        """
         QMessageBox.information(
             self,
             "Create New VM",
@@ -321,7 +390,13 @@ class VMManagerDialog(QDialog):
         )
 
     def _configure_base_images(self) -> None:
-        """Open dialog to configure base images."""
+        """Open dialog to configure base images.
+
+        Displays a dialog showing the current base image configuration for
+        Windows and Linux environments. Users are instructed to edit the
+        configuration file directly to modify base images.
+
+        """
         try:
             current_config = self.qemu_manager.get_base_image_configuration()
 

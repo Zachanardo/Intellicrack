@@ -37,7 +37,8 @@ def generate_patch(target_binary: str, patch_config: dict[str, Any] | None = Non
         patch_config: Configuration options for patch generation
 
     Returns:
-        Dictionary containing patch generation results
+        Dictionary containing patch generation results with keys: success, patch_data,
+        patch_info, and either message (on success) or error (on failure)
 
     """
     _ = patch_config
@@ -71,11 +72,38 @@ class PatchGenerator:
         self.logger = logging.getLogger("IntellicrackLogger.PatchGenerator")
 
     def generate_binary_patch(self, target_path: str, patch_type: str = "license_bypass") -> dict[str, Any]:
-        """Generate a binary patch with specified type."""
+        """Generate a binary patch with specified type.
+
+        Args:
+            target_path: Path to the target binary file for which to generate
+                a patch.
+            patch_type: Type of patch to generate, defaults to "license_bypass".
+                Common values include license_bypass, integrity_check_defeat,
+                and anti_debug_removal.
+
+        Returns:
+            Dictionary containing patch generation results with keys: success,
+                patch_data, patch_info, and either message (on success) or
+                error (on failure).
+
+        """
         return generate_patch(target_path, {"type": patch_type})
 
     def validate_patch(self, patch_data: bytes, target_binary: str) -> dict[str, Any]:
-        """Validate a generated patch."""
+        """Validate a generated patch.
+
+        Args:
+            patch_data: Binary patch data to validate against the target
+                binary.
+            target_binary: Path to the target binary file to which this patch
+                applies.
+
+        Returns:
+            Dictionary with validation results containing keys: valid (bool),
+                issues (list of strings describing validation problems),
+                and recommendations (list of strings with suggested fixes).
+
+        """
         _ = patch_data, target_binary
         return {
             "valid": True,

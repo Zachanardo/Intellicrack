@@ -43,7 +43,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, ClassVar, TypedDict, cast
+from typing import Any, ClassVar, TypedDict, cast
 from xml.etree import ElementTree as ET
 
 import jwt
@@ -54,16 +54,12 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
 from pydantic import BaseModel, Field
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, create_engine
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from intellicrack.handlers.cryptography_handler import Cipher, algorithms, asym_padding, hashes, modes, rsa
 from intellicrack.utils.logger import get_logger
-
-
-if TYPE_CHECKING:
-    import winreg as winreg_module
 
 
 logger = get_logger(__name__)
@@ -1537,14 +1533,8 @@ class DatabaseManager:
     def get_db(self) -> Session:
         """Get database session for license operations.
 
-        Args:
-            None
-
         Returns:
             SQLAlchemy database session instance.
-
-        Raises:
-            None
         """
         db = self.SessionLocal()
         try:
@@ -3403,16 +3393,16 @@ class BinaryKeyExtractor:
 
     def _factor_modulus(self, n: int) -> tuple[int, int] | None:
         """Factor RSA modulus using sophisticated algorithms.
-        
-                Args:
-                    n: Parameter value or data
-        
-                Returns:
-                    tuple[int, int] | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            n: Parameter value or data
+
+        Returns:
+            tuple[int, int] | None.
+
+        Raises:
+            None
+        """
         if factors := self._fermat_factorization(n):
             return factors
         if factors := self._pollard_rho(n):
@@ -3428,16 +3418,16 @@ class BinaryKeyExtractor:
 
     def _fermat_factorization(self, n: int) -> tuple[int, int] | None:
         """Fermat's factorization method for numbers with close factors.
-        
-                Args:
-                    n: Parameter value or data
-        
-                Returns:
-                    tuple[int, int] | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            n: Parameter value or data
+
+        Returns:
+            tuple[int, int] | None.
+
+        Raises:
+            None
+        """
         import math
 
         if n % 2 == 0:
@@ -3457,16 +3447,16 @@ class BinaryKeyExtractor:
 
     def _pollard_rho(self, n: int) -> tuple[int, int] | None:
         """Pollard's rho algorithm for integer factorization.
-        
-                Args:
-                    n: Parameter value or data
-        
-                Returns:
-                    tuple[int, int] | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            n: Parameter value or data
+
+        Returns:
+            tuple[int, int] | None.
+
+        Raises:
+            None
+        """
         import math
 
         if n <= 1:
@@ -3490,16 +3480,16 @@ class BinaryKeyExtractor:
 
     def _pollard_p_minus_1(self, n: int) -> tuple[int, int] | None:
         """Pollard's p-1 factorization algorithm.
-        
-                Args:
-                    n: Parameter value or data
-        
-                Returns:
-                    tuple[int, int] | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            n: Parameter value or data
+
+        Returns:
+            tuple[int, int] | None.
+
+        Raises:
+            None
+        """
         import math
 
         bound = min(10000, n.bit_length() * 100)
@@ -3524,16 +3514,16 @@ class BinaryKeyExtractor:
 
     def _quadratic_sieve_simple(self, n: int) -> tuple[int, int] | None:
         """Self-Initializing Quadratic Sieve (SIQS) with multiple polynomial optimization.
-        
-                Args:
-                    n: Parameter value or data
-        
-                Returns:
-                    tuple[int, int] | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            n: Parameter value or data
+
+        Returns:
+            tuple[int, int] | None.
+
+        Raises:
+            None
+        """
         import math
 
         factor_base_size = min(100, n.bit_length() * 2)
@@ -3552,16 +3542,16 @@ class BinaryKeyExtractor:
 
     def _ecm_factorization(self, n: int) -> tuple[int, int] | None:
         """Elliptic Curve Method factorization.
-        
-                Args:
-                    n: Parameter value or data
-        
-                Returns:
-                    tuple[int, int] | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            n: Parameter value or data
+
+        Returns:
+            tuple[int, int] | None.
+
+        Raises:
+            None
+        """
         for _ in range(20):
             import secrets
 
@@ -3575,16 +3565,16 @@ class BinaryKeyExtractor:
 
     def _optimized_trial_division(self, n: int) -> tuple[int, int] | None:
         """Optimized trial division with wheel factorization.
-        
-                Args:
-                    n: Parameter value or data
-        
-                Returns:
-                    tuple[int, int] | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            n: Parameter value or data
+
+        Returns:
+            tuple[int, int] | None.
+
+        Raises:
+            None
+        """
         import math
 
         small_primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47]
@@ -3606,16 +3596,16 @@ class BinaryKeyExtractor:
 
     def _primes_up_to(self, limit: int) -> list[int]:
         """Generate primes up to limit using sieve of Eratosthenes.
-        
-                Args:
-                    limit: Parameter value or data
-        
-                Returns:
-                    list[int].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            limit: Parameter value or data
+
+        Returns:
+            list[int].
+
+        Raises:
+            None
+        """
         if limit < 2:
             return []
         sieve = [True] * (limit + 1)
@@ -3628,32 +3618,32 @@ class BinaryKeyExtractor:
 
     def _primes_between(self, start: int, end: int) -> list[int]:
         """Generate primes between start and end.
-        
-                Args:
-                    start: Parameter value or data
-                    end: Parameter value or data
-        
-                Returns:
-                    list[int].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            start: Parameter value or data
+            end: Parameter value or data
+
+        Returns:
+            list[int].
+
+        Raises:
+            None
+        """
         return [n for n in range(start | 1, end + 1, 2) if self._is_prime_miller_rabin(n)]
 
     def _is_prime_miller_rabin(self, n: int, k: int = 5) -> bool:
         """Miller-Rabin primality test.
-        
-                Args:
-                    n: Parameter value or data
-                    k: Parameter value or data
-        
-                Returns:
-                    bool.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            n: Parameter value or data
+            k: Parameter value or data
+
+        Returns:
+            bool.
+
+        Raises:
+            None
+        """
         if n < 2:
             return False
         if n in {2, 3}:
@@ -3681,17 +3671,17 @@ class BinaryKeyExtractor:
 
     def _is_smooth(self, n: int, factor_base: list[int]) -> bool:
         """Check if n is smooth over the factor base.
-        
-                Args:
-                    n: Parameter value or data
-                    factor_base: Parameter value or data
-        
-                Returns:
-                    bool.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            n: Parameter value or data
+            factor_base: Parameter value or data
+
+        Returns:
+            bool.
+
+        Raises:
+            None
+        """
         if n < 0:
             n = -n
         for p in factor_base:
@@ -3701,17 +3691,17 @@ class BinaryKeyExtractor:
 
     def _combine_smooth_numbers(self, smooth_numbers: list[tuple[int, int]], n: int) -> tuple[int, int] | None:
         """Combine smooth numbers to find a factorization using Gaussian elimination.
-        
-                Args:
-                    smooth_numbers: Parameter value or data
-                    n: Parameter value or data
-        
-                Returns:
-                    tuple[int, int] | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            smooth_numbers: Parameter value or data
+            n: Parameter value or data
+
+        Returns:
+            tuple[int, int] | None.
+
+        Raises:
+            None
+        """
         import math
 
         for i in range(len(smooth_numbers)):
@@ -3979,16 +3969,16 @@ class BinaryKeyExtractor:
 
     def _find_persistent_crypto_regions(self, snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Find memory regions with persistent cryptographic material.
-        
-                Args:
-                    snapshots: Parameter value or data
-        
-                Returns:
-                    list[dict[str, Any]].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            snapshots: Parameter value or data
+
+        Returns:
+            list[dict[str, Any]].
+
+        Raises:
+            None
+        """
         if len(snapshots) < 2:
             return []
         persistent_regions = []
@@ -4003,46 +3993,46 @@ class BinaryKeyExtractor:
 
     def _extract_key_from_persistent_region(self, region: dict[str, Any]) -> bytes | None:
         """Extract key from persistent memory region.
-        
-                Args:
-                    region: Parameter value or data
-        
-                Returns:
-                    bytes | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            region: Parameter value or data
+
+        Returns:
+            bytes | None.
+
+        Raises:
+            None
+        """
         data = region.get("data")
         return self._try_parse_as_key(data) if isinstance(data, bytes) else None
 
     def _parse_der_key(self, key_bytes: bytes) -> Any:
         """Parse DER-encoded key.
-        
-                Args:
-                    key_bytes: Parameter value or data
-        
-                Returns:
-                    Any.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            key_bytes: Parameter value or data
+
+        Returns:
+            Any.
+
+        Raises:
+            None
+        """
         return self._is_valid_der_rsa(key_bytes)
 
     def _decrypt_adobe_container(self, encrypted_data: bytes, version: int) -> bytes | None:
         """Decrypt Adobe-specific key container.
-        
-                Args:
-                    encrypted_data: Parameter value or data
-                    version: Parameter value or data
-        
-                Returns:
-                    bytes | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            encrypted_data: Parameter value or data
+            version: Parameter value or data
+
+        Returns:
+            bytes | None.
+
+        Raises:
+            None
+        """
         with contextlib.suppress(ValueError, TypeError):
             if version == 1:
                 xor_key = b"Adobe Systems Incorporated"
@@ -4064,17 +4054,17 @@ class BinaryKeyExtractor:
 
     def _extract_key_via_detours(self, _pid: int, _api_names: list[str]) -> bytes | None:
         """Extract keys using Detours library for API hooking.
-        
-                Args:
-                    _pid: Parameter value or data
-                    _api_names: Parameter value or data
-        
-                Returns:
-                    bytes | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            _pid: Parameter value or data
+            _api_names: Parameter value or data
+
+        Returns:
+            bytes | None.
+
+        Raises:
+            None
+        """
         return None
 
     def _extract_key_linux_advanced(self, pid: int, key_type: str) -> bytes | None:
@@ -4233,16 +4223,16 @@ class BinaryKeyExtractor:
 
     def extract_flexlm_keys(self, binary_path: str) -> dict[str, Any]:
         """Extract FLEXlm vendor keys and daemon info from protected binary.
-        
-                Args:
-                    binary_path: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            binary_path: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         import capstone
         import pefile
 
@@ -4326,16 +4316,16 @@ class BinaryKeyExtractor:
 
     def extract_hasp_keys(self, binary_path: str) -> dict[str, Any]:
         """Extract HASP/Sentinel feature IDs and keys from protected binary.
-        
-                Args:
-                    binary_path: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            binary_path: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         import pefile
 
         keys: dict[str, Any] = {
@@ -4414,16 +4404,16 @@ class BinaryKeyExtractor:
 
     def extract_adobe_keys(self, binary_path: str) -> dict[str, Any]:
         """Extract Adobe licensing keys and endpoints from Creative Cloud binaries.
-        
-                Args:
-                    binary_path: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    ExtractionError: If Adobe key extraction fails.
-                """
+
+        Args:
+            binary_path: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            ExtractionError: If Adobe key extraction fails.
+        """
         import pefile
 
         keys: dict[str, Any] = {
@@ -4512,16 +4502,16 @@ class BinaryKeyExtractor:
 
     def extract_validation_algorithm(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary to understand license validation algorithm.
-        
-                Args:
-                    binary_path: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            binary_path: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         import capstone
         import pefile
 
@@ -4549,17 +4539,17 @@ class BinaryKeyExtractor:
 
     def _create_disassembler(self, capstone_module: Any, pe_handle: Any) -> Any:
         """Create a configured Capstone disassembler for the PE architecture.
-        
-                Args:
-                    capstone_module: Parameter value or data
-                    pe_handle: Parameter value or data
-        
-                Returns:
-                    Any.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            capstone_module: Parameter value or data
+            pe_handle: Parameter value or data
+
+        Returns:
+            Any.
+
+        Raises:
+            None
+        """
         mode = capstone_module.CS_MODE_64 if pe_handle.FILE_HEADER.Machine == 34404 else capstone_module.CS_MODE_32
         disassembler = capstone_module.Cs(capstone_module.CS_ARCH_X86, mode)
         disassembler.detail = True
@@ -4567,19 +4557,19 @@ class BinaryKeyExtractor:
 
     def _identify_validation_functions(self, pe_handle: Any, code_section: Any, code_bytes: bytes, _capstone_module: Any) -> list[int]:
         """Identify candidate validation functions by scanning for known strings.
-        
-                Args:
-                    pe_handle: Parameter value or data
-                    code_section: Parameter value or data
-                    code_bytes: Parameter value or data
-                    _capstone_module: Parameter value or data
-        
-                Returns:
-                    list[int].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            pe_handle: Parameter value or data
+            code_section: Parameter value or data
+            code_bytes: Parameter value or data
+            _capstone_module: Parameter value or data
+
+        Returns:
+            list[int].
+
+        Raises:
+            None
+        """
         license_patterns = [
             "IsLicenseValid",
             "CheckLicense",
@@ -4614,18 +4604,18 @@ class BinaryKeyExtractor:
 
     def _match_lea_instructions(self, code_section: Any, code_bytes: bytes, string_rva: int) -> set[int]:
         """Match LEA instructions that likely reference validation strings.
-        
-                Args:
-                    code_section: Parameter value or data
-                    code_bytes: Parameter value or data
-                    string_rva: Parameter value or data
-        
-                Returns:
-                    set[int].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            code_section: Parameter value or data
+            code_bytes: Parameter value or data
+            string_rva: Parameter value or data
+
+        Returns:
+            set[int].
+
+        Raises:
+            None
+        """
         matches = set()
         lea_opcode = b"H\x8d\x05"
         for index in range(len(code_bytes) - len(lea_opcode) - 4):
@@ -4639,18 +4629,18 @@ class BinaryKeyExtractor:
 
     def _match_call_instructions(self, code_section: Any, code_bytes: bytes, string_rva: int) -> set[int]:
         """Match CALL instructions in 32-bit binaries that reference validation strings.
-        
-                Args:
-                    code_section: Parameter value or data
-                    code_bytes: Parameter value or data
-                    string_rva: Parameter value or data
-        
-                Returns:
-                    set[int].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            code_section: Parameter value or data
+            code_bytes: Parameter value or data
+            string_rva: Parameter value or data
+
+        Returns:
+            set[int].
+
+        Raises:
+            None
+        """
         matches = set()
         for index in range(len(code_bytes) - 5):
             if code_bytes[index] != 0xE8:
@@ -5011,16 +5001,16 @@ class RuntimeKeyExtractor:
 
     def scan_memory_for_keys(self, process_handle: int) -> dict[str, Any]:
         """Scan process memory regions for license keys with obfuscation handling.
-        
-                Args:
-                    process_handle: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            process_handle: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         keys: dict[str, list[Any]] = {
             "product_keys": [],
             "guids": [],
@@ -5040,17 +5030,17 @@ class RuntimeKeyExtractor:
 
     def _scan_windows_memory(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Scan Windows process memory.
-        
-                Args:
-                    process_handle: Parameter value or data
-                    keys: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            process_handle: Parameter value or data
+            keys: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         if not win32api or not win32process or not win32con:
             return keys
         try:
@@ -5099,17 +5089,17 @@ class RuntimeKeyExtractor:
 
     def _scan_unix_memory(self, pid: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Scan Unix process memory.
-        
-                Args:
-                    pid: Parameter value or data
-                    keys: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            pid: Parameter value or data
+            keys: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         try:
             with open(f"/proc/{pid}/mem", "rb") as mem, open(f"/proc/{pid}/maps", encoding="utf-8") as maps:
                 for line in maps:
@@ -5144,16 +5134,16 @@ class RuntimeKeyExtractor:
 
     def hook_api_calls(self, process_id: int) -> dict[str, Any]:
         """Install hooks for API calls to intercept license validation.
-        
-                Args:
-                    process_id: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            process_id: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         if platform.system() == "Windows":
             return self._hook_windows_apis(process_id)
         return self._hook_unix_apis(process_id)
@@ -5183,16 +5173,16 @@ class RuntimeKeyExtractor:
 
     def _detect_memory_protection(self, process_handle: int) -> str | None:
         """Detect memory protection scheme (VMProtect, Themida, etc.).
-        
-                Args:
-                    process_handle: Parameter value or data
-        
-                Returns:
-                    str | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            process_handle: Parameter value or data
+
+        Returns:
+            str | None.
+
+        Raises:
+            None
+        """
         if platform.system() == "Windows":
             import ctypes
 
@@ -5245,18 +5235,18 @@ class RuntimeKeyExtractor:
 
     def _handle_protected_memory(self, process_handle: int, protection: str, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle specific memory protection schemes.
-        
-                Args:
-                    process_handle: Parameter value or data
-                    protection: Parameter value or data
-                    keys: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            process_handle: Parameter value or data
+            protection: Parameter value or data
+            keys: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         if protection == "vmprotect":
             return self._handle_vmprotect(process_handle, keys)
         if protection == "themida":
@@ -5271,17 +5261,17 @@ class RuntimeKeyExtractor:
 
     def _handle_vmprotect(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle VMProtect protected memory with VM unpacking.
-        
-                Args:
-                    process_handle: Parameter value or data
-                    keys: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            process_handle: Parameter value or data
+            keys: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         try:
             import ctypes
 
@@ -5336,17 +5326,17 @@ class RuntimeKeyExtractor:
 
     def _handle_themida(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle Themida/WinLicense protected memory with anti-debugging bypass.
-        
-                Args:
-                    process_handle: Parameter value or data
-                    keys: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            process_handle: Parameter value or data
+            keys: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         try:
             import ctypes
 
@@ -5386,17 +5376,17 @@ class RuntimeKeyExtractor:
 
     def _handle_obsidium(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle Obsidium protected memory.
-        
-                Args:
-                    process_handle: Parameter value or data
-                    keys: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            process_handle: Parameter value or data
+            keys: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         try:
             import ctypes
             import zlib
@@ -5579,16 +5569,16 @@ class RuntimeKeyExtractor:
 
     def _extract_themida_constants(self, data: bytes) -> list[dict[str, str]]:
         """Extract Themida encrypted constants.
-        
-                Args:
-                    data: Parameter value or data
-        
-                Returns:
-                    list[dict[str, str]].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            data: Parameter value or data
+
+        Returns:
+            list[dict[str, str]].
+
+        Raises:
+            None
+        """
         keys: list[dict[str, str]] = []
         marker = b"MZ\x90\x00"
         offset = 0
@@ -5607,16 +5597,16 @@ class RuntimeKeyExtractor:
 
     def _extract_vmprotect_strings(self, data: bytes) -> list[dict[str, str]]:
         """Extract VMProtect virtualized string references.
-        
-                Args:
-                    data: Parameter value or data
-        
-                Returns:
-                    list[dict[str, str]].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            data: Parameter value or data
+
+        Returns:
+            list[dict[str, str]].
+
+        Raises:
+            None
+        """
         keys: list[dict[str, str]] = []
         offset = 0
         while offset < len(data) - 8:
@@ -5818,16 +5808,16 @@ class RuntimeKeyExtractor:
 
     def _looks_like_license_data(self, data: bytes) -> bool:
         """Check if data looks like license information.
-        
-                Args:
-                    data: Parameter value or data
-        
-                Returns:
-                    bool.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            data: Parameter value or data
+
+        Returns:
+            bool.
+
+        Raises:
+            None
+        """
         try:
             text = data.decode("utf-8", errors="ignore")
             return self._looks_like_license_string(text)
@@ -5836,47 +5826,47 @@ class RuntimeKeyExtractor:
 
     def _contains_license_patterns(self, data: bytes) -> bool:
         """Check if data contains license-related patterns.
-        
-                Args:
-                    data: Parameter value or data
-        
-                Returns:
-                    bool.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            data: Parameter value or data
+
+        Returns:
+            bool.
+
+        Raises:
+            None
+        """
         patterns = [b"LICENSE", b"ACTIVATION", b"PRODUCT_KEY", b"SERIAL", b"REGISTRATION"]
         return any(pattern in data for pattern in patterns)
 
     def _looks_like_code(self, data: bytes) -> bool:
         """Check if data looks like executable code.
-        
-                Args:
-                    data: Parameter value or data
-        
-                Returns:
-                    bool.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            data: Parameter value or data
+
+        Returns:
+            bool.
+
+        Raises:
+            None
+        """
         common_opcodes = [85, 137, 139, 72, 232, 233, 255]
         opcode_count = sum(b in common_opcodes for b in data[:50])
         return opcode_count > 10
 
     def _reconstruct_vmprotect_iat(self, process_handle: Any) -> list[dict[str, Any]]:
         """Reconstruct VMProtect's virtualized Import Address Table.
-        
-                Args:
-                    process_handle: Parameter value or data
-        
-                Returns:
-                    list[dict[str, Any]].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            process_handle: Parameter value or data
+
+        Returns:
+            list[dict[str, Any]].
+
+        Raises:
+            None
+        """
         keys: list[dict[str, Any]] = []
         try:
             import ctypes
@@ -5925,16 +5915,16 @@ class RuntimeKeyExtractor:
 
     def _extract_vm_strings(self, data: bytes) -> list[str]:
         """Extract strings from VM handler code.
-        
-                Args:
-                    data: Parameter value or data
-        
-                Returns:
-                    list[str].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            data: Parameter value or data
+
+        Returns:
+            list[str].
+
+        Raises:
+            None
+        """
         strings: list[str] = []
         current_string = b""
         for i in range(len(data)):
@@ -5970,16 +5960,16 @@ class RuntimeKeyExtractor:
 
     def _decrypt_themida_block(self, block: bytes) -> bytes:
         """Decrypt a Themida encrypted block.
-        
-                Args:
-                    block: Parameter value or data
-        
-                Returns:
-                    bytes.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            block: Parameter value or data
+
+        Returns:
+            bytes.
+
+        Raises:
+            None
+        """
         key = block[:4]
         data = block[4:]
         decrypted = bytearray()
@@ -5989,16 +5979,16 @@ class RuntimeKeyExtractor:
 
     def _extract_themida_wrapped_apis(self, process_handle: Any) -> list[dict[str, Any]]:
         """Extract Themida wrapped API information.
-        
-                Args:
-                    process_handle: Parameter value or data
-        
-                Returns:
-                    list[dict[str, Any]].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            process_handle: Parameter value or data
+
+        Returns:
+            list[dict[str, Any]].
+
+        Raises:
+            None
+        """
         wrapped_apis: list[dict[str, Any]] = []
         try:
             import ctypes
@@ -6034,16 +6024,16 @@ class RuntimeKeyExtractor:
 
     def _looks_like_api_name(self, data: bytes) -> bool:
         """Check if data looks like an API name.
-        
-                Args:
-                    data: Parameter value or data
-        
-                Returns:
-                    bool.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            data: Parameter value or data
+
+        Returns:
+            bool.
+
+        Raises:
+            None
+        """
         try:
             text = data[:50].split(b"\x00")[0].decode("ascii")
             api_prefixes = [
@@ -6065,18 +6055,18 @@ class RuntimeKeyExtractor:
 
     def _hook_inline_apis(self, process_handle: Any, kernel32: Any, hooked_data: dict[str, Any]) -> dict[str, Any]:
         """Install hooks for critical APIs using inline hooking technique.
-        
-                Args:
-                    process_handle: Parameter value or data
-                    kernel32: Parameter value or data
-                    hooked_data: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            process_handle: Parameter value or data
+            kernel32: Parameter value or data
+            hooked_data: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         try:
             apis_to_hook = {
                 "advapi32.dll": ["RegQueryValueExW", "RegOpenKeyExW", "RegGetValueW"],
@@ -6195,17 +6185,17 @@ class RuntimeKeyExtractor:
 
     def _generate_hook_handler(self, api_name: str, original_addr: int) -> bytes:
         """Generate x64 assembly hook handler code for API interception.
-        
-                Args:
-                    api_name: Parameter value or data
-                    original_addr: Parameter value or data
-        
-                Returns:
-                    bytes.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            api_name: Parameter value or data
+            original_addr: Parameter value or data
+
+        Returns:
+            bytes.
+
+        Raises:
+            None
+        """
         handler_code = bytearray()
         handler_code.extend([
             80,
@@ -6588,16 +6578,16 @@ class ProtocolStateMachine:
 
     def _flexlm_vendor_response(self, keys: dict[str, Any]) -> bytes:
         """Generate vendor code response.
-        
-                Args:
-                    keys: Parameter value or data
-        
-                Returns:
-                    bytes.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            keys: Parameter value or data
+
+        Returns:
+            bytes.
+
+        Raises:
+            None
+        """
         response = bytearray()
         response.extend(b"VENDOR_OK\x00")
         vendor_code = bytes.fromhex(keys.get("vendor_code", "00" * 16))
@@ -6997,18 +6987,18 @@ class ProtocolStateMachine:
 
     def _hasp_write_response(self, _keys: dict[str, Any], request_data: bytes, session_id: str | None) -> bytes:
         """Handle HASP memory write with full protocol compliance.
-        
-                Args:
-                    _keys: Parameter value or data
-                    request_data: Parameter value or data
-                    session_id: Parameter value or data
-        
-                Returns:
-                    bytes.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            _keys: Parameter value or data
+            request_data: Parameter value or data
+            session_id: Parameter value or data
+
+        Returns:
+            bytes.
+
+        Raises:
+            None
+        """
         write_offset = 0
         write_data = b""
         try:
@@ -7438,16 +7428,16 @@ class ProxyInterceptor:
 
     def _detect_xml_schema(self, parsed_data: dict[str, Any]) -> str:
         """Detect XML schema from parsed data.
-        
-                Args:
-                    parsed_data: Parameter value or data
-        
-                Returns:
-                    str.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            parsed_data: Parameter value or data
+
+        Returns:
+            str.
+
+        Raises:
+            None
+        """
         if "root_element" in parsed_data:
             return str(parsed_data["root_element"])
         data_str = str(parsed_data).lower()
@@ -7463,16 +7453,16 @@ class ProxyInterceptor:
 
     def _analyze_xml_request_type(self, parsed_data: dict[str, Any]) -> str:
         """Analyze XML request to determine type.
-        
-                Args:
-                    parsed_data: Parameter value or data
-        
-                Returns:
-                    str.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            parsed_data: Parameter value or data
+
+        Returns:
+            str.
+
+        Raises:
+            None
+        """
         data_str = str(parsed_data).lower()
         if any(x in data_str for x in ["validate", "verify", "check"]):
             return "validation"
@@ -7486,16 +7476,16 @@ class ProxyInterceptor:
 
     def _determine_license_type_from_xml(self, parsed_data: dict[str, Any]) -> str:
         """Determine license type from XML data.
-        
-                Args:
-                    parsed_data: Parameter value or data
-        
-                Returns:
-                    str.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            parsed_data: Parameter value or data
+
+        Returns:
+            str.
+
+        Raises:
+            None
+        """
         if "license_type" in parsed_data:
             return str(parsed_data["license_type"]).title()
         data_str = str(parsed_data).lower()
@@ -7511,16 +7501,16 @@ class ProxyInterceptor:
 
     def _extract_xml_features(self, parsed_data: dict[str, Any]) -> list[str]:
         """Extract feature list from XML parsed data.
-        
-                Args:
-                    parsed_data: Parameter value or data
-        
-                Returns:
-                    list[str].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            parsed_data: Parameter value or data
+
+        Returns:
+            list[str].
+
+        Raises:
+            None
+        """
         features: list[str] = []
         if "features" in parsed_data:
             feat_data = parsed_data["features"]
@@ -7549,16 +7539,16 @@ class ProxyInterceptor:
 
     def _requires_signature(self, parsed_data: dict[str, Any]) -> bool:
         """Check if XML response requires digital signature.
-        
-                Args:
-                    parsed_data: Parameter value or data
-        
-                Returns:
-                    bool.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            parsed_data: Parameter value or data
+
+        Returns:
+            bool.
+
+        Raises:
+            None
+        """
         if "require_signature" in parsed_data:
             return bool(parsed_data["require_signature"])
         data_str = str(parsed_data).lower()
@@ -7566,16 +7556,16 @@ class ProxyInterceptor:
 
     def _generate_text_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate plain text license validation response based on protocol analysis.
-        
-                Args:
-                    analysis: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            analysis: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         import hmac
         from datetime import datetime, timedelta
 
@@ -7664,16 +7654,16 @@ class ProxyInterceptor:
 
     def _generate_flexlm_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate FLEXlm protocol response using binary analysis.
-        
-                Args:
-                    analysis: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            analysis: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         binary_path = self._get_target_binary(analysis)
         request_data = analysis.get("body", b"")
         response_data = self.state_machine.flexlm_handshake(binary_path, request_data)
@@ -7685,16 +7675,16 @@ class ProxyInterceptor:
 
     def _get_target_binary(self, analysis: dict[str, Any]) -> str:
         """Determine target binary from analysis or configuration.
-        
-                Args:
-                    analysis: Parameter value or data
-        
-                Returns:
-                    str.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            analysis: Parameter value or data
+
+        Returns:
+            str.
+
+        Raises:
+            None
+        """
         parsed_data = analysis.get("parsed_data", {})
         binary_path: str = str(parsed_data.get("binary_path", ""))
         if not binary_path:
@@ -7708,16 +7698,16 @@ class ProxyInterceptor:
 
     def _find_binary_by_process(self, process_name: str) -> str:
         """Find binary path from process name.
-        
-                Args:
-                    process_name: Parameter value or data
-        
-                Returns:
-                    str.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            process_name: Parameter value or data
+
+        Returns:
+            str.
+
+        Raises:
+            None
+        """
         import psutil
 
         try:
@@ -7747,16 +7737,16 @@ class ProxyInterceptor:
 
     def _find_protected_binary(self) -> str:
         """Find any protected binary in common locations.
-        
-                Args:
-                    None
-        
-                Returns:
-                    str.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            None
+
+        Returns:
+            str.
+
+        Raises:
+            None
+        """
         search_paths = ["C:\\Program Files", "C:\\Program Files (x86)", "/usr/local/bin", "/opt"]
         protection_indicators = [
             "lmgrd",
@@ -7787,16 +7777,16 @@ class ProxyInterceptor:
 
     def _generate_hasp_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate HASP/Sentinel protocol response using binary analysis.
-        
-                Args:
-                    analysis: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            analysis: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         binary_path = self._get_target_binary(analysis)
         request_data = analysis.get("body", b"")
         session_id = analysis.get("parsed_data", {}).get("session_id")
@@ -7815,16 +7805,16 @@ class ProxyInterceptor:
 
     def _generate_kms_response(self, _analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate Microsoft KMS protocol response.
-        
-                Args:
-                    _analysis: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            _analysis: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         import base64
         from datetime import datetime, timedelta
 
@@ -7845,16 +7835,16 @@ class ProxyInterceptor:
 
     def _generate_kms_product_key(self) -> str:
         """Generate a valid Microsoft KMS product key format.
-        
-                Args:
-                    None
-        
-                Returns:
-                    str.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            None
+
+        Returns:
+            str.
+
+        Raises:
+            None
+        """
         charset = "BCDFGHJKMNPQRTVWXY2346789"
         key_segments = []
         for _ in range(5):
@@ -7868,16 +7858,16 @@ class ProxyInterceptor:
 
     def _generate_adobe_response(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate Adobe licensing protocol response using binary analysis.
-        
-                Args:
-                    analysis: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            analysis: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         from datetime import datetime, timedelta
 
         import jwt
@@ -7991,15 +7981,15 @@ class ProxyInterceptor:
     def _extract_kms_data(self, binary_path: str) -> dict[str, Any]:
         """Extract KMS-specific data from Windows binary.
 
-                Args:
-                    binary_path: Parameter value or data
+        Args:
+            binary_path: Parameter value or data
 
-                Returns:
-                    dict[str, Any].
+        Returns:
+            dict[str, Any].
 
-                Raises:
-                    ExtractionError: If pefile module not available for KMS extraction.
-                """
+        Raises:
+            ExtractionError: If pefile module not available for KMS extraction.
+        """
         if not pefile:
             raise ExtractionError("pefile module not available for KMS extraction")
         kms_data: dict[str, Any] = {
@@ -8087,16 +8077,16 @@ class ProxyInterceptor:
 
     def _find_kms_binary(self) -> str | None:
         """Find KMS-related binary on the system.
-        
-                Args:
-                    None
-        
-                Returns:
-                    str | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            None
+
+        Returns:
+            str | None.
+
+        Raises:
+            None
+        """
         search_paths = [
             "C:\\Windows\\System32\\slmgr.vbs",
             "C:\\Windows\\System32\\SppExtComObj.dll",
@@ -8117,16 +8107,16 @@ class ProxyInterceptor:
 
     def _extract_kms_from_registry(self) -> dict[str, Any]:
         """Extract KMS data from Windows registry.
-        
-                Args:
-                    None
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            None
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         if platform.system() != "Windows" or not winreg:
             return {}
         kms_data = {}
@@ -8156,16 +8146,16 @@ class ProxyInterceptor:
 
     def _find_kms_host_from_service(self) -> str | None:
         """Find KMS host from running service configuration.
-        
-                Args:
-                    None
-        
-                Returns:
-                    str | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            None
+
+        Returns:
+            str | None.
+
+        Raises:
+            None
+        """
         if platform.system() != "Windows":
             return None
         try:
@@ -8182,16 +8172,16 @@ class ProxyInterceptor:
 
     def _find_kms_port_from_service(self) -> int | None:
         """Find KMS port from service configuration.
-        
-                Args:
-                    None
-        
-                Returns:
-                    int | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            None
+
+        Returns:
+            int | None.
+
+        Raises:
+            None
+        """
         if platform.system() != "Windows":
             return None
         try:
@@ -8210,16 +8200,16 @@ class ProxyInterceptor:
 
     def _extract_min_clients_requirement(self) -> int | None:
         """Extract minimum clients requirement from KMS configuration.
-        
-                Args:
-                    None
-        
-                Returns:
-                    int | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            None
+
+        Returns:
+            int | None.
+
+        Raises:
+            None
+        """
         if platform.system() != "Windows":
             return None
         try:
@@ -8242,16 +8232,16 @@ class ProxyInterceptor:
 
     def _detect_kms_protocol_version(self) -> int | None:
         """Detect KMS protocol version from system.
-        
-                Args:
-                    None
-        
-                Returns:
-                    int | None.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            None
+
+        Returns:
+            int | None.
+
+        Raises:
+            None
+        """
         import platform
 
         if platform.system() != "Windows":
@@ -8271,18 +8261,18 @@ class ProxyInterceptor:
 
     def _generate_kms_confirmation_id(self, client_machine_id: str, application_id: str, kms_data: dict[str, Any]) -> str:
         """Generate KMS confirmation ID using proper algorithm.
-        
-                Args:
-                    client_machine_id: Parameter value or data
-                    application_id: Parameter value or data
-                    kms_data: Parameter value or data
-        
-                Returns:
-                    str.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            client_machine_id: Parameter value or data
+            application_id: Parameter value or data
+            kms_data: Parameter value or data
+
+        Returns:
+            str.
+
+        Raises:
+            None
+        """
         if client_machine_id:
             seed = client_machine_id + application_id
         else:
@@ -8297,17 +8287,17 @@ class ProxyInterceptor:
 
     def _generate_kms_product_key_from_binary(self, kms_data: dict[str, Any], sku_id: str) -> str:
         """Generate KMS product key from binary analysis data.
-        
-                Args:
-                    kms_data: Parameter value or data
-                    sku_id: Parameter value or data
-        
-                Returns:
-                    str.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            kms_data: Parameter value or data
+            sku_id: Parameter value or data
+
+        Returns:
+            str.
+
+        Raises:
+            None
+        """
         if kms_data.get("gvlk_keys"):
             return str(kms_data["gvlk_keys"][0])
         seed = (sku_id + str(kms_data)).encode()
@@ -8315,16 +8305,16 @@ class ProxyInterceptor:
 
     def _generate_kms_product_key_from_data(self, data: bytes) -> str:
         """Generate valid KMS product key format from data.
-        
-                Args:
-                    data: Parameter value or data
-        
-                Returns:
-                    str.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            data: Parameter value or data
+
+        Returns:
+            str.
+
+        Raises:
+            None
+        """
         charset = "BCDFGHJKMNPQRTVWXY2346789"
         key_hash = hashlib.sha256(data).digest()
         segments = []
@@ -8342,16 +8332,16 @@ class ProxyInterceptor:
 
     def _validate_product_key(self, key: str) -> bool:
         """Validate Microsoft product key format.
-        
-                Args:
-                    key: Parameter value or data
-        
-                Returns:
-                    bool.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            key: Parameter value or data
+
+        Returns:
+            bool.
+
+        Raises:
+            None
+        """
         if len(key) != 29:
             return False
         parts = key.split("-")
@@ -8367,16 +8357,16 @@ class ProxyInterceptor:
 
     def set_target_binary(self, binary_path: str) -> bool:
         """Set the target binary for analysis.
-        
-                Args:
-                    binary_path: Parameter value or data
-        
-                Returns:
-                    bool.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            binary_path: Parameter value or data
+
+        Returns:
+            bool.
+
+        Raises:
+            None
+        """
         if os.path.exists(binary_path):
             self.target_binary = binary_path
             self.logger.info("Target binary set to: %s", binary_path)
@@ -8395,16 +8385,16 @@ class ProxyInterceptor:
 
     def analyze_binary_for_protection(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary to determine protection type and extract keys.
-        
-                Args:
-                    binary_path: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            binary_path: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         if not os.path.exists(binary_path):
             return {"error": "Binary not found"}
         recommendations: list[str] = []
@@ -8446,16 +8436,16 @@ class ProxyInterceptor:
 
     def _get_adobe_entitlements(self, subscription_type: str) -> dict[str, Any]:
         """Get Adobe entitlements based on subscription type.
-        
-                Args:
-                    subscription_type: Parameter value or data
-        
-                Returns:
-                    dict[str, Any].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            subscription_type: Parameter value or data
+
+        Returns:
+            dict[str, Any].
+
+        Raises:
+            None
+        """
         storage: dict[str, int] = {"quota": 20 * 1024 * 1024 * 1024, "used": 0}
         services: list[str] = ["creative_cloud"]
         base_entitlements: dict[str, Any] = {
@@ -8482,16 +8472,16 @@ class ProxyInterceptor:
 
     def _get_remaining_activations(self, subscription_type: str) -> int:
         """Get remaining device activations based on subscription.
-        
-                Args:
-                    subscription_type: Parameter value or data
-        
-                Returns:
-                    int.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            subscription_type: Parameter value or data
+
+        Returns:
+            int.
+
+        Raises:
+            None
+        """
         limits = {
             "trial": 1,
             "individual": 1,
@@ -8508,16 +8498,16 @@ class ProxyInterceptor:
 
     def _determine_adobe_subscription(self, product_code: str) -> str:
         """Determine Adobe subscription type from product code.
-        
-                Args:
-                    product_code: Parameter value or data
-        
-                Returns:
-                    str.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            product_code: Parameter value or data
+
+        Returns:
+            str.
+
+        Raises:
+            None
+        """
         if not product_code:
             return "creative_cloud_all"
         code_lower = product_code.lower()
@@ -8539,16 +8529,16 @@ class ProxyInterceptor:
 
     def _get_adobe_products(self, product_code: str) -> list[str]:
         """Get list of Adobe products based on product code.
-        
-                Args:
-                    product_code: Parameter value or data
-        
-                Returns:
-                    list[str].
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            product_code: Parameter value or data
+
+        Returns:
+            list[str].
+
+        Raises:
+            None
+        """
         if not product_code:
             return ["all"]
         code_lower = product_code.lower()
@@ -8609,16 +8599,16 @@ class ProxyInterceptor:
 
     def _get_device_limit(self, subscription_type: str) -> int:
         """Get device activation limit based on subscription type.
-        
-                Args:
-                    subscription_type: Parameter value or data
-        
-                Returns:
-                    int.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            subscription_type: Parameter value or data
+
+        Returns:
+            int.
+
+        Raises:
+            None
+        """
         limits = {
             "trial": 2,
             "individual": 2,
@@ -8635,17 +8625,17 @@ class ProxyInterceptor:
 
     async def modify_response(self, response_data: bytes, content_type: str | None = None) -> bytes:
         """Modify response data to ensure license validation succeeds.
-        
-                Args:
-                    response_data: Parameter value or data
-                    content_type: Parameter value or data
-        
-                Returns:
-                    bytes.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            response_data: Parameter value or data
+            content_type: Parameter value or data
+
+        Returns:
+            bytes.
+
+        Raises:
+            None
+        """
         try:
             if content_type and "json" in content_type:
                 data = json.loads(response_data)
@@ -9316,19 +9306,19 @@ class LicenseServerEmulator:
 
     def _create_dns_response(self, transaction_id: int, _query_name: bytes, ip_address: str, question_section: bytes) -> bytes:
         """Create a DNS A record response.
-        
-                Args:
-                    transaction_id: Parameter value or data
-                    _query_name: Parameter value or data
-                    ip_address: Parameter value or data
-                    question_section: Parameter value or data
-        
-                Returns:
-                    bytes.
-        
-                Raises:
-                    None
-                """
+
+        Args:
+            transaction_id: Parameter value or data
+            _query_name: Parameter value or data
+            ip_address: Parameter value or data
+            question_section: Parameter value or data
+
+        Returns:
+            bytes.
+
+        Raises:
+            None
+        """
         header = struct.pack(">HHHHHH", transaction_id, 33152, 1, 1, 0, 0)
         ip_parts = [int(part) for part in ip_address.split(".")]
         answer = (
@@ -9619,9 +9609,6 @@ class LicenseServerInstance:
 
         Returns:
             Server port number.
-
-        Raises:
-            None
         """
         return self.port
 
@@ -9635,14 +9622,8 @@ class LicenseServerInstance:
     def is_running(self) -> bool:
         """Check if server is running.
 
-        Args:
-            None
-
         Returns:
             True if server is running, False otherwise.
-
-        Raises:
-            None
         """
         return self.running
 
@@ -9666,9 +9647,6 @@ class LicenseClientInstance:
 
         Returns:
             True if connection successful, False otherwise.
-
-        Raises:
-            None
         """
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -9683,14 +9661,8 @@ class LicenseClientInstance:
     def is_connected(self) -> bool:
         """Check if connected.
 
-        Args:
-            None
-
         Returns:
             True if connected to server, False otherwise.
-
-        Raises:
-            None
         """
         return self.connected
 

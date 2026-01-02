@@ -183,8 +183,8 @@ class NetworkForensicsEngine:
                 }
 
                 # Basic traffic analysis
-                protocols_observed: list[str] = results["protocols_observed"]  # type: ignore[assignment]
-                anomalies_detected: list[str] = results["anomalies_detected"]  # type: ignore[assignment]
+                protocols_observed: list[str] = results["protocols_observed"]
+                anomalies_detected: list[str] = results["anomalies_detected"]
 
                 if bytes_sent > 10000 or bytes_recv > 10000:
                     protocols_observed.append("High-volume traffic detected")

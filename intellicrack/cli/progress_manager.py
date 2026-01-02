@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Progress Manager for Intellicrack CLI Provides beautiful progress visualization for long-running operations.
+"""Progress Manager for Intellicrack CLI.
+
+Provides beautiful progress visualization for long-running operations.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -58,15 +60,25 @@ from intellicrack.handlers.psutil_handler import psutil
 
 logger = logging.getLogger(__name__)
 
-"""
-Progress Manager for Intellicrack CLI
-Provides beautiful progress visualization for long-running operations
-"""
-
 
 @dataclass
 class AnalysisTask:
-    """Represents a single analysis task."""
+    """Represents a single analysis task.
+
+    Stores information about an analysis task including name, description,
+    progress tracking, status, timing, errors, and any subtasks.
+
+    Attributes:
+        name: Task name.
+        description: Task description.
+        total_steps: Total steps for completion (default: 100).
+        current_step: Current progress step (default: 0).
+        status: Task status - pending, running, completed, or failed (default: "pending").
+        start_time: Task start timestamp (default: None).
+        end_time: Task end timestamp (default: None).
+        error: Error message if task failed (default: None).
+        subtasks: List of nested AnalysisTask objects (default: None).
+    """
 
     name: str
     description: str
@@ -79,16 +91,37 @@ class AnalysisTask:
     subtasks: list["AnalysisTask"] | None = None
 
     def __post_init__(self) -> None:
-        """Initialize analysis task with empty subtasks list if not provided."""
+        """Initialize analysis task.
+
+        Sets up empty subtasks list if not provided for task hierarchy support.
+
+        Returns:
+            None
+        """
         if self.subtasks is None:
             self.subtasks = []
 
 
 class SpeedColumn(ProgressColumn):
-    """Customize column showing processing speed."""
+    """Custom progress column showing processing speed.
+
+    Renders a column that displays the current processing speed in operations
+    per second, extracted from task fields.
+    """
 
     def render(self, task: Task) -> Text:
-        """Render the speed column."""
+        """Render the speed column.
+
+        Extracts speed from task fields and renders it as a colored text
+        display showing operations per second.
+
+        Args:
+            task: The task object containing speed information in its fields.
+
+        Returns:
+            Text object displaying processing speed in operations per second
+            format (ops/s), or empty text if speed is zero or negative.
+        """
         speed = task.fields.get("speed", 0)
         if speed > 0:
             return Text(f"{speed:.1f} ops/s", style="cyan")
@@ -96,10 +129,22 @@ class SpeedColumn(ProgressColumn):
 
 
 class ProgressManager:
-    """Manages progress display for CLI operations."""
+    """Manages progress display for CLI operations.
+
+    Provides a rich, interactive progress visualization system for tracking
+    multiple analysis tasks concurrently with thread-safe updates.
+    """
 
     def __init__(self) -> None:
-        """Initialize progress manager with console, task tracking, and threading support."""
+        """Initialize progress manager.
+
+        Sets up the console output, task tracking dictionary, task ID mapping,
+        and threading lock for thread-safe progress updates across multiple
+        concurrent analysis tasks.
+
+        Returns:
+            None
+        """
         self.console = Console()
         self.tasks: dict[str, AnalysisTask] = {}
         self.task_ids: dict[str, TaskID] = {}  # Store task IDs for progress tracking
@@ -108,7 +153,18 @@ class ProgressManager:
         self._lock = threading.Lock()
 
     def create_progress_display(self) -> Progress:
-        """Create a rich progress display with custom columns."""
+        """Create a rich progress display with custom columns.
+
+        Constructs a Progress instance with spinner, status text, bar, task
+        progress, timing information, and custom speed column for real-time
+        analysis progress visualization.
+
+        Returns:
+            Progress instance configured with custom columns for analysis
+            tracking including spinner, description, progress bar, task
+            progress percentage, elapsed time, remaining time, and speed
+            metrics.
+        """
         return Progress(
             SpinnerColumn(),
             TextColumn("[bold blue]{task.description}"),
@@ -122,7 +178,20 @@ class ProgressManager:
         )
 
     def start_analysis(self, binary_path: str, analysis_types: list[str]) -> None:
-        """Start a new analysis with progress tracking."""
+        """Start a new analysis with progress tracking.
+
+        Initializes a layout with header panel, progress display with task
+        tracking, and status table. Creates individual analysis tasks for
+        each specified analysis type and starts live progress display.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+            analysis_types: List of analysis types to perform (e.g.,
+                "Static Analysis", "Dynamic Analysis", "Vulnerability Scan").
+
+        Returns:
+            None
+        """
         layout = Layout()
 
         # Create header
@@ -167,7 +236,22 @@ class ProgressManager:
             self.task_ids[analysis_type] = task_id
 
     def update_progress(self, task_name: str, current: int, total: int, speed: float | None = None) -> None:
-        """Update progress for a specific task."""
+        """Update progress for a specific task.
+
+        Thread-safe update of task progress using stored task ID mapping.
+        Updates both internal task state and progress display with current
+        step, total steps, and processing speed metrics.
+
+        Args:
+            task_name: Name of the task to update.
+            current: Current progress value (completed steps).
+            total: Total value for completion (total steps).
+            speed: Optional processing speed in operations per second
+                (default: None).
+
+        Returns:
+            None
+        """
         with self._lock:
             if task_name in self.tasks and self.progress is not None and task_name in self.task_ids:
                 task = self.tasks[task_name]
@@ -184,7 +268,20 @@ class ProgressManager:
                 )
 
     def complete_task(self, task_name: str, success: bool = True, error: str | None = None) -> None:
-        """Mark a task as completed."""
+        """Mark a task as completed.
+
+        Updates task status, end time, and error message. Updates progress
+        display with completion status or failure message based on success
+        parameter.
+
+        Args:
+            task_name: Name of the task to complete.
+            success: Whether the task completed successfully (default: True).
+            error: Optional error message if the task failed (default: None).
+
+        Returns:
+            None
+        """
         with self._lock:
             if task_name in self.tasks and self.progress is not None and task_name in self.task_ids:
                 task = self.tasks[task_name]
@@ -204,7 +301,14 @@ class ProgressManager:
                     )
 
     def stop(self) -> None:
-        """Stop the progress display."""
+        """Stop the progress display.
+
+        Stops the live progress display and prints a detailed analysis summary
+        table with task status and duration information.
+
+        Returns:
+            None
+        """
         if self.live:
             self.live.stop()
 
@@ -212,7 +316,15 @@ class ProgressManager:
             self._print_summary()
 
     def _print_summary(self) -> None:
-        """Print analysis summary."""
+        """Print analysis summary.
+
+        Generates and displays a summary table with task status and duration,
+        followed by an overall statistics panel showing task counts and total
+        execution time.
+
+        Returns:
+            None
+        """
         summary_table = Table(
             title="\n[bold]Analysis Summary[/bold]",
             box=box.ROUNDED,
@@ -263,16 +375,42 @@ class ProgressManager:
 
 
 class MultiStageProgress:
-    """Progress tracker for multi-stage operations."""
+    """Progress tracker for multi-stage operations.
+
+    Tracks progress across multiple stages, each containing multiple steps,
+    with visual feedback for overall progress and per-stage completion status.
+    """
 
     def __init__(self, console: Console | None = None) -> None:
-        """Initialize multi-stage progress tracker with console and stage tracking."""
+        """Initialize multi-stage progress tracker.
+
+        Sets up console output and initializes stage tracking with current
+        stage index for multi-stage workflow progress visualization.
+
+        Args:
+            console: Optional Console instance for output (creates default
+                if not provided).
+
+        Returns:
+            None
+        """
         self.console = console or Console()
         self.stages: list[dict[str, Any]] = []
         self.current_stage = 0
 
     def add_stage(self, name: str, steps: list[str]) -> None:
-        """Add a new stage with multiple steps."""
+        """Add a new stage with multiple steps.
+
+        Appends a new stage dictionary to the stages list with initial state
+        including stage name, steps, current step counter, and completion flag.
+
+        Args:
+            name: Name of the stage.
+            steps: List of step names in this stage.
+
+        Returns:
+            None
+        """
         self.stages.append(
             {
                 "name": name,
@@ -283,7 +421,15 @@ class MultiStageProgress:
         )
 
     def start(self) -> None:
-        """Start the multi-stage progress display."""
+        """Start the multi-stage progress display.
+
+        Executes all stages with progress tracking, creating main task and
+        individual stage tasks, updating descriptions as each step completes.
+        Displays elapsed time and overall completion percentage.
+
+        Returns:
+            None
+        """
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -335,7 +481,20 @@ class MultiStageProgress:
 
 
 def _demo_static_analysis(pm: ProgressManager, binary_path: str) -> None:
-    """Perform static analysis demo with real operations."""
+    """Perform static analysis demo with real operations.
+
+    Executes sequential analysis steps including header reading, structure
+    parsing, string extraction, import/export analysis, hashing, and packer
+    detection. Updates progress after each weighted step with processing speed
+    metrics.
+
+    Args:
+        pm: ProgressManager instance for updating progress.
+        binary_path: Path to the binary file to analyze.
+
+    Returns:
+        None
+    """
     steps = [
         ("Reading binary headers", 10),
         ("Parsing PE/ELF structure", 20),
@@ -378,7 +537,19 @@ def _demo_static_analysis(pm: ProgressManager, binary_path: str) -> None:
 
 
 def _demo_dynamic_analysis(pm: ProgressManager, binary_path: str) -> None:
-    """Perform dynamic analysis demo with real monitoring."""
+    """Perform dynamic analysis demo with real monitoring.
+
+    Executes sequential monitoring steps including process monitoring, API
+    hooking, file operation monitoring, network tracking, and registry change
+    recording. Updates progress after each weighted step with processing speed.
+
+    Args:
+        pm: ProgressManager instance for updating progress.
+        binary_path: Path to the binary file to analyze.
+
+    Returns:
+        None
+    """
     steps = [
         ("Starting process monitor", 15),
         ("Hooking API calls", 25),
@@ -408,7 +579,19 @@ def _demo_dynamic_analysis(pm: ProgressManager, binary_path: str) -> None:
 
 
 def _demo_vulnerability_scan(pm: ProgressManager, binary_path: str) -> None:
-    """Perform vulnerability scan demo with real analysis."""
+    """Perform vulnerability scan demo with real analysis.
+
+    Executes sequential vulnerability checks for buffer overflows, format
+    strings, integer overflows, SQL injection, and command injection patterns.
+    Updates progress after each weighted vulnerability check with speed metrics.
+
+    Args:
+        pm: ProgressManager instance for updating progress.
+        binary_path: Path to the binary file to analyze.
+
+    Returns:
+        None
+    """
     scan_items = [
         ("Checking for buffer overflows", 30),
         ("Analyzing format strings", 20),
@@ -470,7 +653,18 @@ def _demo_vulnerability_scan(pm: ProgressManager, binary_path: str) -> None:
 
 
 def _demo_license_detection(pm: ProgressManager) -> None:
-    """Perform license detection demo."""
+    """Perform license detection demo.
+
+    Executes license pattern detection for GPL, MIT, proprietary, and copyright
+    markers. Updates progress after each weighted detection step with processing
+    speed metrics.
+
+    Args:
+        pm: ProgressManager instance for updating progress.
+
+    Returns:
+        None
+    """
     license_patterns = [
         ("Scanning for GPL markers", 25),
         ("Checking MIT license", 25),
@@ -491,7 +685,19 @@ def _demo_license_detection(pm: ProgressManager) -> None:
 
 
 def _demo_network_analysis(pm: ProgressManager, binary_path: str) -> None:
-    """Perform network analysis demo with real operations."""
+    """Perform network analysis demo with real operations.
+
+    Executes network protocol identification, URL/IP extraction, and beaconing
+    detection. Uses regex patterns to identify network artifacts in binary,
+    updating progress after each weighted network check.
+
+    Args:
+        pm: ProgressManager instance for updating progress.
+        binary_path: Path to the binary file to analyze.
+
+    Returns:
+        None
+    """
     network_checks = [
         ("Identifying network protocols", 20),
         ("Extracting URLs/IPs", 30),
@@ -520,7 +726,21 @@ def _demo_network_analysis(pm: ProgressManager, binary_path: str) -> None:
 
 
 def _setup_multi_stage_demo(console: Console) -> MultiStageProgress:
-    """Set up multi-stage progress demo."""
+    """Set up multi-stage progress demo.
+
+    Creates a MultiStageProgress instance and populates it with three stages:
+    preprocessing, analysis, and reporting, each containing relevant steps for
+    binary analysis workflow demonstration.
+
+    Args:
+        console: Console instance for output display.
+
+    Returns:
+        MultiStageProgress instance configured with demo stages including
+        preprocessing (loading, parsing, extracting, building symbols), analysis
+        (control flow, data flow, vulnerability detection, patterns), and
+        reporting (generating reports, visualizations, exporting results).
+    """
     multi_progress = MultiStageProgress(console)
 
     multi_progress.add_stage(
@@ -556,7 +776,17 @@ def _setup_multi_stage_demo(console: Console) -> MultiStageProgress:
 
 
 def demo_progress() -> None:
-    """Demonstrate progress visualization capabilities with real progress tracking."""
+    """Demonstrate progress visualization capabilities.
+
+    This function showcases the capabilities of ProgressManager and
+    MultiStageProgress classes by running demo analysis workflows including
+    static analysis, dynamic analysis, vulnerability scanning, license detection,
+    network analysis, and multi-stage operations. Each analysis is executed with
+    real progress tracking and completion status display.
+
+    Returns:
+        None
+    """
     console = Console()
 
     console.print("[bold cyan]Intellicrack Progress Visualization Demo[/bold cyan]\n")

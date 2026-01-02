@@ -45,8 +45,11 @@ class RegistryMonitor(BaseMonitor):
     def __init__(self, process_info: ProcessInfo | None = None) -> None:
         """Initialize registry monitor.
 
+        Sets up Windows registry monitoring with event notification system.
+        Configures default registry hives and subkeys to monitor for changes.
+
         Args:
-            process_info: Process information (optional for system-wide monitoring).
+            process_info: Process information for context. If None, enables system-wide monitoring.
 
         """
         super().__init__("RegistryMonitor", process_info)
@@ -59,10 +62,13 @@ class RegistryMonitor(BaseMonitor):
         ]
 
     def _start_monitoring(self) -> bool:
-        """Start registry monitoring.
+        """Start registry monitoring thread.
+
+        Creates a Windows event handle for signaling and spawns a daemon thread
+        to monitor registry changes on configured hives and subkeys.
 
         Returns:
-            True if started successfully.
+            True if monitoring started successfully, False otherwise.
 
         """
         try:
@@ -78,7 +84,12 @@ class RegistryMonitor(BaseMonitor):
             return not self._handle_error(e)
 
     def _stop_monitoring(self) -> None:
-        """Stop registry monitoring."""
+        """Stop registry monitoring thread.
+
+        Signals the monitor thread to stop via event handle, waits for thread
+        termination with timeout, and cleans up Windows resources.
+
+        """
         if self._stop_event:
             kernel32.SetEvent(self._stop_event)
 
@@ -90,7 +101,13 @@ class RegistryMonitor(BaseMonitor):
             self._stop_event = None
 
     def _monitor_loop(self) -> None:
-        """Monitor registry changes in dedicated thread."""
+        """Monitor registry changes in dedicated thread.
+
+        Continuously polls configured registry hives for changes, creates watchers
+        for each hive/subkey combination, and emits events when changes are detected.
+        Cleanup occurs when stop event is signaled or errors terminate monitoring.
+
+        """
         hives = [
             (HKEY_CURRENT_USER, "HKCU"),
             (HKEY_LOCAL_MACHINE, "HKLM"),
@@ -131,13 +148,18 @@ class RegistryMonitor(BaseMonitor):
     def _create_watcher(self, hive_key: int, hive_name: str, subkey: str) -> dict[str, Any] | None:
         """Create registry watcher for a key.
 
+        Opens a registry key handle with notification permissions, creates an event
+        for change notification, and registers for asynchronous change notifications
+        on the key and its subtree.
+
         Args:
-            hive_key: Registry hive constant.
-            hive_name: Hive name for display.
-            subkey: Subkey path to watch.
+            hive_key: Registry hive constant (HKEY_CURRENT_USER or HKEY_LOCAL_MACHINE).
+            hive_name: Hive name for display purposes (e.g., "HKCU", "HKLM").
+            subkey: Subkey path to watch within the hive.
 
         Returns:
-            Watcher dictionary or None if failed.
+            Watcher dictionary containing hkey, event, hive_name, subkey, and last_notification time.
+            Returns None if registry key opening fails or event creation fails.
 
         """
         hkey = ctypes.wintypes.HKEY()
@@ -178,8 +200,12 @@ class RegistryMonitor(BaseMonitor):
     def _check_watcher(self, watcher: dict[str, Any]) -> None:
         """Check if watcher has detected changes.
 
+        Polls the watcher event with zero timeout, emits a MonitorEvent if signaled,
+        and re-registers for change notifications. Implements debouncing to prevent
+        duplicate events within 100ms.
+
         Args:
-            watcher: Watcher dictionary.
+            watcher: Watcher dictionary containing event handle, key info, and timing.
 
         """
         result = kernel32.WaitForSingleObject(watcher["event"], 0)

@@ -1,4 +1,12 @@
-"""Copyright (C) 2025 Zachary Flint.
+"""Signature templates for binary analysis and protection detection.
+
+This module provides predefined signature templates for analyzing software
+protections, packers, cryptors, and licensing mechanisms. Templates include
+patterns for PE headers, binary signatures, section analysis, and import
+detection to facilitate comprehensive binary analysis and protection
+identification.
+
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,7 +28,11 @@ class SignatureTemplates:
 
     @staticmethod
     def get_all_categories() -> list[str]:
-        """Get all available template categories."""
+        """Get all available template categories.
+
+        Returns:
+            A list of category names available for signature templates.
+        """
         return [
             "Basic Patterns",
             "PE Headers",
@@ -35,7 +47,14 @@ class SignatureTemplates:
 
     @staticmethod
     def get_templates_for_category(category: str) -> dict[str, dict[str, str]]:
-        """Get templates for a specific category."""
+        """Get templates for a specific category.
+
+        Args:
+            category: The category name to retrieve templates for.
+
+        Returns:
+            A dictionary mapping template names to template data (description and template content).
+        """
         templates = {
             "Basic Patterns": {
                 "Simple Hex Pattern": {
@@ -161,7 +180,7 @@ header:
 
 header:
 {
-    hex = "44 61 6E 53";  // "DanS" (stub signature)
+    hex = "44 61 6E 53";  // "DanS" signature
 }""",
                 },
             },
@@ -401,7 +420,7 @@ section:
 
 ep:
 {
-    hex = "60 BE ?? ?? ?? ?? 8D BE ?? ?? ?? ??";  // UPX stub
+    hex = "60 BE ?? ?? ?? ?? 8D BE ?? ?? ?? ??";  // UPX unpacking code
 }""",
                 },
                 "ASPack": {
@@ -672,7 +691,11 @@ rule:
 
     @staticmethod
     def get_sample_signatures() -> dict[str, str]:
-        """Get sample signature files for testing."""
+        """Get sample signature files for testing.
+
+        Returns:
+            A dictionary mapping signature filenames to their content.
+        """
         return {
             "upx_packer.sg": """// Name: UPX
 // Type: Packer
@@ -789,7 +812,15 @@ ep:
 
 
 def get_signature_template(category: str, template_name: str) -> str:
-    """Get a specific signature template."""
+    """Get a specific signature template.
+
+    Args:
+        category: The category name containing the template.
+        template_name: The name of the template to retrieve.
+
+    Returns:
+        The template content as a string, or an empty string if not found.
+    """
     templates = SignatureTemplates.get_templates_for_category(category)
 
     if template_name in templates:
@@ -799,7 +830,15 @@ def get_signature_template(category: str, template_name: str) -> str:
 
 
 def get_template_description(category: str, template_name: str) -> str:
-    """Get template description."""
+    """Get template description.
+
+    Args:
+        category: The category name containing the template.
+        template_name: The name of the template to retrieve the description for.
+
+    Returns:
+        The template description as a string, or an empty string if not found.
+    """
     templates = SignatureTemplates.get_templates_for_category(category)
 
     if template_name in templates:

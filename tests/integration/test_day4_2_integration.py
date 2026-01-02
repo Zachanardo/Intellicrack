@@ -5,18 +5,17 @@ Validates the integration between enhanced Radare2 patch instructions
 and existing binary modification capabilities.
 """
 
-import sys
 import os
+import sys
 import tempfile
 from pathlib import Path
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "intellicrack"))
+from typing import Any
 
 # Import directly to avoid complex dependency issues
 from intellicrack.plugins.custom_modules.binary_patcher_plugin import BinaryPatch
 
 
-def create_mock_r2_patch() -> dict:
+def create_mock_r2_patch() -> dict[str, Any]:
     """Create a mock R2 patch for testing."""
     return {
         "address": "0x401000",
@@ -28,7 +27,7 @@ def create_mock_r2_patch() -> dict:
     }
 
 
-def create_mock_license_analysis() -> dict:
+def create_mock_license_analysis() -> dict[str, Any]:
     """Create mock license analysis results."""
     return {
         "license_functions": [
@@ -45,11 +44,11 @@ def create_mock_license_analysis() -> dict:
 class MockR2BypassGenerator:
     """Mock R2 bypass generator for testing."""
 
-    def _generate_automated_patches(self, r2, license_analysis):
+    def _generate_automated_patches(self, r2: Any, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate mock automated patches."""
         return [create_mock_r2_patch()]
 
-    def _generate_memory_patches(self, r2, license_analysis):
+    def _generate_memory_patches(self, r2: Any, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate mock memory patches."""
         return [{
             "type": "memory_patch",
@@ -62,20 +61,20 @@ class MockR2BypassGenerator:
 class MockBinaryPatcherPlugin:
     """Mock binary patcher plugin for testing."""
 
-    def __init__(self):
-        self.patches = []
+    def __init__(self) -> None:
+        self.patches: list[BinaryPatch] = []
 
 
 class R2PatchIntegratorTest:
     """Test version of R2PatchIntegrator for validation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize test integrator."""
         self.bypass_generator = MockR2BypassGenerator()
         self.binary_patcher = MockBinaryPatcherPlugin()
-        self.patch_cache = {}
+        self.patch_cache: dict[str, Any] = {}
 
-    def _convert_r2_to_binary_patches(self, r2_result):
+    def _convert_r2_to_binary_patches(self, r2_result: dict[str, Any]) -> list[BinaryPatch]:
         """Convert R2 patch format to binary patch format."""
         binary_patches = []
 
@@ -93,7 +92,7 @@ class R2PatchIntegratorTest:
 
         return binary_patches
 
-    def _create_binary_patch_from_r2(self, r2_patch, patch_category):
+    def _create_binary_patch_from_r2(self, r2_patch: dict[str, Any], patch_category: str) -> BinaryPatch | None:
         """Create a BinaryPatch from R2 patch data."""
         try:
             # Extract address
@@ -136,7 +135,7 @@ class R2PatchIntegratorTest:
             print(f"Error converting R2 patch: {e}")
             return None
 
-    def _validate_patches_with_binary_patcher(self, patches):
+    def _validate_patches_with_binary_patcher(self, patches: list[BinaryPatch]) -> list[BinaryPatch]:
         """Validate patches using binary patcher."""
         validated_patches = []
 
@@ -147,7 +146,7 @@ class R2PatchIntegratorTest:
 
         return validated_patches
 
-    def _is_valid_patch(self, patch):
+    def _is_valid_patch(self, patch: BinaryPatch) -> bool:
         """Validate a single binary patch."""
         if patch.offset < 0:
             return False
@@ -156,7 +155,7 @@ class R2PatchIntegratorTest:
         return len(patch.patched_bytes) <= 1024
 
 
-def test_r2_to_binary_patch_conversion():
+def test_r2_to_binary_patch_conversion() -> bool:
     """Test conversion from R2 patches to binary patches."""
     print("Testing R2 to Binary Patch Conversion")
     print("=" * 40)
@@ -189,7 +188,7 @@ def test_r2_to_binary_patch_conversion():
     return len(binary_patches) > 0
 
 
-def test_patch_validation():
+def test_patch_validation() -> bool:
     """Test patch validation functionality."""
     print("\nTesting Patch Validation")
     print("=" * 25)
@@ -223,7 +222,7 @@ def test_patch_validation():
     return len(validated_patches) == 1
 
 
-def test_binary_file_patching():
+def test_binary_file_patching() -> bool:
     """Test actual binary file patching."""
     print("\nTesting Binary File Patching")
     print("=" * 30)
@@ -285,7 +284,7 @@ def test_binary_file_patching():
         return False
 
 
-def main():
+def main() -> int:
     """Main test function."""
     print("DAY 4.2 INTEGRATION TESTING: R2 Bypass Generator + Binary Modification")
     print("=" * 75)

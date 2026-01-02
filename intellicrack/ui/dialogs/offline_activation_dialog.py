@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any
 
 from PyQt6.QtCore import QThread, pyqtSignal
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QCloseEvent, QFont
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -65,7 +65,11 @@ class ActivationWorker(QThread):
         self.params = params
 
     def run(self) -> None:
-        """Execute offline activation operation in background thread."""
+        """Execute offline activation operation in background thread.
+
+        Performs the specified operation using the emulator and emits progress
+        updates, results, or errors via Qt signals.
+        """
         try:
             if self.operation == "get_hardware_profile":
                 self.progress.emit("Gathering hardware information...")
@@ -130,7 +134,11 @@ class OfflineActivationDialog(QDialog):
     """Comprehensive offline activation emulator interface."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the OfflineActivationDialog with an optional parent."""
+        """Initialize the OfflineActivationDialog with an optional parent.
+
+        Args:
+            parent: Parent widget for the dialog, if any.
+        """
         super().__init__(parent)
         self.emulator = OfflineActivationEmulator()
         self.current_profile: HardwareProfile | None = None
@@ -145,7 +153,15 @@ class OfflineActivationDialog(QDialog):
         self.load_saved_profiles()
 
     def init_ui(self) -> None:
-        """Initialize the user interface."""
+        """Initialize the user interface.
+
+        Creates the main dialog layout with tabs for hardware profile, ID generation,
+        activation, algorithms, saved profiles, and testing. Adds a console output
+        area and dialog control buttons.
+
+        Sets the dialog title, minimum size, and configures all UI components
+        and their layout.
+        """
         self.setWindowTitle("Offline Activation Emulator")
         self.setMinimumSize(1000, 700)
 
@@ -180,7 +196,15 @@ class OfflineActivationDialog(QDialog):
         self.setLayout(layout)
 
     def create_hardware_tab(self) -> QWidget:
-        """Create hardware profile tab."""
+        """Create hardware profile tab.
+
+        Constructs a widget with hardware capture and ID generation controls,
+        including buttons for capturing, importing, and exporting hardware profiles,
+        along with a table displaying hardware components and an ID generation group.
+
+        Returns:
+            Widget containing hardware profile capture, display, and ID generation controls.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -251,7 +275,15 @@ class OfflineActivationDialog(QDialog):
         return widget
 
     def create_generation_tab(self) -> QWidget:
-        """Create ID generation tab."""
+        """Create ID generation tab.
+
+        Constructs a widget with product information inputs (ID, version, key) and
+        ID generation controls for installation ID and request code generation,
+        with formatted output display.
+
+        Returns:
+            Widget containing product information input and ID generation controls.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -341,7 +373,14 @@ class OfflineActivationDialog(QDialog):
         return widget
 
     def create_activation_tab(self) -> QWidget:
-        """Create activation response tab."""
+        """Create activation response tab.
+
+        Constructs a widget with activation settings (type, features, expiry, hardware lock),
+        generation buttons, and response output display for viewing generated activation data.
+
+        Returns:
+            Widget containing activation settings and response generation controls.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -423,7 +462,14 @@ class OfflineActivationDialog(QDialog):
         return widget
 
     def create_algorithms_tab(self) -> QWidget:
-        """Create algorithms configuration tab."""
+        """Create algorithms configuration tab.
+
+        Constructs a widget displaying known activation schemes in a table and
+        providing custom algorithm configuration controls (key length, hash algorithm, encoding).
+
+        Returns:
+            Widget displaying known activation schemes and custom algorithm configuration.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -497,7 +543,15 @@ class OfflineActivationDialog(QDialog):
         return widget
 
     def create_profiles_tab(self) -> QWidget:
-        """Create saved profiles tab."""
+        """Create saved profiles tab.
+
+        Constructs a widget for managing and viewing saved activation profiles,
+        including buttons to load, save, and delete profiles, with a table showing
+        profile details and a JSON details viewer.
+
+        Returns:
+            Widget for managing and viewing saved activation profiles.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -544,7 +598,14 @@ class OfflineActivationDialog(QDialog):
         return widget
 
     def create_testing_tab(self) -> QWidget:
-        """Create testing and validation tab."""
+        """Create testing and validation tab.
+
+        Constructs a widget for selecting and running predefined test scenarios
+        (Microsoft, Adobe, Autodesk, VMware, etc.) and displaying test results.
+
+        Returns:
+            Widget for running test scenarios and viewing results.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -594,7 +655,12 @@ class OfflineActivationDialog(QDialog):
         return widget
 
     def capture_hardware(self) -> None:
-        """Capture current hardware profile."""
+        """Capture current hardware profile.
+
+        Launches a background worker thread to gather hardware information from
+        the system and display it in the hardware table. Connects worker signals
+        to display progress, results, and errors.
+        """
         self.log("Capturing hardware profile...")
         worker = ActivationWorker(self.emulator, "get_hardware_profile", {})
         self.worker = worker
@@ -604,7 +670,12 @@ class OfflineActivationDialog(QDialog):
         worker.start()
 
     def generate_hardware_id(self) -> None:
-        """Generate hardware ID from current profile."""
+        """Generate hardware ID from current profile.
+
+        Uses the algorithm selected in the hardware ID generation group to create
+        a hardware ID from the current hardware profile. Launches a background worker
+        thread and displays the generated ID. Shows warning if no profile has been captured.
+        """
         if not self.current_profile:
             QMessageBox.warning(self, "Warning", "Please capture hardware profile first")
             return
@@ -624,7 +695,12 @@ class OfflineActivationDialog(QDialog):
         worker.start()
 
     def generate_installation_id(self) -> None:
-        """Generate installation ID."""
+        """Generate installation ID.
+
+        Creates an installation ID from the current product ID and hardware ID.
+        Launches a background worker thread and displays the result. Validates that
+        both a product ID is entered and a hardware ID has been generated.
+        """
         product_id = self.product_id_input.text().strip()
         if not product_id:
             QMessageBox.warning(self, "Warning", "Please enter a product ID")
@@ -647,7 +723,12 @@ class OfflineActivationDialog(QDialog):
         worker.start()
 
     def generate_request_code(self) -> None:
-        """Generate request code."""
+        """Generate request code.
+
+        Generates a request code from the current installation ID using a background
+        worker thread. Displays the generated code. Validates that an installation ID
+        has been generated first.
+        """
         if not self.current_installation_id:
             QMessageBox.warning(self, "Warning", "Please generate installation ID first")
             return
@@ -665,7 +746,13 @@ class OfflineActivationDialog(QDialog):
         worker.start()
 
     def generate_activation_response(self) -> None:
-        """Generate complete activation response."""
+        """Generate complete activation response.
+
+        Creates a full activation response with settings from the activation tab,
+        including features, hardware lock status, expiry date, and activation type.
+        Launches a background worker thread to generate the response. Validates that
+        all required fields (product ID, version, hardware ID) are set.
+        """
         product_id = self.product_id_input.text().strip()
         product_version = self.product_version_input.text().strip()
 
@@ -703,7 +790,11 @@ class OfflineActivationDialog(QDialog):
         worker.start()
 
     def format_installation_id(self) -> None:
-        """Format installation ID for phone activation."""
+        """Format installation ID for phone activation.
+
+        Formats the current installation ID into groups of 6 digits separated by hyphens
+        for easier phone-based activation entry. Displays formatted ID in the output field.
+        """
         if not self.current_installation_id:
             return
 
@@ -714,7 +805,12 @@ class OfflineActivationDialog(QDialog):
         self.log("Installation ID formatted for phone activation")
 
     def export_license_file(self) -> None:
-        """Export activation response as license file."""
+        """Export activation response as license file.
+
+        Exports the current activation response to a file selected by the user via
+        file dialog. Supports XML, JSON, and binary license file formats. Launches a
+        background worker thread for export. Shows error if no activation response exists.
+        """
         if not self.current_response:
             QMessageBox.warning(self, "Warning", "No activation response to export")
             return
@@ -752,7 +848,12 @@ class OfflineActivationDialog(QDialog):
                 self.handle_worker_error(str(e))
 
     def validate_license_file(self) -> None:
-        """Validate an existing license file."""
+        """Validate an existing license file.
+
+        Allows the user to select a license file via file dialog and validates it
+        against the current hardware ID using a background worker thread. Displays
+        validation results in the response output.
+        """
         file_path, _ = QFileDialog.getOpenFileName(self, "Select License File", "", "License Files (*.xml *.json *.lic);;All Files (*.*)")
 
         if file_path:
@@ -768,7 +869,12 @@ class OfflineActivationDialog(QDialog):
             worker.start()
 
     def import_hardware_profile(self) -> None:
-        """Import hardware profile from file."""
+        """Import hardware profile from file.
+
+        Allows the user to select a JSON file containing a hardware profile via
+        file dialog and loads it into the current session. Updates display and enables
+        related buttons on successful import. Logs errors if import fails.
+        """
         file_path, _ = QFileDialog.getOpenFileName(self, "Import Hardware Profile", "", "JSON Files (*.json);;All Files (*.*)")
 
         if file_path:
@@ -786,7 +892,11 @@ class OfflineActivationDialog(QDialog):
                 self.handle_worker_error(f"Failed to import profile: {e}")
 
     def export_hardware_profile(self) -> None:
-        """Export current hardware profile to file."""
+        """Export current hardware profile to file.
+
+        Exports the current hardware profile as a JSON file via file dialog that
+        can be imported in a different session. Logs errors if export fails.
+        """
         if not self.current_profile:
             return
 
@@ -814,7 +924,12 @@ class OfflineActivationDialog(QDialog):
                 self.handle_worker_error(f"Failed to export profile: {e}")
 
     def save_custom_scheme(self) -> None:
-        """Save custom activation scheme."""
+        """Save custom activation scheme.
+
+        Creates and saves a new custom activation scheme with user-specified parameters
+        including key length, hash algorithm, and encoding type. Updates the schemes
+        table and logs the action. Shows warning if scheme name is empty.
+        """
         name = self.scheme_name_input.text().strip()
         if not name:
             QMessageBox.warning(self, "Warning", "Please enter a scheme name")
@@ -842,7 +957,12 @@ class OfflineActivationDialog(QDialog):
         self.scheme_name_input.clear()
 
     def save_current_profile(self) -> None:
-        """Save current activation profile."""
+        """Save current activation profile.
+
+        Saves the current activation settings, hardware profile, and generated IDs
+        to the saved profiles dictionary. Prompts user for a profile name via input dialog.
+        Updates profiles table and persists to disk. Shows warning if no profile exists.
+        """
         if not self.current_profile:
             QMessageBox.warning(self, "Warning", "No profile to save")
             return
@@ -867,7 +987,12 @@ class OfflineActivationDialog(QDialog):
             self.log("Profile '%s' saved", name)
 
     def load_profile(self) -> None:
-        """Load selected profile."""
+        """Load selected profile.
+
+        Loads a previously saved profile from the profiles table into the current
+        session, restoring all settings, generated IDs, and UI state. Shows warning
+        if no profile is selected.
+        """
         current_row = self.profiles_table.currentRow()
         if current_row < 0:
             QMessageBox.warning(self, "Warning", "Please select a profile to load")
@@ -909,7 +1034,12 @@ class OfflineActivationDialog(QDialog):
             self.log("Profile '%s' loaded", name)
 
     def delete_profile(self) -> None:
-        """Delete selected profile."""
+        """Delete selected profile.
+
+        Removes a saved profile from the profiles dictionary and updates the
+        profiles table with confirmation. Persists changes to disk. Shows warning
+        if no profile is selected.
+        """
         current_row = self.profiles_table.currentRow()
         if current_row < 0:
             QMessageBox.warning(self, "Warning", "Please select a profile to delete")
@@ -935,7 +1065,13 @@ class OfflineActivationDialog(QDialog):
             self.log("Profile '%s' deleted", name)
 
     def run_test_scenario(self) -> None:
-        """Run selected test scenario."""
+        """Run selected test scenario.
+
+        Executes one of the predefined activation test scenarios (Microsoft,
+        Adobe, Autodesk, VMware, Custom RSA, Hardware-Locked, or Time-Limited).
+        Generates test data, performs activation operations, and displays detailed
+        results with status indicators.
+        """
         scenario = self.test_scenario.currentText()
         self.test_results.clear()
         self.test_results.append(f"Running test scenario: {scenario}\n")
@@ -1012,7 +1148,11 @@ class OfflineActivationDialog(QDialog):
             self.test_results.append(f"\nFAIL Test failed: {e!s}")
 
     def display_hardware_profile(self, profile: HardwareProfile) -> None:
-        """Display hardware profile in table."""
+        """Display hardware profile in table.
+
+        Args:
+            profile: The hardware profile to display.
+        """
         self.hardware_table.setRowCount(0)
 
         fields = [
@@ -1033,7 +1173,12 @@ class OfflineActivationDialog(QDialog):
             self.hardware_table.setItem(row, 1, QTableWidgetItem(value))
 
     def update_profiles_table(self) -> None:
-        """Update saved profiles table."""
+        """Update saved profiles table.
+
+        Refreshes the profiles table with all saved profiles from the
+        saved_profiles dictionary. Populates table rows with profile details and
+        connects the selection change handler for profile detail display.
+        """
         self.profiles_table.setRowCount(0)
 
         for name, profile in self.saved_profiles.items():
@@ -1053,7 +1198,11 @@ class OfflineActivationDialog(QDialog):
         self.profiles_table.itemSelectionChanged.connect(self.on_profile_selected)
 
     def on_profile_selected(self) -> None:
-        """Handle profile selection."""
+        """Handle profile selection.
+
+        Updates the profile details text widget to show a formatted JSON representation
+        of the selected profile from the profiles table, including all settings and IDs.
+        """
         current_row = self.profiles_table.currentRow()
         if current_row >= 0:
             item = self.profiles_table.item(current_row, 0)
@@ -1065,7 +1214,12 @@ class OfflineActivationDialog(QDialog):
                 self.profile_details.setText(details)
 
     def load_saved_profiles(self) -> None:
-        """Load saved profiles from disk."""
+        """Load saved profiles from disk.
+
+        Loads the activation_profiles.json file from disk if it exists and
+        populates the saved_profiles dictionary. Updates the profiles table and
+        logs errors if loading fails.
+        """
         profiles_file = "activation_profiles.json"
         if os.path.exists(profiles_file):
             try:
@@ -1077,7 +1231,11 @@ class OfflineActivationDialog(QDialog):
                 self.log("Failed to load profiles: %s", str(e))
 
     def save_profiles_to_disk(self) -> None:
-        """Save profiles to disk."""
+        """Save profiles to disk.
+
+        Writes the saved_profiles dictionary to activation_profiles.json file with
+        indentation for readability. Logs errors if saving fails.
+        """
         profiles_file = "activation_profiles.json"
         try:
             with open(profiles_file, "w") as f:
@@ -1087,7 +1245,11 @@ class OfflineActivationDialog(QDialog):
             self.log("Failed to save profiles: %s", str(e))
 
     def handle_worker_result(self, result: dict[str, Any]) -> None:
-        """Handle worker thread results."""
+        """Handle worker thread results.
+
+        Args:
+            result: Dictionary containing operation type and data from worker thread.
+        """
         operation = result.get("operation")
         data = result.get("data")
 
@@ -1152,12 +1314,24 @@ Details:
                 QMessageBox.information(self, "Success", f"License file exported successfully to:\n{data.get('path')}")
 
     def handle_worker_error(self, error: str) -> None:
-        """Handle worker thread errors."""
+        """Handle worker thread errors.
+
+        Args:
+            error: Error message from worker thread.
+        """
         self.log("Error: %s", error)
         QMessageBox.critical(self, "Error", error)
 
     def log(self, message: str, *args: Any) -> None:
-        """Log message to console."""
+        """Log message to console.
+
+        Formats a message with provided arguments and appends it to the console
+        output with a timestamp prefix. Supports printf-style string formatting.
+
+        Args:
+            message: Format string for the log message.
+            *args: Variable positional arguments for the log message.
+        """
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_message = message % args if args else message
         self.console.append(f"[{timestamp}] {formatted_message}")
@@ -1165,6 +1339,24 @@ Details:
         scrollbar = self.console.verticalScrollBar()
         if scrollbar is not None:
             scrollbar.setValue(scrollbar.maximum())
+
+    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+        """Handle dialog close with proper thread cleanup.
+
+        Ensures any running worker thread is properly terminated before
+        closing the dialog to prevent resource leaks.
+
+        Args:
+            event: Close event from Qt framework.
+
+        """
+        if self.worker is not None and self.worker.isRunning():
+            self.worker.quit()
+            if not self.worker.wait(2000):
+                self.worker.terminate()
+                self.worker.wait()
+            self.worker = None
+        super().closeEvent(event)
 
 
 if __name__ == "__main__":

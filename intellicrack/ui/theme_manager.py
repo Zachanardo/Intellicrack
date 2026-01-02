@@ -93,7 +93,12 @@ class ThemeManager:
         return theme_mapping.get(stored_theme, "dark")
 
     def save_theme_preference(self) -> None:
-        """Save current theme preference to central config."""
+        """Save current theme preference to central config.
+
+        Persists the currently active theme setting to the configuration manager
+        so that the user's theme preference is restored when the application
+        is restarted.
+        """
         self.config.set("ui_preferences.theme", self.current_theme)
 
     def set_theme(self, theme_name: str) -> None:
@@ -131,7 +136,12 @@ class ThemeManager:
         self._apply_theme()
 
     def _apply_theme(self) -> None:
-        """Apply the current theme's stylesheet to the application."""
+        """Apply the current theme's stylesheet to the application.
+
+        Retrieves the appropriate stylesheet for the current theme and applies
+        it to the QApplication instance. Falls back to the built-in dark theme
+        if loading or applying the stylesheet fails.
+        """
         try:
             # Get the stylesheet content
             stylesheet_content = self._get_theme_stylesheet()
@@ -987,6 +997,7 @@ QPushButton#resetButton:pressed {
 
         Applies the built-in dark theme stylesheet directly when the external
         theme loading fails or when no QApplication instance is available.
+        Gracefully handles any exceptions that occur during stylesheet application.
         """
         try:
             app = QApplication.instance()

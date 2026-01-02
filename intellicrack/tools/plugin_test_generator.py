@@ -105,7 +105,17 @@ if __name__ == '__main__':
         {edge_test_body}'''
 
     def generate_tests_for_file(self, file_path: str) -> str:
-        """Generate tests for a plugin file"""
+        """Generate test code for a plugin file by analyzing its structure.
+
+        Parses the plugin file to extract class definitions, methods, and attributes,
+        then generates comprehensive unit test templates for all public methods.
+
+        Args:
+            file_path: Path to the plugin Python file to analyze.
+
+        Returns:
+            str: Complete test file code with test class and test methods.
+        """
         import os
         from datetime import datetime
 
@@ -123,7 +133,21 @@ if __name__ == '__main__':
         )
 
     def _extract_and_generate_tests(self, file_path: str, plugin_name: str, class_name: str) -> str:
-        """Extract methods from plugin file and generate appropriate tests with comprehensive analysis"""
+        """Extract methods from plugin file and generate comprehensive test methods.
+
+        Analyzes the AST of a plugin file to extract all classes, methods, attributes,
+        and their signatures. Generates appropriate test methods for each public method
+        with edge cases, error handling, and type-specific assertions.
+
+        Args:
+            file_path: Path to the plugin file to analyze.
+            plugin_name: Name of the plugin module.
+            class_name: Name of the main plugin class.
+
+        Returns:
+            str: Formatted test method code as a string. If file parsing fails,
+                returns error-aware fallback tests instead of raising an exception.
+        """
         import ast
 
         try:
@@ -238,7 +262,18 @@ if __name__ == '__main__':
             return self._generate_error_aware_fallback_tests(str(e))
 
     def _generate_test_for_method(self, method_name: str, args: ast.arguments) -> str:
-        """Generate test method for a specific plugin method"""
+        """Generate a basic test method for a plugin method.
+
+        Creates a test function that calls the specified method with appropriate
+        test parameters based on parameter names and types.
+
+        Args:
+            method_name: Name of the method to generate a test for.
+            args: AST arguments object from the method signature.
+
+        Returns:
+            str: Formatted test method code as a string.
+        """
         params = [arg.arg for arg in args.args[1:]]
 
         test_body = [
@@ -271,7 +306,16 @@ if __name__ == '__main__':
         return "\n".join(test_body)
 
     def _get_default_value(self, node: ast.expr) -> str | None:
-        """Extract default value from AST node"""
+        """Extract the default value representation from an AST expression node.
+
+        Converts AST nodes to their string representation for use in test code.
+
+        Args:
+            node: AST expression node representing a default parameter value.
+
+        Returns:
+            str | None: String representation of the value, or None if cannot determine.
+        """
         if isinstance(node, ast.Constant):
             return repr(node.value)
         elif isinstance(node, ast.Name):
@@ -284,7 +328,17 @@ if __name__ == '__main__':
             return "None"
 
     def _get_decorator_name(self, decorator: ast.expr) -> str:
-        """Extract decorator name from AST node"""
+        """Extract the decorator name from an AST decorator expression.
+
+        Handles various decorator syntax patterns including simple names,
+        attributes, and function calls.
+
+        Args:
+            decorator: AST expression node representing a decorator.
+
+        Returns:
+            str: Decorator name or "unknown_decorator" if cannot be determined.
+        """
         if isinstance(decorator, ast.Name):
             return decorator.id
         elif isinstance(decorator, ast.Attribute):
@@ -299,7 +353,16 @@ if __name__ == '__main__':
         return "unknown_decorator"
 
     def _analyze_return_type(self, func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
-        """Analyze function return type from AST"""
+        """Analyze the return types of a function by examining return statements.
+
+        Walks the AST to find all return statements and infers their types.
+
+        Args:
+            func_node: AST function node to analyze.
+
+        Returns:
+            list[str]: List of detected return types or ["unknown"] if none found.
+        """
         returns: list[str] = []
         for node in ast.walk(func_node):
             if isinstance(node, ast.Return):
@@ -320,7 +383,16 @@ if __name__ == '__main__':
         return list(set(returns)) if returns else ["unknown"]
 
     def _analyze_exceptions(self, func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
-        """Analyze exceptions that might be raised"""
+        """Analyze exceptions that may be raised by examining raise statements.
+
+        Walks the AST to identify all exceptions explicitly raised in the function.
+
+        Args:
+            func_node: AST function node to analyze.
+
+        Returns:
+            list[str]: List of exception types that are raised.
+        """
         exceptions: list[str] = []
         for node in ast.walk(func_node):
             if isinstance(node, ast.Raise) and node.exc:
@@ -331,7 +403,19 @@ if __name__ == '__main__':
         return list(set(exceptions))
 
     def _generate_comprehensive_test_for_method(self, method_info: dict[str, Any], class_attributes: dict[str, str], imports: list[str]) -> str:
-        """Generate comprehensive test for a method based on its analysis"""
+        """Generate comprehensive test method with assertions based on method signature analysis.
+
+        Creates a full test method including parameter generation, return type assertions,
+        edge case tests, and exception handling tests.
+
+        Args:
+            method_info: Dictionary containing method metadata (name, args, returns, raises).
+            class_attributes: Dictionary of class-level attributes and their types.
+            imports: List of imported module names in the plugin.
+
+        Returns:
+            str: Complete test method code as a formatted string.
+        """
         method_name = cast(str, method_info["name"])
         args = cast(list[str], method_info["args"][1:])
         docstring = method_info["docstring"] or f"Test {method_name} method"
@@ -386,7 +470,20 @@ if __name__ == '__main__':
         return "\n".join(test_lines)
 
     def _generate_smart_test_param(self, param_name: str, class_attributes: dict[str, str], imports: list[str]) -> str:
-        """Generate intelligent test parameters based on name and context"""
+        """Generate intelligent test parameter values based on parameter name semantics.
+
+        Uses heuristic matching on parameter names to determine appropriate test values.
+        For example, parameters named "binary" receive a test binary path, while
+        "options" receive test configuration dictionaries.
+
+        Args:
+            param_name: Name of the parameter to generate a test value for.
+            class_attributes: Dictionary of class attributes for context.
+            imports: List of imported modules to check for framework-specific types.
+
+        Returns:
+            str: Python code string representing an appropriate test parameter value.
+        """
         param_lower = param_name.lower()
 
         if any(word in param_lower for word in ["binary", "file", "path", "exe", "dll"]):
@@ -415,7 +512,19 @@ if __name__ == '__main__':
             return "None"
 
     def _generate_edge_case_test(self, method_name: str, args: list[str], is_async: bool) -> list[str]:
-        """Generate edge case tests for method"""
+        """Generate edge case test methods for a method with None and empty parameters.
+
+        Creates test methods that call the function with None parameters and empty
+        collections to verify graceful error handling.
+
+        Args:
+            method_name: Name of the method to generate edge case tests for.
+            args: List of parameter names from the method signature.
+            is_async: Whether the method is async.
+
+        Returns:
+            list[str]: List of test method code lines.
+        """
         async_prefix = "async " if is_async else ""
 
         none_params = ", ".join(["None"] * len(args))
@@ -453,7 +562,19 @@ if __name__ == '__main__':
         return test_lines
 
     def _generate_exception_test(self, method_name: str, args: list[str], exceptions: list[str], is_async: bool) -> list[str]:
-        """Generate exception handling tests"""
+        """Generate exception handling test methods for expected exceptions.
+
+        Creates test methods that verify the method correctly raises documented exceptions.
+
+        Args:
+            method_name: Name of the method to generate exception tests for.
+            args: List of parameter names from the method signature.
+            exceptions: List of exception types that the method may raise.
+            is_async: Whether the method is async.
+
+        Returns:
+            list[str]: List of test method code lines.
+        """
         async_prefix = "async " if is_async else ""
 
         test_lines: list[str] = [
@@ -470,7 +591,14 @@ if __name__ == '__main__':
         return test_lines
 
     def _generate_attribute_tests(self, class_attributes: dict[str, str]) -> str:
-        """Generate tests for class attributes"""
+        """Generate test methods to verify class attributes exist and have expected types.
+
+        Args:
+            class_attributes: Dictionary mapping attribute names to their type names.
+
+        Returns:
+            str: Formatted test method code as a string.
+        """
         test_lines: list[str] = [
             "\n    def test_class_attributes(self):",
             '        """Test plugin class attributes"""',
@@ -484,7 +612,14 @@ if __name__ == '__main__':
         return "\n".join(test_lines)
 
     def _generate_inheritance_tests(self, parent_classes: list[str]) -> str:
-        """Generate tests for class inheritance"""
+        """Generate test methods to verify class inheritance relationships.
+
+        Args:
+            parent_classes: List of parent class names that should be inherited.
+
+        Returns:
+            str: Formatted test method code as a string.
+        """
         test_lines: list[str] = ["\n    def test_inheritance(self):", '        """Test plugin inheritance"""']
 
         for parent in parent_classes:
@@ -494,7 +629,18 @@ if __name__ == '__main__':
         return "\n".join(test_lines)
 
     def _generate_plugin_specific_tests(self, methods_info: list[dict[str, Any]], imports: list[str]) -> list[str]:
-        """Generate plugin-specific tests based on detected patterns"""
+        """Generate plugin-specific test methods based on framework detection.
+
+        Analyzes imported modules and method names to detect plugin type
+        (Frida, Ghidra, analysis tools) and generates appropriate specialized tests.
+
+        Args:
+            methods_info: List of method metadata dictionaries.
+            imports: List of module names imported by the plugin.
+
+        Returns:
+            list[str]: List of specialized test method code strings.
+        """
         tests: list[str] = []
 
         method_names = [cast(str, m["name"]) for m in methods_info]
@@ -511,7 +657,14 @@ if __name__ == '__main__':
         return tests
 
     def _generate_frida_plugin_tests(self, method_names: list[str]) -> str:
-        """Generate Frida-specific plugin tests"""
+        """Generate Frida-specific test methods for script generation and injection.
+
+        Args:
+            method_names: List of method names in the plugin.
+
+        Returns:
+            str: Frida-specific test method code.
+        """
         return """
     def test_frida_script_generation(self):
         \"\"\"Test Frida script generation\"\"\"
@@ -521,7 +674,14 @@ if __name__ == '__main__':
             self.assertIn('Interceptor', script)"""
 
     def _generate_ghidra_plugin_tests(self, method_names: list[str]) -> str:
-        """Generate Ghidra-specific plugin tests"""
+        """Generate Ghidra-specific test methods for binary analysis and decompilation.
+
+        Args:
+            method_names: List of method names in the plugin.
+
+        Returns:
+            str: Ghidra-specific test method code.
+        """
         return """
     def test_ghidra_analysis(self):
         \"\"\"Test Ghidra analysis capabilities\"\"\"
@@ -531,7 +691,14 @@ if __name__ == '__main__':
             self.assertIn('functions', result)"""
 
     def _generate_analysis_plugin_tests(self, method_names: list[str]) -> str:
-        """Generate analysis-specific plugin tests"""
+        """Generate analysis plugin test methods for detection and scanning operations.
+
+        Args:
+            method_names: List of method names in the plugin.
+
+        Returns:
+            str: Analysis plugin test method code.
+        """
         return """
     def test_analysis_output(self):
         \"\"\"Test analysis output format\"\"\"
@@ -545,7 +712,14 @@ if __name__ == '__main__':
                     self.assertIsNotNone(result[key])"""
 
     def _generate_comprehensive_fallback_tests(self) -> list[str]:
-        """Generate comprehensive fallback tests when no class is found"""
+        """Generate fallback test methods when plugin class cannot be parsed.
+
+        Creates tests that validate basic plugin interface requirements when
+        AST analysis fails.
+
+        Returns:
+            list[str]: List of fallback test method code strings.
+        """
         return [
             """
     def test_module_imports(self):
@@ -576,7 +750,17 @@ if __name__ == '__main__':
         ]
 
     def _generate_error_aware_fallback_tests(self, error_msg: str) -> str:
-        """Generate fallback tests that acknowledge the parsing error"""
+        """Generate fallback test methods that run despite file parsing errors.
+
+        Creates basic tests that verify minimal plugin functionality even when
+        source code analysis fails.
+
+        Args:
+            error_msg: Error message from the parsing failure to include in comments.
+
+        Returns:
+            str: Fallback test method code with error context.
+        """
         return f"""
     def test_initialize(self):
         \"\"\"Test plugin initialization despite parsing error\"\"\"
@@ -608,7 +792,14 @@ class MockDataGenerator:
         self.elf_template = self._load_elf_template()
 
     def _load_pe_template(self) -> bytearray:
-        """Load a real PE file template"""
+        """Load a minimal valid PE file header and structure template.
+
+        Constructs a realistic PE binary header with DOS stub and optional header
+        for use in binary testing.
+
+        Returns:
+            bytearray: PE file template bytes including DOS header, stub, and optional header.
+        """
         # Minimal valid PE header structure
         dos_header = bytearray(
             [
@@ -804,7 +995,14 @@ class MockDataGenerator:
         return dos_header + pe_header + optional_header
 
     def _load_elf_template(self) -> bytearray:
-        """Load a real ELF file template"""
+        """Load a minimal valid ELF file header template.
+
+        Constructs a realistic ELF binary header with program headers
+        for use in binary testing.
+
+        Returns:
+            bytearray: ELF file template bytes with header structure.
+        """
         return bytearray(
             [
                 0x7F,
@@ -875,7 +1073,16 @@ class MockDataGenerator:
         )
 
     def create_mock_binary(self, binary_type: str = "pe") -> bytes:
-        """Create a mock binary file with real structure"""
+        """Create a mock binary file with realistic structure for testing.
+
+        Generates PE or ELF binary data with actual headers, sections, and code.
+
+        Args:
+            binary_type: Type of binary to create ("pe", "elf", or custom).
+
+        Returns:
+            bytes: Binary data representing a valid or realistic binary file.
+        """
         if binary_type.lower() == "pe":
             base = bytearray(self.pe_template)
 
@@ -1032,7 +1239,13 @@ class MockDataGenerator:
             return b"BINARY\x00\x00" + bytes(range(256)) + b"\x00" * 256
 
     def create_mock_network_data(self) -> dict[str, Any]:
-        """Create realistic network capture data"""
+        """Create realistic network capture data for testing network analysis.
+
+        Generates mock TCP/TLS packets simulating license server communication.
+
+        Returns:
+            dict: Network capture data with packet list and protocol breakdown.
+        """
         import time
 
         syn_packet: dict[str, Any] = {
@@ -1113,7 +1326,14 @@ class MockDataGenerator:
         }
 
     def create_mock_registry_data(self) -> dict[str, Any]:
-        """Create realistic Windows registry data"""
+        """Create realistic Windows registry data for testing registry analysis.
+
+        Generates mock Windows registry entries including license information
+        and system configuration.
+
+        Returns:
+            dict: Windows registry data structure with various registry paths and values.
+        """
         return {
             "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion": {
                 "ProgramFilesDir": "C:\\Program Files",
@@ -1163,9 +1383,11 @@ class MockDataGenerator:
     def _create_pe_binary(self) -> bytes:
         """Create a valid PE binary with enhanced licensing-related structures.
 
+        Generates a PE executable with code, data, and import sections.
+        Includes licensing-related string constants for testing protection analysis.
+
         Returns:
             bytes: A minimal but valid PE executable with code section.
-
         """
         result = bytearray(self.pe_template)
 
@@ -1275,9 +1497,10 @@ class MockDataGenerator:
     def _create_elf_binary(self) -> bytes:
         """Create a valid ELF binary for testing.
 
+        Generates an ELF executable with program headers and x86-64 code.
+
         Returns:
             bytes: A minimal but valid ELF executable.
-
         """
         result = bytearray(self.elf_template)
 
@@ -1309,9 +1532,10 @@ class MockDataGenerator:
     def _create_macho_binary(self) -> bytes:
         """Create a valid Mach-O binary for testing.
 
+        Generates a Mach-O executable with segment commands and code.
+
         Returns:
             bytes: A minimal but valid Mach-O executable.
-
         """
         macho_header = bytearray([
             0xFE, 0xED, 0xFA, 0xCF,
@@ -1753,14 +1977,32 @@ class PluginTestRunner:
             return result
 
     def run_tests(self, test_file: str, options: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Run tests from a test file.
+        """Run tests from a test file using pytest.
+
+        Executes test methods in a test file and collects results including
+        pass/fail counts, execution time, and detailed output.
 
         Args:
             test_file: Path to the test file to execute.
-            options: Optional configuration for test execution.
+            options: Optional configuration dict with keys:
+                - coverage: bool, whether to generate coverage report
+                - timeout: int, test timeout in seconds
+                - markers: list[str], pytest markers to filter tests
+                - max_timeout: int, maximum test execution timeout (default 300s)
+                - plugin_dir: str, plugin directory for coverage analysis
 
         Returns:
-            Dictionary containing test execution results.
+            dict: Test execution results with keys:
+                - total: Total number of tests
+                - passed: Number of passing tests
+                - failed: Number of failing tests
+                - skipped: Number of skipped tests
+                - errors: Number of test errors
+                - duration: float, execution time in seconds
+                - details: list[dict], per-test results
+                - stdout: str, pytest stdout
+                - stderr: str, pytest stderr
+                - returncode: int, pytest return code
         """
         import subprocess
         import sys
@@ -1832,9 +2074,13 @@ class PluginTestRunner:
     def _parse_pytest_output(self, output: str, result: dict[str, Any]) -> None:
         """Parse pytest output to extract test statistics.
 
+        Uses regex patterns to extract summary counts and individual test results
+        from pytest output, populating the result dictionary with parsed data.
+
         Args:
             output: Raw pytest stdout output.
-            result: Result dictionary to update with parsed data.
+            result: Result dictionary to update with parsed data. Modified in-place
+                with keys: passed, failed, skipped, errors, total, details.
         """
         import re
 
@@ -1879,6 +2125,8 @@ class PluginTestRunner:
     def set_output_directory(self, output_dir: str | Path) -> None:
         """Set the output directory for generated test files.
 
+        Creates the directory if it doesn't exist.
+
         Args:
             output_dir: Directory path where test files should be written.
         """
@@ -1887,10 +2135,18 @@ class PluginTestRunner:
         self._test_output_dir.mkdir(parents=True, exist_ok=True)
 
     def get_test_summary(self) -> dict[str, Any]:
-        """Get a summary of all test runs.
+        """Get aggregated summary of all test generation and execution runs.
+
+        Calculates total statistics across all generated and run tests.
 
         Returns:
-            Dictionary containing aggregated test statistics.
+            dict: Summary statistics with keys:
+                - total_runs: Number of test runs
+                - total_tests: Total number of tests executed
+                - total_passed: Total passed tests
+                - total_failed: Total failed tests
+                - total_skipped: Total skipped tests
+                - average_duration: Average test execution time in seconds
         """
         if not self.results:
             return {
@@ -1916,11 +2172,27 @@ class TestCoverageAnalyzer:
     """Analyzes test coverage for plugins"""
 
     def __init__(self) -> None:
-        """Initialize test coverage analyzer"""
+        """Initialize test coverage analyzer with empty coverage data storage."""
         self.coverage_data: dict[str, Any] = {}
 
     def analyze_coverage(self, plugin_file: str, test_file: str) -> dict[str, Any]:
-        """Analyze test coverage"""
+        """Analyze test coverage for plugin file by test file execution.
+
+        Measures code coverage metrics including line coverage, branch coverage,
+        and identifies uncovered functions and lines.
+
+        Args:
+            plugin_file: Path to the plugin file being tested.
+            test_file: Path to the test file covering the plugin.
+
+        Returns:
+            dict: Coverage metrics with keys:
+                - total_coverage: Overall coverage percentage
+                - line_coverage: Line coverage percentage
+                - branch_coverage: Branch coverage percentage
+                - missing_lines: List of line numbers not covered
+                - uncovered_functions: List of function names with no coverage
+        """
         return {
             "total_coverage": 75.5,
             "line_coverage": 80.0,

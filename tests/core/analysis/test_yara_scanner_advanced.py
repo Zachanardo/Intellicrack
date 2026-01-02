@@ -24,7 +24,6 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 import yara
@@ -35,6 +34,46 @@ from intellicrack.core.analysis.yara_scanner import (
     YaraMatch,
     YaraScanner,
 )
+
+
+class FakeLicenseAnalyzer:
+    """Real test double for LicenseAnalyzerProtocol.
+
+    Provides realistic license analysis behavior for testing process scanning
+    integration without external dependencies.
+    """
+
+    def __init__(
+        self,
+        process_handle: int | None = None,
+        license_region_predicate: callable[[object, dict[str, Any]], bool] | None = None
+    ) -> None:
+        self.process_handle: int | None = process_handle
+        self._license_region_predicate: callable[[object, dict[str, Any]], bool] | None = license_region_predicate
+        self.memory_regions: list[dict[str, Any]] = []
+        self.modules: list[dict[str, Any]] = []
+
+    def get_process_handle(self) -> int | None:
+        """Return process handle for process operations."""
+        return self.process_handle
+
+    def is_license_region(self, scanner: object, region: dict[str, Any]) -> bool:
+        """Determine if memory region contains license-related data."""
+        if self._license_region_predicate is not None:
+            return self._license_region_predicate(scanner, region)
+        return False
+
+    def enumerate_memory_regions(self) -> list[dict[str, Any]]:
+        """Enumerate all memory regions in the target process."""
+        return self.memory_regions
+
+    def read_process_memory(self, address: int, size: int) -> bytes | None:
+        """Read memory from the target process at specified address."""
+        return None
+
+    def enumerate_modules(self) -> list[dict[str, Any]]:
+        """Enumerate all loaded modules in the target process."""
+        return self.modules
 
 
 class TestProcessMemoryScanning:
@@ -93,13 +132,11 @@ class TestProcessScanningWithAnalyzer:
 
     def test_scan_process_with_analyzer_integration(self, yara_scanner: YaraScanner) -> None:
         """Process scanning with license analyzer integration works."""
-        mock_analyzer = MagicMock()
-        mock_analyzer.get_process_handle.return_value = None
-        mock_analyzer.is_license_region.return_value = False
+        fake_analyzer = FakeLicenseAnalyzer(process_handle=None)
 
         try:
             matches = yara_scanner.scan_process_with_analyzer(
-                mock_analyzer, categories=[RuleCategory.LICENSE]
+                fake_analyzer, categories=[RuleCategory.LICENSE]
             )
 
             assert isinstance(matches, list)
@@ -111,17 +148,17 @@ class TestProcessScanningWithAnalyzer:
         self, yara_scanner: YaraScanner
     ) -> None:
         """License analyzer filters license-specific memory regions."""
-        mock_analyzer = MagicMock()
-
-        def mock_license_region(scanner: object, region: dict[str, Any]) -> bool:
+        def license_region_filter(scanner: object, region: dict[str, Any]) -> bool:
             return region.get("base_address", 0) % 2 == 0
 
-        mock_analyzer.is_license_region = mock_license_region
-        mock_analyzer.get_process_handle.return_value = None
+        fake_analyzer = FakeLicenseAnalyzer(
+            process_handle=None,
+            license_region_predicate=license_region_filter
+        )
 
         try:
             matches = yara_scanner.scan_process_with_analyzer(
-                mock_analyzer
+                fake_analyzer
             )
 
             assert isinstance(matches, list)
@@ -133,7 +170,7 @@ class TestProcessScanningWithAnalyzer:
         self, yara_scanner: YaraScanner
     ) -> None:
         """Analyzer correctly identifies DLL regions."""
-        mock_analyzer = MagicMock()
+        fake_analyzer = FakeLicenseAnalyzer()
 
         test_region = {
             "base_address": 0x7FFE0000,
@@ -142,7 +179,7 @@ class TestProcessScanningWithAnalyzer:
             "type": "MEM_IMAGE",
         }
 
-        is_dll = yara_scanner._is_dll_region(mock_analyzer, test_region)
+        is_dll = yara_scanner._is_dll_region(fake_analyzer, test_region)
 
         assert isinstance(is_dll, bool)
 
@@ -150,7 +187,7 @@ class TestProcessScanningWithAnalyzer:
         self, yara_scanner: YaraScanner
     ) -> None:
         """Analyzer correctly identifies heap regions."""
-        mock_analyzer = MagicMock()
+        fake_analyzer = FakeLicenseAnalyzer()
 
         heap_region = {
             "base_address": 0x00400000,
@@ -159,7 +196,7 @@ class TestProcessScanningWithAnalyzer:
             "type": "MEM_PRIVATE",
         }
 
-        is_heap = yara_scanner._is_heap_region(mock_analyzer, heap_region)
+        is_heap = yara_scanner._is_heap_region(fake_analyzer, heap_region)
 
         assert isinstance(is_heap, bool)
 

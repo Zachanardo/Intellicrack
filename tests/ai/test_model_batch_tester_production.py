@@ -9,11 +9,10 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 
-from intellicrack.ai.llm_backends import LLMConfig, LLMManager, LLMMessage, LLMResponse
+from intellicrack.ai.llm_backends import LLMBackend, LLMConfig, LLMManager, LLMMessage, LLMProvider, LLMResponse
 from intellicrack.ai.model_batch_tester import (
     BatchTestReport,
     ModelBatchTester,
@@ -24,18 +23,36 @@ from intellicrack.ai.model_batch_tester import (
 from intellicrack.ai.model_performance_monitor import PerformanceMetrics
 
 
-class TestLLMBackend:
+class FakeLLMManager:
+    """Real test double for LLM Manager."""
+
+    def __init__(self) -> None:
+        self.registered_llms: list[tuple[str, LLMConfig]] = []
+
+    def register_llm(self, model_id: str, config: LLMConfig) -> bool:
+        self.registered_llms.append((model_id, config))
+        return True
+
+
+class TestLLMBackend(LLMBackend):
     """Test LLM backend for batch testing."""
 
     def __init__(self, model_id: str, response_pattern: str = "test") -> None:
         """Initialize test backend."""
-        self.config = LLMConfig(model_id=model_id, max_tokens=100, temperature=0.7)
+        config = LLMConfig(provider=LLMProvider.LOCAL_API, model=model_id, max_tokens=100, temperature=0.7)
+        super().__init__(config)
         self.model_id = model_id
         self.response_pattern = response_pattern
         self.device = "cpu"
         self.call_count = 0
+        self.is_initialized = True
 
-    def complete(self, messages: list[LLMMessage]) -> LLMResponse:
+    def initialize(self) -> bool:
+        """Initialize the backend - already done in __init__."""
+        self.is_initialized = True
+        return True
+
+    def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
         """Generate test response."""
         self.call_count += 1
 
@@ -62,9 +79,9 @@ def llm_manager() -> LLMManager:
     """Create test LLM manager with multiple models."""
     manager = LLMManager()
 
-    manager.llms["model_a"] = TestLLMBackend("model_a", "hello")
-    manager.llms["model_b"] = TestLLMBackend("model_b", "math")
-    manager.llms["model_c"] = TestLLMBackend("model_c", "code")
+    manager.backends["model_a"] = TestLLMBackend("model_a", "hello")
+    manager.backends["model_b"] = TestLLMBackend("model_b", "math")
+    manager.backends["model_c"] = TestLLMBackend("model_c", "code")
 
     return manager
 
@@ -165,7 +182,7 @@ def test_run_single_test_success(batch_tester: ModelBatchTester) -> None:
 
 def test_run_single_test_with_validation(batch_tester: ModelBatchTester, llm_manager: LLMManager) -> None:
     """Test single test with pattern validation."""
-    llm_manager.llms["model_validate"] = TestLLMBackend("model_validate", "hello")
+    llm_manager.backends["model_validate"] = TestLLMBackend("model_validate", "hello")
 
     test_case = TestCase(
         test_id="validate_test",
@@ -186,7 +203,7 @@ def test_run_single_test_with_validation(batch_tester: ModelBatchTester, llm_man
 
 def test_run_single_test_exact_match_validation(batch_tester: ModelBatchTester, llm_manager: LLMManager) -> None:
     """Test exact match validation."""
-    llm_manager.llms["model_exact"] = TestLLMBackend("model_exact", "hello")
+    llm_manager.backends["model_exact"] = TestLLMBackend("model_exact", "hello")
 
     test_case = TestCase(
         test_id="exact_test",
@@ -463,18 +480,24 @@ def test_default_test_suites_content(batch_tester: ModelBatchTester) -> None:
 def test_timeout_handling(batch_tester: ModelBatchTester, llm_manager: LLMManager) -> None:
     """Test timeout handling for slow models."""
 
-    class SlowLLM:
+    class SlowLLM(LLMBackend):
         def __init__(self) -> None:
-            self.config = LLMConfig(model_id="slow_model")
+            config = LLMConfig(provider=LLMProvider.LOCAL_API, model="slow_model")
+            super().__init__(config)
             self.device = "cpu"
+            self.is_initialized = True
 
-        def complete(self, messages: list[LLMMessage]) -> LLMResponse:
+        def initialize(self) -> bool:
+            self.is_initialized = True
+            return True
+
+        def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse:
             import time
 
             time.sleep(15)
             return LLMResponse(content="Too slow", model="slow_model")
 
-    llm_manager.llms["slow_model"] = SlowLLM()
+    llm_manager.backends["slow_model"] = SlowLLM()
     batch_tester_fast = ModelBatchTester(llm_manager=llm_manager, timeout_per_test=0.1)
 
     test_case = TestCase(test_id="timeout_test", prompt="Test", max_tokens=10)

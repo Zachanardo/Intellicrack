@@ -14,6 +14,7 @@ import os
 import tempfile
 import time
 import winreg
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -38,13 +39,13 @@ class TestTrialResetEngineProduction:
         return TrialResetEngine()
 
     @pytest.fixture
-    def temp_dir(self) -> Path:
+    def temp_dir(self) -> Generator[Path, None, None]:
         """Create temporary directory for test files."""
         with tempfile.TemporaryDirectory() as tmpdir:
             yield Path(tmpdir)
 
     @pytest.fixture
-    def test_registry_key(self) -> str:
+    def test_registry_key(self) -> Generator[str, None, None]:
         """Create test registry key with trial data."""
         key_path = r"SOFTWARE\TestTrialProduct_" + str(int(time.time()))
 

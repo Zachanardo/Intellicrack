@@ -1,7 +1,7 @@
 """Comprehensive tests for intellicrack.ui.tabs.analysis_tab module.
 
 This test module validates ALL functionality of the AnalysisTab including:
-- UI initialization and component creation  
+- UI initialization and component creation
 - Binary loading and unloading workflows
 - Static analysis operations with real binary processing
 - Dynamic monitoring and protection detection
@@ -12,28 +12,81 @@ This test module validates ALL functionality of the AnalysisTab including:
 - Process attachment and license monitoring
 - Export and import functionality
 
-All tests use real Qt components with minimal mocking for UI elements.
+All tests use real Qt components with minimal fake implementations for testing.
 Tests validate actual functionality breaks when code is broken.
 """
 
 import json
-import os
-import tempfile
 from pathlib import Path
-from typing import Any, Dict, List
-from unittest.mock import MagicMock, Mock, patch
+from typing import Any
 
 import pytest
 
-
 try:
-    from PyQt6.QtCore import Qt
-    from PyQt6.QtTest import QTest
+    from PyQt6.QtCore import QObject, pyqtSignal
     from PyQt6.QtWidgets import QApplication
 
     PYQT6_AVAILABLE = True
 except ImportError:
     PYQT6_AVAILABLE = False
+
+
+class FakeSignal:
+    """Fake PyQt signal implementation for testing."""
+
+    def __init__(self) -> None:
+        """Initialize fake signal."""
+        self._connected_slots: list[Any] = []
+
+    def connect(self, slot: Any) -> None:
+        """Connect a slot to this signal."""
+        self._connected_slots.append(slot)
+
+    def disconnect(self) -> None:
+        """Disconnect all slots."""
+        self._connected_slots.clear()
+
+    def emit(self, *args: Any, **kwargs: Any) -> None:
+        """Emit signal to all connected slots."""
+        for slot in self._connected_slots:
+            slot(*args, **kwargs)
+
+
+class FakeAppContext:
+    """Fake application context for testing AnalysisTab."""
+
+    def __init__(self) -> None:
+        """Initialize fake app context with signals."""
+        self.binary_loaded = FakeSignal()
+        self.binary_unloaded = FakeSignal()
+        self._current_binary: dict[str, Any] | None = None
+
+    def get_current_binary(self) -> dict[str, Any] | None:
+        """Get current binary information."""
+        return self._current_binary
+
+    def set_current_binary(self, binary_info: dict[str, Any] | None) -> None:
+        """Set current binary information."""
+        self._current_binary = binary_info
+
+
+class FakeSharedContext:
+    """Fake shared context for testing."""
+
+    def __init__(self) -> None:
+        """Initialize fake shared context."""
+        self.app_context = FakeAppContext()
+        self._activity_log: list[str] = []
+
+    def get(self, key: str) -> Any:
+        """Get value from shared context."""
+        if key == "app_context":
+            return self.app_context
+        return None
+
+    def log_activity(self, message: str) -> None:
+        """Log activity message."""
+        self._activity_log.append(message)
 
 
 @pytest.fixture(scope="session")
@@ -104,22 +157,16 @@ class TestAnalysisTabInitialization:
     """Test suite for AnalysisTab initialization and UI setup."""
 
     @pytest.fixture
-    def mock_context(self) -> Mock:
-        """Create mock shared context for testing."""
-        context = Mock()
-        context.binary_loaded = Mock()
-        context.binary_loaded.connect = Mock()
-        context.binary_unloaded = Mock()
-        context.binary_unloaded.connect = Mock()
-        context.get_current_binary = Mock(return_value=None)
-        return context
+    def fake_context(self) -> FakeSharedContext:
+        """Create fake shared context for testing."""
+        return FakeSharedContext()
 
     @pytest.fixture
-    def analysis_tab(self, qapp: QApplication, mock_context: Mock) -> Any:
+    def analysis_tab(self, qapp: QApplication, fake_context: FakeSharedContext) -> Any:
         """Create AnalysisTab instance for testing."""
         from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
-        return AnalysisTab(shared_context=mock_context)
+        return AnalysisTab(shared_context=fake_context)
 
     def test_analysis_tab_initialization(self, analysis_tab: Any) -> None:
         """AnalysisTab initializes with correct default state."""
@@ -181,14 +228,15 @@ class TestAnalysisTabInitialization:
         assert hasattr(analysis_tab, "vm_detection_cb")
         assert hasattr(analysis_tab, "license_check_detection_cb")
 
-    def test_analysis_tab_connects_to_context_signals(self, mock_context: Mock, qapp: QApplication) -> None:
+    def test_analysis_tab_connects_to_context_signals(self, fake_context: FakeSharedContext, qapp: QApplication) -> None:
         """AnalysisTab connects to app_context binary signals."""
         from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
-        tab = AnalysisTab(shared_context=mock_context)
+        initial_connected = len(fake_context.app_context.binary_loaded._connected_slots)
+        tab = AnalysisTab(shared_context=fake_context)
 
-        assert mock_context.binary_loaded.connect.called
-        assert mock_context.binary_unloaded.connect.called
+        assert len(fake_context.app_context.binary_loaded._connected_slots) > initial_connected
+        assert len(fake_context.app_context.binary_unloaded._connected_slots) > 0
 
 
 @pytest.mark.skipif(not PYQT6_AVAILABLE, reason="PyQt6 not available")
@@ -200,14 +248,14 @@ class TestAnalysisTabBinaryLoading:
         """Create sample PE binary for testing."""
         binary_path = tmp_path / "test_sample.exe"
         pe_header = b"MZ\x90\x00" + b"\x00" * 60 + b"PE\x00\x00"
-        pe_header += b"\x4C\x01"  # Machine type (x86)
-        pe_header += b"\x03\x00"  # Number of sections
-        pe_header += b"\x00" * 16  # Timestamp and other headers
-        pe_header += b"\x00" * 200  # Additional padding
+        pe_header += b"\x4C\x01"
+        pe_header += b"\x03\x00"
+        pe_header += b"\x00" * 16
+        pe_header += b"\x00" * 200
 
         with open(binary_path, "wb") as f:
             f.write(pe_header)
-            f.write(b"\x00" * 4096)  # Additional binary data
+            f.write(b"\x00" * 4096)
             f.write(b"License Check String\x00" + b"\x00" * 100)
             f.write(b"Serial Number: " + b"\x00" * 100)
             f.write(b"Trial Mode Active" + b"\x00" * 100)
@@ -215,22 +263,16 @@ class TestAnalysisTabBinaryLoading:
         return binary_path
 
     @pytest.fixture
-    def mock_context(self) -> Mock:
-        """Create mock shared context."""
-        context = Mock()
-        context.binary_loaded = Mock()
-        context.binary_loaded.connect = Mock()
-        context.binary_unloaded = Mock()
-        context.binary_unloaded.connect = Mock()
-        context.get_current_binary = Mock(return_value=None)
-        return context
+    def fake_context(self) -> FakeSharedContext:
+        """Create fake shared context."""
+        return FakeSharedContext()
 
     @pytest.fixture
-    def analysis_tab(self, qapp: QApplication, mock_context: Mock) -> Any:
+    def analysis_tab(self, qapp: QApplication, fake_context: FakeSharedContext) -> Any:
         """Create AnalysisTab instance for testing."""
         from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
-        return AnalysisTab(shared_context=mock_context)
+        return AnalysisTab(shared_context=fake_context)
 
     def test_binary_loading_updates_tab_state(
         self, analysis_tab: Any, sample_pe_binary: Path
@@ -322,22 +364,16 @@ class TestAnalysisTabStaticAnalysis:
         return binary_path
 
     @pytest.fixture
-    def mock_context(self) -> Mock:
-        """Create mock shared context."""
-        context = Mock()
-        context.binary_loaded = Mock()
-        context.binary_loaded.connect = Mock()
-        context.binary_unloaded = Mock()
-        context.binary_unloaded.connect = Mock()
-        context.get_current_binary = Mock(return_value=None)
-        return context
+    def fake_context(self) -> FakeSharedContext:
+        """Create fake shared context."""
+        return FakeSharedContext()
 
     @pytest.fixture
-    def analysis_tab(self, qapp: QApplication, mock_context: Mock) -> Any:
+    def analysis_tab(self, qapp: QApplication, fake_context: FakeSharedContext) -> Any:
         """Create AnalysisTab instance."""
         from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
-        return AnalysisTab(shared_context=mock_context)
+        return AnalysisTab(shared_context=fake_context)
 
     def test_find_license_indicators_detects_strings(
         self, analysis_tab: Any, sample_pe_binary: Path
@@ -421,22 +457,16 @@ class TestAnalysisTabProtectionDetection:
     """Test suite for AnalysisTab protection detection functionality."""
 
     @pytest.fixture
-    def mock_context(self) -> Mock:
-        """Create mock shared context."""
-        context = Mock()
-        context.binary_loaded = Mock()
-        context.binary_loaded.connect = Mock()
-        context.binary_unloaded = Mock()
-        context.binary_unloaded.connect = Mock()
-        context.get_current_binary = Mock(return_value=None)
-        return context
+    def fake_context(self) -> FakeSharedContext:
+        """Create fake shared context."""
+        return FakeSharedContext()
 
     @pytest.fixture
-    def analysis_tab(self, qapp: QApplication, mock_context: Mock) -> Any:
+    def analysis_tab(self, qapp: QApplication, fake_context: FakeSharedContext) -> Any:
         """Create AnalysisTab instance."""
         from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
-        return AnalysisTab(shared_context=mock_context)
+        return AnalysisTab(shared_context=fake_context)
 
     @pytest.fixture
     def vmprotect_binary(self, tmp_path: Path) -> Path:
@@ -446,7 +476,7 @@ class TestAnalysisTabProtectionDetection:
         with open(binary_path, "wb") as f:
             f.write(b"MZ\x90\x00" + b"\x00" * 60 + b"PE\x00\x00")
             f.write(b"\x00" * 100)
-            f.write(b".vmp0\x00\x00\x00")  # VMProtect section signature
+            f.write(b".vmp0\x00\x00\x00")
             f.write(b".vmp1\x00\x00\x00")
             f.write(b"\x00" * 500)
             f.write(b"VMProtect" + b"\x00" * 100)
@@ -492,22 +522,16 @@ class TestAnalysisTabExportImport:
     """Test suite for AnalysisTab export and import functionality."""
 
     @pytest.fixture
-    def mock_context(self) -> Mock:
-        """Create mock shared context."""
-        context = Mock()
-        context.binary_loaded = Mock()
-        context.binary_loaded.connect = Mock()
-        context.binary_unloaded = Mock()
-        context.binary_unloaded.connect = Mock()
-        context.get_current_binary = Mock(return_value=None)
-        return context
+    def fake_context(self) -> FakeSharedContext:
+        """Create fake shared context."""
+        return FakeSharedContext()
 
     @pytest.fixture
-    def analysis_tab(self, qapp: QApplication, mock_context: Mock) -> Any:
+    def analysis_tab(self, qapp: QApplication, fake_context: FakeSharedContext) -> Any:
         """Create AnalysisTab instance."""
         from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
-        tab = AnalysisTab(shared_context=mock_context)
+        tab = AnalysisTab(shared_context=fake_context)
         tab.analysis_results = {
             "protections": ["VMProtect", "Themida"],
             "license_checks": [{"address": "0x401000", "type": "serial"}],
@@ -521,11 +545,22 @@ class TestAnalysisTabExportImport:
         """export_analysis_results creates JSON file with analysis data."""
         export_file = tmp_path / "analysis_export.json"
 
-        with patch(
-            "PyQt6.QtWidgets.QFileDialog.getSaveFileName",
-            return_value=(str(export_file), ""),
-        ):
+        class FakeFileDialog:
+            @staticmethod
+            def getSaveFileName(*args: Any, **kwargs: Any) -> tuple[str, str]:
+                return (str(export_file), "")
+
+        original_dialog = None
+        try:
+            from PyQt6.QtWidgets import QFileDialog
+            original_dialog = QFileDialog.getSaveFileName
+            QFileDialog.getSaveFileName = FakeFileDialog.getSaveFileName
+
             analysis_tab.export_analysis_results()
+        finally:
+            if original_dialog:
+                from PyQt6.QtWidgets import QFileDialog
+                QFileDialog.getSaveFileName = original_dialog
 
         if export_file.exists():
             with open(export_file, encoding="utf-8") as f:
@@ -543,11 +578,22 @@ class TestAnalysisTabExportImport:
             "sections": [".text", ".data"],
         }
 
-        with patch(
-            "PyQt6.QtWidgets.QFileDialog.getSaveFileName",
-            return_value=(str(export_file), ""),
-        ):
+        class FakeFileDialog:
+            @staticmethod
+            def getSaveFileName(*args: Any, **kwargs: Any) -> tuple[str, str]:
+                return (str(export_file), "")
+
+        original_dialog = None
+        try:
+            from PyQt6.QtWidgets import QFileDialog
+            original_dialog = QFileDialog.getSaveFileName
+            QFileDialog.getSaveFileName = FakeFileDialog.getSaveFileName
+
             analysis_tab.export_structure_analysis()
+        finally:
+            if original_dialog:
+                from PyQt6.QtWidgets import QFileDialog
+                QFileDialog.getSaveFileName = original_dialog
 
         if export_file.exists():
             assert export_file.stat().st_size > 0
@@ -577,22 +623,16 @@ class TestAnalysisTabProfileManagement:
     """Test suite for AnalysisTab profile management."""
 
     @pytest.fixture
-    def mock_context(self) -> Mock:
-        """Create mock shared context."""
-        context = Mock()
-        context.binary_loaded = Mock()
-        context.binary_loaded.connect = Mock()
-        context.binary_unloaded = Mock()
-        context.binary_unloaded.connect = Mock()
-        context.get_current_binary = Mock(return_value=None)
-        return context
+    def fake_context(self) -> FakeSharedContext:
+        """Create fake shared context."""
+        return FakeSharedContext()
 
     @pytest.fixture
-    def analysis_tab(self, qapp: QApplication, mock_context: Mock) -> Any:
+    def analysis_tab(self, qapp: QApplication, fake_context: FakeSharedContext) -> Any:
         """Create AnalysisTab instance."""
         from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
-        return AnalysisTab(shared_context=mock_context)
+        return AnalysisTab(shared_context=fake_context)
 
     def test_update_profile_settings_quick_scan(
         self, analysis_tab: Any

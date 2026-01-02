@@ -52,7 +52,11 @@ class ProtectionAnalysisThread(QThread):
     analysis_progress = pyqtSignal(str)
 
     def __init__(self, file_path: str) -> None:
-        """Initialize protection analysis thread with file path and detection components."""
+        """Initialize protection analysis thread with file path and detection components.
+
+        Args:
+            file_path: Path to the binary file to analyze for protections.
+        """
         super().__init__()
         self.file_path = file_path
         self.detector = IntellicrackProtectionCore()
@@ -92,14 +96,14 @@ class ProtectionAnalysisThread(QThread):
 
                     if license_file_results.get("status") == "success":
                         files_found = license_file_results.get("files_found", [])
-                        setattr(analysis, "license_files", files_found)
+                        analysis.license_files = files_found
 
                         license_summary = {
                             "total_found": len(files_found),
                             "search_directory": binary_dir,
                             "patterns_matched": license_file_results.get("patterns_matched", []),
                         }
-                        setattr(analysis, "license_file_summary", license_summary)
+                        analysis.license_file_summary = license_summary
                 except Exception as e:
                     logger.warning("License file search failed: %s", e, exc_info=True)
 
@@ -119,7 +123,11 @@ class IntellicrackProtectionWidget(QWidget):
     analysis_requested = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize protection widget with parent widget, AI assistant components, and UI setup."""
+        """Initialize protection widget with parent widget, AI assistant components, and UI setup.
+
+        Args:
+            parent: Parent widget for this protection analysis widget.
+        """
         super().__init__(parent)
         self.current_analysis: ProtectionAnalysis | None = None
         self.analysis_thread: ProtectionAnalysisThread | None = None
@@ -128,7 +136,11 @@ class IntellicrackProtectionWidget(QWidget):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """Initialize the UI."""
+        """Initialize the UI layout and create all widgets for the protection analysis interface.
+
+        Sets up the main window layout with header controls, detection tree, detail tabs,
+        and status bar. Configures button connections and initializes all UI components.
+        """
         layout = QVBoxLayout()
 
         # Header
@@ -242,7 +254,10 @@ class IntellicrackProtectionWidget(QWidget):
         self.setLayout(layout)
 
     def on_analyze_clicked(self) -> None:
-        """Handle analyze button click."""
+        """Handle analyze button click by opening a file dialog and analyzing the selected binary.
+
+        Opens a file selection dialog and initiates binary analysis if a file is selected.
+        """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Binary to Analyze",
@@ -254,7 +269,11 @@ class IntellicrackProtectionWidget(QWidget):
             self.analyze_file(file_path)
 
     def analyze_file(self, file_path: str) -> None:
-        """Analyze a file with ICP."""
+        """Analyze a binary file for protections using Intellicrack Protection Core.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+        """
         if not os.path.exists(file_path):
             QMessageBox.warning(self, "Error", f"File not found: {file_path}")
             return
@@ -275,7 +294,11 @@ class IntellicrackProtectionWidget(QWidget):
         self.analysis_thread.start()
 
     def on_analysis_complete(self, analysis: ProtectionAnalysis) -> None:
-        """Handle completed analysis."""
+        """Handle completed analysis by displaying results and re-enabling UI controls.
+
+        Args:
+            analysis: The completed ProtectionAnalysis object containing detection results.
+        """
         self.current_analysis = analysis
         self.display_results(analysis)
 
@@ -295,17 +318,33 @@ class IntellicrackProtectionWidget(QWidget):
                 )
 
     def on_analysis_error(self, error_msg: str) -> None:
-        """Handle analysis error."""
+        """Handle analysis error by displaying error message and re-enabling UI controls.
+
+        Args:
+            error_msg: Error message describing what went wrong during analysis.
+
+        Displays an error dialog and restores UI to allow retry.
+        """
         QMessageBox.critical(self, "Analysis Error", f"Error during analysis:\n{error_msg}")
         self.analyze_btn.setEnabled(True)
         self.status_label.setText("Analysis failed")
 
     def on_analysis_progress(self, message: str) -> None:
-        """Update progress status."""
+        """Update progress status in the UI status label.
+
+        Args:
+            message: Progress message to display in the status label.
+
+        Updates the status label with the provided progress message.
+        """
         self.status_label.setText(message)
 
     def display_results(self, analysis: ProtectionAnalysis) -> None:
-        """Display analysis results in the UI."""
+        """Display analysis results in the UI by populating detection tree and detail tabs.
+
+        Args:
+            analysis: The ProtectionAnalysis object containing detection results to display.
+        """
         # Populate detection tree
         self.detection_tree.clear()
 
@@ -350,7 +389,11 @@ class IntellicrackProtectionWidget(QWidget):
         self.display_technical_details(analysis)
 
     def display_summary(self, analysis: ProtectionAnalysis) -> None:
-        """Display analysis summary."""
+        """Display analysis summary in the summary text widget.
+
+        Args:
+            analysis: The ProtectionAnalysis object to display summary information for.
+        """
         summary_lines = [
             "=== File Analysis Summary ===\n",
             f"File: {os.path.basename(analysis.file_path)}",
@@ -401,7 +444,11 @@ class IntellicrackProtectionWidget(QWidget):
         self.summary_text.setText("\n".join(summary_lines))
 
     def display_technical_details(self, analysis: ProtectionAnalysis) -> None:
-        """Display technical details."""
+        """Display technical details in the technical details text widget.
+
+        Args:
+            analysis: The ProtectionAnalysis object to display technical details for.
+        """
         details_lines = ["=== Technical Details ===\n"]
 
         # Entry point
@@ -432,7 +479,10 @@ class IntellicrackProtectionWidget(QWidget):
         self.tech_details_text.setText("\n".join(details_lines))
 
     def on_detection_selected(self) -> None:
-        """Handle detection selection in tree."""
+        """Handle detection selection in tree by displaying bypass recommendations for the selected detection.
+
+        Retrieves the selected detection item from the tree and displays its bypass recommendations.
+        """
         items = self.detection_tree.selectedItems()
         if not items:
             return
@@ -448,7 +498,6 @@ class IntellicrackProtectionWidget(QWidget):
 
         Args:
             detection: Detection object containing protection information and bypass recommendations.
-
         """
         bypass_lines = [f"=== Bypass Recommendations for {detection.name} ===\n"]
 
@@ -478,7 +527,11 @@ class IntellicrackProtectionWidget(QWidget):
         self.details_tabs.setCurrentWidget(self.bypass_text)
 
     def on_export_clicked(self) -> None:
-        """Handle export button click."""
+        """Handle export button click by opening export format and file dialogs, then exporting results.
+
+        Prompts user to select export format and file path, then exports analysis results to the selected file.
+        Displays success or error message upon completion.
+        """
         if not self.current_analysis:
             return
 
@@ -532,7 +585,10 @@ class IntellicrackProtectionWidget(QWidget):
                 )
 
     def clear_results(self) -> None:
-        """Clear all result displays."""
+        """Clear all result displays and reset current analysis to None.
+
+        Clears all UI text widgets and resets the current analysis object.
+        """
         self.detection_tree.clear()
         self.summary_text.clear()
         self.bypass_text.clear()
@@ -542,12 +598,22 @@ class IntellicrackProtectionWidget(QWidget):
         self.current_analysis = None
 
     def set_binary_path(self, file_path: str) -> None:
-        """Set binary path for analysis (called from main UI)."""
+        """Set binary path for analysis and start analyzing if file exists.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+        """
         if file_path and os.path.exists(file_path):
             self.analyze_file(file_path)
 
     def on_ai_reasoning_clicked(self) -> None:
-        """Handle AI reasoning button click."""
+        """Handle AI reasoning button click by performing AI reasoning on current analysis results.
+
+        Prepares task data from the current analysis and sends it to the AI assistant for reasoning.
+        Displays reasoning results in the AI Reasoning tab upon completion.
+
+        Displays warning if no analysis is available or error message if reasoning fails.
+        """
         if not self.current_analysis:
             QMessageBox.warning(self, "No Analysis", "Please analyze a binary first.")
             return
@@ -609,7 +675,12 @@ class IntellicrackProtectionWidget(QWidget):
             self.status_label.setText("AI reasoning failed")
 
     def display_ai_reasoning(self, reasoning_result: dict[str, object]) -> None:
-        """Display AI reasoning results in the UI."""
+        """Display AI reasoning results in the AI reasoning text widget.
+
+        Args:
+            reasoning_result: Dictionary containing reasoning results with keys like task_type,
+                reasoning_confidence, evidence, conclusions, and next_steps.
+        """
         reasoning_lines = ["=== AI Reasoning Analysis ===\n"]
 
         # Check for errors
@@ -689,7 +760,13 @@ class IntellicrackProtectionWidget(QWidget):
         self.details_tabs.setCurrentWidget(self.ai_reasoning_text)
 
     def search_license_files(self) -> None:
-        """Search for license files in the current binary's directory."""
+        """Search for license files in the current binary's directory using AI file tools.
+
+        Searches the binary's directory for license-related files using AI file detection patterns.
+        Displays results in a message box and updates the current analysis with found files.
+
+        Displays warning if no analysis is available or error message if search fails.
+        """
         if not self.current_analysis:
             QMessageBox.warning(self, "No Analysis", "Please analyze a binary first")
             return
@@ -717,7 +794,7 @@ class IntellicrackProtectionWidget(QWidget):
 
                     QMessageBox.information(self, "License Files Found", "\n".join(message_lines))
 
-                    setattr(self.current_analysis, "license_files", files_found)
+                    self.current_analysis.license_files = files_found
 
                     self.display_summary(self.current_analysis)
                 else:
@@ -734,7 +811,12 @@ class IntellicrackProtectionWidget(QWidget):
             self.status_label.setText("License file search failed")
 
     def on_ask_ai_clicked(self) -> None:
-        """Handle Ask AI button click - opens a dialog to ask questions about protections."""
+        """Handle Ask AI button click by opening a dialog for asking questions about protections.
+
+        Creates and displays a dialog that allows users to ask AI questions about
+        binary protections, licensing schemes, and security analysis with context
+        from the current analysis if available. Displays suggested questions if analysis is available.
+        """
         # Create a custom dialog for asking questions
         dialog = QDialog(self)
         dialog.setWindowTitle("Ask AI about Protections")
@@ -765,6 +847,11 @@ class IntellicrackProtectionWidget(QWidget):
         button_box.addButton(close_button, QDialogButtonBox.ButtonRole.RejectRole)
 
         def ask_question() -> None:
+            """Process user question and get AI response with analysis context.
+
+            Handles user input validation, adds current binary analysis context if available,
+            sends the question to the AI assistant, and displays the response in the UI.
+            """
             question = question_input.text().strip()
             if not question:
                 QMessageBox.warning(dialog, "No Question", "Please enter a question.")

@@ -25,19 +25,24 @@ from enum import Enum
 from typing import Any
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
-"""
-Protection Knowledge Base
+"""Protection Knowledge Base module.
 
 Comprehensive database of software protection schemes, bypass techniques,
-and analysis strategies for the ML system.
+and analysis strategies for the ML system. Provides singleton access to
+structured protection knowledge for security research and analysis.
 """
 
 
 class BypassDifficulty(Enum):
-    """Protection bypass difficulty levels."""
+    """Protection bypass difficulty levels.
+
+    Enumeration of relative difficulty ratings for software protection bypass
+    techniques, ranging from trivial (simple patches) to extreme (requires
+    specialized expertise and advanced tools).
+    """
 
     TRIVIAL = "trivial"
     LOW = "low"
@@ -48,7 +53,13 @@ class BypassDifficulty(Enum):
 
 
 class ProtectionCategory(Enum):
-    """Protection scheme categories."""
+    """Protection scheme categories.
+
+    Enumeration of software protection categories covering hardware-based
+    (dongle), network-based (license servers), software-based (obfuscation),
+    virtualization-based, gaming DRM, enterprise systems, custom implementations,
+    and hybrid approaches combining multiple protection mechanisms.
+    """
 
     NONE = "none"
     HARDWARE_DONGLE = "hardware_dongle"
@@ -63,7 +74,12 @@ class ProtectionCategory(Enum):
 
 @dataclass
 class BypassTechnique:
-    """Bypass technique information."""
+    """Bypass technique information.
+
+    Represents a specific technique for bypassing a software protection scheme,
+    including difficulty level, required tools, success rate, time estimate,
+    and associated risks and prerequisites for execution.
+    """
 
     name: str
     description: str
@@ -77,7 +93,13 @@ class BypassTechnique:
 
 @dataclass
 class ProtectionSchemeInfo:
-    """Complete information about a protection scheme."""
+    """Complete information about a protection scheme.
+
+    Comprehensive data structure containing all known information about a
+    specific software protection scheme, including vendor details, detection
+    methods, bypass techniques, analysis strategies, and security research
+    resources for defeating the protection mechanism.
+    """
 
     name: str
     vendor: str
@@ -94,16 +116,45 @@ class ProtectionSchemeInfo:
 
 
 class ProtectionKnowledgeBase:
-    """Knowledge base for software protection schemes."""
+    """Knowledge base for software protection schemes.
+
+    Central repository containing comprehensive information about software
+    protection mechanisms, bypass techniques, analysis strategies, and
+    workflows for analyzing and defeating commercial licensing protections.
+    """
 
     def __init__(self) -> None:
-        """Initialize the protection knowledge base with schemes, strategies, and workflows."""
-        self.protection_schemes = self._initialize_protection_schemes()
-        self.bypass_strategies = self._initialize_bypass_strategies()
-        self.analysis_workflows = self._initialize_analysis_workflows()
+        """Initialize the protection knowledge base with schemes, strategies, and workflows.
+
+        Initializes three core components:
+        - protection_schemes: Database of software protection mechanisms
+        - bypass_strategies: Generic bypass strategies by category
+        - analysis_workflows: Standard analysis methodologies
+        """
+        self.protection_schemes: dict[str, ProtectionSchemeInfo] = (
+            self._initialize_protection_schemes()
+        )
+        self.bypass_strategies: dict[str, list[str]] = (
+            self._initialize_bypass_strategies()
+        )
+        self.analysis_workflows: dict[str, list[str]] = (
+            self._initialize_analysis_workflows()
+        )
 
     def _initialize_protection_schemes(self) -> dict[str, ProtectionSchemeInfo]:
-        """Initialize comprehensive protection scheme database with production-ready bypass strategies."""
+        """Initialize comprehensive protection scheme database with production-ready bypass strategies.
+
+        Creates the complete protection knowledge base containing detailed information
+        about major software protection mechanisms including commercial protectors
+        (Sentinel HASP, FlexLM, VMProtect, Denuvo, etc.), gaming DRM (Steam CEG),
+        enterprise systems (Microsoft Activation), and emerging protection technologies.
+
+        Returns:
+            dict[str, ProtectionSchemeInfo]: Dictionary mapping protection names to
+                their detailed information including bypass techniques, detection
+                signatures, analysis tips, vendor information, and security
+                research resources.
+        """
         schemes = {
             "sentinel_hasp": ProtectionSchemeInfo(
                 name="Sentinel HASP/HL",
@@ -1394,7 +1445,18 @@ class ProtectionKnowledgeBase:
         return schemes
 
     def _initialize_bypass_strategies(self) -> dict[str, list[str]]:
-        """Initialize general bypass strategies by category."""
+        """Initialize general bypass strategies by category.
+
+        Creates a mapping of protection categories to generic bypass strategies
+        that can be applied across multiple protections within each category.
+        Provides high-level tactical approaches for defeating various classes
+        of protection mechanisms.
+
+        Returns:
+            dict[str, list[str]]: Dictionary mapping protection categories
+                (hardware_dongle, network_license, software_protection, etc.)
+                to lists of bypass strategies applicable to each category.
+        """
         return {
             "hardware_dongle": [
                 "Dump dongle memory and emulate",
@@ -1434,7 +1496,20 @@ class ProtectionKnowledgeBase:
         }
 
     def _initialize_analysis_workflows(self) -> dict[str, list[str]]:
-        """Initialize standard analysis workflows."""
+        """Initialize standard analysis workflows.
+
+        Creates predefined analysis workflows for protecting software reverse
+        engineering. Workflows provide step-by-step guidance covering initial
+        analysis, static analysis, dynamic analysis, protection removal, and
+        validation phases. Workflows reflect industry best practices and proven
+        methodologies for security research.
+
+        Returns:
+            dict[str, list[str]]: Dictionary mapping workflow types
+                (initial_analysis, static_analysis, dynamic_analysis,
+                protection_removal, validation) to lists of workflow steps
+                in recommended execution order.
+        """
         return {
             "initial_analysis": [
                 "Identify file type and architecture",
@@ -1474,7 +1549,22 @@ class ProtectionKnowledgeBase:
         }
 
     def get_protection_info(self, protection_name: str) -> ProtectionSchemeInfo | None:
-        """Get detailed information about a protection scheme."""
+        """Get detailed information about a protection scheme.
+
+        Searches for protection schemes by name, supporting both exact and
+        partial matches through flexible normalization. Handles various input
+        formats (spaces, slashes) for improved usability and consistency.
+
+        Args:
+            protection_name: The name of the protection scheme to retrieve.
+                Examples: 'Sentinel HASP', 'FlexLM', 'VMProtect'.
+
+        Returns:
+            ProtectionSchemeInfo | None: Detailed protection scheme information
+                including vendor, category, bypass techniques, analysis tips,
+                and detection signatures if found. Returns None if no matching
+                scheme exists in the knowledge base.
+        """
         # Normalize name
         normalized_name = protection_name.lower().replace(" ", "_").replace("/", "_")
 
@@ -1492,17 +1582,58 @@ class ProtectionKnowledgeBase:
         return None
 
     def get_bypass_techniques(self, protection_name: str) -> list[BypassTechnique]:
-        """Get bypass techniques for a specific protection."""
+        """Get bypass techniques for a specific protection.
+
+        Retrieves all documented bypass techniques for a given protection scheme,
+        including difficulty ratings, required tools, success rates, and time
+        estimates for each technique.
+
+        Args:
+            protection_name: The name of the protection scheme to query.
+
+        Returns:
+            list[BypassTechnique]: List of bypass techniques for the protection,
+                including details on difficulty, tools, success rates, and risks.
+                Returns empty list if protection not found in knowledge base.
+        """
         if info := self.get_protection_info(protection_name):
             return info.bypass_techniques
         return []
 
     def get_analysis_workflow(self, workflow_type: str) -> list[str]:
-        """Get a standard analysis workflow."""
+        """Get a standard analysis workflow.
+
+        Retrieves a predefined analysis workflow for a specific type of protection
+        analysis. Workflows provide step-by-step guidance for analyzing software
+        protections using industry best practices.
+
+        Args:
+            workflow_type: The type of analysis workflow to retrieve. Common types
+                include 'initial_analysis', 'static_analysis', 'dynamic_analysis',
+                'protection_removal', and 'validation'.
+
+        Returns:
+            list[str]: List of workflow steps in recommended execution order.
+                Returns empty list if workflow type not found in knowledge base.
+        """
         return self.analysis_workflows.get(workflow_type, [])
 
     def search_by_signature(self, signature: str) -> list[ProtectionSchemeInfo]:
-        """Search for protections containing a specific signature."""
+        """Search for protections containing a specific signature.
+
+        Searches the knowledge base for protection schemes that include a specific
+        detection signature. Useful for identifying protections based on detected
+        strings, functions, files, or other observable markers.
+
+        Args:
+            signature: The detection signature to search for. Case-insensitive.
+                Examples: 'hasp_login', 'steam_api.dll', 'VMProtect'.
+
+        Returns:
+            list[ProtectionSchemeInfo]: List of protection schemes containing the
+                specified signature in their detection signatures list. Returns
+                empty list if no matching signatures found.
+        """
         results = []
         signature_lower = signature.lower()
 
@@ -1515,7 +1646,20 @@ class ProtectionKnowledgeBase:
         return results
 
     def get_tools_for_protection(self, protection_name: str) -> list[str]:
-        """Get all tools needed for bypassing a protection."""
+        """Get all tools needed for bypassing a protection.
+
+        Aggregates tools from all bypass techniques for a protection scheme,
+        eliminating duplicates and returning a sorted, deduplicated list. Useful
+        for planning security research or identifying tool requirements.
+
+        Args:
+            protection_name: The name of the protection scheme to analyze.
+
+        Returns:
+            list[str]: Sorted and deduplicated list of all tools required for
+                bypassing the protection across all available techniques. Returns
+                empty list if protection not found in knowledge base.
+        """
         info = self.get_protection_info(protection_name)
         if not info:
             return []
@@ -1527,7 +1671,22 @@ class ProtectionKnowledgeBase:
         return sorted(tools)
 
     def estimate_bypass_time(self, protection_name: str, skill_level: str = "intermediate") -> str:
-        """Estimate time to bypass a protection based on skill level."""
+        """Estimate time to bypass a protection based on skill level.
+
+        Calculates an estimated time to bypass by analyzing all available bypass
+        techniques and applying a skill-level multiplier. Supports beginner to
+        expert skill levels with proportional time adjustments based on expertise.
+
+        Args:
+            protection_name: The name of the protection scheme to estimate.
+            skill_level: The expertise level as a string. Accepts 'beginner',
+                'intermediate', 'advanced', or 'expert'. Defaults to 'intermediate'.
+
+        Returns:
+            str: Estimated time in human-readable format (hours, days, weeks,
+                or months), or "Unknown" if protection not found, or "Variable"
+                if no techniques exist.
+        """
         info = self.get_protection_info(protection_name)
         if not info:
             return "Unknown"
@@ -1577,7 +1736,20 @@ class ProtectionKnowledgeBase:
         return "Variable"
 
     def export_knowledge_base(self, output_path: str) -> None:
-        """Export knowledge base to JSON."""
+        """Export knowledge base to JSON.
+
+        Serializes the complete protection knowledge base including schemes,
+        strategies, and workflows to a JSON file for external use, backup, or
+        integration with other tools. Creates well-formatted, human-readable JSON.
+
+        Args:
+            output_path: The file path where the JSON export will be written.
+                Must be a valid writable file path.
+
+        Raises:
+            IOError: If the output file cannot be written or the parent directory
+                does not exist.
+        """
         protection_schemes_dict: dict[str, dict[str, Any]] = {}
 
         data: dict[str, Any] = {
@@ -1625,11 +1797,22 @@ class ProtectionKnowledgeBase:
 
 
 # Singleton instance
-_knowledge_base = None
+_knowledge_base: ProtectionKnowledgeBase | None = None
 
 
 def get_protection_knowledge_base() -> ProtectionKnowledgeBase:
-    """Get or create the protection knowledge base singleton."""
+    """Get or create the protection knowledge base singleton.
+
+    Implements lazy initialization of the protection knowledge base using a
+    global singleton pattern to ensure only one instance exists throughout the
+    application lifetime. On first call, creates and caches the knowledge base.
+    Subsequent calls return the cached instance.
+
+    Returns:
+        ProtectionKnowledgeBase: The singleton protection knowledge base
+            instance containing all protection scheme information, bypass
+            strategies, and analysis workflows.
+    """
     global _knowledge_base
     if _knowledge_base is None:
         _knowledge_base = ProtectionKnowledgeBase()

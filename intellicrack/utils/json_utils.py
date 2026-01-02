@@ -9,7 +9,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import json
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any, TextIO
@@ -113,6 +113,11 @@ def dump(obj: object, fp: TextIO, **kwargs: Any) -> None:
         fp: File pointer opened in write mode.
         **kwargs: Additional arguments passed to json.dump.
 
+    Raises:
+        TypeError: If object contains non-JSON-serializable types not handled
+            by DateTimeEncoder.
+        IOError: If file write fails.
+
     """
     kwargs.setdefault("cls", DateTimeEncoder)
     kwargs.setdefault("indent", 2)
@@ -156,6 +161,11 @@ def safe_serialize(obj: object, filepath: Path, use_pickle: bool = False) -> Non
         obj: Object to serialize.
         filepath: Path to save file.
         use_pickle: If True, use pickle; otherwise use JSON with warning.
+
+    Raises:
+        IOError: If file write fails.
+        TypeError: If object cannot be serialized (JSON or pickle).
+        pickle.PicklingError: If pickle serialization fails.
 
     """
     if use_pickle:
@@ -204,7 +214,8 @@ class _RestrictedUnpickler:
                     The class object.
 
                 Raises:
-                    pickle.UnpicklingError: If the class is not whitelisted.
+                    pickle.UnpicklingError: When the requested class is not in the
+                        whitelist.
 
                 """
                 if module in {
@@ -248,6 +259,13 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
 
     Returns:
         Deserialized object.
+
+    Raises:
+        IOError: If file read fails.
+        json.JSONDecodeError: If JSON deserialization fails.
+        UnicodeDecodeError: If file encoding is invalid.
+        pickle.UnpicklingError: If pickle deserialization fails or class is
+            not whitelisted.
 
     """
     if use_pickle:

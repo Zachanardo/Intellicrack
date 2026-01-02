@@ -20,7 +20,15 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 
 def format_bytes(size_bytes: int) -> str:
-    """Format byte size in human readable format."""
+    """Format byte size in human-readable format.
+
+    Args:
+        size_bytes: Number of bytes to format.
+
+    Returns:
+        str: Human-readable byte size string (B, KB, MB, or GB).
+
+    """
     if size_bytes < 1024:
         return f"{size_bytes} B"
     if size_bytes < 1024 * 1024:
@@ -34,11 +42,11 @@ def extract_ascii_strings(data: bytes | bytearray, min_length: int = 4) -> list[
     """Extract printable ASCII strings from binary data.
 
     Args:
-        data: Binary data to extract strings from
-        min_length: Minimum string length to include
+        data: Binary data to extract strings from.
+        min_length: Minimum string length to include (default: 4).
 
     Returns:
-        List of extracted strings
+        list[str]: List of extracted ASCII strings.
 
     """
     strings = []

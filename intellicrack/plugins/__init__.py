@@ -22,13 +22,19 @@ import importlib
 import logging
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import Any, Protocol
 
 from .plugin_config import PLUGIN_SYSTEM_EXPORTS
 
 
 class AppProtocol(Protocol):
-    """Protocol for app objects used in plugin functions."""
+    """Protocol for app objects used in plugin functions.
+
+    Attributes:
+        binary_path: Path to the binary being analyzed.
+        update_output: Callback function for updating output.
+        frida_sessions: Dictionary mapping session IDs to Frida session tuples.
+    """
 
     binary_path: str
     update_output: Any
@@ -177,9 +183,10 @@ except ImportError as e:
 
         Args:
             plugin_dir: The directory containing plugin files.
+                Defaults to "intellicrack/intellicrack/plugins".
 
         Returns:
-            A dictionary mapping plugin names to their metadata and modules.
+            Dictionary mapping plugin names to their metadata and modules.
 
         """
         logger.debug("Fallback load_plugins called with plugin_dir: %s", plugin_dir)
@@ -292,6 +299,7 @@ except ImportError as e:
 
         Args:
             plugin_dir: Directory where sample plugins should be created.
+                Defaults to "intellicrack/intellicrack/plugins".
 
         Notes:
             Does nothing when the actual plugin system cannot be imported.
@@ -308,7 +316,7 @@ except ImportError as e:
             *args: Additional arguments for the plugin function.
 
         Returns:
-            None when the actual plugin system cannot be imported.
+            Empty list when the actual plugin system cannot be imported.
 
         Notes:
             Does nothing when the actual plugin system cannot be imported.
@@ -330,7 +338,7 @@ except ImportError as e:
             plugin_info: Plugin information dictionary.
 
         Returns:
-            None when the actual plugin system cannot be imported.
+            Empty list when the actual plugin system cannot be imported.
 
         Notes:
             Does nothing when the actual plugin system cannot be imported.

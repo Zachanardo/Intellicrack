@@ -5,10 +5,8 @@ with real LLM libraries.
 """
 
 import os
-import sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-def test_real_provider_import():
+def test_real_provider_import() -> None:
     """Test if we can actually import and initialize real LLM providers."""
 
     print("=== Testing Real LLM Provider Import ===\n")
@@ -31,9 +29,9 @@ def test_real_provider_import():
         import anthropic
         print("\nOK Anthropic module imported successfully")
         if os.environ.get("ANTHROPIC_API_KEY"):
-            client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-            print(f"   Client type: {type(client)}")
-            print(f"   Has messages.create: {hasattr(client, 'messages') and hasattr(client.messages, 'create')}")
+            anthropic_client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+            print(f"   Client type: {type(anthropic_client)}")
+            print(f"   Has messages.create: {hasattr(anthropic_client, 'messages') and hasattr(anthropic_client.messages, 'create')}")
     except ImportError:
         print("\nFAIL Anthropic module not installed")
     except Exception as e:

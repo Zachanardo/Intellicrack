@@ -31,13 +31,6 @@ from intellicrack.core.trial_reset_engine import (
 
 
 @pytest.fixture
-def temp_workspace() -> Path:
-    """Create temporary workspace for test files."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        yield Path(tmpdir)
-
-
-@pytest.fixture
 def trial_engine() -> TrialResetEngine:
     """Create trial reset engine instance."""
     return TrialResetEngine()

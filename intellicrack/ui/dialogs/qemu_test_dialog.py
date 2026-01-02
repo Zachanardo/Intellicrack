@@ -74,7 +74,12 @@ class QEMUTestDialog(QDialog):
         self._init_ui()
 
     def _init_ui(self) -> None:
-        """Initialize the user interface."""
+        """Initialize the user interface.
+
+        Constructs the dialog layout with warning header, script preview (if
+        available), execution options, and action buttons.
+
+        """
         layout: QVBoxLayout = QVBoxLayout(self)
 
         # Header with icon and warning
@@ -196,7 +201,8 @@ class QEMUTestDialog(QDialog):
     def _on_continue(self) -> None:
         """Handle continue button click.
 
-        Updates user_choice attribute based on selected radio button and remember preference.
+        Updates user_choice attribute based on selected radio button and
+        remember preference checkbox state. Then accepts the dialog to close it.
 
         """
         if self.qemu_test_radio.isChecked():
@@ -212,10 +218,17 @@ class QEMUTestDialog(QDialog):
         self.accept()
 
     def get_user_choice(self) -> str:
-        """Get the user's choice.
+        """Get the user's selected execution choice.
+
+        Returns the user's choice from the dialog. Possible values are:
+        - "test_qemu": Test in QEMU first (one-time choice)
+        - "always_test": Test in QEMU and remember for this script type
+        - "run_host": Run directly on host (one-time choice)
+        - "never_test": Run directly on host and remember for this script type
+        - "cancelled": User cancelled the dialog without selecting an option
 
         Returns:
-            User's selected execution choice or "cancelled" if dialog was rejected
+            The user's selected execution preference or "cancelled".
 
         """
         return self.user_choice or "cancelled"

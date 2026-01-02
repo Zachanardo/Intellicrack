@@ -243,6 +243,7 @@ class TestTPMEmulator:
         key_template = {"algorithm": TPM_ALG.RSA, "key_size": 2048}
         rc, key = emulator.create_primary_key(0x40000001, b"", key_template)
         assert rc == TPM_RC.SUCCESS
+        assert key is not None
 
         data_to_sign = b"license_verification_challenge"
         rc, signature = emulator.sign(key.handle, data_to_sign, key.auth_value)
@@ -254,6 +255,8 @@ class TestTPMEmulator:
         private_key = serialization.load_der_private_key(key.private_key, password=None, backend=default_backend())
         public_key = private_key.public_key()
 
+        from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
+        assert isinstance(public_key, RSAPublicKey)
         public_key.verify(
             signature,
             data_to_sign,
@@ -270,6 +273,7 @@ class TestTPMEmulator:
         key_template = {"algorithm": TPM_ALG.ECC, "key_size": 256}
         rc, key = emulator.create_primary_key(0x40000001, b"", key_template)
         assert rc == TPM_RC.SUCCESS
+        assert key is not None
 
         data_to_sign = b"remote_attestation_challenge"
         rc, signature = emulator.sign(key.handle, data_to_sign, key.auth_value)
@@ -281,6 +285,8 @@ class TestTPMEmulator:
         private_key = serialization.load_der_private_key(key.private_key, password=None, backend=default_backend())
         public_key = private_key.public_key()
 
+        from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
+        assert isinstance(public_key, EllipticCurvePublicKey)
         public_key.verify(signature, data_to_sign, ec.ECDSA(hashes.SHA256()))
 
     def test_sign_fails_with_invalid_handle(self, tpm_emulator: TPMEmulator) -> None:
@@ -299,6 +305,7 @@ class TestTPMEmulator:
         key_template = {"algorithm": TPM_ALG.RSA, "key_size": 2048}
         rc, key = emulator.create_primary_key(0x40000001, b"", key_template)
         assert rc == TPM_RC.SUCCESS
+        assert key is not None
 
         rc, signature = emulator.sign(key.handle, b"data", b"wrong_auth")
 
@@ -450,6 +457,7 @@ class TestTPMEmulator:
 
         rc, sealed_blob = emulator.seal(secret_data, pcr_selection, auth_value)
         assert rc == TPM_RC.SUCCESS
+        assert sealed_blob is not None
 
         rc, unsealed_data = emulator.unseal(sealed_blob, auth_value)
 
@@ -463,6 +471,7 @@ class TestTPMEmulator:
         secret_data = b"protected_license_data"
         rc, sealed_blob = emulator.seal(secret_data, [0], b"correct_auth")
         assert rc == TPM_RC.SUCCESS
+        assert sealed_blob is not None
 
         rc, unsealed_data = emulator.unseal(sealed_blob, b"wrong_auth")
 
@@ -479,6 +488,7 @@ class TestTPMEmulator:
 
         rc, sealed_blob = emulator.seal(secret_data, pcr_selection, auth_value)
         assert rc == TPM_RC.SUCCESS
+        assert sealed_blob is not None
 
         rc = emulator.extend_pcr(0, TPM_ALG.SHA256, b"boot_change")
         assert rc == TPM_RC.SUCCESS
@@ -658,6 +668,7 @@ class TestSGXEmulator:
 
         sealed_data, seal_error = emulator.seal_data(enclave_id, secret_data)
         assert seal_error == SGX_ERROR.SUCCESS
+        assert sealed_data is not None
 
         unsealed_data, unseal_error = emulator.unseal_data(enclave_id, sealed_data)
 
@@ -680,6 +691,7 @@ class TestSGXEmulator:
 
         secret_data = b"enclave1_license_secret"
         sealed_data, _ = emulator.seal_data(enclave_id1, secret_data)
+        assert sealed_data is not None
 
         unsealed_data, error = emulator.unseal_data(enclave_id2, sealed_data)
 
@@ -721,6 +733,7 @@ class TestSGXEmulator:
 
         enclave_id, _ = emulator.create_enclave(enclave_file)
         report, _ = emulator.get_report(enclave_id)
+        assert report is not None
 
         quote_data, error = emulator.get_quote(enclave_id, report, quote_type=0)
 
@@ -744,10 +757,12 @@ class TestSGXEmulator:
         enclave_id, _ = emulator.create_enclave(enclave_file)
         custom_report_data = secrets.token_bytes(64)
         report, _ = emulator.get_report(enclave_id, report_data=custom_report_data)
+        assert report is not None
 
         quote_data, error = emulator.get_quote(enclave_id, report)
 
         assert error == SGX_ERROR.SUCCESS
+        assert quote_data is not None
         assert report.mr_enclave in quote_data
         assert custom_report_data in quote_data
 
@@ -781,10 +796,12 @@ class TestSGXEmulator:
 
         enclave_id, _ = emulator.create_enclave(enclave_file)
         report, _ = emulator.get_report(enclave_id)
+        assert report is not None
 
         quote_data, error = emulator.get_quote(enclave_id, report)
 
         assert error == SGX_ERROR.SUCCESS
+        assert quote_data is not None
         assert len(quote_data) > 400
 
         signature_offset = len(quote_data) - 32
@@ -1105,33 +1122,33 @@ class TestTPMEnumerations:
 
     def test_tpm_rc_values_match_specification(self) -> None:
         """TPM return code values match TPM 2.0 specification."""
-        assert TPM_RC.SUCCESS == 0x00000000
-        assert TPM_RC.AUTHFAIL == 0x0000098E
-        assert TPM_RC.BAD_AUTH == 0x00000A22
-        assert TPM_RC.FAILURE == 0x00000101
-        assert TPM_RC.PCR == 0x00000127
-        assert TPM_RC.PCR_CHANGED == 0x00000128
-        assert TPM_RC.HIERARCHY == 0x00000185
-        assert TPM_RC.HANDLE == 0x0000008B
+        assert TPM_RC.SUCCESS.value == 0x00000000
+        assert TPM_RC.AUTHFAIL.value == 0x0000098E
+        assert TPM_RC.BAD_AUTH.value == 0x00000A22
+        assert TPM_RC.FAILURE.value == 0x00000101
+        assert TPM_RC.PCR.value == 0x00000127
+        assert TPM_RC.PCR_CHANGED.value == 0x00000128
+        assert TPM_RC.HIERARCHY.value == 0x00000185
+        assert TPM_RC.HANDLE.value == 0x0000008B
 
     def test_tpm_alg_values_match_specification(self) -> None:
         """TPM algorithm identifiers match TPM 2.0 specification."""
-        assert TPM_ALG.RSA == 0x0001
-        assert TPM_ALG.SHA1 == 0x0004
-        assert TPM_ALG.HMAC == 0x0005
-        assert TPM_ALG.AES == 0x0006
-        assert TPM_ALG.SHA256 == 0x000B
-        assert TPM_ALG.SHA384 == 0x000C
-        assert TPM_ALG.SHA512 == 0x000D
-        assert TPM_ALG.ECC == 0x0023
+        assert TPM_ALG.RSA.value == 0x0001
+        assert TPM_ALG.SHA1.value == 0x0004
+        assert TPM_ALG.HMAC.value == 0x0005
+        assert TPM_ALG.AES.value == 0x0006
+        assert TPM_ALG.SHA256.value == 0x000B
+        assert TPM_ALG.SHA384.value == 0x000C
+        assert TPM_ALG.SHA512.value == 0x000D
+        assert TPM_ALG.ECC.value == 0x0023
 
     def test_sgx_error_values_match_intel_specification(self) -> None:
         """SGX error codes match Intel SGX specification."""
-        assert SGX_ERROR.SUCCESS == 0x00000000
-        assert SGX_ERROR.INVALID_ENCLAVE_ID == 0x00002002
-        assert SGX_ERROR.ENCLAVE_FILE_ACCESS == 0x0000200F
-        assert SGX_ERROR.MAC_MISMATCH == 0x00003001
-        assert SGX_ERROR.INVALID_SIGNATURE == 0x00002003
+        assert SGX_ERROR.SUCCESS.value == 0x00000000
+        assert SGX_ERROR.INVALID_ENCLAVE_ID.value == 0x00002002
+        assert SGX_ERROR.ENCLAVE_FILE_ACCESS.value == 0x0000200F
+        assert SGX_ERROR.MAC_MISMATCH.value == 0x00003001
+        assert SGX_ERROR.INVALID_SIGNATURE.value == 0x00002003
 
 
 class TestTPMKeyDataclass:

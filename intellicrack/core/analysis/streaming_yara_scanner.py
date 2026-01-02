@@ -517,9 +517,6 @@ def scan_binary_streaming(
         Complete YARA scan results including matches, categorization, coverage,
         and summary of detected protection patterns
 
-    Raises:
-        Exception: If file not found or scanning encounters errors
-
     """
     try:
         binary_path = Path(binary_path)

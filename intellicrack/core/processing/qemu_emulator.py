@@ -40,14 +40,17 @@ from .base_snapshot_handler import BaseSnapshotHandler
 if TYPE_CHECKING:
     from types import TracebackType
 
-    from PyQt6.QtCore import pyqtSignal
-
 
 class UpdateOutputSignal(Protocol):
     """Protocol for pyqtSignal with emit method."""
 
     def emit(self, message: str) -> None:
-        """Emit a message signal."""
+        """Emit a message signal.
+
+        Args:
+            message: Message to emit via signal.
+
+        """
         pass
 
 
@@ -93,7 +96,15 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
     @staticmethod
     def _discover_rootfs_for_architecture(architecture: str) -> Path | None:
-        """Discover rootfs image for architecture using dynamic discovery."""
+        """Discover rootfs image for architecture using dynamic discovery.
+
+        Args:
+            architecture: Target architecture (x86_64, x86, arm64, arm)
+
+        Returns:
+            Path | None: Path to rootfs image or None if not found
+
+        """
         from intellicrack.utils.qemu_image_discovery import get_qemu_discovery
 
         discovery = get_qemu_discovery()
@@ -334,6 +345,9 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
         Returns:
             List of command arguments
+
+        Raises:
+            RuntimeError: If QEMU binary is not found
 
         """
         # Find QEMU binary using path discovery
@@ -1685,7 +1699,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                         new_pids = current_pids - baseline_pids
                         for process in current_processes:
                             if not isinstance(process, dict):
-                                continue  # type: ignore[unreachable]
+                                continue
                             if process.get("pid") in new_pids and any(
                                 lp in process.get("name", "").lower()
                                 for lp in [
@@ -1709,10 +1723,10 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                         # Monitor memory changes for existing processes
                         for current_proc in current_processes:
                             if not isinstance(current_proc, dict):
-                                continue  # type: ignore[unreachable]
+                                continue
                             for baseline_proc in self._baseline_processes:
                                 if not isinstance(baseline_proc, dict):
-                                    continue  # type: ignore[unreachable]
+                                    continue
                                 curr_pid = current_proc.get("pid")
                                 base_pid = baseline_proc.get("pid")
                                 if curr_pid == base_pid and current_proc.get("memory", 0) != baseline_proc.get("memory", 0):
@@ -1823,7 +1837,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                         new_conn_ids = current_conn_ids - baseline_conn_ids
                         for conn in current_connections:
                             if not isinstance(conn, dict):
-                                continue  # type: ignore[unreachable]
+                                continue
                             dst_port = conn.get("dst_port")
                             if self._connection_id(conn) in new_conn_ids and (
                                 (isinstance(dst_port, int) and dst_port in license_ports)
@@ -1851,7 +1865,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                             baseline_queries = {q.get("query", "") for q in self._baseline_dns_queries if isinstance(q, dict)}
                             for query in current_dns_queries:
                                 if not isinstance(query, dict):
-                                    continue  # type: ignore[unreachable]
+                                    continue
                                 query_str = query.get("query", "")
                                 if query_str not in baseline_queries and any(host in str(query_str) for host in license_hosts):
                                     dns_queries.append(
@@ -2161,7 +2175,16 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
     def _copy_binary_to_windows_guest(self, binary_path: str, app: AppProtocol | None = None) -> str | None:
-        """Copy binary to Windows guest using QEMU guest agent."""
+        """Copy binary to Windows guest using QEMU guest agent.
+
+        Args:
+            binary_path: Path to the binary to copy.
+            app: Application instance for updates.
+
+        Returns:
+            Path to binary on Windows guest, or None if copy failed.
+
+        """
         try:
             binary_name = os.path.basename(binary_path)
             guest_path = f"C:\\temp\\{binary_name}"
@@ -2231,7 +2254,16 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return None
 
     def _copy_binary_to_linux_guest(self, binary_path: str, app: AppProtocol | None = None) -> str | None:
-        """Copy binary to Linux guest using SSH or guest agent."""
+        """Copy binary to Linux guest using SSH or guest agent.
+
+        Args:
+            binary_path: Path to the binary to copy.
+            app: Application instance for updates.
+
+        Returns:
+            Path to binary on Linux guest, or None if copy failed.
+
+        """
         try:
             binary_name = os.path.basename(binary_path)
             guest_path = f"/tmp/{binary_name}"  # noqa: S108
@@ -2285,7 +2317,16 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return None
 
     def _execute_in_windows_guest(self, guest_path: str, app: AppProtocol | None = None) -> dict[str, Any]:
-        """Execute binary in Windows guest and capture results."""
+        """Execute binary in Windows guest and capture results.
+
+        Args:
+            guest_path: Path to binary on Windows guest.
+            app: Application instance for updates.
+
+        Returns:
+            Dictionary with execution results including success, exit code, and output.
+
+        """
         try:
             if app:
                 app.update_output.emit("[QEMU] Executing binary in Windows guest...")
@@ -2346,7 +2387,16 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
     def _execute_in_linux_guest(self, guest_path: str, app: AppProtocol | None = None) -> dict[str, Any]:
-        """Execute binary in Linux guest and capture results."""
+        """Execute binary in Linux guest and capture results.
+
+        Args:
+            guest_path: Path to binary on Linux guest.
+            app: Application instance for updates.
+
+        Returns:
+            Dictionary with execution results including success, exit code, and output.
+
+        """
         try:
             if app:
                 app.update_output.emit("[QEMU] Executing binary in Linux guest...")
@@ -2389,7 +2439,16 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
     def _monitor_windows_execution(self, guest_path: str, app: AppProtocol | None = None) -> dict[str, Any]:
-        """Monitor Windows execution for registry, file, and network changes."""
+        """Monitor Windows execution for registry, file, and network changes.
+
+        Args:
+            guest_path: Path to binary on Windows guest.
+            app: Application instance for updates.
+
+        Returns:
+            Dictionary with monitoring results including registry, file, and network changes.
+
+        """
         try:
             binary_name = os.path.basename(guest_path) if guest_path else "unknown"
             if app:
@@ -2442,7 +2501,16 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
     def _monitor_linux_execution(self, guest_path: str, app: AppProtocol | None = None) -> dict[str, Any]:
-        """Monitor Linux execution for file and network changes."""
+        """Monitor Linux execution for file and network changes.
+
+        Args:
+            guest_path: Path to binary on Linux guest.
+            app: Application instance for updates.
+
+        Returns:
+            Dictionary with monitoring results including file and network changes.
+
+        """
         try:
             if app:
                 app.update_output.emit(f"[QEMU] Monitoring Linux execution of {os.path.basename(guest_path)}...")
@@ -2496,7 +2564,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         """Context manager entry.
 
         Returns:
-            This QEMUEmulator instance
+            This QEMUSystemEmulator instance.
 
         """
         return self
@@ -2522,7 +2590,12 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         return False
 
     def _capture_filesystem_snapshot(self) -> dict[str, dict[str, Any]]:
-        """Capture filesystem snapshot for comparison."""
+        """Capture filesystem snapshot for comparison.
+
+        Returns:
+            Dictionary mapping file paths to file metadata including size and modification time.
+
+        """
         try:
             # Use SSH or QEMU guest agent to get file listing
             snapshot = {}
@@ -2562,7 +2635,12 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return {}
 
     def _get_guest_processes(self) -> list[dict[str, Any]]:
-        """Get process list from guest OS."""
+        """Get process list from guest OS.
+
+        Returns:
+            List of dictionaries containing process information including PID, command, arguments, and memory.
+
+        """
         try:
             processes = []
 
@@ -2600,7 +2678,12 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return []
 
     def _get_guest_network_connections(self) -> list[dict[str, Any]]:
-        """Get network connections from guest OS."""
+        """Get network connections from guest OS.
+
+        Returns:
+            List of dictionaries containing network connection information including IPs and ports.
+
+        """
         try:
             connections = []
 
@@ -2686,7 +2769,12 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return []
 
     def _capture_dns_via_ssh(self) -> list[dict[str, Any]]:
-        """Capture DNS queries via SSH network monitoring."""
+        """Capture DNS queries via SSH network monitoring.
+
+        Returns:
+            List of dictionaries containing DNS query information captured via tcpdump and netstat.
+
+        """
         dns_queries = []
 
         try:
@@ -2746,7 +2834,15 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         return dns_queries
 
     def _parse_tcpdump_dns_line(self, line: str) -> dict[str, Any] | None:
-        """Parse a tcpdump DNS query line."""
+        """Parse a tcpdump DNS query line.
+
+        Args:
+            line: A single line from tcpdump DNS output.
+
+        Returns:
+            Dictionary containing parsed DNS query information, or None if parsing failed.
+
+        """
         try:
             # Example tcpdump DNS line:
             # 12:34:56.789 IP 192.168.1.100.12345 > 8.8.8.8.53: 12345+ A? example.com. (28)
@@ -2785,7 +2881,12 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         return None
 
     def _analyze_dns_cache(self) -> list[dict[str, Any]]:
-        """Analyze DNS cache for recent queries."""
+        """Analyze DNS cache for recent queries.
+
+        Returns:
+            List of dictionaries containing DNS cache entries and query information.
+
+        """
         dns_queries: list[dict[str, Any]] = []
 
         try:
@@ -2855,7 +2956,12 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         return dns_queries
 
     def _monitor_dns_processes(self) -> list[dict[str, Any]]:
-        """Monitor processes for DNS-related activity."""
+        """Monitor processes for DNS-related activity.
+
+        Returns:
+            List of dictionaries containing DNS-related process information.
+
+        """
         dns_queries = []
 
         try:
@@ -2930,7 +3036,12 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         return dns_queries
 
     def _parse_dns_logs(self) -> list[dict[str, Any]]:
-        """Parse system logs for DNS-related entries."""
+        """Parse system logs for DNS-related entries.
+
+        Returns:
+            List of dictionaries containing parsed DNS log entries.
+
+        """
         dns_queries: list[dict[str, Any]] = []
 
         try:
@@ -3001,7 +3112,15 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         return dns_queries
 
     def _deduplicate_dns_queries(self, dns_queries: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Remove duplicate DNS queries based on query name and recent timestamp."""
+        """Remove duplicate DNS queries based on query name and recent timestamp.
+
+        Args:
+            dns_queries: List of DNS query dictionaries to deduplicate.
+
+        Returns:
+            List of unique DNS queries sorted by timestamp.
+
+        """
         seen_queries = set()
         unique_queries = []
 
@@ -3023,11 +3142,28 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         return unique_queries[:100]  # Return max 100 queries
 
     def _connection_id(self, conn: dict[str, Any]) -> str:
-        """Generate unique ID for network connection."""
+        """Generate unique ID for network connection.
+
+        Args:
+            conn: Network connection dictionary with src_ip, src_port, dst_ip, dst_port.
+
+        Returns:
+            str: Unique connection identifier in format src_ip:src_port-dst_ip:dst_port.
+
+        """
         return f"{conn.get('src_ip', '')}:{conn.get('src_port', 0)}-{conn.get('dst_ip', '')}:{conn.get('dst_port', 0)}"
 
     def _copy_via_guest_agent(self, binary_path: str, guest_path: str) -> str | None:
-        """Copy binary using QEMU guest agent."""
+        """Copy binary using QEMU guest agent.
+
+        Args:
+            binary_path: Path to source binary on host.
+            guest_path: Path where binary should be copied on guest.
+
+        Returns:
+            Guest path if copy succeeded, None otherwise.
+
+        """
         try:
             # Read binary data
             with open(binary_path, "rb") as f:
@@ -3080,7 +3216,15 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return None
 
     def _execute_via_guest_agent(self, guest_path: str) -> dict[str, Any]:
-        """Execute binary using QEMU guest agent."""
+        """Execute binary using QEMU guest agent.
+
+        Args:
+            guest_path: Path to binary on guest to execute.
+
+        Returns:
+            Dictionary with execution results including success status, exit code, and output.
+
+        """
         try:
             # Use QEMU guest agent to execute command
             cmd = {

@@ -12,7 +12,6 @@ import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -353,8 +352,36 @@ class TestCodeSigningInfo:
 
     def test_signing_certificate_property(self) -> None:
         """CodeSigningInfo returns primary signing certificate."""
-        cert1 = Mock(spec=CertificateInfo)
-        cert2 = Mock(spec=CertificateInfo)
+        cert1 = CertificateInfo(
+            subject="CN=Cert1",
+            issuer="CN=CA1",
+            serial_number="111",
+            not_before=datetime.utcnow(),
+            not_after=datetime.utcnow() + timedelta(days=365),
+            signature_algorithm="SHA256",
+            public_key_algorithm="RSA",
+            public_key_size=2048,
+            fingerprint_sha1="ABC1",
+            fingerprint_sha256="DEF1",
+            is_self_signed=False,
+            is_expired=False,
+            is_code_signing=True,
+        )
+        cert2 = CertificateInfo(
+            subject="CN=Cert2",
+            issuer="CN=CA2",
+            serial_number="222",
+            not_before=datetime.utcnow(),
+            not_after=datetime.utcnow() + timedelta(days=365),
+            signature_algorithm="SHA256",
+            public_key_algorithm="RSA",
+            public_key_size=2048,
+            fingerprint_sha1="ABC2",
+            fingerprint_sha256="DEF2",
+            is_self_signed=False,
+            is_expired=False,
+            is_code_signing=True,
+        )
 
         signing_info = CodeSigningInfo(is_signed=True, certificates=[cert1, cert2])
 

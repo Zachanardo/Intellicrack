@@ -17,38 +17,91 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
+import contextlib
+import sys
 import tempfile
 from pathlib import Path
-from typing import Any
+from collections.abc import Generator, Iterator
+from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
+from numpy.typing import NDArray
 import pytest
 
 from intellicrack.ai.model_format_converter import ModelFormatConverter
 
-try:
-    import torch
-    HAS_TORCH = True
-except ImportError:
-    HAS_TORCH = False
-    torch = None
 
-try:
+class SafeOpenContextProtocol(Protocol):
+    """Protocol for safe_open context manager."""
+
+    def keys(self) -> list[str]:
+        """Get tensor keys."""
+        ...
+
+    def get_tensor(self, name: str) -> Any:
+        """Get tensor by name."""
+        ...
+
+
+HAS_TORCH = False
+HAS_ONNX = False
+HAS_SAFETENSORS = False
+
+_safe_open_func: Any = None
+
+if TYPE_CHECKING:
+    import torch
     import onnx
     import onnxruntime as ort
-    HAS_ONNX = True
-except ImportError:
-    HAS_ONNX = False
+    from safetensors.torch import save_file
+else:
+    torch = None
     onnx = None
     ort = None
-
-try:
-    from safetensors.torch import save_file, safe_open
-    HAS_SAFETENSORS = True
-except ImportError:
-    HAS_SAFETENSORS = False
     save_file = None
-    safe_open = None
+
+    try:
+        import torch
+        HAS_TORCH = True
+    except ImportError:
+        pass
+
+    try:
+        import onnx
+        import onnxruntime as ort
+        HAS_ONNX = True
+    except ImportError:
+        pass
+
+    try:
+        from safetensors.torch import save_file
+        from safetensors import safe_open as _safe_open
+        _safe_open_func = _safe_open
+        HAS_SAFETENSORS = True
+    except ImportError:
+        pass
+
+
+@contextlib.contextmanager
+def typed_safe_open(path: str, framework: str = "pt") -> Iterator[SafeOpenContextProtocol]:
+    """Type-safe wrapper for safetensors safe_open.
+
+    Args:
+        path: Path to safetensors file.
+        framework: Framework type (pt, np, etc).
+
+    Yields:
+        Context manager with typed interface.
+    """
+    if _safe_open_func is None:
+        raise RuntimeError("safetensors not available")
+    ctx = _safe_open_func(path, framework=framework)
+    try:
+        yield ctx
+    finally:
+        pass
 
 
 class TestModelFormatConverterInitialization:
@@ -92,7 +145,7 @@ class TestFormatDetection:
         return ModelFormatConverter()
 
     @pytest.fixture
-    def temp_dir(self) -> Path:
+    def temp_dir(self) -> Generator[Path, None, None]:
         """Create temporary directory."""
         with tempfile.TemporaryDirectory(prefix="model_test_") as tmp:
             yield Path(tmp)
@@ -174,7 +227,7 @@ class TestPyTorchToONNXConversion:
         return ModelFormatConverter()
 
     @pytest.fixture
-    def temp_dir(self) -> Path:
+    def temp_dir(self) -> Generator[Path, None, None]:
         """Create temporary directory."""
         with tempfile.TemporaryDirectory(prefix="conversion_test_") as tmp:
             yield Path(tmp)
@@ -185,10 +238,11 @@ class TestPyTorchToONNXConversion:
         class SimpleModel(torch.nn.Module):
             def __init__(self) -> None:
                 super().__init__()
-                self.linear = torch.nn.Linear(10, 5)
+                self.linear: torch.nn.Linear = torch.nn.Linear(10, 5)
 
             def forward(self, x: torch.Tensor) -> torch.Tensor:
-                return self.linear(x)
+                result: torch.Tensor = self.linear(x)
+                return result
 
         model = SimpleModel()
         model.eval()
@@ -217,10 +271,11 @@ class TestPyTorchToONNXConversion:
         class TestModel(torch.nn.Module):
             def __init__(self) -> None:
                 super().__init__()
-                self.fc = torch.nn.Linear(20, 10)
+                self.fc: torch.nn.Linear = torch.nn.Linear(20, 10)
 
             def forward(self, x: torch.Tensor) -> torch.Tensor:
-                return self.fc(x)
+                result: torch.Tensor = self.fc(x)
+                return result
 
         model = TestModel()
         model.eval()
@@ -240,7 +295,7 @@ class TestPyTorchToONNXConversion:
 
         session = ort.InferenceSession(str(result))
 
-        test_input: np.ndarray = np.random.randn(1, 20).astype(np.float32)
+        test_input: NDArray[np.floating[Any]] = np.random.randn(1, 20).astype(np.float32)
         outputs = session.run(None, {"input_ids": test_input})
 
         assert outputs is not None, "Model must produce output"
@@ -253,10 +308,11 @@ class TestPyTorchToONNXConversion:
         class DynamicModel(torch.nn.Module):
             def __init__(self) -> None:
                 super().__init__()
-                self.conv = torch.nn.Conv2d(3, 16, 3, padding=1)
+                self.conv: torch.nn.Conv2d = torch.nn.Conv2d(3, 16, 3, padding=1)
 
             def forward(self, x: torch.Tensor) -> torch.Tensor:
-                return self.conv(x)
+                result: torch.Tensor = self.conv(x)
+                return result
 
         model = DynamicModel()
         model.eval()
@@ -278,7 +334,7 @@ class TestPyTorchToONNXConversion:
         session = ort.InferenceSession(str(result))
 
         for batch_size in [1, 2, 4]:
-            test_input: np.ndarray = np.random.randn(batch_size, 3, 64, 64).astype(np.float32)
+            test_input: NDArray[np.floating[Any]] = np.random.randn(batch_size, 3, 64, 64).astype(np.float32)
             outputs = session.run(None, {"input_ids": test_input})
             assert outputs[0].shape[0] == batch_size, f"Must handle batch size {batch_size}"
 
@@ -287,7 +343,8 @@ class TestPyTorchToONNXConversion:
 
         class Model(torch.nn.Module):
             def forward(self, x: torch.Tensor) -> torch.Tensor:
-                return x * 2
+                result: torch.Tensor = x * 2
+                return result
 
         model = Model()
         source_path: Path = temp_dir / "model.pt"
@@ -313,7 +370,7 @@ class TestPyTorchToSafeTensorsConversion:
         return ModelFormatConverter()
 
     @pytest.fixture
-    def temp_dir(self) -> Path:
+    def temp_dir(self) -> Generator[Path, None, None]:
         """Create temporary directory."""
         with tempfile.TemporaryDirectory(prefix="safetensors_test_") as tmp:
             yield Path(tmp)
@@ -341,7 +398,7 @@ class TestPyTorchToSafeTensorsConversion:
         assert result.exists(), "SafeTensors file must be created"
         assert result.suffix == ".safetensors", "Must have correct extension"
 
-        with safe_open(str(result), framework="pt") as f:
+        with typed_safe_open(str(result), framework="pt") as f:
             loaded_keys = list(f.keys())
             assert len(loaded_keys) == 4, "All tensors must be saved"
             assert "layer1.weight" in loaded_keys, "Must preserve tensor names"
@@ -366,7 +423,7 @@ class TestPyTorchToSafeTensorsConversion:
 
         assert result is not None, "Conversion must succeed"
 
-        with safe_open(str(result), framework="pt") as f:
+        with typed_safe_open(str(result), framework="pt") as f:
             loaded_tensor: torch.Tensor = f.get_tensor("test_tensor")
 
             assert torch.allclose(loaded_tensor, original_tensor, rtol=1e-5), "Values must match exactly"
@@ -408,7 +465,7 @@ class TestPyTorchToSafeTensorsConversion:
 
         assert result is not None, "Conversion must succeed"
 
-        with safe_open(str(result), framework="pt") as f:
+        with typed_safe_open(str(result), framework="pt") as f:
             keys = list(f.keys())
             assert "part1" in keys, "Must load from first file"
             assert "part2" in keys, "Must load from second file"
@@ -424,7 +481,7 @@ class TestSafeTensorsToPyTorchConversion:
         return ModelFormatConverter()
 
     @pytest.fixture
-    def temp_dir(self) -> Path:
+    def temp_dir(self) -> Generator[Path, None, None]:
         """Create temporary directory."""
         with tempfile.TemporaryDirectory(prefix="st_to_pt_") as tmp:
             yield Path(tmp)
@@ -503,7 +560,7 @@ class TestConversionValidation:
         return ModelFormatConverter()
 
     @pytest.fixture
-    def temp_dir(self) -> Path:
+    def temp_dir(self) -> Generator[Path, None, None]:
         """Create temporary directory."""
         with tempfile.TemporaryDirectory(prefix="validation_test_") as tmp:
             yield Path(tmp)
@@ -515,12 +572,13 @@ class TestConversionValidation:
         class SimpleModel(torch.nn.Module):
             def __init__(self) -> None:
                 super().__init__()
-                self.linear = torch.nn.Linear(10, 5)
+                self.linear: torch.nn.Linear = torch.nn.Linear(10, 5)
                 torch.nn.init.constant_(self.linear.weight, 0.1)
                 torch.nn.init.constant_(self.linear.bias, 0.0)
 
             def forward(self, x: torch.Tensor) -> torch.Tensor:
-                return self.linear(x)
+                result: torch.Tensor = self.linear(x)
+                return result
 
         model = SimpleModel()
         model.eval()
@@ -535,7 +593,7 @@ class TestConversionValidation:
             input_shape=(1, 10),
         )
 
-        test_input: np.ndarray = np.random.randn(1, 10).astype(np.float32)
+        test_input: NDArray[np.floating[Any]] = np.random.randn(1, 10).astype(np.float32)
 
         is_valid: bool = converter.validate_conversion(
             pytorch_path,
@@ -568,7 +626,7 @@ class TestHighLevelConversion:
         return ModelFormatConverter()
 
     @pytest.fixture
-    def temp_dir(self) -> Path:
+    def temp_dir(self) -> Generator[Path, None, None]:
         """Create temporary directory."""
         with tempfile.TemporaryDirectory(prefix="highlevel_test_") as tmp:
             yield Path(tmp)
@@ -641,7 +699,7 @@ class TestModelInfo:
         return ModelFormatConverter()
 
     @pytest.fixture
-    def temp_dir(self) -> Path:
+    def temp_dir(self) -> Generator[Path, None, None]:
         """Create temporary directory."""
         with tempfile.TemporaryDirectory(prefix="info_test_") as tmp:
             yield Path(tmp)
@@ -657,7 +715,7 @@ class TestModelInfo:
         model_path: Path = temp_dir / "model.pt"
         torch.save(state_dict, str(model_path))
 
-        info: dict[str, Any] = converter.get_model_info(str(model_path))
+        info: dict[str, Any] = converter.get_model_info(model_path)
 
         assert info is not None, "Must return model info"
         assert "format" in info, "Must include format"

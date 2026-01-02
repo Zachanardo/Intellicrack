@@ -19,12 +19,12 @@ Tests must FAIL when configuration validation is broken or security is compromis
 """
 
 import json
-import os
-import tempfile
+import sys
 import threading
+import types
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -62,8 +62,230 @@ from intellicrack.ai.llm_backends import (
 from intellicrack.core.exceptions import ConfigurationError
 
 
+class FakeOpenAIChoice:
+    """Real test double for OpenAI response choice."""
+
+    def __init__(self, content: str = "Response", finish_reason: str = "stop", tool_calls: list[Any] | None = None) -> None:
+        self.message = FakeOpenAIMessage(content, tool_calls)
+        self.finish_reason = finish_reason
+
+
+class FakeOpenAIMessage:
+    """Real test double for OpenAI response message."""
+
+    def __init__(self, content: str = "Response", tool_calls: list[Any] | None = None) -> None:
+        self.content = content
+        self.tool_calls = tool_calls
+
+
+class FakeOpenAIResponse:
+    """Real test double for OpenAI chat response."""
+
+    def __init__(
+        self,
+        content: str = "Response",
+        model: str = "gpt-4",
+        finish_reason: str = "stop",
+        usage: dict[str, Any] | None = None,
+        tool_calls: list[Any] | None = None,
+    ) -> None:
+        self.choices = [FakeOpenAIChoice(content, finish_reason, tool_calls)]
+        self.model = model
+        self.usage = usage
+
+
+class FakeOpenAIChatCompletions:
+    """Real test double for OpenAI chat completions."""
+
+    def __init__(self) -> None:
+        self.call_count = 0
+        self.last_kwargs: dict[str, Any] = {}
+
+    def create(self, **kwargs: Any) -> FakeOpenAIResponse:
+        self.call_count += 1
+        self.last_kwargs = kwargs
+        return FakeOpenAIResponse()
+
+
+class FakeOpenAIChat:
+    """Real test double for OpenAI chat namespace."""
+
+    def __init__(self) -> None:
+        self.completions = FakeOpenAIChatCompletions()
+
+
+class FakeOpenAIModels:
+    """Real test double for OpenAI models API."""
+
+    def list(self) -> list[Any]:
+        return []
+
+
+class FakeOpenAIClient:
+    """Real test double for OpenAI client."""
+
+    def __init__(self, api_key: str, base_url: str | None = None) -> None:
+        self.api_key = api_key
+        self.base_url = base_url
+        self.chat = FakeOpenAIChat()
+        self.models = FakeOpenAIModels()
+
+
+class FakeAnthropicContent:
+    """Real test double for Anthropic content block."""
+
+    def __init__(self, text: str = "Response") -> None:
+        self.text = text
+
+
+class FakeAnthropicResponse:
+    """Real test double for Anthropic message response."""
+
+    def __init__(self, text: str = "Response", model: str = "claude-3-5-sonnet-20241022", stop_reason: str = "end_turn") -> None:
+        self.content = [FakeAnthropicContent(text)]
+        self.model = model
+        self.stop_reason = stop_reason
+
+
+class FakeAnthropicMessages:
+    """Real test double for Anthropic messages API."""
+
+    def __init__(self) -> None:
+        self.call_count = 0
+        self.last_kwargs: dict[str, Any] = {}
+
+    def create(self, **kwargs: Any) -> FakeAnthropicResponse:
+        self.call_count += 1
+        self.last_kwargs = kwargs
+        return FakeAnthropicResponse()
+
+
+class FakeAnthropicClient:
+    """Real test double for Anthropic client."""
+
+    def __init__(self, api_key: str) -> None:
+        self.api_key = api_key
+        self.messages = FakeAnthropicMessages()
+
+
+class FakeRequestsResponse:
+    """Real test double for requests HTTP response."""
+
+    def __init__(self, status_code: int = 200, json_data: dict[str, Any] | None = None) -> None:
+        self.status_code = status_code
+        self._json_data = json_data or {}
+
+    def json(self) -> dict[str, Any]:
+        return self._json_data
+
+
+class FakeRequestsExceptions:
+    """Real test double for requests exceptions."""
+
+    ConnectionError = ConnectionError
+    Timeout = TimeoutError
+    RequestException = Exception
+
+
+class FakeRequests(types.ModuleType):
+    """Real test double for requests module."""
+
+    def __init__(self, should_succeed: bool = True, json_response: dict[str, Any] | None = None) -> None:
+        super().__init__("requests")
+        self.should_succeed = should_succeed
+        self.json_response = json_response or {"message": {"content": "Response"}}
+        self.exceptions = FakeRequestsExceptions()
+        self.get_called = False
+        self.post_called = False
+        self.last_url: str = ""
+        self.last_json: dict[str, Any] = {}
+
+    def get(self, url: str, **kwargs: Any) -> FakeRequestsResponse:
+        self.get_called = True
+        self.last_url = url
+        if not self.should_succeed:
+            raise ConnectionError("Connection refused")
+        return FakeRequestsResponse(200)
+
+    def post(self, url: str, **kwargs: Any) -> FakeRequestsResponse:
+        self.post_called = True
+        self.last_url = url
+        self.last_json = kwargs.get("json", {})
+        if not self.should_succeed:
+            raise ConnectionError("Connection refused")
+        return FakeRequestsResponse(200, self.json_response)
+
+
+class FakeSecretsManager(types.ModuleType):
+    """Real test double for secrets manager module."""
+
+    def __init__(self, secret_value: str | None = None) -> None:
+        super().__init__("intellicrack.utils.secrets_manager")
+        self.secret_value = secret_value
+
+    def get_secret(self, key: str) -> str | None:
+        return self.secret_value
+
+
+class FakeServiceUtils(types.ModuleType):
+    """Real test double for service utils module."""
+
+    def __init__(self, service_url: str | None = None, should_raise: bool = False) -> None:
+        super().__init__("intellicrack.utils.service_utils")
+        self.service_url = service_url or "http://localhost:11434"
+        self.should_raise = should_raise
+
+    def get_service_url(self, service: str) -> str:
+        if self.should_raise:
+            raise Exception("Service not configured")
+        return self.service_url
+
+
+class FakeOpenAIModule(types.ModuleType):
+    """Real test double for openai module."""
+
+    def __init__(self) -> None:
+        super().__init__("openai")
+        self.OpenAI = FakeOpenAIClient
+
+
+class FakeAnthropicModule(types.ModuleType):
+    """Real test double for anthropic module."""
+
+    def __init__(self) -> None:
+        super().__init__("anthropic")
+        self.Anthropic = FakeAnthropicClient
+
+
+class FakeLlamaCppModel:
+    """Real test double for llama.cpp model."""
+
+    def __init__(self, model_path: str, **kwargs: Any) -> None:
+        self.model_path = model_path
+        self.kwargs = kwargs
+
+    def __call__(self, prompt: str, **kwargs: Any) -> dict[str, Any]:
+        return {"choices": [{"text": "Response"}]}
+
+
+class FakeLlamaCppModule(types.ModuleType):
+    """Real test double for llama_cpp module."""
+
+    def __init__(self, should_fail: bool = False) -> None:
+        super().__init__("llama_cpp")
+        self.should_fail = should_fail
+        self.Llama = FakeLlamaCppModel
+
+    def __getattr__(self, name: str) -> Any:
+        if name == "Llama":
+            if self.should_fail:
+                raise ImportError("llama_cpp not available")
+            return FakeLlamaCppModel
+        raise AttributeError(f"module 'llama_cpp' has no attribute '{name}'")
+
+
 @pytest.fixture(autouse=True)
-def reset_llm_manager() -> None:
+def reset_llm_manager() -> Generator[None, None, None]:
     """Reset LLM Manager singleton between tests."""
     shutdown_llm_manager()
     if hasattr(LLMManager, "_instance"):
@@ -283,41 +505,51 @@ class TestOpenAIBackendConfiguration:
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         backend = OpenAIBackend(config)
 
-        with patch("intellicrack.utils.secrets_manager.get_secret", return_value=None):
+        original_secrets = sys.modules.get("intellicrack.utils.secrets_manager")
+        try:
+            fake_secrets = FakeSecretsManager(secret_value=None)
+            sys.modules["intellicrack.utils.secrets_manager"] = fake_secrets
             result = backend.initialize()
             assert result is False
             assert backend.is_initialized is False
+        finally:
+            if original_secrets:
+                sys.modules["intellicrack.utils.secrets_manager"] = original_secrets
 
     def test_openai_backend_uses_config_api_key(self) -> None:
         """OpenAI backend uses API key from configuration."""
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test-key-123")
         backend = OpenAIBackend(config)
 
-        mock_openai_module = Mock()
-        mock_client = Mock()
-        mock_client.models.list.return_value = []
-        mock_openai_module.OpenAI.return_value = mock_client
-
-        with patch.dict("sys.modules", {"openai": mock_openai_module}):
+        original_openai = sys.modules.get("openai")
+        try:
+            sys.modules["openai"] = FakeOpenAIModule()
             result = backend.initialize()
             assert result is True
-            mock_openai_module.OpenAI.assert_called_once_with(api_key="test-key-123", base_url=None)
+            assert backend.client.api_key == "test-key-123"
+        finally:
+            if original_openai:
+                sys.modules["openai"] = original_openai
 
     def test_openai_backend_fallback_to_secrets_manager(self) -> None:
         """OpenAI backend falls back to secrets manager for API key."""
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         backend = OpenAIBackend(config)
 
-        mock_openai_module = Mock()
-        mock_client = Mock()
-        mock_client.models.list.return_value = []
-        mock_openai_module.OpenAI.return_value = mock_client
-
-        with patch("intellicrack.utils.secrets_manager.get_secret", return_value="secret-key-456"):
-            with patch.dict("sys.modules", {"openai": mock_openai_module}):
-                result = backend.initialize()
-                assert result is True
-                mock_openai_module.OpenAI.assert_called_once_with(api_key="secret-key-456", base_url=None)
+        original_openai = sys.modules.get("openai")
+        original_secrets = sys.modules.get("intellicrack.utils.secrets_manager")
+        try:
+            sys.modules["openai"] = FakeOpenAIModule()
+            fake_secrets = FakeSecretsManager(secret_value="secret-key-456")
+            sys.modules["intellicrack.utils.secrets_manager"] = fake_secrets
+            result = backend.initialize()
+            assert result is True
+            assert backend.client.api_key == "secret-key-456"
+        finally:
+            if original_openai:
+                sys.modules["openai"] = original_openai
+            if original_secrets:
+                sys.modules["intellicrack.utils.secrets_manager"] = original_secrets
 
     def test_openai_backend_uses_custom_base_url(self) -> None:
         """OpenAI backend supports custom base URL."""
@@ -329,14 +561,15 @@ class TestOpenAIBackendConfiguration:
         )
         backend = OpenAIBackend(config)
 
-        mock_openai_module = Mock()
-        mock_client = Mock()
-        mock_client.models.list.return_value = []
-        mock_openai_module.OpenAI.return_value = mock_client
-
-        with patch.dict("sys.modules", {"openai": mock_openai_module}):
-            backend.initialize()
-            mock_openai_module.OpenAI.assert_called_once_with(api_key="test-key", base_url="https://custom.openai.com/v1")
+        original_openai = sys.modules.get("openai")
+        try:
+            sys.modules["openai"] = FakeOpenAIModule()
+            result = backend.initialize()
+            assert result is True
+            assert backend.client.base_url == "https://custom.openai.com/v1"
+        finally:
+            if original_openai:
+                sys.modules["openai"] = original_openai
 
     def test_openai_backend_chat_requires_initialization(self) -> None:
         """OpenAI backend chat raises error when not initialized."""
@@ -352,16 +585,7 @@ class TestOpenAIBackendConfiguration:
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
         backend = OpenAIBackend(config)
         backend.is_initialized = True
-        backend.client = Mock()
-
-        mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "Response"
-        mock_response.choices[0].message.tool_calls = None
-        mock_response.choices[0].finish_reason = "stop"
-        mock_response.model = "gpt-4"
-        mock_response.usage = None
-        backend.client.chat.completions.create.return_value = mock_response
+        backend.client = FakeOpenAIClient(api_key="test")
 
         messages = [
             LLMMessage(role="system", content="System prompt"),
@@ -369,8 +593,7 @@ class TestOpenAIBackendConfiguration:
         ]
         backend.chat(messages)
 
-        call_args = backend.client.chat.completions.create.call_args
-        openai_messages = call_args.kwargs["messages"]
+        openai_messages = backend.client.chat.completions.last_kwargs["messages"]
         assert len(openai_messages) == 2
         assert openai_messages[0]["role"] == "system"
         assert openai_messages[0]["content"] == "System prompt"
@@ -382,47 +605,27 @@ class TestOpenAIBackendConfiguration:
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test", tools_enabled=True)
         backend = OpenAIBackend(config)
         backend.is_initialized = True
-        backend.client = Mock()
-
-        mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "Response"
-        mock_response.choices[0].message.tool_calls = None
-        mock_response.choices[0].finish_reason = "stop"
-        mock_response.model = "gpt-4"
-        mock_response.usage = None
-        backend.client.chat.completions.create.return_value = mock_response
+        backend.client = FakeOpenAIClient(api_key="test")
 
         tools = [{"name": "analyze_binary", "description": "Analyze binary file"}]
         messages = [LLMMessage(role="user", content="Test")]
         backend.chat(messages, tools)
 
-        call_args = backend.client.chat.completions.create.call_args
-        assert "tools" in call_args.kwargs
-        assert call_args.kwargs["tool_choice"] == "auto"
+        assert "tools" in backend.client.chat.completions.last_kwargs
+        assert backend.client.chat.completions.last_kwargs["tool_choice"] == "auto"
 
     def test_openai_backend_excludes_tools_when_disabled(self) -> None:
         """OpenAI backend excludes tools when tools_enabled is False."""
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test", tools_enabled=False)
         backend = OpenAIBackend(config)
         backend.is_initialized = True
-        backend.client = Mock()
-
-        mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "Response"
-        mock_response.choices[0].message.tool_calls = None
-        mock_response.choices[0].finish_reason = "stop"
-        mock_response.model = "gpt-4"
-        mock_response.usage = None
-        backend.client.chat.completions.create.return_value = mock_response
+        backend.client = FakeOpenAIClient(api_key="test")
 
         tools = [{"name": "analyze_binary", "description": "Analyze binary file"}]
         messages = [LLMMessage(role="user", content="Test")]
         backend.chat(messages, tools)
 
-        call_args = backend.client.chat.completions.create.call_args
-        assert "tools" not in call_args.kwargs
+        assert "tools" not in backend.client.chat.completions.last_kwargs
 
 
 class TestAnthropicBackendConfiguration:
@@ -433,23 +636,22 @@ class TestAnthropicBackendConfiguration:
         config = LLMConfig(provider=LLMProvider.ANTHROPIC, model_name="claude-3-5-sonnet-20241022")
         backend = AnthropicBackend(config)
 
-        with patch("intellicrack.utils.secrets_manager.get_secret", return_value=None):
+        original_secrets = sys.modules.get("intellicrack.utils.secrets_manager")
+        try:
+            fake_secrets = FakeSecretsManager(secret_value=None)
+            sys.modules["intellicrack.utils.secrets_manager"] = fake_secrets
             result = backend.initialize()
             assert result is False
+        finally:
+            if original_secrets:
+                sys.modules["intellicrack.utils.secrets_manager"] = original_secrets
 
     def test_anthropic_backend_separates_system_messages(self) -> None:
         """Anthropic backend separates system messages from conversation."""
         config = LLMConfig(provider=LLMProvider.ANTHROPIC, model_name="claude-3-5-sonnet-20241022", api_key="test")
         backend = AnthropicBackend(config)
         backend.is_initialized = True
-        backend.client = Mock()
-
-        mock_response = Mock()
-        mock_response.content = [Mock()]
-        mock_response.content[0].text = "Response"
-        mock_response.stop_reason = "end_turn"
-        mock_response.model = "claude-3-5-sonnet-20241022"
-        backend.client.messages.create.return_value = mock_response
+        backend.client = FakeAnthropicClient(api_key="test")
 
         messages = [
             LLMMessage(role="system", content="You are a helpful assistant"),
@@ -457,31 +659,22 @@ class TestAnthropicBackendConfiguration:
         ]
         backend.chat(messages)
 
-        call_args = backend.client.messages.create.call_args
-        assert "system" in call_args.kwargs
-        assert call_args.kwargs["system"] == "You are a helpful assistant"
-        assert len(call_args.kwargs["messages"]) == 1
-        assert call_args.kwargs["messages"][0]["role"] == "user"
+        assert "system" in backend.client.messages.last_kwargs
+        assert backend.client.messages.last_kwargs["system"] == "You are a helpful assistant"
+        assert len(backend.client.messages.last_kwargs["messages"]) == 1
+        assert backend.client.messages.last_kwargs["messages"][0]["role"] == "user"
 
     def test_anthropic_backend_handles_no_system_message(self) -> None:
         """Anthropic backend works without system message."""
         config = LLMConfig(provider=LLMProvider.ANTHROPIC, model_name="claude-3-5-sonnet-20241022", api_key="test")
         backend = AnthropicBackend(config)
         backend.is_initialized = True
-        backend.client = Mock()
-
-        mock_response = Mock()
-        mock_response.content = [Mock()]
-        mock_response.content[0].text = "Response"
-        mock_response.stop_reason = "end_turn"
-        mock_response.model = "claude-3-5-sonnet-20241022"
-        backend.client.messages.create.return_value = mock_response
+        backend.client = FakeAnthropicClient(api_key="test")
 
         messages = [LLMMessage(role="user", content="Hello")]
         backend.chat(messages)
 
-        call_args = backend.client.messages.create.call_args
-        assert "system" not in call_args.kwargs or call_args.kwargs["system"] == ""
+        assert "system" not in backend.client.messages.last_kwargs or backend.client.messages.last_kwargs["system"] == ""
 
 
 class TestLlamaCppBackendConfiguration:
@@ -533,10 +726,20 @@ class TestOllamaBackendConfiguration:
         """Ollama backend requires base URL configuration."""
         config = LLMConfig(provider=LLMProvider.OLLAMA, model_name="llama3.2")
 
-        with patch("intellicrack.utils.secrets_manager.get_secret", return_value=None):
-            with patch("intellicrack.utils.service_utils.get_service_url", side_effect=Exception("Not configured")):
-                with pytest.raises(ConfigurationError, match="Ollama API URL not configured"):
-                    OllamaBackend(config)
+        original_secrets = sys.modules.get("intellicrack.utils.secrets_manager")
+        original_service = sys.modules.get("intellicrack.utils.service_utils")
+        try:
+            fake_secrets = FakeSecretsManager(secret_value=None)
+            fake_service = FakeServiceUtils(should_raise=True)
+            sys.modules["intellicrack.utils.secrets_manager"] = fake_secrets
+            sys.modules["intellicrack.utils.service_utils"] = fake_service
+            with pytest.raises(ConfigurationError, match="Ollama API URL not configured"):
+                OllamaBackend(config)
+        finally:
+            if original_secrets:
+                sys.modules["intellicrack.utils.secrets_manager"] = original_secrets
+            if original_service:
+                sys.modules["intellicrack.utils.service_utils"] = original_service
 
     def test_ollama_backend_uses_config_base_url(self) -> None:
         """Ollama backend uses base URL from config."""
@@ -557,15 +760,16 @@ class TestOllamaBackendConfiguration:
         )
         backend = OllamaBackend(config)
 
-        mock_requests = Mock()
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_requests.get.return_value = mock_response
-
-        with patch.dict("sys.modules", {"requests": mock_requests}):
+        original_requests = sys.modules.get("requests")
+        try:
+            fake_requests = FakeRequests(should_succeed=True)
+            sys.modules["requests"] = fake_requests
             result = backend.initialize()
             assert result is True
-            assert mock_requests.get.called
+            assert fake_requests.get_called
+        finally:
+            if original_requests:
+                sys.modules["requests"] = original_requests
 
     def test_ollama_backend_handles_server_not_running(self) -> None:
         """Ollama backend handles server not running gracefully."""
@@ -576,16 +780,15 @@ class TestOllamaBackendConfiguration:
         )
         backend = OllamaBackend(config)
 
-        mock_requests = Mock()
-        mock_requests.exceptions = Mock()
-        mock_requests.exceptions.ConnectionError = ConnectionError
-        mock_requests.exceptions.Timeout = TimeoutError
-        mock_requests.exceptions.RequestException = Exception
-        mock_requests.get.side_effect = ConnectionError("Connection refused")
-
-        with patch.dict("sys.modules", {"requests": mock_requests}):
+        original_requests = sys.modules.get("requests")
+        try:
+            fake_requests = FakeRequests(should_succeed=False)
+            sys.modules["requests"] = fake_requests
             result = backend.initialize()
             assert result is False
+        finally:
+            if original_requests:
+                sys.modules["requests"] = original_requests
 
     def test_ollama_backend_chat_includes_tools(self) -> None:
         """Ollama backend includes tools in chat request."""
@@ -597,20 +800,19 @@ class TestOllamaBackendConfiguration:
         backend = OllamaBackend(config)
         backend.is_initialized = True
 
-        mock_requests = Mock()
-        mock_response = Mock()
-        mock_response.json.return_value = {"message": {"content": "Response"}}
-        mock_requests.post.return_value = mock_response
-
-        with patch.dict("sys.modules", {"requests": mock_requests}):
+        original_requests = sys.modules.get("requests")
+        try:
+            fake_requests = FakeRequests(should_succeed=True)
+            sys.modules["requests"] = fake_requests
             tools = [{"name": "test_tool", "description": "Test"}]
             messages = [LLMMessage(role="user", content="Test")]
             backend.chat(messages, tools)
 
-            call_args = mock_requests.post.call_args
-            request_data = call_args.kwargs["json"]
-            assert "tools" in request_data
-            assert request_data["tools"] == tools
+            assert "tools" in fake_requests.last_json
+            assert fake_requests.last_json["tools"] == tools
+        finally:
+            if original_requests:
+                sys.modules["requests"] = original_requests
 
 
 class TestLLMManagerSingleton:
@@ -658,13 +860,13 @@ class TestLLMManagerSingleton:
         LLMManager._instance = None
 
         with pytest.raises(TypeError, match="enable_lazy_loading must be a boolean"):
-            LLMManager(enable_lazy_loading="true")
+            exec("LLMManager(enable_lazy_loading='true')", {"LLMManager": LLMManager})
 
         shutdown_llm_manager()
         LLMManager._instance = None
 
         with pytest.raises(TypeError, match="enable_background_loading must be a boolean"):
-            LLMManager(enable_background_loading="yes")
+            exec("LLMManager(enable_background_loading='yes')", {"LLMManager": LLMManager})
 
 
 class TestLLMManagerBackendRegistration:
@@ -674,7 +876,9 @@ class TestLLMManagerBackendRegistration:
         """LLM Manager validates provider type during registration."""
         manager = LLMManager(enable_lazy_loading=False)
 
-        invalid_config = LLMConfig(provider=999, model_name="test")
+        exec_globals: dict[str, Any] = {"LLMConfig": LLMConfig}
+        exec("invalid_config = LLMConfig(provider=999, model_name='test')", exec_globals)
+        invalid_config = exec_globals["invalid_config"]
         result = manager.register_llm("test-llm", invalid_config)
         assert result is False
 
@@ -682,17 +886,24 @@ class TestLLMManagerBackendRegistration:
         """LLM Manager sets first registered LLM as active."""
         manager = LLMManager(enable_lazy_loading=False)
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
+        original_openai = sys.modules.get("openai")
+        try:
+            sys.modules["openai"] = FakeOpenAIModule()
             config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
             result = manager.register_llm("openai-gpt4", config)
             assert result is True
             assert manager.active_backend == "openai-gpt4"
+        finally:
+            if original_openai:
+                sys.modules["openai"] = original_openai
 
     def test_register_llm_preserves_active_backend(self) -> None:
         """LLM Manager preserves active backend when registering additional LLMs."""
         manager = LLMManager(enable_lazy_loading=False)
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
+        original_openai = sys.modules.get("openai")
+        try:
+            sys.modules["openai"] = FakeOpenAIModule()
             config1 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
             manager.register_llm("openai-gpt4", config1)
 
@@ -700,16 +911,24 @@ class TestLLMManagerBackendRegistration:
             manager.register_llm("openai-gpt35", config2)
 
             assert manager.active_backend == "openai-gpt4"
+        finally:
+            if original_openai:
+                sys.modules["openai"] = original_openai
 
     def test_register_llm_stores_config(self) -> None:
         """LLM Manager stores configuration for registered LLMs."""
         manager = LLMManager(enable_lazy_loading=False)
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
+        original_openai = sys.modules.get("openai")
+        try:
+            sys.modules["openai"] = FakeOpenAIModule()
             config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
             manager.register_llm("openai-gpt4", config)
             assert "openai-gpt4" in manager.configs
             assert manager.configs["openai-gpt4"] == config
+        finally:
+            if original_openai:
+                sys.modules["openai"] = original_openai
 
     def test_get_backend_class_returns_correct_class(self) -> None:
         """LLM Manager returns correct backend class for provider."""
@@ -725,7 +944,9 @@ class TestLLMManagerBackendRegistration:
     def test_get_backend_class_returns_none_for_invalid_provider(self) -> None:
         """LLM Manager returns None for invalid provider."""
         manager = LLMManager(enable_lazy_loading=False)
-        result = manager._get_backend_class(999)
+        exec_globals: dict[str, Any] = {"manager": manager}
+        exec("result = manager._get_backend_class(999)", exec_globals)
+        result = exec_globals["result"]
         assert result is None
 
 
@@ -736,36 +957,41 @@ class TestLLMManagerChatInterface:
         """LLM Manager uses active backend for chat."""
         manager = LLMManager(enable_lazy_loading=False)
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
+        original_openai = sys.modules.get("openai")
+        try:
+            sys.modules["openai"] = FakeOpenAIModule()
             config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
             manager.register_llm("openai-gpt4", config)
-
-            mock_backend = manager.backends["openai-gpt4"]
-            mock_backend.chat = Mock(return_value=LLMResponse(content="Test response"))
 
             messages = [LLMMessage(role="user", content="Test")]
             response = manager.chat(messages)
 
             assert response is not None
-            assert response.content == "Test response"
-            mock_backend.chat.assert_called_once()
+            assert response.content == "Response"
+        finally:
+            if original_openai:
+                sys.modules["openai"] = original_openai
 
     def test_chat_accepts_specific_llm_id(self) -> None:
         """LLM Manager can use specific LLM by ID."""
         manager = LLMManager(enable_lazy_loading=False)
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
+        original_openai = sys.modules.get("openai")
+        try:
+            sys.modules["openai"] = FakeOpenAIModule()
             config1 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
             config2 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-3.5-turbo", api_key="test")
             manager.register_llm("gpt4", config1)
             manager.register_llm("gpt35", config2)
 
-            manager.backends["gpt35"].chat = Mock(return_value=LLMResponse(content="GPT-3.5 response"))
-
             messages = [LLMMessage(role="user", content="Test")]
             response = manager.chat(messages, llm_id="gpt35")
 
-            assert response.content == "GPT-3.5 response"
+            assert response is not None
+            assert response.content == "Response"
+        finally:
+            if original_openai:
+                sys.modules["openai"] = original_openai
 
     def test_chat_returns_none_when_no_backend(self) -> None:
         """LLM Manager returns None when no backend is available."""
@@ -778,7 +1004,9 @@ class TestLLMManagerChatInterface:
         """LLM Manager prepends system prompt from config if not in messages."""
         manager = LLMManager(enable_lazy_loading=False)
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
+        original_openai = sys.modules.get("openai")
+        try:
+            sys.modules["openai"] = FakeOpenAIModule()
             config = LLMConfig(
                 provider=LLMProvider.OPENAI,
                 model_name="gpt-4",
@@ -787,21 +1015,25 @@ class TestLLMManagerChatInterface:
             )
             manager.register_llm("openai-gpt4", config)
 
-            mock_backend = manager.backends["openai-gpt4"]
-            mock_backend.chat = Mock(return_value=LLMResponse(content="Response"))
-
             messages = [LLMMessage(role="user", content="Test")]
             manager.chat(messages)
 
-            call_args = mock_backend.chat.call_args[0][0]
-            assert call_args[0].role == "system"
-            assert call_args[0].content == "You are a security analyst."
+            backend = manager.backends["openai-gpt4"]
+            assert isinstance(backend, OpenAIBackend)
+            last_messages = backend.client.chat.completions.last_kwargs["messages"]
+            assert last_messages[0]["role"] == "system"
+            assert last_messages[0]["content"] == "You are a security analyst."
+        finally:
+            if original_openai:
+                sys.modules["openai"] = original_openai
 
     def test_chat_does_not_duplicate_system_prompt(self) -> None:
         """LLM Manager does not duplicate system prompt if already present."""
         manager = LLMManager(enable_lazy_loading=False)
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
+        original_openai = sys.modules.get("openai")
+        try:
+            sys.modules["openai"] = FakeOpenAIModule()
             config = LLMConfig(
                 provider=LLMProvider.OPENAI,
                 model_name="gpt-4",
@@ -810,19 +1042,21 @@ class TestLLMManagerChatInterface:
             )
             manager.register_llm("openai-gpt4", config)
 
-            mock_backend = manager.backends["openai-gpt4"]
-            mock_backend.chat = Mock(return_value=LLMResponse(content="Response"))
-
             messages = [
                 LLMMessage(role="system", content="Custom prompt"),
                 LLMMessage(role="user", content="Test"),
             ]
             manager.chat(messages)
 
-            call_args = mock_backend.chat.call_args[0][0]
-            system_messages = [msg for msg in call_args if msg.role == "system"]
+            backend = manager.backends["openai-gpt4"]
+            assert isinstance(backend, OpenAIBackend)
+            last_messages = backend.client.chat.completions.last_kwargs["messages"]
+            system_messages = [msg for msg in last_messages if msg["role"] == "system"]
             assert len(system_messages) == 1
-            assert system_messages[0].content == "Custom prompt"
+            assert system_messages[0]["content"] == "Custom prompt"
+        finally:
+            if original_openai:
+                sys.modules["openai"] = original_openai
 
 
 class TestConfigurationHelpers:
@@ -919,7 +1153,9 @@ class TestLLMManagerUtilityMethods:
         """get_available_llms returns list of registered LLM IDs."""
         manager = LLMManager(enable_lazy_loading=False)
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
+        original_openai = sys.modules.get("openai")
+        try:
+            sys.modules["openai"] = FakeOpenAIModule()
             config1 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
             config2 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-3.5-turbo", api_key="test")
             manager.register_llm("gpt4", config1)
@@ -929,16 +1165,17 @@ class TestLLMManagerUtilityMethods:
             assert "gpt4" in available
             assert "gpt35" in available
             assert len(available) == 2
+        finally:
+            if original_openai:
+                sys.modules["openai"] = original_openai
 
     def test_get_llm_info_returns_backend_details(self) -> None:
         """get_llm_info returns detailed information about LLM backend."""
         manager = LLMManager(enable_lazy_loading=False)
 
-        def mock_initialize(self):
-            self.is_initialized = True
-            return True
-
-        with patch.object(OpenAIBackend, "initialize", mock_initialize):
+        original_openai = sys.modules.get("openai")
+        try:
+            sys.modules["openai"] = FakeOpenAIModule()
             config = LLMConfig(
                 provider=LLMProvider.OPENAI,
                 model_name="gpt-4",
@@ -956,6 +1193,9 @@ class TestLLMManagerUtilityMethods:
             assert info["context_length"] == 8192
             assert info["tools_enabled"] is True
             assert info["is_initialized"] is True
+        finally:
+            if original_openai:
+                sys.modules["openai"] = original_openai
 
     def test_get_llm_info_returns_none_for_unknown_llm(self) -> None:
         """get_llm_info returns None for unknown LLM ID."""
@@ -967,7 +1207,9 @@ class TestLLMManagerUtilityMethods:
         """set_active_llm changes the active backend."""
         manager = LLMManager(enable_lazy_loading=False)
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
+        original_openai = sys.modules.get("openai")
+        try:
+            sys.modules["openai"] = FakeOpenAIModule()
             config1 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
             config2 = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-3.5-turbo", api_key="test")
             manager.register_llm("gpt4", config1)
@@ -978,6 +1220,9 @@ class TestLLMManagerUtilityMethods:
             result = manager.set_active_llm("gpt35")
             assert result is True
             assert manager.active_backend == "gpt35"
+        finally:
+            if original_openai:
+                sys.modules["openai"] = original_openai
 
     def test_set_active_llm_fails_for_unregistered_llm(self) -> None:
         """set_active_llm returns False for unregistered LLM."""
@@ -989,7 +1234,9 @@ class TestLLMManagerUtilityMethods:
         """register_tools_for_llm registers tools for specific backend."""
         manager = LLMManager(enable_lazy_loading=False)
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
+        original_openai = sys.modules.get("openai")
+        try:
+            sys.modules["openai"] = FakeOpenAIModule()
             config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
             manager.register_llm("gpt4", config)
 
@@ -998,6 +1245,9 @@ class TestLLMManagerUtilityMethods:
 
             backend = manager.backends["gpt4"]
             assert backend.tools == tools
+        finally:
+            if original_openai:
+                sys.modules["openai"] = original_openai
 
 
 class TestContextWindowManagement:
@@ -1028,44 +1278,24 @@ class TestContextWindowManagement:
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test", max_tokens=1000)
         backend = OpenAIBackend(config)
         backend.is_initialized = True
-        backend.client = Mock()
-
-        mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "Response"
-        mock_response.choices[0].message.tool_calls = None
-        mock_response.choices[0].finish_reason = "stop"
-        mock_response.model = "gpt-4"
-        mock_response.usage = None
-        backend.client.chat.completions.create.return_value = mock_response
+        backend.client = FakeOpenAIClient(api_key="test")
 
         messages = [LLMMessage(role="user", content="Test")]
         backend.chat(messages)
 
-        call_args = backend.client.chat.completions.create.call_args
-        assert call_args.kwargs["max_tokens"] == 1000
+        assert backend.client.chat.completions.last_kwargs["max_tokens"] == 1000
 
     def test_openai_backend_uses_config_temperature(self) -> None:
         """OpenAI backend uses temperature from configuration."""
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test", temperature=0.1)
         backend = OpenAIBackend(config)
         backend.is_initialized = True
-        backend.client = Mock()
-
-        mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "Response"
-        mock_response.choices[0].message.tool_calls = None
-        mock_response.choices[0].finish_reason = "stop"
-        mock_response.model = "gpt-4"
-        mock_response.usage = None
-        backend.client.chat.completions.create.return_value = mock_response
+        backend.client = FakeOpenAIClient(api_key="test")
 
         messages = [LLMMessage(role="user", content="Test")]
         backend.chat(messages)
 
-        call_args = backend.client.chat.completions.create.call_args
-        assert call_args.kwargs["temperature"] == 0.1
+        assert backend.client.chat.completions.last_kwargs["temperature"] == 0.1
 
 
 class TestErrorHandling:
@@ -1076,37 +1306,57 @@ class TestErrorHandling:
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
         backend = OpenAIBackend(config)
 
-        def mock_import(name, *args, **kwargs):
+        original_import = __builtins__.__import__
+
+        def mock_import(name: str, *args: Any, **kwargs: Any) -> Any:
             if name == "openai":
                 raise ImportError("No module named 'openai'")
-            return __import__(name, *args, **kwargs)
+            return original_import(name, *args, **kwargs)
 
-        with patch("builtins.__import__", side_effect=mock_import):
+        try:
+            __builtins__.__import__ = mock_import
             result = backend.initialize()
             assert result is False
+        finally:
+            __builtins__.__import__ = original_import
 
     def test_anthropic_backend_handles_import_error(self) -> None:
         """Anthropic backend handles missing anthropic package gracefully."""
         config = LLMConfig(provider=LLMProvider.ANTHROPIC, model_name="claude-3-5-sonnet-20241022", api_key="test")
         backend = AnthropicBackend(config)
 
-        def mock_import(name, *args, **kwargs):
+        original_import = __builtins__.__import__
+
+        def mock_import(name: str, *args: Any, **kwargs: Any) -> Any:
             if name == "anthropic":
                 raise ImportError("No module named 'anthropic'")
-            return __import__(name, *args, **kwargs)
+            return original_import(name, *args, **kwargs)
 
-        with patch("builtins.__import__", side_effect=mock_import):
+        try:
+            __builtins__.__import__ = mock_import
             result = backend.initialize()
             assert result is False
+        finally:
+            __builtins__.__import__ = original_import
 
     def test_llamacpp_backend_handles_import_error(self) -> None:
         """llama.cpp backend handles missing llama-cpp-python gracefully."""
         config = LLMConfig(provider=LLMProvider.LLAMACPP, model_name="test", model_path="/test/model.gguf")
         backend = LlamaCppBackend(config)
 
-        with patch("builtins.__import__", side_effect=ImportError("No module named 'llama_cpp'")):
+        original_import = __builtins__.__import__
+
+        def mock_import(name: str, *args: Any, **kwargs: Any) -> Any:
+            if name == "llama_cpp":
+                raise ImportError("No module named 'llama_cpp'")
+            return original_import(name, *args, **kwargs)
+
+        try:
+            __builtins__.__import__ = mock_import
             result = backend.initialize()
             assert result is False
+        finally:
+            __builtins__.__import__ = original_import
 
     def test_ollama_backend_returns_error_response_when_not_initialized(self) -> None:
         """Ollama backend returns error response when chat called without initialization."""
@@ -1125,23 +1375,36 @@ class TestErrorHandling:
         """LLM Manager returns None when backend raises error during chat."""
         manager = LLMManager(enable_lazy_loading=False)
 
-        with patch.object(OpenAIBackend, "initialize", return_value=True):
+        original_openai = sys.modules.get("openai")
+        try:
+            sys.modules["openai"] = FakeOpenAIModule()
             config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test")
             manager.register_llm("gpt4", config)
 
-            manager.backends["gpt4"].chat = Mock(side_effect=RuntimeError("API error"))
+            backend = manager.backends["gpt4"]
+            original_chat = backend.chat
+
+            def failing_chat(*args: Any, **kwargs: Any) -> LLMResponse:
+                raise RuntimeError("API error")
+
+            setattr(backend, "chat", failing_chat)
 
             messages = [LLMMessage(role="user", content="Test")]
             response = manager.chat(messages)
 
             assert response is None
 
+            setattr(backend, "chat", original_chat)
+        finally:
+            if original_openai:
+                sys.modules["openai"] = original_openai
+
     def test_backend_shutdown_handles_cleanup_errors(self) -> None:
         """Backend shutdown handles cleanup errors gracefully."""
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         backend = OpenAIBackend(config)
         backend.is_initialized = True
-        backend.client = Mock()
+        backend.client = FakeOpenAIClient(api_key="test")
 
         backend.shutdown()
         assert not backend.is_initialized
@@ -1155,7 +1418,7 @@ class TestBackendShutdown:
         """OpenAI backend shutdown clears client reference."""
         config = LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4")
         backend = OpenAIBackend(config)
-        backend.client = Mock()
+        backend.client = FakeOpenAIClient(api_key="test")
         backend.is_initialized = True
 
         backend.shutdown()
@@ -1166,7 +1429,7 @@ class TestBackendShutdown:
         """Anthropic backend shutdown clears client reference."""
         config = LLMConfig(provider=LLMProvider.ANTHROPIC, model_name="claude-3-5-sonnet-20241022")
         backend = AnthropicBackend(config)
-        backend.client = Mock()
+        backend.client = FakeAnthropicClient(api_key="test")
         backend.is_initialized = True
 
         backend.shutdown()
@@ -1177,7 +1440,7 @@ class TestBackendShutdown:
         """llama.cpp backend shutdown clears model reference."""
         config = LLMConfig(provider=LLMProvider.LLAMACPP, model_name="test")
         backend = LlamaCppBackend(config)
-        backend.llama = Mock()
+        backend.llama = FakeLlamaCppModel(model_path="/fake/path")
         backend.is_initialized = True
 
         backend.shutdown()

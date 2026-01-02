@@ -58,7 +58,11 @@ _real_time_dashboard: ModuleType | bool | None = None
 
 
 def _lazy_import_dashboard_manager() -> ModuleType | None:
-    """Lazy import of dashboard manager module."""
+    """Lazy import of dashboard manager module.
+
+    Returns:
+        The dashboard manager module if available, None otherwise.
+    """
     global _dashboard_manager
     if _dashboard_manager is None:
         try:
@@ -74,7 +78,11 @@ def _lazy_import_dashboard_manager() -> ModuleType | None:
 
 
 def _lazy_import_dashboard_widgets() -> ModuleType | None:
-    """Lazy import of dashboard widgets module."""
+    """Lazy import of dashboard widgets module.
+
+    Returns:
+        The dashboard widgets module if available, None otherwise.
+    """
     global _dashboard_widgets
     if _dashboard_widgets is None:
         try:
@@ -90,7 +98,11 @@ def _lazy_import_dashboard_widgets() -> ModuleType | None:
 
 
 def _lazy_import_real_time_dashboard() -> ModuleType | None:
-    """Lazy import of real-time dashboard module."""
+    """Lazy import of real-time dashboard module.
+
+    Returns:
+        The real-time dashboard module if available, None otherwise.
+    """
     global _real_time_dashboard
     if _real_time_dashboard is None:
         try:
@@ -106,19 +118,40 @@ def _lazy_import_real_time_dashboard() -> ModuleType | None:
 
 
 def _get_dashboard_manager(self: Any) -> ModuleType | None:
-    """Property getter for dashboard_manager."""
+    """Property getter for dashboard_manager.
+
+    Args:
+        self: The instance accessing the property.
+
+    Returns:
+        The dashboard manager module if available, None otherwise.
+    """
     logger.debug("Accessing dashboard_manager on %s", self)
     return _lazy_import_dashboard_manager()
 
 
 def _get_dashboard_widgets(self: Any) -> ModuleType | None:
-    """Property getter for dashboard_widgets."""
+    """Property getter for dashboard_widgets.
+
+    Args:
+        self: The instance accessing the property.
+
+    Returns:
+        The dashboard widgets module if available, None otherwise.
+    """
     logger.debug("Accessing dashboard_widgets on %s", self)
     return _lazy_import_dashboard_widgets()
 
 
 def _get_real_time_dashboard(self: Any) -> ModuleType | None:
-    """Property getter for real_time_dashboard."""
+    """Property getter for real_time_dashboard.
+
+    Args:
+        self: The instance accessing the property.
+
+    Returns:
+        The real-time dashboard module if available, None otherwise.
+    """
     logger.debug("Accessing real_time_dashboard on %s", self)
     return _lazy_import_real_time_dashboard()
 
@@ -130,7 +163,17 @@ real_time_dashboard = property(_get_real_time_dashboard)
 
 # For backwards compatibility, expose the classes and functions
 def __getattr__(name: str) -> object:
-    """Lazy attribute access for dashboard components."""
+    """Lazy attribute access for dashboard components.
+
+    Args:
+        name: The name of the attribute to retrieve.
+
+    Returns:
+        The requested attribute from the dashboard modules.
+
+    Raises:
+        AttributeError: If the attribute is not found in any dashboard module.
+    """
     if name in {
         "DashboardLayout",
         "DashboardManager",

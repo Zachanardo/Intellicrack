@@ -6,12 +6,7 @@ import os
 from typing import Protocol, runtime_checkable
 
 from intellicrack.types.analysis import ExploitPayloadResult, ExploitStrategyResult
-from intellicrack.types.ui import (
-    StandardButton,
-    WidgetProtocol,
-    get_file_dialog,
-    get_message_box,
-)
+from intellicrack.types.ui import StandardButton, WidgetProtocol, get_file_dialog, get_message_box
 from intellicrack.utils.logger import logger
 
 
@@ -20,7 +15,12 @@ class SignalEmitterProtocol(Protocol):
     """Protocol for objects that can emit signals."""
 
     def emit(self, message: str) -> None:
-        """Emit a signal with the given message."""
+        """Emit a signal with the given message.
+
+        Args:
+            message: The message to emit as a signal.
+
+        """
         ...
 
 
@@ -48,10 +48,10 @@ def check_binary_path_and_warn(app_instance: AppInstanceProtocol | WidgetProtoco
     """Check if binary path exists and show warning if not.
 
     Args:
-        app_instance: Application instance with binary_path and QMessageBox access
+        app_instance: Application instance with binary_path and QMessageBox access.
 
     Returns:
-        bool: True if binary path exists, False if missing
+        True if binary path exists, False if missing.
 
     """
     binary_path = getattr(app_instance, "binary_path", None)
@@ -70,8 +70,8 @@ def emit_log_message(app_instance: LoggableAppProtocol | object, message: str) -
     """Emit log message if app instance supports it.
 
     Args:
-        app_instance: Application instance (LoggableAppProtocol or any object)
-        message: Message to log
+        app_instance: Application instance with optional update_output signal.
+        message: Message to log.
 
     """
     if not hasattr(app_instance, "update_output"):
@@ -98,12 +98,12 @@ def show_file_dialog(
     """Show file save dialog and return filename.
 
     Args:
-        parent: Parent widget (WidgetProtocol or None)
-        title: Dialog title
-        file_filter: File filter string
+        parent: Parent widget for the dialog.
+        title: Dialog title.
+        file_filter: File filter string.
 
     Returns:
-        Selected filename or empty string if cancelled
+        Selected filename or empty string if cancelled.
 
     """
     FileDialog = get_file_dialog()
@@ -119,12 +119,12 @@ def ask_yes_no_question(
     """Show yes/no question dialog.
 
     Args:
-        parent: Parent widget (WidgetProtocol or None)
-        title: Dialog title
-        question: Question text
+        parent: Parent widget for the dialog.
+        title: Dialog title.
+        question: Question text.
 
     Returns:
-        True if Yes clicked, False otherwise
+        True if Yes clicked, False otherwise.
 
     """
     MessageBox = get_message_box()
@@ -147,11 +147,11 @@ def generate_exploit_payload_common(
     in main_app.py and missing_methods.py.
 
     Args:
-        payload_type: Type of payload to generate ("License Bypass", "Function Hijack", "NOP Slide")
-        target_path: Target path for license bypass payload
+        payload_type: Type of payload to generate ("License Bypass", "Function Hijack", "NOP Slide").
+        target_path: Target path for license bypass payload.
 
     Returns:
-        ExploitPayloadResult with payload details or error
+        Result with payload details or error.
 
     """
     try:
@@ -223,11 +223,11 @@ def generate_exploit_strategy_common(
     This is the common implementation extracted from duplicate code.
 
     Args:
-        binary_path: Path to binary file
-        vulnerability_type: Type of vulnerability to exploit
+        binary_path: Path to binary file.
+        vulnerability_type: Type of vulnerability to exploit.
 
     Returns:
-        ExploitStrategyResult with strategy details or error
+        Result with strategy details or error.
 
     """
     try:

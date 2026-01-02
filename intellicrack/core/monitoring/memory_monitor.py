@@ -81,7 +81,7 @@ class MemoryMonitor(BaseMonitor):
             return not self._handle_error(e)
 
     def _stop_monitoring(self) -> None:
-        """Stop memory monitoring."""
+        """Stop memory monitoring and cleanup resources."""
         if self.script:
             try:
                 self.script.unload()
@@ -100,7 +100,7 @@ class MemoryMonitor(BaseMonitor):
             self._scan_thread.join(timeout=2.0)
 
     def _scan_loop(self) -> None:
-        """Periodic scanning loop (runs in thread)."""
+        """Execute periodic memory scanning loop in dedicated thread."""
         while self._running:
             try:
                 if self.script:
@@ -111,7 +111,7 @@ class MemoryMonitor(BaseMonitor):
                     break
 
     def _trigger_scan(self) -> None:
-        """Trigger memory scan via Frida script."""
+        """Trigger memory scan execution through Frida script exports."""
         try:
             if self.script:
                 self.script.exports.scan_memory()
@@ -177,7 +177,7 @@ class MemoryMonitor(BaseMonitor):
         """Build Frida JavaScript for memory scanning.
 
         Returns:
-            Frida script source code.
+            Frida script source code as JavaScript string.
 
         """
         return """

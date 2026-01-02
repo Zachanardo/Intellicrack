@@ -77,6 +77,7 @@ class DropZoneWidget(QWidget):
 
         Initializes the layout and UI elements including the main instruction label
         and information label displaying supported file types.
+
         """
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -107,6 +108,7 @@ class DropZoneWidget(QWidget):
         Changes the visual appearance of the drop zone to reflect whether
         a drag operation is currently active. When dragging, displays a
         highlighted blue border and updated label text.
+
         """
         if self.is_dragging:
             self.setStyleSheet("""

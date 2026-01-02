@@ -25,7 +25,7 @@ import os
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, BinaryIO
+from typing import BinaryIO
 
 from ..utils.logger import get_logger
 
@@ -53,12 +53,22 @@ class DifferenceBlock:
 
     @property
     def end1(self) -> int:
-        """End offset in file 1."""
+        """End offset in file 1.
+
+        Returns:
+            int: End offset calculated from offset1 and length1.
+
+        """
         return self.offset1 + self.length1
 
     @property
     def end2(self) -> int:
-        """End offset in file 2."""
+        """End offset in file 2.
+
+        Returns:
+            int: End offset calculated from offset2 and length2.
+
+        """
         return self.offset2 + self.length2
 
 
@@ -93,7 +103,14 @@ class BinaryComparer:
             file2_path: Path to second file
 
         Returns:
-            List of DifferenceBlock objects
+            list[DifferenceBlock]: List of DifferenceBlock objects representing
+                identified differences between the two files.
+
+        Raises:
+            FileNotFoundError: If either file does not exist.
+            IOError: If an error occurs reading from either file.
+            OSError: If a general OS-level error occurs during comparison.
+            Exception: If any other unexpected error occurs during comparison.
 
         """
         self.differences = []
@@ -119,7 +136,8 @@ class BinaryComparer:
             data2: Second byte array
 
         Returns:
-            List of DifferenceBlock objects
+            list[DifferenceBlock]: List of DifferenceBlock objects representing
+                differences identified in the byte arrays.
 
         """
         self.differences = []
@@ -131,6 +149,9 @@ class BinaryComparer:
 
     def _compare_streams(self, f1: BinaryIO, f2: BinaryIO, size1: int, size2: int) -> None:
         """Compare two file streams block by block.
+
+        Compares file streams in configurable block sizes and populates
+        the differences list with identified changes.
 
         Args:
             f1: First file stream
@@ -190,11 +211,11 @@ class BinaryComparer:
         """Determine the type of difference between two blocks.
 
         Args:
-            block1: First block
-            block2: Second block
+            block1: First block of binary data
+            block2: Second block of binary data
 
         Returns:
-            Type of difference
+            DifferenceType: The difference type (MODIFIED, INSERTED, or DELETED).
 
         """
         if not block1:
@@ -204,9 +225,12 @@ class BinaryComparer:
     def _find_differences_lcs(self, data1: bytes, data2: bytes) -> None:
         """Find differences using LCS algorithm for smaller data.
 
+        Uses the Longest Common Subsequence algorithm to identify differences
+        between two byte arrays and populates the differences list.
+
         Args:
-            data1: First data
-            data2: Second data
+            data1: First byte data to compare
+            data2: Second byte data to compare
 
         """
         # For large files, fall back to block comparison
@@ -232,9 +256,12 @@ class BinaryComparer:
     def _find_differences_simple(self, data1: bytes, data2: bytes) -> None:
         """Perform simple byte-by-byte comparison for finding differences.
 
+        Compares two byte arrays using a simple linear scan algorithm
+        and populates the differences list with identified changes.
+
         Args:
-            data1: First data
-            data2: Second data
+            data1: First byte data to compare
+            data2: Second byte data to compare
 
         """
         i: int = 0
@@ -303,10 +330,13 @@ class BinaryComparer:
     def _trace_lcs(self, data1: bytes, data2: bytes, lcs: list[list[int]]) -> None:
         """Trace LCS table to find differences.
 
+        Backtracks through the LCS table to identify and record differences
+        between two byte arrays.
+
         Args:
-            data1: First data
-            data2: Second data
-            lcs: LCS table
+            data1: First byte data
+            data2: Second byte data
+            lcs: LCS table generated from the two data arrays
 
         """
         i: int = len(data1)
@@ -380,7 +410,12 @@ class BinaryComparer:
         self._merge_adjacent_differences()
 
     def _merge_adjacent_differences(self) -> None:
-        """Merge adjacent difference blocks of the same type."""
+        """Merge adjacent difference blocks of the same type.
+
+        Combines consecutive difference blocks that share the same type
+        and are adjacent in both files to reduce fragmentation.
+
+        """
         if len(self.differences) <= 1:
             return
 
@@ -405,7 +440,9 @@ class BinaryComparer:
         """Get statistics about the comparison.
 
         Returns:
-            Dictionary with comparison statistics
+            dict[str, int]: Dictionary containing statistics about identified
+                differences, including counts of modified, inserted, and deleted
+                blocks.
 
         """
         stats: dict[str, int] = {
@@ -449,7 +486,7 @@ class ComparisonNavigator:
         """Check if there are any differences.
 
         Returns:
-            True if differences exist
+            bool: True if differences exist, False otherwise.
 
         """
         return len(self.differences) > 0
@@ -458,7 +495,8 @@ class ComparisonNavigator:
         """Go to the first difference.
 
         Returns:
-            First difference block or None
+            DifferenceBlock | None: First difference block if available, None
+                otherwise.
 
         """
         if self.differences:
@@ -470,7 +508,8 @@ class ComparisonNavigator:
         """Go to the last difference.
 
         Returns:
-            Last difference block or None
+            DifferenceBlock | None: Last difference block if available, None
+                otherwise.
 
         """
         if self.differences:
@@ -482,7 +521,8 @@ class ComparisonNavigator:
         """Go to the next difference.
 
         Returns:
-            Next difference block or None
+            DifferenceBlock | None: Next difference block if available, None
+                otherwise.
 
         """
         if self.current_index < len(self.differences) - 1:
@@ -494,7 +534,8 @@ class ComparisonNavigator:
         """Go to the previous difference.
 
         Returns:
-            Previous difference block or None
+            DifferenceBlock | None: Previous difference block if available, None
+                otherwise.
 
         """
         if self.current_index > 0:
@@ -506,11 +547,12 @@ class ComparisonNavigator:
         """Go to the difference containing the specified offset.
 
         Args:
-            offset: Offset to find
+            offset: Offset to find in the file
             file_num: Which file's offset to use (1 or 2)
 
         Returns:
-            Difference block containing offset or None
+            DifferenceBlock | None: Difference block containing the offset if
+                found, None otherwise.
 
         """
         for i, diff in enumerate(self.differences):
@@ -527,7 +569,8 @@ class ComparisonNavigator:
         """Get the current difference.
 
         Returns:
-            Current difference block or None
+            DifferenceBlock | None: Current difference block if valid index, None
+                otherwise.
 
         """
         if 0 <= self.current_index < len(self.differences):
@@ -538,7 +581,8 @@ class ComparisonNavigator:
         """Get current position in difference list.
 
         Returns:
-            Tuple of (current_index + 1, total_differences)
+            tuple[int, int]: Tuple containing (current_index + 1,
+                total_differences).
 
         """
         return (self.current_index + 1, len(self.differences))

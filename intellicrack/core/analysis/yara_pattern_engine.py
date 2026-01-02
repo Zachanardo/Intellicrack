@@ -14,7 +14,7 @@ import tempfile
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 from intellicrack.utils.logger import logger
 from intellicrack.utils.type_safety import validate_type
@@ -46,7 +46,7 @@ class PatternCategory(Enum):
 
 @dataclass
 class YaraMatch:
-    """Single YARA rule match."""
+    """Single YARA rule match from a binary scan."""
 
     rule_name: str
     namespace: str
@@ -61,7 +61,11 @@ class YaraMatch:
 
     @property
     def severity(self) -> str:
-        """Get severity based on category and confidence."""
+        """Get severity based on category and confidence.
+
+        Returns:
+            Severity level as 'high', 'medium', or 'low'.
+        """
         if self.category in [PatternCategory.LICENSE_BYPASS, PatternCategory.ANTI_DEBUG]:
             return "high" if self.confidence > 0.8 else "medium"
         if self.category in [PatternCategory.PROTECTION, PatternCategory.PACKER]:
@@ -71,7 +75,7 @@ class YaraMatch:
 
 @dataclass
 class YaraScanResult:
-    """Complete YARA scan results."""
+    """Complete YARA scan results for a binary or process."""
 
     file_path: str
     matches: list[YaraMatch] = field(default_factory=list)
@@ -82,26 +86,49 @@ class YaraScanResult:
 
     @property
     def has_protections(self) -> bool:
-        """Check if any protection patterns were found."""
+        """Check if any protection patterns were found.
+
+        Returns:
+            True if protection patterns detected, False otherwise.
+        """
         return any(m.category == PatternCategory.PROTECTION for m in self.matches)
 
     @property
     def has_packers(self) -> bool:
-        """Check if any packer patterns were found."""
+        """Check if any packer patterns were found.
+
+        Returns:
+            True if packer patterns detected, False otherwise.
+        """
         return any(m.category == PatternCategory.PACKER for m in self.matches)
 
     @property
     def has_licensing(self) -> bool:
-        """Check if any licensing patterns were found."""
+        """Check if any licensing patterns were found.
+
+        Returns:
+            True if licensing patterns detected, False otherwise.
+        """
         return any(m.category == PatternCategory.LICENSING for m in self.matches)
 
     @property
     def high_confidence_matches(self) -> list[YaraMatch]:
-        """Get matches with high confidence (>0.8)."""
+        """Get matches with high confidence (>0.8).
+
+        Returns:
+            List of high confidence matches.
+        """
         return [m for m in self.matches if m.confidence > 0.8]
 
     def get_matches_by_category(self, category: PatternCategory) -> list[YaraMatch]:
-        """Get all matches for a specific category."""
+        """Get all matches for a specific category.
+
+        Args:
+            category: The pattern category to filter by.
+
+        Returns:
+            List of matches belonging to the specified category.
+        """
         return [m for m in self.matches if m.category == category]
 
 
@@ -117,8 +144,10 @@ class YaraPatternEngine:
         """Initialize YARA pattern engine.
 
         Args:
-            custom_rules_path: Optional path to custom YARA rules directory
+            custom_rules_path: Optional path to custom YARA rules directory.
 
+        Raises:
+            ImportError: If yara-python package is not installed.
         """
         if not YARA_AVAILABLE:
             raise ImportError("yara-python package is required but not installed")
@@ -132,7 +161,14 @@ class YaraPatternEngine:
         self._load_rules()
 
     def _load_rules(self) -> None:
-        """Load and compile YARA rules."""
+        """Load and compile YARA rules.
+
+        Loads built-in YARA rules and custom rules if specified. Creates default
+        rules if none exist, then compiles all rules and extracts metadata.
+
+        Raises:
+            Exception: If YARA rule loading or compilation fails.
+        """
         try:
             # Get built-in rules directory
             rules_dir = Path(__file__).parent.parent.parent / "data" / "yara_rules"
@@ -191,7 +227,11 @@ class YaraPatternEngine:
             self.compiled_rules = None
 
     def _create_default_rules(self, rules_dir: Path) -> None:
-        """Create comprehensive default YARA rules."""
+        """Create comprehensive default YARA rules.
+
+        Args:
+            rules_dir: Directory path to store the default YARA rule files.
+        """
         # Protection detection rules
         protection_rules = """
 rule VMProtect_Detection
@@ -485,7 +525,14 @@ rule GCC_Compiler
         (rules_dir / "compilers.yar").write_text(compiler_rules)
 
     def _create_minimal_rules(self, rules_dir: Path) -> None:
-        """Create minimal rules as fallback."""
+        """Create minimal rules as fallback.
+
+        Args:
+            rules_dir: Directory path to store the minimal YARA rule file.
+
+        Raises:
+            Exception: If minimal rule file cannot be written.
+        """
         minimal_rules = """
 rule Basic_PE_Detection
 {
@@ -504,14 +551,32 @@ rule Basic_PE_Detection
         (rules_dir / "basic.yar").write_text(minimal_rules)
 
     def _extract_rule_metadata(self) -> None:
-        """Extract metadata from compiled rules by parsing rule sources."""
+        """Extract metadata from compiled rules by parsing rule sources.
+
+        Parses the metadata section from YARA rule source files and stores
+        category, confidence, and description information for each rule.
+
+        Raises:
+            Exception: If metadata extraction fails during parsing.
+        """
         import re
 
         if not self.compiled_rules:
             return
 
         def parse_meta_from_source(rule_source: str, rule_name: str) -> dict[str, Any]:
-            """Parse meta fields from a specific rule in the source."""
+            """Parse meta fields from a specific rule in the source.
+
+            Args:
+                rule_source: The full source code of the YARA rules.
+                rule_name: The specific rule name to extract metadata from.
+
+            Returns:
+                Dictionary containing the extracted metadata fields.
+
+            Raises:
+                Exception: If regex parsing encounters unexpected rule format.
+            """
             meta: dict[str, Any] = {}
 
             # Find the specific rule in the source
@@ -569,7 +634,11 @@ rule Basic_PE_Detection
             }
 
     def _count_total_rules(self) -> int:
-        """Count total number of rules."""
+        """Count total number of rules.
+
+        Returns:
+            Total number of compiled YARA rules.
+        """
         return len(list(self.compiled_rules)) if self.compiled_rules else 0
 
     def scan(self, binary_path: str, timeout: int = 60) -> dict[str, Any]:
@@ -579,12 +648,17 @@ rule Basic_PE_Detection
         compatible with the analysis orchestrator and other consumers.
 
         Args:
-            binary_path: Path to binary file to scan
-            timeout: Scan timeout in seconds
+            binary_path: Path to binary file to scan.
+            timeout: Scan timeout in seconds (default: 60).
 
         Returns:
-            Dictionary containing scan results with matches, metadata, and any errors
+            Dictionary containing scan results with matches, metadata, and any errors.
+            Structure includes file_path, matches list, total_rules, scan_time,
+            has_protections, has_packers, has_licensing flags, high_confidence_count,
+            metadata, and categories_detected list.
 
+        Raises:
+            Exception: If file scanning or result conversion fails.
         """
         result = self.scan_file(binary_path, timeout)
 
@@ -631,11 +705,14 @@ rule Basic_PE_Detection
         The rules are compiled and merged with existing rules.
 
         Args:
-            rules_path: Path to YARA rules file (.yar) or directory containing rules
+            rules_path: Path to YARA rules file (.yar) or directory containing rules.
 
         Returns:
-            True if rules were loaded successfully, False otherwise
+            True if rules were loaded successfully, False otherwise.
 
+        Raises:
+            yara.SyntaxError: If YARA rules have syntax errors.
+            Exception: If rule file reading or compilation fails.
         """
         try:
             rules_path_obj = Path(rules_path)
@@ -714,13 +791,19 @@ rule Basic_PE_Detection
     def scan_file(self, file_path: str, timeout: int = 60) -> YaraScanResult:
         """Scan a file with YARA rules.
 
+        Performs comprehensive scanning of a binary file with all compiled YARA
+        rules. Handles large files with temporary directory allocation. Caches
+        scanned file metadata to skip unchanged files.
+
         Args:
-            file_path: Path to file to scan
-            timeout: Scan timeout in seconds
+            file_path: Path to file to scan.
+            timeout: Scan timeout in seconds (default: 60).
 
         Returns:
-            YaraScanResult with all matches
+            YaraScanResult with all matches, metadata, and scan statistics.
 
+        Raises:
+            Exception: If file access, YARA matching, or match processing fails.
         """
         import time
 
@@ -917,7 +1000,21 @@ rule Basic_PE_Detection
                     logger.warning("Failed to cleanup temp directory: %s", cleanup_error)
 
     def _determine_category(self, match: Any) -> PatternCategory:
-        """Determine pattern category from YARA match."""
+        """Determine pattern category from YARA match.
+
+        Inspects the rule name and keywords to classify the match into
+        appropriate pattern categories such as protection, packer, licensing,
+        anti-debug, anti-VM, compiler, or suspicious.
+
+        Args:
+            match: The YARA match object to categorize.
+
+        Returns:
+            PatternCategory enumeration value for the match.
+
+        Raises:
+            AttributeError: If match object lacks required rule attribute.
+        """
         # Check rule name first
         rule_name: str = validate_type(match.rule, str).lower()
 
@@ -938,7 +1035,21 @@ rule Basic_PE_Detection
         return PatternCategory.SUSPICIOUS
 
     def _calculate_confidence(self, match: Any) -> float:
-        """Calculate confidence score for a match."""
+        """Calculate confidence score for a match.
+
+        Calculates confidence based on metadata (if present), number of string
+        matches, and presence of confidence-related tags. Returns normalized
+        score between 0.1 and 1.0.
+
+        Args:
+            match: The YARA match object to calculate confidence for.
+
+        Returns:
+            Confidence score between 0.1 and 1.0.
+
+        Raises:
+            ValueError: If confidence metadata cannot be converted to float.
+        """
         # Check metadata first
         if hasattr(match, "meta") and "confidence" in match.meta:
             try:
@@ -969,13 +1080,18 @@ rule Basic_PE_Detection
     def scan_memory(self, process_id: int, timeout: int = 60) -> YaraScanResult:
         """Scan process memory with YARA rules.
 
+        Performs in-memory pattern scanning of a live process. Handles robust
+        extraction of YARA string matches across different yara-python versions.
+
         Args:
-            process_id: Process ID to scan
-            timeout: Scan timeout in seconds
+            process_id: Process ID to scan.
+            timeout: Scan timeout in seconds (default: 60).
 
         Returns:
-            YaraScanResult with memory matches
+            YaraScanResult with memory matches and scan metadata.
 
+        Raises:
+            Exception: If process memory access or YARA matching fails.
         """
         if not YARA_AVAILABLE:
             return YaraScanResult(
@@ -1071,13 +1187,19 @@ rule Basic_PE_Detection
     def create_custom_rule(self, rule_content: str, rule_name: str) -> bool:
         """Create a custom YARA rule.
 
+        Validates rule syntax, writes rule to disk in custom rules directory,
+        and reloads all rules to include the new custom rule.
+
         Args:
-            rule_content: YARA rule content
-            rule_name: Name for the rule file
+            rule_content: YARA rule content as string.
+            rule_name: Name for the rule file (without extension).
 
         Returns:
-            True if rule was created successfully
+            True if rule was created successfully, False otherwise.
 
+        Raises:
+            yara.SyntaxError: If rule content has invalid YARA syntax.
+            Exception: If rule file writing or rules reloading fails.
         """
         try:
             # Validate rule syntax first
@@ -1104,7 +1226,16 @@ rule Basic_PE_Detection
             return False
 
     def get_rule_info(self) -> dict[str, Any]:
-        """Get information about loaded rules."""
+        """Get information about loaded rules.
+
+        Returns:
+            Dictionary with rule information including total count, categories,
+            namespaces, namespace distribution with rule counts, and YARA
+            availability status.
+
+        Raises:
+            Exception: If rule information collection fails.
+        """
         if not self.compiled_rules:
             return {"error": "No rules loaded"}
 
@@ -1135,12 +1266,19 @@ rule Basic_PE_Detection
     def generate_icp_supplemental_data(self, scan_result: YaraScanResult) -> dict[str, Any]:
         """Generate supplemental data for ICP backend integration.
 
+        Processes YARA scan results and organizes matches by category
+        (protection, licensing, packer, anti-analysis) for ICP backend
+        integration. Exports scan summary as JSON for debugging.
+
         Args:
-            scan_result: YARA scan results
+            scan_result: YARA scan results object containing all matches.
 
         Returns:
-            Dictionary with supplemental pattern data for ICP
+            Dictionary with supplemental pattern data for ICP analysis,
+            including categorized indicators and scan statistics.
 
+        Raises:
+            Exception: If match categorization or JSON export fails.
         """
         if not scan_result.matches:
             return {}
@@ -1226,7 +1364,17 @@ _yara_engine: YaraPatternEngine | None = None
 
 
 def get_yara_engine() -> YaraPatternEngine | None:
-    """Get or create the YARA pattern engine singleton."""
+    """Get or create the YARA pattern engine singleton.
+
+    Creates and caches a single YaraPatternEngine instance for reuse across
+    the application.
+
+    Returns:
+        YaraPatternEngine instance if available, None otherwise.
+
+    Raises:
+        Exception: If YARA engine initialization fails (caught and logged).
+    """
     global _yara_engine
     if _yara_engine is None and YARA_AVAILABLE:
         try:
@@ -1238,10 +1386,27 @@ def get_yara_engine() -> YaraPatternEngine | None:
 
 
 def is_yara_available() -> bool:
-    """Check if YARA functionality is available."""
+    """Check if YARA functionality is available.
+
+    Returns:
+        True if YARA is available, False otherwise.
+    """
     return YARA_AVAILABLE
 
 
 def scan_file_with_yara(file_path: str) -> YaraScanResult | None:
-    """Quick scan function for integration."""
+    """Quick scan function for integration.
+
+    Convenience function for quickly scanning a file with the YARA engine
+    singleton. Returns None if engine is unavailable.
+
+    Args:
+        file_path: Path to file to scan.
+
+    Returns:
+        YaraScanResult if scan succeeds, None if engine is unavailable.
+
+    Raises:
+        Exception: If file scanning fails (caught by engine).
+    """
     return engine.scan_file(file_path) if (engine := get_yara_engine()) else None

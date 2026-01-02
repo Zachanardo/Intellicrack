@@ -57,7 +57,11 @@ class APIMonitor(BaseMonitor):
             return False
 
     def _stop_monitoring(self) -> None:
-        """Stop API monitoring."""
+        """Stop API monitoring.
+
+        Unloads the Frida script and detaches from the target process.
+
+        """
         if self.script:
             try:
                 self.script.unload()
@@ -74,6 +78,9 @@ class APIMonitor(BaseMonitor):
 
     def _on_frida_message(self, message: frida.core.ScriptPayloadMessage | frida.core.ScriptErrorMessage, data: bytes | None) -> None:
         """Handle messages from Frida script.
+
+        Processes incoming Frida messages to detect and emit API call events
+        or handle script errors.
 
         Args:
             message: Message from Frida.
@@ -94,6 +101,9 @@ class APIMonitor(BaseMonitor):
 
     def _handle_api_call(self, payload: dict[str, Any]) -> None:
         """Handle API call event from Frida.
+
+        Extracts API call details, determines event severity based on
+        licensing-related keywords, and emits a monitor event.
 
         Args:
             payload: API call information.
@@ -144,8 +154,12 @@ class APIMonitor(BaseMonitor):
     def _build_frida_script(self) -> str:
         """Build Frida JavaScript for API hooking.
 
+        Generates Frida instrumentation code that hooks Windows APIs for
+        registry, file, network, crypto, and time operations to detect
+        licensing-related activity.
+
         Returns:
-            Frida script source code.
+            JavaScript source code for Frida script execution.
 
         """
         return """

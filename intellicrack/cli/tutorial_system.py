@@ -102,7 +102,13 @@ class TutorialSystem:
         self._init_tutorials()
 
     def _init_tutorials(self) -> None:
-        """Initialize all available tutorials."""
+        """Initialize all available tutorials.
+
+        Creates and registers all available tutorials including getting started,
+        advanced analysis, project management, and monitoring dashboard tutorials.
+        Populates the tutorials dictionary with Tutorial instances.
+
+        """
         # Beginner Tutorial: Getting Started
         getting_started = Tutorial(
             name="getting_started",
@@ -365,7 +371,13 @@ class TutorialSystem:
         }
 
     def list_tutorials(self) -> None:
-        """Display available tutorials."""
+        """Display available tutorials.
+
+        Displays all available tutorials in a formatted table with progress
+        information. If rich console is not available, falls back to basic
+        text output using logging.
+
+        """
         logger.debug("Listing %d available tutorials", len(self.tutorials))
         if not self.console:
             self._list_tutorials_basic()
@@ -406,7 +418,13 @@ class TutorialSystem:
             self.console.print("\n [bold yellow]Recommendation:[/bold yellow] Start with 'getting_started' if you're new to Intellicrack")
 
     def _list_tutorials_basic(self) -> None:
-        """List tutorials in basic text format."""
+        """List tutorials in basic text format.
+
+        Displays all tutorials using the logging system in plain text format
+        when rich console is not available. Shows tutorial metadata including
+        title, difficulty, estimated time, and progress for each tutorial.
+
+        """
         logger.info("Available Tutorials:")
         logger.info("=" * 50)
 
@@ -459,7 +477,13 @@ class TutorialSystem:
         return True
 
     def _show_tutorial_intro(self) -> None:
-        """Show tutorial introduction."""
+        """Show tutorial introduction.
+
+        Displays the introduction panel for the current tutorial, including
+        title, description, difficulty level, estimated completion time,
+        and number of steps. Then initiates display of the first step.
+
+        """
         tutorial = self.current_tutorial
         if not tutorial:
             return
@@ -494,7 +518,13 @@ class TutorialSystem:
         self._show_current_step()
 
     def _show_current_step(self) -> None:
-        """Show current tutorial step."""
+        """Show current tutorial step.
+
+        Displays the current tutorial step with its title, description,
+        commands to try, explanation, and hints. If interactive mode is
+        enabled, prompts the user to execute the step command.
+
+        """
         if not self.current_tutorial:
             return
 
@@ -557,7 +587,14 @@ class TutorialSystem:
             self._prompt_for_command()
 
     def _prompt_for_command(self) -> None:
-        """Prompt user to execute the tutorial command interactively."""
+        """Prompt user to execute the tutorial command interactively.
+
+        Enters an interactive loop prompting the user for input to execute
+        tutorial step commands. Handles navigation commands (next, prev, skip,
+        quit), help requests, hint display, and command execution with
+        validation. Auto-advances on successful command execution.
+
+        """
         if not self.current_tutorial:
             return
         if self.current_step >= len(self.current_tutorial.steps):
@@ -633,10 +670,13 @@ class TutorialSystem:
         """Execute and validate a tutorial step command.
 
         Args:
-            user_command: Command entered by the user
+            user_command: Command entered by the user to validate and execute
+                as part of the current tutorial step.
 
         Returns:
-            Tuple of (success, message)
+            Tuple of (success, message). success is True if the command matched
+            expected step commands and passed validation; message contains
+            feedback or error explanation.
 
         """
         if not self.current_tutorial:
@@ -723,7 +763,16 @@ class TutorialSystem:
         return True, success_msg
 
     def next_step(self) -> bool:
-        """Move to next tutorial step."""
+        """Move to next tutorial step.
+
+        Advances to the next tutorial step, updating progress tracking.
+        Displays the new current step or completes the tutorial if all
+        steps have been processed.
+
+        Returns:
+            True if step advanced successfully, False if no active tutorial.
+
+        """
         if not self.current_tutorial:
             return False
 
@@ -740,7 +789,16 @@ class TutorialSystem:
         return True
 
     def prev_step(self) -> bool:
-        """Move to previous tutorial step."""
+        """Move to previous tutorial step.
+
+        Steps back to the previous tutorial step if available. Updates the
+        current step index and displays the previous step.
+
+        Returns:
+            True if successfully moved to previous step, False if no active
+            tutorial or already at first step.
+
+        """
         if not self.current_tutorial:
             return False
         if self.current_step <= 0:
@@ -751,7 +809,17 @@ class TutorialSystem:
         return True
 
     def skip_step(self) -> bool:
-        """Skip current tutorial step."""
+        """Skip current tutorial step.
+
+        Skips the current tutorial step and advances to the next one if the
+        step allows skipping. Checks the skip_allowed flag before proceeding.
+
+        Returns:
+            True if skip successful and advanced to next step, False if no
+            active tutorial, already past all steps, or skip not allowed for
+            current step.
+
+        """
         if not self.current_tutorial:
             return False
         if self.current_step >= len(self.current_tutorial.steps):
@@ -768,7 +836,17 @@ class TutorialSystem:
         return self.next_step()
 
     def quit_tutorial(self) -> bool:
-        """Quit current tutorial."""
+        """Quit current tutorial.
+
+        Exits the current tutorial session, saving progress to tutorial_progress
+        and recording the quit event in tutorial_history. Progress is preserved
+        to allow resuming later.
+
+        Returns:
+            True if tutorial quit successfully and progress saved, False if no
+            active tutorial.
+
+        """
         tutorial = self.current_tutorial
         if not tutorial:
             return False
@@ -802,7 +880,16 @@ class TutorialSystem:
         return True
 
     def _complete_tutorial(self) -> None:
-        """Complete current tutorial."""
+        """Complete current tutorial.
+
+        Marks the current tutorial as completed, records completion in
+        tutorial_history, displays completion message, and shows recommended
+        next tutorials based on completed tutorials.
+
+        Returns:
+            None.
+
+        """
         tutorial = self.current_tutorial
         if not tutorial:
             return
@@ -841,7 +928,16 @@ class TutorialSystem:
         self.current_step = 0
 
     def _show_next_recommendations(self) -> None:
-        """Show recommended next tutorials."""
+        """Show recommended next tutorials.
+
+        Displays a panel with recommendations for which tutorials to attempt next
+        based on currently completed tutorials. Uses rule-based logic to suggest
+        progressive learning paths from beginner to advanced.
+
+        Returns:
+            None.
+
+        """
         completed = {name for name, progress in self.tutorial_progress.items() if progress >= len(self.tutorials[name].steps)}
 
         recommendations = []
@@ -871,7 +967,17 @@ class TutorialSystem:
                     logger.info("   %s - %s", rec, tutorial.title)
 
     def resume_tutorial(self) -> bool:
-        """Resume the most recent tutorial."""
+        """Resume the most recent tutorial.
+
+        Resumes the most recently started tutorial that hasn't been completed.
+        Searches tutorial_history in reverse order to find the most recent
+        incomplete tutorial and starts it.
+
+        Returns:
+            True if tutorial resumed successfully, False if no tutorial history
+            or all tutorials are complete.
+
+        """
         if not self.tutorial_history:
             return False
 
@@ -885,7 +991,16 @@ class TutorialSystem:
         return False
 
     def show_progress(self) -> None:
-        """Show tutorial progress summary."""
+        """Show tutorial progress summary.
+
+        Displays a table with progress information for all available tutorials,
+        showing completion status and step counts. Falls back to basic text
+        output if rich console is not available.
+
+        Returns:
+            None.
+
+        """
         if not self.console:
             self._show_progress_basic()
             return
@@ -914,7 +1029,16 @@ class TutorialSystem:
         self.console.print(progress_table)
 
     def _show_progress_basic(self) -> None:
-        """Show progress in basic text format."""
+        """Show progress in basic text format.
+
+        Displays tutorial progress using the logging system in plain text format
+        when rich console is not available. Shows completion status and step
+        counts for each tutorial.
+
+        Returns:
+            None.
+
+        """
         logger.info("Tutorial Progress:")
         logger.info("=" * 40)
 
@@ -931,7 +1055,17 @@ class TutorialSystem:
             logger.info("  Status: %s", status)
 
     def show_help(self) -> None:
-        """Show tutorial system help."""
+        """Show tutorial system help.
+
+        Displays comprehensive help documentation for the tutorial system,
+        including general commands, navigation commands during tutorials,
+        and usage tips. Uses rich formatted panels for console or logging
+        for basic output.
+
+        Returns:
+            None.
+
+        """
         if self.console:
             help_content = """[bold cyan]Tutorial System Commands[/bold cyan]
 
@@ -972,7 +1106,16 @@ class TutorialSystem:
             logger.info("  tutorial help     - Show this help")
 
     def display_tutorial_cards(self) -> None:
-        """Display available tutorials as cards using Columns."""
+        """Display available tutorials as cards using Columns.
+
+        Renders tutorial cards in a column layout showing tutorial metadata
+        including difficulty level, estimated time, step count, and description.
+        Each card is color-coded based on completion status.
+
+        Returns:
+            None.
+
+        """
         if not RICH_AVAILABLE or not self.console:
             return
 
@@ -1022,7 +1165,19 @@ class TutorialSystem:
             self.console.print(columns)
 
     def display_centered_tutorial_header(self, tutorial: Tutorial) -> None:
-        """Display tutorial header with centered alignment using Align."""
+        """Display tutorial header with centered alignment using Align.
+
+        Renders a centered header panel displaying tutorial title, difficulty level,
+        estimated completion time, and description using the rich Align utility.
+        Only available when rich console is available and console instance exists.
+
+        Args:
+            tutorial: Tutorial object to display header for.
+
+        Returns:
+            None.
+
+        """
         if not RICH_AVAILABLE or not self.console:
             return
 
@@ -1047,7 +1202,19 @@ class TutorialSystem:
         self.console.print(header_panel)
 
     def show_tutorial_progress_bar(self, tutorial_name: str) -> None:
-        """Show tutorial progress using Progress bar."""
+        """Show tutorial progress using Progress bar.
+
+        Displays a progress bar with spinner animation showing completion status
+        of a specific tutorial. The bar shows current step progress out of total
+        steps with percentage completion. Only available with rich console support.
+
+        Args:
+            tutorial_name: Name of the tutorial to show progress for.
+
+        Returns:
+            None.
+
+        """
         if not RICH_AVAILABLE or not self.console:
             return
 
@@ -1069,7 +1236,20 @@ class TutorialSystem:
             progress.update(task, completed=current_step)
 
     def display_step_with_syntax(self, step: TutorialStep) -> None:
-        """Display tutorial step with syntax highlighting using Syntax."""
+        """Display tutorial step with syntax highlighting using Syntax.
+
+        Renders a tutorial step with detailed formatting including title, description,
+        commands with bash syntax highlighting, and explanation text in separate panels.
+        Only available with rich console support. Commands are highlighted using the
+        monokai theme with bash language syntax.
+
+        Args:
+            step: TutorialStep object to display with syntax highlighting.
+
+        Returns:
+            None.
+
+        """
         if not RICH_AVAILABLE or not self.console:
             return
 
@@ -1102,7 +1282,18 @@ class TutorialSystem:
             self.console.print(explanation_panel)
 
     def interactive_tutorial_selection(self) -> str | None:
-        """Interactive tutorial selection using Prompt."""
+        """Interactive tutorial selection using Prompt.
+
+        Displays available tutorials in a numbered list and prompts user to select
+        one by entering the corresponding number. Returns the selected tutorial name
+        or None if unavailable in non-interactive mode or on input error.
+
+        Returns:
+            Selected tutorial name as str if successful selection, None if not in
+            interactive mode, rich console unavailable, no tutorials available,
+            or input error occurs.
+
+        """
         if not self.interactive or not RICH_AVAILABLE or not self.console:
             return None
 
@@ -1127,7 +1318,20 @@ class TutorialSystem:
             return None
 
     def confirm_tutorial_reset(self, tutorial_name: str) -> bool:
-        """Confirm tutorial reset using Confirm."""
+        """Confirm tutorial reset using Confirm.
+
+        Prompts user for confirmation before resetting the progress of a specific tutorial.
+        Returns False if interactive mode or rich console is not available, or if tutorial
+        is not found. Only available in interactive mode with rich console support.
+
+        Args:
+            tutorial_name: Name of the tutorial to reset progress for.
+
+        Returns:
+            True if user confirms reset, False if user declines, not in interactive
+            mode, rich console unavailable, or tutorial not found.
+
+        """
         if not self.interactive or not RICH_AVAILABLE or not self.console:
             return False
 
@@ -1140,7 +1344,20 @@ class TutorialSystem:
             return False
 
     def get_custom_tutorial_settings(self) -> dict[str, Any]:
-        """Get custom tutorial settings using Prompt."""
+        """Get custom tutorial settings using Prompt.
+
+        Prompts user for custom tutorial settings including auto-advance mode,
+        hint display preferences, step timeout duration, and difficulty level filter.
+        Returns an empty dictionary if interactive mode or rich console is unavailable.
+        Settings collected include auto_advance, show_hints, step_timeout, and
+        difficulty_filter keys.
+
+        Returns:
+            Dictionary with keys: auto_advance (bool), show_hints (bool),
+            step_timeout (int, optional), difficulty_filter (str). Returns empty
+            dict if not in interactive mode or rich console unavailable.
+
+        """
         if not self.interactive or not RICH_AVAILABLE or not self.console:
             return {}
 
@@ -1161,7 +1378,16 @@ class TutorialSystem:
         return settings
 
     def display_tutorials_table(self) -> None:
-        """Display tutorials in a formatted table using Table."""
+        """Display tutorials in a formatted table using Table.
+
+        Renders all tutorials in a comprehensive table showing name, title,
+        difficulty, duration, step count, and completion status. Only
+        available with rich console support.
+
+        Returns:
+            None.
+
+        """
         if not RICH_AVAILABLE or not self.console:
             return
 
@@ -1196,7 +1422,20 @@ class TutorialSystem:
         self.console.print(table)
 
     def display_tutorial_structure_tree(self, tutorial_name: str) -> None:
-        """Display tutorial structure as a tree using Tree."""
+        """Display tutorial structure as a tree using Tree.
+
+        Renders a hierarchical tree structure of the specified tutorial showing
+        metadata, steps, commands, and hints. Includes progress indicators and
+        formatting with rich console output. Only available with rich console
+        support.
+
+        Args:
+            tutorial_name: Name of the tutorial to display as a tree structure.
+
+        Returns:
+            None.
+
+        """
         if not RICH_AVAILABLE or not self.console:
             return
 
@@ -1240,12 +1479,28 @@ class TutorialSystem:
 
 
 def create_tutorial_system(cli_instance: object | None = None) -> TutorialSystem:
-    """Create tutorial system instance."""
+    """Create tutorial system instance.
+
+    Args:
+        cli_instance: Optional reference to CLI instance for command execution.
+
+    Returns:
+        Initialized TutorialSystem instance.
+
+    """
     return TutorialSystem(cli_instance)
 
 
 def run_interactive_tutorial(cli_instance: object | None = None) -> int:
-    """Run the interactive tutorial system."""
+    """Run the interactive tutorial system.
+
+    Args:
+        cli_instance: Optional reference to CLI instance for command execution.
+
+    Returns:
+        Exit code (0 for success).
+
+    """
     tutorial_system = TutorialSystem(cli_instance)
 
     # Show welcome message

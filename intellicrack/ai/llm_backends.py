@@ -179,6 +179,7 @@ class LLMConfig:
 
     This dataclass defines all configuration parameters needed to initialize and
     run an LLM backend for AI-assisted binary analysis and code generation.
+
     Attributes:
         provider: LLM provider enum (OpenAI, Anthropic, Google, etc.)
         model_name: Name or identifier of the model to load

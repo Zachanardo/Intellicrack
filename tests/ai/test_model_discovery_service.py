@@ -2,6 +2,7 @@ import json
 import tempfile
 import threading
 import time
+from collections.abc import Generator
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -13,7 +14,7 @@ from intellicrack.ai.model_discovery_service import ModelDiscoveryService
 
 
 @pytest.fixture
-def temp_cache_file() -> Path:
+def temp_cache_file() -> Generator[Path, None, None]:
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         cache_path = Path(f.name)
     yield cache_path
@@ -117,6 +118,7 @@ class TestModelDiscoveryServiceCacheOperations:
         openai_model = service._cached_models["OpenAI"][0]
         assert openai_model.id == "gpt-4o"
         assert openai_model.context_length == 128000
+        assert openai_model.capabilities is not None
         assert "vision" in openai_model.capabilities
 
     def test_load_cache_from_disk_missing_file(self, temp_cache_file: Path) -> None:
@@ -313,10 +315,12 @@ class TestModelDiscoveryServiceBackgroundUpdater:
 
         service.start_background_updater()
 
+        # mypy can't track that start_background_updater sets _update_thread
         assert service._update_thread is not None
-        assert service._update_thread.is_alive()
-        assert service._update_thread.name == "ModelDiscoveryUpdater"
-        assert service._update_thread.daemon is True
+        update_thread = service._update_thread  # type: ignore[unreachable]
+        assert update_thread.is_alive()
+        assert update_thread.name == "ModelDiscoveryUpdater"
+        assert update_thread.daemon is True
 
         service.stop_background_updater()
 

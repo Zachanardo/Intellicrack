@@ -18,13 +18,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-import hashlib
-import hmac
 import json
 import logging
 import multiprocessing as mp
 import os
-import pickle  # noqa: S403
 import random
 import re
 import secrets
@@ -34,7 +31,14 @@ from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, TypeVar, overload
+from collections.abc import Iterable
+from typing import Any, cast
+
+from intellicrack.utils.core.secure_serialization import (
+    RestrictedUnpickler,
+    secure_pickle_dumps,
+    secure_pickle_loads,
+)
 
 
 try:
@@ -75,13 +79,10 @@ Version: 2.0.0
 License: GPL v3
 """
 
-# Security configuration for pickle
-PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
-
 # Fallback implementations for missing libraries
 if not SKLEARN_AVAILABLE:
 
-    class DBSCAN:  # type: ignore[no-redef]
+    class DBSCAN:
         """Fallback DBSCAN clustering implementation."""
 
         def __init__(self, eps: float = 0.5, min_samples: int = 5) -> None:
@@ -137,7 +138,7 @@ if not SKLEARN_AVAILABLE:
                 X: Input data array for clustering.
 
             Returns:
-                Cluster labels for each sample.
+                np.ndarray: Cluster labels for each sample.
 
             Raises:
                 RuntimeError: If labels are not initialized after fit operation.
@@ -148,7 +149,7 @@ if not SKLEARN_AVAILABLE:
                 raise RuntimeError("Labels not initialized after fit")
             return self.labels_
 
-    class KMeans:  # type: ignore[no-redef]
+    class KMeans:
         """Fallback K-Means clustering implementation."""
 
         def __init__(self, n_clusters: int = 8, random_state: int | None = None, n_init: int = 10) -> None:
@@ -179,7 +180,7 @@ if not SKLEARN_AVAILABLE:
             self.labels_ = np.random.randint(0, self.n_clusters, n)
             return self
 
-    class AgglomerativeClustering:  # type: ignore[no-redef]
+    class AgglomerativeClustering:
         """Fallback agglomerative clustering implementation."""
 
         def __init__(
@@ -221,7 +222,7 @@ if not SKLEARN_AVAILABLE:
                 self.labels_ = np.zeros(n, dtype=int)
             return self.labels_
 
-    class StandardScaler:  # type: ignore[no-redef]
+    class StandardScaler:
         """Fallback standard scaler implementation."""
 
         def __init__(self) -> None:
@@ -259,7 +260,7 @@ if not SKLEARN_AVAILABLE:
 
 if not SCIPY_AVAILABLE:
 
-    def hamming(u: list[float] | np.ndarray | object, v: list[float] | np.ndarray | object) -> float:
+    def hamming(u: list[float] | np.ndarray | Iterable[Any], v: list[float] | np.ndarray | Iterable[Any]) -> float:
         """Hamming distance fallback.
 
         Args:
@@ -276,7 +277,7 @@ if not SCIPY_AVAILABLE:
             u_list = list(u)
         else:
             try:
-                u_list = list(u)  # type: ignore[arg-type]
+                u_list = list(u)
             except TypeError:
                 u_list = []
 
@@ -286,13 +287,13 @@ if not SCIPY_AVAILABLE:
             v_list = list(v)
         else:
             try:
-                v_list = list(v)  # type: ignore[arg-type]
+                v_list = list(v)
             except TypeError:
                 v_list = []
 
-        return float(sum(x != y for x, y in zip(u_list, v_list, strict=False)) / len(u_list))
+        return float(sum(x != y for x, y in zip(u_list, v_list, strict=False)) / len(u_list)) if u_list else 0.0
 
-    def jaccard(u: list[float] | set[Any] | np.ndarray | object, v: list[float] | set[Any] | np.ndarray | object) -> float:
+    def jaccard(u: list[float] | set[Any] | np.ndarray | Iterable[Any], v: list[float] | set[Any] | np.ndarray | Iterable[Any]) -> float:
         """Jaccard distance fallback.
 
         Args:
@@ -303,11 +304,11 @@ if not SCIPY_AVAILABLE:
             Jaccard distance between u and v.
 
         """
-        set_u: set[Any] = u if isinstance(u, set) else set(u)  # type: ignore[arg-type]
-        set_v: set[Any] = v if isinstance(v, set) else set(v)  # type: ignore[arg-type]
+        set_u: set[Any] = u if isinstance(u, set) else set(u)
+        set_v: set[Any] = v if isinstance(v, set) else set(v)
         return 1.0 - len(set_u & set_v) / len(set_u | set_v) if (set_u | set_v) else 0.0
 
-    def cosine(u: np.ndarray | list[float] | object, v: np.ndarray | list[float] | object) -> float:
+    def cosine(u: np.ndarray | list[float] | Iterable[float], v: np.ndarray | list[float] | Iterable[float]) -> float:
         """Cosine distance fallback.
 
         Args:
@@ -328,7 +329,7 @@ if not SCIPY_AVAILABLE:
             return 1.0
         return float(1.0 - dot_product / (norm_u * norm_v))
 
-    def entropy(pk: np.ndarray | list[float] | object, base: int = 2) -> float:
+    def entropy(pk: np.ndarray | list[float] | Iterable[float], base: int = 2) -> float:
         """Entropy calculation fallback.
 
         Args:
@@ -342,102 +343,6 @@ if not SCIPY_AVAILABLE:
         pk_arr = np.asarray(pk)
         pk_arr = pk_arr[pk_arr > 0]
         return 0.0 if len(pk_arr) == 0 else float(-np.sum(pk_arr * np.log(pk_arr) / np.log(base)))
-
-
-class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
-    """Restricted unpickler that only allows safe classes."""
-
-    def find_class(self, module: str, name: str) -> type[object]:
-        """Override ``find_class`` to restrict allowed classes.
-
-        Args:
-            module: Module name of the class to unpickle.
-            name: Class name to unpickle.
-
-        Returns:
-            The class object if allowed.
-
-        Raises:
-            UnpicklingError: If the class is not in the allowed list.
-
-        """
-        # Allow only safe modules and classes
-        ALLOWED_MODULES = {
-            "numpy",
-            "numpy.core.multiarray",
-            "numpy.core.numeric",
-            "pandas",
-            "pandas.core.frame",
-            "pandas.core.series",
-            "sklearn",
-            "torch",
-            "tensorflow",
-            "__builtin__",
-            "builtins",
-            "collections",
-            "collections.abc",
-        }
-
-        # Allow model classes from our own modules
-        if module.startswith("intellicrack."):
-            cls: type[object] = super().find_class(module, name)
-            return cls
-
-        # Check if module is in allowed list
-        if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
-            cls = super().find_class(module, name)
-            return cls
-
-        # Deny everything else
-        raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
-
-
-def secure_pickle_dumps(obj: object) -> bytes:
-    """Securely serialize object with integrity check.
-
-    Args:
-        obj: Python object to serialize.
-
-    Returns:
-        Bytes containing HMAC signature and pickled data.
-
-    """
-    # Serialize object
-    data = pickle.dumps(obj)
-
-    # Calculate HMAC for integrity
-    mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
-
-    # Return MAC + data as bytes
-    return mac + data
-
-
-def secure_pickle_loads(data: bytes) -> object:
-    """Securely deserialize object with integrity verification.
-
-    Args:
-        data: Bytes containing HMAC signature and pickled data.
-
-    Returns:
-        Deserialized Python object.
-
-    Raises:
-        ValueError: If integrity verification fails.
-
-    """
-    # Split MAC and data
-    stored_mac = data[:32]  # SHA256 produces 32 bytes
-    obj_data = data[32:]
-
-    # Verify integrity
-    expected_mac = hmac.new(PICKLE_SECURITY_KEY, obj_data, hashlib.sha256).digest()
-    if not hmac.compare_digest(stored_mac, expected_mac):
-        raise ValueError("Pickle data integrity check failed - possible tampering detected")
-
-    # Deserialize object using RestrictedUnpickler
-    import io
-
-    return RestrictedUnpickler(io.BytesIO(obj_data)).load()
 
 
 class PatternType(Enum):
@@ -491,7 +396,7 @@ class PatternGene:
         to ensure uniqueness across pattern instances.
 
         Returns:
-            Hexadecimal string of first 16 characters of SHA256 hash of pattern.
+            str: Hexadecimal string of first 16 characters of SHA256 hash of pattern.
 
         """
         data = f"{self.type.value}_{self.pattern_data}_{time.time()}"
@@ -1624,7 +1529,7 @@ class PatternEvolutionTracker:
             pattern2: Second pattern to compare.
 
         Returns:
-            Similarity score between 0.0 and 1.0.
+            float: Similarity score between 0.0 and 1.0.
 
         """
         # Use chi2_contingency for calculating similarity if available
@@ -1666,7 +1571,7 @@ class PatternEvolutionTracker:
             pattern2: Second pattern to compare.
 
         Returns:
-            Similarity score between 0.0 and 1.0, or 0.5 for unsupported types.
+            float: Similarity score between 0.0 and 1.0, or 0.5 for unsupported types.
 
         """
         if pattern1.type != pattern2.type:
@@ -1707,7 +1612,7 @@ class PatternEvolutionTracker:
             pattern: PatternGene to analyze for mutations from parents.
 
         Returns:
-            List of dictionaries containing mutation analysis for each parent.
+            list[dict[str, Any]]: List of dictionaries containing mutation analysis for each parent.
 
         """
         mutations: list[dict[str, Any]] = []
@@ -1730,7 +1635,7 @@ class PatternEvolutionTracker:
             child: Child PatternGene instance descended from parent.
 
         Returns:
-            Dictionary with 'similarity', 'generation_diff', 'fitness_diff', and 'mutations' keys.
+            dict[str, Any]: Dictionary with 'similarity', 'generation_diff', 'fitness_diff', and 'mutations' keys.
 
         """
         return {
@@ -1751,7 +1656,7 @@ class PatternEvolutionTracker:
             similarity_threshold: Minimum similarity to merge clusters (default 0.7).
 
         Returns:
-            Dictionary mapping family IDs to sets of pattern IDs in each family.
+            dict[str, set[str]]: Dictionary mapping family IDs to sets of pattern IDs in each family.
 
         """
         population = self.populations[pattern_type]
@@ -1803,7 +1708,7 @@ class PatternEvolutionTracker:
             pattern_type: Type of patterns to analyze.
 
         Returns:
-            Dictionary containing evolution_rate, evolutionary_branches, prediction,
+            dict[str, Any]: Dictionary containing evolution_rate, evolutionary_branches, prediction,
             active_lineages, and pattern_type keys.
 
         """
@@ -1946,7 +1851,7 @@ class PatternEvolutionTracker:
             pattern: PatternGene instance to evaluate.
 
         Returns:
-            Fitness score between 0.0 and 1.0.
+            float: Fitness score between 0.0 and 1.0.
 
         """
         if not pattern or not pattern.pattern_data:
@@ -2003,7 +1908,7 @@ class PatternEvolutionTracker:
             tournament_size: Number of patterns to sample for tournament (default 3).
 
         Returns:
-            PatternGene with highest fitness from tournament sample.
+            PatternGene: PatternGene with highest fitness from tournament sample.
 
         """
         tournament = random.sample(population, min(tournament_size, len(population)))
@@ -2021,7 +1926,7 @@ class PatternEvolutionTracker:
             pattern_types: List of PatternTypes to match (None matches all types).
 
         Returns:
-            Dictionary with 'detections', 'confidence', and 'patterns_matched' keys.
+            dict[str, Any]: Dictionary with 'detections', 'confidence', and 'patterns_matched' keys.
 
         """
         if not pattern_types:
@@ -2038,7 +1943,7 @@ class PatternEvolutionTracker:
 
             for pattern_id, confidence in matches:
                 if pattern := self.storage.load_pattern(pattern_id):
-                    detections_list: list[dict[str, Any]] = results["detections"]  # type: ignore[assignment]
+                    detections_list = cast("list[dict[str, Any]]", results["detections"])
                     detections_list.append(
                         {
                             "pattern_id": pattern_id,
@@ -2048,7 +1953,7 @@ class PatternEvolutionTracker:
                             "pattern_data": str(pattern.pattern_data)[:100],  # Preview
                         },
                     )
-                    patterns_matched_list: list[str] = results["patterns_matched"]  # type: ignore[assignment]
+                    patterns_matched_list = cast("list[str]", results["patterns_matched"])
                     patterns_matched_list.append(pattern_id)
 
         detections_final: Any = results["detections"]
@@ -2098,7 +2003,7 @@ class PatternEvolutionTracker:
             data: Binary data to extract features from.
 
         Returns:
-            NumPy array of 50 feature values for Q-learning state representation.
+            np.ndarray: NumPy array of 50 feature values for Q-learning state representation.
 
         """
         features = [len(data)]
@@ -2284,7 +2189,7 @@ class PatternEvolutionTracker:
         including counts, average fitness, and best fitness across all pattern types.
 
         Returns:
-            Dictionary with generation count, detection stats, and per-type metrics.
+            dict[str, Any]: Dictionary with generation count, detection stats, and per-type metrics.
 
         """
         stats = self.stats.copy()
@@ -2309,7 +2214,7 @@ class PatternEvolutionTracker:
             min_samples: Minimum samples in cluster neighborhood (default 5).
 
         Returns:
-            Dictionary mapping cluster labels to lists of PatternGene instances.
+            dict[int, list[PatternGene]]: Dictionary mapping cluster labels to lists of PatternGene instances.
 
         """
         population = self.populations[pattern_type]

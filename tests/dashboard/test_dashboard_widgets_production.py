@@ -164,7 +164,7 @@ class TestWidgetData:
         assert data.values["simple"] == 42
         nested = data.values["nested"]
         assert isinstance(nested, dict)
-        assert nested["level1"]["level2"] == [1, 2, 3]  # type: ignore[index]
+        assert nested["level1"]["level2"] == [1, 2, 3]
 
 
 class TestDashboardWidget:
@@ -1075,11 +1075,11 @@ class TestCreateWidgetHelper:
             "helper_003",
             WidgetType.TABLE,
             "Type Validation",
-            width="invalid",  # type: ignore[arg-type]
-            height="also_invalid",  # type: ignore[arg-type]
-            refresh_interval="not_a_float",  # type: ignore[arg-type]
-            data_source=12345,  # type: ignore[arg-type]
-            options="not_a_dict",  # type: ignore[arg-type]
+            width="invalid",
+            height="also_invalid",
+            refresh_interval="not_a_float",
+            data_source=12345,
+            options="not_a_dict",
         )
 
         assert widget.config.width == 400

@@ -78,10 +78,6 @@ class AnalysisResult:
 
         Converts None default values to empty lists for errors and warnings
         to avoid mutable default issues in dataclasses.
-
-        Raises:
-            None: All operations complete successfully.
-
         """
         if self.errors is None:
             self.errors = []

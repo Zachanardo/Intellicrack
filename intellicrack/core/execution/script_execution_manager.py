@@ -23,7 +23,7 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.handlers.pyqt6_handler import QDialog, QMessageBox, QObject, QWidget, pyqtSignal
 from intellicrack.utils.type_safety import validate_type
@@ -79,6 +79,12 @@ class ScriptExecutionManager(QObject):
         self._initialize_managers()
 
     def _initialize_managers(self) -> None:
+        """Initialize QEMU manager and dialog components.
+
+        Attempts to load QEMU manager and related dialog classes from their
+        respective modules. If import fails, components are left uninitialized
+        and a warning is logged for graceful degradation.
+        """
         try:
             from intellicrack.ai.qemu_manager import QEMUManager as EnhancedQEMUManager
             from intellicrack.ui.dialogs.qemu_test_dialog import QEMUTestDialog
@@ -98,16 +104,25 @@ class ScriptExecutionManager(QObject):
         target_binary: str,
         options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Execute a script with optional QEMU testing.
+        """Execute a script with optional QEMU pre-testing and user prompts.
+
+        Orchestrates full script execution workflow including optional QEMU
+        testing before host deployment. Evaluates user preferences and QEMU
+        testing configuration to determine whether to prompt user, test in
+        QEMU first, or execute directly on host. Manages preference storage
+        and handles all execution branches.
 
         Args:
-            script_type: Type of script ('frida', 'ghidra', etc.)
-            script_content: The actual script content
-            target_binary: Path to the target binary
-            options: Additional execution options
-        Returns:
-            Execution results dictionary
+            script_type: Type of script to execute ('frida', 'ghidra', etc.)
+            script_content: Complete script code content
+            target_binary: Path to the binary for analysis
+            options: Execution options dict with optional keys: force_qemu_test,
+                use_terminal, no_pause, os_type, architecture, timeout, etc.
 
+        Returns:
+            Execution results dictionary with success (bool), and execution
+            output depending on execution path (stdout, stderr, returncode,
+            terminal_session, error message, etc.).
         """
         options = options or {}
 
@@ -162,7 +177,21 @@ class ScriptExecutionManager(QObject):
         return self._execute_on_host(script_type, script_content, target_binary, options)
 
     def _should_ask_qemu_testing(self, script_type: str, target_binary: str, options: dict[str, Any]) -> bool:
-        """Determine if we should ask the user about QEMU testing."""
+        """Determine if user should be prompted about QEMU testing.
+
+        Evaluates whether to show the QEMU testing dialog based on forced
+        options, global preferences, script-type preferences, and binary trust
+        status. Returns False if execution should proceed without user prompt.
+
+        Args:
+            script_type: Type of script being executed ('frida', 'ghidra', etc.)
+            target_binary: Path to the binary being analyzed
+            options: Execution options including 'force_qemu_test'
+
+        Returns:
+            True if user should be prompted for QEMU testing; False if preferences
+            or forced options determine behavior automatically.
+        """
         # Check if force option is set
         if options.get("force_qemu_test") is not None:
             return False  # Don't ask, use the forced option
@@ -182,7 +211,19 @@ class ScriptExecutionManager(QObject):
         return not self._is_trusted_binary(target_binary)
 
     def _should_auto_test_qemu(self, script_type: str, options: dict[str, Any]) -> bool:
-        """Check if we should automatically test in QEMU."""
+        """Check if QEMU testing should be performed automatically.
+
+        Evaluates global and script-type specific preferences to determine
+        whether QEMU testing should proceed without user intervention. Forced
+        options take precedence over all saved preferences.
+
+        Args:
+            script_type: Type of script being executed ('frida', 'ghidra', etc.)
+            options: Execution options including 'force_qemu_test'
+
+        Returns:
+            True if QEMU testing should proceed; False otherwise.
+        """
         if options.get("force_qemu_test"):
             return True
 
@@ -199,7 +240,18 @@ class ScriptExecutionManager(QObject):
         return saved_pref == "always"
 
     def _is_trusted_binary(self, binary_path: str) -> bool:
-        """Check if a binary is in the trusted list."""
+        """Check if a binary is in the trusted list.
+
+        Normalizes the provided binary path and checks against the configured
+        list of trusted binaries. Trusted binaries can skip QEMU testing
+        requirements.
+
+        Args:
+            binary_path: Path to the binary to check
+
+        Returns:
+            True if binary is in the trusted list; False otherwise.
+        """
         trusted_binaries = self.config.get("qemu_testing.trusted_binaries", [])
 
         if not isinstance(trusted_binaries, list):
@@ -211,7 +263,22 @@ class ScriptExecutionManager(QObject):
         return binary_path in trusted_binaries
 
     def _show_qemu_test_dialog(self, script_type: str, target_binary: str, script_content: str) -> str:
-        """Show QEMU test dialog and return user choice."""
+        """Display QEMU testing dialog and retrieve user selection.
+
+        Shows a modal dialog prompting the user for QEMU testing preferences.
+        If the dialog component is unavailable, defaults to host execution.
+        The dialog displays a preview of the script content (first 500 chars).
+
+        Args:
+            script_type: Type of script being executed ('frida', 'ghidra', etc.)
+            target_binary: Path to the binary being analyzed
+            script_content: The complete script content to preview
+
+        Returns:
+            User's choice as string ('test_qemu', 'run_host', 'always_test',
+            'never_test', or 'cancelled'). Defaults to 'run_host' if dialog
+            is unavailable.
+        """
         if not self.QEMUTestDialog:
             logger.warning("QEMUTestDialog not available, defaulting to host execution")
             return "run_host"
@@ -221,7 +288,7 @@ class ScriptExecutionManager(QObject):
             script_type=script_type,
             target_binary=target_binary,
             script_preview=script_content[:500],
-            parent=parent_widget,  # type: ignore[arg-type]
+            parent=parent_widget,
         )
 
         result = dialog.exec()
@@ -229,7 +296,24 @@ class ScriptExecutionManager(QObject):
         return dialog.get_user_choice() if result == accepted_value else "cancelled"
 
     def _run_qemu_test(self, script_type: str, script_content: str, target_binary: str, options: dict[str, Any]) -> dict[str, Any]:
-        """Run script in QEMU environment."""
+        """Execute script in isolated QEMU environment for testing.
+
+        Creates a QEMU snapshot and executes the provided script within that
+        isolated environment. Supports both Frida and Ghidra script types.
+        Emits signals at start and completion of testing. Returns detailed
+        results including success status and error information.
+
+        Args:
+            script_type: Type of script to execute ('frida' or 'ghidra')
+            script_content: The script code to execute
+            target_binary: Path to the binary to analyze
+            options: Execution options including os_type and architecture
+
+        Returns:
+            Dictionary with keys: success (bool), error (str if failed), and
+            additional execution results depending on script type. Returns
+            failure response if QEMU manager unavailable or snapshot creation fails.
+        """
         if not self.qemu_manager:
             logger.error("QEMU manager not available")
             return {"success": False, "error": "QEMU testing not available"}
@@ -244,13 +328,13 @@ class ScriptExecutionManager(QObject):
 
             results: dict[str, Any]
             if script_type == "frida":
-                results = self.qemu_manager.test_frida_script_enhanced(  # type: ignore[attr-defined]
+                results = self.qemu_manager.test_frida_script_enhanced(
                     snapshot_id,
                     script_content,
                     target_binary,
                 )
             elif script_type == "ghidra":
-                results = self.qemu_manager.test_ghidra_script_enhanced(  # type: ignore[attr-defined]
+                results = self.qemu_manager.test_ghidra_script_enhanced(
                     snapshot_id,
                     script_content,
                     target_binary,
@@ -268,7 +352,22 @@ class ScriptExecutionManager(QObject):
             return error_results
 
     def _create_qemu_snapshot(self, target_binary: str, options: dict[str, Any]) -> str | None:
-        """Create QEMU snapshot for testing."""
+        """Create QEMU snapshot for isolated testing environment.
+
+        Generates a unique snapshot identifier based on the binary path and
+        current timestamp, then creates a QEMU snapshot with the specified
+        OS type and architecture. Used for pre-testing scripts in isolation
+        before deployment to host system.
+
+        Args:
+            target_binary: Path to the binary to snapshot
+            options: Configuration with 'os_type' (default 'windows') and
+                'architecture' (default 'x64')
+
+        Returns:
+            Snapshot ID string if creation succeeds; None if QEMU manager
+            unavailable, creation fails, or exception occurs.
+        """
         if not self.qemu_manager:
             return None
         try:
@@ -276,7 +375,7 @@ class ScriptExecutionManager(QObject):
                 f"test_{hashlib.sha256(target_binary.encode()).hexdigest()[:8]}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
             )
 
-            success = self.qemu_manager.create_snapshot(  # type: ignore[call-arg]
+            success = self.qemu_manager.create_snapshot(
                 snapshot_id=snapshot_id,
                 binary_path=target_binary,
                 os_type=options.get("os_type", "windows"),
@@ -290,7 +389,20 @@ class ScriptExecutionManager(QObject):
             return None
 
     def _show_qemu_results_and_confirm(self, qemu_results: dict[str, Any]) -> bool:
-        """Show QEMU test results and ask for confirmation to proceed."""
+        """Display QEMU test results and prompt user for deployment confirmation.
+
+        Shows test results from QEMU execution and requests user confirmation
+        to proceed with host deployment. Uses dedicated results dialog if
+        available; falls back to simple message box. Returns True only if user
+        explicitly confirms deployment.
+
+        Args:
+            qemu_results: Dictionary containing QEMU test results
+
+        Returns:
+            True if user confirms deployment to host; False if user cancels
+            or dialog is rejected.
+        """
         if not self.QEMUTestResultsDialog:
             parent_widget = validate_type(self.parent(), QWidget) if self.parent() is not None else None
             msg = QMessageBox(parent_widget)
@@ -301,16 +413,16 @@ class ScriptExecutionManager(QObject):
             return result == int(QMessageBox.StandardButton.Yes)
 
         parent_widget = validate_type(self.parent(), QWidget) if self.parent() is not None else None
-        dialog = self.QEMUTestResultsDialog(  # type: ignore[call-arg]
+        dialog = self.QEMUTestResultsDialog(
             test_results=qemu_results,
             parent=parent_widget,
         )
 
-        dialog.add_action_button("Deploy to Host", "deploy")  # type: ignore[attr-defined]
-        dialog.add_action_button("Cancel Deployment", "cancel")  # type: ignore[attr-defined]
+        dialog.add_action_button("Deploy to Host", "deploy")
+        dialog.add_action_button("Cancel Deployment", "cancel")
 
         result = dialog.exec()
-        user_action: str = dialog.get_user_action()  # type: ignore[attr-defined]
+        user_action: str = dialog.get_user_action()
 
         accepted_value = getattr(dialog, "Accepted", 1)
         rejected_value = getattr(dialog, "Rejected", 0)
@@ -328,7 +440,23 @@ class ScriptExecutionManager(QObject):
         return bool(user_action == "deploy")
 
     def _execute_on_host(self, script_type: str, script_content: str, target_binary: str, options: dict[str, Any]) -> dict[str, Any]:
-        """Execute script on the host system."""
+        """Execute script on the host system.
+
+        Dispatches script execution to the appropriate handler based on script
+        type (Frida or Ghidra). Emits execution start and completion signals
+        with execution results. Returns detailed execution results including
+        stdout, stderr, and return code.
+
+        Args:
+            script_type: Type of script to execute ('frida' or 'ghidra')
+            script_content: The script code to execute
+            target_binary: Path to the binary to analyze
+            options: Execution options (use_terminal, no_pause, etc.)
+
+        Returns:
+            Dictionary with keys: success (bool), stdout (str), stderr (str),
+            returncode (int), and error (str if failed).
+        """
         self.execution_started.emit(script_type, target_binary)
 
         try:
@@ -349,6 +477,24 @@ class ScriptExecutionManager(QObject):
             return error_results
 
     def _execute_frida_host(self, script_content: str, target_binary: str, options: dict[str, Any]) -> dict[str, Any]:
+        """Execute Frida script on host system against target binary.
+
+        Writes script content to temporary file and executes Frida with the
+        target binary. Supports both terminal (interactive) and subprocess
+        execution modes. Terminal execution does not clean up script file
+        immediately; caller must handle cleanup after session ends.
+
+        Args:
+            script_content: JavaScript code for Frida instrumentation
+            target_binary: Path to binary to instrument with Frida
+            options: Execution options with 'no_pause' (bool) and
+                'use_terminal' (bool) keys
+
+        Returns:
+            For terminal execution: Dictionary with success, terminal_session,
+            script_path, message keys. For subprocess execution: Dictionary
+            with success (bool), stdout (str), stderr (str), returncode (int).
+        """
         try:
             import tempfile
 
@@ -394,6 +540,27 @@ class ScriptExecutionManager(QObject):
             return {"success": False, "error": str(e)}
 
     def _execute_ghidra_host(self, script_content: str, target_binary: str, options: dict[str, Any]) -> dict[str, Any]:
+        """Execute Ghidra headless analysis script on host system.
+
+        Locates Ghidra installation, creates temporary project and script files,
+        then executes Ghidra's analyzeHeadless with the target binary. Supports
+        both terminal (interactive) and subprocess execution modes. Terminal
+        execution does not clean up script/project files immediately; caller
+        must handle cleanup after session ends.
+
+        Args:
+            script_content: Python code for Ghidra analysis script
+            target_binary: Path to binary to analyze with Ghidra
+            options: Execution options with 'max_memory', 'analyze' (bool),
+                'processor', 'script_args', 'verbose' (bool), 'timeout' (int,
+                default 300), 'use_terminal' (bool)
+
+        Returns:
+            For terminal execution: Dictionary with success, terminal_session,
+            script_path, project_path, message keys. For subprocess execution:
+            Dictionary with success (bool), stdout (str), stderr (str),
+            returncode (int).
+        """
         try:
             import tempfile
 
@@ -488,7 +655,16 @@ class ScriptExecutionManager(QObject):
             return {"success": False, "error": str(e)}
 
     def _find_ghidra_installation(self) -> str | None:
-        """Find Ghidra installation path."""
+        """Locate Ghidra installation directory on the system.
+
+        Searches common installation locations including the GHIDRA_HOME
+        environment variable, user home directory, system directories, and
+        Windows Program Files. Returns the first existing path found.
+
+        Returns:
+            Path to Ghidra installation directory if found; None if no
+            installation is detected.
+        """
         # Check common locations
         possible_paths = [
             os.environ.get("GHIDRA_HOME"),
@@ -504,11 +680,28 @@ class ScriptExecutionManager(QObject):
         )
 
     def _save_qemu_preference(self, preference: str, script_type: str) -> None:
-        """Save QEMU testing preference."""
+        """Save user's QEMU testing preference for script type.
+
+        Persists the user's preference for QEMU testing (always, never, ask)
+        to the configuration for the specified script type. Preferences are
+        used to determine future behavior without user prompts.
+
+        Args:
+            preference: Testing preference ('always', 'never', or 'ask')
+            script_type: Script type to apply preference to ('frida', 'ghidra', etc.)
+        """
         self.config.set(f"qemu_testing.script_type_preferences.{script_type}", preference)
 
     def add_trusted_binary(self, binary_path: str) -> None:
-        """Add binary to trusted list."""
+        """Add binary to trusted binaries list for QEMU testing exemption.
+
+        Registers a binary as trusted, allowing it to skip QEMU testing
+        requirements. Path is normalized to absolute form. If binary is already
+        in the list, no action is taken.
+
+        Args:
+            binary_path: Path to the binary to add to trusted list
+        """
         binary_path = os.path.abspath(binary_path)
         trusted_binaries = self.config.get("qemu_testing.trusted_binaries", [])
 
@@ -520,7 +713,15 @@ class ScriptExecutionManager(QObject):
             self.config.set("qemu_testing.trusted_binaries", trusted_binaries)
 
     def remove_trusted_binary(self, binary_path: str) -> None:
-        """Remove binary from trusted list."""
+        """Remove binary from trusted binaries list.
+
+        Revokes trusted status from a binary, requiring QEMU testing for future
+        script executions against it. Path is normalized to absolute form. If
+        binary is not in the list, no action is taken.
+
+        Args:
+            binary_path: Path to the binary to remove from trusted list
+        """
         binary_path = os.path.abspath(binary_path)
         trusted_binaries = self.config.get("qemu_testing.trusted_binaries", [])
 
@@ -532,7 +733,19 @@ class ScriptExecutionManager(QObject):
             self.config.set("qemu_testing.trusted_binaries", trusted_binaries)
 
     def get_execution_history(self, limit: int = 50) -> list[dict[str, Any]]:
-        """Get recent execution history."""
+        """Retrieve recent script execution history.
+
+        Returns the most recent script execution records up to the specified
+        limit. Each record contains script type, target binary, success status,
+        and timestamp of the execution.
+
+        Args:
+            limit: Maximum number of history entries to return (default 50)
+
+        Returns:
+            List of execution history dictionaries, newest first, limited to
+            specified count.
+        """
         history = self.config.get("qemu_testing.execution_history", [])
 
         if not isinstance(history, list):
@@ -541,7 +754,18 @@ class ScriptExecutionManager(QObject):
         return history[:limit]
 
     def _add_to_history(self, script_type: str, target_binary: str, success: bool, timestamp: datetime.datetime) -> None:
-        """Add execution to history."""
+        """Add script execution record to execution history.
+
+        Records the execution of a script with its metadata. New entries are
+        inserted at the beginning of the history list. History is trimmed to
+        keep only the most recent 100 entries to prevent unbounded growth.
+
+        Args:
+            script_type: Type of script executed ('frida', 'ghidra', etc.)
+            target_binary: Path to the binary that was analyzed
+            success: Whether the execution succeeded
+            timestamp: Datetime when execution occurred
+        """
         history = self.config.get("qemu_testing.execution_history", [])
 
         if not isinstance(history, list):

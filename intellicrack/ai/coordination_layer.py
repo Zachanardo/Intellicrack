@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 import queue
@@ -45,6 +47,10 @@ class CacheEntry(TypedDict):
     timestamp: datetime
 
 
+ModelManagerClass: type[Any] | None
+AISharedContextClass: type[Any] | None
+AIEventBusClass: type[Any] | None
+
 try:
     from ..utils.logger import get_logger
 
@@ -60,7 +66,7 @@ try:
 
     _MODELMANAGER_AVAILABLE = True
 except ImportError:
-    ModelManagerClass = None  # type: ignore[assignment, misc]
+    ModelManagerClass = None
     _MODELMANAGER_AVAILABLE = False
 
 try:
@@ -71,8 +77,8 @@ try:
 
     _ORCHESTRATOR_AVAILABLE = True
 except ImportError:
-    AISharedContextClass = None  # type: ignore[assignment, misc]
-    AIEventBusClass = None  # type: ignore[assignment, misc]
+    AISharedContextClass = None
+    AIEventBusClass = None
     _ORCHESTRATOR_AVAILABLE = False
 
 

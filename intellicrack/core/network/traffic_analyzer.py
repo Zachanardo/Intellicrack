@@ -25,7 +25,6 @@ import socket
 import struct
 import threading
 import time
-import traceback
 from typing import Any
 
 from intellicrack.utils.core.plugin_paths import get_visualizations_dir
@@ -82,7 +81,7 @@ except ImportError as e:
     logger.exception("Import error in traffic_analyzer: %s", e)
     MATPLOTLIB_AVAILABLE = False
     HAS_MATPLOTLIB = False
-    plt = None  # type: ignore[assignment]
+    plt = None
 
 # Determine available packet capture library
 if PYSHARK_AVAILABLE:
@@ -199,7 +198,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             interface: Network interface to capture on (optional)
 
         Returns:
-            bool: True if capture started successfully, False otherwise
+            True if capture started successfully, False otherwise
 
         """
         try:
@@ -214,15 +213,6 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                 allowing the network monitoring to run concurrently with the main application.
                 It calls the internal _capture_packets method with the specified interface
                 and provides exception handling to prevent thread crashes.
-
-                Args:
-                    None: Uses the interface parameter from the parent function scope
-
-                Returns:
-                    None
-
-                Raises:
-                    No exceptions are propagated as they are caught and logged internally
 
                 """
                 try:
@@ -284,6 +274,12 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             packet_count: Maximum number of packets to capture (optional)
             timeout: Timeout in seconds (optional)
 
+        Returns:
+            Capture statistics including start_time, packets_total, and capture_time
+
+        Raises:
+            PermissionError: When raw socket creation fails due to insufficient privileges
+
         """
         self.logger.info("Starting packet capture using native socket library")
 
@@ -344,7 +340,12 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
             # Inner function to handle the main capture logic
             def perform_capture(out_file: Any) -> None:
-                """Perform the actual packet capture."""
+                """Perform the actual packet capture.
+
+                Args:
+                    out_file: File object to write captured packets to (optional)
+
+                """
                 nonlocal packets_captured
 
                 # Capture loop
@@ -432,7 +433,12 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             raise
 
     def _process_captured_packet(self, packet_data: bytes) -> None:
-        """Process socket-captured packets with simple processor."""
+        """Process socket-captured packets with simple processor.
+
+        Args:
+            packet_data: Raw packet data as bytes
+
+        """
         try:
             # Very basic packet processing - extract IP header info
             if len(packet_data) >= 20:  # Minimum IP header size
@@ -483,6 +489,9 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             output_file: Path to save the capture in pcapng format (optional)
             packet_count: Maximum number of packets to capture before stopping (optional)
             timeout: Timeout in seconds after which to stop capturing (optional)
+
+        Raises:
+            Exception: When packet capture fails during sniffing or processing
 
         """
         if not PYSHARK_AVAILABLE:
@@ -547,6 +556,11 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                 """Handle SIGINT for graceful packet capture termination.
 
                 Logs the interrupt and restores the original signal handler.
+
+                Args:
+                    sig: Signal number
+                    frame: Current stack frame
+
                 """
                 self.logger.info("Received interrupt signal %d, stopping capture...", sig)
                 if frame:
@@ -641,7 +655,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             packet: Captured packet
 
         Returns:
-            bool: True if packet was processed successfully, False otherwise
+            True if packet was processed successfully, False otherwise
 
         """
         try:
@@ -765,7 +779,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             conn_key: Connection key for logging
 
         Returns:
-            bool: True if license content detected, False otherwise
+            True if license content detected, False otherwise
 
         """
         try:
@@ -809,7 +823,14 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
             # Define packet processing function
             def process_tcp_packet(packet: Any, IP: Any, TCP: Any) -> None:
-                """Process TCP packets for analysis."""
+                """Process TCP packets for analysis.
+
+                Args:
+                    packet: Scapy packet object
+                    IP: Scapy IP layer class
+                    TCP: Scapy TCP layer class
+
+                """
                 if not hasattr(packet, "__contains__") or IP not in packet or TCP not in packet:
                     return
                 # Extract packet info with type safety
@@ -908,6 +929,15 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
             # Use sniff with a stop filter
             def stop_filter(packet: object) -> bool:
+                """Check if packet capture should stop.
+
+                Args:
+                    packet: Captured packet object
+
+                Returns:
+                    True if capture should stop, False otherwise
+
+                """
                 self.logger.debug("Checking stop condition for packet: %s", type(packet).__name__)
                 return not self.capturing
 
@@ -931,7 +961,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         """Analyze captured traffic for license communications.
 
         Returns:
-            dict: Analysis results
+            Analysis results with packet statistics and license connection details, or None if analysis fails.
 
         """
         try:
@@ -994,7 +1024,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         """Generate visualizations of license traffic.
 
         Args:
-            results: Analysis results
+            results: Analysis results containing license connection details
 
         """
         if not MATPLOTLIB_AVAILABLE:
@@ -1082,11 +1112,8 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         and suspicious traffic patterns.
 
         Returns:
-            Dictionary containing:
-            - packets_analyzed: Total number of packets analyzed
-            - protocols_detected: List of detected protocols
-            - suspicious_traffic: List of suspicious traffic patterns
-            - statistics: Detailed traffic statistics
+            Analysis results with packets_analyzed, protocols_detected,
+            suspicious_traffic, statistics, license_analysis, and summary keys.
 
         """
         # Analyze traffic if not already done
@@ -1215,7 +1242,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             indicators: List of suspicious indicator descriptions
 
         Returns:
-            str: Threat level as "high", "medium", or "low"
+            Threat level as "high", "medium", or "low"
 
         """
         if len(indicators) >= 3:
@@ -1226,7 +1253,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         """Calculate total capture duration in seconds.
 
         Returns:
-            float: Total duration in seconds from first to last packet
+            Total duration in seconds from first to last packet
 
         """
         if not self.packets:
@@ -1240,7 +1267,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         """Calculate average packets per second.
 
         Returns:
-            float: Average number of packets captured per second
+            Average number of packets captured per second
 
         """
         duration = self._calculate_capture_duration()
@@ -1250,7 +1277,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         """Calculate distribution of protocols.
 
         Returns:
-            dict[str, int]: Protocol names mapped to packet counts
+            Protocol names mapped to packet counts
 
         """
         distribution: dict[str, int] = {}
@@ -1275,7 +1302,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         """Calculate distribution of destination ports.
 
         Returns:
-            dict[int, int]: Top 10 destination ports mapped to connection counts
+            Top 10 destination ports mapped to connection counts
 
         """
         distribution: dict[int, int] = {}
@@ -1290,7 +1317,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         """Calculate percentage of traffic that is license-related.
 
         Returns:
-            float: Percentage of packets identified as license-related traffic
+            Percentage of packets identified as license-related traffic
 
         """
         if not self.packets:
@@ -1304,7 +1331,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         """Identify time period with peak traffic.
 
         Returns:
-            str | None: Timestamp of peak traffic period formatted as YYYY-MM-DD HH:MM, or None if no packets
+            Timestamp of peak traffic period formatted as YYYY-MM-DD HH:MM, or None if no packets
 
         """
         if not self.packets:
@@ -1327,7 +1354,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         """Analyze connection duration statistics.
 
         Returns:
-            dict[str, float]: Dictionary with keys 'min', 'max', 'avg', 'total' containing duration statistics
+            Dictionary with keys 'min', 'max', 'avg', 'total' containing duration statistics
 
         """
         if durations := [
@@ -1346,7 +1373,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         """Stop the packet capture process.
 
         Returns:
-            bool: True if capture was stopped successfully, False otherwise
+            True if capture was stopped successfully, False otherwise
 
         """
         try:
@@ -1387,7 +1414,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             filename: Output filename (optional)
 
         Returns:
-            bool: True if generated successfully, False otherwise
+            True if generated successfully, False otherwise
 
         """
         try:

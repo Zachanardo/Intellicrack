@@ -22,10 +22,14 @@ This module contains constants that are used across multiple modules
 to avoid code duplication.
 """
 
-# Common file size formatting breakpoints
-SIZE_UNITS = [
+SIZE_UNITS: list[tuple[int, str]] = [
     (1024**3, "GB"),
     (1024**2, "MB"),
     (1024, "KB"),
     (1, "B"),
 ]
+"""File size formatting breakpoints.
+
+Tuple of (size_in_bytes, unit_label) for converting bytes to human-readable
+format. Ordered from largest to smallest for sequential comparison.
+"""

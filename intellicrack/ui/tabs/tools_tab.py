@@ -19,10 +19,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-import logging
 import os
 import subprocess
 from pathlib import Path
+from typing import Any
 
 from intellicrack.core.patching.windows_activator import WindowsActivator
 from intellicrack.core.terminal_manager import get_terminal_manager
@@ -1354,9 +1354,6 @@ class ToolsTab(BaseTab):
         Args:
             algorithm: The hashing algorithm to use (md5 or sha256).
 
-        Raises:
-            ValueError: If an unsupported hashing algorithm is specified.
-
         """
         data = self.crypto_input.toPlainText().strip()
         if not data:
@@ -1661,7 +1658,7 @@ def get_plugin():
             self._capture_active = True
             self._captured_packets = []
 
-            if success := start_network_capture(self, interface=interface, filter_str=filter_text or None):
+            if start_network_capture(self, interface=interface, filter_str=filter_text or None):
                 import threading
 
                 update_thread = threading.Thread(target=self._update_packet_table_periodically, daemon=True)
@@ -2049,17 +2046,65 @@ def get_plugin():
             return
 
         try:
+            from intellicrack.core.analysis.memory_forensics_engine import MemoryForensicsEngine
+
             self.tool_output.append(f"Starting memory forensics on: {binary_path}")
             self.tool_output.append("=" * 50)
-            self.tool_output.append("Memory forensics requires specialized memory analysis tools")
-            self.tool_output.append("Use the memory analysis interface from the main analysis tab")
+
+            engine = MemoryForensicsEngine()
+            results = engine.analyze_memory_dump(binary_path)
+
+            if results and isinstance(results, dict):
+                self.tool_output.append("Memory Forensics Results:")
+                self.tool_output.append("-" * 30)
+
+                if processes := results.get("processes"):
+                    self.tool_output.append(f"\nProcesses Found: {len(processes)}")
+                    for proc in processes[:10]:
+                        if isinstance(proc, dict):
+                            pid = proc.get("pid", "N/A")
+                            name = proc.get("name", "Unknown")
+                            suspicious = proc.get("suspicious", False)
+                            marker = " [SUSPICIOUS]" if suspicious else ""
+                            self.tool_output.append(f"  PID {pid}: {name}{marker}")
+
+                if modules := results.get("modules"):
+                    self.tool_output.append(f"\nLoaded Modules: {len(modules)}")
+                    for mod in modules[:10]:
+                        if isinstance(mod, dict):
+                            mod_name = mod.get("name", "Unknown")
+                            mod_base = mod.get("base", "N/A")
+                            self.tool_output.append(f"  {mod_name} @ {mod_base}")
+
+                if strings := results.get("extracted_strings"):
+                    license_strings = [s for s in strings if any(
+                        kw in s.lower() for kw in ["license", "serial", "key", "trial", "expire"]
+                    )]
+                    if license_strings:
+                        self.tool_output.append(f"\nLicense-related Strings: {len(license_strings)}")
+                        for s in license_strings[:15]:
+                            self.tool_output.append(f"  - {s[:80]}...")
+
+                if security_issues := results.get("security_issues"):
+                    self.tool_output.append(f"\nSecurity Issues: {len(security_issues)}")
+                    for issue in security_issues[:10]:
+                        if isinstance(issue, dict):
+                            issue_type = issue.get("type", "Unknown")
+                            severity = issue.get("severity", "Unknown")
+                            self.tool_output.append(f"  [{severity}] {issue_type}")
+
+                summary = engine.get_analysis_summary()
+                if summary:
+                    self.tool_output.append(f"\nSummary: {summary}")
+            else:
+                self.tool_output.append("No forensic data extracted from binary")
 
             self.log_message("Memory forensics analysis completed")
 
-        except ImportError:
-            logger.error("Memory forensics tools not available", exc_info=True)
-            self.output_console.append("Error: Memory forensics tools not available")
-        except Exception as e:
+        except ImportError as e:
+            logger.error("Memory forensics tools not available: %s", e, exc_info=True)
+            self.output_console.append(f"Error: Memory forensics tools not available: {e}")
+        except (OSError, RuntimeError, ValueError) as e:
             logger.error("Error running memory forensics: %s", e, exc_info=True)
             self.output_console.append(f"Error running memory forensics: {e!s}")
 
@@ -2071,22 +2116,84 @@ def get_plugin():
             return
 
         try:
-            self.tool_output.append(f"Starting Ghidra analysis on: {binary_path}")
-            self.tool_output.append("=" * 50)
-            self.tool_output.append("Ghidra analysis requires external Ghidra installation")
-            self.tool_output.append("Use the Ghidra integration from the main analysis interface")
+            from intellicrack.core.analysis.ghidra_advanced_analyzer import GhidraAdvancedAnalyzer
 
-            self.log_message("Ghidra analysis information displayed")
+            self.tool_output.append(f"Starting Ghidra-style analysis on: {binary_path}")
+            self.tool_output.append("=" * 50)
+
+            analyzer = GhidraAdvancedAnalyzer(binary_path)
+
+            variables = analyzer.recover_variables()
+            if variables:
+                self.tool_output.append(f"\nRecovered Variables: {len(variables)}")
+                self.tool_output.append("-" * 30)
+                for var in variables[:15]:
+                    if isinstance(var, dict):
+                        var_name = var.get("name", "Unknown")
+                        var_type = var.get("type", "Unknown")
+                        var_addr = var.get("address", "N/A")
+                        self.tool_output.append(f"  {var_name}: {var_type} @ {var_addr}")
+
+            structures = analyzer.recover_structures()
+            if structures:
+                self.tool_output.append(f"\nRecovered Structures: {len(structures)}")
+                self.tool_output.append("-" * 30)
+                for struct in structures[:10]:
+                    if isinstance(struct, dict):
+                        struct_name = struct.get("name", "Unknown")
+                        struct_size = struct.get("size", 0)
+                        fields = struct.get("fields", [])
+                        self.tool_output.append(f"  {struct_name} (size: {struct_size} bytes)")
+                        for field in fields[:5]:
+                            if isinstance(field, dict):
+                                fname = field.get("name", "field")
+                                ftype = field.get("type", "unknown")
+                                foffset = field.get("offset", 0)
+                                self.tool_output.append(f"    +{foffset}: {fname} ({ftype})")
+
+            vtables = analyzer.analyze_vtables()
+            if vtables:
+                self.tool_output.append(f"\nVTables Found: {len(vtables)}")
+                self.tool_output.append("-" * 30)
+                for vt in vtables[:8]:
+                    if isinstance(vt, dict):
+                        vt_addr = vt.get("address", "N/A")
+                        class_name = vt.get("class_name", "Unknown")
+                        methods = vt.get("methods", [])
+                        self.tool_output.append(f"  {class_name} @ {vt_addr}")
+                        self.tool_output.append(f"    Methods: {len(methods)}")
+
+            exceptions = analyzer.extract_exception_handlers()
+            if exceptions:
+                self.tool_output.append(f"\nException Handlers: {len(exceptions)}")
+                self.tool_output.append("-" * 30)
+                for eh in exceptions[:10]:
+                    if isinstance(eh, dict):
+                        eh_type = eh.get("type", "Unknown")
+                        eh_addr = eh.get("address", "N/A")
+                        self.tool_output.append(f"  [{eh_type}] @ {eh_addr}")
+
+            debug_info = analyzer.parse_debug_symbols()
+            if debug_info:
+                self.tool_output.append("\nDebug Symbols:")
+                self.tool_output.append("-" * 30)
+                if isinstance(debug_info, dict):
+                    pdb_guid = debug_info.get("pdb_guid", "")
+                    if pdb_guid:
+                        self.tool_output.append(f"  PDB GUID: {pdb_guid}")
+                    pdb_path = debug_info.get("pdb_path", "")
+                    if pdb_path:
+                        self.tool_output.append(f"  PDB Path: {pdb_path}")
+
+            self.log_message("Ghidra-style analysis completed")
 
         except ImportError as e:
-            logger.error("Ghidra import error: %s", e, exc_info=True)
+            logger.error("Ghidra analyzer import error: %s", e, exc_info=True)
             error_msg = get_user_friendly_error("ghidra", "Ghidra Analysis", e)
             self.output_console.append(error_msg)
-
-            # Suggest alternatives for static analysis
             alternatives = dependency_feedback.suggest_alternatives("ghidra", "static analysis")
             self.tool_output.append(alternatives)
-        except Exception as e:
+        except (OSError, RuntimeError, ValueError) as e:
             logger.error("Error running Ghidra analysis: %s", e, exc_info=True)
             self.output_console.append(f"Error running Ghidra analysis: {e!s}")
 
@@ -2213,17 +2320,80 @@ def get_plugin():
             return
 
         try:
+            from intellicrack.core.analysis.taint_analyzer import TaintAnalysisEngine
+
             self.tool_output.append(f"Starting taint analysis on: {binary_path}")
             self.tool_output.append("=" * 50)
-            self.tool_output.append("Taint analysis requires symbolic execution engine")
-            self.tool_output.append("Use the symbolic execution interface from the main analysis tab")
+
+            engine = TaintAnalysisEngine()
+            engine.set_binary(binary_path)
+
+            success = engine.run_analysis()
+            results = engine.get_results() if success else {}
+
+            if results:
+                self.tool_output.append("Taint Analysis Results:")
+                self.tool_output.append("-" * 30)
+
+                if taint_paths := results.get("taint_paths"):
+                    self.tool_output.append(f"\nTaint Paths Found: {len(taint_paths)}")
+                    for path in taint_paths[:15]:
+                        if isinstance(path, dict):
+                            source = path.get("source", "Unknown")
+                            sink = path.get("sink", "Unknown")
+                            confidence = path.get("confidence", 0)
+                            length = path.get("length", 0)
+                            self.tool_output.append(
+                                f"  {source} -> {sink} (confidence: {confidence:.1%}, "
+                                f"length: {length})"
+                            )
+
+                if sources := results.get("sources"):
+                    self.tool_output.append(f"\nTaint Sources: {len(sources)}")
+                    for src in sources[:10]:
+                        if isinstance(src, dict):
+                            src_type = src.get("type", "Unknown")
+                            src_addr = src.get("address", "N/A")
+                            src_func = src.get("function", "Unknown")
+                            self.tool_output.append(f"  [{src_type}] {src_func} @ {src_addr}")
+
+                if sinks := results.get("sinks"):
+                    self.tool_output.append(f"\nTaint Sinks: {len(sinks)}")
+                    for sink in sinks[:10]:
+                        if isinstance(sink, dict):
+                            sink_type = sink.get("type", "Unknown")
+                            sink_addr = sink.get("address", "N/A")
+                            sink_func = sink.get("function", "Unknown")
+                            self.tool_output.append(f"  [{sink_type}] {sink_func} @ {sink_addr}")
+
+                if validation_points := results.get("validation_points"):
+                    self.tool_output.append(f"\nLicense Validation Points: {len(validation_points)}")
+                    for vp in validation_points[:10]:
+                        if isinstance(vp, dict):
+                            vp_addr = vp.get("address", "N/A")
+                            vp_type = vp.get("type", "Unknown")
+                            difficulty = vp.get("bypass_difficulty", "Unknown")
+                            self.tool_output.append(
+                                f"  [{vp_type}] @ {vp_addr} (bypass difficulty: {difficulty})"
+                            )
+                            if patch_suggestion := vp.get("patch_suggestion"):
+                                self.tool_output.append(f"    Suggestion: {patch_suggestion}")
+
+                stats = engine.get_statistics()
+                if stats:
+                    self.tool_output.append("\nStatistics:")
+                    self.tool_output.append(f"  Total Sources: {stats.get('total_sources', 0)}")
+                    self.tool_output.append(f"  Total Sinks: {stats.get('total_sinks', 0)}")
+                    self.tool_output.append(f"  Paths Analyzed: {stats.get('paths_analyzed', 0)}")
+            else:
+                self.tool_output.append("No taint paths found in binary")
 
             self.log_message("Taint analysis completed")
 
-        except ImportError:
-            logger.warning("Taint analysis engine not available")
-            self.output_console.append("Error: Taint analysis engine not available")
-        except Exception as e:
+        except ImportError as e:
+            logger.warning("Taint analysis engine not available: %s", e)
+            self.output_console.append(f"Error: Taint analysis engine not available: {e}")
+        except (OSError, RuntimeError, ValueError) as e:
             logger.error("Error running taint analysis: %s", e, exc_info=True)
             self.output_console.append(f"Error running taint analysis: {e!s}")
 
@@ -2376,22 +2546,74 @@ def get_plugin():
             return
 
         try:
+            from intellicrack.core.analysis.rop_generator import ROPChainGenerator
             from intellicrack.utils.core.import_checks import CAPSTONE_AVAILABLE
 
             if not CAPSTONE_AVAILABLE:
-                # Use comprehensive dependency feedback for disassembly dependency
                 status = dependency_feedback.get_dependency_status("capstone")
                 self.output_console.append(str(status["message"]))
-
-                # Show alternatives for disassembly/ROP generation
-                alternatives = dependency_feedback.suggest_alternatives("capstone", "ROP chain generation")
+                alternatives = dependency_feedback.suggest_alternatives(
+                    "capstone", "ROP chain generation"
+                )
                 self.tool_output.append(alternatives)
                 return
 
             self.tool_output.append(f"Starting ROP chain generation for: {binary_path}")
             self.tool_output.append("=" * 50)
-            self.tool_output.append("ROP chain generation requires exploitation framework")
-            self.tool_output.append("Use the exploitation tools from the main interface")
+
+            generator = ROPChainGenerator()
+            generator.set_binary(binary_path)
+
+            generator.find_gadgets()
+            gadgets = generator.gadgets
+            if gadgets:
+                self.tool_output.append(f"\nGadgets Found: {len(gadgets)}")
+                self.tool_output.append("-" * 30)
+
+                gadget_types: dict[str, int] = {}
+                for gadget in gadgets:
+                    if isinstance(gadget, dict):
+                        gtype = gadget.get("type", "unknown")
+                        gadget_types[gtype] = gadget_types.get(gtype, 0) + 1
+
+                for gtype, count in sorted(gadget_types.items(), key=lambda x: -x[1])[:10]:
+                    self.tool_output.append(f"  {gtype}: {count} gadgets")
+
+                self.tool_output.append("\nSample Gadgets:")
+                for gadget in gadgets[:15]:
+                    if isinstance(gadget, dict):
+                        addr = gadget.get("address", "N/A")
+                        instr = gadget.get("instructions", "")
+                        gtype = gadget.get("type", "unknown")
+                        self.tool_output.append(f"  0x{addr:08x}: {instr} [{gtype}]")
+
+            generator.generate_chains()
+            chains = generator.chains
+            if chains:
+                self.tool_output.append(f"\nROP Chains Generated: {len(chains)}")
+                self.tool_output.append("-" * 30)
+                for chain in chains[:5]:
+                    if isinstance(chain, dict):
+                        chain_type = chain.get("type", "Unknown")
+                        target = chain.get("target", "N/A")
+                        probability = chain.get("success_probability", 0)
+                        gadget_count = len(chain.get("gadgets", []))
+                        self.tool_output.append(
+                            f"  [{chain_type}] Target: {target}"
+                        )
+                        self.tool_output.append(
+                            f"    Gadgets: {gadget_count}, Success Probability: {probability:.1%}"
+                        )
+                        if payload := chain.get("payload"):
+                            payload_hex = payload.hex()[:60]
+                            self.tool_output.append(f"    Payload: {payload_hex}...")
+
+            stats = generator.get_statistics()
+            if stats:
+                self.tool_output.append("\nStatistics:")
+                self.tool_output.append(f"  Total Gadgets: {stats.get('total_gadgets', 0)}")
+                self.tool_output.append(f"  Useful Gadgets: {stats.get('useful_gadgets', 0)}")
+                self.tool_output.append(f"  Chains Generated: {stats.get('chains_generated', 0)}")
 
             self.log_message("ROP chain generation completed")
 
@@ -2399,7 +2621,7 @@ def get_plugin():
             logger.warning("ROP Generator import error: %s", e)
             error_msg = get_user_friendly_error("capstone", "ROP Generator", e)
             self.output_console.append(error_msg)
-        except Exception as e:
+        except (OSError, RuntimeError, ValueError) as e:
             logger.error("Error running ROP generator: %s", e, exc_info=True)
             self.output_console.append(f"Error running ROP generator: {e!s}")
 
@@ -2411,23 +2633,83 @@ def get_plugin():
             return
 
         try:
+            from intellicrack.core.exploitation.license_bypass_code_generator import LicenseBypassCodeGenerator
             from intellicrack.utils.core.import_checks import LIEF_AVAILABLE, PEFILE_AVAILABLE
 
-            # Check binary analysis dependencies needed for payload generation
             if not (PEFILE_AVAILABLE or LIEF_AVAILABLE):
-                # Use comprehensive dependency feedback for binary analysis
                 status = dependency_feedback.get_dependency_status("pefile")
                 self.output_console.append(str(status["message"]))
-
-                # Show alternatives for binary analysis
-                alternatives = dependency_feedback.suggest_alternatives("pefile", "payload generation")
+                alternatives = dependency_feedback.suggest_alternatives(
+                    "pefile", "payload generation"
+                )
                 self.tool_output.append(alternatives)
                 return
 
             self.tool_output.append(f"Starting payload generation for: {binary_path}")
             self.tool_output.append("=" * 50)
-            self.tool_output.append("Payload generation requires exploitation framework")
-            self.tool_output.append("Use the exploitation tools from the main interface")
+
+            generator = LicenseBypassCodeGenerator()
+
+            results = generator.generate_license_bypass(binary_path)
+
+            if results and isinstance(results, dict):
+                self.tool_output.append("License Bypass Payload Generation Results:")
+                self.tool_output.append("-" * 30)
+
+                if binary_info := results.get("binary_info"):
+                    self.tool_output.append("\nBinary Information:")
+                    arch = binary_info.get("architecture", "Unknown")
+                    platform = binary_info.get("platform", "Unknown")
+                    self.tool_output.append(f"  Architecture: {arch}")
+                    self.tool_output.append(f"  Platform: {platform}")
+
+                if protections := results.get("detected_protections"):
+                    self.tool_output.append(f"\nDetected Protections: {len(protections)}")
+                    for prot in protections[:10]:
+                        if isinstance(prot, dict):
+                            prot_type = prot.get("type", "Unknown")
+                            prot_addr = prot.get("address", "N/A")
+                            confidence = prot.get("confidence", 0)
+                            self.tool_output.append(
+                                f"  [{prot_type}] @ {prot_addr} (confidence: {confidence:.1%})"
+                            )
+
+                if bypasses := results.get("generated_bypasses"):
+                    self.tool_output.append(f"\nGenerated Bypass Payloads: {len(bypasses)}")
+                    for bypass in bypasses[:5]:
+                        if isinstance(bypass, dict):
+                            bypass_type = bypass.get("type", "Unknown")
+                            target = bypass.get("target_address", "N/A")
+                            payload_size = len(bypass.get("payload", b""))
+                            stealth = bypass.get("stealth_enabled", False)
+                            stealth_str = " [STEALTH]" if stealth else ""
+                            self.tool_output.append(
+                                f"  [{bypass_type}] Target: {target}, "
+                                f"Size: {payload_size} bytes{stealth_str}"
+                            )
+                            if desc := bypass.get("description"):
+                                self.tool_output.append(f"    Description: {desc}")
+
+                if recommendations := results.get("recommendations"):
+                    self.tool_output.append("\nRecommendations:")
+                    for rec in recommendations[:5]:
+                        self.tool_output.append(f"  - {rec}")
+
+                patches = generator.get_generated_patches()
+                if patches:
+                    self.tool_output.append(f"\nGenerated Patches: {len(patches)}")
+                    for patch in patches[:5]:
+                        if isinstance(patch, dict):
+                            patch_type = patch.get("type", "Unknown")
+                            offset = patch.get("offset", 0)
+                            orig_size = len(patch.get("original", b""))
+                            new_size = len(patch.get("patched", b""))
+                            self.tool_output.append(
+                                f"  [{patch_type}] Offset: 0x{offset:08x}, "
+                                f"Original: {orig_size}B -> Patched: {new_size}B"
+                            )
+            else:
+                self.tool_output.append("No bypass payloads could be generated")
 
             self.log_message("Payload generation completed")
 
@@ -2435,12 +2717,16 @@ def get_plugin():
             logger.warning("Payload Engine import error: %s", e)
             error_msg = get_user_friendly_error("pefile", "Payload Engine", e)
             self.output_console.append(error_msg)
-        except Exception as e:
+        except (OSError, RuntimeError, ValueError) as e:
             logger.error("Error running payload engine: %s", e, exc_info=True)
             self.output_console.append(f"Error running payload engine: {e!s}")
 
     def run_shellcode_generator(self) -> None:
-        """Execute shellcode generation for target binary."""
+        """Execute shellcode generation for target binary.
+
+        Generates license bypass shellcode by analyzing the binary for protection
+        mechanisms and creating targeted bypass code for each identified check.
+        """
         binary_path = self.advanced_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
             self.output_console.append("Error: Invalid binary path for shellcode generation")
@@ -2450,19 +2736,125 @@ def get_plugin():
             from intellicrack.utils.core.import_checks import CAPSTONE_AVAILABLE
 
             if not CAPSTONE_AVAILABLE:
-                # Use comprehensive dependency feedback for disassembly
                 status = dependency_feedback.get_dependency_status("capstone")
                 self.output_console.append(str(status["message"]))
 
-                # Show alternatives for shellcode generation
                 alternatives = dependency_feedback.suggest_alternatives("capstone", "shellcode generation")
                 self.tool_output.append(alternatives)
                 return
 
+            from intellicrack.core.exploitation.license_bypass_code_generator import LicenseBypassCodeGenerator
+
             self.tool_output.append(f"Starting shellcode generation for: {binary_path}")
-            self.tool_output.append("=" * 50)
-            self.tool_output.append("Shellcode generation requires license bypass code generator")
-            self.tool_output.append("Use the code generation tools from the main interface")
+            self.tool_output.append("=" * 60)
+
+            generator = LicenseBypassCodeGenerator()
+            results = generator.generate_shellcode(binary_path)
+
+            if results and isinstance(results, dict):
+                binary_info = results.get("binary_info", {})
+                if binary_info:
+                    self.tool_output.append("\n[Binary Information]")
+                    self.tool_output.append(f"  Architecture: {binary_info.get('architecture', 'Unknown')}")
+                    self.tool_output.append(f"  Entry Point: 0x{binary_info.get('entry_point', 0):08x}")
+                    self.tool_output.append(f"  Image Base: 0x{binary_info.get('image_base', 0):08x}")
+                    if binary_info.get("subsystem"):
+                        self.tool_output.append(f"  Subsystem: {binary_info.get('subsystem')}")
+                    if binary_info.get("sections"):
+                        self.tool_output.append(f"  Sections: {len(binary_info.get('sections', []))}")
+
+                analysis_results = results.get("analysis_results", {})
+                if analysis_results:
+                    self.tool_output.append("\n[Protection Analysis]")
+
+                    license_checks = analysis_results.get("license_checks", [])
+                    if license_checks:
+                        self.tool_output.append(f"  License Checks Found: {len(license_checks)}")
+                        for i, check in enumerate(license_checks[:5], 1):
+                            addr = check.get("address", 0)
+                            check_type = check.get("type", "unknown")
+                            self.tool_output.append(f"    {i}. 0x{addr:08x} - {check_type}")
+
+                    trial_checks = analysis_results.get("trial_checks", [])
+                    if trial_checks:
+                        self.tool_output.append(f"  Trial Checks Found: {len(trial_checks)}")
+                        for i, check in enumerate(trial_checks[:5], 1):
+                            addr = check.get("address", 0)
+                            self.tool_output.append(f"    {i}. 0x{addr:08x}")
+
+                    activation_checks = analysis_results.get("activation_checks", [])
+                    if activation_checks:
+                        self.tool_output.append(f"  Activation Checks Found: {len(activation_checks)}")
+                        for i, check in enumerate(activation_checks[:5], 1):
+                            addr = check.get("address", 0)
+                            self.tool_output.append(f"    {i}. 0x{addr:08x}")
+
+                    serial_checks = analysis_results.get("serial_checks", [])
+                    if serial_checks:
+                        self.tool_output.append(f"  Serial Validation Checks Found: {len(serial_checks)}")
+                        for i, check in enumerate(serial_checks[:5], 1):
+                            addr = check.get("address", 0)
+                            self.tool_output.append(f"    {i}. 0x{addr:08x}")
+
+                shellcodes = results.get("shellcodes", [])
+                if shellcodes:
+                    self.tool_output.append(f"\n[Generated Shellcode Entries: {len(shellcodes)}]")
+
+                    by_type: dict[str, list[dict[str, Any]]] = {}
+                    for sc in shellcodes:
+                        sc_type = sc.get("type", "unknown")
+                        if sc_type not in by_type:
+                            by_type[sc_type] = []
+                        by_type[sc_type].append(sc)
+
+                    for sc_type, entries in by_type.items():
+                        self.tool_output.append(f"\n  [{sc_type.replace('_', ' ').title()}] - {len(entries)} entries")
+                        for i, entry in enumerate(entries[:10], 1):
+                            addr = entry.get("address", 0)
+                            arch = entry.get("arch", "unknown")
+                            code = entry.get("code", b"")
+                            code_len = len(code) if isinstance(code, (bytes, bytearray)) else 0
+                            desc = entry.get("description", "")
+
+                            self.tool_output.append(f"    {i}. Address: 0x{addr:08x}")
+                            self.tool_output.append(f"       Architecture: {arch}")
+                            self.tool_output.append(f"       Size: {code_len} bytes")
+                            if desc:
+                                self.tool_output.append(f"       Description: {desc}")
+
+                            if code_len > 0 and isinstance(code, (bytes, bytearray)):
+                                hex_preview = code[:32].hex()
+                                if code_len > 32:
+                                    hex_preview += "..."
+                                self.tool_output.append(f"       Shellcode: {hex_preview}")
+
+                        if len(entries) > 10:
+                            self.tool_output.append(f"    ... and {len(entries) - 10} more entries")
+
+                recommendations = results.get("recommendations", [])
+                if recommendations:
+                    self.tool_output.append("\n[Recommendations]")
+                    for i, rec in enumerate(recommendations[:10], 1):
+                        if isinstance(rec, dict):
+                            rec_type = rec.get("type", "general")
+                            rec_msg = rec.get("message", str(rec))
+                            priority = rec.get("priority", "medium")
+                            self.tool_output.append(f"  {i}. [{priority.upper()}] {rec_type}: {rec_msg}")
+                        else:
+                            self.tool_output.append(f"  {i}. {rec}")
+
+                self.tool_output.append("\n" + "=" * 60)
+                total_shellcodes = len(shellcodes)
+                total_bytes = sum(
+                    len(sc.get("code", b""))
+                    for sc in shellcodes
+                    if isinstance(sc.get("code"), (bytes, bytearray))
+                )
+                self.tool_output.append(f"Total Shellcode Entries: {total_shellcodes}")
+                self.tool_output.append(f"Total Shellcode Bytes: {total_bytes}")
+            else:
+                self.tool_output.append("No shellcode generation results available")
+                self.tool_output.append("The binary may not contain identifiable protection mechanisms")
 
             self.log_message("Shellcode generation completed")
 
@@ -2470,7 +2862,7 @@ def get_plugin():
             logger.warning("Shellcode Generator import error: %s", e)
             error_msg = get_user_friendly_error("capstone", "Shellcode Generator", e)
             self.output_console.append(error_msg)
-        except Exception as e:
+        except (OSError, RuntimeError, ValueError) as e:
             logger.error("Error running shellcode generator: %s", e, exc_info=True)
             self.output_console.append(f"Error running shellcode generator: {e!s}")
 

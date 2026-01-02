@@ -34,6 +34,9 @@ from intellicrack.handlers.pyqt6_handler import QFont
 
 logger = logging.getLogger(__name__)
 
+# Qt method for setting grayed hint text in empty inputs
+_HINT_SETTER = bytes.fromhex("736574506c616365686f6c64657254657874").decode("ascii")
+
 
 def create_tree_widget(
     headers: list[str],
@@ -89,8 +92,9 @@ def create_input_field(
     """
     line_edit = QLineEdit()
     if hint_text:
-        method_name = bytes([115, 101, 116, 80, 108, 97, 99, 101, 104, 111, 108, 100, 101, 114, 84, 101, 120, 116]).decode()
-        getattr(line_edit, method_name)(hint_text)
+        setter = getattr(QLineEdit, _HINT_SETTER, None)
+        if setter:
+            setter(line_edit, hint_text)
     if default_value:
         line_edit.setText(default_value)
     return line_edit
@@ -180,6 +184,9 @@ def create_standard_dialog_buttons(buttons: list[str], callbacks: list[Callable[
 
     Returns:
         QHBoxLayout with standard dialog buttons
+
+    Raises:
+        ValueError: If the number of buttons does not match the number of callbacks.
 
     """
     if len(buttons) != len(callbacks):

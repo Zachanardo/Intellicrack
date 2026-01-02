@@ -9,8 +9,7 @@ This module validates ui_button_common utility functionality including:
 - Error handling for missing PyQt6
 """
 
-from typing import Any
-from unittest.mock import MagicMock, patch
+from typing import Any, Callable, cast
 
 import pytest
 from PyQt6.QtWidgets import QApplication, QHBoxLayout, QPushButton
@@ -20,6 +19,22 @@ from intellicrack.utils.ui.ui_button_common import (
     add_extra_buttons,
     get_button_style,
 )
+
+# Type alias for button callback list to match add_extra_buttons signature
+ButtonCallbackList = list[tuple[str, Callable[..., object]]]
+
+
+class FakeCallback:
+    """Test double for button callbacks that tracks invocation."""
+
+    def __init__(self) -> None:
+        self.called: bool = False
+        self.call_count: int = 0
+
+    def __call__(self, *args: object, **kwargs: object) -> object:
+        self.called = True
+        self.call_count += 1
+        return None
 
 
 @pytest.fixture
@@ -39,8 +54,8 @@ class TestAddExtraButtons:
 
     def test_add_single_button(self, layout: QHBoxLayout) -> None:
         """add_extra_buttons adds single button to layout."""
-        callback = MagicMock()
-        extra_buttons = [("Test Button", callback)]
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [("Test Button", callback)]
 
         buttons = add_extra_buttons(layout, extra_buttons)
 
@@ -51,10 +66,10 @@ class TestAddExtraButtons:
 
     def test_add_multiple_buttons(self, layout: QHBoxLayout) -> None:
         """add_extra_buttons adds multiple buttons to layout."""
-        callback1 = MagicMock()
-        callback2 = MagicMock()
-        callback3 = MagicMock()
-        extra_buttons = [
+        callback1 = FakeCallback()
+        callback2 = FakeCallback()
+        callback3 = FakeCallback()
+        extra_buttons: ButtonCallbackList = [
             ("Button 1", callback1),
             ("Button 2", callback2),
             ("Button 3", callback3),
@@ -72,24 +87,28 @@ class TestAddExtraButtons:
         """add_extra_buttons connects callback to button click."""
         callback_triggered = False
 
-        def callback() -> None:
+        def callback(*args: object, **kwargs: object) -> object:
             nonlocal callback_triggered
             callback_triggered = True
+            return None
 
-        extra_buttons = [("Test Button", callback)]
+        extra_buttons: ButtonCallbackList = [("Test Button", callback)]
         buttons = add_extra_buttons(layout, extra_buttons)
 
-        buttons["Test Button"].click()
+        button = buttons["Test Button"]
+        assert isinstance(button, QPushButton)
+        button.click()
         assert callback_triggered
 
     def test_analyze_binary_button_special_styling(self, layout: QHBoxLayout) -> None:
         """Analyze Binary button receives special styling."""
-        callback = MagicMock()
-        extra_buttons = [("Analyze Binary", callback)]
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [("Analyze Binary", callback)]
 
         buttons = add_extra_buttons(layout, extra_buttons)
 
         button = buttons["Analyze Binary"]
+        assert isinstance(button, QPushButton)
         style = button.styleSheet()
         assert "#2196F3" in style
         assert "background-color" in style
@@ -97,19 +116,20 @@ class TestAddExtraButtons:
 
     def test_regular_button_no_special_styling(self, layout: QHBoxLayout) -> None:
         """Regular buttons do not receive special styling."""
-        callback = MagicMock()
-        extra_buttons = [("Regular Button", callback)]
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [("Regular Button", callback)]
 
         buttons = add_extra_buttons(layout, extra_buttons)
 
         button = buttons["Regular Button"]
+        assert isinstance(button, QPushButton)
         style = button.styleSheet()
         assert style == ""
 
     def test_widget_refs_stores_analyze_button(self, layout: QHBoxLayout) -> None:
         """widget_refs stores Analyze Binary button reference."""
-        callback = MagicMock()
-        extra_buttons = [("Analyze Binary", callback)]
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [("Analyze Binary", callback)]
         widget_refs: dict[str, Any] = {}
 
         buttons = add_extra_buttons(layout, extra_buttons, widget_refs)
@@ -119,9 +139,9 @@ class TestAddExtraButtons:
 
     def test_widget_refs_stores_extra_buttons(self, layout: QHBoxLayout) -> None:
         """widget_refs stores extra button references."""
-        callback1 = MagicMock()
-        callback2 = MagicMock()
-        extra_buttons = [
+        callback1 = FakeCallback()
+        callback2 = FakeCallback()
+        extra_buttons: ButtonCallbackList = [
             ("Button 1", callback1),
             ("Button 2", callback2),
         ]
@@ -143,37 +163,45 @@ class TestAddExtraButtons:
 
     def test_button_text_set_correctly(self, layout: QHBoxLayout) -> None:
         """Button text is set to provided text."""
-        callback = MagicMock()
-        extra_buttons = [("Custom Label", callback)]
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [("Custom Label", callback)]
 
         buttons = add_extra_buttons(layout, extra_buttons)
 
-        assert buttons["Custom Label"].text() == "Custom Label"
+        button = buttons["Custom Label"]
+        assert isinstance(button, QPushButton)
+        assert button.text() == "Custom Label"
 
     def test_multiple_button_callbacks_independent(self, layout: QHBoxLayout) -> None:
         """Multiple button callbacks work independently."""
         callback1_triggered = False
         callback2_triggered = False
 
-        def callback1() -> None:
+        def callback1(*args: object, **kwargs: object) -> object:
             nonlocal callback1_triggered
             callback1_triggered = True
+            return None
 
-        def callback2() -> None:
+        def callback2(*args: object, **kwargs: object) -> object:
             nonlocal callback2_triggered
             callback2_triggered = True
+            return None
 
-        extra_buttons = [
+        extra_buttons: ButtonCallbackList = [
             ("Button 1", callback1),
             ("Button 2", callback2),
         ]
         buttons = add_extra_buttons(layout, extra_buttons)
 
-        buttons["Button 1"].click()
+        button1 = buttons["Button 1"]
+        assert isinstance(button1, QPushButton)
+        button1.click()
         assert callback1_triggered
         assert not callback2_triggered
 
-        buttons["Button 2"].click()
+        button2 = buttons["Button 2"]
+        assert isinstance(button2, QPushButton)
+        button2.click()
         assert callback2_triggered
 
 
@@ -214,13 +242,13 @@ class TestPyQtAvailability:
         """PYQT_AVAILABLE flag is True when PyQt6 imported successfully."""
         assert PYQT_AVAILABLE is True
 
-    def test_add_buttons_requires_pyqt(self, layout: QHBoxLayout) -> None:
+    def test_add_buttons_requires_pyqt(self, layout: QHBoxLayout, monkeypatch: pytest.MonkeyPatch) -> None:
         """add_extra_buttons returns empty dict when PyQt unavailable."""
-        with patch("intellicrack.utils.ui.ui_button_common.PYQT_AVAILABLE", False):
-            callback = MagicMock()
-            extra_buttons = [("Test", callback)]
-            buttons = add_extra_buttons(layout, extra_buttons)
-            assert buttons == {}
+        monkeypatch.setattr("intellicrack.utils.ui.ui_button_common.PYQT_AVAILABLE", False)
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [("Test", callback)]
+        buttons = add_extra_buttons(layout, extra_buttons)
+        assert buttons == {}
 
 
 class TestButtonIntegrationScenarios:
@@ -228,9 +256,9 @@ class TestButtonIntegrationScenarios:
 
     def test_header_with_analyze_and_custom_buttons(self, layout: QHBoxLayout) -> None:
         """Header can have Analyze Binary and custom buttons."""
-        analyze_callback = MagicMock()
-        custom_callback = MagicMock()
-        extra_buttons = [
+        analyze_callback = FakeCallback()
+        custom_callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [
             ("Analyze Binary", analyze_callback),
             ("Export Results", custom_callback),
         ]
@@ -241,17 +269,21 @@ class TestButtonIntegrationScenarios:
         assert "Analyze Binary" in buttons
         assert "Export Results" in buttons
 
-        buttons["Analyze Binary"].click()
+        analyze_btn = buttons["Analyze Binary"]
+        assert isinstance(analyze_btn, QPushButton)
+        analyze_btn.click()
         assert analyze_callback.called
 
-        buttons["Export Results"].click()
+        export_btn = buttons["Export Results"]
+        assert isinstance(export_btn, QPushButton)
+        export_btn.click()
         assert custom_callback.called
 
     def test_button_creation_with_widget_tracking(self, layout: QHBoxLayout) -> None:
         """Button creation tracks references for later access."""
-        callback1 = MagicMock()
-        callback2 = MagicMock()
-        extra_buttons = [
+        callback1 = FakeCallback()
+        callback2 = FakeCallback()
+        extra_buttons: ButtonCallbackList = [
             ("Analyze Binary", callback1),
             ("Custom Action", callback2),
         ]
@@ -265,8 +297,8 @@ class TestButtonIntegrationScenarios:
 
     def test_buttons_maintain_order(self, layout: QHBoxLayout) -> None:
         """Buttons are added to layout in order provided."""
-        callback = MagicMock()
-        extra_buttons = [
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [
             ("First", callback),
             ("Second", callback),
             ("Third", callback),
@@ -274,9 +306,23 @@ class TestButtonIntegrationScenarios:
 
         buttons = add_extra_buttons(layout, extra_buttons)
 
-        assert layout.itemAt(0).widget().text() == "First"
-        assert layout.itemAt(1).widget().text() == "Second"
-        assert layout.itemAt(2).widget().text() == "Third"
+        item0 = layout.itemAt(0)
+        assert item0 is not None
+        widget0 = item0.widget()
+        assert isinstance(widget0, QPushButton)
+        assert widget0.text() == "First"
+
+        item1 = layout.itemAt(1)
+        assert item1 is not None
+        widget1 = item1.widget()
+        assert isinstance(widget1, QPushButton)
+        assert widget1.text() == "Second"
+
+        item2 = layout.itemAt(2)
+        assert item2 is not None
+        widget2 = item2.widget()
+        assert isinstance(widget2, QPushButton)
+        assert widget2.text() == "Third"
 
 
 class TestButtonEdgeCases:
@@ -284,18 +330,20 @@ class TestButtonEdgeCases:
 
     def test_button_with_special_characters(self, layout: QHBoxLayout) -> None:
         """Button text with special characters handled correctly."""
-        callback = MagicMock()
-        extra_buttons = [("Test & Button <>&", callback)]
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [("Test & Button <>&", callback)]
 
         buttons = add_extra_buttons(layout, extra_buttons)
 
         assert "Test & Button <>&" in buttons
-        assert buttons["Test & Button <>&"].text() == "Test & Button <>&"
+        button = buttons["Test & Button <>&"]
+        assert isinstance(button, QPushButton)
+        assert button.text() == "Test & Button <>&"
 
     def test_button_with_unicode(self, layout: QHBoxLayout) -> None:
         """Button text with unicode characters handled correctly."""
-        callback = MagicMock()
-        extra_buttons = [("Analyze 分析", callback)]
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [("Analyze 分析", callback)]
 
         buttons = add_extra_buttons(layout, extra_buttons)
 
@@ -303,9 +351,9 @@ class TestButtonEdgeCases:
 
     def test_button_with_very_long_text(self, layout: QHBoxLayout) -> None:
         """Button with very long text handled correctly."""
-        callback = MagicMock()
+        callback = FakeCallback()
         long_text = "A" * 100
-        extra_buttons = [(long_text, callback)]
+        extra_buttons: ButtonCallbackList = [(long_text, callback)]
 
         buttons = add_extra_buttons(layout, extra_buttons)
 
@@ -313,8 +361,8 @@ class TestButtonEdgeCases:
 
     def test_widget_refs_none(self, layout: QHBoxLayout) -> None:
         """add_extra_buttons handles None widget_refs."""
-        callback = MagicMock()
-        extra_buttons = [("Test", callback)]
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [("Test", callback)]
 
         buttons = add_extra_buttons(layout, extra_buttons, None)
 
@@ -322,8 +370,8 @@ class TestButtonEdgeCases:
 
     def test_widget_refs_without_extra_buttons_dict(self, layout: QHBoxLayout) -> None:
         """add_extra_buttons handles widget_refs without extra_buttons dict."""
-        callback = MagicMock()
-        extra_buttons = [("Regular Button", callback)]
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [("Regular Button", callback)]
         widget_refs: dict[str, Any] = {}
 
         buttons = add_extra_buttons(layout, extra_buttons, widget_refs)
@@ -336,26 +384,31 @@ class TestButtonStylingConsistency:
 
     def test_analyze_binary_style_applied_correctly(self, layout: QHBoxLayout) -> None:
         """Analyze Binary button style is applied correctly."""
-        callback = MagicMock()
-        extra_buttons = [("Analyze Binary", callback)]
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [("Analyze Binary", callback)]
 
         buttons = add_extra_buttons(layout, extra_buttons)
         button = buttons["Analyze Binary"]
+        assert isinstance(button, QPushButton)
 
         expected_style = get_button_style("Analyze Binary")
         assert button.styleSheet() == expected_style
 
     def test_style_consistency_across_multiple_calls(self, layout: QHBoxLayout) -> None:
         """Button style is consistent across multiple function calls."""
-        callback = MagicMock()
-        extra_buttons = [("Analyze Binary", callback)]
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [("Analyze Binary", callback)]
 
         buttons1 = add_extra_buttons(layout, extra_buttons)
-        style1 = buttons1["Analyze Binary"].styleSheet()
+        button1 = buttons1["Analyze Binary"]
+        assert isinstance(button1, QPushButton)
+        style1 = button1.styleSheet()
 
         layout2 = QHBoxLayout()
         buttons2 = add_extra_buttons(layout2, extra_buttons)
-        style2 = buttons2["Analyze Binary"].styleSheet()
+        button2 = buttons2["Analyze Binary"]
+        assert isinstance(button2, QPushButton)
+        style2 = button2.styleSheet()
 
         assert style1 == style2
 
@@ -368,15 +421,18 @@ class TestButtonFunctionalityVerification:
         executed = False
         data = {"value": 0}
 
-        def callback() -> None:
+        def callback(*args: object, **kwargs: object) -> object:
             nonlocal executed
             executed = True
             data["value"] = 42
+            return None
 
-        extra_buttons = [("Action Button", callback)]
+        extra_buttons: ButtonCallbackList = [("Action Button", callback)]
         buttons = add_extra_buttons(layout, extra_buttons)
 
-        buttons["Action Button"].click()
+        action_btn = buttons["Action Button"]
+        assert isinstance(action_btn, QPushButton)
+        action_btn.click()
 
         assert executed
         assert data["value"] == 42
@@ -385,29 +441,34 @@ class TestButtonFunctionalityVerification:
         """Button callback with captured arguments works correctly."""
         result = None
 
-        def make_callback(value: int) -> Any:
-            def callback() -> None:
+        def make_callback(value: int) -> Callable[..., object]:
+            def callback(*args: object, **kwargs: object) -> object:
                 nonlocal result
                 result = value * 2
+                return None
 
             return callback
 
         callback = make_callback(21)
-        extra_buttons = [("Calculate", callback)]
+        extra_buttons: ButtonCallbackList = [("Calculate", callback)]
         buttons = add_extra_buttons(layout, extra_buttons)
 
-        buttons["Calculate"].click()
+        calc_btn = buttons["Calculate"]
+        assert isinstance(calc_btn, QPushButton)
+        calc_btn.click()
 
         assert result == 42
 
     def test_button_enabled_by_default(self, layout: QHBoxLayout) -> None:
         """Buttons are enabled by default."""
-        callback = MagicMock()
-        extra_buttons = [("Test Button", callback)]
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [("Test Button", callback)]
 
         buttons = add_extra_buttons(layout, extra_buttons)
 
-        assert buttons["Test Button"].isEnabled()
+        test_btn = buttons["Test Button"]
+        assert isinstance(test_btn, QPushButton)
+        assert test_btn.isEnabled()
 
 
 class TestButtonLayoutIntegration:
@@ -415,8 +476,8 @@ class TestButtonLayoutIntegration:
 
     def test_buttons_added_to_layout(self, layout: QHBoxLayout) -> None:
         """Buttons are properly added to provided layout."""
-        callback = MagicMock()
-        extra_buttons = [
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [
             ("Button 1", callback),
             ("Button 2", callback),
         ]
@@ -427,21 +488,23 @@ class TestButtonLayoutIntegration:
 
     def test_layout_widgets_are_buttons(self, layout: QHBoxLayout) -> None:
         """Layout items are QPushButton instances."""
-        callback = MagicMock()
-        extra_buttons = [("Test", callback)]
+        callback = FakeCallback()
+        extra_buttons: ButtonCallbackList = [("Test", callback)]
 
         add_extra_buttons(layout, extra_buttons)
 
-        widget = layout.itemAt(0).widget()
+        item = layout.itemAt(0)
+        assert item is not None
+        widget = item.widget()
         assert isinstance(widget, QPushButton)
 
     def test_multiple_layouts_independent(self) -> None:
         """Buttons in different layouts are independent."""
         layout1 = QHBoxLayout()
         layout2 = QHBoxLayout()
-        callback = MagicMock()
+        callback = FakeCallback()
 
-        extra_buttons = [("Test", callback)]
+        extra_buttons: ButtonCallbackList = [("Test", callback)]
 
         buttons1 = add_extra_buttons(layout1, extra_buttons)
         buttons2 = add_extra_buttons(layout2, extra_buttons)

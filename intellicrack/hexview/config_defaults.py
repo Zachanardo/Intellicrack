@@ -22,7 +22,9 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
-HEX_VIEWER_DEFAULTS = {
+from typing import Any
+
+HEX_VIEWER_DEFAULTS: dict[str, dict[str, Any]] = {
     "ui": {
         # Color Configuration
         "bg_color": "#1E1E1E",  # Dark background for reduced eye strain

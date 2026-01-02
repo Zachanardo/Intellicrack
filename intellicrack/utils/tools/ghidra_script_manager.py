@@ -152,7 +152,16 @@ class GhidraScript:
             self.is_valid = False
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert script info to dictionary."""
+        """Convert script info to dictionary.
+
+        Returns:
+            dict[str, Any]: Dictionary containing all script metadata
+                and properties including path, filename, name, type,
+                description, author, category, version, tags,
+                last_modified, size, is_valid, validation_errors,
+                and directory.
+
+        """
         return {
             "path": self.path,
             "filename": self.filename,
@@ -282,7 +291,15 @@ class GhidraScriptManager:
         return self.scripts
 
     def get_scripts_by_category(self) -> dict[str, list[GhidraScript]]:
-        """Get scripts organized by category."""
+        """Get scripts organized by category.
+
+        Returns:
+            dict[str, list[GhidraScript]]: Dictionary mapping category
+                names to lists of GhidraScript objects. Keys are category
+                names and values are lists of GhidraScript instances in
+                that category.
+
+        """
         if not self.scripts:
             self.scan_scripts()
 
@@ -447,12 +464,19 @@ class GhidraScriptManager:
     def add_user_script(self, source_path: str, category: str = "User Scripts") -> GhidraScript | None:
         """Add a user script to the user scripts directory.
 
+        Copies the script to the user scripts directory and validates
+        it before adding to the collection. If validation fails, the
+        copied file is removed and None is returned.
+
         Args:
             source_path: Path to the script to add
             category: Category for the script
 
         Returns:
-            GhidraScript object if successful
+            GhidraScript object if successful, None on failure
+
+        Raises:
+            ValueError: If the script fails validation.
 
         """
         base_dir = get_resource_path("scripts/ghidra")
@@ -566,7 +590,18 @@ _script_manager: GhidraScriptManager | None = None
 
 
 def get_script_manager() -> GhidraScriptManager:
-    """Get or create the global script manager instance."""
+    """Get or create the global script manager instance.
+
+    Returns a singleton instance of GhidraScriptManager that manages
+    all Ghidra script discovery and execution. Creates the instance
+    on first call and reuses it on subsequent calls.
+
+    Returns:
+        GhidraScriptManager: The global GhidraScriptManager instance
+            used for managing script discovery, validation, and
+            execution across the application.
+
+    """
     global _script_manager
     if _script_manager is None:
         _script_manager = GhidraScriptManager()
@@ -574,7 +609,16 @@ def get_script_manager() -> GhidraScriptManager:
 
 
 def add_script_directory(directory: str) -> None:
-    """Add a directory to search for scripts."""
+    """Add a directory to search for scripts.
+
+    Adds a new directory to the global script manager's search path.
+    The directory will be scanned for Ghidra scripts (Java and Python)
+    during the next scan operation.
+
+    Args:
+        directory: Path to the directory to add for script searching.
+
+    """
     manager = get_script_manager()
     if directory not in manager.script_dirs:
         manager.script_dirs.append(directory)

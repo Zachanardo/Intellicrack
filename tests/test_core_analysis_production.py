@@ -13,6 +13,9 @@ Tests validate REAL offensive capabilities:
 from pathlib import Path
 from typing import Any
 
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
 import pytest
 
 from intellicrack.core.analysis.core_analysis import (
@@ -213,13 +216,13 @@ class TestRealBinaryAnalysis:
     @pytest.fixture
     def legitimate_pe_binaries(self) -> list[Path]:
         """Provide paths to legitimate PE binaries."""
-        binaries_dir = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate")
+        binaries_dir = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate"
         return list(binaries_dir.glob("*.exe")) if binaries_dir.exists() else []
 
     @pytest.fixture
     def protected_binaries(self) -> list[Path]:
         """Provide paths to protected PE binaries."""
-        binaries_dir = Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected")
+        binaries_dir = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected"
         return list(binaries_dir.glob("*.exe")) if binaries_dir.exists() else []
 
     def test_binary_analysis_parses_pe_header(self, legitimate_pe_binaries: list[Path]) -> None:
@@ -334,7 +337,7 @@ class TestRealBinaryAnalysis:
 
     def test_binary_analysis_identifies_dll_files(self, legitimate_pe_binaries: list[Path]) -> None:
         """Binary analysis correctly identifies DLL files."""
-        binaries_dir = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate")
+        binaries_dir = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate"
         dll_files = list(binaries_dir.glob("*.dll")) if binaries_dir.exists() else []
 
         if not dll_files:
@@ -434,7 +437,7 @@ class TestLicenseRelatedImportDetection:
     @pytest.fixture
     def protected_binaries(self) -> list[Path]:
         """Provide paths to protected binaries."""
-        binaries_dir = Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected")
+        binaries_dir = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected"
         return list(binaries_dir.glob("*.exe")) if binaries_dir.exists() else []
 
     @pytest.mark.skipif(not PEFILE_AVAILABLE, reason="pefile library not available")
@@ -456,7 +459,7 @@ class TestSectionEntropyAnalysis:
     @pytest.fixture
     def protected_binaries(self) -> list[Path]:
         """Provide paths to protected binaries."""
-        binaries_dir = Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected")
+        binaries_dir = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected"
         return list(binaries_dir.glob("*.exe")) if binaries_dir.exists() else []
 
     @pytest.mark.skipif(not PEFILE_AVAILABLE, reason="pefile library not available")

@@ -29,7 +29,7 @@ def validate_snapshots(
     snapshot2: str,
     logger: logging.Logger | None = None,
 ) -> tuple[bool, str | None]:
-    """Validate that both snapshots exist.
+    """Validate that both snapshots exist in the snapshot dictionary.
 
     Args:
         snapshots_dict: Dictionary containing snapshots.
@@ -61,7 +61,7 @@ def log_comparison_start(
     snapshot2: str,
     logger: logging.Logger | None = None,
 ) -> None:
-    """Log the start of snapshot comparison.
+    """Log the start of snapshot comparison process.
 
     Args:
         snapshot1: Name of first snapshot.
@@ -118,7 +118,7 @@ def get_snapshot_data(
     snapshots_dict: dict[str, Any],
     snapshot_name: str,
 ) -> dict[str, Any]:
-    """Get snapshot data safely.
+    """Get snapshot data safely from snapshots dictionary.
 
     Args:
         snapshots_dict: Dictionary containing snapshots.
@@ -136,7 +136,7 @@ def compare_file_lists(
     files2_data: str | None,
     limit: int = 100,
 ) -> dict[str, list[str]]:
-    """Compare file lists between two snapshots.
+    """Compare file lists between two snapshots and identify changes.
 
     Args:
         files1_data: File data from first snapshot.

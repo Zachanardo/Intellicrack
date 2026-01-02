@@ -36,8 +36,11 @@ except ImportError as e:
 class TestActualModules(unittest.TestCase):
     """Test actual Intellicrack modules for production readiness."""
 
+    is_windows: bool
+    results: Dict[str, Any]
+
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         """Set up test environment."""
         cls.is_windows = platform.system() == "Windows"
         cls.results = {
@@ -48,7 +51,7 @@ class TestActualModules(unittest.TestCase):
             "warnings": []
         }
 
-    def test_01_module_imports(self):
+    def test_01_module_imports(self) -> None:
         """Test that all required modules can be imported."""
         print("\n[TEST] Module Import Verification")
         print("=" * 60)
@@ -75,7 +78,7 @@ class TestActualModules(unittest.TestCase):
         self.assertGreaterEqual(imported, 2,
                                "At least 2 core modules must be importable")
 
-    def test_02_windows_api_presence(self):
+    def test_02_windows_api_presence(self) -> None:
         """Test for real Windows API implementations."""
         if not self.is_windows:
             self.skipTest("Windows API test skipped on non-Windows platform")
@@ -144,7 +147,7 @@ class TestActualModules(unittest.TestCase):
         self.assertGreaterEqual(api_count, 15,
                                "At least 15 Windows APIs must be available")
 
-    def test_03_license_analyzer_capabilities(self):
+    def test_03_license_analyzer_capabilities(self) -> None:
         """Test LicenseAnalyzer capabilities."""
         if not PROCESS_MANIPULATION_AVAILABLE:
             self.skipTest("LicenseAnalyzer not available")
@@ -199,7 +202,7 @@ class TestActualModules(unittest.TestCase):
         self.assertGreaterEqual(len(capabilities), 10,
                                "LicenseAnalyzer must have at least 10 capabilities")
 
-    def test_04_license_debugger_capabilities(self):
+    def test_04_license_debugger_capabilities(self) -> None:
         """Test LicenseDebugger capabilities."""
         if not DEBUGGING_ENGINE_AVAILABLE:
             self.skipTest("LicenseDebugger not available")
@@ -253,7 +256,7 @@ class TestActualModules(unittest.TestCase):
         self.assertGreaterEqual(len(capabilities), 8,
                                "LicenseDebugger must have at least 8 capabilities")
 
-    def test_05_yara_scanner_capabilities(self):
+    def test_05_yara_scanner_capabilities(self) -> None:
         """Test YaraScanner capabilities."""
         if not YARA_SCANNER_AVAILABLE:
             self.skipTest("YaraScanner not available")
@@ -323,7 +326,7 @@ class TestActualModules(unittest.TestCase):
         self.assertGreaterEqual(len(capabilities), 6,
                                "YaraScanner must have at least 6 capabilities")
 
-    def test_06_pattern_scanning_implementation(self):
+    def test_06_pattern_scanning_implementation(self) -> None:
         """Verify pattern scanning implementation."""
         if not PROCESS_MANIPULATION_AVAILABLE:
             self.skipTest("Pattern scanning test requires LicenseAnalyzer")
@@ -362,7 +365,7 @@ class TestActualModules(unittest.TestCase):
             print(f"  FAIL Error testing pattern scanning: {e}")
             self.fail(f"Pattern scanning test failed: {e}")
 
-    def test_07_memory_operations(self):
+    def test_07_memory_operations(self) -> None:
         """Verify memory read/write capabilities."""
         if not PROCESS_MANIPULATION_AVAILABLE:
             self.skipTest("Memory operations test requires LicenseAnalyzer")
@@ -396,7 +399,7 @@ class TestActualModules(unittest.TestCase):
             print(f"  FAIL Error testing memory operations: {e}")
             self.fail(f"Memory operations test failed: {e}")
 
-    def test_08_protection_detection(self):
+    def test_08_protection_detection(self) -> None:
         """Verify protection detection capabilities."""
         if not PROCESS_MANIPULATION_AVAILABLE:
             self.skipTest("Protection detection requires LicenseAnalyzer")
@@ -579,7 +582,7 @@ class TestActualModules(unittest.TestCase):
         print("\n" + "=" * 70)
 
 
-def main():
+def main() -> int:
     """Run the production standards test suite."""
     suite = unittest.TestLoader().loadTestsFromTestCase(TestActualModules)
     runner = unittest.TextTestRunner(verbosity=2)

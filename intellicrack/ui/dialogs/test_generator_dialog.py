@@ -21,7 +21,7 @@ import sys
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
-    QCheckBox, QFileDialog, QFont, QGroupBox, QHBoxLayout, QLabel,
+    QCheckBox, QCloseEvent, QFileDialog, QFont, QGroupBox, QHBoxLayout, QLabel,
     QListWidget, QMessageBox, QProgressBar, QPushButton, QSpinBox,
     QSplitter, Qt, QTabWidget, QTextEdit, QThread, QVBoxLayout,
     QWidget, pyqtSignal,
@@ -62,15 +62,24 @@ class TestGenerationThread(QThread):
     finished = pyqtSignal(dict)
     error = pyqtSignal(str)
 
-    def __init__(self, plugin_path: str, options: dict[str, Any]):
-        """Initialize the TestGenerationThread with default values."""
+    def __init__(self, plugin_path: str, options: dict[str, Any]) -> None:
+        """Initialize the TestGenerationThread with default values.
+
+        Args:
+            plugin_path: Path to the plugin file to generate tests for.
+            options: Configuration dictionary for test generation options.
+        """
         super().__init__()
         self.plugin_path = plugin_path
         self.options = options
         self.runner = PluginTestRunner()
 
     def run(self) -> None:
-        """Generate and run tests"""
+        """Generate and run tests for the specified plugin.
+
+        Emits progress signals during test generation and execution.
+        Emits finished signal with results dictionary or error signal on failure.
+        """
         try:
             self.progress.emit("Analyzing plugin structure...")
 
@@ -101,20 +110,32 @@ class TestGeneratorDialog(PluginDialogBase):
     """Dialog for generating and managing plugin tests"""
 
     def __init__(self, parent: QWidget | None = None, plugin_path: str | None = None) -> None:
-        """Initialize the TestGeneratorDialog with default values."""
+        """Initialize the TestGeneratorDialog with default values.
+
+        Args:
+            parent: Parent widget for the dialog.
+            plugin_path: Optional initial plugin path to load.
+        """
         self.generator: PluginTestGenerator = PluginTestGenerator()
         self.test_data_generator: MockDataGenerator = MockDataGenerator()
         self.generation_thread: TestGenerationThread | None = None
         super().__init__(parent, plugin_path)
 
     def init_dialog(self) -> None:
-        """Initialize the test generator dialog"""
+        """Initialize the test generator dialog.
+
+        Sets up window title and minimum size, then calls setup_ui.
+        """
         self.setWindowTitle("Plugin Test Generator")
         self.setMinimumSize(900, 700)
         self.setup_ui()
 
     def setup_ui(self) -> None:
-        """Set up the dialog UI"""
+        """Set up the dialog UI.
+
+        Creates and arranges all UI components including options panel,
+        results tabs, and control buttons.
+        """
         layout = QVBoxLayout(self)
 
         # Plugin selection (using base class method)
@@ -180,7 +201,11 @@ class TestGeneratorDialog(PluginDialogBase):
         layout.addLayout(control_layout)
 
     def create_options_panel(self) -> QWidget:
-        """Create options panel"""
+        """Create options panel for test generation.
+
+        Returns:
+            A widget containing all test generation and execution options.
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -252,7 +277,11 @@ class TestGeneratorDialog(PluginDialogBase):
         return widget
 
     def create_results_widget(self) -> QWidget:
-        """Create test results widget"""
+        """Create test results widget.
+
+        Returns:
+            A widget containing test output and summary information.
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -270,7 +299,11 @@ class TestGeneratorDialog(PluginDialogBase):
         return widget
 
     def create_coverage_widget(self) -> QWidget:
-        """Create coverage report widget"""
+        """Create coverage report widget.
+
+        Returns:
+            A widget displaying code coverage metrics and uncovered lines.
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -297,7 +330,11 @@ class TestGeneratorDialog(PluginDialogBase):
         return widget
 
     def create_test_data_widget(self) -> QWidget:
-        """Create test data widget"""
+        """Create test data widget.
+
+        Returns:
+            A widget for generating and viewing test data objects.
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -335,7 +372,14 @@ class TestGeneratorDialog(PluginDialogBase):
         return widget
 
     def load_plugin(self, path: str) -> bool:
-        """Load a plugin for testing"""
+        """Load a plugin for testing.
+
+        Args:
+            path: Path to the plugin file to load.
+
+        Returns:
+            True if plugin loaded successfully, False otherwise.
+        """
         # Call the base class method first
         if not super().load_plugin(path):
             return False
@@ -351,7 +395,11 @@ class TestGeneratorDialog(PluginDialogBase):
         return True
 
     def generate_tests(self) -> None:
-        """Generate tests for the plugin"""
+        """Generate tests for the plugin.
+
+        Generates test code using the selected options and displays
+        the generated tests in the UI.
+        """
         if not self.plugin_path:
             return
 
@@ -378,7 +426,11 @@ class TestGeneratorDialog(PluginDialogBase):
             QMessageBox.critical(self, "Error", f"Failed to generate tests:\n{str(e)}")
 
     def run_tests(self) -> None:
-        """Run the generated tests"""
+        """Run the generated tests.
+
+        Saves test code to a file and launches a background thread to execute tests
+        with the configured options.
+        """
         if not self.test_code_edit.toPlainText():
             QMessageBox.warning(self, "No Tests", "Please generate tests first.")
             return
@@ -420,11 +472,19 @@ class TestGeneratorDialog(PluginDialogBase):
         self.generation_thread.start()
 
     def on_progress(self, message: str) -> None:
-        """Handle progress updates"""
+        """Handle progress updates from test generation thread.
+
+        Args:
+            message: Progress message to display.
+        """
         self.test_output.append(message)
 
     def on_tests_finished(self, results: dict[str, Any]) -> None:
-        """Handle test completion"""
+        """Handle test completion.
+
+        Args:
+            results: Dictionary containing test results and coverage information.
+        """
         # Update UI
         self.progress_bar.setVisible(False)
         self.generate_btn.setEnabled(True)
@@ -450,7 +510,11 @@ class TestGeneratorDialog(PluginDialogBase):
             self.update_coverage_display(results['coverage'])
 
     def on_error(self, error: str) -> None:
-        """Handle test errors"""
+        """Handle test errors.
+
+        Args:
+            error: Error message from test execution.
+        """
         self.progress_bar.setVisible(False)
         self.generate_btn.setEnabled(True)
         self.run_btn.setEnabled(True)
@@ -458,7 +522,11 @@ class TestGeneratorDialog(PluginDialogBase):
         QMessageBox.critical(self, "Test Error", f"Failed to run tests:\n{error}")
 
     def update_coverage_display(self, coverage: dict[str, Any]) -> None:
-        """Update coverage display"""
+        """Update coverage display with coverage metrics.
+
+        Args:
+            coverage: Dictionary containing coverage information and missing lines.
+        """
         # Update summary
         total = coverage.get('total_coverage', 0)
         self.coverage_summary.setText(f"Total Coverage: {total}%")
@@ -477,7 +545,10 @@ class TestGeneratorDialog(PluginDialogBase):
             self.uncovered_list.addItem(f"Line {line}")
 
     def save_tests(self) -> None:
-        """Save generated tests"""
+        """Save generated tests to a file.
+
+        Prompts user for save location and writes the generated test code.
+        """
         if not self.test_code_edit.toPlainText():
             QMessageBox.warning(self, "No Tests", "No tests to save.")
             return
@@ -505,7 +576,10 @@ class TestGeneratorDialog(PluginDialogBase):
                 QMessageBox.critical(self, "Error", f"Failed to save tests:\n{str(e)}")
 
     def generate_test_binary(self) -> None:
-        """Generate test binary data"""
+        """Generate test binary data.
+
+        Creates sample binary data and displays it in hexadecimal format.
+        """
         binary_data = self.test_data_generator.create_test_binary('pe')
 
         # Display hex view
@@ -519,21 +593,30 @@ class TestGeneratorDialog(PluginDialogBase):
         self.test_data_viewer.append(f"\n\nTotal size: {len(binary_data)} bytes")
 
     def generate_test_network(self) -> None:
-        """Generate test network data"""
+        """Generate test network data.
+
+        Creates sample network protocol data and displays it as JSON.
+        """
         network_data = self.test_data_generator.create_test_network_data()
 
         import json
         self.test_data_viewer.setPlainText(json.dumps(network_data, indent=2))
 
     def generate_test_registry(self) -> None:
-        """Generate test registry data"""
+        """Generate test registry data.
+
+        Creates sample Windows registry data and displays it as JSON.
+        """
         registry_data = self.test_data_generator.create_test_registry_data()
 
         import json
         self.test_data_viewer.setPlainText(json.dumps(registry_data, indent=2))
 
     def save_test_data(self) -> None:
-        """Save test data to file"""
+        """Save test data to file.
+
+        Prompts user for save location and writes the test data viewer content.
+        """
         content = self.test_data_viewer.toPlainText()
         if not content:
             QMessageBox.warning(self, "No Data", "No test data to save.")
@@ -555,3 +638,21 @@ class TestGeneratorDialog(PluginDialogBase):
             except Exception as e:
                 logger.error("Exception in test_generator_dialog: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to save test data:\n{str(e)}")
+
+    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+        """Handle dialog close with proper thread cleanup.
+
+        Ensures any running generation thread is properly terminated before
+        closing the dialog to prevent resource leaks.
+
+        Args:
+            event: Close event from Qt framework.
+
+        """
+        if self.generation_thread is not None and self.generation_thread.isRunning():
+            self.generation_thread.quit()
+            if not self.generation_thread.wait(2000):
+                self.generation_thread.terminate()
+                self.generation_thread.wait()
+            self.generation_thread = None
+        super().closeEvent(event)

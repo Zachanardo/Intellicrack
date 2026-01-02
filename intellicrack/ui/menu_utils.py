@@ -23,7 +23,7 @@ Menu Utilities
 Common functionality for menu operations to eliminate code duplication.
 """
 
-from typing import Any, cast
+from typing import cast
 
 from intellicrack.utils.logger import logger
 
@@ -44,6 +44,9 @@ def find_or_create_menu(menu_bar: QMenuBar, menu_name: str) -> QMenu:
 
     Returns:
         The found or newly created menu
+
+    Raises:
+        RuntimeError: If the menu cannot be created on the menu bar.
 
     """
     # Search for existing menu

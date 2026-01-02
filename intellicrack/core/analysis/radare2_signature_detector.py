@@ -86,6 +86,11 @@ class Radare2SignatureDetector:
         Args:
             binary_path: Path to the binary file to analyze.
 
+        Returns:
+            None.
+
+        Raises:
+            No exceptions raised by this method.
         """
         self.binary_path = binary_path
         self.r2: Any = None
@@ -95,7 +100,18 @@ class Radare2SignatureDetector:
         self.file_hash = self._calculate_file_hash()
 
     def _calculate_file_hash(self) -> dict[str, str | int]:
-        """Calculate various hashes of the binary."""
+        """Calculate various hashes of the binary.
+
+        Computes SHA256 and SHA512 hashes of the binary file and returns file
+        size along with the hashes.
+
+        Returns:
+            Dictionary containing SHA256, SHA512 hashes and file size in bytes.
+
+        Raises:
+            OSError: If the binary file cannot be read.
+            IOError: If an I/O error occurs while reading the file.
+        """
         hashes: dict[str, str | int] = {}
         with open(self.binary_path, "rb") as f:
             data = f.read()
@@ -105,7 +121,18 @@ class Radare2SignatureDetector:
         return hashes
 
     def open(self) -> bool:
-        """Open binary in Radare2."""
+        """Open binary in Radare2.
+
+        Initializes r2pipe session with the binary file and performs initial
+        analysis using the "aaa" command.
+
+        Returns:
+            True if binary was successfully opened, False otherwise.
+
+        Raises:
+            Exception: Caught and logged if binary opening fails, returns False
+                in such cases.
+        """
         try:
             self.r2 = r2pipe.open(self.binary_path)
             self.r2.cmd("aaa")  # Analyze
@@ -116,7 +143,21 @@ class Radare2SignatureDetector:
             return False
 
     def load_yara_rules(self, rules_path: str) -> bool:
-        """Load YARA rules from file or directory."""
+        """Load YARA rules from file or directory.
+
+        Loads YARA rule files from a single file or from all rule files in a
+        directory. Supports .yar and .yara file extensions.
+
+        Args:
+            rules_path: Path to YARA rule file or directory containing rules.
+
+        Returns:
+            True if at least one rule was loaded successfully, False otherwise.
+
+        Raises:
+            Exception: Caught and logged if rule loading fails, returns False
+                in such cases.
+        """
         try:
             path = Path(rules_path)
 
@@ -143,7 +184,19 @@ class Radare2SignatureDetector:
             return False
 
     def create_default_yara_rules(self) -> str:
-        """Create comprehensive default YARA rules for common protections."""
+        """Create comprehensive default YARA rules for common protections.
+
+        Generates built-in YARA rule definitions for detecting common protections,
+        packers, compilers, and licensing mechanisms including VMProtect, Themida,
+        ASProtect, UPX, Armadillo, and various license managers.
+
+        Returns:
+            YARA rule definitions as string containing signatures for
+            protection schemes, packers, compilers, and licensing mechanisms.
+
+        Raises:
+            No exceptions raised by this method.
+        """
         return """
 rule VMProtect_Signature {
     meta:
@@ -493,7 +546,20 @@ rule CryptoAPI_Usage {
 """
 
     def scan_with_yara(self) -> list[SignatureMatch]:
-        """Scan binary with loaded YARA rules."""
+        """Scan binary with loaded YARA rules.
+
+        Scans the binary file using all loaded YARA rule sets. If no rules are
+        loaded, creates and uses default rules for common protections, packers,
+        and compilers. Adds all matches to the internal match list.
+
+        Returns:
+            List of SignatureMatch objects containing YARA rule matches found
+            in the binary file.
+
+        Raises:
+            Exception: Caught and logged if YARA scanning fails, returns empty
+                list in such cases.
+        """
         matches = []
 
         try:
@@ -538,7 +604,23 @@ rule CryptoAPI_Usage {
         return matches
 
     def scan_with_clamav(self) -> list[SignatureMatch]:
-        """Scan binary with ClamAV."""
+        """Scan binary with ClamAV.
+
+        Executes ClamAV antivirus scanner on the binary file to detect known
+        malware and threat signatures. Requires clamscan to be installed and
+        available in the system PATH. Adds all detected matches to the
+        internal match list.
+
+        Returns:
+            List of SignatureMatch objects containing ClamAV detections. Returns
+            empty list if ClamAV is not installed or scanning fails.
+
+        Raises:
+            FileNotFoundError: Caught if clamscan is not found, logs debug
+                message and returns empty list.
+            Exception: Caught and logged if ClamAV scanning fails, returns
+                empty list in such cases.
+        """
         matches = []
 
         try:
@@ -586,7 +668,20 @@ rule CryptoAPI_Usage {
         return matches
 
     def create_custom_signatures(self) -> None:
-        """Create custom binary signatures."""
+        """Create custom binary signatures.
+
+        Populates the custom_signatures dictionary with byte patterns for
+        protection schemes, license checks, trial mechanisms, hardware IDs,
+        anti-debug techniques, and cryptographic algorithms. Includes signatures
+        for VMProtect, Themida, licensing validation functions, trial period
+        checks, hardware identification routines, and crypto operations.
+
+        Returns:
+            None. Directly modifies self.custom_signatures dictionary.
+
+        Raises:
+            No exceptions raised by this method.
+        """
         # Common protection signatures
         self.custom_signatures = {
             # VMProtect signatures
@@ -625,7 +720,21 @@ rule CryptoAPI_Usage {
         }
 
     def scan_custom_signatures(self) -> list[SignatureMatch]:
-        """Scan with custom signatures."""
+        """Scan with custom signatures.
+
+        Scans the binary file for all custom signature patterns. Creates default
+        signatures if none are already loaded. Searches for each pattern in the
+        binary and records all matches with offset, size, and metadata. Adds
+        all matches to the internal match list.
+
+        Returns:
+            List of SignatureMatch objects containing custom signature matches
+            found in the binary file.
+
+        Raises:
+            Exception: Caught and logged if custom signature scanning fails,
+                returns empty list in such cases.
+        """
         matches = []
 
         if not self.custom_signatures:
@@ -664,7 +773,23 @@ rule CryptoAPI_Usage {
         return matches
 
     def detect_protection_schemes(self) -> list[SignatureMatch]:
-        """Detect protection schemes using Radare2 analysis."""
+        """Detect protection schemes using Radare2 analysis.
+
+        Analyzes the binary using Radare2 to identify protection schemes and
+        anti-analysis techniques. Checks for high entropy sections, TLS callbacks,
+        and imports of protection-related APIs like debugger detection and
+        virtual protection functions. Adds all detected protections to the
+        internal match list.
+
+        Returns:
+            List of SignatureMatch objects containing detected protection
+            schemes, anti-analysis APIs, and other protection indicators.
+            Returns empty list if r2 is None or analysis fails.
+
+        Raises:
+            Exception: Caught and logged if protection scheme detection fails,
+                returns empty list in such cases.
+        """
         matches: list[SignatureMatch] = []
 
         if self.r2 is None:
@@ -734,7 +859,22 @@ rule CryptoAPI_Usage {
         return matches
 
     def _calculate_entropy(self, section: dict[str, Any]) -> float:
-        """Calculate entropy of a section."""
+        """Calculate entropy of a section.
+
+        Calculates the Shannon entropy of a binary section using radare2 to
+        extract the section data. Returns 0.0 if r2 is not initialized or if
+        data cannot be retrieved.
+
+        Args:
+            section: Binary section information with vaddr and size keys.
+
+        Returns:
+            Entropy value in bits. Returns 0.0 if r2 is None or error occurs.
+
+        Raises:
+            Exception: Caught internally if entropy calculation fails, returns
+                0.0 in such cases.
+        """
         if self.r2 is None:
             return 0.0
 
@@ -761,7 +901,22 @@ rule CryptoAPI_Usage {
             return 0.0
 
     def detect_compiler(self) -> CompilerInfo | None:
-        """Detect compiler and version."""
+        """Detect compiler and version.
+
+        Analyzes the binary using Radare2 to detect the compiler used to build
+        it. Searches for compiler signatures in strings, MSVC runtime libraries,
+        and disassembly patterns. Estimates optimization level based on code
+        patterns like NOP instruction density and function call frequency.
+
+        Returns:
+            CompilerInfo object containing compiler name, version, optimization
+            level, and architecture. Returns None if r2 is None or detection
+            fails.
+
+        Raises:
+            Exception: Caught and logged if compiler detection fails, returns
+                None in such cases.
+        """
         if self.r2 is None:
             return None
 
@@ -855,7 +1010,22 @@ rule CryptoAPI_Usage {
             return None
 
     def detect_libraries(self) -> list[LibraryInfo]:
-        """Detect library versions."""
+        """Detect library versions.
+
+        Analyzes imported functions and strings in the binary to detect libraries
+        and their versions. Extracts imported function names from each library
+        and searches for version information in binary strings. Includes detection
+        of common libraries like OpenSSL, zlib, libpng, Qt, and Boost.
+
+        Returns:
+            List of LibraryInfo objects containing detected libraries, their
+            versions, and imported function information. Returns empty list if
+            r2 is None or detection fails.
+
+        Raises:
+            Exception: Caught and logged if library detection fails, returns
+                empty list in such cases.
+        """
         libraries: list[LibraryInfo] = []
 
         if self.r2 is None:
@@ -928,7 +1098,20 @@ rule CryptoAPI_Usage {
         return libraries
 
     def generate_report(self) -> str:
-        """Generate comprehensive detection report."""
+        """Generate comprehensive detection report.
+
+        Compiles all detected signatures, compiler information, and library
+        details into a formatted text report. Includes binary hashes, signature
+        matches grouped by type, detected compiler and optimization level,
+        identified libraries, and protection detection summary.
+
+        Returns:
+            Formatted string containing signature matches, compiler info,
+            detected libraries, and overall protection analysis summary.
+
+        Raises:
+            No exceptions raised by this method.
+        """
         report = [
             "=" * 60,
             "SIGNATURE DETECTION REPORT",
@@ -1006,7 +1189,23 @@ rule CryptoAPI_Usage {
         return "\n".join(report)
 
     def export_signatures(self, output_file: str, format: str = "json") -> bool:
-        """Export detected signatures to file."""
+        """Export detected signatures to file.
+
+        Exports all detected signature matches to a file in the specified format.
+        JSON format includes binary hashes, match details, and metadata. CSV
+        format contains a header row and one row per signature match.
+
+        Args:
+            output_file: Path to output file for signature export.
+            format: Export format, either "json" or "csv". Defaults to "json".
+
+        Returns:
+            True if export was successful, False otherwise.
+
+        Raises:
+            Exception: Caught and logged if export fails, returns False in such
+                cases.
+        """
         try:
             if format == "json":
                 data: dict[str, Any] = {"binary": self.binary_path, "hashes": self.file_hash, "matches": []}
@@ -1050,14 +1249,35 @@ rule CryptoAPI_Usage {
             return False
 
     def close(self) -> None:
-        """Close Radare2 session."""
+        """Close Radare2 session.
+
+        Properly closes the r2pipe connection and releases resources. Sets
+        internal r2 reference to None after closing.
+
+        Returns:
+            None.
+
+        Raises:
+            No exceptions raised by this method.
+        """
         if self.r2:
             self.r2.quit()
             self.r2 = None
 
 
 def main() -> None:
-    """Demonstrate usage of signature detector."""
+    """Demonstrate usage of signature detector.
+
+    Command-line interface for signature detection supporting YARA rules,
+    ClamAV integration, custom signatures, and protection scheme analysis.
+    Results can be exported to JSON or CSV format.
+
+    Returns:
+        None.
+
+    Raises:
+        SystemExit: Raised by argparse if command-line arguments are invalid.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description="Radare2 Signature-Based Detection")

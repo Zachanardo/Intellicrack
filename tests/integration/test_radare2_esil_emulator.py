@@ -17,7 +17,9 @@ import os
 import struct
 import tempfile
 import threading
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -203,7 +205,7 @@ class BinaryGenerator:
 
 
 @pytest.fixture
-def test_binary_x64():
+def test_binary_x64() -> Generator[Path, None, None]:
     """Create test binary with real x64 code for emulation testing."""
     with tempfile.TemporaryDirectory() as tmpdir:
         binary_path = Path(tmpdir) / "test_binary.exe"
@@ -228,7 +230,7 @@ def test_binary_x64():
 
 
 @pytest.fixture
-def test_binary_with_calls():
+def test_binary_with_calls() -> Generator[Path, None, None]:
     """Create test binary with call instructions for API extraction testing."""
     with tempfile.TemporaryDirectory() as tmpdir:
         binary_path = Path(tmpdir) / "test_calls.exe"
@@ -249,7 +251,7 @@ def test_binary_with_calls():
 
 
 @pytest.fixture
-def test_binary_elf():
+def test_binary_elf() -> Generator[Path, None, None]:
     """Create test ELF binary for cross-format testing."""
     with tempfile.TemporaryDirectory() as tmpdir:
         binary_path = Path(tmpdir) / "test_binary_elf"
@@ -269,7 +271,7 @@ def test_binary_elf():
 
 
 @pytest.fixture
-def session_pool():
+def session_pool() -> Generator[R2SessionPool, None, None]:
     """Create session pool for pooled mode testing."""
     pool = R2SessionPool(max_sessions=3, max_idle_time=30.0)
     yield pool
@@ -279,7 +281,7 @@ def session_pool():
 class TestESILEmulatorInitialization:
     """Test ESIL emulator initialization and setup."""
 
-    def test_initialization_standalone(self, test_binary_x64):
+    def test_initialization_standalone(self, test_binary_x64: Path) -> None:
         """Test standalone emulator initialization without pool."""
         emulator = RadareESILEmulator(
             binary_path=str(test_binary_x64),
@@ -296,7 +298,9 @@ class TestESILEmulatorInitialization:
 
         emulator.cleanup()
 
-    def test_initialization_with_pool(self, test_binary_x64, session_pool):
+    def test_initialization_with_pool(
+        self, test_binary_x64: Path, session_pool: R2SessionPool
+    ) -> None:
         """Test emulator initialization with session pool."""
         emulator = RadareESILEmulator(
             binary_path=str(test_binary_x64),
@@ -309,18 +313,18 @@ class TestESILEmulatorInitialization:
 
         emulator.cleanup()
 
-    def test_invalid_binary_path(self):
+    def test_invalid_binary_path(self) -> None:
         """Test initialization with non-existent binary."""
         with pytest.raises(FileNotFoundError):
             RadareESILEmulator(binary_path="/nonexistent/binary.exe")
 
-    def test_context_manager(self, test_binary_x64):
+    def test_context_manager(self, test_binary_x64: Path) -> None:
         """Test context manager interface for resource cleanup."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             assert emulator.session is not None
             assert emulator.state == ESILState.READY
 
-    def test_register_initialization(self, test_binary_x64):
+    def test_register_initialization(self, test_binary_x64: Path) -> None:
         """Test register state is properly initialized."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             assert len(emulator.registers) > 0
@@ -335,13 +339,13 @@ class TestESILEmulatorInitialization:
 class TestRegisterOperations:
     """Test register read and write operations."""
 
-    def test_get_register_value(self, test_binary_x64):
+    def test_get_register_value(self, test_binary_x64: Path) -> None:
         """Test reading register values."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             rax_value = emulator.get_register("rax")
             assert isinstance(rax_value, int)
 
-    def test_set_register_value(self, test_binary_x64):
+    def test_set_register_value(self, test_binary_x64: Path) -> None:
         """Test setting register values."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             test_value = 0xDEADBEEF
@@ -350,7 +354,7 @@ class TestRegisterOperations:
             retrieved_value = emulator.get_register("rax")
             assert retrieved_value == test_value
 
-    def test_symbolic_register(self, test_binary_x64):
+    def test_symbolic_register(self, test_binary_x64: Path) -> None:
         """Test symbolic register marking."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             emulator.set_register("rbx", 0x1234, symbolic=True)
@@ -359,13 +363,13 @@ class TestRegisterOperations:
             assert emulator.registers["rbx"].symbolic is True
             assert len(emulator.registers["rbx"].constraints) > 0
 
-    def test_register_thread_safety(self, test_binary_x64):
+    def test_register_thread_safety(self, test_binary_x64: Path) -> None:
         """Test concurrent register access is thread-safe."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
-            results = []
-            errors = []
+            results: list[tuple[str, int, int]] = []
+            errors: list[Exception] = []
 
-            def worker(reg_name, value):
+            def worker(reg_name: str, value: int) -> None:
                 try:
                     emulator.set_register(reg_name, value)
                     retrieved = emulator.get_register(reg_name)
@@ -391,7 +395,7 @@ class TestRegisterOperations:
 class TestMemoryOperations:
     """Test memory read and write operations."""
 
-    def test_get_memory(self, test_binary_x64):
+    def test_get_memory(self, test_binary_x64: Path) -> None:
         """Test reading memory from binary."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             entry = emulator.entry_point
@@ -400,7 +404,7 @@ class TestMemoryOperations:
             assert isinstance(memory, bytes)
             assert len(memory) == 16
 
-    def test_set_memory(self, test_binary_x64):
+    def test_set_memory(self, test_binary_x64: Path) -> None:
         """Test writing memory."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             test_data = b"\xAA\xBB\xCC\xDD\xEE\xFF\x00\x11"
@@ -411,7 +415,7 @@ class TestMemoryOperations:
 
             assert retrieved == test_data
 
-    def test_symbolic_memory(self, test_binary_x64):
+    def test_symbolic_memory(self, test_binary_x64: Path) -> None:
         """Test symbolic memory marking."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             test_data = b"\x01\x02\x03\x04"
@@ -422,12 +426,12 @@ class TestMemoryOperations:
             for i in range(len(test_data)):
                 assert (test_addr + i) in emulator.symbolic_memory
 
-    def test_memory_thread_safety(self, test_binary_x64):
+    def test_memory_thread_safety(self, test_binary_x64: Path) -> None:
         """Test concurrent memory access is thread-safe."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
-            errors = []
+            errors: list[Exception] = []
 
-            def worker(addr, data):
+            def worker(addr: int, data: bytes) -> None:
                 try:
                     emulator.set_memory(addr, data)
                     emulator.get_memory(addr, len(data))
@@ -451,7 +455,7 @@ class TestMemoryOperations:
 class TestInstructionStepping:
     """Test single instruction execution and state tracking."""
 
-    def test_step_instruction_basic(self, test_binary_x64):
+    def test_step_instruction_basic(self, test_binary_x64: Path) -> None:
         """Test single instruction stepping."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             initial_count = emulator.instruction_count
@@ -464,7 +468,7 @@ class TestInstructionStepping:
             assert "esil" in step_info
             assert "new_pc" in step_info
 
-    def test_step_tracks_register_changes(self, test_binary_x64):
+    def test_step_tracks_register_changes(self, test_binary_x64: Path) -> None:
         """Test instruction stepping tracks register modifications."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             emulator.set_register("rax", 0)
@@ -478,7 +482,7 @@ class TestInstructionStepping:
                         assert "new" in changes
                     break
 
-    def test_step_tracks_memory_accesses(self, test_binary_x64):
+    def test_step_tracks_memory_accesses(self, test_binary_x64: Path) -> None:
         """Test instruction stepping tracks memory operations."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             for _ in range(10):
@@ -491,7 +495,7 @@ class TestInstructionStepping:
                     assert access.size > 0
                     assert access.operation in ["read", "write"]
 
-    def test_step_tracks_control_flow(self, test_binary_x64):
+    def test_step_tracks_control_flow(self, test_binary_x64: Path) -> None:
         """Test control flow change detection."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             for _ in range(20):
@@ -509,7 +513,7 @@ class TestInstructionStepping:
 class TestBreakpointSystem:
     """Test breakpoint functionality."""
 
-    def test_add_breakpoint(self, test_binary_x64):
+    def test_add_breakpoint(self, test_binary_x64: Path) -> None:
         """Test adding breakpoints."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             entry = emulator.entry_point
@@ -520,7 +524,7 @@ class TestBreakpointSystem:
             assert bp.enabled is True
             assert bp.hit_count == 0
 
-    def test_breakpoint_triggers(self, test_binary_x64):
+    def test_breakpoint_triggers(self, test_binary_x64: Path) -> None:
         """Test breakpoint triggers during execution."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             entry = emulator.entry_point
@@ -539,11 +543,11 @@ class TestBreakpointSystem:
             if bp_addr in emulator.breakpoints:
                 assert emulator.breakpoints[bp_addr].hit_count >= 0
 
-    def test_breakpoint_callback(self, test_binary_x64):
+    def test_breakpoint_callback(self, test_binary_x64: Path) -> None:
         """Test breakpoint callback execution."""
-        callback_data = {"triggered": False, "inst": None}
+        callback_data: dict[str, Any] = {"triggered": False, "inst": None}
 
-        def bp_callback(emu, inst):
+        def bp_callback(emu: RadareESILEmulator, inst: Any) -> None:
             callback_data["triggered"] = True
             callback_data["inst"] = inst
 
@@ -562,7 +566,7 @@ class TestBreakpointSystem:
             if callback_data["triggered"]:
                 assert callback_data["inst"] is not None
 
-    def test_conditional_breakpoint(self, test_binary_x64):
+    def test_conditional_breakpoint(self, test_binary_x64: Path) -> None:
         """Test conditional breakpoint evaluation."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             entry = emulator.entry_point
@@ -574,7 +578,7 @@ class TestBreakpointSystem:
                 except Exception:
                     break
 
-    def test_remove_breakpoint(self, test_binary_x64):
+    def test_remove_breakpoint(self, test_binary_x64: Path) -> None:
         """Test breakpoint removal."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             entry = emulator.entry_point
@@ -590,7 +594,7 @@ class TestBreakpointSystem:
 class TestExecutionControl:
     """Test execution control methods."""
 
-    def test_run_until_address(self, test_binary_x64):
+    def test_run_until_address(self, test_binary_x64: Path) -> None:
         """Test running until target address."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             target = emulator.entry_point + 0x10
@@ -604,7 +608,7 @@ class TestExecutionControl:
                 assert "address" in step
                 assert "instruction" in step
 
-    def test_run_until_max_steps(self, test_binary_x64):
+    def test_run_until_max_steps(self, test_binary_x64: Path) -> None:
         """Test max_steps limit enforcement."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             target = 0xFFFFFFFF
@@ -614,7 +618,7 @@ class TestExecutionControl:
 
             assert len(trace) <= max_steps
 
-    def test_reset_emulator(self, test_binary_x64):
+    def test_reset_emulator(self, test_binary_x64: Path) -> None:
         """Test emulator state reset."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             for _ in range(10):
@@ -637,7 +641,7 @@ class TestExecutionControl:
 class TestTaintAnalysis:
     """Test taint tracking functionality."""
 
-    def test_add_taint_source(self, test_binary_x64):
+    def test_add_taint_source(self, test_binary_x64: Path) -> None:
         """Test adding taint sources."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             taint_addr = 0x200000
@@ -645,7 +649,7 @@ class TestTaintAnalysis:
 
             assert taint_addr in emulator.taint_sources
 
-    def test_taint_propagation(self, test_binary_x64):
+    def test_taint_propagation(self, test_binary_x64: Path) -> None:
         """Test taint propagates through operations."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             taint_addr = 0x200000
@@ -664,7 +668,7 @@ class TestTaintAnalysis:
 class TestAPICallExtraction:
     """Test API call extraction and analysis."""
 
-    def test_extract_api_calls_basic(self, test_binary_with_calls):
+    def test_extract_api_calls_basic(self, test_binary_with_calls: Path) -> None:
         """Test basic API call extraction."""
         with RadareESILEmulator(binary_path=str(test_binary_with_calls)) as emulator:
             for _ in range(50):
@@ -676,7 +680,7 @@ class TestAPICallExtraction:
             api_calls = emulator.extract_api_calls()
             assert isinstance(api_calls, list)
 
-    def test_extract_call_arguments(self, test_binary_with_calls):
+    def test_extract_call_arguments(self, test_binary_with_calls: Path) -> None:
         """Test extracting function call arguments."""
         with RadareESILEmulator(binary_path=str(test_binary_with_calls)) as emulator:
             emulator.set_register("rdi", 0x1)
@@ -702,7 +706,7 @@ class TestAPICallExtraction:
 class TestLicenseCheckDetection:
     """Test license validation detection capabilities."""
 
-    def test_find_license_checks(self, test_binary_x64):
+    def test_find_license_checks(self, test_binary_x64: Path) -> None:
         """Test finding license check patterns."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             license_checks = emulator.find_license_checks()
@@ -714,7 +718,7 @@ class TestLicenseCheckDetection:
                 assert "type" in check
                 assert "pattern" in check
 
-    def test_license_check_conditional_branches(self, test_binary_x64):
+    def test_license_check_conditional_branches(self, test_binary_x64: Path) -> None:
         """Test license checks have proper branch paths."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             license_checks = emulator.find_license_checks()
@@ -727,7 +731,7 @@ class TestLicenseCheckDetection:
 class TestPathConstraints:
     """Test path constraint generation."""
 
-    def test_generate_path_constraints(self, test_binary_x64):
+    def test_generate_path_constraints(self, test_binary_x64: Path) -> None:
         """Test path constraint generation to target."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             target = emulator.entry_point + 0x10
@@ -736,7 +740,7 @@ class TestPathConstraints:
 
             assert isinstance(constraints, list)
 
-    def test_constraints_track_conditionals(self, test_binary_x64):
+    def test_constraints_track_conditionals(self, test_binary_x64: Path) -> None:
         """Test constraints capture conditional jumps."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             target = emulator.entry_point + 0x20
@@ -750,7 +754,7 @@ class TestPathConstraints:
 class TestExecutionTracing:
     """Test execution trace dumping."""
 
-    def test_dump_execution_trace(self, test_binary_x64):
+    def test_dump_execution_trace(self, test_binary_x64: Path) -> None:
         """Test execution trace export to JSON."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             for _ in range(10):
@@ -784,7 +788,9 @@ class TestExecutionTracing:
 class TestSessionPoolIntegration:
     """Test integration with R2SessionPool."""
 
-    def test_pooled_session_usage(self, test_binary_x64, session_pool):
+    def test_pooled_session_usage(
+        self, test_binary_x64: Path, session_pool: R2SessionPool
+    ) -> None:
         """Test emulator works with pooled sessions."""
         emulator1 = RadareESILEmulator(
             binary_path=str(test_binary_x64),
@@ -805,12 +811,14 @@ class TestSessionPoolIntegration:
         emulator2.step_instruction()
         emulator2.cleanup()
 
-    def test_concurrent_pooled_emulation(self, test_binary_x64, session_pool):
+    def test_concurrent_pooled_emulation(
+        self, test_binary_x64: Path, session_pool: R2SessionPool
+    ) -> None:
         """Test concurrent emulation with shared pool."""
-        results = []
-        errors = []
+        results: list[dict[str, Any]] = []
+        errors: list[Exception] = []
 
-        def worker():
+        def worker() -> None:
             try:
                 with RadareESILEmulator(
                     binary_path=str(test_binary_x64),
@@ -836,13 +844,13 @@ class TestSessionPoolIntegration:
 class TestErrorHandling:
     """Test error handling and edge cases."""
 
-    def test_invalid_register_name(self, test_binary_x64):
+    def test_invalid_register_name(self, test_binary_x64: Path) -> None:
         """Test handling of invalid register names."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             with pytest.raises(RuntimeError):
                 emulator.get_register("invalid_reg_12345")
 
-    def test_invalid_memory_address(self, test_binary_x64):
+    def test_invalid_memory_address(self, test_binary_x64: Path) -> None:
         """Test handling of invalid memory access."""
         with RadareESILEmulator(binary_path=str(test_binary_x64)) as emulator:
             try:
@@ -850,7 +858,7 @@ class TestErrorHandling:
             except RuntimeError:
                 pass
 
-    def test_cleanup_after_error(self, test_binary_x64):
+    def test_cleanup_after_error(self, test_binary_x64: Path) -> None:
         """Test proper cleanup after errors."""
         emulator = RadareESILEmulator(binary_path=str(test_binary_x64))
 
@@ -858,7 +866,7 @@ class TestErrorHandling:
             for _ in range(1000):
                 emulator.step_instruction()
         except Exception as e:
-            logging.debug(f"Emulation stopped: {e}")
+            logging.debug("Emulation stopped: %s", e)
 
         emulator.cleanup()
         assert emulator.session is None
@@ -867,7 +875,7 @@ class TestErrorHandling:
 class TestCrossFormatSupport:
     """Test support for different binary formats."""
 
-    def test_elf_binary_emulation(self, test_binary_elf):
+    def test_elf_binary_emulation(self, test_binary_elf: Path) -> None:
         """Test emulation of ELF binaries."""
         with RadareESILEmulator(binary_path=str(test_binary_elf)) as emulator:
             assert emulator.arch in ["x86", "x64", "amd64"]
@@ -880,7 +888,7 @@ class TestCrossFormatSupport:
 class TestRealWorldScenarios:
     """Test real-world licensing protection scenarios."""
 
-    def test_serial_validation_pattern(self):
+    def test_serial_validation_pattern(self) -> None:
         """Test detecting serial number validation patterns."""
         with tempfile.TemporaryDirectory() as tmpdir:
             binary_path = Path(tmpdir) / "serial_check.exe"
@@ -906,7 +914,7 @@ class TestRealWorldScenarios:
                 license_checks = emulator.find_license_checks()
                 assert len(license_checks) > 0
 
-    def test_time_based_trial_detection(self):
+    def test_time_based_trial_detection(self) -> None:
         """Test detecting time-based trial checks."""
         with tempfile.TemporaryDirectory() as tmpdir:
             binary_path = Path(tmpdir) / "trial_check.exe"

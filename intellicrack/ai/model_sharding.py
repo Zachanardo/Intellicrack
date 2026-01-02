@@ -37,15 +37,18 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import gc
 import time
+import types
+from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
     import torch
-    from torch import nn
 
     TorchDtype = torch.dtype
     TorchModel = torch.nn.Module
@@ -64,6 +67,16 @@ logger = get_logger(__name__)
 
 APPLIED_GPU_OPTIMIZATIONS_MSG = "Applied GPU optimizations to model"
 
+torch: types.ModuleType | None
+Accelerator: type[Any] | None
+dispatch_model: Callable[..., Any] | None
+infer_auto_device_map: Callable[..., Any] | None
+init_empty_weights: Callable[..., Any] | None
+load_checkpoint_and_dispatch: Callable[..., Any] | None
+AutoConfig: type[Any] | None
+AutoModel: type[Any] | None
+AutoModelForCausalLM: type[Any] | None
+
 # Try importing PyTorch
 try:
     import torch
@@ -79,7 +92,7 @@ try:
         GPU_AUTOLOADER_AVAILABLE = False
 
 except ImportError:
-    torch = None  # type: ignore[assignment]
+    torch = None
     HAS_TORCH = False
     GPU_AUTOLOADER_AVAILABLE = False
 
@@ -104,9 +117,9 @@ try:
     HAS_TRANSFORMERS = True
 except ImportError as e:
     logger.exception("Import error in model_sharding: %s", e)
-    AutoConfig = None  # type: ignore[assignment,misc]
-    AutoModel = None  # type: ignore[assignment,misc]
-    AutoModelForCausalLM = None  # type: ignore[assignment,misc]
+    AutoConfig = None
+    AutoModel = None
+    AutoModelForCausalLM = None
     HAS_TRANSFORMERS = False
 
 
@@ -379,7 +392,7 @@ class ModelShardingManager:
 
             with init_empty_weights():
                 if HAS_TRANSFORMERS and AutoModelForCausalLM is not None:
-                    model = AutoModelForCausalLM.from_config(config)  # type: ignore[no-untyped-call]
+                    model = AutoModelForCausalLM.from_config(config)
                 else:
                     logger.warning("Transformers not available")
                     return self._create_simple_device_map()
@@ -615,7 +628,7 @@ class ModelShardingManager:
         """
         if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader is not None:
             try:
-                optimized = gpu_autoloader(model)  # type: ignore[operator]
+                optimized = gpu_autoloader(model)
                 if optimized is not None:
                     model = optimized
                     logger.info("Applied autoloader optimizations after sharding")
@@ -789,7 +802,7 @@ class ModelShardingManager:
         """
         if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader is not None:
             try:
-                optimized = gpu_autoloader(model)  # type: ignore[operator]
+                optimized = gpu_autoloader(model)
                 if optimized is not None:
                     model = optimized
                     logger.info("Applied autoloader optimizations to sharded checkpoint")

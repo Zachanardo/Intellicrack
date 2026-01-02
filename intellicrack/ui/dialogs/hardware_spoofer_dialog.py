@@ -4,12 +4,13 @@ Provides comprehensive interface for spoofing hardware identifiers to bypass har
 """
 
 import json
+import logging
 import os
 import random
-import re  # Add this import for regex validation
+import re
 import secrets
 import string
-import subprocess
+import subprocess  # noqa: S404
 import uuid
 import winreg
 from datetime import datetime
@@ -79,6 +80,7 @@ DEFAULT_BIOS_INFO = {
     "manufacturer": AMI_MANUFACTURER,
 }
 PROCESSOR_ID_PREFIX = "ProcessorId="
+GETMAC_MAC_COLUMN_INDEX = 2
 
 
 class HardwareSpoofingWorker(QThread):
@@ -102,7 +104,12 @@ class HardwareSpoofingWorker(QThread):
         self.params: dict[str, Any] = {}
 
     def run(self) -> None:
-        """Execute spoofing operation."""
+        """Execute spoofing operation.
+
+        Runs the configured spoofing action (capture, generate, apply, restore, or verify) based
+        on the action attribute set prior to thread start. Emits status and error signals throughout
+        execution and handles exceptions gracefully.
+        """
         try:
             self.status_update.emit("Starting hardware spoofing operation...", "blue")
 
@@ -122,7 +129,12 @@ class HardwareSpoofingWorker(QThread):
             self.status_update.emit(f"Error: {e!s}", "red")
 
     def capture_hardware_info(self) -> None:
-        """Capture current hardware information."""
+        """Capture current hardware information.
+
+        Reads CPU ID, motherboard serial, HDD serial, MAC addresses, volume serial numbers,
+        BIOS information, Windows Product ID, and Machine GUID from the current system using
+        WMI queries and registry access. Emits spoof_complete signal with collected data.
+        """
         self.progress_update.emit("Capturing hardware information...")
 
         hardware_info: dict[str, Any] = {}
@@ -171,7 +183,14 @@ class HardwareSpoofingWorker(QThread):
         self.status_update.emit("Hardware information captured successfully", "green")
 
     def get_cpu_id(self) -> str:
-        """Get CPU ID using WMI."""
+        """Get CPU ID using WMI.
+
+        Executes WMIC query to retrieve processor ID from system hardware. Returns a default
+        Intel CPU ID if retrieval fails.
+
+        Returns:
+            CPU processor ID in format like BFEBFBFF000906EA, or DEFAULT_CPU_ID if retrieval fails.
+        """
         try:
             # Sanitize WMIC_VALUE_FLAG to prevent command injection
             wmic_flag_clean = str(WMIC_VALUE_FLAG).replace(";", "").replace("|", "").replace("&", "")
@@ -180,6 +199,7 @@ class HardwareSpoofingWorker(QThread):
                 capture_output=True,
                 text=True,
                 shell=False,
+                check=False,
             )
             for line in result.stdout.split("\n"):
                 if PROCESSOR_ID_PREFIX in line:
@@ -189,7 +209,14 @@ class HardwareSpoofingWorker(QThread):
         return DEFAULT_CPU_ID  # Default Intel CPU ID
 
     def get_motherboard_serial(self) -> str:
-        """Get motherboard serial number."""
+        """Get motherboard serial number.
+
+        Executes WMIC query to retrieve the baseboard (motherboard) serial number. Returns
+        a default serial if retrieval fails.
+
+        Returns:
+            Motherboard serial number, or DEFAULT_MB_SERIAL if retrieval fails.
+        """
         try:
             # Sanitize WMIC_VALUE_FLAG to prevent command injection
             wmic_flag_clean = str(WMIC_VALUE_FLAG).replace(";", "").replace("|", "").replace("&", "")
@@ -198,6 +225,7 @@ class HardwareSpoofingWorker(QThread):
                 capture_output=True,
                 text=True,
                 shell=False,
+                check=False,
             )
             for line in result.stdout.split("\n"):
                 if SERIAL_NUMBER_PREFIX in line:
@@ -207,7 +235,14 @@ class HardwareSpoofingWorker(QThread):
         return DEFAULT_MB_SERIAL
 
     def get_hdd_serial(self) -> str:
-        """Get primary hard drive serial."""
+        """Get primary hard drive serial.
+
+        Executes WMIC query to retrieve the serial number of the primary hard drive. Returns
+        a default serial if retrieval fails.
+
+        Returns:
+            Hard drive serial number, or DEFAULT_HDD_SERIAL if retrieval fails.
+        """
         try:
             # Sanitize WMIC_VALUE_FLAG to prevent command injection
             wmic_flag_clean = str(WMIC_VALUE_FLAG).replace(";", "").replace("|", "").replace("&", "")
@@ -216,6 +251,7 @@ class HardwareSpoofingWorker(QThread):
                 capture_output=True,
                 text=True,
                 shell=False,
+                check=False,
             )
             for line in result.stdout.split("\n"):
                 if SERIAL_NUMBER_PREFIX in line:
@@ -226,15 +262,23 @@ class HardwareSpoofingWorker(QThread):
         return DEFAULT_HDD_SERIAL
 
     def get_mac_addresses(self) -> list[str]:
-        """Get all network adapter MAC addresses."""
+        """Get all network adapter MAC addresses.
+
+        Executes getmac command to retrieve MAC addresses for all active network adapters.
+        Returns a list with default MAC if retrieval fails.
+
+        Returns:
+            List of MAC addresses in format 00-11-22-33-44-55, or list with DEFAULT_MAC if retrieval fails.
+        """
         macs: list[str] = []
         try:
-            result = subprocess.run(["getmac", "/v", "/fo", "csv"], capture_output=True, text=True, shell=False)
+            result = subprocess.run(["getmac", "/v", "/fo", "csv"], capture_output=True, text=True, shell=False, check=False)
             lines = result.stdout.strip().split("\n")[1:]  # Skip header
             for line in lines:
                 parts = line.split(",")
-                if len(parts) > 2 and parts[2].strip('"'):
-                    mac = parts[2].strip('"')
+                mac_idx = GETMAC_MAC_COLUMN_INDEX
+                if len(parts) > mac_idx and parts[mac_idx].strip('"'):
+                    mac = parts[mac_idx].strip('"')
                     if mac and mac != "N/A":
                         macs.append(mac)
         except Exception as e:
@@ -245,7 +289,15 @@ class HardwareSpoofingWorker(QThread):
         return macs
 
     def get_volume_serials(self) -> dict[str, str]:
-        """Get volume serial numbers for all drives."""
+        """Get volume serial numbers for all drives.
+
+        Executes WMIC query to retrieve volume serial numbers for all logical disk drives.
+        Returns a dictionary with drive letter as key and serial as value.
+
+        Returns:
+            Mapping of drive letters (e.g., "C:", "D:") to their volume serial numbers,
+            or dict with C: and DEFAULT_VOLUME_SERIAL if retrieval fails.
+        """
         volumes: dict[str, str] = {}
         try:
             # Sanitize WMIC_VALUE_FLAG to prevent command injection
@@ -255,6 +307,7 @@ class HardwareSpoofingWorker(QThread):
                 capture_output=True,
                 text=True,
                 shell=False,
+                check=False,
             )
 
             current_name = None
@@ -272,7 +325,15 @@ class HardwareSpoofingWorker(QThread):
         return volumes
 
     def get_bios_info(self) -> dict[str, str]:
-        """Get BIOS information."""
+        """Get BIOS information.
+
+        Executes WMIC queries to retrieve BIOS serial number, version, and manufacturer information.
+        Returns a dictionary with bios info keys including 'serial', 'version', and 'manufacturer'.
+
+        Returns:
+            Dictionary with keys 'serial', 'version', 'manufacturer' containing BIOS information,
+            or DEFAULT_BIOS_INFO dict if retrieval fails.
+        """
         bios_info: dict[str, str] = {}
         try:
             # BIOS Serial Number
@@ -283,6 +344,7 @@ class HardwareSpoofingWorker(QThread):
                 capture_output=True,
                 text=True,
                 shell=False,
+                check=False,
             )
             for line in result.stdout.split("\n"):
                 if BIOS_SERIAL_PREFIX in line:
@@ -296,6 +358,7 @@ class HardwareSpoofingWorker(QThread):
                 capture_output=True,
                 text=True,
                 shell=False,
+                check=False,
             )
             for line in result.stdout.split("\n"):
                 if VERSION_PREFIX in line:
@@ -309,6 +372,7 @@ class HardwareSpoofingWorker(QThread):
                 capture_output=True,
                 text=True,
                 shell=False,
+                check=False,
             )
             for line in result.stdout.split("\n"):
                 if MANUFACTURER_PREFIX in line:
@@ -321,7 +385,14 @@ class HardwareSpoofingWorker(QThread):
         return bios_info
 
     def get_windows_product_id(self) -> str:
-        """Get Windows Product ID from registry."""
+        r"""Get Windows Product ID from registry.
+
+        Reads the ProductId value from Windows registry at HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion.
+        Returns a default product ID if registry access fails.
+
+        Returns:
+            Windows Product ID string, or DEFAULT_PRODUCT_ID if retrieval fails.
+        """
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion") as key:
                 product_id_value, _ = winreg.QueryValueEx(key, "ProductId")
@@ -330,7 +401,14 @@ class HardwareSpoofingWorker(QThread):
             return DEFAULT_PRODUCT_ID
 
     def get_machine_guid(self) -> str:
-        """Get Machine GUID from registry."""
+        r"""Get Machine GUID from registry.
+
+        Reads the MachineGuid value from Windows registry at HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Cryptography.
+        Generates a random UUID if registry access fails.
+
+        Returns:
+            Machine GUID string, or a newly generated UUID if retrieval fails.
+        """
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
                 machine_guid_value, _ = winreg.QueryValueEx(key, "MachineGuid")
@@ -338,8 +416,13 @@ class HardwareSpoofingWorker(QThread):
         except Exception:
             return str(uuid.uuid4())
 
-    def generate_spoofed_ids(self) -> None:
-        """Generate realistic spoofed hardware IDs."""
+    def generate_spoofed_ids(self) -> None:  # noqa: PLR0914
+        """Generate realistic spoofed hardware IDs.
+
+        Generates realistic random hardware identifiers including CPU ID, motherboard serial, HDD serial,
+        MAC addresses, volume serials, BIOS info, Windows Product ID, and Machine GUID. Emits
+        spoof_complete signal with the generated hardware dictionary.
+        """
         self.progress_update.emit("Generating spoofed identifiers...")
 
         spoofed_info: dict[str, Any] = {}
@@ -395,7 +478,13 @@ class HardwareSpoofingWorker(QThread):
         self.status_update.emit("Spoofed identifiers generated successfully", "green")
 
     def apply_spoofing(self) -> None:
-        """Apply hardware spoofing."""
+        """Apply hardware spoofing.
+
+        Applies the spoofed hardware identifiers to the system by invoking handler functions for
+        volume spoofing, MAC spoofing, product ID spoofing, and machine GUID spoofing. Delegates
+        advanced spoofing to the backend spoofer if available. Emits spoof_complete signal with
+        results dictionary containing success_count, fail_count, and total.
+        """
         self.progress_update.emit("Applying hardware spoofing...")
 
         success_count = 0
@@ -445,7 +534,17 @@ class HardwareSpoofingWorker(QThread):
             )
 
     def _apply_volume_spoofing(self, volumes: dict[str, str]) -> int:
-        """Apply volume serial spoofing."""
+        """Apply volume serial spoofing.
+
+        Applies spoofed volume serial numbers to all specified disk drives using diskpart commands.
+        Iterates through volume dictionary and attempts to spoof each drive's serial number.
+
+        Args:
+            volumes: Dictionary mapping drive letters (e.g., "C:") to spoofed serial numbers.
+
+        Returns:
+            Count of successfully spoofed volumes.
+        """
         success_count = 0
         for drive, serial in volumes.items():
             self.progress_update.emit(f"Spoofing volume serial for {drive}...")
@@ -454,7 +553,17 @@ class HardwareSpoofingWorker(QThread):
         return success_count
 
     def _apply_mac_spoofing(self, mac_addresses: list[str]) -> int:
-        """Apply MAC address spoofing."""
+        """Apply MAC address spoofing.
+
+        Applies spoofed MAC addresses to network adapters. Iterates through MAC address list
+        and attempts to apply each address to corresponding adapter.
+
+        Args:
+            mac_addresses: List of spoofed MAC addresses in format 00-11-22-33-44-55.
+
+        Returns:
+            Count of successfully spoofed MAC addresses.
+        """
         success_count = 0
         for i, mac in enumerate(mac_addresses):
             self.progress_update.emit(f"Spoofing MAC address {i + 1}...")
@@ -463,17 +572,48 @@ class HardwareSpoofingWorker(QThread):
         return success_count
 
     def _apply_product_spoofing(self, product_id: str) -> int:
-        """Apply product ID spoofing."""
+        r"""Apply product ID spoofing.
+
+        Applies spoofed Windows Product ID to the system registry. Attempts to write the new
+        product ID to HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion.
+
+        Args:
+            product_id: Spoofed Windows Product ID string (e.g., "12345-67890-12345-AAAAA").
+
+        Returns:
+            1 if spoofing succeeded, 0 if it failed.
+        """
         self.progress_update.emit("Spoofing Windows Product ID...")
         return 1 if self.spoof_product_id(product_id) else 0
 
     def _apply_machine_guid_spoofing(self, guid: str) -> int:
-        """Apply machine GUID spoofing."""
+        r"""Apply machine GUID spoofing.
+
+        Applies spoofed Machine GUID to the system registry. Attempts to write the new GUID
+        to HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Cryptography.
+
+        Args:
+            guid: Spoofed Machine GUID string in UUID format (e.g., "12345678-1234-5678-9012-123456789012").
+
+        Returns:
+            1 if spoofing succeeded, 0 if it failed.
+        """
         self.progress_update.emit("Spoofing Machine GUID...")
         return 1 if self.spoof_machine_guid(guid) else 0
 
     def spoof_volume_serial(self, drive: str, serial: str) -> bool:
-        """Spoof volume serial number."""
+        """Spoof volume serial number.
+
+        Modifies the volume serial number of a specified drive using diskpart. Creates and executes
+        a diskpart script to set the unique volume ID.
+
+        Args:
+            drive: Drive letter with colon (e.g., "C:").
+            serial: Spoofed serial number to apply (e.g., "1234-5678").
+
+        Returns:
+            True if spoofing succeeded, False otherwise.
+        """
         try:
             # This requires admin privileges
             # Using diskpart or other methods
@@ -483,12 +623,12 @@ class HardwareSpoofingWorker(QThread):
             script = f"select volume {drive_letter}\nuniqueid disk ID={serial}"
             script_file = "temp_diskpart.txt"
 
-            with open(script_file, "w") as f:
+            with open(script_file, "w", encoding="utf-8") as f:
                 f.write(script)
 
             # Sanitize script_file to prevent command injection
             script_file_clean = script_file.replace(";", "").replace("|", "").replace("&", "")
-            result = subprocess.run(["diskpart", "/s", script_file_clean], capture_output=True, text=True, shell=False)
+            result = subprocess.run(["diskpart", "/s", script_file_clean], capture_output=True, text=True, shell=False, check=False)
 
             os.remove(script_file)
             return "successfully" in result.stdout.lower()
@@ -496,7 +636,18 @@ class HardwareSpoofingWorker(QThread):
             return False
 
     def spoof_mac_address(self, index: int, mac: str) -> bool:
-        """Spoof MAC address in registry."""
+        """Spoof MAC address in registry.
+
+        Modifies a network adapter's MAC address by setting the NetworkAddress value in the
+        Windows registry. Searches network adapter class keys and updates the specified adapter.
+
+        Args:
+            index: Adapter index to modify.
+            mac: Spoofed MAC address in format 00-11-22-33-44-55 or 00:11:22:33:44:55.
+
+        Returns:
+            True if MAC address was successfully modified, False otherwise.
+        """
         try:
             # Find network adapter in registry
             adapter_key = r"SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}"
@@ -521,7 +672,17 @@ class HardwareSpoofingWorker(QThread):
         return False
 
     def spoof_product_id(self, product_id: str) -> bool:
-        """Spoof Windows Product ID in registry."""
+        r"""Spoof Windows Product ID in registry.
+
+        Modifies the Windows Product ID value stored in the registry. Writes the new product ID
+        to HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion.
+
+        Args:
+            product_id: Spoofed Windows Product ID string.
+
+        Returns:
+            True if product ID was successfully modified, False otherwise.
+        """
         try:
             with winreg.OpenKey(
                 winreg.HKEY_LOCAL_MACHINE,
@@ -535,7 +696,17 @@ class HardwareSpoofingWorker(QThread):
             return False
 
     def spoof_machine_guid(self, guid: str) -> bool:
-        """Spoof Machine GUID in registry."""
+        r"""Spoof Machine GUID in registry.
+
+        Modifies the Windows Machine GUID value stored in the registry. Writes the new GUID
+        to HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Cryptography.
+
+        Args:
+            guid: Spoofed Machine GUID string in UUID format.
+
+        Returns:
+            True if Machine GUID was successfully modified, False otherwise.
+        """
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography", 0, winreg.KEY_WRITE) as key:
                 winreg.SetValueEx(key, "MachineGuid", 0, winreg.REG_SZ, guid)
@@ -544,7 +715,12 @@ class HardwareSpoofingWorker(QThread):
             return False
 
     def restore_original(self) -> None:
-        """Restore original hardware IDs."""
+        """Restore original hardware IDs.
+
+        Removes spoofed hardware identifiers by deleting NetworkAddress registry values from network
+        adapters and invoking backend spoofer restore method. Emits spoof_complete signal with
+        restoration completion status.
+        """
         self.progress_update.emit("Restoring original hardware identifiers...")
 
         # Remove spoofed MAC addresses
@@ -561,13 +737,14 @@ class HardwareSpoofingWorker(QThread):
                                 try:
                                     winreg.DeleteValue(subkey, "NetworkAddress")
                                     self.progress_update.emit(f"Removed spoofed MAC for adapter {i}")
-                                except OSError:
-                                    pass
+                                except OSError as e:
+                                    logger.debug("MAC address value not found for adapter %d: %s", i, e)
                         i += 1
                     except OSError:
+                        logger.debug("Finished enumerating network adapters at index %d", i)
                         break
         except Exception as e:
-            logger.debug(f"MAC address restoration failed: {e}")
+            logger.debug("MAC address restoration failed: %s", e)
 
         # Restore using backend
         if hasattr(self, "spoofer") and self.spoofer:
@@ -577,7 +754,11 @@ class HardwareSpoofingWorker(QThread):
         self.status_update.emit("Original hardware identifiers restored", "green")
 
     def verify_spoofing(self) -> None:
-        """Verify if spoofing is active."""
+        """Verify if spoofing is active.
+
+        Captures current hardware information and compares it against expected spoofed values if available.
+        Emits spoof_complete signal with verification results or current system hardware information.
+        """
         self.progress_update.emit("Verifying spoofing status...")
 
         # Capture current hardware info
@@ -608,7 +789,7 @@ class HardwareSpoofingWorker(QThread):
             self.status_update.emit("Current hardware information retrieved", "blue")
 
 
-class HardwareSpoofingDialog(QDialog):
+class HardwareSpoofingDialog(QDialog):  # noqa: PLR0904
     """Advanced Hardware Fingerprint Spoofing Dialog."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -629,7 +810,11 @@ class HardwareSpoofingDialog(QDialog):
         self.load_settings()
 
     def init_ui(self) -> None:
-        """Initialize the user interface."""
+        """Initialize the user interface.
+
+        Constructs the dialog UI with tabbed interface for hardware information, spoofing configuration,
+        profile management, and advanced options. Sets up status bar and control buttons.
+        """
         self.setWindowTitle("Hardware Fingerprint Spoofer - Defeat Hardware-Locked Licensing")
         self.setMinimumSize(900, 600)
 
@@ -663,7 +848,14 @@ class HardwareSpoofingDialog(QDialog):
         self.create_control_buttons(layout)
 
     def create_info_tab(self) -> QWidget:
-        """Create hardware information display tab."""
+        """Create hardware information display tab.
+
+        Constructs the hardware information tab with table showing current and spoofed identifiers,
+        capture buttons, refresh functionality, and educational text about hardware-based licensing.
+
+        Returns:
+            The constructed hardware information tab widget.
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -743,7 +935,14 @@ class HardwareSpoofingDialog(QDialog):
         return tab
 
     def create_config_tab(self) -> QWidget:
-        """Create spoofing configuration tab."""
+        """Create spoofing configuration tab.
+
+        Constructs the configuration tab with spoofing method selection checkboxes, ID generation options,
+        random seed input, generation mode selector, and spoofed values preview pane.
+
+        Returns:
+            The constructed configuration tab widget.
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -828,7 +1027,14 @@ class HardwareSpoofingDialog(QDialog):
         return tab
 
     def create_profiles_tab(self) -> QWidget:
-        """Create profiles management tab."""
+        """Create profiles management tab.
+
+        Constructs the profiles tab with saved profiles table, profile management buttons (save, load,
+        delete, import, export), and quick profile preset buttons for common hardware configurations.
+
+        Returns:
+            The constructed profiles management tab widget.
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -887,7 +1093,7 @@ class HardwareSpoofingDialog(QDialog):
 
         for name, description in quick_profiles:
             btn = QPushButton(f"{name} - {description}")
-            btn.clicked.connect(lambda checked, n=name: self.apply_quick_profile(n))
+            btn.clicked.connect(lambda _checked, n=name: self.apply_quick_profile(n))
             quick_layout.addWidget(btn)
 
         quick_group.setLayout(quick_layout)
@@ -896,7 +1102,14 @@ class HardwareSpoofingDialog(QDialog):
         return tab
 
     def create_advanced_tab(self) -> QWidget:
-        """Create advanced options tab."""
+        """Create advanced options tab.
+
+        Constructs the advanced options tab with driver-level spoofing configuration, API hook method
+        selection, persistence options, and anti-detection features for bypassing detection mechanisms.
+
+        Returns:
+            The constructed advanced options tab widget.
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -980,7 +1193,13 @@ class HardwareSpoofingDialog(QDialog):
         return tab
 
     def create_status_bar(self, parent_layout: QVBoxLayout) -> None:
-        """Create status bar."""
+        """Create status bar.
+
+        Adds a horizontal layout with status label and spoofing status indicator to the parent layout.
+
+        Args:
+            parent_layout: The parent vertical layout to add the status bar to.
+        """
         status_layout = QHBoxLayout()
 
         self.status_label = QLabel("Ready")
@@ -996,7 +1215,14 @@ class HardwareSpoofingDialog(QDialog):
         parent_layout.addLayout(status_layout)
 
     def create_control_buttons(self, parent_layout: QVBoxLayout) -> None:
-        """Create main control buttons."""
+        """Create main control buttons.
+
+        Creates and adds main action buttons (Apply Spoofing, Restore Original, Verify Spoofing, Close)
+        to the parent layout with appropriate styling and signal connections.
+
+        Args:
+            parent_layout: The parent vertical layout to add the control buttons to.
+        """
         button_layout = QHBoxLayout()
 
         self.apply_btn = QPushButton("Apply Spoofing")
@@ -1022,7 +1248,11 @@ class HardwareSpoofingDialog(QDialog):
 
     @pyqtSlot()
     def capture_hardware(self) -> None:
-        """Capture current hardware information."""
+        """Capture current hardware information.
+
+        Creates and starts a worker thread to capture current system hardware identifiers.
+        Connects thread signals to UI update slots.
+        """
         self.status_label.setText("Capturing hardware information...")
 
         # Create worker thread
@@ -1038,7 +1268,14 @@ class HardwareSpoofingDialog(QDialog):
 
     @pyqtSlot(dict)
     def on_capture_complete(self, hardware_info: dict[str, Any]) -> None:
-        """Handle captured hardware information."""
+        """Handle captured hardware information.
+
+        Updates the hardware information table with newly captured hardware identifiers.
+        Called when hardware capture worker thread completes.
+
+        Args:
+            hardware_info: Dictionary containing captured hardware identifiers and their values.
+        """
         self.current_hardware = hardware_info
 
         # Update table
@@ -1079,7 +1316,11 @@ class HardwareSpoofingDialog(QDialog):
 
     @pyqtSlot()
     def generate_spoofed_ids(self) -> None:
-        """Generate spoofed hardware IDs."""
+        """Generate spoofed hardware IDs.
+
+        Creates and starts a worker thread to generate realistic spoofed hardware identifiers based on
+        selected spoofing methods. Applies random seed if provided for reproducible generation.
+        """
         self.status_label.setText("Generating spoofed identifiers...")
 
         params: dict[str, bool] = {method: True for method, check in self.spoof_methods.items() if check.isChecked()}
@@ -1100,7 +1341,14 @@ class HardwareSpoofingDialog(QDialog):
 
     @pyqtSlot(dict)
     def on_generate_complete(self, spoofed_info: dict[str, Any]) -> None:
-        """Handle generated spoofed IDs."""
+        """Handle generated spoofed IDs.
+
+        Updates the hardware table and preview text with newly generated spoofed identifiers.
+        Called when the generation worker thread completes.
+
+        Args:
+            spoofed_info: Dictionary containing generated spoofed hardware identifiers.
+        """
         self.spoofed_hardware = spoofed_info
 
         self._update_hardware_table(spoofed_info)
@@ -1122,7 +1370,14 @@ class HardwareSpoofingDialog(QDialog):
         self.preview_text.setPlainText(preview_text)
 
     def _update_hardware_table(self, spoofed_info: dict[str, Any]) -> None:
-        """Update the hardware table with spoofed values."""
+        """Update the hardware table with spoofed values.
+
+        Updates the third column (spoofed values) of the hardware information table with values
+        from the spoofed_info dictionary. Highlights updated cells with light yellow background.
+
+        Args:
+            spoofed_info: Dictionary containing spoofed hardware identifiers and their values.
+        """
         # Simple key to row mapping
         simple_updates = [
             ("cpu_id", 0),
@@ -1168,7 +1423,11 @@ class HardwareSpoofingDialog(QDialog):
 
     @pyqtSlot()
     def apply_spoofing(self) -> None:
-        """Apply hardware spoofing."""
+        """Apply hardware spoofing.
+
+        Shows confirmation dialog and creates worker thread to apply spoofed hardware identifiers
+        to the system if user confirms. Displays results message upon completion.
+        """
         if not self.spoofed_hardware:
             QMessageBox.warning(self, "Warning", "No spoofed values generated. Generate IDs first.")
             return
@@ -1196,7 +1455,14 @@ class HardwareSpoofingDialog(QDialog):
 
     @pyqtSlot(dict)
     def on_apply_complete(self, results: dict[str, int]) -> None:
-        """Handle spoofing application completion."""
+        """Handle spoofing application completion.
+
+        Updates spoofing status indicator and displays results message based on application success.
+        Called when spoofing application worker thread completes.
+
+        Args:
+            results: Dictionary containing success_count, fail_count, and total keys from spoofing operation.
+        """
         if results.get("success_count", 0) > 0:
             self.spoof_status_label.setText("Spoofing: Active")
             self.spoof_status_label.setStyleSheet("QLabel { padding: 5px; color: green; font-weight: bold; }")
@@ -1216,7 +1482,11 @@ class HardwareSpoofingDialog(QDialog):
 
     @pyqtSlot()
     def restore_original(self) -> None:
-        """Restore original hardware IDs."""
+        """Restore original hardware IDs.
+
+        Shows confirmation dialog and creates worker thread to restore original hardware identifiers
+        if user confirms. Updates UI to reflect restoration status.
+        """
         reply = QMessageBox.question(
             self,
             "Confirm Restore",
@@ -1240,7 +1510,14 @@ class HardwareSpoofingDialog(QDialog):
 
     @pyqtSlot(dict)
     def on_restore_complete(self, results: dict[str, Any]) -> None:
-        """Handle restore completion."""
+        """Handle restore completion.
+
+        Updates spoofing status indicator, clears spoofed values from hardware table, and displays
+        confirmation message. Called when restoration worker thread completes.
+
+        Args:
+            results: Dictionary containing restoration status with 'restored' key.
+        """
         if results.get("restored"):
             self.spoof_status_label.setText("Spoofing: Inactive")
             self.spoof_status_label.setStyleSheet("QLabel { padding: 5px; color: gray; }")
@@ -1255,7 +1532,11 @@ class HardwareSpoofingDialog(QDialog):
 
     @pyqtSlot()
     def verify_spoofing(self) -> None:
-        """Verify if spoofing is active."""
+        """Verify if spoofing is active.
+
+        Creates and starts a worker thread to verify if spoofed values are currently active on the system.
+        Compares current hardware info against expected spoofed values if available.
+        """
         self.status_label.setText("Verifying spoofing status...")
 
         params: dict[str, Any] = {}
@@ -1275,7 +1556,14 @@ class HardwareSpoofingDialog(QDialog):
 
     @pyqtSlot(dict)
     def on_verify_complete(self, results: dict[str, Any]) -> None:
-        """Handle verification completion."""
+        """Handle verification completion.
+
+        Displays verification results showing whether spoofed values match current system hardware.
+        Shows differences if verification fails or current hardware info if no expected values.
+
+        Args:
+            results: Dictionary with verification results including 'verified', 'differences', or 'current' keys.
+        """
         if "verified" in results:
             if results["verified"]:
                 QMessageBox.information(self, "Verification", "Spoofing is active and verified.")
@@ -1292,12 +1580,19 @@ class HardwareSpoofingDialog(QDialog):
 
     @pyqtSlot()
     def refresh_hardware_info(self) -> None:
-        """Refresh hardware information display."""
+        """Refresh hardware information display.
+
+        Triggers a fresh capture of current hardware information by calling capture_hardware().
+        """
         self.capture_hardware()
 
     @pyqtSlot()
     def export_hardware_info(self) -> None:
-        """Export hardware information to file."""
+        """Export hardware information to file.
+
+        Shows file save dialog and exports currently captured hardware information to JSON format
+        with timestamp in filename.
+        """
         if not self.current_hardware:
             QMessageBox.warning(self, "Warning", "No hardware information to export.")
             return
@@ -1310,17 +1605,21 @@ class HardwareSpoofingDialog(QDialog):
         )
 
         if file_path:
-            with open(file_path, "w") as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(self.current_hardware, f, indent=2)
             QMessageBox.information(self, "Exported", "Hardware information exported successfully.")
 
     @pyqtSlot()
     def import_profile(self) -> None:
-        """Import profile from file."""
+        """Import profile from file.
+
+        Shows file open dialog to select a JSON profile file and imports it into the profiles
+        directory for use in the application.
+        """
         file_path, _ = QFileDialog.getOpenFileName(self, "Import Profile", "", JSON_FILES_FILTER)
 
         if file_path:
-            with open(file_path) as f:
+            with open(file_path, encoding="utf-8") as f:
                 profile = json.load(f)
 
             self.save_profile_to_file(profile)
@@ -1330,7 +1629,11 @@ class HardwareSpoofingDialog(QDialog):
 
     @pyqtSlot()
     def save_profile(self) -> None:
-        """Save current spoofing configuration as profile."""
+        """Save current spoofing configuration as profile.
+
+        Prompts user for profile name and saves current spoofed hardware configuration along with
+        selected spoofing methods and timestamp to profiles directory.
+        """
         if not self.spoofed_hardware:
             QMessageBox.warning(self, "Warning", "No spoofed configuration to save.")
             return
@@ -1353,17 +1656,28 @@ class HardwareSpoofingDialog(QDialog):
             QMessageBox.information(self, "Saved", f"Profile '{name}' saved successfully.")
 
     def save_profile_to_file(self, profile: dict[str, Any]) -> None:
-        """Save profile to file."""
+        """Save profile to file.
+
+        Serializes profile dictionary to JSON and saves it to the hardware profiles directory
+        using profile name as filename.
+
+        Args:
+            profile: Dictionary containing profile data including 'name', 'created', 'hardware', and 'methods'.
+        """
         profiles_dir = os.path.join(os.path.expanduser("~"), INTELLICRACK_DIR, "hw_profiles")
         os.makedirs(profiles_dir, exist_ok=True)
 
         file_path = os.path.join(profiles_dir, f"{profile['name']}.json")
-        with open(file_path, "w") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(profile, f, indent=2)
 
     @pyqtSlot()
     def load_profile(self) -> None:
-        """Load selected profile."""
+        """Load selected profile.
+
+        Loads the selected profile from profiles table, applies hardware configuration from the profile,
+        updates spoofing methods checkboxes, and refreshes the hardware display.
+        """
         current_row = self.profiles_table.currentRow()
         if current_row < 0:
             QMessageBox.warning(self, "Warning", NO_PROFILE_MSG)
@@ -1380,7 +1694,7 @@ class HardwareSpoofingDialog(QDialog):
         file_path = os.path.join(profiles_dir, f"{profile_name}.json")
 
         if os.path.exists(file_path):
-            with open(file_path) as f:
+            with open(file_path, encoding="utf-8") as f:
                 profile = json.load(f)
 
             # Apply profile
@@ -1398,7 +1712,11 @@ class HardwareSpoofingDialog(QDialog):
 
     @pyqtSlot()
     def delete_profile(self) -> None:
-        """Delete selected profile."""
+        """Delete selected profile.
+
+        Shows confirmation dialog and deletes the selected profile from the profiles directory
+        if user confirms. Reloads the profiles table after deletion.
+        """
         current_row = self.profiles_table.currentRow()
         if current_row < 0:
             QMessageBox.warning(self, "Warning", NO_PROFILE_MSG)
@@ -1428,7 +1746,11 @@ class HardwareSpoofingDialog(QDialog):
 
     @pyqtSlot()
     def export_profile(self) -> None:
-        """Export selected profile."""
+        """Export selected profile.
+
+        Shows file save dialog and exports the selected profile to a user-specified location in
+        JSON format.
+        """
         current_row = self.profiles_table.currentRow()
         if current_row < 0:
             QMessageBox.warning(self, "Warning", NO_PROFILE_MSG)
@@ -1448,17 +1770,24 @@ class HardwareSpoofingDialog(QDialog):
             file_path, _ = QFileDialog.getSaveFileName(self, "Export Profile", f"{profile_name}.json", JSON_FILES_FILTER)
 
             if file_path:
-                with open(source_path) as f:
+                with open(source_path, encoding="utf-8") as f:
                     profile = json.load(f)
 
-                with open(file_path, "w") as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     json.dump(profile, f, indent=2)
 
                 QMessageBox.information(self, "Exported", f"Profile '{profile_name}' exported.")
 
     @pyqtSlot(str)
     def apply_quick_profile(self, profile_name: str) -> None:
-        """Apply a quick profile."""
+        """Apply a quick profile.
+
+        Loads and applies a predefined hardware profile based on the profile name. Supports profiles like
+        Clean Slate, Minor Change, Virtual Machine, OEM System, and Gaming PC.
+
+        Args:
+            profile_name: Name of the quick profile to apply (e.g., "Clean Slate", "Virtual Machine").
+        """
         # Generate appropriate IDs based on profile
         if profile_name == "Clean Slate":
             # Generate completely new identity
@@ -1469,7 +1798,7 @@ class HardwareSpoofingDialog(QDialog):
         elif profile_name == "Minor Change":
             # Only change non-critical IDs
             for method, check in self.spoof_methods.items():
-                check.setChecked(method in [VOLUME_SERIALS_LABEL, MAC_ADDRESSES_LABEL])
+                check.setChecked(method in {VOLUME_SERIALS_LABEL, MAC_ADDRESSES_LABEL})
 
         elif profile_name == VIRTUAL_MACHINE_LABEL:
             # Generate VMware-like IDs
@@ -1491,7 +1820,12 @@ class HardwareSpoofingDialog(QDialog):
 
     @pyqtSlot()
     def install_driver(self) -> None:
-        """Install spoofing driver."""
+        """Install spoofing driver.
+
+        Shows informational dialog about driver installation requirements and kernel-level spoofing
+        capabilities. Driver installation typically requires administrator privileges, test signing mode,
+        and system restart.
+        """
         QMessageBox.information(
             self,
             "Driver Installation",
@@ -1503,7 +1837,11 @@ class HardwareSpoofingDialog(QDialog):
         )
 
     def load_saved_profiles(self) -> None:
-        """Load saved profiles into table."""
+        """Load saved profiles into table.
+
+        Scans the hardware profiles directory for JSON profile files and populates the profiles
+        table with profile metadata (name, description, creation date) and action buttons.
+        """
         self.profiles_table.setRowCount(0)
 
         profiles_dir = os.path.join(os.path.expanduser("~"), INTELLICRACK_DIR, "hw_profiles")
@@ -1515,7 +1853,7 @@ class HardwareSpoofingDialog(QDialog):
                 file_path = os.path.join(profiles_dir, file_name)
 
                 try:
-                    with open(file_path) as f:
+                    with open(file_path, encoding="utf-8") as f:
                         profile = json.load(f)
 
                     row = self.profiles_table.rowCount()
@@ -1641,31 +1979,68 @@ class HardwareSpoofingDialog(QDialog):
         except OSError as e:
             logger.error("Failed to save hardware spoofer settings: %s", e)
 
-    def closeEvent(self, event: Any) -> None:
-        """Handle dialog close event to save settings."""
+    def closeEvent(self, event: Any) -> None:  # noqa: N802
+        """Handle dialog close event with proper thread cleanup.
+
+        Ensures any running worker thread is properly terminated and saves
+        current dialog settings to persistent storage before closing.
+
+        Args:
+            event: Close event object from Qt.
+        """
+        if self.worker_thread is not None and self.worker_thread.isRunning():
+            self.worker_thread.quit()
+            if not self.worker_thread.wait(2000):
+                self.worker_thread.terminate()
+                self.worker_thread.wait()
+            self.worker_thread = None
         self.save_settings()
         super().closeEvent(event)
 
     @pyqtSlot(str, str)
     def on_status_update(self, message: str, color: str) -> None:
-        """Handle status updates."""
+        """Handle status updates.
+
+        Updates the status label with new message and applies color styling for visual feedback.
+
+        Args:
+            message: Status message text to display.
+            color: CSS color name or hex code for text color.
+        """
         self.status_label.setText(message)
         self.status_label.setStyleSheet(f"QLabel {{ padding: 5px; color: {color}; }}")
 
     @pyqtSlot(str)
     def on_progress_update(self, message: str) -> None:
-        """Handle progress updates."""
+        """Handle progress updates.
+
+        Updates the status label with progress message from worker thread.
+
+        Args:
+            message: Progress message text to display.
+        """
         self.status_label.setText(message)
 
     @pyqtSlot(str)
     def on_error(self, error_msg: str) -> None:
-        """Handle errors."""
+        """Handle errors.
+
+        Displays error message in a critical message box and updates status label with error indication.
+        Called when worker thread encounters an exception.
+
+        Args:
+            error_msg: Error message text describing what went wrong.
+        """
         QMessageBox.critical(self, "Error", error_msg)
         self.status_label.setText(f"Error: {error_msg}")
         self.status_label.setStyleSheet("QLabel { padding: 5px; color: red; }")
 
     def customize_values(self) -> None:
-        """Open dialog to customize spoofed values."""
+        """Open dialog to customize spoofed values.
+
+        Opens CustomizeHardwareDialog to allow manual editing of spoofed hardware identifiers.
+        Updates spoofed_hardware with customized values if user accepts the dialog.
+        """
         current = self.spoofed_hardware or {
             "cpu_id": DEFAULT_CPU_ID,
             "motherboard_serial": f"MB-{os.urandom(8).hex().upper()}",
@@ -1710,7 +2085,14 @@ class CustomizeHardwareDialog(QDialog):
         self.init_ui()
 
     def _get_default_hardware(self) -> dict[str, Any]:
-        """Get default hardware configuration."""
+        """Get default hardware configuration.
+
+        Returns a dictionary with default hardware identifier values for all supported hardware types.
+
+        Returns:
+            Dictionary containing default CPU ID, motherboard serial, HDD serial, MAC addresses,
+            volume serials, BIOS info, Windows Product ID, and Machine GUID.
+        """
         return {
             "cpu_id": DEFAULT_CPU_ID,
             "motherboard_serial": f"MB-{os.urandom(8).hex().upper()}",
@@ -1727,7 +2109,11 @@ class CustomizeHardwareDialog(QDialog):
         }
 
     def init_ui(self) -> None:
-        """Initialize the customize dialog UI."""
+        """Initialize the customize dialog UI.
+
+        Constructs the customize hardware dialog with sections for basic hardware fields, BIOS information,
+        MAC addresses, volume serials, template selector, and action buttons (auto-generate, apply, cancel).
+        """
         self.setWindowTitle("Customize Hardware Values")
         self.setModal(True)
         self.setMinimumWidth(600)
@@ -1793,7 +2179,18 @@ class CustomizeHardwareDialog(QDialog):
         layout.addLayout(button_layout)
 
     def _create_basic_fields(self, scroll_layout: QFormLayout, current: dict[str, Any]) -> dict[str, QLineEdit]:
-        """Create basic hardware field edits and return dict of widgets."""
+        """Create basic hardware field edits and return dict of widgets.
+
+        Creates QLineEdit widgets for CPU ID, motherboard serial, HDD serial, Windows Product ID,
+        and Machine GUID with appropriate tooltips.
+
+        Args:
+            scroll_layout: Parent form layout to add fields to.
+            current: Current hardware dictionary to populate field initial values.
+
+        Returns:
+            Dictionary of widget names to QLineEdit objects.
+        """
         widgets: dict[str, QLineEdit] = {"cpu_edit": QLineEdit(current.get("cpu_id", DEFAULT_CPU_ID))}
 
         widgets["cpu_edit"].setToolTip("CPU ProcessorId value. Format: BFEBFBFF000906EA")
@@ -1822,7 +2219,18 @@ class CustomizeHardwareDialog(QDialog):
         return widgets
 
     def _create_bios_section(self, scroll_layout: QFormLayout, current: dict[str, Any]) -> dict[str, QLineEdit]:
-        """Create BIOS information fields and return dict of widgets."""
+        """Create BIOS information fields and return dict of widgets.
+
+        Creates QLineEdit widgets for BIOS manufacturer, version, and serial number in a grouped
+        layout with appropriate tooltips.
+
+        Args:
+            scroll_layout: Parent form layout to add BIOS section to.
+            current: Current hardware dictionary to populate BIOS field initial values.
+
+        Returns:
+            Dictionary of BIOS widget names to QLineEdit objects.
+        """
         widgets: dict[str, QLineEdit] = {}
 
         bios_group = QGroupBox("BIOS Information")
@@ -1847,7 +2255,18 @@ class CustomizeHardwareDialog(QDialog):
         return widgets
 
     def _create_mac_section(self, scroll_layout: QFormLayout, current: dict[str, Any]) -> QListWidget:
-        """Create MAC addresses section."""
+        """Create MAC addresses section.
+
+        Creates a QListWidget showing current MAC addresses with buttons to add, edit, and delete
+        MAC address entries. Populates list from current hardware MAC addresses.
+
+        Args:
+            scroll_layout: Parent form layout to add MAC section to.
+            current: Current hardware dictionary to populate MAC address list initial values.
+
+        Returns:
+            The MAC addresses list widget.
+        """
         mac_group = QGroupBox("MAC Addresses")
         mac_layout = QVBoxLayout()
         mac_list = QListWidget()
@@ -1878,7 +2297,18 @@ class CustomizeHardwareDialog(QDialog):
         return mac_list
 
     def _create_volume_section(self, scroll_layout: QFormLayout, current: dict[str, Any]) -> QTableWidget:
-        """Create volume serials section."""
+        """Create volume serials section.
+
+        Creates a QTableWidget showing drive letters and volume serials with buttons to add and delete
+        volume entries. Populates table from current hardware volume serials.
+
+        Args:
+            scroll_layout: Parent form layout to add volume section to.
+            current: Current hardware dictionary to populate volume serial table initial values.
+
+        Returns:
+            The volume serials table widget.
+        """
         vol_group = QGroupBox("Volume Serials")
         vol_layout = QVBoxLayout()
         vol_table = QTableWidget()
@@ -1913,7 +2343,11 @@ class CustomizeHardwareDialog(QDialog):
         return vol_table
 
     def add_mac_address(self) -> None:
-        """Add new MAC address."""
+        """Add new MAC address.
+
+        Shows input dialog for user to enter a new MAC address. Validates MAC address format
+        and adds it to the MAC address list if valid.
+        """
         mac, ok = QInputDialog.getText(self, "Add MAC Address", "Enter MAC address (Example: 00-11-22-33-44-55):")
         if ok and mac:
             # Validate MAC format
@@ -1924,7 +2358,11 @@ class CustomizeHardwareDialog(QDialog):
                 QMessageBox.warning(self, "Invalid Format", "MAC address must be in format 00-11-22-33-44-55")
 
     def edit_mac_address(self) -> None:
-        """Edit selected MAC address."""
+        """Edit selected MAC address.
+
+        Shows input dialog to edit the currently selected MAC address in the list. Validates
+        new MAC address format before updating the entry.
+        """
         if not self.mac_list:
             return
         if item := self.mac_list.currentItem():
@@ -1936,7 +2374,10 @@ class CustomizeHardwareDialog(QDialog):
                     QMessageBox.warning(self, "Invalid Format", "MAC address must be in format 00-11-22-33-44-55")
 
     def delete_mac_address(self) -> None:
-        """Delete selected MAC address."""
+        """Delete selected MAC address.
+
+        Removes the currently selected MAC address from the MAC address list.
+        """
         if not self.mac_list:
             return
         row = self.mac_list.currentRow()
@@ -1944,7 +2385,11 @@ class CustomizeHardwareDialog(QDialog):
             self.mac_list.takeItem(row)
 
     def add_volume_serial(self) -> None:
-        """Add new volume serial."""
+        """Add new volume serial.
+
+        Shows input dialogs for user to enter drive letter and volume serial number. Adds new
+        row to volume serials table with the provided values.
+        """
         if not self.vol_table:
             return
         drive, ok1 = QInputDialog.getText(self, ADD_VOLUME_LABEL, "Enter drive letter (e.g., D:):")
@@ -1957,7 +2402,10 @@ class CustomizeHardwareDialog(QDialog):
                 self.vol_table.setItem(row, 1, QTableWidgetItem(serial.upper()))
 
     def delete_volume_serial(self) -> None:
-        """Delete selected volume serial."""
+        """Delete selected volume serial.
+
+        Removes the currently selected volume serial entry from the volume serials table.
+        """
         if not self.vol_table:
             return
         row = self.vol_table.currentRow()
@@ -1965,7 +2413,11 @@ class CustomizeHardwareDialog(QDialog):
             self.vol_table.removeRow(row)
 
     def auto_generate(self) -> None:
-        """Auto-generate random values for all fields."""
+        """Auto-generate random values for all fields.
+
+        Generates realistic random hardware identifiers for all fields including CPU ID, motherboard
+        serial, HDD serial, Windows Product ID, Machine GUID, BIOS information, and random MAC address.
+        """
         if not self.basic_widgets or not self.bios_widgets:
             return
 
@@ -1990,11 +2442,24 @@ class CustomizeHardwareDialog(QDialog):
             self.mac_list.addItem(rand_mac)
 
     def _on_template_changed(self, index: int) -> None:
-        """Handle template selection change."""
+        """Handle template selection change.
+
+        Signal handler that calls _load_template when template combo box selection changes.
+
+        Args:
+            index: Index of the selected template in the combo box.
+        """
         self._load_template(index)
 
     def _load_template(self, index: int) -> None:
-        """Load template values for hardware fields."""
+        """Load template values for hardware fields.
+
+        Loads predefined hardware template values (Generic PC, Dell, HP, Lenovo, ASUS, MSI, VMware) based
+        on template index. Updates all hardware field widgets with template-specific values.
+
+        Args:
+            index: Index of the selected template (0=Custom, 1=Generic PC, 2=Dell OptiPlex, etc.).
+        """
         if index == 0:  # Custom
             return
         if not self.basic_widgets or not self.bios_widgets:
@@ -2056,7 +2521,11 @@ class CustomizeHardwareDialog(QDialog):
                 self.bios_widgets["bios_serial_edit"].setText(template["bios_serial"])
 
     def save(self) -> None:
-        """Save the customized values."""
+        """Save the customized values.
+
+        Collects all customized hardware values from dialog fields and tables, builds spoofed_hardware
+        dictionary, and closes dialog with accepted status. Falls back to defaults for empty fields.
+        """
         if not self.mac_list or not self.vol_table or not self.basic_widgets or not self.bios_widgets:
             return
 
@@ -2093,5 +2562,12 @@ class CustomizeHardwareDialog(QDialog):
         self.accept()
 
     def get_spoofed_hardware(self) -> dict[str, Any]:
-        """Get the customized spoofed hardware values."""
+        """Get the customized spoofed hardware values.
+
+        Returns the spoofed_hardware dictionary containing all customized hardware identifiers.
+
+        Returns:
+            Dictionary with keys like 'cpu_id', 'motherboard_serial', 'hdd_serial',
+            'mac_addresses', 'volume_serials', 'bios_info', 'product_id', 'machine_guid'.
+        """
         return self.spoofed_hardware

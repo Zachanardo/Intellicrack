@@ -44,7 +44,7 @@ Dependencies:
 
 import logging
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import networkx as nx
 
@@ -101,14 +101,15 @@ class CfgExplorerInner:
             *args: Additional positional arguments to pass to core CFG explorer.
             **kwargs: Additional keyword arguments to pass to core CFG explorer.
 
-        Returns:
-            None
-
         Raises:
-            ImportError: When core CFG explorer cannot be imported (non-critical).
-            OSError: When binary file cannot be read.
-            ValueError: When binary data format is invalid.
-            RuntimeError: When analysis operations fail.
+            ImportError: Raised when core CFG explorer module is unavailable and fallback
+                analysis is attempted.
+            OSError: Raised when binary file operations or system calls fail during
+                CFG analysis initialization.
+            ValueError: Raised when invalid configuration parameters or binary data
+                is encountered during analysis setup.
+            RuntimeError: Raised when CFG explorer initialization encounters unexpected
+                runtime errors in analysis tools or data structures.
 
         """
         try:
@@ -434,8 +435,8 @@ class CfgExplorerInner:
                     binary_path: File path to the binary to analyze.
 
                 Returns:
-                    Dictionary containing analysis results with functions, edges, imports,
-                    strings, license-related patterns, and binary sections.
+                    dict[str, object]: Dictionary containing analysis results with functions,
+                    edges, imports, strings, license-related patterns, and binary sections.
 
                 """
                 try:
@@ -548,8 +549,8 @@ class CfgExplorerInner:
                     mode: Address width - "32" or "64" bits (default: "64").
 
                 Returns:
-                    Dictionary containing disassembled instructions, identified basic blocks,
-                    and architecture information.
+                    dict[str, object]: Dictionary containing disassembled instructions,
+                    identified basic blocks, and architecture information.
 
                 """
                 try:
@@ -722,9 +723,11 @@ class CfgExplorerInner:
             None
 
         Raises:
-            OSError: When binary file cannot be opened or read.
-            ValueError: When binary data is invalid.
-            RuntimeError: When analysis operations fail.
+            OSError: Raised when binary file cannot be opened or read from disk.
+            ValueError: Raised when binary data format is invalid or analysis
+                parameters are invalid.
+            RuntimeError: Raised when binary structure analysis encounters
+                unexpected runtime errors during pattern detection or analysis.
 
         """
         if hasattr(app, "binary_path") and app.binary_path:
@@ -776,7 +779,9 @@ class CfgExplorerInner:
             binary_data: Raw binary data to analyze.
 
         Returns:
-            String indicating detected format: "PE", "ELF", "Mach-O", or "unknown".
+            str: Detected executable format string - one of "PE" for Windows PE
+                executables, "ELF" for Unix/Linux ELF binaries, "Mach-O" for
+                macOS Mach-O binaries, or "unknown" for unrecognized formats.
 
         """
         binary_format = "unknown"
@@ -809,12 +814,14 @@ class CfgExplorerInner:
         Currently supports PE binary format with x86/x86-64 function prologue detection.
 
         Args:
-            app: The application instance for analysis context.
+            _app: The application instance for analysis context.
             binary_data: Raw binary data to scan for function patterns.
             binary_format: Binary format ("PE", "ELF", "Mach-O", etc.).
 
         Returns:
-            List of detected function patterns with address, pattern hex, type, and confidence.
+            list[dict[str, object]]: List of detected function patterns, each containing
+                "address" (hex address string), "pattern" (hex encoded pattern bytes),
+                "type" (function pattern type), and "confidence" (detection confidence score).
 
         """
         function_patterns: list[dict[str, object]] = []
@@ -893,9 +900,6 @@ class CfgExplorerInner:
         Args:
             app: The application instance with detected functions and graph data structures.
 
-        Returns:
-            None
-
         """
         if not hasattr(app, "cfg_detected_functions") or not app.cfg_detected_functions:
             return
@@ -928,11 +932,13 @@ class CfgExplorerInner:
         addresses, call patterns, and detected control flow instructions.
 
         Args:
-            app: The application instance with analysis data.
+            _app: The application instance with analysis data.
             sample_nodes: List of function node dictionaries with address information.
 
         Returns:
-            List of edge dictionaries representing control flow between functions.
+            list[dict[str, object]]: List of edge dictionaries representing control flow
+                between functions, each containing "from" (source node ID), "to"
+                (destination node ID), "type" (edge type), and "weight" (edge weight).
 
         """
         return [

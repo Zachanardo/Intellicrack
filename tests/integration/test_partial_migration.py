@@ -11,6 +11,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Any
 
 from intellicrack.core.config_manager import IntellicrackConfig
 
@@ -18,21 +19,21 @@ from intellicrack.core.config_manager import IntellicrackConfig
 class RealPartialMigrationSimulator:
     """Real partial migration simulator for production testing without mocks."""
 
-    def __init__(self, temp_dir):
+    def __init__(self, temp_dir: str) -> None:
         """Initialize partial migration simulator with real capabilities."""
-        self.temp_dir = temp_dir
-        self.config_dir = Path(temp_dir) / ".intellicrack"
-        self.llm_config_dir = self.config_dir / "llm_configs"
-        self.legacy_config_dir = self.config_dir / "legacy"
+        self.temp_dir: str = temp_dir
+        self.config_dir: Path = Path(temp_dir) / ".intellicrack"
+        self.llm_config_dir: Path = self.config_dir / "llm_configs"
+        self.legacy_config_dir: Path = self.config_dir / "legacy"
 
         # Real migration state tracking
-        self.migration_completed = False
-        self.migration_errors = []
-        self.migrated_sections = set()
-        self.legacy_data_sources = set()
+        self.migration_completed: bool = False
+        self.migration_errors: list[str] = []
+        self.migrated_sections: set[str] = set()
+        self.legacy_data_sources: set[str] = set()
 
         # Real QSettings simulation data
-        self.qsettings_data = {
+        self.qsettings_data: dict[str, Any] = {
             "qemu_testing/default_preference": "always",
             "qemu_testing/trusted_binaries": ["test.exe", "sample.bin"],
             "theme/accent_color": "#007ACC",
@@ -43,43 +44,43 @@ class RealPartialMigrationSimulator:
         }
 
         # Track configuration conflicts
-        self.conflicts_detected = []
-        self.conflict_resolutions = {}
+        self.conflicts_detected: list[dict[str, Any]] = []
+        self.conflict_resolutions: dict[str, Any] = {}
 
         # Migration history
-        self.migration_runs = 0
-        self.duplicate_checks = []
+        self.migration_runs: int = 0
+        self.duplicate_checks: list[dict[str, Any]] = []
 
-    def create_directory_structure(self):
+    def create_directory_structure(self) -> None:
         """Create real directory structure for testing."""
         self.config_dir.mkdir(parents=True, exist_ok=True)
         self.llm_config_dir.mkdir(exist_ok=True)
         self.legacy_config_dir.mkdir(exist_ok=True)
 
-    def simulate_qsettings_data(self, key, default=None):
+    def simulate_qsettings_data(self, key: str, default: Any = None) -> Any:
         """Simulate QSettings data retrieval."""
         return self.qsettings_data.get(key, default)
 
-    def get_all_qsettings_keys(self):
+    def get_all_qsettings_keys(self) -> list[str]:
         """Get all QSettings keys."""
         return list(self.qsettings_data.keys())
 
-    def set_qsettings_data(self, key, value):
+    def set_qsettings_data(self, key: str, value: Any) -> None:
         """Set QSettings data."""
         self.qsettings_data[key] = value
 
-    def track_migration_section(self, section_name):
+    def track_migration_section(self, section_name: str) -> None:
         """Track which sections have been migrated."""
         self.migrated_sections.add(section_name)
 
-    def track_legacy_source(self, source_name):
+    def track_legacy_source(self, source_name: str) -> None:
         """Track legacy data sources."""
         self.legacy_data_sources.add(source_name)
 
-    def detect_conflict(self, key, central_value, legacy_value):
+    def detect_conflict(self, key: str, central_value: Any, legacy_value: Any) -> bool:
         """Detect and track configuration conflicts."""
         if central_value != legacy_value:
-            conflict = {
+            conflict: dict[str, Any] = {
                 "key": key,
                 "central_value": central_value,
                 "legacy_value": legacy_value,
@@ -90,7 +91,7 @@ class RealPartialMigrationSimulator:
             return True
         return False
 
-    def validate_migration_completeness(self, config):
+    def validate_migration_completeness(self, config: IntellicrackConfig) -> bool:
         """Validate that migration is complete."""
         required_sections = [
             "llm_configuration.profiles",
@@ -109,13 +110,13 @@ class RealPartialMigrationSimulator:
         self.migration_completed = True
         return True
 
-    def track_migration_run(self):
+    def track_migration_run(self) -> None:
         """Track migration run for idempotency testing."""
         self.migration_runs += 1
 
-    def check_for_duplicates(self, data_type, current_data):
+    def check_for_duplicates(self, data_type: str, current_data: Any) -> dict[str, Any]:
         """Check for duplicates in migrated data."""
-        duplicate_check = {
+        duplicate_check: dict[str, Any] = {
             "run": self.migration_runs,
             "type": data_type,
             "count": len(current_data) if isinstance(current_data, (dict, list)) else 1
@@ -127,14 +128,14 @@ class RealPartialMigrationSimulator:
 class RealLegacyDataGenerator:
     """Real legacy data generator for production testing."""
 
-    def __init__(self, migration_sim):
+    def __init__(self, migration_sim: RealPartialMigrationSimulator) -> None:
         """Initialize with migration simulator."""
-        self.migration_sim = migration_sim
-        self.config_dir = migration_sim.config_dir
-        self.llm_config_dir = migration_sim.llm_config_dir
-        self.legacy_config_dir = migration_sim.legacy_config_dir
+        self.migration_sim: RealPartialMigrationSimulator = migration_sim
+        self.config_dir: Path = migration_sim.config_dir
+        self.llm_config_dir: Path = migration_sim.llm_config_dir
+        self.legacy_config_dir: Path = migration_sim.legacy_config_dir
 
-    def create_partial_central_config(self):
+    def create_partial_central_config(self) -> dict[str, Any]:
         """Create a central config with some sections already migrated."""
         self.migration_sim.create_directory_structure()
 
@@ -182,7 +183,9 @@ class RealLegacyDataGenerator:
 
         return migrated_config
 
-    def create_legacy_llm_configs(self):
+    def create_legacy_llm_configs(
+        self,
+    ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
         """Create legacy LLM configs that haven't been migrated."""
         # Legacy profiles.json (not migrated)
         profiles_data = {
@@ -249,7 +252,7 @@ class RealLegacyDataGenerator:
 
         return profiles_data, metrics_data, models_data
 
-    def create_legacy_cli_config(self):
+    def create_legacy_cli_config(self) -> dict[str, Any]:
         """Create legacy CLI configuration file."""
         cli_config = {
             "preferences": {
@@ -282,7 +285,7 @@ class RealLegacyDataGenerator:
 
         return cli_config
 
-    def create_conflicted_configs(self):
+    def create_conflicted_configs(self) -> tuple[dict[str, Any], dict[str, Any]]:
         """Create configs with conflicting values for testing resolution."""
         # Central config with newer values
         central_config = {
@@ -323,7 +326,7 @@ class RealLegacyDataGenerator:
 
         return central_config, models_data
 
-    def create_custom_settings_config(self):
+    def create_custom_settings_config(self) -> dict[str, Any]:
         """Create config with custom user settings for preservation testing."""
         central_config = {
             "version": "1.2.0",
@@ -350,7 +353,15 @@ class RealLegacyDataGenerator:
 class TestPartialMigration(unittest.TestCase):
     """Test migration from a partially migrated system using real simulators."""
 
-    def setUp(self):
+    temp_dir: str
+    migration_sim: RealPartialMigrationSimulator
+    legacy_data_gen: RealLegacyDataGenerator
+    config_dir: Path
+    llm_config_dir: Path
+    legacy_config_dir: Path
+    config: IntellicrackConfig
+
+    def setUp(self) -> None:
         """Set up test environment with real simulators."""
         # Create temporary directories
         self.temp_dir = tempfile.mkdtemp(prefix="intellicrack_partial_test_")
@@ -373,7 +384,7 @@ class TestPartialMigration(unittest.TestCase):
         # Initialize config manager with temporary directory
         self.config = IntellicrackConfig(config_path=str(self.config_dir / "config.json"))
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         """Clean up test environment."""
         # Remove temporary directory
         if Path(self.temp_dir).exists():
@@ -383,8 +394,7 @@ class TestPartialMigration(unittest.TestCase):
         if 'INTELLICRACK_CONFIG_DIR' in os.environ:
             del os.environ['INTELLICRACK_CONFIG_DIR']
 
-
-    def test_18_1_3_partial_migration_detection(self):
+    def test_18_1_3_partial_migration_detection(self) -> None:
         """Test that system correctly detects partial migration state using real simulators."""
         # Create partial migration state using real generators
         central_config = self.legacy_data_gen.create_partial_central_config()
@@ -413,7 +423,7 @@ class TestPartialMigration(unittest.TestCase):
         self.assertIn("ui_preferences", self.migration_sim.migrated_sections)
         self.assertIn("profiles.json", self.migration_sim.legacy_data_sources)
 
-    def test_18_1_3_merge_partial_llm_configs(self):
+    def test_18_1_3_merge_partial_llm_configs(self) -> None:
         """Test merging partially migrated LLM configurations using real simulators."""
         # Set up partial state using real generators
         self.legacy_data_gen.create_partial_central_config()
@@ -423,7 +433,7 @@ class TestPartialMigration(unittest.TestCase):
         self.config = IntellicrackConfig(config_path=str(self.config_dir / "config.json"))
 
         # Run migration with real functionality
-        self.config._migrate_llm_configs()
+        self.config._migrate_llm_configs()  # type: ignore[attr-defined]
 
         # Verify merged models with real validation (should have both migrated and legacy)
         gpt4_config = self.config.get("llm_configuration.models.gpt-4")
@@ -453,7 +463,7 @@ class TestPartialMigration(unittest.TestCase):
         self.migration_sim.track_migration_section("llm_configuration.profiles")
         self.migration_sim.track_migration_section("llm_configuration.metrics")
 
-    def test_18_1_3_merge_qsettings_partial(self):
+    def test_18_1_3_merge_qsettings_partial(self) -> None:
         """Test merging QSettings when some settings already migrated using real simulators."""
         # Set up partial state using real generators
         self.legacy_data_gen.create_partial_central_config()
@@ -495,7 +505,7 @@ class TestPartialMigration(unittest.TestCase):
         self.migration_sim.track_migration_section("qemu_testing")
         self.migration_sim.track_migration_section("general_preferences")
 
-    def test_18_1_3_cli_config_migration_partial(self):
+    def test_18_1_3_cli_config_migration_partial(self) -> None:
         """Test CLI config migration when central config exists using real simulators."""
         # Set up partial state using real generators
         self.legacy_data_gen.create_partial_central_config()
@@ -505,7 +515,7 @@ class TestPartialMigration(unittest.TestCase):
         self.config = IntellicrackConfig(config_path=str(self.config_dir / "config.json"))
 
         # Run migration with real functionality
-        self.config._migrate_cli_config()
+        self.config._migrate_cli_config()  # type: ignore[attr-defined]
 
         # Verify CLI config migrated with real validation
         cli_prefs = self.config.get("cli_configuration.preferences")
@@ -526,14 +536,14 @@ class TestPartialMigration(unittest.TestCase):
         # Track migration
         self.migration_sim.track_migration_section("cli_configuration")
 
-    def test_18_1_3_conflict_resolution(self):
+    def test_18_1_3_conflict_resolution(self) -> None:
         """Test that newer values in central config take precedence using real simulators."""
         # Create conflicted configs using real generator
         central_config, models_data = self.legacy_data_gen.create_conflicted_configs()
 
         # Reload and migrate with real functionality
         self.config = IntellicrackConfig(config_path=str(self.config_dir / "config.json"))
-        self.config._migrate_llm_configs()
+        self.config._migrate_llm_configs()  # type: ignore[attr-defined]
 
         # Verify central config values preserved with real validation
         gpt4_config = self.config.get("llm_configuration.models.gpt-4")
@@ -545,12 +555,12 @@ class TestPartialMigration(unittest.TestCase):
         self.assertGreater(len(self.migration_sim.conflicts_detected), 0)
         self.assertIn("llm_configuration.models.gpt-4.model_name", self.migration_sim.conflict_resolutions)
 
-    def test_18_1_3_migration_completeness_check(self):
+    def test_18_1_3_migration_completeness_check(self) -> None:
         """Test that migration completes all missing sections."""
         # Create partial state
-        self.create_partial_central_config()
-        self.create_legacy_llm_configs()
-        self.create_legacy_cli_config()
+        self.legacy_data_gen.create_partial_central_config()
+        self.legacy_data_gen.create_legacy_llm_configs()
+        self.legacy_data_gen.create_legacy_cli_config()
 
         # Set up QSettings data in real simulator
         self.migration_sim.set_qsettings_data("qemu_testing/default_preference", "always")
@@ -560,7 +570,7 @@ class TestPartialMigration(unittest.TestCase):
         self.config = IntellicrackConfig(config_path=str(self.config_dir / "config.json"))
 
         # Run all migrations
-        self.config._run_migrations()
+        self.config._run_migrations()  # type: ignore[attr-defined]
 
         # Verify completeness with real validation
         completeness_result = self.migration_sim.validate_migration_completeness(self.config)
@@ -581,7 +591,7 @@ class TestPartialMigration(unittest.TestCase):
         self.assertTrue(self.migration_sim.migration_completed)
         self.assertEqual(len(self.migration_sim.migration_errors), 0)
 
-    def test_18_1_3_idempotent_migration(self):
+    def test_18_1_3_idempotent_migration(self) -> None:
         """Test that running migration multiple times doesn't duplicate data using real simulators."""
         # Create partial state using real generators
         self.legacy_data_gen.create_partial_central_config()
@@ -592,7 +602,7 @@ class TestPartialMigration(unittest.TestCase):
 
         # Run migration twice with real tracking
         self.migration_sim.track_migration_run()
-        self.config._migrate_llm_configs()
+        self.config._migrate_llm_configs()  # type: ignore[attr-defined]
         first_models = self.config.get("llm_configuration.models")
         first_profiles = self.config.get("llm_configuration.profiles")
 
@@ -600,7 +610,7 @@ class TestPartialMigration(unittest.TestCase):
         first_check = self.migration_sim.check_for_duplicates("models", first_models)
 
         self.migration_sim.track_migration_run()
-        self.config._migrate_llm_configs()
+        self.config._migrate_llm_configs()  # type: ignore[attr-defined]
         second_models = self.config.get("llm_configuration.models")
         second_profiles = self.config.get("llm_configuration.profiles")
 
@@ -617,7 +627,7 @@ class TestPartialMigration(unittest.TestCase):
         self.assertEqual(self.migration_sim.migration_runs, 2)
         self.assertEqual(first_check["count"], second_check["count"])  # No increase in count
 
-    def test_18_1_3_preserve_custom_settings(self):
+    def test_18_1_3_preserve_custom_settings(self) -> None:
         """Test that custom user settings in central config are preserved using real simulators."""
         # Create central config with custom settings using real generator
         central_config = self.legacy_data_gen.create_custom_settings_config()
@@ -627,7 +637,7 @@ class TestPartialMigration(unittest.TestCase):
 
         # Reload and migrate with real functionality
         self.config = IntellicrackConfig(config_path=str(self.config_dir / "config.json"))
-        self.config._run_migrations()
+        self.config._run_migrations()  # type: ignore[attr-defined]
 
         # Verify custom settings preserved with real validation
         self.assertEqual(self.config.get("application.custom_field"), "user_value")

@@ -34,10 +34,18 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 
 class CICDPipeline:
-    """CI/CD pipeline for Intellicrack plugins"""
+    """CI/CD pipeline for Intellicrack plugins.
+
+    Manages automated testing, quality checks, security scanning, building,
+    and deployment of Intellicrack plugins through a complete pipeline.
+    """
 
     def __init__(self, plugin_path: str) -> None:
-        """Initialize CI/CD pipeline with plugin path, configuration, and results tracking."""
+        """Initialize CI/CD pipeline with plugin path, configuration, and results tracking.
+
+        Args:
+            plugin_path: Path to the plugin file (.py or .js).
+        """
         self.plugin_path: str = plugin_path
         self.plugin_dir: str = os.path.dirname(plugin_path)
         self.plugin_name: str = os.path.basename(plugin_path).replace(".py", "").replace(".js", "")
@@ -49,7 +57,14 @@ class CICDPipeline:
         }
 
     def _load_or_create_config(self) -> dict[str, Any]:
-        """Load or create pipeline configuration"""
+        """Load or create pipeline configuration.
+
+        Loads pipeline configuration from .intellicrack-ci.yml if it exists,
+        otherwise creates a default configuration file.
+
+        Returns:
+            Pipeline configuration dictionary with stages and settings.
+        """
         config_path: str = os.path.join(self.plugin_dir, ".intellicrack-ci.yml")
 
         if os.path.exists(config_path):
@@ -84,7 +99,14 @@ class CICDPipeline:
             return default_config
 
     def run_pipeline(self) -> dict[str, Any]:
-        """Run the complete CI/CD pipeline"""
+        """Run the complete CI/CD pipeline.
+
+        Executes all configured pipeline stages in sequence (validate, test,
+        quality, security, build, deploy). Stops on first stage failure.
+
+        Returns:
+            Dictionary containing stage results, overall status, and timestamp.
+        """
         print(f" Starting CI/CD pipeline for {self.plugin_name}")
 
         stages: Any = self.pipeline_config.get("stages", [])
@@ -117,7 +139,14 @@ class CICDPipeline:
         return self.results
 
     def run_validate_stage(self) -> dict[str, Any]:
-        """Validation stage - check plugin structure"""
+        """Validation stage - check plugin structure.
+
+        Validates plugin syntax, structure, and imports according to
+        configuration settings.
+
+        Returns:
+            Dictionary with success status, checks, errors, and warnings.
+        """
         result: dict[str, Any] = {"success": True, "checks": {}, "errors": [], "warnings": []}
 
         validate_config: Any = self.pipeline_config.get("validate", {})
@@ -155,7 +184,14 @@ class CICDPipeline:
         return result
 
     def run_test_stage(self) -> dict[str, Any]:
-        """Test stage - run unit tests"""
+        """Test stage - run unit tests.
+
+        Runs unit tests using pytest, generates coverage reports, and verifies
+        coverage meets configured thresholds.
+
+        Returns:
+            Dictionary with test results, coverage percentage, and errors.
+        """
         result: dict[str, Any] = {"success": True, "test_results": {}, "coverage": 0, "errors": []}
 
         test_config: Any = self.pipeline_config.get("test", {})
@@ -232,7 +268,14 @@ class CICDPipeline:
         return result
 
     def run_quality_stage(self) -> dict[str, Any]:
-        """Quality stage - run linters and code quality checks"""
+        """Quality stage - run linters and code quality checks.
+
+        Runs configured linters (pylint, flake8), calculates code complexity,
+        and checks line length against thresholds.
+
+        Returns:
+            Dictionary with linter results, metrics, and errors.
+        """
         result: dict[str, Any] = {"success": True, "linter_results": {}, "metrics": {}, "errors": []}
 
         quality_config: Any = self.pipeline_config.get("quality", {})
@@ -275,7 +318,14 @@ class CICDPipeline:
         return result
 
     def run_security_stage(self) -> dict[str, Any]:
-        """Security stage - run security scanners"""
+        """Security stage - run security scanners.
+
+        Runs security scanners (Bandit) and checks for vulnerable dependencies.
+        Fails on high-severity security issues.
+
+        Returns:
+            Dictionary with scanner results, vulnerabilities, and errors.
+        """
         result: dict[str, Any] = {"success": True, "scanner_results": {}, "vulnerabilities": [], "errors": []}
 
         security_config: Any = self.pipeline_config.get("security", {})
@@ -313,7 +363,14 @@ class CICDPipeline:
         return result
 
     def run_build_stage(self) -> dict[str, Any]:
-        """Build stage - optimize and package plugin"""
+        """Build stage - optimize and package plugin.
+
+        Creates build directory, copies plugin, optimizes code if configured,
+        and generates metadata file with checksums.
+
+        Returns:
+            Dictionary with artifact paths and errors.
+        """
         result: dict[str, Any] = {"success": True, "artifacts": [], "errors": []}
 
         build_config: Any = self.pipeline_config.get("build", {})
@@ -354,7 +411,14 @@ class CICDPipeline:
         return result
 
     def run_deploy_stage(self) -> dict[str, Any]:
-        """Deploy stage - deploy plugin to target"""
+        """Deploy stage - deploy plugin to target.
+
+        Deploys built plugin to target directory, backs up previous versions,
+        and updates plugin registry.
+
+        Returns:
+            Dictionary with deployment paths and errors.
+        """
         result: dict[str, Any] = {"success": True, "deployed_to": [], "errors": []}
 
         deploy_config: Any = self.pipeline_config.get("deploy", {})
@@ -392,7 +456,17 @@ class CICDPipeline:
         return result
 
     def _check_syntax(self) -> dict[str, Any]:
-        """Check plugin syntax"""
+        """Check plugin syntax.
+
+        Validates Python plugin syntax using compile(). JavaScript plugins
+        are considered valid without parsing.
+
+        Returns:
+            Dictionary with validity status and error messages.
+
+        Raises:
+            None: SyntaxError is caught and reported in result.
+        """
         if not self.plugin_path.endswith(".py"):
             # For JavaScript, we'd need a JS parser
             return {"valid": True, "errors": []}
@@ -405,19 +479,50 @@ class CICDPipeline:
             return {"valid": False, "errors": [f"Line {e.lineno}: {e.msg}"]}
 
     def _check_structure(self) -> dict[str, Any]:
-        """Check plugin structure"""
+        """Check plugin structure.
+
+        Validates plugin structure using PluginStructureValidator.
+
+        Returns:
+            Structure validation result dictionary.
+
+        Raises:
+            ImportError: If PluginStructureValidator cannot be imported.
+        """
         from ..utils.validation.import_validator import PluginStructureValidator
 
         return PluginStructureValidator.validate_structure_from_file(self.plugin_path)
 
     def _check_imports(self) -> dict[str, Any]:
-        """Check plugin imports"""
+        """Check plugin imports.
+
+        Validates plugin imports using ImportValidator.
+
+        Returns:
+            Import validation result dictionary.
+
+        Raises:
+            ImportError: If ImportValidator cannot be imported.
+        """
         from ..utils.validation.import_validator import ImportValidator
 
         return ImportValidator.validate_imports_from_file(self.plugin_path)
 
     def _run_linter(self, linter: str) -> dict[str, Any]:
-        """Run a specific linter"""
+        """Run a specific linter.
+
+        Executes pylint or flake8 on the plugin and parses results.
+
+        Args:
+            linter: Linter name ('pylint' or 'flake8').
+
+        Returns:
+            Dictionary with success status and issues list.
+
+        Raises:
+            subprocess.CalledProcessError: Caught and logged, not re-raised.
+            json.JSONDecodeError: Caught and logged, not re-raised.
+        """
         result: dict[str, Any] = {"success": True, "issues": []}
 
         cmd: list[str]
@@ -452,7 +557,16 @@ class CICDPipeline:
         return result
 
     def _calculate_complexity(self) -> int:
-        """Calculate cyclomatic complexity"""
+        """Calculate cyclomatic complexity.
+
+        Calculates cyclomatic complexity using Radon library.
+
+        Returns:
+            Maximum cyclomatic complexity value, or 0 if Radon unavailable.
+
+        Raises:
+            ImportError: Caught and logged when Radon not available.
+        """
         try:
             import radon.complexity as cc
 
@@ -470,7 +584,16 @@ class CICDPipeline:
             return 0
 
     def _check_line_length(self) -> int:
-        """Check maximum line length"""
+        """Check maximum line length.
+
+        Scans plugin file for longest line.
+
+        Returns:
+            Maximum line length found.
+
+        Raises:
+            IOError: If plugin file cannot be read.
+        """
         max_length: int = 0
 
         with open(self.plugin_path) as f:
@@ -480,7 +603,17 @@ class CICDPipeline:
         return max_length
 
     def _run_bandit(self) -> dict[str, Any]:
-        """Run Bandit security scanner"""
+        """Run Bandit security scanner.
+
+        Executes Bandit security scanner and parses JSON output.
+
+        Returns:
+            Dictionary with security issues found.
+
+        Raises:
+            subprocess.CalledProcessError: Caught and logged, not re-raised.
+            json.JSONDecodeError: Caught and logged, not re-raised.
+        """
         result: dict[str, Any] = {"issues": []}
 
         try:
@@ -510,13 +643,31 @@ class CICDPipeline:
         return result
 
     def _check_dependencies(self) -> dict[str, Any]:
-        """Check for vulnerable dependencies"""
+        """Check for vulnerable dependencies.
+
+        Checks for vulnerable dependencies. Currently returns empty result.
+
+        Returns:
+            Dictionary with vulnerable packages list.
+
+        Raises:
+            None: No exceptions raised in current implementation.
+        """
         # This would integrate with a vulnerability database
         # For now, return empty
         return {"vulnerable_packages": []}
 
     def _optimize_plugin(self, file_path: str) -> None:
-        """Optimize plugin code"""
+        """Optimize plugin code.
+
+        Removes empty lines and comments from Python plugin code.
+
+        Args:
+            file_path: Path to plugin file to optimize.
+
+        Raises:
+            IOError: If plugin file cannot be read or written.
+        """
         if file_path.endswith(".py"):
             with open(file_path) as f:
                 lines: list[str] = f.readlines()
@@ -531,7 +682,16 @@ class CICDPipeline:
                 f.writelines(optimized)
 
     def _get_version(self) -> str:
-        """Get plugin version"""
+        """Get plugin version.
+
+        Extracts version string from plugin code using regex.
+
+        Returns:
+            Plugin version string, or '1.0.0' if not found.
+
+        Raises:
+            IOError: Caught and logged if version extraction fails.
+        """
         try:
             with open(self.plugin_path) as f:
                 content: str = f.read()
@@ -546,7 +706,19 @@ class CICDPipeline:
         return "1.0.0"
 
     def _calculate_checksum(self, file_path: str) -> str:
-        """Calculate file checksum"""
+        """Calculate file checksum.
+
+        Calculates SHA256 checksum of file.
+
+        Args:
+            file_path: Path to file.
+
+        Returns:
+            Hex-encoded SHA256 checksum.
+
+        Raises:
+            IOError: If file cannot be read.
+        """
         sha256_hash: hashlib._Hash = hashlib.sha256()
 
         with open(file_path, "rb") as f:
@@ -556,7 +728,17 @@ class CICDPipeline:
         return sha256_hash.hexdigest()
 
     def _update_plugin_registry(self, plugin_path: str) -> None:
-        """Update plugin registry with deployment info"""
+        """Update plugin registry with deployment info.
+
+        Updates or creates plugin_registry.json with deployment information.
+
+        Args:
+            plugin_path: Path to deployed plugin file.
+
+        Raises:
+            IOError: If registry file cannot be read or written.
+            json.JSONDecodeError: If existing registry is not valid JSON.
+        """
         registry_path: str = os.path.join(os.path.dirname(plugin_path), "plugin_registry.json")
 
         registry: dict[str, Any]
@@ -584,7 +766,13 @@ class CICDPipeline:
             json.dump(registry, f, indent=2)
 
     def _generate_report(self) -> None:
-        """Generate pipeline report"""
+        """Generate pipeline report.
+
+        Generates JSON and text format pipeline reports with stage results.
+
+        Raises:
+            IOError: If report files cannot be written.
+        """
         report_path: str = os.path.join(self.plugin_dir, f"pipeline_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
 
         with open(report_path, "w") as f:
@@ -625,11 +813,25 @@ Stage Results:
 
 
 class GitHubActionsGenerator:
-    """Generate GitHub Actions workflow for plugins"""
+    """Generate GitHub Actions workflow for plugins.
+
+    Creates GitHub Actions workflow YAML configuration files for
+    automated CI/CD pipeline execution on GitHub.
+    """
 
     @staticmethod
     def generate_workflow(plugin_name: str) -> str:
-        """Generate GitHub Actions workflow YAML"""
+        """Generate GitHub Actions workflow YAML.
+
+        Args:
+            plugin_name: Name of the plugin for workflow configuration.
+
+        Returns:
+            GitHub Actions workflow YAML as string.
+
+        Raises:
+            None: No exceptions raised.
+        """
         return f"""name: {plugin_name} CI/CD
 
 on:

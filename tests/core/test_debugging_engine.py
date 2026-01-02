@@ -76,6 +76,7 @@ class TestDebuggerInitialization:
         assert isinstance(debugger.veh_handlers, list)
 
 
+@pytest.mark.requires_admin
 class TestDebugPrivilegeElevation:
     """Test debug privilege elevation for process debugging."""
 
@@ -86,7 +87,7 @@ class TestDebugPrivilegeElevation:
         result = debugger._enable_debug_privilege()
 
         if not result:
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         assert result is True
 
@@ -95,7 +96,7 @@ class TestDebugPrivilegeElevation:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         current_pid = os.getpid()
         handle = debugger.kernel32.OpenProcess(
@@ -108,6 +109,8 @@ class TestDebugPrivilegeElevation:
         debugger.kernel32.CloseHandle(handle)
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestProcessAttachment:
     """Test debugger attachment to running processes."""
 
@@ -151,7 +154,7 @@ except KeyboardInterrupt:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         result = debugger.attach_to_process(target_process.pid)
 
@@ -171,7 +174,7 @@ except KeyboardInterrupt:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         result = debugger.attach_to_process(999999)
 
@@ -186,10 +189,10 @@ except KeyboardInterrupt:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         assert debugger.process_handle is not None
 
@@ -206,6 +209,8 @@ except KeyboardInterrupt:
         debugger.detach()
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestSoftwareBreakpoints:
     """Test software breakpoint setting and management."""
 
@@ -215,10 +220,10 @@ class TestSoftwareBreakpoints:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         yield debugger
 
@@ -342,6 +347,8 @@ class TestSoftwareBreakpoints:
             assert result is True
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestHardwareBreakpoints:
     """Test hardware breakpoint functionality using debug registers."""
 
@@ -351,10 +358,10 @@ class TestHardwareBreakpoints:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         time.sleep(1)
 
@@ -503,6 +510,8 @@ class TestHardwareBreakpoints:
                 break
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestAntiDebuggingBypass:
     """Test anti-debugging detection bypass capabilities."""
 
@@ -512,10 +521,10 @@ class TestAntiDebuggingBypass:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         time.sleep(1)
 
@@ -638,6 +647,8 @@ class TestAntiDebuggingBypass:
         assert result is True
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestTimingAttackMitigation:
     """Test timing attack mitigation capabilities."""
 
@@ -647,10 +658,10 @@ class TestTimingAttackMitigation:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         time.sleep(1)
 
@@ -700,6 +711,8 @@ class TestTimingAttackMitigation:
         assert result is True
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestMemoryOperations:
     """Test memory read/write operations."""
 
@@ -709,10 +722,10 @@ class TestMemoryOperations:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         time.sleep(1)
 
@@ -801,6 +814,8 @@ class TestMemoryOperations:
             assert region["size"] > 0
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestThreadContextManipulation:
     """Test thread context manipulation and register access."""
 
@@ -810,10 +825,10 @@ class TestThreadContextManipulation:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         time.sleep(1.5)
 
@@ -877,6 +892,8 @@ class TestThreadContextManipulation:
             debugger.set_registers(original_regs)
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestVectoredExceptionHandler:
     """Test Vectored Exception Handler (VEH) functionality."""
 
@@ -886,10 +903,10 @@ class TestVectoredExceptionHandler:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         time.sleep(1)
 
@@ -1078,6 +1095,8 @@ class TestCodeGeneration:
         assert offset == expected_offset
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestDetachment:
     """Test debugger detachment from processes."""
 
@@ -1088,10 +1107,10 @@ class TestDetachment:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         time.sleep(1)
 
@@ -1330,6 +1349,8 @@ class TestPEParsingAndImportAnalysis:
         assert found_license or found_serial
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestThreadLocalStorageAnalysis:
     """Test TLS callback analysis and manipulation."""
 
@@ -1339,10 +1360,10 @@ class TestThreadLocalStorageAnalysis:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         time.sleep(1)
 
@@ -1383,6 +1404,8 @@ class TestThreadLocalStorageAnalysis:
         assert isinstance(result, bool)
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestDelayedImportHooking:
     """Test delayed import hooking for license API interception."""
 
@@ -1392,10 +1415,10 @@ class TestDelayedImportHooking:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         time.sleep(1)
 
@@ -1704,6 +1727,8 @@ class TestConditionalBreakpointEvaluation:
         assert result is True
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestExecutionTracing:
     """Test execution tracing and instruction logging."""
 
@@ -1713,10 +1738,10 @@ class TestExecutionTracing:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         time.sleep(1)
 
@@ -1750,6 +1775,8 @@ class TestExecutionTracing:
         assert isinstance(trace, list)
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestMemoryBreakpoints:
     """Test memory breakpoints using guard pages."""
 
@@ -1759,10 +1786,10 @@ class TestMemoryBreakpoints:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         time.sleep(1)
 
@@ -1792,6 +1819,8 @@ class TestMemoryBreakpoints:
         assert isinstance(result, bool)
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestThreadEnumerationBypass:
     """Test thread enumeration bypass."""
 
@@ -1801,10 +1830,10 @@ class TestThreadEnumerationBypass:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         time.sleep(1)
 
@@ -1833,6 +1862,8 @@ class TestThreadEnumerationBypass:
         assert isinstance(suspended_threads, dict)
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestAPIHooking:
     """Test API hooking for license validation interception."""
 
@@ -1842,10 +1873,10 @@ class TestAPIHooking:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         time.sleep(1)
 
@@ -1868,6 +1899,8 @@ class TestAPIHooking:
             assert len(debugger.api_hooks) > 0
 
 
+@pytest.mark.requires_admin
+@pytest.mark.requires_process_attach
 class TestStringOperations:
     """Test string reading from process memory."""
 
@@ -1877,10 +1910,10 @@ class TestStringOperations:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         if not debugger.attach_to_process(target_process.pid):
-            pytest.skip("Process attachment failed")
+            pytest.skip("Process attachment failed - requires debugger privileges")
 
         time.sleep(1)
 
@@ -1939,6 +1972,7 @@ class TestExceptionHandling:
         assert hasattr(DebugEvent, "OUTPUT_DEBUG_STRING_EVENT")
 
 
+@pytest.mark.requires_admin
 class TestEdgeCasesAndErrorHandling:
     """Test edge cases and error handling."""
 
@@ -1947,7 +1981,7 @@ class TestEdgeCasesAndErrorHandling:
         debugger = LicenseDebugger()
 
         if not debugger._enable_debug_privilege():
-            pytest.skip("Requires administrator privileges")
+            pytest.skip("Debug privilege elevation requires administrator privileges")
 
         system_pid = 4
 

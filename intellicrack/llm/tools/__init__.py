@@ -34,7 +34,11 @@ __all__ = [
 
 
 def get_all_tools() -> dict[str, Any]:
-    """Get all available LLM tools"""
+    """Get all available LLM tools
+
+    Returns:
+        Dictionary mapping tool names to their instances.
+    """
     return {
         "die_analysis": create_die_tool(),
         "binary_analysis": create_binary_tool(),

@@ -20,14 +20,12 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import os
 import warnings
-from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 import requests
-from requests import PreparedRequest, Response
+from requests import Response
 from requests.adapters import HTTPAdapter
-from requests.auth import AuthBase
 from urllib3.exceptions import InsecureRequestWarning
 from urllib3.util.retry import Retry
 
@@ -38,7 +36,11 @@ class SecureHTTPClient:
     """HTTP client with configurable SSL verification for security research."""
 
     def __init__(self) -> None:
-        """Initialize HTTP client with configuration from IntellicrackConfig."""
+        """Initialize HTTP client with configuration from IntellicrackConfig.
+
+        Sets up the HTTP session with retry logic, proxy settings, and SSL
+        configuration loaded from the IntellicrackConfig.
+        """
         from intellicrack.core.config_manager import IntellicrackConfig
 
         self.config_manager = IntellicrackConfig()
@@ -46,7 +48,12 @@ class SecureHTTPClient:
         self._setup_session()
 
     def _setup_session(self) -> None:
-        """Configure session with retry logic and SSL settings."""
+        """Configure session with retry logic and SSL settings.
+
+        Applies retry strategy, default headers, proxy configuration, and
+        SSL verification settings to the underlying requests session based
+        on the current IntellicrackConfig.
+        """
         config: dict[str, Any] = dict(self.config_manager._config)
         network_config_raw: object = config.get("network", {})
         network_config: dict[str, Any] = network_config_raw if isinstance(network_config_raw, dict) else {}
@@ -101,15 +108,20 @@ class SecureHTTPClient:
     def _get_ssl_verify(self, override_verify: bool | str | None = None) -> bool | str:
         """Get SSL verification setting with override capability.
 
+        Determines the SSL verification setting to use for HTTP requests,
+        considering the provided override, configuration settings, environment
+        variables, and custom CA bundle paths.
+
         Args:
-            override_verify: Optional override for SSL verification.
+            override_verify: Optional override for SSL verification. Can be:
                 - True: Enable verification (default)
                 - False: Disable verification (for self-signed certs)
                 - str: Path to CA bundle file
+                - None: Use configuration settings
 
         Returns:
-            SSL verification setting for requests
-
+            SSL verification setting for requests. Either a boolean
+            (True/False) or a string path to a CA bundle file.
         """
         if override_verify is not None:
             if override_verify is False:
@@ -147,18 +159,32 @@ class SecureHTTPClient:
 
         return ssl_verify
 
-    def request(self, method: str, url: str, verify: bool | str | None = None, **kwargs: Any) -> Response:
+    def request(self, method: str, url: str, verify: bool | str | None = None, **kwargs: Any) -> requests.Response:
         """Make an HTTP request with configurable SSL verification.
 
+        Executes an HTTP request using the configured session with automatic
+        retry logic and SSL verification settings. Applies timeout settings
+        from configuration if not explicitly provided.
+
         Args:
-            method: HTTP method (GET, POST, etc.)
-            url: Target URL
-            verify: SSL verification override (True, False, or CA bundle path)
-            **kwargs: Additional arguments passed to requests
+            method: HTTP method (GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS,
+                TRACE).
+            url: Target URL for the HTTP request.
+            verify: SSL verification override. Can be True (enable), False
+                (disable), or a string path to a CA bundle file. If None,
+                uses configuration settings.
+            **kwargs: Additional arguments passed to requests.Session.request(),
+                such as data, json, headers, cookies, etc.
 
         Returns:
-            Response object
+            requests.Response: HTTP response object containing status code,
+            headers, and body content.
 
+        Raises:
+            requests.exceptions.SSLError: If SSL certificate verification
+                fails and cannot be bypassed.
+            requests.exceptions.RequestException: If the HTTP request fails
+                for other reasons (connection error, timeout, etc.).
         """
         # Get timeout from config if not specified
         if "timeout" not in kwargs:
@@ -190,24 +216,100 @@ class SecureHTTPClient:
             logger.error("Request failed for %s: %s", url, e, exc_info=True)
             raise
 
-    def get(self, url: str, **kwargs: Any) -> Response:
-        """Make a GET request."""
+    def get(self, url: str, **kwargs: Any) -> requests.Response:
+        """Make a GET request.
+
+        Executes a GET request to the specified URL using the configured
+        session with SSL verification and retry logic.
+
+        Args:
+            url: Target URL for the GET request.
+            **kwargs: Additional arguments passed to requests.Session.request(),
+                such as headers, params, verify, etc.
+
+        Returns:
+            requests.Response: HTTP response object containing status code,
+            headers, and body content.
+
+        Raises:
+            requests.exceptions.SSLError: If SSL certificate verification
+                fails.
+            requests.exceptions.RequestException: If the HTTP request fails.
+        """
         return self.request("GET", url, **kwargs)
 
-    def post(self, url: str, **kwargs: Any) -> Response:
-        """Make a POST request."""
+    def post(self, url: str, **kwargs: Any) -> requests.Response:
+        """Make a POST request.
+
+        Executes a POST request to the specified URL using the configured
+        session with SSL verification and retry logic.
+
+        Args:
+            url: Target URL for the POST request.
+            **kwargs: Additional arguments passed to requests.Session.request(),
+                such as data, json, headers, verify, etc.
+
+        Returns:
+            requests.Response: HTTP response object containing status code,
+            headers, and body content.
+
+        Raises:
+            requests.exceptions.SSLError: If SSL certificate verification
+                fails.
+            requests.exceptions.RequestException: If the HTTP request fails.
+        """
         return self.request("POST", url, **kwargs)
 
-    def put(self, url: str, **kwargs: Any) -> Response:
-        """Make a PUT request."""
+    def put(self, url: str, **kwargs: Any) -> requests.Response:
+        """Make a PUT request.
+
+        Executes a PUT request to the specified URL using the configured
+        session with SSL verification and retry logic.
+
+        Args:
+            url: Target URL for the PUT request.
+            **kwargs: Additional arguments passed to requests.Session.request(),
+                such as data, json, headers, verify, etc.
+
+        Returns:
+            requests.Response: HTTP response object containing status code,
+            headers, and body content.
+
+        Raises:
+            requests.exceptions.SSLError: If SSL certificate verification
+                fails.
+            requests.exceptions.RequestException: If the HTTP request fails.
+        """
         return self.request("PUT", url, **kwargs)
 
-    def delete(self, url: str, **kwargs: Any) -> Response:
-        """Make a DELETE request."""
+    def delete(self, url: str, **kwargs: Any) -> requests.Response:
+        """Make a DELETE request.
+
+        Executes a DELETE request to the specified URL using the configured
+        session with SSL verification and retry logic.
+
+        Args:
+            url: Target URL for the DELETE request.
+            **kwargs: Additional arguments passed to requests.Session.request(),
+                such as headers, verify, etc.
+
+        Returns:
+            requests.Response: HTTP response object containing status code,
+            headers, and body content.
+
+        Raises:
+            requests.exceptions.SSLError: If SSL certificate verification
+                fails.
+            requests.exceptions.RequestException: If the HTTP request fails.
+        """
         return self.request("DELETE", url, **kwargs)
 
     def close(self) -> None:
-        """Close the session."""
+        """Close the session.
+
+        Cleanly closes the underlying requests session and releases all
+        associated resources, including connections and connection pools.
+        """
         self.session.close()
 
 
@@ -218,9 +320,13 @@ _http_client: SecureHTTPClient | None = None
 def get_http_client() -> SecureHTTPClient:
     """Get or create the global HTTP client instance.
 
-    Returns:
-        SecureHTTPClient instance
+    Implements a lazy-load singleton pattern to manage a single global HTTP
+    client instance. Creates the instance on first call and returns the same
+    instance for all subsequent calls.
 
+    Returns:
+        SecureHTTPClient: The global HTTP client instance with configured
+        session, retry logic, and SSL verification settings.
     """
     global _http_client
     if _http_client is None:
@@ -228,30 +334,78 @@ def get_http_client() -> SecureHTTPClient:
     return _http_client
 
 
-def secure_request(method: str, url: str, verify: bool | str | None = None, **kwargs: Any) -> Response:
+def secure_request(method: str, url: str, verify: bool | str | None = None, **kwargs: Any) -> requests.Response:
     """Make secure HTTP requests.
 
-    This function uses the global HTTP client with proper SSL configuration.
+    Convenience function that uses the global HTTP client with proper SSL
+    configuration, retry logic, and session management. Delegates to the
+    singleton SecureHTTPClient instance.
 
     Args:
-        method: HTTP method (GET, POST, etc.)
-        url: Target URL
-        verify: SSL verification override (True, False, or CA bundle path)
-        **kwargs: Additional arguments passed to requests
+        method: HTTP method (GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS,
+            TRACE).
+        url: Target URL for the HTTP request.
+        verify: SSL verification override. Can be True (enable), False
+            (disable), or a string path to a CA bundle file. If None, uses
+            configuration settings.
+        **kwargs: Additional arguments passed to requests.Session.request(),
+            such as data, json, headers, cookies, etc.
 
     Returns:
-        Response object
+        requests.Response: HTTP response object containing status code,
+        headers, and body content.
 
+    Raises:
+        requests.exceptions.SSLError: If SSL certificate verification
+            fails and cannot be bypassed.
+        requests.exceptions.RequestException: If the HTTP request fails
+            for other reasons (connection error, timeout, etc.).
     """
     client: SecureHTTPClient = get_http_client()
     return client.request(method, url, verify=verify, **kwargs)
 
 
-def secure_get(url: str, **kwargs: Any) -> Response:
-    """Make secure GET requests."""
+def secure_get(url: str, **kwargs: Any) -> requests.Response:
+    """Make secure GET requests.
+
+    Convenience function for making secure GET requests using the global
+    HTTP client with proper SSL configuration and retry logic.
+
+    Args:
+        url: Target URL for the GET request.
+        **kwargs: Additional arguments passed to requests.Session.request(),
+            such as headers, params, verify, etc.
+
+    Returns:
+        requests.Response: HTTP response object containing status code,
+        headers, and body content.
+
+    Raises:
+        requests.exceptions.SSLError: If SSL certificate verification
+            fails.
+        requests.exceptions.RequestException: If the HTTP request fails.
+    """
     return secure_request("GET", url, **kwargs)
 
 
-def secure_post(url: str, **kwargs: Any) -> Response:
-    """Make secure POST requests."""
+def secure_post(url: str, **kwargs: Any) -> requests.Response:
+    """Make secure POST requests.
+
+    Convenience function for making secure POST requests using the global
+    HTTP client with proper SSL configuration and retry logic.
+
+    Args:
+        url: Target URL for the POST request.
+        **kwargs: Additional arguments passed to requests.Session.request(),
+            such as data, json, headers, verify, etc.
+
+    Returns:
+        requests.Response: HTTP response object containing status code,
+        headers, and body content.
+
+    Raises:
+        requests.exceptions.SSLError: If SSL certificate verification
+            fails.
+        requests.exceptions.RequestException: If the HTTP request fails.
+    """
     return secure_request("POST", url, **kwargs)

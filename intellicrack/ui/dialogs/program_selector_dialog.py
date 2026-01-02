@@ -118,7 +118,11 @@ class FileSelectionPage(QWizardPage):
         self.setLayout(layout)
 
     def browse_for_file(self) -> None:
-        """Open file dialog to select a file."""
+        """Open file dialog to select a file.
+
+        Displays a file selection dialog and updates the file path edit field
+        with the user's selection if a valid file is chosen.
+        """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Program File",
@@ -130,7 +134,11 @@ class FileSelectionPage(QWizardPage):
             self.file_path_edit.setText(file_path)
 
     def validate_file_path(self) -> None:
-        """Validate the selected file path."""
+        """Validate the selected file path.
+
+        Checks if the file path exists and is a valid file, updating the commit
+        page state accordingly to enable or disable wizard progression.
+        """
         file_path = self.file_path_edit.text().strip()
 
         if not file_path:
@@ -230,7 +238,11 @@ class AnalysisPage(QWizardPage):
         self.setLayout(layout)
 
     def initializePage(self) -> None:
-        """Initialize the page when it becomes active."""
+        """Initialize the page when it becomes active.
+
+        Updates the program information display and performs licensing file
+        analysis on the selected program's installation folder.
+        """
         if self._wizard_instance.selected_program:
             # Update program info
             file_path = Path(self._wizard_instance.selected_program)
@@ -309,7 +321,6 @@ class AnalysisPage(QWizardPage):
             file_path: Path to the licensing file to add (str or Path object).
             file_type: Classification of the file type (e.g., "License", "EULA", "Copyright").
             priority: Priority level of the licensing file (lower values = higher priority).
-
         """
         try:
             file_path = Path(file_path)
@@ -378,10 +389,6 @@ class AnalysisPage(QWizardPage):
 
         Args:
             item: The QTreeWidgetItem representing the selected licensing file.
-
-        Raises:
-            Displays a warning dialog if the file cannot be opened.
-
         """
         try:
             file_path = item.data(0, Qt.ItemDataRole.UserRole)

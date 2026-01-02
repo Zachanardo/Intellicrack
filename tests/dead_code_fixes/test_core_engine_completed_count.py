@@ -11,16 +11,45 @@ import asyncio
 import logging
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any, Callable
-from unittest.mock import MagicMock
 
 import pytest
 
 
-class MockEvent:
-    """Mock event for testing."""
+class FakeEvent:
+    """Real test double for Event objects."""
 
     def __init__(self, event_type: str = "test_event") -> None:
         self.event_type = event_type
+
+
+class FakeLogger:
+    """Real test double for logger that tracks all method calls."""
+
+    def __init__(self) -> None:
+        self.debug_calls: list[tuple[str, ...]] = []
+        self.exception_calls: list[tuple[str, ...]] = []
+
+    def debug(self, msg: str, *args: Any) -> None:
+        """Record debug call with message and arguments."""
+        self.debug_calls.append((msg, *args))
+
+    def exception(self, msg: str, *args: Any) -> None:
+        """Record exception call with message and arguments."""
+        self.exception_calls.append((msg, *args))
+
+    @property
+    def called(self) -> bool:
+        """Check if any method was called."""
+        return len(self.debug_calls) > 0 or len(self.exception_calls) > 0
+
+    def assert_debug_called_once(self) -> None:
+        """Assert debug was called exactly once."""
+        assert len(self.debug_calls) == 1, f"Expected 1 debug call, got {len(self.debug_calls)}"
+
+    def get_last_debug_call_args(self) -> tuple[str, ...]:
+        """Get arguments from last debug call."""
+        assert len(self.debug_calls) > 0, "No debug calls recorded"
+        return self.debug_calls[-1]
 
 
 class TestCompletedCountLogging:
@@ -88,10 +117,10 @@ class TestCompletedCountLogging:
     @pytest.mark.asyncio
     async def test_logger_receives_completed_count(self) -> None:
         """Test that logger receives correct completed_count value."""
-        logger = MagicMock()
+        logger = FakeLogger()
         completed_count = 0
         results: list[Any] = []
-        event = MockEvent("analysis_complete")
+        event = FakeEvent("analysis_complete")
 
         async def handler() -> str:
             return "done"
@@ -117,8 +146,9 @@ class TestCompletedCountLogging:
             len(tasks),
         )
 
-        logger.debug.assert_called_once()
-        call_args = logger.debug.call_args[0]
+        logger.assert_debug_called_once()
+        call_args = logger.get_last_debug_call_args()
+        assert call_args[0] == "Event %s: %d/%d handlers completed successfully"
         assert call_args[1] == "analysis_complete"
         assert call_args[2] == 2
         assert call_args[3] == 2
@@ -210,11 +240,11 @@ class TestCompletedCountLogging:
     async def test_handler_type_tracking(self) -> None:
         """Test that handler types are tracked for error reporting."""
         class AnalysisHandler:
-            async def __call__(self, event: MockEvent) -> str:
+            async def __call__(self, event: FakeEvent) -> str:
                 return "analyzed"
 
         class PatchHandler:
-            async def __call__(self, event: MockEvent) -> str:
+            async def __call__(self, event: FakeEvent) -> str:
                 return "patched"
 
         handlers = [AnalysisHandler(), PatchHandler()]
@@ -226,7 +256,7 @@ class TestCompletedCountLogging:
     @pytest.mark.asyncio
     async def test_exception_logging_with_handler_index(self) -> None:
         """Test that exceptions are logged with handler index."""
-        logger = MagicMock()
+        logger = FakeLogger()
         results: list[Any] = []
         handler_types = [type(lambda: None), type(lambda: None)]
 
@@ -248,7 +278,7 @@ class TestCompletedCountLogging:
             except Exception as e:
                 results.append(e)
 
-        event = MockEvent("test_event")
+        event = FakeEvent("test_event")
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 logger.exception(
@@ -259,7 +289,7 @@ class TestCompletedCountLogging:
                     result,
                 )
 
-        assert logger.exception.called
+        assert logger.called
 
     @pytest.mark.asyncio
     async def test_completed_count_matches_task_count(self) -> None:
@@ -298,4 +328,3 @@ class TestCompletedCountLogging:
 
         assert progress == [1, 2, 3, 4, 5]
         assert completed_count == 5
-

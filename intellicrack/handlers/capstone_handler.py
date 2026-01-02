@@ -927,7 +927,7 @@ except ImportError as e:
 
             code_bytes: bytes
             code_bytes = bytes(code, "latin-1") if isinstance(code, str) else code
-            instructions: list[FallbackCsInsn] = self._disasm_impl.disasm(code_bytes, offset)  # type: ignore[attr-defined]
+            instructions: list[FallbackCsInsn] = self._disasm_impl.disasm(code_bytes, offset)
 
             if count > 0:
                 instructions = instructions[:count]

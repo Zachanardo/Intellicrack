@@ -23,14 +23,6 @@ from intellicrack.utils.logger import get_logger
 
 
 logger = get_logger(__name__)
-logger.debug("Frida constants module loaded")
-
-"""
-Frida Constants Module
-
-This module contains enums and constants used by Frida components
-to avoid cyclic imports between core and UI modules.
-"""
 
 
 class ProtectionType(Enum):

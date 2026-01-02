@@ -12,8 +12,7 @@ import tempfile
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, Mock, patch
+from typing import Any, Literal, Optional
 
 import paramiko
 import pytest
@@ -24,6 +23,294 @@ from intellicrack.ai.qemu_manager import (
     QEMUSnapshot,
     SecureHostKeyPolicy,
 )
+
+
+class FakeQEMUProcess:
+    """Fake QEMU process for testing."""
+
+    def __init__(
+        self,
+        should_fail: bool = False,
+        exit_code: int = 0,
+        stdout_data: bytes = b"",
+        stderr_data: bytes = b""
+    ) -> None:
+        self.should_fail = should_fail
+        self.exit_code = exit_code
+        self.stdout_data = stdout_data
+        self.stderr_data = stderr_data
+        self.running = True
+        self.pid = 12345
+        self.returncode = exit_code if should_fail else None
+        self._terminated = False
+        self._killed = False
+
+    def poll(self) -> Optional[int]:
+        if self.should_fail:
+            return self.exit_code
+        if self._terminated or self._killed:
+            return 0
+        return None
+
+    def terminate(self) -> None:
+        self.running = False
+        self._terminated = True
+        self.returncode = 0
+
+    def kill(self) -> None:
+        self.running = False
+        self._killed = True
+        self.returncode = -9
+
+    def wait(self, timeout: int = 10) -> int:
+        if self._terminated or self._killed:
+            return 0
+        if self.should_fail:
+            return self.exit_code
+        return 0
+
+    def communicate(self, timeout: Optional[int] = None) -> tuple[bytes, bytes]:
+        return (self.stdout_data, self.stderr_data)
+
+
+class FakeSSHTransport:
+    """Fake SSH transport for testing."""
+
+    def __init__(self, is_active: bool = True) -> None:
+        self._is_active = is_active
+        self._peername = ("127.0.0.1", 22222)
+
+    def is_active(self) -> bool:
+        return self._is_active
+
+    def getpeername(self) -> tuple[str, int]:
+        return self._peername
+
+
+class FakeSSHChannel:
+    """Fake SSH channel for command execution."""
+
+    def __init__(self, exit_status: int = 0) -> None:
+        self._exit_status = exit_status
+
+    def recv_exit_status(self) -> int:
+        return self._exit_status
+
+
+class FakeSSHStream:
+    """Fake SSH stream for stdout/stderr."""
+
+    def __init__(self, data: bytes, exit_status: int = 0) -> None:
+        self._data = data
+        self.channel = FakeSSHChannel(exit_status)
+
+    def read(self) -> bytes:
+        return self._data
+
+
+class FakeSSHClient:
+    """Fake SSH client for testing."""
+
+    def __init__(
+        self,
+        stdout_data: str = "",
+        stderr_data: str = "",
+        exit_code: int = 0,
+        should_fail: bool = False
+    ) -> None:
+        self.stdout_data = stdout_data
+        self.stderr_data = stderr_data
+        self.exit_code = exit_code
+        self.should_fail = should_fail
+        self._transport = FakeSSHTransport(is_active=not should_fail)
+        self._connected = not should_fail
+        self._sftp_client: Optional[FakeSFTPClient] = None
+
+    def get_transport(self) -> FakeSSHTransport:
+        return self._transport
+
+    def exec_command(
+        self,
+        command: str,
+        timeout: Optional[int] = None
+    ) -> tuple[Any, FakeSSHStream, FakeSSHStream]:
+        if self.should_fail:
+            raise TimeoutError("Command timeout")
+
+        stdin = None
+        stdout = FakeSSHStream(self.stdout_data.encode(), self.exit_code)
+        stderr = FakeSSHStream(self.stderr_data.encode(), self.exit_code)
+        return (stdin, stdout, stderr)
+
+    def open_sftp(self) -> "FakeSFTPClient":
+        if not self._sftp_client:
+            self._sftp_client = FakeSFTPClient()
+        return self._sftp_client
+
+    def close(self) -> None:
+        self._connected = False
+
+
+class FakeSFTPFile:
+    """Fake SFTP file object."""
+
+    def __init__(self, path: str) -> None:
+        self.path = path
+        self._data = b""
+
+    def write(self, data: bytes) -> int:
+        self._data += data
+        return len(data)
+
+    def close(self) -> None:
+        pass
+
+    def __enter__(self) -> "FakeSFTPFile":
+        return self
+
+    def __exit__(self, *args: Any) -> Literal[False]:
+        return False
+
+
+class FakeSFTPClient:
+    """Fake SFTP client for file operations."""
+
+    def __init__(self) -> None:
+        self._files: dict[str, bytes] = {}
+        self._permissions: dict[str, int] = {}
+        self._should_fail_get = False
+
+    def stat(self, path: str) -> Any:
+        if path not in self._files:
+            raise FileNotFoundError(f"File not found: {path}")
+        return None
+
+    def file(self, path: str, mode: str = "w") -> FakeSFTPFile:
+        return FakeSFTPFile(path)
+
+    def chmod(self, path: str, mode: int) -> None:
+        self._permissions[path] = mode
+
+    def get(self, remote_path: str, local_path: str) -> None:
+        if self._should_fail_get:
+            raise FileNotFoundError("Remote file not found")
+
+        Path(local_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(local_path).write_bytes(b"fake_remote_data")
+
+    def put(self, local_path: str, remote_path: str) -> None:
+        data = Path(local_path).read_bytes()
+        self._files[remote_path] = data
+
+
+class FakeConfig:
+    """Fake configuration object."""
+
+    def __init__(self, workspace: Path, windows_image: Path, linux_image: Path) -> None:
+        self._workspace = workspace
+        self._windows_image = windows_image
+        self._linux_image = linux_image
+        self._settings: dict[str, Any] = {}
+
+    def get(self, key: str, default: Any = None) -> Any:
+        config_values = {
+            "vm_framework.ssh.timeout": 30,
+            "vm_framework.ssh.retry_count": 3,
+            "vm_framework.ssh.retry_delay": 2,
+            "vm_framework.ssh.circuit_breaker_threshold": 5,
+            "vm_framework.ssh.circuit_breaker_timeout": 60,
+            "vm_framework.qemu_defaults.ssh_port_start": 22222,
+            "vm_framework.qemu_defaults.vnc_port_start": 5900,
+            "vm_framework.base_images.windows": [str(self._windows_image)],
+            "vm_framework.base_images.linux": [str(self._linux_image)],
+            "vm_framework.base_images.default_windows_size_gb": 2,
+            "vm_framework.base_images.default_linux_size_gb": 1,
+        }
+        return config_values.get(key, default)
+
+    def get_tool_path(self, tool: str) -> Optional[str]:
+        return None
+
+    def set(self, key: str, value: Any) -> None:
+        self._settings[key] = value
+
+    def save_config(self) -> None:
+        pass
+
+
+class FakeImageDiscovery:
+    """Fake QEMU image discovery service."""
+
+    def __init__(self) -> None:
+        self._images: list[Any] = []
+
+    def discover_images(self) -> list[Any]:
+        return self._images
+
+    def get_images_by_os(self, os_type: str) -> list[Any]:
+        return []
+
+
+class FakeResourceManager:
+    """Fake resource manager."""
+
+    def __init__(self) -> None:
+        self._resources: dict[str, Any] = {}
+
+    def register_resource(self, resource_id: str, resource_type: str, data: Any) -> None:
+        self._resources[resource_id] = {"type": resource_type, "data": data}
+
+    def release_resource(self, resource_id: str) -> None:
+        self._resources.pop(resource_id, None)
+
+
+class FakeAuditLogger:
+    """Fake audit logger."""
+
+    def __init__(self) -> None:
+        self._logs: list[dict[str, Any]] = []
+
+    def log(self, event: str, data: dict[str, Any]) -> None:
+        self._logs.append({"event": event, "data": data})
+
+
+class FakeSubprocessRun:
+    """Fake subprocess.run result."""
+
+    def __init__(self, returncode: int = 0, stdout: str = "", stderr: str = "") -> None:
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+
+
+class FakeMonitor:
+    """Fake QEMU monitor for QMP commands."""
+
+    def __init__(self) -> None:
+        self._responses: dict[str, dict[str, Any]] = {}
+
+    def send(self, data: bytes) -> None:
+        pass
+
+    def recv(self, size: int = 1024) -> bytes:
+        return b'{"return": {}}\n'
+
+
+class TestContext:
+    """Test context for managing fake dependencies."""
+
+    def __init__(
+        self,
+        workspace: Path,
+        windows_image: Path,
+        linux_image: Path
+    ) -> None:
+        self.config = FakeConfig(workspace, windows_image, linux_image)
+        self.resource_manager = FakeResourceManager()
+        self.audit_logger = FakeAuditLogger()
+        self.image_discovery = FakeImageDiscovery()
+        self.subprocess_results: list[FakeSubprocessRun] = []
+        self.popen_processes: list[FakeQEMUProcess] = []
 
 
 @pytest.fixture
@@ -70,44 +357,53 @@ def sample_snapshot() -> QEMUSnapshot:
 
 
 @pytest.fixture
+def test_context(
+    temp_qemu_workspace: Path,
+    mock_base_image: Path,
+    mock_linux_image: Path
+) -> TestContext:
+    """Create test context with fake dependencies."""
+    return TestContext(temp_qemu_workspace, mock_base_image, mock_linux_image)
+
+
+@pytest.fixture
 def qemu_manager_with_mocked_config(
     temp_qemu_workspace: Path,
     mock_base_image: Path,
     mock_linux_image: Path,
+    test_context: TestContext,
+    monkeypatch: pytest.MonkeyPatch
 ) -> QEMUManager:
     """Create QEMUManager with mocked configuration."""
-    with patch("intellicrack.ai.qemu_manager.get_config") as mock_config, \
-         patch("intellicrack.ai.qemu_manager.get_resource_manager") as mock_rm, \
-         patch("intellicrack.ai.qemu_manager.get_audit_logger") as mock_audit, \
-         patch("intellicrack.utils.qemu_image_discovery.get_qemu_discovery") as mock_discovery:
 
-        config_mock = MagicMock()
-        config_mock.get.side_effect = lambda key, default=None: {
-            "vm_framework.ssh.timeout": 30,
-            "vm_framework.ssh.retry_count": 3,
-            "vm_framework.ssh.retry_delay": 2,
-            "vm_framework.ssh.circuit_breaker_threshold": 5,
-            "vm_framework.ssh.circuit_breaker_timeout": 60,
-            "vm_framework.qemu_defaults.ssh_port_start": 22222,
-            "vm_framework.qemu_defaults.vnc_port_start": 5900,
-            "vm_framework.base_images.windows": [str(mock_base_image)],
-            "vm_framework.base_images.linux": [str(mock_linux_image)],
-            "vm_framework.base_images.default_windows_size_gb": 2,
-            "vm_framework.base_images.default_linux_size_gb": 1,
-        }.get(key, default)
-        config_mock.get_tool_path.return_value = None
-        mock_config.return_value = config_mock
+    def fake_get_config() -> FakeConfig:
+        return test_context.config
 
-        mock_discovery_instance = MagicMock()
-        mock_discovery_instance.discover_images.return_value = []
-        mock_discovery_instance.get_images_by_os.return_value = []
-        mock_discovery.return_value = mock_discovery_instance
+    def fake_get_resource_manager() -> FakeResourceManager:
+        return test_context.resource_manager
 
-        with patch("intellicrack.ai.qemu_manager.tempfile.gettempdir", return_value=str(temp_qemu_workspace)):
-            with patch.object(QEMUManager, "_validate_qemu_setup"):
-                manager = QEMUManager()
-                manager.working_dir = temp_qemu_workspace
-                return manager
+    def fake_get_audit_logger() -> FakeAuditLogger:
+        return test_context.audit_logger
+
+    def fake_get_qemu_discovery() -> FakeImageDiscovery:
+        return test_context.image_discovery
+
+    def fake_gettempdir() -> str:
+        return str(temp_qemu_workspace)
+
+    def fake_validate_qemu_setup(self: QEMUManager) -> None:
+        pass
+
+    monkeypatch.setattr("intellicrack.ai.qemu_manager.get_config", fake_get_config)
+    monkeypatch.setattr("intellicrack.ai.qemu_manager.get_resource_manager", fake_get_resource_manager)
+    monkeypatch.setattr("intellicrack.ai.qemu_manager.get_audit_logger", fake_get_audit_logger)
+    monkeypatch.setattr("intellicrack.utils.qemu_image_discovery.get_qemu_discovery", fake_get_qemu_discovery)
+    monkeypatch.setattr("intellicrack.ai.qemu_manager.tempfile.gettempdir", fake_gettempdir)
+    monkeypatch.setattr(QEMUManager, "_validate_qemu_setup", fake_validate_qemu_setup)
+
+    manager = QEMUManager()
+    manager.working_dir = temp_qemu_workspace
+    return manager
 
 
 class TestQEMUManagerInitialization:
@@ -161,19 +457,28 @@ class TestQEMUSnapshotCreation:
     """Test QEMU snapshot creation and management."""
 
     def test_create_snapshot_generates_unique_id(
-        self, qemu_manager_with_mocked_config: QEMUManager, tmp_path: Path
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Snapshot creation generates unique snapshot ID."""
         manager = qemu_manager_with_mocked_config
         test_binary = tmp_path / "test.exe"
         test_binary.write_bytes(b"PE\x00\x00")
 
-        with patch.object(manager, "_start_vm", return_value=True):
-            with patch("subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0)
-                snapshot_id = manager.create_snapshot(str(test_binary))
-                assert snapshot_id.startswith("test_")
-                assert snapshot_id in manager.snapshots
+        def fake_start_vm(snapshot: QEMUSnapshot) -> bool:
+            return True
+
+        def fake_subprocess_run(*args: Any, **kwargs: Any) -> FakeSubprocessRun:
+            return FakeSubprocessRun(returncode=0)
+
+        monkeypatch.setattr(manager, "_start_vm", fake_start_vm)
+        monkeypatch.setattr("subprocess.run", fake_subprocess_run)
+
+        snapshot_id = manager.create_snapshot(str(test_binary))
+        assert snapshot_id.startswith("test_")
+        assert snapshot_id in manager.snapshots
 
     def test_create_snapshot_detects_windows_binary(
         self, qemu_manager_with_mocked_config: QEMUManager
@@ -192,24 +497,33 @@ class TestQEMUSnapshotCreation:
         assert os_type == "linux"
 
     def test_create_snapshot_allocates_unique_ports(
-        self, qemu_manager_with_mocked_config: QEMUManager, tmp_path: Path
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Each snapshot receives unique SSH and VNC ports."""
         manager = qemu_manager_with_mocked_config
         test_binary = tmp_path / "test.exe"
         test_binary.write_bytes(b"PE\x00\x00")
 
-        with patch.object(manager, "_start_vm", return_value=True):
-            with patch("subprocess.run") as mock_run:
-                mock_run.return_value = MagicMock(returncode=0)
-                snapshot_id1 = manager.create_snapshot(str(test_binary))
-                snapshot_id2 = manager.create_snapshot(str(test_binary))
+        def fake_start_vm(snapshot: QEMUSnapshot) -> bool:
+            return True
 
-                snapshot1 = manager.snapshots[snapshot_id1]
-                snapshot2 = manager.snapshots[snapshot_id2]
+        def fake_subprocess_run(*args: Any, **kwargs: Any) -> FakeSubprocessRun:
+            return FakeSubprocessRun(returncode=0)
 
-                assert snapshot1.ssh_port != snapshot2.ssh_port
-                assert snapshot1.vnc_port != snapshot2.vnc_port
+        monkeypatch.setattr(manager, "_start_vm", fake_start_vm)
+        monkeypatch.setattr("subprocess.run", fake_subprocess_run)
+
+        snapshot_id1 = manager.create_snapshot(str(test_binary))
+        snapshot_id2 = manager.create_snapshot(str(test_binary))
+
+        snapshot1 = manager.snapshots[snapshot_id1]
+        snapshot2 = manager.snapshots[snapshot_id2]
+
+        assert snapshot1.ssh_port != snapshot2.ssh_port
+        assert snapshot1.vnc_port != snapshot2.vnc_port
 
     def test_create_snapshot_raises_on_missing_binary(
         self, qemu_manager_with_mocked_config: QEMUManager
@@ -224,76 +538,92 @@ class TestQEMUVMLifecycle:
     """Test VM startup, monitoring, and shutdown."""
 
     def test_start_vm_spawns_qemu_process(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """VM startup spawns real QEMU process."""
         manager = qemu_manager_with_mocked_config
 
-        with patch("subprocess.Popen") as mock_popen:
-            mock_process = MagicMock()
-            mock_process.communicate.return_value = (b"", b"")
-            mock_process.returncode = 0
-            mock_popen.return_value = mock_process
+        fake_process = FakeQEMUProcess()
 
-            result = manager._start_vm(sample_snapshot)
-            assert mock_popen.called
-            assert result is True
+        def fake_popen(*args: Any, **kwargs: Any) -> FakeQEMUProcess:
+            return fake_process
+
+        monkeypatch.setattr("subprocess.Popen", fake_popen)
+
+        result = manager._start_vm(sample_snapshot)
+        assert result is True
 
     def test_start_vm_builds_correct_qemu_command(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """VM startup constructs valid QEMU command line."""
         manager = qemu_manager_with_mocked_config
 
-        with patch("subprocess.Popen") as mock_popen:
-            mock_process = MagicMock()
-            mock_process.communicate.return_value = (b"", b"")
-            mock_process.returncode = 0
-            mock_popen.return_value = mock_process
+        captured_args: list[Any] = []
 
-            manager._start_vm(sample_snapshot)
+        def fake_popen(args: Any, **kwargs: Any) -> FakeQEMUProcess:
+            captured_args.append(args)
+            return FakeQEMUProcess()
 
-            call_args = mock_popen.call_args[0][0]
-            assert manager.qemu_executable in call_args
-            assert "-m" in call_args
-            assert "2048" in call_args
-            assert "-smp" in call_args
+        monkeypatch.setattr("subprocess.Popen", fake_popen)
+
+        manager._start_vm(sample_snapshot)
+
+        call_args = captured_args[0]
+        assert manager.qemu_executable in call_args
+        assert "-m" in call_args
+        assert "2048" in call_args
+        assert "-smp" in call_args
 
     def test_start_vm_configures_network_forwarding(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """VM startup configures SSH port forwarding."""
         manager = qemu_manager_with_mocked_config
 
-        with patch("subprocess.Popen") as mock_popen:
-            mock_process = MagicMock()
-            mock_process.communicate.return_value = (b"", b"")
-            mock_process.returncode = 0
-            mock_popen.return_value = mock_process
+        captured_args: list[Any] = []
 
-            manager._start_vm(sample_snapshot)
+        def fake_popen(args: Any, **kwargs: Any) -> FakeQEMUProcess:
+            captured_args.append(args)
+            return FakeQEMUProcess()
 
-            call_args = mock_popen.call_args[0][0]
-            netdev_arg = next((arg for arg in call_args if "hostfwd" in arg), None)
-            assert netdev_arg is not None
-            assert f"{sample_snapshot.ssh_port}" in netdev_arg
+        monkeypatch.setattr("subprocess.Popen", fake_popen)
+
+        manager._start_vm(sample_snapshot)
+
+        call_args = captured_args[0]
+        netdev_arg = next((arg for arg in call_args if "hostfwd" in arg), None)
+        assert netdev_arg is not None
+        assert f"{sample_snapshot.ssh_port}" in netdev_arg
 
     def test_stop_vm_terminates_process_gracefully(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot
     ) -> None:
         """VM shutdown terminates process gracefully."""
         manager = qemu_manager_with_mocked_config
 
-        mock_process = MagicMock()
-        mock_process.poll.return_value = None
-        mock_process.wait.return_value = None
-        sample_snapshot.vm_process = mock_process
+        fake_process = FakeQEMUProcess()
+        object.__setattr__(sample_snapshot, "vm_process", fake_process)
 
         manager._stop_vm_for_snapshot(sample_snapshot)
-        mock_process.wait.assert_called()
+        assert fake_process._terminated or fake_process._killed
 
     def test_cleanup_snapshot_removes_all_resources(
-        self, qemu_manager_with_mocked_config: QEMUManager, tmp_path: Path
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Snapshot cleanup removes disk files and processes."""
         manager = qemu_manager_with_mocked_config
@@ -312,14 +642,17 @@ class TestQEMUVMLifecycle:
             vnc_port=5900,
         )
 
-        mock_process = MagicMock()
-        mock_process.poll.return_value = None
-        snapshot.vm_process = mock_process
+        fake_process = FakeQEMUProcess()
+        object.__setattr__(snapshot, "vm_process", fake_process)
 
         manager.snapshots[snapshot_id] = snapshot
 
-        with patch.object(manager, "_close_ssh_connection"):
-            manager.cleanup_snapshot(snapshot_id)
+        def fake_close_ssh(snapshot: QEMUSnapshot) -> None:
+            pass
+
+        monkeypatch.setattr(manager, "_close_ssh_connection", fake_close_ssh)
+
+        manager.cleanup_snapshot(snapshot_id)
 
         assert snapshot_id not in manager.snapshots
         assert not disk_path.exists()
@@ -334,16 +667,12 @@ class TestSSHConnectionManagement:
         """SSH connection pool reuses existing active connections."""
         manager = qemu_manager_with_mocked_config
 
-        mock_client = MagicMock(spec=paramiko.SSHClient)
-        mock_transport = MagicMock()
-        mock_transport.is_active.return_value = True
-        mock_client.get_transport.return_value = mock_transport
-
+        fake_client = FakeSSHClient()
         pool_key = (sample_snapshot.vm_name, sample_snapshot.ssh_port)
-        manager.ssh_connection_pool[pool_key] = mock_client
+        manager.ssh_connection_pool[pool_key] = fake_client
 
         result = manager._get_existing_connection(pool_key)
-        assert result is mock_client
+        assert result is fake_client
 
     def test_ssh_connection_pool_removes_inactive_connections(
         self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
@@ -351,13 +680,11 @@ class TestSSHConnectionManagement:
         """SSH connection pool removes inactive connections."""
         manager = qemu_manager_with_mocked_config
 
-        mock_client = MagicMock(spec=paramiko.SSHClient)
-        mock_transport = MagicMock()
-        mock_transport.is_active.return_value = False
-        mock_client.get_transport.return_value = mock_transport
+        fake_client = FakeSSHClient()
+        fake_client._transport._is_active = False
 
         pool_key = (sample_snapshot.vm_name, sample_snapshot.ssh_port)
-        manager.ssh_connection_pool[pool_key] = mock_client
+        manager.ssh_connection_pool[pool_key] = fake_client
 
         result = manager._get_existing_connection(pool_key)
         assert result is None
@@ -409,80 +736,86 @@ class TestVMCommandExecution:
     """Test command execution in VMs via SSH."""
 
     def test_execute_command_returns_exit_code(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Command execution returns exit code from VM."""
         manager = qemu_manager_with_mocked_config
 
-        mock_client = MagicMock(spec=paramiko.SSHClient)
-        mock_stdout = MagicMock()
-        mock_stdout.read.return_value = b"output"
-        mock_stdout.channel.recv_exit_status.return_value = 0
-        mock_stderr = MagicMock()
-        mock_stderr.read.return_value = b""
+        fake_client = FakeSSHClient(stdout_data="output", exit_code=0)
 
-        mock_client.exec_command.return_value = (MagicMock(), mock_stdout, mock_stderr)
+        def fake_get_ssh_connection(snapshot: QEMUSnapshot) -> FakeSSHClient:
+            return fake_client
 
-        with patch.object(manager, "_get_ssh_connection", return_value=mock_client):
-            result = manager._execute_command_in_vm(sample_snapshot, "echo test")
+        monkeypatch.setattr(manager, "_get_ssh_connection", fake_get_ssh_connection)
+
+        result = manager._execute_command_in_vm(sample_snapshot, "echo test")
 
         assert result["exit_code"] == 0
         assert result["stdout"] == "output"
 
     def test_execute_command_captures_stdout(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Command execution captures stdout from VM."""
         manager = qemu_manager_with_mocked_config
 
         expected_output = "test output from vm"
-        mock_client = MagicMock(spec=paramiko.SSHClient)
-        mock_stdout = MagicMock()
-        mock_stdout.read.return_value = expected_output.encode()
-        mock_stdout.channel.recv_exit_status.return_value = 0
-        mock_stderr = MagicMock()
-        mock_stderr.read.return_value = b""
+        fake_client = FakeSSHClient(stdout_data=expected_output, exit_code=0)
 
-        mock_client.exec_command.return_value = (MagicMock(), mock_stdout, mock_stderr)
+        def fake_get_ssh_connection(snapshot: QEMUSnapshot) -> FakeSSHClient:
+            return fake_client
 
-        with patch.object(manager, "_get_ssh_connection", return_value=mock_client):
-            result = manager._execute_command_in_vm(sample_snapshot, "echo test")
+        monkeypatch.setattr(manager, "_get_ssh_connection", fake_get_ssh_connection)
+
+        result = manager._execute_command_in_vm(sample_snapshot, "echo test")
 
         assert result["stdout"] == expected_output
 
     def test_execute_command_captures_stderr(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Command execution captures stderr from VM."""
         manager = qemu_manager_with_mocked_config
 
         expected_error = "error message"
-        mock_client = MagicMock(spec=paramiko.SSHClient)
-        mock_stdout = MagicMock()
-        mock_stdout.read.return_value = b""
-        mock_stdout.channel.recv_exit_status.return_value = 1
-        mock_stderr = MagicMock()
-        mock_stderr.read.return_value = expected_error.encode()
+        fake_client = FakeSSHClient(stderr_data=expected_error, exit_code=1)
 
-        mock_client.exec_command.return_value = (MagicMock(), mock_stdout, mock_stderr)
+        def fake_get_ssh_connection(snapshot: QEMUSnapshot) -> FakeSSHClient:
+            return fake_client
 
-        with patch.object(manager, "_get_ssh_connection", return_value=mock_client):
-            result = manager._execute_command_in_vm(sample_snapshot, "false")
+        monkeypatch.setattr(manager, "_get_ssh_connection", fake_get_ssh_connection)
+
+        result = manager._execute_command_in_vm(sample_snapshot, "false")
 
         assert result["stderr"] == expected_error
         assert result["exit_code"] == 1
 
     def test_execute_command_handles_timeout(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Command execution handles timeout errors."""
         manager = qemu_manager_with_mocked_config
 
-        mock_client = MagicMock(spec=paramiko.SSHClient)
-        mock_client.exec_command.side_effect = TimeoutError("Command timeout")
+        fake_client = FakeSSHClient(should_fail=True)
 
-        with patch.object(manager, "_get_ssh_connection", return_value=mock_client):
-            result = manager._execute_command_in_vm(sample_snapshot, "sleep 100", timeout=1)
+        def fake_get_ssh_connection(snapshot: QEMUSnapshot) -> FakeSSHClient:
+            return fake_client
+
+        monkeypatch.setattr(manager, "_get_ssh_connection", fake_get_ssh_connection)
+
+        result = manager._execute_command_in_vm(sample_snapshot, "sleep 100", timeout=1)
 
         assert result["exit_code"] == -1
         assert "timed out" in result["stderr"].lower()
@@ -492,28 +825,40 @@ class TestFileTransferOperations:
     """Test file upload and download operations."""
 
     def test_upload_file_creates_remote_directory(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """File upload creates remote directory if needed."""
         manager = qemu_manager_with_mocked_config
 
-        mock_client = MagicMock(spec=paramiko.SSHClient)
-        mock_sftp = MagicMock()
-        mock_sftp.stat.side_effect = FileNotFoundError()
-        mock_file = MagicMock()
-        mock_sftp.file.return_value.__enter__ = Mock(return_value=mock_file)
-        mock_sftp.file.return_value.__exit__ = Mock(return_value=False)
-        mock_client.open_sftp.return_value = mock_sftp
+        fake_client = FakeSSHClient()
+        fake_sftp = fake_client.open_sftp()
 
-        with patch.object(manager, "_get_ssh_connection", return_value=mock_client):
-            with patch.object(manager, "_execute_command_in_vm") as mock_exec:
-                manager._upload_file_to_vm(sample_snapshot, "test content", "/tmp/test/file.txt")
+        mkdir_called = []
 
-                mkdir_calls = [call for call in mock_exec.call_args_list if "mkdir" in str(call)]
-                assert mkdir_calls
+        def fake_get_ssh_connection(snapshot: QEMUSnapshot) -> FakeSSHClient:
+            return fake_client
+
+        def fake_execute_command(snapshot: QEMUSnapshot, command: str, **kwargs: Any) -> dict[str, Any]:
+            if "mkdir" in command:
+                mkdir_called.append(command)
+            return {"exit_code": 0, "stdout": "", "stderr": ""}
+
+        monkeypatch.setattr(manager, "_get_ssh_connection", fake_get_ssh_connection)
+        monkeypatch.setattr(manager, "_execute_command_in_vm", fake_execute_command)
+
+        manager._upload_file_to_vm(sample_snapshot, "test content", "/tmp/test/file.txt")
+
+        assert len(mkdir_called) > 0
 
     def test_upload_binary_sets_executable_permissions(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot, tmp_path: Path
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Binary upload sets executable permissions on remote file."""
         manager = qemu_manager_with_mocked_config
@@ -521,50 +866,68 @@ class TestFileTransferOperations:
         local_binary = tmp_path / "test.exe"
         local_binary.write_bytes(b"MZ\x90\x00")
 
-        mock_client = MagicMock(spec=paramiko.SSHClient)
-        mock_sftp = MagicMock()
-        mock_sftp.stat.side_effect = FileNotFoundError()
-        mock_client.open_sftp.return_value = mock_sftp
+        fake_client = FakeSSHClient()
+        fake_sftp = fake_client.open_sftp()
 
-        with patch.object(manager, "_get_ssh_connection", return_value=mock_client):
-            with patch.object(manager, "_execute_command_in_vm"):
-                manager._upload_binary_to_vm(sample_snapshot, str(local_binary), "/tmp/test.exe")
+        def fake_get_ssh_connection(snapshot: QEMUSnapshot) -> FakeSSHClient:
+            return fake_client
 
-        mock_sftp.chmod.assert_called_once_with("/tmp/test.exe", 0o755)
+        def fake_execute_command(snapshot: QEMUSnapshot, command: str, **kwargs: Any) -> dict[str, Any]:
+            return {"exit_code": 0, "stdout": "", "stderr": ""}
+
+        monkeypatch.setattr(manager, "_get_ssh_connection", fake_get_ssh_connection)
+        monkeypatch.setattr(manager, "_execute_command_in_vm", fake_execute_command)
+
+        manager._upload_binary_to_vm(sample_snapshot, str(local_binary), "/tmp/test.exe")
+
+        assert fake_sftp._permissions.get("/tmp/test.exe") == 0o755
 
     def test_download_file_creates_local_directory(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot, tmp_path: Path
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """File download creates local directory structure."""
         manager = qemu_manager_with_mocked_config
 
         local_path = tmp_path / "nested" / "dir" / "file.txt"
 
-        mock_client = MagicMock(spec=paramiko.SSHClient)
-        mock_sftp = MagicMock()
-        mock_client.open_sftp.return_value = mock_sftp
+        fake_client = FakeSSHClient()
 
-        with patch.object(manager, "_get_ssh_connection", return_value=mock_client):
-            result = manager.download_file_from_vm(sample_snapshot, "/tmp/file.txt", str(local_path))
+        def fake_get_ssh_connection(snapshot: QEMUSnapshot) -> FakeSSHClient:
+            return fake_client
+
+        monkeypatch.setattr(manager, "_get_ssh_connection", fake_get_ssh_connection)
+
+        result = manager.download_file_from_vm(sample_snapshot, "/tmp/file.txt", str(local_path))
 
         assert local_path.parent.exists()
         assert result is True
 
     def test_download_file_handles_missing_remote_file(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot, tmp_path: Path
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """File download handles missing remote file gracefully."""
         manager = qemu_manager_with_mocked_config
 
         local_path = tmp_path / "download.txt"
 
-        mock_client = MagicMock(spec=paramiko.SSHClient)
-        mock_sftp = MagicMock()
-        mock_sftp.get.side_effect = FileNotFoundError("Remote file not found")
-        mock_client.open_sftp.return_value = mock_sftp
+        fake_client = FakeSSHClient()
+        fake_sftp = fake_client.open_sftp()
+        fake_sftp._should_fail_get = True
 
-        with patch.object(manager, "_get_ssh_connection", return_value=mock_client):
-            result = manager.download_file_from_vm(sample_snapshot, "/nonexistent/file.txt", str(local_path))
+        def fake_get_ssh_connection(snapshot: QEMUSnapshot) -> FakeSSHClient:
+            return fake_client
+
+        monkeypatch.setattr(manager, "_get_ssh_connection", fake_get_ssh_connection)
+
+        result = manager.download_file_from_vm(sample_snapshot, "/nonexistent/file.txt", str(local_path))
 
         assert result is False
 
@@ -635,9 +998,8 @@ class TestSnapshotInformation:
         """VM info includes running status of VM process."""
         manager = qemu_manager_with_mocked_config
 
-        mock_process = MagicMock()
-        mock_process.poll.return_value = None
-        sample_snapshot.vm_process = mock_process
+        fake_process = FakeQEMUProcess()
+        object.__setattr__(sample_snapshot, "vm_process", fake_process)
 
         manager.snapshots[sample_snapshot.snapshot_id] = sample_snapshot
 
@@ -651,7 +1013,10 @@ class TestVersionedSnapshots:
     """Test versioned snapshot management."""
 
     def test_create_versioned_snapshot_creates_child_snapshot(
-        self, qemu_manager_with_mocked_config: QEMUManager, tmp_path: Path
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Versioned snapshot creation creates child snapshot."""
         manager = qemu_manager_with_mocked_config
@@ -670,10 +1035,16 @@ class TestVersionedSnapshots:
         test_binary = tmp_path / "test.exe"
         test_binary.write_bytes(b"PE\x00\x00")
 
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(returncode=0)
-            with patch.object(manager, "_start_vm_for_snapshot"):
-                child_id = manager.create_versioned_snapshot("parent_snap", str(test_binary))
+        def fake_subprocess_run(*args: Any, **kwargs: Any) -> FakeSubprocessRun:
+            return FakeSubprocessRun(returncode=0)
+
+        def fake_start_vm_for_snapshot(snapshot: QEMUSnapshot) -> None:
+            pass
+
+        monkeypatch.setattr("subprocess.run", fake_subprocess_run)
+        monkeypatch.setattr(manager, "_start_vm_for_snapshot", fake_start_vm_for_snapshot)
+
+        child_id = manager.create_versioned_snapshot("parent_snap", str(test_binary))
 
         assert child_id in manager.snapshots
         child_snapshot = manager.snapshots[child_id]
@@ -735,7 +1106,11 @@ class TestScriptExecution:
     """Test script execution in VM environment."""
 
     def test_frida_script_execution_returns_result(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot, tmp_path: Path
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Frida script execution returns ExecutionResult."""
         manager = qemu_manager_with_mocked_config
@@ -750,18 +1125,24 @@ class TestScriptExecution:
         });
         """
 
-        with patch.object(manager, "_execute_command_in_vm") as mock_exec:
-            mock_exec.return_value = {
+        def fake_execute_command(
+            snapshot: QEMUSnapshot,
+            command: str,
+            **kwargs: Any
+        ) -> dict[str, Any]:
+            return {
                 "exit_code": 0,
                 "stdout": "[+] Script loaded\n[+] Hook installed",
                 "stderr": "",
             }
 
-            result = manager.test_frida_script(
-                sample_snapshot.snapshot_id,
-                script_content,
-                "/tmp/target.exe"
-            )
+        monkeypatch.setattr(manager, "_execute_command_in_vm", fake_execute_command)
+
+        result = manager.test_frida_script(
+            sample_snapshot.snapshot_id,
+            script_content,
+            "/tmp/target.exe"
+        )
 
         assert isinstance(result, ExecutionResult)
         assert result.success is True
@@ -791,31 +1172,39 @@ class TestScriptExecution:
         assert success is False
 
     def test_ghidra_script_execution_returns_result(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Ghidra script execution returns ExecutionResult."""
         manager = qemu_manager_with_mocked_config
         manager.snapshots[sample_snapshot.snapshot_id] = sample_snapshot
 
         script_content = """
-        # Ghidra script to patch license check
-        from ghidra.program.model.address import Address
-        addr = currentProgram.getAddressFactory().getAddress("0x401000")
-        setByte(addr, 0x90)
+from ghidra.program.model.address import Address
+addr = currentProgram.getAddressFactory().getAddress("0x401000")
+setByte(addr, 0x90)
         """
 
-        with patch.object(manager, "_execute_command_in_vm") as mock_exec:
-            mock_exec.return_value = {
+        def fake_execute_command(
+            snapshot: QEMUSnapshot,
+            command: str,
+            **kwargs: Any
+        ) -> dict[str, Any]:
+            return {
                 "exit_code": 0,
                 "stdout": "Analysis complete\nPatched function at 0x401000",
                 "stderr": "",
             }
 
-            result = manager.test_ghidra_script(
-                sample_snapshot.snapshot_id,
-                script_content,
-                "/tmp/target.exe"
-            )
+        monkeypatch.setattr(manager, "_execute_command_in_vm", fake_execute_command)
+
+        result = manager.test_ghidra_script(
+            sample_snapshot.snapshot_id,
+            script_content,
+            "/tmp/target.exe"
+        )
 
         assert isinstance(result, ExecutionResult)
 
@@ -865,7 +1254,10 @@ class TestStorageOptimization:
     """Test snapshot storage optimization."""
 
     def test_optimize_snapshot_storage_analyzes_disk_usage(
-        self, qemu_manager_with_mocked_config: QEMUManager, tmp_path: Path
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Storage optimization analyzes disk usage."""
         manager = qemu_manager_with_mocked_config
@@ -881,13 +1273,15 @@ class TestStorageOptimization:
         )
         manager.snapshots["test_snap"] = snapshot
 
-        with patch("subprocess.run") as mock_run:
-            mock_result = MagicMock()
-            mock_result.returncode = 0
-            mock_result.stdout = "1073741824\n2147483648"
-            mock_run.return_value = mock_result
+        def fake_subprocess_run(*args: Any, **kwargs: Any) -> FakeSubprocessRun:
+            return FakeSubprocessRun(
+                returncode=0,
+                stdout="1073741824\n2147483648"
+            )
 
-            optimization_result = manager.optimize_snapshot_storage()
+        monkeypatch.setattr("subprocess.run", fake_subprocess_run)
+
+        optimization_result = manager.optimize_snapshot_storage()
 
         assert "total_size_before" in optimization_result
         assert "optimization_performed" in optimization_result
@@ -897,7 +1291,10 @@ class TestSnapshotMaintenance:
     """Test snapshot maintenance operations."""
 
     def test_cleanup_old_snapshots_removes_expired_snapshots(
-        self, qemu_manager_with_mocked_config: QEMUManager, tmp_path: Path
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Cleanup removes snapshots older than retention period."""
         manager = qemu_manager_with_mocked_config
@@ -925,13 +1322,22 @@ class TestSnapshotMaintenance:
         manager.snapshots["old_snap"] = old_snapshot
         manager.snapshots["recent_snap"] = recent_snapshot
 
-        with patch.object(manager, "cleanup_snapshot"):
-            result = manager.cleanup_old_snapshots(max_age_days=7)
+        cleanup_called = []
+
+        def fake_cleanup_snapshot(snapshot_id: str) -> None:
+            cleanup_called.append(snapshot_id)
+
+        monkeypatch.setattr(manager, "cleanup_snapshot", fake_cleanup_snapshot)
+
+        result = manager.cleanup_old_snapshots(max_age_days=7)
 
         assert result["cleaned_count"] >= 0
 
     def test_perform_snapshot_maintenance_validates_integrity(
-        self, qemu_manager_with_mocked_config: QEMUManager, tmp_path: Path
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Maintenance validates snapshot integrity."""
         manager = qemu_manager_with_mocked_config
@@ -947,9 +1353,12 @@ class TestSnapshotMaintenance:
         )
         manager.snapshots["maint_snap"] = snapshot
 
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(returncode=0, stdout="No errors found")
-            result = manager.perform_snapshot_maintenance()
+        def fake_subprocess_run(*args: Any, **kwargs: Any) -> FakeSubprocessRun:
+            return FakeSubprocessRun(returncode=0, stdout="No errors found")
+
+        monkeypatch.setattr("subprocess.run", fake_subprocess_run)
+
+        result = manager.perform_snapshot_maintenance()
 
         assert "integrity_check" in result
         assert "cleanup" in result
@@ -964,35 +1373,43 @@ class TestQEMUMonitorInterface:
         """Monitor command sends instruction to QEMU."""
         manager = qemu_manager_with_mocked_config
 
-        mock_monitor = MagicMock()
-        mock_monitor.send.return_value = None
-        mock_monitor.recv.return_value = b'{"return": {}}\n'
-        manager.monitor = mock_monitor
+        fake_monitor = FakeMonitor()
+        manager.monitor = fake_monitor
 
         result = manager._send_monitor_command("info status")
         assert result is not None
 
     def test_create_monitor_snapshot_sends_savevm_command(
-        self, qemu_manager_with_mocked_config: QEMUManager
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Monitor snapshot creation sends savevm command."""
         manager = qemu_manager_with_mocked_config
 
-        with patch.object(manager, "_send_qmp_command") as mock_qmp:
-            mock_qmp.return_value = {"return": {}}
-            result = manager.create_monitor_snapshot("test_snapshot")
+        def fake_send_qmp_command(command: dict[str, Any]) -> dict[str, Any]:
+            return {"return": {}}
+
+        monkeypatch.setattr(manager, "_send_qmp_command", fake_send_qmp_command)
+
+        result = manager.create_monitor_snapshot("test_snapshot")
 
         assert result is True
 
     def test_restore_monitor_snapshot_sends_loadvm_command(
-        self, qemu_manager_with_mocked_config: QEMUManager
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Monitor snapshot restore sends loadvm command."""
         manager = qemu_manager_with_mocked_config
 
-        with patch.object(manager, "_send_qmp_command") as mock_qmp:
-            mock_qmp.return_value = {"return": {}}
-            result = manager.restore_monitor_snapshot("test_snapshot")
+        def fake_send_qmp_command(command: dict[str, Any]) -> dict[str, Any]:
+            return {"return": {}}
+
+        monkeypatch.setattr(manager, "_send_qmp_command", fake_send_qmp_command)
+
+        result = manager.restore_monitor_snapshot("test_snapshot")
 
         assert result is True
 
@@ -1001,34 +1418,46 @@ class TestQEMUSystemControl:
     """Test QEMU system start/stop control."""
 
     def test_start_system_spawns_qemu_process(
-        self, qemu_manager_with_mocked_config: QEMUManager
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """System start spawns QEMU process with correct parameters."""
         manager = qemu_manager_with_mocked_config
 
-        with patch("subprocess.Popen") as mock_popen:
-            mock_process = MagicMock()
-            mock_process.poll.return_value = None
-            mock_popen.return_value = mock_process
+        fake_process = FakeQEMUProcess()
 
-            with patch.object(manager, "_wait_for_boot", return_value=True):
-                result = manager.start_system(headless=True)
+        def fake_popen(*args: Any, **kwargs: Any) -> FakeQEMUProcess:
+            return fake_process
+
+        def fake_wait_for_boot(timeout: int = 60) -> bool:
+            return True
+
+        monkeypatch.setattr("subprocess.Popen", fake_popen)
+        monkeypatch.setattr(manager, "_wait_for_boot", fake_wait_for_boot)
+
+        result = manager.start_system(headless=True)
 
         assert result is True
         assert manager.qemu_process is not None
 
     def test_stop_system_terminates_qemu_gracefully(
-        self, qemu_manager_with_mocked_config: QEMUManager
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """System stop terminates QEMU process gracefully."""
         manager = qemu_manager_with_mocked_config
 
-        mock_process = MagicMock()
-        mock_process.poll.return_value = None
-        manager.qemu_process = mock_process
+        fake_process = FakeQEMUProcess()
+        object.__setattr__(manager, "qemu_process", fake_process)
 
-        with patch.object(manager, "_send_qmp_command", return_value={"return": {}}):
-            result = manager.stop_system(force=False)
+        def fake_send_qmp_command(command: dict[str, Any]) -> dict[str, Any]:
+            return {"return": {}}
+
+        monkeypatch.setattr(manager, "_send_qmp_command", fake_send_qmp_command)
+
+        result = manager.stop_system(force=False)
 
         assert result is True
 
@@ -1038,14 +1467,17 @@ class TestQEMUSystemControl:
         """System stop force kills unresponsive QEMU process."""
         manager = qemu_manager_with_mocked_config
 
-        mock_process = MagicMock()
-        mock_process.poll.return_value = None
-        mock_process.wait.side_effect = subprocess.TimeoutExpired("qemu", 10)
-        manager.qemu_process = mock_process
+        fake_process = FakeQEMUProcess()
+
+        def timeout_wait(timeout: int = 10) -> int:
+            raise subprocess.TimeoutExpired("qemu", timeout)
+        object.__setattr__(fake_process, "wait", timeout_wait)
+
+        object.__setattr__(manager, "qemu_process", fake_process)
 
         result = manager.stop_system(force=True)
 
-        mock_process.kill.assert_called()
+        assert fake_process._killed
         assert result is True
 
 
@@ -1059,14 +1491,10 @@ class TestSecureHostKeyPolicy:
         known_hosts = temp_qemu_workspace / "known_hosts"
         policy = SecureHostKeyPolicy(known_hosts)
 
-        mock_client = MagicMock()
-        mock_transport = MagicMock()
-        mock_transport.getpeername.return_value = ("127.0.0.1", 22222)
-        mock_client.get_transport.return_value = mock_transport
+        fake_client = FakeSSHClient()
+        fake_key = paramiko.RSAKey.generate(2048)
 
-        mock_key = paramiko.RSAKey.generate(2048)
-
-        policy.missing_host_key(mock_client, "localhost", mock_key)
+        policy.missing_host_key(fake_client, "localhost", fake_key)
 
         assert known_hosts.exists()
 
@@ -1077,41 +1505,52 @@ class TestSecureHostKeyPolicy:
         known_hosts = temp_qemu_workspace / "known_hosts"
         policy = SecureHostKeyPolicy(known_hosts)
 
-        mock_client = MagicMock()
-        mock_transport = MagicMock()
-        mock_transport.getpeername.return_value = ("127.0.0.1", 22222)
-        mock_client.get_transport.return_value = mock_transport
-
+        fake_client = FakeSSHClient()
         original_key = paramiko.RSAKey.generate(2048)
         changed_key = paramiko.RSAKey.generate(2048)
 
-        policy.missing_host_key(mock_client, "localhost", original_key)
+        policy.missing_host_key(fake_client, "localhost", original_key)
 
         with pytest.raises(paramiko.SSHException, match="Host key verification failed"):
-            policy.missing_host_key(mock_client, "localhost", changed_key)
+            policy.missing_host_key(fake_client, "localhost", changed_key)
 
 
 class TestResourceManagement:
     """Test VM resource registration and cleanup."""
 
     def test_vm_startup_registers_with_resource_manager(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        test_context: TestContext,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """VM startup registers with resource manager."""
         manager = qemu_manager_with_mocked_config
 
-        with patch("intellicrack.ai.qemu_manager.resource_manager") as mock_rm:
-            with patch("subprocess.Popen") as mock_popen:
-                mock_process = MagicMock()
-                mock_process.poll.return_value = None
-                mock_popen.return_value = mock_process
+        register_called = []
 
-                manager._start_vm_for_snapshot(sample_snapshot)
+        def fake_register_resource(resource_id: str, resource_type: str, data: Any) -> None:
+            register_called.append((resource_id, resource_type, data))
 
-        mock_rm.register_resource.assert_called()
+        object.__setattr__(test_context.resource_manager, "register_resource", fake_register_resource)
+
+        def fake_popen(*args: Any, **kwargs: Any) -> FakeQEMUProcess:
+            return FakeQEMUProcess()
+
+        monkeypatch.setattr("subprocess.Popen", fake_popen)
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.resource_manager", test_context.resource_manager)
+
+        manager._start_vm_for_snapshot(sample_snapshot)
+
+        assert len(register_called) > 0
 
     def test_cleanup_releases_resource_manager_resources(
-        self, qemu_manager_with_mocked_config: QEMUManager, tmp_path: Path
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        tmp_path: Path,
+        test_context: TestContext,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Snapshot cleanup releases resources from manager."""
         manager = qemu_manager_with_mocked_config
@@ -1128,59 +1567,94 @@ class TestResourceManagement:
 
         (tmp_path / "disk.qcow2").write_bytes(b"MOCK")
 
-        mock_process = MagicMock()
-        mock_process.poll.return_value = 0
-        snapshot.vm_process = mock_process
+        fake_process = FakeQEMUProcess(should_fail=True)
+        object.__setattr__(snapshot, "vm_process", fake_process)
 
         manager.snapshots["resource_test"] = snapshot
 
-        with patch("intellicrack.ai.qemu_manager.resource_manager") as mock_rm:
-            with patch.object(manager, "_close_ssh_connection"):
-                manager.cleanup_snapshot("resource_test")
+        release_called = []
 
-        mock_rm.release_resource.assert_called()
+        def fake_release_resource(resource_id: str) -> None:
+            release_called.append(resource_id)
+
+        object.__setattr__(test_context.resource_manager, "release_resource", fake_release_resource)
+
+        def fake_close_ssh(snapshot: QEMUSnapshot) -> None:
+            pass
+
+        monkeypatch.setattr(manager, "_close_ssh_connection", fake_close_ssh)
+        monkeypatch.setattr("intellicrack.ai.qemu_manager.resource_manager", test_context.resource_manager)
+
+        manager.cleanup_snapshot("resource_test")
+
+        assert len(release_called) > 0
 
 
 class TestErrorHandling:
     """Test error handling and recovery."""
 
     def test_ssh_connection_failure_does_not_crash(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """SSH connection failure handles error gracefully."""
         manager = qemu_manager_with_mocked_config
 
-        with patch.object(manager, "_initialize_ssh_client") as mock_init:
-            mock_init.side_effect = paramiko.SSHException("Connection failed")
+        def fake_initialize_ssh_client(
+            host: str,
+            port: int,
+            username: str,
+            password: str
+        ) -> None:
+            raise paramiko.SSHException("Connection failed")
 
-            result = manager._get_ssh_connection(sample_snapshot)
+        monkeypatch.setattr(manager, "_initialize_ssh_client", fake_initialize_ssh_client)
+
+        result = manager._get_ssh_connection(sample_snapshot)
 
         assert result is None
 
     def test_vm_startup_failure_raises_runtime_error(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """VM startup failure raises appropriate error."""
         manager = qemu_manager_with_mocked_config
 
-        with patch("subprocess.Popen") as mock_popen:
-            mock_process = MagicMock()
-            mock_process.poll.return_value = 1
-            mock_process.communicate.return_value = (b"", b"QEMU startup failed")
-            mock_popen.return_value = mock_process
+        fake_process = FakeQEMUProcess(
+            should_fail=True,
+            exit_code=1,
+            stderr_data=b"QEMU startup failed"
+        )
 
-            with pytest.raises(RuntimeError, match="VM startup failed"):
-                manager._start_vm_for_snapshot(sample_snapshot)
+        def fake_popen(*args: Any, **kwargs: Any) -> FakeQEMUProcess:
+            return fake_process
+
+        monkeypatch.setattr("subprocess.Popen", fake_popen)
+
+        with pytest.raises(RuntimeError, match="VM startup failed"):
+            manager._start_vm_for_snapshot(sample_snapshot)
 
     def test_file_upload_failure_raises_runtime_error(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """File upload failure raises appropriate error."""
         manager = qemu_manager_with_mocked_config
 
-        with patch.object(manager, "_get_ssh_connection", return_value=None):
-            with pytest.raises(RuntimeError, match="Failed to establish SSH connection"):
-                manager._upload_file_to_vm(sample_snapshot, "content", "/tmp/file.txt")
+        def fake_get_ssh_connection(snapshot: QEMUSnapshot) -> None:
+            return None
+
+        monkeypatch.setattr(manager, "_get_ssh_connection", fake_get_ssh_connection)
+
+        with pytest.raises(RuntimeError, match="Failed to establish SSH connection"):
+            manager._upload_file_to_vm(sample_snapshot, "content", "/tmp/file.txt")
 
 
 class TestBaseImageManagement:
@@ -1195,36 +1669,59 @@ class TestBaseImageManagement:
         assert isinstance(config, dict)
 
     def test_update_base_image_configuration_saves_settings(
-        self, qemu_manager_with_mocked_config: QEMUManager
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        test_context: TestContext
     ) -> None:
         """Base image configuration update saves to config."""
         manager = qemu_manager_with_mocked_config
 
+        set_called = []
+        save_called = []
+
+        def fake_set(key: str, value: Any, persist: bool | None = None) -> None:
+            set_called.append((key, value))
+
+        def fake_save_config() -> None:
+            save_called.append(True)
+
+        object.__setattr__(manager.config, "set", fake_set)
+        object.__setattr__(manager.config, "save_config", fake_save_config)
+
         new_paths = ["/path/to/image1.qcow2", "/path/to/image2.qcow2"]
         manager.update_base_image_configuration("windows", new_paths)
 
-        manager.config.set.assert_called()
-        manager.config.save_config.assert_called()
+        assert len(set_called) > 0
+        assert len(save_called) > 0
 
 
 class TestPerformanceMonitoring:
     """Test snapshot performance monitoring."""
 
     def test_monitor_snapshot_performance_collects_metrics(
-        self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        sample_snapshot: QEMUSnapshot,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Performance monitoring collects VM metrics."""
         manager = qemu_manager_with_mocked_config
         manager.snapshots[sample_snapshot.snapshot_id] = sample_snapshot
 
-        with patch.object(manager, "_execute_command_in_vm") as mock_exec:
-            mock_exec.return_value = {
+        def fake_execute_command(
+            snapshot: QEMUSnapshot,
+            command: str,
+            **kwargs: Any
+        ) -> dict[str, Any]:
+            return {
                 "exit_code": 0,
                 "stdout": "MemTotal: 2048000 kB\nMemFree: 1024000 kB\nCpu: 25%",
                 "stderr": "",
             }
 
-            metrics = manager.monitor_snapshot_performance(sample_snapshot.snapshot_id)
+        monkeypatch.setattr(manager, "_execute_command_in_vm", fake_execute_command)
+
+        metrics = manager.monitor_snapshot_performance(sample_snapshot.snapshot_id)
 
         assert "timestamp" in metrics
         assert "snapshot_id" in metrics
@@ -1234,7 +1731,9 @@ class TestCleanupOperations:
     """Test cleanup and resource release."""
 
     def test_cleanup_all_snapshots_removes_all_vms(
-        self, qemu_manager_with_mocked_config: QEMUManager
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Cleanup all snapshots removes all VMs."""
         manager = qemu_manager_with_mocked_config
@@ -1261,41 +1760,61 @@ class TestCleanupOperations:
         manager.snapshots["snap1"] = snapshot1
         manager.snapshots["snap2"] = snapshot2
 
-        with patch.object(manager, "cleanup_snapshot"):
-            manager.cleanup_all_snapshots()
+        cleanup_called = []
+
+        def fake_cleanup_snapshot(snapshot_id: str) -> None:
+            cleanup_called.append(snapshot_id)
+
+        monkeypatch.setattr(manager, "cleanup_snapshot", fake_cleanup_snapshot)
+
+        manager.cleanup_all_snapshots()
 
         assert len(manager.snapshots) == 0
 
     def test_destructor_closes_all_ssh_connections(
-        self, qemu_manager_with_mocked_config: QEMUManager
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Destructor closes all SSH connections."""
         manager = qemu_manager_with_mocked_config
 
-        mock_client1 = MagicMock()
-        mock_client2 = MagicMock()
+        fake_client1 = FakeSSHClient()
+        fake_client2 = FakeSSHClient()
 
-        manager.ssh_connection_pool[("vm1", 22222)] = mock_client1
-        manager.ssh_connection_pool[("vm2", 22223)] = mock_client2
+        manager.ssh_connection_pool[("vm1", 22222)] = fake_client1
+        manager.ssh_connection_pool[("vm2", 22223)] = fake_client2
 
-        with patch.object(manager, "cleanup_all_snapshots"):
-            manager.__del__()
+        cleanup_all_called = []
 
-        mock_client1.close.assert_called()
-        mock_client2.close.assert_called()
+        def fake_cleanup_all_snapshots() -> None:
+            cleanup_all_called.append(True)
+
+        monkeypatch.setattr(manager, "cleanup_all_snapshots", fake_cleanup_all_snapshots)
+
+        manager.__del__()
+
+        assert not fake_client1._connected
+        assert not fake_client2._connected
 
 
 class TestPlatformCompatibility:
     """Test cross-platform compatibility."""
 
     def test_qemu_executable_detection_finds_system_qemu(
-        self, qemu_manager_with_mocked_config: QEMUManager
+        self,
+        qemu_manager_with_mocked_config: QEMUManager,
+        monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """QEMU executable detection finds system installation."""
         manager = qemu_manager_with_mocked_config
 
-        with patch("shutil.which", return_value="/usr/bin/qemu-system-x86_64"):
-            qemu_path = manager._find_qemu_executable()
+        def fake_which(name: str) -> Optional[str]:
+            return "/usr/bin/qemu-system-x86_64"
+
+        monkeypatch.setattr("shutil.which", fake_which)
+
+        qemu_path = manager._find_qemu_executable()
 
         assert qemu_path is not None
 

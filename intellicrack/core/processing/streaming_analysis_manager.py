@@ -231,9 +231,10 @@ class StreamingAnalysisManager:
             file_path: Path to file
 
         Returns:
-            Tuple of (file_handle, mmap_object)
+            Tuple containing file handle and memory-mapped object for the file
 
         Raises:
+            OSError: If file cannot be opened or file descriptor is invalid
             RuntimeError: If memory mapping fails
 
         """
@@ -261,7 +262,7 @@ class StreamingAnalysisManager:
             checkpoint_path: Optional path for saving checkpoints
 
         Returns:
-            Complete analysis results
+            Complete analysis results with status and metadata
 
         """
         try:
@@ -533,7 +534,7 @@ class StreamingAnalysisManager:
             size: Size of section
 
         Returns:
-            Section analysis results
+            Section analysis results including entropy and characteristics
 
         """
         try:
@@ -587,12 +588,12 @@ class StreamingAnalysisManager:
         """Classify section characteristics.
 
         Args:
-            entropy: Section entropy
-            printable_ratio: Ratio of printable characters
-            null_ratio: Ratio of null bytes
+            entropy: Section entropy value
+            printable_ratio: Ratio of printable characters in section
+            null_ratio: Ratio of null bytes in section
 
         Returns:
-            Classification string
+            Classification string describing section type
 
         """
         if null_ratio > 0.9:
@@ -614,7 +615,7 @@ class StreamingAnalysisManager:
             file_path: Path to file
 
         Returns:
-            True if file size exceeds threshold
+            True if file size exceeds threshold, False otherwise
 
         """
         try:

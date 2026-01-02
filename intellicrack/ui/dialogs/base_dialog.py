@@ -18,8 +18,11 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import json
 import logging
+import os
 from collections.abc import Callable
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
@@ -122,7 +125,12 @@ class BaseDialog(QDialog):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
     def _setup_buttons(self, show_help: bool) -> None:
-        """Set up standardized button box with OK/Cancel and optional Help."""
+        """Set up standardized button box with OK/Cancel and optional Help.
+
+        Args:
+            show_help: Whether to include Help button in button box.
+
+        """
         buttons = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
 
         if show_help:
@@ -148,7 +156,11 @@ class BaseDialog(QDialog):
         self.main_layout.addLayout(button_layout)
 
     def _setup_shortcuts(self) -> None:
-        """Set up keyboard shortcuts for the dialog."""
+        """Set up keyboard shortcuts for the dialog.
+
+        Configures Escape key to cancel and Ctrl+Enter to accept.
+
+        """
         # Escape to cancel
         escape_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         escape_shortcut.activated.connect(self._on_reject)
@@ -158,7 +170,11 @@ class BaseDialog(QDialog):
         accept_shortcut.activated.connect(self._on_accept)
 
     def _apply_theme(self) -> None:
-        """Apply consistent dark theme styling to the dialog."""
+        """Apply consistent dark theme styling to the dialog.
+
+        Sets comprehensive dark theme stylesheet for all dialog widgets.
+
+        """
         self.setStyleSheet("""
             QDialog {
                 background-color: #1e1e1e;
@@ -373,8 +389,11 @@ class BaseDialog(QDialog):
     def set_content_layout(self, layout: QVBoxLayout) -> None:
         """Set a custom layout for the content area.
 
+        Replaces the current content layout with a new one, properly
+        transferring widgets and cleaning up the old layout.
+
         Args:
-            layout: Layout to use for content area
+            layout: Layout to use for content area.
 
         """
         # Clear existing layout
@@ -401,7 +420,7 @@ class BaseDialog(QDialog):
         """Add a widget to the content area.
 
         Args:
-            widget: Widget to add to content area
+            widget: Widget to add to content area.
 
         """
         self.content_layout.addWidget(widget)
@@ -410,7 +429,7 @@ class BaseDialog(QDialog):
         """Add a layout to the content area.
 
         Args:
-            layout: Layout to add to content area
+            layout: Layout to add to content area.
 
         """
         self.content_layout.addLayout(layout)
@@ -419,8 +438,8 @@ class BaseDialog(QDialog):
         """Set the dialog loading state.
 
         Args:
-            loading: Whether dialog is in loading state
-            message: Loading message to display
+            loading: Whether dialog is in loading state.
+            message: Loading message to display.
 
         """
         self._is_loading = loading
@@ -438,7 +457,7 @@ class BaseDialog(QDialog):
         """Show an error message in the dialog.
 
         Args:
-            message: Error message to display
+            message: Error message to display.
 
         """
         self._error_state = True
@@ -449,7 +468,7 @@ class BaseDialog(QDialog):
         """Show a success message in the dialog.
 
         Args:
-            message: Success message to display
+            message: Success message to display.
 
         """
         self.show_status(message, "success")
@@ -458,8 +477,8 @@ class BaseDialog(QDialog):
         """Show a status message in the dialog.
 
         Args:
-            message: Status message to display
-            status_type: Type of status ('info', 'error', 'success')
+            message: Status message to display.
+            status_type: Type of status ('info', 'error', 'success').
 
         """
         self.status_label.setText(message)
@@ -471,7 +490,11 @@ class BaseDialog(QDialog):
         self.status_label.show()
 
     def hide_status(self) -> None:
-        """Hide the status message."""
+        """Hide the status message.
+
+        Clears and hides the status label, resetting error state.
+
+        """
         self.status_label.hide()
         self.status_label.clear()
         self._error_state = False
@@ -480,7 +503,7 @@ class BaseDialog(QDialog):
         """Enable or disable the OK button.
 
         Args:
-            enabled: Whether OK button should be enabled
+            enabled: Whether OK button should be enabled.
 
         """
         if self.ok_button is not None:
@@ -490,7 +513,7 @@ class BaseDialog(QDialog):
         """Set custom text for the OK button.
 
         Args:
-            text: Text to display on OK button
+            text: Text to display on OK button.
 
         """
         if self.ok_button is not None:
@@ -500,7 +523,7 @@ class BaseDialog(QDialog):
         """Set custom text for the Cancel button.
 
         Args:
-            text: Text to display on Cancel button
+            text: Text to display on Cancel button.
 
         """
         if self.cancel_button is not None:
@@ -510,12 +533,12 @@ class BaseDialog(QDialog):
         """Add a custom button to the button box.
 
         Args:
-            text: Button text
-            callback: Function to call when button is clicked
-            button_type: Button style ('default', 'primary', 'danger')
+            text: Button text.
+            callback: Function to call when button is clicked.
+            button_type: Button style ('default', 'primary', 'danger').
 
         Returns:
-            The created button
+            QPushButton: The created button.
 
         """
         button = QPushButton(text)
@@ -535,13 +558,17 @@ class BaseDialog(QDialog):
         Override this method in subclasses to provide custom validation.
 
         Returns:
-            True if input is valid, False otherwise
+            bool: True if input is valid, False otherwise.
 
         """
         return True
 
     def _on_accept(self) -> None:
-        """Handle dialog acceptance with validation."""
+        """Handle dialog acceptance with validation.
+
+        Validates input before accepting and shows error message if validation fails.
+
+        """
         if self._is_loading:
             return
 
@@ -553,14 +580,22 @@ class BaseDialog(QDialog):
             self.show_error("Please correct the errors before continuing.")
 
     def _on_reject(self) -> None:
-        """Handle dialog rejection."""
+        """Handle dialog rejection.
+
+        Rejects the dialog unless it is currently in a loading state.
+
+        """
         if self._is_loading:
             return
 
         self.reject()
 
     def _on_help(self) -> None:
-        """Handle help button click."""
+        """Handle help button click.
+
+        Displays the help text in an information message box.
+
+        """
         if self._help_text:
             from PyQt6.QtWidgets import QMessageBox
 
@@ -572,7 +607,7 @@ class BaseDialog(QDialog):
         Override this method in subclasses to return dialog data.
 
         Returns:
-            Dictionary containing dialog result data
+            dict[str, object]: Dictionary containing dialog result data.
 
         """
         return {}
@@ -581,7 +616,7 @@ class BaseDialog(QDialog):
         """Handle dialog close event for cleanup.
 
         Args:
-            event: Close event
+            event: Close event.
 
         """
         # Restore cursor if it was changed
@@ -597,7 +632,7 @@ class BaseDialog(QDialog):
         """Handle dialog show event for focus management.
 
         Args:
-            event: Show event
+            event: Show event.
 
         """
         super().showEvent(event)
@@ -616,7 +651,7 @@ class BaseDialog(QDialog):
             templates: List of template names to display.
 
         Returns:
-            QWidget containing the template selection interface with list and details.
+            QWidget: Widget containing the template selection interface with list and details.
 
         """
         from intellicrack.handlers.pyqt6_handler import QGroupBox, QHBoxLayout, QListWidget, QListWidgetItem, QTextEdit, QVBoxLayout
@@ -665,21 +700,394 @@ class BaseDialog(QDialog):
         layout.addWidget(template_group)
         return widget
 
+    def _get_template_type(self) -> str:
+        """Get the template type identifier for this dialog.
+
+        Subclasses should override this to provide a specific template type.
+
+        Returns:
+            str: Template type identifier used for directory naming.
+
+        """
+        return "base_dialog"
+
+    def _get_templates_dir(self) -> str:
+        """Get the templates directory path for this dialog type.
+
+        Creates the directory if it doesn't exist.
+
+        Returns:
+            str: Full path to the templates directory.
+
+        """
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        templates_dir = os.path.join(
+            base_dir, "..", "..", "data", "templates", self._get_template_type()
+        )
+        templates_dir = os.path.normpath(templates_dir)
+        os.makedirs(templates_dir, exist_ok=True)
+        return templates_dir
+
+    def _load_template_data(self, template_name: str) -> dict[str, Any] | None:
+        """Load template data from JSON file.
+
+        Args:
+            template_name: Name of the template to load.
+
+        Returns:
+            Template data dictionary or None if not found.
+
+        """
+        templates_dir = self._get_templates_dir()
+        safe_name = template_name.replace(" ", "_").replace("/", "_").replace("\\", "_")
+        template_path = os.path.join(templates_dir, f"{safe_name}.json")
+
+        if os.path.exists(template_path):
+            try:
+                with open(template_path, encoding="utf-8") as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, OSError):
+                self.logger.exception("Failed to load template %s", template_name)
+                return None
+        return None
+
+    def _save_template_data(self, template_name: str, data: dict[str, Any]) -> bool:
+        """Save template data to JSON file.
+
+        Args:
+            template_name: Name of the template to save.
+            data: Template data dictionary.
+
+        Returns:
+            bool: True if save succeeded, False otherwise.
+
+        """
+        templates_dir = self._get_templates_dir()
+        safe_name = template_name.replace(" ", "_").replace("/", "_").replace("\\", "_")
+        template_path = os.path.join(templates_dir, f"{safe_name}.json")
+
+        try:
+            with open(template_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            return True
+        except OSError:
+            self.logger.exception("Failed to save template %s", template_name)
+            return False
+
     def on_template_selected(self) -> None:
-        """Handle template selection - override in subclasses."""
-        pass
+        """Handle template selection from the template list.
+
+        Enables template action buttons and displays template details.
+        Subclasses can override this to provide custom selection handling.
+
+        """
+        if not hasattr(self, "template_list"):
+            return
+
+        selected_items = self.template_list.selectedItems()
+        has_selection = len(selected_items) > 0
+
+        if hasattr(self, "use_template_btn"):
+            self.use_template_btn.setEnabled(has_selection)
+        if hasattr(self, "edit_template_btn"):
+            self.edit_template_btn.setEnabled(has_selection)
+
+        if has_selection and hasattr(self, "template_details"):
+            template_name = selected_items[0].text()
+            template_data = self._load_template_data(template_name)
+
+            if template_data:
+                details_text = f"Template: {template_name}\n"
+                details_text += "-" * 40 + "\n"
+                if "description" in template_data:
+                    details_text += f"\nDescription:\n{template_data['description']}\n"
+                if "sections" in template_data:
+                    details_text += f"\nSections: {', '.join(template_data['sections'])}\n"
+                if "created" in template_data:
+                    details_text += f"\nCreated: {template_data['created']}\n"
+                if "modified" in template_data:
+                    details_text += f"\nModified: {template_data['modified']}\n"
+                self.template_details.setText(details_text)
+            else:
+                self.template_details.setText(f"Template: {template_name}\n\nNo saved data found.")
 
     def use_template(self) -> None:
-        """Use the selected template - override in subclasses."""
-        pass
+        """Apply the currently selected template.
+
+        Base implementation shows an info message. Subclasses should override
+        this method to implement actual template application logic.
+
+        """
+        if not hasattr(self, "template_list"):
+            return
+
+        selected_items = self.template_list.selectedItems()
+        if not selected_items:
+            self.show_error("No template selected.")
+            return
+
+        template_name = selected_items[0].text()
+        template_data = self._load_template_data(template_name)
+
+        if template_data:
+            self._apply_template_data(template_data, template_name)
+        else:
+            from intellicrack.handlers.pyqt6_handler import QMessageBox
+
+            QMessageBox.information(
+                self,
+                "Template Applied",
+                f"Template '{template_name}' selected.\n\n"
+                "Override use_template() in your dialog to implement "
+                "specific template application behavior.",
+            )
+
+    def _apply_template_data(self, template_data: dict[str, Any], template_name: str) -> None:
+        """Apply template data to the dialog.
+
+        Subclasses should override this to implement specific template application.
+
+        Args:
+            template_data: Template data dictionary.
+            template_name: Name of the template being applied.
+
+        """
+        from intellicrack.handlers.pyqt6_handler import QMessageBox
+
+        QMessageBox.information(
+            self,
+            "Template Applied",
+            f"Template '{template_name}' loaded with {len(template_data)} fields.\n\n"
+            "Override _apply_template_data() in your dialog to implement "
+            "specific template application behavior.",
+        )
 
     def edit_template(self) -> None:
-        """Edit the selected template - override in subclasses."""
-        pass
+        """Edit the currently selected template.
+
+        Opens a dialog to edit template properties and saves changes.
+
+        """
+        if not hasattr(self, "template_list"):
+            return
+
+        selected_items = self.template_list.selectedItems()
+        if not selected_items:
+            self.show_error("No template selected.")
+            return
+
+        template_name = selected_items[0].text()
+        template_data = self._load_template_data(template_name)
+
+        if not template_data:
+            template_data = {"name": template_name, "description": "", "sections": []}
+
+        self._show_template_editor(template_name, template_data)
+
+    def _build_template_editor_ui(
+        self,
+        template_name: str,
+        template_data: dict[str, Any],
+        *,
+        is_new: bool = False,
+    ) -> tuple["QDialog", dict[str, Any]]:
+        """Build the template editor dialog UI.
+
+        Args:
+            template_name: Name of the template.
+            template_data: Current template data.
+            is_new: Whether this is a new template.
+
+        Returns:
+            Tuple of (dialog, widgets_dict) where widgets_dict contains
+            references to name_edit, desc_edit, and section_checkboxes.
+
+        """
+        from intellicrack.handlers.pyqt6_handler import (
+            QCheckBox,
+            QDialog,
+            QDialogButtonBox,
+            QFormLayout,
+            QGroupBox,
+            QLineEdit,
+            QPlainTextEdit,
+            QVBoxLayout,
+        )
+
+        editor_dialog = QDialog(self)
+        editor_dialog.setWindowTitle("Edit Template" if not is_new else "Create Template")
+        editor_dialog.setMinimumSize(500, 400)
+
+        layout = QVBoxLayout(editor_dialog)
+        form_layout = QFormLayout()
+
+        name_edit = QLineEdit(template_name)
+        name_edit.setReadOnly(not is_new)
+        form_layout.addRow("Name:", name_edit)
+
+        desc_edit = QPlainTextEdit()
+        desc_edit.setPlainText(template_data.get("description", ""))
+        desc_edit.setMaximumHeight(100)
+        form_layout.addRow("Description:", desc_edit)
+
+        layout.addLayout(form_layout)
+
+        section_checkboxes: dict[str, QCheckBox] = {}
+        available_sections = self._get_available_template_sections()
+        current_sections = template_data.get("sections", [])
+
+        if available_sections:
+            sections_group = QGroupBox("Sections")
+            sections_layout = QVBoxLayout(sections_group)
+            for section in available_sections:
+                checkbox = QCheckBox(section)
+                checkbox.setChecked(section in current_sections)
+                sections_layout.addWidget(checkbox)
+                section_checkboxes[section] = checkbox
+            layout.addWidget(sections_group)
+
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
+        )
+        button_box.accepted.connect(editor_dialog.accept)
+        button_box.rejected.connect(editor_dialog.reject)
+        layout.addWidget(button_box)
+
+        widgets: dict[str, Any] = {
+            "name_edit": name_edit,
+            "desc_edit": desc_edit,
+            "section_checkboxes": section_checkboxes,
+        }
+        return editor_dialog, widgets
+
+    def _save_template_from_editor(
+        self,
+        widgets: dict[str, Any],
+        template_data: dict[str, Any],
+        *,
+        is_new: bool,
+    ) -> None:
+        """Save template data from editor dialog.
+
+        Args:
+            widgets: Dictionary containing editor widget references.
+            template_data: Original template data.
+            is_new: Whether this is a new template.
+
+        """
+        from datetime import datetime
+
+        from intellicrack.handlers.pyqt6_handler import QListWidgetItem
+
+        name_edit = widgets["name_edit"]
+        desc_edit = widgets["desc_edit"]
+        section_checkboxes = widgets["section_checkboxes"]
+
+        final_name = name_edit.text().strip()
+        if not final_name:
+            self.show_error("Template name cannot be empty.")
+            return
+
+        selected_sections = [
+            section for section, checkbox in section_checkboxes.items()
+            if checkbox.isChecked()
+        ]
+
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        new_data: dict[str, Any] = {
+            "name": final_name,
+            "description": desc_edit.toPlainText(),
+            "sections": selected_sections,
+            "modified": timestamp,
+        }
+
+        if is_new:
+            new_data["created"] = timestamp
+        elif "created" in template_data:
+            new_data["created"] = template_data["created"]
+
+        if self._save_template_data(final_name, new_data):
+            self.show_success(f"Template '{final_name}' saved successfully.")
+            if is_new and hasattr(self, "template_list"):
+                self.template_list.addItem(QListWidgetItem(final_name))
+        else:
+            self.show_error(f"Failed to save template '{final_name}'.")
+
+    def _show_template_editor(
+        self,
+        template_name: str,
+        template_data: dict[str, Any],
+        *,
+        is_new: bool = False,
+    ) -> None:
+        """Show the template editor dialog.
+
+        Args:
+            template_name: Name of the template.
+            template_data: Current template data.
+            is_new: Whether this is a new template.
+
+        """
+        from intellicrack.handlers.pyqt6_handler import QDialog
+
+        editor_dialog, widgets = self._build_template_editor_ui(
+            template_name, template_data, is_new=is_new
+        )
+
+        if editor_dialog.exec() == QDialog.DialogCode.Accepted:
+            self._save_template_from_editor(widgets, template_data, is_new=is_new)
+
+    def _get_available_template_sections(self) -> list[str]:
+        """Get list of available template sections.
+
+        Subclasses should override this to provide specific sections.
+
+        Returns:
+            list[str]: List of available section names.
+
+        """
+        return ["Header", "Summary", "Details", "Findings", "Recommendations", "Footer"]
 
     def create_template(self) -> None:
-        """Create a new template - override in subclasses."""
-        pass
+        """Create a new template.
+
+        Opens a dialog to enter template name and properties, then saves.
+
+        """
+        from intellicrack.handlers.pyqt6_handler import QInputDialog
+
+        name, ok = QInputDialog.getText(
+            self,
+            "Create Template",
+            "Enter template name:",
+        )
+
+        if ok and name:
+            name = name.strip()
+            if not name:
+                self.show_error("Template name cannot be empty.")
+                return
+
+            existing_data = self._load_template_data(name)
+            if existing_data:
+                from intellicrack.handlers.pyqt6_handler import QMessageBox
+
+                result = QMessageBox.question(
+                    self,
+                    "Template Exists",
+                    f"Template '{name}' already exists. Edit it instead?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                )
+                if result == QMessageBox.StandardButton.Yes:
+                    self._show_template_editor(name, existing_data)
+                return
+
+            new_template_data: dict[str, Any] = {
+                "name": name,
+                "description": "",
+                "sections": [],
+            }
+            self._show_template_editor(name, new_template_data, is_new=True)
 
     def setup_header(
         self,
@@ -694,9 +1102,10 @@ class BaseDialog(QDialog):
 
         Args:
             layout: The parent layout to add the header to.
-            show_label: Whether to show the "Binary:" label (default True).
+            show_label: Whether to show the "Binary:" label.
             extra_buttons: Optional list of tuples (button_text, callback) for
                 additional buttons to add to the header.
+
         """
         from intellicrack.handlers.pyqt6_handler import QLineEdit
 
@@ -731,7 +1140,11 @@ class BaseDialog(QDialog):
         layout.addLayout(header_layout)
 
     def _browse_binary(self) -> None:
-        """Open a file dialog to select a binary file for analysis."""
+        """Open a file dialog to select a binary file for analysis.
+
+        Updates binary_path_edit and calls on_binary_selected callback if defined.
+
+        """
         from intellicrack.handlers.pyqt6_handler import QFileDialog
 
         file_path, _ = QFileDialog.getOpenFileName(
@@ -755,5 +1168,6 @@ class BaseDialog(QDialog):
 
         Args:
             file_path: Path to the selected binary file.
+
         """
         self.logger.debug("Binary selected: %s", file_path)

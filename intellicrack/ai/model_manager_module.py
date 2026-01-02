@@ -32,6 +32,7 @@ from typing import Any, cast
 
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.tensorflow_handler import HAS_TENSORFLOW
+from intellicrack.utils.url_validation import is_safe_url
 
 
 logger = logging.getLogger(__name__)
@@ -1319,8 +1320,13 @@ Memory.writeByteArray(patch_addr, {bytes});""",
         model_path = os.path.join(self.models_dir, model_filename)
 
         try:
+            # Validate URL for SSRF protection
+            if not is_safe_url(model_url):
+                logger.error("URL blocked by SSRF protection: %s", model_url)
+                return False
+
             logger.info("Downloading model %s from %s", model_id, model_url)
-            urllib.request.urlretrieve(model_url, model_path)  # noqa: S310  # Legitimate AI model download for security research tool
+            urllib.request.urlretrieve(model_url, model_path)
 
             # Register the downloaded model
             self.register_model(

@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Any
 
 from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QApplication,
@@ -18,7 +19,6 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
-    QHeaderView,
     QInputDialog,
     QLabel,
     QLineEdit,
@@ -49,14 +49,24 @@ class SerialGeneratorWorker(QThread):
     error = pyqtSignal(str)
 
     def __init__(self, generator: SerialNumberGenerator, operation: str, params: dict[str, Any]) -> None:
-        """Initialize the SerialGeneratorWorker with a generator, operation, and parameters."""
+        """Initialize the SerialGeneratorWorker with a generator, operation, and parameters.
+
+        Args:
+            generator: SerialNumberGenerator instance for serial operations.
+            operation: String identifying the operation to perform.
+            params: Dictionary containing operation-specific parameters.
+        """
         super().__init__()
         self.generator = generator
         self.operation = operation
         self.params = params
 
     def run(self) -> None:
-        """Execute serial generation operation in background thread."""
+        """Execute serial generation operation in background thread.
+
+        Emits progress signals as the operation progresses, and emits
+        either a result signal on success or an error signal on failure.
+        """
         try:
             if self.operation == "analyze":
                 self.progress.emit("Analyzing serial patterns...")
@@ -158,7 +168,11 @@ class SerialGeneratorDialog(QDialog):
     """Comprehensive serial number generator interface."""
 
     def __init__(self, parent: QDialog | None = None) -> None:
-        """Initialize the SerialNumberGeneratorDialog with an optional parent."""
+        """Initialize the SerialNumberGeneratorDialog with an optional parent.
+
+        Args:
+            parent: Optional parent QDialog widget.
+        """
         super().__init__(parent)
         self.generator = SerialNumberGenerator()
         self.generated_serials: list[Any] = []
@@ -173,7 +187,11 @@ class SerialGeneratorDialog(QDialog):
         self.load_presets()
 
     def init_ui(self) -> None:
-        """Initialize the user interface."""
+        """Initialize the user interface.
+
+        Sets up the main dialog window with tabs for generation, analysis,
+        batch processing, validation, patterns, and presets management.
+        """
         self.setWindowTitle("Serial Number Generator")
         self.setMinimumSize(900, 650)
 
@@ -208,7 +226,11 @@ class SerialGeneratorDialog(QDialog):
         self.setLayout(layout)
 
     def create_generation_tab(self) -> QWidget:
-        """Create serial generation tab."""
+        """Create serial generation tab.
+
+        Returns:
+            QWidget: The generation tab widget.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -364,7 +386,11 @@ class SerialGeneratorDialog(QDialog):
         return widget
 
     def create_analysis_tab(self) -> QWidget:
-        """Create serial analysis tab."""
+        """Create serial analysis tab.
+
+        Returns:
+            QWidget: The analysis tab widget.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -422,7 +448,11 @@ class SerialGeneratorDialog(QDialog):
         return widget
 
     def create_batch_tab(self) -> QWidget:
-        """Create batch generation tab."""
+        """Create batch generation tab.
+
+        Returns:
+            QWidget: The batch generation tab widget.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -502,7 +532,11 @@ class SerialGeneratorDialog(QDialog):
         return widget
 
     def create_validation_tab(self) -> QWidget:
-        """Create serial validation tab."""
+        """Create serial validation tab.
+
+        Returns:
+            QWidget: The validation tab widget.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -576,7 +610,11 @@ class SerialGeneratorDialog(QDialog):
         return widget
 
     def create_patterns_tab(self) -> QWidget:
-        """Create pattern library tab."""
+        """Create pattern library tab.
+
+        Returns:
+            QWidget: The patterns tab widget.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -650,7 +688,11 @@ class SerialGeneratorDialog(QDialog):
         return widget
 
     def create_presets_tab(self) -> QWidget:
-        """Create presets management tab."""
+        """Create presets management tab.
+
+        Returns:
+            QWidget: The presets tab widget.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -698,7 +740,14 @@ class SerialGeneratorDialog(QDialog):
         return widget
 
     def on_format_changed(self, format_str: str) -> None:
-        """Handle format change."""
+        """Handle format change event.
+
+        Args:
+            format_str: The selected format as a string.
+
+        Shows or hides the custom alphabet widget based on format selection,
+        and sets default values for specific predefined formats.
+        """
         if format_str == "custom":
             self.custom_alphabet_widget.setVisible(True)
         else:
@@ -713,7 +762,11 @@ class SerialGeneratorDialog(QDialog):
             self.groups_spin.setValue(5)
 
     def generate_single_serial(self) -> None:
-        """Generate a single serial number."""
+        """Generate a single serial number.
+
+        Creates a background worker thread to generate a serial number
+        based on current constraint settings and emits progress/result signals.
+        """
         try:
             constraints = self.build_constraints()
 
@@ -727,7 +780,11 @@ class SerialGeneratorDialog(QDialog):
             self.handle_worker_error(str(e))
 
     def build_constraints(self) -> SerialConstraints:
-        """Build constraints from UI settings."""
+        """Build constraints from UI settings.
+
+        Returns:
+            SerialConstraints: The serial constraints built from current UI settings.
+        """
         format_str = self.format_combo.currentText()
         format_enum = SerialFormat(format_str)
 
@@ -766,7 +823,11 @@ class SerialGeneratorDialog(QDialog):
         )
 
     def analyze_serials(self) -> None:
-        """Analyze sample serials."""
+        """Analyze sample serials for patterns.
+
+        Extracts serials from the input widget, validates there are at least
+        2 samples, then spawns a worker thread to analyze their patterns.
+        """
         text = self.samples_input.toPlainText().strip()
         if not text:
             QMessageBox.warning(self, "Warning", "Please enter sample serials")
@@ -784,7 +845,11 @@ class SerialGeneratorDialog(QDialog):
         self.worker.start()
 
     def generate_from_analysis(self) -> None:
-        """Generate serials based on analysis."""
+        """Generate serials based on analysis results.
+
+        Uses the previously analyzed pattern data to create 10 new serial
+        numbers matching the detected format and constraints.
+        """
         if not self.analyzed_pattern:
             return
 
@@ -808,7 +873,11 @@ class SerialGeneratorDialog(QDialog):
         self.worker.start()
 
     def generate_batch_serials(self) -> None:
-        """Generate batch of serials."""
+        """Generate batch of serials.
+
+        Creates a worker thread to generate multiple serials based on batch
+        settings including count, prefix, suffix, and uniqueness constraints.
+        """
         count = self.batch_count.value()
         constraints = self.build_constraints()
 
@@ -834,7 +903,11 @@ class SerialGeneratorDialog(QDialog):
         self.worker.start()
 
     def validate_serial(self) -> None:
-        """Validate a serial number."""
+        """Validate a serial number.
+
+        Extracts the serial from input, determines validation method (auto or
+        selected), builds constraints, and spawns a worker thread to validate.
+        """
         serial = self.validation_input.text().strip()
         if not serial:
             QMessageBox.warning(self, "Warning", "Please enter a serial number")
@@ -858,14 +931,22 @@ class SerialGeneratorDialog(QDialog):
         self.worker.start()
 
     def copy_serial(self) -> None:
-        """Copy generated serial to clipboard."""
+        """Copy generated serial to clipboard.
+
+        Copies the serial number from the output field to the system clipboard
+        if a serial has been generated.
+        """
         if serial := self.serial_output.text():
             if clipboard := QApplication.clipboard():
                 clipboard.setText(serial)
                 self.log("Serial copied to clipboard")
 
     def save_serial(self) -> None:
-        """Save generated serial to file."""
+        """Save generated serial to file.
+
+        Prompts user for save location and writes the serial number and
+        optional details to a text file.
+        """
         serial = self.serial_output.text()
         if not serial:
             return
@@ -889,7 +970,11 @@ class SerialGeneratorDialog(QDialog):
                 self.handle_worker_error(f"Failed to save: {e}")
 
     def export_batch(self) -> None:
-        """Export batch serials to file."""
+        """Export batch serials to file.
+
+        Prompts user for save location and writes all generated serials
+        from the batch to a text or CSV file.
+        """
         text = self.batch_output.toPlainText()
         if not text:
             return
@@ -911,14 +996,21 @@ class SerialGeneratorDialog(QDialog):
                 self.handle_worker_error(f"Failed to export: {e}")
 
     def clear_batch(self) -> None:
-        """Clear batch output."""
+        """Clear batch output.
+
+        Clears the batch output display and resets generated serials list.
+        """
         self.batch_output.clear()
         self.batch_stats.setText("No serials generated")
         self.generated_serials.clear()
         self.btn_export_batch.setEnabled(False)
 
     def load_sample_serials(self) -> None:
-        """Load sample serials from file."""
+        """Load sample serials from file.
+
+        Opens a file dialog for the user to select a text file containing
+        sample serials, then populates the samples input widget.
+        """
         file_path, _ = QFileDialog.getOpenFileName(self, "Load Sample Serials", "", "Text Files (*.txt);;All Files (*.*)")
 
         if file_path:
@@ -932,7 +1024,11 @@ class SerialGeneratorDialog(QDialog):
                 self.handle_worker_error(f"Failed to load: {e}")
 
     def load_validation_batch(self) -> None:
-        """Load serials for batch validation."""
+        """Load serials for batch validation.
+
+        Opens a file dialog for the user to select a text file containing
+        serials to validate, then populates the batch validation input widget.
+        """
         file_path, _ = QFileDialog.getOpenFileName(self, "Load Serials for Validation", "", "Text Files (*.txt);;All Files (*.*)")
 
         if file_path:
@@ -947,7 +1043,11 @@ class SerialGeneratorDialog(QDialog):
                 self.handle_worker_error(f"Failed to load: {e}")
 
     def validate_batch(self) -> None:
-        """Validate batch of serials."""
+        """Validate batch of serials.
+
+        Extracts serials from batch input, validates each against a simple
+        pattern, and displays results in the validation output widget.
+        """
         text = self.batch_validation_input.toPlainText().strip()
         if not text:
             return
@@ -964,7 +1064,11 @@ class SerialGeneratorDialog(QDialog):
         self.log(f"Validated {len(serials)} serials")
 
     def use_selected_pattern(self) -> None:
-        """Use selected pattern from patterns table."""
+        """Use selected pattern from patterns table.
+
+        Extracts the selected software pattern from the patterns table,
+        switches to the generation tab, and applies format and length settings.
+        """
         current_row = self.patterns_table.currentRow()
         if current_row < 0:
             QMessageBox.warning(self, "Warning", "Please select a pattern")
@@ -995,7 +1099,11 @@ class SerialGeneratorDialog(QDialog):
         self.log(f"Applied pattern for {software_item.text()}")
 
     def export_patterns(self) -> None:
-        """Export patterns to file."""
+        """Export patterns to file.
+
+        Extracts all patterns from the patterns table and saves them to
+        a JSON file selected by the user.
+        """
         patterns: list[dict[str, str]] = []
         for row in range(self.patterns_table.rowCount()):
             software_item = self.patterns_table.item(row, 0)
@@ -1022,7 +1130,11 @@ class SerialGeneratorDialog(QDialog):
                 self.handle_worker_error(f"Failed to export: {e}")
 
     def import_patterns(self) -> None:
-        """Import patterns from file."""
+        """Import patterns from file.
+
+        Loads patterns from a JSON file selected by the user and adds them
+        to the patterns table, replacing any existing patterns.
+        """
         file_path, _ = QFileDialog.getOpenFileName(self, "Import Patterns", "", "JSON Files (*.json);;All Files (*.*)")
 
         if file_path:
@@ -1048,7 +1160,11 @@ class SerialGeneratorDialog(QDialog):
                 self.handle_worker_error(f"Failed to import: {e}")
 
     def save_preset(self) -> None:
-        """Save current settings as preset."""
+        """Save current settings as preset.
+
+        Prompts user for a preset name, captures all current UI settings,
+        and persists them to the presets JSON file.
+        """
         name, ok = QInputDialog.getText(self, "Save Preset", "Preset Name:")
         if ok and name:
             preset = {
@@ -1090,7 +1206,11 @@ class SerialGeneratorDialog(QDialog):
                 self.handle_worker_error(f"Failed to save preset: {e}")
 
     def load_preset(self) -> None:
-        """Load selected preset."""
+        """Load selected preset.
+
+        Retrieves the selected preset from the presets file and applies all
+        stored settings to the current UI.
+        """
         current_item = self.presets_list.currentItem()
         if not current_item:
             QMessageBox.warning(self, "Warning", "Please select a preset")
@@ -1134,7 +1254,11 @@ class SerialGeneratorDialog(QDialog):
                 self.handle_worker_error(f"Failed to load preset: {e}")
 
     def delete_preset(self) -> None:
-        """Delete selected preset."""
+        """Delete selected preset.
+
+        Prompts user for confirmation, then removes the selected preset
+        from the presets file.
+        """
         current_item = self.presets_list.currentItem()
         if not current_item:
             QMessageBox.warning(self, "Warning", "Please select a preset")
@@ -1169,7 +1293,11 @@ class SerialGeneratorDialog(QDialog):
                     self.handle_worker_error(f"Failed to delete preset: {e}")
 
     def load_presets(self) -> None:
-        """Load saved presets."""
+        """Load saved presets.
+
+        Reads the presets JSON file and populates the presets list widget
+        with available preset names.
+        """
         self.presets_list.clear()
 
         presets_file = "serial_generator_presets.json"
@@ -1184,7 +1312,11 @@ class SerialGeneratorDialog(QDialog):
                 logger.debug("load_presets: Error parsing presets: %s", e)
 
     def on_preset_selected(self) -> None:
-        """Handle preset selection."""
+        """Handle preset selection.
+
+        Displays details of the selected preset in the preset details widget
+        when a preset is selected from the presets list.
+        """
         current_item = self.presets_list.currentItem()
         if not current_item:
             self.preset_details.clear()
@@ -1206,7 +1338,11 @@ class SerialGeneratorDialog(QDialog):
                 logger.debug("on_preset_selected: Error loading preset details: %s", e)
 
     def handle_worker_result(self, result: dict[str, Any]) -> None:
-        """Handle worker thread results."""
+        """Handle worker thread results.
+
+        Args:
+            result: Dictionary containing operation results from worker thread.
+        """
         operation = result.get("operation")
         data = result.get("data")
 
@@ -1302,17 +1438,43 @@ Generated Test Serials:
             self.log("Pattern cracking complete")
 
     def handle_worker_error(self, error: str) -> None:
-        """Handle worker thread errors."""
+        """Handle worker thread errors.
+
+        Args:
+            error: Error message from worker thread.
+        """
         self.log(f"Error: {error}")
         QMessageBox.critical(self, "Error", error)
 
     def log(self, message: str) -> None:
-        """Log message to console."""
+        """Log message to console.
+
+        Args:
+            message: Message to log to the console.
+        """
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.console.append(f"[{timestamp}] {message}")
 
         if scrollbar := self.console.verticalScrollBar():
             scrollbar.setValue(scrollbar.maximum())
+
+    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+        """Handle dialog close with proper thread cleanup.
+
+        Ensures any running worker thread is properly terminated before
+        closing the dialog to prevent resource leaks.
+
+        Args:
+            event: Close event from Qt framework.
+
+        """
+        if self.worker is not None and self.worker.isRunning():
+            self.worker.quit()
+            if not self.worker.wait(2000):
+                self.worker.terminate()
+                self.worker.wait()
+            self.worker = None
+        super().closeEvent(event)
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ import os
 import tempfile
 import time
 from pathlib import Path
-from unittest.mock import Mock, patch
+from typing import Any, Optional, Callable
 
 import pytest
 
@@ -22,6 +22,60 @@ from intellicrack.core.analysis.incremental_analyzer import (
     get_cache_path,
     run_incremental_analysis,
 )
+
+
+class FakeSignal:
+    """Real test double for Qt signal functionality."""
+
+    def __init__(self) -> None:
+        self.call_count: int = 0
+        self.call_args_list: list[tuple[Any, ...]] = []
+        self.last_args: Optional[tuple[Any, ...]] = None
+
+    def emit(self, *args: Any) -> None:
+        self.call_count += 1
+        self.call_args_list.append(args)
+        self.last_args = args
+
+    def assert_called_once(self) -> None:
+        assert self.call_count == 1, f"Expected 1 call, got {self.call_count}"
+
+    def assert_called_once_with(self, *expected_args: Any) -> None:
+        self.assert_called_once()
+        assert self.last_args == expected_args, f"Expected {expected_args}, got {self.last_args}"
+
+    def assert_not_called(self) -> None:
+        assert self.call_count == 0, f"Expected 0 calls, got {self.call_count}"
+
+
+class FakeMainApplication:
+    """Real test double for main application instance."""
+
+    def __init__(self, binary_path: str = "") -> None:
+        self.current_binary: str = binary_path
+        self.update_output: FakeSignal = FakeSignal()
+        self.update_analysis_results: FakeSignal = FakeSignal()
+        self.analysis_completed: FakeSignal = FakeSignal()
+
+    def emit(self, *args: Any) -> None:
+        """Emit a signal."""
+        pass
+
+    def run_selected_analysis_partial(self, analysis_type: str) -> None:
+        """Run a partial analysis of the specified type."""
+        pass
+
+
+class FakeConfig:
+    """Real test double for configuration object."""
+
+    def __init__(self, cache_dir: str) -> None:
+        self._cache_dir: str = cache_dir
+
+    def get(self, key: str, default: Any = None) -> Any:
+        if key == "cache_dir":
+            return self._cache_dir
+        return default
 
 
 @pytest.fixture
@@ -48,15 +102,9 @@ def cache_dir(temp_dir: Path) -> Path:
 
 
 @pytest.fixture
-def mock_app(test_binary: Path) -> Mock:
-    """Create mock main application instance."""
-    app = Mock()
-    app.current_binary = str(test_binary)
-    app.update_output = Mock()
-    app.update_analysis_results = Mock()
-    app.analysis_completed = Mock()
-    app.run_selected_analysis_partial = Mock()
-    return app
+def fake_app(test_binary: Path) -> FakeMainApplication:
+    """Create fake main application instance."""
+    return FakeMainApplication(binary_path=str(test_binary))
 
 
 def test_get_cache_path_creates_consistent_hash(test_binary: Path) -> None:
@@ -83,15 +131,17 @@ def test_get_cache_path_different_binaries_different_hashes(temp_dir: Path) -> N
     assert path1 != path2
 
 
-def test_get_cache_path_creates_directory(temp_dir: Path, test_binary: Path) -> None:
+def test_get_cache_path_creates_directory(temp_dir: Path, test_binary: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Cache path creation ensures parent directory exists."""
-    with patch("intellicrack.core.analysis.incremental_analyzer.get_config") as mock_config:
-        mock_config.return_value.get.return_value = str(temp_dir / ".cache")
+    fake_config = FakeConfig(cache_dir=str(temp_dir / ".cache"))
 
-        cache_path = get_cache_path(str(test_binary))
+    import intellicrack.core.analysis.incremental_analyzer
+    monkeypatch.setattr(intellicrack.core.analysis.incremental_analyzer, "get_config", lambda: fake_config)
 
-        assert cache_path.parent.exists()
-        assert cache_path.parent.name == "incremental"
+    cache_path = get_cache_path(str(test_binary))
+
+    assert cache_path.parent.exists()
+    assert cache_path.parent.name == "incremental"
 
 
 def test_get_cache_path_hashes_absolute_path(test_binary: Path) -> None:
@@ -103,329 +153,410 @@ def test_get_cache_path_hashes_absolute_path(test_binary: Path) -> None:
     assert expected_hash in str(cache_path)
 
 
-def test_run_incremental_analysis_no_binary_loaded(mock_app: Mock) -> None:
+def test_run_incremental_analysis_no_binary_loaded(fake_app: FakeMainApplication) -> None:
     """Analysis fails gracefully when no binary is loaded."""
-    mock_app.current_binary = None
+    object.__setattr__(fake_app, "current_binary", None)
 
-    run_incremental_analysis(mock_app)
+    run_incremental_analysis(fake_app)
 
-    mock_app.update_output.emit.assert_called_once()
-    call_args = mock_app.update_output.emit.call_args[0][0]
+    fake_app.update_output.assert_called_once()
+    assert fake_app.update_output.last_args is not None
+    call_args = fake_app.update_output.last_args[0]
     assert "Error" in call_args
     assert "No binary loaded" in call_args
 
 
 def test_run_incremental_analysis_cache_miss_triggers_full_analysis(
-    mock_app: Mock, test_binary: Path, temp_dir: Path
+    fake_app: FakeMainApplication, test_binary: Path, temp_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Missing or invalid cache triggers full comprehensive analysis."""
-    with patch("intellicrack.core.analysis.incremental_analyzer.get_config") as mock_config:
-        mock_config.return_value.get.return_value = str(temp_dir / ".cache")
+    fake_config = FakeConfig(cache_dir=str(temp_dir / ".cache"))
 
-        run_incremental_analysis(mock_app)
+    import intellicrack.core.analysis.incremental_analyzer
+    monkeypatch.setattr(intellicrack.core.analysis.incremental_analyzer, "get_config", lambda: fake_config)
 
-        mock_app.run_selected_analysis_partial.assert_called_once_with("comprehensive")
+    analysis_called: list[str] = []
 
-        assert any(
-            "No valid cache" in str(call)
-            for call in mock_app.update_output.emit.call_args_list
-        )
+    def track_analysis(analysis_type: str) -> None:
+        analysis_called.append(analysis_type)
+
+    object.__setattr__(fake_app, "run_selected_analysis_partial", track_analysis)
+
+    run_incremental_analysis(fake_app)
+
+    assert analysis_called == ["comprehensive"]
+    assert any(
+        "No valid cache" in str(call)
+        for call in fake_app.update_output.call_args_list
+    )
 
 
 def test_run_incremental_analysis_valid_cache_loads_results(
-    mock_app: Mock, test_binary: Path, temp_dir: Path
+    fake_app: FakeMainApplication, test_binary: Path, temp_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Valid cache loads results without running full analysis."""
-    with patch("intellicrack.core.analysis.incremental_analyzer.get_config") as mock_config:
-        mock_config.return_value.get.return_value = str(temp_dir / ".cache")
+    fake_config = FakeConfig(cache_dir=str(temp_dir / ".cache"))
 
-        cache_path = get_cache_path(str(test_binary))
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
+    import intellicrack.core.analysis.incremental_analyzer
+    monkeypatch.setattr(intellicrack.core.analysis.incremental_analyzer, "get_config", lambda: fake_config)
 
-        cached_data = {
-            "mtime": test_binary.stat().st_mtime,
-            "size": test_binary.stat().st_size,
-            "results": {
-                "protection_detected": "VMProtect",
-                "license_type": "trial",
-                "analysis_timestamp": time.time(),
-            },
-        }
+    cache_path = get_cache_path(str(test_binary))
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(cached_data, f)
+    cached_data = {
+        "mtime": test_binary.stat().st_mtime,
+        "size": test_binary.stat().st_size,
+        "results": {
+            "protection_detected": "VMProtect",
+            "license_type": "trial",
+            "analysis_timestamp": time.time(),
+        },
+    }
 
-        run_incremental_analysis(mock_app)
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(cached_data, f)
 
-        mock_app.run_selected_analysis_partial.assert_not_called()
+    analysis_called: list[str] = []
 
-        mock_app.update_analysis_results.emit.assert_called_once()
-        emitted_results = mock_app.update_analysis_results.emit.call_args[0][0]
-        assert "VMProtect" in emitted_results
+    def track_analysis(analysis_type: str) -> None:
+        analysis_called.append(analysis_type)
+
+    object.__setattr__(fake_app, "run_selected_analysis_partial", track_analysis)
+
+    run_incremental_analysis(fake_app)
+
+    assert len(analysis_called) == 0
+
+    fake_app.update_analysis_results.assert_called_once()
+    assert fake_app.update_analysis_results.last_args is not None
+    emitted_results = fake_app.update_analysis_results.last_args[0]
+    assert "VMProtect" in emitted_results
 
 
 def test_run_incremental_analysis_cache_invalidation_on_modification(
-    mock_app: Mock, test_binary: Path, temp_dir: Path
+    fake_app: FakeMainApplication, test_binary: Path, temp_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Cache invalidates when binary modification time changes."""
-    with patch("intellicrack.core.analysis.incremental_analyzer.get_config") as mock_config:
-        mock_config.return_value.get.return_value = str(temp_dir / ".cache")
+    fake_config = FakeConfig(cache_dir=str(temp_dir / ".cache"))
 
-        cache_path = get_cache_path(str(test_binary))
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
+    import intellicrack.core.analysis.incremental_analyzer
+    monkeypatch.setattr(intellicrack.core.analysis.incremental_analyzer, "get_config", lambda: fake_config)
 
-        old_mtime = test_binary.stat().st_mtime - 1000
+    cache_path = get_cache_path(str(test_binary))
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
 
-        cached_data = {
-            "mtime": old_mtime,
-            "size": test_binary.stat().st_size,
-            "results": {"protection_detected": "Old_Analysis"},
-        }
+    old_mtime = test_binary.stat().st_mtime - 1000
 
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(cached_data, f)
+    cached_data = {
+        "mtime": old_mtime,
+        "size": test_binary.stat().st_size,
+        "results": {"protection_detected": "Old_Analysis"},
+    }
 
-        run_incremental_analysis(mock_app)
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(cached_data, f)
 
-        mock_app.run_selected_analysis_partial.assert_called_once()
+    analysis_called: list[str] = []
+
+    def track_analysis(analysis_type: str) -> None:
+        analysis_called.append(analysis_type)
+
+    object.__setattr__(fake_app, "run_selected_analysis_partial", track_analysis)
+
+    run_incremental_analysis(fake_app)
+
+    assert len(analysis_called) == 1
 
 
 def test_run_incremental_analysis_cache_invalidation_on_size_change(
-    mock_app: Mock, test_binary: Path, temp_dir: Path
+    fake_app: FakeMainApplication, test_binary: Path, temp_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Cache invalidates when binary size changes."""
-    with patch("intellicrack.core.analysis.incremental_analyzer.get_config") as mock_config:
-        mock_config.return_value.get.return_value = str(temp_dir / ".cache")
+    fake_config = FakeConfig(cache_dir=str(temp_dir / ".cache"))
 
-        cache_path = get_cache_path(str(test_binary))
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
+    import intellicrack.core.analysis.incremental_analyzer
+    monkeypatch.setattr(intellicrack.core.analysis.incremental_analyzer, "get_config", lambda: fake_config)
 
-        cached_data = {
-            "mtime": test_binary.stat().st_mtime,
-            "size": test_binary.stat().st_size - 100,
-            "results": {"protection_detected": "Old_Analysis"},
-        }
+    cache_path = get_cache_path(str(test_binary))
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(cached_data, f)
+    cached_data = {
+        "mtime": test_binary.stat().st_mtime,
+        "size": test_binary.stat().st_size - 100,
+        "results": {"protection_detected": "Old_Analysis"},
+    }
 
-        run_incremental_analysis(mock_app)
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(cached_data, f)
 
-        mock_app.run_selected_analysis_partial.assert_called_once()
+    analysis_called: list[str] = []
+
+    def track_analysis(analysis_type: str) -> None:
+        analysis_called.append(analysis_type)
+
+    object.__setattr__(fake_app, "run_selected_analysis_partial", track_analysis)
+
+    run_incremental_analysis(fake_app)
+
+    assert len(analysis_called) == 1
 
 
 def test_run_incremental_analysis_emits_completion_signal(
-    mock_app: Mock, test_binary: Path, temp_dir: Path
+    fake_app: FakeMainApplication, test_binary: Path, temp_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Analysis emits completion signal when loading from cache."""
-    with patch("intellicrack.core.analysis.incremental_analyzer.get_config") as mock_config:
-        mock_config.return_value.get.return_value = str(temp_dir / ".cache")
+    fake_config = FakeConfig(cache_dir=str(temp_dir / ".cache"))
 
-        cache_path = get_cache_path(str(test_binary))
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
+    import intellicrack.core.analysis.incremental_analyzer
+    monkeypatch.setattr(intellicrack.core.analysis.incremental_analyzer, "get_config", lambda: fake_config)
 
-        cached_data = {
-            "mtime": test_binary.stat().st_mtime,
-            "size": test_binary.stat().st_size,
-            "results": {"test": "data"},
-        }
+    cache_path = get_cache_path(str(test_binary))
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(cached_data, f)
+    cached_data = {
+        "mtime": test_binary.stat().st_mtime,
+        "size": test_binary.stat().st_size,
+        "results": {"test": "data"},
+    }
 
-        run_incremental_analysis(mock_app)
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(cached_data, f)
 
-        mock_app.analysis_completed.emit.assert_called_once_with(
-            "Incremental Analysis (Cached)"
-        )
+    run_incremental_analysis(fake_app)
+
+    fake_app.analysis_completed.assert_called_once_with(
+        "Incremental Analysis (Cached)"
+    )
 
 
 def test_run_incremental_analysis_handles_corrupted_cache(
-    mock_app: Mock, test_binary: Path, temp_dir: Path
+    fake_app: FakeMainApplication, test_binary: Path, temp_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Analysis handles corrupted cache gracefully and runs full analysis."""
-    with patch("intellicrack.core.analysis.incremental_analyzer.get_config") as mock_config:
-        mock_config.return_value.get.return_value = str(temp_dir / ".cache")
+    fake_config = FakeConfig(cache_dir=str(temp_dir / ".cache"))
 
-        cache_path = get_cache_path(str(test_binary))
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
+    import intellicrack.core.analysis.incremental_analyzer
+    monkeypatch.setattr(intellicrack.core.analysis.incremental_analyzer, "get_config", lambda: fake_config)
 
-        cache_path.write_text("INVALID JSON{]", encoding="utf-8")
+    cache_path = get_cache_path(str(test_binary))
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
 
-        run_incremental_analysis(mock_app)
+    cache_path.write_text("INVALID JSON{]", encoding="utf-8")
 
-        mock_app.run_selected_analysis_partial.assert_called_once()
+    analysis_called: list[str] = []
+
+    def track_analysis(analysis_type: str) -> None:
+        analysis_called.append(analysis_type)
+
+    object.__setattr__(fake_app, "run_selected_analysis_partial", track_analysis)
+
+    run_incremental_analysis(fake_app)
+
+    assert len(analysis_called) == 1
 
 
 def test_run_incremental_analysis_handles_missing_cache_fields(
-    mock_app: Mock, test_binary: Path, temp_dir: Path
+    fake_app: FakeMainApplication, test_binary: Path, temp_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Analysis handles incomplete cache data and runs full analysis."""
-    with patch("intellicrack.core.analysis.incremental_analyzer.get_config") as mock_config:
-        mock_config.return_value.get.return_value = str(temp_dir / ".cache")
+    fake_config = FakeConfig(cache_dir=str(temp_dir / ".cache"))
 
-        cache_path = get_cache_path(str(test_binary))
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
+    import intellicrack.core.analysis.incremental_analyzer
+    monkeypatch.setattr(intellicrack.core.analysis.incremental_analyzer, "get_config", lambda: fake_config)
 
-        cached_data = {
-            "mtime": test_binary.stat().st_mtime,
-        }
+    cache_path = get_cache_path(str(test_binary))
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(cached_data, f)
+    cached_data = {
+        "mtime": test_binary.stat().st_mtime,
+    }
 
-        run_incremental_analysis(mock_app)
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(cached_data, f)
 
-        mock_app.run_selected_analysis_partial.assert_called_once()
+    analysis_called: list[str] = []
+
+    def track_analysis(analysis_type: str) -> None:
+        analysis_called.append(analysis_type)
+
+    object.__setattr__(fake_app, "run_selected_analysis_partial", track_analysis)
+
+    run_incremental_analysis(fake_app)
+
+    assert len(analysis_called) == 1
 
 
 def test_run_incremental_analysis_handles_exception(
-    mock_app: Mock, test_binary: Path
+    fake_app: FakeMainApplication, test_binary: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Analysis handles exceptions gracefully during execution."""
-    with patch("intellicrack.core.analysis.incremental_analyzer.Path") as mock_path:
-        mock_path.side_effect = Exception("Test exception")
+    def raise_exception(*args: Any, **kwargs: Any) -> None:
+        raise Exception("Test exception")
 
-        run_incremental_analysis(mock_app)
+    import intellicrack.core.analysis.incremental_analyzer
+    original_path = getattr(intellicrack.core.analysis.incremental_analyzer, "Path", None)
 
-        assert any(
-            "error occurred" in str(call).lower()
-            for call in mock_app.update_output.emit.call_args_list
-        )
+    monkeypatch.setattr(intellicrack.core.analysis.incremental_analyzer, "Path", raise_exception)
+
+    run_incremental_analysis(fake_app)
+
+    assert any(
+        "error occurred" in str(call).lower()
+        for call in fake_app.update_output.call_args_list
+    )
 
 
 def test_run_incremental_analysis_without_analysis_function(
-    mock_app: Mock, test_binary: Path, temp_dir: Path
+    fake_app: FakeMainApplication, test_binary: Path, temp_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Analysis reports error when app lacks analysis function."""
-    mock_app.run_selected_analysis_partial = None
+    object.__setattr__(fake_app, "run_selected_analysis_partial", None)
 
-    with patch("intellicrack.core.analysis.incremental_analyzer.get_config") as mock_config:
-        mock_config.return_value.get.return_value = str(temp_dir / ".cache")
+    fake_config = FakeConfig(cache_dir=str(temp_dir / ".cache"))
 
-        run_incremental_analysis(mock_app)
+    import intellicrack.core.analysis.incremental_analyzer
+    monkeypatch.setattr(intellicrack.core.analysis.incremental_analyzer, "get_config", lambda: fake_config)
 
-        assert any(
-            "not available" in str(call)
-            for call in mock_app.update_output.emit.call_args_list
-        )
+    run_incremental_analysis(fake_app)
+
+    assert any(
+        "not available" in str(call)
+        for call in fake_app.update_output.call_args_list
+    )
 
 
 def test_cache_preserves_complex_analysis_results(
-    mock_app: Mock, test_binary: Path, temp_dir: Path
+    fake_app: FakeMainApplication, test_binary: Path, temp_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Cache correctly serializes and deserializes complex analysis data."""
-    with patch("intellicrack.core.analysis.incremental_analyzer.get_config") as mock_config:
-        mock_config.return_value.get.return_value = str(temp_dir / ".cache")
+    fake_config = FakeConfig(cache_dir=str(temp_dir / ".cache"))
 
-        cache_path = get_cache_path(str(test_binary))
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
+    import intellicrack.core.analysis.incremental_analyzer
+    monkeypatch.setattr(intellicrack.core.analysis.incremental_analyzer, "get_config", lambda: fake_config)
 
-        complex_results = {
-            "protections": ["VMProtect", "Themida"],
-            "license_checks": [
-                {"address": "0x401000", "type": "registry"},
-                {"address": "0x402000", "type": "file"},
-            ],
-            "metadata": {
-                "analysis_version": "2.0",
-                "confidence": 0.95,
-                "bypass_suggestions": ["patch_0x401000", "nop_range_0x402000"],
-            },
-        }
+    cache_path = get_cache_path(str(test_binary))
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
 
-        cached_data = {
-            "mtime": test_binary.stat().st_mtime,
-            "size": test_binary.stat().st_size,
-            "results": complex_results,
-        }
+    complex_results = {
+        "protections": ["VMProtect", "Themida"],
+        "license_checks": [
+            {"address": "0x401000", "type": "registry"},
+            {"address": "0x402000", "type": "file"},
+        ],
+        "metadata": {
+            "analysis_version": "2.0",
+            "confidence": 0.95,
+            "bypass_suggestions": ["patch_0x401000", "nop_range_0x402000"],
+        },
+    }
 
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(cached_data, f)
+    cached_data = {
+        "mtime": test_binary.stat().st_mtime,
+        "size": test_binary.stat().st_size,
+        "results": complex_results,
+    }
 
-        run_incremental_analysis(mock_app)
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(cached_data, f)
 
-        emitted_results = mock_app.update_analysis_results.emit.call_args[0][0]
-        parsed_results = json.loads(emitted_results)
+    run_incremental_analysis(fake_app)
 
-        assert "VMProtect" in parsed_results["protections"]
-        assert "Themida" in parsed_results["protections"]
-        assert len(parsed_results["license_checks"]) == 2
-        assert parsed_results["metadata"]["confidence"] == 0.95
+    assert fake_app.update_analysis_results.last_args is not None
+    emitted_results = fake_app.update_analysis_results.last_args[0]
+    parsed_results = json.loads(emitted_results)
+
+    assert "VMProtect" in parsed_results["protections"]
+    assert "Themida" in parsed_results["protections"]
+    assert len(parsed_results["license_checks"]) == 2
+    assert parsed_results["metadata"]["confidence"] == 0.95
 
 
 def test_cache_directory_created_if_not_exists(
-    mock_app: Mock, test_binary: Path, temp_dir: Path
+    fake_app: FakeMainApplication, test_binary: Path, temp_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Cache directory is created automatically if it doesn't exist."""
     cache_base = temp_dir / "new_cache_dir"
 
-    with patch("intellicrack.core.analysis.incremental_analyzer.get_config") as mock_config:
-        mock_config.return_value.get.return_value = str(cache_base)
+    fake_config = FakeConfig(cache_dir=str(cache_base))
 
-        cache_path = get_cache_path(str(test_binary))
+    import intellicrack.core.analysis.incremental_analyzer
+    monkeypatch.setattr(intellicrack.core.analysis.incremental_analyzer, "get_config", lambda: fake_config)
 
-        assert cache_path.parent.exists()
-        assert cache_path.parent.name == "incremental"
+    cache_path = get_cache_path(str(test_binary))
+
+    assert cache_path.parent.exists()
+    assert cache_path.parent.name == "incremental"
 
 
 def test_cache_validation_mtime_precision(
-    mock_app: Mock, test_binary: Path, temp_dir: Path
+    fake_app: FakeMainApplication, test_binary: Path, temp_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Cache validation uses precise modification time comparison."""
-    with patch("intellicrack.core.analysis.incremental_analyzer.get_config") as mock_config:
-        mock_config.return_value.get.return_value = str(temp_dir / ".cache")
+    fake_config = FakeConfig(cache_dir=str(temp_dir / ".cache"))
 
-        cache_path = get_cache_path(str(test_binary))
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
+    import intellicrack.core.analysis.incremental_analyzer
+    monkeypatch.setattr(intellicrack.core.analysis.incremental_analyzer, "get_config", lambda: fake_config)
 
-        exact_mtime = test_binary.stat().st_mtime
+    cache_path = get_cache_path(str(test_binary))
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
 
-        cached_data = {
-            "mtime": exact_mtime,
-            "size": test_binary.stat().st_size,
-            "results": {"protection": "test"},
-        }
+    exact_mtime = test_binary.stat().st_mtime
 
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(cached_data, f)
+    cached_data = {
+        "mtime": exact_mtime,
+        "size": test_binary.stat().st_size,
+        "results": {"protection": "test"},
+    }
 
-        run_incremental_analysis(mock_app)
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(cached_data, f)
 
-        mock_app.run_selected_analysis_partial.assert_not_called()
+    analysis_called: list[str] = []
+
+    def track_analysis(analysis_type: str) -> None:
+        analysis_called.append(analysis_type)
+
+    object.__setattr__(fake_app, "run_selected_analysis_partial", track_analysis)
+
+    run_incremental_analysis(fake_app)
+
+    assert len(analysis_called) == 0
 
 
 def test_cache_stores_analysis_timestamp(
-    mock_app: Mock, test_binary: Path, temp_dir: Path
+    fake_app: FakeMainApplication, test_binary: Path, temp_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Cache can include analysis timestamps in results."""
-    with patch("intellicrack.core.analysis.incremental_analyzer.get_config") as mock_config:
-        mock_config.return_value.get.return_value = str(temp_dir / ".cache")
+    fake_config = FakeConfig(cache_dir=str(temp_dir / ".cache"))
 
-        cache_path = get_cache_path(str(test_binary))
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
+    import intellicrack.core.analysis.incremental_analyzer
+    monkeypatch.setattr(intellicrack.core.analysis.incremental_analyzer, "get_config", lambda: fake_config)
 
-        analysis_time = time.time()
+    cache_path = get_cache_path(str(test_binary))
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
 
-        cached_data = {
-            "mtime": test_binary.stat().st_mtime,
-            "size": test_binary.stat().st_size,
-            "results": {
-                "analysis_timestamp": analysis_time,
-                "binary_name": "test_app.exe",
-            },
-        }
+    analysis_time = time.time()
 
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(cached_data, f)
+    cached_data = {
+        "mtime": test_binary.stat().st_mtime,
+        "size": test_binary.stat().st_size,
+        "results": {
+            "analysis_timestamp": analysis_time,
+            "binary_name": "test_app.exe",
+        },
+    }
 
-        run_incremental_analysis(mock_app)
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(cached_data, f)
 
-        emitted_results = mock_app.update_analysis_results.emit.call_args[0][0]
-        parsed = json.loads(emitted_results)
+    run_incremental_analysis(fake_app)
 
-        assert "analysis_timestamp" in parsed
-        assert abs(parsed["analysis_timestamp"] - analysis_time) < 1
+    assert fake_app.update_analysis_results.last_args is not None
+    emitted_results = fake_app.update_analysis_results.last_args[0]
+    parsed = json.loads(emitted_results)
+
+    assert "analysis_timestamp" in parsed
+    assert abs(parsed["analysis_timestamp"] - analysis_time) < 1
 
 
 def test_multiple_binaries_independent_caches(temp_dir: Path) -> None:
@@ -451,29 +582,31 @@ def test_cache_path_filesystem_safe(test_binary: Path) -> None:
 
 
 def test_run_incremental_analysis_cache_hit_status_message(
-    mock_app: Mock, test_binary: Path, temp_dir: Path
+    fake_app: FakeMainApplication, test_binary: Path, temp_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Cache hit emits clear status message to user."""
-    with patch("intellicrack.core.analysis.incremental_analyzer.get_config") as mock_config:
-        mock_config.return_value.get.return_value = str(temp_dir / ".cache")
+    fake_config = FakeConfig(cache_dir=str(temp_dir / ".cache"))
 
-        cache_path = get_cache_path(str(test_binary))
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
+    import intellicrack.core.analysis.incremental_analyzer
+    monkeypatch.setattr(intellicrack.core.analysis.incremental_analyzer, "get_config", lambda: fake_config)
 
-        cached_data = {
-            "mtime": test_binary.stat().st_mtime,
-            "size": test_binary.stat().st_size,
-            "results": {},
-        }
+    cache_path = get_cache_path(str(test_binary))
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(cached_data, f)
+    cached_data = {
+        "mtime": test_binary.stat().st_mtime,
+        "size": test_binary.stat().st_size,
+        "results": {},
+    }
 
-        run_incremental_analysis(mock_app)
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(cached_data, f)
 
-        status_messages = [
-            call[0][0] for call in mock_app.update_output.emit.call_args_list
-        ]
+    run_incremental_analysis(fake_app)
 
-        assert any("Loading cached results" in msg for msg in status_messages)
-        assert any("test_app.exe" in msg for msg in status_messages)
+    status_messages = [
+        call[0] for call in fake_app.update_output.call_args_list
+    ]
+
+    assert any("Loading cached results" in msg for msg in status_messages)
+    assert any("test_app.exe" in msg for msg in status_messages)

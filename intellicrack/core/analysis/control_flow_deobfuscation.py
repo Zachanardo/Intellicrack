@@ -27,7 +27,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import logging
+import types
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,8 +43,36 @@ if TYPE_CHECKING:
         R2SessionPoolAdapter,
     )
 
+import networkx as nx
+
+NETWORKX_AVAILABLE = True
+
 from intellicrack.utils.logger import logger
 
+OpaquePredicateAnalyzer: type[Any] | None
+PredicateAnalysis: type[Any] | None
+lief: types.ModuleType | None
+Binary: type[Any] | None
+Section: type[Any] | None
+
+CS_ARCH_X86: int | None
+CS_ARCH_ARM: int | None
+CS_ARCH_ARM64: int | None
+CS_MODE_32: int | None
+CS_MODE_64: int | None
+CS_MODE_ARM: int | None
+CS_MODE_THUMB: int | None
+CS_GRP_JUMP: int | None
+Cs: type[Any] | None
+
+KS_ARCH_X86: int | None
+KS_ARCH_ARM: int | None
+KS_ARCH_ARM64: int | None
+KS_MODE_32: int | None
+KS_MODE_64: int | None
+KS_MODE_ARM: int | None
+KS_MODE_THUMB: int | None
+Ks: type[Any] | None
 
 try:
     from intellicrack.core.analysis.opaque_predicate_analyzer import OpaquePredicateAnalyzer, PredicateAnalysis
@@ -50,17 +81,8 @@ try:
 except ImportError:
     logger.warning("Advanced opaque predicate analyzer not available")
     OPAQUE_ANALYZER_AVAILABLE = False
-    OpaquePredicateAnalyzer = type(None)  # type: ignore[misc,assignment]
-    PredicateAnalysis = type(None)  # type: ignore[misc,assignment]
-
-try:
-    import networkx as nx
-
-    NETWORKX_AVAILABLE = True
-except ImportError:
-    logger.warning("NetworkX not available for control flow deobfuscation")
-    NETWORKX_AVAILABLE = False
-    nx = Any
+    OpaquePredicateAnalyzer = None
+    PredicateAnalysis = None
 
 try:
     from intellicrack.handlers.capstone_handler import (
@@ -79,13 +101,18 @@ try:
 except ImportError:
     logger.warning("Capstone not available for control flow deobfuscation")
     CAPSTONE_AVAILABLE = False
-    CS_ARCH_X86 = CS_ARCH_ARM = CS_ARCH_ARM64 = Any
-    CS_MODE_32 = CS_MODE_64 = CS_MODE_ARM = CS_MODE_THUMB = Any
-    CS_GRP_JUMP = Any
-    Cs = Any
+    CS_ARCH_X86 = None
+    CS_ARCH_ARM = None
+    CS_ARCH_ARM64 = None
+    CS_MODE_32 = None
+    CS_MODE_64 = None
+    CS_MODE_ARM = None
+    CS_MODE_THUMB = None
+    CS_GRP_JUMP = None
+    Cs = None
 
 try:
-    from intellicrack.handlers.keystone_handler import (  # type: ignore[attr-defined]
+    from intellicrack.handlers.keystone_handler import (
         KS_ARCH_ARM,
         KS_ARCH_ARM64,
         KS_ARCH_X86,
@@ -100,9 +127,14 @@ try:
 except ImportError:
     logger.warning("Keystone not available for control flow deobfuscation")
     KEYSTONE_AVAILABLE = False
-    KS_ARCH_X86 = KS_ARCH_ARM = KS_ARCH_ARM64 = Any
-    KS_MODE_32 = KS_MODE_64 = KS_MODE_ARM = KS_MODE_THUMB = Any
-    Ks = Any
+    KS_ARCH_X86 = None
+    KS_ARCH_ARM = None
+    KS_ARCH_ARM64 = None
+    KS_MODE_32 = None
+    KS_MODE_64 = None
+    KS_MODE_ARM = None
+    KS_MODE_THUMB = None
+    Ks = None
 
 try:
     from intellicrack.handlers.lief_handler import lief
@@ -114,9 +146,9 @@ try:
 except ImportError:
     logger.warning("LIEF not available for control flow deobfuscation")
     LIEF_AVAILABLE = False
-    lief = type(None)  # type: ignore[assignment]
-    Binary = type(None)  # type: ignore[misc,assignment]
-    Section = type(None)  # type: ignore[misc,assignment]
+    lief = None
+    Binary = None
+    Section = None
 
 from ...utils.tools.radare2_utils import r2_session
 
@@ -138,7 +170,10 @@ class BasicBlock:
     complexity_score: float = 0.0
 
     def __post_init__(self) -> None:
-        """Initialize mutable defaults after dataclass creation."""
+        """Initialize mutable defaults after dataclass creation.
+
+        Initializes empty state_variable_refs list if None.
+        """
         if self.state_variable_refs is None:
             self.state_variable_refs = []
 
@@ -182,9 +217,12 @@ class ControlFlowDeobfuscator:
         """Initialize the control flow deobfuscator.
 
         Args:
-            binary_path: Path to the binary to deobfuscate
-            radare2_path: Optional custom path to radare2 executable
+            binary_path: Path to the binary to deobfuscate.
+            radare2_path: Optional custom path to radare2 executable.
 
+        Raises:
+            FileNotFoundError: If binary file does not exist at the specified
+                path.
         """
         self.binary_path = Path(binary_path)
         self.radare2_path = radare2_path
@@ -203,8 +241,15 @@ class ControlFlowDeobfuscator:
         self._initialize_opaque_analyzer()
 
     def _initialize_binary(self) -> None:
-        """Initialize binary parsing with LIEF."""
-        if not LIEF_AVAILABLE:
+        """Initialize binary parsing with LIEF.
+
+        Parses the binary file and detects the target architecture. Sets
+        architecture to x86_64 as fallback if detection fails.
+
+        Raises:
+            ValueError: If binary parsing fails and LIEF is available.
+        """
+        if not LIEF_AVAILABLE or lief is None:
             self.logger.warning("LIEF not available, binary manipulation will be limited")
             return
 
@@ -244,27 +289,31 @@ class ControlFlowDeobfuscator:
                 self.architecture = "x86_64"
 
     def _initialize_disassembler(self) -> None:
-        """Initialize Capstone disassembler and Keystone assembler."""
-        if not CAPSTONE_AVAILABLE:
+        """Initialize Capstone disassembler and Keystone assembler.
+
+        Sets up architecture-specific disassembly and assembly tools based on
+        detected binary architecture.
+        """
+        if not CAPSTONE_AVAILABLE or Cs is None:
             self.logger.warning("Capstone not available, disassembly will be limited")
             return
 
         try:
-            if self.architecture == "x86_64":
+            if self.architecture == "x86_64" and CS_ARCH_X86 is not None and CS_MODE_64 is not None:
                 self.disassembler = Cs(CS_ARCH_X86, CS_MODE_64)
-                if KEYSTONE_AVAILABLE:
+                if KEYSTONE_AVAILABLE and Ks is not None and KS_ARCH_X86 is not None and KS_MODE_64 is not None:
                     self.assembler = Ks(KS_ARCH_X86, KS_MODE_64)
-            elif self.architecture == "x86":
+            elif self.architecture == "x86" and CS_ARCH_X86 is not None and CS_MODE_32 is not None:
                 self.disassembler = Cs(CS_ARCH_X86, CS_MODE_32)
-                if KEYSTONE_AVAILABLE:
+                if KEYSTONE_AVAILABLE and Ks is not None and KS_ARCH_X86 is not None and KS_MODE_32 is not None:
                     self.assembler = Ks(KS_ARCH_X86, KS_MODE_32)
-            elif self.architecture == "arm64":
+            elif self.architecture == "arm64" and CS_ARCH_ARM64 is not None:
                 self.disassembler = Cs(CS_ARCH_ARM64, 0)
-                if KEYSTONE_AVAILABLE:
+                if KEYSTONE_AVAILABLE and Ks is not None and KS_ARCH_ARM64 is not None:
                     self.assembler = Ks(KS_ARCH_ARM64, 0)
-            elif self.architecture == "arm":
+            elif self.architecture == "arm" and CS_ARCH_ARM is not None and CS_MODE_ARM is not None:
                 self.disassembler = Cs(CS_ARCH_ARM, CS_MODE_ARM)
-                if KEYSTONE_AVAILABLE:
+                if KEYSTONE_AVAILABLE and Ks is not None and KS_ARCH_ARM is not None and KS_MODE_ARM is not None:
                     self.assembler = Ks(KS_ARCH_ARM, KS_MODE_ARM)
 
             if self.disassembler and hasattr(self.disassembler, "detail"):
@@ -275,8 +324,12 @@ class ControlFlowDeobfuscator:
             self.logger.exception("Failed to initialize disassembler: %s", e)
 
     def _initialize_opaque_analyzer(self) -> None:
-        """Initialize advanced opaque predicate analyzer."""
-        if OPAQUE_ANALYZER_AVAILABLE and OpaquePredicateAnalyzer is not type(None):  # type: ignore[comparison-overlap]
+        """Initialize advanced opaque predicate analyzer.
+
+        Creates an instance of the opaque predicate analyzer if available,
+        logging warnings if initialization fails or module not available.
+        """
+        if OPAQUE_ANALYZER_AVAILABLE and OpaquePredicateAnalyzer is not None:
             try:
                 self.opaque_analyzer = OpaquePredicateAnalyzer()
                 self.logger.info("Initialized advanced opaque predicate analyzer")
@@ -292,13 +345,18 @@ class ControlFlowDeobfuscator:
     ) -> DeobfuscationResult:
         """Deobfuscate a single function's control flow.
 
+        Performs comprehensive deobfuscation including dispatcher detection,
+        opaque predicate removal, and bogus block elimination.
+
         Args:
-            function_address: Address of the function to deobfuscate
-            function_name: Optional name of the function
+            function_address: Address of the function to deobfuscate.
+            function_name: Optional name of the function.
 
         Returns:
-            DeobfuscationResult containing deobfuscated CFG and analysis data
+            DeobfuscationResult containing deobfuscated CFG and analysis data.
 
+        Raises:
+            Exception: If deobfuscation fails during CFG building or analysis.
         """
         self.logger.info("Deobfuscating function at 0x%x", function_address)
 
@@ -375,16 +433,24 @@ class ControlFlowDeobfuscator:
             self.logger.exception("Deobfuscation failed: %s", e)
             raise
 
-    def _build_control_flow_graph(self, r2: "Radare2Session | R2SessionPoolAdapter", function_address: int) -> Any:
+    def _build_control_flow_graph(
+        self, r2: "Radare2Session | R2SessionPoolAdapter", function_address: int
+    ) -> Any:
         """Build control flow graph for a function using radare2.
 
+        Constructs a directed graph with basic blocks as nodes and control
+        flow edges between them. Includes predecessors/successors tracking.
+
         Args:
-            r2: Active radare2 session
-            function_address: Address of the function
+            r2: Active radare2 session.
+            function_address: Address of the function.
 
         Returns:
-            NetworkX directed graph representing the CFG
+            NetworkX directed graph representing the CFG.
 
+        Raises:
+            RuntimeError: If NetworkX is not available.
+            ValueError: If CFG retrieval from radare2 fails.
         """
         if not NETWORKX_AVAILABLE:
             raise RuntimeError("NetworkX required for control flow deobfuscation")
@@ -450,13 +516,12 @@ class ControlFlowDeobfuscator:
         state variable based switching. Supports OLLVM, Tigress, and VMProtect patterns.
 
         Args:
-            r2: Active radare2 session
-            cfg: Control flow graph
-            function_address: Function address
+            r2: Active radare2 session.
+            cfg: Control flow graph.
+            function_address: Function address.
 
         Returns:
-            List of detected dispatchers
-
+            List of detected dispatchers.
         """
         dispatchers = []
 
@@ -496,12 +561,11 @@ class ControlFlowDeobfuscator:
         - Dominates many blocks in the CFG
 
         Args:
-            basic_block: Basic block to analyze
-            cfg: Control flow graph
+            basic_block: Basic block to analyze.
+            cfg: Control flow graph.
 
         Returns:
-            True if block is likely a dispatcher
-
+            True if block is likely a dispatcher.
         """
         out_degree = len(basic_block.successors)
         if out_degree < 3:
@@ -530,14 +594,16 @@ class ControlFlowDeobfuscator:
     ) -> dict[str, Any]:
         """Identify the state variable used by a dispatcher.
 
+        Analyzes dispatcher instructions to find the variable controlling
+        state transitions, supporting stack and global variable patterns.
+
         Args:
-            r2: Active radare2 session
-            basic_block: Dispatcher block
-            function_address: Function address
+            r2: Active radare2 session.
+            basic_block: Dispatcher block.
+            function_address: Function address.
 
         Returns:
-            Dictionary containing state variable information
-
+            Dictionary containing state variable information (location, type, access, instruction).
         """
         state_var_candidates = []
 
@@ -583,13 +649,15 @@ class ControlFlowDeobfuscator:
     def _identify_controlled_blocks(self, cfg: Any, dispatcher_address: int) -> list[int]:
         """Identify blocks controlled by a dispatcher.
 
+        Finds all blocks that branch from dispatcher and descendants that
+        return control to dispatcher.
+
         Args:
-            cfg: Control flow graph
-            dispatcher_address: Address of dispatcher block
+            cfg: Control flow graph.
+            dispatcher_address: Address of dispatcher block.
 
         Returns:
-            List of controlled block addresses
-
+            List of controlled block addresses.
         """
         controlled = list(cfg.successors(dispatcher_address))
 
@@ -613,15 +681,17 @@ class ControlFlowDeobfuscator:
     ) -> dict[int, int]:
         """Extract switch case mappings from dispatcher block.
 
+        Analyzes dispatcher instructions to extract case value to block mappings.
+        Falls back to enumerated mapping if explicit switch info unavailable.
+
         Args:
-            r2: Active radare2 session
-            basic_block: Dispatcher block
-            controlled_blocks: List of controlled blocks
-            function_address: Function address
+            r2: Active radare2 session.
+            basic_block: Dispatcher block.
+            controlled_blocks: List of controlled blocks.
+            function_address: Function address.
 
         Returns:
-            Mapping from case values to target block addresses
-
+            Mapping from case values to target block addresses.
         """
         try:
             switch_info = r2._execute_command(
@@ -640,12 +710,14 @@ class ControlFlowDeobfuscator:
     def _classify_dispatcher_type(self, basic_block: BasicBlock) -> str:
         """Classify the type of dispatcher (OLLVM, Tigress, VMProtect, etc.).
 
+        Uses instruction patterns and control flow characteristics to identify
+        obfuscator tool that generated the dispatcher.
+
         Args:
-            basic_block: Dispatcher block
+            basic_block: Dispatcher block.
 
         Returns:
-            String identifying dispatcher type
-
+            String identifying dispatcher type (OLLVM, Tigress, VMProtect, or Generic).
         """
         disasm_text = " ".join(inst.get("disasm", "") for inst in basic_block.instructions)
 
@@ -664,15 +736,17 @@ class ControlFlowDeobfuscator:
     ) -> Any:
         """Unflatten control flow by removing dispatcher blocks and recovering original edges.
 
+        Creates a new CFG with dispatcher nodes removed and original control flow
+        edges restored based on case mappings.
+
         Args:
-            r2: Active radare2 session
-            cfg: Original control flow graph
-            dispatchers: List of detected dispatchers
-            function_address: Function address
+            r2: Active radare2 session.
+            cfg: Original control flow graph.
+            dispatchers: List of detected dispatchers.
+            function_address: Function address.
 
         Returns:
-            Deobfuscated control flow graph
-
+            Deobfuscated control flow graph with flattening removed.
         """
         deobfuscated = cfg.copy()
 
@@ -711,14 +785,13 @@ class ControlFlowDeobfuscator:
         the original control flow before flattening.
 
         Args:
-            r2: Active radare2 session
-            cfg: Control flow graph
-            dispatcher: Dispatcher information
-            function_address: Function address
+            r2: Active radare2 session.
+            cfg: Control flow graph.
+            dispatcher: Dispatcher information.
+            function_address: Function address.
 
         Returns:
-            List of (source, target) edge tuples
-
+            List of (source, target) edge tuples representing original control flow.
         """
         recovered_edges = []
 
@@ -746,13 +819,15 @@ class ControlFlowDeobfuscator:
     ) -> int | None:
         """Extract state variable assignment from a basic block.
 
+        Scans block instructions in reverse to find state variable assignments
+        and extracts their assigned values.
+
         Args:
-            basic_block: Basic block to analyze
-            dispatcher: Dispatcher information
+            basic_block: Basic block to analyze.
+            dispatcher: Dispatcher information.
 
         Returns:
-            Assigned state value or None
-
+            Assigned state value or None if no assignment found.
         """
         for inst in reversed(basic_block.instructions):
             disasm = inst.get("disasm", "").lower()
@@ -786,13 +861,12 @@ class ControlFlowDeobfuscator:
         4. Legacy heuristic-based detection as fallback
 
         Args:
-            r2: Active radare2 session
-            cfg: Control flow graph
-            function_address: Function address
+            r2: Active radare2 session.
+            cfg: Control flow graph.
+            function_address: Function address.
 
         Returns:
-            List of detected opaque predicates with analysis metadata
-
+            List of detected opaque predicates with analysis metadata.
         """
         opaque_predicates: list[dict[str, Any]] = []
 
@@ -890,13 +964,12 @@ class ControlFlowDeobfuscator:
         4. Simplifies control flow by collapsing linear chains
 
         Args:
-            r2: Active radare2 session
-            cfg: Control flow graph
-            opaque_predicates: List of opaque predicates with analysis metadata
+            r2: Active radare2 session.
+            cfg: Control flow graph.
+            opaque_predicates: List of opaque predicates with analysis metadata.
 
         Returns:
-            Simplified control flow graph with dead code removed
-
+            Simplified control flow graph with dead code removed.
         """
         simplified = cfg.copy()
 
@@ -972,12 +1045,11 @@ class ControlFlowDeobfuscator:
         become unreachable as a result of previous removals.
 
         Args:
-            cfg: Control flow graph
-            initial_dead_blocks: Initial set of dead blocks to start elimination
+            cfg: Control flow graph.
+            initial_dead_blocks: Initial set of dead blocks to start elimination.
 
         Returns:
-            Control flow graph with dead code removed
-
+            Control flow graph with dead code removed.
         """
         if not NETWORKX_AVAILABLE:
             return cfg
@@ -1028,11 +1100,10 @@ class ControlFlowDeobfuscator:
         This simplifies the CFG by merging blocks that form straight-line code.
 
         Args:
-            cfg: Control flow graph
+            cfg: Control flow graph.
 
         Returns:
-            Simplified control flow graph
-
+            Simplified control flow graph with linear chains merged.
         """
         if not NETWORKX_AVAILABLE:
             return cfg
@@ -1087,14 +1158,16 @@ class ControlFlowDeobfuscator:
     ) -> list[int]:
         """Detect bogus/unreachable basic blocks inserted by obfuscators.
 
+        Identifies unreachable blocks and blocks containing only no-op instructions
+        that serve no function in the control flow.
+
         Args:
-            r2: Active radare2 session
-            cfg: Control flow graph
-            function_address: Function address
+            r2: Active radare2 session.
+            cfg: Control flow graph.
+            function_address: Function address.
 
         Returns:
-            List of bogus block addresses
-
+            List of bogus block addresses.
         """
         bogus_blocks: list[int] = []
 
@@ -1131,13 +1204,15 @@ class ControlFlowDeobfuscator:
     def _remove_bogus_blocks(self, cfg: Any, bogus_blocks: list[int]) -> Any:
         """Remove bogus blocks from the control flow graph.
 
+        Removes bogus blocks while preserving edges between their predecessors
+        and successors.
+
         Args:
-            cfg: Control flow graph
-            bogus_blocks: List of bogus block addresses
+            cfg: Control flow graph.
+            bogus_blocks: List of bogus block addresses.
 
         Returns:
-            Cleaned control flow graph
-
+            Cleaned control flow graph with bogus blocks removed.
         """
         cleaned = cfg.copy()
 
@@ -1165,16 +1240,18 @@ class ControlFlowDeobfuscator:
     ) -> list[dict[str, Any]]:
         """Generate binary patch information to permanently deobfuscate the function.
 
+        Creates patch operations for dispatcher removal and edge redirection
+        to convert binary to deobfuscated state.
+
         Args:
-            r2: Active radare2 session
-            original_cfg: Original control flow graph
-            deobfuscated_cfg: Deobfuscated control flow graph
-            dispatchers: List of dispatchers
-            function_address: Function address
+            r2: Active radare2 session.
+            original_cfg: Original control flow graph.
+            deobfuscated_cfg: Deobfuscated control flow graph.
+            dispatchers: List of dispatchers.
+            function_address: Function address.
 
         Returns:
-            List of patch operations
-
+            List of patch operations.
         """
         patches = []
 
@@ -1211,12 +1288,11 @@ class ControlFlowDeobfuscator:
         """Get size of a basic block.
 
         Args:
-            cfg: Control flow graph
-            block_address: Block address
+            cfg: Control flow graph.
+            block_address: Block address.
 
         Returns:
-            Size in bytes
-
+            Size in bytes.
         """
         if block_address in cfg.nodes():
             basic_block: BasicBlock = cfg.nodes[block_address]["data"]
@@ -1230,13 +1306,14 @@ class ControlFlowDeobfuscator:
     ) -> dict[str, Any]:
         """Calculate metrics comparing original and deobfuscated CFGs.
 
+        Computes block count, edge count, cycle count, and complexity reduction metrics.
+
         Args:
-            original_cfg: Original control flow graph
-            deobfuscated_cfg: Deobfuscated control flow graph
+            original_cfg: Original control flow graph.
+            deobfuscated_cfg: Deobfuscated control flow graph.
 
         Returns:
-            Dictionary of metrics
-
+            Dictionary of metrics including blocks, edges, cycles, and complexity reduction.
         """
         metrics = {
             "original_blocks": original_cfg.number_of_nodes(),
@@ -1273,15 +1350,16 @@ class ControlFlowDeobfuscator:
     ) -> float:
         """Calculate confidence score for deobfuscation results.
 
+        Scores based on detection of obfuscation elements and reduction metrics.
+
         Args:
-            dispatchers: Detected dispatchers
-            opaque_predicates: Detected opaque predicates
-            bogus_blocks: Detected bogus blocks
-            metrics: Deobfuscation metrics
+            dispatchers: Detected dispatchers.
+            opaque_predicates: Detected opaque predicates.
+            bogus_blocks: Detected bogus blocks.
+            metrics: Deobfuscation metrics.
 
         Returns:
-            Confidence score between 0.0 and 1.0
-
+            Confidence score between 0.0 and 1.0.
         """
         score = 0.0
 
@@ -1308,12 +1386,11 @@ class ControlFlowDeobfuscator:
         """Extract newly recovered edges that weren't in the original CFG.
 
         Args:
-            original_cfg: Original control flow graph
-            deobfuscated_cfg: Deobfuscated control flow graph
+            original_cfg: Original control flow graph.
+            deobfuscated_cfg: Deobfuscated control flow graph.
 
         Returns:
-            List of recovered edge tuples
-
+            List of recovered edge tuples.
         """
         return [(source, target) for source, target, data in deobfuscated_cfg.edges(data=True) if data.get("edge_type") == "recovered"]
 
@@ -1321,11 +1398,10 @@ class ControlFlowDeobfuscator:
         """Classify a basic block based on its instructions.
 
         Args:
-            instructions: List of instructions
+            instructions: List of instructions.
 
         Returns:
-            Block type classification
-
+            Block type classification (empty, return, call, branch, or sequential).
         """
         if not instructions:
             return "empty"
@@ -1343,12 +1419,13 @@ class ControlFlowDeobfuscator:
     def _calculate_block_complexity(self, instructions: list[dict[str, Any]]) -> float:
         """Calculate complexity score for a basic block.
 
+        Scores instructions based on type (calls, jumps, arithmetic).
+
         Args:
-            instructions: List of instructions
+            instructions: List of instructions.
 
         Returns:
-            Complexity score
-
+            Complexity score.
         """
         complexity: float = float(len(instructions))
 
@@ -1368,11 +1445,10 @@ class ControlFlowDeobfuscator:
         """Check if a block is a terminator (ends with ret or unconditional jmp).
 
         Args:
-            instructions: List of instructions
+            instructions: List of instructions.
 
         Returns:
-            True if terminator block
-
+            True if terminator block.
         """
         if not instructions:
             return False
@@ -1387,13 +1463,14 @@ class ControlFlowDeobfuscator:
     ) -> bool:
         """Export deobfuscated CFG to DOT format for visualization.
 
+        Generates a Graphviz DOT file with color-coded nodes and edge types.
+
         Args:
-            result: Deobfuscation result
-            output_path: Output file path
+            result: Deobfuscation result.
+            output_path: Output file path.
 
         Returns:
-            True if successful
-
+            True if successful.
         """
         if not NETWORKX_AVAILABLE:
             self.logger.exception("NetworkX required for export")
@@ -1454,15 +1531,19 @@ class ControlFlowDeobfuscator:
     ) -> bool:
         """Apply deobfuscation patches to create a patched binary.
 
+        Modifies the binary in-place with dispatcher NOPs and edge redirects.
+
         Args:
-            result: Deobfuscation result with patch information
-            output_path: Optional output path for patched binary
+            result: Deobfuscation result with patch information.
+            output_path: Optional output path for patched binary.
 
         Returns:
-            True if successful
+            True if successful.
 
+        Raises:
+            ValueError: If binary parsing for patching fails.
         """
-        if not LIEF_AVAILABLE or not KEYSTONE_AVAILABLE:
+        if not LIEF_AVAILABLE or lief is None or not KEYSTONE_AVAILABLE:
             self.logger.exception("LIEF and Keystone required for patching")
             return False
 
@@ -1520,12 +1601,11 @@ class ControlFlowDeobfuscator:
         """Find the section containing a given address.
 
         Args:
-            binary: LIEF binary object
-            address: Virtual address
+            binary: LIEF binary object.
+            address: Virtual address.
 
         Returns:
-            Section object or None
-
+            Section object or None.
         """
         try:
             if hasattr(binary, "sections") and hasattr(binary, "imagebase"):

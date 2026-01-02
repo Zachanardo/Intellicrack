@@ -45,7 +45,11 @@ class ModelLoadingDialog(BaseDialog):
     model_loaded = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the ModelLoadingDialog with default values."""
+        """Initialize the ModelLoadingDialog with default values.
+
+        Args:
+            parent: Parent widget for this dialog, or None for no parent.
+        """
         super().__init__(parent, "Model Loading Manager")
         self.setMinimumSize(800, 600)
 
@@ -59,7 +63,12 @@ class ModelLoadingDialog(BaseDialog):
             self.setup_content(new_layout)
 
     def setup_content(self, layout: QVBoxLayout) -> None:
-        """Set up the UI content."""
+        """Set up the UI content.
+
+        Args:
+            layout: The QVBoxLayout instance to populate with UI elements
+                including title, tabs, and dialog buttons.
+        """
         # Title
         title = QLabel("Background Model Loading Manager")
         title.setFont(QFont("Arial", 14, QFont.Weight.Bold))
@@ -92,7 +101,13 @@ class ModelLoadingDialog(BaseDialog):
         self.setLayout(layout)
 
     def create_new_model_tab(self) -> QWidget:
-        """Create the new model loading tab."""
+        """Create the new model loading tab.
+
+        Returns:
+            QWidget: A widget containing the new model loading configuration
+                tab with provider selection, model name input, API URL
+                configuration, priority settings, and load button.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -155,7 +170,12 @@ class ModelLoadingDialog(BaseDialog):
         return widget
 
     def create_loaded_models_tab(self) -> QWidget:
-        """Create the loaded models tab."""
+        """Create the loaded models tab.
+
+        Returns:
+            QWidget: A widget containing the loaded models display tab with a
+                list of available and loading models plus a refresh button.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -216,7 +236,12 @@ class ModelLoadingDialog(BaseDialog):
             QMessageBox.critical(self, "Error", f"Error loading model:\n{e!s}")
 
     def get_next_id(self) -> int:
-        """Get next available ID number."""
+        """Get next available ID number.
+
+        Returns:
+            int: The next available ID number based on the current count of
+                loading tasks, calculated as the total number of tasks plus one.
+        """
         all_tasks = self.llm_manager.get_all_loading_tasks()
         return len(all_tasks) + 1
 
@@ -246,7 +271,12 @@ class ModelLoadingDialog(BaseDialog):
                 self.models_list.addItem(item)
 
     def on_model_loaded(self, model_id: str) -> None:
-        """Handle model loaded signal."""
+        """Handle model loaded signal.
+
+        Args:
+            model_id: The unique identifier string of the model that was
+                successfully loaded.
+        """
         self.model_loaded.emit(model_id)
         self.refresh_loaded_models()
 
@@ -254,7 +284,12 @@ class ModelLoadingDialog(BaseDialog):
         QMessageBox.information(self, "Model Loaded", f"Model successfully loaded:\n{model_id}")
 
     def closeEvent(self, event: QCloseEvent | None) -> None:
-        """Handle dialog close."""
+        """Handle dialog close.
+
+        Args:
+            event: The QCloseEvent instance containing close event details, or
+                None if no event is available.
+        """
         if event is None:
             return
         self.progress_widget.cleanup()

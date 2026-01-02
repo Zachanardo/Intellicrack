@@ -497,7 +497,7 @@ class TestHASPSentinelParser:
         assert write_response.license_data["bytes_written"] == len(test_data)
 
         memory = hasp_parser.memory_storage[100]
-        assert memory[256:256+len(test_data)] == bytearray(test_data)
+        assert memory[256:256 + len(test_data)] == bytearray(test_data)
 
     def test_encryption_operation(self, hasp_parser: HASPSentinelParser, sample_login_packet: bytes) -> None:
         """Encryption operation encrypts data correctly."""
@@ -746,7 +746,7 @@ class TestHASPUSBEmulator:
         )
 
         assert len(info) == 16
-        vendor_id, product_id, version, memory = struct.unpack("<IIII", info)
+        vendor_id, product_id, _version, _memory = struct.unpack("<IIII", info)
         assert vendor_id == HASPUSBProtocol.USB_VENDOR_ID
         assert product_id in HASPUSBProtocol.USB_PRODUCT_IDS
 
@@ -831,7 +831,7 @@ class TestHASPEdgeCases:
         hasp_parser.add_feature(feature)
 
         sessions = []
-        for i in range(2):
+        for _i in range(2):
             packet = self._create_login_packet(0x12345678, 8888)
             request = hasp_parser.parse_request(packet)
             assert request is not None

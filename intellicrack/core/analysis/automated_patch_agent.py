@@ -44,7 +44,16 @@ class AutomatedPatchAgent:
         self.exploitation_techniques = self._load_exploitation_techniques()
 
     def _initialize_bypass_patterns(self) -> dict[str, bytes]:
-        """Initialize real bypass patterns for modern protections."""
+        """Initialize real bypass patterns for modern protections.
+
+        Loads machine code bypass patterns for defeating various protection
+        schemes including license checks, anti-debugging mechanisms, time
+        bombs, hardware ID checks, and integrity verification routines.
+
+        Returns:
+            Dictionary mapping protection bypass names to their machine code
+            patterns ready for binary patching.
+        """
         return {
             # License check bypasses
             "license_check_jmp": b"\xeb",  # Short jump to bypass
@@ -66,7 +75,17 @@ class AutomatedPatchAgent:
         }
 
     def _load_exploitation_techniques(self) -> dict[str, Any]:
-        """Load real exploitation techniques for modern software."""
+        """Load real exploitation techniques for modern software.
+
+        Initializes and loads advanced exploitation primitives including ROP
+        chains for privilege escalation, shellcode templates for code execution,
+        API hook detours for function interception, and memory patches for
+        runtime modification of protected software behavior.
+
+        Returns:
+            Dictionary containing ROP chains, shellcode templates, hook detours,
+            and memory patches organized by exploitation technique type.
+        """
         return {
             "rop_chains": self._generate_rop_chains(),
             "shellcode": self._generate_shellcode_templates(),
@@ -75,7 +94,16 @@ class AutomatedPatchAgent:
         }
 
     def _generate_rop_chains(self) -> dict[str, list[int]]:
-        """Generate ROP chains for exploitation."""
+        """Generate ROP chains for exploitation.
+
+        Creates return-oriented programming (ROP) chains that chain together
+        existing executable code sequences to perform protected operations like
+        memory manipulation and privilege escalation without executing injected code.
+
+        Returns:
+            Dictionary mapping ROP chain names to lists of instruction addresses
+            for gadget chaining and control flow hijacking.
+        """
         return {
             "virtualprotect": [
                 0x77E51234,  # VirtualProtect address (example)
@@ -97,7 +125,16 @@ class AutomatedPatchAgent:
         }
 
     def _generate_shellcode_templates(self) -> dict[str, bytes]:
-        """Generate shellcode templates for patching."""
+        """Generate shellcode templates for patching.
+
+        Produces compact machine code sequences for license validation bypass,
+        trial period reset, and feature flag modification. These templates are
+        injected into binary code sections to override protection routines.
+
+        Returns:
+            Dictionary mapping shellcode template names to their assembled
+            machine code bytes ready for binary injection.
+        """
         return {
             # License validation bypass shellcode
             "license_bypass": (
@@ -123,7 +160,16 @@ class AutomatedPatchAgent:
         }
 
     def _create_hook_detours(self) -> dict[str, bytes]:
-        """Create hook detours for API interception."""
+        """Create hook detours for API interception.
+
+        Generates detour code for intercepting Windows API calls like CreateFile
+        and RegQueryValueEx to spoof file and registry access used by protection
+        mechanisms to validate licenses and check hardware configurations.
+
+        Returns:
+            Dictionary mapping API hook names to their detour code bytes
+            for inline hooking and function trampoline installation.
+        """
         return {
             # CreateFile hook for license file spoofing
             "createfile_detour": (
@@ -143,7 +189,16 @@ class AutomatedPatchAgent:
         }
 
     def _create_memory_patches(self) -> dict[str, tuple[int, bytes]]:
-        """Create memory patches for runtime modification."""
+        """Create memory patches for runtime modification.
+
+        Generates memory patches to disable nag screens, skip update checks,
+        enable debug menus, and remove usage restrictions. These patches target
+        specific memory offsets in loaded binaries for runtime behavior modification.
+
+        Returns:
+            Dictionary mapping patch names to tuples of memory offset and patch
+            bytes for direct memory modification.
+        """
         return {
             "remove_nag_screen": (0x00401234, b"\x90" * 20),  # NOP nag screen call
             "skip_update_check": (0x00401567, b"\xeb\x50"),  # Jump over update check
@@ -152,7 +207,26 @@ class AutomatedPatchAgent:
         }
 
     def analyze_binary(self, binary_path: str) -> dict[str, Any]:
-        """Analyze binary for patch points."""
+        """Analyze binary for patch points.
+
+        Performs comprehensive binary analysis to detect installed protection
+        schemes (UPX packing, Themida, WinLicense, VMProtect), identify
+        patchable code locations, calculate vulnerability scoring, and
+        recommend specific patches to defeat detected protections.
+
+        Args:
+            binary_path: Path to the binary file to analyze for protection
+                mechanisms and vulnerable code patterns.
+
+        Returns:
+            Dictionary containing identified protection schemes, located patch
+            points with offsets and types, calculated vulnerability score,
+            and recommended patches with specific bypass techniques.
+
+        Raises:
+            Exception: Logged if file I/O or binary analysis fails but does not
+                re-raise, returning empty structures instead.
+        """
         protection_schemes: list[str] = []
         patch_points_list: list[dict[str, Any]] = []
         vulnerability_score: int = 0
@@ -206,7 +280,21 @@ class AutomatedPatchAgent:
         }
 
     def _find_patch_points(self, binary_data: bytes) -> list[dict[str, Any]]:
-        """Find patchable points in binary."""
+        """Find patchable points in binary.
+
+        Scans binary data for known protection check patterns including license
+        validation checks, anti-debugging routines, and time-based restrictions.
+        Each pattern match yields a patchable code location with offset and type
+        information for targeted exploitation.
+
+        Args:
+            binary_data: Binary data to scan for patchable patterns including
+                license checks, anti-debug mechanisms, and time verification code.
+
+        Returns:
+            List of dictionaries containing patch point information including
+            byte offset, protection type, hex pattern, and patch size in bytes.
+        """
         patch_points = []
 
         # Common x86/x64 patterns to patch
@@ -244,7 +332,25 @@ class AutomatedPatchAgent:
         return patch_points
 
     def apply_patch(self, binary_path: str, patch: dict[str, Any]) -> bool:
-        """Apply a patch to the binary."""
+        """Apply a patch to the binary.
+
+        Applies a specific patch to the binary file at the designated offset,
+        creating a timestamped backup before modification. Logs all patching
+        operations to the internal patch history for audit and rollback purposes.
+
+        Args:
+            binary_path: Path to the binary file to patch with bypass code.
+            patch: Dictionary containing 'offset' (int) and 'patch' (bytes) keys
+                specifying the location and machine code to inject.
+
+        Returns:
+            True if the patch was successfully applied and written to disk,
+            False otherwise including validation or I/O failures.
+
+        Raises:
+            Exception: Logged if file read/write operations fail but does not
+                re-raise, returning False instead.
+        """
         try:
             with open(binary_path, "rb") as f:
                 binary_data = bytearray(f.read())
@@ -284,7 +390,22 @@ class AutomatedPatchAgent:
         return False
 
     def generate_keygen(self, algorithm_type: str) -> str:
-        """Generate a keygen based on reverse-engineered algorithm."""
+        """Generate a keygen based on reverse-engineered algorithm.
+
+        Creates complete Python keygen source code implementing license key
+        generation based on reverse-engineered algorithms. Supports multiple
+        cryptographic approaches and custom implementations discovered during
+        binary analysis of protected software.
+
+        Args:
+            algorithm_type: Type of algorithm to use: 'serial' for sequential
+                hashing, 'rsa' for RSA cryptography, 'elliptic' for ECC based
+                generation, or 'custom' for proprietary algorithms.
+
+        Returns:
+            Generated keygen code as a Python string with license generation
+            functions ready for immediate execution and key production.
+        """
         keygen_code = {
             "serial": self._generate_serial_keygen(),
             "rsa": self._generate_rsa_keygen(),
@@ -295,7 +416,16 @@ class AutomatedPatchAgent:
         return keygen_code.get(algorithm_type, self._generate_serial_keygen())
 
     def _generate_serial_keygen(self) -> str:
-        """Generate serial number keygen."""
+        """Generate serial number keygen.
+
+        Produces Python code implementing simple MD5-based hash serial key
+        generation. Suitable for protection schemes using hash-derived serial
+        validation where key validity depends on username hashing.
+
+        Returns:
+            Python code string implementing serial number based key generation
+            with validation function for license verification.
+        """
         return '''
 import hashlib
 import random
@@ -303,7 +433,7 @@ import random
 def generate_serial(name):
     """Generate valid serial for given name."""
     # Common serial algorithm patterns
-    name_hash = hashlib.md5(name.encode()).hexdigest()
+    name_hash = hashlib.md5(name.encode(), usedforsecurity=False).hexdigest()
 
     # Format: 4char-4char-4char-4char hexadecimal groups
     serial_parts = []
@@ -325,7 +455,16 @@ print(f"Generated serial: {serial}")
 '''
 
     def _generate_rsa_keygen(self) -> str:
-        """Generate RSA-based keygen."""
+        """Generate RSA-based keygen.
+
+        Produces Python code implementing RSA-2048 asymmetric key generation
+        and license data signing. Targets protection schemes using RSA signature
+        verification for license validity checking.
+
+        Returns:
+            Python code string implementing RSA cryptography based key generation
+            with PSS padding and SHA256 hashing for signature production.
+        """
         return '''
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
@@ -362,7 +501,16 @@ print(f"License Key: {generate_license_key()}")
 '''
 
     def _generate_ecc_keygen(self) -> str:
-        """Generate ECC-based keygen."""
+        """Generate ECC-based keygen.
+
+        Produces Python code implementing SECP256R1 elliptic curve key
+        generation and license data signing with ECDSA. Targets modern
+        protection schemes using elliptic curve cryptography for license validation.
+
+        Returns:
+            Python code string implementing elliptic curve cryptography based
+            key generation with ECDSA signatures for license production.
+        """
         return '''
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -392,7 +540,16 @@ print(f"ECC License: {generate_ecc_license()}")
 '''
 
     def _generate_custom_keygen(self) -> str:
-        """Generate custom algorithm keygen."""
+        """Generate custom algorithm keygen.
+
+        Produces Python code implementing proprietary key generation algorithms
+        combining bitwise operations, time-based components, and seed values.
+        Used for protection schemes with undocumented or obfuscated key derivation.
+
+        Returns:
+            Python code string implementing custom algorithm based key generation
+            with proprietary license key formatting.
+        """
         return '''
 import struct
 import time
@@ -423,7 +580,27 @@ print(f"License Key: {key}")
 
 
 def run_automated_patch_agent(target_binary: str, patch_mode: str = "auto") -> dict[str, Any]:
-    """Run the automated patch agent on target binary."""
+    """Run the automated patch agent on target binary.
+
+    Orchestrates complete automated patching workflow including binary analysis,
+    protection detection, vulnerability identification, and conditional patch
+    application based on selected patching mode.
+
+    Args:
+        target_binary: Path to the target binary file to patch and analyze
+            for protection mechanisms.
+        patch_mode: Patching mode controlling automation level. Default "auto"
+            applies all recommended patches automatically. Other modes may
+            require manual selection before patch application.
+
+    Returns:
+        Dictionary containing 'analysis' (binary analysis results), 'patches_applied'
+        (list of successfully applied patches), and 'success' (boolean indicating
+        whether any patches were applied successfully).
+
+    Raises:
+        Exception: Logged from AutomatedPatchAgent methods but not re-raised.
+    """
     agent = AutomatedPatchAgent()
 
     # Analyze the binary

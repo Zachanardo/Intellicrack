@@ -45,7 +45,7 @@ try:
             output_callback: Optional callback function to handle output messages.
 
         Returns:
-            The result of the Windows interactive activation process.
+            Dictionary containing the result of the Windows interactive activation process.
 
         """
         activator = create_windows_activator()
@@ -55,7 +55,7 @@ try:
         """Activate Windows using embedded terminal (recommended).
 
         Returns:
-            The result of the Windows embedded terminal activation process.
+            Dictionary containing the result of the Windows embedded terminal activation process.
 
         """
         activator = create_windows_activator()

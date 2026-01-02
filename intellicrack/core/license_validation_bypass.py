@@ -211,7 +211,7 @@ class LicenseValidationBypass:
             data: Raw bytes containing potential ASN.1 encoded key.
 
         Returns:
-            ExtractedKey | None: Parsed RSA key if found, None otherwise.
+            Parsed RSA key if found, None otherwise.
         """
         try:
             # Try to parse as public key
@@ -259,7 +259,7 @@ class LicenseValidationBypass:
             data: Binary data to scan for RSA moduli.
 
         Returns:
-            list[ExtractedKey]: List of potential RSA keys found.
+            List of potential RSA keys found.
         """
         keys = []
 
@@ -307,7 +307,7 @@ class LicenseValidationBypass:
             n: Integer to check as potential RSA modulus.
 
         Returns:
-            bool: True if the number has properties consistent with RSA modulus.
+            True if the number has properties consistent with RSA modulus.
         """
         if n < 2**511 or n > 2**4097:  # Common RSA sizes
             return False
@@ -332,7 +332,7 @@ class LicenseValidationBypass:
             binary_path: Path to the binary file to analyze.
 
         Returns:
-            list[ExtractedKey]: List of extracted keys from PE resources.
+            List of extracted keys from PE resources.
         """
         keys = []
 
@@ -377,7 +377,7 @@ class LicenseValidationBypass:
             binary_path: Path to the binary file to analyze.
 
         Returns:
-            list[ExtractedKey]: List of extracted keys from CryptoAPI usage.
+            List of extracted keys from CryptoAPI usage.
         """
         keys = []
 
@@ -429,7 +429,7 @@ class LicenseValidationBypass:
             data: Binary data to analyze for key structures.
 
         Returns:
-            list[ExtractedKey]: List of extracted keys from memory patterns.
+            List of extracted keys from memory patterns.
         """
         keys = []
 
@@ -482,7 +482,7 @@ class LicenseValidationBypass:
             data: Binary data to analyze for keys using entropy metrics.
 
         Returns:
-            list[ExtractedKey]: List of extracted keys from entropy analysis.
+            List of extracted keys from entropy analysis.
         """
         keys = []
         window_size = 256
@@ -520,7 +520,7 @@ class LicenseValidationBypass:
             data: Binary data to analyze.
 
         Returns:
-            float: Shannon entropy value (0.0-8.0 for bytes).
+            Shannon entropy value (0.0-8.0 for bytes).
         """
         if not data:
             return 0.0
@@ -540,7 +540,7 @@ class LicenseValidationBypass:
             data: Binary data to check.
 
         Returns:
-            bool: True if data appears to contain cryptographic keys.
+            True if data appears to contain cryptographic keys.
         """
         if len(data) < 128:
             return False
@@ -561,7 +561,7 @@ class LicenseValidationBypass:
             data: Binary data containing potential key formats.
 
         Returns:
-            list[ExtractedKey]: List of successfully parsed keys.
+            List of successfully parsed keys.
         """
         keys = []
 
@@ -592,7 +592,7 @@ class LicenseValidationBypass:
             virtual_address: Virtual address of the PE section.
 
         Returns:
-            list[ExtractedKey]: List of extracted keys from the section.
+            List of extracted keys from the section.
         """
         keys = []
 
@@ -639,7 +639,7 @@ class LicenseValidationBypass:
             text_va: Virtual address of the text section.
 
         Returns:
-            list[ExtractedKey]: List of extracted keys from CryptoAPI usage.
+            List of extracted keys from CryptoAPI usage.
         """
         keys = []
 
@@ -683,7 +683,7 @@ class LicenseValidationBypass:
             data: Memory data containing OpenSSL RSA structure.
 
         Returns:
-            ExtractedKey | None: Parsed RSA key if found, None otherwise.
+            Parsed RSA key if found, None otherwise.
         """
         # OpenSSL RSA structure detection with version-specific handling
         try:
@@ -737,7 +737,7 @@ class LicenseValidationBypass:
             data: Memory data containing OpenSSL 1.0.x RSA structure.
 
         Returns:
-            ExtractedKey | None: Parsed RSA key if found, None otherwise.
+            Parsed RSA key if found, None otherwise.
         """
         try:
             # OpenSSL 1.0.x RSA structure layout
@@ -801,7 +801,7 @@ class LicenseValidationBypass:
             data: Memory data containing OpenSSL 1.1.x RSA structure.
 
         Returns:
-            ExtractedKey | None: Parsed RSA key if found, None otherwise.
+            Parsed RSA key if found, None otherwise.
         """
         try:
             offset = 16 + 16
@@ -856,7 +856,7 @@ class LicenseValidationBypass:
             data: Memory data containing OpenSSL 3.x RSA structure.
 
         Returns:
-            ExtractedKey | None: Parsed RSA key if found, None otherwise.
+            Parsed RSA key if found, None otherwise.
         """
         try:
             offset = 16 + 8
@@ -916,7 +916,7 @@ class LicenseValidationBypass:
             data: Memory data containing unknown OpenSSL RSA structure.
 
         Returns:
-            ExtractedKey | None: Parsed RSA key if found, None otherwise.
+            Parsed RSA key if found, None otherwise.
         """
         try:
             # Try multiple offsets to find BIGNUM structures
@@ -1020,7 +1020,7 @@ class LicenseValidationBypass:
             data: Memory data containing OpenSSL 1.1.x BIGNUM structure.
 
         Returns:
-            int | None: Integer value of the BIGNUM, or None if parsing fails.
+            Integer value of the BIGNUM, or None if parsing fails.
         """
         try:
             if len(data) < 12:
@@ -1065,7 +1065,7 @@ class LicenseValidationBypass:
             data: Memory data containing OpenSSL 3.x BIGNUM structure.
 
         Returns:
-            int | None: Integer value of the BIGNUM, or None if parsing fails.
+            Integer value of the BIGNUM, or None if parsing fails.
         """
         try:
             if len(data) < 16:
@@ -1131,7 +1131,7 @@ class LicenseValidationBypass:
             data: Memory data containing OpenSSL BIGNUM structure.
 
         Returns:
-            int | None: Integer value of the BIGNUM, or None if parsing fails.
+            Integer value of the BIGNUM, or None if parsing fails.
         """
         try:
             # Simplified BIGNUM reading
@@ -1168,7 +1168,7 @@ class LicenseValidationBypass:
             data: Memory data containing BCRYPT_RSAKEY_BLOB structure.
 
         Returns:
-            ExtractedKey | None: Parsed RSA key if found, None otherwise.
+            Parsed RSA key if found, None otherwise.
         """
         try:
             # BCRYPT_RSAKEY_BLOB structure

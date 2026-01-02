@@ -10,6 +10,7 @@ Licensed under GNU General Public License v3.0
 import argparse
 import os
 import tempfile
+from collections.abc import Generator
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -96,7 +97,7 @@ class TestProfileManager:
     """Production tests for ProfileManager."""
 
     @pytest.fixture
-    def temp_config_dir(self) -> Path:
+    def temp_config_dir(self) -> Generator[Path, None, None]:
         """Create temporary config directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             config_dir = Path(tmpdir)
@@ -222,7 +223,7 @@ class TestDefaultProfiles:
     """Test default profile creation."""
 
     @pytest.fixture
-    def temp_config_dir(self) -> Path:
+    def temp_config_dir(self) -> Generator[Path, None, None]:
         """Create temporary config directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             config_dir = Path(tmpdir)
@@ -284,7 +285,7 @@ class TestProfileMigration:
     """Test migration from legacy profile files."""
 
     @pytest.fixture
-    def temp_config_dir(self) -> Path:
+    def temp_config_dir(self) -> Generator[Path, None, None]:
         """Create temporary config directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             config_dir = Path(tmpdir)
@@ -321,8 +322,8 @@ class TestProfileMigration:
             assert manager.profiles["legacy_profile"].description == "Migrated from file"
 
         if legacy_dir.exists():
-            for f in legacy_dir.glob("*"):
-                f.unlink()
+            for file_path in legacy_dir.glob("*"):
+                file_path.unlink()
             legacy_dir.rmdir()
 
 
@@ -330,7 +331,7 @@ class TestEdgeCases:
     """Test edge cases and error handling."""
 
     @pytest.fixture
-    def temp_config_dir(self) -> Path:
+    def temp_config_dir(self) -> Generator[Path, None, None]:
         """Create temporary config directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             config_dir = Path(tmpdir)

@@ -307,6 +307,9 @@ dependencies = [
     "loguru",
     "sentry-sdk>=2.47.0,<3",
     "structlog>=25.5.0,<26",
+
+    # Security patches for transitive dependencies
+    "marshmallow>=3.26.2,<4",
 ]
 
 [project.urls]
@@ -404,6 +407,9 @@ addopts = [
     "--ignore=tests/generators",
     "--ignore=tests/checkpoints",
     "--ignore=tests/framework",
+    "-p no:langsmith",
+    "-p no:qt",
+    "-p no:randomly",
 ]
 norecursedirs = [
     "runners",
@@ -423,6 +429,7 @@ markers = [
     "slow: Slow running tests",
     "integration: Integration tests",
     "unit: Unit tests",
+    "e2e: End-to-end tests",
 ]
 
 [tool.pytest-deadfixtures]
@@ -1268,6 +1275,12 @@ docstring-code-line-length = 30
 strictness = "short"
 docstring_style = "google"
 ignore_regex = "^(test_|_)"
+# DAR402: Darglint cannot trace into called functions to see they raise exceptions.
+#         Functions calling yaml.safe_load, json.loads, etc. DO propagate exceptions but
+#         darglint flags Raises sections as "excess" because it only analyzes the immediate code.
+# DAR202: Protocol methods with `...` body define interfaces. They SHOULD document Returns
+#         but darglint sees ellipsis as "no return statement" and flags Returns as excess.
+ignore = ["DAR402", "DAR202"]
 
 [tool.wemake-python-styleguide]
 # Strict code style following wemake guidelines

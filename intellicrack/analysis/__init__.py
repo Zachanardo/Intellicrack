@@ -86,8 +86,8 @@ def get_available_capabilities() -> list[str]:
     """Get list of available analysis capabilities.
 
     Returns:
-        list[str]: List of available capability names including result
-            orchestration, protection workflows, and installed handlers.
+        List of available capability names including result orchestration,
+        protection workflows, and installed handlers.
 
     """
     capabilities = []
@@ -106,7 +106,7 @@ def is_capability_available(capability_name: str) -> bool:
         capability_name: The name of the capability to check for availability.
 
     Returns:
-        bool: True if the capability is available, False otherwise.
+        True if the capability is available, False otherwise.
 
     """
     return capability_name in get_available_capabilities()

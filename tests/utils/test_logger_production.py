@@ -10,7 +10,7 @@ import logging
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from typing import Any
 
 import pytest
 
@@ -26,102 +26,162 @@ from intellicrack.utils.logger import (
 )
 
 
+class FakeLogger:
+    """Real test double for logging.Logger with call tracking."""
+
+    def __init__(self, name: str = "test") -> None:
+        self.name: str = name
+        self.level: int = logging.INFO
+        self.debug_calls: list[tuple[str, ...]] = []
+        self.info_calls: list[tuple[str, ...]] = []
+        self.warning_calls: list[tuple[str, ...]] = []
+        self.error_calls: list[tuple[str, ...]] = []
+        self.critical_calls: list[tuple[str, ...]] = []
+
+    def debug(self, msg: str, *args: Any) -> None:
+        """Track debug level calls."""
+        self.debug_calls.append((msg,) + args)
+
+    def info(self, msg: str, *args: Any) -> None:
+        """Track info level calls."""
+        self.info_calls.append((msg,) + args)
+
+    def warning(self, msg: str, *args: Any) -> None:
+        """Track warning level calls."""
+        self.warning_calls.append((msg,) + args)
+
+    def error(self, msg: str, *args: Any) -> None:
+        """Track error level calls."""
+        self.error_calls.append((msg,) + args)
+
+    def critical(self, msg: str, *args: Any) -> None:
+        """Track critical level calls."""
+        self.critical_calls.append((msg,) + args)
+
+
 class TestLogMessage:
     """Test basic log_message functionality."""
 
-    def test_logs_at_info_level_by_default(self) -> None:
+    def test_logs_at_info_level_by_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_message logs at INFO level by default."""
-        with patch("intellicrack.utils.logger.logger") as mock_logger:
-            log_message("Test message")
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            mock_logger.info.assert_called_once_with("Test message")
+        log_message("Test message")
 
-    def test_logs_at_debug_level(self) -> None:
+        assert len(fake_logger.info_calls) == 1
+        assert fake_logger.info_calls[0] == ("Test message",)
+
+    def test_logs_at_debug_level(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_message logs at DEBUG level when specified."""
-        with patch("intellicrack.utils.logger.logger") as mock_logger:
-            log_message("Debug message", level="DEBUG")
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            mock_logger.debug.assert_called_once_with("Debug message")
+        log_message("Debug message", level="DEBUG")
 
-    def test_logs_at_warning_level(self) -> None:
+        assert len(fake_logger.debug_calls) == 1
+        assert fake_logger.debug_calls[0] == ("Debug message",)
+
+    def test_logs_at_warning_level(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_message logs at WARNING level when specified."""
-        with patch("intellicrack.utils.logger.logger") as mock_logger:
-            log_message("Warning message", level="WARNING")
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            mock_logger.warning.assert_called_once_with("Warning message")
+        log_message("Warning message", level="WARNING")
 
-    def test_logs_at_error_level(self) -> None:
+        assert len(fake_logger.warning_calls) == 1
+        assert fake_logger.warning_calls[0] == ("Warning message",)
+
+    def test_logs_at_error_level(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_message logs at ERROR level when specified."""
-        with patch("intellicrack.utils.logger.logger") as mock_logger:
-            log_message("Error message", level="ERROR")
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            mock_logger.error.assert_called_once_with("Error message")
+        log_message("Error message", level="ERROR")
 
-    def test_logs_at_critical_level(self) -> None:
+        assert len(fake_logger.error_calls) == 1
+        assert fake_logger.error_calls[0] == ("Error message",)
+
+    def test_logs_at_critical_level(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_message logs at CRITICAL level when specified."""
-        with patch("intellicrack.utils.logger.logger") as mock_logger:
-            log_message("Critical message", level="CRITICAL")
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            mock_logger.critical.assert_called_once_with("Critical message")
+        log_message("Critical message", level="CRITICAL")
 
-    def test_handles_case_insensitive_levels(self) -> None:
+        assert len(fake_logger.critical_calls) == 1
+        assert fake_logger.critical_calls[0] == ("Critical message",)
+
+    def test_handles_case_insensitive_levels(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_message handles case-insensitive log levels."""
-        with patch("intellicrack.utils.logger.logger") as mock_logger:
-            log_message("Test", level="error")
-            log_message("Test", level="Error")
-            log_message("Test", level="ERROR")
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            assert mock_logger.error.call_count == 3
+        log_message("Test", level="error")
+        log_message("Test", level="Error")
+        log_message("Test", level="ERROR")
+
+        assert len(fake_logger.error_calls) == 3
 
 
 class TestLogFunctionCall:
     """Test function call logging decorator."""
 
-    def test_logs_function_entry_and_exit(self) -> None:
+    def test_logs_function_entry_and_exit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call logs function entry and exit."""
 
         @log_function_call
         def test_function() -> str:
             return "result"
 
-        with patch("intellicrack.utils.logger.logger") as mock_logger:
-            result = test_function()
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            assert result == "result"
-            assert mock_logger.debug.call_count >= 2
+        result = test_function()
 
-    def test_logs_function_arguments(self) -> None:
+        assert result == "result"
+        assert len(fake_logger.debug_calls) >= 2
+
+    def test_logs_function_arguments(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call logs function arguments."""
 
         @log_function_call
         def test_function(arg1: int, arg2: str) -> None:
             pass
 
-        with patch("intellicrack.utils.logger.logger"):
-            test_function(42, "test")
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-    def test_logs_return_value(self) -> None:
+        test_function(42, "test")
+
+        assert len(fake_logger.debug_calls) > 0
+
+    def test_logs_return_value(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call logs function return value."""
 
         @log_function_call
         def test_function() -> int:
             return 42
 
-        with patch("intellicrack.utils.logger.logger"):
-            result = test_function()
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            assert result == 42
+        result = test_function()
 
-    def test_logs_exceptions(self) -> None:
+        assert result == 42
+
+    def test_logs_exceptions(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call logs exceptions raised by function."""
 
         @log_function_call
         def failing_function() -> None:
             raise ValueError("Test error")
 
-        with patch("intellicrack.utils.logger.logger"):
-            with pytest.raises(ValueError):
-                failing_function()
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
+
+        with pytest.raises(ValueError):
+            failing_function()
 
     def test_preserves_function_metadata(self) -> None:
         """log_function_call preserves function metadata."""
@@ -133,19 +193,21 @@ class TestLogFunctionCall:
         assert documented_function.__name__ == "documented_function"
         assert documented_function.__doc__ == "This is a test function."
 
-    def test_handles_async_functions(self) -> None:
+    def test_handles_async_functions(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call handles async functions."""
 
         @log_function_call
         async def async_function() -> str:
             return "async result"
 
-        with patch("intellicrack.utils.logger.logger"):
-            result = asyncio.run(async_function())
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            assert result == "async result"
+        result = asyncio.run(async_function())
 
-    def test_prevents_recursion_in_logging(self) -> None:
+        assert result == "async result"
+
+    def test_prevents_recursion_in_logging(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call prevents recursion during logging."""
 
         call_count = 0
@@ -157,34 +219,40 @@ class TestLogFunctionCall:
             if depth > 0:
                 recursive_function(depth - 1)
 
-        with patch("intellicrack.utils.logger.logger"):
-            recursive_function(3)
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            assert call_count == 4
+        recursive_function(3)
 
-    def test_skips_problematic_functions(self) -> None:
+        assert call_count == 4
+
+    def test_skips_problematic_functions(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call skips logging for problematic functions."""
 
         @log_function_call
         def __str__(self: object) -> str:
             return "string representation"
 
-        with patch("intellicrack.utils.logger.logger") as mock_logger:
-            __str__(None)
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-    def test_handles_functions_with_keyword_arguments(self) -> None:
+        __str__(None)
+
+    def test_handles_functions_with_keyword_arguments(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call handles functions with keyword arguments."""
 
         @log_function_call
         def function_with_kwargs(a: int, b: int = 10, c: str = "default") -> int:
             return a + b
 
-        with patch("intellicrack.utils.logger.logger"):
-            result = function_with_kwargs(5, b=20, c="custom")
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            assert result == 25
+        result = function_with_kwargs(5, b=20, c="custom")
 
-    def test_safe_repr_handles_repr_failures(self) -> None:
+        assert result == 25
+
+    def test_safe_repr_handles_repr_failures(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call handles objects that fail to repr."""
 
         class BadRepr:
@@ -195,25 +263,29 @@ class TestLogFunctionCall:
         def test_function(obj: BadRepr) -> None:
             pass
 
-        with patch("intellicrack.utils.logger.logger"):
-            test_function(BadRepr())
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-    def test_truncates_long_representations(self) -> None:
+        test_function(BadRepr())
+
+    def test_truncates_long_representations(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call truncates very long argument representations."""
 
         @log_function_call
         def test_function(data: str) -> None:
             pass
 
-        with patch("intellicrack.utils.logger.logger"):
-            long_data = "A" * 200
-            test_function(long_data)
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
+
+        long_data = "A" * 200
+        test_function(long_data)
 
 
 class TestLogAllMethods:
     """Test class decorator for logging all methods."""
 
-    def test_decorates_all_methods(self) -> None:
+    def test_decorates_all_methods(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_all_methods decorates all methods in class."""
 
         @log_all_methods
@@ -224,12 +296,14 @@ class TestLogAllMethods:
             def method2(self) -> str:
                 return "result2"
 
-        with patch("intellicrack.utils.logger.logger"):
-            obj = TestClass()
-            obj.method1()
-            obj.method2()
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-    def test_does_not_decorate_dunder_methods(self) -> None:
+        obj = TestClass()
+        obj.method1()
+        obj.method2()
+
+    def test_does_not_decorate_dunder_methods(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_all_methods does not decorate dunder methods."""
 
         @log_all_methods
@@ -240,9 +314,11 @@ class TestLogAllMethods:
             def regular_method(self) -> int:
                 return self.value
 
-        with patch("intellicrack.utils.logger.logger"):
-            obj = TestClass()
-            assert obj.value == 42
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
+
+        obj = TestClass()
+        assert obj.value == 42
 
 
 class TestSetupLogger:
@@ -435,20 +511,22 @@ class TestSetupPersistentLogging:
 class TestRealWorldScenarios:
     """Test realistic production usage scenarios."""
 
-    def test_binary_analysis_function_logging(self) -> None:
+    def test_binary_analysis_function_logging(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test logging during binary analysis functions."""
 
         @log_function_call
         def analyze_pe_header(binary_data: bytes) -> dict[str, int]:
             return {"sections": 5, "imports": 42}
 
-        with patch("intellicrack.utils.logger.logger"):
-            result = analyze_pe_header(b"MZ\x90\x00")
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            assert result["sections"] == 5
-            assert result["imports"] == 42
+        result = analyze_pe_header(b"MZ\x90\x00")
 
-    def test_class_with_all_methods_logged(self) -> None:
+        assert result["sections"] == 5
+        assert result["imports"] == 42
+
+    def test_class_with_all_methods_logged(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test class decorator for binary analyzer."""
 
         @log_all_methods
@@ -465,14 +543,16 @@ class TestRealWorldScenarios:
             def find_crypto_routines(self) -> int:
                 return 3
 
-        with patch("intellicrack.utils.logger.logger"):
-            analyzer = BinaryAnalyzer()
-            analyzer.load_binary("test.exe")
-            strings = analyzer.extract_strings()
-            crypto_count = analyzer.find_crypto_routines()
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            assert len(strings) == 3
-            assert crypto_count == 3
+        analyzer = BinaryAnalyzer()
+        analyzer.load_binary("test.exe")
+        strings = analyzer.extract_strings()
+        crypto_count = analyzer.find_crypto_routines()
+
+        assert len(strings) == 3
+        assert crypto_count == 3
 
     def test_multi_level_logging_configuration(self) -> None:
         """Test configuring logging for different modules."""
@@ -493,19 +573,21 @@ class TestRealWorldScenarios:
 class TestEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_handles_none_return_value(self) -> None:
+    def test_handles_none_return_value(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call handles None return values."""
 
         @log_function_call
         def returns_none() -> None:
             return None
 
-        with patch("intellicrack.utils.logger.logger"):
-            result = returns_none()
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            assert result is None
+        result = returns_none()
 
-    def test_handles_generator_functions(self) -> None:
+        assert result is None
+
+    def test_handles_generator_functions(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call handles generator functions."""
 
         @log_function_call
@@ -514,36 +596,42 @@ class TestEdgeCases:
             yield 2
             yield 3
 
-        with patch("intellicrack.utils.logger.logger"):
-            result = list(generator_function())
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            assert result == [1, 2, 3]
+        result = list(generator_function())
 
-    def test_handles_functions_with_no_arguments(self) -> None:
+        assert result == [1, 2, 3]
+
+    def test_handles_functions_with_no_arguments(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call handles functions with no arguments."""
 
         @log_function_call
         def no_args() -> str:
             return "result"
 
-        with patch("intellicrack.utils.logger.logger"):
-            result = no_args()
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            assert result == "result"
+        result = no_args()
 
-    def test_handles_functions_with_many_arguments(self) -> None:
+        assert result == "result"
+
+    def test_handles_functions_with_many_arguments(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call handles functions with many arguments."""
 
         @log_function_call
         def many_args(a: int, b: int, c: int, d: int, e: int) -> int:
             return a + b + c + d + e
 
-        with patch("intellicrack.utils.logger.logger"):
-            result = many_args(1, 2, 3, 4, 5)
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            assert result == 15
+        result = many_args(1, 2, 3, 4, 5)
 
-    def test_handles_nested_function_calls(self) -> None:
+        assert result == 15
+
+    def test_handles_nested_function_calls(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call handles nested decorated function calls."""
 
         @log_function_call
@@ -554,21 +642,25 @@ class TestEdgeCases:
         def outer_function(x: int) -> int:
             return inner_function(x) + 1
 
-        with patch("intellicrack.utils.logger.logger"):
-            result = outer_function(5)
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-            assert result == 11
+        result = outer_function(5)
 
-    def test_handles_exception_in_async_function(self) -> None:
+        assert result == 11
+
+    def test_handles_exception_in_async_function(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """log_function_call handles exceptions in async functions."""
 
         @log_function_call
         async def failing_async() -> None:
             raise ValueError("Async error")
 
-        with patch("intellicrack.utils.logger.logger"):
-            with pytest.raises(ValueError):
-                asyncio.run(failing_async())
+        fake_logger = FakeLogger()
+        monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
+
+        with pytest.raises(ValueError):
+            asyncio.run(failing_async())
 
     def test_log_file_creation_in_nonexistent_directory(self) -> None:
         """setup_persistent_logging creates parent directories."""

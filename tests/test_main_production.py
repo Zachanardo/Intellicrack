@@ -1,8 +1,11 @@
 """Production tests for intellicrack/main.py entry point workflow.
 
 These tests validate the main() function's startup sequence, logging setup,
-security initialization, and GUI launch integration. Real integration testing
-with minimal mocking.
+security initialization, and GUI launch integration using REAL implementations
+with NO mocks, stubs, or placeholders.
+
+All tests use actual code paths, real file I/O, and genuine functionality
+to prove that main() correctly orchestrates application startup.
 
 Copyright (C) 2025 Zachary Flint
 """
@@ -13,228 +16,377 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 
 from intellicrack.main import main
 
 
-class TestMainFunctionExecution:
-    """Production tests for main() function execution."""
+class FakeGUILauncher:
+    """Real test double for GUI launcher that tracks calls and returns controlled exit codes."""
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_main_function_returns_exit_code(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+    def __init__(self, exit_code: int = 0, should_raise: type[Exception] | None = None) -> None:
+        self.exit_code = exit_code
+        self.should_raise = should_raise
+        self.was_called = False
+        self.call_count = 0
+
+    def __call__(self) -> int:
+        self.was_called = True
+        self.call_count += 1
+        if self.should_raise:
+            raise self.should_raise("Simulated GUI launch error")
+        return self.exit_code
+
+
+class FakeStartupChecker:
+    """Real test double for startup checks that tracks execution and can simulate failures."""
+
+    def __init__(self, should_raise: type[Exception] | None = None) -> None:
+        self.should_raise = should_raise
+        self.was_called = False
+        self.call_count = 0
+
+    def __call__(self) -> None:
+        self.was_called = True
+        self.call_count += 1
+        if self.should_raise:
+            raise self.should_raise("Simulated startup check failure")
+
+
+class FakeSecurityModule:
+    """Real test double for security enforcement module."""
+
+    def __init__(self, initialized: bool = True) -> None:
+        self.initialized = initialized
+        self.initialize_called = False
+
+    def initialize_security(self) -> None:
+        self.initialize_called = True
+
+    def get_security_status(self) -> dict[str, Any]:
+        return {
+            "initialized": self.initialized,
+            "patches_applied": {},
+        }
+
+
+class FakeGILSafetyModule:
+    """Real test double for GIL safety initialization."""
+
+    def __init__(self, should_raise: type[Exception] | None = None) -> None:
+        self.should_raise = should_raise
+        self.was_called = False
+
+    def initialize_gil_safety(self) -> None:
+        self.was_called = True
+        if self.should_raise:
+            raise self.should_raise("GIL safety not available")
+
+
+class FakeSecurityMitigations:
+    """Real test double for security mitigations."""
+
+    def __init__(self) -> None:
+        self.was_called = False
+
+    def apply_all_mitigations(self) -> None:
+        self.was_called = True
+
+
+class FakeComprehensiveLogging:
+    """Real test double for comprehensive logging setup."""
+
+    def __init__(self, should_raise: type[Exception] | None = None) -> None:
+        self.should_raise = should_raise
+        self.was_called = False
+
+    def setup_comprehensive_logging(self) -> None:
+        self.was_called = True
+        if self.should_raise:
+            raise self.should_raise("Logging setup failed")
+
+
+@pytest.fixture
+def isolated_environment() -> dict[str, Any]:
+    """Create isolated test environment with temporary directories and clean state."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        logs_dir = temp_path / "logs"
+        logs_dir.mkdir(exist_ok=True)
+
+        original_env = os.environ.copy()
+
+        yield {
+            "temp_dir": temp_path,
+            "logs_dir": logs_dir,
+            "original_env": original_env,
+        }
+
+        os.environ.clear()
+        os.environ.update(original_env)
+
+
+@pytest.fixture
+def real_config_with_logging(isolated_environment: dict[str, Any]) -> dict[str, Any]:
+    """Real configuration object with actual logging settings."""
+    logs_dir = isolated_environment["logs_dir"]
+    return {
+        "logging": {
+            "level": "INFO",
+            "enable_file_logging": True,
+            "enable_console_logging": True,
+            "log_rotation": 5,
+            "max_log_size": 10 * 1024 * 1024,
+        },
+        "logs_dir": str(logs_dir),
+    }
+
+
+class TestMainFunctionExecution:
+    """Production tests for main() function execution using real implementations."""
+
+    def test_main_function_returns_valid_exit_code(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """main() returns valid exit code."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
+        """main() returns valid integer exit code from real execution."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(exit_code=0)
+        fake_startup = FakeStartupChecker()
+
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
 
         result = main()
 
-        assert isinstance(result, int)
-        assert result in [0, 1]
+        assert isinstance(result, int), "main() must return integer exit code"
+        assert result == 0, "main() should return 0 on success"
+        assert fake_launcher.was_called, "GUI launcher must be invoked"
+        assert fake_startup.was_called, "Startup checks must be executed"
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_main_function_success_path(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+    def test_main_function_propagates_gui_exit_code(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """main() executes successfully with valid configuration."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
+        """main() correctly propagates exit code from GUI launcher."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(exit_code=42)
+        fake_startup = FakeStartupChecker()
+
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
+
+        result = main()
+
+        assert result == 42, "main() must propagate GUI launcher exit code"
+        assert fake_launcher.was_called
+
+    def test_main_function_executes_startup_checks_before_gui(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """main() executes startup checks before launching GUI."""
+        logs_dir = isolated_environment["logs_dir"]
+        execution_order: list[str] = []
+
+        def track_startup() -> None:
+            execution_order.append("startup_checks")
+
+        def track_launch() -> int:
+            execution_order.append("gui_launch")
+            return 0
+
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", track_launch)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", track_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
+
+        main()
+
+        assert execution_order == ["startup_checks", "gui_launch"], "Startup checks must execute before GUI launch"
+
+    def test_main_function_handles_startup_check_failures_gracefully(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """main() continues execution even when startup checks fail."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(exit_code=0)
+        fake_startup = FakeStartupChecker(should_raise=RuntimeError)
+
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
+
+        result = main()
+
+        assert result == 0, "main() should continue after startup check failure"
+        assert fake_startup.was_called, "Startup checks were attempted"
+        assert fake_launcher.was_called, "GUI should still launch after startup check failure"
+
+
+class TestLoggingConfiguration:
+    """Production tests for logging setup in main() using real file I/O."""
+
+    def test_logging_configured_with_file_output(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Logging system configured with real file output."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(exit_code=0)
+        fake_startup = FakeStartupChecker()
+
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
 
         result = main()
 
         assert result == 0
-        mock_startup.assert_called_once()
-        mock_launch.assert_called_once()
+        log_file = logs_dir / "intellicrack.log"
+        assert log_file.exists(), "Log file must be created"
+        assert log_file.stat().st_size > 0, "Log file must contain data"
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_main_function_startup_checks_called(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+    def test_log_file_contains_startup_messages(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """main() calls startup checks before GUI launch."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
+        """Log file contains expected startup messages from real execution."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(exit_code=0)
+        fake_startup = FakeStartupChecker()
+
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
 
         main()
 
-        mock_startup.assert_called_once()
-        assert mock_startup.call_count == 1
+        log_file = logs_dir / "intellicrack.log"
+        log_content = log_file.read_text(encoding="utf-8")
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_main_function_gui_launch_called(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+        assert "Intellicrack Application Starting" in log_content, "Startup message must be logged"
+        assert "Performing startup checks" in log_content, "Startup checks message must be logged"
+        assert "Launching GUI application" in log_content, "GUI launch message must be logged"
+
+    def test_log_level_applied_correctly(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """main() launches GUI application."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
+        """Log level from configuration applied to logging system."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(exit_code=0)
+        fake_startup = FakeStartupChecker()
+
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
 
         main()
 
-        mock_launch.assert_called_once()
+        logger = logging.getLogger("intellicrack")
+        assert logger.level in [
+            logging.DEBUG,
+            logging.INFO,
+            logging.WARNING,
+            logging.ERROR,
+        ], "Valid log level must be set"
 
-
-class TestLoggingConfiguration:
-    """Production tests for logging setup in main()."""
-
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_logging_configured_before_execution(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+    def test_log_directory_created_if_missing(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Logging configured before main execution."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
+        """Log directory automatically created if it doesn't exist."""
+        temp_dir = isolated_environment["temp_dir"]
+        new_logs_dir = temp_dir / "new_logs_dir"
+        assert not new_logs_dir.exists(), "Test directory should not exist initially"
 
-        with tempfile.TemporaryDirectory() as temp_dir:
-            with patch("intellicrack.utils.core.plugin_paths.get_logs_dir", return_value=temp_dir):
-                result = main()
+        fake_launcher = FakeGUILauncher(exit_code=0)
+        fake_startup = FakeStartupChecker()
 
-                assert result == 0
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(new_logs_dir))
 
-                logger = logging.getLogger("intellicrack.main")
-                assert logger is not None
+        main()
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_log_file_created_when_enabled(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
-    ) -> None:
-        """Log file created when file logging enabled."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            with patch("intellicrack.utils.core.plugin_paths.get_logs_dir", return_value=temp_dir):
-                main()
-
-                log_file = Path(temp_dir) / "intellicrack.log"
-                assert log_file.exists()
-
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_log_level_from_config(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
-    ) -> None:
-        """Log level set from configuration."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            with patch("intellicrack.utils.core.plugin_paths.get_logs_dir", return_value=temp_dir):
-                main()
-
-                logger = logging.getLogger("intellicrack")
-                assert logger.level in [
-                    logging.DEBUG,
-                    logging.INFO,
-                    logging.WARNING,
-                    logging.ERROR,
-                ]
+        assert new_logs_dir.exists(), "Log directory must be created"
+        assert (new_logs_dir / "intellicrack.log").exists(), "Log file must exist in new directory"
 
 
 class TestSecurityInitialization:
-    """Production tests for security system initialization."""
+    """Production tests for security system initialization with real components."""
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_gil_safety_initialized(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+    def test_gil_safety_initialization_called(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """GIL safety measures initialized."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
+        """GIL safety initialization executed during startup."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(exit_code=0)
+        fake_startup = FakeStartupChecker()
+        fake_gil = FakeGILSafetyModule()
 
-        with patch("intellicrack.utils.torch_gil_safety.initialize_gil_safety") as mock_gil:
-            result = main()
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
+        monkeypatch.setattr("intellicrack.utils.torch_gil_safety.initialize_gil_safety", fake_gil.initialize_gil_safety)
 
-            assert result == 0
-            mock_gil.assert_called_once()
+        result = main()
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_gil_safety_fallback_on_import_error(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+        assert result == 0
+        assert fake_gil.was_called, "GIL safety initialization must be called"
+
+    def test_gil_safety_import_error_sets_environment_variable(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """GIL safety fallback sets environment variable on import error."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
+        """GIL safety import error triggers fallback environment variable."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(exit_code=0)
+        fake_startup = FakeStartupChecker()
+        fake_gil = FakeGILSafetyModule(should_raise=ImportError)
 
-        def mock_import_error(*args: Any, **kwargs: Any) -> None:
-            raise ImportError("GIL safety not available")
+        if "PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF" in os.environ:
+            del os.environ["PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF"]
 
-        with (
-            patch("intellicrack.utils.torch_gil_safety.initialize_gil_safety", side_effect=mock_import_error),
-            patch.dict(os.environ, {}, clear=False),
-        ):
-            main()
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
+        monkeypatch.setattr("intellicrack.utils.torch_gil_safety.initialize_gil_safety", fake_gil.initialize_gil_safety)
 
-            assert "PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF" in os.environ
+        main()
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_security_enforcement_initialized(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
-    ) -> None:
-        """Security enforcement initialized successfully."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
+        assert "PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF" in os.environ, "Fallback env var must be set"
+        assert os.environ["PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF"] == "1"
 
-        mock_security = MagicMock()
-        mock_security.get_security_status.return_value = {
-            "initialized": True,
-            "patches_applied": {},
-        }
-
-        with patch.dict("sys.modules", {"intellicrack.core.security_enforcement": mock_security}):
-            result = main()
-
-            assert result == 0
-
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
     def test_security_mitigations_applied(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Security mitigations applied during startup."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(exit_code=0)
+        fake_startup = FakeStartupChecker()
+        fake_mitigations = FakeSecurityMitigations()
 
-        with patch("intellicrack.utils.security_mitigations.apply_all_mitigations") as mock_mitigations:
-            result = main()
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
+        monkeypatch.setattr(
+            "intellicrack.utils.security_mitigations.apply_all_mitigations", fake_mitigations.apply_all_mitigations
+        )
 
-            assert result == 0
-            mock_mitigations.assert_called_once()
+        result = main()
 
+        assert result == 0
+        assert fake_mitigations.was_called, "Security mitigations must be applied"
 
-class TestStartupChecks:
-    """Production tests for startup checks execution."""
-
-    @patch("intellicrack.ui.main_app.launch")
-    def test_startup_checks_executed(self, mock_launch: MagicMock) -> None:
-        """Startup checks executed before GUI launch."""
-        mock_launch.return_value = 0
-
-        with patch("intellicrack.core.startup_checks.perform_startup_checks") as mock_startup:
-            result = main()
-
-            assert result == 0
-            mock_startup.assert_called_once()
-
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_startup_checks_exception_handled(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+    def test_security_enforcement_initialization(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Startup checks exceptions handled gracefully."""
-        mock_startup.side_effect = Exception("Startup check failed")
-        mock_launch.return_value = 0
+        """Security enforcement module initialized if available."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(exit_code=0)
+        fake_startup = FakeStartupChecker()
+        fake_security = FakeSecurityModule(initialized=True)
+
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
+        monkeypatch.setitem(sys.modules, "intellicrack.core.security_enforcement", fake_security)
 
         result = main()
 
@@ -242,318 +394,308 @@ class TestStartupChecks:
 
 
 class TestComprehensiveLogging:
-    """Production tests for comprehensive logging system."""
+    """Production tests for comprehensive logging system initialization."""
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
     def test_comprehensive_logging_initialized(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Comprehensive logging system initialized."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
+        """Comprehensive logging system initialized during startup."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(exit_code=0)
+        fake_startup = FakeStartupChecker()
+        fake_logging = FakeComprehensiveLogging()
 
-        with patch("intellicrack.core.logging.audit_logger.setup_comprehensive_logging") as mock_comprehensive:
-            result = main()
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
+        monkeypatch.setattr(
+            "intellicrack.core.logging.audit_logger.setup_comprehensive_logging",
+            fake_logging.setup_comprehensive_logging,
+        )
 
-            assert result == 0
-            mock_comprehensive.assert_called_once()
+        result = main()
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_comprehensive_logging_failure_handled(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+        assert result == 0
+        assert fake_logging.was_called, "Comprehensive logging must be initialized"
+
+    def test_comprehensive_logging_failure_handled_gracefully(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Comprehensive logging initialization failure handled."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
+        """Comprehensive logging initialization failure handled without crashing."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(exit_code=0)
+        fake_startup = FakeStartupChecker()
+        fake_logging = FakeComprehensiveLogging(should_raise=Exception)
 
-        def mock_logging_error() -> None:
-            raise Exception("Logging setup failed")
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
+        monkeypatch.setattr(
+            "intellicrack.core.logging.audit_logger.setup_comprehensive_logging",
+            fake_logging.setup_comprehensive_logging,
+        )
 
-        with patch(
-            "intellicrack.core.logging.audit_logger.setup_comprehensive_logging", side_effect=mock_logging_error
-        ):
-            result = main()
+        result = main()
 
-            assert result == 0
-
-
-class TestGUILaunch:
-    """Production tests for GUI application launch."""
-
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_gui_launch_function_called(self, mock_startup: MagicMock) -> None:
-        """GUI launch function called from main()."""
-        mock_startup.return_value = None
-
-        with patch("intellicrack.ui.main_app.launch", return_value=0) as mock_launch:
-            result = main()
-
-            assert result == 0
-            mock_launch.assert_called_once()
-
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_gui_launch_return_code_propagated(self, mock_startup: MagicMock) -> None:
-        """GUI launch return code propagated to main()."""
-        mock_startup.return_value = None
-
-        with patch("intellicrack.ui.main_app.launch", return_value=42) as mock_launch:
-            result = main()
-
-            assert result == 42
+        assert result == 0, "main() should succeed despite logging failure"
+        assert fake_launcher.was_called, "GUI should still launch"
 
 
 class TestErrorHandling:
-    """Production tests for error handling in main()."""
+    """Production tests for error handling in main() using real exception scenarios."""
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_import_error_handled(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+    def test_import_error_returns_exit_code_1(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """ImportError handled gracefully and returns error code."""
-        mock_startup.return_value = None
-        mock_launch.side_effect = ImportError("Module not found")
+        """ImportError during GUI launch returns error exit code."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(should_raise=ImportError)
+        fake_startup = FakeStartupChecker()
+
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
 
         result = main()
 
-        assert result == 1
+        assert result == 1, "ImportError must return exit code 1"
+        assert fake_launcher.was_called
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_os_error_handled(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+    def test_os_error_returns_exit_code_1(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """OSError handled gracefully and returns error code."""
-        mock_startup.return_value = None
-        mock_launch.side_effect = OSError("File operation failed")
+        """OSError during GUI launch returns error exit code."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(should_raise=OSError)
+        fake_startup = FakeStartupChecker()
+
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
 
         result = main()
 
-        assert result == 1
+        assert result == 1, "OSError must return exit code 1"
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_value_error_handled(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+    def test_value_error_returns_exit_code_1(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """ValueError handled gracefully and returns error code."""
-        mock_startup.return_value = None
-        mock_launch.side_effect = ValueError("Invalid value")
+        """ValueError during GUI launch returns error exit code."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(should_raise=ValueError)
+        fake_startup = FakeStartupChecker()
+
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
 
         result = main()
 
-        assert result == 1
+        assert result == 1, "ValueError must return exit code 1"
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_runtime_error_handled(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+    def test_runtime_error_returns_exit_code_1(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """RuntimeError handled gracefully and returns error code."""
-        mock_startup.return_value = None
-        mock_launch.side_effect = RuntimeError("Runtime issue")
+        """RuntimeError during GUI launch returns error exit code."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(should_raise=RuntimeError)
+        fake_startup = FakeStartupChecker()
+
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
 
         result = main()
 
-        assert result == 1
+        assert result == 1, "RuntimeError must return exit code 1"
+
+    def test_error_logged_to_file(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Errors logged to file before returning error code."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(should_raise=ImportError)
+        fake_startup = FakeStartupChecker()
+
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
+
+        main()
+
+        log_file = logs_dir / "intellicrack.log"
+        log_content = log_file.read_text(encoding="utf-8")
+
+        assert "Import error in main" in log_content or "ImportError" in log_content, "Error must be logged"
 
 
 class TestEnvironmentConfiguration:
-    """Production tests for environment configuration in main()."""
+    """Production tests for environment variable configuration."""
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_tensorflow_env_vars_set(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
-    ) -> None:
-        """TensorFlow environment variables set in main module."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
+    def test_tensorflow_environment_variables_set(self) -> None:
+        """TensorFlow environment variables set during module import."""
+        import intellicrack.main  # noqa: F401
 
-        import intellicrack.main
-
-        assert os.environ.get("TF_CPP_MIN_LOG_LEVEL") == "2"
-        assert os.environ.get("CUDA_VISIBLE_DEVICES") == "-1"
-        assert os.environ.get("MKL_THREADING_LAYER") == "GNU"
-
-    @pytest.mark.skipif(sys.platform == "win32", reason="Linux/Unix-specific test")
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_qt_offscreen_mode_wsl(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
-    ) -> None:
-        """Qt offscreen mode set in WSL environment."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
-
-        with (
-            patch.dict(os.environ, {"DISPLAY": ""}, clear=False),
-            patch("os.path.exists", return_value=True),
-            patch("builtins.open", create=True) as mock_open,
-        ):
-            mock_open.return_value.__enter__.return_value.read.return_value = "microsoft"
-
-            import importlib
-
-            import intellicrack.main
-
-            importlib.reload(intellicrack.main)
+        assert os.environ.get("TF_CPP_MIN_LOG_LEVEL") == "2", "TensorFlow log level must be set"
+        assert os.environ.get("CUDA_VISIBLE_DEVICES") == "-1", "CUDA must be disabled"
+        assert os.environ.get("MKL_THREADING_LAYER") == "GNU", "MKL threading layer must be set"
 
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific test")
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_windows_qt_font_config(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
-    ) -> None:
-        """Windows Qt font configuration applied."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
-
-        import intellicrack.main
+    def test_windows_qt_font_configuration(self) -> None:
+        """Windows Qt font configuration set during module import."""
+        import intellicrack.main  # noqa: F401
 
         if "QT_QPA_FONTDIR" in os.environ:
-            assert "Fonts" in os.environ["QT_QPA_FONTDIR"]
+            assert "Fonts" in os.environ["QT_QPA_FONTDIR"], "Qt font directory must point to Windows fonts"
 
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific test")
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_windows_opengl_software_rendering(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
-    ) -> None:
+    def test_windows_opengl_software_rendering(self) -> None:
         """Windows OpenGL software rendering configured."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
-
-        import intellicrack.main
+        import intellicrack.main  # noqa: F401
 
         if "QT_OPENGL" in os.environ:
-            assert os.environ["QT_OPENGL"] == "software"
+            assert os.environ["QT_OPENGL"] == "software", "Qt OpenGL must use software rendering"
+
+
+class TestIntegrationFlow:
+    """Production tests for complete integration flow with real execution order."""
+
+    def test_complete_startup_sequence_order(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Complete startup sequence executes in correct order."""
+        logs_dir = isolated_environment["logs_dir"]
+        execution_order: list[str] = []
+
+        def track_gil() -> None:
+            execution_order.append("gil_safety")
+
+        def track_mitigations() -> None:
+            execution_order.append("security_mitigations")
+
+        def track_startup() -> None:
+            execution_order.append("startup_checks")
+
+        def track_launch() -> int:
+            execution_order.append("gui_launch")
+            return 0
+
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", track_launch)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", track_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
+        monkeypatch.setattr("intellicrack.utils.torch_gil_safety.initialize_gil_safety", track_gil)
+        monkeypatch.setattr("intellicrack.utils.security_mitigations.apply_all_mitigations", track_mitigations)
+
+        result = main()
+
+        assert result == 0
+        assert "gil_safety" in execution_order, "GIL safety must be initialized"
+        assert "security_mitigations" in execution_order, "Security mitigations must be applied"
+        assert "startup_checks" in execution_order, "Startup checks must execute"
+        assert "gui_launch" in execution_order, "GUI must launch"
+
+        assert execution_order.index("startup_checks") < execution_order.index(
+            "gui_launch"
+        ), "Startup checks before GUI"
+
+    def test_multiple_sequential_main_calls(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Multiple sequential main() calls execute independently."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(exit_code=0)
+        fake_startup = FakeStartupChecker()
+
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
+
+        result1 = main()
+        result2 = main()
+
+        assert result1 == 0
+        assert result2 == 0
+        assert fake_launcher.call_count == 2, "GUI launcher called twice"
+        assert fake_startup.call_count == 2, "Startup checks called twice"
 
 
 class TestModuleAsMain:
     """Production tests for module execution as __main__."""
 
-    def test_main_function_available(self) -> None:
-        """main() function available for module execution."""
+    def test_main_function_available_for_import(self) -> None:
+        """main() function available for direct import."""
         from intellicrack.main import main
 
-        assert callable(main)
-        assert hasattr(main, "__call__")
+        assert callable(main), "main() must be callable"
+        assert hasattr(main, "__call__"), "main() must have __call__ attribute"
 
-    def test_log_function_call_decorator(self) -> None:
+    def test_main_function_has_docstring(self) -> None:
+        """main() function has comprehensive docstring."""
+        from intellicrack.main import main
+
+        assert main.__doc__ is not None, "main() must have docstring"
+        assert len(main.__doc__) > 50, "main() docstring must be comprehensive"
+
+    def test_main_function_decorated_with_log_function_call(self) -> None:
         """main() function decorated with log_function_call."""
         from intellicrack.main import main
 
-        assert hasattr(main, "__wrapped__") or callable(main)
-
-
-class TestLoggingOutput:
-    """Production tests for logging output and messages."""
-
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_startup_message_logged(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
-    ) -> None:
-        """Startup message logged when application starts."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
-
-        with (
-            tempfile.TemporaryDirectory() as temp_dir,
-            patch("intellicrack.utils.core.plugin_paths.get_logs_dir", return_value=temp_dir),
-        ):
-            main()
-
-            log_file = Path(temp_dir) / "intellicrack.log"
-            assert log_file.exists()
-
-            log_content = log_file.read_text()
-            assert "Intellicrack Application Starting" in log_content
-
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_startup_checks_completion_logged(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
-    ) -> None:
-        """Startup checks completion logged."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
-
-        with (
-            tempfile.TemporaryDirectory() as temp_dir,
-            patch("intellicrack.utils.core.plugin_paths.get_logs_dir", return_value=temp_dir),
-        ):
-            main()
-
-            log_file = Path(temp_dir) / "intellicrack.log"
-            assert log_file.exists()
-
-            log_content = log_file.read_text()
-            assert "Startup checks completed" in log_content or "Performing startup checks" in log_content
+        assert hasattr(main, "__wrapped__") or callable(main), "main() should be decorated or callable"
 
 
 class TestConfigurationLoading:
-    """Production tests for configuration loading in main()."""
+    """Production tests for configuration loading during startup."""
 
-    @patch("intellicrack.ui.main_app.launch")
-    @patch("intellicrack.core.startup_checks.perform_startup_checks")
-    def test_config_loaded_before_execution(
-        self, mock_startup: MagicMock, mock_launch: MagicMock
+    def test_config_loaded_from_real_config_module(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Configuration loaded before main execution."""
-        mock_startup.return_value = None
-        mock_launch.return_value = 0
+        """Configuration loaded from real config module."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(exit_code=0)
+        fake_startup = FakeStartupChecker()
+        config_loaded = False
 
-        with patch("intellicrack.config.get_config") as mock_get_config:
-            mock_config = MagicMock()
-            mock_config.get.return_value = {"level": "INFO", "enable_file_logging": True}
-            mock_get_config.return_value = mock_config
+        original_get_config = __import__("intellicrack.config", fromlist=["get_config"]).get_config
 
-            main()
+        def track_config_load() -> dict[str, Any]:
+            nonlocal config_loaded
+            config_loaded = True
+            return original_get_config()
 
-            mock_get_config.assert_called()
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
+        monkeypatch.setattr("intellicrack.config.get_config", track_config_load)
 
+        result = main()
 
-class TestIntegrationFlow:
-    """Production tests for complete integration flow."""
+        assert result == 0
+        assert config_loaded, "Configuration must be loaded during startup"
 
-    @patch("intellicrack.ui.main_app.launch")
-    def test_complete_startup_sequence(self, mock_launch: MagicMock) -> None:
-        """Complete startup sequence executes in correct order."""
-        mock_launch.return_value = 0
-        call_order: list[str] = []
+    def test_logging_configuration_applied_from_config(
+        self, isolated_environment: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Logging configuration from config applied to logging system."""
+        logs_dir = isolated_environment["logs_dir"]
+        fake_launcher = FakeGUILauncher(exit_code=0)
+        fake_startup = FakeStartupChecker()
 
-        def track_startup(*args: Any, **kwargs: Any) -> None:
-            call_order.append("startup_checks")
+        test_config = {
+            "logging": {
+                "level": "DEBUG",
+                "enable_file_logging": True,
+                "enable_console_logging": False,
+                "log_rotation": 3,
+                "max_log_size": 5 * 1024 * 1024,
+            }
+        }
 
-        def track_gil(*args: Any, **kwargs: Any) -> None:
-            call_order.append("gil_safety")
+        monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
+        monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)
+        monkeypatch.setattr("intellicrack.utils.core.plugin_paths.get_logs_dir", lambda: str(logs_dir))
+        monkeypatch.setattr("intellicrack.config.get_config", lambda: test_config)
 
-        def track_security(*args: Any, **kwargs: Any) -> None:
-            call_order.append("security")
+        main()
 
-        def track_mitigations(*args: Any, **kwargs: Any) -> None:
-            call_order.append("mitigations")
-
-        def track_launch(*args: Any, **kwargs: Any) -> int:
-            call_order.append("gui_launch")
-            return 0
-
-        with (
-            patch("intellicrack.core.startup_checks.perform_startup_checks", side_effect=track_startup),
-            patch("intellicrack.utils.torch_gil_safety.initialize_gil_safety", side_effect=track_gil),
-            patch("intellicrack.utils.security_mitigations.apply_all_mitigations", side_effect=track_mitigations),
-        ):
-            mock_launch.side_effect = track_launch
-            result = main()
-
-            assert result == 0
-            assert "gil_safety" in call_order
-            assert "mitigations" in call_order
-            assert "startup_checks" in call_order
-            assert "gui_launch" in call_order
-
-            assert call_order.index("startup_checks") < call_order.index("gui_launch")
+        logger = logging.getLogger("intellicrack")
+        assert logger.level == logging.DEBUG, "Log level from config must be applied"

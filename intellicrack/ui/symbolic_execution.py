@@ -20,7 +20,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import logging
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any
 
 from intellicrack.core.analysis.symbolic_executor import SymbolicExecutionEngine
 from intellicrack.handlers.pyqt6_handler import (
@@ -107,17 +107,16 @@ class SymbolicExecution:
                 f"Symbolic execution initialized successfully (angr: {self.angr_available}, max_paths: {self.max_paths}, timeout: {self.timeout})"
             )
 
-        except ImportError as e:
-            self.logger.exception("Failed to initialize symbolic execution engine: %s", e)
+        except ImportError as exc:
+            self.logger.exception("Failed to initialize symbolic execution engine")
             self.engine_available = False
-            log_error(f"Symbolic execution engine initialization failed: {e}")
+            log_error(f"Symbolic execution engine initialization failed: {exc}")
 
     def run_symbolic_execution(self, app: object) -> None:
         """Run symbolic execution analysis with UI integration.
 
         Args:
             app: Main application instance with binary data and UI signals
-
         """
         try:
             log_info("Starting symbolic execution analysis")
@@ -176,7 +175,7 @@ class SymbolicExecution:
             log_info(f"Symbolic execution analysis completed successfully (binary: {binary_path}, results: {vuln_count})")
 
         except Exception as e:
-            self.logger.exception("Symbolic execution failed: %s", e)
+            self.logger.exception("Symbolic execution failed")
             log_error(f"Symbolic execution analysis failed: {e}")
 
             if hasattr(app, "update_output"):
@@ -223,8 +222,8 @@ class SymbolicExecution:
 
             return None
 
-        except Exception as e:
-            self.logger.exception("Failed to get binary path: %s", e)
+        except Exception:
+            self.logger.exception("Failed to get binary path")
             return None
 
     def _show_configuration_dialog(self, app: object) -> bool:
@@ -323,8 +322,8 @@ class SymbolicExecution:
                 return True
             return False
 
-        except Exception as e:
-            self.logger.exception("Failed to show configuration dialog: %s", e)
+        except Exception:
+            self.logger.exception("Failed to show configuration dialog")
             return True  # Use defaults on error
 
     def _show_progress_dialog(self, app: object, binary_path: str) -> None:
@@ -333,11 +332,22 @@ class SymbolicExecution:
         Args:
             app: Main application instance with binary data and UI signals
             binary_path: Path to the binary file being analyzed
-
         """
         try:
             if not hasattr(app, "centralWidget") or not app.centralWidget():
                 return
+
+            # Clean up any existing dialog before creating a new one
+            if self.progress_dialog is not None:
+                try:
+                    self.progress_dialog.close()
+                    self.progress_dialog.deleteLater()
+                except RuntimeError:
+                    pass  # Dialog already deleted
+                self.progress_dialog = None
+                self.progress_bar = None
+                self.status_label = None
+                self.results_text = None
 
             self.progress_dialog = QDialog(app.centralWidget())
             self.progress_dialog.setWindowTitle("Symbolic Execution Analysis")
@@ -388,17 +398,28 @@ class SymbolicExecution:
             # Show dialog
             self.progress_dialog.show()
 
-        except Exception as e:
-            self.logger.exception("Failed to show progress dialog: %s", e)
+        except Exception:
+            self.logger.exception("Failed to show progress dialog")
 
     def _hide_progress_dialog(self) -> None:
-        """Hide progress dialog."""
+        """Hide progress dialog.
+
+        Properly closes and schedules the dialog for deletion to prevent
+        resource leaks and ensure clean Qt object lifecycle management.
+        """
         try:
-            if self.progress_dialog:
-                self.progress_dialog.close()
+            if self.progress_dialog is not None:
+                try:
+                    self.progress_dialog.close()
+                    self.progress_dialog.deleteLater()
+                except RuntimeError:
+                    pass  # Dialog already deleted
                 self.progress_dialog = None
-        except Exception as e:
-            self.logger.exception("Failed to hide progress dialog: %s", e)
+                self.progress_bar = None
+                self.status_label = None
+                self.results_text = None
+        except Exception:
+            self.logger.exception("Failed to hide progress dialog")
 
     def _run_symbolic_analysis(self, app: object, engine: SymbolicExecutionEngine) -> dict[str, Any]:
         """Run the actual symbolic analysis.
@@ -448,7 +469,7 @@ class SymbolicExecution:
             return results
 
         except Exception as e:
-            self.logger.exception("Symbolic analysis execution failed: %s", e)
+            self.logger.exception("Symbolic analysis execution failed")
             results["error"] = str(e)
             return results
 
@@ -631,7 +652,7 @@ class SymbolicExecution:
             return results
 
         except Exception as e:
-            self.logger.exception("Fallback analysis failed: %s", e)
+            self.logger.exception("Fallback analysis failed")
             results["error"] = str(e)
             return results
 
@@ -642,7 +663,6 @@ class SymbolicExecution:
             app: Main application instance with binary data and UI signals
             results: Dictionary containing analysis results
             binary_path: Path to the binary file that was analyzed
-
         """
         try:
             if not results:
@@ -691,7 +711,7 @@ class SymbolicExecution:
             self.current_analysis = results
 
         except Exception as e:
-            self.logger.exception("Failed to process symbolic execution results: %s", e)
+            self.logger.exception("Failed to process symbolic execution results")
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[ERROR] Failed to process symbolic execution results: {e}")
 
@@ -722,5 +742,5 @@ class SymbolicExecution:
 
             log_info("Symbolic execution cleanup completed")
 
-        except Exception as e:
-            self.logger.exception("Symbolic execution cleanup failed: %s", e)
+        except Exception:
+            self.logger.exception("Symbolic execution cleanup failed")

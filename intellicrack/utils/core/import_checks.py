@@ -1,4 +1,4 @@
-"""Import checks for Intellicrack.
+"""Import checking utilities for validating module availability.
 
 This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
@@ -16,10 +16,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 
-Import checking utilities for validating module availability.
-
-This module consolidates repeated import checking patterns
-to avoid code duplication across modules.
+This module consolidates repeated import checking patterns to avoid code
+duplication across modules. It provides centralized import availability
+flags for all major dependencies used in Intellicrack, including binary
+analysis libraries, system monitoring tools, instrumentation frameworks,
+visualization libraries, and machine learning frameworks.
 """
 
 from __future__ import annotations

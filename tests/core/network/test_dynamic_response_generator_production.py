@@ -414,7 +414,7 @@ class TestDynamicResponseGeneratorProduction:
         """Response cache expires entries after TTL."""
         response_generator.cache_ttl = 0.1
 
-        response1 = response_generator.generate_response(flexlm_request_context)
+        response_generator.generate_response(flexlm_request_context)
 
         time.sleep(0.2)
 

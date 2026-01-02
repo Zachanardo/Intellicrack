@@ -65,7 +65,17 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class TamperCheckLocation:
-    """Location of anti-tampering check."""
+    """Location of anti-tampering check.
+
+    Attributes:
+        address: Memory address where the tamper check is located.
+        size: Size of the tamper check pattern in bytes.
+        check_type: Type of tamper check (e.g., "tamper_detection", "inline_check").
+        target_region: Tuple of (start, end) addresses for the protected region.
+        algorithm: Algorithm used for verification (e.g., "crc32", "md5").
+        bypass_complexity: Complexity level for bypassing the check
+            ("low", "medium", or "high").
+    """
 
     address: int
     size: int
@@ -77,7 +87,20 @@ class TamperCheckLocation:
 
 @dataclass
 class ControlFlowAnalysis:
-    """Analysis of control flow obfuscation."""
+    """Analysis of control flow obfuscation.
+
+    Attributes:
+        opaque_predicates: List of memory addresses containing opaque predicate
+            patterns.
+        indirect_jumps: List of memory addresses containing indirect jump
+            instructions.
+        control_flow_flattening: Boolean indicating presence of control flow
+            flattening obfuscation.
+        junk_code_blocks: List of (address, size) tuples for detected junk code
+            blocks.
+        obfuscation_density: Float representing the density of obfuscation as
+            a percentage (0.0 to 1.0).
+    """
 
     opaque_predicates: list[int] = field(default_factory=list)
     indirect_jumps: list[int] = field(default_factory=list)
@@ -88,7 +111,19 @@ class ControlFlowAnalysis:
 
 @dataclass
 class RASPMechanism:
-    """Runtime Application Self-Protection mechanism."""
+    """Runtime Application Self-Protection mechanism.
+
+    Attributes:
+        mechanism_type: Type of RASP protection (e.g., "anti_frida",
+            "anti_debug", "anti_hook", "anti_vm", "exception_handler").
+        address: Memory address where the RASP mechanism is detected.
+        hook_target: Target of the hook or protection (e.g., "runtime", "SEH").
+        detection_method: Method used to detect tampering (e.g.,
+            "string_detection", "peb_check", "integrity_check",
+            "signature_scan", "exception_based").
+        severity: Severity level of the RASP mechanism ("low", "medium", or
+            "high").
+    """
 
     mechanism_type: str
     address: int
@@ -99,7 +134,22 @@ class RASPMechanism:
 
 @dataclass
 class LicenseValidationRoutine:
-    """License validation routine information."""
+    """License validation routine information.
+
+    Attributes:
+        address: Memory address where the license validation routine is located.
+        function_name: Derived function name based on address (e.g.,
+            "license_check_0x12345678").
+        algorithm: Cryptographic algorithm used for validation (e.g., "RSA",
+            "AES", "custom").
+        key_length: Key length in bits for cryptographic operations.
+        validation_type: Type of license validation (e.g., "rsa_validation",
+            "aes_license", "serial_check").
+        crypto_operations: List of cryptographic operations detected in the
+            routine (e.g., "modular_exponentiation", "sbox_substitution").
+        string_references: List of string references found near the license
+            validation routine.
+    """
 
     address: int
     function_name: str
@@ -112,7 +162,20 @@ class LicenseValidationRoutine:
 
 @dataclass
 class IntegrityCheckMechanism:
-    """Integrity check mechanism details."""
+    """Integrity check mechanism details.
+
+    Attributes:
+        address: Memory address where the integrity check is located or invoked.
+        check_type: Type of integrity check (e.g., "hash_verification",
+            "api_based").
+        target_section: Section being checked (e.g., "code", "data", "all").
+        hash_algorithm: Algorithm used for integrity verification (e.g.,
+            "CRC32", "SHA256").
+        check_frequency: How often the check occurs (e.g., "periodic",
+            "on_load", "on_demand").
+        bypass_strategy: Recommended bypass approach (e.g.,
+            "hook_hash_function", "hook_crypto_api").
+    """
 
     address: int
     check_type: str
@@ -124,7 +187,22 @@ class IntegrityCheckMechanism:
 
 @dataclass
 class ArxanAnalysisResult:
-    """Complete Arxan analysis result."""
+    """Complete Arxan analysis result.
+
+    Attributes:
+        tamper_checks: List of detected anti-tampering check locations.
+        control_flow: Control flow obfuscation analysis results.
+        rasp_mechanisms: List of detected Runtime Application Self-Protection
+            mechanisms.
+        license_routines: List of detected license validation routines.
+        integrity_checks: List of detected integrity check mechanisms.
+        encrypted_strings: List of (address, size) tuples for encrypted string
+            regions.
+        white_box_crypto_tables: List of (address, size) tuples for white-box
+            cryptography lookup tables.
+        metadata: Dictionary containing analysis metadata (binary size, Arxan
+            version, protection features, etc.).
+    """
 
     tamper_checks: list[TamperCheckLocation] = field(default_factory=list)
     control_flow: ControlFlowAnalysis = field(default_factory=ControlFlowAnalysis)
@@ -219,7 +297,11 @@ class ArxanAnalyzer:
     }
 
     def __init__(self) -> None:
-        """Initialize ArxanAnalyzer with disassemblers and pattern matchers."""
+        """Initialize ArxanAnalyzer with disassemblers and pattern matchers.
+
+        Initializes Capstone disassemblers for x86 32-bit and 64-bit architectures,
+        and sets up the Arxan detector for protection identification.
+        """
         self.logger: logging.Logger = logging.getLogger(__name__)
 
         self.md_32: Any = None
@@ -244,6 +326,8 @@ class ArxanAnalyzer:
         Returns:
             ArxanAnalysisResult with detailed analysis
 
+        Raises:
+            FileNotFoundError: When the binary file does not exist.
         """
         binary_path = Path(binary_path)
 
@@ -283,8 +367,21 @@ class ArxanAnalyzer:
 
         return result
 
-    def _analyze_tamper_checks(self, binary_path: Path, binary_data: bytes) -> list[TamperCheckLocation]:
-        """Analyze anti-tampering mechanisms."""
+    def _analyze_tamper_checks(
+        self, binary_path: Path, binary_data: bytes
+    ) -> list[TamperCheckLocation]:
+        """Analyze anti-tampering mechanisms.
+
+        Scans binary data for tamper check signatures and analyzes executable
+        sections of PE files for additional inline tamper detection patterns.
+
+        Args:
+            binary_path: Path to the binary file.
+            binary_data: Raw binary data as bytes.
+
+        Returns:
+            List of detected tamper check locations.
+        """
         tamper_checks: list[TamperCheckLocation] = []
 
         for check_type, info in self.TAMPER_CHECK_SIGNATURES.items():
@@ -332,8 +429,19 @@ class ArxanAnalyzer:
 
         return tamper_checks
 
-    def _scan_section_for_tamper_checks(self, section_data: bytes, section_va: int, tamper_checks: list[TamperCheckLocation]) -> None:
-        """Scan executable section for tamper check patterns."""
+    def _scan_section_for_tamper_checks(
+        self, section_data: bytes, section_va: int, tamper_checks: list[TamperCheckLocation]
+    ) -> None:
+        """Scan executable section for tamper check patterns.
+
+        Detects inline tamper check patterns that involve memory reads followed
+        by XOR/SUB operations, indicating checksum or comparison routines.
+
+        Args:
+            section_data: Raw bytes of the section to scan.
+            section_va: Virtual address of the section.
+            tamper_checks: List to append detected tamper checks to.
+        """
         memory_read_patterns: list[bytes] = [
             b"\x8b\x45",
             b"\x8b\x55",
@@ -356,8 +464,21 @@ class ArxanAnalyzer:
                 )
                 tamper_checks.append(tamper_check)
 
-    def _analyze_control_flow(self, binary_path: Path, binary_data: bytes) -> ControlFlowAnalysis:
-        """Analyze control flow obfuscation."""
+    def _analyze_control_flow(
+        self, binary_path: Path, binary_data: bytes
+    ) -> ControlFlowAnalysis:
+        """Analyze control flow obfuscation.
+
+        Detects opaque predicates, indirect jumps, control flow flattening patterns,
+        and junk code blocks to quantify overall obfuscation density.
+
+        Args:
+            binary_path: Path to the binary file.
+            binary_data: Raw binary data as bytes.
+
+        Returns:
+            ControlFlowAnalysis containing obfuscation patterns and density.
+        """
         analysis: ControlFlowAnalysis = ControlFlowAnalysis()
 
         for pattern in self.OPAQUE_PREDICATE_PATTERNS:
@@ -414,8 +535,21 @@ class ArxanAnalyzer:
 
         return analysis
 
-    def _detect_junk_code(self, section_data: bytes, section_va: int) -> list[tuple[int, int]]:
-        """Detect junk code blocks."""
+    def _detect_junk_code(
+        self, section_data: bytes, section_va: int
+    ) -> list[tuple[int, int]]:
+        """Detect junk code blocks.
+
+        Identifies filler code patterns including NOP sequences, INT3 breakpoints,
+        and padding instructions used to obfuscate executable sections.
+
+        Args:
+            section_data: Raw bytes of the section to analyze.
+            section_va: Virtual address of the section.
+
+        Returns:
+            List of (address, size) tuples for detected junk code blocks.
+        """
         junk_blocks: list[tuple[int, int]] = []
 
         junk_patterns: list[bytes] = [
@@ -435,7 +569,14 @@ class ArxanAnalyzer:
         return junk_blocks
 
     def _analyze_rasp(self, binary_data: bytes) -> list[RASPMechanism]:
-        """Analyze Runtime Application Self-Protection mechanisms."""
+        """Analyze Runtime Application Self-Protection mechanisms.
+
+        Args:
+            binary_data: Raw binary data as bytes.
+
+        Returns:
+            List of detected RASP mechanisms.
+        """
         rasp_mechanisms: list[RASPMechanism] = []
 
         for mechanism_type, patterns in self.RASP_DETECTION_PATTERNS.items():
@@ -488,7 +629,14 @@ class ArxanAnalyzer:
         return rasp_mechanisms
 
     def _find_exception_handlers(self, binary_data: bytes) -> list[int]:
-        """Find exception handler installations."""
+        """Find exception handler installations.
+
+        Args:
+            binary_data: Raw binary data as bytes.
+
+        Returns:
+            List of addresses where exception handlers are installed.
+        """
         handler_addresses: list[int] = []
 
         seh_patterns: list[bytes] = [
@@ -509,8 +657,21 @@ class ArxanAnalyzer:
 
         return handler_addresses
 
-    def _analyze_license_validation(self, binary_path: Path, binary_data: bytes) -> list[LicenseValidationRoutine]:
-        """Analyze license validation routines."""
+    def _analyze_license_validation(
+        self, binary_path: Path, binary_data: bytes
+    ) -> list[LicenseValidationRoutine]:
+        """Analyze license validation routines.
+
+        Identifies RSA, AES, and serial number validation signatures, then correlates
+        them with nearby license-related strings for enhanced context.
+
+        Args:
+            binary_path: Path to the binary file.
+            binary_data: Raw binary data as bytes.
+
+        Returns:
+            List of detected license validation routines.
+        """
         license_routines: list[LicenseValidationRoutine] = []
 
         for validation_type, patterns in self.LICENSE_VALIDATION_SIGNATURES.items():
@@ -560,7 +721,14 @@ class ArxanAnalyzer:
         return license_routines
 
     def _find_license_strings(self, binary_data: bytes) -> list[tuple[int, str]]:
-        """Find license-related strings."""
+        """Find license-related strings.
+
+        Args:
+            binary_data: Raw binary data as bytes.
+
+        Returns:
+            List of (address, string) tuples for license-related strings.
+        """
         license_keywords: list[bytes] = [
             b"license",
             b"serial",
@@ -595,8 +763,21 @@ class ArxanAnalyzer:
 
         return found_strings
 
-    def _analyze_integrity_checks(self, binary_path: Path, binary_data: bytes) -> list[IntegrityCheckMechanism]:
-        """Analyze integrity check mechanisms."""
+    def _analyze_integrity_checks(
+        self, binary_path: Path, binary_data: bytes
+    ) -> list[IntegrityCheckMechanism]:
+        """Analyze integrity check mechanisms.
+
+        Detects CRC32 and hash-based integrity verification patterns in binary code,
+        and identifies cryptographic API imports used for signature verification.
+
+        Args:
+            binary_path: Path to the binary file.
+            binary_data: Raw binary data as bytes.
+
+        Returns:
+            List of detected integrity check mechanisms.
+        """
         integrity_checks: list[IntegrityCheckMechanism] = []
 
         crc_patterns: list[tuple[bytes, str, str, str]] = [
@@ -652,7 +833,14 @@ class ArxanAnalyzer:
         return integrity_checks
 
     def _find_encrypted_strings(self, binary_data: bytes) -> list[tuple[int, int]]:
-        """Find encrypted string regions."""
+        """Find encrypted string regions.
+
+        Args:
+            binary_data: Raw binary data as bytes.
+
+        Returns:
+            List of (address, size) tuples for encrypted string regions.
+        """
         encrypted_regions: list[tuple[int, int]] = []
 
         xor_loop_pattern: bytes = b"\x30\x04"
@@ -677,7 +865,14 @@ class ArxanAnalyzer:
         return encrypted_regions
 
     def _find_white_box_tables(self, binary_data: bytes) -> list[tuple[int, int]]:
-        """Find white-box cryptography lookup tables."""
+        """Find white-box cryptography lookup tables.
+
+        Args:
+            binary_data: Raw binary data as bytes.
+
+        Returns:
+            List of (address, size) tuples for white-box crypto tables.
+        """
         tables: list[tuple[int, int]] = []
 
         for i in range(0, len(binary_data) - 2048, 256):
@@ -700,7 +895,11 @@ class ArxanAnalyzer:
 
 
 def main() -> None:
-    """Test entry point for Arxan analyzer."""
+    """Test entry point for Arxan analyzer.
+
+    Parses command-line arguments and performs Arxan analysis on the specified
+    binary file, outputting results in either human-readable or JSON format.
+    """
     import argparse
     import json
 

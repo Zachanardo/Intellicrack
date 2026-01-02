@@ -103,101 +103,221 @@ class DataInterpreter:
 
     @staticmethod
     def _handle_uint8(data: bytes) -> str:
-        """Handle UINT8 data type."""
+        """Handle UINT8 data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the UINT8 value.
+
+        """
         return str(data[0]) if data else "Insufficient data"
 
     @staticmethod
     def _handle_int8(data: bytes) -> str:
-        """Handle INT8 data type."""
+        """Handle INT8 data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the INT8 value.
+
+        """
         return str(struct.unpack("b", data[:1])[0]) if data else "Insufficient data"
 
     @staticmethod
     def _handle_uint16_le(data: bytes) -> str:
-        """Handle UINT16_LE data type."""
+        """Handle UINT16_LE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the UINT16 little-endian value.
+
+        """
         if len(data) >= 2:
             return str(struct.unpack("<H", data[:2])[0])
         return "Insufficient data"
 
     @staticmethod
     def _handle_uint16_be(data: bytes) -> str:
-        """Handle UINT16_BE data type."""
+        """Handle UINT16_BE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the UINT16 big-endian value.
+
+        """
         if len(data) >= 2:
             return str(struct.unpack(">H", data[:2])[0])
         return "Insufficient data"
 
     @staticmethod
     def _handle_int16_le(data: bytes) -> str:
-        """Handle INT16_LE data type."""
+        """Handle INT16_LE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the INT16 little-endian value.
+
+        """
         if len(data) >= 2:
             return str(struct.unpack("<h", data[:2])[0])
         return "Insufficient data"
 
     @staticmethod
     def _handle_int16_be(data: bytes) -> str:
-        """Handle INT16_BE data type."""
+        """Handle INT16_BE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the INT16 big-endian value.
+
+        """
         if len(data) >= 2:
             return str(struct.unpack(">h", data[:2])[0])
         return "Insufficient data"
 
     @staticmethod
     def _handle_uint32_le(data: bytes) -> str:
-        """Handle UINT32_LE data type."""
+        """Handle UINT32_LE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the UINT32 little-endian value.
+
+        """
         if len(data) >= 4:
             return str(struct.unpack("<I", data[:4])[0])
         return "Insufficient data"
 
     @staticmethod
     def _handle_uint32_be(data: bytes) -> str:
-        """Handle UINT32_BE data type."""
+        """Handle UINT32_BE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the UINT32 big-endian value.
+
+        """
         if len(data) >= 4:
             return str(struct.unpack(">I", data[:4])[0])
         return "Insufficient data"
 
     @staticmethod
     def _handle_int32_le(data: bytes) -> str:
-        """Handle INT32_LE data type."""
+        """Handle INT32_LE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the INT32 little-endian value.
+
+        """
         if len(data) >= 4:
             return str(struct.unpack("<i", data[:4])[0])
         return "Insufficient data"
 
     @staticmethod
     def _handle_int32_be(data: bytes) -> str:
-        """Handle INT32_BE data type."""
+        """Handle INT32_BE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the INT32 big-endian value.
+
+        """
         if len(data) >= 4:
             return str(struct.unpack(">i", data[:4])[0])
         return "Insufficient data"
 
     @staticmethod
     def _handle_uint64_le(data: bytes) -> str:
-        """Handle UINT64_LE data type."""
+        """Handle UINT64_LE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the UINT64 little-endian value.
+
+        """
         if len(data) >= 8:
             return str(struct.unpack("<Q", data[:8])[0])
         return "Insufficient data"
 
     @staticmethod
     def _handle_uint64_be(data: bytes) -> str:
-        """Handle UINT64_BE data type."""
+        """Handle UINT64_BE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the UINT64 big-endian value.
+
+        """
         if len(data) >= 8:
             return str(struct.unpack(">Q", data[:8])[0])
         return "Insufficient data"
 
     @staticmethod
     def _handle_int64_le(data: bytes) -> str:
-        """Handle INT64_LE data type."""
+        """Handle INT64_LE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the INT64 little-endian value.
+
+        """
         if len(data) >= 8:
             return str(struct.unpack("<q", data[:8])[0])
         return "Insufficient data"
 
     @staticmethod
     def _handle_int64_be(data: bytes) -> str:
-        """Handle INT64_BE data type."""
+        """Handle INT64_BE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the INT64 big-endian value.
+
+        """
         if len(data) >= 8:
             return str(struct.unpack(">q", data[:8])[0])
         return "Insufficient data"
 
     @staticmethod
     def _handle_float32_le(data: bytes) -> str:
-        """Handle FLOAT32_LE data type."""
+        """Handle FLOAT32_LE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the FLOAT32 little-endian value.
+
+        """
         if len(data) >= 4:
             value = struct.unpack("<f", data[:4])[0]
             return f"{value:.6f}"
@@ -205,7 +325,15 @@ class DataInterpreter:
 
     @staticmethod
     def _handle_float32_be(data: bytes) -> str:
-        """Handle FLOAT32_BE data type."""
+        """Handle FLOAT32_BE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the FLOAT32 big-endian value.
+
+        """
         if len(data) >= 4:
             value = struct.unpack(">f", data[:4])[0]
             return f"{value:.6f}"
@@ -213,7 +341,15 @@ class DataInterpreter:
 
     @staticmethod
     def _handle_float64_le(data: bytes) -> str:
-        """Handle FLOAT64_LE data type."""
+        """Handle FLOAT64_LE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the FLOAT64 little-endian value.
+
+        """
         if len(data) >= 8:
             value = struct.unpack("<d", data[:8])[0]
             return f"{value:.15f}"
@@ -221,7 +357,15 @@ class DataInterpreter:
 
     @staticmethod
     def _handle_float64_be(data: bytes) -> str:
-        """Handle FLOAT64_BE data type."""
+        """Handle FLOAT64_BE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            String representation of the FLOAT64 big-endian value.
+
+        """
         if len(data) >= 8:
             value = struct.unpack(">d", data[:8])[0]
             return f"{value:.15f}"
@@ -229,7 +373,15 @@ class DataInterpreter:
 
     @staticmethod
     def _handle_ascii(data: bytes) -> str:
-        """Handle ASCII data type."""
+        """Handle ASCII data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            ASCII string representation of the data.
+
+        """
         try:
             null_pos = data.find(b"\x00")
             text_data = data[:null_pos] if null_pos >= 0 else data
@@ -240,7 +392,15 @@ class DataInterpreter:
 
     @staticmethod
     def _handle_utf8(data: bytes) -> str:
-        """Handle UTF8 data type."""
+        """Handle UTF8 data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            UTF-8 string representation of the data.
+
+        """
         try:
             null_pos = data.find(b"\x00")
             text_data = data[:null_pos] if null_pos >= 0 else data
@@ -251,7 +411,15 @@ class DataInterpreter:
 
     @staticmethod
     def _handle_utf16_le(data: bytes) -> str:
-        """Handle UTF16_LE data type."""
+        """Handle UTF16_LE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            UTF-16 little-endian string representation of the data.
+
+        """
         try:
             null_pos = data.find(b"\x00\x00")
             text_data = data[:null_pos] if null_pos >= 0 and null_pos % 2 == 0 else data
@@ -262,7 +430,15 @@ class DataInterpreter:
 
     @staticmethod
     def _handle_utf16_be(data: bytes) -> str:
-        """Handle UTF16_BE data type."""
+        """Handle UTF16_BE data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            UTF-16 big-endian string representation of the data.
+
+        """
         try:
             null_pos = data.find(b"\x00\x00")
             text_data = data[:null_pos] if null_pos >= 0 and null_pos % 2 == 0 else data
@@ -273,7 +449,15 @@ class DataInterpreter:
 
     @staticmethod
     def _handle_unix_timestamp_32(data: bytes) -> str:
-        """Handle UNIX_TIMESTAMP_32 data type."""
+        """Handle UNIX_TIMESTAMP_32 data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            Formatted datetime string from 32-bit Unix timestamp.
+
+        """
         if len(data) >= 4:
             timestamp = struct.unpack("<I", data[:4])[0]
             try:
@@ -286,7 +470,15 @@ class DataInterpreter:
 
     @staticmethod
     def _handle_unix_timestamp_64(data: bytes) -> str:
-        """Handle UNIX_TIMESTAMP_64 data type."""
+        """Handle UNIX_TIMESTAMP_64 data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            Formatted datetime string from 64-bit Unix timestamp.
+
+        """
         if len(data) >= 8:
             timestamp = struct.unpack("<Q", data[:8])[0]
             try:
@@ -301,7 +493,15 @@ class DataInterpreter:
 
     @staticmethod
     def _handle_windows_filetime(data: bytes) -> str:
-        """Handle WINDOWS_FILETIME data type."""
+        """Handle WINDOWS_FILETIME data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            Formatted datetime string from Windows FILETIME value.
+
+        """
         if len(data) >= 8:
             filetime = struct.unpack("<Q", data[:8])[0]
             try:
@@ -315,7 +515,15 @@ class DataInterpreter:
 
     @staticmethod
     def _handle_dos_datetime(data: bytes) -> str:
-        """Handle DOS_DATETIME data type."""
+        """Handle DOS_DATETIME data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            Formatted datetime string from DOS date/time format.
+
+        """
         if len(data) >= 4:
             dos_time = struct.unpack("<H", data[:2])[0]
             dos_date = struct.unpack("<H", data[2:4])[0]
@@ -327,8 +535,6 @@ class DataInterpreter:
                 minute = (dos_time >> 5) & 0x3F
                 second = (dos_time & 0x1F) * 2
 
-                from datetime import timezone
-
                 dt = datetime.datetime(year, month, day, hour, minute, second, tzinfo=datetime.UTC)
                 return dt.strftime("%Y-%m-%d %H:%M:%S")
             except (ValueError, OSError) as e:
@@ -338,17 +544,41 @@ class DataInterpreter:
 
     @staticmethod
     def _handle_binary(data: bytes) -> str:
-        """Handle BINARY data type."""
+        """Handle BINARY data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            Binary string representation of up to 8 bytes.
+
+        """
         return " ".join(f"{b:08b}" for b in data[:8])
 
     @staticmethod
     def _handle_hex(data: bytes) -> str:
-        """Handle HEX data type."""
+        """Handle HEX data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            Hexadecimal string representation of up to 16 bytes.
+
+        """
         return " ".join(f"{b:02X}" for b in data[:16])
 
     @staticmethod
     def _handle_guid(data: bytes) -> str:
-        """Handle GUID data type."""
+        """Handle GUID data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            GUID string representation in standard format.
+
+        """
         if len(data) >= 16:
             guid_parts = struct.unpack("<IHH8B", data[:16])
             return f"{guid_parts[0]:08X}-{guid_parts[1]:04X}-{guid_parts[2]:04X}-{guid_parts[3]:02X}{guid_parts[4]:02X}-" + "".join(
@@ -358,14 +588,30 @@ class DataInterpreter:
 
     @staticmethod
     def _handle_ipv4_address(data: bytes) -> str:
-        """Handle IPV4_ADDRESS data type."""
+        """Handle IPV4_ADDRESS data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            IPv4 address string representation.
+
+        """
         if len(data) >= 4:
             return f"{data[0]}.{data[1]}.{data[2]}.{data[3]}"
         return "Insufficient data"
 
     @staticmethod
     def _handle_ipv6_address(data: bytes) -> str:
-        """Handle IPV6_ADDRESS data type."""
+        """Handle IPV6_ADDRESS data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            IPv6 address string representation.
+
+        """
         if len(data) >= 16:
             parts = struct.unpack(">8H", data[:16])
             return ":".join(f"{part:04x}" for part in parts)
@@ -373,7 +619,15 @@ class DataInterpreter:
 
     @staticmethod
     def _handle_mac_address(data: bytes) -> str:
-        """Handle MAC_ADDRESS data type."""
+        """Handle MAC_ADDRESS data type.
+
+        Args:
+            data: Binary data to interpret.
+
+        Returns:
+            MAC address string representation.
+
+        """
         if len(data) >= 6:
             return ":".join(f"{b:02X}" for b in data[:6])
         return "Insufficient data"
@@ -383,11 +637,11 @@ class DataInterpreter:
         """Interpret binary data as the specified data type.
 
         Args:
-            data: Binary data to interpret
-            data_type: Type to interpret the data as
+            data: Binary data to interpret.
+            data_type: Type to interpret the data as.
 
         Returns:
-            String representation of the interpreted data
+            String representation of the interpreted data.
 
         """
         if not data:
@@ -447,7 +701,7 @@ else:
     _data_modified_signal = None
 
 
-class DataInspector(_DataInspectorBase):  # type: ignore[misc]
+class DataInspector(_DataInspectorBase):
     """Data inspector widget for interpreting selected bytes.
 
     This widget displays the selected bytes interpreted as various data types
@@ -460,7 +714,7 @@ class DataInspector(_DataInspectorBase):  # type: ignore[misc]
         """Initialize the data inspector widget.
 
         Args:
-            parent: Parent widget (default: None)
+            parent: Parent widget.
 
         """
         if not PYQT6_AVAILABLE:
@@ -809,8 +1063,8 @@ class DataInspector(_DataInspectorBase):  # type: ignore[misc]
         """Set the data to inspect.
 
         Args:
-            data: Binary data to inspect
-            offset: Starting offset of the data (default: 0)
+            data: Binary data to inspect.
+            offset: Starting offset of the data.
 
         """
         self.current_data = data
@@ -1035,7 +1289,7 @@ class DataInspector(_DataInspectorBase):  # type: ignore[misc]
         converted bytes.
 
         Raises:
-            ValueError: If the input format is invalid for the selected type
+            ValueError: If decimal value is invalid or outside range 0-255.
 
         """
         if self.input_type_combo is None or self.value_edit is None:
@@ -1096,7 +1350,9 @@ class DataInspector(_DataInspectorBase):  # type: ignore[misc]
             if self.data_modified:
                 self.data_modified.emit(new_data)
 
-        except (OSError, ValueError, RuntimeError) as e:
+        except ValueError:
+            raise
+        except (OSError, RuntimeError) as e:
             logger.warning("Error parsing input value: %s", e)
 
     def clear_modification(self) -> None:

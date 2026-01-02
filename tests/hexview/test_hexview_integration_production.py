@@ -23,8 +23,7 @@ import re
 import struct
 import sys
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock
+from typing import Any, Callable, Dict, List, Optional, cast
 
 import pytest
 
@@ -52,6 +51,100 @@ from intellicrack.hexview.integration import (
 
 
 pytestmark = pytest.mark.skipif(not PYQT6_AVAILABLE, reason="PyQt6 not available")
+
+
+class FakeMenuBar:
+    """Fake menu bar for testing menu operations."""
+
+    def __init__(self) -> None:
+        self.menus: List[Any] = []
+        self.call_count: int = 0
+
+    def addMenu(self, name: str) -> "FakeMenu":
+        """Add menu to menu bar."""
+        self.call_count += 1
+        menu = FakeMenu(name)
+        self.menus.append(menu)
+        return menu
+
+
+class FakeMenu:
+    """Fake menu for testing menu actions."""
+
+    def __init__(self, name: str) -> None:
+        self.name: str = name
+        self.actions: List[Dict[str, Any]] = []
+
+    def addAction(self, text: str, callback: Optional[Callable[[], None]] = None) -> "FakeAction":
+        """Add action to menu."""
+        action = FakeAction(text, callback)
+        self.actions.append({"text": text, "callback": callback, "action": action})
+        return action
+
+
+class FakeAction:
+    """Fake menu action for testing."""
+
+    def __init__(self, text: str, callback: Optional[Callable[[], None]] = None) -> None:
+        self.text: str = text
+        self.callback: Optional[Callable[[], None]] = callback
+        self.triggered_count: int = 0
+
+    def trigger(self) -> None:
+        """Trigger action callback."""
+        self.triggered_count += 1
+        if self.callback:
+            self.callback()
+
+
+class FakeToolBar:
+    """Fake toolbar for testing toolbar operations."""
+
+    def __init__(self, name: str) -> None:
+        self.name: str = name
+        self.actions: List[Dict[str, Any]] = []
+
+    def addAction(self, text: str, callback: Optional[Callable[[], None]] = None) -> "FakeAction":
+        """Add action to toolbar."""
+        action = FakeAction(text, callback)
+        self.actions.append({"text": text, "callback": callback, "action": action})
+        return action
+
+
+class FakeAppInstance:
+    """Fake application instance with required attributes for testing."""
+
+    def __init__(self) -> None:
+        self.binary_path: Optional[str] = None
+        self._hex_viewer_integrated: bool = False
+        self.TOOL_REGISTRY: Dict[str, Callable[..., Any]] = {}
+        self._original_show_editable_hex_viewer: Optional[Callable[..., Any]] = None
+        self.show_editable_hex_viewer: Optional[Callable[..., Any]] = None
+        self.show_writable_hex_viewer: Optional[Callable[..., Any]] = None
+        self._menu_bar: FakeMenuBar = FakeMenuBar()
+        self._toolbars: Dict[str, FakeToolBar] = {}
+        self._children: List[Any] = []
+
+    def menuBar(self) -> FakeMenuBar:
+        """Return fake menu bar."""
+        return self._menu_bar
+
+    def children(self) -> List[Any]:
+        """Return children widgets."""
+        return self._children
+
+    def addToolBar(self, name: str) -> FakeToolBar:
+        """Add toolbar to application."""
+        toolbar = FakeToolBar(name)
+        self._toolbars[name] = toolbar
+        return toolbar
+
+    def findChild(self, type_class: type, name: str) -> Optional[Any]:
+        """Find child widget by type and name."""
+        for toolbar in self._toolbars.values():
+            if toolbar.name == name:
+                return toolbar
+        return None
 
 
 @pytest.fixture(scope="module")
@@ -101,39 +194,30 @@ def test_binary_elf(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def mock_app_instance(qapp: Any) -> Any:
-    """Create mock application instance with required attributes."""
-    app = MagicMock(spec=QWidget)
-    app.binary_path = None
-    app._hex_viewer_integrated = False
-    app.TOOL_REGISTRY = {}
-    app._original_show_editable_hex_viewer = None
-
-    app.menuBar = MagicMock()
-    app.children = MagicMock(return_value=[])
-
-    return app
+def fake_app_instance(qapp: Any) -> FakeAppInstance:
+    """Create fake application instance with required attributes."""
+    return FakeAppInstance()
 
 
 class TestEnhancedHexViewerDisplay:
     """Test enhanced hex viewer dialog display functionality."""
 
-    def test_show_enhanced_hex_viewer_requires_file_path(self, mock_app_instance: Any, qapp: Any) -> None:
+    def test_show_enhanced_hex_viewer_requires_file_path(self, fake_app_instance: FakeAppInstance, qapp: Any) -> None:
         """show_enhanced_hex_viewer requires valid file path or binary_path attribute."""
-        result = show_enhanced_hex_viewer(mock_app_instance, file_path=None, read_only=True)
+        result = show_enhanced_hex_viewer(fake_app_instance, file_path=None, read_only=True)
 
         if result is not None:
             assert isinstance(result, QDialog)
             result.close()
 
     def test_show_enhanced_hex_viewer_uses_app_binary_path(
-        self, mock_app_instance: Any, test_binary_pe: Path, qapp: Any
+        self, fake_app_instance: FakeAppInstance, test_binary_pe: Path, qapp: Any
     ) -> None:
         """show_enhanced_hex_viewer uses app_instance.binary_path if no path provided."""
-        mock_app_instance.binary_path = str(test_binary_pe)
+        fake_app_instance.binary_path = str(test_binary_pe)
 
         try:
-            result = show_enhanced_hex_viewer(mock_app_instance, file_path=None, read_only=True)
+            result = show_enhanced_hex_viewer(fake_app_instance, file_path=None, read_only=True)
 
             if result is not None:
                 assert isinstance(result, QDialog)
@@ -141,20 +225,20 @@ class TestEnhancedHexViewerDisplay:
         except Exception:
             pass
 
-    def test_show_enhanced_hex_viewer_validates_file_exists(self, mock_app_instance: Any, qapp: Any) -> None:
+    def test_show_enhanced_hex_viewer_validates_file_exists(self, fake_app_instance: FakeAppInstance, qapp: Any) -> None:
         """show_enhanced_hex_viewer validates file existence before opening."""
         nonexistent = Path("/nonexistent/file.exe")
 
-        result = show_enhanced_hex_viewer(mock_app_instance, file_path=str(nonexistent), read_only=True)
+        result = show_enhanced_hex_viewer(fake_app_instance, file_path=str(nonexistent), read_only=True)
 
         assert result is None
 
     def test_show_enhanced_hex_viewer_handles_read_only_mode(
-        self, mock_app_instance: Any, test_binary_pe: Path, qapp: Any
+        self, fake_app_instance: FakeAppInstance, test_binary_pe: Path, qapp: Any
     ) -> None:
         """show_enhanced_hex_viewer opens dialog in read-only mode when specified."""
         try:
-            result = show_enhanced_hex_viewer(mock_app_instance, file_path=str(test_binary_pe), read_only=True)
+            result = show_enhanced_hex_viewer(fake_app_instance, file_path=str(test_binary_pe), read_only=True)
 
             if result is not None:
                 assert isinstance(result, QDialog)
@@ -163,11 +247,11 @@ class TestEnhancedHexViewerDisplay:
             pass
 
     def test_show_enhanced_hex_viewer_handles_editable_mode(
-        self, mock_app_instance: Any, test_binary_pe: Path, qapp: Any
+        self, fake_app_instance: FakeAppInstance, test_binary_pe: Path, qapp: Any
     ) -> None:
         """show_enhanced_hex_viewer opens dialog in editable mode when specified."""
         try:
-            result = show_enhanced_hex_viewer(mock_app_instance, file_path=str(test_binary_pe), read_only=False)
+            result = show_enhanced_hex_viewer(fake_app_instance, file_path=str(test_binary_pe), read_only=False)
 
             if result is not None:
                 assert isinstance(result, QDialog)
@@ -179,34 +263,38 @@ class TestEnhancedHexViewerDisplay:
 class TestHexViewerInitialization:
     """Test hexview viewer initialization and setup."""
 
-    def test_initialize_hex_viewer_sets_up_methods(self, mock_app_instance: Any) -> None:
+    def test_initialize_hex_viewer_sets_up_methods(self, fake_app_instance: FakeAppInstance) -> None:
         """initialize_hex_viewer sets up hex viewer methods on app instance."""
-        initialize_hex_viewer(mock_app_instance)
+        initialize_hex_viewer(fake_app_instance)
 
-        assert hasattr(mock_app_instance, "show_editable_hex_viewer")
-        assert callable(mock_app_instance.show_editable_hex_viewer)
-        assert hasattr(mock_app_instance, "show_writable_hex_viewer")
-        assert callable(mock_app_instance.show_writable_hex_viewer)
+        assert hasattr(fake_app_instance, "show_editable_hex_viewer")
+        assert callable(fake_app_instance.show_editable_hex_viewer)
+        assert hasattr(fake_app_instance, "show_writable_hex_viewer")
+        assert callable(fake_app_instance.show_writable_hex_viewer)
 
-    def test_initialize_hex_viewer_preserves_original_method(self, mock_app_instance: Any) -> None:
+    def test_initialize_hex_viewer_preserves_original_method(self, fake_app_instance: FakeAppInstance) -> None:
         """initialize_hex_viewer preserves original show_editable_hex_viewer if it exists."""
-        original_method = MagicMock()
-        mock_app_instance.show_editable_hex_viewer = original_method
+        def original_method() -> None:
+            pass
 
-        initialize_hex_viewer(mock_app_instance)
+        fake_app_instance.show_editable_hex_viewer = original_method
 
-        assert hasattr(mock_app_instance, "_original_show_editable_hex_viewer")
-        assert mock_app_instance._original_show_editable_hex_viewer == original_method
+        initialize_hex_viewer(fake_app_instance)
 
-    def test_restore_standard_hex_viewer_restores_original(self, mock_app_instance: Any) -> None:
+        assert hasattr(fake_app_instance, "_original_show_editable_hex_viewer")
+        assert fake_app_instance._original_show_editable_hex_viewer == original_method
+
+    def test_restore_standard_hex_viewer_restores_original(self, fake_app_instance: FakeAppInstance) -> None:
         """restore_standard_hex_viewer restores original hex viewer method."""
-        original_method = MagicMock()
-        mock_app_instance.show_editable_hex_viewer = original_method
+        def original_method() -> None:
+            pass
 
-        initialize_hex_viewer(mock_app_instance)
-        restore_standard_hex_viewer(mock_app_instance)
+        fake_app_instance.show_editable_hex_viewer = original_method
 
-        assert mock_app_instance.show_editable_hex_viewer == original_method
+        initialize_hex_viewer(fake_app_instance)
+        restore_standard_hex_viewer(fake_app_instance)
+
+        assert fake_app_instance.show_editable_hex_viewer == original_method
 
 
 class TestAIToolBinaryAnalysis:
@@ -216,10 +304,10 @@ class TestAIToolBinaryAnalysis:
         """wrapper_ai_binary_analyze calculates Shannon entropy of binary data."""
         data = test_binary_pe.read_bytes()
 
-        result = wrapper_ai_binary_analyze(None, {"data": data, "offset": 0})
+        result = cast(Dict[str, Any], wrapper_ai_binary_analyze(None, {"data": data, "offset": 0}))
 
         assert "analysis" in result
-        analysis = result["analysis"]
+        analysis = cast(Dict[str, Any], result["analysis"])
         assert "entropy" in analysis
         assert isinstance(analysis["entropy"], float)
         assert 0.0 <= analysis["entropy"] <= 8.0
@@ -228,47 +316,49 @@ class TestAIToolBinaryAnalysis:
         """wrapper_ai_binary_analyze extracts printable ASCII strings from binary."""
         data = test_binary_pe.read_bytes()
 
-        result = wrapper_ai_binary_analyze(None, {"data": data, "offset": 0})
+        result = cast(Dict[str, Any], wrapper_ai_binary_analyze(None, {"data": data, "offset": 0}))
 
         assert "analysis" in result
-        analysis = result["analysis"]
+        analysis = cast(Dict[str, Any], result["analysis"])
         assert "strings" in analysis
         assert isinstance(analysis["strings"], list)
 
-        string_data = " ".join(analysis["strings"])
+        string_data = " ".join(cast(List[str], analysis["strings"]))
         assert "license" in string_data.lower() or "trial" in string_data.lower()
 
     def test_wrapper_ai_binary_analyze_detects_patterns(self, test_binary_pe: Path) -> None:
         """wrapper_ai_binary_analyze detects file type and license-related patterns."""
         data = test_binary_pe.read_bytes()
 
-        result = wrapper_ai_binary_analyze(None, {"data": data, "offset": 0})
+        result = cast(Dict[str, Any], wrapper_ai_binary_analyze(None, {"data": data, "offset": 0}))
 
         assert "analysis" in result
-        analysis = result["analysis"]
+        analysis = cast(Dict[str, Any], result["analysis"])
         assert "patterns" in analysis
         assert isinstance(analysis["patterns"], dict)
 
-        if "file_type" in analysis["patterns"]:
-            assert "PE" in analysis["patterns"]["file_type"]
+        patterns = cast(Dict[str, Any], analysis["patterns"])
+        if "file_type" in patterns:
+            assert "PE" in patterns["file_type"]
 
     def test_wrapper_ai_binary_analyze_analyzes_structure(self, test_binary_pe: Path) -> None:
         """wrapper_ai_binary_analyze performs structural analysis of binary data."""
         data = test_binary_pe.read_bytes()
 
-        result = wrapper_ai_binary_analyze(None, {"data": data, "offset": 0})
+        result = cast(Dict[str, Any], wrapper_ai_binary_analyze(None, {"data": data, "offset": 0}))
 
         assert "analysis" in result
-        analysis = result["analysis"]
+        analysis = cast(Dict[str, Any], result["analysis"])
         assert "structure" in analysis
         assert isinstance(analysis["structure"], dict)
 
-        if "null_bytes" in analysis["structure"]:
-            assert isinstance(analysis["structure"]["null_bytes"], int)
+        structure = cast(Dict[str, Any], analysis["structure"])
+        if "null_bytes" in structure:
+            assert isinstance(structure["null_bytes"], int)
 
     def test_wrapper_ai_binary_analyze_handles_empty_data(self) -> None:
         """wrapper_ai_binary_analyze handles empty data gracefully."""
-        result = wrapper_ai_binary_analyze(None, {"data": b"", "offset": 0})
+        result = cast(Dict[str, Any], wrapper_ai_binary_analyze(None, {"data": b"", "offset": 0}))
 
         assert "analysis" in result
 
@@ -276,12 +366,12 @@ class TestAIToolBinaryAnalysis:
         """wrapper_ai_binary_analyze includes byte distribution statistics."""
         data = test_binary_pe.read_bytes()
 
-        result = wrapper_ai_binary_analyze(None, {"data": data, "offset": 0})
+        result = cast(Dict[str, Any], wrapper_ai_binary_analyze(None, {"data": data, "offset": 0}))
 
         assert "analysis" in result
-        analysis = result["analysis"]
+        analysis = cast(Dict[str, Any], result["analysis"])
         assert "byte_distribution" in analysis
-        dist = analysis["byte_distribution"]
+        dist = cast(Dict[str, Any], analysis["byte_distribution"])
 
         if "most_common" in dist:
             assert isinstance(dist["most_common"], list)
@@ -296,32 +386,36 @@ class TestAIToolPatternSearch:
         """wrapper_ai_binary_pattern_search finds hex byte patterns in binary."""
         data = test_binary_pe.read_bytes()
 
-        result = wrapper_ai_binary_pattern_search(
+        result = cast(Dict[str, Any], wrapper_ai_binary_pattern_search(
             None,
             {"data": data, "pattern": "4D5A", "pattern_type": "hex"},
-        )
+        ))
 
         assert "matches" in result
         assert "count" in result
-        assert isinstance(result["matches"], list)
+        matches = cast(List[Dict[str, Any]], result["matches"])
+        assert isinstance(matches, list)
 
-        if result["count"] > 0:
-            assert result["matches"][0]["offset"] == 0
+        count = cast(int, result["count"])
+        if count > 0:
+            assert matches[0]["offset"] == 0
 
     def test_wrapper_ai_binary_pattern_search_finds_string_patterns(self, test_binary_pe: Path) -> None:
         """wrapper_ai_binary_pattern_search finds string patterns in binary."""
         data = test_binary_pe.read_bytes()
 
-        result = wrapper_ai_binary_pattern_search(
+        result = cast(Dict[str, Any], wrapper_ai_binary_pattern_search(
             None,
             {"data": data, "pattern": "license", "pattern_type": "string"},
-        )
+        ))
 
         assert "matches" in result
-        assert isinstance(result["matches"], list)
+        matches = cast(List[Dict[str, Any]], result["matches"])
+        assert isinstance(matches, list)
 
-        if result["count"] > 0:
-            for match in result["matches"]:
+        count = cast(int, result["count"])
+        if count > 0:
+            for match in matches:
                 assert "offset" in match
                 assert "length" in match
 
@@ -329,16 +423,18 @@ class TestAIToolPatternSearch:
         """wrapper_ai_binary_pattern_search finds license-related keywords."""
         data = test_binary_pe.read_bytes()
 
-        result = wrapper_ai_binary_pattern_search(
+        result = cast(Dict[str, Any], wrapper_ai_binary_pattern_search(
             None,
             {"data": data, "pattern": "", "pattern_type": "license_check"},
-        )
+        ))
 
         assert "matches" in result
-        assert isinstance(result["matches"], list)
+        matches = cast(List[Dict[str, Any]], result["matches"])
+        assert isinstance(matches, list)
 
-        if result["count"] > 0:
-            found_types = {match.get("type") for match in result["matches"] if "type" in match}
+        count = cast(int, result["count"])
+        if count > 0:
+            found_types = {match.get("type") for match in matches if "type" in match}
             assert any(
                 keyword in found_types
                 for keyword in ["license", "trial", "expired", "serial", "activation", "registration"]
@@ -348,10 +444,10 @@ class TestAIToolPatternSearch:
         """wrapper_ai_binary_pattern_search supports regex pattern matching."""
         data = test_binary_pe.read_bytes()
 
-        result = wrapper_ai_binary_pattern_search(
+        result = cast(Dict[str, Any], wrapper_ai_binary_pattern_search(
             None,
             {"data": data, "pattern": b"[lt]rial", "pattern_type": "regex"},
-        )
+        ))
 
         assert "matches" in result
         assert isinstance(result["matches"], list)
@@ -360,10 +456,10 @@ class TestAIToolPatternSearch:
         """wrapper_ai_binary_pattern_search handles no matches gracefully."""
         data = b"test data without pattern"
 
-        result = wrapper_ai_binary_pattern_search(
+        result = cast(Dict[str, Any], wrapper_ai_binary_pattern_search(
             None,
             {"data": data, "pattern": "NONEXISTENT_PATTERN", "pattern_type": "string"},
-        )
+        ))
 
         assert result["count"] == 0
         assert result["matches"] == []
@@ -376,38 +472,40 @@ class TestAIToolEditSuggestions:
         """wrapper_ai_binary_edit_suggest identifies conditional jump instructions."""
         data = b"\x74\x05" + b"\x90" * 10 + b"\x75\x05" + b"\x90" * 10
 
-        result = wrapper_ai_binary_edit_suggest(
+        result = cast(Dict[str, Any], wrapper_ai_binary_edit_suggest(
             None,
             {"data": data, "offset": 0, "context": "license_check"},
-        )
+        ))
 
         assert "suggestions" in result
-        assert isinstance(result["suggestions"], list)
+        suggestions = cast(List[Dict[str, Any]], result["suggestions"])
+        assert isinstance(suggestions, list)
 
-        if len(result["suggestions"]) > 0:
-            for suggestion in result["suggestions"]:
+        if len(suggestions) > 0:
+            for suggestion in suggestions:
                 assert "offset" in suggestion
                 assert "description" in suggestion
                 assert "original" in suggestion
                 assert "patched" in suggestion
                 assert "type" in suggestion
 
-            types = {s["type"] for s in result["suggestions"]}
+            types = {s["type"] for s in suggestions}
             assert "conditional_jump_bypass" in types
 
     def test_wrapper_ai_binary_edit_suggest_finds_call_instructions(self) -> None:
         """wrapper_ai_binary_edit_suggest identifies CALL instructions for bypass."""
         data = b"\xe8\x00\x00\x00\x00" + b"\x90" * 20
 
-        result = wrapper_ai_binary_edit_suggest(
+        result = cast(Dict[str, Any], wrapper_ai_binary_edit_suggest(
             None,
             {"data": data, "offset": 0, "context": "license_check"},
-        )
+        ))
 
         assert "suggestions" in result
+        suggestions = cast(List[Dict[str, Any]], result["suggestions"])
 
-        if len(result["suggestions"]) > 0:
-            call_suggestions = [s for s in result["suggestions"] if s["type"] == "call_bypass"]
+        if len(suggestions) > 0:
+            call_suggestions = [s for s in suggestions if s["type"] == "call_bypass"]
             if call_suggestions:
                 assert "CALL" in call_suggestions[0]["description"]
 
@@ -416,15 +514,16 @@ class TestAIToolEditSuggestions:
         data = b"\xb8\x00\x00\x00\x00" + b"\xc3"
         data += b"\x31\xc0" + b"\xc3"
 
-        result = wrapper_ai_binary_edit_suggest(
+        result = cast(Dict[str, Any], wrapper_ai_binary_edit_suggest(
             None,
             {"data": data, "offset": 0, "context": "return_value"},
-        )
+        ))
 
         assert "suggestions" in result
+        suggestions = cast(List[Dict[str, Any]], result["suggestions"])
 
-        if len(result["suggestions"]) > 0:
-            return_suggestions = [s for s in result["suggestions"] if s["type"] == "return_value_modification"]
+        if len(suggestions) > 0:
+            return_suggestions = [s for s in suggestions if s["type"] == "return_value_modification"]
             if return_suggestions:
                 assert "return" in return_suggestions[0]["description"].lower()
 
@@ -432,24 +531,25 @@ class TestAIToolEditSuggestions:
         """wrapper_ai_binary_edit_suggest suggests comparison operation bypass."""
         data = b"\x3b\x45\x08" + b"\x90" * 10
 
-        result = wrapper_ai_binary_edit_suggest(
+        result = cast(Dict[str, Any], wrapper_ai_binary_edit_suggest(
             None,
             {"data": data, "offset": 0, "context": "comparison"},
-        )
+        ))
 
         assert "suggestions" in result
+        suggestions = cast(List[Dict[str, Any]], result["suggestions"])
 
-        if len(result["suggestions"]) > 0:
-            comp_suggestions = [s for s in result["suggestions"] if s["type"] == "comparison_bypass"]
+        if len(suggestions) > 0:
+            comp_suggestions = [s for s in suggestions if s["type"] == "comparison_bypass"]
             if comp_suggestions:
                 assert "comparison" in comp_suggestions[0]["description"].lower()
 
     def test_wrapper_ai_binary_edit_suggest_handles_empty_data(self) -> None:
         """wrapper_ai_binary_edit_suggest handles empty data gracefully."""
-        result = wrapper_ai_binary_edit_suggest(
+        result = cast(Dict[str, Any], wrapper_ai_binary_edit_suggest(
             None,
             {"data": b"", "offset": 0, "context": "general"},
-        )
+        ))
 
         assert "suggestions" in result
         assert result["suggestions"] == []
@@ -458,22 +558,24 @@ class TestAIToolEditSuggestions:
 class TestAIToolRegistration:
     """Test AI tool registration with application."""
 
-    def test_register_hex_viewer_ai_tools_adds_to_registry(self, mock_app_instance: Any) -> None:
+    def test_register_hex_viewer_ai_tools_adds_to_registry(self, fake_app_instance: FakeAppInstance) -> None:
         """register_hex_viewer_ai_tools adds all AI tools to TOOL_REGISTRY."""
-        register_hex_viewer_ai_tools(mock_app_instance)
+        register_hex_viewer_ai_tools(fake_app_instance)
 
-        assert "tool_ai_binary_analyze" in mock_app_instance.TOOL_REGISTRY
-        assert "tool_ai_binary_pattern_search" in mock_app_instance.TOOL_REGISTRY
-        assert "tool_ai_binary_edit_suggest" in mock_app_instance.TOOL_REGISTRY
+        assert "tool_ai_binary_analyze" in fake_app_instance.TOOL_REGISTRY
+        assert "tool_ai_binary_pattern_search" in fake_app_instance.TOOL_REGISTRY
+        assert "tool_ai_binary_edit_suggest" in fake_app_instance.TOOL_REGISTRY
 
-        assert callable(mock_app_instance.TOOL_REGISTRY["tool_ai_binary_analyze"])
-        assert callable(mock_app_instance.TOOL_REGISTRY["tool_ai_binary_pattern_search"])
-        assert callable(mock_app_instance.TOOL_REGISTRY["tool_ai_binary_edit_suggest"])
+        assert callable(fake_app_instance.TOOL_REGISTRY["tool_ai_binary_analyze"])
+        assert callable(fake_app_instance.TOOL_REGISTRY["tool_ai_binary_pattern_search"])
+        assert callable(fake_app_instance.TOOL_REGISTRY["tool_ai_binary_edit_suggest"])
 
     def test_register_hex_viewer_ai_tools_handles_missing_registry(self) -> None:
         """register_hex_viewer_ai_tools handles missing TOOL_REGISTRY gracefully."""
-        app_without_registry = MagicMock()
-        del app_without_registry.TOOL_REGISTRY
+        class AppWithoutRegistry:
+            pass
+
+        app_without_registry = AppWithoutRegistry()
 
         register_hex_viewer_ai_tools(app_without_registry)
 
@@ -481,28 +583,31 @@ class TestAIToolRegistration:
 class TestIntegrationWorkflow:
     """Test complete integration workflow."""
 
-    def test_integrate_enhanced_hex_viewer_performs_full_setup(self, mock_app_instance: Any) -> None:
+    def test_integrate_enhanced_hex_viewer_performs_full_setup(self, fake_app_instance: FakeAppInstance) -> None:
         """integrate_enhanced_hex_viewer performs complete integration setup."""
-        result = integrate_enhanced_hex_viewer(mock_app_instance)
+        result = integrate_enhanced_hex_viewer(fake_app_instance)
 
         assert result is True
-        assert mock_app_instance._hex_viewer_integrated is True
-        assert hasattr(mock_app_instance, "show_editable_hex_viewer")
-        assert "tool_ai_binary_analyze" in mock_app_instance.TOOL_REGISTRY
+        assert fake_app_instance._hex_viewer_integrated is True
+        assert hasattr(fake_app_instance, "show_editable_hex_viewer")
+        assert "tool_ai_binary_analyze" in fake_app_instance.TOOL_REGISTRY
 
-    def test_integrate_enhanced_hex_viewer_skips_if_already_integrated(self, mock_app_instance: Any) -> None:
+    def test_integrate_enhanced_hex_viewer_skips_if_already_integrated(self, fake_app_instance: FakeAppInstance) -> None:
         """integrate_enhanced_hex_viewer skips integration if already completed."""
-        mock_app_instance._hex_viewer_integrated = True
+        fake_app_instance._hex_viewer_integrated = True
 
-        result = integrate_enhanced_hex_viewer(mock_app_instance)
+        result = integrate_enhanced_hex_viewer(fake_app_instance)
 
         assert result is True
 
     def test_integrate_enhanced_hex_viewer_handles_errors(self) -> None:
         """integrate_enhanced_hex_viewer handles integration errors gracefully."""
-        broken_app = MagicMock()
-        broken_app._hex_viewer_integrated = False
-        broken_app.TOOL_REGISTRY = None
+        class BrokenApp:
+            def __init__(self) -> None:
+                self._hex_viewer_integrated: bool = False
+                self.TOOL_REGISTRY: Optional[Dict[str, Any]] = None
+
+        broken_app = BrokenApp()
 
         result = integrate_enhanced_hex_viewer(broken_app)
 
@@ -581,7 +686,7 @@ class TestDecorator:
         """hex_viewer_ai_tool decorator properly wraps functions."""
 
         @hex_viewer_ai_tool
-        def test_tool(app_instance: Any, parameters: dict) -> dict:
+        def test_tool(app_instance: Any, parameters: Dict[str, Any]) -> Dict[str, Any]:
             return {"result": "success"}
 
         result = test_tool(None, {})
@@ -592,7 +697,7 @@ class TestDecorator:
         """hex_viewer_ai_tool decorator catches and logs errors."""
 
         @hex_viewer_ai_tool
-        def failing_tool(app_instance: Any, parameters: dict) -> dict:
+        def failing_tool(app_instance: Any, parameters: Dict[str, Any]) -> Dict[str, Any]:
             raise ValueError("Test error")
 
         result = failing_tool(None, {})
@@ -608,10 +713,10 @@ class TestRealBinaryScenarios:
         """Analyze real PE binary structure and characteristics."""
         data = test_binary_pe.read_bytes()
 
-        result = wrapper_ai_binary_analyze(None, {"data": data, "offset": 0})
+        result = cast(Dict[str, Any], wrapper_ai_binary_analyze(None, {"data": data, "offset": 0}))
 
         assert "analysis" in result
-        analysis = result["analysis"]
+        analysis = cast(Dict[str, Any], result["analysis"])
 
         assert analysis["size"] == len(data)
         assert "entropy" in analysis
@@ -622,10 +727,10 @@ class TestRealBinaryScenarios:
         """Search for license-related patterns in real binary."""
         data = test_binary_pe.read_bytes()
 
-        result = wrapper_ai_binary_pattern_search(
+        result = cast(Dict[str, Any], wrapper_ai_binary_pattern_search(
             None,
             {"data": data, "pattern": "", "pattern_type": "license_check"},
-        )
+        ))
 
         assert "matches" in result
         assert "count" in result
@@ -634,10 +739,10 @@ class TestRealBinaryScenarios:
         """Generate bypass suggestions for real binary code."""
         data = test_binary_pe.read_bytes()
 
-        result = wrapper_ai_binary_edit_suggest(
+        result = cast(Dict[str, Any], wrapper_ai_binary_edit_suggest(
             None,
             {"data": data, "offset": 0, "context": "license_check"},
-        )
+        ))
 
         assert "suggestions" in result
         assert isinstance(result["suggestions"], list)

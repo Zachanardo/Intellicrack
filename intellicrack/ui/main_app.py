@@ -38,7 +38,6 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
-import contextlib
 import logging
 import os
 import traceback
@@ -75,6 +74,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QLabel,
     QMainWindow,
     QPlainTextEdit,
+    QProgressBar,
     QPushButton,
     QSplitter,
     Qt,
@@ -108,7 +108,7 @@ from intellicrack.utils.logger import log_all_methods
 from intellicrack.utils.protection_utils import inject_comprehensive_api_hooks
 from intellicrack.utils.resource_helper import get_resource_path
 from intellicrack.utils.runtime.runner_functions import run_frida_script, run_qemu_analysis, run_selected_analysis, run_ssl_tls_interceptor
-from intellicrack.utils.type_safety import get_typed_item, validate_type
+from intellicrack.utils.type_safety import validate_type
 
 
 if TYPE_CHECKING:
@@ -268,12 +268,17 @@ class IntellicrackApp(QMainWindow):
         self.log_filter: QWidget | None = None
         self.log_output: QTextEdit | None = None
         self.program_info: QWidget | None = None
+        self.progress_bar: QProgressBar | None = None
         self.recent_files_list: QWidget | None = None
         self.report_viewer: QTextEdit | None = None
+        self.status_label: QLabel | None = None
         self.traffic_analyzer: TrafficAnalyzer | None = None
 
         self._hex_viewer_dialogs: list[QWidget] = []
+        self._keygen_name: str = ""
+        self._keygen_version: str = ""
         self.ai_conversation_history: list[dict[str, str]] = []
+        self.keygen_dialog: QWidget | None = None
         self.log_access_history: list[str] = []
         self.reports: list[dict[str, Any]] = []
 
@@ -621,11 +626,7 @@ class IntellicrackApp(QMainWindow):
             # Initialize icon manager for consistent iconography
             self.icon_manager = IconManager()
         except Exception as e:
-            # Continue initialization even if theme application fails
             logger.debug("Theme application failed: %s", e)
-
-        self.tabs.setTabPosition(QTabWidget.TabPosition.North)
-        self.tabs.setTabsClosable(False)
 
         self.main_splitter.addWidget(self.tabs)
 
@@ -652,7 +653,8 @@ class IntellicrackApp(QMainWindow):
         self.output_layout.addWidget(self.clear_output_btn)
 
         self.main_splitter.addWidget(self.output_panel)
-        self.main_splitter.setSizes([700, 500])
+        self.main_splitter.setStretchFactor(0, 7)
+        self.main_splitter.setStretchFactor(1, 3)
 
     def _create_modular_tabs(self) -> None:
         """Create all modular tab instances with shared context."""
@@ -706,9 +708,9 @@ class IntellicrackApp(QMainWindow):
         """Set up each individual tab with error handling.
 
         Raises:
-            OSError: If file system operations fail during tab setup.
-            ValueError: If configuration values are invalid.
-            RuntimeError: If required components fail to initialize.
+            OSError: When tab resource files cannot be accessed.
+            ValueError: When tab configuration is invalid.
+            RuntimeError: When tab widget initialization fails.
 
         """
         # Initialize the binary_path variable before setting up tabs
@@ -766,14 +768,40 @@ class IntellicrackApp(QMainWindow):
 
     def _finalize_ui_initialization(self) -> None:
         """Finalize UI initialization with tooltips, plugins, and final configuration."""
-        # Register terminal manager with main app
+        self._setup_status_bar()
+
         from intellicrack.core.terminal_manager import get_terminal_manager
 
         terminal_mgr = get_terminal_manager()
         terminal_mgr.set_main_app(self)
 
-        # Mark UI as initialized
         self._ui_initialized = True
+
+    def _setup_status_bar(self) -> None:
+        """Set up the status bar with progress bar and permanent widgets."""
+        status_bar = self.statusBar()
+        if status_bar is None:
+            return
+
+        self.status_label = QLabel("Ready")
+        self.status_label.setMinimumWidth(200)
+        status_bar.addPermanentWidget(self.status_label)
+
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setMaximumWidth(200)
+        self.progress_bar.setMinimumWidth(150)
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setVisible(False)
+        self.progress_bar.setTextVisible(True)
+        self.progress_bar.setFormat("%p%")
+        status_bar.addPermanentWidget(self.progress_bar)
+
+        binary_label = QLabel("No binary loaded")
+        binary_label.setObjectName("binary_status_label")
+        status_bar.addPermanentWidget(binary_label)
+
+        self.logger.debug("Status bar initialized with progress bar and status widgets")
 
         # Apply comprehensive tooltips to all buttons
         try:
@@ -781,9 +809,7 @@ class IntellicrackApp(QMainWindow):
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.warning("Could not apply tooltips: %s", e)
 
-        # Ensure window is properly configured
-        self.setGeometry(100, 100, 1200, 800)
-        self.setWindowTitle("Intellicrack")
+        # Set minimum window size
         self.setMinimumSize(800, 600)
 
         # Initialize plugins
@@ -925,7 +951,11 @@ class IntellicrackApp(QMainWindow):
             value: Progress value as a percentage (0-100).
 
         """
-        self.logger.debug("Progress updated: %s%%", value)
+        clamped_value = max(0, min(100, value))
+        if self.progress_bar is not None:
+            self.progress_bar.setValue(clamped_value)
+            self.progress_bar.setVisible(clamped_value < 100)
+        self.logger.debug("Progress updated: %s%%", clamped_value)
 
     def set_assistant_status(self, status: str) -> None:
         """Set AI assistant status.
@@ -981,6 +1011,10 @@ class IntellicrackApp(QMainWindow):
             name: Name to set for the key generator.
 
         """
+        self._keygen_name = name
+        if hasattr(self, "keygen_dialog") and self.keygen_dialog is not None:
+            if hasattr(self.keygen_dialog, "set_target_name"):
+                self.keygen_dialog.set_target_name(name)
         self.logger.info("Keygen name set: %s", name)
 
     def handle_set_keygen_version(self, version: str) -> None:
@@ -990,6 +1024,10 @@ class IntellicrackApp(QMainWindow):
             version: Version to set for the key generator.
 
         """
+        self._keygen_version = version
+        if hasattr(self, "keygen_dialog") and self.keygen_dialog is not None:
+            if hasattr(self.keygen_dialog, "set_target_version"):
+                self.keygen_dialog.set_target_version(version)
         self.logger.info("Keygen version set: %s", version)
 
     def handle_switch_tab(self, tab_index: int) -> None:
@@ -1004,8 +1042,19 @@ class IntellicrackApp(QMainWindow):
         self.logger.info("Switched to tab index: %s", tab_index)
 
     def handle_generate_key(self) -> None:
-        """Handle key generation request."""
-        self.logger.info("Key generation requested")
+        """Handle key generation request by opening the keygen dialog."""
+        from .dialogs.keygen_dialog import KeygenDialog
+
+        binary_path = getattr(self, "binary_path", None) or ""
+        self.keygen_dialog = KeygenDialog(binary_path=str(binary_path), parent=self)
+        if hasattr(self, "_keygen_name"):
+            if hasattr(self.keygen_dialog, "set_target_name"):
+                self.keygen_dialog.set_target_name(self._keygen_name)
+        if hasattr(self, "_keygen_version"):
+            if hasattr(self.keygen_dialog, "set_target_version"):
+                self.keygen_dialog.set_target_version(self._keygen_version)
+        self.keygen_dialog.show()
+        self.logger.info("Key generation dialog opened")
 
     def clear_output(self) -> None:
         """Clear all output displays."""
@@ -1053,6 +1102,8 @@ class IntellicrackApp(QMainWindow):
             self.update_output.emit(self.log_message(f"Binary loaded: {binary_info}"))
             self.logger.info("Binary loaded: %s", binary_info)
 
+        self._refresh_dashboard_stats()
+
     def _on_analysis_completed(self, results: list[Any]) -> None:
         """Handle analysis completion event from app context.
 
@@ -1062,6 +1113,16 @@ class IntellicrackApp(QMainWindow):
         """
         self.update_analysis_results.emit(f"Analysis completed with {len(results)} results")
         self.logger.info("Analysis completed")
+        self._refresh_dashboard_stats()
+
+    def _refresh_dashboard_stats(self) -> None:
+        """Refresh dashboard statistics and update the dashboard tab."""
+        if hasattr(self, "dashboard_manager") and self.dashboard_manager is not None:
+            self.dashboard_manager.update_stats()
+
+            if hasattr(self, "dashboard_tab") and self.dashboard_tab is not None:
+                if hasattr(self.dashboard_tab, "refresh_from_manager"):
+                    self.dashboard_tab.refresh_from_manager(self.dashboard_manager)
 
     def _on_task_started(self, task_name: str) -> None:
         """Handle task started event from app context.
@@ -1113,9 +1174,9 @@ class IntellicrackApp(QMainWindow):
             apply_tooltips_to_all_elements(self)
 
             # Apply tooltips to each tab specifically
-            if hasattr(self, "tab_widget") and self.tab_widget is not None:
-                for i in range(self.tab_widget.count()):
-                    tab = self.tab_widget.widget(i)
+            if hasattr(self, "tabs") and self.tabs is not None:
+                for i in range(self.tabs.count()):
+                    tab = self.tabs.widget(i)
                     if tab is not None:
                         apply_tooltips_to_all_elements(tab)
 
@@ -1139,16 +1200,94 @@ class IntellicrackApp(QMainWindow):
             self.logger.debug("Could not restore window state: %s", e)
 
     def _initialize_font_manager(self) -> None:
-        """Initialize custom fonts."""
-        self.logger.debug("Font manager initialized")
+        """Initialize custom fonts using the FontManager utility."""
+        try:
+            from intellicrack.utils.font_manager import get_font_manager
+
+            self.font_manager = get_font_manager()
+            self.font_manager.load_application_fonts()
+            self.logger.debug(
+                "Font manager initialized: loaded %d custom fonts",
+                len(self.font_manager.loaded_fonts),
+            )
+        except (ImportError, OSError, RuntimeError) as e:
+            self.font_manager = None
+            self.logger.debug("Font manager initialization skipped: %s", e)
 
     def create_toolbar(self) -> None:
-        """Create application toolbar."""
+        """Create application toolbar with essential actions."""
+        from PyQt6.QtGui import QAction
         from PyQt6.QtWidgets import QToolBar
 
         toolbar = QToolBar("Main Toolbar", self)
+        toolbar.setMovable(False)
         self.addToolBar(toolbar)
-        self.logger.debug("Toolbar created")
+
+        open_action = QAction("Open Binary", self)
+        open_action.setToolTip("Open a binary file for analysis")
+        open_action.triggered.connect(self._toolbar_open_binary)
+        toolbar.addAction(open_action)
+
+        toolbar.addSeparator()
+
+        analyze_action = QAction("Analyze", self)
+        analyze_action.setToolTip("Run analysis on the loaded binary")
+        analyze_action.triggered.connect(self._toolbar_run_analysis)
+        toolbar.addAction(analyze_action)
+
+        keygen_action = QAction("Keygen", self)
+        keygen_action.setToolTip("Open keygen dialog for license key generation")
+        keygen_action.triggered.connect(self.handle_generate_key)
+        toolbar.addAction(keygen_action)
+
+        toolbar.addSeparator()
+
+        clear_action = QAction("Clear Output", self)
+        clear_action.setToolTip("Clear the output panel")
+        clear_action.triggered.connect(self.clear_output)
+        toolbar.addAction(clear_action)
+
+        settings_action = QAction("Settings", self)
+        settings_action.setToolTip("Open application settings")
+        settings_action.triggered.connect(self._toolbar_open_settings)
+        toolbar.addAction(settings_action)
+
+        self.toolbar = toolbar
+        self.logger.debug("Toolbar created with actions")
+
+    def _toolbar_open_binary(self) -> None:
+        """Handle toolbar open binary action."""
+        from PyQt6.QtWidgets import QFileDialog
+
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open Binary File",
+            "",
+            "All Files (*);;Executable Files (*.exe *.dll *.so *.dylib);;ELF Files (*.elf);;PE Files (*.exe *.dll)",
+        )
+        if file_path:
+            self.binary_path = file_path
+            self.current_binary = file_path
+            binary_info = {"path": file_path, "name": os.path.basename(file_path)}
+            self.app_context.binary_loaded.emit(binary_info)
+            self.update_status.emit(f"Loaded: {os.path.basename(file_path)}")
+
+    def _toolbar_run_analysis(self) -> None:
+        """Handle toolbar run analysis action."""
+        if not self.binary_path:
+            from PyQt6.QtWidgets import QMessageBox
+
+            QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
+            return
+        if hasattr(self, "tabs") and self.tabs is not None:
+            self.tabs.setCurrentIndex(2)
+        if hasattr(self, "analysis_tab") and hasattr(self.analysis_tab, "run_quick_analysis"):
+            self.analysis_tab.run_quick_analysis()
+
+    def _toolbar_open_settings(self) -> None:
+        """Handle toolbar settings action."""
+        if hasattr(self, "tabs") and self.tabs is not None:
+            self.tabs.setCurrentIndex(7)
 
     def on_theme_changed(self, theme_name: str) -> None:
         """Handle theme change event.
@@ -1427,80 +1566,246 @@ class IntellicrackApp(QMainWindow):
         return plugins
 
     def setup_project_dashboard_tab(self) -> None:
-        """Set up project dashboard tab with real-time monitoring."""
+        """Set up project dashboard tab with real-time monitoring.
+
+        Initializes system monitoring refresh timers, connects file load events,
+        and populates initial dashboard statistics from the dashboard manager.
+
+        """
         try:
-            if hasattr(self, "dashboard_tab") and self.dashboard_tab:
-                self.dashboard_tab.setVisible(True)
-                self.logger.info("Dashboard tab initialized successfully")
-        except Exception as e:
-            self.logger.exception("Failed to setup dashboard tab: %s", e)
-            if hasattr(self, "dashboard_tab"):
-                self.dashboard_tab.setVisible(True)
+            if not hasattr(self, "dashboard_tab") or not self.dashboard_tab:
+                self.logger.warning("Dashboard tab not available for setup")
+                return
+
+            if hasattr(self.dashboard_tab, "start_monitoring"):
+                self.dashboard_tab.start_monitoring()
+
+            if hasattr(self, "dashboard_manager") and self.dashboard_manager:
+                self.dashboard_manager.update_stats()
+                self.dashboard_manager.add_activity("startup", "Application started")
+
+            if hasattr(self.dashboard_tab, "refresh_recent_files"):
+                self.dashboard_tab.refresh_recent_files()
+
+            if hasattr(self.dashboard_tab, "update_system_stats"):
+                self.dashboard_tab.update_system_stats()
+
+            self.logger.info("Dashboard tab initialized with monitoring and statistics")
+
+        except Exception:
+            self.logger.exception("Failed to setup dashboard tab")
 
     def setup_analysis_tab(self) -> None:
-        """Set up analysis tab with licensing protection analysis capabilities."""
-        try:
-            if hasattr(self, "analysis_tab") and self.analysis_tab:
-                self.analysis_tab.setVisible(True)
-                self.logger.info("Analysis tab initialized successfully")
+        """Set up analysis tab with licensing protection analysis capabilities.
 
-            if hasattr(self, "symbolic_execution_engine"):
-                self.symbolic_execution_engine = None
-        except Exception as e:
-            self.logger.exception("Failed to setup analysis tab: %s", e)
-            if hasattr(self, "analysis_tab"):
-                self.analysis_tab.setVisible(True)
+        Initializes analysis engines including symbolic execution, protection scanners,
+        and disassembler integrations. Connects analysis completion handlers.
+
+        """
+        try:
+            if not hasattr(self, "analysis_tab") or not self.analysis_tab:
+                self.logger.warning("Analysis tab not available for setup")
+                return
+
+            self.symbolic_execution_engine: SymbolicExecution | None = None
+
+            if hasattr(self.analysis_tab, "initialize_analyzers"):
+                self.analysis_tab.initialize_analyzers()
+
+            if hasattr(self.analysis_tab, "load_protection_signatures"):
+                self.analysis_tab.load_protection_signatures()
+
+            if hasattr(self.analysis_tab, "check_tool_availability"):
+                tool_status = self.analysis_tab.check_tool_availability()
+                if tool_status:
+                    available_tools = [name for name, avail in tool_status.items() if avail]
+                    self.logger.info("Analysis tools available: %s", ", ".join(available_tools) if available_tools else "None")
+
+            if hasattr(self, "dashboard_manager") and self.dashboard_manager:
+                self.dashboard_manager.add_activity("analysis", "Analysis engines initialized")
+
+            self.logger.info("Analysis tab initialized with protection scanners and disassemblers")
+
+        except Exception:
+            self.logger.exception("Failed to setup analysis tab")
 
     def setup_patching_exploitation_tab(self) -> None:
-        """Set up patching exploitation tab with advanced license bypass capabilities."""
+        """Set up patching exploitation tab with advanced license bypass capabilities.
+
+        Initializes exploit generation engines, ROP chain generators, payload templates,
+        and memory patching infrastructure for binary modification.
+
+        """
         try:
-            if hasattr(self, "exploitation_tab") and self.exploitation_tab:
-                self.exploitation_tab.setVisible(True)
-                self.logger.info("Exploitation tab initialized successfully")
-        except Exception as e:
-            self.logger.exception("Failed to setup patching exploitation tab: %s", e)
-            if hasattr(self, "exploitation_tab"):
-                self.exploitation_tab.setVisible(True)
+            if not hasattr(self, "exploitation_tab") or not self.exploitation_tab:
+                self.logger.warning("Exploitation tab not available for setup")
+                return
+
+            if hasattr(self.exploitation_tab, "initialize_exploit_engine"):
+                self.exploitation_tab.initialize_exploit_engine()
+
+            if hasattr(self.exploitation_tab, "load_payload_templates"):
+                self.exploitation_tab.load_payload_templates()
+
+            if hasattr(self.exploitation_tab, "initialize_rop_gadget_finder"):
+                self.exploitation_tab.initialize_rop_gadget_finder()
+
+            if hasattr(self.exploitation_tab, "load_bypass_strategies"):
+                self.exploitation_tab.load_bypass_strategies()
+
+            self.patches: list[dict[str, Any]] = []
+            self.potential_patches: list[dict[str, Any]] = []
+
+            if hasattr(self, "dashboard_manager") and self.dashboard_manager:
+                self.dashboard_manager.add_activity("exploitation", "Exploitation toolkit initialized")
+
+            self.logger.info("Exploitation tab initialized with patching and bypass engines")
+
+        except Exception:
+            self.logger.exception("Failed to setup patching exploitation tab")
 
     def setup_ai_assistant_tab(self) -> None:
-        """Set up AI assistant tab with license protection research capabilities."""
+        """Set up AI assistant tab with license protection research capabilities.
+
+        Initializes AI model connections, loads available models from configured
+        providers, and verifies API configuration for script generation assistance.
+
+        """
         try:
-            if hasattr(self, "ai_assistant_tab") and self.ai_assistant_tab:
-                self.ai_assistant_tab.setVisible(True)
-                self.logger.info("AI assistant tab initialized successfully")
-        except Exception as e:
-            self.logger.exception("Failed to setup AI assistant tab: %s", e)
-            if hasattr(self, "ai_assistant_tab"):
-                self.ai_assistant_tab.setVisible(True)
+            if not hasattr(self, "ai_assistant_tab") or not self.ai_assistant_tab:
+                self.logger.warning("AI assistant tab not available for setup")
+                return
+
+            if hasattr(self.ai_assistant_tab, "verify_api_configuration"):
+                config_status = self.ai_assistant_tab.verify_api_configuration()
+                if config_status:
+                    self.logger.info("AI API configuration verified")
+
+            if hasattr(self.ai_assistant_tab, "refresh_model_list"):
+                self.ai_assistant_tab.refresh_model_list()
+
+            if hasattr(self.ai_assistant_tab, "load_conversation_history"):
+                self.ai_assistant_tab.load_conversation_history()
+
+            if hasattr(self.ai_assistant_tab, "initialize_code_context"):
+                self.ai_assistant_tab.initialize_code_context()
+
+            if hasattr(self, "dashboard_manager") and self.dashboard_manager:
+                self.dashboard_manager.add_activity("ai", "AI assistant initialized")
+
+            self.logger.info("AI assistant tab initialized with model configuration")
+
+        except Exception:
+            self.logger.exception("Failed to setup AI assistant tab")
 
     def setup_netanalysis_emulation_tab(self) -> None:
-        """Set up network analysis emulation tab with license server bypass capabilities."""
+        """Set up network analysis emulation tab with license server bypass capabilities.
+
+        Initializes network traffic interceptors, protocol analyzers, and license
+        server emulation components for analyzing network-based license validation.
+
+        """
         try:
-            self.logger.info("Network analysis emulation tab initialized successfully")
-        except Exception as e:
-            self.logger.exception("Failed to setup network analysis emulation tab: %s", e)
+            self.network_interceptors: list[object] = []
+            self.protocol_handlers: dict[str, object] = {}
+
+            if hasattr(self, "config") and self.config:
+                network_config = self.config.get("network", {})
+                if isinstance(network_config, dict):
+                    if network_config.get("auto_start_capture", False):
+                        self.logger.info("Network capture auto-start configured")
+
+            from intellicrack.core.network.protocol_fingerprinter import ProtocolFingerprinter
+
+            self.protocol_fingerprinter = ProtocolFingerprinter()
+            self.logger.debug("Protocol fingerprinter initialized")
+
+            if hasattr(self, "dashboard_manager") and self.dashboard_manager:
+                self.dashboard_manager.add_activity("network", "Network analysis initialized")
+
+            self.logger.info("Network analysis tab initialized with protocol analyzers")
+
+        except ImportError:
+            self.logger.warning("Network analysis components not available - some features disabled")
+        except Exception:
+            self.logger.exception("Failed to setup network analysis emulation tab")
 
     def setup_tools_plugins_tab(self) -> None:
-        """Set up tools plugins tab with license protection research tool integration."""
+        """Set up tools plugins tab with license protection research tool integration.
+
+        Scans plugin directories, loads enabled plugins, discovers external tools
+        (Ghidra, radare2, x64dbg), and initializes tool integration bridges.
+
+        """
         try:
-            if hasattr(self, "tools_tab") and self.tools_tab:
-                self.tools_tab.setVisible(True)
-                self.logger.info("Tools tab initialized successfully")
-        except Exception as e:
-            self.logger.exception("Failed to setup tools plugins tab: %s", e)
-            if hasattr(self, "tools_tab"):
-                self.tools_tab.setVisible(True)
+            if not hasattr(self, "tools_tab") or not self.tools_tab:
+                self.logger.warning("Tools tab not available for setup")
+                return
+
+            if hasattr(self.tools_tab, "initialize"):
+                self.tools_tab.initialize()
+
+            if hasattr(self.tools_tab, "scan_plugins"):
+                self.tools_tab.scan_plugins()
+
+            if hasattr(self.tools_tab, "populate_plugin_list"):
+                self.tools_tab.populate_plugin_list()
+
+            if hasattr(self.tools_tab, "discover_external_tools"):
+                tool_paths = self.tools_tab.discover_external_tools()
+                if tool_paths:
+                    discovered = [name for name, path in tool_paths.items() if path]
+                    self.logger.info("Discovered external tools: %s", ", ".join(discovered) if discovered else "None")
+
+            if hasattr(self.tools_tab, "load_enabled_plugins"):
+                self.tools_tab.load_enabled_plugins()
+
+            if hasattr(self, "dashboard_manager") and self.dashboard_manager:
+                self.dashboard_manager.add_activity("tools", "Tools and plugins initialized")
+
+            self.logger.info("Tools tab initialized with plugin system and external tool discovery")
+
+        except Exception:
+            self.logger.exception("Failed to setup tools plugins tab")
 
     def setup_settings_tab(self) -> None:
-        """Set up settings tab with license protection research configuration."""
+        """Set up settings tab with license protection research configuration.
+
+        Loads saved settings from configuration, applies initial UI preferences
+        including theme and font settings, and registers settings change handlers.
+
+        """
         try:
-            if hasattr(self, "settings_tab") and self.settings_tab:
-                self.settings_tab.setVisible(True)
-                self.logger.info("Settings tab initialized successfully")
-        except Exception as e:
-            self.logger.exception("Failed to setup settings tab: %s", e)
-            if hasattr(self, "settings_tab"):
-                self.settings_tab.setVisible(True)
+            if not hasattr(self, "settings_tab") or not self.settings_tab:
+                self.logger.warning("Settings tab not available for setup")
+                return
+
+            if hasattr(self.settings_tab, "load_settings"):
+                self.settings_tab.load_settings()
+
+            if hasattr(self.settings_tab, "apply_current_theme"):
+                self.settings_tab.apply_current_theme()
+
+            if hasattr(self.settings_tab, "update_tool_paths"):
+                self.settings_tab.update_tool_paths()
+
+            if hasattr(self.settings_tab, "register_change_handlers"):
+                self.settings_tab.register_change_handlers()
+
+            if hasattr(self.settings_tab, "validate_configuration"):
+                validation_result = self.settings_tab.validate_configuration()
+                if validation_result and not validation_result.get("valid", True):
+                    warnings = validation_result.get("warnings", [])
+                    for warning in warnings:
+                        self.logger.warning("Settings validation warning: %s", warning)
+
+            if hasattr(self, "dashboard_manager") and self.dashboard_manager:
+                self.dashboard_manager.add_activity("settings", "Configuration loaded")
+
+            self.logger.info("Settings tab initialized with saved configuration")
+
+        except Exception:
+            self.logger.exception("Failed to setup settings tab")
 
 
 def launch() -> int:

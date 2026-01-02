@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import Any, cast
+from typing import Any
 
 
 try:
@@ -495,7 +495,21 @@ class R2BinaryDiff:
             return 0.0
 
     def _levenshtein_distance(self, s1: list[str], s2: list[str]) -> int:
-        """Calculate Levenshtein distance between two sequences."""
+        """Calculate Levenshtein distance between two sequences.
+
+        Computes the minimum number of single-character edits (insertions,
+        deletions, substitutions) required to transform one sequence into
+        another. Used for opcodes similarity comparison in binary analysis.
+
+        Args:
+            s1: First sequence of strings to compare against s2.
+            s2: Second sequence of strings to compare against s1.
+
+        Returns:
+            The Levenshtein distance (integer) between the two sequences,
+            representing the number of edits needed for transformation.
+
+        """
         if len(s1) < len(s2):
             return self._levenshtein_distance(s2, s1)
 
@@ -515,7 +529,22 @@ class R2BinaryDiff:
         return previous_row[-1]
 
     def _get_function_bb_diff(self, func_name: str) -> dict[str, Any]:
-        """Get basic block diff summary for a function."""
+        """Get basic block diff summary for a function.
+
+        Analyzes basic block differences for the specified function,
+        comparing versions from primary and secondary binaries to identify
+        modifications in control flow and structure.
+
+        Args:
+            func_name: Name of the function to analyze for basic block
+                differences.
+
+        Returns:
+            Dictionary containing basic block diff statistics with keys:
+            total_blocks, added, removed, modified, unchanged counts as
+            integers representing the number of blocks in each category.
+
+        """
         bb_diffs = self.get_basic_block_diffs(func_name)
         return {
             "total_blocks": len(bb_diffs),
@@ -526,7 +555,21 @@ class R2BinaryDiff:
         }
 
     def _count_opcode_changes(self, func_name: str) -> int:
-        """Count number of opcode changes in a function."""
+        """Count number of opcode changes in a function.
+
+        Compares the opcode sequences of a function between primary and
+        secondary binaries, counting both instruction differences and length
+        variations to quantify the extent of code modifications.
+
+        Args:
+            func_name: Name of the function to analyze for opcode changes.
+
+        Returns:
+            Integer count of total opcode changes detected, including both
+            instruction modifications and size differences between the two
+            binary versions.
+
+        """
         if self.r2_primary is None or self.r2_secondary is None:
             return 0
 
@@ -553,7 +596,21 @@ class R2BinaryDiff:
             return 0
 
     def _get_call_changes(self, func_name: str) -> list[str]:
-        """Get list of changed function calls."""
+        """Get list of changed function calls.
+
+        Identifies function calls that have been added or removed between
+        the primary and secondary binary versions, useful for detecting
+        licensing or anti-analysis routine modifications.
+
+        Args:
+            func_name: Name of the function to analyze for call changes.
+
+        Returns:
+            List of string descriptions of call changes, with format
+            "added: <target>" or "removed: <target>" for each call that
+            differs between binary versions.
+
+        """
         if self.r2_primary is None or self.r2_secondary is None:
             return []
 
@@ -583,7 +640,25 @@ class R2BinaryDiff:
             return []
 
     def _match_basic_blocks(self, primary_blocks: list[dict[str, Any]], secondary_blocks: list[dict[str, Any]]) -> dict[int, int]:
-        """Match basic blocks between two versions of a function."""
+        """Match basic blocks between two versions of a function.
+
+        Attempts to correlate basic blocks from primary and secondary binaries
+        by relative position and flow. Used to identify which blocks correspond
+        between binary versions for change detection.
+
+        Args:
+            primary_blocks: List of basic block dictionaries from primary
+                binary, each containing metadata like address, size, and
+                operations.
+            secondary_blocks: List of basic block dictionaries from secondary
+                binary with the same structure as primary_blocks.
+
+        Returns:
+            Dictionary mapping primary block addresses (integers) to secondary
+            block addresses (integers), establishing correspondence between
+            blocks in both binary versions.
+
+        """
         return {
             primary_bb.get("addr", 0): secondary_blocks[i].get("addr", 0)
             for i, primary_bb in enumerate(primary_blocks)
@@ -591,7 +666,23 @@ class R2BinaryDiff:
         }
 
     def _blocks_differ(self, bb1: dict[str, Any], bb2: dict[str, Any]) -> bool:
-        """Check if two basic blocks differ significantly."""
+        """Check if two basic blocks differ significantly.
+
+        Compares two basic blocks across multiple dimensions including size,
+        instruction count, and jump targets. Used to identify code changes
+        that may indicate protection or licensing modifications.
+
+        Args:
+            bb1: First basic block metadata dictionary containing size, ops,
+                jump, and fail address fields.
+            bb2: Second basic block metadata dictionary with the same
+                structure as bb1 for comparison.
+
+        Returns:
+            Boolean True if the blocks differ in size, instruction count, or
+            jump targets, False if they are functionally equivalent.
+
+        """
         # Compare sizes
         if bb1.get("size", 0) != bb2.get("size", 0):
             return True
@@ -669,7 +760,11 @@ class R2BinaryDiff:
             return 0
 
     def cleanup(self) -> None:
-        """Clean up r2 sessions."""
+        """Clean up r2 sessions.
+
+        Closes all open radare2 sessions and releases associated resources.
+
+        """
         if self.r2_primary is not None:
             try:
                 self.r2_primary.quit()
@@ -686,6 +781,7 @@ class R2BinaryDiff:
 
         This method provides an alias for cleanup() to match common resource
         management patterns. It safely closes all radare2 sessions.
+
         """
         self.cleanup()
 

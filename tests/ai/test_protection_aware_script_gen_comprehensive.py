@@ -16,9 +16,9 @@ import os
 import re
 from pathlib import Path
 from typing import Any, Dict
-from unittest.mock import MagicMock, patch
 
 import pytest
+from pytest import LogCaptureFixture
 
 from intellicrack.ai.protection_aware_script_gen import (
     ProtectionAwareScriptGenerator,
@@ -40,6 +40,8 @@ from intellicrack.protection.unified_protection_engine import (
     UnifiedProtectionResult,
     get_unified_engine,
 )
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 class TestAllProtectionTemplateGenerators:
@@ -493,7 +495,7 @@ class TestGenerateBypassScriptEdgeCases:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Must handle unknown script types."""
-        binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/7zip.exe")
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "7zip.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")
@@ -508,7 +510,7 @@ class TestGenerateBypassScriptEdgeCases:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Must prioritize protection with highest confidence when multiple detected."""
-        binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected/enterprise_license_check.exe")
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "enterprise_license_check.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")
@@ -523,7 +525,7 @@ class TestGenerateBypassScriptEdgeCases:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Result must include all expected metadata fields."""
-        binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/vlc.exe")
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "vlc.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")
@@ -667,7 +669,7 @@ class TestEnhanceAIScriptGenerationFunction:
 
     def test_enhance_ai_script_generation_with_none_generator(self) -> None:
         """Must create AI generator when None provided."""
-        binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/7zip.exe")
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "7zip.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")
@@ -684,7 +686,7 @@ class TestEnhanceAIScriptGenerationFunction:
 
     def test_enhance_ai_script_generation_includes_enhancement_metadata(self) -> None:
         """Enhanced result must include AI enhancement metadata."""
-        binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/vlc.exe")
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "vlc.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")
@@ -848,8 +850,8 @@ class TestRealWorldBinaryProcessing:
     ) -> None:
         """Must successfully process real PE binaries."""
         binaries: list[Path] = [
-            Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/7zip.exe"),
-            Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/vlc.exe"),
+            PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "7zip.exe",
+            PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "vlc.exe",
         ]
 
         for binary in binaries:
@@ -871,9 +873,9 @@ class TestRealWorldBinaryProcessing:
     ) -> None:
         """Protected binaries must generate protection-specific scripts."""
         protected_binaries: list[Path] = [
-            Path("D:/Intellicrack/tests/fixtures/binaries/protected/vmprotect_protected.exe"),
-            Path("D:/Intellicrack/tests/fixtures/binaries/protected/themida_protected.exe"),
-            Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected/hasp_sentinel_protected.exe"),
+            PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "vmprotect_protected.exe",
+            PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "themida_protected.exe",
+            PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "hasp_sentinel_protected.exe",
         ]
 
         for binary in protected_binaries:
@@ -987,10 +989,10 @@ class TestLoggingAndDiagnostics:
         return ProtectionAwareScriptGenerator()
 
     def test_generator_logs_protection_detection(
-        self, generator: ProtectionAwareScriptGenerator, caplog
+        self, generator: ProtectionAwareScriptGenerator, caplog: LogCaptureFixture
     ) -> None:
         """Generator must log protection detection events."""
-        binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/7zip.exe")
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "7zip.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")
@@ -1002,7 +1004,7 @@ class TestLoggingAndDiagnostics:
             logging.info("Logging is functional")
 
     def test_generator_logs_errors_on_failure(
-        self, generator: ProtectionAwareScriptGenerator, caplog
+        self, generator: ProtectionAwareScriptGenerator, caplog: LogCaptureFixture
     ) -> None:
         """Generator must log errors when analysis fails."""
         with caplog.at_level(logging.ERROR):
@@ -1023,7 +1025,7 @@ class TestScriptHeaderMetadata:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Script header must include comprehensive metadata."""
-        binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/vlc.exe")
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "vlc.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")
@@ -1045,7 +1047,7 @@ class TestScriptHeaderMetadata:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Script must document number of protections detected."""
-        binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected/enterprise_license_check.exe")
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "enterprise_license_check.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")

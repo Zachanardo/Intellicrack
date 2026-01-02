@@ -24,17 +24,22 @@ import logging
 import os
 from dataclasses import dataclass, field
 from types import ModuleType
-from typing import Any, cast
+from typing import Any
 
+r2pipe_module: ModuleType | None
+nx: ModuleType | None
 
 try:
-    import r2pipe as r2pipe_module
+    import r2pipe as _r2pipe_module
+
+    r2pipe_module = _r2pipe_module
 except ImportError:
     r2pipe_module = None
 
 try:
-    import networkx as nx
+    import networkx as _nx
 
+    nx = _nx
     NETWORKX_AVAILABLE = True
 except ImportError:
     nx = None
@@ -99,7 +104,7 @@ class R2GraphGenerator:
         """Initialize graph generator.
 
         Args:
-            binary_path: Path to the binary file
+            binary_path: Path to the binary file.
 
         """
         self.binary_path: str = binary_path
@@ -113,7 +118,12 @@ class R2GraphGenerator:
             self._initialize_r2()
 
     def _initialize_r2(self) -> None:
-        """Initialize r2pipe session."""
+        """Initialize r2pipe session.
+
+        Opens a r2pipe connection to the binary file and runs initial analysis.
+        If initialization fails, logs the error and sets self.r2 to None.
+
+        """
         if not self.r2pipe_available or r2pipe_module is None:
             return
 
@@ -129,10 +139,11 @@ class R2GraphGenerator:
         """Generate control flow graph for a function.
 
         Args:
-            function_name: Name of the function
+            function_name: Name of the function to analyze.
 
         Returns:
-            GraphData containing CFG
+            GraphData containing control flow graph with basic blocks and edges.
+            If generation fails, returns GraphData with metadata but no nodes/edges.
 
         """
         graph_data: GraphData = GraphData(metadata={"type": "control_flow", "function": function_name, "binary": self.binary_path})
@@ -234,10 +245,11 @@ class R2GraphGenerator:
         """Generate function call graph.
 
         Args:
-            max_depth: Maximum depth for call graph traversal
+            max_depth: Maximum depth for call graph traversal.
 
         Returns:
-            GraphData containing call graph
+            GraphData containing function call graph with nodes and edges.
+            If generation fails, returns GraphData with metadata but no nodes/edges.
 
         """
         graph_data: GraphData = GraphData(metadata={"type": "call_graph", "max_depth": max_depth, "binary": self.binary_path})
@@ -313,10 +325,11 @@ class R2GraphGenerator:
         """Generate cross-reference graph for a specific address.
 
         Args:
-            address: Address to analyze
+            address: Address to analyze for cross-references.
 
         Returns:
-            GraphData containing xref graph
+            GraphData containing cross-reference graph with incoming and outgoing references.
+            If generation fails, returns GraphData with metadata but no nodes/edges.
 
         """
         graph_data: GraphData = GraphData(metadata={"type": "xref_graph", "address": address, "binary": self.binary_path})
@@ -405,7 +418,8 @@ class R2GraphGenerator:
         """Generate import dependency graph.
 
         Returns:
-            GraphData containing import dependencies
+            GraphData containing import dependencies with libraries and functions.
+            If generation fails, returns GraphData with metadata but no nodes/edges.
 
         """
         graph_data: GraphData = GraphData(metadata={"type": "import_dependency", "binary": self.binary_path})
@@ -489,8 +503,8 @@ class R2GraphGenerator:
         """Export graph to DOT format.
 
         Args:
-            graph_data: Graph data to export
-            output_path: Path for output DOT file
+            graph_data: Graph data to export.
+            output_path: Path for output DOT file.
 
         """
         try:
@@ -523,12 +537,12 @@ class R2GraphGenerator:
         """Visualize graph using matplotlib/networkx.
 
         Args:
-            graph_data: Graph data to visualize
-            output_path: Optional path to save image
-            layout: Layout algorithm ('spring', 'circular', 'shell', 'kamada_kawai')
+            graph_data: Graph data to visualize.
+            output_path: Optional path to save image.
+            layout: Layout algorithm name.
 
         Returns:
-            True if successful
+            True if visualization succeeds, False otherwise.
 
         """
         if not NETWORKX_AVAILABLE or not MATPLOTLIB_AVAILABLE or nx is None or plt_module is None or mpatches_module is None:
@@ -600,7 +614,12 @@ class R2GraphGenerator:
             return False
 
     def cleanup(self) -> None:
-        """Clean up resources."""
+        """Clean up resources.
+
+        Closes the r2pipe session if active. Any errors during closure are logged
+        as warnings but do not propagate exceptions.
+
+        """
         if self.r2:
             try:
                 self.r2.quit()
@@ -612,10 +631,10 @@ def create_graph_generator(binary_path: str) -> R2GraphGenerator:
     """Create graph generator.
 
     Args:
-        binary_path: Path to binary
+        binary_path: Path to binary file.
 
     Returns:
-        New R2GraphGenerator instance
+        New R2GraphGenerator instance for analyzing the binary.
 
     """
     return R2GraphGenerator(binary_path)

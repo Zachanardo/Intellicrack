@@ -285,7 +285,7 @@ class TestTimeBombMechanism:
         """Time bomb action executes after specified duration."""
         trigger_time = 0.2
         triggered = threading.Event()
-        trigger_timestamp = None
+        trigger_timestamp: float | None = None
 
         def action() -> None:
             nonlocal trigger_timestamp
@@ -300,6 +300,7 @@ class TestTimeBombMechanism:
         if not triggered.is_set():
             pytest.skip("Time bomb did not trigger - possible timing anomaly detected")
 
+        assert trigger_timestamp is not None
         elapsed = trigger_timestamp - start
         assert 0.15 <= elapsed <= 1.0, f"Time bomb triggered at {elapsed}s"
 
@@ -418,6 +419,8 @@ class TestGetTickCountWindows:
         time.sleep(0.1)
         tick2 = timing_defense_windows_only._get_tick_count()
 
+        assert tick1 is not None
+        assert tick2 is not None
         assert tick2 > tick1, "Tick count should increase over time"
         elapsed_ms = tick2 - tick1
         assert 80 <= elapsed_ms <= 200, f"Tick count should increase by ~100ms, got {elapsed_ms}ms"

@@ -528,10 +528,3 @@ class TestNetworkProtocolAnalysisDetailed:
         assert has_ssl or has_tls
 
 
-@pytest.fixture
-def temp_workspace() -> Path:
-    """Provide temporary workspace for test files."""
-    with tempfile.TemporaryDirectory(
-        prefix="intellicrack_advanced_test_"
-    ) as tmp:
-        yield Path(tmp)

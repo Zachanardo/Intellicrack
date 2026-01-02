@@ -14,12 +14,106 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from PyQt6.QtWidgets import QApplication
 
 from intellicrack.ui.tabs.adobe_injector_tab import AdobeInjectorTab
+
+
+class FakeProcess:
+    """Test double for subprocess.Popen process."""
+
+    def __init__(self, output_lines: list[bytes] | None = None) -> None:
+        self.output_lines = output_lines or [b""]
+        self.line_index = 0
+        self.stdout = self
+        self.stderr = self
+        self.stdin = None
+        self.returncode: int | None = None
+        self.poll_called = False
+
+    def readline(self) -> bytes:
+        """Read next output line."""
+        if self.line_index >= len(self.output_lines):
+            return b""
+        line = self.output_lines[self.line_index]
+        self.line_index += 1
+        return line
+
+    def poll(self) -> int | None:
+        """Check if process has terminated."""
+        self.poll_called = True
+        return self.returncode
+
+
+class FakePopen:
+    """Test double for subprocess.Popen."""
+
+    def __init__(self) -> None:
+        self.called = False
+        self.call_count = 0
+        self.last_args: list[str] | None = None
+        self.last_kwargs: dict[str, Any] = {}
+        self.process_to_return: FakeProcess = FakeProcess()
+
+    def __call__(self, args: list[str], **kwargs: Any) -> FakeProcess:
+        """Create fake process."""
+        self.called = True
+        self.call_count += 1
+        self.last_args = args
+        self.last_kwargs = kwargs
+        return self.process_to_return
+
+    @property
+    def call_args(self) -> Any:
+        """Return call arguments in Mock-compatible format."""
+        class CallArgs:
+            def __init__(self, args: list[str], kwargs: dict[str, Any]) -> None:
+                self.args = (args,)
+                self.kwargs = kwargs
+
+        return CallArgs(self.last_args or [], self.last_kwargs)
+
+
+class FakeTerminalManager:
+    """Test double for terminal manager."""
+
+    def __init__(self) -> None:
+        self.terminal_available = True
+        self.execute_command_called = False
+        self.execute_call_count = 0
+        self.last_command: str | list[str] | None = None
+        self.session_id_to_return = "test_session_id"
+
+    def is_terminal_available(self) -> bool:
+        """Check if terminal is available."""
+        return self.terminal_available
+
+    def execute_command(self, command: str | list[str]) -> str:
+        """Execute command in terminal."""
+        self.execute_command_called = True
+        self.execute_call_count += 1
+        self.last_command = command
+        return self.session_id_to_return
+
+    @property
+    def execute_command(self) -> Any:
+        """Return callable with tracking."""
+        manager = self
+
+        class ExecuteCommand:
+            def __init__(self) -> None:
+                self.called = False
+
+            def __call__(self, command: str | list[str]) -> str:
+                self.called = True
+                manager.execute_command_called = True
+                manager.execute_call_count += 1
+                manager.last_command = command
+                return manager.session_id_to_return
+
+        return ExecuteCommand()
 
 
 @pytest.fixture
@@ -68,76 +162,90 @@ class TestAdobeInjectorTabSubprocessExecution:
         self,
         adobe_tab: AdobeInjectorTab,
         mock_adobe_injector_exe: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Subprocess launch in hidden mode creates valid process with output capture."""
-        with patch("intellicrack.ui.tabs.adobe_injector_tab.get_project_root", return_value=mock_adobe_injector_exe.parent.parent.parent):
-            with patch("subprocess.Popen") as mock_popen:
-                mock_process = Mock()
-                mock_process.stdout.readline.return_value = b""
-                mock_popen.return_value = mock_process
+        fake_popen = FakePopen()
+        fake_popen.process_to_return = FakeProcess()
 
-                adobe_tab.launch_subprocess(hidden=True)
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.adobe_injector_tab.get_project_root",
+            lambda: mock_adobe_injector_exe.parent.parent.parent,
+        )
+        monkeypatch.setattr("subprocess.Popen", fake_popen)
 
-                assert mock_popen.called
-                call_args = mock_popen.call_args
+        adobe_tab.launch_subprocess(hidden=True)
 
-                assert call_args.kwargs["stdout"] == subprocess.PIPE
-                assert call_args.kwargs["stderr"] == subprocess.PIPE
-                assert call_args.kwargs["stdin"] == subprocess.PIPE
-                assert call_args.kwargs["shell"] is False
-                assert "startupinfo" in call_args.kwargs
+        assert fake_popen.called
+        assert fake_popen.last_kwargs["stdout"] == subprocess.PIPE
+        assert fake_popen.last_kwargs["stderr"] == subprocess.PIPE
+        assert fake_popen.last_kwargs["stdin"] == subprocess.PIPE
+        assert fake_popen.last_kwargs["shell"] is False
+        assert "startupinfo" in fake_popen.last_kwargs
 
     def test_subprocess_launch_visible_no_output_capture(
         self,
         adobe_tab: AdobeInjectorTab,
         mock_adobe_injector_exe: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Subprocess launch in visible mode creates process without output capture."""
-        with patch("intellicrack.ui.tabs.adobe_injector_tab.get_project_root", return_value=mock_adobe_injector_exe.parent.parent.parent):
-            with patch("subprocess.Popen") as mock_popen:
-                mock_process = Mock()
-                mock_popen.return_value = mock_process
+        fake_popen = FakePopen()
+        fake_popen.process_to_return = FakeProcess()
 
-                adobe_tab.launch_subprocess(hidden=False)
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.adobe_injector_tab.get_project_root",
+            lambda: mock_adobe_injector_exe.parent.parent.parent,
+        )
+        monkeypatch.setattr("subprocess.Popen", fake_popen)
 
-                assert mock_popen.called
-                call_args = mock_popen.call_args
+        adobe_tab.launch_subprocess(hidden=False)
 
-                assert "stdout" not in call_args.kwargs or call_args.kwargs.get("stdout") != subprocess.PIPE
-                assert call_args.kwargs["shell"] is False
+        assert fake_popen.called
+        assert "stdout" not in fake_popen.last_kwargs or fake_popen.last_kwargs.get("stdout") != subprocess.PIPE
+        assert fake_popen.last_kwargs["shell"] is False
 
     def test_subprocess_command_argument_parsing(
         self,
         adobe_tab: AdobeInjectorTab,
         mock_adobe_injector_exe: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Subprocess correctly parses and passes command line arguments."""
-        with patch("intellicrack.ui.tabs.adobe_injector_tab.get_project_root", return_value=mock_adobe_injector_exe.parent.parent.parent):
-            with patch("subprocess.Popen") as mock_popen:
-                mock_process = Mock()
-                mock_process.stdout.readline.return_value = b""
-                mock_popen.return_value = mock_process
+        fake_popen = FakePopen()
+        fake_popen.process_to_return = FakeProcess()
 
-                adobe_tab.cmd_args.setText("/silent /path:C:\\Test")
-                adobe_tab.launch_subprocess(hidden=True)
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.adobe_injector_tab.get_project_root",
+            lambda: mock_adobe_injector_exe.parent.parent.parent,
+        )
+        monkeypatch.setattr("subprocess.Popen", fake_popen)
 
-                assert mock_popen.called
-                cmd = mock_popen.call_args.args[0]
+        adobe_tab.cmd_args.setText("/silent /path:C:\\Test")
+        adobe_tab.launch_subprocess(hidden=True)
 
-                assert isinstance(cmd, list)
-                assert len(cmd) >= 3
-                assert "/silent" in cmd
-                assert "/path:C:\\Test" in cmd
+        assert fake_popen.called
+        cmd = fake_popen.last_args
+
+        assert isinstance(cmd, list)
+        assert len(cmd) >= 3
+        assert "/silent" in cmd
+        assert "/path:C:\\Test" in cmd
 
     def test_subprocess_fails_when_exe_missing(
         self,
         adobe_tab: AdobeInjectorTab,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Subprocess launch fails gracefully when executable not found."""
-        with patch("intellicrack.ui.tabs.adobe_injector_tab.get_project_root", return_value=Path("/nonexistent")):
-            adobe_tab.launch_subprocess(hidden=True)
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.adobe_injector_tab.get_project_root",
+            lambda: Path("/nonexistent"),
+        )
 
-            assert adobe_tab.adobe_injector_process is None
+        adobe_tab.launch_subprocess(hidden=True)
+
+        assert adobe_tab.adobe_injector_process is None
 
 
 class TestAdobeInjectorTabTerminalExecution:
@@ -147,34 +255,43 @@ class TestAdobeInjectorTabTerminalExecution:
         self,
         adobe_tab: AdobeInjectorTab,
         mock_adobe_injector_exe: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Terminal execution sends command to terminal manager."""
-        with patch("intellicrack.ui.tabs.adobe_injector_tab.get_project_root", return_value=mock_adobe_injector_exe.parent.parent.parent):
-            with patch("intellicrack.ui.tabs.adobe_injector_tab.get_terminal_manager") as mock_get_tm:
-                mock_tm = Mock()
-                mock_tm.is_terminal_available.return_value = True
-                mock_tm.execute_command.return_value = "test_session_id"
-                mock_get_tm.return_value = mock_tm
+        fake_tm = FakeTerminalManager()
 
-                adobe_tab.execute_in_terminal("AdobeInjector.exe /scan")
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.adobe_injector_tab.get_project_root",
+            lambda: mock_adobe_injector_exe.parent.parent.parent,
+        )
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.adobe_injector_tab.get_terminal_manager",
+            lambda: fake_tm,
+        )
 
-                assert mock_tm.execute_command.called
-                call_args = mock_tm.execute_command.call_args.args[0]
-                assert "AdobeInjector.exe" in call_args or isinstance(call_args, list)
+        adobe_tab.execute_in_terminal("AdobeInjector.exe /scan")
+
+        assert fake_tm.execute_command_called
+        assert fake_tm.last_command is not None
+        assert "AdobeInjector.exe" in str(fake_tm.last_command) or isinstance(fake_tm.last_command, list)
 
     def test_terminal_execution_fails_when_unavailable(
         self,
         adobe_tab: AdobeInjectorTab,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Terminal execution handles unavailable terminal gracefully."""
-        with patch("intellicrack.ui.tabs.adobe_injector_tab.get_terminal_manager") as mock_get_tm:
-            mock_tm = Mock()
-            mock_tm.is_terminal_available.return_value = False
-            mock_get_tm.return_value = mock_tm
+        fake_tm = FakeTerminalManager()
+        fake_tm.terminal_available = False
 
-            adobe_tab.execute_in_terminal("test command")
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.adobe_injector_tab.get_terminal_manager",
+            lambda: fake_tm,
+        )
 
-            assert not mock_tm.execute_command.called
+        adobe_tab.execute_in_terminal("test command")
+
+        assert not fake_tm.execute_command_called
 
 
 class TestAdobeInjectorTabConfiguration:
@@ -184,41 +301,51 @@ class TestAdobeInjectorTabConfiguration:
         self,
         adobe_tab: AdobeInjectorTab,
         tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Silent config creation generates valid JSON configuration file."""
-        with patch("intellicrack.ui.tabs.adobe_injector_tab.get_project_root", return_value=tmp_path):
-            adobe_tab.create_silent_config()
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.adobe_injector_tab.get_project_root",
+            lambda: tmp_path,
+        )
 
-            config_path = tmp_path / "tools" / "AdobeInjector" / "silent_config.json"
-            assert config_path.exists()
+        adobe_tab.create_silent_config()
 
-            with open(config_path) as f:
-                config = json.load(f)
+        config_path = tmp_path / "tools" / "AdobeInjector" / "silent_config.json"
+        assert config_path.exists()
 
-            assert config["auto_scan"] is True
-            assert config["auto_patch"] is True
-            assert config["target_path"] == "C:\\Program Files\\Adobe"
-            assert config["backup_files"] is True
-            assert config["silent_mode"] is True
+        with open(config_path) as f:
+            config = json.load(f)
+
+        assert config["auto_scan"] is True
+        assert config["auto_patch"] is True
+        assert config["target_path"] == "C:\\Program Files\\Adobe"
+        assert config["backup_files"] is True
+        assert config["silent_mode"] is True
 
     def test_rebranding_config_creation_generates_valid_json(
         self,
         adobe_tab: AdobeInjectorTab,
         tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Resource modification creates valid rebranding configuration."""
-        with patch("intellicrack.ui.tabs.adobe_injector_tab.get_project_root", return_value=tmp_path):
-            adobe_tab.modify_resources()
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.adobe_injector_tab.get_project_root",
+            lambda: tmp_path,
+        )
 
-            config_path = tmp_path / "tools" / "AdobeInjector" / "rebrand.json"
-            assert config_path.exists()
+        adobe_tab.modify_resources()
 
-            with open(config_path) as f:
-                rebrand = json.load(f)
+        config_path = tmp_path / "tools" / "AdobeInjector" / "rebrand.json"
+        assert config_path.exists()
 
-            assert rebrand["ProductName"] == "Adobe Injector"
-            assert rebrand["CompanyName"] == "Intellicrack"
-            assert "FileDescription" in rebrand
+        with open(config_path) as f:
+            rebrand = json.load(f)
+
+        assert rebrand["ProductName"] == "Adobe Injector"
+        assert rebrand["CompanyName"] == "Intellicrack"
+        assert "FileDescription" in rebrand
 
 
 class TestAdobeInjectorTabSignalEmission:
@@ -228,6 +355,7 @@ class TestAdobeInjectorTabSignalEmission:
         self,
         adobe_tab: AdobeInjectorTab,
         mock_adobe_injector_exe: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Terminal execution emits injector_started signal."""
         signal_emitted = False
@@ -240,14 +368,18 @@ class TestAdobeInjectorTabSignalEmission:
 
         adobe_tab.injector_started.connect(signal_handler)
 
-        with patch("intellicrack.ui.tabs.adobe_injector_tab.get_project_root", return_value=mock_adobe_injector_exe.parent.parent.parent):
-            with patch("intellicrack.ui.tabs.adobe_injector_tab.get_terminal_manager") as mock_get_tm:
-                mock_tm = Mock()
-                mock_tm.is_terminal_available.return_value = True
-                mock_tm.execute_command.return_value = "test_session"
-                mock_get_tm.return_value = mock_tm
+        fake_tm = FakeTerminalManager()
 
-                adobe_tab.execute_in_terminal("test command")
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.adobe_injector_tab.get_project_root",
+            lambda: mock_adobe_injector_exe.parent.parent.parent,
+        )
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.adobe_injector_tab.get_terminal_manager",
+            lambda: fake_tm,
+        )
+
+        adobe_tab.execute_in_terminal("test command")
 
         assert signal_emitted
         assert signal_data == "Command sent to terminal"
@@ -279,13 +411,12 @@ class TestAdobeInjectorTabProcessMonitoring:
         adobe_tab: AdobeInjectorTab,
     ) -> None:
         """Subprocess monitor reads and displays output lines."""
-        mock_process = Mock()
-        mock_process.stdout.readline.side_effect = [
+        fake_process = FakeProcess(output_lines=[
             b"Line 1\n",
             b"Line 2\n",
             b"",
-        ]
-        adobe_tab.adobe_injector_process = mock_process
+        ])
+        adobe_tab.adobe_injector_process = fake_process
 
         adobe_tab.monitor_subprocess()
 

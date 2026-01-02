@@ -15,7 +15,6 @@ import re
 import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 from PyQt6.QtCore import Qt, QEvent
@@ -53,6 +52,37 @@ def highlighter(qapp: QApplication) -> ConsoleSyntaxHighlighter:
 
     doc = QTextDocument()
     return ConsoleSyntaxHighlighter(doc)
+
+
+class FakeFileDialog:
+    """Real test double for QFileDialog."""
+
+    def __init__(self, return_path: str = "", file_filter: str = "") -> None:
+        self.return_path = return_path
+        self.file_filter = file_filter
+
+    def getSaveFileName(
+        self,
+        parent: Any = None,
+        caption: str = "",
+        directory: str = "",
+        filter_str: str = ""
+    ) -> tuple[str, str]:
+        """Return configured path and filter."""
+        return (self.return_path, self.file_filter)
+
+
+class FakeOpenFunction:
+    """Real test double for open() builtin that raises permission errors."""
+
+    def __init__(self, should_raise: bool = False) -> None:
+        self.should_raise = should_raise
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        """Raise PermissionError if configured."""
+        if self.should_raise:
+            raise PermissionError("Access denied")
+        return open(*args, **kwargs)
 
 
 class TestConsoleSyntaxHighlighterInitialization:
@@ -284,7 +314,9 @@ class TestConsoleWidgetLineManagement:
         console_widget.max_lines = 50
         for i in range(100):
             console_widget.append_output(f"Line {i}", "INFO")
-        line_count = console_widget.output.document().lineCount()
+        doc = console_widget.output.document()
+        assert doc is not None
+        line_count = doc.lineCount()
         assert line_count <= console_widget.max_lines + 10
 
     def test_set_max_lines_changes_limit(self, console_widget: ConsoleWidget) -> None:
@@ -381,14 +413,14 @@ class TestConsoleWidgetLineWrapping:
 
     def test_toggle_wrap_enables_wrapping(self, console_widget: ConsoleWidget) -> None:
         """toggle_wrap enables line wrapping."""
-        console_widget.toggle_wrap(Qt.CheckState.Checked.value)
+        console_widget.toggle_wrap(2)  # Qt.CheckState.Checked
         from PyQt6.QtWidgets import QTextEdit
 
         assert console_widget.output.lineWrapMode() == QTextEdit.LineWrapMode.WidgetWidth
 
     def test_toggle_wrap_disables_wrapping(self, console_widget: ConsoleWidget) -> None:
         """toggle_wrap disables line wrapping."""
-        console_widget.toggle_wrap(Qt.CheckState.Unchecked.value)
+        console_widget.toggle_wrap(0)  # Qt.CheckState.Unchecked
         from PyQt6.QtWidgets import QTextEdit
 
         assert console_widget.output.lineWrapMode() == QTextEdit.LineWrapMode.NoWrap
@@ -403,6 +435,7 @@ class TestConsoleWidgetAutoScroll:
         for i in range(20):
             console_widget.append_output(f"Message {i}", "INFO")
         scrollbar = console_widget.output.verticalScrollBar()
+        assert scrollbar is not None
         assert scrollbar.value() == scrollbar.maximum() or scrollbar.maximum() == 0
 
 
@@ -489,7 +522,7 @@ class TestConsoleWidgetCommandHistory:
 class TestConsoleWidgetExportFunctionality:
     """Test console widget log export functionality."""
 
-    def test_export_log_writes_to_file(self, console_widget: ConsoleWidget) -> None:
+    def test_export_log_writes_to_file(self, console_widget: ConsoleWidget, monkeypatch: pytest.MonkeyPatch) -> None:
         """export_log writes console content to file."""
         console_widget.append_output("Test message", "INFO")
 
@@ -497,8 +530,12 @@ class TestConsoleWidgetExportFunctionality:
             file_path = f.name
 
         try:
-            with patch("intellicrack.handlers.pyqt6_handler.QFileDialog.getSaveFileName", return_value=(file_path, "")):
-                console_widget.export_log()
+            fake_dialog = FakeFileDialog(file_path, "")
+            monkeypatch.setattr(
+                "intellicrack.handlers.pyqt6_handler.QFileDialog.getSaveFileName",
+                fake_dialog.getSaveFileName
+            )
+            console_widget.export_log()
 
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
@@ -507,18 +544,29 @@ class TestConsoleWidgetExportFunctionality:
         finally:
             Path(file_path).unlink(missing_ok=True)
 
-    def test_export_log_handles_cancel(self, console_widget: ConsoleWidget) -> None:
+    def test_export_log_handles_cancel(self, console_widget: ConsoleWidget, monkeypatch: pytest.MonkeyPatch) -> None:
         """export_log handles user canceling file dialog."""
-        with patch("intellicrack.handlers.pyqt6_handler.QFileDialog.getSaveFileName", return_value=("", "")):
-            console_widget.export_log()
+        fake_dialog = FakeFileDialog("", "")
+        monkeypatch.setattr(
+            "intellicrack.handlers.pyqt6_handler.QFileDialog.getSaveFileName",
+            fake_dialog.getSaveFileName
+        )
+        console_widget.export_log()
 
-    def test_export_log_handles_write_error(self, console_widget: ConsoleWidget) -> None:
+    def test_export_log_handles_write_error(self, console_widget: ConsoleWidget, monkeypatch: pytest.MonkeyPatch) -> None:
         """export_log handles file write errors gracefully."""
-        with patch("intellicrack.handlers.pyqt6_handler.QFileDialog.getSaveFileName", return_value=("D:\\invalid\\path\\file.txt", "")):
-            with patch("builtins.open", side_effect=PermissionError("Access denied")):
-                console_widget.export_log()
-                content = console_widget.output.toPlainText()
-                assert "Failed to export" in content
+        fake_dialog = FakeFileDialog("D:\\invalid\\path\\file.txt", "")
+        monkeypatch.setattr(
+            "intellicrack.handlers.pyqt6_handler.QFileDialog.getSaveFileName",
+            fake_dialog.getSaveFileName
+        )
+
+        fake_open = FakeOpenFunction(should_raise=True)
+        monkeypatch.setattr("builtins.open", fake_open)
+
+        console_widget.export_log()
+        content = console_widget.output.toPlainText()
+        assert "Failed to export" in content
 
 
 class TestConsoleWidgetContentRetrieval:
@@ -572,7 +620,9 @@ class TestConsoleWidgetEdgeCases:
         """Console handles rapid message appending."""
         for i in range(100):
             console_widget.append_output(f"Rapid message {i}", "INFO")
-        line_count = console_widget.output.document().lineCount()
+        doc = console_widget.output.document()
+        assert doc is not None
+        line_count = doc.lineCount()
         assert line_count > 0
 
 

@@ -3,11 +3,17 @@
 Tests verify real .env file operations, API key management, and central config integration.
 """
 
+from __future__ import annotations
+
 import os
-import tempfile
+from collections.abc import Generator
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
+
+if TYPE_CHECKING:
+    from intellicrack.utils.env_file_manager import EnvFileManager
 
 
 @pytest.fixture
@@ -19,7 +25,9 @@ def temp_env_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def env_manager(temp_env_dir: Path, monkeypatch: pytest.MonkeyPatch):
+def env_manager(
+    temp_env_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> Generator[EnvFileManager, None, None]:
     """Create EnvFileManager with temporary .env file."""
     from intellicrack.utils.env_file_manager import EnvFileManager
 
@@ -57,7 +65,7 @@ class TestEnvFileManagerInitialization:
 class TestReadEnv:
     """Tests for read_env method."""
 
-    def test_reads_simple_variables(self, env_manager) -> None:
+    def test_reads_simple_variables(self, env_manager: EnvFileManager) -> None:
         """read_env parses simple key=value pairs."""
         env_manager.env_path.write_text("KEY1=value1\nKEY2=value2")
 
@@ -66,7 +74,7 @@ class TestReadEnv:
         assert env_vars["KEY1"] == "value1"
         assert env_vars["KEY2"] == "value2"
 
-    def test_skips_comments(self, env_manager) -> None:
+    def test_skips_comments(self, env_manager: EnvFileManager) -> None:
         """read_env ignores comment lines starting with #."""
         env_manager.env_path.write_text("# Comment\nKEY=value\n#Another comment")
 
@@ -75,7 +83,7 @@ class TestReadEnv:
         assert len(env_vars) == 1
         assert env_vars["KEY"] == "value"
 
-    def test_handles_quoted_values(self, env_manager) -> None:
+    def test_handles_quoted_values(self, env_manager: EnvFileManager) -> None:
         """read_env removes surrounding quotes from values."""
         env_manager.env_path.write_text('KEY1="quoted value"\nKEY2=\'single quoted\'')
 
@@ -84,7 +92,7 @@ class TestReadEnv:
         assert env_vars["KEY1"] == "quoted value"
         assert env_vars["KEY2"] == "single quoted"
 
-    def test_handles_empty_values(self, env_manager) -> None:
+    def test_handles_empty_values(self, env_manager: EnvFileManager) -> None:
         """read_env handles empty values correctly."""
         env_manager.env_path.write_text("EMPTY_KEY=\nNON_EMPTY=value")
 
@@ -93,7 +101,7 @@ class TestReadEnv:
         assert env_vars["EMPTY_KEY"] == ""
         assert env_vars["NON_EMPTY"] == "value"
 
-    def test_handles_spaces_around_equals(self, env_manager) -> None:
+    def test_handles_spaces_around_equals(self, env_manager: EnvFileManager) -> None:
         """read_env handles spaces around equals sign."""
         env_manager.env_path.write_text("KEY1 = value1\nKEY2= value2\nKEY3 =value3")
 
@@ -107,7 +115,7 @@ class TestReadEnv:
 class TestWriteEnv:
     """Tests for write_env method."""
 
-    def test_writes_new_variables(self, env_manager) -> None:
+    def test_writes_new_variables(self, env_manager: EnvFileManager) -> None:
         """write_env creates .env file with variables."""
         env_vars = {"KEY1": "value1", "KEY2": "value2"}
         env_manager.write_env(env_vars)
@@ -116,7 +124,7 @@ class TestWriteEnv:
         assert "KEY1=value1" in content
         assert "KEY2=value2" in content
 
-    def test_updates_existing_variables(self, env_manager) -> None:
+    def test_updates_existing_variables(self, env_manager: EnvFileManager) -> None:
         """write_env updates existing variables while preserving others."""
         env_manager.env_path.write_text("KEY1=old_value\nKEY2=keep_this")
 
@@ -126,7 +134,7 @@ class TestWriteEnv:
         assert env_vars["KEY1"] == "new_value"
         assert env_vars["KEY2"] == "keep_this"
 
-    def test_preserves_comments(self, env_manager) -> None:
+    def test_preserves_comments(self, env_manager: EnvFileManager) -> None:
         """write_env preserves comments when preserve_comments=True."""
         env_manager.env_path.write_text("# Important comment\nKEY=value")
 
@@ -135,14 +143,14 @@ class TestWriteEnv:
         content = env_manager.env_path.read_text()
         assert "# Important comment" in content
 
-    def test_quotes_values_with_spaces(self, env_manager) -> None:
+    def test_quotes_values_with_spaces(self, env_manager: EnvFileManager) -> None:
         """write_env quotes values containing spaces."""
         env_manager.write_env({"KEY_WITH_SPACES": "value with spaces"})
 
         content = env_manager.env_path.read_text()
         assert 'KEY_WITH_SPACES="value with spaces"' in content
 
-    def test_creates_backup_on_write(self, env_manager) -> None:
+    def test_creates_backup_on_write(self, env_manager: EnvFileManager) -> None:
         """write_env creates backup of existing file."""
         env_manager.env_path.write_text("ORIGINAL=value")
         backup_path = env_manager.env_path.with_suffix(".env.bak")
@@ -155,7 +163,7 @@ class TestWriteEnv:
 class TestGetSetKey:
     """Tests for get_key and set_key methods."""
 
-    def test_get_existing_key(self, env_manager) -> None:
+    def test_get_existing_key(self, env_manager: EnvFileManager) -> None:
         """get_key retrieves existing variable."""
         env_manager.env_path.write_text("TEST_KEY=test_value")
 
@@ -163,19 +171,19 @@ class TestGetSetKey:
 
         assert value == "test_value"
 
-    def test_get_nonexistent_key_returns_none(self, env_manager) -> None:
+    def test_get_nonexistent_key_returns_none(self, env_manager: EnvFileManager) -> None:
         """get_key returns None for nonexistent keys."""
         value = env_manager.get_key("NONEXISTENT")
 
         assert value is None
 
-    def test_set_key_creates_new_variable(self, env_manager) -> None:
+    def test_set_key_creates_new_variable(self, env_manager: EnvFileManager) -> None:
         """set_key creates new environment variable."""
         env_manager.set_key("NEW_KEY", "new_value")
 
         assert env_manager.get_key("NEW_KEY") == "new_value"
 
-    def test_set_key_updates_existing(self, env_manager) -> None:
+    def test_set_key_updates_existing(self, env_manager: EnvFileManager) -> None:
         """set_key updates existing variable."""
         env_manager.env_path.write_text("EXISTING=old")
 
@@ -187,7 +195,7 @@ class TestGetSetKey:
 class TestUpdateKeys:
     """Tests for update_keys method."""
 
-    def test_updates_multiple_keys(self, env_manager) -> None:
+    def test_updates_multiple_keys(self, env_manager: EnvFileManager) -> None:
         """update_keys updates multiple variables in one operation."""
         env_manager.update_keys({"KEY1": "value1", "KEY2": "value2", "KEY3": "value3"})
 
@@ -195,7 +203,7 @@ class TestUpdateKeys:
         assert env_manager.get_key("KEY2") == "value2"
         assert env_manager.get_key("KEY3") == "value3"
 
-    def test_merges_with_existing(self, env_manager) -> None:
+    def test_merges_with_existing(self, env_manager: EnvFileManager) -> None:
         """update_keys merges with existing variables."""
         env_manager.env_path.write_text("EXISTING=value")
 
@@ -208,7 +216,7 @@ class TestUpdateKeys:
 class TestDeleteKey:
     """Tests for delete_key method."""
 
-    def test_deletes_existing_key(self, env_manager) -> None:
+    def test_deletes_existing_key(self, env_manager: EnvFileManager) -> None:
         """delete_key removes existing variable."""
         env_manager.env_path.write_text("TO_DELETE=value\nKEEP=value")
 
@@ -218,7 +226,7 @@ class TestDeleteKey:
         assert env_manager.get_key("TO_DELETE") is None
         assert env_manager.get_key("KEEP") == "value"
 
-    def test_returns_false_for_nonexistent(self, env_manager) -> None:
+    def test_returns_false_for_nonexistent(self, env_manager: EnvFileManager) -> None:
         """delete_key returns False for nonexistent keys."""
         result = env_manager.delete_key("NONEXISTENT")
 
@@ -228,14 +236,14 @@ class TestDeleteKey:
 class TestValidateKey:
     """Tests for validate_key method."""
 
-    def test_validates_correct_key_names(self, env_manager) -> None:
+    def test_validates_correct_key_names(self, env_manager: EnvFileManager) -> None:
         """validate_key accepts valid environment variable names."""
         assert env_manager.validate_key("VALID_KEY")
         assert env_manager.validate_key("KEY123")
         assert env_manager.validate_key("_LEADING_UNDERSCORE")
         assert env_manager.validate_key("MixedCase")
 
-    def test_rejects_invalid_key_names(self, env_manager) -> None:
+    def test_rejects_invalid_key_names(self, env_manager: EnvFileManager) -> None:
         """validate_key rejects invalid environment variable names."""
         assert not env_manager.validate_key("123_STARTS_WITH_NUMBER")
         assert not env_manager.validate_key("KEY-WITH-DASH")
@@ -246,7 +254,7 @@ class TestValidateKey:
 class TestAPIKeyManagement:
     """Tests for API key specific functionality."""
 
-    def test_test_api_key_validates_format(self, env_manager) -> None:
+    def test_test_api_key_validates_format(self, env_manager: EnvFileManager) -> None:
         """test_api_key validates API key formats."""
         valid_openai = "sk-1234567890abcdefghijklmnopqrstuvwxyz"
         success, message = env_manager.test_api_key("openai", valid_openai)
@@ -254,7 +262,7 @@ class TestAPIKeyManagement:
         assert success
         assert "valid" in message.lower()
 
-    def test_test_api_key_rejects_invalid_format(self, env_manager) -> None:
+    def test_test_api_key_rejects_invalid_format(self, env_manager: EnvFileManager) -> None:
         """test_api_key rejects improperly formatted keys."""
         invalid_key = "not-a-valid-key"
         success, message = env_manager.test_api_key("openai", invalid_key)
@@ -262,7 +270,7 @@ class TestAPIKeyManagement:
         assert not success
         assert "invalid" in message.lower()
 
-    def test_get_all_api_keys(self, env_manager) -> None:
+    def test_get_all_api_keys(self, env_manager: EnvFileManager) -> None:
         """get_all_api_keys returns only API key variables."""
         env_manager.write_env({
             "OPENAI_API_KEY": "sk-test123",
@@ -278,7 +286,7 @@ class TestAPIKeyManagement:
         assert "DATABASE_TOKEN" in api_keys
         assert "REGULAR_VAR" not in api_keys
 
-    def test_set_api_key_with_service_mapping(self, env_manager) -> None:
+    def test_set_api_key_with_service_mapping(self, env_manager: EnvFileManager) -> None:
         """set_api_key uses proper service-to-key mapping."""
         env_manager.set_api_key("openai", "sk-test123")
 
@@ -288,7 +296,7 @@ class TestAPIKeyManagement:
 class TestLoadIntoEnvironment:
     """Tests for load_into_environment method."""
 
-    def test_loads_variables_into_os_environ(self, env_manager) -> None:
+    def test_loads_variables_into_os_environ(self, env_manager: EnvFileManager) -> None:
         """load_into_environment sets os.environ variables."""
         env_manager.write_env({"TEST_VAR": "test_value"})
         test_key = "TEST_VAR_UNIQUE_12345"
@@ -300,7 +308,9 @@ class TestLoadIntoEnvironment:
 
         del os.environ[test_key]
 
-    def test_respects_override_flag(self, env_manager, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_respects_override_flag(
+        self, env_manager: EnvFileManager, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """load_into_environment respects override parameter."""
         test_key = "OVERRIDE_TEST_KEY"
         monkeypatch.setenv(test_key, "existing_value")
@@ -318,7 +328,7 @@ class TestLoadIntoEnvironment:
 class TestErrorHandling:
     """Tests for error handling and edge cases."""
 
-    def test_handles_corrupted_env_file(self, env_manager) -> None:
+    def test_handles_corrupted_env_file(self, env_manager: EnvFileManager) -> None:
         """EnvFileManager handles corrupted .env files gracefully."""
         env_manager.env_path.write_text("VALID=value\nINVALID LINE WITHOUT EQUALS\nANOTHER=valid")
 
@@ -327,7 +337,9 @@ class TestErrorHandling:
         assert "VALID" in env_vars
         assert "ANOTHER" in env_vars
 
-    def test_handles_write_failure(self, env_manager, tmp_path: Path) -> None:
+    def test_handles_write_failure(
+        self, env_manager: EnvFileManager, tmp_path: Path
+    ) -> None:
         """write_env handles write failures gracefully."""
         env_manager.env_path.write_text("BACKUP=original")
 
@@ -347,7 +359,7 @@ class TestErrorHandling:
         finally:
             read_only_dir.chmod(stat.S_IRWXU)
 
-    def test_handles_unicode_content(self, env_manager) -> None:
+    def test_handles_unicode_content(self, env_manager: EnvFileManager) -> None:
         """EnvFileManager handles Unicode content correctly."""
         unicode_value = "测试值_Test_Тест_🔑"
         env_manager.set_key("UNICODE_KEY", unicode_value)
@@ -360,7 +372,7 @@ class TestErrorHandling:
 class TestIntegrationScenarios:
     """Integration tests for complete workflows."""
 
-    def test_complete_api_key_workflow(self, env_manager) -> None:
+    def test_complete_api_key_workflow(self, env_manager: EnvFileManager) -> None:
         """Complete workflow of setting, validating, and using API keys."""
         service = "openai"
         api_key = "sk-test1234567890abcdefghijklmnopqr"
@@ -373,7 +385,7 @@ class TestIntegrationScenarios:
         assert "OPENAI_API_KEY" in all_keys
         assert all_keys["OPENAI_API_KEY"] == api_key
 
-    def test_migration_workflow(self, env_manager) -> None:
+    def test_migration_workflow(self, env_manager: EnvFileManager) -> None:
         """Workflow of migrating from old format to new format."""
         old_format = "OLD_API_KEY=old-value\nDEPRECATED_VAR=deprecated"
         env_manager.env_path.write_text(old_format)

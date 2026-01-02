@@ -13,6 +13,7 @@ import json
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from collections.abc import Generator
 from typing import Any
 
 import pytest
@@ -117,7 +118,7 @@ class TestModelDownloadManager:
     """Test ModelDownloadManager functionality."""
 
     @pytest.fixture
-    def temp_cache_dir(self) -> Path:
+    def temp_cache_dir(self) -> Generator[Path, None, None]:
         """Create temporary cache directory."""
         temp_dir = tempfile.mkdtemp(prefix="download_test_")
         cache_path = Path(temp_dir)
@@ -251,8 +252,10 @@ class TestModelDownloadManager:
         assert "model_count" in size_info
         assert "cache_dir" in size_info
 
-        assert size_info["total_size_mb"] > 1.0
-        assert size_info["model_count"] >= 1
+        total_size = size_info["total_size_mb"]
+        model_count = size_info["model_count"]
+        assert isinstance(total_size, (int, float)) and total_size > 1.0
+        assert isinstance(model_count, int) and model_count >= 1
         assert size_info["cache_dir"] == str(download_manager.cache_dir)
 
     def test_clear_cache_everything(self, download_manager: ModelDownloadManager) -> None:
@@ -392,7 +395,7 @@ class TestDownloadManagerEdgeCases:
     """Test edge cases and error handling."""
 
     @pytest.fixture
-    def download_manager(self) -> ModelDownloadManager:
+    def download_manager(self) -> Generator[ModelDownloadManager, None, None]:
         """Create download manager for edge case testing."""
         temp_dir = tempfile.mkdtemp(prefix="download_edge_")
         manager = ModelDownloadManager(cache_dir=temp_dir)

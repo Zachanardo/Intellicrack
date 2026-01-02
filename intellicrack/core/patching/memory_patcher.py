@@ -38,7 +38,12 @@ class SignalEmitter(Protocol):
     """Protocol for Qt signal emitter."""
 
     def emit(self, *args: object) -> None:
-        """Emit signal with arbitrary arguments."""
+        """Emit signal with arbitrary arguments.
+
+        Args:
+            *args: Variable positional arguments to emit with signal.
+
+        """
         pass
 
 
@@ -140,7 +145,7 @@ def _create_handle_types(ctypes_module: Any) -> tuple[type, type, type, type]:
 
     """
 
-    class HANDLE(ctypes_module.c_void_p):  # type: ignore[misc]
+    class HANDLE(ctypes_module.c_void_p):
         """Real Windows HANDLE type implementation."""
 
         def __init__(self, value: int | None = None) -> None:
@@ -215,7 +220,7 @@ def _create_pointer_types(ctypes_module: Any) -> tuple[type, type, type]:
 
     """
 
-    class LPVOID(ctypes_module.c_void_p):  # type: ignore[misc]
+    class LPVOID(ctypes_module.c_void_p):
         """Real Windows LPVOID type implementation."""
 
         def __str__(self) -> str:
@@ -224,7 +229,7 @@ def _create_pointer_types(ctypes_module: Any) -> tuple[type, type, type]:
         def __repr__(self) -> str:
             return f"LPVOID({self.value})"
 
-    class SIZE_T(ctypes_module.c_size_t):  # type: ignore[misc]  # noqa: N801
+    class SIZE_T(ctypes_module.c_size_t):  # noqa: N801
         """Real Windows SIZE_T type implementation."""
 
         def __str__(self) -> str:
@@ -233,7 +238,7 @@ def _create_pointer_types(ctypes_module: Any) -> tuple[type, type, type]:
         def __repr__(self) -> str:
             return f"SIZE_T({self.value})"
 
-    class ULONG_PTR(ctypes_module.c_void_p):  # type: ignore[misc]  # noqa: N801
+    class ULONG_PTR(ctypes_module.c_void_p):  # noqa: N801
         """Real Windows ULONG_PTR type implementation."""
 
         def __str__(self) -> str:
@@ -306,7 +311,15 @@ PTRACE_POKEDATA = 5
 
 
 def log_message(msg: str) -> str:
-    """Format log messages consistently."""
+    """Format log messages consistently.
+
+    Args:
+        msg: Message text to format.
+
+    Returns:
+        str: Formatted message wrapped in brackets.
+
+    """
     return f"[{msg}]"
 
 
@@ -377,15 +390,26 @@ TARGET_BINARY = r"{binary_path}"
 # Patches to apply
 PATCHES = {patches_str}
 
-def on_message(message, data):
-    """Handle messages from Frida script"""
+def on_message(message: dict[str, object], data: object) -> None:
+    """Handle messages from Frida script.
+
+    Args:
+        message: Dictionary containing message type and payload from Frida.
+        data: Additional data payload from Frida script.
+
+    """
     if message['type'] == 'send':
         print("[Frida] " + str(message['payload']))
     elif message['type'] == 'error':
         print("[Frida Error] " + str(message['stack']))
 
-def create_frida_script():
-    """Create the Frida instrumentation script"""
+def create_frida_script() -> str:
+    """Create the Frida instrumentation script.
+
+    Returns:
+        JavaScript code for Frida instrumentation script that patches memory.
+
+    """
     script_code = """
     console.log('[+] Starting memory patcher...');
 
@@ -427,8 +451,13 @@ def create_frida_script():
 
     return script_code
 
-def launch_with_frida():
-    """Launch target with Frida instrumentation"""
+def launch_with_frida() -> int:
+    """Launch target with Frida instrumentation.
+
+    Returns:
+        Exit code: 0 on success, 1 on failure.
+
+    """
     print("[*] Launching " + TARGET_BINARY + " with memory patches...")
 
     try:
@@ -461,8 +490,13 @@ def launch_with_frida():
 
     return 0
 
-def launch_normal():
-    """Launch target normally without patches"""
+def launch_normal() -> int:
+    """Launch target normally without patches.
+
+    Returns:
+        Exit code: 0 on success, 1 on failure.
+
+    """
     print("[*] Launching " + TARGET_BINARY + " normally...")
     try:
         subprocess.Popen([TARGET_BINARY], encoding='utf-8')
@@ -472,8 +506,13 @@ def launch_normal():
         return 1
     return 0
 
-def main():
-    \"\"\"Main launcher entry point\"\"\"
+def main() -> int:
+    """Main launcher entry point.
+
+    Returns:
+        Exit code: 0 on success, 1 on failure.
+
+    """
     print("=" * 60)
     print("Intellicrack Memory Patcher Launcher")
     print("=" * 60)
@@ -733,7 +772,10 @@ def _bypass_memory_protection_unix(address: int, size: int, protection: int | No
         protection: New protection flags (optional)
 
     Returns:
-        True if protection changed successfully, False otherwise
+        bool: True if protection changed successfully, False otherwise
+
+    Raises:
+        ValueError: If protection is PROT_NONE (no access protection).
 
     """
     try:

@@ -96,7 +96,13 @@ class GPUAccelerationManager:
             self._init_opencl()
 
     def _determine_backend(self) -> str | None:
-        """Determine the backend based on GPU type and configuration."""
+        """Determine the backend based on GPU type and configuration.
+
+        Returns:
+            str | None: Backend name string or None if no backend
+                available.
+
+        """
         if self.gpu_type == "intel_xpu":
             if self.use_intel_pytorch and self._has_xpu:
                 return "pytorch_xpu"
@@ -135,18 +141,36 @@ class GPUAccelerationManager:
             self.logger.debug("OpenCL initialization failed: %s", e)
 
     def is_acceleration_available(self) -> bool:
-        """Check if GPU acceleration is available."""
+        """Check if GPU acceleration is available.
+
+        Returns:
+            bool: True if GPU acceleration is available, False
+                otherwise.
+
+        """
         return bool(self.gpu_available)
 
     def get_gpu_type(self) -> str | None:
-        """Get the type of GPU acceleration available."""
+        """Get the type of GPU acceleration available.
+
+        Returns:
+            str | None: GPU type string or None if no GPU
+                available.
+
+        """
         gpu_type = self.gpu_type
         if gpu_type is None:
             return None
         return str(gpu_type) if not isinstance(gpu_type, str) else gpu_type
 
     def get_backend(self) -> str | None:
-        """Get the GPU backend type."""
+        """Get the GPU backend type.
+
+        Returns:
+            str | None: Backend type string or None if no backend
+                available.
+
+        """
         return self.gpu_backend
 
     def accelerate_pattern_matching(self, data: bytes, patterns: list[bytes]) -> list[int]:
@@ -185,7 +209,17 @@ class GPUAccelerationManager:
             return self._cpu_pattern_matching(data, patterns)
 
     def _cpu_pattern_matching(self, data: bytes, patterns: list[bytes]) -> list[int]:
-        """Fallback CPU pattern matching."""
+        """Fallback CPU pattern matching.
+
+        Args:
+            data: Binary data to search in.
+            patterns: List of byte patterns to search for.
+
+        Returns:
+            list[int]: Sorted list of match positions found in
+                data.
+
+        """
         matches = []
         for pattern in patterns:
             pos = 0
@@ -198,7 +232,17 @@ class GPUAccelerationManager:
         return sorted(matches)
 
     def _torch_pattern_matching(self, data: bytes, patterns: list[bytes]) -> list[int]:
-        """PyTorch-based pattern matching for Intel XPU/CUDA/ROCm."""
+        """PyTorch-based pattern matching for Intel XPU/CUDA/ROCm.
+
+        Args:
+            data: Binary data to search in.
+            patterns: List of byte patterns to search for.
+
+        Returns:
+            list[int]: Sorted list of match positions found in
+                data.
+
+        """
         if not self._torch:
             return self._cpu_pattern_matching(data, patterns)
 
@@ -230,7 +274,17 @@ class GPUAccelerationManager:
         return sorted(all_matches)
 
     def _opencl_pattern_matching(self, data: bytes, patterns: list[bytes]) -> list[int]:
-        """OpenCL-based pattern matching."""
+        """OpenCL-based pattern matching.
+
+        Args:
+            data: Binary data to search in.
+            patterns: List of byte patterns to search for.
+
+        Returns:
+            list[int]: Sorted list of match positions found in
+                data.
+
+        """
         if self.cl is None or self.context is None or self.queue is None:
             return self._cpu_pattern_matching(data, patterns)
 
@@ -313,7 +367,17 @@ class GPUAccelerationManager:
         return sorted(all_matches)
 
     def _cupy_pattern_matching(self, data: bytes, patterns: list[bytes]) -> list[int]:
-        """CUDA-based pattern matching using CuPy."""
+        """CUDA-based pattern matching using CuPy.
+
+        Args:
+            data: Binary data to search in.
+            patterns: List of byte patterns to search for.
+
+        Returns:
+            list[int]: Sorted list of match positions found in
+                data.
+
+        """
         if not cp:
             return self._cpu_pattern_matching(data, patterns)
 
@@ -441,7 +505,12 @@ class GPUAccelerator(GPUAccelerationManager):
         self.blacklisted_backends: set[str] = set()
 
     def _detect_vendor(self) -> str:
-        """Detect GPU vendor from type."""
+        """Detect GPU vendor from type.
+
+        Returns:
+            str: GPU vendor name string.
+
+        """
         gpu_type = self.gpu_type
         if gpu_type is not None:
             gpu_type_str = str(gpu_type).lower()

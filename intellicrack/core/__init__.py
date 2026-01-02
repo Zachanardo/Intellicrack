@@ -97,19 +97,9 @@ def get_frida_manager() -> type | None:
     subsequent calls.
 
     Returns:
-        FridaManager: The FridaManager class if available, None if import fails
-
-    Side Effects:
-        - Sets global FridaManager variable on first successful import
-        - Sets FRIDA_MODULES_AVAILABLE to True on successful import
-        - Logs warning if import fails
-
-    Example:
-        >>> FridaManager = (
-        ...     get_frida_manager()
-        ... )
-        >>> if FridaManager:
-        ...     manager = FridaManager()
+        The FridaManager class if available, None if import fails. Sets global
+        FridaManager variable and FRIDA_MODULES_AVAILABLE flag on successful
+        import. Logs warning if import fails.
 
     """
     global FridaManager, FRIDA_MODULES_AVAILABLE
@@ -132,20 +122,9 @@ def get_frida_presets() -> dict[str, Any] | None:
     bypass scripts for common protection schemes.
 
     Returns:
-        dict: Dictionary of Frida presets if available, None if import fails
-
-    Side Effects:
-        - Sets global FRIDA_PRESETS variable on first successful import
-        - Logs error if import fails
-
-    Example:
-        >>> presets = get_frida_presets()
-        >>> if presets:
-        ...     anti_debug_script = (
-        ...         presets.get(
-        ...             "anti_debug"
-        ...         )
-        ...     )
+        Dictionary of Frida presets if available, None if import fails. Sets
+        global FRIDA_PRESETS variable on first successful import. Logs error
+        if import fails.
 
     """
     global FRIDA_PRESETS
@@ -167,21 +146,9 @@ def get_frida_bypass_wizard() -> type | None:
     scripts based on detected protection schemes.
 
     Returns:
-        FridaBypassWizard: The wizard class if available, None if import fails
-
-    Side Effects:
-        - Sets global FridaBypassWizard variable on first successful import
-        - Logs error if import fails
-
-    Example:
-        >>> Wizard = (
-        ...     get_frida_bypass_wizard()
-        ... )
-        >>> if Wizard:
-        ...     wizard = Wizard()
-        ...     wizard.generate_bypass_script(
-        ...         protections
-        ...     )
+        The wizard class if available, None if import fails. Sets global
+        FridaBypassWizard variable on first successful import. Logs error
+        if import fails.
 
     """
     global FridaBypassWizard
@@ -199,7 +166,31 @@ _lazy_modules: dict[str, Any] = {}
 
 
 def __getattr__(name: str) -> Any:
-    """Lazy load module attributes to prevent circular imports."""
+    """Lazy load module attributes to prevent circular imports.
+
+    Implements lazy loading for core modules to prevent circular import
+    issues during module initialization. Modules are loaded on first access
+    and cached in _lazy_modules for subsequent calls.
+
+    Args:
+        name: The name of the module or class attribute to load. Must
+            correspond to a module name in the lazy-loadable modules list
+            or to special attributes like 'ProtectionAnalyzer' or
+            'protocols'.
+
+    Returns:
+        The loaded module, class, or dictionary if the attribute is
+        available and successfully imported. Returns None if the import
+        fails but the attribute name is valid. Raises AttributeError if
+        the requested attribute name is not in the list of available
+        lazy-loadable modules.
+
+    Raises:
+        AttributeError: If the requested attribute name is not in the list
+            of available lazy-loadable modules or recognized special
+            attributes.
+
+    """
     module_names = [
         "analysis",
         "binary_analyzer",

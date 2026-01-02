@@ -65,7 +65,7 @@ class TestResult:
 class EnvironmentDetector:
     """Detects current environment characteristics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.wmi_client = wmi.WMI() if platform.system() == 'Windows' else None
 
     def detect_container(self) -> dict[str, Any]:
@@ -75,7 +75,7 @@ class EnvironmentDetector:
         Returns:
             Container detection results
         """
-        container_indicators = {
+        container_indicators: dict[str, Any] = {
             'is_container': False,
             'container_type': None,
             'indicators': []
@@ -123,7 +123,7 @@ class EnvironmentDetector:
         Returns:
             Cloud provider detection results
         """
-        cloud_info = {
+        cloud_info: dict[str, Any] = {
             'is_cloud': False,
             'provider': None,
             'instance_type': None,
@@ -207,7 +207,7 @@ class EnvironmentDetector:
         Returns:
             WSL detection results
         """
-        wsl_info = {
+        wsl_info: dict[str, Any] = {
             'is_wsl': False,
             'version': None,
             'distro': None,
@@ -247,10 +247,10 @@ class EnvironmentDetector:
 class TestExecutor:
     """Executes tests in different environments."""
 
-    def __init__(self, base_path: str):
+    def __init__(self, base_path: str) -> None:
         self.base_path = Path(base_path)
         self.detector = EnvironmentDetector()
-        self.results_queue = queue.Queue()
+        self.results_queue: queue.Queue[TestResult] = queue.Queue()
         self.executor = ThreadPoolExecutor(max_workers=4)
 
     def execute_test(self, test_command: str, environment: TestEnvironment,
@@ -339,7 +339,7 @@ class TestExecutor:
         hw_validator = HardwareValidator()
         current_hw = hw_validator.collect_hardware_info()
 
-        compatibility = {
+        compatibility: dict[str, Any] = {
             'compatible': True,
             'warnings': [],
             'errors': [],
@@ -404,12 +404,12 @@ class TestExecutor:
 class MultiEnvironmentTester:
     """Orchestrates testing across multiple environments."""
 
-    def __init__(self, validation_path: str):
+    def __init__(self, validation_path: str) -> None:
         self.validation_path = Path(validation_path)
         self.executor = TestExecutor(validation_path)
         self.environments = self._load_environment_matrix()
         self.test_suite = self._load_test_suite()
-        self.results = []
+        self.results: list[TestResult] = []
 
     def _load_environment_matrix(self) -> list[TestEnvironment]:
         """
@@ -668,7 +668,7 @@ class MultiEnvironmentTester:
         Returns:
             Compatibility report
         """
-        report = {
+        report: dict[str, Any] = {
             'timestamp': time.time(),
             'current_environment': {},
             'compatibility_matrix': []
@@ -764,7 +764,7 @@ class MultiEnvironmentTester:
         Returns:
             Testing report dictionary
         """
-        report = {
+        report: dict[str, Any] = {
             'timestamp': time.time(),
             'total_tests': len(self.results),
             'passed': sum(bool(r.passed)
@@ -849,7 +849,7 @@ class MultiEnvironmentTester:
         return report
 
 
-def run_multi_environment_testing():
+def run_multi_environment_testing() -> None:
     """Run the multi-environment testing matrix."""
     print("=== Multi-Environment Testing Matrix ===")
     print("[*] Initializing multi-environment tester...")

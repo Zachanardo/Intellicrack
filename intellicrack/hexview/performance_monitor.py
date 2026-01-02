@@ -49,11 +49,18 @@ __all__ = ["PerformanceMonitor", "PerformanceWidget"]
 _BaseClass = QWidget if TYPE_CHECKING or PYQT6_AVAILABLE else object
 
 
-class PerformanceWidget(_BaseClass):  # type: ignore[misc, valid-type]
+class PerformanceWidget(_BaseClass):
     """Widget for displaying performance statistics."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the performance widget."""
+        """Initialize the performance widget.
+
+        Args:
+            parent: Parent widget for this performance widget.
+
+        Raises:
+            RuntimeError: If PyQt6 is not available.
+        """
         if not PYQT6_AVAILABLE:
             logger.warning("PyQt6 not available, PerformanceWidget cannot be created")
             raise RuntimeError("PyQt6 not available")
@@ -314,7 +321,11 @@ class PerformanceWidget(_BaseClass):  # type: ignore[misc, valid-type]
             main_layout.addLayout(controls_layout)
 
     def set_file_handler(self, file_handler: object) -> None:
-        """Set the file handler to monitor."""
+        """Set the file handler to monitor.
+
+        Args:
+            file_handler: File handler object with performance stats methods.
+        """
         self.file_handler = file_handler
         self.stats_history.clear()
         self.update_display()
@@ -328,7 +339,7 @@ class PerformanceWidget(_BaseClass):  # type: ignore[misc, valid-type]
             if not hasattr(self.file_handler, "get_performance_stats"):
                 return
 
-            stats_result = self.file_handler.get_performance_stats()  # type: ignore[attr-defined]
+            stats_result = self.file_handler.get_performance_stats()
             if not stats_result or not isinstance(stats_result, dict):
                 return
 
@@ -347,7 +358,11 @@ class PerformanceWidget(_BaseClass):  # type: ignore[misc, valid-type]
             logger.exception("Error updating performance display: %s", e)
 
     def update_overview_tab(self, stats: dict[str, Any]) -> None:
-        """Update the overview tab."""
+        """Update the overview tab.
+
+        Args:
+            stats: Performance statistics dictionary.
+        """
         # File information
         self.file_size_label.setText(f"{stats.get('file_size_mb', 0):.1f} MB")
         self.memory_strategy_label.setText(stats.get("memory_strategy", "N/A"))
@@ -373,7 +388,11 @@ class PerformanceWidget(_BaseClass):  # type: ignore[misc, valid-type]
         )
 
     def update_memory_tab(self, stats: dict[str, Any]) -> None:
-        """Update the memory tab."""
+        """Update the memory tab.
+
+        Args:
+            stats: Performance statistics dictionary.
+        """
         cache_stats_raw = stats.get("cache_stats", {})
         cache_stats: dict[str, Any] = cache_stats_raw if isinstance(cache_stats_raw, dict) else {}
 
@@ -399,7 +418,11 @@ class PerformanceWidget(_BaseClass):  # type: ignore[misc, valid-type]
             self.system_memory_progress.setValue(50)
 
     def update_cache_tab(self, stats: dict[str, Any]) -> None:
-        """Update the cache tab."""
+        """Update the cache tab.
+
+        Args:
+            stats: Performance statistics dictionary.
+        """
         cache_stats_raw = stats.get("cache_stats", {})
         cache_stats: dict[str, Any] = cache_stats_raw if isinstance(cache_stats_raw, dict) else {}
 
@@ -413,7 +436,11 @@ class PerformanceWidget(_BaseClass):  # type: ignore[misc, valid-type]
         self.cache_progress.setValue(int(utilization))
 
     def update_patterns_tab(self, stats: dict[str, Any]) -> None:
-        """Update the access patterns tab."""
+        """Update the access patterns tab with pattern information.
+
+        Args:
+            stats: Performance statistics dictionary containing access pattern information.
+        """
         access_patterns = int(stats.get("access_patterns", 0))
         sequential_ratio = float(stats.get("sequential_ratio", 0))
 
@@ -433,7 +460,7 @@ class PerformanceWidget(_BaseClass):  # type: ignore[misc, valid-type]
             if not hasattr(self.file_handler, "get_performance_stats"):
                 return
 
-            stats_result = self.file_handler.get_performance_stats()  # type: ignore[attr-defined]
+            stats_result = self.file_handler.get_performance_stats()
             if not stats_result or not isinstance(stats_result, dict):
                 return
 
@@ -469,7 +496,14 @@ class PerformanceMonitor:
         self.file_handler: object | None = None
 
     def create_widget(self, parent: QWidget | None = None) -> QWidget | None:
-        """Create and return the performance monitoring widget."""
+        """Create and return the performance monitoring widget.
+
+        Args:
+            parent: Parent widget for the created performance widget.
+
+        Returns:
+            The created performance widget or None if PyQt6 is not available.
+        """
         if not PYQT6_AVAILABLE:
             return None
 
@@ -480,20 +514,29 @@ class PerformanceMonitor:
         return self.widget
 
     def set_file_handler(self, file_handler: object) -> None:
-        """Set the file handler to monitor."""
+        """Set the file handler to monitor.
+
+        Args:
+            file_handler: File handler object with performance stats methods.
+        """
         self.file_handler = file_handler
         if self.widget:
             self.widget.set_file_handler(file_handler)
 
     def get_stats_summary(self) -> dict[str, Any]:
-        """Get a summary of current performance statistics."""
+        """Get a summary of current performance statistics.
+
+        Returns:
+            Summary dictionary with file_size_mb, memory_strategy, cache_memory_mb,
+            cache_utilization, sequential_ratio, and optimization_active keys.
+        """
         if not self.file_handler:
             return {}
 
         if not hasattr(self.file_handler, "get_performance_stats"):
             return {}
 
-        stats_result = self.file_handler.get_performance_stats()  # type: ignore[attr-defined]
+        stats_result = self.file_handler.get_performance_stats()
         if not stats_result or not isinstance(stats_result, dict):
             return {}
 

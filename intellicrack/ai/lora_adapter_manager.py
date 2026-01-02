@@ -20,18 +20,12 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import json
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import Any, TypeVar
 
 from ..utils.logger import get_logger
 
-
-if TYPE_CHECKING:
-    from peft import (
-        PeftConfig as PeftConfigType,
-        PeftModel as PeftModelType,
-    )
 
 ModelType = TypeVar("ModelType")
 ConfigType = TypeVar("ConfigType")

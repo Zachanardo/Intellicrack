@@ -1,15 +1,5 @@
-"""Hexadecimal viewer renderer for displaying binary data."""
+"""Hexadecimal viewer renderer for displaying binary data.
 
-import logging
-import re
-import struct
-from enum import Enum, auto
-from typing import Any
-
-from intellicrack.utils.logger import logger
-
-
-"""
 Hex data rendering module for the hex viewer/editor.
 
 Copyright (C) 2025 Zachary Flint
@@ -29,6 +19,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
+
+import logging
+import re
+import struct
+from enum import Enum, auto
+from typing import Any
+
+from intellicrack.utils.logger import logger
 
 
 class ViewMode(Enum):
@@ -449,7 +447,7 @@ def parse_hex_view(hex_view: str, bytes_per_row: int = 16, offset_radix: int = 1
         offset_radix: Radix of the offset column (16 for hex, 10 for decimal)
 
     Returns:
-        Tuple of (starting_offset, binary_data)
+        Starting offset and binary data extracted from the hex view.
 
     """
     result = bytearray()

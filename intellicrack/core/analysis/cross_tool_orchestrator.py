@@ -32,12 +32,9 @@ import threading
 import time
 
 
-try:
-    import defusedxml.ElementTree as ET  # noqa: N817
-except ImportError:
-    import xml.etree.ElementTree as ET  # noqa: S405
 from collections import defaultdict
-from collections.abc import Mapping
+
+from defusedxml import ElementTree as ET
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -109,7 +106,12 @@ class SharedMemoryIPC:
         self._initialize_shared_memory()
 
     def _initialize_shared_memory(self) -> None:
-        """Create or connect to shared memory segment."""
+        """Create or connect to shared memory segment.
+
+        Raises:
+            Exception: If shared memory creation/connection fails.
+
+        """
         try:
             # Try to create new shared memory
             self.mmap_obj = mmap.mmap(-1, self.size, tagname=self.name, access=mmap.ACCESS_WRITE)
@@ -246,6 +248,9 @@ class ResultSerializer:
         Returns:
             Serialized bytes
 
+        Raises:
+            TypeError: If package cannot be serialized to dict.
+
         """
         package = {
             "version": ResultSerializer.PROTOCOL_VERSION,
@@ -261,6 +266,14 @@ class ResultSerializer:
 
         # Convert result to JSON-serializable format by converting datetime objects to strings
         def make_serializable(obj: object) -> object:
+            """Convert object to JSON-serializable format.
+
+            Args:
+                obj: Object to convert.
+
+            Returns:
+                JSON-serializable representation of object.
+            """
             if isinstance(obj, (datetime,)):
                 return obj.isoformat()
             if isinstance(obj, dict):
@@ -346,6 +359,13 @@ class ToolMonitor:
         """
 
         def monitor_loop() -> None:
+            """Monitor tool processes in a loop.
+
+            Continuously collects CPU and memory metrics for all registered
+            processes. Removes processes that are no longer running and
+            limits memory usage by keeping only last 100 metric samples.
+
+            """
             while not self.stop_monitoring.is_set():
                 for tool_name, process in list(self.processes.items()):
                     try:
@@ -907,10 +927,26 @@ class CrossToolOrchestrator:
         self._setup_recovery_strategies()
 
     def _setup_resolution_rules(self) -> None:
-        """Set up conflict resolution rules for tool results."""
+        """Set up conflict resolution rules for tool results.
+
+        Configures rules to resolve conflicts when multiple analysis tools
+        produce different results for the same functions. Rules are prioritized
+        to prefer debug symbols and comprehensive cross-references.
+
+        """
 
         # Rule 1: Prefer results with debug symbols
         def prefer_debug_symbols(functions: list[CorrelatedFunction]) -> CorrelatedFunction | None:
+            """Prefer functions with debug symbol information.
+
+            Args:
+                functions: List of correlated functions.
+
+            Returns:
+                Function with debug information or None if no function has
+                    debug symbols.
+
+            """
             for func in functions:
                 if func.ghidra_data and func.ghidra_data.get("has_debug_info"):
                     return func
@@ -920,6 +956,16 @@ class CrossToolOrchestrator:
 
         # Rule 2: Prefer results with more cross-references
         def prefer_more_xrefs(functions: list[CorrelatedFunction]) -> CorrelatedFunction | None:
+            """Prefer functions with most cross-references.
+
+            Args:
+                functions: List of correlated functions.
+
+            Returns:
+                Function with most cross-references or None if empty list
+                    is provided.
+
+            """
             max_xrefs = 0
             best_func = None
             for func in functions:
@@ -937,10 +983,23 @@ class CrossToolOrchestrator:
         self.conflict_resolver.add_resolution_rule(prefer_more_xrefs, priority=5)
 
     def _setup_recovery_strategies(self) -> None:
-        """Set up recovery strategies for tool failures."""
+        """Set up recovery strategies for tool failures.
+
+        Registers recovery handlers for each analysis tool to handle transient
+        failures and resource cleanup. Strategies include process termination,
+        temporary file cleanup, and tool reinitialization.
+
+        """
 
         # Ghidra recovery strategy
         def ghidra_recovery(error: Exception, context: dict[str, Any] | None) -> None:
+            """Recover from Ghidra analysis failures.
+
+            Args:
+                error: Exception that occurred.
+                context: Optional context information.
+
+            """
             self.logger.info("Attempting Ghidra recovery")
             # Kill any hanging Ghidra process
             for proc in psutil.process_iter(["name"]):
@@ -963,6 +1022,16 @@ class CrossToolOrchestrator:
 
         # Radare2 recovery strategy
         def r2_recovery(error: Exception, context: dict[str, Any] | None) -> None:
+            """Recover from Radare2 analysis failures.
+
+            Cleans up the Radare2 integration and reinitializes it to restore
+            functional state after transient failures.
+
+            Args:
+                error: Exception that occurred.
+                context: Optional context information.
+
+            """
             self.logger.info("Attempting Radare2 recovery")
             # Re-initialize r2 integration
             if self.r2_integration:
@@ -972,6 +1041,16 @@ class CrossToolOrchestrator:
 
         # Frida recovery strategy
         def frida_recovery(error: Exception, context: dict[str, Any] | None) -> None:
+            """Recover from Frida analysis failures.
+
+            Cleans up the Frida manager and reinitializes it to restore
+            functional state after transient failures.
+
+            Args:
+                error: Exception that occurred.
+                context: Optional context information.
+
+            """
             self.logger.info("Attempting Frida recovery")
             if self.frida_manager:
                 self.frida_manager.cleanup()
@@ -983,7 +1062,14 @@ class CrossToolOrchestrator:
         self.failure_recovery.register_recovery_strategy("frida", frida_recovery)
 
     def _initialize_tools(self) -> None:
-        """Initialize analysis tools."""
+        """Initialize analysis tools.
+
+        Sets up instances of Radare2, Frida, and Ghidra analysis tools.
+        Tools are registered with the monitor and marked as IDLE. Failures
+        in tool initialization are logged but do not prevent orchestrator
+        instantiation.
+
+        """
         try:
             # Initialize Radare2
             self.r2_integration = EnhancedR2Integration(self.binary_path)
@@ -1008,11 +1094,16 @@ class CrossToolOrchestrator:
     def run_parallel_analysis(self, tools: list[str] | None = None) -> UnifiedAnalysisResult:
         """Run analysis in parallel across specified tools.
 
+        Optimizes tool execution order based on resource constraints and
+        batches tools to avoid resource exhaustion. Uses load balancing to
+        determine which tools can be started simultaneously.
+
         Args:
-            tools: List of tools to use ['ghidra', 'radare2', 'frida'] or None for all
+            tools: List of tools to use ['ghidra', 'radare2', 'frida'] or
+                None for all tools.
 
         Returns:
-            UnifiedAnalysisResult containing correlated data
+            UnifiedAnalysisResult containing correlated data from all tools.
 
         """
         if tools is None:
@@ -1079,11 +1170,17 @@ class CrossToolOrchestrator:
     def run_sequential_analysis(self, workflow: list[dict[str, Any]]) -> UnifiedAnalysisResult:
         """Run analysis sequentially with data flow between tools.
 
+        Executes analysis steps in order with dependency resolution. Each step
+        waits for its dependencies to complete before running. Tools can pass
+        intermediate results to downstream tools.
+
         Args:
-            workflow: List of workflow steps with tool and configuration
+            workflow: List of workflow steps with tool and configuration.
+                Each step should contain 'tool', 'config', and optional
+                'depends_on' fields.
 
         Returns:
-            UnifiedAnalysisResult
+            Unified analysis result from sequential tool execution.
 
         """
         self.logger.info("Starting sequential analysis with %s steps", len(workflow))
@@ -1111,7 +1208,19 @@ class CrossToolOrchestrator:
         return self._correlate_results()
 
     def _run_ghidra_analysis_with_ipc(self, config: dict[str, Any] | None = None) -> None:
-        """Run Ghidra analysis with IPC communication."""
+        """Run Ghidra analysis with IPC communication.
+
+        Executes Ghidra headless analysis or uses GUI integration if available.
+        Results are serialized and transmitted via shared memory IPC. Handles
+        recovery from transient failures via the failure recovery mechanism.
+
+        Args:
+            config: Optional configuration parameters for analysis.
+
+        Raises:
+            ValueError: If command validation fails or binary path is unsafe.
+
+        """
         try:
             self.tool_monitor.status["ghidra"] = ToolStatus.RUNNING
             self.logger.info("Starting Ghidra analysis with IPC")
@@ -1124,7 +1233,7 @@ class CrossToolOrchestrator:
 
             if self.main_app:
                 # Use GUI integration
-                run_advanced_ghidra_analysis(cast(MainAppProtocol, self.main_app))
+                run_advanced_ghidra_analysis(cast("MainAppProtocol", self.main_app))
                 self.ghidra_results = GhidraAnalysisResult(
                     binary_path=self.binary_path,
                     architecture="",
@@ -1177,7 +1286,7 @@ class CrossToolOrchestrator:
                     imports = []
 
                     if os.path.exists(output_file):
-                        tree = ET.parse(output_file)  # noqa: S314
+                        tree = ET.parse(output_file)
                         root = tree.getroot()
 
                         # Parse functions
@@ -1271,11 +1380,30 @@ class CrossToolOrchestrator:
                     self.analysis_complete["ghidra"] = True
 
     def _run_ghidra_analysis(self, config: dict[str, Any] | None = None) -> None:
-        """Run Ghidra analysis (legacy method for compatibility)."""
+        """Run Ghidra analysis (legacy method for compatibility).
+
+        Wrapper for _run_ghidra_analysis_with_ipc to maintain backwards
+        compatibility with sequential workflow calling convention.
+
+        Args:
+            config: Optional configuration parameters for analysis.
+
+        """
         self._run_ghidra_analysis_with_ipc(config)
 
     def _run_radare2_analysis_with_ipc(self, config: dict[str, Any] | None = None) -> None:
-        """Run Radare2 analysis with IPC communication."""
+        """Run Radare2 analysis with IPC communication.
+
+        Executes comprehensive Radare2 analysis including decompilation,
+        function extraction, and vulnerability scanning. Results are serialized
+        and transmitted via shared memory IPC. Handles recovery from transient
+        failures via the failure recovery mechanism.
+
+        Args:
+            config: Optional configuration parameters for analysis. Can include
+                'analysis_types' to specify which analysis components to run.
+
+        """
         try:
             self.tool_monitor.status["radare2"] = ToolStatus.RUNNING
             self.logger.info("Starting Radare2 analysis with IPC")
@@ -1319,11 +1447,34 @@ class CrossToolOrchestrator:
                     self.analysis_complete["radare2"] = True
 
     def _run_radare2_analysis(self, config: dict[str, Any] | None = None) -> None:
-        """Run Radare2 analysis (legacy method for compatibility)."""
+        """Run Radare2 analysis (legacy method for compatibility).
+
+        Wrapper for _run_radare2_analysis_with_ipc to maintain backwards
+        compatibility with sequential workflow calling convention.
+
+        Args:
+            config: Optional configuration parameters for analysis.
+
+        """
         self._run_radare2_analysis_with_ipc(config)
 
     def _run_frida_analysis_with_ipc(self, config: dict[str, Any] | None = None) -> None:
-        """Run Frida analysis with IPC communication."""
+        """Run Frida analysis with IPC communication.
+
+        Executes Frida-based dynamic analysis including API monitoring,
+        memory scanning, and hook detection. Can attach to existing processes
+        or spawn new ones. Results are serialized and transmitted via shared
+        memory IPC.
+
+        Args:
+            config: Optional configuration parameters for analysis. Can include
+                'pid' for process attachment and 'scripts' list for which
+                analysis scripts to execute.
+
+        Raises:
+            ValueError: If binary path is unsafe or contains path traversal.
+
+        """
         try:
             if not self.frida_manager:
                 self.logger.warning("Frida not available, skipping")
@@ -1404,11 +1555,24 @@ class CrossToolOrchestrator:
                     self.analysis_complete["frida"] = True
 
     def _run_frida_analysis(self, config: dict[str, Any] | None = None) -> None:
-        """Run Frida analysis (legacy method for compatibility)."""
+        """Run Frida analysis (legacy method for compatibility).
+
+        Wrapper for _run_frida_analysis_with_ipc to maintain backwards
+        compatibility with sequential workflow calling convention.
+
+        Args:
+            config: Optional configuration parameters for analysis.
+
+        """
         self._run_frida_analysis_with_ipc(config)
 
     def _frida_memory_scan(self) -> dict[str, Any]:
-        """Perform memory scanning with Frida."""
+        """Perform memory scanning with Frida.
+
+        Returns:
+            Dictionary containing strings, patterns, and suspicious regions found in memory.
+
+        """
         results: dict[str, Any] = {"strings": [], "patterns": [], "suspicious_regions": []}
 
         if not self.frida_manager:
@@ -1461,7 +1625,12 @@ class CrossToolOrchestrator:
         return results
 
     def _frida_api_monitor(self) -> list[dict[str, Any]]:
-        """Monitor API calls with Frida."""
+        """Monitor API calls with Frida.
+
+        Returns:
+            List of monitored API calls with arguments and timestamps.
+
+        """
         api_calls: list[dict[str, Any]] = []
 
         if not self.frida_manager:
@@ -1508,7 +1677,12 @@ class CrossToolOrchestrator:
         return api_calls
 
     def _frida_hook_detection(self) -> dict[str, Any]:
-        """Detect hooks and patches with Frida."""
+        """Detect hooks and patches with Frida.
+
+        Returns:
+            Dictionary containing detected inline hooks, IAT hooks, and patches.
+
+        """
         hooks: dict[str, Any] = {"inline_hooks": [], "iat_hooks": [], "patches": []}
 
         if not self.frida_manager:
@@ -1564,7 +1738,17 @@ class CrossToolOrchestrator:
         return hooks
 
     def _correlate_results_with_resolution(self) -> UnifiedAnalysisResult:
-        """Correlate results with conflict resolution."""
+        """Correlate results with conflict resolution.
+
+        Combines data from multiple analysis tools while resolving conflicts
+        using configured resolution rules. Produces comprehensive unified result
+        with enhanced metadata including tool metrics and failure history.
+
+        Returns:
+            Unified analysis result with conflicts resolved and comprehensive
+                metadata.
+
+        """
         self.logger.info("Correlating results with conflict resolution")
 
         result = UnifiedAnalysisResult(binary_path=self.binary_path, timestamp=datetime.now())
@@ -1601,7 +1785,16 @@ class CrossToolOrchestrator:
         return result
 
     def _correlate_results(self) -> UnifiedAnalysisResult:
-        """Correlate results from all tools."""
+        """Correlate results from all tools.
+
+        Combines function, string, vulnerability, and protection data from
+        all available analysis tools into a unified result. Includes basic
+        metadata about tool completion status and correlation confidence.
+
+        Returns:
+            Unified analysis result combining data from all tools.
+
+        """
         self.logger.info("Correlating results from all tools")
 
         result = UnifiedAnalysisResult(binary_path=self.binary_path, timestamp=datetime.now())
@@ -1634,7 +1827,16 @@ class CrossToolOrchestrator:
         return result
 
     def _correlate_functions(self) -> list[CorrelatedFunction]:
-        """Correlate function data across tools."""
+        """Correlate function data across tools.
+
+        Combines function information from Ghidra, Radare2, and Frida into
+        unified function objects. Assigns confidence scores based on number
+        of tools providing data for each function.
+
+        Returns:
+            List of functions correlated across multiple analysis tools.
+
+        """
         correlated: list[CorrelatedFunction] = []
         function_map: dict[str, CorrelatedFunction] = {}
 
@@ -1683,7 +1885,16 @@ class CrossToolOrchestrator:
         return correlated
 
     def _correlate_strings(self) -> list[CorrelatedString]:
-        """Correlate string data across tools."""
+        """Correlate string data across tools.
+
+        Combines string references from Ghidra, Radare2, and Frida analysis.
+        Classifies strings as license or crypto-related and assigns importance
+        scores based on reference count and classification.
+
+        Returns:
+            List of strings correlated across multiple analysis tools.
+
+        """
         correlated: list[CorrelatedString] = []
         string_map: dict[str, CorrelatedString] = {}
 
@@ -1740,7 +1951,15 @@ class CrossToolOrchestrator:
         return correlated
 
     def _combine_vulnerabilities(self) -> list[dict[str, Any]]:
-        """Combine vulnerability findings from all tools."""
+        """Combine vulnerability findings from all tools.
+
+        Aggregates vulnerability data from Radare2 static analysis and Frida
+        runtime analysis. Adds source attribution for each finding.
+
+        Returns:
+            List of combined vulnerability findings with source attribution.
+
+        """
         vulnerabilities: list[dict[str, Any]] = []
 
         # Get R2 vulnerabilities
@@ -1769,7 +1988,15 @@ class CrossToolOrchestrator:
         return vulnerabilities
 
     def _identify_protections(self) -> list[dict[str, Any]]:
-        """Identify protection mechanisms from analysis."""
+        """Identify protection mechanisms from analysis.
+
+        Detects anti-debugging APIs and obfuscation patterns from Radare2 and
+        Ghidra results. Assigns confidence scores based on evidence strength.
+
+        Returns:
+            List of identified protection mechanisms with confidence scores.
+
+        """
         protections: list[dict[str, Any]] = []
 
         if r2_results := self.analysis_results.get("radare2", {}):
@@ -1808,7 +2035,16 @@ class CrossToolOrchestrator:
         return protections
 
     def _generate_bypass_strategies(self) -> list[dict[str, Any]]:
-        """Generate bypass strategies based on findings."""
+        """Generate bypass strategies based on findings.
+
+        Creates bypass recommendations for identified protections using Frida
+        runtime patching techniques. Includes strategies from Radare2 analysis
+        and custom implementation suggestions.
+
+        Returns:
+            List of bypass strategy recommendations with implementation details.
+
+        """
         strategies: list[dict[str, Any]] = []
 
         # Get bypass suggestions from R2
@@ -1845,7 +2081,17 @@ class CrossToolOrchestrator:
         return strategies
 
     def _build_unified_call_graph(self) -> dict[str, Any]:
-        """Build unified call graph from all tools."""
+        """Build unified call graph from all tools.
+
+        Merges call graphs from Radare2 and Ghidra into a unified graph
+        structure. Deduplicates nodes based on function identity while
+        preserving tool-specific metadata.
+
+        Returns:
+            Dictionary containing nodes, edges, and metadata of unified
+                call graph.
+
+        """
         graph: dict[str, Any] = {"nodes": [], "edges": [], "metadata": {}}
 
         # Get R2 call graph
@@ -1870,7 +2116,16 @@ class CrossToolOrchestrator:
         return graph
 
     def _calculate_correlation_confidence(self) -> float:
-        """Calculate overall correlation confidence."""
+        """Calculate overall correlation confidence.
+
+        Computes confidence score based on proportion of analysis tools that
+        successfully completed. Higher score indicates more comprehensive
+        multi-tool correlated analysis.
+
+        Returns:
+            Confidence score between 0.0 and 1.0 based on tool completion.
+
+        """
         tools_complete = sum(bool(v) for v in self.analysis_complete.values())
         total_tools = len(self.analysis_complete)
 
@@ -1879,8 +2134,12 @@ class CrossToolOrchestrator:
     def export_unified_report(self, output_path: str) -> None:
         """Export unified analysis report.
 
+        Generates JSON report containing correlated analysis results from
+        all tools. Includes functions, strings, vulnerabilities, protections,
+        bypass strategies, and metadata.
+
         Args:
-            output_path: Path for output file
+            output_path: Path for output file.
 
         """
         result = self._correlate_results()
@@ -1921,7 +2180,13 @@ class CrossToolOrchestrator:
         self.logger.info("Exported unified report to %s", output_path)
 
     def cleanup(self) -> None:
-        """Clean up resources."""
+        """Clean up resources.
+
+        Stops monitoring threads, closes IPC channels, and cleans up all
+        analysis tool instances. Waits for running threads to complete with
+        timeout.
+
+        """
         # Stop monitoring
         if self.tool_monitor:
             self.tool_monitor.stop()
@@ -1948,12 +2213,15 @@ class CrossToolOrchestrator:
 def create_orchestrator(binary_path: str, main_app: object | None = None) -> CrossToolOrchestrator:
     """Create orchestrator.
 
+    Factory function to instantiate a CrossToolOrchestrator for multi-tool
+    binary analysis orchestration.
+
     Args:
-        binary_path: Path to binary
-        main_app: Optional GUI reference
+        binary_path: Path to binary file to analyze.
+        main_app: Optional GUI application reference for UI integration.
 
     Returns:
-        New CrossToolOrchestrator instance
+        New CrossToolOrchestrator instance configured for the binary.
 
     """
     return CrossToolOrchestrator(binary_path, main_app)

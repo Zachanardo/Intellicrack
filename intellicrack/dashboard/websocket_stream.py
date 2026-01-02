@@ -3,6 +3,13 @@
 This module provides WebSocket-based real-time streaming of analysis events
 from all Intellicrack components to the web dashboard for visualization and monitoring.
 
+Classes:
+    EventType: Enumeration of analysis event types.
+    EventPriority: Enumeration of event priority levels.
+    AnalysisEvent: Data structure for analysis events.
+    WebSocketEventStream: WebSocket server for event streaming.
+    EventPublisher: Helper class for publishing events from analysis components.
+
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -96,7 +103,12 @@ class WebSocketEventStream:
     """WebSocket-based real-time event streaming system."""
 
     def __init__(self, host: str = "localhost", port: int = 8765) -> None:
-        """Initialize WebSocket stream server."""
+        """Initialize WebSocket stream server.
+
+        Args:
+            host: Hostname to bind WebSocket server to.
+            port: Port number to bind WebSocket server to.
+        """
         self.host = host
         self.port = port
         self.clients: set[WebSocketServerProtocol] = set()
@@ -123,7 +135,11 @@ class WebSocketEventStream:
         self.rate_limits: dict[str, dict[str, Any]] = {}
 
     async def start(self) -> None:
-        """Start WebSocket server."""
+        """Start WebSocket server.
+
+        Initializes the WebSocket server and starts background tasks for event
+        broadcasting and statistics updates.
+        """
         self.running = True
         self.server = await websockets.serve(self.handle_client, self.host, self.port, ping_interval=20, ping_timeout=10)
         logger.info("WebSocket stream server started on ws://%s:%s", self.host, self.port)
@@ -135,7 +151,10 @@ class WebSocketEventStream:
         self._background_tasks = [broadcaster_task, stats_task]
 
     async def stop(self) -> None:
-        """Stop WebSocket server."""
+        """Stop WebSocket server and close all client connections.
+
+        Closes the WebSocket server and disconnects all connected clients.
+        """
         self.running = False
 
         # Close all client connections
@@ -148,7 +167,15 @@ class WebSocketEventStream:
             logger.info("WebSocket stream server stopped")
 
     async def handle_client(self, websocket: WebSocketServerProtocol, path: str) -> None:
-        """Handle new WebSocket client connection."""
+        """Handle new WebSocket client connection.
+
+        Manages the lifecycle of a WebSocket client connection, including
+        registration, message handling, and cleanup on disconnect.
+
+        Args:
+            websocket: WebSocket connection from client.
+            path: Connection path.
+        """
         client_id = str(uuid.uuid4())
         client_info = {
             "id": client_id,
@@ -203,7 +230,15 @@ class WebSocketEventStream:
                 del self.rate_limits[client_id]
 
     async def _send_welcome(self, websocket: WebSocketServerProtocol, client_id: str) -> None:
-        """Send welcome message to new client."""
+        """Send welcome message to new client.
+
+        Sends an initial welcome message containing server capabilities and
+        configuration details to newly connected clients.
+
+        Args:
+            websocket: WebSocket connection to send to.
+            client_id: Unique identifier for the client.
+        """
         welcome = {
             "type": "welcome",
             "client_id": client_id,
@@ -220,7 +255,16 @@ class WebSocketEventStream:
         await websocket.send(json.dumps(welcome))
 
     async def _handle_client_message(self, websocket: WebSocketServerProtocol, client_id: str, message: str) -> None:
-        """Handle message from client."""
+        """Handle message from client.
+
+        Parses client messages and routes them to appropriate handlers based on
+        command type (subscribe, unsubscribe, filter, control, statistics, history).
+
+        Args:
+            websocket: WebSocket connection from client.
+            client_id: Unique identifier for the client.
+            message: JSON message from client.
+        """
         try:
             data = json.loads(message)
             command = data.get("command")
@@ -246,7 +290,16 @@ class WebSocketEventStream:
             await self._send_error(websocket, str(e))
 
     async def _handle_subscribe(self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]) -> None:
-        """Handle event subscription request."""
+        """Handle event subscription request.
+
+        Registers the client to receive events of specified types and sends a
+        confirmation message back to the client.
+
+        Args:
+            websocket: WebSocket connection from client.
+            client_id: Unique identifier for the client.
+            data: Message data containing event_types.
+        """
         event_types = data.get("event_types", [])
 
         if client_id not in self.filters:
@@ -263,7 +316,16 @@ class WebSocketEventStream:
         await websocket.send(json.dumps({"type": "subscription_confirmed", "subscribed_to": event_types}))
 
     async def _handle_unsubscribe(self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]) -> None:
-        """Handle unsubscribe request."""
+        """Handle unsubscribe request.
+
+        Removes the client from event subscriptions for specified types and sends
+        a confirmation message back to the client.
+
+        Args:
+            websocket: WebSocket connection from client.
+            client_id: Unique identifier for the client.
+            data: Message data containing event_types.
+        """
         event_types = data.get("event_types", [])
 
         if client_id in self.filters:
@@ -278,7 +340,16 @@ class WebSocketEventStream:
         await websocket.send(json.dumps({"type": "unsubscription_confirmed", "unsubscribed_from": event_types}))
 
     async def _handle_filter(self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]) -> None:
-        """Handle filter configuration."""
+        """Handle filter configuration.
+
+        Applies event filtering rules to the client including priority, source,
+        and tag filters, then sends a confirmation message.
+
+        Args:
+            websocket: WebSocket connection from client.
+            client_id: Unique identifier for the client.
+            data: Filter configuration data.
+        """
         if client_id not in self.filters:
             self.filters[client_id] = {}
 
@@ -305,7 +376,16 @@ class WebSocketEventStream:
         )
 
     async def _handle_control(self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]) -> None:
-        """Handle control commands from client."""
+        """Handle control commands from client.
+
+        Executes control actions such as pause, resume, or stop on analysis
+        components and sends the result back to the client.
+
+        Args:
+            websocket: WebSocket connection from client.
+            client_id: Unique identifier for the client.
+            data: Control command data.
+        """
         action = data.get("action")
         target = data.get("target")
         params = data.get("params", {})
@@ -329,7 +409,16 @@ class WebSocketEventStream:
         )
 
     async def _execute_control_action(self, action: str, target: str, params: dict[str, Any]) -> dict[str, Any]:
-        """Execute control action on analysis components."""
+        """Execute control action on analysis components.
+
+        Args:
+            action: Control action to execute.
+            target: Target component for the action.
+            params: Action parameters.
+
+        Returns:
+            dict[str, Any]: Result dictionary with success status and data.
+        """
         result: dict[str, Any] = {"success": False, "data": None}
 
         if action == "configure":
@@ -404,7 +493,14 @@ class WebSocketEventStream:
         return result
 
     async def _send_statistics(self, websocket: WebSocketServerProtocol) -> None:
-        """Send server statistics to client."""
+        """Send server statistics to client.
+
+        Computes current server statistics including uptime, client count, and
+        event counts, then sends them to the requesting client.
+
+        Args:
+            websocket: WebSocket connection to send statistics to.
+        """
         uptime = time.time() - self.stats["uptime_start"]
 
         stats = {
@@ -422,7 +518,15 @@ class WebSocketEventStream:
         await websocket.send(json.dumps(stats))
 
     async def _send_history(self, websocket: WebSocketServerProtocol, count: int) -> None:
-        """Send event history to client."""
+        """Send event history to client.
+
+        Retrieves the most recent events from the event queue, converts them to
+        JSON format, and sends them to the requesting client.
+
+        Args:
+            websocket: WebSocket connection to send history to.
+            count: Number of recent events to send.
+        """
         # Get recent events from queue
         events = list(self.event_queue)[-count:]
 
@@ -437,11 +541,25 @@ class WebSocketEventStream:
         await websocket.send(json.dumps({"type": "history", "count": len(history), "events": history}))
 
     async def _send_error(self, websocket: WebSocketServerProtocol, error: str) -> None:
-        """Send error message to client."""
+        """Send error message to client.
+
+        Formats and sends an error message to the client with timestamp.
+
+        Args:
+            websocket: WebSocket connection to send error to.
+            error: Error message to send.
+        """
         await websocket.send(json.dumps({"type": "error", "message": error, "timestamp": time.time()}))
 
     def _format_uptime(self, seconds: float) -> str:
-        """Format uptime in human-readable format."""
+        """Format uptime in human-readable format.
+
+        Args:
+            seconds: Uptime in seconds.
+
+        Returns:
+            str: Human-readable uptime string.
+        """
         days = int(seconds // 86400)
         hours = int((seconds % 86400) // 3600)
         minutes = int((seconds % 3600) // 60)
@@ -459,7 +577,11 @@ class WebSocketEventStream:
         return " ".join(parts)
 
     async def _event_broadcaster(self) -> None:
-        """Broadcast events to connected clients."""
+        """Broadcast events to connected clients continuously.
+
+        Runs as a background task that continuously processes events from the
+        event queue and broadcasts them to all connected clients.
+        """
         while self.running:
             if self.event_queue and self.clients:
                 batch = [self.event_queue.popleft() for _ in range(min(10, len(self.event_queue))) if self.event_queue]
@@ -470,7 +592,14 @@ class WebSocketEventStream:
             await asyncio.sleep(0.01)  # Small delay to prevent CPU spinning
 
     async def _broadcast_event(self, event: AnalysisEvent) -> None:
-        """Broadcast event to all connected clients."""
+        """Broadcast event to all connected clients.
+
+        Sends an event to all connected clients that are not rate-limited and
+        have subscribed to this event type. Removes disconnected clients.
+
+        Args:
+            event: Analysis event to broadcast.
+        """
         # Convert event to JSON
         event_dict = asdict(event)
         event_dict["type"] = event.type.value
@@ -496,12 +625,30 @@ class WebSocketEventStream:
             self.clients.discard(client)
 
     def _get_client_id(self, websocket: WebSocketServerProtocol) -> str:
-        """Get client ID from websocket connection."""
+        """Get client ID from websocket connection.
+
+        Args:
+            websocket: WebSocket connection.
+
+        Returns:
+            Client identifier derived from the websocket object.
+        """
         # In production, maintain proper client ID mapping
         return str(id(websocket))
 
     def _should_send_to_client(self, client_id: str, event: AnalysisEvent) -> bool:
-        """Check if event should be sent to specific client."""
+        """Check if event should be sent to specific client.
+
+        Evaluates whether an event passes all active filters for a client
+        including subscription, priority, source, and tag filters.
+
+        Args:
+            client_id: Client identifier.
+            event: Analysis event to check.
+
+        Returns:
+            True if event should be sent to client, False otherwise.
+        """
         if client_id not in self.filters:
             return True  # No filters, send everything
 
@@ -523,7 +670,17 @@ class WebSocketEventStream:
         return "tags" not in filters or any(tag in event.tags for tag in filters["tags"])
 
     def _is_rate_limited(self, client_id: str) -> bool:
-        """Check if client is rate limited."""
+        """Check if client is rate limited.
+
+        Tracks message count per client within a one-second time window and
+        returns True if the client exceeds the 100 messages per second limit.
+
+        Args:
+            client_id: Client identifier.
+
+        Returns:
+            True if client is rate limited, False otherwise.
+        """
         if client_id not in self.rate_limits:
             self.rate_limits[client_id] = {"messages": 0, "reset_time": time.time() + 1.0}
 
@@ -542,7 +699,11 @@ class WebSocketEventStream:
         return False
 
     async def _statistics_updater(self) -> None:
-        """Periodically broadcast statistics."""
+        """Periodically broadcast statistics to event stream.
+
+        Runs as a background task that publishes server statistics to the event
+        stream every 30 seconds for monitoring and dashboarding.
+        """
         while self.running:
             await asyncio.sleep(30)  # Update every 30 seconds
 
@@ -567,7 +728,14 @@ class WebSocketEventStream:
             self.event_queue.append(stats_event)
 
     def publish_event(self, event: AnalysisEvent) -> None:
-        """Publish analysis event to stream."""
+        """Publish analysis event to stream.
+
+        Adds an event to the broadcast queue and triggers any registered event
+        handlers for the event type.
+
+        Args:
+            event: Analysis event to publish.
+        """
         self.event_queue.append(event)
         self.stats["events_received"] += 1
 
@@ -580,13 +748,29 @@ class WebSocketEventStream:
                     logger.exception("Event handler error: %s", e)
 
     def register_event_handler(self, event_type: EventType, handler: Callable[[AnalysisEvent], None]) -> None:
-        """Register handler for specific event type."""
+        """Register handler for specific event type.
+
+        Registers a callback function to be invoked synchronously when events
+        of the specified type are published to the stream.
+
+        Args:
+            event_type: Event type to handle.
+            handler: Callback function to invoke when events of this type are published.
+        """
         if event_type not in self.event_handlers:
             self.event_handlers[event_type] = []
         self.event_handlers[event_type].append(handler)
 
     def create_session(self, session_id: str, metadata: dict[str, Any]) -> None:
-        """Create new analysis session."""
+        """Create new analysis session.
+
+        Initializes a new session with metadata and publishes an analysis start
+        event to the event stream.
+
+        Args:
+            session_id: Unique session identifier.
+            metadata: Session metadata and configuration.
+        """
         self.sessions[session_id] = {
             "id": session_id,
             "created_at": time.time(),
@@ -610,7 +794,14 @@ class WebSocketEventStream:
         )
 
     def end_session(self, session_id: str) -> None:
-        """End analysis session."""
+        """End analysis session.
+
+        Terminates a session, computes session duration, publishes an analysis
+        complete event, and removes the session from the registry.
+
+        Args:
+            session_id: Session identifier to end.
+        """
         if session_id in self.sessions:
             session = self.sessions[session_id]
             duration = time.time() - session["created_at"]
@@ -641,7 +832,12 @@ class EventPublisher:
     """Helper class for publishing events from analysis components."""
 
     def __init__(self, stream: WebSocketEventStream, source: str) -> None:
-        """Initialize event publisher."""
+        """Initialize event publisher.
+
+        Args:
+            stream: WebSocket event stream instance.
+            source: Source identifier for events published by this publisher.
+        """
         self.stream = stream
         self.source = source
 
@@ -654,7 +850,19 @@ class EventPublisher:
         tags: list[str] | None = None,
         session_id: str = "",
     ) -> None:
-        """Publish event to stream."""
+        """Publish event to stream.
+
+        Creates an AnalysisEvent with provided parameters and publishes it to
+        the WebSocket event stream for broadcast to all subscribed clients.
+
+        Args:
+            event_type: Type of event to publish.
+            data: Event payload data.
+            target: Target component identifier for the event.
+            priority: Event priority level.
+            tags: Categorical tags for the event.
+            session_id: Session identifier associated with the event.
+        """
         event = AnalysisEvent(
             id=str(uuid.uuid4()),
             type=event_type,
@@ -669,7 +877,16 @@ class EventPublisher:
         self.stream.publish_event(event)
 
     def function_discovered(self, address: int, name: str, size: int) -> None:
-        """Publish function discovery event."""
+        """Publish function discovery event.
+
+        Creates and publishes an event when a new function is discovered during
+        binary analysis.
+
+        Args:
+            address: Function address in binary.
+            name: Function name or symbol.
+            size: Function size in bytes.
+        """
         self.publish(
             EventType.FUNCTION_DISCOVERED,
             {"address": f"0x{address:x}", "name": name, "size": size},
@@ -677,7 +894,15 @@ class EventPublisher:
         )
 
     def string_found(self, address: int, value: str) -> None:
-        """Publish string discovery event."""
+        """Publish string discovery event.
+
+        Creates and publishes an event when a relevant string is discovered
+        during binary analysis.
+
+        Args:
+            address: String address in binary.
+            value: String value found.
+        """
         self.publish(
             EventType.STRING_FOUND,
             {"address": f"0x{address:x}", "value": value[:100]},
@@ -685,7 +910,15 @@ class EventPublisher:
         )
 
     def crypto_detected(self, algorithm: str, address: int) -> None:
-        """Publish crypto detection event."""
+        """Publish crypto detection event.
+
+        Creates and publishes an event when a cryptographic algorithm is
+        detected during binary analysis.
+
+        Args:
+            algorithm: Cryptographic algorithm detected.
+            address: Address where algorithm is implemented.
+        """
         self.publish(
             EventType.CRYPTO_DETECTED,
             {"algorithm": algorithm, "address": f"0x{address:x}"},
@@ -694,7 +927,15 @@ class EventPublisher:
         )
 
     def license_check_found(self, check_type: str, address: int) -> None:
-        """Publish license check discovery event."""
+        """Publish license check discovery event.
+
+        Creates and publishes an event when a license check mechanism is
+        discovered during binary analysis.
+
+        Args:
+            check_type: Type of license check mechanism.
+            address: Address where license check is implemented.
+        """
         self.publish(
             EventType.LICENSE_CHECK_FOUND,
             {"type": check_type, "address": f"0x{address:x}"},
@@ -703,7 +944,15 @@ class EventPublisher:
         )
 
     def patch_applied(self, address: int, description: str) -> None:
-        """Publish patch application event."""
+        """Publish patch application event.
+
+        Creates and publishes an event when a binary patch is successfully
+        applied to remove or bypass licensing checks.
+
+        Args:
+            address: Address where patch was applied.
+            description: Description of the patch applied.
+        """
         self.publish(
             EventType.PATCH_APPLIED,
             {"address": f"0x{address:x}", "description": description},
@@ -712,7 +961,15 @@ class EventPublisher:
         )
 
     def progress(self, percentage: float, message: str) -> None:
-        """Publish progress update."""
+        """Publish progress update.
+
+        Creates and publishes a progress event indicating the current status and
+        completion percentage of an ongoing operation.
+
+        Args:
+            percentage: Completion percentage.
+            message: Progress message.
+        """
         self.publish(
             EventType.PROGRESS,
             {"percentage": percentage, "message": message},

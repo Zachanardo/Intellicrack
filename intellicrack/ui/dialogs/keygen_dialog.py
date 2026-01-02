@@ -262,7 +262,11 @@ class KeygenDialog(BaseDialog):
             self.auto_analyze_binary()
 
     def setup_ui(self) -> None:
-        """Set up the user interface."""
+        """Set up the user interface.
+
+        Constructs the dialog layout with header, tabs, and footer components.
+
+        """
         layout = QVBoxLayout(self)
 
         # Title and binary selection

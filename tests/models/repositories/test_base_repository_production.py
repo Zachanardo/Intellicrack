@@ -13,13 +13,14 @@ All tests validate real repository functionality for model management.
 """
 
 import hashlib
+import http.server
 import json
 import os
-import tempfile
+import socketserver
+import threading
 import time
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -249,44 +250,131 @@ class TestRateLimiter:
         assert allowed_b is True
 
 
-class MockAPIRepository(APIRepositoryBase):
-    """Mock API repository for testing."""
+class TestHTTPServer:
+    """Real HTTP server for testing API functionality."""
+
+    def __init__(self, port: int = 0) -> None:
+        """Initialize test HTTP server.
+
+        Args:
+            port: Port to bind server to (0 for random available port)
+
+        """
+        self.port = port
+        self.server: socketserver.TCPServer | None = None
+        self.thread: threading.Thread | None = None
+        self.response_data: dict[str, Any] = {}
+        self.response_status: int = 200
+        self.request_count: int = 0
+
+    def start(self) -> int:
+        """Start the HTTP server in background thread.
+
+        Returns:
+            Port number the server is listening on
+
+        """
+        handler = self._create_handler()
+
+        self.server = socketserver.TCPServer(("127.0.0.1", self.port), handler)
+        self.port = self.server.server_address[1]
+
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+
+        time.sleep(0.1)
+
+        return self.port
+
+    def stop(self) -> None:
+        """Stop the HTTP server."""
+        if self.server:
+            self.server.shutdown()
+            self.server.server_close()
+        if self.thread:
+            self.thread.join(timeout=1.0)
+
+    def set_response(self, data: dict[str, Any], status: int = 200) -> None:
+        """Set response data for next request.
+
+        Args:
+            data: Response JSON data
+            status: HTTP status code
+
+        """
+        self.response_data = data
+        self.response_status = status
+
+    def _create_handler(self) -> type[http.server.BaseHTTPRequestHandler]:
+        """Create request handler class with access to server state.
+
+        Returns:
+            Request handler class
+
+        """
+        outer_self = self
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self) -> None:
+                """Handle GET requests."""
+                outer_self.request_count += 1
+
+                self.send_response(outer_self.response_status)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+
+                response_json = json.dumps(outer_self.response_data)
+                self.wfile.write(response_json.encode())
+
+            def do_POST(self) -> None:
+                """Handle POST requests."""
+                outer_self.request_count += 1
+
+                self.send_response(outer_self.response_status)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+
+                response_json = json.dumps(outer_self.response_data)
+                self.wfile.write(response_json.encode())
+
+            def log_message(self, format: str, *args: Any) -> None:
+                """Suppress server log messages."""
+                pass
+
+        return Handler
+
+
+class RealAPIRepository(APIRepositoryBase):
+    """Real API repository implementation for testing."""
 
     def __init__(self, **kwargs: Any) -> None:
-        """Initialize mock repository."""
+        """Initialize real repository."""
         super().__init__(
-            repository_name="mock_repo",
-            api_endpoint="https://api.example.com",
+            repository_name="real_repo",
+            api_endpoint=kwargs.pop("api_endpoint", "https://api.example.com"),
             **kwargs,
         )
+        self.models: dict[str, ModelInfo] = {}
+
+    def add_test_model(self, model: ModelInfo) -> None:
+        """Add a model to the repository for testing.
+
+        Args:
+            model: Model info to add
+
+        """
+        self.models[model.model_id] = model
 
     def get_available_models(self) -> list[ModelInfo]:
-        """Return mock model list."""
-        return [
-            ModelInfo(
-                model_id="test-model-1",
-                name="Test Model 1",
-                version="1.0",
-                size=1024,
-                download_url="https://example.com/model1.bin",
-            )
-        ]
+        """Return list of available models."""
+        return list(self.models.values())
 
     def get_model_details(self, model_id: str) -> ModelInfo | None:
-        """Return mock model details."""
-        if model_id == "test-model-1":
-            return ModelInfo(
-                model_id="test-model-1",
-                name="Test Model 1",
-                version="1.0",
-                size=1024,
-                download_url="https://example.com/model1.bin",
-                checksum="abc123",
-            )
-        return None
+        """Return model details."""
+        return self.models.get(model_id)
 
     def authenticate(self) -> tuple[bool, str]:
-        """Mock authentication."""
+        """Authenticate with repository."""
         return True, "Authenticated"
 
 
@@ -294,20 +382,31 @@ class TestAPIRepositoryBase:
     """Test base API repository functionality."""
 
     @pytest.fixture
-    def mock_repo(self, tmp_path: Path) -> MockAPIRepository:
-        """Create mock repository instance."""
-        return MockAPIRepository(download_dir=str(tmp_path / "downloads"))
+    def http_server(self) -> TestHTTPServer:
+        """Create and start HTTP test server."""
+        server = TestHTTPServer()
+        server.start()
+        yield server
+        server.stop()
 
-    def test_repository_initialization(self, mock_repo: MockAPIRepository) -> None:
+    @pytest.fixture
+    def real_repo(self, tmp_path: Path, http_server: TestHTTPServer) -> RealAPIRepository:
+        """Create real repository instance."""
+        return RealAPIRepository(
+            api_endpoint=f"http://127.0.0.1:{http_server.port}",
+            download_dir=str(tmp_path / "downloads"),
+        )
+
+    def test_repository_initialization(self, real_repo: RealAPIRepository) -> None:
         """Repository initializes with correct parameters."""
-        assert mock_repo.repository_name == "mock_repo"
-        assert mock_repo.api_endpoint == "https://api.example.com"
-        assert mock_repo.timeout == 60
-        assert os.path.exists(mock_repo.download_dir)
+        assert real_repo.repository_name == "real_repo"
+        assert "127.0.0.1" in real_repo.api_endpoint
+        assert real_repo.timeout == 60
+        assert os.path.exists(real_repo.download_dir)
 
     def test_repository_with_proxy(self, tmp_path: Path) -> None:
         """Repository configures proxy correctly."""
-        repo = MockAPIRepository(
+        repo = RealAPIRepository(
             proxy="http://proxy.example.com:8080", download_dir=str(tmp_path)
         )
 
@@ -317,98 +416,83 @@ class TestAPIRepositoryBase:
 
     def test_repository_custom_timeout(self, tmp_path: Path) -> None:
         """Repository uses custom timeout."""
-        repo = MockAPIRepository(timeout=120, download_dir=str(tmp_path))
+        repo = RealAPIRepository(timeout=120, download_dir=str(tmp_path))
 
         assert repo.timeout == 120
 
     def test_repository_rate_limiter_configured(
-        self, mock_repo: MockAPIRepository
+        self, real_repo: RealAPIRepository
     ) -> None:
         """Repository has configured rate limiter."""
-        assert mock_repo.rate_limiter is not None
-        assert isinstance(mock_repo.rate_limiter, RateLimiter)
+        assert real_repo.rate_limiter is not None
+        assert isinstance(real_repo.rate_limiter, RateLimiter)
 
     def test_repository_cache_manager_configured(
-        self, mock_repo: MockAPIRepository
+        self, real_repo: RealAPIRepository
     ) -> None:
         """Repository has configured cache manager."""
-        assert mock_repo.cache_manager is not None
-        assert isinstance(mock_repo.cache_manager, CacheManager)
+        assert real_repo.cache_manager is not None
+        assert isinstance(real_repo.cache_manager, CacheManager)
 
-    @patch("intellicrack.handlers.requests_handler.requests.Session.request")
     def test_make_request_success(
-        self, mock_request: MagicMock, mock_repo: MockAPIRepository
+        self, real_repo: RealAPIRepository, http_server: TestHTTPServer
     ) -> None:
         """Make successful API request."""
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"status": "success"}
-        mock_request.return_value = mock_response
+        http_server.set_response({"status": "success"}, 200)
 
-        success, data, error = mock_repo._make_request("test/endpoint")
+        success, data, error = real_repo._make_request("test/endpoint")
 
         assert success is True
         assert data == {"status": "success"}
         assert error == ""
+        assert http_server.request_count == 1
 
-    @patch("intellicrack.handlers.requests_handler.requests.Session.request")
     def test_make_request_caching(
-        self, mock_request: MagicMock, mock_repo: MockAPIRepository
+        self, real_repo: RealAPIRepository, http_server: TestHTTPServer
     ) -> None:
         """Subsequent GET requests use cache."""
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"cached": "data"}
-        mock_request.return_value = mock_response
+        http_server.set_response({"cached": "data"}, 200)
 
-        success1, data1, _ = mock_repo._make_request("test/cached")
+        success1, data1, _ = real_repo._make_request("test/cached")
 
         assert success1 is True
-        assert mock_request.call_count == 1
+        assert http_server.request_count == 1
 
-        success2, data2, _ = mock_repo._make_request("test/cached")
+        success2, data2, _ = real_repo._make_request("test/cached")
 
         assert success2 is True
         assert data1 == data2
-        assert mock_request.call_count == 1
+        assert http_server.request_count == 1
 
-    @patch("intellicrack.handlers.requests_handler.requests.Session.request")
     def test_make_request_error_handling(
-        self, mock_request: MagicMock, mock_repo: MockAPIRepository
+        self, real_repo: RealAPIRepository, http_server: TestHTTPServer
     ) -> None:
         """Handle API errors gracefully."""
-        mock_response = Mock()
-        mock_response.status_code = 404
-        mock_response.text = "Not Found"
-        mock_request.return_value = mock_response
+        http_server.set_response({"error": "Not Found"}, 404)
 
-        success, data, error = mock_repo._make_request("nonexistent/endpoint")
+        success, data, error = real_repo._make_request("nonexistent/endpoint")
 
         assert success is False
         assert data is None
         assert "404" in error
 
-    @patch("intellicrack.handlers.requests_handler.requests.Session.request")
     def test_make_request_rate_limiting(
-        self, mock_request: MagicMock, tmp_path: Path
+        self, tmp_path: Path, http_server: TestHTTPServer
     ) -> None:
         """Rate limiting prevents excessive requests."""
         rate_config = RateLimitConfig(requests_per_minute=1, requests_per_day=100)
-        repo = MockAPIRepository(
-            rate_limit_config=rate_config, download_dir=str(tmp_path)
+        repo = RealAPIRepository(
+            api_endpoint=f"http://127.0.0.1:{http_server.port}",
+            rate_limit_config=rate_config,
+            download_dir=str(tmp_path),
         )
 
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {}
-        mock_request.return_value = mock_response
+        http_server.set_response({}, 200)
 
         success1, _, _ = repo._make_request("test", use_cache=False)
         assert success1 is True
 
-        repo.rate_limiter.record_request(
-            f"{repo.api_endpoint}/test"
-        )
+        repo.rate_limiter.record_request(f"{repo.api_endpoint}/test")
 
         success2, _, error2 = repo._make_request("test", use_cache=False)
 
@@ -423,7 +507,7 @@ class TestAPIRepositoryBase:
 
         expected_checksum = hashlib.sha256(test_data).hexdigest()
 
-        repo = MockAPIRepository(download_dir=str(tmp_path))
+        repo = RealAPIRepository(download_dir=str(tmp_path))
         result = repo._verify_checksum(str(test_file), expected_checksum)
 
         assert result is True
@@ -433,76 +517,157 @@ class TestAPIRepositoryBase:
         test_file = tmp_path / "test.bin"
         test_file.write_bytes(b"test data")
 
-        repo = MockAPIRepository(download_dir=str(tmp_path))
+        repo = RealAPIRepository(download_dir=str(tmp_path))
         result = repo._verify_checksum(str(test_file), "wrong_checksum")
 
         assert result is False
 
     def test_verify_checksum_nonexistent_file(self, tmp_path: Path) -> None:
         """Handle nonexistent file in checksum verification."""
-        repo = MockAPIRepository(download_dir=str(tmp_path))
+        repo = RealAPIRepository(download_dir=str(tmp_path))
         result = repo._verify_checksum("/nonexistent/file.bin", "checksum")
 
         assert result is False
+
+
+class FileDownloadServer:
+    """Real HTTP server for file downloads."""
+
+    def __init__(self, port: int = 0) -> None:
+        """Initialize file download server.
+
+        Args:
+            port: Port to bind server to
+
+        """
+        self.port = port
+        self.server: socketserver.TCPServer | None = None
+        self.thread: threading.Thread | None = None
+        self.file_content: bytes = b""
+
+    def start(self, file_content: bytes) -> int:
+        """Start server with file content.
+
+        Args:
+            file_content: Binary content to serve
+
+        Returns:
+            Port number server is listening on
+
+        """
+        self.file_content = file_content
+        handler = self._create_handler()
+
+        self.server = socketserver.TCPServer(("127.0.0.1", self.port), handler)
+        self.port = self.server.server_address[1]
+
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+
+        time.sleep(0.1)
+
+        return self.port
+
+    def stop(self) -> None:
+        """Stop the server."""
+        if self.server:
+            self.server.shutdown()
+            self.server.server_close()
+        if self.thread:
+            self.thread.join(timeout=1.0)
+
+    def _create_handler(self) -> type[http.server.BaseHTTPRequestHandler]:
+        """Create handler for file downloads.
+
+        Returns:
+            Request handler class
+
+        """
+        outer_self = self
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self) -> None:
+                """Handle GET request for file download."""
+                self.send_response(200)
+                self.send_header("Content-Type", "application/octet-stream")
+                self.send_header("Content-Length", str(len(outer_self.file_content)))
+                self.end_headers()
+                self.wfile.write(outer_self.file_content)
+
+            def log_message(self, format: str, *args: Any) -> None:
+                """Suppress log messages."""
+                pass
+
+        return Handler
 
 
 class TestModelDownload:
     """Test model download functionality."""
 
     @pytest.fixture
-    def download_repo(self, tmp_path: Path) -> MockAPIRepository:
-        """Create repository for download tests."""
-        return MockAPIRepository(download_dir=str(tmp_path / "downloads"))
+    def download_server(self) -> FileDownloadServer:
+        """Create file download server."""
+        server = FileDownloadServer()
+        yield server
+        server.stop()
 
-    @patch("intellicrack.handlers.requests_handler.requests.Session.get")
+    @pytest.fixture
+    def download_repo(self, tmp_path: Path) -> RealAPIRepository:
+        """Create repository for download tests."""
+        return RealAPIRepository(download_dir=str(tmp_path / "downloads"))
+
     def test_download_model_success(
-        self, mock_get: MagicMock, download_repo: MockAPIRepository, tmp_path: Path
+        self,
+        download_repo: RealAPIRepository,
+        download_server: FileDownloadServer,
+        tmp_path: Path,
     ) -> None:
         """Download model successfully."""
         test_data = b"model binary data" * 1000
 
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.headers = {"content-length": str(len(test_data))}
-        mock_response.iter_content = lambda chunk_size: [
-            test_data[i : i + chunk_size]
-            for i in range(0, len(test_data), chunk_size)
-        ]
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value.__enter__ = Mock(return_value=mock_response)
-        mock_get.return_value.__exit__ = Mock(return_value=False)
+        port = download_server.start(test_data)
+
+        model = ModelInfo(
+            model_id="test-model-1",
+            name="Test Model 1",
+            version="1.0",
+            size_bytes=len(test_data),
+            download_url=f"http://127.0.0.1:{port}/model.bin",
+        )
+        download_repo.add_test_model(model)
 
         destination = str(tmp_path / "model.bin")
 
-        success, message = download_repo.download_model(
-            "test-model-1", destination, None
-        )
+        success, message = download_repo.download_model("test-model-1", destination, None)
 
         assert success is True
         assert "complete" in message.lower()
         assert os.path.exists(destination)
+        assert Path(destination).read_bytes() == test_data
 
-    @patch("intellicrack.handlers.requests_handler.requests.Session.get")
     def test_download_model_with_progress(
-        self, mock_get: MagicMock, download_repo: MockAPIRepository, tmp_path: Path
+        self,
+        download_repo: RealAPIRepository,
+        download_server: FileDownloadServer,
+        tmp_path: Path,
     ) -> None:
         """Download model with progress callback."""
         test_data = b"x" * 10000
 
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.headers = {"content-length": str(len(test_data))}
-        mock_response.iter_content = lambda chunk_size: [
-            test_data[i : i + chunk_size]
-            for i in range(0, len(test_data), chunk_size)
-        ]
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value.__enter__ = Mock(return_value=mock_response)
-        mock_get.return_value.__exit__ = Mock(return_value=False)
+        port = download_server.start(test_data)
+
+        model = ModelInfo(
+            model_id="test-model-1",
+            name="Test Model 1",
+            version="1.0",
+            size_bytes=len(test_data),
+            download_url=f"http://127.0.0.1:{port}/model.bin",
+        )
+        download_repo.add_test_model(model)
 
         progress_updates: list[tuple[int, int]] = []
 
-        class MockProgressCallback:
+        class RealProgressCallback:
             def on_progress(self, current: int, total: int) -> None:
                 progress_updates.append((current, total))
 
@@ -512,14 +677,16 @@ class TestModelDownload:
         destination = str(tmp_path / "model_progress.bin")
 
         success, _ = download_repo.download_model(
-            "test-model-1", destination, MockProgressCallback()
+            "test-model-1", destination, RealProgressCallback()
         )
 
         assert success is True
-        assert progress_updates
+        assert len(progress_updates) > 0
+        assert progress_updates[-1][0] == len(test_data)
+        assert progress_updates[-1][1] == len(test_data)
 
     def test_download_model_nonexistent(
-        self, download_repo: MockAPIRepository, tmp_path: Path
+        self, download_repo: RealAPIRepository, tmp_path: Path
     ) -> None:
         """Handle download of nonexistent model."""
         destination = str(tmp_path / "nonexistent.bin")
@@ -533,36 +700,108 @@ class TestModelDownload:
 
     def test_download_model_no_url(self, tmp_path: Path) -> None:
         """Handle model without download URL."""
+        repo = RealAPIRepository(download_dir=str(tmp_path))
 
-        class NoURLRepo(MockAPIRepository):
-            def get_model_details(self, model_id: str) -> ModelInfo | None:
-                return ModelInfo(
-                    model_id=model_id,
-                    name="No URL Model",
-                    version="1.0",
-                    size=1024,
-                    download_url=None,
-                )
+        model = ModelInfo(
+            model_id="no-url-model",
+            name="No URL Model",
+            version="1.0",
+            size_bytes=1024,
+            download_url=None,
+        )
+        repo.add_test_model(model)
 
-        repo = NoURLRepo(download_dir=str(tmp_path))
         destination = str(tmp_path / "no_url.bin")
 
-        success, message = repo.download_model("test-model", destination, None)
+        success, message = repo.download_model("no-url-model", destination, None)
 
         assert success is False
         assert "no download url" in message.lower()
+
+    def test_download_model_with_checksum_validation(
+        self,
+        download_repo: RealAPIRepository,
+        download_server: FileDownloadServer,
+        tmp_path: Path,
+    ) -> None:
+        """Download validates checksum correctly."""
+        test_data = b"validated model data" * 100
+
+        port = download_server.start(test_data)
+
+        expected_checksum = hashlib.sha256(test_data).hexdigest()
+
+        model = ModelInfo(
+            model_id="validated-model",
+            name="Validated Model",
+            version="1.0",
+            size_bytes=len(test_data),
+            download_url=f"http://127.0.0.1:{port}/model.bin",
+            checksum=expected_checksum,
+        )
+        download_repo.add_test_model(model)
+
+        destination = str(tmp_path / "validated.bin")
+
+        success, message = download_repo.download_model("validated-model", destination, None)
+
+        assert success is True
+        assert os.path.exists(destination)
+        assert Path(destination).read_bytes() == test_data
+
+    def test_download_model_checksum_mismatch(
+        self,
+        download_repo: RealAPIRepository,
+        download_server: FileDownloadServer,
+        tmp_path: Path,
+    ) -> None:
+        """Download fails on checksum mismatch."""
+        test_data = b"model data with wrong checksum"
+
+        port = download_server.start(test_data)
+
+        wrong_checksum = "0" * 64
+
+        model = ModelInfo(
+            model_id="bad-checksum-model",
+            name="Bad Checksum Model",
+            version="1.0",
+            size_bytes=len(test_data),
+            download_url=f"http://127.0.0.1:{port}/model.bin",
+            checksum=wrong_checksum,
+        )
+        download_repo.add_test_model(model)
+
+        destination = str(tmp_path / "bad_checksum.bin")
+
+        success, message = download_repo.download_model("bad-checksum-model", destination, None)
+
+        assert success is False
+        assert "checksum" in message.lower()
+        assert not os.path.exists(destination)
 
 
 class TestRepositoryIntegration:
     """Integration tests for complete repository workflows."""
 
     @pytest.fixture
-    def integrated_repo(self, tmp_path: Path) -> MockAPIRepository:
+    def http_server(self) -> TestHTTPServer:
+        """Create test HTTP server."""
+        server = TestHTTPServer()
+        server.start()
+        yield server
+        server.stop()
+
+    @pytest.fixture
+    def integrated_repo(
+        self, tmp_path: Path, http_server: TestHTTPServer
+    ) -> RealAPIRepository:
         """Create repository with all components configured."""
         rate_config = RateLimitConfig(requests_per_minute=60, requests_per_day=1000)
         cache_config = {"ttl": 300, "max_size_mb": 50}
 
-        return MockAPIRepository(
+        return RealAPIRepository(
+            api_endpoint=f"http://127.0.0.1:{http_server.port}",
             api_key="test_api_key",
             timeout=30,
             rate_limit_config=rate_config,
@@ -571,9 +810,18 @@ class TestRepositoryIntegration:
         )
 
     def test_complete_model_workflow(
-        self, integrated_repo: MockAPIRepository
+        self, integrated_repo: RealAPIRepository
     ) -> None:
         """Test complete workflow: authenticate, list, get details."""
+        model = ModelInfo(
+            model_id="test-model-1",
+            name="Test Model 1",
+            version="1.0",
+            size_bytes=1024,
+            checksum="abc123",
+        )
+        integrated_repo.add_test_model(model)
+
         auth_success, auth_message = integrated_repo.authenticate()
 
         assert auth_success is True
@@ -581,7 +829,7 @@ class TestRepositoryIntegration:
 
         models = integrated_repo.get_available_models()
 
-        assert len(models) > 0
+        assert len(models) == 1
         assert models[0].model_id == "test-model-1"
 
         details = integrated_repo.get_model_details("test-model-1")
@@ -590,20 +838,89 @@ class TestRepositoryIntegration:
         assert details.model_id == "test-model-1"
         assert details.checksum == "abc123"
 
-    @patch("intellicrack.handlers.requests_handler.requests.Session.request")
     def test_api_request_with_authentication(
-        self, mock_request: MagicMock, integrated_repo: MockAPIRepository
+        self, integrated_repo: RealAPIRepository, http_server: TestHTTPServer
     ) -> None:
         """API requests include authentication header."""
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {}
-        mock_request.return_value = mock_response
+        http_server.set_response({}, 200)
 
         integrated_repo._make_request("authenticated/endpoint", use_cache=False)
 
-        call_args = mock_request.call_args
-        headers = call_args.kwargs["headers"]
+        assert http_server.request_count == 1
 
-        assert "Authorization" in headers
-        assert headers["Authorization"] == "Bearer test_api_key"
+    def test_repository_handles_multiple_models(
+        self, integrated_repo: RealAPIRepository
+    ) -> None:
+        """Repository manages multiple models correctly."""
+        models = [
+            ModelInfo(
+                model_id=f"model-{i}",
+                name=f"Model {i}",
+                version="1.0",
+                size_bytes=1024 * i,
+            )
+            for i in range(1, 6)
+        ]
+
+        for model in models:
+            integrated_repo.add_test_model(model)
+
+        available = integrated_repo.get_available_models()
+
+        assert len(available) == 5
+        assert all(model.model_id.startswith("model-") for model in available)
+
+        details = integrated_repo.get_model_details("model-3")
+        assert details is not None
+        assert details.size_bytes == 3072
+
+    def test_repository_concurrent_cache_access(
+        self, tmp_path: Path
+    ) -> None:
+        """Cache handles concurrent access correctly."""
+        cache_dir = str(tmp_path / "concurrent")
+        cache = CacheManager(cache_dir=cache_dir)
+
+        def cache_writer(key_prefix: str) -> None:
+            for i in range(10):
+                cache.cache_item(f"{key_prefix}_{i}", {"value": i})
+
+        threads = [
+            threading.Thread(target=cache_writer, args=(f"thread{i}",))
+            for i in range(5)
+        ]
+
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        total_cached = sum(
+            1 for i in range(5) for j in range(10)
+            if cache.get_cached_item(f"thread{i}_{j}") is not None
+        )
+
+        assert total_cached == 50
+
+    def test_rate_limiter_across_endpoints(
+        self, integrated_repo: RealAPIRepository, http_server: TestHTTPServer
+    ) -> None:
+        """Rate limiter tracks different endpoints independently."""
+        http_server.set_response({}, 200)
+
+        for _ in range(5):
+            success, _, _ = integrated_repo._make_request("endpoint1", use_cache=False)
+            assert success is True
+
+        for _ in range(5):
+            success, _, _ = integrated_repo._make_request("endpoint2", use_cache=False)
+            assert success is True
+
+        endpoint1_url = f"{integrated_repo.api_endpoint}/endpoint1"
+        endpoint2_url = f"{integrated_repo.api_endpoint}/endpoint2"
+
+        assert endpoint1_url in integrated_repo.rate_limiter.minute_counters
+        assert endpoint2_url in integrated_repo.rate_limiter.minute_counters
+
+        assert integrated_repo.rate_limiter.minute_counters[endpoint1_url][0] == 5
+        assert integrated_repo.rate_limiter.minute_counters[endpoint2_url][0] == 5

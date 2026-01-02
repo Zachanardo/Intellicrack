@@ -27,15 +27,15 @@ import sys
 from typing import Any
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 try:
     import mmap
 
-    MMAP_AVAILABLE = True
+    MMAP_AVAILABLE: bool = True
 except ImportError:
-    MMAP_AVAILABLE = False
+    MMAP_AVAILABLE: bool = False
 
 
 class TerminalHexViewer:
@@ -45,12 +45,12 @@ class TerminalHexViewer:
         """Initialize hex viewer with file path.
 
         Args:
-            filepath: Path to file to view/edit
+            filepath: Path to file to view/edit.
 
         """
         self.filepath: str = filepath
         self.file_size: int = 0
-        self.data: bytes | bytearray | mmap.mmap
+        self.data: bytes | bytearray | mmap.mmap = b""
         self.mmap_file: mmap.mmap | None = None
         self.file_handle: Any = None
 
@@ -90,8 +90,41 @@ class TerminalHexViewer:
 
         self._load_file()
 
+    def close(self) -> None:
+        """Close file handles and release resources.
+
+        Properly closes memory mapped file and file handle if they are open.
+        Safe to call multiple times.
+        """
+        if self.mmap_file is not None:
+            try:
+                self.mmap_file.close()
+            except (OSError, ValueError):
+                pass
+            self.mmap_file = None
+
+        if self.file_handle is not None:
+            try:
+                self.file_handle.close()
+            except (OSError, ValueError):
+                pass
+            self.file_handle = None
+
+    def __del__(self) -> None:
+        """Clean up resources when the object is destroyed."""
+        self.close()
+
     def _load_file(self) -> None:
-        """Load file data using memory mapping when possible."""
+        """Load file data using memory mapping when possible.
+
+        Attempts to load a file using memory mapping for efficiency, with
+        fallback to standard file reading if memory mapping is unavailable.
+
+        Raises:
+            FileNotFoundError: If the file does not exist.
+            OSError: If the file cannot be opened or memory mapped.
+
+        """
         if not os.path.exists(self.filepath):
             raise FileNotFoundError(f"File not found: {self.filepath}")
 
@@ -116,7 +149,12 @@ class TerminalHexViewer:
                 raise OSError(f"Cannot open file: {e}") from e
 
     def _setup_colors(self) -> None:
-        """Set up color pairs for the interface."""
+        """Set up color pairs for the interface.
+
+        Sets up curses color pairs for normal, cursor, modified, search,
+        ASCII, status, and help modes. Handles platforms without color support.
+
+        """
         if not curses.has_colors():
             return
 
@@ -133,7 +171,17 @@ class TerminalHexViewer:
         curses.init_pair(self.colors["help"], curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
     def run(self, stdscr: Any) -> None:
-        """Run main application loop."""
+        """Run main application loop.
+
+        Initializes the curses environment, sets up colors, and enters the
+        main event loop for handling user input and screen updates until
+        the user requests an exit.
+
+        Args:
+            stdscr (Any): The curses window object for rendering the hex
+                viewer interface and receiving user input.
+
+        """
         self.stdscr = stdscr
         self._setup_colors()
 
@@ -160,13 +208,23 @@ class TerminalHexViewer:
             self._cleanup()
 
     def _update_screen_dimensions(self) -> None:
-        """Update screen dimensions and layout."""
+        """Update screen dimensions and layout.
+
+        Updates internal tracking of screen dimensions and calculates
+        the hex viewing area height and status line position.
+
+        """
         self.screen_height, self.screen_width = self.stdscr.getmaxyx()
         self.hex_area_height = self.screen_height - 3  # Leave room for status and help
         self.status_line = self.screen_height - 2
 
     def _draw_interface(self) -> None:
-        """Draw the complete hex viewer interface."""
+        """Draw the complete hex viewer interface.
+
+        Renders the entire UI including hex area, status line, info line,
+        or help screen depending on current state.
+
+        """
         self.stdscr.clear()
 
         if self.help_visible:
@@ -179,7 +237,12 @@ class TerminalHexViewer:
         self.stdscr.refresh()
 
     def _draw_hex_area(self) -> None:
-        """Draw the main hex viewing area."""
+        """Draw the main hex viewing area.
+
+        Renders multiple lines of hex data starting from the current
+        offset, calculating how many lines fit on screen.
+
+        """
         lines_to_show = min(
             self.hex_area_height,
             (self.file_size - self.current_offset + self.bytes_per_line - 1) // self.bytes_per_line,
@@ -193,7 +256,18 @@ class TerminalHexViewer:
             self._draw_hex_line(line_idx, offset)
 
     def _draw_hex_line(self, line_idx: int, offset: int) -> None:
-        """Draw a single line of hex data."""
+        """Draw a single line of hex data.
+
+        Renders a line showing the file offset, hex bytes, and ASCII
+        representation with appropriate color highlighting for cursor,
+        modifications, and search results.
+
+        Args:
+            line_idx (int): Line number on screen to render at (0-based
+                Y coordinate).
+            offset (int): Byte offset in the file to start rendering from.
+
+        """
         y = line_idx
 
         # Draw offset
@@ -241,7 +315,12 @@ class TerminalHexViewer:
             self.stdscr.addstr(y, ascii_x, ascii_display, curses.color_pair(self.colors["ascii"]))
 
     def _draw_status_line(self) -> None:
-        """Draw status line with current information."""
+        """Draw status line with current information.
+
+        Displays the current mode, cursor offset, file size, and filename
+        with indication of unsaved modifications if present.
+
+        """
         if self.status_line >= self.screen_height:
             return
 
@@ -269,7 +348,12 @@ class TerminalHexViewer:
             )
 
     def _draw_info_line(self) -> None:
-        """Draw information/help line."""
+        """Draw information/help line.
+
+        Displays context-sensitive help text showing available keyboard
+        shortcuts for the current mode (view or edit).
+
+        """
         info_line = self.status_line + 1
         if info_line >= self.screen_height:
             return
@@ -285,7 +369,12 @@ class TerminalHexViewer:
             self.stdscr.addstr(info_line, 0, help_text, curses.color_pair(self.colors["help"]))
 
     def _draw_help(self) -> None:
-        """Draw help screen."""
+        """Draw help screen.
+
+        Displays a comprehensive help overlay showing all available
+        keyboard shortcuts and operational modes.
+
+        """
         help_lines = [
             "Intellicrack Terminal Hex Viewer - Help",
             "",
@@ -329,7 +418,18 @@ class TerminalHexViewer:
                 self.stdscr.addstr(y, x, line, curses.color_pair(self.colors["help"]))
 
     def _handle_input(self, key: int) -> bool:
-        """Handle keyboard input. Returns False to exit."""
+        """Handle keyboard input.
+
+        Routes keyboard input to the appropriate handler based on current
+        mode (help visible, edit mode, or view mode).
+
+        Args:
+            key (int): The keyboard key code to process.
+
+        Returns:
+            bool: False to exit the application, True to continue running.
+
+        """
         if self.help_visible:
             self.help_visible = False
             return True
@@ -339,7 +439,18 @@ class TerminalHexViewer:
         return self._handle_view_input(key)
 
     def _handle_view_input(self, key: int) -> bool:
-        """Handle input in view mode."""
+        """Handle input in view mode.
+
+        Processes keyboard input in view mode, handling navigation,
+        search, goto offset, and mode switching operations.
+
+        Args:
+            key (int): The keyboard key code to process.
+
+        Returns:
+            bool: False to exit the application, True to continue running.
+
+        """
         if key == ord("q"):
             return bool(self.modified and not self._confirm_exit())
 
@@ -390,7 +501,18 @@ class TerminalHexViewer:
         return True
 
     def _handle_edit_input(self, key: int) -> bool:
-        """Handle input in edit mode."""
+        """Handle input in edit mode.
+
+        Processes keyboard input in edit mode, handling navigation,
+        mode switching, and character editing operations.
+
+        Args:
+            key (int): The keyboard key code to process.
+
+        Returns:
+            bool: Always True to continue execution.
+
+        """
         if key == 27:  # ESC
             self.edit_mode = False
 
@@ -418,7 +540,15 @@ class TerminalHexViewer:
         return True
 
     def _handle_edit_character(self, key: int) -> None:
-        """Handle character input during editing."""
+        """Handle character input during editing.
+
+        Processes printable characters and hex digits during editing,
+        delegating hex digit editing to the appropriate handler.
+
+        Args:
+            key (int): The keyboard key code representing the character.
+
+        """
         if self.cursor_offset >= self.file_size:
             return
 
@@ -440,7 +570,16 @@ class TerminalHexViewer:
             self._move_cursor(1)
 
     def _edit_hex_digit(self, digit: int) -> None:
-        """Edit a single hex digit."""
+        """Edit a single hex digit.
+
+        Replaces the high nibble of the byte at the cursor position with
+        the provided hex digit and advances the cursor.
+
+        Args:
+            digit (int): The hex digit value (0-15) to apply to the high
+                nibble.
+
+        """
         current_byte = self.modifications.get(self.cursor_offset, self.data[self.cursor_offset])
 
         # For simplicity, replace the entire byte
@@ -451,13 +590,27 @@ class TerminalHexViewer:
         self._move_cursor(1)
 
     def _move_cursor(self, delta: int) -> None:
-        """Move cursor by delta bytes."""
+        """Move cursor by delta bytes.
+
+        Moves the cursor position by the specified number of bytes, clamping
+        to valid file range, and adjusts the display to keep cursor visible.
+
+        Args:
+            delta (int): The number of bytes to move cursor (positive or
+                negative).
+
+        """
         new_offset = max(0, min(self.file_size - 1, self.cursor_offset + delta))
         self.cursor_offset = new_offset
         self._adjust_display()
 
     def _adjust_display(self) -> None:
-        """Adjust display offset to keep cursor visible."""
+        """Adjust display offset to keep cursor visible.
+
+        Scrolls the view to ensure the cursor position remains visible
+        on screen.
+
+        """
         lines_per_screen = self.hex_area_height
         bytes_per_screen = lines_per_screen * self.bytes_per_line
 
@@ -473,7 +626,13 @@ class TerminalHexViewer:
             self.current_offset = max(0, self.current_offset)
 
     def _start_search(self) -> None:
-        """Start search functionality with interactive input."""
+        """Start search functionality with interactive input.
+
+        Displays a dialog for the user to enter a search pattern, which
+        can be in hex or text format. Performs the search and displays
+        result count.
+
+        """
         # Create input window for search pattern
         height, width = self.stdscr.getmaxyx()
         input_height = 5
@@ -535,7 +694,13 @@ class TerminalHexViewer:
         del input_win
 
     def _perform_search(self) -> None:
-        """Perform search for current pattern (hex or text)."""
+        """Perform search for current pattern (hex or text).
+
+        Searches through the file data for all occurrences of the current
+        search pattern and stores results. Automatically navigates to the
+        first match.
+
+        """
         if not self.search_pattern:
             return
 
@@ -585,7 +750,12 @@ class TerminalHexViewer:
             self._goto_search_result(0)
 
     def _next_search_result(self) -> None:
-        """Go to next search result."""
+        """Go to next search result.
+
+        Navigates to the next occurrence in the search results list,
+        wrapping around to the beginning if at the end.
+
+        """
         if not self.search_results:
             return
 
@@ -593,7 +763,12 @@ class TerminalHexViewer:
         self._goto_search_result(self.current_search_index)
 
     def _prev_search_result(self) -> None:
-        """Go to previous search result."""
+        """Go to previous search result.
+
+        Navigates to the previous occurrence in the search results list,
+        wrapping around to the end if at the beginning.
+
+        """
         if not self.search_results:
             return
 
@@ -601,14 +776,28 @@ class TerminalHexViewer:
         self._goto_search_result(self.current_search_index)
 
     def _goto_search_result(self, index: int) -> None:
-        """Go to specific search result."""
+        """Go to specific search result.
+
+        Navigates to the byte offset of the search result at the given index,
+        if the index is within valid bounds.
+
+        Args:
+            index (int): The index in the search results list to navigate to.
+
+        """
         if 0 <= index < len(self.search_results):
             offset, _length = self.search_results[index]
             self.cursor_offset = offset
             self._adjust_display()
 
     def _goto_offset(self) -> None:
-        """Go to specific offset with interactive input."""
+        """Go to specific offset with interactive input.
+
+        Displays a dialog for the user to enter a file offset in either
+        hexadecimal (with 0x prefix) or decimal format. Validates the
+        offset against file bounds before navigating.
+
+        """
         # Create input window for offset
         height, width = self.stdscr.getmaxyx()
         input_height = 5
@@ -675,7 +864,13 @@ class TerminalHexViewer:
         del input_win
 
     def _save_changes(self) -> None:
-        """Save modifications to file."""
+        """Save modifications to file.
+
+        Writes all accumulated modifications to the file, either via
+        memory map or by reopening the file. Clears the modifications
+        dictionary and modified flag on success.
+
+        """
         if not self.modified or not self.modifications:
             return
 
@@ -703,7 +898,7 @@ class TerminalHexViewer:
         """Show confirmation dialog for unsaved changes.
 
         Returns:
-            True if user wants to exit, False otherwise
+            bool: True if user wants to exit, False otherwise.
 
         """
         # Save current screen state
@@ -755,7 +950,7 @@ class TerminalHexViewer:
         """Display an error dialog with the given message.
 
         Args:
-            error_message: The error message to display
+            error_message: The error message to display.
 
         """
         # Save current screen state
@@ -821,7 +1016,12 @@ class TerminalHexViewer:
         self.stdscr.refresh()
 
     def _cleanup(self) -> None:
-        """Clean up resources."""
+        """Clean up resources.
+
+        Closes any open file handles and memory-mapped file objects
+        to ensure proper resource cleanup.
+
+        """
         if self.mmap_file:
             self.mmap_file.close()
         if self.file_handle and hasattr(self.file_handle, "close"):
@@ -831,8 +1031,14 @@ class TerminalHexViewer:
 def launch_hex_viewer(filepath: str) -> bool:
     """Launch the terminal hex viewer.
 
+    Initializes and runs the terminal-based hex viewer for the specified
+    file using the curses wrapper for proper terminal handling.
+
     Args:
-        filepath: Path to file to view
+        filepath (str): Path to file to view.
+
+    Returns:
+        bool: True if viewer launched successfully, False on error.
 
     """
     try:

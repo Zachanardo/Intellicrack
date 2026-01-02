@@ -18,35 +18,35 @@ class TestLRUCache:
         """LRUCache must store and retrieve items correctly."""
         cache = LRUCache(max_size=5)
 
-        cache["key1"] = "value1"
-        cache["key2"] = "value2"
+        cache[1] = b"value1"
+        cache[2] = b"value2"
 
-        assert "key1" in cache
-        assert cache["key1"] == "value1"
+        assert 1 in cache
+        assert cache[1] == b"value1"
 
     def test_lrucache_evicts_least_recently_used(self) -> None:
         """LRUCache must evict least recently used item when full."""
         cache = LRUCache(max_size=3)
 
-        cache["a"] = 1
-        cache["b"] = 2
-        cache["c"] = 3
+        cache[0] = b"data0"
+        cache[1] = b"data1"
+        cache[2] = b"data2"
 
-        _ = cache["a"]
+        _ = cache[0]
 
-        cache["d"] = 4
+        cache[3] = b"data3"
 
-        assert "a" in cache
-        assert "b" not in cache
-        assert "c" in cache
-        assert "d" in cache
+        assert 0 in cache
+        assert 1 not in cache
+        assert 2 in cache
+        assert 3 in cache
 
     def test_lrucache_respects_max_size(self) -> None:
         """LRUCache must not exceed max size."""
         cache = LRUCache(max_size=5)
 
         for i in range(10):
-            cache[f"key{i}"] = i
+            cache[i] = f"data{i}".encode()
 
         assert len(cache) == 5
 

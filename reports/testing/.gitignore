@@ -1,0 +1,14 @@
+# Test results and coverage reports
+# These are generated during test runs and should not be committed
+
+# Test results
+results/*.txt
+results/*.xml
+
+# Coverage reports
+coverage/
+coverage/*.xml
+coverage/*_*/
+
+# Keep directory structure
+!.gitignore

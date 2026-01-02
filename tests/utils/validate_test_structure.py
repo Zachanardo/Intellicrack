@@ -12,7 +12,7 @@ import ast
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-def validate_test_file():
+def validate_test_file() -> bool:
     """Validate the test file structure and syntax."""
     test_file = PROJECT_ROOT / "tests" / "unit" / "utils" / "exploitation" / "test_init.py"
 
@@ -73,7 +73,7 @@ def validate_test_file():
         print(f"FAIL Error validating test file: {e}")
         return False
 
-def test_imports():
+def test_imports() -> bool:
     """Test that all required modules can be imported."""
     print("\nTesting imports...")
 
@@ -114,7 +114,7 @@ def test_imports():
         traceback.print_exc()
         return False
 
-def estimate_coverage():
+def estimate_coverage() -> bool:
     """Estimate potential coverage based on test methods."""
     print("\nEstimating coverage potential...")
 
@@ -150,7 +150,7 @@ def estimate_coverage():
         print(f"WARNING  Could not estimate coverage: {e}")
         return True
 
-def main():
+def main() -> bool:
     """Run all validations."""
     print("=" * 60)
     print("VALIDATING TEST STRUCTURE FOR __INIT__.PY")

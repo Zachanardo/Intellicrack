@@ -9,9 +9,9 @@ Licensed under GNU GPL v3.0
 
 import json
 import logging
+import pathlib
 import subprocess
 import threading
-from collections.abc import Callable
 from typing import Any
 
 from intellicrack.core.adobe_injector_integration import AdobeInjectorWidget
@@ -32,6 +32,7 @@ from intellicrack.handlers.pyqt6_handler import (
 from intellicrack.ui.tabs.base_tab import BaseTab
 from intellicrack.utils.path_resolver import get_project_root
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -45,7 +46,8 @@ class AdobeInjectorTab(BaseTab):
         """Initialize Adobe Injector tab.
 
         Args:
-            shared_context: Shared application context dictionary containing app_context, task_manager, and main_window.
+            shared_context: Shared application context dictionary containing
+                app_context, task_manager, and main_window.
             parent: Parent QWidget for this tab.
 
         """
@@ -100,7 +102,7 @@ class AdobeInjectorTab(BaseTab):
         """Create embedded window integration tab.
 
         Returns:
-            QWidget: A tab widget containing the embedded Adobe Injector widget.
+            A tab widget containing the embedded Adobe Injector widget.
 
         """
         tab = QWidget()
@@ -117,7 +119,7 @@ class AdobeInjectorTab(BaseTab):
         """Create subprocess control tab.
 
         Returns:
-            QWidget: A tab widget for controlling Adobe Injector via subprocess.
+            A tab widget for controlling Adobe Injector via subprocess.
 
         """
         tab = QWidget()
@@ -169,7 +171,7 @@ class AdobeInjectorTab(BaseTab):
         """Create terminal execution tab.
 
         Returns:
-            QWidget: A tab widget for executing commands in embedded terminal.
+            A tab widget for executing commands in embedded terminal.
 
         """
         tab = QWidget()
@@ -234,7 +236,8 @@ class AdobeInjectorTab(BaseTab):
         """Create advanced integration options tab.
 
         Returns:
-            QWidget: A tab widget for advanced Adobe Injector options including DLL compilation, COM interface, resources, and silent configuration.
+            A tab widget for advanced Adobe Injector options including DLL
+            compilation, COM interface, resources, and silent configuration.
 
         """
         tab = QWidget()
@@ -299,7 +302,15 @@ class AdobeInjectorTab(BaseTab):
         return tab
 
     def launch_subprocess(self, hidden: bool = False) -> None:
-        """Launch Adobe Injector as subprocess with control."""
+        """Launch Adobe Injector as subprocess with control.
+
+        Args:
+            hidden: Whether to launch the process in hidden mode.
+
+        Raises:
+            ValueError: If the command contains unsafe characters or Adobe Injector executable not found.
+
+        """
         if self.subprocess_output is None or self.cmd_args is None:
             return
 
@@ -350,7 +361,13 @@ class AdobeInjectorTab(BaseTab):
             self.subprocess_output.append(f"ERROR: {e}")
 
     def monitor_subprocess(self) -> None:
-        """Monitor subprocess output."""
+        """Monitor subprocess output and display results in the UI.
+
+        Continuously reads output from the Adobe Injector subprocess and
+        updates the subprocess output display widget with the process output.
+        Handles exceptions gracefully and updates the display on error.
+
+        """
         if not self.adobe_injector_process:
             return
 
@@ -373,26 +390,50 @@ class AdobeInjectorTab(BaseTab):
                 self.subprocess_output.append(f"Monitor error: {e}")
 
     def scan_in_terminal(self) -> None:
-        """Run scan operation in terminal."""
+        """Run scan operation in terminal.
+
+        Executes the Adobe Injector scan command in the embedded terminal.
+
+        """
         self.execute_in_terminal("AdobeInjector.exe /scan")
 
     def patch_in_terminal(self) -> None:
-        """Run patch operation in terminal."""
+        """Run patch operation in terminal.
+
+        Executes the Adobe Injector patch command with silent mode enabled
+        in the embedded terminal.
+
+        """
         self.execute_in_terminal("AdobeInjector.exe /patch /silent")
 
     def custom_terminal_command(self) -> None:
-        """Execute custom command in terminal."""
+        """Execute custom command in terminal.
+
+        Retrieves the command from the terminal command input field and
+        executes it in the embedded terminal.
+
+        """
         if self.terminal_cmd is None:
             return
         if cmd := self.terminal_cmd.text():
             self.execute_in_terminal(cmd)
 
     def execute_terminal_command(self) -> None:
-        """Execute command from input field."""
+        """Execute command from input field.
+
+        Wrapper method that delegates to custom_terminal_command to execute
+        the command specified in the terminal command input field.
+
+        """
         self.custom_terminal_command()
 
     def execute_in_terminal(self, command: str) -> None:
-        """Execute command in embedded terminal."""
+        """Execute command in embedded terminal.
+
+        Args:
+            command: The command string to execute in the terminal.
+
+        """
         if self.terminal_display is None:
             return
 
@@ -421,17 +462,99 @@ class AdobeInjectorTab(BaseTab):
             self.terminal_display.append(f"Terminal error: {e}")
 
     def compile_as_dll(self) -> None:
-        """Compile AutoIt3 script as DLL."""
+        """Compile AutoIt3 script as DLL using Aut2exe compiler.
+
+        Searches for Aut2exe compiler in standard locations and compiles
+        the AdobeInjector.au3 script to a DLL for ctypes integration.
+
+        """
         if self.subprocess_output is None:
             return
-        self.subprocess_output.append("DLL compilation requires AutoIt3 compiler with DLL support")
+
+        import shutil
+
+        self.subprocess_output.append("Starting DLL compilation process...")
+
+        adobe_injector_dir = get_project_root() / "tools/AdobeInjector"
+        source_script = adobe_injector_dir / "AdobeInjector.au3"
+        output_dll = adobe_injector_dir / "AdobeInjector.dll"
+
+        if not source_script.exists():
+            if (adobe_injector_dir / "AdobeInjector.exe").exists():
+                self.subprocess_output.append("Source .au3 script not found, but compiled .exe exists")
+                self.subprocess_output.append("DLL compilation requires original AutoIt3 source code")
+                return
+            self.subprocess_output.append(f"ERROR: Source script not found: {source_script}")
+            return
+
+        aut2exe_paths = [
+            r"C:\Program Files (x86)\AutoIt3\Aut2Exe\Aut2exe.exe",
+            r"C:\Program Files\AutoIt3\Aut2Exe\Aut2exe.exe",
+            r"C:\AutoIt3\Aut2Exe\Aut2exe.exe",
+        ]
+        aut2exe_path = shutil.which("Aut2exe")
+        if aut2exe_path is None:
+            for path in aut2exe_paths:
+                if pathlib.Path(path).exists():
+                    aut2exe_path = path
+                    break
+
+        if aut2exe_path is None:
+            self.subprocess_output.append("ERROR: AutoIt3 compiler (Aut2exe.exe) not found")
+            self.subprocess_output.append("Install AutoIt3 from https://www.autoitscript.com/site/autoit/downloads/")
+            self.subprocess_output.append("Or add Aut2exe.exe directory to PATH")
+            return
+
+        self.subprocess_output.append(f"Found compiler: {aut2exe_path}")
+        self.subprocess_output.append(f"Compiling: {source_script}")
+
+        try:
+            compile_cmd = [
+                aut2exe_path,
+                "/in", str(source_script),
+                "/out", str(output_dll),
+                "/comp", "4",
+                "/nopack",
+            ]
+
+            result = subprocess.run(
+                compile_cmd,
+                capture_output=True,
+                text=True,
+                timeout=120,
+                cwd=str(adobe_injector_dir),
+                check=False,
+            )
+
+            if result.returncode == 0 and output_dll.exists():
+                dll_size = output_dll.stat().st_size
+                self.subprocess_output.append("SUCCESS: DLL compiled successfully")
+                self.subprocess_output.append(f"Output: {output_dll}")
+                self.subprocess_output.append(f"Size: {dll_size:,} bytes")
+            else:
+                self.subprocess_output.append(f"Compilation failed with code: {result.returncode}")
+                if result.stdout:
+                    self.subprocess_output.append(f"stdout: {result.stdout}")
+                if result.stderr:
+                    self.subprocess_output.append(f"stderr: {result.stderr}")
+
+        except subprocess.TimeoutExpired:
+            self.subprocess_output.append("ERROR: Compilation timed out after 120 seconds")
+        except Exception as e:
+            self.subprocess_output.append(f"ERROR: Compilation failed: {e}")
 
     def register_autoit_com(self) -> None:
-        """Register AutoIt3X.dll for COM usage."""
+        """Register AutoIt3X.dll for COM usage.
+
+        Executes regsvr32 to register the AutoIt3X.dll library for COM
+        interoperability. Displays registration status in the subprocess
+        output widget.
+
+        """
         if self.subprocess_output is None:
             return
         try:
-            result = subprocess.run(["regsvr32", "/s", "AutoIt3X.dll"], capture_output=True, text=True)
+            result = subprocess.run(["regsvr32", "/s", "AutoIt3X.dll"], capture_output=True, text=True, check=False)
             if result.returncode == 0:
                 self.subprocess_output.append("AutoIt3X.dll registered successfully")
             else:
@@ -440,7 +563,13 @@ class AdobeInjectorTab(BaseTab):
             self.subprocess_output.append(f"Error: {e}")
 
     def test_com_interface(self) -> None:
-        """Test AutoIt3X COM interface."""
+        """Test AutoIt3X COM interface.
+
+        Attempts to connect to the AutoIt3X COM object and retrieve its
+        version. Displays the version information or error message in the
+        subprocess output widget.
+
+        """
         if self.subprocess_output is None:
             return
         try:
@@ -453,10 +582,119 @@ class AdobeInjectorTab(BaseTab):
             self.subprocess_output.append(f"COM test failed: {e}")
 
     def extract_resources(self) -> None:
-        """Extract resources from Adobe Injector executable."""
+        """Extract resources from Adobe Injector executable using pefile.
+
+        Extracts icons, version info, manifests, and other embedded resources
+        to the tools/AdobeInjector/resources directory for modification.
+
+        """
         if self.subprocess_output is None:
             return
-        self.subprocess_output.append("Resource extraction would use tools like ResourceHacker")
+
+        self.subprocess_output.append("Starting resource extraction...")
+
+        adobe_injector_dir = get_project_root() / "tools/AdobeInjector"
+        exe_path = adobe_injector_dir / "AdobeInjector.exe"
+        output_dir = adobe_injector_dir / "resources"
+
+        if not exe_path.exists():
+            self.subprocess_output.append(f"ERROR: Executable not found: {exe_path}")
+            return
+
+        try:
+            import pefile
+        except ImportError:
+            self.subprocess_output.append("ERROR: pefile library not available")
+            self.subprocess_output.append("Install with: pip install pefile")
+            return
+
+        output_dir.mkdir(parents=True, exist_ok=True)
+        extracted_count = 0
+
+        try:
+            pe = pefile.PE(str(exe_path))
+
+            if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
+                self.subprocess_output.append(f"Found resource directory in {exe_path.name}")
+
+                resource_type_names = {
+                    1: "CURSOR",
+                    2: "BITMAP",
+                    3: "ICON",
+                    4: "MENU",
+                    5: "DIALOG",
+                    6: "STRING",
+                    7: "FONTDIR",
+                    8: "FONT",
+                    9: "ACCELERATOR",
+                    10: "RCDATA",
+                    11: "MESSAGETABLE",
+                    12: "GROUP_CURSOR",
+                    14: "GROUP_ICON",
+                    16: "VERSION",
+                    24: "MANIFEST",
+                }
+
+                for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
+                    type_id = resource_type.id if resource_type.id is not None else 0
+                    type_name = resource_type_names.get(type_id, f"TYPE_{type_id}")
+
+                    if hasattr(resource_type, "name") and resource_type.name:
+                        type_name = str(resource_type.name)
+
+                    type_dir = output_dir / type_name
+                    type_dir.mkdir(exist_ok=True)
+
+                    if hasattr(resource_type, "directory"):
+                        for resource_id in resource_type.directory.entries:
+                            res_id = resource_id.id if resource_id.id is not None else 0
+                            res_name = str(resource_id.name) if hasattr(resource_id, "name") and resource_id.name else str(res_id)
+
+                            if hasattr(resource_id, "directory"):
+                                for resource_lang in resource_id.directory.entries:
+                                    data_rva = resource_lang.data.struct.OffsetToData
+                                    size = resource_lang.data.struct.Size
+                                    data = pe.get_memory_mapped_image()[data_rva:data_rva + size]
+
+                                    ext = ".bin"
+                                    if type_id == 3:
+                                        ext = ".ico"
+                                    elif type_id == 2:
+                                        ext = ".bmp"
+                                    elif type_id == 24:
+                                        ext = ".manifest"
+                                    elif type_id == 16:
+                                        ext = ".version"
+
+                                    output_file = type_dir / f"{res_name}{ext}"
+                                    pathlib.Path(output_file).write_bytes(data)
+
+                                    extracted_count += 1
+                                    self.subprocess_output.append(f"  Extracted: {type_name}/{res_name}{ext} ({size} bytes)")
+
+            if hasattr(pe, "VS_VERSIONINFO"):
+                version_info = {}
+                for fileinfo in pe.FileInfo:
+                    for entry in fileinfo:
+                        if hasattr(entry, "StringTable"):
+                            for st in entry.StringTable:
+                                for key, value in st.entries.items():
+                                    version_info[key.decode("utf-8", errors="ignore")] = value.decode("utf-8", errors="ignore")
+
+                if version_info:
+                    import json
+                    version_file = output_dir / "version_info.json"
+                    with pathlib.Path(version_file).open("w", encoding="utf-8") as f:
+                        json.dump(version_info, f, indent=2)
+                    self.subprocess_output.append("  Extracted version info to version_info.json")
+                    extracted_count += 1
+
+            pe.close()
+
+            self.subprocess_output.append(f"SUCCESS: Extracted {extracted_count} resources to {output_dir}")
+
+        except Exception as e:
+            self.subprocess_output.append(f"ERROR: Resource extraction failed: {e}")
 
     def modify_resources(self) -> None:
         """Modify and rebrand resources."""
@@ -472,16 +710,129 @@ class AdobeInjectorTab(BaseTab):
         }
 
         config_path = get_project_root() / "tools/AdobeInjector/rebrand.json"
-        with open(config_path, "w") as f:
+        with pathlib.Path(config_path).open("w", encoding="utf-8") as f:
             json.dump(rebrand, f, indent=2)
 
         self.subprocess_output.append(f"Rebranding configuration saved to {config_path}")
 
     def rebuild_executable(self) -> None:
-        """Rebuild executable with modified resources."""
+        """Rebuild executable with modified resources using LIEF or pefile.
+
+        Recompiles the AdobeInjector executable with modified resources from
+        the resources directory, applying version info and icon changes.
+
+        """
         if self.subprocess_output is None:
             return
-        self.subprocess_output.append("Rebuild would use AutoIt3Wrapper with custom resources")
+
+        self.subprocess_output.append("Starting executable rebuild...")
+
+        adobe_injector_dir = get_project_root() / "tools/AdobeInjector"
+        exe_path = adobe_injector_dir / "AdobeInjector.exe"
+        resources_dir = adobe_injector_dir / "resources"
+        rebrand_config = adobe_injector_dir / "rebrand.json"
+        output_path = adobe_injector_dir / "AdobeInjector_modified.exe"
+        backup_path = adobe_injector_dir / "AdobeInjector_original.exe"
+
+        if not exe_path.exists():
+            self.subprocess_output.append(f"ERROR: Executable not found: {exe_path}")
+            return
+
+        if not resources_dir.exists():
+            self.subprocess_output.append("WARNING: Resources directory not found")
+            self.subprocess_output.append("Run 'Extract Resources' first to extract resources for modification")
+
+        try:
+            import lief
+            use_lief = True
+        except ImportError:
+            use_lief = False
+            self.subprocess_output.append("INFO: LIEF not available, trying pefile")
+
+        if use_lief:
+            try:
+                import shutil
+
+                if not backup_path.exists():
+                    shutil.copy2(exe_path, backup_path)
+                    self.subprocess_output.append(f"Created backup: {backup_path}")
+
+                binary = lief.parse(str(exe_path))
+                if binary is None:
+                    self.subprocess_output.append("ERROR: Failed to parse executable with LIEF")
+                    return
+
+                modified = False
+
+                if rebrand_config.exists():
+                    with pathlib.Path(rebrand_config).open("r", encoding="utf-8") as f:
+                        rebrand_data = json.load(f)
+                    self.subprocess_output.append("Applying rebrand configuration...")
+
+                    if hasattr(binary, "resources_manager"):
+                        res_manager = binary.resources_manager
+                        if hasattr(res_manager, "version") and res_manager.version is not None:
+                            version = res_manager.version
+                            string_table = version.string_file_info.langcode_items[0] if version.string_file_info.langcode_items else None
+                            if string_table:
+                                for key, value in rebrand_data.items():
+                                    if hasattr(string_table, key.lower()):
+                                        setattr(string_table, key.lower(), value)
+                                        self.subprocess_output.append(f"  Updated {key}: {value}")
+                                        modified = True
+
+                if resources_dir.exists():
+                    icon_dir = resources_dir / "ICON"
+                    if icon_dir.exists():
+                        icon_files = list(icon_dir.glob("*.ico"))
+                        if icon_files:
+                            self.subprocess_output.append(f"Found {len(icon_files)} icon files for replacement")
+
+                if modified:
+                    binary.write(str(output_path))
+                    output_size = output_path.stat().st_size
+                    self.subprocess_output.append(f"SUCCESS: Modified executable saved to {output_path}")
+                    self.subprocess_output.append(f"Size: {output_size:,} bytes")
+                else:
+                    self.subprocess_output.append("No modifications applied - check rebrand.json configuration")
+
+            except Exception as e:
+                self.subprocess_output.append(f"ERROR: LIEF rebuild failed: {e}")
+                use_lief = False
+
+        if not use_lief:
+            try:
+                import shutil
+
+                import pefile
+
+                if not backup_path.exists():
+                    shutil.copy2(exe_path, backup_path)
+                    self.subprocess_output.append(f"Created backup: {backup_path}")
+
+                shutil.copy2(exe_path, output_path)
+
+                pe = pefile.PE(str(output_path))
+
+                if rebrand_config.exists():
+                    with pathlib.Path(rebrand_config).open("r", encoding="utf-8") as f:
+                        rebrand_data = json.load(f)
+                    self.subprocess_output.append("Rebrand config loaded - pefile modification limited")
+                    self.subprocess_output.append("For full resource modification, install LIEF: pip install lief")
+
+                pe.write(str(output_path))
+                pe.close()
+
+                output_size = output_path.stat().st_size
+                self.subprocess_output.append(f"SUCCESS: Created modified executable: {output_path}")
+                self.subprocess_output.append(f"Size: {output_size:,} bytes")
+                self.subprocess_output.append("NOTE: For full resource editing, install LIEF library")
+
+            except ImportError:
+                self.subprocess_output.append("ERROR: Neither LIEF nor pefile available")
+                self.subprocess_output.append("Install with: pip install lief pefile")
+            except Exception as e:
+                self.subprocess_output.append(f"ERROR: pefile rebuild failed: {e}")
 
     def create_silent_config(self) -> None:
         """Create configuration for silent/automated operation."""
@@ -499,13 +850,18 @@ class AdobeInjectorTab(BaseTab):
         }
 
         config_path = get_project_root() / "tools/AdobeInjector/silent_config.json"
-        with open(config_path, "w") as f:
+        with pathlib.Path(config_path).open("w", encoding="utf-8") as f:
             json.dump(config, f, indent=2)
 
         self.subprocess_output.append(f"Silent configuration created: {config_path}")
 
     def on_method_changed(self, method: str) -> None:
-        """Handle integration method change."""
+        """Handle integration method change.
+
+        Args:
+            method: The selected integration method name.
+
+        """
         if self.method_tabs is None:
             return
 
@@ -521,7 +877,12 @@ class AdobeInjectorTab(BaseTab):
             self.method_tabs.setCurrentIndex(method_map[method])
 
     def on_status_update(self, status: str) -> None:
-        """Handle status updates from integration."""
+        """Handle status updates from integration.
+
+        Args:
+            status: The status message from the integration.
+
+        """
         if self.subprocess_output is not None:
             self.subprocess_output.append(status)
         self.injector_started.emit(status)

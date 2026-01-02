@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 import ctypes
 import ctypes.wintypes
 import hashlib
+import logging
 import struct
 import winreg
 from pathlib import Path
@@ -18,6 +19,8 @@ from typing import Any
 import pefile
 import pytest
 from keystone import Ks, KS_ARCH_X86, KS_MODE_32, KS_MODE_64
+
+logger = logging.getLogger(__name__)
 
 from intellicrack.core.analysis.hardware_id_analyzer import (
     HardwareIDAnalyzer,

@@ -10,6 +10,8 @@ import shutil
 import tempfile
 from pathlib import Path
 import hashlib
+from collections.abc import Generator
+from typing import Any
 
 from intellicrack.ai.model_manager_module import ModelManager
 from intellicrack.ai.model_cache_manager import ModelCacheManager
@@ -21,14 +23,14 @@ class TestModelManager(BaseIntellicrackTest):
     """Test model manager with REAL model operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self, tmp_path):
+    def setup(self, tmp_path: Path) -> None:
         """Set up test environment with temporary model directory."""
         self.model_dir = tmp_path / "models"
         self.model_dir.mkdir()
         self.manager = ModelManager(model_directory=str(self.model_dir))
         self.cache_manager = ModelCacheManager(cache_dir=str(tmp_path / "cache"))
 
-    def test_model_discovery_real(self):
+    def test_model_discovery_real(self) -> None:
         """Test REAL model discovery from filesystem."""
         # Create some test model files
         (self.model_dir / "test_model.gguf").touch()
@@ -50,7 +52,7 @@ class TestModelManager(BaseIntellicrackTest):
         assert gguf_model['path'].endswith('test_model.gguf')
         assert os.path.exists(gguf_model['path'])
 
-    def test_model_validation_real(self):
+    def test_model_validation_real(self) -> None:
         """Test REAL model file validation."""
         # Create a simple GGUF-like file with proper header
         gguf_file = self.model_dir / "valid_model.gguf"
@@ -75,7 +77,7 @@ class TestModelManager(BaseIntellicrackTest):
         assert validation_result['file_size'] > 0
         assert len(validation_result['checksum']) > 0
 
-    def test_model_loading_real(self):
+    def test_model_loading_real(self) -> None:
         """Test REAL model loading into memory."""
         # Create a small test model file
         model_file = self.model_dir / "loadable_model.gguf"
@@ -101,7 +103,7 @@ class TestModelManager(BaseIntellicrackTest):
         loaded_models = self.manager.list_loaded_models()
         assert load_result['model_id'] in [m['id'] for m in loaded_models]
 
-    def test_model_unloading_real(self):
+    def test_model_unloading_real(self) -> None:
         """Test REAL model unloading from memory."""
         # Load a model first
         model_file = self.model_dir / "unload_test_model.gguf"
@@ -130,7 +132,7 @@ class TestModelManager(BaseIntellicrackTest):
         loaded_models = self.manager.list_loaded_models()
         assert all(m['id'] != model_id for m in loaded_models)
 
-    def test_model_caching_real(self):
+    def test_model_caching_real(self) -> None:
         """Test REAL model caching and retrieval."""
         # Create test model data
         model_data = b'GGUF' + os.urandom(2048)  # Random model data
@@ -160,7 +162,7 @@ class TestModelManager(BaseIntellicrackTest):
         assert cache_info['exists'] == True
         assert cache_info['size'] == len(model_data)
 
-    def test_model_quantization_real(self):
+    def test_model_quantization_real(self) -> None:
         """Test REAL model quantization operations."""
         # Create a test model with some structure
         model_file = self.model_dir / "quantize_test.gguf"
@@ -201,7 +203,7 @@ class TestModelManager(BaseIntellicrackTest):
         assert quantized_size <= original_size
         assert quantize_result['compression_ratio'] > 0
 
-    def test_model_metadata_extraction_real(self):
+    def test_model_metadata_extraction_real(self) -> None:
         """Test REAL model metadata extraction."""
         # Create test model with metadata
         model_file = self.model_dir / "metadata_test.gguf"
@@ -241,7 +243,7 @@ class TestModelManager(BaseIntellicrackTest):
         assert extracted_metadata['file_size'] == len(model_data)
         assert extracted_metadata['format'] == 'gguf'
 
-    def test_model_performance_monitoring_real(self):
+    def test_model_performance_monitoring_real(self) -> None:
         """Test REAL model performance monitoring."""
         # Load a model for performance testing
         model_file = self.model_dir / "performance_test.gguf"
@@ -277,7 +279,7 @@ class TestModelManager(BaseIntellicrackTest):
         assert performance_metrics['average_inference_time'] > 0
         assert performance_metrics['memory_usage'] > 0
 
-    def test_model_hot_swapping_real(self):
+    def test_model_hot_swapping_real(self) -> None:
         """Test REAL model hot-swapping without downtime."""
         # Create two test models
         model1_file = self.model_dir / "model1.gguf"
@@ -316,7 +318,7 @@ class TestModelManager(BaseIntellicrackTest):
         assert model1_id not in loaded_ids
         assert swap_result['new_model_id'] in loaded_ids
 
-    def test_model_checksum_verification_real(self):
+    def test_model_checksum_verification_real(self) -> None:
         """Test REAL model file integrity verification."""
         # Create test model
         model_file = self.model_dir / "checksum_test.gguf"
@@ -350,7 +352,7 @@ class TestModelManager(BaseIntellicrackTest):
 
         assert wrong_verification['valid'] == False
 
-    def test_model_memory_optimization_real(self):
+    def test_model_memory_optimization_real(self) -> None:
         """Test REAL model memory optimization."""
         # Load multiple models to test memory management
         models = []
@@ -382,7 +384,7 @@ class TestModelManager(BaseIntellicrackTest):
         # Verify some optimization actions were taken
         assert len(optimization_result['optimization_actions']) > 0
 
-    def test_model_auto_download_real(self):
+    def test_model_auto_download_real(self) -> None:
         """Test REAL model auto-download from repositories."""
         # Test with a very small public model (if available)
         # This test might be skipped in CI to avoid large downloads

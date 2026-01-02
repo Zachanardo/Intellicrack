@@ -77,7 +77,7 @@ class TestRuntimeMonitorLifecycle:
 
         monitor.start()
         assert monitor.active, "Must be active after start"
-        assert monitor.monitor_thread is not None, "Thread must be created"
+        assert monitor.monitor_thread is not None, "Thread must be created"  # type: ignore[unreachable]
         assert monitor.monitor_thread.is_alive(), "Thread must be running"
 
         time.sleep(0.1)
@@ -162,9 +162,10 @@ class TestMetricRecording:
         """Metric buffer doesn't grow unbounded."""
         monitor: RuntimeMonitor = RuntimeMonitor()
 
-        buffer_size: int = monitor.metrics_buffer.maxlen if hasattr(monitor.metrics_buffer, "maxlen") else float("inf")
+        maxlen_value = monitor.metrics_buffer.maxlen if hasattr(monitor.metrics_buffer, "maxlen") else None
 
-        if buffer_size != float("inf"):
+        if maxlen_value is not None:
+            buffer_size: int = maxlen_value
             for i in range(buffer_size + 100):
                 monitor.record_metric(f"test.{i % 10}", float(i), "test")
 

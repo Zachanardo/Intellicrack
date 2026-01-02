@@ -70,12 +70,15 @@ class BinaryAnalyzer:
         """Perform comprehensive binary analysis.
 
         Args:
-            binary_path: Path to the binary file
-            use_streaming: Force streaming mode (None = auto-detect based on size)
+            binary_path: Path to the binary file.
+            use_streaming: Force streaming mode (None = auto-detect based on size).
 
         Returns:
-            Analysis results dictionary
+            Analysis results dictionary with format, metadata, hashes, and security information.
 
+        Raises:
+            FileNotFoundError: If binary file does not exist.
+            OSError: If file operations fail.
         """
         try:
             binary_path = Path(binary_path)
@@ -136,12 +139,14 @@ class BinaryAnalyzer:
         """Perform streaming analysis for large binaries.
 
         Args:
-            binary_path: Path to the binary file
-            file_info: Pre-computed file information
+            binary_path: Path to the binary file.
+            file_info: Pre-computed file information.
 
         Returns:
-            Analysis results dictionary
+            Analysis results dictionary with streaming mode enabled.
 
+        Raises:
+            OSError: If file cannot be read or analyzed.
         """
         try:
             file_format = self._detect_format_streaming(binary_path)
@@ -181,11 +186,14 @@ class BinaryAnalyzer:
         """Open file with memory mapping for efficient large file access.
 
         Args:
-            file_path: Path to file
+            file_path: Path to file.
 
         Returns:
-            Tuple of (file_handle, mmap_object)
+            Tuple of (file_handle, mmap_object).
 
+        Raises:
+            OSError: If file descriptor is invalid.
+            RuntimeError: If memory map creation fails.
         """
         file_handle = open(file_path, "rb")  # noqa: SIM115
         try:
@@ -201,12 +209,14 @@ class BinaryAnalyzer:
         """Generate chunks of file data for streaming analysis.
 
         Args:
-            file_path: Path to file
-            chunk_size: Size of each chunk (default: CHUNK_SIZE)
+            file_path: Path to file.
+            chunk_size: Size of each chunk (default: CHUNK_SIZE).
 
         Yields:
-            Tuple of (chunk_data, offset)
+            Tuple of (chunk_data, offset).
 
+        Raises:
+            OSError: If file cannot be opened or read.
         """
         if chunk_size is None:
             chunk_size = self.CHUNK_SIZE
@@ -224,11 +234,13 @@ class BinaryAnalyzer:
         """Detect file format using streaming read.
 
         Args:
-            file_path: Path to file
+            file_path: Path to file.
 
         Returns:
-            Detected format string
+            Detected format string (e.g., "PE", "ELF", "Unknown").
 
+        Raises:
+            OSError: If file cannot be opened or read.
         """
         try:
             with open(file_path, "rb") as f:
@@ -258,12 +270,14 @@ class BinaryAnalyzer:
         """Calculate file hashes using streaming to avoid loading entire file.
 
         Args:
-            file_path: Path to file
-            progress_callback: Optional callback for progress updates (bytes_processed, total_bytes)
+            file_path: Path to file.
+            progress_callback: Optional callback for progress updates (bytes_processed, total_bytes).
 
         Returns:
-            Dictionary of hash algorithm names to hex digests
+            Dictionary of hash algorithm names to hexadecimal digest strings.
 
+        Raises:
+            OSError: If file cannot be opened or read.
         """
         try:
             sha256_hash = hashlib.sha256()
@@ -303,11 +317,14 @@ class BinaryAnalyzer:
         """Analyze PE file using memory mapping for large files.
 
         Args:
-            file_path: Path to PE file
+            file_path: Path to PE file.
 
         Returns:
-            PE analysis results
+            PE analysis results including machine type, sections, and metadata.
 
+        Raises:
+            OSError: If file cannot be opened or memory-mapped.
+            RuntimeError: If memory mapping fails.
         """
         try:
             file_handle, mm = self._open_mmap(file_path)
@@ -377,11 +394,14 @@ class BinaryAnalyzer:
         """Analyze ELF file using memory mapping.
 
         Args:
-            file_path: Path to ELF file
+            file_path: Path to ELF file.
 
         Returns:
-            ELF analysis results
+            ELF analysis results including class, architecture, segments, and metadata.
 
+        Raises:
+            OSError: If file cannot be opened or memory-mapped.
+            RuntimeError: If memory mapping fails.
         """
         try:
             file_handle, mm = self._open_mmap(file_path)
@@ -470,11 +490,14 @@ class BinaryAnalyzer:
         """Analyze Mach-O file using memory mapping.
 
         Args:
-            file_path: Path to Mach-O file
+            file_path: Path to Mach-O file.
 
         Returns:
-            Mach-O analysis results
+            Mach-O analysis results including architecture, load commands, and metadata.
 
+        Raises:
+            OSError: If file cannot be opened or memory-mapped.
+            RuntimeError: If memory mapping fails.
         """
         try:
             file_handle, mm = self._open_mmap(file_path)
@@ -541,12 +564,14 @@ class BinaryAnalyzer:
         """Extract strings from large binary using streaming.
 
         Args:
-            file_path: Path to file
-            max_strings: Maximum number of strings to extract
+            file_path: Path to file.
+            max_strings: Maximum number of strings to extract.
 
         Returns:
-            List of extracted strings
+            List of extracted printable ASCII strings.
 
+        Raises:
+            OSError: If file cannot be opened or read.
         """
         try:
             strings = []
@@ -581,11 +606,13 @@ class BinaryAnalyzer:
         """Analyze entropy using streaming for large files.
 
         Args:
-            file_path: Path to file
+            file_path: Path to file.
 
         Returns:
-            Entropy analysis results
+            Entropy analysis results including overall entropy, file size, and classification.
 
+        Raises:
+            OSError: If file cannot be opened or read.
         """
         try:
             import math
@@ -621,12 +648,16 @@ class BinaryAnalyzer:
         """Analyze binary with progress tracking for large files.
 
         Args:
-            binary_path: Path to binary file
-            progress_callback: Callback function(stage, current, total)
+            binary_path: Path to binary file.
+            progress_callback: Callback function(stage, current, total). If provided,
+                will be called with (stage_name, current_count, total_count).
 
         Returns:
-            Analysis results dictionary
+            Analysis results dictionary with progress tracking enabled.
 
+        Raises:
+            FileNotFoundError: If binary file does not exist.
+            OSError: If file operations fail.
         """
         try:
             binary_path = Path(binary_path)
@@ -651,6 +682,14 @@ class BinaryAnalyzer:
             total_stages = len(stages)
 
             def update_progress(stage_name: str) -> None:
+                """Update progress callback for current stage.
+
+                Args:
+                    stage_name: Name of the current analysis stage.
+
+                Returns:
+                    None.
+                """
                 nonlocal current_stage
                 if progress_callback:
                     progress_callback(stage_name, current_stage, total_stages)
@@ -662,6 +701,15 @@ class BinaryAnalyzer:
             update_progress(stages[1])
 
             def hash_progress(current: int, total: int) -> None:
+                """Report hash calculation progress.
+
+                Args:
+                    current: Number of bytes processed.
+                    total: Total number of bytes to process.
+
+                Returns:
+                    None.
+                """
                 if progress_callback:
                     progress_callback(f"hash_calculation: {current}/{total}", current, total)
 
@@ -709,12 +757,14 @@ class BinaryAnalyzer:
         """Save analysis checkpoint for resumable operations.
 
         Args:
-            analysis_results: Partial or complete analysis results
-            checkpoint_path: Path to save checkpoint file
+            analysis_results: Partial or complete analysis results.
+            checkpoint_path: Path to save checkpoint file.
 
         Returns:
-            True if successful, False otherwise
+            True if successful, False otherwise.
 
+        Raises:
+            OSError: If checkpoint file cannot be written.
         """
         try:
             checkpoint_path = Path(checkpoint_path)
@@ -733,11 +783,14 @@ class BinaryAnalyzer:
         """Load analysis checkpoint to resume interrupted operations.
 
         Args:
-            checkpoint_path: Path to checkpoint file
+            checkpoint_path: Path to checkpoint file.
 
         Returns:
-            Checkpoint data or None if failed
+            Checkpoint data dictionary or None if file not found or failed to load.
 
+        Raises:
+            OSError: If checkpoint file cannot be read.
+            json.JSONDecodeError: If checkpoint file is not valid JSON.
         """
         try:
             checkpoint_path = Path(checkpoint_path)
@@ -759,13 +812,15 @@ class BinaryAnalyzer:
         """Scan large binary for multiple byte patterns using streaming.
 
         Args:
-            binary_path: Path to binary file
-            patterns: List of byte patterns to search for
-            context_bytes: Number of bytes before/after match to include
+            binary_path: Path to binary file.
+            patterns: List of byte patterns to search for.
+            context_bytes: Number of bytes before/after match to include.
 
         Returns:
-            Dictionary mapping pattern to list of matches with offsets and context
+            Dictionary mapping pattern hex string to list of matches with offsets and context.
 
+        Raises:
+            OSError: If file cannot be read.
         """
         try:
             binary_path = Path(binary_path)
@@ -813,11 +868,13 @@ class BinaryAnalyzer:
         """Scan large binary for licensing-related strings using streaming.
 
         Args:
-            binary_path: Path to binary file
+            binary_path: Path to binary file.
 
         Returns:
-            List of licensing-related string matches with offsets
+            List of licensing-related string matches with offsets, patterns, and lengths (limited to 500 results).
 
+        Raises:
+            OSError: If file cannot be read.
         """
         license_patterns = [
             b"serial",
@@ -874,12 +931,15 @@ class BinaryAnalyzer:
         """Analyze specific sections of large binary using memory mapping.
 
         Args:
-            binary_path: Path to binary file
-            section_ranges: List of (start_offset, end_offset) tuples
+            binary_path: Path to binary file.
+            section_ranges: List of (start_offset, end_offset) tuples.
 
         Returns:
-            Analysis results for each section
+            Dictionary mapping section indices to analysis results including entropy and printable ratios.
 
+        Raises:
+            OSError: If file cannot be opened or memory-mapped.
+            RuntimeError: If memory mapping fails.
         """
         try:
             binary_path = Path(binary_path)
@@ -939,12 +999,11 @@ class BinaryAnalyzer:
         """Classify section characteristics based on entropy and printable content.
 
         Args:
-            entropy: Section entropy value
-            printable_ratio: Ratio of printable characters
+            entropy: Section entropy value.
+            printable_ratio: Ratio of printable characters.
 
         Returns:
-            Characteristic classification string
-
+            Characteristic classification string.
         """
         if entropy > 7.5:
             return "Encrypted/Compressed"
@@ -957,7 +1016,14 @@ class BinaryAnalyzer:
         return "Structured Binary" if 4.0 <= entropy < 6.0 else "Mixed Content"
 
     def _get_file_info(self, file_path: Path) -> dict[str, Any]:
-        """Extract basic file metadata."""
+        """Extract basic file metadata.
+
+        Args:
+            file_path: Path to the file to analyze.
+
+        Returns:
+            Dictionary containing file size, creation time, modification time, access time, and permissions. Returns error dict on failure.
+        """
         try:
             stat = file_path.stat()
             return {
@@ -971,7 +1037,17 @@ class BinaryAnalyzer:
             return {"error": str(e)}
 
     def _detect_format(self, file_path: Path) -> str:
-        """Detect file format using magic bytes."""
+        """Detect file format using magic bytes.
+
+        Args:
+            file_path: Path to the file to identify.
+
+        Returns:
+            File format string such as PE, ELF, Mach-O, or Unknown.
+
+        Raises:
+            OSError: If file cannot be opened or read.
+        """
         try:
             with open(file_path, "rb") as f:
                 header = f.read(8)
@@ -998,7 +1074,17 @@ class BinaryAnalyzer:
             return f"Error: {e}"
 
     def _calculate_hashes(self, file_path: Path) -> dict[str, str]:
-        """Calculate various hashes of the file."""
+        """Calculate various hashes of the file.
+
+        Args:
+            file_path: Path to the file to hash.
+
+        Returns:
+            Dictionary mapping hash algorithm names to hexadecimal digest strings.
+
+        Raises:
+            OSError: If file cannot be opened or read.
+        """
         try:
             with open(file_path, "rb") as f:
                 data = f.read()
@@ -1013,7 +1099,17 @@ class BinaryAnalyzer:
             return {"error": str(e)}
 
     def _analyze_pe(self, file_path: Path) -> dict[str, Any]:
-        """Analyze PE (Windows executable) file."""
+        """Analyze PE (Windows executable) file.
+
+        Args:
+            file_path: Path to the PE file to analyze.
+
+        Returns:
+            Dictionary containing PE header information, sections, and metadata.
+
+        Raises:
+            OSError: If file cannot be opened or read.
+        """
         try:
             with open(file_path, "rb") as f:
                 data = f.read()
@@ -1076,7 +1172,17 @@ class BinaryAnalyzer:
             return {"error": str(e)}
 
     def _analyze_elf(self, file_path: Path) -> dict[str, Any]:
-        """Analyze ELF (Linux executable) file."""
+        """Analyze ELF (Linux executable) file.
+
+        Args:
+            file_path: Path to the ELF file to analyze.
+
+        Returns:
+            Dictionary containing ELF header information, segments, and metadata.
+
+        Raises:
+            OSError: If file cannot be opened or read.
+        """
         try:
             with open(file_path, "rb") as f:
                 data = f.read()
@@ -1157,7 +1263,14 @@ class BinaryAnalyzer:
             return {"error": str(e)}
 
     def _get_segment_flags(self, flags: int) -> str:
-        """Convert segment flags to readable string."""
+        """Convert segment flags to readable string.
+
+        Args:
+            flags: Binary flags value from ELF segment header.
+
+        Returns:
+            String representation of flags (e.g., "RWX", "R", or "None").
+        """
         flag_str = ""
         if flags & 0x1:  # PF_X
             flag_str += "X"
@@ -1168,7 +1281,17 @@ class BinaryAnalyzer:
         return flag_str or "None"
 
     def _analyze_macho(self, file_path: Path) -> dict[str, Any]:
-        """Analyze Mach-O (macOS executable) file."""
+        """Analyze Mach-O (macOS executable) file.
+
+        Args:
+            file_path: Path to the Mach-O file to analyze.
+
+        Returns:
+            Dictionary containing Mach-O header information, load commands, and metadata.
+
+        Raises:
+            OSError: If file cannot be opened or read.
+        """
         try:
             with open(file_path, "rb") as f:
                 data = f.read()
@@ -1230,7 +1353,17 @@ class BinaryAnalyzer:
             return {"error": str(e)}
 
     def _analyze_dex(self, file_path: Path) -> dict[str, Any]:
-        """Analyze Android DEX file."""
+        """Analyze Android DEX file.
+
+        Args:
+            file_path: Path to the DEX file to analyze.
+
+        Returns:
+            Dictionary containing DEX header information, string count, and metadata.
+
+        Raises:
+            OSError: If file cannot be opened or read.
+        """
         try:
             with open(file_path, "rb") as f:
                 data = f.read()
@@ -1297,7 +1430,18 @@ class BinaryAnalyzer:
             return {"error": str(e)}
 
     def _analyze_archive(self, file_path: Path) -> dict[str, Any]:
-        """Analyze archive files (ZIP, JAR, APK)."""
+        """Analyze archive files (ZIP, JAR, APK).
+
+        Args:
+            file_path: Path to the archive file to analyze.
+
+        Returns:
+            Dictionary containing archive information, file listing, and compression statistics.
+
+        Raises:
+            OSError: If archive file cannot be opened or read.
+            zipfile.BadZipFile: If archive is corrupted or not a valid ZIP file.
+        """
         try:
             import zipfile
 
@@ -1348,7 +1492,17 @@ class BinaryAnalyzer:
             return {"error": str(e)}
 
     def _extract_strings(self, file_path: Path) -> list[str]:
-        """Extract printable strings from binary data."""
+        """Extract printable strings from binary data.
+
+        Args:
+            file_path: Path to the binary file to scan.
+
+        Returns:
+            List of extracted printable ASCII strings (limited to 100 strings).
+
+        Raises:
+            OSError: If file cannot be opened or read.
+        """
         try:
             with open(file_path, "rb") as f:
                 data = f.read()
@@ -1377,7 +1531,17 @@ class BinaryAnalyzer:
             return [f"Error extracting strings: {e}"]
 
     def _analyze_entropy(self, file_path: Path) -> dict[str, Any]:
-        """Analyze entropy distribution in the file."""
+        """Analyze entropy distribution in the file.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+
+        Returns:
+            Dictionary containing overall entropy value, file size, unique byte count, and analysis classification.
+
+        Raises:
+            OSError: If file cannot be opened or read.
+        """
         try:
             import math
 
@@ -1406,7 +1570,18 @@ class BinaryAnalyzer:
             return {"error": str(e)}
 
     def _security_analysis(self, file_path: Path, file_format: str) -> dict[str, Any]:
-        """Perform security-focused analysis."""
+        """Perform security-focused analysis.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+            file_format: Detected file format string.
+
+        Returns:
+            Dictionary containing risk assessment, suspicious indicators, recommendations, and protection details.
+
+        Raises:
+            OSError: If file metadata cannot be accessed.
+        """
         try:
             security_info: dict[str, Any] = {
                 "risk_level": "Unknown",

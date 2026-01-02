@@ -28,7 +28,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
@@ -994,10 +994,9 @@ def _detect_usb_dongles() -> list[dict[str, Any]]:
     """Detect USB dongles by enumerating USB devices.
 
     Returns:
-        List of dictionaries containing detected USB dongle information
+        List of dictionaries containing detected USB dongle information.
 
     """
-    """Detect USB dongles by enumerating USB devices."""
     dongles = []
 
     try:
@@ -1060,10 +1059,9 @@ def _detect_windows_usb_dongles() -> list[dict[str, Any]]:
     """Detect USB dongles on Windows using WMI.
 
     Returns:
-        List of dictionaries containing Windows USB dongle information
+        List of dictionaries containing Windows USB dongle information.
 
     """
-    """Detect USB dongles on Windows using WMI."""
     dongles = []
 
     try:
@@ -1123,10 +1121,9 @@ def _detect_linux_usb_dongles() -> list[dict[str, Any]]:
     """Detect USB dongles on Linux using lsusb.
 
     Returns:
-        List of dictionaries containing Linux USB dongle information
+        List of dictionaries containing Linux USB dongle information.
 
     """
-    """Detect USB dongles on Linux using lsusb."""
     dongles = []
 
     try:
@@ -1155,10 +1152,9 @@ def _detect_dongle_processes() -> list[dict[str, Any]]:
     """Detect dongle-related processes.
 
     Returns:
-        List of dictionaries containing detected dongle process information
+        List of dictionaries containing detected dongle process information.
 
     """
-    """Detect dongle-related processes."""
     processes: list[dict[str, Any]] = []
 
     if not PSUTIL_AVAILABLE or _psutil is None:
@@ -1209,10 +1205,9 @@ def _detect_dongle_drivers() -> list[dict[str, Any]]:
     """Detect dongle-related drivers.
 
     Returns:
-        List of dictionaries containing detected dongle driver information
+        List of dictionaries containing detected dongle driver information.
 
     """
-    """Detect dongle-related drivers."""
     drivers = []
 
     try:
@@ -1235,10 +1230,9 @@ def _detect_windows_dongle_drivers() -> list[dict[str, Any]]:
     """Detect dongle drivers on Windows.
 
     Returns:
-        List of dictionaries containing Windows dongle driver information
+        List of dictionaries containing Windows dongle driver information.
 
     """
-    """Detect dongle drivers on Windows."""
     drivers = []
 
     try:
@@ -1275,10 +1269,9 @@ def _detect_linux_dongle_drivers() -> list[dict[str, Any]]:
     """Detect dongle drivers on Linux.
 
     Returns:
-        List of dictionaries containing Linux dongle driver information
+        List of dictionaries containing Linux dongle driver information.
 
     """
-    """Detect dongle drivers on Linux."""
     drivers = []
 
     try:
@@ -1307,10 +1300,9 @@ def _detect_license_dongles() -> list[dict[str, Any]]:
     """Detect software-based license dongles.
 
     Returns:
-        List of dictionaries containing detected license file information
+        List of dictionaries containing detected license file information.
 
     """
-    """Detect software-based license dongles."""
     license_files = []
 
     try:
@@ -1378,10 +1370,9 @@ def _detect_network_dongles() -> list[dict[str, Any]]:
     """Detect network-based dongles.
 
     Returns:
-        List of dictionaries containing detected network dongle information
+        List of dictionaries containing detected network dongle information.
 
     """
-    """Detect network-based dongles."""
     network_dongles = []
 
     try:
@@ -2197,10 +2188,9 @@ def _find_ghidra_installation() -> str | None:
     """Find Ghidra installation path.
 
     Returns:
-        Ghidra installation path or None if not found
+        Ghidra installation path or None if not found.
 
     """
-    """Find Ghidra installation path."""
     # Try dynamic path discovery first
     try:
         from ..core.path_discovery import find_tool
@@ -2234,10 +2224,10 @@ def _is_license_check_pattern(cfg: dict[str, Any]) -> bool:
     associated with license verification routines.
 
     Args:
-        cfg: Control flow graph data dictionary
+        cfg: Control flow graph data dictionary.
 
     Returns:
-        bool: True if license check patterns are detected
+        True if license check patterns are detected.
 
     """
     try:
@@ -2357,13 +2347,12 @@ def _identify_license_related_calls(function_calls: list[str]) -> int:
     """Identify license-related function calls.
 
     Args:
-        function_calls: List of function call names
+        function_calls: List of function call names.
 
     Returns:
-        Number of license-related function calls identified
+        Number of license-related function calls identified.
 
     """
-    """Identify license-related function calls."""
     license_keywords = [
         "license",
         "serial",
@@ -2404,13 +2393,12 @@ def _count_license_strings(string_refs: list[str]) -> int:
     """Count license-related string references.
 
     Args:
-        string_refs: List of string references
+        string_refs: List of string references.
 
     Returns:
-        Number of license-related strings found
+        Number of license-related strings found.
 
     """
-    """Count license-related string references."""
     license_patterns = [
         "license",
         "trial",
@@ -2756,7 +2744,23 @@ def run_weak_crypto_detection(binary_path: str) -> dict[str, Any]:
 
 
 def run_ml_vulnerability_prediction(binary_path: str) -> dict[str, Any]:
-    """ML vulnerability prediction removed - using LLM-only approach."""
+    """Run ML vulnerability prediction using LLM-only approach.
+
+    Analyzes binary vulnerabilities using language model-based predictions
+    instead of traditional machine learning models.
+
+    Args:
+        binary_path: Path to the binary file to analyze.
+
+    Returns:
+        Dictionary containing vulnerability prediction results with keys:
+            - status: Operation status ("removed" for LLM-only approach)
+            - message: Status description
+            - predictions: List of predicted vulnerabilities
+            - confidence: Confidence score for predictions (0.0-1.0)
+            - top_vulnerabilities: Top ranked vulnerability findings
+
+    """
     return {
         "status": "removed",
         "message": "ML vulnerability prediction has been removed. Use LLM-based analysis instead.",

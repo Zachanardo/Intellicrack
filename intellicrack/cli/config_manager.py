@@ -53,13 +53,23 @@ class ConfigManager:
     """
 
     def __init__(self) -> None:
-        """Initialize configuration manager with central config delegation."""
+        """Initialize configuration manager with central config delegation.
+
+        Sets up the central configuration system and performs one-time migration
+        from legacy CLI configuration files if needed.
+        """
         self.central_config = IntellicrackConfig()
         self.config_file = Path.home() / ".intellicrack" / "config.json"
         self._migrate_if_needed()
 
     def _migrate_if_needed(self) -> None:
-        """One-time migration from old JSON file to central config."""
+        """Perform one-time migration from old JSON file to central config.
+
+        Reads the legacy CLI configuration file (~/.intellicrack/config.json) if it
+        exists and hasn't been migrated yet, then merges its contents into the
+        central configuration system. The old file is backed up after successful
+        migration.
+        """
         # Check if we need to migrate
         if not self.config_file.exists() or self.central_config.get("cli_configuration.migrated", False):
             return
@@ -116,12 +126,17 @@ class ConfigManager:
             # Continue without migration, use defaults
 
     def load_config(self) -> None:
-        """Load configuration - now a no-op since we use central config directly."""
-        # This method kept for backward compatibility
-        # Central config is already loaded in __init__
+        """Load configuration - now a no-op since we use central config directly.
+
+        This method is kept for backward compatibility. The central config is
+        already loaded in __init__.
+        """
 
     def save_config(self) -> None:
-        """Save configuration to central config immediately."""
+        """Save configuration to central config immediately.
+
+        Persists all CLI configuration changes to the central configuration file.
+        """
         self.central_config.save()
         logger.debug("CLI configuration saved to central config")
 
@@ -133,7 +148,7 @@ class ConfigManager:
             default: Default value if key not found
 
         Returns:
-            Configuration value or default
+            object: Configuration value or default if key not found.
 
         """
         # Prepend cli_configuration if not already there
@@ -148,7 +163,6 @@ class ConfigManager:
         Args:
             key: Configuration key (can use dot notation for nested values)
             value: Value to set
-
         """
         # Prepend cli_configuration if not already there
         if not key.startswith("cli_configuration."):
@@ -162,8 +176,7 @@ class ConfigManager:
         """List all CLI configuration settings.
 
         Returns:
-            Dictionary of all CLI configuration settings
-
+            dict[str, object]: All CLI configuration settings as a dictionary.
         """
         settings_raw: object = self.central_config.get("cli_configuration", {})
         if not isinstance(settings_raw, dict):
@@ -172,7 +185,14 @@ class ConfigManager:
 
 
 def main() -> int:
-    """Run configuration management CLI."""
+    """Run configuration management CLI.
+
+    Executes the CLI interface for managing Intellicrack configuration settings,
+    allowing users to get, set, or list configuration values.
+
+    Returns:
+        Exit code indicating success or failure (0 for success, 1 for error).
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description="Intellicrack Configuration Manager")

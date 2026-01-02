@@ -66,6 +66,7 @@ from intellicrack.utils.subprocess_security import secure_run
 
 from .base_tab import BaseTab
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -1038,7 +1039,13 @@ class AnalysisTab(BaseTab):
             self.sandbox_execution_cb.setChecked(bool(engines_cfg.get("sandbox", False)))
 
     def run_analysis(self) -> None:
-        """Run analysis based on current settings."""
+        """Run analysis based on current settings.
+
+        Executes the analysis profile selected in the UI on the currently
+        loaded binary, performing static analysis, dynamic monitoring, and
+        protection detection as configured.
+
+        """
         if not self.current_binary:
             # Try to get binary from app context
             app_ctx = self.app_context
@@ -1114,7 +1121,18 @@ class AnalysisTab(BaseTab):
             self.analysis_started.emit(profile.lower())
 
     def _run_static_analysis(self, task: object | None = None) -> dict[str, object]:
-        """Run the static analysis task."""
+        """Run the static analysis task.
+
+        Args:
+            task: Optional task object for background execution context.
+
+        Returns:
+            dict[str, object]: Dictionary containing analysis results with keys
+                like 'binary', 'file_name', 'disassembly', 'strings', 'imports',
+                'entropy', 'signatures', and 'crypto_keys' populated based on
+                enabled options.
+
+        """
         try:
             binary_path = self.current_file_path or ""
             results: dict[str, object] = {
@@ -1297,7 +1315,11 @@ class AnalysisTab(BaseTab):
             return {"error": str(e)}
 
     def start_static_analysis(self) -> None:
-        """Start static analysis with selected options."""
+        """Start static analysis with selected options.
+
+        Submits a static analysis task to the task manager for background execution.
+
+        """
         self.log_activity("Starting static analysis...")
         self.results_display.append("=== STATIC ANALYSIS ===\n")
 
@@ -1316,7 +1338,12 @@ class AnalysisTab(BaseTab):
             self.results_display.append("Static analysis components not available\n")
 
     def start_dynamic_monitoring(self) -> None:
-        """Start dynamic monitoring with selected options."""
+        """Start dynamic monitoring with selected options.
+
+        Monitors API calls, file operations, memory access, and network traffic
+        using the selected hooking framework.
+
+        """
         self.log_activity("Starting dynamic monitoring...")
         self.results_display.append("\n=== DYNAMIC ANALYSIS ===\n")
         self.results_display.append(f"Framework: {self.hooking_framework_combo.currentText()}\n")
@@ -1417,7 +1444,12 @@ class AnalysisTab(BaseTab):
             self.results_display.append(f"Dynamic analysis error: {e!s}\n")
 
     def detect_protections(self) -> None:
-        """Detect binary protections."""
+        """Detect binary protections.
+
+        Scans the binary for known packers, obfuscation, anti-debug, VM protection,
+        and license checks based on selected detection options.
+
+        """
         self.log_activity("Detecting protections...")
         self.results_display.append("\n=== PROTECTION DETECTION ===\n")
 
@@ -1560,12 +1592,20 @@ class AnalysisTab(BaseTab):
         self._analysis_completed(True, "Analysis completed")
 
     def stop_analysis(self) -> None:
-        """Stop current analysis."""
+        """Stop current analysis.
+
+        Terminates any running analysis operations and updates UI state.
+
+        """
         self.log_activity("Analysis stopped by user")
         self._analysis_completed(False, "Analysis stopped by user")
 
     def clear_results(self) -> None:
-        """Clear analysis results."""
+        """Clear analysis results.
+
+        Clears the results display and resets analysis_results dictionary.
+
+        """
         self.results_display.clear()
         self.results_display.setText("Analysis results cleared.")
         self.analysis_results = {}
@@ -1592,7 +1632,12 @@ class AnalysisTab(BaseTab):
             self.analysis_status.setText(f"FAIL {message}")
 
     def open_hex_viewer(self) -> None:
-        """Open hex viewer for current binary."""
+        """Open hex viewer for current binary.
+
+        Opens the hex viewer dialog for the currently loaded binary file,
+        allowing inspection of raw binary data.
+
+        """
         if not self.current_binary:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
@@ -1679,7 +1724,12 @@ class AnalysisTab(BaseTab):
         return f"{size_float:.1f} TB"
 
     def embed_hex_viewer(self) -> None:
-        """Embed hex viewer in the results panel."""
+        """Embed hex viewer in the results panel.
+
+        Embeds a hex viewer widget directly into the results panel for
+        inline inspection of the loaded binary.
+
+        """
         if not self.current_binary:
             # Silently return if no binary is loaded (automatic call from signal)
             return
@@ -1727,7 +1777,12 @@ class AnalysisTab(BaseTab):
                 hex_layout.addWidget(error_label)
 
     def view_disassembly(self) -> None:
-        """View disassembly in separate window with real disassembly functionality."""
+        """View disassembly in separate window with real disassembly functionality.
+
+        Generates and displays disassembly of the binary using Capstone or fallback
+        methods, showing x86/x64 assembly instructions.
+
+        """
         if not self.current_binary:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
@@ -1899,7 +1954,13 @@ class AnalysisTab(BaseTab):
                 QMessageBox.critical(self, "Save Error", f"Failed to save disassembly: {e!s}")
 
     def attach_to_process(self) -> None:
-        """Attach to running process for license analysis and cracking."""
+        """Attach to running process for license analysis and cracking.
+
+        Prompts user to enter a process ID or name and attaches the license
+        analyzer to the specified process to monitor and analyze license
+        validation routines and licensing checks in the running application.
+
+        """
         pid_text, ok = QInputDialog.getText(
             self,
             "Attach to Process",
@@ -1976,7 +2037,13 @@ class AnalysisTab(BaseTab):
                 )
 
     def take_system_snapshot(self) -> None:
-        """Take a comprehensive license-focused system snapshot for differential analysis."""
+        """Take a comprehensive license-focused system snapshot.
+
+        Captures system state including processes, registry keys, files, services,
+        network connections, certificates, and drivers for differential analysis
+        of licensing protection mechanisms and license validation infrastructure.
+
+        """
         import time
 
         from PyQt6.QtCore import QThread, pyqtSignal
@@ -2017,6 +2084,13 @@ class AnalysisTab(BaseTab):
                     self.name = name
 
                 def run(self) -> None:
+                    """Execute snapshot capture in background thread.
+
+                    Captures system state by calling the snapshot object's
+                    capture_full_snapshot method and emits signals for progress
+                    updates and completion status.
+
+                    """
                     try:
                         self.progress.emit(10, "Capturing system info...")
                         snapshot_result = (
@@ -2132,7 +2206,12 @@ class AnalysisTab(BaseTab):
             self.snapshot_thread.start()
 
     def update_entropy_visualization(self) -> None:
-        """Update entropy visualization with current file data."""
+        """Update entropy visualization with current file data.
+
+        Analyzes the entropy of the loaded binary file and updates the
+        visualization, identifying suspicious high-entropy regions.
+
+        """
         if not self.current_file_path:
             return
 
@@ -2152,7 +2231,12 @@ class AnalysisTab(BaseTab):
             self.log_activity(f"Failed to update entropy visualization: {e}")
 
     def update_structure_visualization(self) -> None:
-        """Update structure visualization with current file data."""
+        """Update structure visualization with current file data.
+
+        Parses the binary format (PE or ELF) and displays its structure including
+        sections, imports, exports, and headers in the visualization widget.
+
+        """
         if not self.current_file_path:
             return
 
@@ -2258,13 +2342,22 @@ class AnalysisTab(BaseTab):
             self.log_activity(f"Failed to update structure visualization: {e}")
 
     def clear_analysis_cache(self) -> None:
-        """Clear analysis cache."""
+        """Clear analysis cache.
+
+        Clears the cached analysis results and previous data.
+
+        """
         self.log_activity("Clearing analysis cache...")
         self.analysis_results = {}
         QMessageBox.information(self, "Cache Cleared", "Analysis cache has been cleared.")
 
     def export_analysis_results(self) -> None:
-        """Export analysis results to file."""
+        """Export analysis results to file.
+
+        Exports the current analysis results to a JSON or text file for
+        external review and documentation.
+
+        """
         if not self.analysis_results:
             QMessageBox.warning(self, "No Results", "No analysis results to export.")
             return
@@ -2351,7 +2444,12 @@ class AnalysisTab(BaseTab):
         return widget
 
     def update_fallback_entropy_visualization(self) -> None:
-        """Update fallback entropy visualization with analysis results."""
+        """Update fallback entropy visualization with analysis results.
+
+        Calculates Shannon entropy for the binary file in blocks and displays
+        high and low entropy regions for protection analysis.
+
+        """
         if not hasattr(self, "current_file_path") or not self.current_file_path:
             self.fallback_entropy_results.setPlainText("No binary file loaded. Please load a binary first.")
             return
@@ -2426,7 +2524,12 @@ class AnalysisTab(BaseTab):
             self.log_activity(error_msg)
 
     def analyze_binary_entropy(self) -> None:
-        """Perform detailed binary entropy analysis for license protection detection."""
+        """Perform detailed binary entropy analysis for license protection detection.
+
+        Analyzes entropy at multiple block sizes to identify potential encryption,
+        packing, and protection mechanisms in the binary.
+
+        """
         if not hasattr(self, "current_file_path") or not self.current_file_path:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
@@ -2509,7 +2612,12 @@ class AnalysisTab(BaseTab):
             self.log_activity(error_msg)
 
     def analyze_binary_structure(self) -> None:
-        """Perform detailed binary structure analysis for license protection detection."""
+        """Perform detailed binary structure analysis for license protection detection.
+
+        Parses and analyzes the binary's internal structure including headers,
+        sections, imports, exports, and resources for licensing information.
+
+        """
         if not hasattr(self, "current_file_path") or not self.current_file_path:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
@@ -2565,7 +2673,12 @@ class AnalysisTab(BaseTab):
             self.log_activity(error_msg)
 
     def export_structure_analysis(self) -> None:
-        """Export structure analysis results to file."""
+        """Export structure analysis results to file.
+
+        Exports the binary structure analysis results to a text file for
+        documentation and external review.
+
+        """
         if not hasattr(self, "fallback_structure_results"):
             QMessageBox.warning(self, "No Analysis", "No structure analysis results to export.")
             return
@@ -2591,7 +2704,12 @@ class AnalysisTab(BaseTab):
             QMessageBox.critical(self, "Export Failed", error_msg)
 
     def detect_license_protection(self) -> None:
-        """Detect license protection mechanisms in the binary."""
+        """Detect license protection mechanisms in the binary.
+
+        Scans the binary for common license protection patterns, anti-debugging,
+        anti-tampering, and hardware verification mechanisms.
+
+        """
         if not hasattr(self, "current_file_path") or not self.current_file_path:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
@@ -2849,7 +2967,12 @@ class AnalysisTab(BaseTab):
         self.run_analysis_btn.setEnabled(True)
 
     def scan_for_protections(self) -> None:
-        """Scan binary for protection schemes and license mechanisms."""
+        """Scan binary for protection schemes and license mechanisms.
+
+        Performs a comprehensive scan of the binary for known protection signatures,
+        packers, obfuscation, and licensing protection techniques.
+
+        """
         if not self.current_file_path:
             return
 
@@ -2955,7 +3078,12 @@ class AnalysisTab(BaseTab):
             self.protection_display.append(f"Error: {e!s}")
 
     def detect_license_checks(self) -> None:
-        """Detect license validation checks in the binary."""
+        """Detect license validation checks in the binary.
+
+        Scans the binary for patterns indicative of license validation including
+        serial checks, trial periods, HWID verification, and online activation.
+
+        """
         if not self.current_file_path:
             return
 
@@ -3087,7 +3215,12 @@ class AnalysisTab(BaseTab):
             self.license_display.append(f"Error: {e!s}")
 
     def generate_bypass_strategy(self) -> None:
-        """Generate bypass strategies based on detected protections."""
+        """Generate bypass strategies based on detected protections.
+
+        Generates and displays bypass strategies for the detected license protection
+        mechanisms based on selected bypass methods.
+
+        """
         self.log_activity("Generating bypass strategies...")
         self.bypass_display.clear()
 
@@ -3190,7 +3323,12 @@ class AnalysisTab(BaseTab):
         self.log_activity(f"Generated {len(strategies)} bypass strategies")
 
     def execute_subscription_bypass(self) -> None:
-        """Execute subscription validation bypass for detected scheme."""
+        """Execute subscription validation bypass for detected scheme.
+
+        Activates the subscription bypass for cloud-based, server, token-based,
+        or OAuth-based subscription validation mechanisms.
+
+        """
         if not self.current_binary:
             QMessageBox.warning(self, "Warning", "No binary loaded for bypass")
             return
@@ -3260,7 +3398,12 @@ class AnalysisTab(BaseTab):
             self.log_activity(f"Subscription bypass error: {e!s}")
 
     def stop_subscription_bypass(self) -> None:
-        """Stop active subscription bypass."""
+        """Stop active subscription bypass.
+
+        Deactivates the active subscription bypass and stops any local servers
+        or hooks.
+
+        """
         try:
             from intellicrack.core.subscription_validation_bypass import SubscriptionValidationBypass
 
@@ -3281,7 +3424,12 @@ class AnalysisTab(BaseTab):
             self.log_activity(f"Error stopping subscription bypass: {e!s}")
 
     def start_license_monitoring(self) -> None:
-        """Start real-time license monitoring."""
+        """Start real-time license monitoring.
+
+        Initiates real-time monitoring of license-related activity including API
+        calls, registry access, file operations, network traffic, and memory patterns.
+
+        """
         self.log_activity("Starting license monitoring...")
         self.monitor_log.clear()
         self.monitor_log.append("=" * 60)
@@ -3363,7 +3511,12 @@ class AnalysisTab(BaseTab):
             self.monitoring_session = None
 
     def stop_license_monitoring(self) -> None:
-        """Stop license monitoring."""
+        """Stop license monitoring.
+
+        Terminates active license monitoring and displays a summary of all
+        detected license activity during the monitoring session.
+
+        """
         self.log_activity("Stopping license monitoring...")
 
         if self.monitoring_session:
@@ -3502,7 +3655,12 @@ class AnalysisTab(BaseTab):
         return [0x401500, 0x402800, 0x404000]
 
     def _detect_license_port(self) -> int:
-        """Detect network port used for license validation."""
+        """Detect network port used for license validation.
+
+        Returns:
+            Default or detected port number used for license server communication.
+
+        """
         # This would analyze network code to find license server port
         # Common license server ports
         return 27000  # FlexLM default port
@@ -3762,7 +3920,15 @@ class AnalysisTab(BaseTab):
                 QMessageBox.critical(self, "Import Error", f"Failed to import snapshot:\n{e!s}")
 
     def _read_file_content(self, file_path: str) -> bytes:
-        """Read file content using a context manager."""
+        """Read file content using a context manager.
+
+        Args:
+            file_path: Path to the file to read.
+
+        Returns:
+            Binary content of the file.
+
+        """
         with open(file_path, "rb") as f:
             return f.read()
 

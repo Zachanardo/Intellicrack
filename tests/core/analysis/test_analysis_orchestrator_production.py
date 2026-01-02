@@ -8,10 +8,8 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-import tempfile
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, Mock, patch
+from typing import Any, Dict, List, Optional
 
 import pytest
 
@@ -21,6 +19,93 @@ from intellicrack.core.analysis.analysis_orchestrator import (
     OrchestrationResult,
     run_selected_analysis,
 )
+
+
+class FakeEntropyAnalyzer:
+    """Test double for EntropyAnalyzer that can simulate failures."""
+
+    def __init__(self, should_fail: bool = False) -> None:
+        self.should_fail = should_fail
+        self.calculate_entropy_called = False
+
+    def calculate_entropy(self, binary_data: bytes, chunk_size: int = 256) -> Dict[str, Any]:
+        """Simulate entropy calculation with optional failure."""
+        self.calculate_entropy_called = True
+        if self.should_fail:
+            raise Exception("Entropy error")
+
+        chunks: List[Dict[str, Any]] = []
+        for i in range(0, len(binary_data), chunk_size):
+            chunk = binary_data[i:i+chunk_size]
+            if len(chunk) > 0:
+                chunks.append({
+                    "offset": i,
+                    "entropy": 3.5,
+                    "suspicious": False
+                })
+
+        return {
+            "overall_entropy": 3.5,
+            "chunks": chunks
+        }
+
+
+class FakeQEMUVM:
+    """Test double for QEMU VM instance."""
+
+    def __init__(self) -> None:
+        self.vm_running = False
+        self.is_vm_running_called = False
+        self.start_vm_called = False
+
+    def is_vm_running(self) -> bool:
+        """Check if VM is running."""
+        self.is_vm_running_called = True
+        return self.vm_running
+
+    def start_vm(self) -> bool:
+        """Start the VM."""
+        self.start_vm_called = True
+        self.vm_running = True
+        return True
+
+
+class FakeQEMUManager:
+    """Test double for QEMUManager."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.vm = FakeQEMUVM()
+
+    def is_vm_running(self) -> bool:
+        """Delegate to VM instance."""
+        return self.vm.is_vm_running()
+
+    def start_vm(self) -> bool:
+        """Delegate to VM instance."""
+        return self.vm.start_vm()
+
+
+class FakeGhidraScript:
+    """Test double for Ghidra script."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+
+class FakeGhidraScriptManager:
+    """Test double for GhidraScriptManager."""
+
+    def __init__(self, scripts: Optional[List[FakeGhidraScript]] = None) -> None:
+        self.scripts = scripts or []
+        self.discover_scripts_called = False
+
+    def discover_scripts(self) -> None:
+        """Simulate script discovery."""
+        self.discover_scripts_called = True
+
+    def list_scripts(self) -> List[FakeGhidraScript]:
+        """Return configured scripts."""
+        return self.scripts
 
 
 @pytest.fixture
@@ -208,23 +293,26 @@ class TestAnalysisOrchestrator:
         structure_data = result.results["structure_analysis"]
         assert structure_data is not None
 
-    def test_phase_error_handling(self, orchestrator: AnalysisOrchestrator, temp_binary_file: Path) -> None:
+    def test_phase_error_handling(self, orchestrator: AnalysisOrchestrator, temp_binary_file: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Orchestrator continues after phase failures."""
-        with patch.object(orchestrator.entropy_analyzer, 'calculate_entropy', side_effect=Exception("Entropy error")):
-            result = orchestrator.analyze_binary(
-                str(temp_binary_file),
-                [AnalysisPhase.PREPARATION, AnalysisPhase.ENTROPY_ANALYSIS, AnalysisPhase.STRUCTURE_ANALYSIS]
-            )
+        fake_analyzer = FakeEntropyAnalyzer(should_fail=True)
+        monkeypatch.setattr(orchestrator, "entropy_analyzer", fake_analyzer)
+
+        result = orchestrator.analyze_binary(
+            str(temp_binary_file),
+            [AnalysisPhase.PREPARATION, AnalysisPhase.ENTROPY_ANALYSIS, AnalysisPhase.STRUCTURE_ANALYSIS]
+        )
 
         assert AnalysisPhase.PREPARATION in result.phases_completed
         assert AnalysisPhase.STRUCTURE_ANALYSIS in result.phases_completed
         assert len(result.errors) > 0
+        assert fake_analyzer.calculate_entropy_called
 
     def test_signal_emission(self, orchestrator: AnalysisOrchestrator, temp_binary_file: Path) -> None:
         """Orchestrator emits correct signals during analysis."""
-        phase_started_calls = []
-        phase_completed_calls = []
-        progress_calls = []
+        phase_started_calls: List[str] = []
+        phase_completed_calls: List[str] = []
+        progress_calls: List[tuple[int, int]] = []
 
         orchestrator.phase_started.connect(lambda p: phase_started_calls.append(p))
         orchestrator.phase_completed.connect(lambda p, r: phase_completed_calls.append(p))
@@ -271,31 +359,30 @@ class TestAnalysisOrchestrator:
         high_entropy_finding = any("entropy" in finding.lower() for finding in findings)
         assert high_entropy_finding
 
-    @patch('intellicrack.core.analysis.analysis_orchestrator.QEMUManager')
-    def test_ghidra_analysis_phase_vm_initialization(self, mock_qemu: Mock, orchestrator: AnalysisOrchestrator, temp_binary_file: Path) -> None:
+    def test_ghidra_analysis_phase_vm_initialization(self, orchestrator: AnalysisOrchestrator, temp_binary_file: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Ghidra analysis initializes QEMU VM correctly."""
-        mock_vm = MagicMock()
-        mock_vm.is_vm_running.return_value = False
-        mock_vm.start_vm.return_value = True
-        mock_qemu.return_value = mock_vm
+        import intellicrack.core.analysis.analysis_orchestrator as orchestrator_module
+
+        fake_qemu = FakeQEMUManager()
+        monkeypatch.setattr(orchestrator_module, "QEMUManager", lambda *args, **kwargs: fake_qemu)
 
         result = orchestrator.analyze_binary(str(temp_binary_file), [AnalysisPhase.GHIDRA_ANALYSIS])
 
         ghidra_data = result.results["ghidra_analysis"]
         assert ghidra_data is not None
         assert "ghidra_executed" in ghidra_data
+        assert fake_qemu.vm.is_vm_running_called or fake_qemu.vm.start_vm_called
 
-    def test_select_ghidra_script_pe_binary(self, orchestrator: AnalysisOrchestrator, temp_binary_file: Path) -> None:
+    def test_select_ghidra_script_pe_binary(self, orchestrator: AnalysisOrchestrator, temp_binary_file: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """_select_ghidra_script chooses appropriate script for PE."""
-        with patch.object(orchestrator.ghidra_script_manager, 'discover_scripts'):
-            mock_script = MagicMock()
-            mock_script.name = "LicenseAnalysis"
-            orchestrator.ghidra_script_manager.list_scripts = MagicMock(return_value=[mock_script])
+        fake_script = FakeGhidraScript("LicenseAnalysis")
+        fake_manager = FakeGhidraScriptManager(scripts=[fake_script])
+        monkeypatch.setattr(orchestrator, "ghidra_script_manager", fake_manager)
 
-            script = orchestrator._select_ghidra_script(str(temp_binary_file))
+        script = orchestrator._select_ghidra_script(str(temp_binary_file))
 
-            assert script is not None
-            assert "License" in script.name
+        assert script is not None
+        assert "License" in script.name
 
     def test_parse_ghidra_output(self, orchestrator: AnalysisOrchestrator) -> None:
         """_parse_ghidra_output extracts license check patterns."""

@@ -8,22 +8,32 @@ from typing import TYPE_CHECKING, Any
 
 from intellicrack.utils.logger import logger
 
+from .cloud_license_hooker import CloudLicenseResponseGenerator
+from .protocol_fingerprinter import ProtocolFingerprinter as ProtocolFingerprinterType
+from .ssl_interceptor import SSLTLSInterceptor
+from .traffic_analyzer import NetworkTrafficAnalyzer
+
 
 if TYPE_CHECKING:
     from intellicrack.plugins.custom_modules.license_server_emulator import LicenseServerEmulator as NetworkLicenseServerEmulator
 
-    from .cloud_license_hooker import CloudLicenseResponseGenerator
-    from .protocol_fingerprinter import ProtocolFingerprinter as ProtocolFingerprinterType
-    from .ssl_interceptor import SSLTLSInterceptor
-    from .traffic_analyzer import NetworkTrafficAnalyzer
 
 logger.debug("Network core module loaded")
 
-TrafficAnalyzer: type[Any] | None
-SSLInterceptor: type[Any] | None
-ProtocolFingerprinter: type[Any] | None
-LicenseServerEmulator: type[Any] | None
-CloudLicenseHooker: type[Any] | None
+TrafficAnalyzer: type[Any] | None = None
+"""Network traffic analyzer for capturing and analyzing network communications."""
+
+SSLInterceptor: type[Any] | None = None
+"""SSL/TLS interceptor for analyzing and intercepting encrypted network traffic."""
+
+ProtocolFingerprinter: type[Any] | None = None
+"""Protocol fingerprinter for identifying network protocol implementations."""
+
+LicenseServerEmulator: type[Any] | None = None
+"""License server emulator for generating and validating license server responses."""
+
+CloudLicenseHooker: type[Any] | None = None
+"""Cloud license hooker for intercepting and modifying cloud-based license validation."""
 
 try:
     from .traffic_analyzer import NetworkTrafficAnalyzer as TrafficAnalyzer
@@ -62,5 +72,5 @@ __all__ = [
     "LicenseServerEmulator",
     "ProtocolFingerprinter",
     "SSLInterceptor",
-    "TrafficAnalyzer",
+    "TrafficAnalyzer", "CloudLicenseResponseGenerator", "ProtocolFingerprinterType", "SSLTLSInterceptor", "NetworkTrafficAnalyzer",
 ]

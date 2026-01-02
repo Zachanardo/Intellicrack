@@ -35,7 +35,18 @@ class GPUAutoLoader:
         self._device_string: str | None = None
 
     def setup(self) -> bool:
-        """Run setup function that tries different GPU configurations."""
+        """Initialize GPU acceleration with automatic backend detection.
+
+        Attempts to configure GPU acceleration by trying multiple backends in order:
+        Intel XPU, NVIDIA CUDA, AMD ROCm, DirectML, and CPU fallback. Respects
+        environment variables to skip specific backends. Logs detailed information
+        about the selected GPU device and its capabilities.
+
+        Returns:
+            True if GPU setup succeeded with a valid backend, False if all
+                backends failed (CPU fallback always succeeds).
+
+        """
         # Check if GPU is disabled via environment variable
         if os.environ.get("INTELLICRACK_NO_GPU", "").lower() in ("1", "true", "yes"):
             logger.info("GPU disabled via environment variable")
@@ -88,7 +99,18 @@ class GPUAutoLoader:
         return False
 
     def _try_intel_xpu(self) -> bool:
-        """Try to use Intel Arc/XPU through native PyTorch."""
+        """Detect and configure Intel Arc/XPU GPU acceleration.
+
+        Attempts to import PyTorch with Intel XPU support and verifies device
+        availability. Queries device properties including count, name, memory,
+        and driver version. Handles pybind11 GIL issues and sets environment
+        variables to prevent future failed attempts.
+
+        Returns:
+            True if Intel XPU is available and successfully configured,
+                False if XPU is unavailable, import fails, or GIL issues occur.
+
+        """
         try:
             # Use thread-safe PyTorch import
             from .torch_gil_safety import safe_torch_import
@@ -149,7 +171,17 @@ class GPUAutoLoader:
             return False
 
     def _try_nvidia_cuda(self) -> bool:
-        """Try to use NVIDIA CUDA."""
+        """Detect and configure NVIDIA CUDA GPU acceleration.
+
+        Attempts to import PyTorch with CUDA support and verifies GPU availability.
+        Queries CUDA device properties including device count, device names, total
+        memory in GB, and compute capabilities. Stores CUDA version information.
+
+        Returns:
+            True if NVIDIA CUDA is available and successfully configured,
+                False if CUDA is unavailable or import fails.
+
+        """
         try:
             # Use thread-safe PyTorch import
             from .torch_gil_safety import safe_torch_import
@@ -190,7 +222,17 @@ class GPUAutoLoader:
             return False
 
     def _try_amd_rocm(self) -> bool:
-        """Try to use AMD ROCm."""
+        """Detect and configure AMD ROCm GPU acceleration.
+
+        Attempts to import PyTorch with AMD ROCm (HIP) support and verifies GPU
+        availability. Queries device properties including device count, device names,
+        total memory in GB, and HIP version information.
+
+        Returns:
+            True if AMD ROCm is available and successfully configured,
+                False if ROCm is unavailable or import fails.
+
+        """
         try:
             # Use thread-safe PyTorch import
             from .torch_gil_safety import safe_torch_import
@@ -233,7 +275,17 @@ class GPUAutoLoader:
             return False
 
     def _try_directml(self) -> bool:
-        """Try to use DirectML (works with Intel Arc on Windows)."""
+        """Configure DirectML GPU acceleration for Windows platforms.
+
+        Enables DirectML-based GPU acceleration, which provides Windows-native
+        compute acceleration for Intel Arc and other GPU devices. DirectML operations
+        are transparently accelerated through PyTorch's CPU operations.
+
+        Returns:
+            True if DirectML is successfully configured (Windows only),
+                False if configuration fails.
+
+        """
         try:
             # Use thread-safe PyTorch import
             from .torch_gil_safety import safe_torch_import
@@ -261,7 +313,17 @@ class GPUAutoLoader:
             return False
 
     def _try_cpu_fallback(self) -> bool:
-        """Fallback to CPU."""
+        """Configure CPU-based processing as final fallback option.
+
+        Configures PyTorch to use CPU for all tensor operations. This is the
+        final fallback when no GPU acceleration is available. If PyTorch cannot
+        be imported, operates in fallback mode without torch module.
+
+        Returns:
+            True if CPU configuration is successfully initialized (always
+                succeeds), False only on critical errors.
+
+        """
         try:
             # Use thread-safe PyTorch import
             from .torch_gil_safety import safe_torch_import
@@ -289,25 +351,84 @@ class GPUAutoLoader:
             return False
 
     def get_device(self) -> Any:
-        """Get the configured device object."""
+        """Retrieve the PyTorch device object for the active backend.
+
+        Returns the device object representing the selected GPU backend or CPU.
+        This device object can be used with .to() methods to move tensors and
+        models to the appropriate compute device.
+
+        Returns:
+            The PyTorch device object (torch.device) for the configured backend,
+                or None if PyTorch is not available.
+
+        """
         return self._device
 
     def get_torch(self) -> Any:
-        """Get the torch module if available."""
+        """Access the PyTorch module for direct tensor operations.
+
+        Returns the imported torch module for performing tensor computations,
+        neural network operations, and direct GPU device management. Returns None
+        if PyTorch was not successfully imported.
+
+        Returns:
+            The torch module (PyTorch library) if successfully loaded, or None
+                if PyTorch is not available in the environment.
+
+        """
         return self._torch
 
     def to_device(self, tensor_or_model: Any) -> Any:
-        """Move a tensor or model to the configured device."""
+        """Move a tensor or model to the configured compute device.
+
+        Transfers a PyTorch tensor or neural network model to the currently
+        configured device (GPU or CPU). If no device is configured or the object
+        lacks a .to() method, returns the object unchanged.
+
+        Args:
+            tensor_or_model: The PyTorch tensor or neural network model to
+                transfer to the configured device.
+
+        Returns:
+            The tensor or model transferred to the configured device, or the
+                original object if device configuration is unavailable.
+
+        """
         if self._device and hasattr(tensor_or_model, "to"):
             return tensor_or_model.to(self._device)
         return tensor_or_model
 
     def get_device_string(self) -> str:
-        """Get device string for torch operations."""
+        """Get the device string identifier for PyTorch operations.
+
+        Returns a string representation of the configured device that can be used
+        to specify device placement in PyTorch operations and model transfers.
+        Defaults to 'cpu' if no device has been configured.
+
+        Returns:
+            The device string identifier such as 'cuda', 'xpu', 'hip', or 'cpu',
+                suitable for use with torch.device() constructor calls.
+
+        """
         return self._device_string or "cpu"
 
     def optimize_model(self, model: Any) -> Any:
-        """Optimize model for the current backend."""
+        """Optimize a neural network model for the active GPU backend.
+
+        Applies backend-specific optimizations such as PyTorch compilation for
+        Intel XPU to improve inference and training performance. Falls back to
+        returning the original model if optimizations are not available or supported
+        by the current backend.
+
+        Args:
+            model: The PyTorch neural network model to optimize for the
+                configured GPU backend.
+
+        Returns:
+            The optimized model with backend-specific compilation applied, or
+                the original unmodified model if optimization is unavailable.
+
+        """
         if self.gpu_type == "intel_xpu" and self._torch:
             logger.info("Optimizing model with PyTorch compilation")
             try:
@@ -318,7 +439,19 @@ class GPUAutoLoader:
         return model
 
     def get_memory_info(self) -> dict[str, object]:
-        """Get GPU memory information."""
+        """Retrieve memory usage statistics for the active GPU backend.
+
+        Queries the current GPU device to obtain memory allocation statistics.
+        Provides allocated memory, reserved memory, and free memory values in
+        gigabytes. Returns empty dictionary if no GPU is available or memory
+        queries fail.
+
+        Returns:
+            Dictionary mapping memory metric names to formatted string values
+                (e.g., 'allocated', 'reserved', 'free') with memory sizes in GB,
+                or empty dictionary if GPU is unavailable or queries fail.
+
+        """
         if not self.gpu_available or not self._torch:
             return {}
 
@@ -351,7 +484,11 @@ class GPUAutoLoader:
         return {}
 
     def synchronize(self) -> None:
-        """Synchronize GPU operations."""
+        """Synchronize pending GPU operations and ensure completion.
+
+        Blocks execution until all GPU kernel operations complete. Necessary for
+        accurate timing measurements and ensuring GPU state consistency before
+        host-device synchronization points."""
         if not self.gpu_available or not self._torch:
             return
 
@@ -373,12 +510,32 @@ gpu_autoloader = GPUAutoLoader()
 
 
 def get_device() -> Any:
-    """Get the configured GPU device."""
+    """Retrieve the PyTorch device object from the global GPU autoloader.
+
+    Accesses the configured GPU device from the module-level gpu_autoloader
+    instance, returning the PyTorch device object for the active backend (GPU
+    or CPU).
+
+    Returns:
+        The PyTorch device object for the active backend, or None if PyTorch
+            is not available.
+
+    """
     return gpu_autoloader.get_device()
 
 
 def get_gpu_info() -> dict[str, object]:
-    """Get GPU information."""
+    """Retrieve comprehensive GPU configuration and status information.
+
+    Collects current GPU backend information from the global gpu_autoloader
+    instance including availability status, backend type, device string, device
+    properties, and memory statistics.
+
+    Returns:
+        Dictionary with keys: 'available' (bool), 'type' (str), 'device' (str),
+            'info' (dict), 'memory' (dict) containing all GPU status information.
+
+    """
     return {
         "available": gpu_autoloader.gpu_available,
         "type": gpu_autoloader.gpu_type,
@@ -389,20 +546,62 @@ def get_gpu_info() -> dict[str, object]:
 
 
 def to_device(tensor_or_model: Any) -> Any:
-    """Move tensor or model to GPU."""
+    """Transfer a tensor or model to the configured GPU device.
+
+    Uses the global gpu_autoloader instance to move PyTorch tensors and neural
+    network models to the active GPU backend (or CPU fallback). Provides a
+    convenient module-level interface for device transfer operations.
+
+    Args:
+        tensor_or_model: The PyTorch tensor or neural network model to
+            transfer to the configured device.
+
+    Returns:
+        The tensor or model on the configured device, or unchanged if device
+            is unavailable or the object lacks a .to() method.
+
+    """
     return gpu_autoloader.to_device(tensor_or_model)
 
 
 def optimize_for_gpu(model: Any) -> Any:
-    """Optimize model for current GPU backend."""
+    """Apply backend-specific optimizations to a neural network model.
+
+    Uses the global gpu_autoloader instance to optimize models for the active
+    GPU backend. Applies backend-specific compilation and acceleration techniques
+    to improve model inference and training performance.
+
+    Args:
+        model: The PyTorch neural network model to optimize for the active
+            GPU backend.
+
+    Returns:
+        The optimized model with backend-specific acceleration applied, or
+            the original model if optimization is unavailable for the current
+            backend.
+
+    """
     return gpu_autoloader.optimize_model(model)
 
 
 def detect_gpu_frameworks() -> dict[str, object]:
-    """Detect available GPU frameworks on the system.
+    """Scan the system and detect all available GPU acceleration frameworks.
+
+    Probes the system for installed GPU frameworks including NVIDIA CUDA, AMD ROCm,
+    Intel XPU, DirectML, OpenCL, Vulkan, and Metal. Queries device counts, device
+    names, memory capacities, and version information for each available framework.
+    Handles missing executables and import errors gracefully.
 
     Returns:
-        Dictionary containing framework availability and information
+        Dictionary mapping framework names to availability flags and configuration.
+            Keys include: 'cuda', 'cuda_version', 'rocm', 'rocm_version', 'opencl',
+            'opencl_version', 'directml', 'intel_xpu', 'xpu_version', 'vulkan',
+            'metal', 'available_frameworks' (list), 'gpu_devices' (list),
+            'gpu_count' (int), 'primary_framework' (str).
+
+    Raises:
+        FileNotFoundError: If rocm-smi or vulkaninfo executables are required
+            but not found in system PATH during framework detection.
 
     """
     frameworks: dict[str, object] = {

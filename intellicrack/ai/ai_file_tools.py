@@ -22,9 +22,21 @@ import fnmatch
 import logging
 import os
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any, Protocol, TypedDict, runtime_checkable
 
-from ..handlers.pyqt6_handler import QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout
+from ..handlers.pyqt6_handler import QDialog, QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout
+
+
+@runtime_checkable
+class ApprovalDialogProtocol(Protocol):
+    """Protocol defining the interface for approval dialogs."""
+
+    operation_type: str
+    details: str
+
+    def exec(self) -> int:
+        """Execute the dialog and return result code."""
+        ...
 
 
 logger = logging.getLogger(__name__)
@@ -122,10 +134,15 @@ class _ConsoleApprovalDialog:
                 return 0
 
 
+_GUIDialogClass: type[ApprovalDialogProtocol] | None = None
+
 if QDialog is not None:
 
-    class FileApprovalDialog(QDialog):
+    class _FileApprovalDialogGUI(QDialog):
         """Dialog for requesting user approval for AI file operations."""
+
+        operation_type: str
+        details: str
 
         def __init__(self, operation_type: str, details: str, parent: Any = None) -> None:
             """Initialize file operation confirmation dialog.
@@ -137,6 +154,8 @@ if QDialog is not None:
 
             """
             super().__init__(parent)
+            self.operation_type = operation_type
+            self.details = details
             self.setWindowTitle(f"AI File {operation_type} Request")
             self.setMinimumSize(600, 400)
 
@@ -152,7 +171,7 @@ if QDialog is not None:
             details_text.setMaximumHeight(200)
             layout.addWidget(details_text)
 
-            warning = QLabel("WARNING️ Only approve if you trust the AI's analysis purpose.")
+            warning = QLabel("WARNING Only approve if you trust the AI's analysis purpose.")
             warning.setStyleSheet("color: orange; font-weight: bold;")
             layout.addWidget(warning)
 
@@ -172,8 +191,12 @@ if QDialog is not None:
             layout.addLayout(button_layout)
             self.setLayout(layout)
 
-else:
-    FileApprovalDialog = _ConsoleApprovalDialog  # type: ignore[unreachable, misc]
+    _GUIDialogClass = _FileApprovalDialogGUI
+
+
+FileApprovalDialogClass: type[ApprovalDialogProtocol] = (
+    _GUIDialogClass if _GUIDialogClass is not None else _ConsoleApprovalDialog
+)
 
 
 def create_approval_dialog(operation_type: str, details: str, parent: Any = None) -> bool:
@@ -188,11 +211,11 @@ def create_approval_dialog(operation_type: str, details: str, parent: Any = None
         bool: True if user approved, False if user denied or cancelled
 
     """
-    dialog = FileApprovalDialog(operation_type, details, parent)
-    if QDialog is not None:
-        return dialog.exec() == QDialog.DialogCode.Accepted
-    else:
-        return dialog.exec() == 1  # type: ignore[unreachable]
+    dialog: ApprovalDialogProtocol = FileApprovalDialogClass(operation_type, details, parent)
+    result = dialog.exec()
+    if QDialog is not None and hasattr(QDialog, "DialogCode"):
+        return result == QDialog.DialogCode.Accepted
+    return result == 1
 
 
 class FileSearchTool:

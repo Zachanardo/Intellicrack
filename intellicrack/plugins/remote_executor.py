@@ -144,6 +144,10 @@ class RemotePluginExecutor:
         Returns:
             Deserialized data
 
+        Raises:
+            ValueError: If unsupported serialization type is requested, or if JSON
+                data is invalid or cannot be decoded as UTF-8
+
         """
         if expected_type != "json":
             error_msg = f"Unsupported serialization type: {expected_type}. Only JSON is allowed for security."
@@ -272,8 +276,18 @@ class RemotePluginExecutor:
         def handle_client(client_socket: socket.socket) -> None:
             """Handle a client connection.
 
+            Processes incoming remote plugin execution requests, deserializes
+            arguments, loads and executes plugin code in a sandboxed environment,
+            and returns results back to the client.
+
             Args:
                 client_socket: Client socket connection
+
+            Raises:
+                AttributeError: If no suitable plugin class found in received code
+                OSError: If socket operations or file operations fail
+                ValueError: If JSON parsing or argument deserialization fails
+                RuntimeError: If plugin execution encounters runtime errors
 
             """
             try:

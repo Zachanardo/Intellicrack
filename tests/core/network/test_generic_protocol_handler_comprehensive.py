@@ -573,7 +573,7 @@ class TestGenericProtocolHandlerUDPProxy:
         client.settimeout(5.0)
         try:
             client.sendto(b"ping", ("127.0.0.1", port))
-            response, addr = client.recvfrom(1024)
+            response, _addr = client.recvfrom(1024)
             assert response == b"OK\x00SERVER_ACTIVE\x00"
         finally:
             client.close()
@@ -591,7 +591,7 @@ class TestGenericProtocolHandlerUDPProxy:
         client.settimeout(5.0)
         try:
             client.sendto(b"CHECK_LICENSE\x00", ("127.0.0.1", port))
-            response, addr = client.recvfrom(1024)
+            response, _addr = client.recvfrom(1024)
             assert response == b"OK\x00LICENSE_VALID\x00"
         finally:
             client.close()
@@ -720,7 +720,7 @@ class TestGenericProtocolHandlerUDPProxy:
         try:
             client.sendto(b"ping", ("127.0.0.1", port))
             client.recvfrom(1024)
-        except (socket.timeout, OSError):
+        except (TimeoutError, OSError):
             no_response = True
         finally:
             client.close()
@@ -1058,7 +1058,7 @@ class TestGenericProtocolHandlerConnectionHandling:
             time.sleep(0.1)
 
             if len(handler.active_connections) > 0:
-                conn_id = list(handler.active_connections.keys())[0]
+                conn_id = next(iter(handler.active_connections.keys()))
                 conn_data = handler.active_connections[conn_id]
 
                 assert "socket" in conn_data

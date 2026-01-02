@@ -22,9 +22,13 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from intellicrack.utils.logger import logger
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 try:
@@ -55,7 +59,6 @@ def add_extra_buttons(
 
     Returns:
         Dictionary mapping button text to button widget objects.
-
     """
     if not PYQT_AVAILABLE or not extra_buttons:
         return {}
@@ -63,7 +66,7 @@ def add_extra_buttons(
     if not hasattr(header_layout, "addWidget"):
         return {}
 
-    add_widget_method = getattr(header_layout, "addWidget")
+    add_widget_method = header_layout.addWidget
     buttons: dict[str, object] = {}
 
     for button_text, callback in extra_buttons:

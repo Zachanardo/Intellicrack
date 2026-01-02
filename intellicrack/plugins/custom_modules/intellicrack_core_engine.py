@@ -20,7 +20,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import asyncio
 import hashlib
-import importlib
 import importlib.util
 import inspect
 import json
@@ -38,10 +37,10 @@ import traceback
 import uuid
 import weakref
 from abc import ABC, abstractmethod
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Awaitable, Callable
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypedDict, cast
@@ -394,7 +393,7 @@ class LoggingManager:
         with appropriate formatters and log levels from configuration.
 
         Returns:
-            None: Configures logging handlers and adds them to root logger.
+            None
         """
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.DEBUG)
@@ -460,7 +459,7 @@ class LoggingManager:
         workflow_engine, event_bus, etc.) with debug-level configuration.
 
         Returns:
-            None: Initializes component-specific loggers.
+            None
         """
         components = [
             "plugin_manager",
@@ -505,7 +504,7 @@ class LoggingManager:
             event: Event instance to log with full event data.
 
         Returns:
-            None: Logs event data to configured event logger.
+            None
         """
         logger = self.get_logger("events")
         logger.info(
@@ -530,7 +529,7 @@ class LoggingManager:
             details: Optional dictionary of additional operation context data.
 
         Returns:
-            None: Logs plugin operation to configured plugin logger.
+            None
         """
         logger = self.get_logger("plugins")
         logger.info(
@@ -568,7 +567,7 @@ class LoggingManager:
             result: Optional step result object for tracking outputs.
 
         Returns:
-            None: Logs workflow step execution to configured workflows logger.
+            None
         """
         logger = self.get_logger("workflows")
         logger.info(
@@ -678,7 +677,7 @@ class ConfigurationManager:
         fields and type constraints.
 
         Returns:
-            None: Initializes self.schema with JSON schema definition.
+            None
         """
         self.schema = {
             "type": "object",
@@ -803,7 +802,7 @@ class ConfigurationManager:
         merges with defaults, and notifies all registered watchers of changes.
 
         Returns:
-            None: Updates self.config and triggers watcher callbacks.
+            None
         """
         try:
             if self.config_path.exists():
@@ -845,8 +844,9 @@ class ConfigurationManager:
             override: Override configuration dictionary to merge into base.
 
         Returns:
-            dict[str, Any]: Merged configuration dictionary with all keys from both
-                dictionaries, with override values taking precedence.
+            dict[str, Any]: Merged configuration dictionary containing all keys from
+                both dictionaries, with override values taking precedence over base
+                values for all keys.
         """
         result = base.copy()
 
@@ -865,7 +865,7 @@ class ConfigurationManager:
         directory creation if necessary.
 
         Returns:
-            None: Saves configuration to JSON file at config_path.
+            None
         """
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -879,7 +879,7 @@ class ConfigurationManager:
         and automatically reloads when file modification timestamp changes.
 
         Returns:
-            None: Initializes and starts self.file_watcher thread.
+            None
         """
 
         def watch_file() -> None:
@@ -887,6 +887,9 @@ class ConfigurationManager:
 
             Continuously polls the configuration file for modifications and triggers
             a reload when changes are detected. Implements exponential backoff on errors.
+
+            Returns:
+                None
             """
             while True:
                 try:
@@ -940,7 +943,7 @@ class ConfigurationManager:
             value: Value to set at the specified configuration key.
 
         Returns:
-            None: Updates configuration dictionary and persists to file.
+            None
         """
         keys = key.split(".")
         config = self.config
@@ -964,7 +967,7 @@ class ConfigurationManager:
                 any necessary updates based on new configuration.
 
         Returns:
-            None: Registers callback in internal watchers list.
+            None
         """
         self.watchers.append(callback)
 
@@ -977,7 +980,7 @@ class ConfigurationManager:
             callback: The callback function to unregister.
 
         Returns:
-            None: Removes callback from watchers list if present.
+            None
         """
         if callback in self.watchers:
             self.watchers.remove(callback)
@@ -1085,7 +1088,7 @@ class AbstractPlugin(ABC):
             logger: Logger instance to use for plugin logging.
 
         Returns:
-            None: Stores logger in self.logger attribute.
+            None
         """
         self.logger = logger
 
@@ -1099,7 +1102,7 @@ class AbstractPlugin(ABC):
             event_bus: EventBus instance for inter-component communication.
 
         Returns:
-            None: Stores event bus in self.event_bus attribute.
+            None
         """
         self.event_bus = event_bus
 
@@ -1112,7 +1115,7 @@ class AbstractPlugin(ABC):
             config: Configuration dictionary to merge into plugin config.
 
         Returns:
-            None: Updates self.config with provided values.
+            None
         """
         self.config.update(config)
 
@@ -1127,7 +1130,7 @@ class AbstractPlugin(ABC):
             target: Optional target component name for directed events.
 
         Returns:
-            None: Creates and queues event for emission through event bus.
+            None
         """
         if self.event_bus:
             event = Event(
@@ -1154,7 +1157,7 @@ class AbstractPlugin(ABC):
             value: Numeric or object value of the metric.
 
         Returns:
-            None: Stores metric in self.performance_metrics dictionary.
+            None
         """
         self.performance_metrics[metric_name] = {
             "value": value,
@@ -1816,7 +1819,7 @@ class FridaPlugin(AbstractPlugin):
             data: Associated data payload from Frida script.
 
         Returns:
-            None: Logs message and emits event through event bus.
+            None
         """
         if self.logger:
             self.logger.debug("Frida message: %s", message)
@@ -2303,7 +2306,7 @@ class EventBus:
             logger: Logger instance for event bus diagnostics.
 
         Returns:
-            None: Stores logger in self.logger attribute.
+            None
         """
         self.logger = logger
 
@@ -2314,7 +2317,7 @@ class EventBus:
         and dispatches them to registered handlers.
 
         Returns:
-            None: Initializes event processing and sets running flag.
+            None
         """
         if self.running:
             return
@@ -2331,7 +2334,7 @@ class EventBus:
         Stops the event processor task and sets running flag to False.
 
         Returns:
-            None: Stops event processing and cleans up resources.
+            None
         """
         if not self.running:
             return
@@ -2359,7 +2362,7 @@ class EventBus:
             handler: Async callable that accepts an Event and returns None.
 
         Returns:
-            None: Registers handler in subscribers dictionary.
+            None
         """
         if event_type not in self.subscribers:
             self.subscribers[event_type] = []
@@ -2380,7 +2383,7 @@ class EventBus:
             handler: The handler callable to unregister.
 
         Returns:
-            None: Removes handler from subscribers dictionary if present.
+            None
         """
         if event_type in self.subscribers and handler in self.subscribers[event_type]:
             self.subscribers[event_type].remove(handler)
@@ -2403,7 +2406,7 @@ class EventBus:
             event: Event instance to emit through the bus.
 
         Returns:
-            None: Adds event to queue for processing.
+            None
         """
         try:
             # Check TTL
@@ -2430,6 +2433,9 @@ class EventBus:
 
         Main event loop that continuously fetches events from the queue,
         adds them to history, and dispatches to handlers.
+
+        Returns:
+            None
         """
         while self.running:
             try:
@@ -2461,6 +2467,9 @@ class EventBus:
 
         Args:
             event: Event to dispatch to registered handlers.
+
+        Returns:
+            None
         """
         handlers = []
 
@@ -2546,7 +2555,7 @@ class EventBus:
             event: Event to pass to handler.
 
         Returns:
-            None: Executes handler in thread pool executor.
+            None
         """
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, handler, event)
@@ -2560,7 +2569,7 @@ class EventBus:
             event: Event to add to history.
 
         Returns:
-            None: Appends event to event_history and trims if needed.
+            None
         """
         self.event_history.append(event)
 
@@ -3088,7 +3097,7 @@ class PluginManager:
                 plugin_name: Name of the plugin to visit in the dependency graph.
 
             Returns:
-                None: Updates result list as side effect.
+                None
             """
             if plugin_name in temp_visited:
                 # Circular dependency detected
@@ -3355,7 +3364,7 @@ class WorkflowEngine:
         bypass operations that can be executed by the workflow engine.
 
         Returns:
-            None: Registers default workflow definitions.
+            None
         """
         # Binary Analysis Workflow
         self.register_workflow(
@@ -3452,7 +3461,7 @@ class WorkflowEngine:
             workflow: WorkflowDefinition object to register.
 
         Returns:
-            None: Stores workflow in workflows dictionary and logs registration.
+            None
         """
         self.workflows[workflow.workflow_id] = workflow
         self.logger.info("Registered workflow: %s", workflow.name)
@@ -3522,6 +3531,9 @@ class WorkflowEngine:
 
         Args:
             context: Execution context dictionary with workflow and parameters.
+
+        Returns:
+            None
         """
         execution_id = context["execution_id"]
         workflow = context["workflow"]
@@ -3601,6 +3613,9 @@ class WorkflowEngine:
         Args:
             context: Execution context with workflow definition and results.
 
+        Returns:
+            None
+
         Raises:
             Exception: If dependencies not met for a step with stop error handling.
         """
@@ -3651,6 +3666,9 @@ class WorkflowEngine:
 
         Args:
             context: Execution context with workflow definition and tracking data.
+
+        Returns:
+            None
 
         Raises:
             Exception: If a step fails with stop error handling configured.
@@ -3791,6 +3809,9 @@ class WorkflowEngine:
         Args:
             step: WorkflowStep to execute.
             context: Execution context for storing results and handling errors.
+
+        Returns:
+            None
 
         Raises:
             Exception: If step execution fails or exceeds timeout after max retries.
@@ -3990,6 +4011,9 @@ class AnalysisCoordinator:
 
         Starts the analysis coordinator's background coordination loop and makes
         it ready to process analysis requests and workflow events.
+
+        Returns:
+            None
         """
         if self.running:
             return
@@ -4004,6 +4028,9 @@ class AnalysisCoordinator:
 
         Stops the analysis coordinator's background loop and cleanly shuts down
         any pending analysis operations.
+
+        Returns:
+            None
         """
         if not self.running:
             return
@@ -4083,6 +4110,9 @@ class AnalysisCoordinator:
 
         Main background loop that continuously processes analysis requests from
         the queue and delegates them to the workflow engine with error handling.
+
+        Returns:
+            None
         """
         while self.running:
             try:
@@ -4108,6 +4138,9 @@ class AnalysisCoordinator:
 
         Args:
             analysis_context: Analysis context dictionary with binary path and parameters.
+
+        Returns:
+            None
         """
         analysis_id = analysis_context["analysis_id"]
 
@@ -4261,6 +4294,9 @@ class AnalysisCoordinator:
 
         Args:
             event: Event object containing analysis_request data with binary_path and type.
+
+        Returns:
+            None
         """
         try:
             data = event.data
@@ -4292,6 +4328,9 @@ class AnalysisCoordinator:
 
         Args:
             event: Event object containing execution_id and workflow results.
+
+        Returns:
+            None
         """
         execution_id = event.data.get("execution_id")
         results = event.data.get("results", {})
@@ -4328,6 +4367,9 @@ class AnalysisCoordinator:
 
         Args:
             event: Event object containing execution_id and error information.
+
+        Returns:
+            None
         """
         execution_id = event.data.get("execution_id")
         error = event.data.get("error")
@@ -4445,7 +4487,7 @@ class ResourceManager:
         monitoring loop if enabled.
 
         Returns:
-            None: Initializes pools and starts monitoring task.
+            None
         """
         if self.running:
             return
@@ -4469,7 +4511,7 @@ class ResourceManager:
         and cleans up tracked processes.
 
         Returns:
-            None: Stops monitoring and shuts down executor pools.
+            None
         """
         if not self.running:
             return
@@ -4503,7 +4545,7 @@ class ResourceManager:
         and performs automatic cleanup when enabled.
 
         Returns:
-            None: Runs monitoring loop in background.
+            None
         """
         while self.running:
             try:
@@ -4526,7 +4568,7 @@ class ResourceManager:
         and stores in resource_stats dictionary.
 
         Returns:
-            None: Updates self.resource_stats with current metrics.
+            None
         """
         try:
             # CPU usage
@@ -4555,7 +4597,7 @@ class ResourceManager:
         logs warnings if thresholds are exceeded.
 
         Returns:
-            None: Logs warnings if resource limits exceeded.
+            None
         """
         cpu_usage = self.resource_stats["cpu_usage"]
         memory_usage = self.resource_stats["memory_usage"]
@@ -4573,7 +4615,7 @@ class ResourceManager:
         if memory usage exceeds configured maximum.
 
         Returns:
-            None: Cleans up tracked processes and performs garbage collection.
+            None
         """
         try:
             # Clean up completed processes
@@ -4694,7 +4736,7 @@ class ResourceManager:
             force: If True, send SIGKILL; if False, send SIGTERM first.
 
         Returns:
-            None: Terminates process and removes from tracking dictionary.
+            None
         """
         if pid not in self.tracked_processes:
             return
@@ -4726,7 +4768,7 @@ class ResourceManager:
         Forcefully terminates and unregisters all tracked processes for shutdown.
 
         Returns:
-            None: Kills all tracked processes with force flag.
+            None
         """
         for pid in list(self.tracked_processes):
             await self.kill_process(pid, force=True)
@@ -4826,7 +4868,7 @@ class IntellicrackcoreEngine:
         process analysis requests.
 
         Returns:
-            None: Initializes all components and sets running flag.
+            None
 
         Raises:
             Exception: If any component fails to start.
@@ -4882,7 +4924,7 @@ class IntellicrackcoreEngine:
         resource manager, event bus) and cleans up resources in reverse startup order.
 
         Returns:
-            None: Stops all components and cleans up resources.
+            None
         """
         if not self.running:
             return
@@ -4914,7 +4956,7 @@ class IntellicrackcoreEngine:
         license interception.
 
         Returns:
-            None: Activates registered core plugins.
+            None
         """
         core_plugins = [
             "python_neural_network_detector",
@@ -4934,7 +4976,7 @@ class IntellicrackcoreEngine:
         ensuring proper cleanup and resource release before engine shutdown.
 
         Returns:
-            None: Deactivates and unloads all active plugins.
+            None
         """
         active_plugins = list(self.plugin_manager.plugins.keys())
 

@@ -45,7 +45,6 @@ class QilingEmulatorProtocol(Protocol):
 
         Args:
             binary_path: Path to the binary file to emulate.
-
         """
         ...
 
@@ -60,7 +59,6 @@ class QemuEmulatorProtocol(Protocol):
 
         Args:
             config: Dictionary containing QEMU configuration parameters.
-
         """
         ...
 
@@ -100,7 +98,10 @@ class EmulatorManager(QObject):
     emulator_error = pyqtSignal(str, str)
 
     def __init__(self) -> None:
-        """Initialize the emulator manager with signal handling and emulator setup."""
+        """Initialize the emulator manager.
+
+        Sets up signal handling, emulator tracking, and thread safety mechanisms.
+        """
         super().__init__()
         self.logger = logging.getLogger(__name__)
         self.emulators: dict[str, Any] = {}
@@ -126,12 +127,11 @@ class EmulatorManager(QObject):
         """Ensure QEMU is running for the given binary.
 
         Args:
-            binary_path: Path to binary that needs QEMU
-            config: Optional QEMU configuration
+            binary_path: Path to binary that needs QEMU.
+            config: Optional QEMU configuration dictionary.
 
         Returns:
-            True if QEMU is running or successfully started
-
+            True if QEMU is running or successfully started, False otherwise.
         """
         if not QEMU_AVAILABLE:
             self.emulator_error.emit("QEMU", "QEMU is not installed. Please install QEMU first.")
@@ -212,11 +212,10 @@ class EmulatorManager(QObject):
         """Ensure Qiling is ready for the given binary.
 
         Args:
-            binary_path: Path to binary to emulate
+            binary_path: Path to binary to emulate.
 
         Returns:
-            QilingEmulator instance if successful, None otherwise
-
+            QilingEmulator instance if successful, None otherwise.
         """
         if not QILING_AVAILABLE:
             self.emulator_error.emit("Qiling", "Qiling framework not installed. Run: pip install qiling")
@@ -251,7 +250,10 @@ class EmulatorManager(QObject):
                 self.logger.exception("Error stopping QEMU: %s", e)
 
     def cleanup(self) -> None:
-        """Clean up all emulator resources."""
+        """Clean up all emulator resources.
+
+        Stops the QEMU emulator and clears Qiling instances.
+        """
         self.stop_qemu()
         self.qiling_instances.clear()
 
@@ -261,7 +263,11 @@ _emulator_manager: EmulatorManager | None = None
 
 
 def get_emulator_manager() -> EmulatorManager:
-    """Get or create the global emulator manager instance."""
+    """Get or create the global emulator manager instance.
+
+    Returns:
+        The singleton EmulatorManager instance.
+    """
     global _emulator_manager
     if _emulator_manager is None:
         _emulator_manager = EmulatorManager()
@@ -272,13 +278,12 @@ def run_with_qemu(binary_path: str, analysis_func: Callable[[], dict[str, Any]],
     """Run an analysis function with QEMU automatically started.
 
     Args:
-        binary_path: Binary to analyze
-        analysis_func: Function to run once QEMU is ready
-        config: Optional QEMU configuration
+        binary_path: Binary to analyze.
+        analysis_func: Function to run once QEMU is ready.
+        config: Optional QEMU configuration dictionary.
 
     Returns:
-        Analysis results or error dictionary
-
+        Analysis results dictionary if successful, error dictionary on failure.
     """
     manager = get_emulator_manager()
 
@@ -303,12 +308,11 @@ def run_with_qiling(binary_path: str, analysis_func: Callable[[QilingEmulatorPro
     """Run an analysis function with Qiling automatically initialized.
 
     Args:
-        binary_path: Binary to analyze
-        analysis_func: Function to run with Qiling instance
+        binary_path: Binary to analyze.
+        analysis_func: Function to run with Qiling instance.
 
     Returns:
-        Analysis results or error dictionary
-
+        Analysis results dictionary if successful, error dictionary on failure.
     """
     manager = get_emulator_manager()
 

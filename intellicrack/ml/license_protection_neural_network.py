@@ -16,10 +16,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
 import struct
+import types
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -28,11 +31,15 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
-from ..utils.logger import get_logger
-
 
 logger = logging.getLogger(__name__)
 
+torch: types.ModuleType | None
+nn: types.ModuleType | None
+functional: types.ModuleType | None
+optim: types.ModuleType | None
+DataLoader: type[Any] | None
+Dataset: type[Any] | None
 
 try:
     import torch
@@ -44,12 +51,12 @@ try:
 except ImportError:
     logger.debug("PyTorch not available", exc_info=True)
     TORCH_AVAILABLE = False
-    torch = None  # type: ignore[assignment]
-    nn = None  # type: ignore[assignment]
-    functional = None  # type: ignore[assignment]
-    optim = None  # type: ignore[assignment]
-    DataLoader = None  # type: ignore[misc,assignment]
-    Dataset = None  # type: ignore[misc,assignment]
+    torch = None
+    nn = None
+    functional = None
+    optim = None
+    DataLoader = None
+    Dataset = None
 
 try:
     import tensorflow as tf
@@ -125,16 +132,34 @@ class LicenseFeatures:
     virtualization_checks: npt.NDArray[np.float32]  # VM/sandbox detection
 
     def to_tensor(self) -> npt.NDArray[np.float32]:
-        """Convert all features to a single tensor."""
+        """Convert all features to a single tensor.
+
+        Flattens and concatenates all feature arrays into a single 1D array
+        suitable for neural network input.
+
+        Returns:
+            Flattened concatenated feature array containing all license protection
+            features as a single-dimensional numpy array.
+
+        """
         all_features = [field_value.flatten() for _field_name, field_value in self.__dict__.items() if isinstance(field_value, np.ndarray)]
         return np.concatenate(all_features)
 
 
-class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):  # type: ignore[misc]
+class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):
     """Convolutional Neural Network for license protection detection."""
 
     def __init__(self, input_size: int = 4096, num_classes: int = 20) -> None:
-        """Initialize CNN architecture for license protection analysis."""
+        """Initialize CNN architecture for license protection analysis.
+
+        Args:
+            input_size: Flattened input feature size in pixels.
+            num_classes: Number of license protection classes to classify.
+
+        Raises:
+            ImportError: If PyTorch is not available.
+
+        """
         if not TORCH_AVAILABLE:
             raise ImportError("PyTorch not available for CNN model")
 
@@ -180,7 +205,13 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):  # type: i
         self._load_pretrained_weights()
 
     def _initialize_weights(self) -> None:
-        """Initialize weights using He initialization for ReLU networks."""
+        """Initialize weights using He initialization for ReLU networks.
+
+        Applies Kaiming (He) normal initialization to convolutional layers,
+        standard batch normalization initialization, and Xavier normal initialization
+        to linear layers. This ensures proper gradient flow during backpropagation.
+
+        """
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 # He initialization (Kaiming) for ReLU activation
@@ -198,7 +229,12 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):  # type: i
                     nn.init.constant_(m.bias, 0)
 
     def _load_pretrained_weights(self) -> None:
-        """Load pre-trained weights from saved model if available."""
+        """Load pre-trained weights from saved model if available.
+
+        Attempts to load pre-trained CNN weights from the pretrained directory.
+        If the file does not exist or loading fails, a warning is logged.
+
+        """
         pretrained_path = Path(__file__).parent / "pretrained" / "license_cnn_weights.pth"
         if pretrained_path.exists():
             try:
@@ -209,7 +245,19 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):  # type: i
                 logger.warning("Could not load pre-trained weights: %s", e, exc_info=True)
 
     def save_weights(self, path: str | Path | None = None) -> None:
-        """Save model weights for future use."""
+        """Save model weights for future use.
+
+        Persists the CNN model state dictionary to disk, either to a specified path
+        or to the default pretrained weights directory. Creates parent directories
+        as needed.
+
+        Args:
+            path: Optional path to save weights. If None, uses default pretrained directory.
+
+        Returns:
+            None
+
+        """
         if path is None:
             save_dir = Path(__file__).parent / "pretrained"
             save_dir.mkdir(exist_ok=True)
@@ -222,11 +270,16 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):  # type: i
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass with attention and residual connections.
 
+        Processes input tensor through convolutional layers with batch normalization,
+        applies attention mechanism and residual connections, then outputs classification
+        logits through fully connected layers with dropout regularization.
+
         Args:
-            x: Input tensor of shape (batch_size, 4096).
+            x: Input tensor of shape (batch_size, 4096) containing flattened binary features.
 
         Returns:
-            Output logits tensor of shape (batch_size, num_classes).
+            torch.Tensor: Output logits tensor of shape (batch_size, num_classes) for license
+            protection type classification.
 
         """
         # Reshape input
@@ -266,11 +319,21 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):  # type: i
         return x
 
 
-class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):  # type: ignore[misc]
+class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
     """Transformer-based model for sequence analysis of license checks."""
 
     def __init__(self, input_dim: int = 256, num_heads: int = 8, num_layers: int = 6) -> None:
-        """Initialize Transformer for API sequence and opcode analysis."""
+        """Initialize Transformer for API sequence and opcode analysis.
+
+        Args:
+            input_dim: Input feature dimension for projection.
+            num_heads: Number of attention heads in transformer layers.
+            num_layers: Number of transformer encoder layers to stack.
+
+        Raises:
+            ImportError: If PyTorch is not available.
+
+        """
         if not TORCH_AVAILABLE:
             raise ImportError("PyTorch not available for Transformer model")
 
@@ -310,7 +373,13 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):  #
         self._load_pretrained_weights()
 
     def _initialize_weights(self) -> None:
-        """Initialize weights using Xavier initialization for Transformer."""
+        """Initialize weights using Xavier initialization for Transformer.
+
+        Applies Xavier uniform initialization to all parameters with dimension > 1,
+        with special handling for input projection and classifier layers to ensure
+        optimal starting conditions for gradient flow during training.
+
+        """
         for p in self.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
@@ -327,7 +396,13 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):  #
                     nn.init.constant_(m.bias, 0)
 
     def _load_pretrained_weights(self) -> None:
-        """Load pre-trained weights from saved model if available."""
+        """Load pre-trained weights from saved model if available.
+
+        Attempts to load pre-trained Transformer weights from the pretrained directory.
+        If the file does not exist or loading fails, a warning is logged and training
+        continues with randomly initialized weights.
+
+        """
         pretrained_path = Path(__file__).parent / "pretrained" / "license_transformer_weights.pth"
         if pretrained_path.exists():
             try:
@@ -338,7 +413,19 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):  #
                 logger.warning("Could not load pre-trained Transformer weights: %s", e, exc_info=True)
 
     def save_weights(self, path: str | Path | None = None) -> None:
-        """Save model weights for future use."""
+        """Save model weights for future use.
+
+        Persists the Transformer model state dictionary to disk, either to a specified
+        path or to the default pretrained weights directory. Creates parent directories
+        as needed.
+
+        Args:
+            path: Optional path to save weights. If None, uses default pretrained directory.
+
+        Returns:
+            None
+
+        """
         if path is None:
             save_dir = Path(__file__).parent / "pretrained"
             save_dir.mkdir(exist_ok=True)
@@ -349,7 +436,20 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):  #
         logger.info("Saved Transformer weights to %s", path)
 
     def _create_positional_encoding(self, max_len: int, d_model: int) -> torch.Tensor:
-        """Create sinusoidal positional encoding."""
+        """Create sinusoidal positional encoding.
+
+        Generates positional encoding matrices using sine and cosine functions to
+        provide sequential position information to the transformer encoder.
+
+        Args:
+            max_len: Maximum sequence length for positional encoding.
+            d_model: Model dimension for encoding used in sinusoidal computations.
+
+        Returns:
+            torch.Tensor: Positional encoding tensor of shape (1, max_len, d_model)
+            containing sinusoidal position encodings for sequence processing.
+
+        """
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-np.log(10000.0) / d_model))
@@ -362,11 +462,17 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):  #
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass through transformer.
 
+        Processes input sequences through projection, adds positional encoding,
+        passes through transformer encoder, applies global pooling, and outputs
+        classification logits.
+
         Args:
-            x: Input tensor of shape (batch_size, seq_len, input_dim).
+            x: Input tensor of shape (batch_size, seq_len, input_dim) containing
+                sequence features for API call or opcode analysis.
 
         Returns:
-            Output logits tensor of shape (batch_size, num_classes).
+            torch.Tensor: Output logits tensor of shape (batch_size, num_classes)
+                for license protection type classification.
 
         """
         _batch_size, seq_len, _ = x.size()
@@ -385,11 +491,16 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):  #
         return result
 
 
-class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):  # type: ignore[misc]
+class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
     """Hybrid model combining CNN, Transformer, and Graph Neural Networks."""
 
     def __init__(self) -> None:
-        """Initialize hybrid architecture for comprehensive license analysis."""
+        """Initialize hybrid architecture for comprehensive license analysis.
+
+        Raises:
+            ImportError: If PyTorch is not available.
+
+        """
         if not TORCH_AVAILABLE:
             raise ImportError("PyTorch not available for Hybrid model")
 
@@ -428,7 +539,13 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):  # type: 
         self._load_pretrained_weights()
 
     def _initialize_weights(self) -> None:
-        """Initialize weights for fusion and output layers."""
+        """Initialize weights for fusion and output layers.
+
+        Applies Xavier uniform initialization to all linear layers and batch normalization
+        layers in the fusion network and multi-task output heads to ensure proper weight
+        initialization and convergence during training.
+
+        """
         # Initialize fusion layers
         for m in self.fusion_layer:
             if isinstance(m, nn.Linear):
@@ -463,7 +580,13 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):  # type: 
                 nn.init.constant_(m.bias, 0)
 
     def _load_pretrained_weights(self) -> None:
-        """Load pre-trained weights from saved model if available."""
+        """Load pre-trained weights from saved model if available.
+
+        Attempts to load pre-trained hybrid model weights from the pretrained directory.
+        If the file does not exist or loading fails, a warning is logged and the model
+        continues with randomly initialized weights.
+
+        """
         pretrained_path = Path(__file__).parent / "pretrained" / "hybrid_analyzer_weights.pth"
         if pretrained_path.exists():
             try:
@@ -474,7 +597,19 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):  # type: 
                 logger.warning("Could not load pre-trained Hybrid weights: %s", e, exc_info=True)
 
     def save_weights(self, path: str | Path | None = None) -> None:
-        """Save model weights for future use."""
+        """Save model weights for future use.
+
+        Persists the hybrid model state dictionary to disk, either to a specified path
+        or to the default pretrained weights directory. Creates parent directories
+        as needed.
+
+        Args:
+            path: Optional path to save weights. If None, uses default pretrained directory.
+
+        Returns:
+            None
+
+        """
         if path is None:
             save_dir = Path(__file__).parent / "pretrained"
             save_dir.mkdir(exist_ok=True)
@@ -487,8 +622,16 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):  # type: 
     def _create_gnn_branch(self) -> nn.Sequential:
         """Create Graph Neural Network branch for CFG analysis.
 
+        Constructs a simplified graph neural network using standard linear layers,
+        ReLU activation, and batch normalization for processing control flow graph
+        representations extracted from binary code.
+
+        Args:
+            self: Instance of HybridLicenseAnalyzer.
+
         Returns:
-            Sequential model for control flow graph analysis.
+            nn.Sequential: Sequential model for control flow graph analysis with input
+            dimension 512 and output dimension 256.
 
         """
         # Simplified GNN using standard layers
@@ -502,13 +645,22 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):  # type: 
     ) -> dict[str, torch.Tensor]:
         """Multi-modal forward pass.
 
+        Processes three complementary feature modalities through separate branches
+        (CNN, Transformer, GNN), fuses the outputs, and produces multi-task predictions
+        for license protection analysis including type, version, complexity, and bypass difficulty.
+
         Args:
-            binary_features: CNN input tensor of shape (batch_size, 4096).
-            sequence_features: Transformer input tensor of shape (batch_size, seq_len, input_dim).
-            graph_features: GNN input tensor of shape (batch_size, 512).
+            binary_features: CNN input tensor of shape (batch_size, 4096) containing
+                flattened binary pattern features.
+            sequence_features: Transformer input tensor of shape (batch_size, seq_len,
+                input_dim) containing sequence-based features for API or opcode patterns.
+            graph_features: GNN input tensor of shape (batch_size, 512) containing
+                control flow graph representation features.
 
         Returns:
-            Dictionary containing model outputs with keys: protection_type, version, complexity, bypass_difficulty.
+            dict[str, torch.Tensor]: Dictionary containing model outputs with keys:
+                'protection_type' (batch_size, num_classes), 'version' (batch_size, 1),
+                'complexity' (batch_size, 1), 'bypass_difficulty' (batch_size, 5).
 
         """
         # Process through each branch
@@ -534,16 +686,25 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):  # type: 
         }
 
 
-class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[misc]
+class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
     """Dataset for license protection training data."""
 
     def __init__(self, data_path: str, transform: object | None = None, cache_features: bool = True) -> None:
         """Initialize dataset with protection samples.
 
+        Sets up the dataset for license protection training by loading samples from
+        a directory structure or metadata file, building label mappings, and optionally
+        caching extracted features in memory for faster access.
+
         Args:
-            data_path: Path to dataset directory containing binary samples.
-            transform: Optional transformation to apply to features.
-            cache_features: Whether to cache extracted features in memory.
+            data_path: Path to dataset directory containing binary samples organized
+            by protection type subdirectories or metadata.json file.
+            transform: Optional transformation callable to apply to features.
+            cache_features: Whether to cache extracted features in memory for faster
+            access during training iterations.
+
+        Returns:
+            None
 
         """
         self.data_path = Path(data_path)
@@ -559,7 +720,13 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         self._build_label_mapping()
 
     def _load_data(self) -> None:
-        """Load binary samples and labels from directory structure or metadata."""
+        """Load binary samples and labels from directory structure or metadata.
+
+        Attempts to load dataset from a metadata.json file if available.
+        Falls back to loading from directory structure where subdirectories
+        correspond to protection types and contain binary sample files.
+
+        """
         if not self.data_path.exists():
             logger.warning("Dataset path does not exist: %s", self.data_path)
             return
@@ -573,7 +740,18 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
             self._load_from_directory_structure()
 
     def _load_from_metadata(self, metadata_file: Path) -> None:
-        """Load samples from metadata JSON file."""
+        """Load samples from metadata JSON file.
+
+        Parses a metadata.json file to extract sample file paths and their associated
+        license protection types, populating the samples and labels lists.
+
+        Args:
+            metadata_file: Path to the metadata JSON file containing sample definitions.
+
+        Returns:
+            None
+
+        """
         with open(metadata_file) as f:
             metadata = json.load(f)
 
@@ -585,7 +763,16 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
                 self.labels.append(protection_type)
 
     def _load_from_directory_structure(self) -> None:
-        """Load samples from directory structure where each subdirectory is a protection type."""
+        """Load samples from directory structure where each subdirectory is a protection type.
+
+        Iterates through subdirectories of the data path and treats each subdirectory name
+        as a license protection type. Collects all binary files (.exe, .dll, .sys, .bin)
+        from each subdirectory and associates them with their parent directory's protection type.
+
+        Returns:
+            None
+
+        """
         for protection_dir in self.data_path.iterdir():
             if protection_dir.is_dir():
                 protection_type = protection_dir.name.lower()
@@ -605,24 +792,41 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
                             self.labels.append(protection_type)
 
     def _build_label_mapping(self) -> None:
-        """Build mapping between labels and indices."""
+        """Build mapping between labels and indices.
+
+        Creates bidirectional mappings (label_to_idx and idx_to_label) from unique
+        protection type labels to numeric indices for use in model training and evaluation.
+
+        Returns:
+            None
+
+        """
         unique_labels = sorted(set(self.labels))
         for idx, label in enumerate(unique_labels):
             self.label_to_idx[label] = idx
             self.idx_to_label[idx] = label
 
     def __len__(self) -> int:
-        """Return dataset size."""
+        """Return dataset size.
+
+        Returns:
+            int: Number of samples in dataset.
+
+        """
         return len(self.samples)
 
     def __getitem__(self, idx: int) -> tuple[Any, Any]:
         """Get sample and label with caching support.
 
+        Retrieves the binary features and corresponding label for the sample at the
+        given index, using cached features if available to improve performance.
+
         Args:
-            idx: Index of the sample to retrieve.
+            idx: Index of the sample to retrieve from the dataset.
 
         Returns:
-            Tuple of (features, label) as tensors if PyTorch available, else numpy array and int.
+            tuple[Any, Any]: Tuple of (features, label) as torch tensors if PyTorch available,
+            else numpy array and int label index.
 
         """
         sample_path = self.samples[idx]
@@ -653,7 +857,20 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return features.to_tensor(), label_idx
 
     def _extract_features(self, binary_path: Path) -> LicenseFeatures:
-        """Extract comprehensive features from binary using advanced feature extractor."""
+        """Extract comprehensive features from binary using advanced feature extractor.
+
+        Extracts all relevant license protection indicators from binary data including
+        entropy, section characteristics, imports, strings, opcode patterns, API sequences,
+        crypto signatures, and anti-debug/anti-analysis features.
+
+        Args:
+            binary_path: Path to the binary file to extract features from.
+
+        Returns:
+            LicenseFeatures: LicenseFeatures object containing extracted feature vectors
+            for all binary analysis dimensions.
+
+        """
         # Try to use advanced feature extractor if available
         try:
             from .binary_feature_extractor import BinaryFeatureExtractor
@@ -714,7 +931,20 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
             )
 
     def _calculate_entropy(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Calculate Shannon entropy distribution."""
+        """Calculate Shannon entropy distribution.
+
+        Divides binary data into 16 equal chunks and computes Shannon entropy for each,
+        providing a feature vector representing overall entropy distribution that can
+        indicate encryption, compression, or code obfuscation levels.
+
+        Args:
+            data: Binary data to analyze for entropy calculation.
+
+        Returns:
+            npt.NDArray[np.float32]: Entropy values for chunks of the data as a 16-element
+            array of normalized entropy values.
+
+        """
         if not data:
             return np.zeros(16, dtype=np.float32)
 
@@ -736,7 +966,20 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return np.array(entropies, dtype=np.float32)
 
     def _analyze_sections(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Analyze PE section characteristics."""
+        """Analyze PE section characteristics.
+
+        Parses PE header information to extract section table metadata and characteristics,
+        providing insights into code organization, section permissions, and potential
+        obfuscation or protection patterns.
+
+        Args:
+            data: Binary data to analyze for PE section information.
+
+        Returns:
+            npt.NDArray[np.float32]: PE section characteristics feature vector of size 32
+            with normalized section metadata and characteristic flags.
+
+        """
         features = np.zeros(32, dtype=np.float32)
 
         # Check for PE signature
@@ -761,7 +1004,20 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return features
 
     def _extract_imports(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Extract import table signatures."""
+        """Extract import table signatures.
+
+        Searches binary data for license-related API function names that are
+        commonly imported from Windows system libraries, creating a binary feature
+        vector indicating which APIs are present.
+
+        Args:
+            data: Binary data to analyze for import API signatures.
+
+        Returns:
+            npt.NDArray[np.float32]: Import API signatures feature vector of size 64
+            with binary indicators for presence of license-related API functions.
+
+        """
         features = np.zeros(64, dtype=np.float32)
 
         # Common license-related imports
@@ -787,11 +1043,37 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return features
 
     def _extract_exports(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Extract export table signatures."""
+        """Extract export table signatures.
+
+        Analyzes the export table of a binary to identify functions exported by
+        the module, which can indicate licensing-related functionality exposed
+        to other components.
+
+        Args:
+            data: Binary data to analyze for export table signatures.
+
+        Returns:
+            npt.NDArray[np.float32]: Export table signatures feature vector of size 32
+            with indicators for exported license-related functions.
+
+        """
         return np.zeros(32, dtype=np.float32)  # Simplified
 
     def _extract_strings(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Extract license-related string patterns."""
+        """Extract license-related string patterns.
+
+        Searches binary data for keywords and phrases related to software licensing,
+        such as "license", "serial", "trial", "activation", and similar terms that
+        indicate license protection mechanisms.
+
+        Args:
+            data: Binary data to analyze for license-related strings.
+
+        Returns:
+            npt.NDArray[np.float32]: License-related strings feature vector of size 128
+            with normalized counts of detected licensing keywords.
+
+        """
         features = np.zeros(128, dtype=np.float32)
 
         # License-related keywords
@@ -819,9 +1101,20 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return features
 
     def _analyze_opcodes(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Analyze x86/x64 opcode distribution."""
-        # Common opcodes for license checks
+        """Analyze x86/x64 opcode distribution.
 
+        Computes the byte-frequency distribution across the entire binary,
+        which approximates the opcode distribution and can reveal patterns
+        characteristic of specific protection schemes or code types.
+
+        Args:
+            data: Binary data to analyze for opcode distribution.
+
+        Returns:
+            npt.NDArray[np.float32]: Opcode histogram feature vector of size 256 with
+            normalized byte frequencies showing the distribution of individual byte values.
+
+        """
         histogram = np.zeros(256, dtype=np.float32)
         for byte in data:
             histogram[byte] += 1
@@ -833,7 +1126,20 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return histogram
 
     def _analyze_call_graph(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Analyze function call patterns."""
+        """Analyze function call patterns.
+
+        Detects direct and indirect function call instructions in the binary,
+        which indicate the presence of function calls and indirect jumps that
+        are commonly used in license checking routines.
+
+        Args:
+            data: Binary data to analyze for call patterns.
+
+        Returns:
+            npt.NDArray[np.float32]: Function call patterns feature vector of size 64
+            with normalized counts of direct CALL instructions and indirect call patterns.
+
+        """
         features = np.zeros(64, dtype=np.float32)
 
         # Look for CALL instructions (0xE8)
@@ -847,7 +1153,20 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return features
 
     def _detect_crypto(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Detect cryptographic routine signatures."""
+        """Detect cryptographic routine signatures.
+
+        Searches for known cryptographic constant patterns (from MD5, SHA1, SHA256)
+        that are frequently embedded in cryptographic routines used for license
+        key verification and digital signatures.
+
+        Args:
+            data: Binary data to analyze for cryptographic signatures.
+
+        Returns:
+            npt.NDArray[np.float32]: Cryptographic signature detection feature vector
+            of size 32 with binary indicators for presence of known crypto algorithm constants.
+
+        """
         features = np.zeros(32, dtype=np.float32)
 
         # Crypto constants
@@ -868,7 +1187,20 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return features
 
     def _detect_anti_debug(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Detect anti-debugging techniques."""
+        """Detect anti-debugging techniques.
+
+        Searches for API calls and functions commonly used in anti-debugging
+        protection mechanisms, such as debugger presence checks and process
+        information queries that could indicate anti-analysis protections.
+
+        Args:
+            data: Binary data to analyze for anti-debugging signatures.
+
+        Returns:
+            npt.NDArray[np.float32]: Anti-debugging technique detection feature vector
+            of size 16 with binary indicators for presence of known anti-debugging API calls.
+
+        """
         features = np.zeros(16, dtype=np.float32)
 
         # Anti-debug APIs
@@ -887,7 +1219,20 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return features
 
     def _embed_api_sequences(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Create embeddings for API call sequences."""
+        """Create embeddings for API call sequences.
+
+        Generates deterministic embedding vectors based on detected API call patterns
+        that are specific to license checking operations, using hash-based feature
+        extraction to create normalized embeddings.
+
+        Args:
+            data: Binary data to analyze for API sequence patterns.
+
+        Returns:
+            npt.NDArray[np.float32]: API sequence embedding vector of size 128 with
+            normalized features derived from license-related API pattern detection.
+
+        """
         import hashlib
 
         # Generate deterministic embeddings from API sequences
@@ -933,7 +1278,20 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return embeddings
 
     def _analyze_network(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Analyze network communication patterns."""
+        """Analyze network communication patterns.
+
+        Detects network-related API calls indicating communication with license
+        servers or online activation services, which are common in cloud-based
+        or server-dependent licensing schemes.
+
+        Args:
+            data: Binary data to analyze for network communication patterns.
+
+        Returns:
+            npt.NDArray[np.float32]: Network communication patterns feature vector of
+            size 32 with binary indicators for presence of network-related API functions.
+
+        """
         features = np.zeros(32, dtype=np.float32)
 
         # Network APIs
@@ -955,7 +1313,20 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return features
 
     def _analyze_registry(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Analyze registry access patterns."""
+        """Analyze registry access patterns.
+
+        Detects Windows registry API calls that are commonly used to store and
+        retrieve license information, activation status, and license keys stored
+        in protected registry locations.
+
+        Args:
+            data: Binary data to analyze for registry access patterns.
+
+        Returns:
+            npt.NDArray[np.float32]: Registry access patterns feature vector of size 16
+            with binary indicators for presence of registry manipulation API functions.
+
+        """
         features = np.zeros(16, dtype=np.float32)
 
         # Registry APIs
@@ -974,11 +1345,37 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return features
 
     def _analyze_file_access(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Analyze file system access patterns."""
+        """Analyze file system access patterns.
+
+        Examines binary data for file I/O operations that may indicate license
+        file storage, license data caching, or log file writing patterns typical
+        of license protection mechanisms.
+
+        Args:
+            data: Binary data to analyze for file access patterns.
+
+        Returns:
+            npt.NDArray[np.float32]: File system access patterns feature vector of
+            size 16 with indicators for file I/O operations related to license management.
+
+        """
         return np.zeros(16, dtype=np.float32)
 
     def _analyze_cfg(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Analyze control flow graph complexity."""
+        """Analyze control flow graph complexity.
+
+        Detects branching and jump instructions that form the control flow graph,
+        providing metrics on code complexity which can indicate obfuscation or
+        sophisticated license checking logic.
+
+        Args:
+            data: Binary data to analyze for control flow patterns.
+
+        Returns:
+            npt.NDArray[np.float32]: Control flow graph complexity feature vector of
+            size 8 with normalized counts of branching and jump instructions.
+
+        """
         # Simplified CFG metrics
         features = np.zeros(8, dtype=np.float32)
 
@@ -991,15 +1388,54 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return features
 
     def _analyze_data_flow(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Analyze data flow patterns."""
+        """Analyze data flow patterns.
+
+        Examines data dependencies and information flow within the binary,
+        identifying patterns that may indicate key derivation, license validation
+        logic, or obfuscated data transformations.
+
+        Args:
+            data: Binary data to analyze for data flow patterns.
+
+        Returns:
+            npt.NDArray[np.float32]: Data flow patterns feature vector of size 16 with
+            normalized indicators of data manipulation and flow patterns.
+
+        """
         return np.zeros(16, dtype=np.float32)
 
     def _analyze_memory(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Analyze memory access patterns."""
+        """Analyze memory access patterns.
+
+        Identifies memory read/write operations patterns that may indicate
+        in-memory license data structures, protection tables, or runtime
+        license validation logic.
+
+        Args:
+            data: Binary data to analyze for memory access patterns.
+
+        Returns:
+            npt.NDArray[np.float32]: Memory access patterns feature vector of size 16
+            with normalized counts of memory operation instructions.
+
+        """
         return np.zeros(16, dtype=np.float32)
 
     def _analyze_timing(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Analyze timing-based protection patterns."""
+        """Analyze timing-based protection patterns.
+
+        Detects timing API calls used in trial limitations, time-based license
+        expiration checks, and anti-tampering mechanisms that rely on system
+        clock measurements.
+
+        Args:
+            data: Binary data to analyze for timing-based patterns.
+
+        Returns:
+            npt.NDArray[np.float32]: Timing-based protection patterns feature vector
+            of size 8 with binary indicators for presence of timing-related API functions.
+
+        """
         features = np.zeros(8, dtype=np.float32)
 
         # Timing APIs
@@ -1017,7 +1453,20 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return features
 
     def _detect_hardware_checks(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Detect hardware verification patterns."""
+        """Detect hardware verification patterns.
+
+        Searches for APIs that query hardware identifiers such as disk serial numbers,
+        CPU information, network adapters, and computer names used in hardware-locked
+        licensing schemes.
+
+        Args:
+            data: Binary data to analyze for hardware verification patterns.
+
+        Returns:
+            npt.NDArray[np.float32]: Hardware verification patterns feature vector of
+            size 16 with binary indicators for presence of hardware identification API calls.
+
+        """
         features = np.zeros(16, dtype=np.float32)
 
         # Hardware APIs
@@ -1036,7 +1485,20 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return features
 
     def _detect_vm_checks(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Detect VM/sandbox detection patterns."""
+        """Detect VM/sandbox detection patterns.
+
+        Identifies anti-analysis protection techniques that detect virtual machines
+        and sandboxed environments, which are commonly employed to prevent reverse
+        engineering and unauthorized use in testing environments.
+
+        Args:
+            data: Binary data to analyze for VM detection patterns.
+
+        Returns:
+            npt.NDArray[np.float32]: VM/sandbox detection patterns feature vector of
+            size 8 with binary indicators for presence of VM detection artifacts and strings.
+
+        """
         features = np.zeros(8, dtype=np.float32)
 
         # VM artifacts
@@ -1049,11 +1511,26 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):  # type: ignore[mi
         return features
 
 
-class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):  # type: ignore[misc]
-    """Customize loss function for license protection detection."""
+class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):
+    """Custom loss function for license protection detection.
+
+    Implements a multi-task learning loss combining focal loss for classification,
+    regression losses for version and complexity prediction, and center loss for
+    better feature clustering. Handles class imbalance through weighted focal loss.
+
+    """
 
     def __init__(self, num_classes: int = 20, class_weights: torch.Tensor | None = None) -> None:
-        """Initialize multi-objective loss function."""
+        """Initialize multi-objective loss function.
+
+        Args:
+            num_classes: Number of license protection classes.
+            class_weights: Optional tensor of weights for handling class imbalance.
+
+        Raises:
+            ImportError: If PyTorch is not available.
+
+        """
         if not TORCH_AVAILABLE:
             raise ImportError("PyTorch not available for loss function")
 
@@ -1081,13 +1558,20 @@ class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):  # type: ignore[
     ) -> torch.Tensor:
         """Compute combined loss.
 
+        Computes the total loss combining focal loss for classification, regression losses
+        for auxiliary tasks, and center loss for feature clustering. Handles both single-task
+        and multi-task learning scenarios.
+
         Args:
-            outputs: Model outputs, either a dict for multi-task learning or tensor for single-task.
-            targets: Ground truth labels.
-            features: Optional feature representations for center loss computation.
+            outputs: Model outputs, either a dict for multi-task learning or tensor for
+                single-task classification containing logits.
+            targets: Ground truth labels tensor containing class indices for license
+                protection types.
+            features: Optional feature representations for center loss computation in
+                multi-task learning scenarios.
 
         Returns:
-            Computed loss value.
+            torch.Tensor: Computed loss value as a scalar tensor.
 
         """
         if not isinstance(outputs, dict):
@@ -1126,12 +1610,15 @@ class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):  # type: ignore[
     def focal_loss(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """Compute focal loss for addressing class imbalance.
 
+        Implements focal loss to give more weight to hard examples and down-weight
+        easy examples, improving model performance on imbalanced license protection datasets.
+
         Args:
-            logits: Model output logits.
-            targets: Ground truth labels.
+            logits: Model output logits tensor of shape (batch_size, num_classes).
+            targets: Ground truth labels tensor of shape (batch_size,) containing class indices.
 
         Returns:
-            Computed focal loss value.
+            torch.Tensor: Computed focal loss value as a scalar tensor.
 
         """
         ce_loss = functional.cross_entropy(logits, targets, reduction="none")
@@ -1142,12 +1629,16 @@ class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):  # type: ignore[
     def compute_center_loss(self, features: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """Compute center loss for feature clustering.
 
+        Minimizes the distance between features and their corresponding class centers,
+        improving feature discriminability and model generalization across license
+        protection types.
+
         Args:
-            features: Feature representations.
-            targets: Ground truth labels.
+            features: Feature representations tensor of shape (batch_size, feature_dim).
+            targets: Ground truth labels tensor of shape (batch_size,) containing class indices.
 
         Returns:
-            Computed center loss value.
+            torch.Tensor: Computed center loss value as a scalar tensor.
 
         """
         batch_size = features.size(0)
@@ -1160,7 +1651,13 @@ class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):  # type: ignore[
 
 
 class LicenseProtectionTrainer:
-    """Trainer for license protection neural networks."""
+    """Trainer for license protection neural networks.
+
+    Handles complete training pipeline including initialization, forward passes,
+    validation, checkpoint management, and learning rate scheduling for license
+    protection models. Supports multi-task learning with adaptive optimization.
+
+    """
 
     def __init__(
         self,
@@ -1170,9 +1667,13 @@ class LicenseProtectionTrainer:
     ) -> None:
         """Initialize trainer with model and training configuration.
 
+        Sets up the training environment including optimizer, learning rate scheduler,
+        loss function, and training configuration parameters for license protection
+        model training.
+
         Args:
             model: Neural network model to train.
-            device: Device to run training on (cpu/cuda).
+            device: Device to run training on (cpu/cuda). Auto-detects if None.
             class_weights: Optional weights for imbalanced classes.
 
         """
@@ -1225,11 +1726,16 @@ class LicenseProtectionTrainer:
     def train_epoch(self, dataloader: Any) -> tuple[float, float]:
         """Train for one epoch.
 
+        Executes a single training epoch by iterating through batches, performing
+        forward passes, computing losses, and updating model weights through backpropagation
+        with gradient clipping for stability.
+
         Args:
-            dataloader: DataLoader providing training batches.
+            dataloader: DataLoader providing training batches of (features, labels) tuples.
 
         Returns:
-            Tuple of (average_loss, accuracy_percentage).
+            tuple[float, float]: Tuple of (average_loss, accuracy_percentage) achieved
+            during the training epoch.
 
         """
         if not TORCH_AVAILABLE:
@@ -1283,11 +1789,15 @@ class LicenseProtectionTrainer:
     def validate(self, dataloader: Any) -> tuple[float, float]:
         """Validate model performance.
 
+        Evaluates the model on validation data without computing gradients,
+        providing performance metrics to monitor overfitting and model generalization.
+
         Args:
-            dataloader: DataLoader providing validation batches.
+            dataloader: DataLoader providing validation batches of (features, labels) tuples.
 
         Returns:
-            Tuple of (average_loss, accuracy_percentage).
+            tuple[float, float]: Tuple of (average_loss, accuracy_percentage) on the
+            validation dataset.
 
         """
         if not TORCH_AVAILABLE:
@@ -1326,9 +1836,17 @@ class LicenseProtectionTrainer:
     def train(self, train_loader: Any, val_loader: Any | None = None) -> None:
         """Full training loop.
 
+        Executes complete training pipeline over multiple epochs with optional validation,
+        checkpoint saving for best models, and learning rate scheduling. Logs training
+        progress and performance metrics.
+
         Args:
-            train_loader: DataLoader providing training batches.
-            val_loader: Optional DataLoader providing validation batches.
+            train_loader: DataLoader providing training batches of (features, labels) tuples.
+            val_loader: Optional DataLoader providing validation batches for monitoring
+                model performance during training.
+
+        Returns:
+            None
 
         """
         if not TORCH_AVAILABLE:
@@ -1373,8 +1891,14 @@ class LicenseProtectionTrainer:
     def save_checkpoint(self, filepath: str) -> None:
         """Save model checkpoint with enhanced metadata.
 
+        Persists model state, optimizer state, training history, and metadata to a checkpoint
+        file for later resumption. Also saves model weights separately for production deployment.
+
         Args:
-            filepath: Path where checkpoint will be saved.
+            filepath: Path where checkpoint will be saved, including filename and extension.
+
+        Returns:
+            None
 
         """
         if not TORCH_AVAILABLE:
@@ -1412,11 +1936,16 @@ class LicenseProtectionTrainer:
     def load_checkpoint(self, filepath: str) -> bool | None:
         """Load model checkpoint with validation.
 
+        Restores model state, optimizer state, training history, and metadata from a
+        checkpoint file with comprehensive validation of checkpoint structure and
+        compatibility.
+
         Args:
-            filepath: Path to checkpoint file to load.
+            filepath: Path to checkpoint file to load, including filename and extension.
 
         Returns:
-            True if successful, False if failed, None if PyTorch unavailable.
+            bool | None: True if checkpoint loaded successfully, False if failed,
+            None if PyTorch unavailable.
 
         """
         if not TORCH_AVAILABLE:
@@ -1463,10 +1992,29 @@ class LicenseProtectionTrainer:
 
 
 class LicenseProtectionPredictor:
-    """High-level interface for license protection prediction."""
+    """High-level interface for license protection prediction.
+
+    Provides a user-friendly API for predicting license protection types and
+    characteristics from binary files. Supports both pre-trained models and
+    heuristic-based fallback when ML models are unavailable.
+
+    """
 
     def __init__(self, model_path: str | None = None) -> None:
-        """Initialize predictor with pre-trained model."""
+        """Initialize predictor with pre-trained model.
+
+        Sets up the prediction interface, loading pre-trained weights if available
+        and selecting appropriate device (GPU/CPU) for inference. Initializes the
+        hybrid neural network model for license protection type prediction.
+
+        Args:
+            model_path: Optional path to pre-trained model checkpoint for warm-starting
+            predictions with learned weights.
+
+        Returns:
+            None
+
+        """
         self.model: HybridLicenseAnalyzer | None
         if TORCH_AVAILABLE:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -1484,8 +2032,14 @@ class LicenseProtectionPredictor:
     def load_model(self, model_path: str) -> None:
         """Load pre-trained model.
 
+        Loads the state dictionary from a pre-trained checkpoint and configures the model
+        for inference on the appropriate device. Sets the model to evaluation mode.
+
         Args:
-            model_path: Path to the pre-trained model checkpoint.
+            model_path: Path to the pre-trained model checkpoint file.
+
+        Returns:
+            None
 
         """
         if not TORCH_AVAILABLE or self.model is None:
@@ -1498,7 +2052,21 @@ class LicenseProtectionPredictor:
         logger.info("Model loaded from %s", model_path)
 
     def predict(self, binary_path: str) -> dict[str, Any]:
-        """Predict license protection type and characteristics."""
+        """Predict license protection type and characteristics.
+
+        Analyzes a binary file to predict the type of license protection mechanism,
+        confidence scores, version information, complexity rating, and bypass difficulty
+        assessment using the neural network model or heuristic fallback.
+
+        Args:
+            binary_path: Path to the binary file to analyze for protection identification.
+
+        Returns:
+            dict[str, Any]: Dictionary with keys: 'protection_type' (str), 'confidence' (float),
+            'version' (float), 'complexity' (float), 'bypass_difficulty' (int),
+            'all_probabilities' (dict[str, float]) containing complete predictions and scores.
+
+        """
         if not TORCH_AVAILABLE or not self.model:
             return self._fallback_prediction(binary_path)
 
@@ -1535,7 +2103,20 @@ class LicenseProtectionPredictor:
         }
 
     def _extract_features(self, binary_path: str) -> dict[str, npt.NDArray[np.float32]]:
-        """Extract multi-modal features from binary."""
+        """Extract multi-modal features from binary.
+
+        Extracts three complementary feature modalities from the binary: binary-level
+        features (entropy distribution), sequence features (byte n-grams), and graph
+        features (control flow metrics) for comprehensive protection analysis.
+
+        Args:
+            binary_path: Path to the binary file to extract features from.
+
+        Returns:
+            dict[str, npt.NDArray[np.float32]]: Dictionary with keys 'binary', 'sequence',
+            and 'graph' containing feature arrays suitable for multi-modal neural network processing.
+
+        """
         with open(binary_path, "rb") as f:
             data = f.read()
 
@@ -1547,7 +2128,20 @@ class LicenseProtectionPredictor:
         return {"binary": binary_features, "sequence": sequence_features, "graph": graph_features}
 
     def _extract_binary_features(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Extract binary-level features."""
+        """Extract binary-level features.
+
+        Computes Shannon entropy distribution across chunks of the binary file,
+        capturing overall entropy patterns that characterize encryption, compression,
+        and code obfuscation levels characteristic of different protection mechanisms.
+
+        Args:
+            data: Binary data to extract binary-level features from.
+
+        Returns:
+            npt.NDArray[np.float32]: Binary-level feature vector of size 4096 with
+            entropy distributions and padding for fixed-size network input.
+
+        """
         features: list[float] = []
 
         # Entropy distribution
@@ -1568,7 +2162,20 @@ class LicenseProtectionPredictor:
         return np.array(features[:4096], dtype=np.float32)
 
     def _extract_sequence_features(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Extract sequence features for transformer."""
+        """Extract sequence features for transformer.
+
+        Creates a sequence of overlapping byte windows that capture local byte patterns
+        and n-gram relationships characteristic of different code sections and protection
+        mechanisms found in license protection routines.
+
+        Args:
+            data: Binary data to extract sequence features from.
+
+        Returns:
+            npt.NDArray[np.float32]: Sequence feature array of shape (10, 256) with
+            normalized byte values suitable for transformer sequence processing.
+
+        """
         # Create sequence of byte n-grams
         features_list: list[list[int]] = []
         window_size = 256
@@ -1593,7 +2200,20 @@ class LicenseProtectionPredictor:
         return features_array[:10]  # Limit sequence length
 
     def _extract_graph_features(self, data: bytes) -> npt.NDArray[np.float32]:
-        """Extract control flow graph features."""
+        """Extract control flow graph features.
+
+        Analyzes control flow by counting jump, call, and return instructions that
+        form the control flow graph structure, providing insights into code branching
+        patterns and function organization that indicate license checking complexity.
+
+        Args:
+            data: Binary data to extract control flow graph features from.
+
+        Returns:
+            npt.NDArray[np.float32]: Control flow graph feature vector of size 512 with
+            normalized instruction counts and padding for fixed-size network input.
+
+        """
         # Count different types of control flow instructions
         jmp_count = data.count(b"\xe9") + data.count(b"\xeb")
         call_count = data.count(b"\xe8")
@@ -1607,7 +2227,21 @@ class LicenseProtectionPredictor:
         return np.array(features[:512], dtype=np.float32)
 
     def _fallback_prediction(self, binary_path: str) -> dict[str, Any]:
-        """Fallback prediction using heuristics when ML models unavailable."""
+        """Fallback prediction using heuristics when ML models unavailable.
+
+        Provides heuristic-based license protection detection using signature matching
+        when neural network models are unavailable, enabling basic protection identification
+        without deep learning dependencies. Used when PyTorch is not installed.
+
+        Args:
+            binary_path: Path to the binary file to analyze using signature matching.
+
+        Returns:
+            dict[str, Any]: Dictionary with heuristic-based protection predictions including
+            'protection_type', 'confidence', 'version', 'complexity', 'bypass_difficulty',
+            and 'all_probabilities' keys.
+
+        """
         with open(binary_path, "rb") as f:
             data = f.read()
 
@@ -1647,7 +2281,21 @@ _global_predictor = None
 
 
 def get_license_predictor(model_path: str | None = None) -> LicenseProtectionPredictor:
-    """Get or create global license protection predictor."""
+    """Get or create global license protection predictor.
+
+    Returns a singleton instance of the license protection predictor, creating it
+    on first call with optional pre-trained model loading. Subsequent calls return
+    the cached instance to avoid redundant model initialization.
+
+    Args:
+        model_path: Optional path to pre-trained model checkpoint for warm-starting
+            the predictor with learned weights.
+
+    Returns:
+        LicenseProtectionPredictor: Singleton instance for performing license protection
+        analysis and type prediction on binary files.
+
+    """
     global _global_predictor
 
     if _global_predictor is None:
@@ -1665,7 +2313,30 @@ def create_dataloaders(
     shuffle: bool = True,
     pin_memory: bool = True,
 ) -> tuple[Any, Any, Any]:
-    """Create train, validation, and test dataloaders from dataset path."""
+    """Create train, validation, and test dataloaders from dataset path.
+
+    Loads binary samples from a dataset directory and creates PyTorch DataLoaders
+    with automatic train/validation/test splitting and data augmentation configuration
+    for license protection model training.
+
+    Args:
+        data_path: Path to dataset directory containing binary samples organized by
+            protection type subdirectories or metadata.json file.
+        batch_size: Number of samples per batch for training iterations.
+        train_split: Fraction of data to use for training (default 0.8).
+        val_split: Fraction of data to use for validation (default 0.1).
+        num_workers: Number of worker processes for parallel data loading.
+        shuffle: Whether to shuffle training data for better generalization.
+        pin_memory: Whether to pin memory for faster GPU transfer on CUDA devices.
+
+    Returns:
+        tuple[Any, Any, Any]: Tuple of (train_loader, val_loader, test_loader)
+            for training, validation, and evaluation phases.
+
+    Raises:
+        ImportError: If PyTorch is not available for DataLoader creation.
+
+    """
     if not TORCH_AVAILABLE:
         raise ImportError("PyTorch not available for creating dataloaders")
 
@@ -1728,7 +2399,35 @@ def train_license_model(
     save_path: str | None = None,
     device: str | None = None,
 ) -> dict[str, Any]:
-    """Complete training pipeline for license protection models."""
+    """Complete training pipeline for license protection models.
+
+    Executes end-to-end training of neural network models for license protection
+    classification, including dataset loading, model training, validation, and checkpoint
+    saving with comprehensive logging and error handling for production deployment.
+
+    Args:
+        data_path: Path to dataset directory containing training samples organized
+            by protection type subdirectories.
+        model_type: Type of model to train: 'cnn', 'transformer', or 'hybrid'
+            (default 'hybrid').
+        epochs: Number of training epochs to execute (default 100).
+        batch_size: Batch size for training and validation (default 32).
+        learning_rate: Learning rate for AdamW optimizer (default 0.001).
+        save_path: Optional path to save the trained model checkpoint. If None,
+            uses default model directory.
+        device: Device to train on ('cpu' or 'cuda'). Auto-detected if None based
+            on CUDA availability.
+
+    Returns:
+        dict[str, Any]: Dictionary with training results including 'model_type',
+            'final_train_loss', 'final_train_acc', 'final_val_loss', 'final_val_acc',
+            'test_loss', 'test_acc', 'model_path', and 'history' keys.
+
+    Raises:
+        ImportError: If PyTorch is not available for model training.
+        ValueError: If model_type is not one of the recognized types (cnn, transformer, hybrid).
+
+    """
     if not TORCH_AVAILABLE:
         raise ImportError("PyTorch not available for training")
 
@@ -1816,7 +2515,28 @@ def train_license_model(
 
 
 def evaluate_model(model_path: str, test_data_path: str, batch_size: int = 32, device: str | None = None) -> dict[str, Any]:
-    """Evaluate a trained model on test data."""
+    """Evaluate a trained model on test data.
+
+    Loads a trained model and evaluates it on a test dataset, computing overall accuracy,
+    per-class accuracy metrics, and generating prediction data for confusion matrix analysis
+    and error rate investigation.
+
+    Args:
+        model_path: Path to the trained model checkpoint file to load.
+        test_data_path: Path to test dataset directory containing binary samples.
+        batch_size: Batch size for evaluation batches (default 32).
+        device: Device to evaluate on ('cpu' or 'cuda'). Auto-detected if None based
+            on CUDA availability.
+
+    Returns:
+        dict[str, Any]: Dictionary with keys 'overall_accuracy', 'per_class_accuracy',
+            'total_samples', 'correct_predictions', 'predictions', and 'true_labels' for
+            comprehensive evaluation and confusion matrix generation.
+
+    Raises:
+        ImportError: If PyTorch is not available for model evaluation.
+
+    """
     if not TORCH_AVAILABLE:
         raise ImportError("PyTorch not available for evaluation")
 

@@ -40,7 +40,16 @@ class GPUFrameworksProtocol(Protocol):
     """Protocol for GPU frameworks configuration."""
 
     def get(self, key: str, default: bool = False) -> bool:
-        """Get GPU framework availability."""
+        """Get GPU framework availability.
+
+        Args:
+            key: Framework name to check.
+            default: Default value if key not found. Defaults to False.
+
+        Returns:
+            bool: Availability status of the specified GPU framework.
+
+        """
         ...
 
 
@@ -48,12 +57,11 @@ def run_gpu_accelerated_analysis(app: object, binary_data: bytes) -> dict[str, A
     """Run GPU-accelerated binary analysis using available frameworks.
 
     Args:
-        app: Application instance with update_output signal
-        binary_data: Binary data to analyze
+        app: Application instance with update_output signal.
+        binary_data: Binary data to analyze.
 
     Returns:
-        Dictionary with analysis results
-
+        Dictionary with analysis results.
     """
     results = {
         "gpu_available": False,
@@ -190,7 +198,15 @@ def run_gpu_accelerated_analysis(app: object, binary_data: bytes) -> dict[str, A
 
 
 def _generate_test_data(test_sizes: list[int]) -> dict[int, bytes]:
-    """Generate test data with varying entropy for benchmarking."""
+    """Generate test data with varying entropy for benchmarking.
+
+    Args:
+        test_sizes: List of data sizes in bytes to generate.
+
+    Returns:
+        dict[int, bytes]: Dictionary mapping size to test data bytes.
+
+    """
     test_data = {}
     for size in test_sizes:
         # Create data with varying entropy
@@ -206,7 +222,13 @@ def _generate_test_data(test_sizes: list[int]) -> dict[int, bytes]:
 
 
 def _benchmark_cupy_framework(framework_results: dict[str, Any], test_data: dict[int, bytes]) -> None:
-    """Benchmark CuPy framework."""
+    """Benchmark CuPy framework.
+
+    Args:
+        framework_results: Dictionary to store benchmark results.
+        test_data: Dictionary mapping test size to test data bytes.
+
+    """
     try:
         import cupy as cp
 
@@ -234,7 +256,13 @@ def _benchmark_cupy_framework(framework_results: dict[str, Any], test_data: dict
 
 
 def _benchmark_numba_framework(framework_results: dict[str, Any], test_data: dict[int, bytes]) -> None:
-    """Benchmark Numba framework."""
+    """Benchmark Numba framework.
+
+    Args:
+        framework_results: Dictionary to store benchmark results.
+        test_data: Dictionary mapping test size to test data bytes.
+
+    """
     try:
         from numba import cuda as numba_cuda
 
@@ -255,13 +283,20 @@ def _benchmark_numba_framework(framework_results: dict[str, Any], test_data: dic
             # Perform pattern search operation using GPU acceleration
             search_start = time.time()
 
-            @numba_cuda.jit  # type: ignore[untyped-decorator]
+            @numba_cuda.jit
             def pattern_search_kernel(
                 data: numba_cuda.uint8[:],
                 pattern: numba_cuda.uint8[:],
                 results: numba_cuda.int32[:],
             ) -> None:
-                """GPU kernel for pattern matching in binary data."""
+                """GPU kernel for pattern matching in binary data.
+
+                Args:
+                    data: Array of binary data to search.
+                    pattern: Array containing pattern to find.
+                    results: Array to store result count.
+
+                """
                 idx = numba_cuda.grid(1)
                 if idx < len(data) - len(pattern) + 1:
                     match = True
@@ -290,7 +325,13 @@ def _benchmark_numba_framework(framework_results: dict[str, Any], test_data: dic
 
 
 def _benchmark_pycuda_framework(framework_results: dict[str, Any], test_data: dict[int, bytes]) -> None:
-    """Benchmark PyCUDA framework."""
+    """Benchmark PyCUDA framework.
+
+    Args:
+        framework_results: Dictionary to store benchmark results.
+        test_data: Dictionary mapping test size to test data bytes.
+
+    """
     try:
         import pycuda.driver as cuda
         from pycuda import gpuarray
@@ -316,7 +357,13 @@ def _benchmark_pycuda_framework(framework_results: dict[str, Any], test_data: di
 
 
 def _benchmark_cpu_framework(framework_results: dict[str, Any], test_data: dict[int, bytes]) -> None:
-    """Benchmark CPU baseline."""
+    """Benchmark CPU baseline.
+
+    Args:
+        framework_results: Dictionary to store benchmark results.
+        test_data: Dictionary mapping test size to test data bytes.
+
+    """
     pattern = b"LICENSE"
 
     for size, data in test_data.items():
@@ -341,7 +388,12 @@ def _benchmark_cpu_framework(framework_results: dict[str, Any], test_data: dict[
 
 
 def _determine_best_framework(results: dict[str, Any]) -> None:
-    """Determine the best performing framework from benchmark results."""
+    """Determine the best performing framework from benchmark results.
+
+    Args:
+        results: Dictionary containing benchmark results from all frameworks.
+
+    """
     if len(results["frameworks_tested"]) <= 1:
         return
 
@@ -367,7 +419,13 @@ def _determine_best_framework(results: dict[str, Any]) -> None:
 
 
 def _generate_recommendations(results: dict[str, Any]) -> None:
-    """Generate performance recommendations based on benchmark results."""
+    """Generate performance recommendations based on benchmark results.
+
+    Args:
+        results: Dictionary containing benchmark results and best framework
+            selection.
+
+    """
     if not results["best_framework"]:
         return
 
@@ -390,12 +448,11 @@ def benchmark_gpu_frameworks(app: object, test_sizes: list[int] | None = None) -
     """Benchmark available GPU frameworks.
 
     Args:
-        app: Application instance
-        test_sizes: List of test data sizes in bytes
+        app: Application instance.
+        test_sizes: List of test data sizes in bytes. Defaults to [1MB, 10MB, 50MB].
 
     Returns:
-        Dictionary with benchmark results
-
+        Dictionary with benchmark results.
     """
     if test_sizes is None:
         test_sizes = [

@@ -9,7 +9,6 @@ import json
 import logging
 import os
 import platform
-import random
 import secrets
 import string
 import struct
@@ -43,11 +42,21 @@ class HardwareIDSpoofer:
         self._init_driver()
 
     def _init_driver(self) -> None:
+        """Initialize and load the kernel driver for hardware spoofing.
+
+        Raises:
+            Exception: If driver creation or loading encounters system errors.
+        """
         if not self.driver_path.exists():
             self._create_driver()
         self._load_driver()
 
     def _create_driver(self) -> None:
+        """Create Windows kernel driver binary for hardware spoofing.
+
+        Raises:
+            Exception: If PE binary construction or file writing fails.
+        """
         os.makedirs(self.driver_path.parent, exist_ok=True)
         driver_code = self._generate_driver_code()
 
@@ -81,6 +90,11 @@ class HardwareIDSpoofer:
         pe_builder.write(str(self.driver_path))
 
     def _generate_driver_code(self) -> bytes:
+        """Generate x86-64 kernel driver assembly code for hardware spoofing.
+
+        Returns:
+            bytes: Assembled machine code for the Windows kernel driver.
+        """
         asm_code = """
         ; Windows Kernel Driver for Hardware ID Spoofing
 
@@ -329,9 +343,23 @@ class HardwareIDSpoofer:
         return bytes(encoding)
 
     def _align(self, value: int, alignment: int) -> int:
+        """Align value to specified alignment boundary.
+
+        Args:
+            value: Value to align.
+            alignment: Alignment boundary.
+
+        Returns:
+            int: Aligned value.
+        """
         return ((value + alignment - 1) // alignment) * alignment
 
     def _load_driver(self) -> None:
+        """Load and start the hardware spoofing kernel driver.
+
+        Raises:
+            WinError: If opening Service Control Manager fails.
+        """
         SC_MANAGER_ALL_ACCESS = 0xF003F
         SERVICE_ALL_ACCESS = 0xF01FF
         SERVICE_KERNEL_DRIVER = 0x1
@@ -375,7 +403,15 @@ class HardwareIDSpoofer:
             self.driver_handle = None
 
     def collect_hardware_info(self) -> dict[str, Any]:
-        """Collect all hardware identifiers that may be used for license checks."""
+        """Collect all hardware identifiers that may be used for license checks.
+
+        Returns:
+            Hardware information dictionary containing CPU ID, motherboard info,
+            disk serials, MAC addresses, BIOS information, system UUID, GPU
+            details, and USB device information. Keys include 'cpu_id',
+            'motherboard', 'disk_serials', 'mac_addresses', 'bios', 'system',
+            'gpu', and 'usb_devices'. Returns empty dict on collection errors.
+        """
         info: dict[str, Any] = {}
 
         try:
@@ -393,6 +429,16 @@ class HardwareIDSpoofer:
         return info
 
     def _get_cpu_id(self) -> dict[str, str]:
+        """Retrieve CPU identifier information via WMI and CPUID.
+
+        Returns:
+            dict[str, str]: CPU information dictionary with keys like 'vendor',
+                'brand', 'family', 'model', 'stepping', 'processor_id', 'serial',
+                and 'unique_id'.
+
+        Raises:
+            Exception: If WMI queries or cpuid library operations fail.
+        """
         cpu_info = {}
 
         with contextlib.suppress(ImportError):
@@ -416,6 +462,16 @@ class HardwareIDSpoofer:
         return cpu_info
 
     def _get_cpuid_via_asm(self) -> dict[str, str]:
+        """Extract CPU information directly via x86-64 CPUID instruction.
+
+        Returns:
+            dict[str, str]: CPU CPUID data with keys like 'max_cpuid', 'vendor',
+                'signature', 'features', and 'serial'.
+
+        Raises:
+            Exception: If CPUID execution via ctypes fails or platform is not
+                x86-64.
+        """
         cpu_info = {}
 
         try:
@@ -472,6 +528,16 @@ class HardwareIDSpoofer:
         return cpu_info
 
     def _get_motherboard_info(self) -> dict[str, str]:
+        """Retrieve motherboard information from WMI and registry.
+
+        Returns:
+            dict[str, str]: Motherboard information with keys like 'manufacturer',
+                'product', 'serial', 'version', 'system_manufacturer',
+                'system_product', and 'system_uuid'.
+
+        Raises:
+            OSError: If Windows registry access fails.
+        """
         mb_info = {}
 
         with contextlib.suppress(AttributeError, TypeError):
@@ -490,6 +556,16 @@ class HardwareIDSpoofer:
         return mb_info
 
     def _get_disk_serials(self) -> list[dict[str, str]]:
+        """Retrieve disk drive serial numbers from WMI and volume information.
+
+        Returns:
+            list[dict[str, str]]: List of disk information dictionaries with keys
+                like 'model', 'serial', 'signature', 'interface', 'drive',
+                'volume_name', and 'file_system'.
+
+        Raises:
+            Exception: If WMI disk queries or volume information retrieval fails.
+        """
         disks = []
 
         with contextlib.suppress(AttributeError, TypeError):
@@ -509,6 +585,19 @@ class HardwareIDSpoofer:
         return disks
 
     def _get_volume_serial(self, drive: str) -> dict[str, str] | None:
+        """Retrieve volume serial number and file system information.
+
+        Args:
+            drive: Drive letter or path (e.g., 'C:').
+
+        Returns:
+            dict[str, str] | None: Volume information with keys 'drive',
+                'volume_name', 'serial', and 'file_system', or None if retrieval
+                fails.
+
+        Raises:
+            OSError: If Windows GetVolumeInformationW API call fails.
+        """
         with contextlib.suppress(OSError):
             volume_name = ctypes.create_unicode_buffer(261)
             volume_serial = ctypes.wintypes.DWORD()
@@ -536,6 +625,15 @@ class HardwareIDSpoofer:
         return None
 
     def _get_mac_addresses(self) -> list[dict[str, str]]:
+        """Retrieve network adapter MAC addresses from WMI and system interfaces.
+
+        Returns:
+            list[dict[str, str]]: List of network adapter information dictionaries
+                with keys 'name', 'mac', 'guid', and 'pnp_device_id'.
+
+        Raises:
+            Exception: If WMI network adapter queries fail.
+        """
         macs = []
 
         with contextlib.suppress(AttributeError, TypeError):
@@ -554,6 +652,15 @@ class HardwareIDSpoofer:
         return macs
 
     def _get_bios_info(self) -> dict[str, str]:
+        """Retrieve BIOS information from WMI.
+
+        Returns:
+            dict[str, str]: BIOS information with keys 'manufacturer', 'version',
+                'serial', and 'release_date'.
+
+        Raises:
+            Exception: If WMI BIOS queries fail.
+        """
         bios_info = {}
 
         with contextlib.suppress(AttributeError, TypeError):
@@ -566,6 +673,15 @@ class HardwareIDSpoofer:
         return bios_info
 
     def _get_system_info(self) -> dict[str, str]:
+        """Retrieve system UUID and SKU information from WMI and registry.
+
+        Returns:
+            dict[str, str]: System information with keys 'uuid', 'sku', 'vendor',
+                'name', 'version', and 'machine_guid'.
+
+        Raises:
+            Exception: If WMI system queries fail.
+        """
         sys_info = {}
 
         with contextlib.suppress(AttributeError, TypeError):
@@ -582,6 +698,14 @@ class HardwareIDSpoofer:
         return sys_info
 
     def _get_machine_guid(self) -> str:
+        """Retrieve Windows machine GUID from registry.
+
+        Returns:
+            str: Machine GUID or empty string if retrieval fails.
+
+        Raises:
+            OSError: If Windows registry access fails.
+        """
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
                 result = winreg.QueryValueEx(key, "MachineGuid")[0]
@@ -590,6 +714,15 @@ class HardwareIDSpoofer:
             return ""
 
     def _get_gpu_info(self) -> list[dict[str, str]]:
+        """Retrieve GPU information from WMI.
+
+        Returns:
+            list[dict[str, str]]: List of GPU information dictionaries with keys
+                'name', 'device_id', 'pnp_device_id', and 'driver_version'.
+
+        Raises:
+            Exception: If WMI video controller queries fail.
+        """
         gpus = []
 
         with contextlib.suppress(AttributeError, TypeError):
@@ -604,6 +737,15 @@ class HardwareIDSpoofer:
         return gpus
 
     def _get_usb_devices(self) -> list[dict[str, str]]:
+        """Retrieve USB hub information from WMI.
+
+        Returns:
+            list[dict[str, str]]: List of USB device information dictionaries with
+                keys 'device_id', 'pnp_device_id', and 'name'.
+
+        Raises:
+            Exception: If WMI USB hub queries fail.
+        """
         usbs = []
 
         with contextlib.suppress(AttributeError, TypeError):
@@ -617,7 +759,18 @@ class HardwareIDSpoofer:
         return usbs
 
     def spoof_cpu_id(self, vendor: str | None = None, processor_id: str | None = None) -> bool:
-        """Spoof CPU vendor and processor ID at kernel or usermode level."""
+        """Spoof CPU vendor and processor ID at kernel or usermode level.
+
+        Args:
+            vendor: CPU vendor string (e.g., 'GenuineIntel', 'AuthenticAMD').
+                If None, a random vendor is selected.
+            processor_id: CPU processor ID string. If None, a random ID is
+                generated. Should be a hex string identifying the processor.
+
+        Returns:
+            True if CPU ID spoofing succeeded, False if spoofing failed.
+                Logs exceptions on failure but does not raise.
+        """
         vendor_to_use = vendor
         if vendor_to_use is None:
             vendor_to_use = secrets.choice(["GenuineIntel", "AuthenticAMD", "CentaurHauls"])
@@ -655,7 +808,14 @@ class HardwareIDSpoofer:
             return False
 
     def _generate_random_cpu_id(self) -> str:
-        # Note: Using secrets module for generating spoofed hardware identifiers
+        """Generate random CPU processor ID string.
+
+        Returns:
+            str: Random 16-character hex string suitable for CPUID spoofing.
+
+        Raises:
+            Exception: If random number generation fails.
+        """
         family = secrets.choice([0x06, 0x0F, 0x17])
         model = secrets.randbelow(0xFF) + 0x01
         stepping = secrets.randbelow(0x10)
@@ -666,12 +826,33 @@ class HardwareIDSpoofer:
         return processor_id
 
     def _spoof_cpu_usermode(self, vendor: str, processor_id: str) -> bool:
+        """Spoof CPU ID at usermode level using Detours library.
+
+        Args:
+            vendor: CPU vendor string.
+            processor_id: CPU processor ID string.
+
+        Returns:
+            bool: True if spoofing succeeded, False otherwise.
+
+        Raises:
+            Exception: If Detours library loading or hook attachment fails.
+        """
         try:
             detours_dll = ctypes.windll.LoadLibrary("detours.dll")
 
             original_cpuid_ptr = ctypes.c_void_p()
 
             def hooked_cpuid(eax_in: int, regs: ctypes.Array[ctypes.c_uint32]) -> None:
+                """Hook CPUID instruction to return spoofed values.
+
+                Args:
+                    eax_in: CPUID leaf/subfunction number.
+                    regs: Register array to store CPUID results.
+
+                Returns:
+                    None
+                """
                 if eax_in == 0:
                     regs[0] = 0x0D
                     regs[1] = int.from_bytes(vendor[:4].encode(), "little")
@@ -699,7 +880,18 @@ class HardwareIDSpoofer:
             return False
 
     def spoof_mac_address(self, adapter_name: str | None = None, new_mac: str | None = None) -> bool:
-        """Spoof MAC address of network adapter for hardware ID bypass."""
+        """Spoof MAC address of network adapter for hardware ID bypass.
+
+        Args:
+            adapter_name: Name of the network adapter to spoof. If None, uses
+                the first available adapter.
+            new_mac: New MAC address in format 'XX:XX:XX:XX:XX:XX'. If None,
+                a random locally-administered MAC is generated.
+
+        Returns:
+            True if MAC spoofing succeeded, False if spoofing failed or adapter
+                not found. Logs exceptions on failure but does not raise.
+        """
         new_mac_to_use = new_mac
         if new_mac_to_use is None:
             new_mac_to_use = self._generate_random_mac()
@@ -745,10 +937,32 @@ class HardwareIDSpoofer:
         return False
 
     def _generate_random_mac(self) -> str:
+        """Generate random MAC address string.
+
+        Returns:
+            str: MAC address in format 'XX:XX:XX:XX:XX:XX' with locally
+                administered bit set.
+
+        Raises:
+            Exception: If random number generation fails.
+        """
         mac = [2, *[secrets.randbelow(256) for _ in range(5)]]
         return ":".join(f"{byte:02X}" for byte in mac)
 
     def _restart_network_adapter(self, adapter_name: str) -> None:
+        """Restart network adapter to apply MAC address spoofing changes.
+
+        Args:
+            adapter_name: Name of network adapter to restart.
+
+        Returns:
+            None
+
+        Raises:
+            subprocess.CalledProcessError: If netsh or wmic commands fail to
+                execute.
+            FileNotFoundError: If netsh or wmic executables are not found.
+        """
         try:
             # Sanitize adapter_name to prevent command injection
             adapter_name_clean = adapter_name.replace('"', "").replace("'", "").replace(";", "").replace("|", "").replace("&", "")
@@ -796,7 +1010,18 @@ class HardwareIDSpoofer:
                 )
 
     def spoof_disk_serial(self, drive: str | None = None, new_serial: str | None = None) -> bool:
-        """Spoof disk serial number for bypassing storage-based license checks."""
+        """Spoof disk serial number for bypassing storage-based license checks.
+
+        Args:
+            drive: Drive letter or path (e.g., 'C:\\'). If None, defaults to
+                'C:\\' (system drive).
+            new_serial: New disk serial number. If None, a random serial is
+                generated (16 alphanumeric characters).
+
+        Returns:
+            True if disk serial spoofing succeeded, False on failure. Logs
+                exceptions on failure but does not raise.
+        """
         new_serial_to_use = new_serial
         if new_serial_to_use is None:
             new_serial_to_use = self._generate_random_disk_serial()
@@ -834,9 +1059,30 @@ class HardwareIDSpoofer:
             return False
 
     def _generate_random_disk_serial(self) -> str:
+        """Generate random disk serial number string.
+
+        Returns:
+            str: 16-character alphanumeric string suitable for disk serial spoofing.
+
+        Raises:
+            Exception: If random character selection fails.
+        """
         return "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(16))
 
     def _spoof_disk_usermode(self, drive: str, new_serial: str) -> bool:
+        """Spoof disk serial number at usermode level.
+
+        Args:
+            drive: Drive letter or path.
+            new_serial: New disk serial number.
+
+        Returns:
+            bool: True if spoofing succeeded, False otherwise.
+
+        Raises:
+            OSError: If Windows registry operations or subprocess execution
+                fails.
+        """
         try:
             key_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion"
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_WRITE) as key:
@@ -869,7 +1115,20 @@ exit"""
             return False
 
     def spoof_motherboard_serial(self, manufacturer: str | None = None, product: str | None = None, serial: str | None = None) -> bool:
-        """Spoof motherboard manufacturer, product, and serial via SMBIOS manipulation."""
+        """Spoof motherboard manufacturer, product, and serial via SMBIOS manipulation.
+
+        Args:
+            manufacturer: Motherboard manufacturer name (e.g., 'ASUS', 'MSI').
+                If None, a random manufacturer is selected.
+            product: Motherboard product name. If None, automatically generated
+                from manufacturer and chipset codes.
+            serial: Motherboard serial number. If None, a random 12-character
+                alphanumeric serial is generated.
+
+        Returns:
+            True if motherboard spoofing succeeded, False on failure. Logs
+                exceptions on failure but does not raise.
+        """
         manufacturer_to_use = manufacturer
         if manufacturer_to_use is None:
             manufacturer_to_use = secrets.choice(["ASUS", "MSI", "Gigabyte", "ASRock", "EVGA"])
@@ -918,9 +1177,32 @@ exit"""
             return False
 
     def _generate_random_serial(self) -> str:
+        """Generate random 12-character motherboard serial number.
+
+        Returns:
+            str: 12-character alphanumeric string.
+
+        Raises:
+            Exception: If random character selection fails.
+        """
         return "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(12))
 
     def _spoof_motherboard_usermode(self, manufacturer: str, product: str, serial: str) -> bool:
+        """Spoof motherboard information at usermode level via WMI.
+
+        Args:
+            manufacturer: Motherboard manufacturer name.
+            product: Motherboard product name.
+            serial: Motherboard serial number.
+
+        Returns:
+            bool: True if spoofing succeeded, False otherwise.
+
+        Raises:
+            subprocess.CalledProcessError: If WMI repository manipulation or
+                VBScript execution fails.
+            OSError: If file I/O operations fail.
+        """
         try:
             wmi_repo_path = r"C:\Windows\System32\wbem\Repository"
 
@@ -968,7 +1250,16 @@ objInstance.Put_
             return False
 
     def spoof_system_uuid(self, new_uuid: str | None = None) -> bool:
-        """Spoof system UUID in registry for license bypass."""
+        """Spoof system UUID in registry for license bypass.
+
+        Args:
+            new_uuid: New system UUID string (UUID4 format recommended). If None,
+                a random UUID4 is generated and used.
+
+        Returns:
+            True if system UUID spoofing succeeded, False on failure. Logs
+                exceptions on failure but does not raise.
+        """
         new_uuid_to_use = new_uuid
         if new_uuid_to_use is None:
             new_uuid_to_use = str(uuid.uuid4())
@@ -990,7 +1281,21 @@ objInstance.Put_
             return False
 
     def spoof_all(self, profile: dict[str, Any] | None = None) -> dict[str, bool]:
-        """Spoof all hardware identifiers according to provided or random profile."""
+        """Spoof all hardware identifiers according to provided or random profile.
+
+        Args:
+            profile: Hardware spoofing profile dictionary containing keys like
+                'cpu_vendor', 'cpu_id', 'mac_addresses', 'disk_serials',
+                'motherboard_manufacturer', 'motherboard_product',
+                'motherboard_serial', and 'system_uuid'. If None, a random
+                profile is generated via generate_random_profile().
+
+        Returns:
+            Dictionary mapping identifier names to boolean success values. Keys
+                include 'cpu', 'mac_<adapter>', 'disk_<drive>', 'motherboard',
+                and 'system_uuid'. All values are True for success or False for
+                failed spoofing operations.
+        """
         profile_to_use = profile
         if profile_to_use is None:
             profile_to_use = self.generate_random_profile()
@@ -1029,7 +1334,15 @@ objInstance.Put_
         return results
 
     def generate_random_profile(self) -> dict[str, Any]:
-        """Generate random hardware profile for consistent spoofing across all identifiers."""
+        """Generate random hardware profile for consistent spoofing across all identifiers.
+
+        Returns:
+            Hardware profile dictionary with randomly generated values for all
+                identifiers including cpu_vendor, cpu_id, mac_addresses list,
+                disk_serials list, motherboard_manufacturer, motherboard_product,
+                motherboard_serial, and system_uuid. Each profile is unique and
+                suitable for passing to spoof_all() method.
+        """
         mac_addresses_list: list[dict[str, str]] = []
         disk_serials_list: list[dict[str, str]] = []
 
@@ -1054,7 +1367,16 @@ objInstance.Put_
         return profile
 
     def save_profile(self, profile: dict[str, Any], filepath: Path) -> None:
-        """Save hardware spoofing profile to encrypted file."""
+        """Save hardware spoofing profile to encrypted file.
+
+        Args:
+            profile: Hardware spoofing profile dictionary to persist. Should
+                contain keys like 'cpu_vendor', 'cpu_id', 'mac_addresses',
+                'disk_serials', 'motherboard_manufacturer', 'motherboard_product',
+                'motherboard_serial', and 'system_uuid'.
+            filepath: Path to file where encrypted profile will be saved.
+                Parent directories are created if they don't exist.
+        """
         filepath = Path(filepath)
         filepath.parent.mkdir(parents=True, exist_ok=True)
 
@@ -1062,12 +1384,34 @@ objInstance.Put_
         filepath.write_bytes(encrypted_profile)
 
     def load_profile(self, filepath: Path) -> dict[str, Any]:
-        """Load hardware spoofing profile from encrypted file."""
+        """Load hardware spoofing profile from encrypted file.
+
+        Args:
+            filepath: Path to encrypted profile file saved by save_profile().
+
+        Returns:
+            Decrypted hardware spoofing profile dictionary with keys like
+                'cpu_vendor', 'cpu_id', 'mac_addresses', 'disk_serials',
+                'motherboard_manufacturer', 'motherboard_product',
+                'motherboard_serial', and 'system_uuid'. Returns empty dict if
+                decryption fails.
+        """
         filepath = Path(filepath)
         encrypted_data = filepath.read_bytes()
         return self._decrypt_profile(encrypted_data)
 
     def _encrypt_profile(self, profile: dict[str, Any]) -> bytes:
+        """Encrypt hardware spoofing profile using Fernet symmetric encryption.
+
+        Args:
+            profile: Hardware spoofing profile dictionary to encrypt.
+
+        Returns:
+            bytes: Encrypted profile data.
+
+        Raises:
+            Exception: If Fernet encryption or JSON serialization fails.
+        """
         import cryptography.fernet
 
         key = hashlib.sha256(b"IntellicracKHWIDSpoof").digest()[:32]
@@ -1078,6 +1422,18 @@ objInstance.Put_
         return fernet.encrypt(json_data.encode())
 
     def _decrypt_profile(self, encrypted_data: bytes) -> dict[str, Any]:
+        """Decrypt hardware spoofing profile from encrypted data.
+
+        Args:
+            encrypted_data: Encrypted profile data from _encrypt_profile().
+
+        Returns:
+            dict[str, Any]: Decrypted profile dictionary, or empty dict if
+                decryption fails.
+
+        Raises:
+            Exception: If Fernet decryption or JSON deserialization fails.
+        """
         import cryptography.fernet
 
         key = hashlib.sha256(b"IntellicracKHWIDSpoof").digest()[:32]
@@ -1089,7 +1445,13 @@ objInstance.Put_
         return result if isinstance(result, dict) else {}
 
     def restore_original(self) -> bool:
-        """Restore original hardware identifiers from backup."""
+        """Restore original hardware identifiers from backup.
+
+        Returns:
+            True if restoration succeeded, False on any restoration error. Logs
+                exceptions on failure but does not raise. Iterates through all
+                backed-up hardware values and attempts restoration.
+        """
         try:
             for key, value in self.original_values.items():
                 if key.startswith("mac_"):
@@ -1118,6 +1480,18 @@ objInstance.Put_
             return False
 
     def _restore_mac_address(self, adapter: str, original_mac: str) -> None:
+        """Restore original MAC address for network adapter.
+
+        Args:
+            adapter: Network adapter name.
+            original_mac: Original MAC address to restore.
+
+        Returns:
+            None
+
+        Raises:
+            OSError: If Windows registry access fails.
+        """
         with contextlib.suppress(AttributeError, TypeError):
             base_key = r"SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}"
 
@@ -1137,10 +1511,31 @@ objInstance.Put_
                         break
 
     def _restore_disk_serial(self, drive: str, original_serial: str) -> None:
+        """Restore original disk serial number.
+
+        Args:
+            drive: Drive letter or path.
+            original_serial: Original disk serial number to restore.
+
+        Returns:
+            None
+
+        Raises:
+            Exception: If disk serial restoration via diskpart fails.
+        """
         pass
 
     def cleanup(self) -> None:
-        """Clean up kernel driver and resources."""
+        """Clean up kernel driver and resources.
+
+        Returns:
+            None
+
+        Raises:
+            subprocess.CalledProcessError: If Windows service control commands
+                fail.
+            OSError: If kernel driver handle closure fails.
+        """
         if self.driver_handle:
             self.kernel32.CloseHandle(self.driver_handle)
             self.driver_handle = None

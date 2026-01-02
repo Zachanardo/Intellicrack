@@ -8,7 +8,7 @@ Licensed under GNU General Public License v3.0
 """
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import QHBoxLayout, QLabel, Qt, QVBoxLayout, QWidget, pyqtSignal
 
@@ -24,11 +24,6 @@ except ImportError:
     np = None
     HAS_NUMPY = False
 
-if TYPE_CHECKING:
-    import matplotlib.pyplot as pyplot
-    from matplotlib.axes import Axes
-    from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.figure import Figure as FigureType
 
 logger = get_logger(__name__)
 
@@ -62,7 +57,11 @@ class EntropyGraphWidget(QWidget):
     section_clicked = pyqtSignal(str, float)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize entropy graph widget with data storage and UI setup."""
+        """Initialize entropy graph widget with data storage and UI setup.
+
+        Args:
+            parent: Parent widget for this widget. Defaults to None.
+        """
         super().__init__(parent)
         self.entropy_data: list[Any] = []
         self.title_label: QLabel
@@ -75,7 +74,11 @@ class EntropyGraphWidget(QWidget):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """Initialize the UI."""
+        """Initialize the UI layout and create visualization components.
+
+        Sets up the main layout with header section containing title and legend,
+        plotting area (PyQtGraph or matplotlib fallback), and summary statistics.
+        """
         layout = QVBoxLayout()
 
         # Header
@@ -158,7 +161,12 @@ class EntropyGraphWidget(QWidget):
         self.setLayout(layout)
 
     def _add_threshold_lines(self) -> None:
-        """Add threshold lines to indicate entropy levels."""
+        """Add threshold lines to indicate entropy levels.
+
+        Creates dashed horizontal lines at 6.0 and 7.0 bits to mark the boundaries
+        between low, medium, and high entropy regions. Only operates when PyQtGraph
+        is available.
+        """
         if not PYQTGRAPH_AVAILABLE:
             return
 
@@ -183,10 +191,16 @@ class EntropyGraphWidget(QWidget):
     def update_entropy_data(self, entropy_info: list[Any]) -> None:
         """Update the entropy visualization with new data.
 
+        Processes entropy data and updates the visualization with color-coded
+        entropy values. Also calculates and displays summary statistics including
+        packed and encrypted section counts.
+
         Args:
             entropy_info: List of entropy information objects with attributes:
                          section_name, entropy, packed, encrypted
 
+        Returns:
+            None.
         """
         self.entropy_data = entropy_info
 
@@ -241,7 +255,19 @@ class EntropyGraphWidget(QWidget):
         self.summary_label.setText(summary)
 
     def _update_pyqtgraph(self, sections: list[str], entropies: list[float], colors: list[str]) -> None:
-        """Update PyQtGraph visualization."""
+        """Update PyQtGraph visualization with new entropy bar data.
+
+        Recreates the bar graph with color-coded entropy values and updates
+        x-axis labels with section names. Only operates when PyQtGraph is available.
+
+        Args:
+            sections: List of section names for x-axis labels.
+            entropies: List of entropy values for bar heights.
+            colors: List of color codes for bar coloring.
+
+        Returns:
+            None.
+        """
         if not PYQTGRAPH_AVAILABLE:
             return
 
@@ -276,7 +302,19 @@ class EntropyGraphWidget(QWidget):
         self.plot_widget.setXRange(-0.5, len(sections) - 0.5)
 
     def _update_matplotlib(self, sections: list[str], entropies: list[float], colors: list[str]) -> None:
-        """Update matplotlib visualization (fallback)."""
+        """Update matplotlib visualization (fallback).
+
+        Renders entropy data as a bar chart with value labels, threshold lines,
+        and rotated section labels. Only used when PyQtGraph is not available.
+
+        Args:
+            sections: List of section names for x-axis labels.
+            entropies: List of entropy values for bar heights.
+            colors: List of color codes for bar coloring.
+
+        Returns:
+            None.
+        """
         if self.ax is None or self.figure is None or self.canvas is None:
             return
 
@@ -313,7 +351,15 @@ class EntropyGraphWidget(QWidget):
         self.canvas.draw()
 
     def _on_bar_clicked(self, item: object, points: Sequence[object]) -> None:
-        """Handle bar click in PyQtGraph."""
+        """Handle bar click in PyQtGraph.
+
+        Emits section_clicked signal with the section name and entropy value
+        when a bar is clicked. Safely extracts position data from the clicked point.
+
+        Args:
+            item: The clicked item from PyQtGraph.
+            points: Sequence of point objects from the click event.
+        """
         if points:
             point = points[0]
             if hasattr(point, "pos") and callable(point.pos):
@@ -329,7 +375,13 @@ class EntropyGraphWidget(QWidget):
                             )
 
     def get_entropy_summary(self) -> dict[str, int | float]:
-        """Get summary statistics of entropy data."""
+        """Get summary statistics of entropy data.
+
+        Returns:
+            Dictionary containing total sections, average entropy,
+            maximum entropy, packed sections count, encrypted sections count,
+            and high entropy sections count.
+        """
         if not self.entropy_data:
             return {
                 "total_sections": 0,
@@ -352,7 +404,17 @@ class EntropyGraphWidget(QWidget):
         }
 
     def export_graph(self, file_path: str) -> None:
-        """Export the graph to an image file."""
+        """Export the graph to an image file.
+
+        Saves the current entropy visualization to disk using either PyQtGraph
+        or matplotlib depending on available libraries. Logs export status.
+
+        Args:
+            file_path: Path where the image file will be saved.
+
+        Returns:
+            None.
+        """
         if PYQTGRAPH_AVAILABLE:
             exporter = pg.exporters.ImageExporter(self.plot_widget.plotItem)
             exporter.export(file_path)

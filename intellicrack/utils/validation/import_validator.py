@@ -33,7 +33,8 @@ class ImportValidator:
             code: Python code as string
 
         Returns:
-            Tuple of (success, warnings/errors)
+            Tuple where first element is success boolean, second element is
+            list of warning/error messages for missing modules
 
         """
         warnings = []
@@ -71,7 +72,8 @@ class ImportValidator:
             file_path: Path to Python file
 
         Returns:
-            Dictionary with 'missing' list and optionally 'success' boolean
+            Dictionary containing 'missing' key with list of missing module names
+            and 'success' key with boolean validation status
 
         """
         missing: list[str] = []
@@ -98,7 +100,8 @@ class ImportValidator:
             code: Python code as string
 
         Returns:
-            List of import information dictionaries
+            List of dictionaries containing import information with keys for
+            type, module, alias, names, level, and line number
 
         """
         imports: list[dict[str, str | list[str] | int | None]] = []
@@ -143,7 +146,7 @@ class ImportValidator:
             module_name: Name of module to check
 
         Returns:
-            True if module is available, False otherwise
+            True if module can be imported successfully, False if import fails
 
         """
         try:
@@ -161,7 +164,8 @@ class ImportValidator:
             module_name: Name of missing module
 
         Returns:
-            List of suggested alternatives
+            List of package names or modules that can serve as alternatives
+            for the specified module, or empty list if no alternatives known
 
         """
         alternatives = {
@@ -198,7 +202,8 @@ class PluginStructureValidator:
             required_methods: Set of required method names (defaults to {'run'})
 
         Returns:
-            Tuple of (success, errors)
+            Tuple where first element is success boolean, second element is
+            list of error messages for missing or invalid methods
 
         """
         if required_methods is None:
@@ -242,7 +247,8 @@ class PluginStructureValidator:
             required_methods: Set of required method names (defaults to {'run'})
 
         Returns:
-            Dictionary with 'valid' boolean and 'errors' list
+            Dictionary containing 'valid' key with boolean validation status
+            and 'errors' key with list of validation error messages
 
         """
         try:
@@ -268,7 +274,8 @@ class PluginStructureValidator:
             code: Python code as string
 
         Returns:
-            List of function information dictionaries
+            List of dictionaries containing function and method information
+            with keys for name, line number, arguments, type, and class name
 
         """
         functions: list[dict[str, str | int | list[str]]] = []
@@ -319,7 +326,9 @@ class PluginStructureValidator:
             required_methods: Set of required method names
 
         Returns:
-            Dictionary with validation results
+            Dictionary containing validation results with keys for 'valid',
+            'import_warnings', 'structure_errors', 'import_success', and
+            'structure_success'
 
         """
         # Validate imports
@@ -348,7 +357,8 @@ def validate_imports(code: str) -> tuple[bool, list[str]]:
         code: Python code as string
 
     Returns:
-        Tuple of (success, warnings)
+        Tuple where first element is success boolean, second element is
+        list of warning messages for missing modules
 
     """
     return ImportValidator.validate_imports_from_code(code)
@@ -361,7 +371,8 @@ def validate_structure(code: str) -> tuple[bool, list[str]]:
         code: Python code as string
 
     Returns:
-        Tuple of (success, errors)
+        Tuple where first element is success boolean, second element is
+        list of error messages for missing or invalid methods
 
     """
     return PluginStructureValidator.validate_structure_from_code(code)

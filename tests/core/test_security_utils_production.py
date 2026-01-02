@@ -249,6 +249,7 @@ class TestSecureYamlLoad:
 
         result = secure_yaml_load(yaml_data)
 
+        assert isinstance(result, dict)
         assert result["application"]["name"] == "Intellicrack"
         assert len(result["application"]["features"]) == 2
         assert result["application"]["settings"]["timeout"] == 300
@@ -293,6 +294,7 @@ class TestSecureJsonLoad:
 
         result = secure_json_load(json_data)
 
+        assert isinstance(result, dict)
         assert result["config"]["analysis"]["timeout"] == 300
         assert result["config"]["analysis"]["enabled"] is True
 
@@ -302,6 +304,7 @@ class TestSecureJsonLoad:
 
         result = secure_json_load(json_data)
 
+        assert isinstance(result, dict)
         assert "✓" in result["message"]
         assert "©" in result["message"]
 
@@ -505,11 +508,13 @@ class TestIntegrationScenarios:
         json_config = '{"key": "value", "setting": 42}'
         config = secure_json_load(json_config)
 
+        assert isinstance(config, dict)
         assert config["key"] == "value"
 
         yaml_data = "key: value\nsetting: 42"
         yaml_config = secure_yaml_load(yaml_data)
 
+        assert isinstance(yaml_config, dict)
         assert yaml_config["key"] == "value"
 
         config_hash = secure_hash(json_config, algorithm="sha256")

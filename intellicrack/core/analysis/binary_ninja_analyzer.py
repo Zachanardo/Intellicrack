@@ -166,15 +166,26 @@ class BinaryNinjaAnalyzer:
     def analyze_binary(self, binary_path: str | Path) -> BNAnalysisResult:
         """Perform comprehensive binary analysis using Binary Ninja.
 
+        Analyzes a binary file to extract functions, control flow graphs,
+        strings, imports, exports, and identifies potential license
+        validation functions using Binary Ninja's decompilation and
+        analysis capabilities.
+
         Args:
-            binary_path: Path to binary file to analyze
+            binary_path: Path to binary file to analyze. Can be a string
+                or Path object pointing to a valid PE binary.
 
         Returns:
-            Complete analysis result with functions, CFG, and license candidates
+            BNAnalysisResult: Complete analysis result containing
+                functions, CFG data, strings, imports, exports, sections,
+                symbols, basic blocks, and identified license validation
+                candidates.
 
         Raises:
-            FileNotFoundError: If binary file doesn't exist
-            RuntimeError: If Binary Ninja analysis fails
+            FileNotFoundError: If binary file doesn't exist.
+            ValueError: If the path is not a file or is invalid.
+            RuntimeError: If Binary Ninja analysis fails or binary cannot
+                be opened.
         """
         binary_path = Path(binary_path)
 
@@ -243,7 +254,17 @@ class BinaryNinjaAnalyzer:
                 self.bv.file.close()
 
     def _analyze_functions(self) -> dict[int, BNFunction]:
-        """Analyze all functions in the binary."""
+        """Analyze all functions in the binary.
+
+        Iterates through all functions found by Binary Ninja and performs
+        detailed analysis on each, extracting metadata, cross-references,
+        decompiled code, and other function attributes.
+
+        Returns:
+            dict[int, BNFunction]: Dictionary mapping function addresses
+                (as integers) to BNFunction objects containing detailed
+                analysis results for each function.
+        """
         functions: dict[int, BNFunction] = {}
 
         if not self.bv or not BINARYNINJA_AVAILABLE:
@@ -260,7 +281,24 @@ class BinaryNinjaAnalyzer:
         return functions
 
     def _analyze_single_function(self, func: Function) -> BNFunction:
-        """Perform detailed analysis of a single function."""
+        """Perform detailed analysis of a single function.
+
+        Analyzes a single function to extract comprehensive metadata
+        including cross-references, decompiled code, HLIL/MLIL
+        representations, API calls, referenced strings, and control
+        flow characteristics.
+
+        Args:
+            func: Binary Ninja Function object to analyze. Contains
+                function metadata, basic blocks, instructions, and
+                decompiled representations.
+
+        Returns:
+            BNFunction: Object containing detailed analysis results
+                including name, address, size, calling convention,
+                decompiled code, cross-references, API calls, and
+                other function attributes.
+        """
         xrefs_to = [ref.address for ref in self.bv.get_code_refs(func.start)] if self.bv is not None else []
         xrefs_from = []
         calls = []
@@ -342,7 +380,22 @@ class BinaryNinjaAnalyzer:
         )
 
     def _calculate_cyclomatic_complexity(self, func: Function) -> int:
-        """Calculate cyclomatic complexity: M = E - N + 2P."""
+        """Calculate cyclomatic complexity: M = E - N + 2P.
+
+        Computes the cyclomatic complexity of a function using the
+        formula M = E - N + 2P, where E is the number of edges, N is
+        the number of nodes, and P is the number of connected components.
+        Returns 1 for functions with no basic blocks.
+
+        Args:
+            func: Binary Ninja Function object containing basic blocks
+                and control flow information.
+
+        Returns:
+            int: Cyclomatic complexity metric for the function. Returns
+                1 for simple functions, higher values for more complex
+                control flow.
+        """
         if not func.basic_blocks:
             return 1
 
@@ -352,7 +405,17 @@ class BinaryNinjaAnalyzer:
         return edges - nodes + 2
 
     def _extract_strings(self) -> list[tuple[int, str]]:
-        """Extract all strings from binary."""
+        """Extract all strings from binary.
+
+        Identifies and extracts all strings found in the binary by Binary
+        Ninja's analysis, including both ASCII and Unicode strings with
+        their memory addresses.
+
+        Returns:
+            list[tuple[int, str]]: List of tuples where each tuple contains
+                the memory address (as integer) and string value. Returns
+                empty list if Binary Ninja is unavailable.
+        """
         strings: list[tuple[int, str]] = []
 
         if not self.bv or not BINARYNINJA_AVAILABLE:
@@ -362,7 +425,17 @@ class BinaryNinjaAnalyzer:
         return strings
 
     def _extract_imports(self) -> list[tuple[str, str, int]]:
-        """Extract imported functions."""
+        """Extract imported functions.
+
+        Identifies all imported functions from external libraries by
+        examining the symbol table and import symbols detected by Binary
+        Ninja.
+
+        Returns:
+            list[tuple[str, str, int]]: List of tuples containing library
+                name, function name, and memory address. Returns empty
+                list if Binary Ninja is unavailable.
+        """
         imports: list[tuple[str, str, int]] = []
 
         if not self.bv or not BINARYNINJA_AVAILABLE:
@@ -376,7 +449,16 @@ class BinaryNinjaAnalyzer:
         return imports
 
     def _extract_exports(self) -> list[tuple[str, int]]:
-        """Extract exported functions."""
+        """Extract exported functions.
+
+        Identifies all exported functions by examining symbols that are
+        executable and marked as function symbols by Binary Ninja.
+
+        Returns:
+            list[tuple[str, int]]: List of tuples containing exported
+                function name and memory address. Returns empty list if
+                Binary Ninja is unavailable.
+        """
         exports: list[tuple[str, int]] = []
 
         if not self.bv or not BINARYNINJA_AVAILABLE:
@@ -391,7 +473,16 @@ class BinaryNinjaAnalyzer:
         return exports
 
     def _extract_sections(self) -> list[dict[str, Any]]:
-        """Extract section information."""
+        """Extract section information.
+
+        Identifies and extracts metadata about all sections in the binary,
+        including their addresses, sizes, names, and types.
+
+        Returns:
+            list[dict[str, Any]]: List of dictionaries, each containing
+                section name, start address, end address, size, and type.
+                Returns empty list if Binary Ninja is unavailable.
+        """
         sections: list[dict[str, Any]] = []
 
         if not self.bv or not BINARYNINJA_AVAILABLE:
@@ -410,7 +501,16 @@ class BinaryNinjaAnalyzer:
         return sections
 
     def _extract_symbols(self) -> dict[int, str]:
-        """Extract all symbols."""
+        """Extract all symbols.
+
+        Identifies and extracts all symbols found in the binary's symbol
+        table, mapping each symbol's address to its full name.
+
+        Returns:
+            dict[int, str]: Dictionary mapping symbol addresses (as integers)
+                to their full names (as strings). Returns empty dictionary
+                if Binary Ninja is unavailable.
+        """
         symbols: dict[int, str] = {}
 
         if not self.bv or not BINARYNINJA_AVAILABLE:
@@ -422,7 +522,18 @@ class BinaryNinjaAnalyzer:
         return symbols
 
     def _extract_basic_blocks(self) -> dict[int, BNBasicBlock]:
-        """Extract all basic blocks with control flow information."""
+        """Extract all basic blocks with control flow information.
+
+        Identifies all basic blocks in all functions and extracts control
+        flow information including dominance relationships, outgoing and
+        incoming edges, and block properties.
+
+        Returns:
+            dict[int, BNBasicBlock]: Dictionary mapping basic block
+                addresses (as integers) to BNBasicBlock objects containing
+                control flow and dominance information. Returns empty
+                dictionary if Binary Ninja is unavailable.
+        """
         blocks: dict[int, BNBasicBlock] = {}
 
         if not self.bv or not BINARYNINJA_AVAILABLE:
@@ -456,7 +567,17 @@ class BinaryNinjaAnalyzer:
         return blocks
 
     def _identify_license_validators(self) -> list[int]:
-        """Identify potential license validation functions."""
+        """Identify potential license validation functions.
+
+        Scores functions based on the presence of license-related keywords
+        in function names, decompiled code, referenced strings, and imported
+        APIs. Returns functions with scores above a threshold.
+
+        Returns:
+            list[int]: List of function addresses (as integers) that appear
+                to validate licenses, sorted in ascending order. Returns
+                empty list if Binary Ninja is unavailable.
+        """
         candidates: list[int] = []
 
         if not self.bv or not BINARYNINJA_AVAILABLE:
@@ -495,7 +616,18 @@ class BinaryNinjaAnalyzer:
         return sorted(candidates, key=lambda addr: addr)
 
     def _detect_protection_mechanisms(self) -> dict[str, list[int]]:
-        """Detect anti-debug, anti-VM, and other protection mechanisms."""
+        """Detect anti-debug, anti-VM, and other protection mechanisms.
+
+        Identifies functions that call protection-related APIs by matching
+        imported functions against known anti-debug, anti-VM, cryptographic,
+        and network protection API calls.
+
+        Returns:
+            dict[str, list[int]]: Dictionary mapping protection categories
+                (anti_debug, anti_vm, crypto, network) to lists of function
+                addresses that use those protection mechanisms. Returns
+                empty lists for each category if Binary Ninja is unavailable.
+        """
         protections: dict[str, list[int]] = {"anti_debug": [], "anti_vm": [], "crypto": [], "network": []}
 
         if not self.bv or not BINARYNINJA_AVAILABLE:
@@ -513,7 +645,27 @@ class BinaryNinjaAnalyzer:
         return protections
 
     def _fallback_analysis(self, binary_path: Path) -> BNAnalysisResult:
-        """Fallback to basic PE analysis when Binary Ninja unavailable."""
+        """Fallback to basic PE analysis when Binary Ninja unavailable.
+
+        Performs basic binary analysis using the pefile library when Binary
+        Ninja is not available. Extracts imports, exports, sections, and
+        strings using PE file parsing. Returns limited analysis compared
+        to full Binary Ninja analysis.
+
+        Args:
+            binary_path: Path to binary file to analyze. Must be a valid
+                PE binary file on Windows.
+
+        Returns:
+            BNAnalysisResult: Analysis result with basic PE information
+                including imports, exports, sections, and strings. Functions
+                and basic blocks will be empty since pefile does not provide
+                decompilation.
+
+        Raises:
+            RuntimeError: If neither Binary Ninja nor pefile are available,
+                or if PE parsing fails.
+        """
         if not PEFILE_AVAILABLE:
             raise RuntimeError("Neither Binary Ninja nor pefile available for analysis")
 
@@ -663,7 +815,10 @@ class BinaryNinjaAnalyzer:
             raise ValueError(f"Decompilation failed: {e}") from e
 
     def close(self) -> None:
-        """Close Binary Ninja binary view."""
+        """Close Binary Ninja binary view.
+
+        Closes the Binary Ninja file handle and clears the binary view reference.
+        """
         if self.bv is not None and BINARYNINJA_AVAILABLE:
             self.bv.file.close()
             self.bv = None

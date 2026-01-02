@@ -14,6 +14,7 @@ from typing import Any
 
 import pytest
 
+from conftest import refresh_bool
 from intellicrack.ai.multi_agent_system import (
     AgentCapability,
     AgentMessage,
@@ -33,6 +34,8 @@ from intellicrack.ai.multi_agent_system import (
     TaskPriority,
 )
 from intellicrack.ai.llm_backends import LLMManager
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture
@@ -64,7 +67,7 @@ def test_binary_path(tmp_path: Path) -> Path:
 @pytest.fixture
 def protected_binary_path() -> Path:
     """Get path to real VMProtect protected binary."""
-    binary_path = Path("D:/Intellicrack/tests/fixtures/binaries/protected/vmprotect_protected.exe")
+    binary_path = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "vmprotect_protected.exe"
     if not binary_path.exists():
         pytest.skip(f"VMProtect binary not found: {binary_path}")
     return binary_path
@@ -1149,12 +1152,12 @@ async def test_agent_start_stop_lifecycle() -> None:
     assert not agent.active
 
     agent.start()
-    assert agent.active
+    assert refresh_bool(agent.active)
 
     await asyncio.sleep(0.1)
 
     agent.stop()
-    assert not agent.active
+    assert not refresh_bool(agent.active)
 
 
 @pytest.mark.asyncio

@@ -23,7 +23,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import Any, Protocol, cast
 
 
 class SavableEditorProtocol(Protocol):
@@ -35,9 +35,11 @@ class SavableEditorProtocol(Protocol):
         """Save the file and return success status."""
         ...
 
+
 from intellicrack.handlers.pyqt6_handler import (
     QAction,
     QCheckBox,
+    QCloseEvent,
     QComboBox,
     QDialog,
     QFileDialog,
@@ -64,11 +66,6 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 from intellicrack.utils.subprocess_security import secure_run
-
-
-if TYPE_CHECKING:
-    from PyQt6.QtCore import QModelIndex
-    from PyQt6.QtWidgets import QMenu, QScrollBar, QStyle
 
 from ...ai.code_analysis_tools import AIAssistant
 from ...utils.logger import get_logger
@@ -170,8 +167,8 @@ class FileTreeWidget(QTreeWidget):
 
                         if style := self.style():
                             tree_item.setIcon(0, style.standardIcon(QStyle.StandardPixmap.SP_DirIcon))
-                    except (ImportError, AttributeError):
-                        pass
+                    except (ImportError, AttributeError) as e:
+                        logger.debug("Could not set directory icon: %s", e)
                     # Add subdirectories (up to 3 levels deep to avoid performance issues)
                     if self.current_root and len(item.parts) - len(self.current_root.parts) < 3:
                         self._add_directory_items(tree_item, item)
@@ -181,16 +178,16 @@ class FileTreeWidget(QTreeWidget):
 
                         if style := self.style():
                             tree_item.setIcon(0, style.standardIcon(QStyle.StandardPixmap.SP_FileIcon))
-                    except (ImportError, AttributeError):
-                        pass
+                    except (ImportError, AttributeError) as e:
+                        logger.debug("Could not set file icon: %s", e)
                 else:
                     try:
                         from PyQt6.QtWidgets import QStyle
 
                         if style := self.style():
                             tree_item.setIcon(0, style.standardIcon(QStyle.StandardPixmap.SP_ComputerIcon))
-                    except (ImportError, AttributeError):
-                        pass
+                    except (ImportError, AttributeError) as e:
+                        logger.debug("Could not set computer icon: %s", e)
         except PermissionError as e:
             logger.exception("Permission error in ai_coding_assistant_dialog: %s", e)
             # Skip directories we can't read
@@ -499,7 +496,11 @@ class ChatWidget(QWidget):
         layout.addLayout(settings_layout)
 
     def send_message(self) -> None:
-        """Send a message to the AI."""
+        """Send a message to the AI.
+
+        Retrieves the text from the message input widget, adds it to the chat
+        history, emits the message_sent signal, and clears the input field.
+        """
         if message := self.message_input.text().strip():
             self.add_message("User", message)
             self.message_sent.emit(message)
@@ -542,9 +543,12 @@ class ChatWidget(QWidget):
     def load_available_models(self, force_refresh: bool = False) -> None:
         """Load available AI models using dynamic API-based discovery.
 
-        Args:
-            force_refresh: Force refresh from provider APIs even if cache is valid
+        Queries both configured models and dynamically discovered models from
+        various API providers. Updates the model combo box with available options
+        and displays appropriate status messages to the user.
 
+        Args:
+            force_refresh: Force refresh from provider APIs even if cache is valid.
         """
         try:
             from ...ai.llm_config_manager import get_llm_config_manager
@@ -617,7 +621,12 @@ class ChatWidget(QWidget):
             self._show_error_message(f"Discovery error: {e!s}")
 
     def refresh_models(self) -> None:
-        """Refresh available models from API providers with force refresh."""
+        """Refresh available models from API providers.
+
+        Triggers a forced refresh of available models from all configured API
+        providers and updates the model combo box. Disables the refresh button
+        during the operation and restores it when complete.
+        """
         try:
             self.refresh_models_btn.setEnabled(False)
             self.refresh_models_btn.setText("⏳")
@@ -633,10 +642,10 @@ class ChatWidget(QWidget):
             self.refresh_models_btn.setText("🔄")
 
     def _show_no_models_message(self) -> None:
-        """Display message when no models are configured.
+        """Display warning message when no AI models are configured.
 
-        Note:
-            This method catches all exceptions internally and does not re-raise them.
+        Updates the chat history display with instructions for configuring
+        AI models through the application settings.
         """
         self.chat_history.setHtml(
             "<div style='padding: 10px;'>"
@@ -654,9 +663,8 @@ class ChatWidget(QWidget):
         """Display ready message with active model.
 
         Args:
-            model_name: Name of the default/selected model
-            total_models: Total number of available models
-
+            model_name: Name of the default/selected model.
+            total_models: Total number of available models.
         """
         self.chat_history.setHtml(
             "<div style='padding: 10px;'>"
@@ -668,10 +676,10 @@ class ChatWidget(QWidget):
         )
 
     def _show_error_message(self, error: str) -> None:
-        """Display error message.
+        """Display error message in the chat history.
 
         Args:
-            error: The error message to display.
+            error: The error message to display to the user.
         """
         self.chat_history.setHtml(
             "<div style='padding: 10px;'>"
@@ -754,6 +762,9 @@ class AICodingAssistantWidget(QWidget):
 
     def setup_menu_bar(self, layout: QVBoxLayout) -> None:
         """Set up the menu bar.
+
+        Creates and configures the menu bar for the AI coding assistant widget,
+        allowing users to access file, edit, and view menu options.
 
         Args:
             layout: The main vertical layout to add the menu bar to.
@@ -1635,7 +1646,7 @@ def generate_license_key(user_info: str = "") -> str:
     # Generate key using MD5-based algorithm
     if 'md5' in ALGORITHM_TYPE.lower():
         hash_input = f"{base_data}_intellicrack_{random.randint(1000, 9999)}"
-        md5_hash = hashlib.md5(hash_input.encode()).hexdigest().upper()
+        md5_hash = hashlib.md5(hash_input.encode(), usedforsecurity=False).hexdigest().upper()
 
         # Format as AAAA-AAAA-AAAA-AAAA
         key_parts = []
@@ -1647,7 +1658,7 @@ def generate_license_key(user_info: str = "") -> str:
     # Generate key using SHA1-based algorithm
     elif 'sha1' in ALGORITHM_TYPE.lower():
         hash_input = f"{base_data}_license_{random.randint(10000, 99999)}"
-        sha1_hash = hashlib.sha1(hash_input.encode()).hexdigest().upper()
+        sha1_hash = hashlib.sha1(hash_input.encode(), usedforsecurity=False).hexdigest().upper()
 
         # Use first 16 characters and format
         key_parts = [sha1_hash[i:i+4] for i in range(0, 16, 4)]
@@ -1769,11 +1780,11 @@ def validate_license_key(key: str) -> bool:
     def open_file_in_research_editor(self, file_path: str) -> None:
         """Open a file in the research editor tabs.
 
+        Checks if the file is already open in an editor tab. If found, switches
+        to that tab. Otherwise, creates a new editor tab and loads the file.
+
         Args:
             file_path: Path to the file to open in the editor.
-
-        Note:
-            This method catches all exceptions internally and does not re-raise them.
         """
         try:
             # Check if file is already open
@@ -1800,11 +1811,10 @@ def validate_license_key(key: str) -> bool:
     def close_research_tab(self, index: int) -> None:
         """Close a research editor tab.
 
+        Removes the editor tab at the specified index from the tab widget.
+
         Args:
             index: The index of the tab to close.
-
-        Note:
-            This method catches all exceptions internally and does not re-raise them.
         """
         try:
             if hasattr(self, "editor_tabs") and self.editor_tabs.count() > index:
@@ -1814,7 +1824,12 @@ def validate_license_key(key: str) -> bool:
             logger.exception("Error closing research tab: %s", e)
 
     def execute_license_bypass_script(self) -> None:
-        """Execute the current license bypass script."""
+        """Execute the current license bypass script.
+
+        Retrieves the script from the active editor tab and executes it based
+        on its file extension (.py, .js, or .keygen). Reports execution results
+        to the chat interface.
+        """
         try:
             logger.info("Executing license bypass script...")
             if hasattr(self, "chat_widget"):
@@ -1832,7 +1847,7 @@ def validate_license_key(key: str) -> bool:
             if not hasattr(current_editor, "toPlainText"):
                 self.chat_widget.add_message("System", "ERROR: Invalid editor widget")
                 return
-            script_content = current_editor.toPlainText()  # type: ignore[attr-defined]
+            script_content = current_editor.toPlainText()
             script_path = getattr(current_editor, "current_file", None)
 
             if not script_content.strip():
@@ -1863,12 +1878,13 @@ def validate_license_key(key: str) -> bool:
     def _execute_python_bypass_script(self, script_content: str, script_path: str) -> None:
         """Execute Python-based bypass script.
 
+        Creates a temporary Python file from the script content and executes it
+        using the secure_run function with a 30-second timeout. Captures and
+        reports the execution output to the chat interface.
+
         Args:
             script_content: The Python script code to execute.
             script_path: Path where the script is located.
-
-        Note:
-            This method catches all exceptions internally and does not re-raise them.
         """
         import subprocess
         import tempfile
@@ -1907,12 +1923,13 @@ def validate_license_key(key: str) -> bool:
     def _execute_frida_bypass_script(self, script_content: str, script_path: str) -> None:
         """Execute Frida-based bypass script.
 
+        Attaches to the target binary process using Frida or spawns it if not
+        running. Loads the provided Frida JavaScript code and monitors for
+        messages from the executing script.
+
         Args:
             script_content: The Frida JavaScript code to execute.
             script_path: Path where the script is located.
-
-        Note:
-            This method catches all exceptions internally and does not re-raise them.
         """
         try:
             # Check if frida is available
@@ -1942,7 +1959,7 @@ def validate_license_key(key: str) -> bool:
 
             # Create and load script
             script = session.create_script(script_content)
-            script.on("message", self._on_frida_message)  # type: ignore[call-overload]
+            script.on("message", self._on_frida_message)
             script.load()
 
             self.chat_widget.add_message("System", "OK Frida bypass script loaded successfully")
@@ -1960,11 +1977,12 @@ def validate_license_key(key: str) -> bool:
     def _execute_keygen_script(self, script_content: str) -> None:
         """Execute keygen template script.
 
+        Parses the keygen configuration from the script, generates multiple
+        license keys using the specified algorithm, and validates them against
+        the configured validation pattern.
+
         Args:
             script_content: The keygen template code to execute.
-
-        Note:
-            This method catches all exceptions internally and does not re-raise them.
         """
         try:
             # Parse keygen template to extract configuration
@@ -2046,12 +2064,12 @@ def validate_license_key(key: str) -> bool:
     def _on_frida_message(self, message: dict[str, Any], data: bytes | None) -> None:
         """Handle Frida script messages.
 
+        Callback function invoked when the Frida script sends a message. Extracts
+        the message payload and displays it in the chat interface.
+
         Args:
             message: Message dictionary from Frida script.
             data: Optional binary data payload from Frida.
-
-        Note:
-            This method is used as a callback for Frida script messages.
         """
         if message.get("type") == "send":
             payload = message.get("payload", {})
@@ -2061,8 +2079,9 @@ def validate_license_key(key: str) -> bool:
     def analyze_license_protection(self) -> None:
         """Analyze the current binary for license protection.
 
-        Note:
-            This method catches all exceptions internally and does not re-raise them.
+        Performs comprehensive binary analysis to identify license protection
+        mechanisms including license validation functions, cryptographic imports,
+        registry operations, time checks, and hardware binding patterns.
         """
         try:
             logger.info("Analyzing license protection mechanisms...")
@@ -2221,8 +2240,9 @@ def validate_license_key(key: str) -> bool:
     def generate_keygen_template(self) -> None:
         """Generate a keygen template for the current target.
 
-        Note:
-            This method catches all exceptions internally and does not re-raise them.
+        Creates a comprehensive Python keygen template with mathematical key
+        generation algorithms, checksum validation, and batch key generation
+        capabilities. Adds the template as a new editor tab.
         """
         try:
             logger.info("Generating keygen template...")
@@ -2299,7 +2319,7 @@ class {target_name}KeyGenerator:
     def _generate_hash_component(self, seed: str) -> str:
         """Generate hash-based component."""
         hash_input = f"{{seed}}_{{self.magic_constants[0]:08X}}"
-        md5_hash = hashlib.md5(hash_input.encode()).hexdigest().upper()
+        md5_hash = hashlib.md5(hash_input.encode(), usedforsecurity=False).hexdigest().upper()
         return md5_hash[:4]
 
     def _encode_license_type(self, license_type: str) -> str:
@@ -2482,8 +2502,9 @@ if __name__ == "__main__":
     def generate_hwid_spoof(self) -> None:
         """Generate hardware ID spoofing code.
 
-        Note:
-            This method catches all exceptions internally and does not re-raise them.
+        Creates comprehensive hardware ID spoofing scripts including volume serial
+        number spoofing, computer name modification, MAC address spoofing, disk
+        serial spoofing, and processor ID spoofing. Includes Frida runtime hooks.
         """
         try:
             logger.info("Generating hardware ID spoofing code...")
@@ -2937,8 +2958,9 @@ console.log("[+] All HWID hooks installed");
     def open_patch_assistant(self) -> None:
         """Open the binary patch assistant.
 
-        Note:
-            This method catches all exceptions internally and does not re-raise them.
+        Generates and displays a comprehensive binary patching tool that can
+        detect license check patterns, patch conditional jumps, modify return
+        values, and analyze time-based protections.
         """
         try:
             logger.info("Opening binary patch assistant...")
@@ -3128,7 +3150,8 @@ class BinaryPatcher:
 
             return True  # Default to true if context unclear
 
-        except:
+        except (IndexError, TypeError, ValueError) as e:
+            logger.debug("Error checking conditional context at offset: %s", e)
             return False
 
     def patch_return_values(self) -> int:
@@ -3377,11 +3400,12 @@ if __name__ == "__main__":
     def handle_license_ai_message(self, message: str) -> None:
         """Handle AI messages specifically for license research.
 
+        Processes user messages within a license research context, creating an
+        enhanced prompt that emphasizes defensive security research for software
+        protection strengthening. Provides fallback responses when AI is unavailable.
+
         Args:
             message: The user message to process for license research.
-
-        Note:
-            This method catches all exceptions internally and does not re-raise them.
         """
         try:
             logger.info("Processing license research AI message: %s", message)
@@ -3454,14 +3478,14 @@ This research is for strengthening software protection mechanisms."""
     def _format_license_research_response(self, response: str) -> str:
         """Format AI response for license research context.
 
+        Enhances the AI response with research context markers and disclaimers
+        emphasizing the defensive security research purpose.
+
         Args:
             response: The AI response to format.
 
         Returns:
-            str: Formatted response with license research context.
-
-        Note:
-            This method catches all exceptions internally and does not re-raise them.
+            Formatted response with license research context and disclaimers.
         """
         try:
             # Add license research formatting and context
@@ -3476,14 +3500,15 @@ This research is for strengthening software protection mechanisms."""
     def _generate_license_research_fallback(self, message: str) -> str:
         """Generate fallback response for license research when AI is unavailable.
 
+        Provides context-aware fallback responses based on the user query,
+        offering general guidance on license protection research techniques
+        and recommendations for enabling AI functionality.
+
         Args:
             message: The user message to generate fallback response for.
 
         Returns:
-            str: Fallback response text for license research.
-
-        Note:
-            This method catches all exceptions internally and does not re-raise them.
+            Fallback response text for license research.
         """
         try:
             # Analyze the message to provide relevant fallback
@@ -3559,8 +3584,12 @@ WARNING️  All research should be conducted on your own software in controlled 
     def generate_bypass(self) -> str:
         """Generate license bypass code based on current analysis.
 
+        Constructs a comprehensive bypass script in Python that targets specific
+        protection mechanisms detected in the current target binary. The generated
+        code includes registry patching, API hooking, and time-bomb disabling.
+
         Returns:
-            Generated bypass script as a string.
+            Generated bypass script as a complete Python string.
         """
         bypass_code: list[str] = [
             "#!/usr/bin/env python3",
@@ -4103,7 +4132,7 @@ WARNING️  Use for authorized security research only WARNING️
                 # Create new tab
                 new_tab = CodeEditor()
                 new_tab.set_content(content)
-                new_tab.file_path = filename  # type: ignore[attr-defined]
+                new_tab.file_path = filename
 
                 # Add to tab widget
                 tab_index = self.editor_tabs.addTab(new_tab, filename)
@@ -4251,7 +4280,8 @@ Keep the response focused and actionable while maintaining technical accuracy.""
             original_query: The original query that prompted the response.
 
         Returns:
-            Formatted string with enhanced presentation for quick license queries."""
+            Formatted string with enhanced presentation for quick license queries.
+        """
         try:
             formatted = " **Quick License Research Response:**\n\n"
             formatted += f"{response}\n\n"
@@ -4272,7 +4302,8 @@ Keep the response focused and actionable while maintaining technical accuracy.""
             message: The user's query message requiring a fallback response.
 
         Returns:
-            Formatted string with offline guidance for license protection research."""
+            Formatted string with offline guidance for license protection research.
+        """
         try:
             query_type = self._classify_quick_license_query(message)
 
@@ -4441,6 +4472,10 @@ class AICodingAssistantDialog(QDialog):
 
     def setup_menu_bar(self, layout: QVBoxLayout) -> None:
         """Set up the menu bar.
+
+        Creates and configures the menu bar with File, AI, and Tools menus.
+        Sets up menu actions for project management, code analysis, and script
+        execution with appropriate keyboard shortcuts.
 
         Args:
             layout: The main vertical layout to add the menu bar to.
@@ -4616,6 +4651,9 @@ class AICodingAssistantDialog(QDialog):
     def setup_status_bar(self, layout: QVBoxLayout) -> None:
         """Set up the status bar.
 
+        Creates and configures the status bar with indicators for the current
+        file, modified files count, and AI processing status.
+
         Args:
             layout: The main vertical layout to add the status bar to.
         """
@@ -4636,7 +4674,11 @@ class AICodingAssistantDialog(QDialog):
         layout.addWidget(self.status_bar)
 
     def setup_connections(self) -> None:
-        """Set up signal connections."""
+        """Set up signal connections.
+
+        Connects dialog signals and slots for file tree, editor tabs, and
+        chat widget interactions to enable proper event handling.
+        """
         # File tree connections
         self.file_tree.file_selected.connect(self.open_file_in_editor)
 
@@ -4644,7 +4686,11 @@ class AICodingAssistantDialog(QDialog):
         self.chat_widget.message_sent.connect(self.handle_ai_message)
 
     def load_intellicrack_project(self) -> None:
-        """Auto-load the Intellicrack project."""
+        """Auto-load the Intellicrack project.
+
+        Automatically discovers and loads the Intellicrack project root directory
+        for immediate use in file exploration and code analysis.
+        """
         project_root = Path(__file__).parent.parent.parent.parent
         if project_root.exists() and (project_root / "intellicrack").exists():
             self.set_project_root(str(project_root))
@@ -4652,6 +4698,9 @@ class AICodingAssistantDialog(QDialog):
 
     def set_project_root(self, root_path: str) -> None:
         """Set the project root directory.
+
+        Updates the file tree to display the contents of the specified project
+        root directory and refreshes the context information panel.
 
         Args:
             root_path: The path to set as the project root directory.
@@ -4661,12 +4710,19 @@ class AICodingAssistantDialog(QDialog):
         self.update_context_info()
 
     def open_project(self) -> None:
-        """Open a project directory."""
+        """Open a project directory.
+
+        Displays a directory selection dialog and loads the selected directory
+        as the project root.
+        """
         if directory := QFileDialog.getExistingDirectory(self, "Select Project Directory"):
             self.set_project_root(directory)
 
     def open_file_in_editor(self, file_path: str) -> None:
         """Open a file in the code editor.
+
+        Opens the specified file in a new editor tab or switches to the existing
+        tab if the file is already open. Updates the status bar and context panel.
 
         Args:
             file_path: The path to the file to open in the editor.
@@ -4697,6 +4753,9 @@ class AICodingAssistantDialog(QDialog):
     def close_tab(self, index: int) -> None:
         """Close an editor tab.
 
+        Closes the editor tab at the specified index. Prompts user to save
+        unsaved changes before closing.
+
         Args:
             index: The index of the tab to close.
         """
@@ -4710,7 +4769,7 @@ class AICodingAssistantDialog(QDialog):
             )
 
             if reply == QMessageBox.StandardButton.Save:
-                if hasattr(editor, "save_file") and callable(getattr(editor, "save_file", None)) and not cast(SavableEditorProtocol, editor).save_file():
+                if hasattr(editor, "save_file") and callable(getattr(editor, "save_file", None)) and not cast("SavableEditorProtocol", editor).save_file():
                     return
             elif reply == QMessageBox.StandardButton.Cancel:
                 return
@@ -4722,13 +4781,19 @@ class AICodingAssistantDialog(QDialog):
             self.update_context_info()
 
     def save_current_file(self) -> None:
-        """Save the currently active file."""
+        """Save the currently active file.
+
+        Saves the content of the currently open editor tab to its file.
+        """
         if current_editor := self.get_current_editor():
             current_editor.save_file()
             self.update_modified_status()
 
     def save_all_files(self) -> None:
-        """Save all modified files."""
+        """Save all modified files.
+
+        Iterates through all open editor tabs and saves files with unsaved changes.
+        """
         for i in range(self.editor_tabs.count()):
             editor = self.editor_tabs.widget(i)
             if (
@@ -4737,7 +4802,7 @@ class AICodingAssistantDialog(QDialog):
                 and getattr(editor, "is_modified", False)
                 and (hasattr(editor, "save_file") and callable(getattr(editor, "save_file", None)))
             ):
-                cast(SavableEditorProtocol, editor).save_file()
+                cast("SavableEditorProtocol", editor).save_file()
 
         self.update_modified_status()
 
@@ -4745,13 +4810,16 @@ class AICodingAssistantDialog(QDialog):
         """Get the currently active code editor.
 
         Returns:
-            The currently active CodeEditor widget, or None if no editor is active.
+            Currently active CodeEditor widget, or None if no editor is active.
         """
         current_widget = self.editor_tabs.currentWidget()
         return current_widget if isinstance(current_widget, CodeEditor) else None
 
     def on_file_modified(self, file_path: str) -> None:
         """Handle file modification.
+
+        Records the modified file and updates status indicators when a file
+        is edited.
 
         Args:
             file_path: The path to the file that was modified.
@@ -4761,14 +4829,21 @@ class AICodingAssistantDialog(QDialog):
         self.update_context_info()
 
     def update_modified_status(self) -> None:
-        """Update the modified files indicator."""
+        """Update the modified files indicator.
+
+        Updates the status bar to display the count of files with unsaved changes.
+        """
         if self.modified_files:
             self.modified_label.setText(f"Modified: {len(self.modified_files)} files")
         else:
             self.modified_label.setText("")
 
     def update_context_info(self) -> None:
-        """Update the context information panel."""
+        """Update the context information panel.
+
+        Displays information about the currently active file including filename,
+        type, size, and current selection length.
+        """
         current_editor = self.get_current_editor()
         if current_editor and current_editor.current_file:
             file_path = Path(current_editor.current_file)
@@ -4786,6 +4861,9 @@ class AICodingAssistantDialog(QDialog):
 
     def handle_ai_message(self, message: str) -> None:
         """Handle AI assistant message.
+
+        Processes user messages through the AI system with current code context.
+        Displays the AI response in the chat widget.
 
         Args:
             message: The message from the user to process.
@@ -4812,6 +4890,9 @@ class AICodingAssistantDialog(QDialog):
     def get_ai_context(self) -> dict[str, Any]:
         """Get context information for AI processing.
 
+        Gathers information about the current project, active file, and code
+        selection to provide context for AI analysis and code generation.
+
         Returns:
             Dictionary containing project root, current file, selected text, file content, and file type.
         """
@@ -4834,6 +4915,10 @@ class AICodingAssistantDialog(QDialog):
 
     def process_ai_request(self, message: str, context: dict[str, Any]) -> str:
         """Process AI request and return response.
+
+        Analyzes the user message and provides context-aware responses for code
+        explanation, generation, optimization, and debugging. Routes specific
+        commands to appropriate handlers.
 
         Args:
             message: The user message to process.
@@ -4858,28 +4943,27 @@ class AICodingAssistantDialog(QDialog):
                     question = f"Generate a {script_type} based on this context:\n{context['file_content'][:1000]}"
                 else:
                     question = f"Generate a {script_type} for: {message}"
-                return self.ai_tools.ask_question(  # type: ignore[union-attr]
-                    question
-                )
+                if self.ai_tools:
+                    return self.ai_tools.ask_question(question)
+                return f"AI tools unavailable for {script_type} generation."
             if "optimize" in message.lower() and context.get("selected_text"):
                 # Handle optimization requests
                 code_snippet = context["selected_text"][:500]
                 question = f"Please optimize this code:\n```\n{code_snippet}\n```"
-                return self.ai_tools.ask_question(  # type: ignore[union-attr]
-                    question
-                )
+                if self.ai_tools:
+                    return self.ai_tools.ask_question(question)
+                return "AI tools unavailable for code optimization."
             if "debug" in message.lower() and context.get("selected_text"):
                 # Handle debugging requests
                 code_snippet = context["selected_text"][:500]
                 question = f"Help me debug this code:\n```\n{code_snippet}\n```"
-                return self.ai_tools.ask_question(  # type: ignore[union-attr]
-                    question
-                )
+                if self.ai_tools:
+                    return self.ai_tools.ask_question(question)
+                return "AI tools unavailable for debugging assistance."
             # For general questions, use ask_question directly
-            response = self.ai_tools.ask_question(  # type: ignore[union-attr]
-                message
-            )
-            return response
+            if self.ai_tools:
+                return self.ai_tools.ask_question(message)
+            return "AI tools unavailable for processing your request."
 
         except Exception as e:
             logger.exception("Error processing AI request: %s", e)
@@ -4892,7 +4976,11 @@ class AICodingAssistantDialog(QDialog):
             return f"AI processing error: {e!s}"
 
     def ai_generate_code(self) -> None:
-        """Generate code using AI."""
+        """Generate code using AI.
+
+        Generates code based on the selected script type and inserts it into
+        the active editor at the cursor position.
+        """
         current_editor = self.get_current_editor()
         if not current_editor:
             QMessageBox.information(self, "Info", "Please open a file first.")
@@ -4917,7 +5005,11 @@ def example_function():
         self.chat_widget.add_message("AI", f"Generated {script_type} code and inserted into editor.")
 
     def run_current_script(self) -> None:
-        """Run the current script with optional QEMU testing."""
+        """Run the current script with optional QEMU testing.
+
+        Executes the currently open script file based on its file extension.
+        Supports Python and Frida scripts with optional QEMU testing.
+        """
         current_editor = self.get_current_editor()
         if not current_editor or not current_editor.current_file:
             QMessageBox.information(self, "Info", "No file to run.")
@@ -4929,7 +5021,7 @@ def example_function():
         if not hasattr(self, "script_execution_manager"):
             from ...core.execution import ScriptExecutionManager
 
-            self.script_execution_manager = ScriptExecutionManager(self)  # type: ignore[call-arg]
+            self.script_execution_manager = ScriptExecutionManager(self)
 
         # Determine script type based on file extension
         script_type = None
@@ -4978,6 +5070,9 @@ def example_function():
     def run_python_script(self, file_path: str) -> None:
         """Run a Python script.
 
+        Executes the Python script and captures its output, displaying results
+        in the chat interface.
+
         Args:
             file_path: The path to the Python script file to execute.
         """
@@ -5002,6 +5097,9 @@ def example_function():
 
     def run_javascript_script(self, file_path: str) -> None:
         """Run a JavaScript script (if Node.js is available).
+
+        Executes the JavaScript script using Node.js and captures its output,
+        displaying results in the chat interface. Requires Node.js to be installed.
 
         Args:
             file_path: The path to the JavaScript script file to execute.
@@ -5029,7 +5127,11 @@ def example_function():
             self.chat_widget.add_message("System", f"Script execution error: {e}")
 
     def format_current_code(self) -> None:
-        """Format the current code."""
+        """Format the current code.
+
+        Automatically formats the code in the active editor using appropriate
+        formatters based on the file type (e.g., Black for Python).
+        """
         current_editor = self.get_current_editor()
         if not current_editor:
             return
@@ -5043,6 +5145,9 @@ def example_function():
 
     def format_python_code(self, editor: CodeEditor) -> None:
         """Format Python code using black if available.
+
+        Applies the Black code formatter to Python code in the editor,
+        improving code style and consistency.
 
         Args:
             editor: The code editor containing the Python code to format.
@@ -5082,7 +5187,12 @@ def example_function():
             self.chat_widget.add_message("System", f"Formatting error: {e}")
 
     def analyze_current_code(self) -> None:
-        """Analyze the current code with AI."""
+        """Analyze the current code with AI.
+
+        Performs comprehensive AI-powered analysis of the code in the active
+        editor, identifying potential issues, security concerns, and providing
+        suggestions for improvement.
+        """
         current_editor = self.get_current_editor()
         if not current_editor:
             QMessageBox.information(self, "Info", "No file to analyze.")
@@ -5138,6 +5248,10 @@ def example_function():
     def _format_analysis_results(self, analysis_result: dict[str, Any]) -> str:
         """Format code analysis results for display.
 
+        Converts analysis results into a human-readable format suitable for
+        display in the chat interface, including language, metrics, insights,
+        security issues, and suggestions.
+
         Args:
             analysis_result: Dictionary containing analysis results with keys like language, lines_of_code, complexity, insights, security_issues, and suggestions.
 
@@ -5181,6 +5295,9 @@ def example_function():
     def _highlight_security_issues(self, security_issues: list[str]) -> None:
         """Highlight security issues in the code editor.
 
+        Visually marks security issues in the active editor to draw attention
+        to potential vulnerabilities found during code analysis.
+
         Args:
             security_issues: List of security issue descriptions to highlight.
         """
@@ -5202,13 +5319,21 @@ def example_function():
             )
 
     def generate_script_dialog(self) -> None:
-        """Open script generation dialog."""
+        """Open script generation dialog.
+
+        Sends a message to the AI chat interface requesting generation of a script
+        based on the selected script type.
+        """
         script_type = self.script_type_combo.currentText()
         message = f"Generate a {script_type} for the current context"
         self.chat_widget.send_quick_message(message)
 
     def create_new_file(self) -> None:
-        """Create a new file."""
+        """Create a new file.
+
+        Opens a file save dialog to create a new file. The file is created in
+        the project directory and automatically opened in the editor.
+        """
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Create New File",
@@ -5226,3 +5351,26 @@ def example_function():
 
             # Open in editor
             self.open_file_in_editor(file_path)
+
+    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+        """Handle dialog close with proper thread cleanup.
+
+        Ensures any running worker threads are properly terminated before
+        closing the dialog to prevent resource leaks.
+
+        Args:
+            event: Close event from Qt framework.
+        """
+        if self.worker_thread is not None and hasattr(self.worker_thread, "isRunning") and self.worker_thread.isRunning():
+            self.worker_thread.quit()
+            if not self.worker_thread.wait(2000):
+                self.worker_thread.terminate()
+                self.worker_thread.wait()
+            self.worker_thread = None
+        if self.generation_thread is not None and hasattr(self.generation_thread, "isRunning") and self.generation_thread.isRunning():
+            self.generation_thread.quit()
+            if not self.generation_thread.wait(2000):
+                self.generation_thread.terminate()
+                self.generation_thread.wait()
+            self.generation_thread = None
+        super().closeEvent(event)

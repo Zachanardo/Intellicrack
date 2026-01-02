@@ -56,13 +56,21 @@ class ScriptInfoWidget(QWidget):
     """Widget to display detailed script information."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the ScriptInfoWidget with default values."""
+        """Initialize the ScriptInfoWidget with default values.
+
+        Args:
+            parent: Parent widget for this widget, or None for no parent.
+        """
         super().__init__(parent)
         self.current_script: GhidraScript | None = None
         self._init_ui()
 
     def _init_ui(self) -> None:
-        """Initialize the UI."""
+        """Initialize the UI.
+
+        Sets up all UI widgets including script information display,
+        metadata labels, description text, validation status, and tags.
+        """
         layout: QVBoxLayout = QVBoxLayout()
 
         # Script name label
@@ -130,7 +138,11 @@ class ScriptInfoWidget(QWidget):
         self.setLayout(layout)
 
     def update_script_info(self, script: GhidraScript | None) -> None:
-        """Update displayed information for a script."""
+        """Update displayed information for a script.
+
+        Args:
+            script: The script to display information for, or None to clear the display.
+        """
         self.current_script = script
 
         if not script:
@@ -188,7 +200,12 @@ class GhidraScriptSelector(QDialog):
     script_selected = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None, show_invalid: bool = False) -> None:
-        """Initialize the GhidraScriptSelector with default values."""
+        """Initialize the GhidraScriptSelector with default values.
+
+        Args:
+            parent: Parent widget for the dialog.
+            show_invalid: Whether to show invalid scripts in the list.
+        """
         super().__init__(parent)
         self.script_manager = get_script_manager()
         self.show_invalid: bool = show_invalid
@@ -203,7 +220,11 @@ class GhidraScriptSelector(QDialog):
         self._load_scripts()
 
     def _init_ui(self) -> None:
-        """Initialize the UI."""
+        """Initialize the UI.
+
+        Sets up the dialog with search bar, script tree, info widget, category
+        filter, and action buttons for script management and selection.
+        """
         layout: QVBoxLayout = QVBoxLayout()
 
         # Search bar
@@ -302,7 +323,11 @@ class GhidraScriptSelector(QDialog):
         self.setLayout(layout)
 
     def _load_scripts(self) -> None:
-        """Load and display scripts."""
+        """Load and display scripts.
+
+        Scans for Ghidra scripts, populates category filter, and displays
+        scripts in the tree widget.
+        """
         # Clear tree
         self.script_tree.clear()
         self.category_filter.clear()
@@ -322,7 +347,11 @@ class GhidraScriptSelector(QDialog):
         self._populate_tree()
 
     def _populate_tree(self) -> None:
-        """Populate the script tree based on current filters."""
+        """Populate the script tree based on current filters.
+
+        Updates the script tree based on search text and category filter,
+        showing or hiding invalid scripts based on configuration.
+        """
         self.script_tree.clear()
 
         # Get current filters
@@ -384,12 +413,23 @@ class GhidraScriptSelector(QDialog):
             self.script_tree.resizeColumnToContents(i)
 
     def _add_script_item(self, script: GhidraScript) -> None:
-        """Add a script item to the tree."""
+        """Add a script item to the tree.
+
+        Args:
+            script: The script to add to the tree.
+        """
         item = self._create_script_item(script)
         self.script_tree.addTopLevelItem(item)
 
     def _create_script_item(self, script: GhidraScript) -> QTreeWidgetItem:
-        """Create a tree item for a script."""
+        """Create a tree item for a script.
+
+        Args:
+            script: The script to create a tree item for.
+
+        Returns:
+            The created tree widget item with script data.
+        """
         status = "OK Valid" if script.is_valid else "FAIL Invalid"
         item = QTreeWidgetItem([script.name, script.type.upper(), status])
 
@@ -412,7 +452,11 @@ class GhidraScriptSelector(QDialog):
         return item
 
     def _on_selection_changed(self) -> None:
-        """Handle selection change."""
+        """Handle selection change.
+
+        Updates the info widget and enables/disables the select button based on
+        whether a valid script is selected.
+        """
         items = self.script_tree.selectedItems()
 
         if not items:
@@ -438,7 +482,11 @@ class GhidraScriptSelector(QDialog):
             self.select_btn.setEnabled(False)
 
     def _on_search_changed(self, text: str) -> None:
-        """Handle search text change."""
+        """Handle search text change.
+
+        Args:
+            text: The new search text.
+        """
         _ = text
         # Debounce search with timer
         if self._search_timer is not None:
@@ -450,17 +498,30 @@ class GhidraScriptSelector(QDialog):
         self._search_timer.start(300)  # 300ms delay
 
     def _on_category_changed(self, category: str) -> None:
-        """Handle category filter change."""
+        """Handle category filter change.
+
+        Args:
+            category: The selected category name.
+        """
         _ = category
         self._populate_tree()
 
     def _on_show_invalid_changed(self, state: int) -> None:
-        """Handle show invalid checkbox change."""
+        """Handle show invalid checkbox change.
+
+        Args:
+            state: The checkbox state (0 = unchecked, 2 = checked).
+        """
         self.show_invalid = state == 2
         self._populate_tree()
 
     def _on_item_double_clicked(self, item: QTreeWidgetItem, column: int) -> None:
-        """Handle double-click on item."""
+        """Handle double-click on item.
+
+        Args:
+            item: The tree widget item that was double-clicked.
+            column: The column that was double-clicked.
+        """
         _ = column
         if script_path := item.data(0, Qt.ItemDataRole.UserRole):
             script = self.script_manager.get_script(script_path)
@@ -468,24 +529,39 @@ class GhidraScriptSelector(QDialog):
                 self._on_select_clicked()
 
     def _on_select_clicked(self) -> None:
-        """Handle select button click."""
+        """Handle select button click.
+
+        Emits the script_selected signal with the selected script path and
+        accepts the dialog.
+        """
         if self.selected_script_path:
             self.script_selected.emit(self.selected_script_path)
             self.accept()
 
     def _use_default_script(self) -> None:
-        """Use the default AdvancedAnalysis.java script."""
+        """Use the default AdvancedAnalysis.java script.
+
+        Emits the script_selected signal with a special marker for the default
+        script and accepts the dialog.
+        """
         # Emit special marker for default script
         self.script_selected.emit("__DEFAULT__")
         self.accept()
 
     def _refresh_scripts(self) -> None:
-        """Refresh the script list."""
+        """Refresh the script list.
+
+        Forces a rescan of scripts and reloads the script list in the UI.
+        """
         self.script_manager.scan_scripts(force_rescan=True)
         self._load_scripts()
 
     def _add_user_script(self) -> None:
-        """Add a user script."""
+        """Add a user script.
+
+        Opens a file dialog to select a Ghidra script file and adds it to the
+        user scripts collection. Shows a message box indicating success or failure.
+        """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Ghidra Script",
@@ -511,7 +587,12 @@ class GhidraScriptSelector(QDialog):
             )
 
     def _open_scripts_folder(self) -> None:
-        """Open the user scripts folder."""
+        """Open the user scripts folder.
+
+        Opens the Ghidra scripts folder in the system file manager. Handles
+        platform-specific file manager commands for Windows, macOS, and Linux.
+        Shows an error message if the folder cannot be opened.
+        """
         user_scripts_dir = "intellicrack/intellicrack/scripts/ghidra"
         os.makedirs(user_scripts_dir, exist_ok=True)
 
@@ -536,5 +617,9 @@ class GhidraScriptSelector(QDialog):
             )
 
     def get_selected_script(self) -> str | None:
-        """Get the selected script path."""
+        """Get the selected script path.
+
+        Returns:
+            The path to the selected script, or None if no script is selected.
+        """
         return self.selected_script_path

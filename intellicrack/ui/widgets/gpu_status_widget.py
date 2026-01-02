@@ -45,29 +45,46 @@ from intellicrack.utils.logger import logger
 
 
 class GPUMonitorWorker(QObject):
-    """Worker thread for collecting GPU metrics."""
+    """Worker thread for collecting GPU metrics.
+
+    Monitors GPU performance metrics including utilization, temperature, memory usage,
+    and power draw across NVIDIA, AMD, and Intel Arc GPUs on Windows and Linux platforms.
+    Emits signals when data is ready or errors occur during monitoring.
+    """
 
     gpu_data_ready = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
 
     def __init__(self) -> None:
-        """Initialize GPU monitor worker with performance tracking capabilities."""
+        """Initialize GPU monitor worker with performance tracking capabilities.
+
+        Sets up the worker thread with default monitoring interval and platform detection.
+        """
         super().__init__()
         self.running = True
         self.update_interval = 1000  # Default 1 second
         self.platform = platform.system()  # Initialize platform
 
     def start_monitoring(self) -> None:
-        """Start the monitoring process."""
+        """Start the monitoring process.
+
+        Enables the monitoring flag and initiates the monitoring loop.
+        """
         self.running = True
         self._monitor_loop()
 
     def stop_monitoring(self) -> None:
-        """Stop the monitoring process."""
+        """Stop the monitoring process.
+
+        Disables the monitoring flag to gracefully exit the monitoring loop.
+        """
         self.running = False
 
     def _monitor_loop(self) -> None:
-        """Run monitoring loop using thread sleep."""
+        """Run monitoring loop using thread sleep.
+
+        Continuously collects GPU data and emits it via signal while monitoring is active.
+        """
         while self.running:
             try:
                 gpu_data = self._collect_gpu_data()
@@ -81,7 +98,11 @@ class GPUMonitorWorker(QObject):
                     thread.msleep(self.update_interval)
 
     def _collect_gpu_data(self) -> dict[str, Any]:
-        """Collect GPU data based on platform."""
+        """Collect GPU data based on platform.
+
+        Returns:
+            dict[str, Any]: Dictionary containing GPU list, platform, and error information.
+        """
         gpu_data: dict[str, Any] = {
             "gpus": [],
             "platform": self.platform,
@@ -120,6 +141,12 @@ class GPUMonitorWorker(QObject):
         return gpu_data
 
     def _get_nvidia_gpu_info(self) -> list[dict[str, Any]]:
+        """Retrieve NVIDIA GPU information using nvidia-smi.
+
+        Returns:
+            list[dict[str, Any]]: List of NVIDIA GPU data dictionaries containing
+                vendor, index, name, temperature, utilization, memory usage, and power draw.
+        """
         gpus = []
         try:
             result = subprocess.run(
@@ -185,6 +212,12 @@ class GPUMonitorWorker(QObject):
         return gpus
 
     def _get_intel_arc_info(self) -> list[dict[str, Any]]:
+        """Retrieve Intel Arc GPU information using WMI queries.
+
+        Returns:
+            list[dict[str, Any]]: List of Intel GPU data dictionaries containing
+                vendor, index, name, temperature, utilization, memory usage, and power draw.
+        """
         gpus = []
         try:
             import wmi
@@ -282,6 +315,12 @@ class GPUMonitorWorker(QObject):
         return gpus
 
     def _get_amd_gpu_info(self) -> list[dict[str, Any]]:
+        """Retrieve AMD Radeon GPU information using WMI queries.
+
+        Returns:
+            list[dict[str, Any]]: List of AMD GPU data dictionaries containing
+                vendor, index, name, temperature, utilization, memory usage, and power draw.
+        """
         gpus = []
         try:
             import wmi
@@ -374,10 +413,19 @@ class GPUMonitorWorker(QObject):
 
 
 class GPUStatusWidget(QWidget):
-    """GPU status monitoring widget."""
+    """GPU status monitoring widget.
+
+    Displays real-time GPU performance metrics, capabilities, and system information
+    in a comprehensive UI with selection dropdown, progress bars, and detailed
+    capabilities display. Supports multiple GPU types and vendor-specific features.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize GPU status widget with performance monitoring and GPU detection."""
+        """Initialize GPU status widget with performance monitoring and GPU detection.
+
+        Args:
+            parent: Parent widget. Defaults to None.
+        """
         super().__init__(parent)
         self.setMinimumWidth(300)
         self.setMinimumHeight(500)
@@ -388,7 +436,11 @@ class GPUStatusWidget(QWidget):
         self.start_monitoring()
 
     def setup_ui(self) -> None:
-        """Set up the user interface."""
+        """Set up the user interface.
+
+        Constructs the GPU monitoring interface with GPU selection dropdown,
+        performance metrics displays, and capabilities text area.
+        """
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -503,7 +555,11 @@ class GPUStatusWidget(QWidget):
         main_layout.addWidget(scroll_area)
 
     def setup_monitoring(self) -> None:
-        """Set up GPU monitoring thread."""
+        """Set up GPU monitoring thread.
+
+        Creates a dedicated worker thread for GPU data collection and connects
+        signals for data updates and error handling.
+        """
         self.monitor_thread = QThread()
         self.monitor_worker = GPUMonitorWorker()
         self.monitor_worker.moveToThread(self.monitor_thread)
@@ -514,24 +570,38 @@ class GPUStatusWidget(QWidget):
         self.monitor_worker.error_occurred.connect(self.handle_error)
 
     def start_monitoring(self) -> None:
-        """Start GPU monitoring."""
+        """Start GPU monitoring.
+
+        Initiates the worker thread if it is not already running.
+        """
         if not self.monitor_thread.isRunning():
             self.monitor_thread.start()
 
     def stop_monitoring(self) -> None:
-        """Stop GPU monitoring."""
+        """Stop GPU monitoring.
+
+        Stops the worker thread gracefully and waits for it to terminate.
+        """
         if self.monitor_thread.isRunning():
             self.monitor_worker.stop_monitoring()
             self.monitor_thread.quit()
             self.monitor_thread.wait()
 
     def set_refresh_interval(self, interval_ms: int) -> None:
-        """Set the refresh interval for GPU monitoring."""
+        """Set the refresh interval for GPU monitoring.
+
+        Args:
+            interval_ms: Refresh interval in milliseconds.
+        """
         if hasattr(self, "monitor_worker"):
             self.monitor_worker.update_interval = interval_ms
 
     def update_gpu_data(self, data: dict[str, Any]) -> None:
-        """Update GPU data from monitor."""
+        """Update GPU data from monitor.
+
+        Args:
+            data: GPU data dictionary from monitor worker.
+        """
         self.gpu_data = data
 
         # Only update combo box if GPU list has changed
@@ -572,12 +642,23 @@ class GPUStatusWidget(QWidget):
             self.clear_display()
 
     def on_gpu_selected(self, index: int) -> None:
-        """Handle GPU selection change."""
+        """Handle GPU selection change.
+
+        Updates the selected GPU index and refreshes the display with the
+        selected GPU's information.
+
+        Args:
+            index: Selected GPU index in the combo box.
+        """
         self.selected_gpu_index = index
         self.update_display()
 
     def update_display(self) -> None:
-        """Update the display with current GPU data."""
+        """Update the display with current GPU data.
+
+        Refreshes all metric displays and capabilities text based on the
+        currently selected GPU data.
+        """
         if not self.gpu_data.get("gpus") or self.selected_gpu_index >= len(self.gpu_data["gpus"]):
             return
 
@@ -617,7 +698,14 @@ class GPUStatusWidget(QWidget):
         self.update_capabilities(gpu)
 
     def update_capabilities(self, gpu: dict[str, Any]) -> None:
-        """Update GPU capabilities display."""
+        """Update GPU capabilities display.
+
+        Updates the capabilities text area with vendor-specific features and
+        hardware specifications based on GPU vendor information.
+
+        Args:
+            gpu: GPU data dictionary containing vendor and capabilities information.
+        """
         caps_text: list[str] = []
 
         if gpu["vendor"] == "NVIDIA":
@@ -644,7 +732,11 @@ class GPUStatusWidget(QWidget):
         self.caps_text.setPlainText("\n".join(caps_text))
 
     def clear_display(self) -> None:
-        """Clear all display fields."""
+        """Clear all display fields.
+
+        Resets all performance metrics and GPU information labels to their
+        default "N/A" or zero values.
+        """
         self.vendor_label.setText("Vendor: N/A")
         self.name_label.setText("Name: N/A")
         self.driver_label.setText("Driver: N/A")
@@ -664,7 +756,17 @@ class GPUStatusWidget(QWidget):
         self.caps_text.setPlainText("No GPU detected")
 
     def _set_bar_color(self, bar: QProgressBar, value: float, warning: float, critical: float) -> None:
-        """Set progress bar color based on value thresholds."""
+        """Set progress bar color based on value thresholds.
+
+        Changes the progress bar styling to green (normal), yellow (warning),
+        or red (critical) depending on the provided value and thresholds.
+
+        Args:
+            bar: Progress bar widget to update.
+            value: Current value to evaluate.
+            warning: Threshold value for warning color.
+            critical: Threshold value for critical color.
+        """
         if value >= critical:
             bar.setStyleSheet("QProgressBar::chunk { background-color: #dc3545; }")
         elif value >= warning:
@@ -673,11 +775,20 @@ class GPUStatusWidget(QWidget):
             bar.setStyleSheet("QProgressBar::chunk { background-color: #28a745; }")
 
     def handle_error(self, error_msg: str) -> None:
-        """Handle monitoring errors."""
+        """Handle monitoring errors.
+
+        Appends error message to the capabilities text display for user visibility.
+
+        Args:
+            error_msg: Error message to display.
+        """
         self.caps_text.append(f"\nError: {error_msg}")
 
     def refresh_gpus(self) -> None:
-        """Manually refresh GPU list."""
+        """Manually refresh GPU list.
+
+        Restarts the GPU monitoring to rescan the system for available GPU devices.
+        """
         # Trigger a manual refresh by restarting monitoring
         try:
             if hasattr(self, "monitor_worker") and self.monitor_worker:

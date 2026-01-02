@@ -78,20 +78,26 @@ SHELL_METACHARACTERS = {
 
 
 class SecureSubprocess:
-    """Secure subprocess execution with validation."""
+    """Secure subprocess execution with input validation and command sanitization.
+
+    This class provides safe wrappers around subprocess.run and subprocess.Popen
+    with built-in validation for executables, arguments, and working directories.
+    It enforces an allowlist of permitted tools and prevents dangerous shell
+    metacharacters from being passed to the subprocess.
+    """
 
     @staticmethod
     def validate_executable(executable: str) -> str:
         """Validate that the executable is allowed and exists.
 
         Args:
-            executable: Path to executable or command name
+            executable: Path to executable or command name.
 
         Returns:
-            Validated absolute path to executable
+            Validated absolute path to executable.
 
         Raises:
-            ValueError: If executable is not allowed or doesn't exist
+            ValueError: If executable not found or path resolution fails.
 
         """
         # Extract base name for validation
@@ -138,14 +144,14 @@ class SecureSubprocess:
         """Validate a single command argument.
 
         Args:
-            arg: Argument to validate
-            allow_wildcards: Whether to allow wildcard characters
+            arg: Argument to validate.
+            allow_wildcards: Whether to allow wildcard characters.
 
         Returns:
-            Validated argument
+            Validated argument.
 
         Raises:
-            ValueError: If argument contains dangerous characters
+            ValueError: If argument contains dangerous characters.
 
         """
         dangerous_chars: set[str] = SHELL_METACHARACTERS.copy()
@@ -168,14 +174,14 @@ class SecureSubprocess:
         """Validate entire command list.
 
         Args:
-            command: List of command arguments
-            allow_wildcards: Whether to allow wildcards in arguments
+            command: List of command arguments.
+            allow_wildcards: Whether to allow wildcards in arguments.
 
         Returns:
-            Validated command list
+            Validated command list.
 
         Raises:
-            ValueError: If command validation fails
+            ValueError: If command validation fails.
 
         """
         if not command:
@@ -208,18 +214,21 @@ class SecureSubprocess:
         """Secure subprocess.run wrapper with validation.
 
         Args:
-            command: Command to execute
-            shell: Whether to use shell (strongly discouraged)
-            capture_output: Whether to capture stdout/stderr
-            text: Whether to return text instead of bytes
-            timeout: Timeout in seconds
-            check: Whether to raise on non-zero exit
-            cwd: Working directory
-            env: Environment variables
-            **kwargs: Additional arguments for subprocess.run
+            command: Command to execute.
+            shell: Whether to use shell (strongly discouraged).
+            capture_output: Whether to capture stdout/stderr.
+            text: Whether to return text instead of bytes.
+            timeout: Timeout in seconds.
+            check: Whether to raise on non-zero exit.
+            cwd: Working directory.
+            env: Environment variables.
+            **kwargs: Additional arguments for subprocess.run.
 
         Returns:
-            CompletedProcess instance
+            CompletedProcess instance with command execution results.
+
+        Raises:
+            ValueError: If command validation fails or working directory is invalid.
 
         """
         validated_command: list[str] | str
@@ -266,17 +275,20 @@ class SecureSubprocess:
         """Secure subprocess.Popen wrapper with validation.
 
         Args:
-            command: Command to execute
-            shell: Whether to use shell (strongly discouraged)
-            stdout: stdout configuration
-            stderr: stderr configuration
-            stdin: stdin configuration
-            cwd: Working directory
-            env: Environment variables
-            **kwargs: Additional arguments for subprocess.Popen
+            command: Command to execute.
+            shell: Whether to use shell (strongly discouraged).
+            stdout: stdout configuration.
+            stderr: stderr configuration.
+            stdin: stdin configuration.
+            cwd: Working directory.
+            env: Environment variables.
+            **kwargs: Additional arguments for subprocess.Popen.
 
         Returns:
-            Popen instance
+            Popen instance with subprocess communication capabilities.
+
+        Raises:
+            ValueError: If command validation fails or working directory is invalid.
 
         """
         validated_command: list[str] | str
@@ -324,18 +336,21 @@ def secure_run(
     """Drop-in replacement for subprocess.run with security validation.
 
     Args:
-        command: Command to execute
-        shell: Whether to use shell (strongly discouraged)
-        capture_output: Whether to capture stdout/stderr
-        text: Whether to return text instead of bytes
-        timeout: Timeout in seconds
-        check: Whether to raise on non-zero exit
-        cwd: Working directory
-        env: Environment variables
-        **kwargs: Additional arguments passed to SecureSubprocess.run
+        command: Command to execute.
+        shell: Whether to use shell (strongly discouraged).
+        capture_output: Whether to capture stdout/stderr.
+        text: Whether to return text instead of bytes.
+        timeout: Timeout in seconds.
+        check: Whether to raise on non-zero exit.
+        cwd: Working directory.
+        env: Environment variables.
+        **kwargs: Additional arguments passed to SecureSubprocess.run.
 
     Returns:
-        CompletedProcess instance from the secure subprocess execution
+        CompletedProcess instance from the secure subprocess execution.
+
+    Raises:
+        ValueError: If command validation fails or working directory is invalid.
 
     """
     return SecureSubprocess.run(
@@ -364,17 +379,20 @@ def secure_popen(
     """Drop-in replacement for subprocess.Popen with security validation.
 
     Args:
-        command: Command to execute
-        shell: Whether to use shell (strongly discouraged)
-        stdout: stdout configuration
-        stderr: stderr configuration
-        stdin: stdin configuration
-        cwd: Working directory
-        env: Environment variables
-        **kwargs: Additional arguments passed to SecureSubprocess.popen
+        command: Command to execute.
+        shell: Whether to use shell (strongly discouraged).
+        stdout: stdout configuration.
+        stderr: stderr configuration.
+        stdin: stdin configuration.
+        cwd: Working directory.
+        env: Environment variables.
+        **kwargs: Additional arguments passed to SecureSubprocess.popen.
 
     Returns:
-        Popen instance from the secure subprocess execution
+        Popen instance from the secure subprocess execution.
+
+    Raises:
+        ValueError: If command validation fails or working directory is invalid.
 
     """
     return SecureSubprocess.popen(

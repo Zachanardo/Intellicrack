@@ -26,13 +26,14 @@ def get_resource_path(resource_path: str) -> str:
     """Get the absolute path to a resource file in the intellicrack package.
 
     This function replaces pkg_resources.resource_filename() to avoid
-    deprecation warnings and improve compatibility.
+    deprecation warnings and improve compatibility. It handles both
+    PyInstaller frozen applications and standard Python environments.
 
     Args:
-        resource_path: Relative path within the intellicrack package
+        resource_path: Relative path within the intellicrack package.
 
     Returns:
-        Absolute path to the resource file
+        Absolute path to the resource file.
 
     """
     # Handle different installation scenarios

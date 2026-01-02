@@ -1,0 +1,17 @@
+[darglint]
+# Docstring checking following Google conventions
+docstring_style = google
+strictness = short
+
+# Ignore test and private functions
+ignore_regex = ^(test_|_)
+
+# Ignore false positive error categories:
+# DAR402: Darglint cannot trace into called functions to see they raise exceptions.
+#         Functions calling yaml.safe_load, json.loads, etc. DO propagate exceptions
+#         but darglint flags Raises sections as "excess" because it only analyzes
+#         the immediate code.
+# DAR202: Protocol methods with `...` body define interfaces. They SHOULD document
+#         Returns but darglint sees ellipsis as "no return statement" and flags
+#         Returns as excess.
+ignore = DAR402,DAR202

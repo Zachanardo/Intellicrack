@@ -59,7 +59,7 @@ from ..handlers.pyqt6_handler import (
 
 
 if TYPE_CHECKING:
-    from re import Match, Pattern
+    from re import Pattern
 
     from .file_handler import VirtualFileAccess
 
@@ -110,7 +110,7 @@ class BaseFileHandler:
         """Get the total size of the file in bytes.
 
         Returns:
-            int: Total file size in bytes.
+            Total file size in bytes.
 
         """
         return self._file_size
@@ -123,7 +123,7 @@ class BaseFileHandler:
             size: Number of bytes to read.
 
         Returns:
-            bytes: Data read from the file, or empty bytes if offset is invalid.
+            Data read from the file, or empty bytes if offset is invalid.
 
         """
         if offset < 0 or offset >= self._file_size:
@@ -139,7 +139,7 @@ class BaseFileHandler:
             length: Number of bytes to delete.
 
         Returns:
-            bool: True if deletion succeeded, False if read-only or invalid offset.
+            True if deletion succeeded, False if read-only or invalid offset.
 
         """
         if self.read_only:
@@ -159,7 +159,7 @@ class BaseFileHandler:
             data: Bytes to insert.
 
         Returns:
-            bool: True if insertion succeeded, False if read-only or invalid offset.
+            True if insertion succeeded, False if read-only or invalid offset.
 
         """
         if self.read_only:
@@ -202,7 +202,7 @@ class SearchResult:
         """Return string representation of the search result.
 
         Returns:
-            str: String representation showing offset and length.
+            String representation showing offset and length.
 
         """
         return f"SearchResult(offset=0x{self.offset:X}, length={self.length})"
@@ -211,7 +211,7 @@ class SearchResult:
         """Convert to dictionary for serialization.
 
         Returns:
-            dict[str, Any]: Dictionary with offset, length, data (hex), and context (hex).
+            Dictionary with offset, length, data (hex), and context (hex).
 
         """
         return {
@@ -225,11 +225,14 @@ class SearchResult:
     def from_dict(cls, data: dict[str, Any]) -> SearchResult:
         """Create from dictionary.
 
+        Constructs a new SearchResult instance from a dictionary representation,
+        decoding hex-encoded data and context fields back to bytes.
+
         Args:
             data: Dictionary containing offset, length, data (hex), and context (hex).
 
         Returns:
-            SearchResult: New SearchResult instance.
+            New SearchResult instance.
 
         """
         return cls(
@@ -269,6 +272,9 @@ class SearchHistory:
     def add_search(self, pattern: str, search_type: SearchType, options: dict[str, Any]) -> None:
         """Add a search to history.
 
+        Adds a new search entry to the history, removing duplicates with the
+        same pattern and type. Maintains the maximum history entries limit.
+
         Args:
             pattern: Search pattern string.
             search_type: Type of search (hex, text, regex, wildcard).
@@ -294,12 +300,15 @@ class SearchHistory:
     def get_recent_searches(self, search_type: SearchType | None = None, limit: int = 10) -> list[str]:
         """Get recent search patterns.
 
+        Retrieves the most recent search patterns from history, optionally
+        filtered by search type. Returns patterns in chronological order.
+
         Args:
-            search_type: Filter results by search type.
+            search_type: Filter results by search type (if provided).
             limit: Maximum number of patterns to return.
 
         Returns:
-            list[str]: List of recent search patterns.
+            List of recent search pattern strings.
 
         """
         filtered_entries = self.entries
@@ -309,7 +318,12 @@ class SearchHistory:
         return [str(e["pattern"]) for e in filtered_entries[:limit]]
 
     def load_history(self) -> None:
-        """Load history from file."""
+        """Load history from file.
+
+        Loads search history from the JSON history file. If the file does not
+        exist or cannot be read, initializes with empty history.
+
+        """
         try:
             if self.history_file.exists():
                 with open(self.history_file, encoding="utf-8") as f:
@@ -320,7 +334,12 @@ class SearchHistory:
             self.entries = []
 
     def save_history(self) -> None:
-        """Save history to file."""
+        """Save history to file.
+
+        Persists the current search history entries to the JSON history file.
+        Creates parent directories as needed.
+
+        """
         try:
             self.history_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self.history_file, "w", encoding="utf-8") as f:
@@ -362,16 +381,19 @@ class SearchEngine:
     ) -> SearchResult | None:
         """Search for a single occurrence of a pattern.
 
+        Performs a pattern search starting from a given offset in either forward
+        or backward direction. Supports hex, text, regex, and wildcard search types.
+
         Args:
-            pattern: Search pattern
-            search_type: Type of search
-            start_offset: Offset to start searching from
-            case_sensitive: Whether search is case sensitive
-            whole_words: Whether to match whole words only
-            direction: Search direction ("forward" or "backward")
+            pattern: Search pattern string or bytes.
+            search_type: Type of search to perform.
+            start_offset: Byte offset to start searching from.
+            case_sensitive: Whether search is case-sensitive.
+            whole_words: Whether to match whole words only.
+            direction: Search direction ("forward" or "backward").
 
         Returns:
-            First search result or None if not found
+            First SearchResult found or None if pattern not found.
 
         """
         compiled_pattern = self._compile_pattern(pattern, search_type, case_sensitive)
@@ -392,15 +414,18 @@ class SearchEngine:
     ) -> list[SearchResult]:
         """Search for all occurrences of a pattern.
 
+        Finds all occurrences of a pattern in the file, processing data in chunks
+        to handle large files efficiently. Respects maximum results limit.
+
         Args:
-            pattern: Search pattern
-            search_type: Type of search
-            case_sensitive: Whether search is case sensitive
-            whole_words: Whether to match whole words only
-            max_results: Maximum number of results to return
+            pattern: Search pattern string or bytes.
+            search_type: Type of search to perform.
+            case_sensitive: Whether search is case-sensitive.
+            whole_words: Whether to match whole words only.
+            max_results: Maximum number of results to return.
 
         Returns:
-            List of all search results
+            List of SearchResult objects, up to max_results in length.
 
         """
         compiled_pattern = self._compile_pattern(pattern, search_type, case_sensitive)
@@ -445,18 +470,22 @@ class SearchEngine:
     ) -> list[tuple[int, int]]:
         """Replace all occurrences of a pattern.
 
+        Finds all occurrences of find_pattern and replaces them with replace_pattern.
+        Replacements are performed in reverse order to maintain offset accuracy.
+        Returns a list of (offset, length) tuples indicating the replaced ranges.
+
         Args:
-            find_pattern: Pattern to find
-            replace_pattern: Pattern to replace with
-            search_type: Type of search
-            case_sensitive: Whether search is case sensitive
-            whole_words: Whether to match whole words only
+            find_pattern: Pattern to find (string or bytes).
+            replace_pattern: Pattern to replace with (string or bytes).
+            search_type: Type of search to perform.
+            case_sensitive: Whether search is case-sensitive.
+            whole_words: Whether to match whole words only.
 
         Returns:
-            List of (offset, length) tuples for replaced ranges
+            List of (offset, length) tuples for replaced ranges.
 
         Raises:
-            ValueError: If the file is read-only.
+            ValueError: If the file is read-only or file operations fail.
             RuntimeError: If insertion of replacement at a given offset fails.
 
         """
@@ -496,13 +525,17 @@ class SearchEngine:
     def _compile_pattern(self, pattern: str | bytes, search_type: SearchType, case_sensitive: bool) -> bytes | Pattern[str] | None:
         """Compile pattern based on search type.
 
+        Converts the input pattern into a compiled form appropriate for the
+        specified search type. Handles hex decoding, text encoding, and regex
+        compilation with appropriate flags.
+
         Args:
             pattern: Search pattern string or bytes.
             search_type: Type of search to perform.
             case_sensitive: Whether comparison is case-sensitive.
 
         Returns:
-            bytes | Pattern[str] | None: Compiled pattern or None if compilation fails.
+            Compiled pattern (bytes or regex Pattern) or None if compilation fails.
 
         """
         try:
@@ -541,13 +574,16 @@ class SearchEngine:
     ) -> SearchResult | None:
         """Search forward from start_offset.
 
+        Searches through file chunks in forward direction starting from the
+        given offset. Returns the first match found or None if no matches.
+
         Args:
             compiled_pattern: Compiled search pattern.
-            start_offset: Offset to start search from.
+            start_offset: Byte offset to start search from.
             whole_words: Whether to match whole words only.
 
         Returns:
-            SearchResult | None: First match found or None.
+            First SearchResult found or None if pattern not found.
 
         """
         file_size = self.file_handler.get_file_size()
@@ -581,13 +617,16 @@ class SearchEngine:
     ) -> SearchResult | None:
         """Search backward from start_offset.
 
+        Searches through file chunks in backward direction starting from the
+        given offset. Returns the last match found before the start offset.
+
         Args:
             compiled_pattern: Compiled search pattern.
-            start_offset: Offset to start search from.
+            start_offset: Byte offset to start search from.
             whole_words: Whether to match whole words only.
 
         Returns:
-            SearchResult | None: Last match found or None.
+            Last SearchResult found or None if pattern not found.
 
         """
         offset = min(start_offset, self.file_handler.get_file_size())
@@ -624,15 +663,19 @@ class SearchEngine:
     ) -> list[SearchResult]:
         """Find all matches in a chunk of data.
 
+        Searches a binary data chunk for pattern matches. Handles both byte-based
+        searching (hex, text) and regex-based searching. Includes context bytes
+        around each match.
+
         Args:
             compiled_pattern: Compiled search pattern.
             chunk_data: Binary data chunk to search.
-            chunk_offset: Offset of chunk in the file.
+            chunk_offset: Byte offset of chunk in the file.
             search_type: Type of search being performed.
             whole_words: Whether to match whole words only.
 
         Returns:
-            list[SearchResult]: List of matches found in the chunk.
+            List of SearchResult objects found in the chunk.
 
         """
         matches: list[SearchResult] = []
@@ -713,14 +756,17 @@ class SearchEngine:
     ) -> SearchResult | None:
         """Find first match in a chunk of data.
 
+        Searches a binary data chunk and returns only the first match found.
+        Uses hex search type to treat pattern as raw bytes.
+
         Args:
             compiled_pattern: Compiled search pattern.
             chunk_data: Binary data chunk to search.
-            chunk_offset: Offset of chunk in the file.
+            chunk_offset: Byte offset of chunk in the file.
             whole_words: Whether to match whole words only.
 
         Returns:
-            SearchResult | None: First match found or None.
+            First SearchResult found or None if no matches.
 
         """
         matches = self._find_matches_in_chunk(
@@ -747,7 +793,7 @@ class SearchEngine:
             length: Length of the match.
 
         Returns:
-            bool: True if the match is a whole word, False otherwise.
+            True if the match is a whole word, False otherwise.
 
         """
 
@@ -764,7 +810,7 @@ class SearchEngine:
                 byte_val: Single byte value to check.
 
             Returns:
-                bool: True if byte represents a word character.
+                True if byte represents a word character.
 
             """
             return (48 <= byte_val <= 57) or (65 <= byte_val <= 90) or (97 <= byte_val <= 122) or (byte_val == 95)
@@ -806,7 +852,7 @@ _SearchThreadBase: type[QThread] | type[object]
 _SearchThreadBase = QThread if PYQT6_AVAILABLE else object
 
 
-class SearchThread(_SearchThreadBase):  # type: ignore[valid-type,misc]
+class SearchThread(_SearchThreadBase):
     """Background thread for long-running search operations."""
 
     if PYQT6_AVAILABLE:
@@ -881,7 +927,11 @@ class SearchThread(_SearchThreadBase):  # type: ignore[valid-type,misc]
             logger.exception("Search thread error: %s", e)
 
     def stop(self) -> None:
-        """Stop the search operation."""
+        """Stop the search operation.
+
+        Sets the stop flag to halt the search thread execution.
+
+        """
         self.should_stop = True
 
 
@@ -889,7 +939,7 @@ _AdvancedSearchDialogBase: type[QDialog] | type[object]
 _AdvancedSearchDialogBase = QDialog if PYQT6_AVAILABLE else object
 
 
-class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-type,misc]
+class AdvancedSearchDialog(_AdvancedSearchDialogBase):
     """Advanced search dialog with comprehensive search options."""
 
     def __init__(
@@ -949,7 +999,12 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
         self.load_recent_searches()
 
     def setup_ui(self) -> None:
-        """Set up the user interface."""
+        """Set up the user interface.
+
+        Initializes all UI components including tabs for search, replace, find all,
+        and history operations.
+
+        """
         layout = QVBoxLayout(self)
 
         tab_widget = QTabWidget()
@@ -1183,7 +1238,12 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
         return tab
 
     def load_recent_searches(self) -> None:
-        """Load recent searches into combo boxes."""
+        """Load recent searches into combo boxes.
+
+        Populates all search pattern combo boxes with the 10 most recent
+        search patterns from history.
+
+        """
         recent_searches = self.search_history.get_recent_searches(limit=10)
 
         for combo in [
@@ -1199,7 +1259,12 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
         self.update_history_list()
 
     def update_history_list(self) -> None:
-        """Update the history list widget."""
+        """Update the history list widget.
+
+        Refreshes the history list widget to display the 20 most recent
+        search entries with their type information.
+
+        """
         if self.history_list is None:
             return
 
@@ -1212,7 +1277,13 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
             self.history_list.addItem(item)
 
     def find_next(self) -> None:
-        """Find next occurrence."""
+        """Find next occurrence.
+
+        Searches forward from the current position for the search pattern
+        and updates the status label with the result. If a match is found,
+        selects the range in the hex viewer.
+
+        """
         if self.search_pattern_combo is None:
             return
 
@@ -1262,7 +1333,9 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
     def find_previous(self) -> None:
         """Find previous occurrence.
 
-        Searches backward from the current position for the search pattern.
+        Searches backward from the current position for the search pattern
+        and updates the status label with the result. If a match is found,
+        selects the range in the hex viewer.
 
         """
         if self.search_pattern_combo is None:
@@ -1305,14 +1378,20 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
                     self.search_status_label.setText(f"Search error: {e}")
 
     def replace_current(self) -> None:
-        """Replace current selection."""
+        """Replace current selection.
+
+        Replaces the currently selected text with the replacement pattern.
+        Requires hex viewer integration for full functionality.
+
+        """
         if self.replace_status_label is not None:
             self.replace_status_label.setText("Replace functionality requires hex viewer integration")
 
     def replace_all(self) -> None:
         """Replace all occurrences.
 
-        Replaces all occurrences of the find pattern with the replace pattern.
+        Replaces all occurrences of the find pattern with the replace pattern
+        in the file. Updates the status label with the count of replaced instances.
 
         """
         if self.find_pattern_combo is None or self.replace_pattern_edit is None:
@@ -1354,6 +1433,8 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
         """Find all occurrences.
 
         Searches for all occurrences of the pattern and displays results in a table.
+        Executes the search in a background thread and updates the results table
+        as matches are found.
 
         """
         if self.find_all_pattern_combo is None:
@@ -1396,6 +1477,9 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
     def on_find_all_completed(self, results: list[SearchResult]) -> None:
         """Handle find all completion.
 
+        Called when the background search thread completes. Populates the results
+        table with all found matches and re-enables the find all button.
+
         Args:
             results: List of search results found.
 
@@ -1419,7 +1503,12 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
             self.results_table.setItem(i, 3, QTableWidgetItem(result.context.hex(" ")[:48] + "..."))
 
     def cancel_search(self) -> None:
-        """Cancel current search."""
+        """Cancel current search.
+
+        Stops the background search thread and updates the UI to reflect
+        the cancellation state.
+
+        """
         if self.current_search_thread is not None:
             self.current_search_thread.stop()
             if hasattr(self.current_search_thread, "wait"):
@@ -1435,6 +1524,9 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
     def use_history_item(self, item: QListWidgetItem) -> None:
         """Use selected history item.
 
+        Populates the search pattern and type combo boxes with the data
+        from the selected history item.
+
         Args:
             item: History list item to use.
 
@@ -1448,7 +1540,12 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
                     self.search_type_combo.setCurrentIndex(type_index)
 
     def use_selected_history(self) -> None:
-        """Use currently selected history item."""
+        """Use currently selected history item.
+
+        Retrieves the currently selected item from the history list and
+        applies its search pattern and type to the search controls.
+
+        """
         if self.history_list is None:
             return
 
@@ -1457,7 +1554,12 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
             self.use_history_item(current_item)
 
     def clear_history(self) -> None:
-        """Clear search history."""
+        """Clear search history.
+
+        Prompts the user for confirmation before clearing all search history
+        entries and updating the history list display.
+
+        """
         reply = QMessageBox.question(
             self,
             "Clear History",
@@ -1473,11 +1575,14 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
     def _get_search_type(self, type_str: str) -> SearchType:
         """Convert string to SearchType enum.
 
+        Maps string type names to SearchType enum values, defaulting to HEX
+        if the type string is not recognized.
+
         Args:
-            type_str: Search type name.
+            type_str: Search type name ("Hex", "Text", "Regex", "Wildcard").
 
         Returns:
-            SearchType: Corresponding SearchType enum value.
+            Corresponding SearchType enum value.
 
         """
         type_map = {
@@ -1493,7 +1598,7 @@ _FindAllDialogBase: type[QDialog] | type[object]
 _FindAllDialogBase = QDialog if PYQT6_AVAILABLE else object
 
 
-class FindAllDialog(_FindAllDialogBase):  # type: ignore[valid-type,misc]
+class FindAllDialog(_FindAllDialogBase):
     """Dialog for displaying find all results."""
 
     def __init__(
@@ -1518,7 +1623,12 @@ class FindAllDialog(_FindAllDialogBase):  # type: ignore[valid-type,misc]
         self.setup_ui()
 
     def setup_ui(self) -> None:
-        """Set up the dialog UI."""
+        """Set up the dialog UI.
+
+        Initializes the results table with search results and configures
+        the layout with information label and close button.
+
+        """
         layout = QVBoxLayout(self)
 
         info_label = QLabel(f"Found {len(self.results)} matches")
@@ -1555,7 +1665,7 @@ _ReplaceDialogBase: type[QDialog] | type[object]
 _ReplaceDialogBase = QDialog if PYQT6_AVAILABLE else object
 
 
-class ReplaceDialog(_ReplaceDialogBase):  # type: ignore[valid-type,misc]
+class ReplaceDialog(_ReplaceDialogBase):
     """Dialog for replace operations."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -1578,7 +1688,12 @@ class ReplaceDialog(_ReplaceDialogBase):  # type: ignore[valid-type,misc]
         self.setup_ui()
 
     def setup_ui(self) -> None:
-        """Set up the dialog UI."""
+        """Set up the dialog UI.
+
+        Initializes the replace dialog layout with find/replace pattern inputs,
+        type selection, and options for case sensitivity and replace all.
+
+        """
         layout = QVBoxLayout(self)
 
         find_group = QGroupBox("Find")

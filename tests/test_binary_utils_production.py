@@ -14,6 +14,9 @@ import os
 from pathlib import Path
 from typing import Any
 
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
 import pytest
 
 from intellicrack.utils.binary.binary_utils import (
@@ -477,7 +480,7 @@ class TestSuspiciousPESections:
     @pytest.fixture
     def legitimate_pe_binaries(self) -> list[Path]:
         """Provide paths to legitimate PE binaries."""
-        binaries_dir = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate")
+        binaries_dir = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate"
         return list(binaries_dir.glob("*.exe")) if binaries_dir.exists() else []
 
     def test_check_suspicious_sections_on_real_pe(self, legitimate_pe_binaries: list[Path]) -> None:
@@ -578,7 +581,7 @@ class TestRealBinaryFileOperations:
     @pytest.fixture
     def legitimate_binaries(self) -> list[Path]:
         """Provide paths to legitimate binaries."""
-        binaries_dir = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate")
+        binaries_dir = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate"
         return list(binaries_dir.glob("*.exe")) if binaries_dir.exists() else []
 
     def test_hash_computation_on_real_binaries(self, legitimate_binaries: list[Path]) -> None:

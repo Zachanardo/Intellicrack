@@ -43,10 +43,10 @@ def parse_patch_instructions(text: str) -> list[dict[str, Any]]:
     Expected format: "Address: 0x12345 NewBytes: 90 90 90 // Comment"
 
     Args:
-        text: Text containing patch instructions
+        text: Text containing patch instructions.
 
     Returns:
-        list: Patch instructions with address (int), new_bytes (bytes), and description (str)
+        Patch instructions with address, new_bytes, and description fields.
 
     """
     instructions = []
@@ -136,12 +136,12 @@ def create_patch(original_data: bytes, modified_data: bytes, base_address: int =
     """Create patch instructions by comparing original and modified data.
 
     Args:
-        original_data: Original binary data
-        modified_data: Modified binary data
-        base_address: Base address for patch offsets
+        original_data: Original binary data.
+        modified_data: Modified binary data.
+        base_address: Base address for patch offsets.
 
     Returns:
-        list: Patch instructions for the differences
+        Patch instructions for the differences between original and modified data.
 
     """
     patches = []
@@ -178,12 +178,12 @@ def apply_patch(file_path: str | Path, patches: list[dict[str, Any]], create_bac
     """Apply patches to a binary file.
 
     Args:
-        file_path: Path to the file to patch
-        patches: List of patch instructions
-        create_backup: Whether to create a backup
+        file_path: Path to the file to patch.
+        patches: List of patch instructions.
+        create_backup: Whether to create a backup.
 
     Returns:
-        tuple: (success, patched_file_path)
+        Tuple of (success status, patched file path if successful or None).
 
     """
     file_path = Path(file_path)
@@ -260,11 +260,11 @@ def validate_patch(file_path: str | Path, patches: list[dict[str, Any]]) -> bool
     """Validate that patches have been correctly applied.
 
     Args:
-        file_path: Path to the patched file
-        patches: List of patches that should have been applied
+        file_path: Path to the patched file.
+        patches: List of patches that should have been applied.
 
     Returns:
-        bool: True if all patches are validated
+        True if all patches are correctly validated.
 
     """
     file_path = Path(file_path)
@@ -305,11 +305,11 @@ def convert_rva_to_offset(file_path: str | Path, rva: int) -> int | None:
     """Convert RVA (Relative Virtual Address) to file offset for PE files.
 
     Args:
-        file_path: Path to PE file
-        rva: Relative Virtual Address
+        file_path: Path to PE file.
+        rva: Relative Virtual Address.
 
     Returns:
-        Optional[int]: File offset, or None if conversion fails
+        File offset, or None if conversion fails.
 
     """
     if pefile is None:
@@ -330,10 +330,10 @@ def get_section_info(file_path: str | Path) -> list[dict[str, Any]]:
     """Get section information from a PE file.
 
     Args:
-        file_path: Path to PE file
+        file_path: Path to PE file.
 
     Returns:
-        list: Section information including names, addresses, and sizes
+        Section information including names, addresses, and sizes.
 
     """
     if pefile is None:
@@ -368,12 +368,12 @@ def create_nop_patch(address: int, length: int, arch: str = "x86") -> dict[str, 
     """Create a NOP (No Operation) patch of specified length.
 
     Args:
-        address: Address to patch
-        length: Number of bytes to NOP
-        arch: Architecture (x86, x64, arm, etc.)
+        address: Address to patch.
+        length: Number of bytes to NOP.
+        arch: Architecture (x86, x64, arm, etc.).
 
     Returns:
-        dict: Patch instruction with NOP bytes
+        Patch instruction with NOP bytes.
 
     """
     nop_bytes = {

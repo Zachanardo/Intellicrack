@@ -1598,9 +1598,3 @@ class TestBypassGeneratorEdgeCases:
         return dos_header + dos_stub + pe_sig + coff + opt + text_section + data_section + rsrc_section + code + data + rsrc
 
 
-@pytest.fixture
-def temp_workspace(tmp_path: Path) -> Path:
-    """Create temporary workspace for test binaries."""
-    workspace = tmp_path / "bypass_tests"
-    workspace.mkdir(exist_ok=True)
-    return workspace

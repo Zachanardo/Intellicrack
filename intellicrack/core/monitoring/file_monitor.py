@@ -62,8 +62,7 @@ class LicenseFileHandler(FileSystemEventHandler):
             path: File path to check.
 
         Returns:
-            True if file is license-related.
-
+            True if file is license-related, False otherwise.
         """
         path_lower = path.lower()
 
@@ -77,7 +76,6 @@ class LicenseFileHandler(FileSystemEventHandler):
 
         Args:
             event: File system event.
-
         """
         src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode("utf-8", errors="replace")
         if not event.is_directory and self._is_license_file(src_path):
@@ -88,7 +86,6 @@ class LicenseFileHandler(FileSystemEventHandler):
 
         Args:
             event: File system event.
-
         """
         src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode("utf-8", errors="replace")
         if not event.is_directory and self._is_license_file(src_path):
@@ -99,7 +96,6 @@ class LicenseFileHandler(FileSystemEventHandler):
 
         Args:
             event: File system event.
-
         """
         src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode("utf-8", errors="replace")
         if not event.is_directory and self._is_license_file(src_path):
@@ -110,7 +106,6 @@ class LicenseFileHandler(FileSystemEventHandler):
 
         Args:
             event: File system event.
-
         """
         src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode("utf-8", errors="replace")
         dest_path: str = event.dest_path if isinstance(event.dest_path, str) else event.dest_path.decode("utf-8", errors="replace")
@@ -160,8 +155,7 @@ class FileMonitor(BaseMonitor):
         """Get default paths to monitor.
 
         Returns:
-            List of paths to watch.
-
+            List of default directory paths that exist and are monitored for license files.
         """
         paths = []
 
@@ -191,8 +185,7 @@ class FileMonitor(BaseMonitor):
         """Start file monitoring.
 
         Returns:
-            True if started successfully.
-
+            True if started successfully, False otherwise.
         """
         try:
             self.observer = Observer()
@@ -213,7 +206,10 @@ class FileMonitor(BaseMonitor):
             return not self._handle_error(e)
 
     def _stop_monitoring(self) -> None:
-        """Stop file monitoring."""
+        """Stop file monitoring.
+
+        Stops and joins the watchdog observer thread with timeout.
+        """
         if self.observer:
             try:
                 self.observer.stop()
@@ -229,7 +225,6 @@ class FileMonitor(BaseMonitor):
             event_type: Type of event.
             path: File path.
             description: Event description.
-
         """
         severity = EventSeverity.WARNING
         if any(keyword in path.lower() for keyword in ["license", "serial", "key", "activation"]):

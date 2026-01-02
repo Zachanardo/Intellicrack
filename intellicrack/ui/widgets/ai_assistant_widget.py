@@ -21,7 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -59,7 +59,11 @@ class AIAssistantWidget(QWidget):
     script_generated = pyqtSignal(str, str)  # script_type, content
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the AI Assistant Widget."""
+        """Initialize the AI Assistant Widget.
+
+        Args:
+            parent: Parent widget or None.
+        """
         super().__init__(parent)
 
         # State
@@ -74,7 +78,12 @@ class AIAssistantWidget(QWidget):
         self.load_available_models()
 
     def setup_ui(self) -> None:
-        """Set up the AI assistant interface."""
+        """Set up the AI assistant interface.
+
+        Creates the main UI components including tabs and model selector.
+        Initializes header, tab widget with chat/script/analysis/keygen tabs,
+        and model selection controls.
+        """
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
 
@@ -130,7 +139,11 @@ class AIAssistantWidget(QWidget):
         layout.addLayout(model_layout)
 
     def create_chat_tab(self) -> QWidget:
-        """Create the chat interface tab."""
+        """Create the chat interface tab.
+
+        Returns:
+            A QWidget containing the chat interface.
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -204,7 +217,11 @@ class AIAssistantWidget(QWidget):
         return tab
 
     def create_script_generation_tab(self) -> QWidget:
-        """Create the script generation tab."""
+        """Create the script generation tab.
+
+        Returns:
+            A QWidget containing the script generation interface.
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -314,7 +331,11 @@ class AIAssistantWidget(QWidget):
         return tab
 
     def create_code_analysis_tab(self) -> QWidget:
-        """Create the code analysis tab."""
+        """Create the code analysis tab.
+
+        Returns:
+            A QWidget containing the code analysis interface.
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -382,7 +403,11 @@ class AIAssistantWidget(QWidget):
         return tab
 
     def create_keygen_tab(self) -> QWidget:
-        """Create the keygen generation tab."""
+        """Create the keygen generation tab.
+
+        Returns:
+            A QWidget containing the keygen generation interface.
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -478,7 +503,15 @@ class AIAssistantWidget(QWidget):
         return tab
 
     def send_message(self) -> None:
-        """Send a message to the AI."""
+        """Send a message to the AI.
+
+        Sends the message from the input field to the AI for processing.
+        Retrieves current context if enabled and passes to process_ai_request
+        for AI backend processing.
+
+        Returns:
+            None
+        """
         if message := self.message_input.text().strip():
             self.add_message("User", message)
             self.message_input.clear()
@@ -491,7 +524,14 @@ class AIAssistantWidget(QWidget):
             self.process_ai_request(message, context)
 
     def send_quick_message(self, message: str) -> None:
-        """Send a predefined quick message."""
+        """Send a predefined quick message.
+
+        Args:
+            message: The quick message to send.
+
+        Returns:
+            None
+        """
         self.add_message("User", message)
 
         # Get context if enabled
@@ -502,7 +542,18 @@ class AIAssistantWidget(QWidget):
         self.process_ai_request(message, context)
 
     def add_message(self, sender: str, message: str) -> None:
-        """Add a message to the chat history."""
+        """Add a message to the chat history.
+
+        Appends a message to conversation history and formats it for display
+        in the chat widget with color-coded sender identification.
+
+        Args:
+            sender: The sender identifier (User or AI).
+            message: The message content to add.
+
+        Returns:
+            None
+        """
         self.conversation_history.append({"sender": sender, "message": message})
 
         # Format message for display
@@ -519,7 +570,19 @@ class AIAssistantWidget(QWidget):
             scrollbar.setValue(scrollbar.maximum())
 
     def process_ai_request(self, message: str, context: str = "") -> None:
-        """Process AI request using available AI backends."""
+        """Process AI request using available AI backends.
+
+        Attempts to use the IntegrationManager for AI processing, falling back
+        to pattern-based responses if unavailable. Emits message_sent signal
+        upon completion.
+
+        Args:
+            message: The message to process.
+            context: Optional file context for the request.
+
+        Returns:
+            None
+        """
         model = self.model_combo.currentText()
         temperature = float(self.temperature_spin.currentText())
 
@@ -555,7 +618,21 @@ class AIAssistantWidget(QWidget):
         self.message_sent.emit(message)
 
     def _generate_fallback_response(self, message: str, model: str, temperature: float, context: str = "") -> str:
-        """Generate intelligent fallback response when AI backend is unavailable."""
+        """Generate intelligent fallback response when AI backend is unavailable.
+
+        Analyzes message for keywords and generates pattern-based responses
+        for common security research and binary analysis queries.
+
+        Args:
+            message: The user's message.
+            model: The selected model name.
+            temperature: The temperature parameter for response generation.
+            context: Optional file context for analysis context.
+
+        Returns:
+            A fallback response string containing relevant analysis guidance
+                or generic security research recommendations.
+        """
         message_lower = message.lower()
 
         # Pattern-based responses for common security research queries
@@ -599,18 +676,46 @@ class AIAssistantWidget(QWidget):
         return f"Analysis using {model} (temp={temperature}):\nYour question: '{message}'\n\nFor comprehensive security research, consider:\n Static analysis of target binaries\n Dynamic runtime analysis\n Network traffic monitoring\n Vulnerability assessment\n\n{f'Context considered: {context}' if context else 'No additional context provided'}"
 
     def clear_chat(self) -> None:
-        """Clear the chat history."""
+        """Clear the chat history.
+
+        Resets both the internal conversation history list and the chat
+        display widget, preparing for a fresh conversation.
+
+        Returns:
+            None
+        """
         self.chat_history.clear()
         self.conversation_history.clear()
         self.chat_history.setText("Chat cleared. Ready for new conversation.\n")
 
     def on_model_changed(self, model: str) -> None:
-        """Handle model change."""
+        """Handle model change event.
+
+        Logs the model change and notifies the user via system message
+        in the chat history.
+
+        Args:
+            model: The new model name selected by the user.
+
+        Returns:
+            None
+        """
         logger.info("AI model changed to: %s", model)
         self.add_message("System", f"Switched to {model} model")
 
     def set_current_context(self, file_path: str, content: str = "") -> None:
-        """Set the current file context for AI assistance."""
+        """Set the current file context for AI assistance.
+
+        Updates the current file context with optional content truncation.
+        Updates the context label to reflect the loaded file.
+
+        Args:
+            file_path: Path to the current file.
+            content: File content for context (truncated to 1000 chars).
+
+        Returns:
+            None
+        """
         self.current_file = file_path
         self.current_context = content[:1000] if content else ""  # Limit context size
 
@@ -620,7 +725,16 @@ class AIAssistantWidget(QWidget):
             self.context_label.setText("Context: No file loaded")
 
     def generate_script(self) -> None:
-        """Generate protection-aware bypass script using actual binary analysis."""
+        """Generate protection-aware bypass script using actual binary analysis.
+
+        Analyzes the target binary using ProtectionAwareScriptGenerator and
+        generates an appropriate script for the selected analysis tool
+        (Frida, Ghidra, Radare2, etc.). Displays results with protection
+        detection confidence and recommended approach.
+
+        Returns:
+            None
+        """
         script_type = self.script_type_combo.currentText()
         target = self.target_input.text()
 
@@ -670,7 +784,14 @@ class AIAssistantWidget(QWidget):
             logger.exception("Script generation failed: %s", e)
 
     def copy_script(self) -> None:
-        """Copy generated script to clipboard."""
+        """Copy generated script to clipboard.
+
+        Retrieves the current script output text and copies it to the
+        system clipboard for external use. Logs success to debug output.
+
+        Returns:
+            None
+        """
         from PyQt6.QtWidgets import QApplication
 
         clipboard: QClipboard | None = QApplication.clipboard()
@@ -679,7 +800,15 @@ class AIAssistantWidget(QWidget):
             logger.info("Script copied to clipboard")
 
     def save_script(self) -> None:
-        """Save generated script to file."""
+        """Save generated script to file.
+
+        Opens a file dialog allowing the user to select destination and
+        filename. Writes the current script output to the selected file.
+        Logs success or failure to debug output.
+
+        Returns:
+            None
+        """
         from PyQt6.QtWidgets import QFileDialog
 
         script_type = self.script_type_combo.currentText().lower().replace(" ", "_")
@@ -694,7 +823,16 @@ class AIAssistantWidget(QWidget):
                 logger.exception("Failed to save script: %s", e)
 
     def test_script(self) -> None:
-        """Test the generated script in appropriate execution environment."""
+        """Test the generated script in appropriate execution environment.
+
+        Validates and tests the generated script based on its type, using
+        syntax checking and tool availability verification. Handles Frida,
+        Python, Ghidra, and Radare2 scripts with appropriate testing methods.
+        Updates output with validation results and execution instructions.
+
+        Returns:
+            None
+        """
         script_content = self.script_output.toPlainText()
         script_type = self.script_type_combo.currentText()
 
@@ -800,14 +938,30 @@ class AIAssistantWidget(QWidget):
             logger.exception("Script test failed: %s", e)
 
     def load_current_file_for_analysis(self) -> None:
-        """Load current file content for analysis."""
+        """Load current file content for analysis.
+
+        Populates the code input field in the analysis tab with the current
+        file context. Shows a message if no file context is available.
+
+        Returns:
+            None
+        """
         if self.current_context:
             self.code_input.setPlainText(self.current_context)
         else:
             self.code_input.setPlainText("No file context available. Load a file first.")
 
     def analyze_code(self) -> None:
-        """Analyze code using AI-powered analysis."""
+        """Analyze code using AI-powered analysis.
+
+        Performs analysis on the code in the analysis tab using the selected
+        AI model. Analyzes based on the selected analysis type (vulnerability,
+        code quality, performance, security audit, etc.). Updates the results
+        area with formatted findings.
+
+        Returns:
+            None
+        """
         code = self.code_input.toPlainText()
         analysis_type = self.analysis_type_combo.currentText()
 
@@ -855,7 +1009,15 @@ Format as clear, actionable analysis."""
             logger.exception("Code analysis failed: %s", e)
 
     def generate_keygen(self) -> None:
-        """Generate keygen using AI-powered code generation."""
+        """Generate keygen using AI-powered code generation.
+
+        Generates a complete keygen based on the selected algorithm and
+        language using AI-powered code generation. Includes cryptographic
+        implementations and optional GUI based on user selections.
+
+        Returns:
+            None
+        """
         algo_type = self.keygen_algo_combo.currentText()
         details = self.keygen_details.toPlainText()
         language = self.keygen_lang_combo.currentText()
@@ -901,7 +1063,14 @@ Return ONLY the code, no explanations."""
             logger.exception("Keygen generation failed: %s", e)
 
     def copy_keygen(self) -> None:
-        """Copy keygen code to clipboard."""
+        """Copy keygen code to clipboard.
+
+        Retrieves the current keygen output text and copies it to the
+        system clipboard for external use. Logs success to debug output.
+
+        Returns:
+            None
+        """
         from PyQt6.QtWidgets import QApplication
 
         clipboard: QClipboard | None = QApplication.clipboard()
@@ -910,7 +1079,15 @@ Return ONLY the code, no explanations."""
             logger.info("Keygen code copied to clipboard")
 
     def save_keygen(self) -> None:
-        """Save keygen to file."""
+        """Save keygen to file.
+
+        Opens a file dialog allowing the user to select destination and
+        filename. Saves the generated keygen code with appropriate file
+        extension based on selected language. Logs success or failure.
+
+        Returns:
+            None
+        """
         from PyQt6.QtWidgets import QFileDialog
 
         language = self.keygen_lang_combo.currentText().lower()
@@ -934,7 +1111,17 @@ Return ONLY the code, no explanations."""
                 logger.exception("Failed to save keygen: %s", e)
 
     def compile_keygen(self) -> None:
-        """Compile the keygen code into standalone executable."""
+        """Compile the keygen code into standalone executable.
+
+        Compiles the generated keygen code into an executable for the
+        selected language. Supports Python (PyInstaller), C/C++ (gcc/g++),
+        JavaScript (Node.js/pkg), and Assembly (NASM/MASM). Provides
+        platform-specific compilation instructions and file dialogs for
+        saving compiled output.
+
+        Returns:
+            None
+        """
         keygen_content = self.keygen_output.toPlainText()
         language = self.keygen_lang_combo.currentText()
 
@@ -1091,7 +1278,16 @@ Return ONLY the code, no explanations."""
             logger.exception("Keygen compilation failed: %s", e)
 
     def load_available_models(self, force_refresh: bool = False) -> None:
-        """Load available AI models using dynamic API-based discovery."""
+        """Load available AI models using dynamic API-based discovery.
+
+        Discovers both configured and API-discovered models from all
+        providers. Updates the model combo box with available options
+        and displays appropriate welcome/error messages. Supports multiple
+        API providers through dynamic discovery service.
+
+        Args:
+            force_refresh: Force refresh of discovered models from APIs.
+        """
         try:
             from ...ai.llm_config_manager import get_llm_config_manager
             from ...ai.model_discovery_service import get_model_discovery_service
@@ -1147,7 +1343,15 @@ Return ONLY the code, no explanations."""
             self._show_error_message(str(e))
 
     def _show_no_models_prompt(self) -> None:
-        """Display prompt when no models are configured."""
+        """Display prompt when no models are configured.
+
+        Shows help text in the chat area guiding users through AI model
+        configuration options, including OpenAI, Anthropic, local GGUF,
+        Ollama, and LM Studio setup instructions.
+
+        Returns:
+            None
+        """
         self.chat_history.setHtml(
             "<div style='padding: 20px;'>"
             "<h2 style='color: #dc3545;'>⚠ No AI Models Configured</h2>"
@@ -1167,7 +1371,14 @@ Return ONLY the code, no explanations."""
         )
 
     def _show_welcome_message(self, total_models: int) -> None:
-        """Display welcome message with model count."""
+        """Display welcome message with model count.
+
+        Shows welcome message in the chat area listing capabilities
+        and instructions for using the AI Assistant.
+
+        Args:
+            total_models: The total number of available models.
+        """
         self.chat_history.setHtml(
             "<div style='padding: 20px;'>"
             "<h2 style='color: #28a745;'>OK AI Assistant Ready</h2>"
@@ -1190,7 +1401,17 @@ Return ONLY the code, no explanations."""
         )
 
     def _show_error_message(self, error: str) -> None:
-        """Display error message when model loading fails."""
+        """Display error message when model loading fails.
+
+        Shows error message in the chat area with troubleshooting steps
+        for common configuration and connectivity issues.
+
+        Args:
+            error: The error message to display.
+
+        Returns:
+            None
+        """
         self.chat_history.setHtml(
             "<div style='padding: 20px;'>"
             "<h2 style='color: #dc3545;'>FAIL Error Loading Models</h2>"

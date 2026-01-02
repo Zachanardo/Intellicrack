@@ -6,8 +6,7 @@ validating accuracy of entropy, distribution, and pattern detection.
 
 import math
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock
+from typing import Any, Generator, Optional, cast
 
 import pytest
 from PyQt6.QtWidgets import QApplication
@@ -15,13 +14,55 @@ from PyQt6.QtWidgets import QApplication
 from intellicrack.hexview.statistics_dialog import StatisticsDialog, StatisticsWorker
 
 
+class FakeFileHandler:
+    """Real test double for file handler with complete implementation."""
+
+    def __init__(
+        self,
+        file_size: int = 1024,
+        file_path: str = "test.bin",
+        read_data_value: bytes = b"\x00" * 1024,
+    ) -> None:
+        self.file_size: int = file_size
+        self.file_path: str = file_path
+        self._read_data_value: bytes = read_data_value
+        self.read_data_calls: list[tuple[int, int]] = []
+
+    def read_data(self, offset: int = 0, length: int = -1) -> bytes:
+        """Read data from the fake file."""
+        self.read_data_calls.append((offset, length))
+        if length == -1:
+            return self._read_data_value[offset:]
+        return self._read_data_value[offset : offset + length]
+
+
+class FakeHexViewer:
+    """Real test double for hex viewer with complete implementation."""
+
+    def __init__(
+        self,
+        selection_start: int = -1,
+        selection_end: int = -1,
+        file_size: int = 1024,
+        file_path: str = "test.bin",
+        read_data_value: bytes = b"\x00" * 1024,
+    ) -> None:
+        self.selection_start: int = selection_start
+        self.selection_end: int = selection_end
+        self.file_handler: Any = FakeFileHandler(
+            file_size=file_size, file_path=file_path, read_data_value=read_data_value
+        )
+
+
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Generator[QApplication, None, None]:
     """Create QApplication instance for Qt tests."""
-    app = QApplication.instance()
-    if app is None:
+    existing = QApplication.instance()
+    if existing is not None and isinstance(existing, QApplication):
+        yield existing
+    else:
         app = QApplication([])
-    yield app
+        yield app
 
 
 @pytest.fixture
@@ -31,22 +72,15 @@ def statistics_dialog(qapp: QApplication) -> StatisticsDialog:
 
 
 @pytest.fixture
-def mock_hex_viewer() -> MagicMock:
-    """Create mock hex viewer with file handler."""
-    viewer = MagicMock()
-    viewer.selection_start = -1
-    viewer.selection_end = -1
-    viewer.file_handler = MagicMock()
-    viewer.file_handler.file_size = 1024
-    viewer.file_handler.file_path = "test.bin"
-    viewer.file_handler.read_data = MagicMock(return_value=b"\x00" * 1024)
-    return viewer
+def fake_hex_viewer() -> FakeHexViewer:
+    """Create fake hex viewer with file handler."""
+    return FakeHexViewer()
 
 
 @pytest.fixture
-def dialog_with_viewer(qapp: QApplication, mock_hex_viewer: MagicMock) -> StatisticsDialog:
-    """Create statistics dialog with mock hex viewer."""
-    return StatisticsDialog(hex_viewer=mock_hex_viewer)
+def dialog_with_viewer(qapp: QApplication, fake_hex_viewer: FakeHexViewer) -> StatisticsDialog:
+    """Create statistics dialog with fake hex viewer."""
+    return StatisticsDialog(hex_viewer=cast(Any, fake_hex_viewer))
 
 
 @pytest.fixture
@@ -128,13 +162,10 @@ class TestDataSourceSelection:
         """Selection radio disabled without active selection."""
         assert not dialog_with_viewer.selection_radio.isEnabled()
 
-    def test_selection_radio_enabled_with_selection(
-        self, qapp: QApplication, mock_hex_viewer: MagicMock
-    ) -> None:
+    def test_selection_radio_enabled_with_selection(self, qapp: QApplication) -> None:
         """Selection radio enabled with active selection."""
-        mock_hex_viewer.selection_start = 100
-        mock_hex_viewer.selection_end = 300
-        dialog = StatisticsDialog(hex_viewer=mock_hex_viewer)
+        fake_viewer = FakeHexViewer(selection_start=100, selection_end=300)
+        dialog = StatisticsDialog(hex_viewer=cast(Any, fake_viewer))
 
         assert dialog.selection_radio.isEnabled()
         assert "200 bytes" in dialog.selection_radio.text()
@@ -162,9 +193,9 @@ class TestStatisticsWorker:
     def test_worker_calculates_statistics(self, uniform_data: bytes) -> None:
         """Worker calculates statistics correctly."""
         worker = StatisticsWorker(data=uniform_data)
-        results = {}
+        results: dict[str, Any] = {}
 
-        def store_result(result: dict) -> None:
+        def store_result(result: dict[str, Any]) -> None:
             nonlocal results
             results = result
 
@@ -181,9 +212,9 @@ class TestStatisticsWorker:
         test_file.write_bytes(uniform_data)
 
         worker = StatisticsWorker(file_path=str(test_file))
-        results = {}
+        results: dict[str, Any] = {}
 
-        def store_result(result: dict) -> None:
+        def store_result(result: dict[str, Any]) -> None:
             nonlocal results
             results = result
 
@@ -230,9 +261,9 @@ class TestStatisticalAccuracy:
     def test_entropy_calculation_uniform_distribution(self, uniform_data: bytes) -> None:
         """Uniform distribution has high entropy."""
         worker = StatisticsWorker(data=uniform_data)
-        results = {}
+        results: dict[str, Any] = {}
 
-        def store_result(result: dict) -> None:
+        def store_result(result: dict[str, Any]) -> None:
             nonlocal results
             results = result
 
@@ -245,9 +276,9 @@ class TestStatisticalAccuracy:
     def test_entropy_calculation_low_entropy(self, low_entropy_data: bytes) -> None:
         """Low entropy data has low entropy value."""
         worker = StatisticsWorker(data=low_entropy_data)
-        results = {}
+        results: dict[str, Any] = {}
 
-        def store_result(result: dict) -> None:
+        def store_result(result: dict[str, Any]) -> None:
             nonlocal results
             results = result
 
@@ -260,9 +291,9 @@ class TestStatisticalAccuracy:
         """Byte statistics calculate correctly."""
         test_data = bytes([0x10, 0x20, 0x30, 0x40, 0x50])
         worker = StatisticsWorker(data=test_data)
-        results = {}
+        results: dict[str, Any] = {}
 
-        def store_result(result: dict) -> None:
+        def store_result(result: dict[str, Any]) -> None:
             nonlocal results
             results = result
 
@@ -277,9 +308,9 @@ class TestStatisticalAccuracy:
         """Null byte counting is accurate."""
         test_data = b"\x00" * 500 + b"\xFF" * 500
         worker = StatisticsWorker(data=test_data)
-        results = {}
+        results: dict[str, Any] = {}
 
-        def store_result(result: dict) -> None:
+        def store_result(result: dict[str, Any]) -> None:
             nonlocal results
             results = result
 
@@ -293,9 +324,9 @@ class TestStatisticalAccuracy:
         """Printable character detection is accurate."""
         test_data = b"Hello World!" + b"\x00" * 88
         worker = StatisticsWorker(data=test_data)
-        results = {}
+        results: dict[str, Any] = {}
 
-        def store_result(result: dict) -> None:
+        def store_result(result: dict[str, Any]) -> None:
             nonlocal results
             results = result
 
@@ -311,9 +342,9 @@ class TestPatternDetection:
     def test_repeating_pattern_detection(self, pattern_data: bytes) -> None:
         """Repeating patterns are detected."""
         worker = StatisticsWorker(data=pattern_data)
-        results = {}
+        results: dict[str, Any] = {}
 
-        def store_result(result: dict) -> None:
+        def store_result(result: dict[str, Any]) -> None:
             nonlocal results
             results = result
 
@@ -327,9 +358,9 @@ class TestPatternDetection:
     def test_no_patterns_in_random_data(self, uniform_data: bytes) -> None:
         """Random data has fewer patterns."""
         worker = StatisticsWorker(data=uniform_data)
-        results = {}
+        results: dict[str, Any] = {}
 
-        def store_result(result: dict) -> None:
+        def store_result(result: dict[str, Any]) -> None:
             nonlocal results
             results = result
 
@@ -590,6 +621,7 @@ class TestCopyResults:
         dialog_with_viewer.copy_results()
 
         clipboard = QApplication.clipboard()
+        assert clipboard is not None
         clipboard_text = clipboard.text()
 
         assert "OVERVIEW" in clipboard_text

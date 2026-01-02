@@ -1,4 +1,8 @@
-"""Protection detection modules for Intellicrack.
+"""Provide protection detection analyzers for various software licensing schemes.
+
+This module exposes detection classes and result types for identifying common
+software protection mechanisms including Arxan, SecuROM, and StarForce
+protection schemes used in commercial software licensing.
 
 Copyright (C) 2025 Zachary Flint
 

@@ -11,9 +11,11 @@ the Free Software Foundation, either version 3 of the License, or
 """
 
 import os
+import subprocess
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
+from typing import Any, Callable, List, Optional, Tuple
+from urllib.parse import ParseResult
 
 import pytest
 from intellicrack.handlers.pyqt6_handler import QApplication, QMessageBox
@@ -23,8 +25,194 @@ from intellicrack.ui.dialogs.nodejs_setup_dialog import (
 )
 
 
+class FakeSubprocessResult:
+    """Fake subprocess.CompletedProcess for testing."""
+
+    def __init__(self, returncode: int, stdout: str = "", stderr: str = "") -> None:
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+
+
+class FakeHTTPResponse:
+    """Fake HTTP response for testing."""
+
+    def __init__(self, content: bytes = b"") -> None:
+        self.raw = FakeRawResponse(content)
+        self.content = content
+
+
+class FakeRawResponse:
+    """Fake raw HTTP response stream."""
+
+    def __init__(self, content: bytes = b"") -> None:
+        self._content = content
+        self._position = 0
+
+    def read(self, chunk_size: int = 8192) -> bytes:
+        """Read chunk from response."""
+        if self._position >= len(self._content):
+            return b""
+        chunk = self._content[self._position : self._position + chunk_size]
+        self._position += chunk_size
+        return chunk
+
+
+class FakeFileDialog:
+    """Fake QFileDialog for testing."""
+
+    def __init__(self, return_path: str = "") -> None:
+        self._return_path = return_path
+
+    def getExistingDirectory(
+        self,
+        parent: Any = None,
+        caption: str = "",
+        directory: str = "",
+        options: Any = None,
+    ) -> str:
+        """Return configured path."""
+        return self._return_path
+
+
+class FakeMessageBox:
+    """Fake QMessageBox for testing."""
+
+    def __init__(self) -> None:
+        self.information_calls: List[Tuple[Any, str, str]] = []
+
+    def information(self, parent: Any, title: str, message: str) -> None:
+        """Record information dialog call."""
+        self.information_calls.append((parent, title, message))
+
+
+class FakeURLParseResult:
+    """Fake URL parse result for testing."""
+
+    def __init__(self, scheme: str) -> None:
+        self.scheme = scheme
+        self.netloc = "nodejs.org"
+        self.path = "/download/node.msi"
+
+
+class FakeFile:
+    """Fake file object for testing."""
+
+    def __init__(self) -> None:
+        self.written_data: List[bytes] = []
+        self.closed = False
+
+    def write(self, data: bytes) -> int:
+        """Record written data."""
+        self.written_data.append(data)
+        return len(data)
+
+    def close(self) -> None:
+        """Mark file as closed."""
+        self.closed = True
+
+    def __enter__(self) -> "FakeFile":
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.close()
+
+
+class RecordingNodeJSSetupDialog(NodeJSSetupDialog):
+    """Test double for NodeJSSetupDialog that records method calls."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.start_installation_calls: int = 0
+        self.show_error_calls: List[str] = []
+        self.show_success_calls: List[str] = []
+        self.accept_calls: int = 0
+        self._should_accept = False
+
+    def start_installation(self) -> None:
+        """Record start_installation call."""
+        self.start_installation_calls += 1
+        if hasattr(super(), "start_installation"):
+            super().start_installation()
+
+    def show_error(self, message: str) -> None:
+        """Record show_error call."""
+        self.show_error_calls.append(message)
+
+    def show_success(self, message: str) -> None:
+        """Record show_success call."""
+        self.show_success_calls.append(message)
+
+    def accept(self) -> None:
+        """Record accept call."""
+        self.accept_calls += 1
+        self._should_accept = True
+
+
+class SubprocessRunner:
+    """Fake subprocess runner for testing."""
+
+    def __init__(self) -> None:
+        self.run_calls: List[Tuple[Any, ...]] = []
+        self.return_result: Optional[FakeSubprocessResult] = FakeSubprocessResult(0, "v20.15.1")
+        self.raise_exception: Optional[Exception] = None
+
+    def run(self, *args: Any, **kwargs: Any) -> FakeSubprocessResult:
+        """Record run call and return configured result."""
+        self.run_calls.append((args, kwargs))
+        if self.raise_exception:
+            raise self.raise_exception
+        if self.return_result is None:
+            return FakeSubprocessResult(1, "")
+        return self.return_result
+
+
+class RequestsGetter:
+    """Fake requests.get for testing."""
+
+    def __init__(self) -> None:
+        self.get_calls: List[Tuple[str, Any]] = []
+        self.return_response: Optional[FakeHTTPResponse] = FakeHTTPResponse(b"installer_data")
+        self.raise_exception: Optional[Exception] = None
+
+    def get(self, url: str, **kwargs: Any) -> FakeHTTPResponse:
+        """Record get call and return configured response."""
+        self.get_calls.append((url, kwargs))
+        if self.raise_exception:
+            raise self.raise_exception
+        if self.return_response is None:
+            return FakeHTTPResponse(b"")
+        return self.return_response
+
+
+class URLParser:
+    """Fake urlparse for testing."""
+
+    def __init__(self, scheme: str = "https") -> None:
+        self.parse_calls: List[str] = []
+        self.return_scheme = scheme
+
+    def __call__(self, url: str) -> FakeURLParseResult:
+        """Record parse call and return configured result."""
+        self.parse_calls.append(url)
+        return FakeURLParseResult(self.return_scheme)
+
+
+class FileOpener:
+    """Fake file opener for testing."""
+
+    def __init__(self) -> None:
+        self.open_calls: List[Tuple[str, str]] = []
+        self.fake_file = FakeFile()
+
+    def __call__(self, path: str, mode: str = "r") -> FakeFile:
+        """Record open call and return fake file."""
+        self.open_calls.append((path, mode))
+        return self.fake_file
+
+
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Any:
     """Create QApplication instance for tests."""
     app = QApplication.instance()
     if app is None:
@@ -33,9 +221,17 @@ def qapp() -> QApplication:
 
 
 @pytest.fixture
-def dialog(qapp: QApplication) -> NodeJSSetupDialog:
+def dialog(qapp: Any) -> Generator[NodeJSSetupDialog, None, None]:
     """Create Node.js setup dialog for testing."""
     dlg = NodeJSSetupDialog()
+    yield dlg
+    dlg.deleteLater()
+
+
+@pytest.fixture
+def recording_dialog(qapp: Any) -> Generator[RecordingNodeJSSetupDialog, None, None]:
+    """Create recording Node.js setup dialog for testing."""
+    dlg = RecordingNodeJSSetupDialog()
     yield dlg
     dlg.deleteLater()
 
@@ -96,51 +292,59 @@ def test_browse_button_opens_directory_dialog(dialog: NodeJSSetupDialog) -> None
     """Browse button opens directory selection dialog."""
     test_path = "C:\\Test\\nodejs"
 
-    with patch(
-        "intellicrack.ui.dialogs.nodejs_setup_dialog.QFileDialog.getExistingDirectory",
-        return_value=test_path,
-    ):
+    import intellicrack.ui.dialogs.nodejs_setup_dialog as dialog_module
+    original_file_dialog = getattr(dialog_module, 'QFileDialog', None)
+    fake_file_dialog = FakeFileDialog(test_path)
+
+    try:
+        setattr(dialog_module, 'QFileDialog', fake_file_dialog)
         dialog.custom_path_radio.setChecked(True)
         dialog.browse_nodejs_path()
 
         assert dialog.path_input.text() == test_path
+    finally:
+        if original_file_dialog is not None:
+            setattr(dialog_module, 'QFileDialog', original_file_dialog)
 
 
 def test_browse_button_cancelled_does_not_change_path(dialog: NodeJSSetupDialog) -> None:
     """Cancelling browse dialog does not change path."""
     original_path = dialog.path_input.text()
 
-    with patch(
-        "intellicrack.ui.dialogs.nodejs_setup_dialog.QFileDialog.getExistingDirectory",
-        return_value="",
-    ):
+    import intellicrack.ui.dialogs.nodejs_setup_dialog as dialog_module
+    orig_file_dialog = getattr(dialog_module, 'QFileDialog', None)
+    fake_file_dialog = FakeFileDialog("")
+
+    try:
+        setattr(dialog_module, 'QFileDialog', fake_file_dialog)
         dialog.custom_path_radio.setChecked(True)
         dialog.browse_nodejs_path()
 
         assert dialog.path_input.text() == original_path
+    finally:
+        if orig_file_dialog is not None:
+            setattr(dialog_module, 'QFileDialog', orig_file_dialog)
 
 
-def test_validate_input_auto_install_starts_installation(dialog: NodeJSSetupDialog) -> None:
+def test_validate_input_auto_install_starts_installation(recording_dialog: RecordingNodeJSSetupDialog) -> None:
     """Validate with auto-install starts installation process."""
-    dialog.auto_install_radio.setChecked(True)
+    recording_dialog.auto_install_radio.setChecked(True)
 
-    with patch.object(dialog, "start_installation") as mock_start:
-        result = dialog.validate_input()
+    result = recording_dialog.validate_input()
 
-        mock_start.assert_called_once()
-        assert result is False
+    assert recording_dialog.start_installation_calls == 1
+    assert result is False
 
 
-def test_validate_input_custom_path_empty_shows_error(dialog: NodeJSSetupDialog) -> None:
+def test_validate_input_custom_path_empty_shows_error(recording_dialog: RecordingNodeJSSetupDialog) -> None:
     """Validate with empty custom path shows error."""
-    dialog.custom_path_radio.setChecked(True)
-    dialog.path_input.setText("")
+    recording_dialog.custom_path_radio.setChecked(True)
+    recording_dialog.path_input.setText("")
 
-    with patch.object(dialog, "show_error") as mock_error:
-        result = dialog.validate_input()
+    result = recording_dialog.validate_input()
 
-        mock_error.assert_called_once()
-        assert result is False
+    assert len(recording_dialog.show_error_calls) == 1
+    assert result is False
 
 
 def test_validate_input_custom_path_valid_succeeds(dialog: NodeJSSetupDialog) -> None:
@@ -149,47 +353,68 @@ def test_validate_input_custom_path_valid_succeeds(dialog: NodeJSSetupDialog) ->
     test_path = "C:\\Program Files\\nodejs"
     dialog.path_input.setText(test_path)
 
-    mock_result = MagicMock()
-    mock_result.returncode = 0
-    mock_result.stdout = "v20.15.1"
+    import subprocess as subprocess_module
+    original_run = subprocess_module.run
+    subprocess_runner = SubprocessRunner()
+    subprocess_runner.return_result = FakeSubprocessResult(0, "v20.15.1")
 
-    with patch("subprocess.run", return_value=mock_result):
-        with patch.object(QMessageBox, "information"):
-            result = dialog.validate_input()
+    import intellicrack.handlers.pyqt6_handler as pyqt_handler
+    original_messagebox = pyqt_handler.QMessageBox
+    fake_messagebox = FakeMessageBox()
 
-            assert result is True
+    try:
+        subprocess_module.run = subprocess_runner.run  # type: ignore[assignment]
+        pyqt_handler.QMessageBox = fake_messagebox  # type: ignore[misc, assignment]
+
+        result = dialog.validate_input()
+
+        assert result is True
+        assert len(fake_messagebox.information_calls) == 1
+    finally:
+        subprocess_module.run = original_run
+        pyqt_handler.QMessageBox = original_messagebox  # type: ignore[misc]
 
 
-def test_validate_input_custom_path_invalid_shows_error(dialog: NodeJSSetupDialog) -> None:
+def test_validate_input_custom_path_invalid_shows_error(recording_dialog: RecordingNodeJSSetupDialog) -> None:
     """Validate with invalid Node.js path shows error."""
-    dialog.custom_path_radio.setChecked(True)
-    dialog.path_input.setText("C:\\Invalid\\Path")
+    recording_dialog.custom_path_radio.setChecked(True)
+    recording_dialog.path_input.setText("C:\\Invalid\\Path")
 
-    mock_result = MagicMock()
-    mock_result.returncode = 1
-    mock_result.stdout = ""
+    import subprocess as subprocess_module
+    original_run = subprocess_module.run
+    subprocess_runner = SubprocessRunner()
+    subprocess_runner.return_result = FakeSubprocessResult(1, "")
 
-    with patch("subprocess.run", return_value=mock_result):
-        with patch.object(dialog, "show_error") as mock_error:
-            result = dialog.validate_input()
+    try:
+        subprocess_module.run = subprocess_runner.run  # type: ignore[assignment]
 
-            mock_error.assert_called_once()
-            assert result is False
+        result = recording_dialog.validate_input()
+
+        assert len(recording_dialog.show_error_calls) == 1
+        assert result is False
+    finally:
+        subprocess_module.run = original_run
 
 
-def test_validate_input_custom_path_timeout_shows_error(dialog: NodeJSSetupDialog) -> None:
+def test_validate_input_custom_path_timeout_shows_error(recording_dialog: RecordingNodeJSSetupDialog) -> None:
     """Validate with timeout exception shows error."""
-    dialog.custom_path_radio.setChecked(True)
-    dialog.path_input.setText("C:\\Test\\nodejs")
+    recording_dialog.custom_path_radio.setChecked(True)
+    recording_dialog.path_input.setText("C:\\Test\\nodejs")
 
-    import subprocess
+    import subprocess as subprocess_module
+    original_run = subprocess_module.run
+    subprocess_runner = SubprocessRunner()
+    subprocess_runner.raise_exception = subprocess.TimeoutExpired("node", 5)
 
-    with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("node", 5)):
-        with patch.object(dialog, "show_error") as mock_error:
-            result = dialog.validate_input()
+    try:
+        subprocess_module.run = subprocess_runner.run  # type: ignore[assignment]
 
-            mock_error.assert_called_once()
-            assert result is False
+        result = recording_dialog.validate_input()
+
+        assert len(recording_dialog.show_error_calls) == 1
+        assert result is False
+    finally:
+        subprocess_module.run = original_run
 
 
 def test_validate_input_sanitizes_node_exe_path(dialog: NodeJSSetupDialog) -> None:
@@ -197,42 +422,86 @@ def test_validate_input_sanitizes_node_exe_path(dialog: NodeJSSetupDialog) -> No
     dialog.custom_path_radio.setChecked(True)
     dialog.path_input.setText("C:\\nodejs")
 
-    with patch("subprocess.run") as mock_run:
-        mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = "v20.15.1"
+    import subprocess as subprocess_module
+    original_run = subprocess_module.run
+    subprocess_runner = SubprocessRunner()
+    subprocess_runner.return_result = FakeSubprocessResult(0, "v20.15.1")
+
+    try:
+        subprocess_module.run = subprocess_runner.run  # type: ignore[assignment]
 
         dialog.validate_input()
 
-        call_args = mock_run.call_args
-        assert call_args.kwargs.get("shell") is False
+        assert len(subprocess_runner.run_calls) == 1
+        call_kwargs = subprocess_runner.run_calls[0][1]
+        assert call_kwargs.get("shell") is False
+    finally:
+        subprocess_module.run = original_run
 
 
 def test_start_installation_shows_progress_ui(dialog: NodeJSSetupDialog) -> None:
     """Start installation shows progress bar and text."""
-    with patch.object(NodeJSInstallWorker, "start"):
+    import intellicrack.ui.dialogs.nodejs_setup_dialog as dialog_module
+    original_worker = dialog_module.NodeJSInstallWorker
+
+    class FakeWorker:
+        def __init__(self) -> None:
+            pass
+        def start(self) -> None:
+            pass
+
+    try:
+        dialog_module.NodeJSInstallWorker = FakeWorker  # type: ignore[misc, assignment]
         dialog.start_installation()
 
         assert dialog.progress_bar.isVisible()
         assert dialog.progress_text.isVisible()
         assert dialog.progress_bar.value() == 0
+    finally:
+        dialog_module.NodeJSInstallWorker = original_worker  # type: ignore[misc]
 
 
 def test_start_installation_disables_controls(dialog: NodeJSSetupDialog) -> None:
     """Start installation disables all input controls."""
-    with patch.object(NodeJSInstallWorker, "start"):
+    import intellicrack.ui.dialogs.nodejs_setup_dialog as dialog_module
+    original_worker = dialog_module.NodeJSInstallWorker
+
+    class FakeWorker:
+        def __init__(self) -> None:
+            pass
+        def start(self) -> None:
+            pass
+
+    try:
+        dialog_module.NodeJSInstallWorker = FakeWorker  # type: ignore[misc, assignment]
         dialog.start_installation()
 
         assert not dialog.auto_install_radio.isEnabled()
         assert not dialog.custom_path_radio.isEnabled()
+    finally:
+        dialog_module.NodeJSInstallWorker = original_worker  # type: ignore[misc]
 
 
 def test_start_installation_creates_worker_thread(dialog: NodeJSSetupDialog) -> None:
     """Start installation creates and starts worker thread."""
-    with patch.object(NodeJSInstallWorker, "start") as mock_start:
+    import intellicrack.ui.dialogs.nodejs_setup_dialog as dialog_module
+    original_worker = dialog_module.NodeJSInstallWorker
+
+    class FakeWorker:
+        def __init__(self) -> None:
+            self.started = False
+        def start(self) -> None:
+            self.started = True
+
+    try:
+        dialog_module.NodeJSInstallWorker = FakeWorker  # type: ignore[misc, assignment]
         dialog.start_installation()
 
         assert dialog.install_worker is not None
-        mock_start.assert_called_once()
+        assert hasattr(dialog.install_worker, "started")
+        assert getattr(dialog.install_worker, "started", False) is True
+    finally:
+        dialog_module.NodeJSInstallWorker = original_worker  # type: ignore[misc]
 
 
 def test_on_install_progress_updates_text(dialog: NodeJSSetupDialog) -> None:
@@ -244,46 +513,52 @@ def test_on_install_progress_updates_text(dialog: NodeJSSetupDialog) -> None:
     assert "Test progress message" in dialog.progress_text.toPlainText()
 
 
-def test_on_install_finished_success_closes_dialog(dialog: NodeJSSetupDialog) -> None:
+def test_on_install_finished_success_closes_dialog(recording_dialog: RecordingNodeJSSetupDialog) -> None:
     """Successful installation shows success and closes dialog."""
-    with patch.object(dialog, "show_success"):
-        with patch.object(dialog, "accept") as mock_accept:
-            dialog.on_install_finished(True, "Installation complete")
+    recording_dialog.on_install_finished(True, "Installation complete")
 
-            mock_accept.assert_called_once()
+    assert len(recording_dialog.show_success_calls) == 1
+    assert recording_dialog.accept_calls == 1
 
 
-def test_on_install_finished_failure_shows_error(dialog: NodeJSSetupDialog) -> None:
+def test_on_install_finished_failure_shows_error(recording_dialog: RecordingNodeJSSetupDialog) -> None:
     """Failed installation shows error and keeps dialog open."""
-    with patch.object(dialog, "show_error") as mock_error:
-        with patch.object(dialog, "accept") as mock_accept:
-            dialog.on_install_finished(False, "Installation failed")
+    recording_dialog.on_install_finished(False, "Installation failed")
 
-            mock_error.assert_called_once()
-            mock_accept.assert_not_called()
+    assert len(recording_dialog.show_error_calls) == 1
+    assert recording_dialog.accept_calls == 0
 
 
 def test_on_install_finished_reenables_controls(dialog: NodeJSSetupDialog) -> None:
     """Install completion re-enables controls."""
-    with patch.object(NodeJSInstallWorker, "start"):
+    import intellicrack.ui.dialogs.nodejs_setup_dialog as dialog_module
+    original_worker = dialog_module.NodeJSInstallWorker
+
+    class FakeWorker:
+        def __init__(self) -> None:
+            pass
+        def start(self) -> None:
+            pass
+
+    try:
+        dialog_module.NodeJSInstallWorker = FakeWorker  # type: ignore[misc, assignment]
         dialog.start_installation()
 
-    with patch.object(dialog, "show_error"):
         dialog.on_install_finished(False, "Test failure")
 
         assert dialog.auto_install_radio.isEnabled()
         assert dialog.custom_path_radio.isEnabled()
+    finally:
+        dialog_module.NodeJSInstallWorker = original_worker  # type: ignore[misc]
 
 
-def test_on_install_finished_hides_progress_bar(dialog: NodeJSSetupDialog) -> None:
+def test_on_install_finished_hides_progress_bar(recording_dialog: RecordingNodeJSSetupDialog) -> None:
     """Install completion hides progress bar."""
-    dialog.progress_bar.setVisible(True)
+    recording_dialog.progress_bar.setVisible(True)
 
-    with patch.object(dialog, "show_success"):
-        with patch.object(dialog, "accept"):
-            dialog.on_install_finished(True, "Complete")
+    recording_dialog.on_install_finished(True, "Complete")
 
-            assert not dialog.progress_bar.isVisible()
+    assert not recording_dialog.progress_bar.isVisible()
 
 
 def test_install_worker_initialization() -> None:
@@ -297,8 +572,8 @@ def test_install_worker_emits_progress_signals() -> None:
     """Install worker emits progress signals during run."""
     worker = NodeJSInstallWorker()
 
-    progress_messages = []
-    progress_values = []
+    progress_messages: List[str] = []
+    progress_values: List[int] = []
 
     def on_progress(msg: str) -> None:
         progress_messages.append(msg)
@@ -309,195 +584,305 @@ def test_install_worker_emits_progress_signals() -> None:
     worker.progress.connect(on_progress)
     worker.progress_value.connect(on_progress_value)
 
-    with patch("subprocess.run") as mock_run:
-        mock_run.return_value.returncode = 0
+    import subprocess as subprocess_module
+    original_run = subprocess_module.run
+    subprocess_runner = SubprocessRunner()
+    subprocess_runner.return_result = FakeSubprocessResult(0)
 
-        with patch("requests.get") as mock_get:
-            mock_response = MagicMock()
-            mock_response.raw = MagicMock()
-            mock_get.return_value = mock_response
+    import requests as requests_module
+    original_get = requests_module.get
+    requests_getter = RequestsGetter()
+    requests_getter.return_response = FakeHTTPResponse(b"installer_data")
 
-            worker.run()
+    import builtins
+    original_open = builtins.open
+    file_opener = FileOpener()
 
-            assert progress_messages
-            assert progress_values
-            assert 100 in progress_values
+    try:
+        subprocess_module.run = subprocess_runner.run  # type: ignore[assignment]
+        requests_module.get = requests_getter.get  # type: ignore[assignment]
+        builtins.open = file_opener  # type: ignore[assignment]
+
+        worker.run()
+
+        assert len(progress_messages) > 0
+        assert len(progress_values) > 0
+        assert 100 in progress_values
+    finally:
+        subprocess_module.run = original_run
+        requests_module.get = original_get
+        builtins.open = original_open
 
 
 def test_install_worker_validates_url_scheme() -> None:
     """Install worker validates URL scheme to prevent file:// attacks."""
     worker = NodeJSInstallWorker()
 
-    finished_calls = []
+    finished_calls: List[Tuple[bool, str]] = []
 
     def on_finished(success: bool, message: str) -> None:
         finished_calls.append((success, message))
 
     worker.finished.connect(on_finished)
 
-    with patch("intellicrack.ui.dialogs.nodejs_setup_dialog.urlparse") as mock_urlparse:
-        mock_parsed = MagicMock()
-        mock_parsed.scheme = "file"
-        mock_urlparse.return_value = mock_parsed
+    import intellicrack.ui.dialogs.nodejs_setup_dialog as dialog_module
+    original_urlparse = getattr(dialog_module, 'urlparse', None)
+    url_parser = URLParser("file")
+
+    try:
+        setattr(dialog_module, 'urlparse', url_parser)
 
         worker.run()
 
         assert len(finished_calls) == 1
         assert not finished_calls[0][0]
+    finally:
+        setattr(dialog_module, 'urlparse', original_urlparse)
 
 
 def test_install_worker_sanitizes_temp_installer_path() -> None:
     """Install worker sanitizes temp installer path to prevent injection."""
     worker = NodeJSInstallWorker()
 
-    with patch("subprocess.run") as mock_run:
-        mock_run.return_value.returncode = 0
+    import subprocess as subprocess_module
+    original_run = subprocess_module.run
+    subprocess_runner = SubprocessRunner()
+    subprocess_runner.return_result = FakeSubprocessResult(0)
 
-        with patch("requests.get") as mock_get:
-            mock_response = MagicMock()
-            mock_response.raw = MagicMock()
-            mock_get.return_value = mock_response
+    import requests as requests_module
+    original_get = requests_module.get
+    requests_getter = RequestsGetter()
+    requests_getter.return_response = FakeHTTPResponse(b"installer_data")
 
-            with patch("builtins.open", MagicMock()):
-                worker.run()
+    import builtins
+    original_open = builtins.open
+    file_opener = FileOpener()
 
-                call_args = mock_run.call_args
-                assert call_args.kwargs.get("shell") is False
+    try:
+        subprocess_module.run = subprocess_runner.run  # type: ignore[assignment]
+        requests_module.get = requests_getter.get  # type: ignore[assignment]
+        builtins.open = file_opener  # type: ignore[assignment]
 
-                command = call_args[0][0]
-                assert isinstance(command, list)
-                assert command[0] == "msiexec"
+        worker.run()
+
+        assert len(subprocess_runner.run_calls) == 1
+        call_kwargs = subprocess_runner.run_calls[0][1]
+        assert call_kwargs.get("shell") is False
+
+        command = subprocess_runner.run_calls[0][0][0]
+        assert isinstance(command, list)
+        assert command[0] == "msiexec"
+    finally:
+        subprocess_module.run = original_run
+        requests_module.get = original_get
+        builtins.open = original_open
 
 
 def test_install_worker_uses_https_url() -> None:
     """Install worker uses HTTPS URL for Node.js download."""
     worker = NodeJSInstallWorker()
 
-    with patch("requests.get") as mock_get:
-        mock_response = MagicMock()
-        mock_response.raw = MagicMock()
-        mock_get.return_value = mock_response
+    import requests as requests_module
+    original_get = requests_module.get
+    requests_getter = RequestsGetter()
+    requests_getter.return_response = FakeHTTPResponse(b"installer_data")
 
-        with patch("subprocess.run") as mock_run:
-            mock_run.return_value.returncode = 0
+    import subprocess as subprocess_module
+    original_run = subprocess_module.run
+    subprocess_runner = SubprocessRunner()
+    subprocess_runner.return_result = FakeSubprocessResult(0)
 
-            with patch("builtins.open", MagicMock()):
-                worker.run()
+    import builtins
+    original_open = builtins.open
+    file_opener = FileOpener()
 
-                call_args = mock_get.call_args
-                url = call_args[0][0]
-                assert url.startswith("https://")
-                assert "nodejs.org" in url
+    try:
+        requests_module.get = requests_getter.get  # type: ignore[assignment]
+        subprocess_module.run = subprocess_runner.run  # type: ignore[assignment]
+        builtins.open = file_opener  # type: ignore[assignment]
+
+        worker.run()
+
+        assert len(requests_getter.get_calls) == 1
+        url = requests_getter.get_calls[0][0]
+        assert url.startswith("https://")
+        assert "nodejs.org" in url
+    finally:
+        requests_module.get = original_get
+        subprocess_module.run = original_run
+        builtins.open = original_open
 
 
 def test_install_worker_handles_download_exception() -> None:
     """Install worker handles download exceptions gracefully."""
     worker = NodeJSInstallWorker()
 
-    finished_calls = []
+    finished_calls: List[Tuple[bool, str]] = []
 
     def on_finished(success: bool, message: str) -> None:
         finished_calls.append((success, message))
 
     worker.finished.connect(on_finished)
 
-    with patch("requests.get", side_effect=Exception("Network error")):
+    import requests as requests_module
+    original_get = requests_module.get
+    requests_getter = RequestsGetter()
+    requests_getter.raise_exception = Exception("Network error")
+
+    try:
+        requests_module.get = requests_getter.get  # type: ignore[assignment]
+
         worker.run()
 
         assert len(finished_calls) == 1
         assert not finished_calls[0][0]
+    finally:
+        requests_module.get = original_get
 
 
 def test_install_worker_handles_subprocess_exception() -> None:
     """Install worker handles subprocess exceptions gracefully."""
     worker = NodeJSInstallWorker()
 
-    finished_calls = []
+    finished_calls: List[Tuple[bool, str]] = []
 
     def on_finished(success: bool, message: str) -> None:
         finished_calls.append((success, message))
 
     worker.finished.connect(on_finished)
 
-    with patch("requests.get") as mock_get:
-        mock_response = MagicMock()
-        mock_response.raw = MagicMock()
-        mock_get.return_value = mock_response
+    import requests as requests_module
+    original_get = requests_module.get
+    requests_getter = RequestsGetter()
+    requests_getter.return_response = FakeHTTPResponse(b"installer_data")
 
-        with patch("subprocess.run", side_effect=Exception("Subprocess error")):
-            with patch("builtins.open", MagicMock()):
-                worker.run()
+    import subprocess as subprocess_module
+    original_run = subprocess_module.run
+    subprocess_runner = SubprocessRunner()
+    subprocess_runner.raise_exception = Exception("Subprocess error")
 
-                assert len(finished_calls) == 1
-                assert not finished_calls[0][0]
+    import builtins
+    original_open = builtins.open
+    file_opener = FileOpener()
+
+    try:
+        requests_module.get = requests_getter.get  # type: ignore[assignment]
+        subprocess_module.run = subprocess_runner.run  # type: ignore[assignment]
+        builtins.open = file_opener  # type: ignore[assignment]
+
+        worker.run()
+
+        assert len(finished_calls) == 1
+        assert not finished_calls[0][0]
+    finally:
+        requests_module.get = original_get
+        subprocess_module.run = original_run
+        builtins.open = original_open
 
 
 def test_install_worker_emits_progress_values_incrementally() -> None:
     """Install worker emits progress values in incremental steps."""
     worker = NodeJSInstallWorker()
 
-    progress_values = []
+    progress_values: List[int] = []
 
     def on_progress_value(val: int) -> None:
         progress_values.append(val)
 
     worker.progress_value.connect(on_progress_value)
 
-    with patch("subprocess.run") as mock_run:
-        mock_run.return_value.returncode = 0
+    import subprocess as subprocess_module
+    original_run = subprocess_module.run
+    subprocess_runner = SubprocessRunner()
+    subprocess_runner.return_result = FakeSubprocessResult(0)
 
-        with patch("requests.get") as mock_get:
-            mock_response = MagicMock()
-            mock_response.raw = MagicMock()
-            mock_get.return_value = mock_response
+    import requests as requests_module
+    original_get = requests_module.get
+    requests_getter = RequestsGetter()
+    requests_getter.return_response = FakeHTTPResponse(b"installer_data")
 
-            with patch("builtins.open", MagicMock()):
-                worker.run()
+    import builtins
+    original_open = builtins.open
+    file_opener = FileOpener()
 
-                assert len(progress_values) > 3
-                assert progress_values[0] < progress_values[-1]
+    try:
+        subprocess_module.run = subprocess_runner.run  # type: ignore[assignment]
+        requests_module.get = requests_getter.get  # type: ignore[assignment]
+        builtins.open = file_opener  # type: ignore[assignment]
+
+        worker.run()
+
+        assert len(progress_values) > 3
+        assert progress_values[0] < progress_values[-1]
+    finally:
+        subprocess_module.run = original_run
+        requests_module.get = original_get
+        builtins.open = original_open
 
 
 def test_install_worker_success_emits_100_percent(dialog: NodeJSSetupDialog) -> None:
     """Successful installation emits 100% progress."""
     worker = NodeJSInstallWorker()
 
-    progress_values = []
+    progress_values: List[int] = []
 
     def on_progress_value(val: int) -> None:
         progress_values.append(val)
 
     worker.progress_value.connect(on_progress_value)
 
-    with patch("subprocess.run") as mock_run:
-        mock_run.return_value.returncode = 0
+    import subprocess as subprocess_module
+    original_run = subprocess_module.run
+    subprocess_runner = SubprocessRunner()
+    subprocess_runner.return_result = FakeSubprocessResult(0)
 
-        with patch("requests.get") as mock_get:
-            mock_response = MagicMock()
-            mock_response.raw = MagicMock()
-            mock_get.return_value = mock_response
+    import requests as requests_module
+    original_get = requests_module.get
+    requests_getter = RequestsGetter()
+    requests_getter.return_response = FakeHTTPResponse(b"installer_data")
 
-            with patch("builtins.open", MagicMock()):
-                worker.run()
+    import builtins
+    original_open = builtins.open
+    file_opener = FileOpener()
 
-                assert 100 in progress_values
+    try:
+        subprocess_module.run = subprocess_runner.run  # type: ignore[assignment]
+        requests_module.get = requests_getter.get  # type: ignore[assignment]
+        builtins.open = file_opener  # type: ignore[assignment]
+
+        worker.run()
+
+        assert 100 in progress_values
+    finally:
+        subprocess_module.run = original_run
+        requests_module.get = original_get
+        builtins.open = original_open
 
 
 def test_install_worker_failure_resets_progress(dialog: NodeJSSetupDialog) -> None:
     """Failed installation resets progress to 0."""
     worker = NodeJSInstallWorker()
 
-    progress_values = []
+    progress_values: List[int] = []
 
     def on_progress_value(val: int) -> None:
         progress_values.append(val)
 
     worker.progress_value.connect(on_progress_value)
 
-    with patch("requests.get", side_effect=Exception("Test error")):
+    import requests as requests_module
+    original_get = requests_module.get
+    requests_getter = RequestsGetter()
+    requests_getter.raise_exception = Exception("Test error")
+
+    try:
+        requests_module.get = requests_getter.get  # type: ignore[assignment]
+
         worker.run()
 
         assert 0 in progress_values
+    finally:
+        requests_module.get = original_get
 
 
 def test_path_detection_checks_common_locations(dialog: NodeJSSetupDialog) -> None:
@@ -509,30 +894,67 @@ def test_path_detection_checks_common_locations(dialog: NodeJSSetupDialog) -> No
 
 def test_progress_bar_range_set_correctly(dialog: NodeJSSetupDialog) -> None:
     """Progress bar is configured with 0-100 range."""
-    with patch.object(NodeJSInstallWorker, "start"):
+    import intellicrack.ui.dialogs.nodejs_setup_dialog as dialog_module
+    original_worker = dialog_module.NodeJSInstallWorker
+
+    class FakeWorker:
+        def __init__(self) -> None:
+            pass
+        def start(self) -> None:
+            pass
+
+    try:
+        dialog_module.NodeJSInstallWorker = FakeWorker  # type: ignore[misc, assignment]
         dialog.start_installation()
 
         assert dialog.progress_bar.minimum() == 0
         assert dialog.progress_bar.maximum() == 100
+    finally:
+        dialog_module.NodeJSInstallWorker = original_worker  # type: ignore[misc]
 
 
 def test_progress_text_cleared_on_installation_start(dialog: NodeJSSetupDialog) -> None:
     """Progress text is cleared when installation starts."""
     dialog.progress_text.setText("Previous text")
 
-    with patch.object(NodeJSInstallWorker, "start"):
+    import intellicrack.ui.dialogs.nodejs_setup_dialog as dialog_module
+    original_worker = dialog_module.NodeJSInstallWorker
+
+    class FakeWorker:
+        def __init__(self) -> None:
+            pass
+        def start(self) -> None:
+            pass
+
+    try:
+        dialog_module.NodeJSInstallWorker = FakeWorker  # type: ignore[misc, assignment]
         dialog.start_installation()
 
         assert dialog.progress_text.toPlainText() == ""
+    finally:
+        dialog_module.NodeJSInstallWorker = original_worker  # type: ignore[misc]
 
 
 def test_worker_progress_signal_connected_to_progress_bar(dialog: NodeJSSetupDialog) -> None:
     """Worker progress_value signal is connected to progress bar."""
-    with patch.object(NodeJSInstallWorker, "start"):
+    import intellicrack.ui.dialogs.nodejs_setup_dialog as dialog_module
+    original_worker = dialog_module.NodeJSInstallWorker
+
+    class FakeWorker:
+        def __init__(self) -> None:
+            from intellicrack.handlers.pyqt6_handler import QObject, pyqtSignal
+            self.progress_value = pyqtSignal(int)
+        def start(self) -> None:
+            pass
+
+    try:
+        dialog_module.NodeJSInstallWorker = FakeWorker  # type: ignore[misc, assignment]
         dialog.start_installation()
 
         assert dialog.install_worker is not None
 
         signal_obj = dialog.install_worker.progress_value
-        receivers_count = signal_obj.receivers(signal_obj)
+        receivers_count = signal_obj.receivers(signal_obj)  # type: ignore[attr-defined]
         assert receivers_count > 0
+    finally:
+        dialog_module.NodeJSInstallWorker = original_worker  # type: ignore[misc]

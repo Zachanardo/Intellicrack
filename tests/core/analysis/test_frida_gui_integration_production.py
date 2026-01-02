@@ -10,7 +10,7 @@ Licensed under GNU General Public License v3.0
 import json
 import tempfile
 from pathlib import Path
-from typing import Generator
+from typing import Any, Generator
 
 import pytest
 
@@ -375,7 +375,7 @@ class TestScriptOutputTab:
         assert len(tab.messages) == 0
         assert tab.output_text.toPlainText() == ""
 
-    def test_export_output_creates_json_file(self, qapp: QApplication, tmp_path: Path, monkeypatch) -> None:
+    def test_export_output_creates_json_file(self, qapp: QApplication, tmp_path: Path, monkeypatch: Any) -> None:
         """export_output creates JSON file with complete session data."""
         tab = ScriptOutputTab("test_script", "session_001")
         tab.add_message({"type": "info", "payload": "Test message"})
@@ -522,7 +522,7 @@ class TestFridaScriptCreatorWidget:
 
         assert "No message sending detected" in issues
 
-    def test_save_script_creates_file_with_metadata(self, qapp: QApplication, tmp_path: Path, monkeypatch) -> None:
+    def test_save_script_creates_file_with_metadata(self, qapp: QApplication, tmp_path: Path, monkeypatch: Any) -> None:
         """save_script creates JavaScript file with metadata header."""
         widget = FridaScriptCreatorWidget()
 

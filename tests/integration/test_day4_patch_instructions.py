@@ -3,10 +3,7 @@
 
 Validates that template patch instructions have been replaced with real implementations.
 """
-
 import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "intellicrack"))
 
 from intellicrack.core.analysis.radare2_bypass_generator import R2BypassGenerator
 

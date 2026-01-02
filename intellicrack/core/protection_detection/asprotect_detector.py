@@ -179,7 +179,11 @@ class ASProtectDetector:
         self._yara_rules: Any | None = self._compile_yara_rules() if YARA_AVAILABLE else None
 
     def _compile_yara_rules(self) -> Any | None:
-        """Compile YARA rules for ASProtect signature detection."""
+        """Compile YARA rules for ASProtect signature detection.
+
+        Returns:
+            Compiled YARA rules object or None if YARA unavailable.
+        """
         if not YARA_AVAILABLE:
             return None
 
@@ -270,11 +274,10 @@ class ASProtectDetector:
         """Perform comprehensive ASProtect detection.
 
         Args:
-            target_path: Path to executable to analyze
+            target_path: Path to executable to analyze.
 
         Returns:
-            ASProtectDetection results with confidence score
-
+            Comprehensive ASProtect detection results with confidence score.
         """
         signatures_found: list[str] = []
         protected_sections: list[str] = []
@@ -332,7 +335,15 @@ class ASProtectDetector:
         )
 
     def _check_string_signatures(self, binary_data: bytes, signatures_found: list[str]) -> float:
-        """Check for ASProtect string signatures in binary."""
+        """Check for ASProtect string signatures in binary.
+
+        Args:
+            binary_data: Binary file contents to search.
+            signatures_found: List to append found signature strings to.
+
+        Returns:
+            Confidence score based on signatures found (0.0-1.0).
+        """
         found_count = 0
 
         for signature in self.STRING_SIGNATURES:
@@ -345,7 +356,15 @@ class ASProtectDetector:
         return min(found_count / 4.0, 1.0)
 
     def _detect_protected_sections(self, target_path: Path, protected_sections: list[str]) -> float:
-        """Detect ASProtect protected PE sections."""
+        """Detect ASProtect protected PE sections.
+
+        Args:
+            target_path: Path to executable to analyze.
+            protected_sections: List to append protected section names to.
+
+        Returns:
+            Confidence score based on protected sections found (0.0-1.0).
+        """
         if not PEFILE_AVAILABLE:
             return 0.0
 
@@ -377,7 +396,14 @@ class ASProtectDetector:
         return min(found_count / 2.0, 1.0)
 
     def _detect_version(self, binary_data: bytes) -> ASProtectVersion:
-        """Detect ASProtect version from binary signatures."""
+        """Detect ASProtect version from binary signatures.
+
+        Args:
+            binary_data: Binary file contents to analyze.
+
+        Returns:
+            Detected ASProtect version or UNKNOWN.
+        """
         version_scores: dict[ASProtectVersion, int] = dict.fromkeys(ASProtectVersion, 0)
 
         for version, patterns in self.VERSION_SIGNATURES.items():
@@ -397,7 +423,15 @@ class ASProtectDetector:
         return best_version
 
     def _detect_features(self, binary_data: bytes, features: ASProtectFeatures) -> float:
-        """Detect ASProtect protection features."""
+        """Detect ASProtect protection features.
+
+        Args:
+            binary_data: Binary file contents to analyze.
+            features: ASProtectFeatures object to populate with detection results.
+
+        Returns:
+            Cumulative confidence score for all features detected (0.0+).
+        """
         score = 0.0
 
         anti_debug_count = sum(1 for pattern in self.ANTI_DEBUG_PATTERNS if pattern in binary_data)
@@ -439,7 +473,14 @@ class ASProtectDetector:
         return score
 
     def _detect_registration_system(self, binary_data: bytes) -> bool:
-        """Detect registration/licensing system."""
+        """Detect registration/licensing system.
+
+        Args:
+            binary_data: Binary file contents to analyze.
+
+        Returns:
+            True if registration system detected, False otherwise.
+        """
         reg_strings = [
             b"registration",
             b"serial",
@@ -455,7 +496,14 @@ class ASProtectDetector:
         return reg_count >= 3
 
     def _detect_import_protection(self, binary_data: bytes) -> bool:
-        """Detect import table protection."""
+        """Detect import table protection.
+
+        Args:
+            binary_data: Binary file contents to analyze.
+
+        Returns:
+            True if import protection detected, False otherwise.
+        """
         import_patterns = [
             b"\x8b\x45\x3c\x03\xc5\x8b\x40\x78",
             b"\x8b\x4d\x3c\x03\xcd\x8b\x51\x78",
@@ -464,7 +512,14 @@ class ASProtectDetector:
         return any(pattern in binary_data for pattern in import_patterns)
 
     def _detect_code_encryption(self, binary_data: bytes) -> bool:
-        """Detect code encryption patterns."""
+        """Detect code encryption patterns.
+
+        Args:
+            binary_data: Binary file contents to analyze.
+
+        Returns:
+            True if code encryption detected, False otherwise.
+        """
         decrypt_loops = [
             b"\x30\x04\x0e\x41\x81\xf9",
             b"\x80\x34\x08\xff\x40\x3d",
@@ -474,7 +529,14 @@ class ASProtectDetector:
         return any(pattern in binary_data for pattern in decrypt_loops)
 
     def _detect_anti_dumping(self, binary_data: bytes) -> bool:
-        """Detect anti-dumping techniques."""
+        """Detect anti-dumping techniques.
+
+        Args:
+            binary_data: Binary file contents to analyze.
+
+        Returns:
+            True if anti-dumping techniques detected, False otherwise.
+        """
         anti_dump_patterns = [
             b"\x64\xa1\x18\x00\x00\x00\x8b\x40\x30",
             b"\x8b\x45\x3c\x8b\x54\x05\x78",
@@ -483,7 +545,14 @@ class ASProtectDetector:
         return any(pattern in binary_data for pattern in anti_dump_patterns)
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data."""
+        """Calculate Shannon entropy of data.
+
+        Args:
+            data: Binary data to calculate entropy for.
+
+        Returns:
+            Shannon entropy value (0.0-8.0).
+        """
         if not data:
             return 0.0
 
@@ -504,7 +573,15 @@ class ASProtectDetector:
         return entropy
 
     def _yara_scan(self, target_path: Path) -> list[dict[str, str]]:
-        """Scan executable with YARA rules."""
+        """Scan executable with YARA rules.
+
+        Args:
+            target_path: Path to executable to scan.
+
+        Returns:
+            List of YARA match dictionaries with rule, version, and
+                description keys.
+        """
         if not self._yara_rules:
             return []
 
@@ -526,7 +603,11 @@ class ASProtectDetector:
         return matches
 
     def _detect_registry_keys(self) -> list[str]:
-        """Detect ASProtect registry keys."""
+        """Detect ASProtect registry keys.
+
+        Returns:
+            List of detected ASProtect registry key paths.
+        """
         detected: list[str] = []
 
         for key_path in self.REGISTRY_KEYS:
@@ -540,7 +621,14 @@ class ASProtectDetector:
         return detected
 
     def _get_entry_point_signature(self, target_path: Path) -> str:
-        """Get signature bytes at entry point."""
+        """Get signature bytes at entry point.
+
+        Args:
+            target_path: Path to executable to analyze.
+
+        Returns:
+            Hexadecimal representation of entry point bytes or empty string.
+        """
         if not PEFILE_AVAILABLE:
             return ""
 
@@ -564,7 +652,14 @@ class ASProtectDetector:
         return ""
 
     def _count_api_redirects(self, binary_data: bytes) -> int:
-        """Count API redirection patterns in binary."""
+        """Count API redirection patterns in binary.
+
+        Args:
+            binary_data: Binary file contents to analyze.
+
+        Returns:
+            int: Count of API redirection patterns found.
+        """
         count = 0
         for pattern in self.API_REDIRECT_PATTERNS:
             count += binary_data.count(pattern)
@@ -578,7 +673,18 @@ class ASProtectDetector:
         yara_score: float,
         registry_count: int,
     ) -> float:
-        """Calculate overall detection confidence score."""
+        """Calculate overall detection confidence score.
+
+        Args:
+            signature_score: String signature matching score (0.0-1.0).
+            section_score: PE section detection score (0.0-1.0).
+            feature_score: Protection feature detection score (0.0+).
+            yara_score: YARA rule matching score (0.0-1.0).
+            registry_count: Count of detected registry keys.
+
+        Returns:
+            float: Overall confidence score (0.0-1.0).
+        """
         registry_score = min(registry_count / 2.0, 1.0)
 
         total_score = signature_score * 0.30 + section_score * 0.20 + feature_score * 0.25 + yara_score * 0.15 + registry_score * 0.10

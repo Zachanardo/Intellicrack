@@ -23,7 +23,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import capstone
 import pefile

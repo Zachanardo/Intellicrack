@@ -31,7 +31,10 @@ def setup_cli_logging(verbose: bool = False) -> None:
     """Configure logging for CLI usage.
 
     Args:
-        verbose: Enable verbose logging output
+        verbose: Enable verbose logging output.
+
+    Returns:
+        None.
 
     """
     level = logging.DEBUG if verbose else logging.INFO
@@ -42,14 +45,16 @@ def validate_binary_path(path: str) -> Path:
     """Validate binary file path and accessibility.
 
     Args:
-        path: Path to binary file
+        path: Path to binary file.
 
     Returns:
-        Validated Path object
+        Validated Path object for the resolved binary file.
 
     Raises:
-        FileNotFoundError: If binary file doesn't exist
-        PermissionError: If file is not readable
+        FileNotFoundError: If the binary file does not exist.
+        ValueError: If the provided path is not a file.
+        PermissionError: If the file cannot be read due to
+            insufficient permissions.
 
     """
     binary_path = Path(path).resolve()
@@ -70,11 +75,18 @@ def run_basic_analysis(binary_path: Path, options: dict[str, Any]) -> dict[str, 
     """Perform basic binary analysis via CLI.
 
     Args:
-        binary_path: Path to binary file for analysis
-        options: Analysis configuration options
+        binary_path: Path to binary file for analysis.
+        options: Analysis configuration options mapping feature names to
+            boolean flags.
 
     Returns:
-        Dictionary containing analysis results
+        Dictionary containing analysis results, with keys for 'binary_path',
+        'success', 'phases_completed', 'results', 'errors', 'warnings', and
+        'memory_analysis'. If an error occurs, returns a dictionary with an
+        'error' key containing the error message.
+
+    Raises:
+        ImportError: If required analysis components cannot be imported.
 
     """
     try:
@@ -119,12 +131,21 @@ def run_basic_analysis(binary_path: Path, options: dict[str, Any]) -> dict[str, 
 def format_analysis_output(results: dict[str, Any], output_format: str) -> str:
     """Format analysis results for output.
 
+    Converts analysis results dictionary into a human-readable or
+    machine-readable string format suitable for display or file output.
+
     Args:
-        results: Analysis results dictionary
-        output_format: Output format ('json', 'text', 'summary')
+        results: Analysis results dictionary containing keys like
+            'binary_path', 'architecture', 'entropy', 'sections', 'strings',
+            etc.
+        output_format: Output format specification - 'json', 'text', or
+            'summary'.
 
     Returns:
-        Formatted output string
+        Formatted output string ready for display or file writing. For JSON
+        format, returns a JSON string with proper indentation. For summary
+        format, returns a human-readable summary with key metrics. For text
+        format, returns a detailed listing of all result fields.
 
     """
     if output_format.lower() == "json":
@@ -180,8 +201,13 @@ def format_analysis_output(results: dict[str, Any], output_format: str) -> str:
 def create_cli_parser() -> argparse.ArgumentParser:
     """Create command line argument parser.
 
+    Constructs and returns a fully configured ArgumentParser instance for
+    the Intellicrack CLI tool with all supported arguments and help text.
+
     Returns:
-        Configured ArgumentParser instance
+        ArgumentParser instance configured with binary input path, output
+        format options, and various analysis control flags for entropy,
+        strings, sections, imports, and exports analysis.
 
     """
     parser = argparse.ArgumentParser(
@@ -227,8 +253,17 @@ Examples:
 def main() -> int:
     """Run main CLI entry point.
 
+    Orchestrates the complete CLI workflow including argument parsing,
+    binary path validation, analysis execution, output formatting, and
+    results display or file output. Handles all exceptions and returns
+    appropriate exit codes.
+
     Returns:
-        Exit code (0 for success, 1 for error)
+        Exit code - 0 for successful analysis completion, 1 for validation
+        failures, analysis errors, file I/O errors, or keyboard interruption.
+
+    Raises:
+        KeyboardInterrupt: When user interrupts execution via Ctrl+C.
 
     """
     try:

@@ -71,6 +71,9 @@ class ProtectionDetector:
         Returns:
             ProtectionAnalysis object with all detection results
 
+        Raises:
+            FileNotFoundError: If the binary file does not exist at the specified path
+
         """
         if not os.path.exists(file_path):
             error_msg = f"File not found: {file_path}"
@@ -166,7 +169,15 @@ class ProtectionDetector:
     def _convert_to_legacy_format(self, unified_result: UnifiedProtectionResult) -> ProtectionAnalysis:
         """Convert unified result to legacy ProtectionAnalysis format.
 
-        This ensures backward compatibility with existing code.
+        This ensures backward compatibility with existing code by mapping the modern
+        UnifiedProtectionResult structure to the legacy ProtectionAnalysis format.
+
+        Args:
+            unified_result: Modern unified protection analysis result
+
+        Returns:
+            ProtectionAnalysis: Legacy format analysis object with converted data
+
         """
         analysis = ProtectionAnalysis(
             file_path=unified_result.file_path,
@@ -213,7 +224,19 @@ class ProtectionDetector:
         return analysis
 
     def _map_protection_type(self, type_str: str) -> ProtectionType:
-        """Map string protection type to enum."""
+        """Map string protection type to enum.
+
+        Converts a string representation of a protection type to the corresponding
+        ProtectionType enum value. Performs case-insensitive matching and returns
+        UNKNOWN for unmapped types.
+
+        Args:
+            type_str: String representation of the protection type
+
+        Returns:
+            ProtectionType: Corresponding enum value or UNKNOWN if not found
+
+        """
         type_map = {
             "packer": ProtectionType.PACKER,
             "protector": ProtectionType.PROTECTOR,
@@ -232,7 +255,18 @@ class ProtectionDetector:
         return type_map.get(type_str.lower(), ProtectionType.UNKNOWN)
 
     def get_summary(self, analysis: ProtectionAnalysis) -> str:
-        """Get a human-readable summary of the analysis."""
+        """Get a human-readable summary of the analysis.
+
+        Generates a formatted text summary of protection analysis results,
+        including file information, detected protections, and confidence scores.
+
+        Args:
+            analysis: ProtectionAnalysis object containing detection results
+
+        Returns:
+            str: Formatted summary string with file details and protection information
+
+        """
         lines = [f"File: {os.path.basename(analysis.file_path)}"]
         lines.append(f"Type: {analysis.file_type} ({analysis.architecture})")
 
@@ -272,6 +306,9 @@ class ProtectionDetector:
 
         Returns:
             Formatted string of results
+
+        Raises:
+            ValueError: If the output_format is not one of the supported formats (json, text, csv)
 
         """
         if output_format == "json":
@@ -1094,11 +1131,15 @@ class ProtectionDetector:
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy of data.
 
+        Computes the Shannon entropy of binary data to detect compression, encryption,
+        and obfuscation. Values closer to 8.0 indicate higher entropy (more randomness),
+        typical of packed or encrypted code. Returns 0.0 for empty data.
+
         Args:
-            data: Binary data
+            data: Binary data to analyze
 
         Returns:
-            Entropy value (0-8)
+            float: Entropy value ranging from 0.0 to 8.0, where higher values indicate greater randomness
 
         """
         if not data:
@@ -1188,7 +1229,15 @@ _global_detector: ProtectionDetector | None = None
 
 
 def get_protection_detector() -> ProtectionDetector:
-    """Get or create global protection detector instance."""
+    """Get or create global protection detector instance.
+
+    Retrieves the singleton ProtectionDetector instance, creating it if necessary.
+    This ensures only one detector instance is used throughout the application.
+
+    Returns:
+        ProtectionDetector: Global detector instance
+
+    """
     global _global_detector
     if _global_detector is None:
         _global_detector = ProtectionDetector()
@@ -1197,62 +1246,172 @@ def get_protection_detector() -> ProtectionDetector:
 
 # Convenience functions for quick analysis
 def quick_analyze(file_path: str) -> ProtectionAnalysis:
-    """Quick analysis function for one-off use."""
+    """Quick analysis function for one-off use.
+
+    Performs a fast protection analysis without deep scanning, returning legacy
+    format results. Useful for quick assessments when speed is prioritized.
+
+    Args:
+        file_path: Path to the binary file to analyze
+
+    Returns:
+        ProtectionAnalysis: Legacy format analysis with detected protections
+
+    """
     detector = get_protection_detector()
     return detector.detect_protections(file_path, deep_scan=False)
 
 
 def deep_analyze(file_path: str) -> UnifiedProtectionResult:
-    """Deep analysis with full unified result."""
+    """Deep analysis with full unified result.
+
+    Performs comprehensive protection analysis with all detection methods enabled,
+    returning the full modern UnifiedProtectionResult format with detailed results.
+
+    Args:
+        file_path: Path to the binary file to analyze
+
+    Returns:
+        UnifiedProtectionResult: Complete unified analysis with all detection data
+
+    """
     detector = get_protection_detector()
     return detector.analyze(file_path, deep_scan=True)
 
 
 # Standalone function exports for backward compatibility
 def detect_virtualization_protection(binary_path: str | None = None) -> dict[str, Any]:
-    """Standalone function for virtualization detection."""
+    """Standalone function for virtualization detection.
+
+    Detects VM-based protections by analyzing running processes, system registry,
+    and file system indicators. Works on Windows and Linux platforms.
+
+    Args:
+        binary_path: Optional path to binary for additional context
+
+    Returns:
+        dict[str, Any]: Detection results with virtualization indicators and confidence
+
+    """
     detector = get_protection_detector()
     return detector.detect_virtualization_protection(binary_path)
 
 
 def detect_commercial_protections(binary_path: str) -> dict[str, Any]:
-    """Standalone function for commercial protection detection."""
+    """Standalone function for commercial protection detection.
+
+    Detects commercially available packers, protectors, and license protection systems
+    in binary files through signature matching and advanced analysis.
+
+    Args:
+        binary_path: Path to the binary file to analyze
+
+    Returns:
+        dict[str, Any]: Commercial protections found with signatures and analysis details
+
+    """
     detector = get_protection_detector()
     return detector.detect_commercial_protections(binary_path)
 
 
 def detect_checksum_verification(binary_path: str) -> dict[str, Any]:
-    """Standalone function for checksum verification detection."""
+    """Standalone function for checksum verification detection.
+
+    Detects checksum and integrity verification routines including CRC32, MD5, SHA1,
+    and SHA256 implementations in binaries.
+
+    Args:
+        binary_path: Path to the binary file to analyze
+
+    Returns:
+        dict[str, Any]: Checksum detection results with verification methods found
+
+    """
     detector = get_protection_detector()
     return detector.detect_checksum_verification(binary_path)
 
 
 def detect_self_healing_code(binary_path: str) -> dict[str, Any]:
-    """Standalone function for self-healing code detection."""
+    """Standalone function for self-healing code detection.
+
+    Detects self-modifying and self-healing code patterns that restore or repair
+    the code during execution to prevent static analysis.
+
+    Args:
+        binary_path: Path to the binary file to analyze
+
+    Returns:
+        dict[str, Any]: Self-healing techniques detected with indicators
+
+    """
     detector = get_protection_detector()
     return detector.detect_self_healing_code(binary_path)
 
 
 def detect_obfuscation(binary_path: str) -> dict[str, Any]:
-    """Standalone function for obfuscation detection."""
+    """Standalone function for obfuscation detection.
+
+    Detects code obfuscation techniques including entropy analysis, control flow
+    obfuscation, and obfuscator tool signatures.
+
+    Args:
+        binary_path: Path to the binary file to analyze
+
+    Returns:
+        dict[str, Any]: Obfuscation detection results with entropy and techniques
+
+    """
     detector = get_protection_detector()
     return detector.detect_obfuscation(binary_path)
 
 
 def detect_anti_debugging_techniques(binary_path: str) -> dict[str, Any]:
-    """Standalone function for anti-debugging detection."""
+    """Standalone function for anti-debugging detection.
+
+    Detects anti-debugging techniques including debugger detection APIs, timing
+    checks, and assembler-level anti-debug patterns.
+
+    Args:
+        binary_path: Path to the binary file to analyze
+
+    Returns:
+        dict[str, Any]: Anti-debugging techniques detected with API calls and patterns
+
+    """
     detector = get_protection_detector()
     return detector.detect_anti_debugging_techniques(binary_path)
 
 
 def detect_tpm_protection(binary_path: str) -> dict[str, Any]:
-    """Standalone function for TPM protection detection."""
+    """Standalone function for TPM protection detection.
+
+    Detects Trusted Platform Module (TPM) protection mechanisms and cryptographic
+    provider integrations used for secure key storage and activation.
+
+    Args:
+        binary_path: Path to the binary file to analyze
+
+    Returns:
+        dict[str, Any]: TPM protection detection results with function signatures
+
+    """
     detector = get_protection_detector()
     return detector.detect_tpm_protection(binary_path)
 
 
 def detect_all_protections(binary_path: str) -> dict[str, Any]:
-    """Standalone function for all protection detection."""
+    """Standalone function for all protection detection.
+
+    Runs all available protection detection methods on a binary file and combines
+    results into a comprehensive protection assessment.
+
+    Args:
+        binary_path: Path to the binary file to analyze
+
+    Returns:
+        dict[str, Any]: Combined detection results from all analysis methods
+
+    """
     detector = get_protection_detector()
     return detector.detect_all_protections(binary_path)
 
@@ -1266,12 +1425,34 @@ detect_vm_detection = detect_virtualization_protection
 
 
 def detect_protection_mechanisms(binary_path: str) -> dict[str, Any]:
-    """Detect general protection mechanisms."""
+    """Detect general protection mechanisms.
+
+    Alias for detect_all_protections providing backward compatibility. Analyzes
+    all protection mechanisms in a binary file.
+
+    Args:
+        binary_path: Path to the binary file to analyze
+
+    Returns:
+        dict[str, Any]: All detected protection mechanisms
+
+    """
     return detect_all_protections(binary_path)
 
 
 def detect_packing_methods(binary_path: str) -> dict[str, Any]:
-    """Detect packing methods in binary."""
+    """Detect packing methods in binary.
+
+    Identifies packing and compression techniques used to obfuscate binaries.
+    Filters commercial protection results for packer signatures.
+
+    Args:
+        binary_path: Path to the binary file to analyze
+
+    Returns:
+        dict[str, Any]: Detected packers and packed status
+
+    """
     results = detect_commercial_protections(binary_path)
     # Filter for packers only
     packers = [p for p in results.get("protections", []) if "Pack" in p or "Compress" in p]
@@ -1279,12 +1460,34 @@ def detect_packing_methods(binary_path: str) -> dict[str, Any]:
 
 
 def run_comprehensive_protection_scan(binary_path: str) -> dict[str, Any]:
-    """Run comprehensive protection scan."""
+    """Run comprehensive protection scan.
+
+    Performs exhaustive protection analysis across all detection methods and
+    protection categories.
+
+    Args:
+        binary_path: Path to the binary file to analyze
+
+    Returns:
+        dict[str, Any]: Comprehensive protection scan results
+
+    """
     return detect_all_protections(binary_path)
 
 
 def scan_for_bytecode_protectors(binary_path: str) -> dict[str, Any]:
-    """Scan for bytecode-level protectors."""
+    """Scan for bytecode-level protectors.
+
+    Detects bytecode-level protection mechanisms for managed code including .NET
+    obfuscators and Java/Python protection tools.
+
+    Args:
+        binary_path: Path to the binary file to analyze
+
+    Returns:
+        dict[str, Any]: Bytecode protectors detected and protection status
+
+    """
     results = detect_commercial_protections(binary_path)
     # Filter for bytecode protectors
     bytecode_protectors = [
@@ -1299,12 +1502,15 @@ def scan_for_bytecode_protectors(binary_path: str) -> dict[str, Any]:
 def generate_checksum(data: bytes, algorithm: str = "sha256") -> str:
     """Generate checksum for data.
 
+    Computes cryptographic hash of binary data using SHA256. The algorithm parameter
+    is accepted for API compatibility but SHA256 is always used for security.
+
     Args:
-        data: Binary data
-        algorithm: Hash algorithm (md5, sha1, sha256)
+        data: Binary data to hash
+        algorithm: Hash algorithm identifier (only sha256 is securely supported)
 
     Returns:
-        Hex digest of checksum
+        str: Hexadecimal digest of the SHA256 hash
 
     """
     # This function has been updated to only use secure hash algorithms

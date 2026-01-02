@@ -28,7 +28,7 @@ import pickle  # noqa: S403
 import subprocess
 from datetime import date, datetime
 from pathlib import Path
-from typing import IO, TYPE_CHECKING, Any, cast
+from typing import IO, TYPE_CHECKING, Any
 
 from intellicrack.utils.type_safety import validate_type
 
@@ -37,7 +37,6 @@ from ..utils.logger import log_all_methods, log_function_call
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
-    from typing import TextIO
 
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
@@ -197,7 +196,7 @@ def _get_security() -> SecurityEnforcement:
         The SecurityEnforcement instance.
 
     Raises:
-        RuntimeError: If security cannot be initialized.
+        RuntimeError: If security initialization fails unexpectedly.
 
     """
     global _security
@@ -422,9 +421,6 @@ def _secure_pickle_dump(
         protocol: Pickle protocol version (optional).
         fix_imports: Whether to fix imports for Python 2/3 compatibility.
         buffer_callback: Optional callback for buffer protocol objects.
-
-    Returns:
-        None.
 
     Raises:
         TypeError: If object cannot be serialized to either JSON or pickle.
@@ -919,7 +915,13 @@ def secure_open(
 
 
 def _monkey_patch_subprocess() -> None:
-    """Apply subprocess security patches."""
+    """Apply subprocess security patches.
+
+    Replaces subprocess module functions with secure wrappers that enforce
+    shell command restrictions and whitelist validation based on security
+    configuration.
+
+    """
     sec = _get_security()
     logger.debug("Applying subprocess security patches.")
     if "subprocess.run" not in sec._original_functions:
@@ -934,7 +936,7 @@ def _monkey_patch_subprocess() -> None:
 
     original_popen = sec._original_functions["subprocess.Popen"]
 
-    class SecurePopen(original_popen):  # type: ignore[valid-type,misc]
+    class SecurePopen(original_popen):
         """Secure wrapper for subprocess.Popen that can be subclassed."""
 
         def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -976,17 +978,23 @@ def _monkey_patch_subprocess() -> None:
             super().__init__(*args, **kwargs)
 
     subprocess.run = _secure_subprocess_run
-    subprocess.Popen = SecurePopen  # type: ignore[misc]
+    subprocess.Popen = SecurePopen
     subprocess.call = _secure_subprocess_call
     subprocess.check_call = _secure_subprocess_check_call
-    subprocess.check_output = _secure_subprocess_check_output  # type: ignore[assignment]
+    subprocess.check_output = _secure_subprocess_check_output
 
     logger.info("Subprocess security patches applied")
     logger.debug("Subprocess functions monkey-patched.")
 
 
 def _monkey_patch_pickle() -> None:
-    """Apply pickle security patches."""
+    """Apply pickle security patches.
+
+    Replaces pickle module functions with secure wrappers that attempt JSON
+    serialization first when pickle restrictions are enabled, providing safer
+    deserialization alternatives.
+
+    """
     sec = _get_security()
     logger.debug("Applying pickle security patches.")
     if "pickle.dump" not in sec._original_functions:
@@ -998,17 +1006,23 @@ def _monkey_patch_pickle() -> None:
     else:
         logger.debug("Original pickle functions already stored.")
 
-    pickle.dump = _secure_pickle_dump  # type: ignore[assignment]
+    pickle.dump = _secure_pickle_dump
     pickle.dumps = _secure_pickle_dumps
-    pickle.load = _secure_pickle_load  # type: ignore[assignment]
-    pickle.loads = _secure_pickle_loads  # type: ignore[assignment]
+    pickle.load = _secure_pickle_load
+    pickle.loads = _secure_pickle_loads
 
     logger.info("Pickle security patches applied")
     logger.debug("Pickle functions monkey-patched.")
 
 
 def _monkey_patch_hashlib() -> None:
-    """Apply hashlib security patches."""
+    """Apply hashlib security patches.
+
+    Replaces hashlib module functions with secure wrappers that enforce
+    hash algorithm policies, blocking MD5 unless explicitly allowed by
+    security configuration.
+
+    """
     sec = _get_security()
     logger.debug("Applying hashlib security patches.")
     if "hashlib.new" not in sec._original_functions:
@@ -1018,15 +1032,22 @@ def _monkey_patch_hashlib() -> None:
     else:
         logger.debug("Original hashlib functions already stored.")
 
-    hashlib.new = _secure_hashlib_new  # type: ignore[assignment]
-    hashlib.md5 = _secure_hashlib_md5  # type: ignore[assignment]
+    hashlib.new = _secure_hashlib_new
+    hashlib.md5 = _secure_hashlib_md5
 
     logger.info("Hashlib security patches applied")
     logger.debug("Hashlib functions monkey-patched.")
 
 
 def initialize_security() -> None:
-    """Initialize all security patches."""
+    """Initialize all security patches.
+
+    Initializes the global security enforcement module by creating the
+    SecurityEnforcement instance and applying monkey patches to subprocess,
+    pickle, and hashlib modules. Configures environment variables based on
+    security settings.
+
+    """
     global _security
     logger.debug("Starting security enforcement initialization.")
     if _security is None:

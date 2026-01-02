@@ -16,14 +16,26 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import json
-import logging
 import os
 from pathlib import Path
 from typing import Any
 
+SelectRows: Any
+NoEditTriggers: Any
+StretchMode: Any
+TicksBelow: Any
+HorizontalOrientation: Any
+VerticalOrientation: Any
+YesButton: Any
+NoButton: Any
+BinarySimilaritySearch: type[Any] | None
+
 from intellicrack.handlers.pyqt6_handler import (
     QAbstractItemView,
+    QCloseEvent,
     QDialog,
     QHBoxLayout,
     QHeaderView,
@@ -48,55 +60,33 @@ if hasattr(QAbstractItemView, "SelectionBehavior"):
     SelectRows = QAbstractItemView.SelectionBehavior.SelectRows
     NoEditTriggers = QAbstractItemView.EditTrigger.NoEditTriggers
 else:
-    SelectRows = QAbstractItemView.SelectRows  # type: ignore[attr-defined]
-    NoEditTriggers = QAbstractItemView.NoEditTriggers  # type: ignore[attr-defined]
+    SelectRows = QAbstractItemView.SelectRows
+    NoEditTriggers = QAbstractItemView.NoEditTriggers
 
 if hasattr(QHeaderView, "ResizeMode"):
     StretchMode = QHeaderView.ResizeMode.Stretch
 else:
-    StretchMode = QHeaderView.Stretch  # type: ignore[attr-defined]
+    StretchMode = QHeaderView.Stretch
 
 if hasattr(QSlider, "TickPosition"):
     TicksBelow = QSlider.TickPosition.TicksBelow
 else:
-    TicksBelow = QSlider.TicksBelow  # type: ignore[attr-defined]
+    TicksBelow = QSlider.TicksBelow
 
 if hasattr(Qt, "Orientation"):
     HorizontalOrientation = Qt.Orientation.Horizontal
     VerticalOrientation = Qt.Orientation.Vertical
 else:
-    HorizontalOrientation = Qt.Horizontal  # type: ignore[attr-defined]
-    VerticalOrientation = Qt.Vertical  # type: ignore[attr-defined]
+    HorizontalOrientation = Qt.Horizontal
+    VerticalOrientation = Qt.Vertical
 
 if hasattr(QMessageBox, "StandardButton"):
     YesButton = QMessageBox.StandardButton.Yes
     NoButton = QMessageBox.StandardButton.No
 else:
-    YesButton = QMessageBox.Yes  # type: ignore[attr-defined]
-    NoButton = QMessageBox.No  # type: ignore[attr-defined]
+    YesButton = QMessageBox.Yes
+    NoButton = QMessageBox.No
 from intellicrack.utils.logger import logger
-
-
-"""
-Binary Similarity Search Dialog
-
-Copyright (C) 2025 Zachary Flint
-
-This file is part of Intellicrack.
-
-Intellicrack is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Intellicrack is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
-"""
 
 
 HAS_SIMILARITY_SEARCH: bool
@@ -107,7 +97,7 @@ try:
 except ImportError as e:
     logger.error("Import error in similarity_search_dialog: %s", e)
     HAS_SIMILARITY_SEARCH = False
-    BinarySimilaritySearch = None  # type: ignore[assignment,misc]
+    BinarySimilaritySearch = None
 
 __all__ = ["BinarySimilaritySearchDialog"]
 
@@ -132,7 +122,16 @@ class SearchThread(QThread):
         self.threshold: float = threshold
 
     def run(self) -> None:
-        """Execute binary similarity search in a separate thread."""
+        """Execute binary similarity search in a separate thread.
+
+        Performs the similarity search using the configured search engine and
+        emits the results via the result_signal. Catches and logs any exceptions
+        that occur during the search process.
+
+        Returns:
+            None
+
+        """
         try:
             results: list[dict[str, Any]] = self.search_engine.search_similar_binaries(self.binary_path, self.threshold)
             self.result_signal.emit(results)
@@ -184,7 +183,15 @@ class BinarySimilaritySearchDialog(QDialog):
         self.load_database_info()
 
     def init_ui(self) -> None:
-        """Initialize the user interface."""
+        """Initialize the user interface.
+
+        Sets up all UI components including layout, search controls, results table,
+        pattern view, and buttons.
+
+        Returns:
+            None
+
+        """
         layout = QVBoxLayout(self)
 
         # Header with binary info
@@ -295,7 +302,15 @@ class BinarySimilaritySearchDialog(QDialog):
         layout.addWidget(self.status_label)
 
     def load_database_info(self) -> None:
-        """Load database information."""
+        """Load database information.
+
+        Reads the binary database file and updates the UI label with the count
+        of stored binaries or error information if the file cannot be read.
+
+        Returns:
+            None
+
+        """
         try:
             if os.path.exists(self.database_path):
                 with open(self.database_path, encoding="utf-8") as f:
@@ -309,12 +324,28 @@ class BinarySimilaritySearchDialog(QDialog):
             self.db_info_label.setText(f"Database Error: {e}")
 
     def update_threshold_label(self, value: int) -> None:
-        """Update the threshold label when slider changes."""
+        """Update the threshold label when slider changes.
+
+        Args:
+            value: Slider value from 1 to 10 representing threshold tenths.
+
+        Returns:
+            None
+
+        """
         threshold = value / 10.0
         self.threshold_label.setText(f"{threshold:.1f}")
 
     def search_similar_binaries(self) -> None:
-        """Search for similar binaries."""
+        """Search for similar binaries.
+
+        Initiates a background search thread to find binaries similar to the
+        target binary using the configured threshold value.
+
+        Returns:
+            None
+
+        """
         if not self.search_engine:
             QMessageBox.warning(
                 self,
@@ -331,7 +362,18 @@ class BinarySimilaritySearchDialog(QDialog):
         self.search_thread.start()
 
     def show_search_results(self, results: list[dict[str, Any]]) -> None:
-        """Show search results in the table."""
+        """Show search results in the table.
+
+        Populates the results table with similar binary entries and updates
+        the status label with the count of results found.
+
+        Args:
+            results: List of search result dictionaries containing binary info.
+
+        Returns:
+            None
+
+        """
         self.similar_binaries = results
         self.results_table.setRowCount(len(results))
 
@@ -351,7 +393,15 @@ class BinarySimilaritySearchDialog(QDialog):
             self.status_label.setText("No similar binaries found")
 
     def result_selected(self) -> None:
-        """Handle result selection in the table."""
+        """Handle result selection in the table.
+
+        Updates the patterns view with cracking patterns from the selected
+        binary result and enables the apply pattern button if patterns exist.
+
+        Returns:
+            None
+
+        """
         selection_model = self.results_table.selectionModel()
         if selection_model is None:
             return
@@ -380,7 +430,16 @@ class BinarySimilaritySearchDialog(QDialog):
             self.apply_pattern_btn.setEnabled(False)
 
     def apply_selected_pattern(self) -> None:
-        """Apply the selected cracking pattern."""
+        """Apply the selected cracking pattern.
+
+        Retrieves the selected pattern from the results table and either applies
+        it directly via the parent widget or displays it for manual application.
+        Handles multiple patterns by prompting the user to select one.
+
+        Returns:
+            None
+
+        """
         selection_model = self.results_table.selectionModel()
         if selection_model is None:
             return
@@ -443,7 +502,15 @@ class BinarySimilaritySearchDialog(QDialog):
                     QMessageBox.critical(self, "Error", f"Error applying pattern: {e}")
 
     def add_to_database(self) -> None:
-        """Add the current binary to the similarity database."""
+        """Add the current binary to the similarity database.
+
+        Prompts the user to enter cracking patterns for the current binary and
+        adds it to the similarity search database for future reference.
+
+        Returns:
+            None
+
+        """
         if not self.search_engine:
             QMessageBox.warning(
                 self,
@@ -521,6 +588,27 @@ class BinarySimilaritySearchDialog(QDialog):
 
         """
         return self.similar_binaries.copy()
+
+    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+        """Handle dialog close with proper thread cleanup.
+
+        Ensures any running search thread is properly terminated before
+        closing the dialog to prevent resource leaks.
+
+        Args:
+            event: Close event from Qt framework.
+
+        Returns:
+            None
+
+        """
+        if self.search_thread is not None and self.search_thread.isRunning():
+            self.search_thread.quit()
+            if not self.search_thread.wait(2000):
+                self.search_thread.terminate()
+                self.search_thread.wait()
+            self.search_thread = None
+        super().closeEvent(event)
 
 
 def create_similarity_search_dialog(binary_path: str, parent: QWidget | None = None) -> BinarySimilaritySearchDialog:

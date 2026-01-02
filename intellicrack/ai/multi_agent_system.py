@@ -33,9 +33,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from queue import Empty, PriorityQueue, Queue
-from typing import Any, cast
+from typing import Any
 
-from intellicrack.utils.type_safety import get_typed_item, validate_type
+from intellicrack.utils.type_safety import validate_type
 
 from ..utils.logger import get_logger
 from .learning_engine import get_learning_engine

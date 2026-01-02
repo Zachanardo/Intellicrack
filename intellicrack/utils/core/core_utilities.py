@@ -24,7 +24,7 @@ import sys
 import traceback
 from argparse import Namespace
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -314,7 +314,12 @@ def register_tool(name: str, func: Callable[[object, dict[str, Any]], dict[str, 
 
 
 def register_default_tools() -> bool | None:
-    """Register all default tools in the registry."""
+    """Register all default tools in the registry.
+
+    Returns:
+        True if all registered successfully, False on error, None if not performed.
+
+    """
     try:
         # Import all tool wrapper functions (moved inside function to avoid cyclic import)
         from ..tools.tool_wrappers import (

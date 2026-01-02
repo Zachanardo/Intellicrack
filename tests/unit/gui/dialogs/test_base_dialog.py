@@ -6,6 +6,7 @@ NO mocked components - validates actual dialog behavior.
 """
 
 import pytest
+from typing import Any
 
 try:
     from PyQt6.QtWidgets import QApplication, QDialog
@@ -28,13 +29,13 @@ class TestBaseDialog:
     """Test REAL base dialog functionality with actual Qt interactions."""
 
     @pytest.fixture(autouse=True)
-    def setup_dialog(self, qtbot):
+    def setup_dialog(self, qtbot: Any) -> BaseDialog:
         """Setup BaseDialog with REAL Qt environment."""
         self.dialog = BaseDialog()
         qtbot.addWidget(self.dialog)
         return self.dialog
 
-    def test_dialog_initialization_real_components(self, qtbot):
+    def test_dialog_initialization_real_components(self, qtbot: Any) -> None:
         """Test that base dialog initializes with REAL Qt components."""
         assert isinstance(self.dialog, QDialog)
         assert self.dialog.windowTitle() != ""
@@ -46,7 +47,7 @@ class TestBaseDialog:
         self.dialog.setModal(False)
         assert not self.dialog.isModal()
 
-    def test_dialog_show_hide_real_visibility(self, qtbot):
+    def test_dialog_show_hide_real_visibility(self, qtbot: Any) -> None:
         """Test REAL dialog show/hide functionality."""
         assert not self.dialog.isVisible()
 
@@ -58,7 +59,7 @@ class TestBaseDialog:
         qtbot.wait(100)
         assert not self.dialog.isVisible()
 
-    def test_dialog_accept_reject_real_results(self, qtbot):
+    def test_dialog_accept_reject_real_results(self, qtbot: Any) -> None:
         """Test REAL dialog accept/reject behavior."""
         # Test accept
         self.dialog.accept()
@@ -70,7 +71,7 @@ class TestBaseDialog:
         qtbot.wait(50)
         assert self.dialog.result() == QDialog.DialogCode.Rejected
 
-    def test_dialog_button_box_real_interaction(self, qtbot):
+    def test_dialog_button_box_real_interaction(self, qtbot: Any) -> None:
         """Test REAL button box interaction if present."""
         if hasattr(self.dialog, 'button_box'):
             button_box = self.dialog.button_box
@@ -88,7 +89,7 @@ class TestBaseDialog:
             if cancel_button:
                 assert cancel_button.isEnabled()
 
-    def test_dialog_layout_real_widget_hierarchy(self, qtbot):
+    def test_dialog_layout_real_widget_hierarchy(self, qtbot: Any) -> None:
         """Test REAL dialog layout and widget hierarchy."""
         if layout := self.dialog.layout():
             assert layout.parent() == self.dialog
@@ -100,7 +101,7 @@ class TestBaseDialog:
                     widget = item.widget()
                     assert widget.parent() == self.dialog or widget.parent().parent() == self.dialog
 
-    def test_dialog_size_constraints_real_geometry(self, qtbot):
+    def test_dialog_size_constraints_real_geometry(self, qtbot: Any) -> None:
         """Test REAL dialog size constraints and geometry."""
         original_size = self.dialog.size()
 
@@ -119,7 +120,7 @@ class TestBaseDialog:
         if self.dialog.minimumSize() != self.dialog.maximumSize():
             assert new_size != original_size or new_size.width() == 400
 
-    def test_dialog_window_flags_real_behavior(self, qtbot):
+    def test_dialog_window_flags_real_behavior(self, qtbot: Any) -> None:
         """Test REAL dialog window flags and behavior."""
         flags = self.dialog.windowFlags()
         assert flags & Qt.WindowType.Dialog
@@ -128,7 +129,7 @@ class TestBaseDialog:
         if flags & Qt.WindowType.WindowCloseButtonHint:
             assert self.dialog.isVisible() == False or True  # Valid state
 
-    def test_dialog_parent_child_real_relationships(self, qtbot):
+    def test_dialog_parent_child_real_relationships(self, qtbot: Any) -> None:
         """Test REAL parent-child relationships in dialog."""
         children = self.dialog.findChildren(object)
         for child in children:
@@ -147,7 +148,7 @@ class TestBaseDialog:
             # Child should be in dialog hierarchy or be a top-level Qt object
             assert found_parent or not hasattr(child, 'parent')
 
-    def test_dialog_focus_real_tab_order(self, qtbot):
+    def test_dialog_focus_real_tab_order(self, qtbot: Any) -> None:
         """Test REAL focus handling and tab order."""
         self.dialog.show()
         qtbot.wait(100)
@@ -164,7 +165,7 @@ class TestBaseDialog:
             # Focus should be within dialog or None
             assert focused_widget is None or self._is_widget_in_dialog(focused_widget)
 
-    def test_dialog_keyboard_shortcuts_real_handling(self, qtbot):
+    def test_dialog_keyboard_shortcuts_real_handling(self, qtbot: Any) -> None:
         """Test REAL keyboard shortcut handling."""
         self.dialog.show()
         qtbot.wait(100)
@@ -180,7 +181,7 @@ class TestBaseDialog:
             if not self.dialog.isVisible():
                 assert self.dialog.result() == QDialog.DialogCode.Rejected
 
-    def test_dialog_stylesheet_real_application(self, qtbot):
+    def test_dialog_stylesheet_real_application(self, qtbot: Any) -> None:
         """Test REAL stylesheet application and theming."""
         original_stylesheet = self.dialog.styleSheet()
 
@@ -194,7 +195,7 @@ class TestBaseDialog:
         # Restore original
         self.dialog.setStyleSheet(original_stylesheet)
 
-    def test_dialog_event_handling_real_mouse_events(self, qtbot):
+    def test_dialog_event_handling_real_mouse_events(self, qtbot: Any) -> None:
         """Test REAL mouse event handling."""
         self.dialog.show()
         qtbot.wait(100)
@@ -212,7 +213,7 @@ class TestBaseDialog:
             # Dialog should still be visible after click
             assert self.dialog.isVisible()
 
-    def test_dialog_cleanup_real_resource_management(self, qtbot):
+    def test_dialog_cleanup_real_resource_management(self, qtbot: Any) -> None:
         """Test REAL cleanup and resource management."""
         self.dialog.show()
         qtbot.wait(100)
@@ -228,14 +229,14 @@ class TestBaseDialog:
         qtbot.wait(100)
         assert self.dialog.isVisible()
 
-    def test_real_data_validation_no_placeholder_content(self, qtbot):
+    def test_real_data_validation_no_placeholder_content(self, qtbot: Any) -> None:
         """Test that dialog contains REAL data, not placeholder content."""
         placeholder_indicators = [
             "TODO", "PLACEHOLDER", "XXX", "FIXME",
             "Not implemented", "Coming soon", "Mock data"
         ]
 
-        def check_widget_text(widget):
+        def check_widget_text(widget: Any) -> None:
             """Check widget for placeholder text."""
             if hasattr(widget, 'text'):
                 text = widget.text()
@@ -251,7 +252,7 @@ class TestBaseDialog:
         for child in self.dialog.findChildren(object):
             check_widget_text(child)
 
-    def _is_widget_in_dialog(self, widget):
+    def _is_widget_in_dialog(self, widget: Any) -> bool:
         """Helper to check if widget is within dialog hierarchy."""
         if not widget:
             return False
@@ -266,7 +267,7 @@ class TestBaseDialog:
                 break
         return False
 
-    def test_dialog_memory_usage_real_cleanup(self, qtbot):
+    def test_dialog_memory_usage_real_cleanup(self, qtbot: Any) -> None:
         """Test REAL memory usage and cleanup behavior."""
         import gc
         import weakref
@@ -287,7 +288,7 @@ class TestBaseDialog:
         children_count = len(self.dialog.findChildren(object))
         assert children_count >= 0
 
-    def test_dialog_thread_safety_real_gui_thread(self, qtbot):
+    def test_dialog_thread_safety_real_gui_thread(self, qtbot: Any) -> None:
         """Test REAL thread safety with GUI thread operations."""
 
 

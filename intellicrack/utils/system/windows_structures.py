@@ -51,7 +51,13 @@ class WindowsContext:
         self.kernel32: Any = ctypes.windll.kernel32 if STRUCTURES_AVAILABLE else None
 
     def create_context_structure(self) -> tuple[type[ctypes.Structure], int] | tuple[None, None]:
-        """Create appropriate CONTEXT structure based on architecture."""
+        """Create appropriate CONTEXT structure based on architecture.
+
+        Returns:
+            tuple[type[ctypes.Structure], int] | tuple[None, None]: Tuple containing
+                CONTEXT structure class and CONTEXT_FULL constant for the current
+                architecture, or (None, None) if structures are unavailable.
+        """
         if not STRUCTURES_AVAILABLE:
             return None, None
 
@@ -146,7 +152,17 @@ class WindowsContext:
             return None, None
 
     def get_thread_context(self, thread_handle: int) -> ctypes.Structure | None:
-        """Get thread context using shared implementation."""
+        """Get thread context using shared implementation.
+
+        Args:
+            thread_handle: Handle to the thread for which to retrieve context
+                information.
+
+        Returns:
+            ctypes.Structure | None: Thread context structure instance containing
+                CPU register state, or None if structures unavailable or operation
+                fails.
+        """
         if not STRUCTURES_AVAILABLE or not self.kernel32:
             return None
 
@@ -171,7 +187,17 @@ class WindowsContext:
             return None
 
     def set_thread_context(self, thread_handle: int, context: ctypes.Structure) -> bool:
-        """Set thread context using shared implementation."""
+        """Set thread context using shared implementation.
+
+        Args:
+            thread_handle: Handle to the thread for which to set context
+                information.
+            context: Thread context structure containing CPU register values
+                to set.
+
+        Returns:
+            bool: True if context was set successfully, False otherwise.
+        """
         if not STRUCTURES_AVAILABLE or not self.kernel32:
             return False
 
@@ -187,7 +213,16 @@ class WindowsContext:
             return False
 
     def get_entry_point(self, context: ctypes.Structure) -> int:
-        """Get entry point from context."""
+        """Get entry point from context.
+
+        Args:
+            context: Thread context structure containing CPU register state
+                from which to extract instruction pointer.
+
+        Returns:
+            int: Entry point (instruction pointer) value from context
+                (Rip for 64-bit or Eip for 32-bit), or 0 on error.
+        """
         try:
             if ctypes.sizeof(ctypes.c_void_p) == 8:
                 entry_point = getattr(context, "Rip", 0)
@@ -204,7 +239,12 @@ class WindowsProcessStructures:
 
     @staticmethod
     def create_startup_info() -> type[ctypes.Structure] | None:
-        """Create STARTUPINFO structure."""
+        """Create STARTUPINFO structure.
+
+        Returns:
+            type[ctypes.Structure] | None: STARTUPINFO structure class for
+                process creation, or None if Windows structures unavailable.
+        """
         if not STRUCTURES_AVAILABLE:
             return None
 
@@ -236,7 +276,13 @@ class WindowsProcessStructures:
 
     @staticmethod
     def create_process_information() -> type[ctypes.Structure] | None:
-        """Create ``PROCESS_INFORMATION`` structure."""
+        """Create PROCESS_INFORMATION structure.
+
+        Returns:
+            type[ctypes.Structure] | None: PROCESS_INFORMATION structure class
+                containing process and thread handles, or None if Windows
+                structures unavailable.
+        """
         if not STRUCTURES_AVAILABLE:
             return None
 
@@ -253,7 +299,18 @@ class WindowsProcessStructures:
         return PROCESS_INFORMATION
 
     def create_suspended_process(self, exe_path: str, command_line: str | None = None) -> dict[str, int] | None:
-        """Create a process in suspended state using shared implementation."""
+        """Create a process in suspended state using shared implementation.
+
+        Args:
+            exe_path: Path to the executable file to launch in suspended state.
+            command_line: Optional command line arguments to pass to the
+                executable.
+
+        Returns:
+            dict[str, int] | None: Dictionary containing process_handle,
+                thread_handle, process_id, and thread_id for the created
+                process, or None if structures unavailable or operation fails.
+        """
         if not STRUCTURES_AVAILABLE:
             return None
 
@@ -322,7 +379,17 @@ COMMON_LICENSE_DOMAINS: list[str] = [
 
 
 def parse_objdump_line(line: str) -> dict[str, Any] | None:
-    """Parse objdump output line - shared between ROP generator and taint analyzer."""
+    """Parse objdump output line - shared between ROP generator and taint analyzer.
+
+    Args:
+        line: Raw objdump output line to parse in format
+            "address: bytes \\t mnemonic operands".
+
+    Returns:
+        dict[str, Any] | None: Dictionary with address, mnemonic, op_str, and
+            bytes keys extracted from disassembly output, or None if parsing
+            fails or line format is invalid.
+    """
     line = line.strip()
     if ":" in line and "\t" in line:
         try:
@@ -346,7 +413,13 @@ def parse_objdump_line(line: str) -> dict[str, Any] | None:
 
 
 def create_ssl_certificate_builder() -> object | None:
-    """Create SSL certificate builder configuration - shared between license server and UI."""
+    """Create SSL certificate builder configuration - shared between license server and UI.
+
+    Returns:
+        object | None: Certificate builder object configured for localhost
+            with subject and issuer names, alternative DNS names for
+            localhost, and valid for 365 days, or None on import error.
+    """
     try:
         import datetime
         import ipaddress

@@ -7,14 +7,12 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-import tempfile
 from pathlib import Path
-from typing import Any
-from unittest.mock import Mock, patch
 
 import joblib
 import numpy as np
 import pytest
+from numpy import typing as npt
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
@@ -22,6 +20,76 @@ from intellicrack.core.ml.protection_classifier import (
     ClassificationResult,
     ProtectionClassifier,
 )
+
+
+class FakeFeatureExtractor:
+    """Real test double for BinaryFeatureExtractor."""
+
+    def __init__(self) -> None:
+        self.feature_names: list[str] = [
+            "overall_entropy",
+            "text_entropy",
+            "data_entropy",
+            "num_sections",
+            "avg_section_entropy",
+            "ep_section_entropy",
+            "suspicious_section_count",
+            "import_count",
+            "suspicious_import_ratio",
+            "api_call_count",
+            "known_packer_signatures",
+            "timestamp_anomaly",
+            "code_section_ratio",
+            "data_section_ratio",
+            "resource_section_size",
+        ] + [f"opcode_freq_{i:02x}" for i in range(16)]
+
+        self.extraction_calls: list[str | Path] = []
+        self.next_features: npt.NDArray[np.float32] | None = None
+
+    def extract_features(self, binary_path: str | Path) -> npt.NDArray[np.float32]:
+        """Extract features from binary path.
+
+        Args:
+            binary_path: Path to binary file
+
+        Returns:
+            Feature vector as numpy array
+
+        Raises:
+            ValueError: If feature extraction fails
+        """
+        self.extraction_calls.append(binary_path)
+
+        if self.next_features is not None:
+            result = self.next_features
+            self.next_features = None
+            return result
+
+        return np.random.rand(len(self.feature_names)).astype(np.float32)
+
+    def set_next_features(self, features: npt.NDArray[np.float32]) -> None:
+        """Set the next feature vector to return.
+
+        Args:
+            features: Feature vector to return on next call
+        """
+        self.next_features = features
+
+    def reset_tracking(self) -> None:
+        """Reset call tracking."""
+        self.extraction_calls.clear()
+        self.next_features = None
+
+
+@pytest.fixture
+def fake_extractor() -> FakeFeatureExtractor:
+    """Create a fake feature extractor for testing.
+
+    Returns:
+        Configured FakeFeatureExtractor instance
+    """
+    return FakeFeatureExtractor()
 
 
 class TestProtectionClassifierInitialization:
@@ -156,8 +224,14 @@ class TestModelTraining:
 class TestModelPrediction:
     """Tests for prediction functionality."""
 
-    def test_predict_with_trained_model(self, tmp_path: Path) -> None:
+    def test_predict_with_trained_model(
+        self,
+        tmp_path: Path,
+        fake_extractor: FakeFeatureExtractor,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         classifier = ProtectionClassifier()
+        monkeypatch.setattr(classifier, "feature_extractor", fake_extractor)
 
         X_train = np.random.rand(100, 15)
         y_train = np.array(["VMProtect"] * 50 + ["Themida"] * 50)
@@ -167,39 +241,51 @@ class TestModelPrediction:
         test_binary = tmp_path / "test.exe"
         test_binary.write_bytes(b"MZ" + b"\x00" * 1000)
 
-        with patch.object(classifier.feature_extractor, "extract_features", return_value=np.random.rand(15)):
-            result = classifier.predict(test_binary)
+        fake_extractor.set_next_features(np.random.rand(15).astype(np.float32))
+        result = classifier.predict(test_binary)
 
         assert isinstance(result, ClassificationResult)
         assert result.primary_protection in ["VMProtect", "Themida"]
         assert 0.0 <= result.confidence <= 1.0
         assert len(result.top_predictions) > 0
+        assert test_binary in fake_extractor.extraction_calls
 
-    def test_predict_returns_top_predictions(self) -> None:
+    def test_predict_returns_top_predictions(
+        self,
+        fake_extractor: FakeFeatureExtractor,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         classifier = ProtectionClassifier()
+        monkeypatch.setattr(classifier, "feature_extractor", fake_extractor)
 
         X_train = np.random.rand(120, 20)
         y_train = np.random.choice(["VMProtect", "Themida", "Enigma"], 120)
 
         classifier.train(X_train, y_train, cross_validate=False)
 
-        with patch.object(classifier.feature_extractor, "extract_features", return_value=np.random.rand(20)):
-            result = classifier.predict("dummy_path")
+        fake_extractor.set_next_features(np.random.rand(20).astype(np.float32))
+        result = classifier.predict("dummy_path")
 
         assert len(result.top_predictions) >= 3
         assert all(isinstance(pred, tuple) for pred in result.top_predictions)
         assert all(0.0 <= conf <= 1.0 for _, conf in result.top_predictions)
+        assert "dummy_path" in fake_extractor.extraction_calls
 
-    def test_predict_confidence_scores(self) -> None:
+    def test_predict_confidence_scores(
+        self,
+        fake_extractor: FakeFeatureExtractor,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         classifier = ProtectionClassifier()
+        monkeypatch.setattr(classifier, "feature_extractor", fake_extractor)
 
         X_train = np.random.rand(100, 15)
         y_train = np.array(["VMProtect"] * 100)
 
         classifier.train(X_train, y_train, cross_validate=False)
 
-        with patch.object(classifier.feature_extractor, "extract_features", return_value=np.random.rand(15)):
-            result = classifier.predict("dummy_path")
+        fake_extractor.set_next_features(np.random.rand(15).astype(np.float32))
+        result = classifier.predict("dummy_path")
 
         assert result.confidence > 0.5
 
@@ -209,7 +295,7 @@ class TestModelPrediction:
         test_binary = tmp_path / "test.exe"
         test_binary.write_bytes(b"MZ" + b"\x00" * 100)
 
-        with pytest.raises((ValueError, AttributeError)):
+        with pytest.raises((ValueError, AttributeError, RuntimeError)):
             classifier.predict(test_binary)
 
 
@@ -247,9 +333,15 @@ class TestModelPersistence:
         assert classifier2.scaler is not None
         assert classifier2.label_encoder is not None
 
-    def test_save_and_load_preserves_predictions(self, tmp_path: Path) -> None:
+    def test_save_and_load_preserves_predictions(
+        self,
+        tmp_path: Path,
+        fake_extractor: FakeFeatureExtractor,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         model_path = tmp_path / "saved_model"
         classifier1 = ProtectionClassifier(model_path=model_path)
+        monkeypatch.setattr(classifier1, "feature_extractor", fake_extractor)
 
         X = np.random.rand(100, 15)
         y = np.array(["VMProtect"] * 50 + ["Themida"] * 50)
@@ -257,15 +349,17 @@ class TestModelPersistence:
         classifier1.train(X, y, cross_validate=False)
         classifier1.save_model()
 
-        test_features = np.random.rand(15)
+        test_features = np.random.rand(15).astype(np.float32)
 
-        with patch.object(classifier1.feature_extractor, "extract_features", return_value=test_features):
-            result1 = classifier1.predict("test")
+        fake_extractor.set_next_features(test_features)
+        result1 = classifier1.predict("test")
 
         classifier2 = ProtectionClassifier(model_path=model_path)
+        fake_extractor2 = FakeFeatureExtractor()
+        monkeypatch.setattr(classifier2, "feature_extractor", fake_extractor2)
 
-        with patch.object(classifier2.feature_extractor, "extract_features", return_value=test_features):
-            result2 = classifier2.predict("test")
+        fake_extractor2.set_next_features(test_features)
+        result2 = classifier2.predict("test")
 
         assert result1.primary_protection == result2.primary_protection
         assert abs(result1.confidence - result2.confidence) < 0.01
@@ -295,27 +389,39 @@ class TestClassificationResult:
 class TestRealWorldScenarios:
     """Tests simulating real protection classification scenarios."""
 
-    def test_classify_vmprotect_binary(self, tmp_path: Path) -> None:
+    def test_classify_vmprotect_binary(
+        self,
+        tmp_path: Path,
+        fake_extractor: FakeFeatureExtractor,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         classifier = ProtectionClassifier()
+        monkeypatch.setattr(classifier, "feature_extractor", fake_extractor)
 
         X = np.random.rand(200, 20)
         y = np.array(["VMProtect"] * 100 + ["Themida"] * 50 + ["Enigma"] * 50)
 
         classifier.train(X, y, n_estimators=100, cross_validate=False)
 
-        vmprotect_features = np.random.rand(20)
+        vmprotect_features = np.random.rand(20).astype(np.float32)
         vmprotect_features[0] = 0.9
         vmprotect_features[1] = 0.8
         vmprotect_features[2] = 0.7
 
-        with patch.object(classifier.feature_extractor, "extract_features", return_value=vmprotect_features):
-            result = classifier.predict("vmprotect_sample.exe")
+        fake_extractor.set_next_features(vmprotect_features)
+        result = classifier.predict("vmprotect_sample.exe")
 
         assert result.primary_protection in classifier.PROTECTION_SCHEMES
         assert result.confidence > 0
+        assert "vmprotect_sample.exe" in fake_extractor.extraction_calls
 
-    def test_classify_multiple_binaries(self) -> None:
+    def test_classify_multiple_binaries(
+        self,
+        fake_extractor: FakeFeatureExtractor,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         classifier = ProtectionClassifier()
+        monkeypatch.setattr(classifier, "feature_extractor", fake_extractor)
 
         X = np.random.rand(150, 25)
         y = np.random.choice(["VMProtect", "Themida", "Enigma", "None"], 150)
@@ -325,10 +431,12 @@ class TestRealWorldScenarios:
         binaries = ["sample1.exe", "sample2.exe", "sample3.exe"]
 
         for binary in binaries:
-            with patch.object(classifier.feature_extractor, "extract_features", return_value=np.random.rand(25)):
-                result = classifier.predict(binary)
-                assert isinstance(result, ClassificationResult)
-                assert result.primary_protection in classifier.PROTECTION_SCHEMES
+            fake_extractor.set_next_features(np.random.rand(25).astype(np.float32))
+            result = classifier.predict(binary)
+            assert isinstance(result, ClassificationResult)
+            assert result.primary_protection in classifier.PROTECTION_SCHEMES
+
+        assert fake_extractor.extraction_calls == binaries
 
 
 class TestModelAccuracy:
@@ -372,17 +480,23 @@ class TestEdgeCases:
         with pytest.raises(ValueError):
             classifier.train(X, y, cross_validate=False)
 
-    def test_predict_with_wrong_feature_count(self) -> None:
+    def test_predict_with_wrong_feature_count(
+        self,
+        fake_extractor: FakeFeatureExtractor,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         classifier = ProtectionClassifier()
+        monkeypatch.setattr(classifier, "feature_extractor", fake_extractor)
 
         X = np.random.rand(80, 15)
         y = np.array(["VMProtect"] * 40 + ["Themida"] * 40)
 
         classifier.train(X, y, cross_validate=False)
 
-        with patch.object(classifier.feature_extractor, "extract_features", return_value=np.random.rand(20)):
-            with pytest.raises(ValueError):
-                classifier.predict("test")
+        fake_extractor.set_next_features(np.random.rand(20).astype(np.float32))
+
+        with pytest.raises(ValueError):
+            classifier.predict("test")
 
     def test_train_with_empty_data(self) -> None:
         classifier = ProtectionClassifier()

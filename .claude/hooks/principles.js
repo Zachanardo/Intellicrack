@@ -9,6 +9,7 @@ const principlesReminder = `<system-reminder>
 	• DRY (Don't Repeat Yourself)
 	• KISS (Keep It Simple, Stupid)
 [5] ALL code requires explicit type hints/annotations compliant with mypy strict mode. Windows compatibility PRIORITY with proper platform checks. NEVER delete method bindings - create FUNCTIONAL missing functions instead. NO comments/emojis/TODO markers unless requested. MAINTAIN functionality over "cleaner" code.
+[6] When the user INITIATES A NEW TASK, use AskUserQuestion to clarify scope, approach, and constraints before implementation. Mid-task feedback or corrections should be acted on directly.
 </system-reminder>`;
 
 console.log(principlesReminder);

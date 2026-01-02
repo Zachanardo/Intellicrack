@@ -13,6 +13,19 @@ from PyQt6.QtWidgets import QDialog, QMessageBox, QToolBar, QWidget
 from intellicrack.handlers.pyqt6_handler import QAction
 from intellicrack.utils.logger import logger
 
+__all__ = [
+    "add_hex_viewer_menu",
+    "add_hex_viewer_toolbar_button",
+    "hex_viewer_ai_tool",
+    "initialize_hex_viewer",
+    "integrate_enhanced_hex_viewer",
+    "register_hex_viewer_ai_tools",
+    "restore_standard_hex_viewer",
+    "show_enhanced_hex_viewer",
+    "wrapper_ai_binary_analyze",
+    "wrapper_ai_binary_edit_suggest",
+    "wrapper_ai_binary_pattern_search",
+]
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -29,21 +42,11 @@ class AppInstance(Protocol):
     TOOL_REGISTRY: dict[str, Callable[[Any, dict[str, Any]], dict[str, Any]]]
 
     def menuBar(self) -> Any:
-        """Return the main window's menu bar.
-
-        Returns:
-            The menu bar widget for adding menus and actions.
-
-        """
+        """Return the main window's menu bar."""
         ...
 
     def children(self) -> list[QObject]:
-        """Return all child QObject instances.
-
-        Returns:
-            List of child QObject widgets and objects.
-
-        """
+        """Return all child QObject instances."""
         ...
 
 
@@ -73,7 +76,7 @@ try:
     from .hex_dialog import HexViewerDialog
 except ImportError as e:
     logger.exception("Import error in integration: %s", e)
-    HexViewerDialog = None  # type: ignore[assignment,misc]
+    HexViewerDialog = None
 
 try:
     from .ai_bridge import wrapper_ai_binary_analyze, wrapper_ai_binary_edit_suggest, wrapper_ai_binary_pattern_search
@@ -82,7 +85,7 @@ except ImportError as e:
 
     import re
 
-    def wrapper_ai_binary_analyze(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:  # type: ignore[misc]
+    def wrapper_ai_binary_analyze(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
         """Perform static binary analysis when AI bridge is not available.
 
         Analyzes binary data using entropy calculation, string extraction,
@@ -93,7 +96,7 @@ except ImportError as e:
             parameters: Dictionary with 'data' (bytes) and optional 'offset' (int)
 
         Returns:
-            dict: Analysis results including entropy, strings, patterns, and structure
+            dict[str, Any]: Analysis results including entropy, strings, patterns, and structure
 
         """
         try:
@@ -118,7 +121,7 @@ except ImportError as e:
             logger.exception("Error in fallback binary analyze: %s", e)
             return {"error": f"Analysis failed: {e!s}"}
 
-    def wrapper_ai_binary_pattern_search(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:  # type: ignore[misc]
+    def wrapper_ai_binary_pattern_search(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
         """Search for patterns in binary data when AI bridge is not available.
 
         Performs pattern matching using regex, byte sequences, and common
@@ -129,7 +132,7 @@ except ImportError as e:
             parameters: Dictionary with 'data' (bytes), 'pattern' (str), and 'pattern_type' (str)
 
         Returns:
-            dict: Search results with matches and their offsets
+            dict[str, Any]: Search results with matches and their offsets
 
         """
         try:
@@ -202,7 +205,7 @@ except ImportError as e:
             logger.exception("Error in fallback pattern search: %s", e)
             return {"error": f"Pattern search failed: {e!s}"}
 
-    def wrapper_ai_binary_edit_suggest(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:  # type: ignore[misc]
+    def wrapper_ai_binary_edit_suggest(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
         """Suggest binary edits for license bypass when AI bridge is not available.
 
         Analyzes binary code to suggest patches for common license validation
@@ -214,7 +217,7 @@ except ImportError as e:
             parameters: Dictionary with 'data' (bytes), 'offset' (int), and 'context' (str)
 
         Returns:
-            dict: Edit suggestions with offsets, original bytes, and patch bytes
+            dict[str, Any]: Edit suggestions with offsets, original bytes, and patch bytes
 
         """
         try:
@@ -313,7 +316,18 @@ except ImportError as e:
             return {"error": f"Edit suggestion failed: {e!s}"}
 
     def _calculate_entropy(data: bytes) -> float:
-        """Calculate Shannon entropy of binary data."""
+        """Calculate Shannon entropy of binary data.
+
+        Computes Shannon entropy to measure the randomness/compression of binary data,
+        useful for identifying encrypted, compressed, or high-entropy sections of binaries.
+
+        Args:
+            data: Binary data to analyze
+
+        Returns:
+            float: Shannon entropy value (0-8 typically, higher = more random)
+
+        """
         if not data:
             return 0.0
         counter = Counter(data)
@@ -325,7 +339,19 @@ except ImportError as e:
         return entropy * 2.302585093
 
     def _extract_strings(data: bytes, min_length: int = 4) -> list[str]:
-        """Extract printable ASCII strings from binary data."""
+        """Extract printable ASCII strings from binary data.
+
+        Identifies human-readable ASCII strings in binary data, useful for finding
+        license validation strings, error messages, and protection markers.
+
+        Args:
+            data: Binary data to extract strings from
+            min_length: Minimum string length to extract (default 4)
+
+        Returns:
+            list[str]: Extracted ASCII strings, limited to first 50 matches
+
+        """
         strings: list[str] = []
         current_string = []
         for byte in data:
@@ -340,7 +366,18 @@ except ImportError as e:
         return strings[:50]
 
     def _detect_patterns(data: bytes) -> dict[str, Any]:
-        """Detect common binary patterns and signatures."""
+        """Detect common binary patterns and signatures.
+
+        Identifies executable file formats and licensing-related string patterns
+        in binary data to recognize protection mechanisms and validation logic.
+
+        Args:
+            data: Binary data to analyze for patterns
+
+        Returns:
+            dict[str, Any]: Dictionary with detected patterns and file types
+
+        """
         patterns: dict[str, Any] = {}
         if b"MZ" in data[:2]:
             patterns["file_type"] = "PE executable"
@@ -357,7 +394,18 @@ except ImportError as e:
         return patterns
 
     def _analyze_structure(data: bytes) -> dict[str, Any]:
-        """Analyze structural characteristics of binary data."""
+        """Analyze structural characteristics of binary data.
+
+        Examines binary structure including null bytes, high-entropy sections (indicative
+        of encryption/compression), and code-like instruction patterns.
+
+        Args:
+            data: Binary data to analyze
+
+        Returns:
+            dict[str, Any]: Structure analysis with null bytes, entropy sections, and code patterns
+
+        """
         structure: dict[str, Any] = {
             "null_bytes": data.count(b"\x00"),
             "high_entropy_sections": 0,
@@ -378,7 +426,18 @@ except ImportError as e:
         return structure
 
     def _analyze_byte_distribution(data: bytes) -> dict[str, Any]:
-        """Analyze distribution of byte values."""
+        """Analyze distribution of byte values.
+
+        Computes byte frequency distribution to identify patterns in binary data,
+        useful for detecting compression, encryption, or structured data formats.
+
+        Args:
+            data: Binary data to analyze
+
+        Returns:
+            dict[str, Any]: Byte distribution with most common bytes and diversity metrics
+
+        """
         if not data:
             return {}
         counter = Counter(data)
@@ -407,7 +466,7 @@ def show_enhanced_hex_viewer(app_instance: Any, file_path: str | None = None, re
         read_only: Whether to open the file in read-only mode
 
     Returns:
-        The created dialog instance
+        QDialog | None: The created dialog instance, or None if creation failed
 
     """
     try:
@@ -614,7 +673,7 @@ def register_hex_viewer_ai_tools(app_instance: Any) -> None:
     logger.info("Registered %d hex viewer AI tools", len(tool_registry))
 
 
-def integrate_enhanced_hex_viewer(app_instance: Any) -> bool | None:
+def integrate_enhanced_hex_viewer(app_instance: Any) -> bool:
     """Fully integrate the enhanced hex viewer with Intellicrack.
 
     This function performs all necessary steps to integrate the enhanced hex
@@ -624,7 +683,7 @@ def integrate_enhanced_hex_viewer(app_instance: Any) -> bool | None:
         app_instance: Intellicrack application instance
 
     Returns:
-        True if integration succeeded, False if it failed, None on error
+        bool: True if integration succeeded, False if it failed
 
     """
     try:
@@ -660,7 +719,7 @@ def hex_viewer_ai_tool(
         func: The tool wrapper function
 
     Returns:
-        Decorated function with error handling and logging
+        Callable[[Any, dict[str, Any]], dict[str, Any]]: Decorated function with error handling and logging
 
     """
 
@@ -672,7 +731,7 @@ def hex_viewer_ai_tool(
             parameters: Parameters to pass to the wrapped function
 
         Returns:
-            Result from the wrapped function or error dictionary on failure
+            dict[str, Any]: Result from the wrapped function or error dictionary on failure
 
         """
         try:

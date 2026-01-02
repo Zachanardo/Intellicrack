@@ -93,7 +93,12 @@ class IntelligentCorrelationEngine:
     """Advanced correlation engine for multi-tool analysis results."""
 
     def __init__(self) -> None:
-        """Initialize the correlation engine."""
+        """Initialize the correlation engine.
+
+        Sets up internal data structures, correlation thresholds, and loads
+        pattern databases for license checks, cryptography, and protection
+        schemes. Initializes ML models for semantic analysis.
+        """
         self.results: dict[str, BaseResult] = {}
         self.correlations: list[Correlation] = []
         self.clusters: list[CorrelationCluster] = []
@@ -115,7 +120,12 @@ class IntelligentCorrelationEngine:
         self.function_embeddings: dict[str, Any] = {}
 
     def _load_license_patterns(self) -> dict[str, Any]:
-        """Load known license check patterns."""
+        """Load known license check patterns.
+
+        Returns:
+            Dictionary of license patterns indexed by pattern type, containing
+            function names, string values, API calls, and other indicators.
+        """
         return {
             "serial_validation": {
                 "functions": ["validate_serial", "check_license", "verify_key"],
@@ -144,7 +154,12 @@ class IntelligentCorrelationEngine:
         }
 
     def _load_crypto_patterns(self) -> dict[str, Any]:
-        """Load cryptographic algorithm patterns."""
+        """Load cryptographic algorithm patterns.
+
+        Returns:
+            Dictionary of cryptographic patterns indexed by algorithm name,
+            containing S-box constants, function signatures, and operations.
+        """
         return {
             "aes": {
                 "constants": [
@@ -179,7 +194,12 @@ class IntelligentCorrelationEngine:
         }
 
     def _load_protection_patterns(self) -> dict[str, Any]:
-        """Load protection scheme patterns."""
+        """Load protection scheme patterns.
+
+        Returns:
+            Dictionary of protection patterns indexed by protection type,
+            containing section markers, imports, and detection indicators.
+        """
         return {
             "vmprotect": {
                 "markers": [".vmp0", ".vmp1", ".vmp2"],
@@ -199,7 +219,13 @@ class IntelligentCorrelationEngine:
         }
 
     def add_result(self, result: BaseResult) -> None:
-        """Add analysis result to correlation engine."""
+        """Add analysis result to correlation engine.
+
+        Triggers incremental correlation against existing results.
+
+        Args:
+            result: Analysis result to add to the engine.
+        """
         self.results[result.id] = result
         self.correlation_graph.add_node(result.id, result=result)
 
@@ -207,7 +233,14 @@ class IntelligentCorrelationEngine:
         self._correlate_with_existing(result)
 
     def add_results_batch(self, results: list[BaseResult]) -> None:
-        """Add multiple results and perform batch correlation."""
+        """Add multiple results and perform batch correlation.
+
+        Performs comprehensive correlation across all results including
+        pattern matching, clustering, and graph analysis.
+
+        Args:
+            results: List of analysis results to add.
+        """
         for result in results:
             self.results[result.id] = result
             self.correlation_graph.add_node(result.id, result=result)
@@ -216,7 +249,14 @@ class IntelligentCorrelationEngine:
         self._perform_comprehensive_correlation()
 
     def _correlate_with_existing(self, new_result: BaseResult) -> None:
-        """Correlate new result with existing results."""
+        """Correlate new result with existing results.
+
+        Checks multiple correlation types including address, xref, string,
+        and semantic correlations, then updates the correlation graph.
+
+        Args:
+            new_result: The new result to correlate against existing results.
+        """
         for result_id, existing_result in self.results.items():
             if result_id == new_result.id:
                 continue
@@ -259,7 +299,15 @@ class IntelligentCorrelationEngine:
                 )
 
     def _check_address_correlation(self, result1: BaseResult, result2: BaseResult) -> bool:
-        """Check if two results are correlated by address proximity."""
+        """Check if two results are correlated by address proximity.
+
+        Args:
+            result1: First result to check.
+            result2: Second result to check.
+
+        Returns:
+            True if results are within address proximity threshold, False otherwise.
+        """
         addr1 = getattr(result1, "address", None)
         addr2 = getattr(result2, "address", None)
 
@@ -272,7 +320,15 @@ class IntelligentCorrelationEngine:
         return abs(addr1 - addr2) <= self.address_proximity_threshold
 
     def _check_xref_correlation(self, func1: FunctionResult, func2: FunctionResult) -> bool:
-        """Check if functions are related through cross-references."""
+        """Check if functions are related through cross-references.
+
+        Args:
+            func1: First function result.
+            func2: Second function result.
+
+        Returns:
+            True if functions call each other or share common callees, False otherwise.
+        """
         # Check if func1 calls func2
         if func2.address in func1.xrefs_from:
             return True
@@ -286,7 +342,15 @@ class IntelligentCorrelationEngine:
         return len(common_calls) > 2
 
     def _check_string_reference(self, string: StringResult, result: BaseResult) -> bool:
-        """Check if string is referenced by result."""
+        """Check if string is referenced by result.
+
+        Args:
+            string: String result to check for references.
+            result: Result to check for string references.
+
+        Returns:
+            True if the result references the string, False otherwise.
+        """
         if isinstance(result, FunctionResult):
             # Check if function references this string
             return string.address in result.xrefs_from
@@ -294,7 +358,15 @@ class IntelligentCorrelationEngine:
         return False
 
     def _check_semantic_correlation(self, result1: BaseResult, result2: BaseResult) -> bool:
-        """Check semantic similarity between results."""
+        """Check semantic similarity between results.
+
+        Args:
+            result1: First result to compare.
+            result2: Second result to compare.
+
+        Returns:
+            True if semantic similarity exceeds threshold, False otherwise.
+        """
         # Extract text features
         text1 = self._extract_text_features(result1)
         text2 = self._extract_text_features(result2)
@@ -313,7 +385,14 @@ class IntelligentCorrelationEngine:
             return False
 
     def _extract_text_features(self, result: BaseResult) -> str:
-        """Extract text features from result for semantic analysis."""
+        """Extract text features from result for semantic analysis.
+
+        Args:
+            result: Analysis result to extract features from.
+
+        Returns:
+            Space-separated string of text features for semantic comparison.
+        """
         features = []
 
         if isinstance(result, FunctionResult):
@@ -334,7 +413,15 @@ class IntelligentCorrelationEngine:
         return " ".join(features)
 
     def _create_address_correlation(self, result1: BaseResult, result2: BaseResult) -> Correlation:
-        """Create address-based correlation."""
+        """Create address-based correlation.
+
+        Args:
+            result1: First result for correlation.
+            result2: Second result for correlation.
+
+        Returns:
+            Correlation object with address-based evidence.
+        """
         distance = abs(getattr(result1, "address", 0) - getattr(result2, "address", 0))
         confidence = 1.0 - (distance / self.address_proximity_threshold)
 
@@ -348,7 +435,15 @@ class IntelligentCorrelationEngine:
         )
 
     def _create_xref_correlation(self, func1: FunctionResult, func2: FunctionResult) -> Correlation:
-        """Create cross-reference correlation."""
+        """Create cross-reference correlation.
+
+        Args:
+            func1: First function result.
+            func2: Second function result.
+
+        Returns:
+            Correlation object describing cross-reference relationship.
+        """
         evidence: dict[str, Any] = {}
         confidence = 0.8
 
@@ -375,7 +470,15 @@ class IntelligentCorrelationEngine:
         )
 
     def _create_string_correlation(self, string: StringResult, result: BaseResult) -> Correlation:
-        """Create string reference correlation."""
+        """Create string reference correlation.
+
+        Args:
+            string: String result to correlate.
+            result: Result that references the string.
+
+        Returns:
+            Correlation object for string reference relationship.
+        """
         return Correlation(
             id=hashlib.sha256(f"{string.id}_{result.id}_str".encode()).hexdigest(),
             type=CorrelationType.STRING_REFERENCE,
@@ -386,7 +489,15 @@ class IntelligentCorrelationEngine:
         )
 
     def _create_semantic_correlation(self, result1: BaseResult, result2: BaseResult) -> Correlation:
-        """Create semantic similarity correlation."""
+        """Create semantic similarity correlation.
+
+        Args:
+            result1: First result to compare semantically.
+            result2: Second result to compare semantically.
+
+        Returns:
+            Correlation object with Jaccard similarity metrics.
+        """
         text1 = self._extract_text_features(result1)[:100]
         text2 = self._extract_text_features(result2)[:100]
 
@@ -412,7 +523,11 @@ class IntelligentCorrelationEngine:
         )
 
     def _perform_comprehensive_correlation(self) -> None:
-        """Perform comprehensive correlation analysis on all results."""
+        """Perform comprehensive correlation analysis on all results.
+
+        Orchestrates pattern-based correlation for license checks, cryptography,
+        and protection schemes, followed by clustering and graph analysis.
+        """
         # Pattern-based correlation
         self._correlate_license_patterns()
         self._correlate_crypto_patterns()
@@ -425,7 +540,12 @@ class IntelligentCorrelationEngine:
         self._analyze_correlation_graph()
 
     def _correlate_license_patterns(self) -> None:
-        """Identify license check patterns across results."""
+        """Identify license check patterns across results.
+
+        Matches results against known license validation patterns including
+        serial validation, hardware ID checks, time bombs, and online activation.
+        Updates internal correlations and correlation graph with matched patterns.
+        """
         for pattern_name, pattern in self.license_patterns.items():
             matching_results = []
 
@@ -462,7 +582,12 @@ class IntelligentCorrelationEngine:
                         )
 
     def _correlate_crypto_patterns(self) -> None:
-        """Identify cryptographic patterns across results."""
+        """Identify cryptographic patterns across results.
+
+        Matches results against known cryptographic algorithm patterns including
+        AES, RSA, SHA256, and custom cipher implementations. Populates correlations
+        for detected cryptographic algorithms.
+        """
         for algo_name, pattern in self.crypto_patterns.items():
             matching_results = []
 
@@ -488,7 +613,12 @@ class IntelligentCorrelationEngine:
                 self.correlations.append(correlation)
 
     def _correlate_protection_patterns(self) -> None:
-        """Identify protection scheme patterns."""
+        """Identify protection scheme patterns.
+
+        Matches results against known protection scheme patterns including
+        VMProtect, Themida, and Denuvo protection markers and techniques.
+        Creates correlations for detected protection schemes.
+        """
         for protection_name, pattern in self.protection_patterns.items():
             matching_results = []
 
@@ -514,7 +644,12 @@ class IntelligentCorrelationEngine:
                 self.correlations.append(correlation)
 
     def _perform_clustering(self) -> None:
-        """Perform clustering analysis on correlated results."""
+        """Perform clustering analysis on correlated results.
+
+        Uses DBSCAN clustering algorithm to group results by density-based
+        similarity, creating correlation clusters of related analysis results.
+        Populates the clusters list with discovered groups.
+        """
         if len(self.results) < self.min_cluster_size:
             return
 
@@ -558,7 +693,14 @@ class IntelligentCorrelationEngine:
             self.clusters.append(cluster)
 
     def _extract_feature_vector(self, result: BaseResult) -> np.ndarray[Any, np.dtype[np.float64]] | None:
-        """Extract numerical feature vector from result."""
+        """Extract numerical feature vector from result.
+
+        Args:
+            result: Analysis result to extract features from.
+
+        Returns:
+            Numpy array of normalized features for clustering, or None if extraction fails.
+        """
         features = [result.confidence, result.timestamp]
 
         # Type-specific features
@@ -588,7 +730,12 @@ class IntelligentCorrelationEngine:
         return np.array(features)
 
     def _analyze_correlation_graph(self) -> None:
-        """Analyze the correlation graph for patterns."""
+        """Analyze the correlation graph for patterns.
+
+        Finds connected components in the correlation graph and creates
+        clusters based on graph topology and edge density. Adds discovered
+        components to the clusters list.
+        """
         # Find strongly connected components
         if self.correlation_graph.number_of_nodes() <= 0:
             return
@@ -623,7 +770,14 @@ class IntelligentCorrelationEngine:
                 self.clusters.append(cluster)
 
     def get_high_confidence_findings(self, min_confidence: float = 0.85) -> list[dict[str, Any]]:
-        """Get findings with high correlation confidence."""
+        """Get findings with high correlation confidence.
+
+        Args:
+            min_confidence: Minimum confidence threshold for findings.
+
+        Returns:
+            List of high-confidence correlation and cluster findings.
+        """
         findings = []
 
         # Check individual correlations
@@ -655,7 +809,11 @@ class IntelligentCorrelationEngine:
         return findings
 
     def generate_correlation_report(self) -> dict[str, Any]:
-        """Generate comprehensive correlation report."""
+        """Generate comprehensive correlation report.
+
+        Returns:
+            Dictionary containing correlation summary, graph metrics, and patterns.
+        """
         correlation_types_dict: dict[str, int] = {}
         graph_metrics_dict: dict[str, Any] = {}
         patterns_detected_dict: dict[str, int] = {}
@@ -693,7 +851,14 @@ class IntelligentCorrelationEngine:
         return report
 
     def export_to_json(self, output_path: str) -> None:
-        """Export correlation analysis to JSON."""
+        """Export correlation analysis to JSON.
+
+        Writes a JSON file containing the correlation report, individual
+        correlations, and cluster information for external analysis and review.
+
+        Args:
+            output_path: Path to write the JSON export file.
+        """
         export_data = {
             "report": self.generate_correlation_report(),
             "correlations": [

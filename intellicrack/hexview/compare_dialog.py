@@ -211,7 +211,6 @@ class CompareDialog(QDialog):
 
         Args:
             file_num: 1 or 2 for first or second file
-
         """
         file_path, _ = QFileDialog.getOpenFileName(self, f"Select File {file_num}", "", "All Files (*.*)")
 
@@ -230,7 +229,6 @@ class CompareDialog(QDialog):
 
         Args:
             file_num: 1 or 2 for first or second file
-
         """
         if file_num == 1:
             path = self.file1_path
@@ -272,7 +270,6 @@ class CompareDialog(QDialog):
 
         Args:
             mode: Comparison mode (visual, byte, or structural)
-
         """
         self.comparison_mode = mode
 
@@ -281,7 +278,6 @@ class CompareDialog(QDialog):
 
         Args:
             checked: Whether sync scrolling is enabled
-
         """
         self.sync_scrolling = checked
 
@@ -290,7 +286,6 @@ class CompareDialog(QDialog):
 
         Args:
             checked: Whether highlighting is enabled
-
         """
         self.highlight_differences = checked
 
@@ -345,7 +340,6 @@ class CompareDialog(QDialog):
 
         Args:
             differences: List of DifferenceBlock objects
-
         """
         if not differences:
             self.stats_label.setText("Files are identical")

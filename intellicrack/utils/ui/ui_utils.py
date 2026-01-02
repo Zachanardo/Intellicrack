@@ -55,7 +55,13 @@ class ProgressTracker:
         self.is_cancelled = False
 
     def update(self, value: int | None = None, increment: int | None = None) -> None:
-        """Update progress value."""
+        """Update progress value.
+
+        Args:
+            value: Set progress to specific value (capped at total)
+            increment: Increment progress by this amount (capped at total)
+
+        """
         if self.is_cancelled:
             return
 
@@ -68,7 +74,12 @@ class ProgressTracker:
             self.callback(self.get_percentage())
 
     def get_percentage(self) -> int:
-        """Get current progress as percentage."""
+        """Get current progress as percentage.
+
+        Returns:
+            Current progress as a percentage (0-100).
+
+        """
         return 100 if self.total == 0 else int((self.current / self.total) * 100)
 
     def cancel(self) -> None:
@@ -145,7 +156,11 @@ def get_user_input(prompt: str, default: str = "", title: str = "Input Required"
         parent: Optional parent widget for context and positioning
 
     Returns:
-        Optional[str]: User input or None if cancelled
+        User input or None if cancelled.
+
+    Raises:
+        KeyboardInterrupt: User interrupted input operation.
+        EOFError: End of file reached during input operation.
 
     """
     # Log the input request with parent context
@@ -226,7 +241,11 @@ def confirm_action(message: str, title: str = "Confirm Action", parent: object =
         parent: Optional parent widget
 
     Returns:
-        bool: True if confirmed, False otherwise
+        True if confirmed, False otherwise.
+
+    Raises:
+        KeyboardInterrupt: User interrupted confirmation operation.
+        EOFError: End of file reached during confirmation operation.
 
     """
     # In a real UI implementation, this would show a confirmation dialog
@@ -261,7 +280,12 @@ def select_from_list(
         parent: Optional parent widget
 
     Returns:
-        Optional[List[str]]: Selected items or None if cancelled
+        Selected items or None if cancelled.
+
+    Raises:
+        KeyboardInterrupt: User interrupted selection operation.
+        EOFError: End of file reached during selection operation.
+        ValueError: Invalid selection format provided.
 
     """
     if not items:
@@ -316,7 +340,8 @@ def create_status_bar_message(message: str, timeout: int = 5000) -> dict[str, st
         timeout: Display timeout in milliseconds
 
     Returns:
-        dict: Status bar configuration
+        Status bar configuration dictionary with message, timeout, and
+        timestamp keys.
 
     """
     return {
@@ -335,7 +360,7 @@ def format_table_data(headers: list[str], rows: list[list[object]], max_width: i
         max_width: Maximum table width
 
     Returns:
-        str: Formatted table
+        Formatted table as a string with aligned columns and separators.
 
     """
     if not headers or not rows:

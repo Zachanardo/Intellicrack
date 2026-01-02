@@ -19,7 +19,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import ctypes
-import ctypes.util
 import json
 import logging
 import os

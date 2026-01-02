@@ -47,14 +47,6 @@ from intellicrack.core.patching.license_check_remover import (
 
 
 @pytest.fixture
-def temp_workspace() -> Path:
-    """Provide temporary directory for test operations."""
-    temp_dir = Path(tempfile.mkdtemp(prefix="intellicrack_lcr_prod_"))
-    yield temp_dir
-    shutil.rmtree(temp_dir, ignore_errors=True)
-
-
-@pytest.fixture
 def real_notepad(temp_workspace: Path) -> Path:
     """Copy real notepad.exe for analysis."""
     notepad_path: Path = Path("C:\\Windows\\System32\\notepad.exe")

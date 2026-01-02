@@ -14,9 +14,36 @@ All tests use real keyboard input - NO mocks.
 Tests validate actual keyboard interaction.
 """
 
+from __future__ import annotations
+
 import time
+from typing import Any
 
 import pytest
+
+PYQT6_AVAILABLE = False
+Qt: Any = None
+QTest: Any = None
+QKeySequence: Any = None
+QAction: Any = None
+QShortcut: Any = None
+QTimer: Any = None
+QApplication: Any = None
+QWidget: Any = None
+QVBoxLayout: Any = None
+QHBoxLayout: Any = None
+QLabel: Any = None
+QLineEdit: Any = None
+QTextEdit: Any = None
+QPushButton: Any = None
+QListWidget: Any = None
+QTableWidget: Any = None
+QTableWidgetItem: Any = None
+QDialog: Any = None
+QDialogButtonBox: Any = None
+QMainWindow: Any = None
+QMenuBar: Any = None
+QMenu: Any = None
 
 try:
     from PyQt6.QtCore import Qt, QTimer
@@ -43,29 +70,7 @@ try:
 
     PYQT6_AVAILABLE = True
 except ImportError:
-    PYQT6_AVAILABLE = False
-    Qt = None
-    QTest = None
-    QKeySequence = None
-    QAction = None
-    QShortcut = None
-    QTimer = None
-    QApplication = None
-    QWidget = None
-    QVBoxLayout = None
-    QHBoxLayout = None
-    QLabel = None
-    QLineEdit = None
-    QTextEdit = None
-    QPushButton = None
-    QListWidget = None
-    QTableWidget = None
-    QTableWidgetItem = None
-    QDialog = None
-    QDialogButtonBox = None
-    QMainWindow = None
-    QMenuBar = None
-    QMenu = None
+    pass
 
 from intellicrack.utils.logger import get_logger
 
@@ -77,7 +82,7 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Any:
     """Create QApplication instance for Qt tests."""
     app = QApplication.instance()
     if app is None:
@@ -85,7 +90,7 @@ def qapp() -> QApplication:
     return app
 
 
-class TestFormDialog(QDialog):
+class TestFormDialog(QDialog):  # type: ignore[misc]
     """Test dialog with multiple input fields."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -128,16 +133,22 @@ class TestFormDialog(QDialog):
         super().reject()
 
 
-class TestMainWindow(QMainWindow):
+class TestMainWindow(QMainWindow):  # type: ignore[misc]
     """Test main window with menu bar."""
 
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Test Window")
+        self.action_triggered: list[str] = []
 
         menubar = self.menuBar()
+        if menubar is None:
+            return
 
         file_menu = menubar.addMenu("&File")
+        if file_menu is None:
+            return
+
         self.new_action = QAction("&New", self)
         self.new_action.setShortcut(QKeySequence.StandardKey.New)
         file_menu.addAction(self.new_action)
@@ -151,6 +162,9 @@ class TestMainWindow(QMainWindow):
         file_menu.addAction(self.quit_action)
 
         edit_menu = menubar.addMenu("&Edit")
+        if edit_menu is None:
+            return
+
         self.copy_action = QAction("&Copy", self)
         self.copy_action.setShortcut(QKeySequence.StandardKey.Copy)
         edit_menu.addAction(self.copy_action)
@@ -158,8 +172,6 @@ class TestMainWindow(QMainWindow):
         self.paste_action = QAction("&Paste", self)
         self.paste_action.setShortcut(QKeySequence.StandardKey.Paste)
         edit_menu.addAction(self.paste_action)
-
-        self.action_triggered = []
 
         self.new_action.triggered.connect(lambda: self.action_triggered.append("new"))
         self.save_action.triggered.connect(lambda: self.action_triggered.append("save"))

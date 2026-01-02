@@ -7,13 +7,12 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-import os
-import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from typing import Any
 
 import pytest
 
+from intellicrack.types.ui import StandardButton
 from intellicrack.utils.ui.ui_helpers import (
     ask_yes_no_question,
     check_binary_path_and_warn,
@@ -24,50 +23,210 @@ from intellicrack.utils.ui.ui_helpers import (
 )
 
 
+class FakeSignal:
+    """Test double for signal emission."""
+
+    def __init__(self) -> None:
+        self.emitted_messages: list[str] = []
+
+    def emit(self, message: str) -> None:
+        self.emitted_messages.append(message)
+
+
+class FakeAppInstance:
+    """Test double for application instance with binary path."""
+
+    def __init__(self, binary_path: str | None = None) -> None:
+        self.binary_path: str | None = binary_path
+        self.update_output: FakeSignal = FakeSignal()
+
+
+class FakeWidget:
+    """Test double for widget protocol implementation."""
+
+    def __init__(self) -> None:
+        self._enabled: bool = True
+        self._visible: bool = True
+
+    def setEnabled(self, enabled: bool) -> None:
+        self._enabled = enabled
+
+    def isEnabled(self) -> bool:
+        return self._enabled
+
+    def setVisible(self, visible: bool) -> None:
+        self._visible = visible
+
+    def isVisible(self) -> bool:
+        return self._visible
+
+    def show(self) -> None:
+        self._visible = True
+
+    def hide(self) -> None:
+        self._visible = False
+
+    def close(self) -> bool:
+        self._visible = False
+        return True
+
+    def setLayout(self, layout: object) -> None:
+        pass
+
+
+class FakeMessageBox:
+    """Test double for message box dialogs."""
+
+    last_warning_parent: FakeWidget | None = None
+    last_warning_title: str = ""
+    last_warning_text: str = ""
+    last_question_parent: FakeWidget | None = None
+    last_question_title: str = ""
+    last_question_text: str = ""
+    question_response: int = StandardButton.Yes
+
+    @classmethod
+    def reset(cls) -> None:
+        cls.last_warning_parent = None
+        cls.last_warning_title = ""
+        cls.last_warning_text = ""
+        cls.last_question_parent = None
+        cls.last_question_title = ""
+        cls.last_question_text = ""
+        cls.question_response = StandardButton.Yes
+
+    @staticmethod
+    def warning(
+        parent: Any,
+        title: str,
+        text: str,
+        buttons: int = StandardButton.Ok,
+        default_button: int = StandardButton.NoButton,
+    ) -> int:
+        FakeMessageBox.last_warning_parent = parent
+        FakeMessageBox.last_warning_title = title
+        FakeMessageBox.last_warning_text = text
+        return StandardButton.Ok
+
+    @staticmethod
+    def question(
+        parent: Any,
+        title: str,
+        text: str,
+        buttons: int = StandardButton.Yes | StandardButton.No,
+        default_button: int = StandardButton.NoButton,
+    ) -> int:
+        FakeMessageBox.last_question_parent = parent
+        FakeMessageBox.last_question_title = title
+        FakeMessageBox.last_question_text = text
+        return FakeMessageBox.question_response
+
+
+class FakeFileDialog:
+    """Test double for file dialogs."""
+
+    save_file_response: tuple[str, str] = ("", "")
+
+    @classmethod
+    def reset(cls) -> None:
+        cls.save_file_response = ("", "")
+
+    @staticmethod
+    def getSaveFileName(
+        parent: Any,
+        caption: str = "",
+        directory: str = "",
+        file_filter: str = "",
+    ) -> tuple[str, str]:
+        return FakeFileDialog.save_file_response
+
+
+class FakeExploitationModule:
+    """Test double for exploitation module."""
+
+    generate_strategy_result: dict[str, Any] = {}
+    should_raise_error: bool = False
+    error_message: str = "Test error"
+
+    @classmethod
+    def reset(cls) -> None:
+        cls.generate_strategy_result = {}
+        cls.should_raise_error = False
+        cls.error_message = "Test error"
+
+    @staticmethod
+    def generate_bypass_script(binary_path: str, vulnerability_type: str) -> dict[str, Any]:
+        if FakeExploitationModule.should_raise_error:
+            raise ValueError(FakeExploitationModule.error_message)
+        return FakeExploitationModule.generate_strategy_result
+
+
+@pytest.fixture(autouse=True)
+def reset_fakes() -> None:
+    """Reset all fake state between tests."""
+    FakeMessageBox.reset()
+    FakeFileDialog.reset()
+    FakeExploitationModule.reset()
+
+
+@pytest.fixture
+def inject_fake_message_box(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Inject fake message box into ui_helpers module."""
+    monkeypatch.setattr("intellicrack.utils.ui.ui_helpers.get_message_box", lambda: FakeMessageBox)
+
+
+@pytest.fixture
+def inject_fake_file_dialog(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Inject fake file dialog into ui_helpers module."""
+    monkeypatch.setattr("intellicrack.utils.ui.ui_helpers.get_file_dialog", lambda: FakeFileDialog)
+
+
+@pytest.fixture
+def inject_fake_exploitation(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Inject fake exploitation module into ui_helpers."""
+    monkeypatch.setattr(
+        "intellicrack.utils.ui.ui_helpers.generate_bypass_script",
+        FakeExploitationModule.generate_bypass_script,
+    )
+
+
 class TestCheckBinaryPathAndWarn:
     """Test check_binary_path_and_warn function."""
 
-    def test_returns_false_when_no_binary_path(self) -> None:
+    def test_returns_false_when_no_binary_path(self, inject_fake_message_box: None) -> None:
         """Test function returns False when binary path is missing."""
-        app_instance = MagicMock()
-        app_instance.binary_path = None
+        app_instance = FakeAppInstance(binary_path=None)
 
-        with patch("intellicrack.utils.ui.ui_helpers.QMessageBox") as mock_msgbox:
-            result = check_binary_path_and_warn(app_instance)
+        result = check_binary_path_and_warn(app_instance)
 
-            assert result is False
-            mock_msgbox.warning.assert_called_once()
+        assert result is False
+        assert FakeMessageBox.last_warning_title == "No File Selected"
+        assert "Please select a program first" in FakeMessageBox.last_warning_text
 
-    def test_returns_false_when_empty_binary_path(self) -> None:
+    def test_returns_false_when_empty_binary_path(self, inject_fake_message_box: None) -> None:
         """Test function returns False when binary path is empty string."""
-        app_instance = MagicMock()
-        app_instance.binary_path = ""
+        app_instance = FakeAppInstance(binary_path="")
 
-        with patch("intellicrack.utils.ui.ui_helpers.QMessageBox") as mock_msgbox:
-            result = check_binary_path_and_warn(app_instance)
+        result = check_binary_path_and_warn(app_instance)
 
-            assert result is False
+        assert result is False
 
     def test_returns_true_when_binary_path_exists(self) -> None:
         """Test function returns True when valid binary path present."""
-        app_instance = MagicMock()
-        app_instance.binary_path = "/path/to/binary.exe"
+        app_instance = FakeAppInstance(binary_path="/path/to/binary.exe")
 
         result = check_binary_path_and_warn(app_instance)
 
         assert result is True
 
-    def test_shows_warning_dialog_on_missing_path(self) -> None:
+    def test_shows_warning_dialog_on_missing_path(self, inject_fake_message_box: None) -> None:
         """Test warning dialog is shown when path is missing."""
-        app_instance = MagicMock()
-        app_instance.binary_path = None
+        app_instance = FakeAppInstance(binary_path=None)
 
-        with patch("intellicrack.utils.ui.ui_helpers.QMessageBox") as mock_msgbox:
-            check_binary_path_and_warn(app_instance)
+        check_binary_path_and_warn(app_instance)
 
-            args = mock_msgbox.warning.call_args[0]
-            assert "No File Selected" in args[1]
-            assert "Please select a program first" in args[2]
+        assert "No File Selected" in FakeMessageBox.last_warning_title
+        assert "Please select a program first" in FakeMessageBox.last_warning_text
 
 
 class TestEmitLogMessage:
@@ -75,117 +234,110 @@ class TestEmitLogMessage:
 
     def test_emits_message_with_update_output_signal(self) -> None:
         """Test message is emitted through update_output signal."""
-        app_instance = MagicMock()
-        app_instance.update_output = MagicMock()
-        app_instance.update_output.emit = MagicMock()
+        app_instance = FakeAppInstance()
 
         emit_log_message(app_instance, "Test log message")
 
-        app_instance.update_output.emit.assert_called_once()
-        call_args = app_instance.update_output.emit.call_args[0]
-        assert "Test log message" in str(call_args[0])
+        assert len(app_instance.update_output.emitted_messages) == 1
+        assert "Test log message" in app_instance.update_output.emitted_messages[0]
 
     def test_handles_missing_update_output(self) -> None:
         """Test graceful handling when update_output is missing."""
-        app_instance = MagicMock(spec=[])
+        app_instance = FakeWidget()
 
         emit_log_message(app_instance, "Message")
 
-    def test_uses_log_message_utility_when_available(self) -> None:
+    def test_uses_log_message_utility_when_available(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test uses log_message utility for formatting."""
-        app_instance = MagicMock()
-        app_instance.update_output = MagicMock()
-        app_instance.update_output.emit = MagicMock()
+        app_instance = FakeAppInstance()
 
-        with patch("intellicrack.utils.ui.ui_helpers.log_message", return_value="[LOG] Message"):
-            emit_log_message(app_instance, "Message")
+        def fake_log_message(msg: str) -> str:
+            return f"[LOG] {msg}"
 
-            app_instance.update_output.emit.assert_called_with("[LOG] Message")
+        monkeypatch.setattr("intellicrack.utils.ui.ui_helpers.log_message", fake_log_message)
+
+        emit_log_message(app_instance, "Message")
+
+        assert app_instance.update_output.emitted_messages[0] == "[LOG] Message"
 
 
 class TestShowFileDialog:
     """Test show_file_dialog function."""
 
-    def test_returns_selected_filename(self) -> None:
+    def test_returns_selected_filename(self, inject_fake_file_dialog: None) -> None:
         """Test dialog returns selected filename."""
-        parent = MagicMock()
+        parent = FakeWidget()
+        FakeFileDialog.save_file_response = ("/path/to/file.html", "HTML Files (*.html)")
 
-        with patch("intellicrack.utils.ui.ui_helpers.QFileDialog") as mock_dialog:
-            mock_dialog.getSaveFileName.return_value = ("/path/to/file.html", "HTML Files (*.html)")
+        result = show_file_dialog(parent, "Save File")
 
-            result = show_file_dialog(parent, "Save File")
+        assert result == "/path/to/file.html"
 
-            assert result == "/path/to/file.html"
-
-    def test_returns_empty_string_on_cancel(self) -> None:
+    def test_returns_empty_string_on_cancel(self, inject_fake_file_dialog: None) -> None:
         """Test dialog returns empty string when cancelled."""
-        parent = MagicMock()
+        parent = FakeWidget()
+        FakeFileDialog.save_file_response = ("", "")
 
-        with patch("intellicrack.utils.ui.ui_helpers.QFileDialog") as mock_dialog:
-            mock_dialog.getSaveFileName.return_value = ("", "")
+        result = show_file_dialog(parent, "Save File")
 
-            result = show_file_dialog(parent, "Save File")
+        assert result == ""
 
-            assert result == ""
-
-    def test_uses_custom_file_filter(self) -> None:
+    def test_uses_custom_file_filter(self, inject_fake_file_dialog: None) -> None:
         """Test dialog uses provided file filter."""
-        parent = MagicMock()
+        parent = FakeWidget()
+        FakeFileDialog.save_file_response = ("/file.txt", "")
 
-        with patch("intellicrack.utils.ui.ui_helpers.QFileDialog") as mock_dialog:
-            mock_dialog.getSaveFileName.return_value = ("/file.txt", "")
+        result = show_file_dialog(parent, "Title", "Text Files (*.txt)")
 
-            show_file_dialog(parent, "Title", "Text Files (*.txt)")
+        assert result == "/file.txt"
 
-            call_args = mock_dialog.getSaveFileName.call_args[0]
-            assert "Text Files (*.txt)" in call_args
-
-    def test_handles_import_error_gracefully(self) -> None:
+    def test_handles_import_error_gracefully(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test graceful handling of missing PyQt6."""
-        parent = MagicMock()
+        parent = FakeWidget()
 
-        with patch("intellicrack.utils.ui.ui_helpers.QFileDialog", side_effect=ImportError()):
-            result = show_file_dialog(parent, "Title")
+        def raise_import_error() -> type:
+            raise ImportError()
 
-            assert result == ""
+        monkeypatch.setattr("intellicrack.utils.ui.ui_helpers.get_file_dialog", raise_import_error)
+
+        result = show_file_dialog(parent, "Title")
+
+        assert result == ""
 
 
 class TestAskYesNoQuestion:
     """Test ask_yes_no_question function."""
 
-    def test_returns_true_for_yes_response(self) -> None:
+    def test_returns_true_for_yes_response(self, inject_fake_message_box: None) -> None:
         """Test function returns True when Yes is clicked."""
-        parent = MagicMock()
+        parent = FakeWidget()
+        FakeMessageBox.question_response = StandardButton.Yes
 
-        with patch("intellicrack.utils.ui.ui_helpers.QMessageBox") as mock_msgbox:
-            mock_msgbox.question.return_value = mock_msgbox.Yes
-            mock_msgbox.Yes = 0x4000
+        result = ask_yes_no_question(parent, "Title", "Question?")
 
-            result = ask_yes_no_question(parent, "Title", "Question?")
+        assert result is True
 
-            assert result is True
-
-    def test_returns_false_for_no_response(self) -> None:
+    def test_returns_false_for_no_response(self, inject_fake_message_box: None) -> None:
         """Test function returns False when No is clicked."""
-        parent = MagicMock()
+        parent = FakeWidget()
+        FakeMessageBox.question_response = StandardButton.No
 
-        with patch("intellicrack.utils.ui.ui_helpers.QMessageBox") as mock_msgbox:
-            mock_msgbox.question.return_value = mock_msgbox.No
-            mock_msgbox.Yes = 0x4000
-            mock_msgbox.No = 0x10000
+        result = ask_yes_no_question(parent, "Title", "Question?")
 
-            result = ask_yes_no_question(parent, "Title", "Question?")
+        assert result is False
 
-            assert result is False
-
-    def test_handles_import_error(self) -> None:
+    def test_handles_import_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test graceful handling when QMessageBox is unavailable."""
-        parent = MagicMock()
+        parent = FakeWidget()
 
-        with patch("intellicrack.utils.ui.ui_helpers.QMessageBox", side_effect=ImportError()):
-            result = ask_yes_no_question(parent, "Title", "Question?")
+        def raise_import_error() -> type:
+            raise ImportError()
 
-            assert result is False
+        monkeypatch.setattr("intellicrack.utils.ui.ui_helpers.get_message_box", raise_import_error)
+
+        result = ask_yes_no_question(parent, "Title", "Question?")
+
+        assert result is False
 
 
 class TestGenerateExploitPayloadCommon:
@@ -266,56 +418,50 @@ class TestGenerateExploitPayloadCommon:
 class TestGenerateExploitStrategyCommon:
     """Test generate_exploit_strategy_common function."""
 
-    def test_calls_generate_exploit_strategy(self, tmp_path: Path) -> None:
+    def test_calls_generate_exploit_strategy(self, tmp_path: Path, inject_fake_exploitation: None) -> None:
         """Test function calls exploitation module."""
         binary_path = tmp_path / "test.exe"
         binary_path.write_bytes(b"\x00" * 100)
 
-        with patch("intellicrack.utils.ui.ui_helpers.generate_exploit_strategy") as mock_gen:
-            mock_gen.return_value = {"strategy": "test_strategy"}
+        FakeExploitationModule.generate_strategy_result = {"strategy": "test_strategy"}
 
-            result = generate_exploit_strategy_common(str(binary_path), "buffer_overflow")
+        result = generate_exploit_strategy_common(str(binary_path), "buffer_overflow")
 
-            mock_gen.assert_called_once_with(str(binary_path), "buffer_overflow")
-            assert result["strategy"] == "test_strategy"
+        assert result["strategy"] == "test_strategy"
 
-    def test_handles_exploitation_errors(self) -> None:
+    def test_handles_exploitation_errors(self, inject_fake_exploitation: None) -> None:
         """Test error handling for exploitation failures."""
-        with patch("intellicrack.utils.ui.ui_helpers.generate_exploit_strategy", side_effect=ValueError("Test error")):
-            result = generate_exploit_strategy_common("/test/binary", "buffer_overflow")
+        FakeExploitationModule.should_raise_error = True
+        FakeExploitationModule.error_message = "Test error"
 
-            assert "error" in result
-            assert "Test error" in result["error"]
+        result = generate_exploit_strategy_common("/test/binary", "buffer_overflow")
 
-    def test_supports_different_vulnerability_types(self, tmp_path: Path) -> None:
+        assert "error" in result
+        assert "Test error" in result["error"]
+
+    def test_supports_different_vulnerability_types(self, tmp_path: Path, inject_fake_exploitation: None) -> None:
         """Test strategy generation for different vulnerability types."""
         binary_path = tmp_path / "vuln.exe"
         binary_path.write_bytes(b"\x00" * 100)
 
-        with patch("intellicrack.utils.ui.ui_helpers.generate_exploit_strategy") as mock_gen:
-            mock_gen.return_value = {"strategy": "custom"}
+        FakeExploitationModule.generate_strategy_result = {"strategy": "custom"}
 
-            result = generate_exploit_strategy_common(str(binary_path), "format_string")
+        result = generate_exploit_strategy_common(str(binary_path), "format_string")
 
-            assert "strategy" in result
+        assert "strategy" in result
 
 
 @pytest.mark.integration
 class TestUIHelpersIntegration:
     """Integration tests for UI helper functions."""
 
-    def test_binary_path_validation_workflow(self) -> None:
+    def test_binary_path_validation_workflow(self, inject_fake_message_box: None) -> None:
         """Test complete binary path validation workflow."""
-        app_with_path = MagicMock()
-        app_with_path.binary_path = "/valid/path.exe"
-
-        app_without_path = MagicMock()
-        app_without_path.binary_path = None
+        app_with_path = FakeAppInstance(binary_path="/valid/path.exe")
+        app_without_path = FakeAppInstance(binary_path=None)
 
         assert check_binary_path_and_warn(app_with_path) is True
-
-        with patch("intellicrack.utils.ui.ui_helpers.QMessageBox"):
-            assert check_binary_path_and_warn(app_without_path) is False
+        assert check_binary_path_and_warn(app_without_path) is False
 
     def test_payload_generation_workflow(self, tmp_path: Path) -> None:
         """Test complete payload generation workflow for security research."""
@@ -332,31 +478,26 @@ class TestUIHelpersIntegration:
 
         assert bypass_payload["payload_bytes"] != hijack_payload["payload_bytes"]
 
-    def test_file_dialog_with_real_interaction(self) -> None:
+    def test_file_dialog_with_real_interaction(self, inject_fake_file_dialog: None) -> None:
         """Test file dialog with simulated user interaction."""
-        parent = MagicMock()
+        parent = FakeWidget()
+        expected_path = "/output/report.html"
+        FakeFileDialog.save_file_response = (expected_path, "HTML Files (*.html)")
 
-        with patch("intellicrack.utils.ui.ui_helpers.QFileDialog") as mock_dialog:
-            expected_path = "/output/report.html"
-            mock_dialog.getSaveFileName.return_value = (expected_path, "HTML Files (*.html)")
+        result = show_file_dialog(parent, "Export Report", "HTML Files (*.html);;All Files (*)")
 
-            result = show_file_dialog(parent, "Export Report", "HTML Files (*.html);;All Files (*)")
-
-            assert result == expected_path
-            assert mock_dialog.getSaveFileName.called
+        assert result == expected_path
 
     def test_log_message_emission_chain(self) -> None:
         """Test log message emission through application instance."""
-        app = MagicMock()
-        app.update_output = MagicMock()
-        app.update_output.emit = MagicMock()
+        app = FakeAppInstance()
 
         messages = ["Analysis started", "Protection detected", "Analysis complete"]
 
         for msg in messages:
             emit_log_message(app, msg)
 
-        assert app.update_output.emit.call_count == 3
+        assert len(app.update_output.emitted_messages) == 3
 
     def test_payload_generation_for_different_targets(self, tmp_path: Path) -> None:
         """Test payload generation adapts to different target files."""

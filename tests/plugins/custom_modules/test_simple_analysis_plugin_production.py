@@ -15,6 +15,9 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
 import pytest
 
 from intellicrack.plugins.custom_modules.simple_analysis_plugin import SimpleAnalysisPlugin
@@ -29,13 +32,13 @@ def plugin() -> SimpleAnalysisPlugin:
 @pytest.fixture
 def legitimate_binaries_dir() -> Path:
     """Path to legitimate binary fixtures."""
-    return Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate")
+    return PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate"
 
 
 @pytest.fixture
 def protected_binaries_dir() -> Path:
     """Path to protected binary fixtures."""
-    return Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected")
+    return PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected"
 
 
 @pytest.fixture

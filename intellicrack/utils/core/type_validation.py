@@ -53,7 +53,6 @@ def validate_file_path(
     Raises:
         TypeError: If path is not a valid path type
         ValueError: If path is empty or invalid
-        FileNotFoundError: If path doesn't exist (when check_exists=True)
         PermissionError: If permissions are insufficient
 
     """

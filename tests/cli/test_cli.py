@@ -69,7 +69,7 @@ def temp_output_dir(tmp_path: Path) -> Path:
     return output_dir
 
 
-def run_cli_command(args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
+def run_cli_command(args: list[str], timeout: int = 30) -> subprocess.CompletedProcess[str]:
     """Execute CLI command via subprocess and return result.
 
     Args:

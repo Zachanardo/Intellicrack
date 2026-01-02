@@ -17,7 +17,7 @@ This file is part of Intellicrack.
 import os
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator, cast
 
 import pytest
 
@@ -25,11 +25,12 @@ try:
     from PyQt6.QtCore import QPoint, Qt
     from PyQt6.QtGui import QKeyEvent, QMouseEvent
     from PyQt6.QtTest import QTest
-    from PyQt6.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication, QWidget
 
     PYQT6_AVAILABLE = True
 except ImportError:
     PYQT6_AVAILABLE = False
+    QWidget = None  # type: ignore[assignment,misc]
 
 from intellicrack.hexview.hex_highlighter import HexHighlighter, HighlightType
 from intellicrack.hexview.hex_renderer import ViewMode
@@ -49,7 +50,7 @@ def qapp() -> Any:
 
 
 @pytest.fixture
-def temp_binary_file() -> Path:
+def temp_binary_file() -> Generator[Path, None, None]:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".bin") as f:
         test_data = bytes(range(256)) * 4
         f.write(test_data)
@@ -59,7 +60,7 @@ def temp_binary_file() -> Path:
 
 
 @pytest.fixture
-def large_binary_file() -> Path:
+def large_binary_file() -> Generator[Path, None, None]:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".bin") as f:
         chunk = bytes(range(256))
         for _ in range(4096):
@@ -70,7 +71,7 @@ def large_binary_file() -> Path:
 
 
 @pytest.fixture
-def empty_binary_file() -> Path:
+def empty_binary_file() -> Generator[Path, None, None]:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".bin") as f:
         temp_path = Path(f.name)
     yield temp_path
@@ -78,12 +79,13 @@ def empty_binary_file() -> Path:
 
 
 @pytest.fixture
-def hex_viewer(qapp: Any) -> Any:
+def hex_viewer(qapp: Any) -> Generator[Any, None, None]:
     if not PYQT6_AVAILABLE:
         pytest.skip("PyQt6 not available")
+    from PyQt6.QtWidgets import QWidget
     viewer = HexViewerWidget()
     viewer.show()
-    QTest.qWaitForWindowExposed(viewer)
+    QTest.qWaitForWindowExposed(cast("QWidget | None", viewer))
     yield viewer
     viewer.close()
 
@@ -618,11 +620,12 @@ class TestFolding:
 
 class TestMouseInteraction:
     def test_mouse_press_event(self, hex_viewer: Any, temp_binary_file: Path) -> None:
+        from PyQt6.QtWidgets import QWidget
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         hex_viewer.resize(800, 600)
 
         click_pos: QPoint = QPoint(200, 100)
-        QTest.mouseClick(hex_viewer.viewport(), Qt.MouseButton.LeftButton, pos=click_pos)
+        QTest.mouseClick(cast("QWidget | None", hex_viewer.viewport()), Qt.MouseButton.LeftButton, pos=click_pos)
 
     def test_get_offset_from_position(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
@@ -639,19 +642,19 @@ class TestKeyboardNavigation:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         hex_viewer.jump_to_offset(100)
 
-        QTest.keyClick(hex_viewer, Qt.Key.Key_Home)
+        QTest.keyClick(cast("QWidget | None", hex_viewer), Qt.Key.Key_Home)
 
     def test_keyboard_navigation_end(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         hex_viewer.jump_to_offset(0)
 
-        QTest.keyClick(hex_viewer, Qt.Key.Key_End)
+        QTest.keyClick(cast("QWidget | None", hex_viewer), Qt.Key.Key_End)
 
     def test_keyboard_navigation_page_up(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         hex_viewer.jump_to_offset(500)
 
-        QTest.keyClick(hex_viewer, Qt.Key.Key_PageUp)
+        QTest.keyClick(cast("QWidget | None", hex_viewer), Qt.Key.Key_PageUp)
 
     def test_keyboard_navigation_page_down(
         self, hex_viewer: Any, temp_binary_file: Path
@@ -659,21 +662,22 @@ class TestKeyboardNavigation:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         hex_viewer.jump_to_offset(0)
 
-        QTest.keyClick(hex_viewer, Qt.Key.Key_PageDown)
+        QTest.keyClick(cast("QWidget | None", hex_viewer), Qt.Key.Key_PageDown)
 
     def test_keyboard_navigation_arrows(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         hex_viewer.jump_to_offset(100)
 
-        QTest.keyClick(hex_viewer, Qt.Key.Key_Left)
-        QTest.keyClick(hex_viewer, Qt.Key.Key_Right)
-        QTest.keyClick(hex_viewer, Qt.Key.Key_Up)
-        QTest.keyClick(hex_viewer, Qt.Key.Key_Down)
+        widget: QWidget | None = cast("QWidget | None", hex_viewer)
+        QTest.keyClick(widget, Qt.Key.Key_Left)
+        QTest.keyClick(widget, Qt.Key.Key_Right)
+        QTest.keyClick(widget, Qt.Key.Key_Up)
+        QTest.keyClick(widget, Qt.Key.Key_Down)
 
     def test_keyboard_shortcut_jump(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
 
-        QTest.keyClick(hex_viewer, Qt.Key.Key_G, Qt.KeyboardModifier.ControlModifier)
+        QTest.keyClick(cast("QWidget | None", hex_viewer), Qt.Key.Key_G, Qt.KeyboardModifier.ControlModifier)
 
 
 class TestCopyOperations:
@@ -683,6 +687,7 @@ class TestCopyOperations:
         hex_viewer.copy_selection_as_hex()
 
         clipboard = QApplication.clipboard()
+        assert clipboard is not None
         text: str = clipboard.text()
 
         assert text is not None
@@ -694,6 +699,7 @@ class TestCopyOperations:
         hex_viewer.copy_selection_as_text()
 
         clipboard = QApplication.clipboard()
+        assert clipboard is not None
         text: str = clipboard.text()
 
         assert text is not None
@@ -704,6 +710,7 @@ class TestCopyOperations:
         hex_viewer.copy_selection_as_c_array()
 
         clipboard = QApplication.clipboard()
+        assert clipboard is not None
         text: str = clipboard.text()
 
         assert text is not None
@@ -717,6 +724,7 @@ class TestCopyOperations:
         hex_viewer.copy_selection_as_java_array()
 
         clipboard = QApplication.clipboard()
+        assert clipboard is not None
         text: str = clipboard.text()
 
         assert text is not None
@@ -730,6 +738,7 @@ class TestCopyOperations:
         hex_viewer.copy_selection_as_python_bytes()
 
         clipboard = QApplication.clipboard()
+        assert clipboard is not None
         text: str = clipboard.text()
 
         assert text is not None
@@ -741,6 +750,7 @@ class TestCopyOperations:
         hex_viewer.copy_selection_as_base64()
 
         clipboard = QApplication.clipboard()
+        assert clipboard is not None
         text: str = clipboard.text()
 
         assert text is not None
@@ -752,6 +762,7 @@ class TestCopyOperations:
         hex_viewer.copy_selection_as_data_uri()
 
         clipboard = QApplication.clipboard()
+        assert clipboard is not None
         text: str = clipboard.text()
 
         assert text is not None

@@ -86,6 +86,10 @@ class LicenseProtocolHandler:
 
         This method clears captured requests, responses, and any cached information.
         Subclasses should override this to clear protocol-specific data structures.
+
+        Returns:
+            None
+
         """
         self.logger.debug("Clearing protocol handler data")
 
@@ -167,6 +171,10 @@ class LicenseProtocolHandler:
         """Shutdown the protocol handler completely.
 
         This method stops the proxy server and cleans up all resources.
+
+        Returns:
+            None
+
         """
         logger.debug("Entering shutdown")
         self.logger.info("Shutting down %s protocol handler", self.__class__.__name__)
@@ -186,7 +194,7 @@ class LicenseProtocolHandler:
         """Check if the proxy server is currently running.
 
         Returns:
-            True if proxy is running, False otherwise
+            Boolean indicating whether proxy is running
 
         """
         return self.running
@@ -195,7 +203,7 @@ class LicenseProtocolHandler:
         """Get current status of the protocol handler.
 
         Returns:
-            Dictionary containing handler status information
+            Status dictionary with protocol, running, port, host, and thread_active keys
 
         """
         return {
@@ -215,6 +223,9 @@ class LicenseProtocolHandler:
 
         Args:
             port: Port number to bind the proxy server to
+
+        Returns:
+            None
 
         """
         logger.debug("Entering _run_proxy: port=%d", port)
@@ -262,6 +273,9 @@ class LicenseProtocolHandler:
             client_socket: Client socket connection
             client_addr: Client address tuple (ip, port)
 
+        Returns:
+            None
+
         """
         try:
             if initial_data := client_socket.recv(4096):
@@ -280,6 +294,9 @@ class LicenseProtocolHandler:
         Args:
             socket: Client socket connection
             initial_data: Initial data received from the client
+
+        Returns:
+            None
 
         """
         self.log_request(initial_data, "client")
@@ -315,6 +332,9 @@ class LicenseProtocolHandler:
             request_data: Raw request data to log
             source: Source identifier for the request
 
+        Returns:
+            None
+
         """
         self.logger.debug("Request from %s: %d bytes", source, len(request_data))
 
@@ -329,6 +349,9 @@ class LicenseProtocolHandler:
         Args:
             response_data: Raw response data to log
             destination: Destination identifier for the response
+
+        Returns:
+            None
 
         """
         self.logger.debug("Response to %s: %d bytes", destination, len(response_data))
@@ -347,7 +370,12 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
     """
 
     def __init__(self, config: dict[str, Any] | None = None) -> None:
-        """Initialize FlexLM protocol handler."""
+        """Initialize FlexLM protocol handler.
+
+        Args:
+            config: Optional configuration dictionary for FlexLM handler
+
+        """
         super().__init__(config)
         self.flexlm_port = self.config.get("flexlm_port", 27000)
         self.captured_requests: list[dict[str, Any]] = []
@@ -364,7 +392,12 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
         self.server_status: str = str(self.config.get("server_status", "UP"))
 
     def clear_data(self) -> None:
-        """Clear FlexLM-specific captured data."""
+        """Clear FlexLM-specific captured data.
+
+        Returns:
+            None
+
+        """
         super().clear_data()
         # Additional FlexLM-specific cleanup if needed
         self.logger.debug("Cleared FlexLM protocol data")
@@ -374,6 +407,9 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
 
         Args:
             port: Port to bind the proxy server to
+
+        Returns:
+            None
 
         """
         import socket
@@ -423,6 +459,9 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             socket: Client socket
             initial_data: Initial request data
 
+        Returns:
+            None
+
         """
         self.log_request(initial_data, "FlexLM client")
 
@@ -442,6 +481,9 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             client_socket: Client socket connection
             client_addr: Client address tuple (ip, port)
 
+        Returns:
+            None
+
         """
         try:
             if initial_data := client_socket.recv(4096):
@@ -458,7 +500,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             request_data: FlexLM request data
 
         Returns:
-            FlexLM response data
+            Response data as bytes
 
         """
         import time
@@ -528,7 +570,12 @@ class HASPProtocolHandler(LicenseProtocolHandler):
     """
 
     def __init__(self, config: dict[str, Any] | None = None) -> None:
-        """Initialize HASP protocol handler."""
+        """Initialize HASP protocol handler.
+
+        Args:
+            config: Optional configuration dictionary for HASP handler
+
+        """
         super().__init__(config)
         self.hasp_port = self.config.get("hasp_port", 1947)
         self.captured_requests: list[dict[str, Any]] = []
@@ -555,7 +602,12 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         self.hasp_emulator_version: str = str(self.config.get("hasp_emulator_version", "HASP_EMU_v2.1"))
 
     def clear_data(self) -> None:
-        """Clear HASP-specific captured data."""
+        """Clear HASP-specific captured data.
+
+        Returns:
+            None
+
+        """
         super().clear_data()
         # Additional HASP-specific cleanup if needed
         self.logger.debug("Cleared HASP protocol data")
@@ -565,6 +617,9 @@ class HASPProtocolHandler(LicenseProtocolHandler):
 
         Args:
             port: Port to bind the proxy server to
+
+        Returns:
+            None
 
         """
         import socket
@@ -614,6 +669,9 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             socket: Client socket
             initial_data: Initial request data
 
+        Returns:
+            None
+
         """
         self.log_request(initial_data, "HASP client")
 
@@ -632,6 +690,9 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             client_socket: Client socket connection
             client_addr: Client address tuple (ip, port)
 
+        Returns:
+            None
+
         """
         try:
             if initial_data := client_socket.recv(4096):
@@ -648,7 +709,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             request_data: HASP request data
 
         Returns:
-            HASP response data
+            Response data as bytes
 
         """
         import struct

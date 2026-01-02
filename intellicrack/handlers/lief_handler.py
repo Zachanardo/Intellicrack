@@ -17,9 +17,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import os
 import struct
-from typing import IO, Any
+import types
+from collections.abc import Callable
+from typing import IO, Any, Protocol, runtime_checkable
 
 from intellicrack.utils.logger import log_all_methods, logger
 
@@ -32,6 +36,169 @@ When LIEF is not available, it provides REAL, functional Python-based
 implementations for essential binary parsing operations.
 """
 
+
+# Protocol definitions for binary analysis types
+@runtime_checkable
+class SectionProtocol(Protocol):
+    """Protocol defining interface for binary sections."""
+
+    name: str
+    offset: int
+    size: int
+    virtual_address: int
+    virtual_size: int
+    characteristics: int
+    content: bytes
+    entropy: float
+
+
+@runtime_checkable
+class SymbolProtocol(Protocol):
+    """Protocol defining interface for binary symbols."""
+
+    name: str
+    value: int
+    size: int
+    type: str
+    binding: str
+    section: Any
+
+
+@runtime_checkable
+class FunctionProtocol(Protocol):
+    """Protocol defining interface for binary functions."""
+
+    name: str
+    address: int
+    size: int
+
+
+@runtime_checkable
+class BinaryProtocol(Protocol):
+    """Protocol defining interface for parsed binaries."""
+
+    path: str
+    name: str
+    size: int
+    entrypoint: int
+    imagebase: int
+    sections: list[Any]
+    symbols: list[Any]
+    functions: list[Any]
+    imports: list[Any]
+    exports: list[Any]
+    libraries: list[str]
+    format: str
+
+
+# Production fallback classes - always available regardless of LIEF
+class _FallbackSection:
+    """Production fallback section implementation for binary sections."""
+
+    def __init__(
+        self,
+        name: str = "",
+        offset: int = 0,
+        size: int = 0,
+        virtual_address: int = 0,
+        virtual_size: int = 0,
+        characteristics: int = 0,
+    ) -> None:
+        self.name = name
+        self.offset = offset
+        self.size = size
+        self.virtual_address = virtual_address
+        self.virtual_size = virtual_size or size
+        self.characteristics = characteristics
+        self.content = b""
+        self.entropy = 0.0
+
+    def __str__(self) -> str:
+        return f"Section({self.name}, VA=0x{self.virtual_address:08x}, Size={self.size})"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+
+class _FallbackSymbol:
+    """Production fallback symbol implementation."""
+
+    def __init__(self, name: str = "", value: int = 0, size: int = 0, type: str = "", binding: str = "") -> None:
+        self.name = name
+        self.value = value
+        self.size = size
+        self.type = type
+        self.binding = binding
+        self.section: Any = None
+
+    def __str__(self) -> str:
+        return f"Symbol({self.name}, 0x{self.value:08x})"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+
+class _FallbackFunction:
+    """Production fallback function implementation."""
+
+    def __init__(self, name: str = "", address: int = 0, size: int = 0) -> None:
+        self.name = name
+        self.address = address
+        self.size = size
+
+    def __str__(self) -> str:
+        return f"Function({self.name}, 0x{self.address:08x})"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+
+# Architecture/mode constants - always available
+class _FallbackArchitectures:
+    """Binary architectures."""
+
+    NONE = 0
+    X86 = 1
+    X64 = 2
+    ARM = 3
+    ARM64 = 4
+    MIPS = 5
+    PPC = 6
+
+
+class _FallbackEndianness:
+    """Byte order."""
+
+    LITTLE = 0
+    BIG = 1
+
+
+class _FallbackModes:
+    """Execution modes."""
+
+    MODE_32 = 0
+    MODE_64 = 1
+    THUMB = 2
+    ARM = 3
+
+
+# Module-level type declarations for cross-branch assignment compatibility
+Binary: type[BinaryProtocol]
+Section: type[SectionProtocol]
+Symbol: type[SymbolProtocol]
+Function: type[FunctionProtocol]
+PE: type[Any]
+ELF: type[Any]
+MachO: type[Any]
+ARCHITECTURES: type[Any]
+ENDIANNESS: type[Any]
+MODES: type[Any]
+parse: Callable[..., Any]
+is_pe: Callable[[str], bool]
+is_elf: Callable[[str], bool]
+is_macho: Callable[[str], bool]
+lief: types.ModuleType | Any
+
 # LIEF availability detection and import handling
 try:
     import lief
@@ -41,20 +208,20 @@ try:
 
     # Try to import architecture constants - these may have moved
     try:
-        from lief import ARCHITECTURES, ENDIANNESS, MODES  # type: ignore[attr-defined]
+        from lief import ARCHITECTURES, ENDIANNESS, MODES
     except ImportError:
-        ARCHITECTURES = None
-        ENDIANNESS = None
-        MODES = None
+        ARCHITECTURES = _FallbackArchitectures
+        ENDIANNESS = _FallbackEndianness
+        MODES = _FallbackModes
 
-    # Import available classes
+    # Import available classes with fallbacks
     try:
         from lief import Binary, Function, Section, Symbol
     except ImportError:
-        Binary = None  # type: ignore[assignment, misc]
-        Function = None  # type: ignore[assignment, misc]
-        Section = None  # type: ignore[assignment, misc]
-        Symbol = None  # type: ignore[assignment, misc]
+        Section = _FallbackSection
+        Symbol = _FallbackSymbol
+        Function = _FallbackFunction
+        Binary = type("Binary", (), {"sections": [], "symbols": [], "functions": []})
 
     HAS_LIEF = True
     LIEF_VERSION: str | None = getattr(lief, "__version__", None)
@@ -64,107 +231,31 @@ except ImportError as e:
     HAS_LIEF = False
     LIEF_VERSION = None
 
-    # Production-ready fallback implementations for binary analysis
+    # Use module-level fallback implementations
+    ARCHITECTURES = _FallbackArchitectures
+    ENDIANNESS = _FallbackEndianness
+    MODES = _FallbackModes
 
-    # Architecture constants
-    class ARCHITECTURES:  # type: ignore[no-redef]
-        """Binary architectures."""
+    # Alias module-level fallback classes for backwards compatibility
+    FallbackSection = _FallbackSection
+    FallbackSymbol = _FallbackSymbol
+    FallbackFunction = _FallbackFunction
 
-        NONE = 0
-        X86 = 1
-        X64 = 2
-        ARM = 3
-        ARM64 = 4
-        MIPS = 5
-        PPC = 6
-
-    class ENDIANNESS:  # type: ignore[no-redef]
-        """Byte order."""
-
-        LITTLE = 0
-        BIG = 1
-
-    class MODES:  # type: ignore[no-redef]
-        """Execution modes."""
-
-        MODE_32 = 0
-        MODE_64 = 1
-        THUMB = 2
-        ARM = 3
-
-    class FallbackSection:
-        """Functional section implementation for binary sections."""
-
-        def __init__(
-            self,
-            name: str = "",
-            offset: int = 0,
-            size: int = 0,
-            virtual_address: int = 0,
-            virtual_size: int = 0,
-            characteristics: int = 0,
-        ) -> None:
-            """Initialize section."""
-            self.name = name
-            self.offset = offset
-            self.size = size
-            self.virtual_address = virtual_address
-            self.virtual_size = virtual_size or size
-            self.characteristics = characteristics
-            self.content = b""
-            self.entropy = 0.0
-
-        def __str__(self) -> str:
-            """Represent as string."""
-            return f"Section({self.name}, VA=0x{self.virtual_address:08x}, Size={self.size})"
-
-        def __repr__(self) -> str:
-            """Representation."""
-            return self.__str__()
-
-    class FallbackSymbol:
-        """Functional symbol implementation."""
-
-        def __init__(self, name: str = "", value: int = 0, size: int = 0, type: str = "", binding: str = "") -> None:
-            """Initialize symbol."""
-            self.name = name
-            self.value = value
-            self.size = size
-            self.type = type
-            self.binding = binding
-            self.section = None
-
-        def __str__(self) -> str:
-            """Represent as string."""
-            return f"Symbol({self.name}, 0x{self.value:08x})"
-
-        def __repr__(self) -> str:
-            """Representation."""
-            return self.__str__()
-
-    class FallbackFunction:
-        """Functional function implementation."""
-
-        def __init__(self, name: str = "", address: int = 0, size: int = 0) -> None:
-            """Initialize function."""
-            self.name = name
-            self.address = address
-            self.size = size
-
-        def __str__(self) -> str:
-            """Represent as string."""
-            return f"Function({self.name}, 0x{self.address:08x})"
-
-        def __repr__(self) -> str:
-            """Representation."""
-            return self.__str__()
+    # Alias for type compatibility
+    Section = _FallbackSection
+    Symbol = _FallbackSymbol
+    Function = _FallbackFunction
 
     @log_all_methods
     class FallbackBinary:
         """Base binary implementation with real parsing capabilities."""
 
         def __init__(self, path: str = "") -> None:
-            """Initialize binary."""
+            """Initialize binary.
+
+            Args:
+                path: Path to binary file to parse.
+            """
             self.path = path
             self.name = os.path.basename(path) if path else ""
             self.size = 0
@@ -212,7 +303,11 @@ except ImportError as e:
                 logger.error("Failed to parse binary %s: %s", self.path, e)
 
         def _parse_pe(self, f: IO[bytes]) -> None:
-            """Parse PE format binary."""
+            """Parse PE format binary.
+
+            Args:
+                f: Open binary file object.
+            """
             self.format = "PE"
 
             try:
@@ -295,7 +390,11 @@ except ImportError as e:
                 logger.error("Failed to parse PE binary: %s", e)
 
         def _parse_elf(self, f: IO[bytes]) -> None:
-            """Parse ELF format binary."""
+            """Parse ELF format binary.
+
+            Args:
+                f: Open binary file object.
+            """
             self.format = "ELF"
 
             try:
@@ -429,7 +528,11 @@ except ImportError as e:
                 logger.error("Failed to parse ELF binary: %s", e)
 
         def _parse_macho(self, f: IO[bytes]) -> None:
-            """Parse Mach-O format binary."""
+            """Parse Mach-O format binary.
+
+            Args:
+                f: Open binary file object.
+            """
             self.format = "MACHO"
 
             try:
@@ -524,11 +627,19 @@ except ImportError as e:
                 logger.error("Failed to parse Mach-O binary: %s", e)
 
         def __str__(self) -> str:
-            """Represent as string."""
+            """Represent as string.
+
+            Returns:
+                String representation showing binary format and name.
+            """
             return f"{self.format}({self.name})"
 
         def __repr__(self) -> str:
-            """Representation."""
+            """Representation.
+
+            Returns:
+                String representation of binary object.
+            """
             return self.__str__()
 
     @log_all_methods
@@ -536,7 +647,11 @@ except ImportError as e:
         """PE specific binary implementation."""
 
         def __init__(self, path: str = "") -> None:
-            """Initialize PE binary."""
+            """Initialize PE binary.
+
+            Args:
+                path: Path to PE binary file to parse.
+            """
             super().__init__(path)
             self.dos_header: dict[str, Any] = {}
             self.header: dict[str, Any] = {}
@@ -554,7 +669,11 @@ except ImportError as e:
         """ELF specific binary implementation."""
 
         def __init__(self, path: str = "") -> None:
-            """Initialize ELF binary."""
+            """Initialize ELF binary.
+
+            Args:
+                path: Path to ELF binary file to parse.
+            """
             super().__init__(path)
             self.segments: list[Any] = []
             self.dynamic_entries: list[Any] = []
@@ -568,7 +687,11 @@ except ImportError as e:
         """Mach-O specific binary implementation."""
 
         def __init__(self, path: str = "") -> None:
-            """Initialize Mach-O binary."""
+            """Initialize Mach-O binary.
+
+            Args:
+                path: Path to Mach-O binary file to parse.
+            """
             super().__init__(path)
             self.commands: list[Any] = []
             self.uuid: Any | None = None
@@ -577,8 +700,16 @@ except ImportError as e:
             self.dylibs: list[str] = []
             self.rpaths: list[str] = []
 
-    def parse(filepath: str) -> FallbackBinary | None:  # type: ignore[misc]
-        """Parse a binary file and return appropriate object."""
+    def parse(filepath: str) -> FallbackBinary | None:
+        """Parse a binary file and return appropriate object.
+
+        Args:
+            filepath: Path to binary file to parse.
+
+        Returns:
+            Appropriate binary object (PE, ELF, MachO, or generic Binary),
+            or None if file does not exist or parsing fails.
+        """
         if not os.path.exists(filepath):
             logger.error("File not found: %s", filepath)
             return None
@@ -604,8 +735,15 @@ except ImportError as e:
             logger.error("Failed to parse binary %s: %s", filepath, e)
             return None
 
-    def is_pe(filepath: str) -> bool:  # type: ignore[no-redef]
-        """Check if file is PE format."""
+    def is_pe(filepath: str) -> bool:
+        """Check if file is PE format.
+
+        Args:
+            filepath: Path to binary file to check.
+
+        Returns:
+            True if file has PE magic signature, False otherwise.
+        """
         try:
             with open(filepath, "rb") as f:
                 magic = f.read(2)
@@ -613,8 +751,15 @@ except ImportError as e:
         except Exception:
             return False
 
-    def is_elf(filepath: str) -> bool:  # type: ignore[no-redef]
-        """Check if file is ELF format."""
+    def is_elf(filepath: str) -> bool:
+        """Check if file is ELF format.
+
+        Args:
+            filepath: Path to binary file to check.
+
+        Returns:
+            True if file has ELF magic signature, False otherwise.
+        """
         try:
             with open(filepath, "rb") as f:
                 magic = f.read(4)
@@ -622,8 +767,15 @@ except ImportError as e:
         except Exception:
             return False
 
-    def is_macho(filepath: str) -> bool:  # type: ignore[no-redef]
-        """Check if file is Mach-O format."""
+    def is_macho(filepath: str) -> bool:
+        """Check if file is Mach-O format.
+
+        Args:
+            filepath: Path to binary file to check.
+
+        Returns:
+            True if file has Mach-O magic signature, False otherwise.
+        """
         try:
             with open(filepath, "rb") as f:
                 magic = f.read(4)
@@ -637,13 +789,13 @@ except ImportError as e:
             return False
 
     # Assign classes
-    Binary = FallbackBinary  # type: ignore[assignment, misc]
-    Section = FallbackSection  # type: ignore[assignment, misc]
-    Symbol = FallbackSymbol  # type: ignore[assignment, misc]
-    Function = FallbackFunction  # type: ignore[assignment, misc]
-    PE = FallbackPE  # type: ignore[assignment]
-    ELF = FallbackELF  # type: ignore[assignment]
-    MachO = FallbackMachO  # type: ignore[assignment]
+    Binary = FallbackBinary
+    Section = FallbackSection
+    Symbol = FallbackSymbol
+    Function = FallbackFunction
+    PE = FallbackPE
+    ELF = FallbackELF
+    MachO = FallbackMachO
 
     # Create module-like object
     class FallbackLIEF:
@@ -669,19 +821,19 @@ except ImportError as e:
         is_elf = staticmethod(is_elf)
         is_macho = staticmethod(is_macho)
 
-    lief = FallbackLIEF()  # type: ignore[assignment]
+    lief = FallbackLIEF()
 
     # Export constants at module level
-    Binary = FallbackBinary  # type: ignore[assignment, misc]
-    Section = FallbackSection  # type: ignore[assignment, misc]
-    Symbol = FallbackSymbol  # type: ignore[assignment, misc]
-    Function = FallbackFunction  # type: ignore[assignment, misc]
+    Binary = FallbackBinary
+    Section = FallbackSection
+    Symbol = FallbackSymbol
+    Function = FallbackFunction
     PE = lief.PE
     ELF = lief.ELF
     MachO = lief.MachO
-    ARCHITECTURES = lief.ARCHITECTURES  # type: ignore[attr-defined]
-    ENDIANNESS = lief.ENDIANNESS  # type: ignore[attr-defined]
-    MODES = lief.MODES  # type: ignore[attr-defined]
+    ARCHITECTURES = lief.ARCHITECTURES
+    ENDIANNESS = lief.ENDIANNESS
+    MODES = lief.MODES
     parse = lief.parse
     is_pe = lief.is_pe
     is_elf = lief.is_elf

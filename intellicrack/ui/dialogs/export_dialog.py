@@ -15,10 +15,7 @@ from typing import Any
 from PyQt6.QtWidgets import QLayout, QWidget
 
 
-try:
-    from xml.etree.ElementTree import Element, ElementTree, SubElement  # noqa: S405
-except ImportError:
-    from xml.etree.ElementTree import Element, ElementTree, SubElement  # noqa: S405
+from defusedxml.ElementTree import Element, ElementTree, SubElement
 
 import contextlib
 
@@ -26,6 +23,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QApplication,
     QButtonGroup,
     QCheckBox,
+    QCloseEvent,
     QComboBox,
     QFileDialog,
     QFont,
@@ -54,7 +52,11 @@ logger = get_logger(__name__)
 
 
 class ExportWorker(QThread):
-    """Worker thread for export operations."""
+    """Worker thread for asynchronous export of ICP analysis results.
+
+    Runs export operations in a separate thread to prevent blocking the UI.
+    Emits signals for progress updates and export completion status.
+    """
 
     #: success, message (type: bool, str)
     export_completed = pyqtSignal(bool, str)
@@ -62,12 +64,26 @@ class ExportWorker(QThread):
     progress_update = pyqtSignal(int, str)
 
     def __init__(self, export_config: dict[str, Any]) -> None:
-        """Initialize the ExportWorker with default values."""
+        """Initialize the ExportWorker with default values.
+
+        Args:
+            export_config: Configuration dictionary containing export settings.
+
+        """
         super().__init__()
         self.export_config = export_config
 
     def run(self) -> None:
-        """Execute export operation."""
+        """Execute export operation in worker thread.
+
+        Signals:
+            export_completed: Emitted when export finishes (success: bool, message: str).
+            progress_update: Emitted during export (progress: int, status: str).
+
+        Raises:
+            ValueError: When an unsupported export format is requested.
+
+        """
         try:
             export_format = self.export_config["format"]
             output_path = self.export_config["output_path"]
@@ -98,7 +114,21 @@ class ExportWorker(QThread):
             self.export_completed.emit(False, f"Export failed: {e!s}")
 
     def _export_json(self, output_path: str, results: dict[str, Any]) -> None:
-        """Export to JSON format."""
+        """Export analysis results to JSON format.
+
+        Formats analysis results into a JSON document with export metadata
+        including timestamp, version, and exporter information, then writes
+        to the specified output path.
+
+        Args:
+            output_path: Path where the JSON file will be written.
+            results: Dictionary containing analysis results to export.
+
+        Raises:
+            IOError: If the output file cannot be written to the specified path.
+            ValueError: If analysis results cannot be serialized to JSON.
+
+        """
         self.progress_update.emit(30, "Formatting JSON data...")
 
         export_data = {
@@ -117,7 +147,21 @@ class ExportWorker(QThread):
             json.dump(export_data, f, indent=2, ensure_ascii=False, default=str)
 
     def _export_xml(self, output_path: str, results: dict[str, Any]) -> None:
-        """Export to XML format."""
+        """Export analysis results to XML format.
+
+        Converts analysis results to an XML document structure with file
+        information and ICP analysis data. Handles nested detection objects
+        by extracting attributes and converting them to XML elements.
+
+        Args:
+            output_path: Path where the XML file will be written.
+            results: Dictionary containing analysis results to export.
+
+        Raises:
+            IOError: If the output file cannot be written to the specified path.
+            AttributeError: If analysis objects lack expected attributes.
+
+        """
         self.progress_update.emit(30, "Building XML structure...")
 
         root = Element("intellicrack_analysis")
@@ -165,7 +209,20 @@ class ExportWorker(QThread):
         tree.write(output_path, encoding="utf-8", xml_declaration=True)
 
     def _dict_to_xml(self, parent: Element, data: dict[str, Any]) -> None:
-        """Convert dictionary to XML elements."""
+        """Convert dictionary to nested XML elements.
+
+        Recursively converts dictionary data structures into nested XML
+        elements. Handles dictionaries, lists, and scalar values with
+        appropriate XML representation.
+
+        Args:
+            parent: Parent XML element to add children to.
+            data: Dictionary to convert to XML structure.
+
+        Raises:
+            TypeError: If dictionary keys cannot be converted to strings.
+
+        """
         for key, value in data.items():
             elem = SubElement(parent, str(key))
 
@@ -182,7 +239,21 @@ class ExportWorker(QThread):
                 elem.text = str(value)
 
     def _export_csv(self, output_path: str, results: dict[str, Any]) -> None:
-        """Export to CSV format."""
+        """Export analysis results to CSV format.
+
+        Generates a CSV file with protection detection information including
+        detection names, types, confidence percentages, versions, file types,
+        architectures, and protection status indicators.
+
+        Args:
+            output_path: Path where the CSV file will be written.
+            results: Dictionary containing analysis results to export.
+
+        Raises:
+            IOError: If the output file cannot be written to the specified path.
+            AttributeError: If detection objects lack expected attributes.
+
+        """
         import csv
 
         self.progress_update.emit(30, "Preparing CSV data...")
@@ -228,7 +299,23 @@ class ExportWorker(QThread):
             writer.writerows(rows)
 
     def _export_pdf(self, output_path: str, results: dict[str, Any]) -> None:
-        """Export to PDF format."""
+        """Export analysis results to PDF format.
+
+        Generates a professional PDF report containing file information,
+        protection analysis results, and detailed detection tables with
+        confidence-based styling. Supports configurable page formats
+        (A4 or Letter).
+
+        Args:
+            output_path: Path where the PDF file will be written.
+            results: Dictionary containing analysis results to export.
+
+        Raises:
+            ImportError: If ReportLab library is not installed.
+            IOError: If the output file cannot be written to the specified path.
+            AttributeError: If analysis objects lack expected attributes.
+
+        """
         try:
             from reportlab.lib import colors
             from reportlab.lib.pagesizes import A4, letter
@@ -337,7 +424,22 @@ class ExportWorker(QThread):
         doc.build(story)
 
     def _export_html(self, output_path: str, results: dict[str, Any]) -> None:
-        """Export to HTML format."""
+        """Export analysis results to HTML format.
+
+        Generates a styled HTML report with file information, protection
+        analysis results, and detection details. Applies CSS styling for
+        visual presentation including confidence-based color indicators
+        for detection results.
+
+        Args:
+            output_path: Path where the HTML file will be written.
+            results: Dictionary containing analysis results to export.
+
+        Raises:
+            IOError: If the output file cannot be written to the specified path.
+            AttributeError: If analysis objects lack expected attributes.
+
+        """
         self.progress_update.emit(30, "Building HTML report...")
 
         html_content = f"""
@@ -450,10 +552,20 @@ class ExportWorker(QThread):
 
 
 class ExportDialog(BaseDialog):
-    """Export dialog for ICP analysis results."""
+    """Dialog for exporting ICP analysis results in multiple formats.
+
+    Supports JSON, XML, CSV, HTML, and PDF export formats with configurable
+    options for data filtering, formatting, and output customization.
+    """
 
     def __init__(self, analysis_results: dict[str, Any] | None = None, parent: QWidget | None = None) -> None:
-        """Initialize the ExportDialog with default values."""
+        """Initialize the ExportDialog with default values.
+
+        Args:
+            analysis_results: Dictionary containing analysis results to export.
+            parent: Parent widget for the dialog.
+
+        """
         super().__init__(parent, "Export ICP Analysis Results")
         self.resize(600, 500)
 
@@ -467,7 +579,12 @@ class ExportDialog(BaseDialog):
         self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
 
     def setup_content(self, layout: QLayout) -> None:
-        """Set up the user interface content."""
+        """Set up the user interface content and controls.
+
+        Args:
+            layout: Layout object to populate with UI elements.
+
+        """
         # Check if we have results to export
         if not self.analysis_results:
             no_data_label = QLabel("No analysis results available for export.")
@@ -526,7 +643,17 @@ class ExportDialog(BaseDialog):
         # BaseDialog already provides OK/Cancel buttons with proper connections
 
     def _create_format_tab(self) -> QWidget:
-        """Create format selection tab."""
+        """Create format selection tab.
+
+        Builds the export format selection interface with radio buttons for
+        each supported format (JSON, XML, CSV, HTML, PDF) and output file
+        path selection with file browser functionality.
+
+        Returns:
+            Format selection tab widget containing format options and
+            output file selection controls.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -582,7 +709,17 @@ class ExportDialog(BaseDialog):
         return widget
 
     def _create_options_tab(self) -> QWidget:
-        """Create export options tab."""
+        """Create export options tab.
+
+        Builds the export configuration interface with checkboxes for data
+        selection (file info, detections, metadata), formatting options
+        (pretty format, timestamps), PDF page format selection, and confidence
+        threshold filtering.
+
+        Returns:
+            Options tab widget containing export configuration controls.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -659,7 +796,16 @@ class ExportDialog(BaseDialog):
         return widget
 
     def _create_preview_tab(self) -> QWidget:
-        """Create export preview tab."""
+        """Create export preview tab.
+
+        Builds the export preview interface with format selection and preview
+        text display showing sample output for the selected format. Includes
+        refresh button to update preview based on current settings.
+
+        Returns:
+            Preview tab widget containing format selection and preview display.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -692,7 +838,16 @@ class ExportDialog(BaseDialog):
         return widget
 
     def browse_output_file(self) -> None:
-        """Browse for output file."""
+        """Browse for output file location and update path field.
+
+        Opens file save dialog with format-specific file filters based on
+        the currently selected export format. Updates the output path field
+        with the selected file path.
+
+        Raises:
+            AttributeError: If format selection widgets are not initialized.
+
+        """
         selected_format = next(
             (button.property("format_id") for button in self.format_group.buttons() if button.isChecked()),
             "json",
@@ -719,7 +874,16 @@ class ExportDialog(BaseDialog):
             self.output_path_edit.setText(file_path)
 
     def refresh_preview(self) -> None:
-        """Refresh export preview."""
+        """Refresh and update export preview based on selected format.
+
+        Generates sample export output for the currently selected format
+        (JSON, XML, CSV, HTML) and displays it in the preview text area.
+        Truncates output to 2000 characters to maintain UI responsiveness.
+
+        Raises:
+            AttributeError: If preview widgets are not initialized.
+
+        """
         if not self.analysis_results:
             self.preview_text.setPlainText("No analysis results available.")
             return
@@ -791,7 +955,17 @@ class ExportDialog(BaseDialog):
             self.preview_text.setPlainText(f"Preview error: {e!s}")
 
     def _filter_results(self) -> dict[str, Any]:
-        """Filter results based on export options."""
+        """Filter results based on export options.
+
+        Applies user-selected filters to analysis results including confidence
+        threshold filtering for detections and selective inclusion of file
+        information and metadata based on checkbox selections.
+
+        Returns:
+            Filtered analysis results dictionary containing only selected
+            components and detections meeting confidence thresholds.
+
+        """
         if not self.analysis_results:
             return {}
 
@@ -815,7 +989,24 @@ class ExportDialog(BaseDialog):
                 ]
 
                 class FilteredICPData:
+                    """Filtered ICP analysis data with confidence-filtered detections.
+
+                    Wraps ICP analysis data while providing a filtered view of
+                    detections based on user-selected confidence thresholds.
+                    """
+
                     def __init__(self, original: object, filtered_detections: list[object]) -> None:
+                        """Initialize FilteredICPData with filtered detection results.
+
+                        Extracts attributes from the original ICP analysis data
+                        object and applies the provided filtered detection list.
+
+                        Args:
+                            original: Original ICP analysis data object.
+                            filtered_detections: List of filtered detection objects
+                                meeting confidence threshold criteria.
+
+                        """
                         self.file_type = getattr(original, "file_type", "Unknown")
                         self.architecture = getattr(original, "architecture", "Unknown")
                         self.is_protected = getattr(original, "is_protected", False)
@@ -828,7 +1019,16 @@ class ExportDialog(BaseDialog):
         return filtered
 
     def start_export(self) -> None:
-        """Start the export process."""
+        """Start the export process and create worker thread.
+
+        Validates output path, saves export preferences to configuration,
+        creates an export worker thread with the configured export options,
+        and displays progress indicators during the export operation.
+
+        Raises:
+            RuntimeError: If export worker fails to start.
+
+        """
         # Validate inputs
         if not self.output_path_edit.text():
             QMessageBox.warning(self, "Invalid Output", "Please select an output file path.")
@@ -888,7 +1088,13 @@ class ExportDialog(BaseDialog):
 
     @pyqtSlot(bool, str)
     def on_export_completed(self, success: bool, message: str) -> None:
-        """Handle export completion."""
+        """Handle export completion.
+
+        Args:
+            success: Boolean indicating whether export succeeded.
+            message: Message describing export result.
+
+        """
         self.progress_bar.setVisible(False)
 
         # Re-enable buttons
@@ -905,13 +1111,43 @@ class ExportDialog(BaseDialog):
 
     @pyqtSlot(int, str)
     def on_progress_update(self, progress: int, status: str) -> None:
-        """Handle progress updates."""
+        """Handle progress updates.
+
+        Args:
+            progress: Progress percentage (0-100).
+            status: Status message to display.
+
+        """
         self.progress_bar.setValue(progress)
         self.status_label.setText(status)
 
+    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+        """Handle dialog close with proper thread cleanup.
+
+        Ensures any running export worker thread is properly terminated
+        before closing the dialog to prevent resource leaks.
+
+        Args:
+            event: Close event from Qt framework.
+
+        """
+        if self.export_worker is not None and self.export_worker.isRunning():
+            self.export_worker.quit()
+            if not self.export_worker.wait(2000):
+                self.export_worker.terminate()
+                self.export_worker.wait()
+            self.export_worker = None
+        super().closeEvent(event)
+
 
 def main() -> None:
-    """Test the export dialog."""
+    """Run export dialog test with production-ready ICP analysis data.
+
+    Creates a test instance of ExportDialog with realistic ICP analysis
+    results including protection detections, file metadata, and hash
+    information for demonstration and validation purposes.
+
+    """
     app = QApplication([])
     app.setApplicationName("IntellicrackExportTest")
 
@@ -930,7 +1166,6 @@ def main() -> None:
     ]
 
     # Generate actual file for analysis
-    import os
 
     temp_file_obj = tempfile.NamedTemporaryFile(suffix=".exe", delete=False)  # noqa: SIM115
     test_file_path = temp_file_obj.name

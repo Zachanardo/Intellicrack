@@ -67,7 +67,12 @@ class ProtectionDetectionHandlers:
         return None
 
     def run_commercial_protection_scan(self) -> None:
-        """Handle detecting commercial software protections."""
+        """Handle detecting commercial software protections.
+
+        Returns:
+            None
+
+        """
         if not self.binary_path:
             QMessageBox.warning(self._get_parent_widget(), "Warning", "Please load a binary file first!")
             return
@@ -176,7 +181,12 @@ class ProtectionDetectionHandlers:
             QMessageBox.critical(self._get_parent_widget(), "Error", error_msg)
 
     def run_checksum_detection(self) -> None:
-        """Handle detecting checksum/integrity verification."""
+        """Handle detecting checksum/integrity verification.
+
+        Returns:
+            None
+
+        """
         if not self.binary_path:
             QMessageBox.warning(self._get_parent_widget(), "Warning", "Please load a binary file first!")
             return
@@ -222,7 +232,12 @@ class ProtectionDetectionHandlers:
             QMessageBox.critical(self._get_parent_widget(), "Error", error_msg)
 
     def run_self_healing_detection(self) -> None:
-        """Handle detecting self-healing/self-modifying code."""
+        """Handle detecting self-healing/self-modifying code.
+
+        Returns:
+            None
+
+        """
         if not self.binary_path:
             QMessageBox.warning(self._get_parent_widget(), "Warning", "Please load a binary file first!")
             return
@@ -268,7 +283,12 @@ class ProtectionDetectionHandlers:
             QMessageBox.critical(self._get_parent_widget(), "Error", error_msg)
 
     def run_tpm_bypass(self) -> None:
-        """Handle TPM bypass functionality."""
+        """Handle TPM bypass functionality.
+
+        Returns:
+            None
+
+        """
         if not self.binary_path:
             QMessageBox.warning(self._get_parent_widget(), "Warning", "Please load a binary file first!")
             return
@@ -310,7 +330,12 @@ class ProtectionDetectionHandlers:
             QMessageBox.critical(self._get_parent_widget(), "Error", error_msg)
 
     def run_vm_bypass(self) -> None:
-        """Handle VM detection bypass functionality."""
+        """Handle VM detection bypass functionality.
+
+        Returns:
+            None
+
+        """
         if not self.binary_path:
             QMessageBox.warning(self._get_parent_widget(), "Warning", "Please load a binary file first!")
             return
@@ -399,7 +424,12 @@ class ProtectionDetectionHandlers:
             QMessageBox.critical(self._get_parent_widget(), "Error", error_msg)
 
     def run_embedded_script_detection(self) -> None:
-        """Handle embedded/encrypted script detection."""
+        """Handle embedded/encrypted script detection.
+
+        Returns:
+            None
+
+        """
         if not self.binary_path:
             QMessageBox.warning(self._get_parent_widget(), "Warning", "Please load a binary file first!")
             return

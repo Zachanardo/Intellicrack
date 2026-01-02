@@ -4,6 +4,8 @@ Tests real icp_analysis functionality.
 """
 
 from pathlib import Path
+from typing import Any
+
 import pytest
 
 PyQt6 = pytest.importorskip("PyQt6")
@@ -11,7 +13,7 @@ from PyQt6.QtWidgets import QApplication
 
 
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Any:
     """Create QApplication instance."""
     app = QApplication.instance()
     if app is None:

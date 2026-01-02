@@ -17,11 +17,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import io
 import logging
 import platform
 import threading
 import time
-from collections.abc import Callable
 from typing import Any, TypedDict
 
 from intellicrack.handlers.pyqt6_handler import (
@@ -32,13 +32,17 @@ from intellicrack.handlers.pyqt6_handler import (
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
+    QImage,
     QLabel,
     QLineEdit,
     QListWidget,
     QMessageBox,
+    QPixmap,
     QProgressBar,
     QPushButton,
+    QSizePolicy,
     QSpinBox,
+    Qt,
     QTabWidget,
     QTextEdit,
     QTimer,
@@ -46,6 +50,17 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
 )
 from intellicrack.utils.log_message import log_error, log_info, log_warning
+
+
+try:
+    import matplotlib as mpl
+    mpl.use("Agg")
+    import matplotlib.pyplot as plt
+    MATPLOTLIB_AVAILABLE = True
+except ImportError:
+    MATPLOTLIB_AVAILABLE = False
+    plt = None
+    mpl = None
 
 
 class LicenseConnectionInfo(TypedDict, total=False):
@@ -89,6 +104,9 @@ class TrafficAnalysisResults(TypedDict, total=False):
     analysis_timestamp: float
     total_connections: int
     license_connection_count: int
+
+
+_MAX_DISPLAY_SERVERS = 5
 
 
 class TrafficAnalyzer:
@@ -145,8 +163,9 @@ class TrafficAnalyzer:
         activation requests, and other protection-related network activity.
 
         Returns:
-            Dictionary containing analysis results with protocol_stats, top_conversations,
-            license_traffic, and connection_info, or None if analysis fails.
+            TrafficAnalysisResults | None: Dictionary containing analysis results with
+            protocol_stats, top_conversations, license_traffic, and connection_info, or
+            None if analysis fails.
 
         """
         try:
@@ -263,45 +282,79 @@ class TrafficAnalyzer:
                     })
 
             except ImportError:
+                connection_counts: dict[tuple[str, str], int] = {}
+                license_ports = {443, 80, 27000, 27001, 5093, 7788, 1947, 8080, 8443}
+                excluded_remote_ips = {"0.0.0.0", "*", "[::]", "[::1]"}
+                excluded_remote_addrs = {"*:*", "[::]:*"}
+                excluded_remote_ip_patterns = {"*", "[::]"}
+
+                state_idx = 3
+                pid_idx = 4
+                remote_addr_idx = 5
+
                 if platform.system() == "Windows":
                     try:
                         import subprocess
 
                         netstat_result = subprocess.run(
-                            ["netstat", "-an"],
+                            ["netstat", "-ano"],
                             capture_output=True,
                             text=True,
-                            timeout=10,
+                            timeout=15,
                             shell=False,
+                            check=False,
                         )
 
                         if netstat_result.returncode == 0:
                             lines = netstat_result.stdout.strip().split("\n")
                             for line in lines[4:]:
                                 parts = line.split()
-                                if len(parts) >= 4:
-                                    protocol = parts[0]
+                                min_parts_for_connection = 4
+                                if len(parts) >= min_parts_for_connection:
+                                    protocol = parts[0].upper()
                                     protocol_stats[protocol] = protocol_stats.get(protocol, 0) + 1
 
-                                    if len(parts) >= 3:
-                                        remote_addr = parts[2]
+                                    local_addr = parts[1]
+                                    remote_addr = parts[2]
+                                    state = parts[state_idx] if len(parts) > state_idx else "UNKNOWN"
+                                    pid = parts[pid_idx] if len(parts) > pid_idx else "N/A"
 
-                                        if ":" in remote_addr:
-                                            local_addr = parts[1]
-                                            try:
-                                                remote_port = int(remote_addr.split(":")[-1])
-                                                if remote_port in {443, 80, 27000, 27001, 5093, 7788, 1947}:
-                                                    license_traffic.append({
-                                                        "local_address": local_addr,
-                                                        "remote_address": remote_addr,
-                                                        "protocol": protocol,
-                                                        "reason": "Known license port",
-                                                    })
-                                            except ValueError:
-                                                pass
+                                    if ":" in local_addr and ":" in remote_addr:
+                                        local_ip = local_addr.rsplit(":", 1)[0]
+                                        remote_ip, remote_port_str = remote_addr.rsplit(":", 1)
 
-                    except Exception as e:
-                        self.logger.warning("Netstat fallback failed: %s", e)
+                                        connection_info.append({
+                                            "protocol": protocol,
+                                            "local_address": local_addr,
+                                            "remote_address": remote_addr,
+                                            "state": state,
+                                            "pid": pid,
+                                        })
+
+                                        if remote_ip not in excluded_remote_ips:
+                                            conn_key = (local_ip, remote_ip)
+                                            connection_counts[conn_key] = connection_counts.get(conn_key, 0) + 1
+
+                                        try:
+                                            remote_port = int(remote_port_str)
+                                            if remote_port in license_ports:
+                                                license_traffic.append({
+                                                    "local_address": local_addr,
+                                                    "remote_address": remote_addr,
+                                                    "protocol": protocol,
+                                                    "state": state,
+                                                    "pid": pid,
+                                                    "reason": f"Known license port {remote_port}",
+                                                })
+                                        except ValueError:
+                                            pass
+
+                    except subprocess.TimeoutExpired:
+                        self.logger.warning("Netstat command timed out")
+                    except FileNotFoundError:
+                        self.logger.warning("Netstat command not found")
+                    except Exception:
+                        self.logger.exception("Netstat fallback failed")
                 else:
                     try:
                         import subprocess
@@ -310,19 +363,69 @@ class TrafficAnalyzer:
                             ["ss", "-tunap"],
                             capture_output=True,
                             text=True,
-                            timeout=10,
+                            timeout=15,
                             shell=False,
+                            check=False,
                         )
 
                         if ss_result.returncode == 0:
                             lines = ss_result.stdout.strip().split("\n")
                             for line in lines[1:]:
-                                if parts := line.split():
-                                    protocol = parts[0]
+                                parts = line.split()
+                                min_parts_for_ss = 5
+                                if len(parts) >= min_parts_for_ss:
+                                    protocol = parts[0].upper()
+                                    state = parts[1]
+                                    local_addr = parts[4]
+                                    remote_addr = parts[remote_addr_idx] if len(parts) > remote_addr_idx else "*:*"
+
                                     protocol_stats[protocol] = protocol_stats.get(protocol, 0) + 1
 
-                    except Exception as e:
-                        self.logger.warning("ss fallback failed: %s", e)
+                                    connection_info.append({
+                                        "protocol": protocol,
+                                        "local_address": local_addr,
+                                        "remote_address": remote_addr,
+                                        "state": state,
+                                        "pid": "N/A",
+                                    })
+
+                                    if remote_addr not in excluded_remote_addrs:
+                                        try:
+                                            local_ip = local_addr.rsplit(":", 1)[0]
+                                            remote_ip = remote_addr.rsplit(":", 1)[0]
+                                            remote_port_str = remote_addr.rsplit(":", 1)[-1]
+
+                                            if remote_ip and remote_ip not in excluded_remote_ip_patterns:
+                                                conn_key = (local_ip, remote_ip)
+                                                connection_counts[conn_key] = connection_counts.get(conn_key, 0) + 1
+
+                                            remote_port = int(remote_port_str)
+                                            if remote_port in license_ports:
+                                                license_traffic.append({
+                                                    "local_address": local_addr,
+                                                    "remote_address": remote_addr,
+                                                    "protocol": protocol,
+                                                    "state": state,
+                                                    "reason": f"Known license port {remote_port}",
+                                                })
+                                        except (ValueError, IndexError):
+                                            pass
+
+                    except subprocess.TimeoutExpired:
+                        self.logger.warning("ss command timed out")
+                    except FileNotFoundError:
+                        self.logger.warning("ss command not found")
+                    except Exception:
+                        self.logger.exception("ss fallback failed")
+
+                sorted_convs = sorted(connection_counts.items(), key=lambda x: x[1], reverse=True)
+                max_conversations = 20
+                for (src_addr, dst_addr), count in sorted_convs[:max_conversations]:
+                    top_conversations.append({
+                        "src": src_addr,
+                        "dst": dst_addr,
+                        "count": count,
+                    })
 
             total_connections = sum(protocol_stats.values())
 
@@ -384,6 +487,98 @@ class NetworkTrafficAnalysisDialog(QDialog):
             log_error(error_msg)
             self.analyzer = None
 
+    def _check_admin_privileges(self) -> bool:
+        """Check if current process has admin/root privileges for packet capture.
+
+        Returns:
+            True if running with elevated privileges, False otherwise.
+        """
+        try:
+            if platform.system() == "Windows":
+                import ctypes
+                return ctypes.windll.shell32.IsUserAnAdmin() != 0
+            else:
+                import os
+                return os.geteuid() == 0
+        except (AttributeError, OSError):
+            return False
+
+    def _is_permission_error(self, error: Exception) -> bool:
+        """Check if an exception is related to permission/privilege issues.
+
+        Args:
+            error: The exception to check.
+
+        Returns:
+            True if this appears to be a permission-related error.
+        """
+        error_str = str(error).lower()
+        permission_indicators = [
+            "permission denied",
+            "access denied",
+            "administrator",
+            "privilege",
+            "elevation required",
+            "operation not permitted",
+            "wpcap",
+            "npcap",
+            "winpcap",
+            "pcap_open_live",
+            "you don't have permission",
+        ]
+        return any(indicator in error_str for indicator in permission_indicators)
+
+    def _populate_network_interfaces(self) -> None:
+        """Dynamically populate available network interfaces in the combo box.
+
+        Discovers network interfaces using netifaces or platform-specific fallbacks.
+        Always includes 'auto' option for automatic interface selection.
+        """
+        interfaces = ["auto"]
+
+        try:
+            import netifaces
+
+            for iface in netifaces.interfaces():
+                addrs = netifaces.ifaddresses(iface)
+                if netifaces.AF_INET in addrs or netifaces.AF_INET6 in addrs:
+                    interfaces.append(iface)
+        except ImportError:
+            import platform as plat
+
+            if plat.system() == "Windows":
+                try:
+                    import subprocess
+
+                    result = subprocess.run(
+                        ["netsh", "interface", "show", "interface"],
+                        capture_output=True,
+                        text=True,
+                        timeout=5,
+                        check=False,
+                    )
+                    for line in result.stdout.splitlines():
+                        parts = line.split()
+                        if len(parts) >= 4 and parts[0] in ("Enabled", "Disabled"):
+                            iface_name = " ".join(parts[3:])
+                            interfaces.append(iface_name)
+                except (subprocess.SubprocessError, OSError):
+                    interfaces.extend(["Ethernet", "Wi-Fi", "Loopback Pseudo-Interface 1"])
+            else:
+                try:
+                    from pathlib import Path
+
+                    net_dir = Path("/sys/class/net")
+                    if net_dir.exists():
+                        for iface_path in net_dir.iterdir():
+                            interfaces.append(iface_path.name)
+                    else:
+                        interfaces.extend(["eth0", "wlan0", "lo"])
+                except OSError:
+                    interfaces.extend(["eth0", "wlan0", "lo"])
+
+        self.interface_combo.addItems(interfaces)
+
     def _setup_ui(self) -> None:
         """Set up the comprehensive UI layout."""
         layout = QVBoxLayout(self)
@@ -417,7 +612,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
 
         interface_layout.addWidget(QLabel("Interface:"), 0, 0)
         self.interface_combo: QComboBox = QComboBox()
-        self.interface_combo.addItems(["auto", "eth0", "wlan0", "lo"])
+        self._populate_network_interfaces()
         interface_layout.addWidget(self.interface_combo, 0, 1)
 
         interface_layout.addWidget(QLabel("Capture Filter:"), 1, 0)
@@ -611,8 +806,16 @@ class NetworkTrafficAnalysisDialog(QDialog):
         viz_display_group = QGroupBox("Visualization Display")
         viz_display_layout = QVBoxLayout(viz_display_group)
 
+        self.chart_label: QLabel = QLabel()
+        self.chart_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.chart_label.setMinimumSize(400, 300)
+        self.chart_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.chart_label.setStyleSheet("background-color: #2c2c2c; border: 1px solid #555;")
+        viz_display_layout.addWidget(self.chart_label, stretch=1)
+
         self.viz_display: QTextEdit = QTextEdit()
         self.viz_display.setReadOnly(True)
+        self.viz_display.setMaximumHeight(120)
         self.viz_display.setPlainText("Visualization will be displayed here after analysis...")
         viz_display_layout.addWidget(self.viz_display)
 
@@ -673,6 +876,42 @@ class NetworkTrafficAnalysisDialog(QDialog):
             QMessageBox.warning(self, "Error", "Network traffic analyzer not available")
             return
 
+        # Check for admin privileges and warn if not elevated
+        if not self._check_admin_privileges():
+            log_warning("Network capture attempted without elevated privileges")
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Icon.Warning)
+            msg.setWindowTitle("Elevated Privileges Recommended")
+            if platform.system() == "Windows":
+                msg.setText(
+                    "Network packet capture typically requires Administrator privileges.\n\n"
+                    "You may encounter permission errors during capture."
+                )
+                msg.setInformativeText(
+                    "For best results, restart Intellicrack as Administrator:\n"
+                    "Right-click the application and select 'Run as administrator'."
+                )
+                msg.setDetailedText(
+                    "Windows requires elevated privileges for raw socket access.\n\n"
+                    "Additionally, ensure Npcap or WinPcap is installed:\n"
+                    "  - Npcap: https://npcap.com/ (recommended)\n"
+                    "  - WinPcap: https://www.winpcap.org/\n\n"
+                    "During Npcap installation, enable 'WinPcap API-compatible Mode'."
+                )
+            else:
+                msg.setText(
+                    "Network packet capture typically requires root privileges.\n\n"
+                    "You may encounter permission errors during capture."
+                )
+                msg.setInformativeText(
+                    "For best results, run with: sudo python -m intellicrack"
+                )
+            msg.setStandardButtons(
+                QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel
+            )
+            if msg.exec() == QMessageBox.StandardButton.Cancel:
+                return
+
         try:
             # Get configuration from UI
             interface = self.interface_combo.currentText()
@@ -705,9 +944,27 @@ class NetworkTrafficAnalysisDialog(QDialog):
             log_info(f"Started network traffic capture on interface: {interface}")
 
         except Exception as e:
-            error_msg = f"Failed to start capture: {e}"
-            log_error(error_msg)
-            QMessageBox.critical(self, "Capture Error", error_msg)
+            if self._is_permission_error(e):
+                log_error(f"Permission error during capture: {e}")
+                if platform.system() == "Windows":
+                    QMessageBox.critical(
+                        self,
+                        "Permission Denied",
+                        "Network capture failed due to insufficient privileges.\n\n"
+                        "Please restart Intellicrack as Administrator and ensure "
+                        "Npcap or WinPcap is properly installed.",
+                    )
+                else:
+                    QMessageBox.critical(
+                        self,
+                        "Permission Denied",
+                        "Network capture failed due to insufficient privileges.\n\n"
+                        "Please run with root privileges: sudo python -m intellicrack",
+                    )
+            else:
+                error_msg = f"Failed to start capture: {e}"
+                log_error(error_msg)
+                QMessageBox.critical(self, "Capture Error", error_msg)
 
     def _capture_worker(self, config: dict[str, Any]) -> None:
         """Worker method for packet capture.
@@ -941,12 +1198,73 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
 
     def _export_pcap(self) -> None:
         """Export captured packets to PCAP file."""
-        QMessageBox.information(
-            self,
-            "PCAP Export",
-            "PCAP export functionality requires additional packet capture libraries.\n"
-            "Use the built-in packet capture features or external tools for PCAP generation.",
-        )
+        if not hasattr(self, "_captured_packets") or not self._captured_packets:
+            QMessageBox.warning(
+                self,
+                "PCAP Export",
+                "No captured packets available for export.\nStart a capture session first.",
+            )
+            return
+
+        try:
+            from scapy.all import Ether, IP, Raw, TCP, wrpcap  # noqa: I001
+
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Export PCAP",
+                "",
+                "PCAP Files (*.pcap);;All Files (*)",
+            )
+
+            if not file_path:
+                return
+
+            if not file_path.lower().endswith(".pcap"):
+                file_path += ".pcap"
+
+            scapy_packets = []
+
+            for packet in self._captured_packets:
+                if hasattr(packet, "haslayer"):
+                    scapy_packets.append(packet)
+                elif isinstance(packet, dict):
+                    data = packet.get("data", b"")
+                    addr = packet.get("address", ("0.0.0.0", 0))
+
+                    if isinstance(data, str):
+                        data = data.encode("utf-8", errors="ignore")
+
+                    src_ip = addr[0] if isinstance(addr, tuple) else "0.0.0.0"
+                    src_port = addr[1] if isinstance(addr, tuple) and len(addr) > 1 else 0
+
+                    pkt = Ether() / IP(src=src_ip, dst="0.0.0.0") / TCP(sport=src_port, dport=0) / Raw(load=data)
+                    scapy_packets.append(pkt)
+
+            if scapy_packets:
+                wrpcap(file_path, scapy_packets)
+                QMessageBox.information(
+                    self,
+                    "PCAP Export",
+                    f"Successfully exported {len(scapy_packets)} packets to:\n{file_path}",
+                )
+                log_info(f"Exported {len(scapy_packets)} packets to PCAP: {file_path}")
+            else:
+                QMessageBox.warning(
+                    self,
+                    "PCAP Export",
+                    "No valid packets could be converted for PCAP export.",
+                )
+
+        except ImportError:
+            QMessageBox.warning(
+                self,
+                "PCAP Export",
+                "PCAP export requires the scapy library.\nInstall with: pip install scapy",
+            )
+        except Exception as e:
+            error_msg = f"Failed to export PCAP: {e}"
+            log_error(error_msg)
+            QMessageBox.critical(self, "Export Error", error_msg)
 
     def _export_report(self) -> None:
         """Generate and export comprehensive analysis report."""
@@ -982,42 +1300,75 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
 
         try:
             chart_type = self.chart_type_combo.currentText()
-
             viz_text = f"Visualization: {chart_type}\n"
-            viz_text += "=" * 50 + "\n\n"
+            chart_generated = False
 
             if chart_type == "Protocol Distribution":
                 if "protocol_distribution" in self.analysis_results:
-                    viz_text += "Protocol Distribution Chart:\n"
-                    total = sum(self.analysis_results["protocol_distribution"].values())
-
-                    for protocol, count in self.analysis_results["protocol_distribution"].items():
-                        percentage = (count / total * 100) if total > 0 else 0
-                        bar = "█" * int(percentage / 2)  # Visual bar representation
-                        viz_text += f"{protocol:10s} {bar} {percentage:.1f}% ({count} packets)\n"
-
-            elif chart_type == "Traffic Over Time":
-                viz_text += "Traffic over time analysis would require time-series data.\n"
-                viz_text += "This feature requires additional data collection during capture.\n"
+                    data = self.analysis_results["protocol_distribution"]
+                    if MATPLOTLIB_AVAILABLE and data:
+                        chart_generated = self._create_pie_chart(
+                            list(data.keys()),
+                            list(data.values()),
+                            "Protocol Distribution",
+                        )
+                    if chart_generated:
+                        total = sum(data.values())
+                        viz_text += f"Total packets: {total}\n"
+                        for protocol, count in data.items():
+                            pct = (count / total * 100) if total > 0 else 0
+                            viz_text += f"  {protocol}: {count} ({pct:.1f}%)\n"
+                    else:
+                        viz_text = self._generate_text_protocol_chart(data)
 
             elif chart_type == "Port Distribution":
                 if "port_distribution" in self.analysis_results:
-                    viz_text += "Port Distribution Chart:\n"
-                    for port, count in list(self.analysis_results["port_distribution"].items())[:20]:
-                        bar = "█" * min(int(count / 10), 50)
-                        viz_text += f"Port {port:5d} {bar} {count} connections\n"
+                    data = dict(list(self.analysis_results["port_distribution"].items())[:15])
+                    if MATPLOTLIB_AVAILABLE and data:
+                        chart_generated = self._create_bar_chart(
+                            [str(p) for p in data],
+                            list(data.values()),
+                            "Port Distribution (Top 15)",
+                            "Port",
+                            "Connections",
+                        )
+                    if chart_generated:
+                        viz_text += f"Showing top {len(data)} ports\n"
+                    else:
+                        viz_text = self._generate_text_port_chart(data)
 
             elif chart_type == "License Traffic Analysis":
                 if "license_analysis" in self.analysis_results:
                     license_data = self.analysis_results["license_analysis"]
-                    viz_text += "License Traffic Analysis:\n"
-                    viz_text += f"Total License Packets: {license_data.get('packet_count', 0)}\n"
-                    viz_text += f"License Traffic %: {license_data.get('traffic_percentage', 0):.2f}%\n"
-                    viz_text += f"Detected Servers: {len(license_data.get('servers', []))}\n"
+                    pkt_count = license_data.get("packet_count", 0)
+                    traffic_pct = license_data.get("traffic_percentage", 0)
+                    servers = license_data.get("servers", [])
+                    if MATPLOTLIB_AVAILABLE:
+                        chart_generated = self._create_pie_chart(
+                            ["License Traffic", "Other Traffic"],
+                            [traffic_pct, 100 - traffic_pct],
+                            "License Traffic Percentage",
+                        )
+                    viz_text += f"Total License Packets: {pkt_count}\n"
+                    viz_text += f"License Traffic: {traffic_pct:.2f}%\n"
+                    viz_text += f"Detected Servers: {len(servers)}\n"
+                    if servers:
+                        viz_text += "Servers: " + ", ".join(str(s) for s in servers[:_MAX_DISPLAY_SERVERS])
+                        if len(servers) > _MAX_DISPLAY_SERVERS:
+                            viz_text += f" (+{len(servers) - _MAX_DISPLAY_SERVERS} more)"
 
-            else:
-                viz_text += "Advanced visualizations require matplotlib integration.\n"
-                viz_text += "Consider exporting data for external visualization tools.\n"
+            elif chart_type == "Traffic Over Time":
+                viz_text += "Time-series visualization requires capture with timestamps.\n"
+                if not chart_generated:
+                    self.chart_label.setText("Time-series data not available")
+
+            elif chart_type == "Connection Flow Diagram":
+                viz_text += "Connection flow diagram requires network graph data.\n"
+                if not chart_generated:
+                    self.chart_label.setText("Flow diagram not available")
+
+            if not chart_generated and not self.chart_label.pixmap():
+                self.chart_label.setText("No chart available - see text output below")
 
             self.viz_display.setPlainText(viz_text)
 
@@ -1025,6 +1376,187 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
             error_msg = f"Visualization generation failed: {e}"
             log_error(error_msg)
             QMessageBox.critical(self, "Visualization Error", error_msg)
+
+    def _create_bar_chart(
+        self,
+        labels: list[str],
+        values: list[float],
+        title: str,
+        xlabel: str = "",
+        ylabel: str = "",
+    ) -> bool:
+        """Create a bar chart and display it in the chart label.
+
+        Args:
+            labels: Labels for the bars.
+            values: Values for each bar.
+            title: Chart title.
+            xlabel: X-axis label.
+            ylabel: Y-axis label.
+
+        Returns:
+            True if chart was created successfully, False otherwise.
+        """
+        if not MATPLOTLIB_AVAILABLE or not labels or not values:
+            return False
+        try:
+            fig, ax = plt.subplots(figsize=(8, 5))
+            fig.patch.set_facecolor("#2c2c2c")
+            ax.set_facecolor("#3c3c3c")
+
+            bars = ax.bar(labels, values, color="#4a90d9", edgecolor="#1a1a1a", linewidth=1.2)
+
+            for bar, value in zip(bars, values, strict=False):
+                height = bar.get_height()
+                ax.annotate(
+                    f"{value:.0f}",
+                    xy=(bar.get_x() + bar.get_width() / 2, height),
+                    xytext=(0, 3),
+                    textcoords="offset points",
+                    ha="center",
+                    va="bottom",
+                    color="white",
+                    fontsize=9,
+                )
+
+            if title:
+                ax.set_title(title, color="white", fontsize=12, fontweight="bold")
+            if xlabel:
+                ax.set_xlabel(xlabel, color="white", fontsize=10)
+            if ylabel:
+                ax.set_ylabel(ylabel, color="white", fontsize=10)
+
+            ax.tick_params(colors="white", labelsize=9)
+            ax.spines["bottom"].set_color("white")
+            ax.spines["left"].set_color("white")
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+
+            plt.xticks(rotation=45, ha="right")
+            plt.tight_layout()
+
+            return self._display_figure(fig)
+        except Exception as e:
+            log_error(f"Error creating bar chart: {e}")
+            return False
+
+    def _create_pie_chart(
+        self,
+        labels: list[str],
+        values: list[float],
+        title: str,
+    ) -> bool:
+        """Create a pie chart and display it in the chart label.
+
+        Args:
+            labels: Labels for pie segments.
+            values: Values for each segment.
+            title: Chart title.
+
+        Returns:
+            True if chart was created successfully, False otherwise.
+        """
+        if not MATPLOTLIB_AVAILABLE or not labels or not values:
+            return False
+        try:
+            fig, ax = plt.subplots(figsize=(7, 5))
+            fig.patch.set_facecolor("#2c2c2c")
+
+            colors = ["#4a90d9", "#6495ed", "#87ceeb", "#b0c4de", "#778899", "#708090", "#5f9ea0"]
+            non_zero = [(lbl, val, colors[i % len(colors)]) for i, (lbl, val) in enumerate(zip(labels, values, strict=False)) if val > 0]
+
+            if not non_zero:
+                ax.text(0.5, 0.5, "No data", ha="center", va="center", color="white", fontsize=12, transform=ax.transAxes)
+                return self._display_figure(fig)
+
+            nz_labels, nz_values, nz_colors = zip(*non_zero, strict=False)
+            _wedges, texts, autotexts = ax.pie(
+                nz_values,
+                labels=nz_labels,
+                autopct="%1.1f%%",
+                colors=nz_colors,
+                startangle=90,
+                wedgeprops={"edgecolor": "#1a1a1a", "linewidth": 1.5},
+            )
+
+            for text in texts:
+                text.set_color("white")
+                text.set_fontsize(9)
+            for autotext in autotexts:
+                autotext.set_color("white")
+                autotext.set_fontsize(8)
+                autotext.set_fontweight("bold")
+
+            if title:
+                ax.set_title(title, color="white", fontsize=12, fontweight="bold", pad=15)
+
+            plt.tight_layout()
+            return self._display_figure(fig)
+        except Exception as e:
+            log_error(f"Error creating pie chart: {e}")
+            return False
+
+    def _display_figure(self, fig: Any) -> bool:
+        """Convert matplotlib figure to QPixmap and display in chart_label.
+
+        Args:
+            fig: Matplotlib figure to display.
+
+        Returns:
+            True if display was successful, False otherwise.
+        """
+        try:
+            buf = io.BytesIO()
+            fig.savefig(buf, format="png", dpi=100, bbox_inches="tight", facecolor="#2c2c2c", edgecolor="none")
+            buf.seek(0)
+            image_data = buf.getvalue()
+            buf.close()
+            plt.close(fig)
+
+            qimage = QImage()
+            qimage.loadFromData(image_data)
+            pixmap = QPixmap.fromImage(qimage)
+            self.chart_label.setPixmap(pixmap.scaled(
+                self.chart_label.size(),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            ))
+            return True
+        except Exception as e:
+            log_error(f"Error displaying figure: {e}")
+            return False
+
+    def _generate_text_protocol_chart(self, data: dict[str, int]) -> str:
+        """Generate text-based protocol distribution chart.
+
+        Args:
+            data: Protocol distribution data.
+
+        Returns:
+            Text representation of the chart.
+        """
+        viz_text = "Protocol Distribution (Text Mode):\n" + "=" * 40 + "\n"
+        total = sum(data.values())
+        for protocol, count in data.items():
+            pct = (count / total * 100) if total > 0 else 0
+            bar = "█" * int(pct / 2)
+            viz_text += f"{protocol:10s} {bar} {pct:.1f}% ({count})\n"
+        return viz_text
+
+    def _generate_text_port_chart(self, data: dict[int, int]) -> str:
+        """Generate text-based port distribution chart.
+
+        Args:
+            data: Port distribution data.
+
+        Returns:
+            Text representation of the chart.
+        """
+        viz_text = "Port Distribution (Text Mode):\n" + "=" * 40 + "\n"
+        for port, count in data.items():
+            bar = "█" * min(int(count / 10), 50)
+            viz_text += f"Port {port:5d} {bar} {count}\n"
+        return viz_text
 
 
 # Network capture management functions for main_app binding
@@ -1037,7 +1569,8 @@ def start_network_capture(self: Any, interface: str | None = None, filter_str: s
         filter_str: BPF filter string for capture filtering
 
     Returns:
-        True if capture started successfully, False on error, None if unhandled
+        bool | None: True if capture started successfully, False on error, None if
+        unhandled
 
     """
     try:
@@ -1088,7 +1621,8 @@ def stop_network_capture(self: Any) -> bool | None:
         self: Traffic analyzer instance
 
     Returns:
-        True if capture stopped successfully, False on error, None if unhandled
+        bool | None: True if capture stopped successfully, False on error, None if
+        unhandled
 
     """
     try:
@@ -1121,7 +1655,8 @@ def clear_network_capture(self: Any) -> bool | None:
         self: Traffic analyzer instance
 
     Returns:
-        True if data cleared successfully, False on error, None if unhandled
+        bool | None: True if data cleared successfully, False on error, None if
+        unhandled
 
     """
     try:

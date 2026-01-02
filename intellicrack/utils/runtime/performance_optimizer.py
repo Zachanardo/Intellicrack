@@ -45,14 +45,30 @@ class MemoryManager:
     """Manages memory usage during large binary analysis."""
 
     def __init__(self, max_memory_mb: int = 2048) -> None:
-        """Initialize memory manager with specified memory limit and usage tracking."""
+        """Initialize memory manager with specified memory limit and usage tracking.
+
+        Args:
+            max_memory_mb: Maximum allowed memory usage in megabytes.
+        """
         self.max_memory_mb = max_memory_mb
         self.max_memory_bytes = max_memory_mb * 1024 * 1024
         self.current_usage = 0
         self.memory_lock = threading.Lock()
 
     def check_memory_usage(self) -> dict[str, float]:
-        """Check current memory usage."""
+        """Check current memory usage and availability.
+
+        Retrieves memory statistics from the current process using psutil,
+        including resident set size (RSS), virtual memory size (VMS), and
+        percentage of available system memory.
+
+        Returns:
+            Memory usage dictionary with keys:
+                - rss_mb: Resident set size in megabytes
+                - vms_mb: Virtual memory size in megabytes
+                - percent: Memory usage percentage
+                - available_mb: Available memory in megabytes
+        """
         try:
             from intellicrack.handlers.psutil_handler import psutil
 
@@ -75,16 +91,41 @@ class MemoryManager:
             }
 
     def should_limit_analysis(self) -> bool:
-        """Check if analysis should be limited due to memory constraints."""
+        """Check if analysis should be limited due to memory constraints.
+
+        Compares current resident set size against the configured maximum memory
+        threshold (80% of max_memory_mb) to determine if analysis should be
+        throttled or limited.
+
+        Returns:
+            True if memory usage exceeds 80% threshold, False otherwise.
+        """
         memory_info = self.check_memory_usage()
         return memory_info["rss_mb"] > (self.max_memory_mb * 0.8)
 
     def cleanup_memory(self) -> None:
-        """Force garbage collection and memory cleanup."""
+        """Force garbage collection and memory cleanup.
+
+        Triggers Python garbage collection to reclaim memory from unreferenced
+        objects, helping reduce memory pressure during long-running analysis
+        tasks.
+        """
         gc.collect()
 
     def get_recommended_chunk_size(self, file_size: int) -> int:
-        """Get recommended chunk size based on available memory."""
+        """Get recommended chunk size based on available memory.
+
+        Calculates an optimal chunk size for binary analysis by considering
+        available memory and file size. The recommended size is 1/4 of available
+        memory but clamped between 1MB and 100MB, and never exceeds 1/10 of the
+        file size.
+
+        Args:
+            file_size: Total size of the binary file in bytes.
+
+        Returns:
+            Recommended chunk size in bytes.
+        """
         memory_info = self.check_memory_usage()
         available_mb = memory_info["available_mb"]
 
@@ -104,19 +145,22 @@ class BinaryChunker:
     """Efficiently processes large binaries in chunks."""
 
     def __init__(self, memory_manager: MemoryManager) -> None:
-        """Initialize binary chunker with memory manager for efficient data processing."""
+        """Initialize binary chunker with memory manager for efficient data processing.
+
+        Args:
+            memory_manager: MemoryManager instance for memory-aware chunking.
+        """
         self.memory_manager = memory_manager
 
     def chunk_binary(self, file_path: str, chunk_size: int | None = None) -> list[dict[str, Any]]:
         """Split binary into manageable chunks for analysis.
 
         Args:
-            file_path: Path to binary file
-            chunk_size: Size of each chunk in bytes (auto-calculated if None)
+            file_path: Path to binary file.
+            chunk_size: Size of each chunk in bytes (auto-calculated if None).
 
         Returns:
-            List of chunk metadata dictionaries
-
+            List of chunk metadata dictionaries.
         """
         file_path_obj = Path(file_path)
         file_size = file_path_obj.stat().st_size
@@ -150,7 +194,17 @@ class BinaryChunker:
         return chunks
 
     def read_chunk(self, chunk_info: dict[str, Any]) -> bytes:
-        """Read a specific chunk from the binary."""
+        """Read a specific chunk from the binary.
+
+        Seeks to the specified offset in the binary file and reads the requested
+        number of bytes. Returns empty bytes on read failure.
+
+        Args:
+            chunk_info: Dictionary containing file_path, offset, and size keys.
+
+        Returns:
+            Raw binary data from the chunk, or empty bytes on error.
+        """
         try:
             file_path_str = str(chunk_info["file_path"])
             offset_val = int(chunk_info["offset"])
@@ -167,14 +221,18 @@ class BinaryChunker:
     ) -> list[dict[str, Any]]:
         """Analyze chunks in parallel with controlled concurrency.
 
+        Distributes chunk analysis across worker threads, monitors memory usage,
+        and gracefully handles failures in individual chunks without stopping
+        overall analysis.
+
         Args:
-            chunks: List of chunk metadata
-            analysis_func: Function to analyze each chunk
-            max_workers: Maximum number of worker threads
+            chunks: List of chunk metadata dictionaries.
+            analysis_func: Function to analyze each chunk, receives chunk dict.
+            max_workers: Maximum number of concurrent worker threads.
 
         Returns:
-            List of analysis results for each chunk
-
+            Sorted list of analysis results for each chunk,
+                with chunk_id added to each result.
         """
         results: list[dict[str, Any]] = []
 
@@ -212,14 +270,29 @@ class CacheManager:
     """Manages caching of analysis results for performance."""
 
     def __init__(self, cache_dir: str = "cache") -> None:
-        """Initialize cache manager with directory setup and threading synchronization."""
+        """Initialize cache manager with directory setup and threading synchronization.
+
+        Args:
+            cache_dir: Directory path for storing cached analysis results.
+        """
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(exist_ok=True)
         self.memory_cache: dict[str, dict[str, Any]] = {}
         self.cache_lock = threading.Lock()
 
     def get_file_hash(self, file_path: str) -> str:
-        """Get hash of file for cache key."""
+        """Get hash of file for cache key.
+
+        Computes a SHA256-based hash of the file by hashing the first 64KB,
+        last 64KB, and file size. This provides a quick but reasonably unique
+        identifier for caching purposes.
+
+        Args:
+            file_path: Path to the file to hash.
+
+        Returns:
+            16-character hexadecimal hash string.
+        """
         hasher = hashlib.sha256()
         with open(file_path, "rb") as f:
             # Hash first and last 64KB + file size for speed
@@ -233,12 +306,34 @@ class CacheManager:
         return hasher.hexdigest()[:16]  # Use first 16 chars
 
     def get_cache_key(self, file_path: str, analysis_type: str) -> str:
-        """Generate cache key for analysis result."""
+        """Generate cache key for analysis result.
+
+        Combines the analysis type with the file hash to create a unique cache
+        key that identifies a specific analysis result for a file.
+
+        Args:
+            file_path: Path to the analyzed file.
+            analysis_type: Type or name of the analysis.
+
+        Returns:
+            Cache key in format "{analysis_type}_{file_hash}".
+        """
         file_hash = self.get_file_hash(file_path)
         return f"{analysis_type}_{file_hash}"
 
     def get_cached_result(self, file_path: str, analysis_type: str) -> dict[str, Any] | None:
-        """Get cached analysis result if available."""
+        """Get cached analysis result if available.
+
+        Attempts to retrieve cached analysis results from in-memory cache first,
+        then from disk cache if not found in memory. Thread-safe.
+
+        Args:
+            file_path: Path to the analyzed file.
+            analysis_type: Type or name of the analysis.
+
+        Returns:
+            Cached analysis result if found, None otherwise.
+        """
         cache_key = self.get_cache_key(file_path, analysis_type)
 
         with self.cache_lock:
@@ -263,7 +358,16 @@ class CacheManager:
         return None
 
     def cache_result(self, file_path: str, analysis_type: str, result: dict[str, Any]) -> None:
-        """Cache analysis result."""
+        """Cache analysis result.
+
+        Stores analysis result in both in-memory and disk cache. Thread-safe
+        for in-memory cache updates. Disk cache saves as JSON.
+
+        Args:
+            file_path: Path to the analyzed file.
+            analysis_type: Type or name of the analysis.
+            result: Analysis result dictionary to cache.
+        """
         cache_key = self.get_cache_key(file_path, analysis_type)
 
         # Add to memory cache
@@ -281,7 +385,11 @@ class CacheManager:
             logger.warning("Error writing cache file %s: %s", cache_file, e, exc_info=True)
 
     def clear_cache(self) -> None:
-        """Clear all cached results."""
+        """Clear all cached results.
+
+        Removes all cached analysis results from both in-memory and disk cache.
+        Thread-safe for in-memory cache operations.
+        """
         with self.cache_lock:
             self.memory_cache.clear()
 
@@ -297,19 +405,29 @@ class AdaptiveAnalyzer:
     """Provides adaptive analysis strategies based on binary characteristics."""
 
     def __init__(self, memory_manager: MemoryManager, cache_manager: CacheManager) -> None:
-        """Initialize adaptive analyzer with memory and cache management for optimized binary analysis."""
+        """Initialize adaptive analyzer with memory and cache management for optimized binary analysis.
+
+        Args:
+            memory_manager: MemoryManager instance for memory tracking.
+            cache_manager: CacheManager instance for result caching.
+        """
         self.memory_manager = memory_manager
         self.cache_manager = cache_manager
 
     def get_analysis_strategy(self, file_path: str) -> dict[str, Any]:
         """Determine optimal analysis strategy for the binary.
 
+        Analyzes file size and available memory to determine whether to use
+        chunking, sampling, and other optimizations. Identifies high-priority
+        sections like PE headers and licensing code regions.
+
         Args:
-            file_path: Path to binary file
+            file_path: Path to binary file to analyze.
 
         Returns:
-            Dictionary with recommended analysis strategy
-
+            Strategy dictionary with keys: file_size_mb,
+                memory_available_mb, use_chunking, chunk_size_mb, max_workers,
+                skip_heavy_analysis, use_sampling, sample_rate, priority_sections.
         """
         file_size = Path(file_path).stat().st_size
         memory_info = self.memory_manager.check_memory_usage()
@@ -354,7 +472,19 @@ class AdaptiveAnalyzer:
         return strategy
 
     def _identify_priority_sections(self, file_path: str) -> list[dict[str, Any]]:
-        """Identify important sections to prioritize during analysis."""
+        """Identify important sections to prioritize during analysis.
+
+        Scans the binary header for PE format markers and searches the end of
+        the file for licensing-related keywords to identify high-priority
+        analysis regions.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+
+        Returns:
+            List of priority sections with name, offset,
+                size, and priority level.
+        """
         priority_sections: list[dict[str, Any]] = []
 
         try:
@@ -415,13 +545,17 @@ class PerformanceOptimizer:
     def optimize_analysis(self, file_path: str, analysis_functions: list[Callable[..., dict[str, Any]]]) -> dict[str, Any]:
         """Perform optimized analysis of a large binary.
 
+        Orchestrates analysis of a binary file with adaptive chunking strategies,
+        caching, memory management, and performance tracking. Selects optimal
+        analysis strategy based on file size and available memory.
+
         Args:
-            file_path: Path to binary file
-            analysis_functions: List of analysis functions to run
+            file_path: Path to binary file to analyze.
+            analysis_functions: List of analysis functions to run.
 
         Returns:
-            Comprehensive analysis results
-
+            Comprehensive analysis results including strategy,
+                analysis_results, performance_metrics, and cache statistics.
         """
         start_time = time.time()
 
@@ -496,7 +630,22 @@ class PerformanceOptimizer:
     def _run_chunked_analysis(
         self, file_path: str, analysis_func: Callable[..., dict[str, Any]], strategy: dict[str, Any]
     ) -> dict[str, Any]:
-        """Run analysis on binary chunks."""
+        """Run analysis on binary chunks.
+
+        Divides the binary into chunks and analyzes each chunk in parallel,
+        optionally applying sampling to reduce analysis time on very large
+        files. Aggregates results across all chunks.
+
+        Args:
+            file_path: Path to binary file to analyze.
+            analysis_func: Analysis function to apply to each chunk.
+            strategy: Strategy dictionary containing chunk_size_mb, use_sampling,
+                sample_rate, and max_workers parameters.
+
+        Returns:
+            Aggregated analysis results with chunk_summaries,
+                combined_results, chunks_analyzed, and sampling_rate.
+        """
         chunk_size_mb = float(strategy["chunk_size_mb"])
         chunk_size = int(chunk_size_mb * 1024 * 1024)
         chunks = self.binary_chunker.chunk_binary(file_path, chunk_size)
@@ -509,7 +658,16 @@ class PerformanceOptimizer:
             chunks = [chunks[i] for i in range(0, len(chunks), step)][:sample_count]
 
         def analyze_chunk(chunk_info: dict[str, Any]) -> dict[str, Any]:
-            """Analyze a single chunk of binary data."""
+            """Analyze a single chunk of binary data.
+
+            Reads the chunk from disk and applies the configured analysis function.
+
+            Args:
+                chunk_info: Dictionary containing chunk metadata (file_path, offset, size).
+
+            Returns:
+                Analysis result from the analysis function, or error dict.
+            """
             chunk_data = self.binary_chunker.read_chunk(chunk_info)
             if chunk_data:
                 return analysis_func(chunk_data, chunk_info)
@@ -531,7 +689,20 @@ class PerformanceOptimizer:
     def _run_standard_analysis(
         self, file_path: str, analysis_func: Callable[..., dict[str, Any]], strategy: dict[str, Any]
     ) -> dict[str, Any]:
-        """Run standard analysis on entire file."""
+        """Run standard analysis on entire file.
+
+        Loads the entire file into memory using memory-mapped I/O for efficiency,
+        and applies the analysis function to the full binary. Falls back to
+        regular file reading if memory mapping fails.
+
+        Args:
+            file_path: Path to binary file to analyze.
+            analysis_func: Analysis function to apply to the full binary data.
+            strategy: Strategy dictionary (unused for standard analysis).
+
+        Returns:
+            Analysis results from the analysis function.
+        """
         _ = strategy
         try:
             with (
@@ -546,7 +717,20 @@ class PerformanceOptimizer:
                 return analysis_func(data)
 
     def _aggregate_chunk_results(self, chunk_results: list[dict[str, Any]], analysis_name: str) -> dict[str, Any]:
-        """Aggregate results from multiple chunks."""
+        """Aggregate results from multiple chunks.
+
+        Combines individual chunk analysis results into a consolidated report,
+        tallying successful chunks and merging findings across all chunks.
+
+        Args:
+            chunk_results: List of analysis results from each chunk.
+            analysis_name: Name of the analysis type being aggregated.
+
+        Returns:
+            Aggregated dictionary with analysis_type,
+                chunks_processed, successful_chunks, combined_results,
+                and chunk_summaries.
+        """
         aggregated: dict[str, Any] = {
             "analysis_type": analysis_name,
             "chunks_processed": len(chunk_results),
@@ -576,12 +760,36 @@ class PerformanceOptimizer:
 
 
 def create_performance_optimizer(max_memory_mb: int = 2048, cache_dir: str = "cache") -> PerformanceOptimizer:
-    """Create a performance optimizer."""
+    """Create a performance optimizer.
+
+    Factory function to instantiate a PerformanceOptimizer with specified memory
+    and cache configuration.
+
+    Args:
+        max_memory_mb: Maximum memory limit in megabytes for analysis.
+        cache_dir: Directory path for storing cached analysis results.
+
+    Returns:
+        Configured optimizer instance ready for use.
+    """
     return PerformanceOptimizer(max_memory_mb, cache_dir)
 
 
 def example_string_analysis(data: bytes | mmap.mmap, chunk_info: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Demonstrate string analysis function."""
+    """Demonstrate string analysis function.
+
+    Extracts ASCII strings from binary data, either by scanning mmap objects
+    directly or using the core string extraction utility. Returns up to 100
+    found strings with metadata.
+
+    Args:
+        data: Binary data to analyze as bytes or memory-mapped file.
+        chunk_info: Optional chunk metadata for tracking chunk-level analysis.
+
+    Returns:
+        Result dictionary with status, findings list, total_strings
+            count, and optional chunk metadata (chunk_id, chunk_offset, chunk_size).
+    """
     result_metadata: dict[str, Any] = {}
     if chunk_info:
         data_len = len(data) if hasattr(data, "__len__") else 0
@@ -617,7 +825,22 @@ def example_string_analysis(data: bytes | mmap.mmap, chunk_info: dict[str, Any] 
 
 
 def example_entropy_analysis(data: bytes | mmap.mmap, chunk_info: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Demonstrate entropy analysis function."""
+    """Demonstrate entropy analysis function.
+
+    Calculates Shannon entropy of binary data to detect compression or encryption.
+    Analyzes up to 1MB of data (sample-based approach). Entropy values closer to
+    8.0 indicate high randomness/compression, while low values indicate structured
+    or readable data.
+
+    Args:
+        data: Binary data to analyze as bytes or memory-mapped file.
+        chunk_info: Optional chunk metadata for tracking chunk-level analysis.
+
+    Returns:
+        Result dictionary with status, entropy value, sample_size,
+            findings list, and optional chunk metadata (chunk_id, chunk_offset,
+            chunk_size, analysis_region).
+    """
     result_metadata: dict[str, Any] = {}
     if chunk_info:
         data_len = len(data) if hasattr(data, "__len__") else 0

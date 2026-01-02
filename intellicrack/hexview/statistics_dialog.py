@@ -46,7 +46,7 @@ class FileHandlerProtocol(Protocol):
 
     @property
     def file_size(self) -> int:
-        """Get file size."""
+        """Get file size in bytes."""
         ...
 
     @property
@@ -55,7 +55,16 @@ class FileHandlerProtocol(Protocol):
         ...
 
     def read_data(self, offset: int, size: int) -> bytes | None:
-        """Read data from file."""
+        """Read data from file.
+
+        Args:
+            offset: Starting position in file.
+            size: Number of bytes to read.
+
+        Returns:
+            Binary data at the specified offset and size, or None if read fails.
+
+        """
         ...
 
 
@@ -95,14 +104,23 @@ class StatisticsWorker(QThread):
         """Progress callback for calculator.
 
         Args:
-            current: Current progress
-            total: Total items
+            current: Current progress value.
+            total: Total items to process.
 
         """
         self.progress.emit(current, total)
 
     def run(self) -> None:
-        """Run statistics calculation."""
+        """Run statistics calculation.
+
+        Executes the statistical analysis in a separate thread. Loads data
+        from file if needed, calculates statistics, and emits results via
+        the result signal. Errors are caught and emitted via the error signal.
+
+        Raises:
+            ValueError: If no data is available to analyze.
+
+        """
         try:
             # Get data if file path provided
             if self.data is None and self.file_path:
@@ -152,7 +170,18 @@ class StatisticsDialog(QDialog):
         self.resize(700, 600)
 
     def init_ui(self) -> None:
-        """Initialize UI components."""
+        """Initialize UI components.
+
+        Constructs the dialog layout with:
+        - Data source selection radio buttons (entire file or selection)
+        - Tabbed interface for overview, distribution, patterns, and file type analysis
+        - Progress bar for analysis feedback
+        - Action buttons for analyze and copy operations
+
+        Returns:
+            None
+
+        """
         layout = QVBoxLayout()
 
         # Data source selection
@@ -235,7 +264,13 @@ class StatisticsDialog(QDialog):
         self.setLayout(layout)
 
     def analyze_data(self) -> None:
-        """Start statistical analysis."""
+        """Start statistical analysis.
+
+        Initiates a worker thread to analyze the selected data source
+        (entire file or current selection) and updates the UI with results.
+        Handles data retrieval, progress tracking, and result display.
+
+        """
         # Clear previous results
         self.overview_text.clear()
         self.distribution_text.clear()
@@ -290,11 +325,13 @@ class StatisticsDialog(QDialog):
         self.worker.start()
 
     def update_progress(self, current: int, total: int) -> None:
-        """Update progress bar.
+        """Update progress bar with analysis progress.
+
+        Updates the progress bar value based on the current analysis stage.
 
         Args:
-            current: Current progress
-            total: Total items
+            current: Current progress value.
+            total: Total items to process.
 
         """
         self.progress_bar.setValue(current)
@@ -302,8 +339,14 @@ class StatisticsDialog(QDialog):
     def display_results(self, results: dict[str, Any]) -> None:
         """Display analysis results.
 
+        Formats and displays statistical analysis results across multiple
+        tabs including overview, distribution histogram, patterns, and
+        file type analysis. Updates UI components and enables copy button.
+
         Args:
-            results: Dictionary of analysis results
+            results: Dictionary of analysis results containing entropy,
+                randomness score, byte statistics, patterns, and file type
+                hints.
 
         """
         # Format overview
@@ -406,10 +449,13 @@ class StatisticsDialog(QDialog):
         self.analyze_btn.setEnabled(True)
 
     def display_error(self, error: str) -> None:
-        """Display error message.
+        """Display error message in the overview tab.
+
+        Shows an error message, hides the progress bar, and re-enables
+        the analyze button.
 
         Args:
-            error: Error message
+            error: Error message to display.
 
         """
         self.overview_text.setPlainText(f"Error: {error}")
@@ -417,7 +463,15 @@ class StatisticsDialog(QDialog):
         self.analyze_btn.setEnabled(True)
 
     def copy_results(self) -> None:
-        """Copy results to clipboard."""
+        """Copy results to clipboard.
+
+        Combines all analysis results from all tabs into a single formatted
+        text and copies it to the system clipboard.
+
+        Returns:
+            None
+
+        """
         # Combine all tabs into one text
         text = "=== OVERVIEW ===\n"
         text += self.overview_text.toPlainText() + "\n\n"

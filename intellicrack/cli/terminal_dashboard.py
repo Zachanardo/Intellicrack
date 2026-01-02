@@ -143,8 +143,11 @@ class TerminalDashboard:
         """Register callback for dashboard events.
 
         Args:
-            event: Event name
-            callback: Callback function
+            event: Event name to listen for.
+            callback: Callback function to invoke when event occurs.
+
+        Returns:
+            None
 
         """
         if event not in self.callbacks:
@@ -155,8 +158,12 @@ class TerminalDashboard:
         """Log activity to dashboard.
 
         Args:
-            message: Activity message
-            level: Log level (info, warning, error, success)
+            message: Activity message to log.
+            level: Log level categorizing the message. Defaults to "info".
+                Valid values are info, warning, error, success.
+
+        Returns:
+            None
 
         """
         timestamp = datetime.now().strftime("%H:%M:%S")
@@ -176,7 +183,11 @@ class TerminalDashboard:
         """Update analysis statistics.
 
         Args:
-            **kwargs: Analysis stats to update
+            **kwargs: Analysis stats fields to update as key-value pairs.
+                Attribute names must exist on the AnalysisStats dataclass.
+
+        Returns:
+            None
 
         """
         for key, value in kwargs.items():
@@ -187,7 +198,11 @@ class TerminalDashboard:
         """Update session information.
 
         Args:
-            **kwargs: Session info to update
+            **kwargs: Session info fields to update as key-value pairs.
+                Attribute names must exist on the SessionInfo dataclass.
+
+        Returns:
+            None
 
         """
         for key, value in kwargs.items():
@@ -198,7 +213,10 @@ class TerminalDashboard:
         """Increment a counter in session info.
 
         Args:
-            counter: Counter name
+            counter: Counter field name in SessionInfo to increment by 1.
+
+        Returns:
+            None
 
         """
         if hasattr(self.session_info, counter):
@@ -250,7 +268,13 @@ class TerminalDashboard:
             self.logger.debug("Failed to collect system metrics", exc_info=True)
 
     def _create_system_panel(self) -> "Panel | None":
-        """Create system metrics panel."""
+        """Create system metrics panel.
+
+        Returns:
+            System metrics panel with CPU, memory, and disk usage displays.
+            Returns None if Rich library is unavailable or console not initialized.
+
+        """
         if not self.console:
             return None
 
@@ -300,7 +324,13 @@ class TerminalDashboard:
         return Panel(content, title="🖥️ System", border_style="green")
 
     def _create_analysis_panel(self) -> "Panel | None":
-        """Create analysis statistics panel."""
+        """Create analysis statistics panel.
+
+        Returns:
+            Analysis statistics panel with completion counts and success rates.
+            Returns None if Rich library is unavailable or console not initialized.
+
+        """
         if not self.console:
             return None
 
@@ -337,7 +367,13 @@ class TerminalDashboard:
         return Panel(content, title=" Analysis", border_style="blue")
 
     def _create_session_panel(self) -> "Panel | None":
-        """Create session information panel."""
+        """Create session information panel.
+
+        Returns:
+            Session information panel with current binary, project, and activity counts.
+            Returns None if Rich library is unavailable or console not initialized.
+
+        """
         if not self.console:
             return None
 
@@ -367,7 +403,13 @@ class TerminalDashboard:
         return Panel(content, title=" Session", border_style="yellow")
 
     def _create_activity_panel(self) -> "Panel | None":
-        """Create recent activity panel."""
+        """Create recent activity panel.
+
+        Returns:
+            Recent activity panel displaying logged activities with color coding.
+            Returns None if Rich library is unavailable or console not initialized.
+
+        """
         if not self.console:
             return None
 
@@ -400,7 +442,13 @@ class TerminalDashboard:
         return Panel(content, title="📋 Recent Activity", border_style="cyan")
 
     def _create_quick_stats_panel(self) -> "Panel | None":
-        """Create quick statistics panel."""
+        """Create quick statistics panel.
+
+        Returns:
+            Quick statistics panel showing trends, efficiency, and health metrics.
+            Returns None if Rich library is unavailable or console not initialized.
+
+        """
         if not self.console:
             return None
 
@@ -477,7 +525,13 @@ Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.s
         return "↘️" if diff < -5 else "→"
 
     def _calculate_commands_per_minute(self) -> float:
-        """Calculate commands per minute rate."""
+        """Calculate commands per minute rate.
+
+        Returns:
+            Commands executed per minute as a float value.
+            Returns 0.0 if session duration is zero.
+
+        """
         session_duration = datetime.now() - self.session_info.start_time
         duration_minutes = session_duration.total_seconds() / 60
 
@@ -535,7 +589,13 @@ Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.s
             self.logger.debug("Dashboard update thread interrupted")
 
     def _create_dashboard_layout(self) -> "Layout":
-        """Create dashboard layout."""
+        """Create dashboard layout.
+
+        Returns:
+            Configured dashboard layout with system, analysis, session, and
+            activity panels arranged in a header-main-footer structure.
+
+        """
         layout = Layout()
 
         # Create main sections
@@ -582,7 +642,16 @@ Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.s
         return layout
 
     def _show_basic_dashboard(self, duration: float | None = None) -> None:
-        """Show basic text dashboard without Rich."""
+        """Show basic text dashboard without Rich.
+
+        Args:
+            duration: Display duration in seconds. If None, display continues
+                indefinitely until KeyboardInterrupt is raised.
+
+        Returns:
+            None
+
+        """
         start_time = time.time()
 
         try:
@@ -738,7 +807,12 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
     def create_system_overview_table(self) -> None:
         """Create system overview using Table.
 
-        Displays current system state in a formatted table.
+        Displays current system state in a formatted table with metrics, status,
+        and trend information for CPU, memory, disk, uptime, and processes.
+
+        Returns:
+            None
+
         """
         if not RICH_AVAILABLE or not self.console:
             return
@@ -811,7 +885,12 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
 
 
 def create_dashboard() -> TerminalDashboard:
-    """Create dashboard instance."""
+    """Create dashboard instance.
+
+    Returns:
+        Newly created TerminalDashboard instance with default update interval.
+
+    """
     return TerminalDashboard()
 
 

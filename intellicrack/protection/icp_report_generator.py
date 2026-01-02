@@ -23,15 +23,15 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import datetime
 import json
+import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 from ..utils.logger import get_logger
 from .unified_protection_engine import UnifiedProtectionResult
 
 
-logger = get_logger(__name__)
+logger: logging.Logger = get_logger(__name__)
 
 
 @dataclass
@@ -58,6 +58,9 @@ class ReportOptions:
 
 class ICPReportGenerator:
     """Generate comprehensive reports from ICP analysis results."""
+
+    report_template_path: Path
+    report_output_path: Path
 
     def __init__(self) -> None:
         """Initialize the ICP report generator with template and output directory paths."""
@@ -780,7 +783,7 @@ class ICPReportGenerator:
             size_f /= 1024.0
         return f"{size_f:.2f} TB"
 
-    def _format_details(self, details: object) -> str:
+    def _format_details(self, details: dict[str, object] | list[object] | str) -> str:
         """Format details object for display in reports.
 
         Args:

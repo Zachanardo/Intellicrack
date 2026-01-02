@@ -44,7 +44,7 @@ def analyze_pe_imports(pe: Any, target_apis: dict[str, list[str]]) -> dict[str, 
         target_apis: Dictionary mapping categories to API lists
 
     Returns:
-        Dictionary mapping categories to detected APIs
+        Dictionary mapping categories to detected APIs in the PE file.
 
     """
     from ..network_api_common import analyze_network_apis
@@ -60,7 +60,7 @@ def get_pe_sections_info(pe: Any) -> list[dict[str, Any]]:
         pe: pefile.PE object from pefile library representing the PE file
 
     Returns:
-        List of section information dictionaries
+        List of section information dictionaries with name, addresses, and characteristics.
 
     """
     sections: list[dict[str, Any]] = []
@@ -86,7 +86,7 @@ def extract_pe_icon(pe_path: str, output_path: str | None = None) -> Image.Image
         output_path: Optional path to save extracted icon
 
     Returns:
-        PIL Image object or None if no icon found
+        PIL Image object if icon found, None otherwise.
 
     """
     try:
@@ -123,7 +123,7 @@ def extract_icon_from_resources(pe: Any) -> bytes | None:
         pe: pefile.PE object representing the PE file
 
     Returns:
-        Icon data bytes or None if no icon data found
+        Icon data bytes if found, None otherwise.
 
     """
     try:
@@ -208,7 +208,7 @@ def create_image_from_icon_data(icon_data: bytes) -> Image.Image | None:
         icon_data: Raw icon data bytes
 
     Returns:
-        PIL Image object or None
+        PIL Image object if successfully created, None otherwise.
 
     """
     try:
@@ -273,7 +273,7 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> list[str]:
         output_dir: Directory to save extracted icons
 
     Returns:
-        List of saved icon file paths
+        List of file paths where icons were saved.
 
     """
     saved_icons = []
@@ -333,7 +333,7 @@ def get_pe_icon_info(pe_path: str) -> dict[str, Any]:
         pe_path: Path to PE file
 
     Returns:
-        Dictionary with icon information
+        Dictionary containing icon count, sizes, and metadata.
 
     """
     icon_info: dict[str, Any] = {
@@ -403,7 +403,7 @@ class PEAnalyzer:
             file_path: Path to PE file to analyze
 
         Returns:
-            Dictionary containing PE analysis results
+            Dictionary containing PE analysis results including imports, exports, sections, and headers.
 
         """
         try:
@@ -437,7 +437,7 @@ class PEAnalyzer:
             pe: pefile.PE object representing the PE file
 
         Returns:
-            List of dictionaries containing DLL and function import information
+            List of dictionaries containing DLL names and imported function details.
 
         """
         imports: list[dict[str, Any]] = []
@@ -468,7 +468,7 @@ class PEAnalyzer:
             pe: pefile.PE object representing the PE file
 
         Returns:
-            List of dictionaries containing exported function information
+            List of dictionaries containing exported function names, addresses, and ordinals.
 
         """
         exports: list[dict[str, Any]] = []
@@ -496,7 +496,7 @@ class PEAnalyzer:
             pe: pefile.PE object representing the PE file
 
         Returns:
-            Dictionary containing DOS, file, and optional header information
+            Dictionary containing DOS, file, and optional header data.
 
         """
         headers: dict[str, Any] = {}
@@ -541,7 +541,7 @@ class PEAnalyzer:
             pe: pefile.PE object representing the PE file
 
         Returns:
-            Dictionary containing resource information and counts
+            Dictionary containing resource types, counts, and metadata.
 
         """
         resources: dict[str, Any] = {"has_resources": False, "resource_types": [], "total_resources": 0}
@@ -573,7 +573,7 @@ class PEAnalyzer:
             pe: pefile.PE object representing the PE file
 
         Returns:
-            Dictionary containing certificate information and counts
+            Dictionary containing certificate presence flag and count.
 
         """
         certs: dict[str, Any] = {"has_certificates": False, "certificate_count": 0}
@@ -594,7 +594,7 @@ class PEAnalyzer:
             pe: pefile.PE object representing the PE file
 
         Returns:
-            String representation of the PE file architecture (x86, x64, ARM, ARM64, or Unknown)
+            String representation of the PE file architecture.
 
         """
         try:

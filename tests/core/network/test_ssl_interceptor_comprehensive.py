@@ -19,6 +19,7 @@ import pytest
 
 from intellicrack.core.network.ssl_interceptor import SSLTLSInterceptor
 
+
 try:
     from cryptography import x509
     from cryptography.hazmat.primitives import hashes, serialization
@@ -436,7 +437,7 @@ class TestSSLInterceptorConfiguration:
 
     def test_configure_ignores_invalid_keys(self, interceptor: SSLTLSInterceptor) -> None:
         """Configure method logs warning for unknown configuration keys."""
-        original_port = interceptor.config["listen_port"]
+        interceptor.config["listen_port"]
         result = interceptor.configure(
             {"listen_port": 20443, "invalid_key": "should_be_ignored"}
         )

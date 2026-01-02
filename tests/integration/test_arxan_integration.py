@@ -18,14 +18,19 @@ from intellicrack.core.protection_bypass.arxan_bypass import ArxanBypass
 class TestArxanIntegration(unittest.TestCase):
     """Integration tests for complete Arxan protection workflow."""
 
-    def setUp(self):
+    detector: ArxanDetector
+    analyzer: ArxanAnalyzer
+    bypass: ArxanBypass
+    test_dir: str
+
+    def setUp(self) -> None:
         """Set up test fixtures."""
         self.detector = ArxanDetector()
         self.analyzer = ArxanAnalyzer()
         self.bypass = ArxanBypass()
         self.test_dir = tempfile.mkdtemp()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         """Clean up test fixtures."""
         import shutil
         shutil.rmtree(self.test_dir, ignore_errors=True)
@@ -101,7 +106,7 @@ class TestArxanIntegration(unittest.TestCase):
 
         return test_file
 
-    def test_complete_workflow(self):
+    def test_complete_workflow(self) -> None:
         """Test complete detection -> analysis -> bypass workflow."""
         binary = self._create_arxan_protected_binary()
 
@@ -122,7 +127,7 @@ class TestArxanIntegration(unittest.TestCase):
         self.assertIsNotNone(bypass_result.patched_binary_path)
         self.assertTrue(Path(bypass_result.patched_binary_path).exists())
 
-    def test_detection_to_analysis(self):
+    def test_detection_to_analysis(self) -> None:
         """Test detection results flow to analysis."""
         binary = self._create_arxan_protected_binary()
 
@@ -137,7 +142,7 @@ class TestArxanIntegration(unittest.TestCase):
             detection_result.version.value
         )
 
-    def test_analysis_to_bypass(self):
+    def test_analysis_to_bypass(self) -> None:
         """Test analysis results inform bypass strategy."""
         binary = self._create_arxan_protected_binary()
 
@@ -155,7 +160,7 @@ class TestArxanIntegration(unittest.TestCase):
 
             self.assertGreater(len(bypass_result.patches_applied), 0)
 
-    def test_bypass_preserves_binary_structure(self):
+    def test_bypass_preserves_binary_structure(self) -> None:
         """Test bypass maintains valid binary structure."""
         binary = self._create_arxan_protected_binary()
 
@@ -172,7 +177,7 @@ class TestArxanIntegration(unittest.TestCase):
             header = f.read(2)
             self.assertEqual(header, b"MZ")
 
-    def test_detection_consistency(self):
+    def test_detection_consistency(self) -> None:
         """Test detection is consistent across multiple runs."""
         binary = self._create_arxan_protected_binary()
 
@@ -183,7 +188,7 @@ class TestArxanIntegration(unittest.TestCase):
         self.assertAlmostEqual(result1.confidence, result2.confidence, places=2)
         self.assertEqual(result1.version, result2.version)
 
-    def test_analysis_metadata_completeness(self):
+    def test_analysis_metadata_completeness(self) -> None:
         """Test analysis provides complete metadata."""
         binary = self._create_arxan_protected_binary()
 
@@ -202,7 +207,7 @@ class TestArxanIntegration(unittest.TestCase):
         for key in required_metadata:
             self.assertIn(key, analysis_result.metadata)
 
-    def test_bypass_frida_script_validity(self):
+    def test_bypass_frida_script_validity(self) -> None:
         """Test generated Frida script is valid JavaScript."""
         binary = self._create_arxan_protected_binary()
 
@@ -218,7 +223,7 @@ class TestArxanIntegration(unittest.TestCase):
 
         self.assertNotIn("undefined", script)
 
-    def test_multiple_protection_features(self):
+    def test_multiple_protection_features(self) -> None:
         """Test handling of binaries with multiple protection features."""
         binary = self._create_arxan_protected_binary()
 
@@ -239,7 +244,7 @@ class TestArxanIntegration(unittest.TestCase):
 
         self.assertTrue(bypass_result.success)
 
-    def test_error_handling(self):
+    def test_error_handling(self) -> None:
         """Test error handling across components."""
         nonexistent = Path(self.test_dir) / "nonexistent.exe"
 
@@ -252,7 +257,7 @@ class TestArxanIntegration(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             self.bypass.bypass(nonexistent)
 
-    def test_performance_acceptable(self):
+    def test_performance_acceptable(self) -> None:
         """Test operations complete in reasonable time."""
         import time
 

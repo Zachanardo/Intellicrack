@@ -17,7 +17,6 @@ import os
 import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from PyQt6.QtCore import Qt
@@ -28,62 +27,186 @@ from intellicrack.ai.llm_backends import LLMConfig, LLMProvider
 from intellicrack.ui.dialogs.llm_config_dialog import LLMConfigDialog, ModelTestThread
 
 
-@pytest.fixture
-def qapp(qapp: QApplication) -> QApplication:
-    """Provide QApplication instance for PyQt6 tests."""
-    return qapp
+class FakeLLMManager:
+    """Test double for LLM manager with real state tracking."""
+
+    def __init__(self) -> None:
+        self.backends: dict[str, Any] = {}
+        self.active_backend: str | None = None
+        self.registration_calls: list[tuple[str, LLMConfig]] = []
+        self.active_backend_calls: list[str] = []
+        self.chat_calls: list[dict[str, Any]] = []
+
+    def register_llm(self, model_id: str, config: LLMConfig) -> bool:
+        """Register LLM backend with validation."""
+        if not model_id or not isinstance(config, LLMConfig):
+            return False
+        self.backends[model_id] = config
+        self.registration_calls.append((model_id, config))
+        return True
+
+    def set_active_llm(self, model_id: str) -> bool:
+        """Set active LLM backend."""
+        if model_id not in self.backends:
+            return False
+        self.active_backend = model_id
+        self.active_backend_calls.append(model_id)
+        return True
+
+    def get_available_llms(self) -> list[str]:
+        """Get list of available LLM backends."""
+        return list(self.backends.keys())
+
+    def chat(self, messages: list[dict[str, str]], **kwargs: Any) -> str:
+        """Mock chat operation."""
+        self.chat_calls.append({"messages": messages, "kwargs": kwargs})
+        return "Test response from LLM"
+
+
+class FakeLLMConfigManager:
+    """Test double for LLM config manager with file operations."""
+
+    def __init__(self, temp_dir: Path) -> None:
+        self.config_dir = temp_dir / "llm_configs"
+        self.config_dir.mkdir(parents=True, exist_ok=True)
+        self.saved_configs: dict[str, LLMConfig] = {}
+        self.save_calls: list[tuple[str, LLMConfig]] = []
+        self.auto_load_count = 0
+
+    def save_model_config(self, model_id: str, config: LLMConfig) -> None:
+        """Save model configuration to storage."""
+        self.saved_configs[model_id] = config
+        self.save_calls.append((model_id, config))
+        config_file = self.config_dir / f"{model_id}.json"
+        config_file.write_text(f'{{"model_id": "{model_id}", "provider": "{config.provider.value}"}}')
+
+    def load_model_config(self, model_id: str) -> LLMConfig | None:
+        """Load model configuration from storage."""
+        return self.saved_configs.get(model_id)
+
+    def auto_load_models(self) -> tuple[int, int]:
+        """Auto-load all saved model configurations."""
+        self.auto_load_count += 1
+        return (len(self.saved_configs), 0)
+
+    def get_all_configs(self) -> dict[str, LLMConfig]:
+        """Get all saved configurations."""
+        return self.saved_configs.copy()
+
+
+class FakeEnvFileManager:
+    """Test double for environment file manager with real .env operations."""
+
+    def __init__(self, temp_dir: Path) -> None:
+        self.env_file = temp_dir / ".env"
+        self.env_file.touch()
+        self.api_keys: dict[str, str] = {}
+        self.update_calls: list[dict[str, str]] = []
+        self.test_calls: list[tuple[str, str]] = []
+
+    def get_all_api_keys(self) -> dict[str, str]:
+        """Get all API keys from .env file."""
+        return self.api_keys.copy()
+
+    def update_keys(self, keys: dict[str, str]) -> None:
+        """Update API keys in .env file."""
+        self.update_calls.append(keys.copy())
+        self.api_keys.update(keys)
+        lines: list[str] = []
+        for key, value in self.api_keys.items():
+            lines.append(f"{key}={value}\n")
+        self.env_file.write_text("".join(lines))
+
+    def test_api_key(self, provider: str, api_key: str) -> tuple[bool, str]:
+        """Test API key validity."""
+        self.test_calls.append((provider, api_key))
+        if not api_key or len(api_key) < 10:
+            return (False, "Invalid API key format")
+        if not api_key.startswith(("sk-", "sk-ant-")):
+            return (False, "API key must start with proper prefix")
+        return (True, "Valid API key")
+
+
+class FakeModelDiscoveryService:
+    """Test double for model discovery service."""
+
+    def __init__(self) -> None:
+        self.cache_cleared = False
+        self.discover_calls: list[dict[str, Any]] = []
+        self.available_models: dict[str, list[str]] = {
+            "openai": ["gpt-4", "gpt-3.5-turbo", "gpt-4-turbo-preview"],
+            "anthropic": ["claude-3-opus", "claude-3-sonnet", "claude-3-haiku"],
+        }
+
+    def clear_cache(self) -> None:
+        """Clear model discovery cache."""
+        self.cache_cleared = True
+
+    def discover_all_models(self, force_refresh: bool = False) -> dict[str, list[str]]:
+        """Discover all available models."""
+        self.discover_calls.append({"force_refresh": force_refresh})
+        return self.available_models.copy()
 
 
 @pytest.fixture
-def mock_llm_manager() -> Mock:
-    """Create mock LLM manager for testing."""
-    manager = Mock()
-    manager.backends = {}
-    manager.active_backend = None
-    manager.register_llm = Mock(return_value=True)
-    manager.set_active_llm = Mock(return_value=True)
-    manager.get_available_llms = Mock(return_value=[])
-    manager.chat = Mock()
-    return manager
+def temp_config_dir(tmp_path: Path) -> Path:
+    """Create temporary configuration directory."""
+    config_dir = tmp_path / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    return config_dir
 
 
 @pytest.fixture
-def mock_config_manager() -> Mock:
-    """Create mock config manager for testing."""
-    manager = Mock()
-    manager.save_model_config = Mock()
-    manager.auto_load_models = Mock(return_value=(0, 0))
-    return manager
+def fake_llm_manager() -> FakeLLMManager:
+    """Create fake LLM manager for testing."""
+    return FakeLLMManager()
 
 
 @pytest.fixture
-def mock_env_manager() -> Mock:
-    """Create mock environment file manager for testing."""
-    manager = Mock()
-    manager.get_all_api_keys = Mock(return_value={})
-    manager.update_keys = Mock()
-    manager.test_api_key = Mock(return_value=(True, "Valid API key"))
-    return manager
+def fake_config_manager(temp_config_dir: Path) -> FakeLLMConfigManager:
+    """Create fake config manager for testing."""
+    return FakeLLMConfigManager(temp_config_dir)
+
+
+@pytest.fixture
+def fake_env_manager(temp_config_dir: Path) -> FakeEnvFileManager:
+    """Create fake environment file manager for testing."""
+    return FakeEnvFileManager(temp_config_dir)
+
+
+@pytest.fixture
+def fake_discovery_service() -> FakeModelDiscoveryService:
+    """Create fake model discovery service."""
+    return FakeModelDiscoveryService()
 
 
 @pytest.fixture
 def llm_config_dialog(
     qapp: QApplication,
-    mock_llm_manager: Mock,
-    mock_config_manager: Mock,
-    mock_env_manager: Mock,
+    fake_llm_manager: FakeLLMManager,
+    fake_config_manager: FakeLLMConfigManager,
+    fake_env_manager: FakeEnvFileManager,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> LLMConfigDialog:
-    """Create LLMConfigDialog with mocked dependencies."""
-    with (
-        patch("intellicrack.ui.dialogs.llm_config_dialog._get_llm_manager", return_value=lambda: mock_llm_manager),
-        patch("intellicrack.ui.dialogs.llm_config_dialog._get_llm_config_manager", return_value=lambda: mock_config_manager),
-        patch("intellicrack.ui.dialogs.llm_config_dialog._llm_imports_available", True),
-    ):
-        dialog = LLMConfigDialog()
-        dialog.env_manager = mock_env_manager
-        dialog.llm_manager = mock_llm_manager
-        dialog.config_manager = mock_config_manager
-        return dialog
+    """Create LLMConfigDialog with fake dependencies."""
+    monkeypatch.setattr(
+        "intellicrack.ui.dialogs.llm_config_dialog._get_llm_manager",
+        lambda: fake_llm_manager,
+    )
+    monkeypatch.setattr(
+        "intellicrack.ui.dialogs.llm_config_dialog._get_llm_config_manager",
+        lambda: fake_config_manager,
+    )
+    monkeypatch.setattr(
+        "intellicrack.ui.dialogs.llm_config_dialog._llm_imports_available",
+        True,
+    )
+
+    dialog = LLMConfigDialog()
+    dialog.env_manager = fake_env_manager
+    dialog.llm_manager = fake_llm_manager
+    dialog.config_manager = fake_config_manager
+    return dialog
 
 
 class TestLLMConfigDialogInitialization:
@@ -173,29 +296,36 @@ class TestLLMConfigDialogInitialization:
     def test_dialog_loads_existing_api_keys_on_initialization(
         self,
         qapp: QApplication,
-        mock_llm_manager: Mock,
-        mock_config_manager: Mock,
-        mock_env_manager: Mock,
+        fake_llm_manager: FakeLLMManager,
+        fake_config_manager: FakeLLMConfigManager,
+        fake_env_manager: FakeEnvFileManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Dialog loads API keys from .env file on startup."""
-        mock_env_manager.get_all_api_keys = Mock(
-            return_value={
-                "OPENAI_API_KEY": "sk-test123",
-                "ANTHROPIC_API_KEY": "sk-ant-test456",
-            }
+        fake_env_manager.api_keys = {
+            "OPENAI_API_KEY": "sk-test123",
+            "ANTHROPIC_API_KEY": "sk-ant-test456",
+        }
+
+        monkeypatch.setattr(
+            "intellicrack.ui.dialogs.llm_config_dialog._get_llm_manager",
+            lambda: fake_llm_manager,
+        )
+        monkeypatch.setattr(
+            "intellicrack.ui.dialogs.llm_config_dialog._get_llm_config_manager",
+            lambda: fake_config_manager,
+        )
+        monkeypatch.setattr(
+            "intellicrack.ui.dialogs.llm_config_dialog._llm_imports_available",
+            True,
         )
 
-        with (
-            patch("intellicrack.ui.dialogs.llm_config_dialog._get_llm_manager", return_value=lambda: mock_llm_manager),
-            patch("intellicrack.ui.dialogs.llm_config_dialog._get_llm_config_manager", return_value=lambda: mock_config_manager),
-            patch("intellicrack.ui.dialogs.llm_config_dialog._llm_imports_available", True),
-        ):
-            dialog = LLMConfigDialog()
-            dialog.env_manager = mock_env_manager
-            dialog.load_existing_api_keys()
+        dialog = LLMConfigDialog()
+        dialog.env_manager = fake_env_manager
+        dialog.load_existing_api_keys()
 
-            assert dialog.openai_api_key.text() == "sk-test123"
-            assert dialog.anthropic_api_key.text() == "sk-ant-test456"
+        assert dialog.openai_api_key.text() == "sk-test123"
+        assert dialog.anthropic_api_key.text() == "sk-ant-test456"
 
 
 class TestModelRegistration:
@@ -204,89 +334,137 @@ class TestModelRegistration:
     def test_add_openai_model_without_api_key_shows_warning(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Adding OpenAI model without API key displays warning."""
         llm_config_dialog.openai_api_key.clear()
 
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            llm_config_dialog.add_openai_model()
-            mock_warning.assert_called_once()
-            args = mock_warning.call_args[0]
-            assert "API key" in args[2].lower()
+        warning_called = False
+        warning_message = ""
+
+        def fake_warning(parent: Any, title: str, message: str) -> None:
+            nonlocal warning_called, warning_message
+            warning_called = True
+            warning_message = message
+
+        monkeypatch.setattr(QMessageBox, "warning", fake_warning)
+
+        llm_config_dialog.add_openai_model()
+
+        assert warning_called
+        assert "api key" in warning_message.lower()
 
     def test_add_openai_model_with_valid_key_registers_model(
         self,
         llm_config_dialog: LLMConfigDialog,
+        fake_llm_manager: FakeLLMManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Adding OpenAI model with API key registers it with manager."""
         llm_config_dialog.openai_api_key.setText("sk-test123456789")
         llm_config_dialog.openai_model.setCurrentText("gpt-4")
 
-        with patch("intellicrack.ui.dialogs.llm_config_dialog.create_openai_config") as mock_create:
-            mock_config = Mock(spec=LLMConfig)
-            mock_config.provider = LLMProvider.OPENAI
-            mock_create.return_value = mock_config
+        def fake_create_openai_config(**kwargs: Any) -> LLMConfig:
+            return LLMConfig(
+                provider=LLMProvider.OPENAI,
+                model_name=kwargs["model_name"],
+                api_key=kwargs["api_key"],
+            )
 
-            llm_config_dialog.add_openai_model()
+        monkeypatch.setattr(
+            "intellicrack.ui.dialogs.llm_config_dialog.create_openai_config",
+            fake_create_openai_config,
+        )
 
-            mock_create.assert_called_once()
-            call_kwargs = mock_create.call_args[1]
-            assert call_kwargs["model_name"] == "gpt-4"
-            assert call_kwargs["api_key"] == "sk-test123456789"
-            assert llm_config_dialog.llm_manager.register_llm.called
+        llm_config_dialog.add_openai_model()
+
+        assert len(fake_llm_manager.registration_calls) > 0
+        model_id, config = fake_llm_manager.registration_calls[-1]
+        assert config.provider == LLMProvider.OPENAI
+        assert config.model_name == "gpt-4"
+        assert config.api_key == "sk-test123456789"
 
     def test_add_gguf_model_without_file_shows_warning(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Adding GGUF model without file path displays warning."""
         llm_config_dialog.gguf_model_path.clear()
 
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            llm_config_dialog.add_gguf_model()
-            mock_warning.assert_called_once()
-            args = mock_warning.call_args[0]
-            assert "model file" in args[2].lower()
+        warning_called = False
+        warning_message = ""
+
+        def fake_warning(parent: Any, title: str, message: str) -> None:
+            nonlocal warning_called, warning_message
+            warning_called = True
+            warning_message = message
+
+        monkeypatch.setattr(QMessageBox, "warning", fake_warning)
+
+        llm_config_dialog.add_gguf_model()
+
+        assert warning_called
+        assert "model file" in warning_message.lower()
 
     def test_add_gguf_model_with_nonexistent_file_shows_warning(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Adding GGUF model with non-existent file displays warning."""
         llm_config_dialog.gguf_model_path.setText("D:\\nonexistent\\model.gguf")
 
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            llm_config_dialog.add_gguf_model()
-            mock_warning.assert_called_once()
-            args = mock_warning.call_args[0]
-            assert "not exist" in args[2].lower()
+        warning_called = False
+        warning_message = ""
+
+        def fake_warning(parent: Any, title: str, message: str) -> None:
+            nonlocal warning_called, warning_message
+            warning_called = True
+            warning_message = message
+
+        monkeypatch.setattr(QMessageBox, "warning", fake_warning)
+
+        llm_config_dialog.add_gguf_model()
+
+        assert warning_called
+        assert "not exist" in warning_message.lower()
 
     def test_register_model_updates_ui_and_saves_config(
         self,
         llm_config_dialog: LLMConfigDialog,
+        fake_llm_manager: FakeLLMManager,
+        fake_config_manager: FakeLLMConfigManager,
     ) -> None:
         """Registering model updates models list and saves configuration."""
-        mock_config = Mock(spec=LLMConfig)
-        mock_config.provider = LLMProvider.OPENAI
+        config = LLMConfig(
+            provider=LLMProvider.OPENAI,
+            model_name="test_model",
+            api_key="sk-test",
+        )
 
-        llm_config_dialog.register_model("test_model_id", mock_config)
+        llm_config_dialog.register_model("test_model_id", config)
 
-        assert llm_config_dialog.llm_manager.register_llm.called
-        assert llm_config_dialog.config_manager.save_model_config.called
+        assert len(fake_llm_manager.registration_calls) > 0
+        assert len(fake_config_manager.save_calls) > 0
         assert "test_model_id" in llm_config_dialog.current_configs
 
     def test_first_registered_model_becomes_active(
         self,
         llm_config_dialog: LLMConfigDialog,
+        fake_llm_manager: FakeLLMManager,
     ) -> None:
         """First model registered is automatically set as active."""
-        mock_config = Mock(spec=LLMConfig)
-        mock_config.provider = LLMProvider.ANTHROPIC
+        config = LLMConfig(
+            provider=LLMProvider.ANTHROPIC,
+            model_name="claude-3-sonnet",
+            api_key="sk-ant-test",
+        )
 
         llm_config_dialog.current_configs.clear()
-        llm_config_dialog.register_model("first_model", mock_config)
+        llm_config_dialog.register_model("first_model", config)
 
-        llm_config_dialog.llm_manager.set_active_llm.assert_called_with("first_model")
+        assert "first_model" in fake_llm_manager.active_backend_calls
 
 
 class TestFileBrowsing:
@@ -295,56 +473,87 @@ class TestFileBrowsing:
     def test_browse_gguf_model_updates_path_field(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Browsing for GGUF model updates path field."""
         test_path = "D:\\models\\test_model.gguf"
 
-        with patch.object(QFileDialog, "getOpenFileName", return_value=(test_path, "GGUF Files (*.gguf)")):
-            llm_config_dialog.browse_gguf_model()
+        def fake_get_open_filename(
+            parent: Any, caption: str, directory: str, filter: str
+        ) -> tuple[str, str]:
+            return (test_path, "GGUF Files (*.gguf)")
 
-            assert llm_config_dialog.gguf_model_path.text() == test_path
-            assert llm_config_dialog.gguf_model_name.text() == "test_model"
+        monkeypatch.setattr(QFileDialog, "getOpenFileName", fake_get_open_filename)
+
+        llm_config_dialog.browse_gguf_model()
+
+        assert llm_config_dialog.gguf_model_path.text() == test_path
+        assert llm_config_dialog.gguf_model_name.text() == "test_model"
 
     def test_browse_gguf_model_cancelled_does_not_update(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Cancelling GGUF browse dialog does not update fields."""
         original_path = llm_config_dialog.gguf_model_path.text()
 
-        with patch.object(QFileDialog, "getOpenFileName", return_value=("", "")):
-            llm_config_dialog.browse_gguf_model()
+        def fake_get_open_filename(
+            parent: Any, caption: str, directory: str, filter: str
+        ) -> tuple[str, str]:
+            return ("", "")
 
-            assert llm_config_dialog.gguf_model_path.text() == original_path
+        monkeypatch.setattr(QFileDialog, "getOpenFileName", fake_get_open_filename)
+
+        llm_config_dialog.browse_gguf_model()
+
+        assert llm_config_dialog.gguf_model_path.text() == original_path
 
     def test_browse_pytorch_model_directory_updates_path(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Browsing for PyTorch directory updates path field."""
         test_dir = "D:\\models\\pytorch_model_dir"
 
-        with patch.object(QFileDialog, "getExistingDirectory", return_value=test_dir):
-            llm_config_dialog.browse_pytorch_model()
+        def fake_get_existing_directory(
+            parent: Any, caption: str, directory: str
+        ) -> str:
+            return test_dir
 
-            assert llm_config_dialog.pytorch_model_path.text() == test_dir
-            assert llm_config_dialog.pytorch_model_name.text() == "pytorch_model_dir"
+        monkeypatch.setattr(QFileDialog, "getExistingDirectory", fake_get_existing_directory)
+
+        llm_config_dialog.browse_pytorch_model()
+
+        assert llm_config_dialog.pytorch_model_path.text() == test_dir
+        assert llm_config_dialog.pytorch_model_name.text() == "pytorch_model_dir"
 
     def test_browse_pytorch_model_file_fallback(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Browsing for PyTorch file falls back to file dialog if directory selection cancelled."""
         test_file = "D:\\models\\model.pth"
 
-        with (
-            patch.object(QFileDialog, "getExistingDirectory", return_value=""),
-            patch.object(QFileDialog, "getOpenFileName", return_value=(test_file, "PyTorch Files (*.pth *.pt *.bin)")),
-        ):
-            llm_config_dialog.browse_pytorch_model()
+        def fake_get_existing_directory(
+            parent: Any, caption: str, directory: str
+        ) -> str:
+            return ""
 
-            assert llm_config_dialog.pytorch_model_path.text() == test_file
-            assert llm_config_dialog.pytorch_model_name.text() == "model"
+        def fake_get_open_filename(
+            parent: Any, caption: str, directory: str, filter: str
+        ) -> tuple[str, str]:
+            return (test_file, "PyTorch Files (*.pth *.pt *.bin)")
+
+        monkeypatch.setattr(QFileDialog, "getExistingDirectory", fake_get_existing_directory)
+        monkeypatch.setattr(QFileDialog, "getOpenFileName", fake_get_open_filename)
+
+        llm_config_dialog.browse_pytorch_model()
+
+        assert llm_config_dialog.pytorch_model_path.text() == test_file
+        assert llm_config_dialog.pytorch_model_name.text() == "model"
 
 
 class TestModelTesting:
@@ -353,45 +562,92 @@ class TestModelTesting:
     def test_test_openai_config_without_api_key_shows_warning(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Testing OpenAI config without API key displays warning."""
         llm_config_dialog.openai_api_key.clear()
 
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            llm_config_dialog.test_openai_config()
-            mock_warning.assert_called_once()
+        warning_called = False
+
+        def fake_warning(parent: Any, title: str, message: str) -> None:
+            nonlocal warning_called
+            warning_called = True
+
+        monkeypatch.setattr(QMessageBox, "warning", fake_warning)
+
+        llm_config_dialog.test_openai_config()
+
+        assert warning_called
 
     def test_test_model_config_starts_validation_thread(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Testing model configuration starts validation thread."""
-        mock_config = Mock(spec=LLMConfig)
-        mock_config.provider = LLMProvider.OPENAI
+        config = LLMConfig(
+            provider=LLMProvider.OPENAI,
+            model_name="gpt-4",
+            api_key="sk-test",
+        )
 
-        with patch("intellicrack.ui.dialogs.llm_config_dialog.ModelTestThread") as mock_thread_class:
-            mock_thread = Mock()
-            mock_thread_class.return_value = mock_thread
-            mock_thread.isRunning.return_value = False
+        thread_started = False
+        thread_instance = None
 
-            llm_config_dialog.test_model_config(mock_config)
+        class FakeModelTestThread:
+            def __init__(self, test_config: LLMConfig) -> None:
+                self.config = test_config
+                self.is_running = False
+                nonlocal thread_instance
+                thread_instance = self
 
-            mock_thread_class.assert_called_once_with(mock_config)
-            mock_thread.start.assert_called_once()
-            assert llm_config_dialog.test_progress.isVisible()
+            def start(self) -> None:
+                nonlocal thread_started
+                thread_started = True
+                self.is_running = True
+
+            def isRunning(self) -> bool:
+                return self.is_running
+
+        monkeypatch.setattr(
+            "intellicrack.ui.dialogs.llm_config_dialog.ModelTestThread",
+            FakeModelTestThread,
+        )
+
+        llm_config_dialog.test_model_config(config)
+
+        assert thread_started
+        assert llm_config_dialog.test_progress.isVisible()
 
     def test_test_model_config_while_test_running_shows_warning(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Starting test while another test runs displays warning."""
-        mock_config = Mock(spec=LLMConfig)
-        llm_config_dialog.validation_thread = Mock()
-        llm_config_dialog.validation_thread.isRunning.return_value = True
+        config = LLMConfig(
+            provider=LLMProvider.OPENAI,
+            model_name="gpt-4",
+            api_key="sk-test",
+        )
 
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            llm_config_dialog.test_model_config(mock_config)
-            mock_warning.assert_called_once()
+        class FakeRunningThread:
+            def isRunning(self) -> bool:
+                return True
+
+        llm_config_dialog.validation_thread = FakeRunningThread()
+
+        warning_called = False
+
+        def fake_warning(parent: Any, title: str, message: str) -> None:
+            nonlocal warning_called
+            warning_called = True
+
+        monkeypatch.setattr(QMessageBox, "warning", fake_warning)
+
+        llm_config_dialog.test_model_config(config)
+
+        assert warning_called
 
     def test_on_test_complete_success_updates_status(
         self,
@@ -424,69 +680,113 @@ class TestAPIKeyManagement:
     def test_save_configuration_stores_api_keys_to_env(
         self,
         llm_config_dialog: LLMConfigDialog,
+        fake_env_manager: FakeEnvFileManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Saving configuration stores API keys to .env file."""
         llm_config_dialog.openai_api_key.setText("sk-test-openai-key")
         llm_config_dialog.anthropic_api_key.setText("sk-ant-test-key")
 
-        with patch.object(QMessageBox, "information"):
-            llm_config_dialog.save_configuration()
+        info_called = False
 
-            llm_config_dialog.env_manager.update_keys.assert_called_once()
-            call_args = llm_config_dialog.env_manager.update_keys.call_args[0][0]
-            assert call_args["OPENAI_API_KEY"] == "sk-test-openai-key"
-            assert call_args["ANTHROPIC_API_KEY"] == "sk-ant-test-key"
+        def fake_information(parent: Any, title: str, message: str) -> None:
+            nonlocal info_called
+            info_called = True
+
+        monkeypatch.setattr(QMessageBox, "information", fake_information)
+
+        llm_config_dialog.save_configuration()
+
+        assert len(fake_env_manager.update_calls) > 0
+        call_args = fake_env_manager.update_calls[-1]
+        assert call_args["OPENAI_API_KEY"] == "sk-test-openai-key"
+        assert call_args["ANTHROPIC_API_KEY"] == "sk-ant-test-key"
 
     def test_save_configuration_with_no_data_shows_warning(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Saving configuration with no data displays warning."""
         llm_config_dialog.openai_api_key.clear()
         llm_config_dialog.anthropic_api_key.clear()
         llm_config_dialog.current_configs.clear()
 
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            llm_config_dialog.save_configuration()
-            mock_warning.assert_called_once()
+        warning_called = False
+
+        def fake_warning(parent: Any, title: str, message: str) -> None:
+            nonlocal warning_called
+            warning_called = True
+
+        monkeypatch.setattr(QMessageBox, "warning", fake_warning)
+
+        llm_config_dialog.save_configuration()
+
+        assert warning_called
 
     def test_test_api_key_with_valid_key_shows_success(
         self,
         llm_config_dialog: LLMConfigDialog,
+        fake_env_manager: FakeEnvFileManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Testing valid API key displays success message."""
-        llm_config_dialog.openai_api_key.setText("sk-valid-key")
-        llm_config_dialog.env_manager.test_api_key = Mock(return_value=(True, "Key is valid"))
+        llm_config_dialog.openai_api_key.setText("sk-valid-key-12345")
 
-        with patch.object(QMessageBox, "information") as mock_info:
-            llm_config_dialog.test_api_key("openai", llm_config_dialog.openai_api_key)
+        info_called = False
 
-            mock_info.assert_called_once()
-            llm_config_dialog.env_manager.test_api_key.assert_called_with("openai", "sk-valid-key")
+        def fake_information(parent: Any, title: str, message: str) -> None:
+            nonlocal info_called
+            info_called = True
+
+        monkeypatch.setattr(QMessageBox, "information", fake_information)
+
+        llm_config_dialog.test_api_key("openai", llm_config_dialog.openai_api_key)
+
+        assert info_called
+        assert len(fake_env_manager.test_calls) > 0
+        assert fake_env_manager.test_calls[-1] == ("openai", "sk-valid-key-12345")
 
     def test_test_api_key_with_invalid_key_shows_warning(
         self,
         llm_config_dialog: LLMConfigDialog,
+        fake_env_manager: FakeEnvFileManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Testing invalid API key displays warning."""
         llm_config_dialog.openai_api_key.setText("invalid-key")
-        llm_config_dialog.env_manager.test_api_key = Mock(return_value=(False, "Invalid format"))
 
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            llm_config_dialog.test_api_key("openai", llm_config_dialog.openai_api_key)
+        warning_called = False
 
-            mock_warning.assert_called_once()
+        def fake_warning(parent: Any, title: str, message: str) -> None:
+            nonlocal warning_called
+            warning_called = True
+
+        monkeypatch.setattr(QMessageBox, "warning", fake_warning)
+
+        llm_config_dialog.test_api_key("openai", llm_config_dialog.openai_api_key)
+
+        assert warning_called
 
     def test_test_api_key_without_key_shows_warning(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Testing API key without entering key displays warning."""
         llm_config_dialog.openai_api_key.clear()
 
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            llm_config_dialog.test_api_key("openai", llm_config_dialog.openai_api_key)
-            mock_warning.assert_called_once()
+        warning_called = False
+
+        def fake_warning(parent: Any, title: str, message: str) -> None:
+            nonlocal warning_called
+            warning_called = True
+
+        monkeypatch.setattr(QMessageBox, "warning", fake_warning)
+
+        llm_config_dialog.test_api_key("openai", llm_config_dialog.openai_api_key)
+
+        assert warning_called
 
 
 class TestActiveModelManagement:
@@ -495,12 +795,15 @@ class TestActiveModelManagement:
     def test_update_models_list_displays_registered_models(
         self,
         llm_config_dialog: LLMConfigDialog,
+        fake_llm_manager: FakeLLMManager,
     ) -> None:
         """Updating models list displays all registered models."""
-        llm_config_dialog.llm_manager.get_available_llms = Mock(
-            return_value=["model_1", "model_2", "model_3"]
-        )
-        llm_config_dialog.llm_manager.active_backend = "model_2"
+        fake_llm_manager.backends = {
+            "model_1": LLMConfig(provider=LLMProvider.OPENAI, model_name="model_1"),
+            "model_2": LLMConfig(provider=LLMProvider.OPENAI, model_name="model_2"),
+            "model_3": LLMConfig(provider=LLMProvider.OPENAI, model_name="model_3"),
+        }
+        fake_llm_manager.active_backend = "model_2"
 
         llm_config_dialog.update_models_list()
 
@@ -511,45 +814,67 @@ class TestActiveModelManagement:
     def test_set_active_model_changes_active_backend(
         self,
         llm_config_dialog: LLMConfigDialog,
+        fake_llm_manager: FakeLLMManager,
     ) -> None:
         """Setting active model changes LLM manager's active backend."""
-        llm_config_dialog.llm_manager.get_available_llms = Mock(return_value=["model_a", "model_b"])
+        fake_llm_manager.backends = {
+            "model_a": LLMConfig(provider=LLMProvider.OPENAI, model_name="model_a"),
+            "model_b": LLMConfig(provider=LLMProvider.OPENAI, model_name="model_b"),
+        }
         llm_config_dialog.update_models_list()
 
         llm_config_dialog.models_list.setCurrentRow(1)
         llm_config_dialog.set_active_model()
 
-        llm_config_dialog.llm_manager.set_active_llm.assert_called()
+        assert len(fake_llm_manager.active_backend_calls) > 0
 
     def test_remove_model_with_confirmation_removes_from_list(
         self,
         llm_config_dialog: LLMConfigDialog,
+        fake_llm_manager: FakeLLMManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Removing model with confirmation removes it from tracking."""
-        llm_config_dialog.current_configs["test_model"] = Mock()
-        llm_config_dialog.llm_manager.get_available_llms = Mock(return_value=["test_model"])
+        test_config = LLMConfig(provider=LLMProvider.OPENAI, model_name="test_model")
+        llm_config_dialog.current_configs["test_model"] = test_config
+        fake_llm_manager.backends = {"test_model": test_config}
         llm_config_dialog.update_models_list()
         llm_config_dialog.models_list.setCurrentRow(0)
 
-        with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes):
-            llm_config_dialog.remove_model()
+        def fake_question(
+            parent: Any, title: str, message: str, buttons: Any, default_button: Any = None
+        ) -> Any:
+            return QMessageBox.StandardButton.Yes
 
-            assert "test_model" not in llm_config_dialog.current_configs
+        monkeypatch.setattr(QMessageBox, "question", fake_question)
+
+        llm_config_dialog.remove_model()
+
+        assert "test_model" not in llm_config_dialog.current_configs
 
     def test_remove_model_without_confirmation_keeps_model(
         self,
         llm_config_dialog: LLMConfigDialog,
+        fake_llm_manager: FakeLLMManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Cancelling model removal keeps it in tracking."""
-        llm_config_dialog.current_configs["test_model"] = Mock()
-        llm_config_dialog.llm_manager.get_available_llms = Mock(return_value=["test_model"])
+        test_config = LLMConfig(provider=LLMProvider.OPENAI, model_name="test_model")
+        llm_config_dialog.current_configs["test_model"] = test_config
+        fake_llm_manager.backends = {"test_model": test_config}
         llm_config_dialog.update_models_list()
         llm_config_dialog.models_list.setCurrentRow(0)
 
-        with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.No):
-            llm_config_dialog.remove_model()
+        def fake_question(
+            parent: Any, title: str, message: str, buttons: Any, default_button: Any = None
+        ) -> Any:
+            return QMessageBox.StandardButton.No
 
-            assert "test_model" in llm_config_dialog.current_configs
+        monkeypatch.setattr(QMessageBox, "question", fake_question)
+
+        llm_config_dialog.remove_model()
+
+        assert "test_model" in llm_config_dialog.current_configs
 
 
 class TestLoRAAdapterManagement:
@@ -558,49 +883,75 @@ class TestLoRAAdapterManagement:
     def test_browse_lora_adapter_updates_path_field(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Browsing for LoRA adapter updates path field."""
         test_adapter_path = "D:\\adapters\\my_lora_adapter"
 
-        with patch.object(QFileDialog, "getExistingDirectory", return_value=test_adapter_path):
-            llm_config_dialog.browse_lora_adapter()
+        def fake_get_existing_directory(
+            parent: Any, caption: str, directory: str
+        ) -> str:
+            return test_adapter_path
 
-            assert llm_config_dialog.lora_adapter_path.text() == test_adapter_path
-            assert llm_config_dialog.lora_adapter_name.text() == "my_lora_adapter"
+        monkeypatch.setattr(QFileDialog, "getExistingDirectory", fake_get_existing_directory)
+
+        llm_config_dialog.browse_lora_adapter()
+
+        assert llm_config_dialog.lora_adapter_path.text() == test_adapter_path
+        assert llm_config_dialog.lora_adapter_name.text() == "my_lora_adapter"
 
     def test_add_lora_adapter_without_base_model_shows_warning(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Adding LoRA adapter without base model displays warning."""
         llm_config_dialog.lora_base_model.clear()
 
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            llm_config_dialog.add_lora_adapter()
-            mock_warning.assert_called_once()
+        warning_called = False
+
+        def fake_warning(parent: Any, title: str, message: str) -> None:
+            nonlocal warning_called
+            warning_called = True
+
+        monkeypatch.setattr(QMessageBox, "warning", fake_warning)
+
+        llm_config_dialog.add_lora_adapter()
+
+        assert warning_called
 
     def test_add_lora_adapter_without_adapter_path_shows_warning(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Adding LoRA adapter without adapter path displays warning."""
         llm_config_dialog.lora_base_model.addItem("base_model_id")
         llm_config_dialog.lora_base_model.setCurrentIndex(0)
         llm_config_dialog.lora_adapter_path.clear()
 
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            llm_config_dialog.add_lora_adapter()
-            mock_warning.assert_called_once()
+        warning_called = False
+
+        def fake_warning(parent: Any, title: str, message: str) -> None:
+            nonlocal warning_called
+            warning_called = True
+
+        monkeypatch.setattr(QMessageBox, "warning", fake_warning)
+
+        llm_config_dialog.add_lora_adapter()
+
+        assert warning_called
 
     def test_refresh_lora_models_updates_base_model_list(
         self,
         llm_config_dialog: LLMConfigDialog,
+        fake_llm_manager: FakeLLMManager,
     ) -> None:
         """Refreshing LoRA models updates base model dropdown."""
-        llm_config_dialog.llm_manager.backends = {
-            "model_1": Mock(),
-            "model_2": Mock(),
-            "model_3": Mock(),
+        fake_llm_manager.backends = {
+            "model_1": LLMConfig(provider=LLMProvider.OPENAI, model_name="model_1"),
+            "model_2": LLMConfig(provider=LLMProvider.OPENAI, model_name="model_2"),
+            "model_3": LLMConfig(provider=LLMProvider.OPENAI, model_name="model_3"),
         }
 
         llm_config_dialog.refresh_lora_models()
@@ -617,35 +968,45 @@ class TestModelTestThread:
 
     def test_model_test_thread_initialization(self) -> None:
         """ModelTestThread initializes with config."""
-        mock_config = Mock(spec=LLMConfig)
-        mock_config.provider = LLMProvider.OPENAI
+        config = LLMConfig(
+            provider=LLMProvider.OPENAI,
+            model_name="gpt-4",
+            api_key="sk-test",
+        )
 
-        thread = ModelTestThread(mock_config)
+        thread = ModelTestThread(config)
 
-        assert thread.config == mock_config
+        assert thread.config == config
 
     def test_model_test_thread_emits_progress_signals(
         self,
         qapp: QApplication,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """ModelTestThread emits progress signals during execution."""
-        mock_config = Mock(spec=LLMConfig)
-        mock_config.provider = LLMProvider.OPENAI
+        config = LLMConfig(
+            provider=LLMProvider.OPENAI,
+            model_name="gpt-4",
+            api_key="sk-test",
+        )
 
-        with patch("intellicrack.ui.dialogs.llm_config_dialog._get_llm_manager"):
-            thread = ModelTestThread(mock_config)
+        monkeypatch.setattr(
+            "intellicrack.ui.dialogs.llm_config_dialog._get_llm_manager",
+            lambda: None,
+        )
 
-            progress_messages: list[str] = []
+        thread = ModelTestThread(config)
 
-            def on_progress(message: str) -> None:
-                progress_messages.append(message)
+        progress_messages: list[str] = []
 
-            thread.validation_progress.connect(on_progress)
+        def on_progress(message: str) -> None:
+            progress_messages.append(message)
 
-            with patch("intellicrack.ui.dialogs.llm_config_dialog._get_llm_manager", return_value=None):
-                thread.run()
+        thread.validation_progress.connect(on_progress)
 
-            qapp.processEvents()
+        thread.run()
+
+        qapp.processEvents()
 
 
 class TestCloseEvent:
@@ -654,38 +1015,75 @@ class TestCloseEvent:
     def test_close_event_with_running_validation_prompts_user(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Closing dialog with running validation prompts confirmation."""
-        llm_config_dialog.validation_thread = Mock()
-        llm_config_dialog.validation_thread.isRunning.return_value = True
+        class FakeRunningThread:
+            def isRunning(self) -> bool:
+                return True
+
+            def terminate(self) -> None:
+                pass
+
+            def wait(self) -> None:
+                pass
+
+        llm_config_dialog.validation_thread = FakeRunningThread()
 
         from PyQt6.QtGui import QCloseEvent
 
         close_event = QCloseEvent()
 
-        with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.No):
-            llm_config_dialog.closeEvent(close_event)
+        def fake_question(
+            parent: Any, title: str, message: str, buttons: Any, default_button: Any = None
+        ) -> Any:
+            return QMessageBox.StandardButton.No
 
-            assert close_event.isAccepted() is False
+        monkeypatch.setattr(QMessageBox, "question", fake_question)
+
+        llm_config_dialog.closeEvent(close_event)
+
+        assert close_event.isAccepted() is False
 
     def test_close_event_with_running_validation_and_confirmation_terminates_thread(
         self,
         llm_config_dialog: LLMConfigDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Closing dialog with confirmation terminates validation thread."""
-        llm_config_dialog.validation_thread = Mock()
-        llm_config_dialog.validation_thread.isRunning.return_value = True
+        terminate_called = False
+        wait_called = False
+
+        class FakeRunningThread:
+            def isRunning(self) -> bool:
+                return True
+
+            def terminate(self) -> None:
+                nonlocal terminate_called
+                terminate_called = True
+
+            def wait(self) -> None:
+                nonlocal wait_called
+                wait_called = True
+
+        llm_config_dialog.validation_thread = FakeRunningThread()
 
         from PyQt6.QtGui import QCloseEvent
 
         close_event = QCloseEvent()
 
-        with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes):
-            llm_config_dialog.closeEvent(close_event)
+        def fake_question(
+            parent: Any, title: str, message: str, buttons: Any, default_button: Any = None
+        ) -> Any:
+            return QMessageBox.StandardButton.Yes
 
-            llm_config_dialog.validation_thread.terminate.assert_called_once()
-            llm_config_dialog.validation_thread.wait.assert_called_once()
-            assert close_event.isAccepted() is True
+        monkeypatch.setattr(QMessageBox, "question", fake_question)
+
+        llm_config_dialog.closeEvent(close_event)
+
+        assert terminate_called
+        assert wait_called
+        assert close_event.isAccepted() is True
 
 
 class TestModelDiscoveryIntegration:
@@ -694,26 +1092,33 @@ class TestModelDiscoveryIntegration:
     def test_save_configuration_triggers_model_discovery_refresh(
         self,
         llm_config_dialog: LLMConfigDialog,
+        fake_discovery_service: FakeModelDiscoveryService,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Saving configuration triggers model discovery service refresh."""
-        llm_config_dialog.openai_api_key.setText("sk-test-key")
+        llm_config_dialog.openai_api_key.setText("sk-test-key-12345")
 
-        mock_discovery_service = Mock()
-        mock_discovery_service.discover_all_models = Mock(
-            return_value={
-                "openai": ["gpt-4", "gpt-3.5-turbo"],
-                "anthropic": ["claude-3-sonnet"],
-            }
+        def fake_get_discovery_service() -> FakeModelDiscoveryService:
+            return fake_discovery_service
+
+        monkeypatch.setattr(
+            "intellicrack.ui.dialogs.llm_config_dialog.get_model_discovery_service",
+            fake_get_discovery_service,
         )
 
-        with (
-            patch("intellicrack.ui.dialogs.llm_config_dialog.get_model_discovery_service", return_value=mock_discovery_service),
-            patch.object(QMessageBox, "information"),
-        ):
-            llm_config_dialog.save_configuration()
+        info_called = False
 
-            mock_discovery_service.clear_cache.assert_called_once()
-            mock_discovery_service.discover_all_models.assert_called_once_with(force_refresh=True)
+        def fake_information(parent: Any, title: str, message: str) -> None:
+            nonlocal info_called
+            info_called = True
+
+        monkeypatch.setattr(QMessageBox, "information", fake_information)
+
+        llm_config_dialog.save_configuration()
+
+        assert fake_discovery_service.cache_cleared
+        assert len(fake_discovery_service.discover_calls) > 0
+        assert fake_discovery_service.discover_calls[-1]["force_refresh"] is True
 
 
 class TestConfigurationPersistence:
@@ -722,11 +1127,13 @@ class TestConfigurationPersistence:
     def test_load_existing_configs_updates_models_list(
         self,
         llm_config_dialog: LLMConfigDialog,
+        fake_llm_manager: FakeLLMManager,
     ) -> None:
         """Loading existing configs updates models list."""
-        llm_config_dialog.llm_manager.get_available_llms = Mock(
-            return_value=["existing_model_1", "existing_model_2"]
-        )
+        fake_llm_manager.backends = {
+            "existing_model_1": LLMConfig(provider=LLMProvider.OPENAI, model_name="existing_model_1"),
+            "existing_model_2": LLMConfig(provider=LLMProvider.OPENAI, model_name="existing_model_2"),
+        }
 
         llm_config_dialog.load_existing_configs()
 
@@ -735,9 +1142,10 @@ class TestConfigurationPersistence:
     def test_load_existing_configs_with_no_models_shows_message(
         self,
         llm_config_dialog: LLMConfigDialog,
+        fake_llm_manager: FakeLLMManager,
     ) -> None:
         """Loading configs with no existing models shows appropriate message."""
-        llm_config_dialog.llm_manager.get_available_llms = Mock(return_value=[])
+        fake_llm_manager.backends = {}
 
         llm_config_dialog.load_existing_configs()
 

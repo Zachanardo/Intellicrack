@@ -9,6 +9,7 @@ Copyright (C) 2025 Zachary Flint
 from __future__ import annotations
 
 import time
+from collections.abc import Generator
 from typing import Any
 
 import pytest
@@ -21,7 +22,7 @@ from intellicrack.ai.integration_manager import (
 
 
 @pytest.fixture
-def integration_manager() -> IntegrationManager:
+def integration_manager() -> Generator[IntegrationManager, None, None]:
     """Create IntegrationManager instance for testing."""
     manager = IntegrationManager()
     yield manager
@@ -30,7 +31,7 @@ def integration_manager() -> IntegrationManager:
 
 
 @pytest.fixture
-def started_integration_manager() -> IntegrationManager:
+def started_integration_manager() -> Generator[IntegrationManager, None, None]:
     """Create and start IntegrationManager for testing."""
     manager = IntegrationManager()
     manager.start()
@@ -89,11 +90,13 @@ class TestManagerStartStop:
         self, integration_manager: IntegrationManager
     ) -> None:
         """Starting manager enables running state."""
-        assert integration_manager.running is False
+        not_running: bool = integration_manager.running is False
+        assert not_running
 
         integration_manager.start()
 
-        assert integration_manager.running is True
+        is_running: bool = integration_manager.running is True
+        assert is_running
         integration_manager.stop()
 
     def test_start_manager_creates_worker_threads(
@@ -144,12 +147,13 @@ class TestTaskManagement:
         task = IntegrationTask(
             task_id="test_task_001",
             task_type="generate_script",
-            params={"binary": "test.exe"},
+            description="Generate test script",
+            input_data={"binary": "test.exe"},
         )
 
         assert task.task_id == "test_task_001"
         assert task.task_type == "generate_script"
-        assert task.params["binary"] == "test.exe"
+        assert task.input_data["binary"] == "test.exe"
         assert task.status == "pending"
 
     def test_task_has_default_status(self) -> None:
@@ -157,7 +161,8 @@ class TestTaskManagement:
         task = IntegrationTask(
             task_id="test_task",
             task_type="test",
-            params={},
+            description="Test task",
+            input_data={},
         )
 
         assert task.status == "pending"
@@ -167,7 +172,8 @@ class TestTaskManagement:
         task = IntegrationTask(
             task_id="dependent_task",
             task_type="test",
-            params={},
+            description="Dependent task",
+            input_data={},
             dependencies=["task_1", "task_2"],
         )
 
@@ -186,7 +192,8 @@ class TestDependencyManagement:
         completed_task = IntegrationTask(
             task_id="completed_task",
             task_type="test",
-            params={},
+            description="Completed task",
+            input_data={},
         )
         completed_task.status = "completed"
         integration_manager.completed_tasks["completed_task"] = completed_task
@@ -194,7 +201,8 @@ class TestDependencyManagement:
         dependent_task = IntegrationTask(
             task_id="dependent",
             task_type="test",
-            params={},
+            description="Dependent task",
+            input_data={},
             dependencies=["completed_task"],
         )
 
@@ -209,7 +217,8 @@ class TestDependencyManagement:
         dependent_task = IntegrationTask(
             task_id="dependent",
             task_type="test",
-            params={},
+            description="Dependent task",
+            input_data={},
             dependencies=["missing_task"],
         )
 
@@ -224,7 +233,8 @@ class TestDependencyManagement:
         failed_task = IntegrationTask(
             task_id="failed_task",
             task_type="test",
-            params={},
+            description="Failed task",
+            input_data={},
         )
         failed_task.status = "failed"
         integration_manager.completed_tasks["failed_task"] = failed_task
@@ -232,7 +242,8 @@ class TestDependencyManagement:
         dependent_task = IntegrationTask(
             task_id="dependent",
             task_type="test",
-            params={},
+            description="Dependent task",
+            input_data={},
             dependencies=["failed_task"],
         )
 
@@ -251,7 +262,7 @@ class TestEventHandling:
         def handler(task: IntegrationTask) -> None:
             events_received.append(task)
 
-        integration_manager.register_event_handler("task_completed", handler)
+        integration_manager.add_event_handler("task_completed", handler)
 
         assert "task_completed" in integration_manager.event_handlers
         assert handler in integration_manager.event_handlers["task_completed"]
@@ -263,9 +274,14 @@ class TestEventHandling:
         def handler(task: IntegrationTask) -> None:
             events_received.append(task.task_id)
 
-        integration_manager.register_event_handler("test_event", handler)
+        integration_manager.add_event_handler("test_event", handler)
 
-        test_task = IntegrationTask(task_id="test_task", task_type="test", params={})
+        test_task = IntegrationTask(
+            task_id="test_task",
+            task_type="test",
+            description="Test task",
+            input_data={},
+        )
         integration_manager._emit_event("test_event", test_task)
 
         assert events_received
@@ -284,10 +300,15 @@ class TestEventHandling:
         def handler_b(task: IntegrationTask) -> None:
             calls_b.append(task.task_id)
 
-        integration_manager.register_event_handler("test_event", handler_a)
-        integration_manager.register_event_handler("test_event", handler_b)
+        integration_manager.add_event_handler("test_event", handler_a)
+        integration_manager.add_event_handler("test_event", handler_b)
 
-        test_task = IntegrationTask(task_id="test", task_type="test", params={})
+        test_task = IntegrationTask(
+            task_id="test",
+            task_type="test",
+            description="Test task",
+            input_data={},
+        )
         integration_manager._emit_event("test_event", test_task)
 
         assert calls_a
@@ -345,7 +366,7 @@ class TestWorkflowExecution:
         }
 
         workflow_id = started_integration_manager.create_workflow(workflow_def)
-        result = started_integration_manager.execute_workflow(workflow_id, timeout=10.0)
+        result = started_integration_manager.wait_for_workflow(workflow_id, timeout=10.0)
 
         assert result is not None
         assert isinstance(result, WorkflowResult)
@@ -518,6 +539,9 @@ class TestWorkflowResult:
         result = WorkflowResult(
             workflow_id="wf_001",
             success=True,
+            tasks_completed=2,
+            tasks_failed=0,
+            execution_time=1.5,
             results={},
         )
 
@@ -534,7 +558,8 @@ class TestTaskStatusTracking:
         task = IntegrationTask(
             task_id="lifecycle_task",
             task_type="test",
-            params={},
+            description="Lifecycle test task",
+            input_data={},
         )
 
         assert task.status == "pending"

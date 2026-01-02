@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import TypedDict
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class UnusedCodeInfo(TypedDict):
@@ -43,14 +43,24 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
     """AST visitor to detect unused configuration-related code."""
 
     def __init__(self) -> None:
-        """Initialize the detector."""
+        """Initialize the detector.
+
+        Creates empty collections to track unused imports, methods, and patterns.
+        """
         self.unused_imports: set[tuple[str, int]] = set()
         self.unused_methods: set[tuple[str, int]] = set()
         self.qsettings_usage: list[int] = []
         self.legacy_config_patterns: list[tuple[str, int]] = []
 
     def visit_Import(self, node: ast.Import) -> None:
-        """Check for unused configuration imports."""
+        """Check for unused configuration imports.
+
+        Args:
+            node: The import statement node to check.
+
+        Returns:
+            None.
+        """
         for alias in node.names:
             if "QSettings" in alias.name:
                 self.unused_imports.add(("QSettings", node.lineno))
@@ -58,14 +68,28 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
                 self.unused_imports.add(("configparser", node.lineno))
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
-        """Check for unused configuration imports from modules."""
+        """Check for unused configuration imports from modules.
+
+        Args:
+            node: The import from statement node to check.
+
+        Returns:
+            None.
+        """
         if node.module and "QtCore" in node.module:
             for alias in node.names:
                 if alias.name == "QSettings":
                     self.unused_imports.add(("QSettings", node.lineno))
 
     def visit_Call(self, node: ast.Call) -> None:
-        """Check for legacy configuration method calls."""
+        """Check for legacy configuration method calls.
+
+        Args:
+            node: The call node to check.
+
+        Returns:
+            None.
+        """
         if isinstance(node.func, ast.Name):
             if node.func.id == "QSettings":
                 self.qsettings_usage.append(node.lineno)
@@ -79,7 +103,14 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        """Check for unused configuration-related methods."""
+        """Check for unused configuration-related methods.
+
+        Args:
+            node: The function definition node to check.
+
+        Returns:
+            None.
+        """
         # Check for deprecated file operation methods
         deprecated_patterns = [
             "_save_json_file",
@@ -97,7 +128,14 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
         self.generic_visit(node)
 
     def _is_likely_unused(self, node: ast.FunctionDef) -> bool:
-        """Check if a method is likely unused based on docstring or comments."""
+        """Check if a method is likely unused based on docstring or comments.
+
+        Args:
+            node: The function definition AST node to check.
+
+        Returns:
+            True if the method appears unused, False otherwise.
+        """
         if node.body and isinstance(node.body[0], ast.Expr) and isinstance(node.body[0].value, ast.Constant):
             docstring = node.body[0].value.value
             if isinstance(docstring, str):
@@ -109,11 +147,17 @@ def analyze_file(file_path: Path) -> tuple[set[tuple[str, int]], set[tuple[str, 
     """Analyze a Python file for unused configuration code.
 
     Args:
-        file_path: Path to the Python file
+        file_path: Path to the Python file to analyze.
 
     Returns:
-        Tuple of (unused_imports, unused_methods, qsettings_usage, legacy_patterns)
+        Tuple containing sets and lists of unused code information:
+            - Set of (import_name, line_number) for unused imports
+            - Set of (method_name, line_number) for unused methods
+            - List of line numbers with QSettings usage
+            - List of (pattern_name, line_number) for legacy patterns
 
+    Raises:
+        Any exceptions are caught and logged; empty collections are returned.
     """
     try:
         with open(file_path, encoding="utf-8") as f:
@@ -137,11 +181,10 @@ def find_unused_config_code(root_dir: Path) -> dict[str, UnusedCodeInfo]:
     """Find all unused configuration code in the project.
 
     Args:
-        root_dir: Root directory to search
+        root_dir: Root directory to search.
 
     Returns:
-        Dictionary mapping file paths to unused code information
-
+        Dictionary mapping file paths to unused code information.
     """
     results: dict[str, UnusedCodeInfo] = {}
 
@@ -167,11 +210,10 @@ def generate_cleanup_report(results: dict[str, UnusedCodeInfo]) -> str:
     """Generate a cleanup report from analysis results.
 
     Args:
-        results: Analysis results from find_unused_config_code
+        results: Analysis results from find_unused_config_code.
 
     Returns:
-        Formatted report string
-
+        Formatted report string.
     """
     total_files = len(results)
     total_issues = sum(
@@ -215,12 +257,14 @@ def remove_unused_imports(file_path: Path, unused_imports: set[tuple[str, int]])
     """Remove unused imports from a file.
 
     Args:
-        file_path: Path to the file
-        unused_imports: Set of (import_name, line_number) tuples
+        file_path: Path to the file to modify.
+        unused_imports: Set of (import_name, line_number) tuples to remove.
 
     Returns:
-        True if successful, False otherwise
+        True if file was successfully modified, False if an error occurred.
 
+    Raises:
+        Any exceptions are caught and logged; False is returned on error.
     """
     try:
         with open(file_path, encoding="utf-8") as f:
@@ -245,12 +289,11 @@ def cleanup_file(file_path: Path, auto_fix: bool = False) -> int:
     """Clean up unused configuration code in a file.
 
     Args:
-        file_path: Path to the file to clean
-        auto_fix: Whether to automatically fix issues
+        file_path: Path to the file to clean.
+        auto_fix: Whether to automatically fix issues.
 
     Returns:
-        Number of issues fixed
-
+        Number of issues fixed.
     """
     imports, methods, qsettings, legacy = analyze_file(file_path)
 

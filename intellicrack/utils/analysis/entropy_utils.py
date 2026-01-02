@@ -28,11 +28,10 @@ def calculate_entropy(data: bytes | str) -> float:
     """Calculate Shannon entropy of data.
 
     Args:
-        data: Input data (bytes or string)
+        data: Input data to analyze.
 
     Returns:
-        Shannon entropy value
-
+        Shannon entropy value as a float.
     """
     if not data:
         return 0.0
@@ -57,11 +56,10 @@ def calculate_byte_entropy(data: bytes) -> float:
     """Calculate Shannon entropy specifically for byte data.
 
     Args:
-        data: Input byte data
+        data: Input byte data to analyze.
 
     Returns:
-        Shannon entropy value
-
+        Shannon entropy value as a float.
     """
     return calculate_entropy(data)
 
@@ -70,11 +68,10 @@ def calculate_string_entropy(data: str) -> float:
     """Calculate Shannon entropy specifically for string data.
 
     Args:
-        data: Input string data
+        data: Input string data to analyze.
 
     Returns:
-        Shannon entropy value
-
+        Shannon entropy value as a float.
     """
     return calculate_entropy(data)
 
@@ -83,12 +80,11 @@ def safe_entropy_calculation(data: bytes, max_entropy: float | None = None) -> f
     """Safe entropy calculation with optional maximum cap.
 
     Args:
-        data: Input byte data
-        max_entropy: Optional maximum entropy value to cap result
+        data: Input byte data to analyze.
+        max_entropy: Optional maximum entropy value to cap result.
 
     Returns:
-        Shannon entropy value (optionally capped)
-
+        Shannon entropy value, optionally capped at max_entropy.
     """
     if not data:
         return 0.0
@@ -102,11 +98,10 @@ def calculate_frequency_distribution(data: bytes | str) -> dict[int | str, dict[
     """Calculate frequency distribution of data.
 
     Args:
-        data: Input data (bytes or string)
+        data: Input data to analyze.
 
     Returns:
-        Dictionary with frequency distribution
-
+        Dictionary mapping each unique byte/character to its frequency and probability.
     """
     if not data:
         return {}
@@ -130,12 +125,11 @@ def is_high_entropy(data: bytes | str, threshold: float = 7.0) -> bool:
     """Check if data has high entropy (likely encrypted/compressed).
 
     Args:
-        data: Input data to analyze
-        threshold: Entropy threshold (default 7.0 for binary data)
+        data: Input data to analyze.
+        threshold: Entropy threshold for determining high entropy.
 
     Returns:
-        True if entropy is above threshold
-
+        True if entropy is above the threshold, False otherwise.
     """
     entropy = calculate_entropy(data)
     return entropy >= threshold
@@ -147,12 +141,11 @@ def analyze_entropy_sections(
     """Analyze entropy across different sections of data.
 
     Args:
-        data: Input byte data
-        block_size: Size of each block to analyze
+        data: Input byte data to analyze.
+        block_size: Size of each block to analyze in bytes.
 
     Returns:
-        Dictionary with entropy analysis
-
+        Dictionary containing overall entropy, per-block entropy analysis, and statistical summaries.
     """
     if not data:
         return {}

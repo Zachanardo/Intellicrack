@@ -23,7 +23,6 @@ import logging
 import mmap
 import os
 from collections import OrderedDict
-from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar
 
@@ -74,13 +73,27 @@ class LRUCache:
         self.cache: OrderedDict[int, bytes | mmap.mmap] = OrderedDict()
 
     def __getitem__(self, key: int) -> bytes | mmap.mmap:
-        """Get an item from the cache and mark it as recently used."""
+        """Get an item from the cache and mark it as recently used.
+
+        Args:
+            key: The cache key to retrieve
+
+        Returns:
+            The cached value associated with the key
+
+        """
         value: bytes | mmap.mmap = self.cache.pop(key)
         self.cache[key] = value
         return value
 
     def __setitem__(self, key: int, value: bytes | mmap.mmap) -> None:
-        """Add an item to the cache, evicting least recently used items if necessary."""
+        """Add an item to the cache, evicting least recently used items if necessary.
+
+        Args:
+            key: The cache key to store
+            value: The value to cache
+
+        """
         if key in self.cache:
             self.cache.pop(key)
         elif len(self.cache) >= self.max_size:
@@ -88,11 +101,24 @@ class LRUCache:
         self.cache[key] = value
 
     def __contains__(self, key: int) -> bool:
-        """Check if an item is in the cache."""
+        """Check if an item is in the cache.
+
+        Args:
+            key: The cache key to check
+
+        Returns:
+            True if the key is in the cache, False otherwise
+
+        """
         return key in self.cache
 
     def __len__(self) -> int:
-        """Get the number of items in the cache."""
+        """Get the number of items in the cache.
+
+        Returns:
+            The number of items currently in the cache
+
+        """
         return len(self.cache)
 
 
@@ -144,7 +170,7 @@ class ChunkManager:
             offset: Byte offset into the file
 
         Returns:
-            Memory-mapped chunk data or raw bytes if memory mapping fails
+            Memory-mapped chunk data or raw bytes if memory mapping fails.
 
         """
         chunk_index = offset // self.chunk_size
@@ -178,7 +204,7 @@ class ChunkManager:
             size: Number of bytes to read
 
         Returns:
-            Read binary data
+            Binary data read from the file.
 
         """
         try:
@@ -267,6 +293,10 @@ class VirtualFileAccess:
             chunk_size: Size of each chunk in bytes
             cache_size: Number of chunks to keep in memory
             use_large_file_optimization: Whether to use large file optimization
+
+        Raises:
+            FileNotFoundError: If the file cannot be found or read
+            ValueError: If temporary file creation fails or file operations are invalid
 
         """
         self.file_path: str = file_path
@@ -458,7 +488,7 @@ class VirtualFileAccess:
             size: Number of bytes to read
 
         Returns:
-            Read binary data with pending edits applied
+            Binary data with pending edits applied.
 
         """
         # Basic validation
@@ -527,7 +557,7 @@ class VirtualFileAccess:
             data: Data to write
 
         Returns:
-            True if the edit was successfully staged, False otherwise
+            True if the edit was successfully staged, False otherwise.
 
         """
         if self.read_only:
@@ -557,7 +587,7 @@ class VirtualFileAccess:
         """Apply all pending edits to the file.
 
         Returns:
-            True if all edits were successfully applied, False otherwise
+            True if all edits were successfully applied, False otherwise.
 
         """
         if self.read_only:
@@ -593,7 +623,7 @@ class VirtualFileAccess:
         """Undo the last applied edit.
 
         Returns:
-            True if the edit was successfully undone, False otherwise
+            True if the edit was successfully undone, False otherwise.
 
         """
         if self.read_only:
@@ -622,7 +652,12 @@ class VirtualFileAccess:
             return False
 
     def discard_edits(self) -> None:
-        """Discard all pending edits without applying them."""
+        """Discard all pending edits without applying them.
+
+        Clears the pending_edits dictionary, discarding all staged changes
+        that have not yet been applied to the file.
+
+        """
         self.pending_edits.clear()
         logger.info("Discarded all pending edits")
 
@@ -637,7 +672,7 @@ class VirtualFileAccess:
             data: Data to insert
 
         Returns:
-            True if successful, False otherwise
+            True if successful, False otherwise.
 
         """
         if self.read_only:
@@ -722,7 +757,7 @@ class VirtualFileAccess:
             length: Number of bytes to delete
 
         Returns:
-            True if successful, False otherwise
+            True if successful, False otherwise.
 
         """
         if self.read_only:
@@ -804,7 +839,7 @@ class VirtualFileAccess:
         """Get the last modification time of the file.
 
         Returns:
-            Modification time as a timestamp
+            Modification time as a Unix timestamp.
 
         """
         try:
@@ -822,7 +857,7 @@ class VirtualFileAccess:
             new_path: Path to save the file to
 
         Returns:
-            True if successful, False otherwise
+            True if successful, False otherwise.
 
         """
         try:
@@ -858,21 +893,29 @@ class VirtualFileAccess:
         """Get performance statistics from large file handler.
 
         Returns:
-            Dictionary with performance stats or None if not available
+            Dictionary with performance stats or None if not available.
 
         """
         return self.large_file_handler.get_stats() if self.large_file_handler else None
 
     def optimize_for_sequential_access(self) -> None:
-        """Optimize for sequential file access patterns."""
+        """Optimize for sequential file access patterns.
+
+        Adjusts the large file handler configuration to optimize performance
+        for sequential read patterns by increasing prefetch settings.
+
+        """
         if self.large_file_handler:
-            # Increase prefetch for sequential access
             self.large_file_handler.config.prefetch_chunks = 4
             logger.debug("Optimized for sequential access")
 
     def optimize_for_random_access(self) -> None:
-        """Optimize for random file access patterns."""
+        """Optimize for random file access patterns.
+
+        Adjusts the large file handler configuration to optimize performance
+        for random access patterns by reducing prefetch settings.
+
+        """
         if self.large_file_handler:
-            # Reduce prefetch for random access
             self.large_file_handler.config.prefetch_chunks = 1
             logger.debug("Optimized for random access")

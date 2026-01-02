@@ -11,8 +11,8 @@ These tests validate genuine GPU backend initialization.
 """
 
 import os
+import sys
 from typing import Any
-from unittest.mock import patch
 
 import pytest
 
@@ -59,53 +59,88 @@ class TestEnvironmentVariableHandling:
 
     def test_respects_pytest_environment(self) -> None:
         """Handler detects pytest environment and skips XPU."""
-        with patch.dict(os.environ, {"PYTEST_CURRENT_TEST": "test_module::test_func"}):
+        original_env = os.environ.get("PYTEST_CURRENT_TEST")
+        try:
+            os.environ["PYTEST_CURRENT_TEST"] = "test_module::test_func"
             import importlib
             from intellicrack.handlers import torch_xpu_handler
 
             importlib.reload(torch_xpu_handler)
 
             assert torch_xpu_handler.HAS_XPU is False
+        finally:
+            if original_env is not None:
+                os.environ["PYTEST_CURRENT_TEST"] = original_env
+            elif "PYTEST_CURRENT_TEST" in os.environ:
+                del os.environ["PYTEST_CURRENT_TEST"]
 
     def test_respects_ci_environment(self) -> None:
         """Handler detects CI environment and skips XPU."""
-        with patch.dict(os.environ, {"CI": "true"}):
+        original_env = os.environ.get("CI")
+        try:
+            os.environ["CI"] = "true"
             import importlib
             from intellicrack.handlers import torch_xpu_handler
 
             importlib.reload(torch_xpu_handler)
 
             assert torch_xpu_handler.HAS_XPU is False
+        finally:
+            if original_env is not None:
+                os.environ["CI"] = original_env
+            elif "CI" in os.environ:
+                del os.environ["CI"]
 
     def test_respects_test_mode_flag(self) -> None:
         """Handler respects INTELLICRACK_TEST_MODE flag."""
-        with patch.dict(os.environ, {"INTELLICRACK_TEST_MODE": "1"}):
+        original_env = os.environ.get("INTELLICRACK_TEST_MODE")
+        try:
+            os.environ["INTELLICRACK_TEST_MODE"] = "1"
             import importlib
             from intellicrack.handlers import torch_xpu_handler
 
             importlib.reload(torch_xpu_handler)
 
             assert torch_xpu_handler.HAS_XPU is False
+        finally:
+            if original_env is not None:
+                os.environ["INTELLICRACK_TEST_MODE"] = original_env
+            elif "INTELLICRACK_TEST_MODE" in os.environ:
+                del os.environ["INTELLICRACK_TEST_MODE"]
 
     def test_respects_gpu_disable_flag(self) -> None:
         """Handler respects INTELLICRACK_DISABLE_GPU flag."""
-        with patch.dict(os.environ, {"INTELLICRACK_DISABLE_GPU": "1"}):
+        original_env = os.environ.get("INTELLICRACK_DISABLE_GPU")
+        try:
+            os.environ["INTELLICRACK_DISABLE_GPU"] = "1"
             import importlib
             from intellicrack.handlers import torch_xpu_handler
 
             importlib.reload(torch_xpu_handler)
 
             assert torch_xpu_handler.HAS_XPU is False
+        finally:
+            if original_env is not None:
+                os.environ["INTELLICRACK_DISABLE_GPU"] = original_env
+            elif "INTELLICRACK_DISABLE_GPU" in os.environ:
+                del os.environ["INTELLICRACK_DISABLE_GPU"]
 
     def test_respects_xpu_skip_flag(self) -> None:
         """Handler respects INTELLICRACK_SKIP_INTEL_XPU flag."""
-        with patch.dict(os.environ, {"INTELLICRACK_SKIP_INTEL_XPU": "1"}):
+        original_env = os.environ.get("INTELLICRACK_SKIP_INTEL_XPU")
+        try:
+            os.environ["INTELLICRACK_SKIP_INTEL_XPU"] = "1"
             import importlib
             from intellicrack.handlers import torch_xpu_handler
 
             importlib.reload(torch_xpu_handler)
 
             assert torch_xpu_handler.HAS_XPU is False
+        finally:
+            if original_env is not None:
+                os.environ["INTELLICRACK_SKIP_INTEL_XPU"] = original_env
+            elif "INTELLICRACK_SKIP_INTEL_XPU" in os.environ:
+                del os.environ["INTELLICRACK_SKIP_INTEL_XPU"]
 
 
 class TestXPUAvailability:
@@ -176,16 +211,22 @@ class TestGracefulDegradation:
 
     def test_import_succeeds_without_pytorch(self) -> None:
         """Handler imports even if PyTorch unavailable."""
-        with patch.dict("sys.modules", {"torch": None}):
-            try:
-                import importlib
-                from intellicrack.handlers import torch_xpu_handler
+        original_torch = sys.modules.get("torch")
+        try:
+            sys.modules["torch"] = None
+            import importlib
+            from intellicrack.handlers import torch_xpu_handler
 
-                importlib.reload(torch_xpu_handler)
+            importlib.reload(torch_xpu_handler)
 
-                assert hasattr(torch_xpu_handler, "HAS_XPU")
-            except ImportError:
-                pytest.skip("PyTorch import manipulation failed")
+            assert hasattr(torch_xpu_handler, "HAS_XPU")
+        except ImportError:
+            pytest.skip("PyTorch import manipulation failed")
+        finally:
+            if original_torch is not None:
+                sys.modules["torch"] = original_torch
+            elif "torch" in sys.modules:
+                del sys.modules["torch"]
 
     def test_handles_runtime_error(self) -> None:
         """Handler handles RuntimeError during XPU initialization."""

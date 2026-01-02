@@ -27,6 +27,9 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
 import pytest
 
 try:
@@ -55,14 +58,6 @@ from intellicrack.core.analysis.fingerprint_engine import (
     LicenseSystemFingerprint,
     ProtectionFingerprint,
 )
-
-
-@pytest.fixture
-def temp_workspace(tmp_path: Path) -> Path:
-    """Create temporary workspace for test files."""
-    workspace = tmp_path / "fingerprint_tests"
-    workspace.mkdir(exist_ok=True)
-    return workspace
 
 
 @pytest.fixture
@@ -700,9 +695,9 @@ class TestProtectionFingerprinting:
     ) -> None:
         """Fingerprint real protected binary from test fixtures."""
         test_binaries = [
-            Path("D:/Intellicrack/tests/fixtures/binaries/protected/upx_packed_0.exe"),
-            Path("D:/Intellicrack/tests/fixtures/binaries/protected/vmprotect_protected.exe"),
-            Path("D:/Intellicrack/tests/fixtures/binaries/protected/themida_protected.exe"),
+            PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "upx_packed_0.exe",
+            PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "vmprotect_protected.exe",
+            PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "themida_protected.exe",
         ]
 
         for binary_path in test_binaries:
@@ -761,8 +756,8 @@ class TestCompilerFingerprinting:
     ) -> None:
         """Fingerprint real binaries to detect compiler."""
         test_binaries = [
-            Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/7zip.exe"),
-            Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/notepadpp.exe"),
+            PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "7zip.exe",
+            PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "notepadpp.exe",
         ]
 
         for binary_path in test_binaries:
@@ -827,9 +822,9 @@ class TestLicenseSystemFingerprinting:
     ) -> None:
         """Fingerprint real licensed binaries from test fixtures."""
         test_binaries = [
-            Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected/flexlm_license_protected.exe"),
-            Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected/hasp_sentinel_protected.exe"),
-            Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected/wibu_codemeter_protected.exe"),
+            PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "flexlm_license_protected.exe",
+            PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "hasp_sentinel_protected.exe",
+            PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "wibu_codemeter_protected.exe",
         ]
 
         for binary_path in test_binaries:
@@ -866,7 +861,7 @@ class TestImportTableFingerprinting:
         self, fingerprint_engine: FingerprintEngine
     ) -> None:
         """Fingerprint imports from real binary."""
-        binary_path = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/7zip.exe")
+        binary_path = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "7zip.exe"
         if not binary_path.exists():
             pytest.skip("Test binary not available")
 
@@ -1050,7 +1045,7 @@ class TestRealWorldBinaries:
         self, fingerprint_engine: FingerprintEngine
     ) -> None:
         """Fingerprint legitimate 7-Zip binary."""
-        binary_path = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/7zip.exe")
+        binary_path = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "7zip.exe"
         if not binary_path.exists():
             pytest.skip("Test binary not available")
 
@@ -1066,7 +1061,7 @@ class TestRealWorldBinaries:
         self, fingerprint_engine: FingerprintEngine
     ) -> None:
         """Fingerprint legitimate Notepad++ binary."""
-        binary_path = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/notepadpp.exe")
+        binary_path = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "notepadpp.exe"
         if not binary_path.exists():
             pytest.skip("Test binary not available")
 
@@ -1080,7 +1075,7 @@ class TestRealWorldBinaries:
         self, fingerprint_engine: FingerprintEngine
     ) -> None:
         """Fingerprint protected Beyond Compare binary."""
-        binary_path = Path("D:/Intellicrack/tests/fixtures/full_protected_software/Beyond_Compare_Full.exe")
+        binary_path = PROJECT_ROOT / "tests" / "fixtures" / "full_protected_software" / "Beyond_Compare_Full.exe"
         if not binary_path.exists():
             pytest.skip("Test binary not available")
 
@@ -1096,9 +1091,9 @@ class TestRealWorldBinaries:
     ) -> None:
         """Fingerprint portable tool binaries."""
         test_binaries = [
-            Path("D:/Intellicrack/tests/fixtures/PORTABLE_SANDBOX/processhacker_portable/x86/ProcessHacker.exe"),
-            Path("D:/Intellicrack/tests/fixtures/PORTABLE_SANDBOX/pestudio_portable/pestudio/pestudio.exe"),
-            Path("D:/Intellicrack/tests/fixtures/PORTABLE_SANDBOX/exeinfope_portable/ExeinfoPE/exeinfope.exe"),
+            PROJECT_ROOT / "tests" / "fixtures" / "PORTABLE_SANDBOX" / "processhacker_portable" / "x86" / "ProcessHacker.exe",
+            PROJECT_ROOT / "tests" / "fixtures" / "PORTABLE_SANDBOX" / "pestudio_portable" / "pestudio" / "pestudio.exe",
+            PROJECT_ROOT / "tests" / "fixtures" / "PORTABLE_SANDBOX" / "exeinfope_portable" / "ExeinfoPE" / "exeinfope.exe",
         ]
 
         for binary_path in test_binaries:
@@ -1251,7 +1246,7 @@ class TestPerformance:
         self, fingerprint_engine: FingerprintEngine
     ) -> None:
         """Measure fingerprinting performance on small binary."""
-        binary_path = Path("D:/Intellicrack/tests/fixtures/binaries/size_categories/tiny_4kb/tiny_hello.exe")
+        binary_path = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "size_categories" / "tiny_4kb" / "tiny_hello.exe"
         if not binary_path.exists():
             pytest.skip("Test binary not available")
 
@@ -1268,7 +1263,7 @@ class TestPerformance:
         self, fingerprint_engine: FingerprintEngine
     ) -> None:
         """Measure fingerprinting performance on medium binary."""
-        binary_path = Path("D:/Intellicrack/tests/fixtures/binaries/size_categories/small_1mb/small_padded.exe")
+        binary_path = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "size_categories" / "small_1mb" / "small_padded.exe"
         if not binary_path.exists():
             pytest.skip("Test binary not available")
 

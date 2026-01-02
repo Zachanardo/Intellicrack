@@ -118,7 +118,16 @@ from cryptography.x509.oid import NameOID
 
 @dataclass
 class CertificateChain:
-    """Complete certificate chain with keys."""
+    """Complete certificate chain with keys.
+
+    Attributes:
+        leaf_cert: End-entity certificate for the target domain
+        intermediate_cert: Intermediate CA certificate
+        root_cert: Self-signed root CA certificate
+        leaf_key: Private key for the leaf certificate
+        intermediate_key: Private key for the intermediate CA
+        root_key: Private key for the root CA
+    """
 
     leaf_cert: x509.Certificate
     intermediate_cert: x509.Certificate
@@ -425,6 +434,18 @@ class CertificateChainGenerator:
             format=serialization.PrivateFormat.TraditionalOpenSSL,
             encryption_algorithm=serialization.NoEncryption(),
         ).decode()
+
+    def export_cert_pem(self, cert: x509.Certificate) -> str:
+        """Export certificate as PEM.
+
+        Args:
+            cert: Certificate to export
+
+        Returns:
+            PEM-encoded certificate
+
+        """
+        return cert.public_bytes(serialization.Encoding.PEM).decode()
 
     def export_public_key_pem(self, key: rsa.RSAPublicKey) -> str:
         """Export public key as PEM.

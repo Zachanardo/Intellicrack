@@ -16,7 +16,6 @@ Tests validate REAL CFG exploration capabilities:
 import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock
 
 import networkx as nx
 import pytest
@@ -42,13 +41,17 @@ LICENSE_STRINGS: list[bytes] = [
 
 
 class MockApp:
-    """Mock application object for testing CFG explorer."""
+    """Test double application object for testing CFG explorer."""
 
     def __init__(self) -> None:
-        """Initialize mock app with update signal."""
-        self.update_output = MagicMock()
+        """Initialize test app with update tracking."""
+        self.update_output_calls: list[tuple[str, ...]] = []
         self.binary_path: str | None = None
         self.analyze_results: list[str] = []
+
+    def update_output(self, *args: Any) -> None:
+        """Track update_output calls."""
+        self.update_output_calls.append(args)
 
 
 def create_realistic_pe_binary() -> bytes:

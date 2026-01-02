@@ -45,7 +45,15 @@ else:
             """Fallback QObject class when PyQt6 is not available."""
 
             def __init__(self, parent: QObject | None = None) -> None:
-                """Initialize QObject with optional parent."""
+                """Initialize QObject with optional parent.
+
+                Args:
+                    parent: Optional parent QObject instance, defaults to None.
+
+                Returns:
+                    None
+
+                """
                 pass
 
         class QRunnable:
@@ -60,15 +68,42 @@ else:
 
             @staticmethod
             def globalInstance() -> QThreadPool | None:
-                """Return the global thread pool instance."""
+                """Return the global thread pool instance.
+
+                Args:
+                    No arguments.
+
+                Returns:
+                    QThreadPool | None: The global thread pool instance or None
+                        if unavailable.
+
+                """
                 return None
 
             def start(self, runnable: QRunnable) -> None:
-                """Start a runnable in the thread pool."""
+                """Start a runnable in the thread pool.
+
+                Args:
+                    runnable: The QRunnable task to execute in the thread pool.
+
+                Returns:
+                    None
+
+                """
                 pass
 
         def pyqtSignal(*args: Any, **kwargs: Any) -> Callable[..., Any]:
-            """Fallback pyqtSignal function when PyQt6 is not available."""
+            """Fallback pyqtSignal function when PyQt6 is not available.
+
+            Args:
+                *args: Positional arguments for the signal definition.
+                **kwargs: Keyword arguments for the signal definition.
+
+            Returns:
+                Callable[..., Any]: A decorator function that wraps signal
+                    definitions.
+
+            """
 
             def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
                 return func
@@ -87,14 +122,22 @@ class LLMManagerProtocol(Protocol):
         ...
 
     def query(self, prompt: str) -> Any:
-        """Query the LLM with a prompt."""
+        """Query the LLM with a prompt.
+
+        Args:
+            prompt: The prompt string to send to the LLM for processing.
+
+        Returns:
+            Any: The response from the LLM backend.
+
+        """
         ...
 
 
 try:
     from ...ai.llm_backends import LLMManager as _LLMManager
 
-    LLMManager: type[LLMManagerProtocol] | None = _LLMManager  # type: ignore[assignment]
+    LLMManager: type[LLMManagerProtocol] | None = _LLMManager
 except ImportError:
     LLMManager = None
 
@@ -195,7 +238,17 @@ class LLMAnalysisWorker(QRunnable):
             self.signals.finished.emit()
 
     def _build_llm_context(self, result: UnifiedProtectionResult) -> dict[str, object]:
-        """Build context dictionary for LLM."""
+        """Build context dictionary for LLM.
+
+        Args:
+            result: The unified protection analysis result to convert to
+                context.
+
+        Returns:
+            dict[str, object]: A dictionary containing the protection analysis
+                context for the LLM.
+
+        """
         context = {
             "file_path": result.file_path,
             "file_type": result.file_type,
@@ -230,7 +283,15 @@ class LLMAnalysisWorker(QRunnable):
         return context
 
     def _build_summary_prompt(self, result: UnifiedProtectionResult) -> str:
-        """Build prompt for protection summary."""
+        """Build prompt for protection summary.
+
+        Args:
+            result: The unified protection analysis result to analyze.
+
+        Returns:
+            str: A formatted string prompt for the LLM to generate a summary.
+
+        """
         prompt = f"""Analyze the following protection analysis results and provide a concise summary:
 
 File: {result.file_path}
@@ -258,7 +319,16 @@ Please provide:
         return prompt
 
     def _build_bypass_prompt(self, result: UnifiedProtectionResult) -> str:
-        """Build prompt for bypass suggestions."""
+        """Build prompt for bypass suggestions.
+
+        Args:
+            result: The unified protection analysis result to analyze.
+
+        Returns:
+            str: A formatted string prompt for the LLM to suggest bypass
+                strategies.
+
+        """
         prompt = """Based on the following protection analysis, suggest bypass strategies:
 
 Protections:
@@ -326,6 +396,13 @@ class LLMHandler(QObject):
 
         This method runs in the main thread and kicks off background
         LLM operations.
+
+        Args:
+            result: The protection analysis result to process.
+
+        Returns:
+            None
+
         """
         self.current_result = result
         logger.info("LLM handler received analysis for: %s", result.file_path)
@@ -342,7 +419,12 @@ class LLMHandler(QObject):
         self.thread_pool.start(worker)
 
     def generate_summary(self) -> None:
-        """Generate an AI summary of the current protection analysis."""
+        """Generate an AI summary of the current protection analysis.
+
+        Returns:
+            None
+
+        """
         if not self.current_result:
             self.llm_error.emit("No analysis result available")
             return
@@ -359,7 +441,12 @@ class LLMHandler(QObject):
         self.thread_pool.start(worker)
 
     def suggest_bypass_strategies(self) -> None:
-        """Get AI suggestions for bypassing detected protections."""
+        """Get AI suggestions for bypassing detected protections.
+
+        Returns:
+            None
+
+        """
         if not self.current_result:
             self.llm_error.emit("No analysis result available")
             return
@@ -376,11 +463,26 @@ class LLMHandler(QObject):
         self.thread_pool.start(worker)
 
     def get_cached_result(self) -> UnifiedProtectionResult | None:
-        """Get the current cached analysis result."""
+        """Get the current cached analysis result.
+
+        Returns:
+            UnifiedProtectionResult | None: The cached protection analysis result
+                or None if no result is available.
+
+        """
         return self.current_result
 
     def _on_context_registered(self, result: dict[str, Any]) -> None:
-        """Handle context registration completion."""
+        """Handle context registration completion.
+
+        Args:
+            result: The result dictionary from the context registration
+                operation.
+
+        Returns:
+            None
+
+        """
         if result.get("success"):
             logger.info("Protection analysis context registered with LLM")
             self.llm_result_ready.emit(
@@ -397,7 +499,16 @@ class LLMHandler(QObject):
                 self.llm_error.emit("Unknown error")
 
     def _on_summary_ready(self, result: dict[str, Any]) -> None:
-        """Handle summary generation completion."""
+        """Handle summary generation completion.
+
+        Args:
+            result: The result dictionary from the summary generation
+                operation.
+
+        Returns:
+            None
+
+        """
         if result.get("success"):
             self.llm_result_ready.emit(
                 {
@@ -413,7 +524,16 @@ class LLMHandler(QObject):
                 self.llm_error.emit("Unknown error")
 
     def _on_bypass_suggestions_ready(self, result: dict[str, Any]) -> None:
-        """Handle bypass suggestions completion."""
+        """Handle bypass suggestions completion.
+
+        Args:
+            result: The result dictionary from the bypass suggestions
+                operation.
+
+        Returns:
+            None
+
+        """
         if result.get("success"):
             self.llm_result_ready.emit(
                 {
@@ -429,7 +549,16 @@ class LLMHandler(QObject):
                 self.llm_error.emit("Unknown error")
 
     def _on_worker_error(self, error_tuple: tuple[type[BaseException], BaseException, str]) -> None:
-        """Handle worker thread errors."""
+        """Handle worker thread errors.
+
+        Args:
+            error_tuple: A tuple containing the exception type, value, and
+                traceback.
+
+        Returns:
+            None
+
+        """
         _exc_type, exc_value, exc_traceback = error_tuple
         error_msg = f"LLM operation failed: {exc_value}"
         logger.error("%s\n%s", error_msg, exc_traceback)

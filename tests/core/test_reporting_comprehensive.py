@@ -9,7 +9,6 @@ import os
 import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -22,60 +21,116 @@ from intellicrack.core.reporting.report_generator import (
 from tests.base_test import IntellicrackTestBase
 
 
+class FakeApplicationInstance:
+    """Real test double for application instance (replaces Mock)."""
+
+    def __init__(
+        self,
+        binary_path: str | None = None,
+        analysis_results: dict[str, Any] | None = None,
+        binary_info: dict[str, Any] | None = None,
+    ) -> None:
+        self.current_binary = binary_path
+        self.binary_path = binary_path
+        self.analysis_results = analysis_results or {}
+        self.analyze_results = analysis_results or {}
+        self.binary_info = binary_info or {}
+        self.logger = None
+        self.update_output_calls: list[str] = []
+
+    def update_output(self, message: str) -> None:
+        """Fake update_output that tracks calls."""
+        self.update_output_calls.append(message)
+
+    def isWidgetType(self) -> bool:
+        """Simulate QWidget check."""
+        return False
+
+
+class FakeSignal:
+    """Real test double for PyQt signals (replaces Mock)."""
+
+    def __init__(self) -> None:
+        self.emissions: list[tuple[Any, ...]] = []
+
+    def emit(self, *args: Any) -> None:
+        """Record emitted signals."""
+        self.emissions.append(args)
+
+
+class FakeWebBrowser:
+    """Real test double for webbrowser module (replaces Mock)."""
+
+    def __init__(self) -> None:
+        self.opened_urls: list[str] = []
+        self.called = False
+
+    def open(self, url: str) -> bool:
+        """Track opened URLs."""
+        self.opened_urls.append(url)
+        self.called = True
+        return True
+
+
 class TestPDFReportGenerator(IntellicrackTestBase):
     """Test PDFReportGenerator functionality."""
 
     def test_pdf_generator_initialization(self) -> None:
         """PDFReportGenerator initializes successfully."""
-        mock_app = MagicMock()
-        generator = PDFReportGenerator(mock_app)
+        fake_app = FakeApplicationInstance()
+        generator = PDFReportGenerator(app_instance=fake_app)
 
         assert generator is not None
         assert hasattr(generator, "app")
 
     def test_pdf_generator_has_generate_method(self) -> None:
         """PDFReportGenerator has generate_report method."""
-        mock_app = MagicMock()
-        generator = PDFReportGenerator(app_instance=mock_app)
+        fake_app = FakeApplicationInstance()
+        generator = PDFReportGenerator(app_instance=fake_app)
 
         assert hasattr(generator, "generate_report")
 
     def test_pdf_generator_generate_creates_output(self, tmp_path: Path) -> None:
-        """PDFReportGenerator.generate creates PDF output."""
-        mock_app = MagicMock()
-        mock_app.current_binary = "test.exe"
-        mock_app.analysis_results = {"format": "PE32", "protections": ["VMProtect"]}
+        """PDFReportGenerator.generate_report creates PDF output."""
+        fake_app = FakeApplicationInstance(
+            binary_path="test.exe",
+            analysis_results={"format": "PE32", "protections": ["VMProtect"]},
+        )
 
-        generator = PDFReportGenerator(mock_app)
+        generator = PDFReportGenerator(app_instance=fake_app)
         output_file = tmp_path / "test_report.pdf"
 
         try:
-            result = generator.generate(str(output_file))
+            result = generator.generate_report(
+                binary_path="test.exe",
+                analysis_results={"format": "PE32", "protections": ["VMProtect"]},
+                output_path=str(output_file),
+            )
             if result is not None and output_file.exists():
                 assert output_file.exists()
                 assert output_file.stat().st_size > 0
-        except Exception as e:
+        except Exception:
             pass
 
     def test_pdf_generator_with_empty_data(self, tmp_path: Path) -> None:
         """PDFReportGenerator handles empty data gracefully."""
-        mock_app = MagicMock()
-        mock_app.current_binary = None
-        mock_app.analysis_results = {}
+        fake_app = FakeApplicationInstance(binary_path=None, analysis_results={})
 
-        generator = PDFReportGenerator(mock_app)
+        generator = PDFReportGenerator(app_instance=fake_app)
         output_file = tmp_path / "empty_report.pdf"
 
         try:
-            generator.generate(str(output_file))
-        except Exception as e:
+            generator.generate_report(
+                binary_path=None,
+                analysis_results={},
+                output_path=str(output_file),
+            )
+        except Exception:
             pass
 
     def test_pdf_generator_with_comprehensive_data(self, tmp_path: Path) -> None:
         """PDFReportGenerator handles comprehensive analysis data."""
-        mock_app = MagicMock()
-        mock_app.current_binary = "protected_app.exe"
-        mock_app.analysis_results = {
+        comprehensive_results = {
             "format": "PE32+",
             "architecture": "AMD64",
             "protections": ["VMProtect", "Themida", "Code Virtualization"],
@@ -86,12 +141,21 @@ class TestPDFReportGenerator(IntellicrackTestBase):
             "strings": ["Licensed to:", "Activation code:", "Trial expired"],
         }
 
-        generator = PDFReportGenerator(mock_app)
+        fake_app = FakeApplicationInstance(
+            binary_path="protected_app.exe",
+            analysis_results=comprehensive_results,
+        )
+
+        generator = PDFReportGenerator(app_instance=fake_app)
         output_file = tmp_path / "comprehensive_report.pdf"
 
         try:
-            generator.generate(str(output_file))
-        except Exception as e:
+            generator.generate_report(
+                binary_path="protected_app.exe",
+                analysis_results=comprehensive_results,
+                output_path=str(output_file),
+            )
+        except Exception:
             pass
 
 
@@ -119,7 +183,7 @@ class TestReportGenerator(IntellicrackTestBase):
             result = generator.generate_html_report(data)
             assert isinstance(result, str)
             assert len(result) > 0
-        except Exception as e:
+        except Exception:
             pass
 
     def test_report_generator_generate_json(self) -> None:
@@ -138,7 +202,7 @@ class TestReportGenerator(IntellicrackTestBase):
             assert isinstance(result, str)
             assert len(result) > 0
             assert "{" in result and "}" in result
-        except Exception as e:
+        except Exception:
             pass
 
     def test_report_generator_generate_text(self) -> None:
@@ -154,7 +218,7 @@ class TestReportGenerator(IntellicrackTestBase):
             result = generator.generate_text_report(data)
             assert isinstance(result, str)
             assert len(result) > 0
-        except Exception as e:
+        except Exception:
             pass
 
     def test_report_generator_with_empty_data(self) -> None:
@@ -173,59 +237,61 @@ class TestGenerateReportFunction(IntellicrackTestBase):
 
     def test_generate_report_html_format(self) -> None:
         """generate_report creates HTML report."""
-        mock_app = MagicMock()
-        mock_app.current_binary = "test.exe"
-        mock_app.analysis_results = {"format": "PE32"}
+        fake_app = FakeApplicationInstance(
+            binary_path="test.exe",
+            analysis_results={"format": "PE32"},
+        )
 
         try:
-            if result := generate_report(mock_app, format="html", save=False):
+            if result := generate_report(fake_app, format="html", save=False):
                 assert isinstance(result, str)
                 assert len(result) > 0
-        except Exception as e:
+        except Exception:
             pass
 
     def test_generate_report_json_format(self) -> None:
         """generate_report creates JSON report."""
-        mock_app = MagicMock()
-        mock_app.current_binary = "test.exe"
-        mock_app.analysis_results = {"format": "PE32", "protections": []}
+        fake_app = FakeApplicationInstance(
+            binary_path="test.exe",
+            analysis_results={"format": "PE32", "protections": []},
+        )
 
         try:
-            if result := generate_report(mock_app, format="json", save=False):
+            if result := generate_report(fake_app, format="json", save=False):
                 assert isinstance(result, str)
                 assert "{" in result or "[" in result
-        except Exception as e:
+        except Exception:
             pass
 
     def test_generate_report_save_to_file(self, tmp_path: Path) -> None:
         """generate_report saves report to file."""
-        mock_app = MagicMock()
-        mock_app.current_binary = "test.exe"
-        mock_app.analysis_results = {"format": "PE32"}
+        fake_app = FakeApplicationInstance(
+            binary_path="test.exe",
+            analysis_results={"format": "PE32"},
+        )
+        fake_app.update_output = FakeSignal()
 
         output_file = tmp_path / "saved_report.html"
 
         try:
             result = generate_report(
-                mock_app,
+                fake_app,
                 format="html",
                 save=True,
                 filename=str(output_file)
             )
             if result and output_file.exists():
                 assert output_file.exists()
-        except Exception as e:
+        except Exception:
             pass
 
     def test_generate_report_without_app_data(self) -> None:
         """generate_report handles missing app data gracefully."""
-        mock_app = MagicMock()
-        mock_app.current_binary = None
-        mock_app.analysis_results = None
+        fake_app = FakeApplicationInstance(binary_path=None, analysis_results=None)
 
         try:
-            result = generate_report(mock_app, format="html", save=False)
-        except Exception as e:
+            result = generate_report(fake_app, format="html", save=False)
+        except Exception:
             pass
 
 
@@ -237,21 +303,28 @@ class TestViewReportFunction(IntellicrackTestBase):
         test_report = tmp_path / "test_report.html"
         test_report.write_text("<html><body>Test Report</body></html>", encoding="utf-8")
 
-        mock_app = MagicMock()
+        fake_app = FakeApplicationInstance()
 
-        with patch("webbrowser.open") as mock_open:
+        try:
+            import webbrowser
+            original_open = webbrowser.open
+            fake_browser = FakeWebBrowser()
+            webbrowser.open = fake_browser.open
+
             try:
-                if result := view_report(mock_app, filepath=str(test_report)):
-                    assert mock_open.called or result is True
-            except Exception as e:
-                pass
+                if result := view_report(fake_app, filepath=str(test_report)):
+                    assert fake_browser.called or result is True
+            finally:
+                webbrowser.open = original_open
+        except Exception:
+            pass
 
     def test_view_report_with_nonexistent_file(self) -> None:
         """view_report handles nonexistent file gracefully."""
-        mock_app = MagicMock()
+        fake_app = FakeApplicationInstance()
 
         try:
-            result = view_report(mock_app, filepath="nonexistent_file.html")
+            result = view_report(fake_app, filepath="nonexistent_file.html")
             assert result is False or result is None
         except FileNotFoundError:
             pass
@@ -260,10 +333,10 @@ class TestViewReportFunction(IntellicrackTestBase):
 
     def test_view_report_without_filepath(self) -> None:
         """view_report handles missing filepath parameter."""
-        mock_app = MagicMock()
+        fake_app = FakeApplicationInstance()
 
         try:
-            result = view_report(mock_app, filepath=None)
+            result = view_report(fake_app, filepath=None)
         except Exception:
             pass
 
@@ -273,18 +346,25 @@ class TestReportingEdgeCases(IntellicrackTestBase):
 
     def test_pdf_generator_with_special_characters(self, tmp_path: Path) -> None:
         """PDFReportGenerator handles special characters in data."""
-        mock_app = MagicMock()
-        mock_app.current_binary = "test_файл_文件.exe"
-        mock_app.analysis_results = {
+        special_results = {
             "strings": ["License: ™®©", "Key: αβγδ", "Path: C:\\Users\\用户\\"]
         }
 
-        generator = PDFReportGenerator(mock_app)
+        fake_app = FakeApplicationInstance(
+            binary_path="test_файл_文件.exe",
+            analysis_results=special_results,
+        )
+
+        generator = PDFReportGenerator(app_instance=fake_app)
         output_file = tmp_path / "special_chars_report.pdf"
 
         try:
-            generator.generate(str(output_file))
-        except Exception as e:
+            generator.generate_report(
+                binary_path="test_файл_文件.exe",
+                analysis_results=special_results,
+                output_path=str(output_file),
+            )
+        except Exception:
             pass
 
     def test_report_generator_with_very_large_data(self) -> None:
@@ -299,24 +379,35 @@ class TestReportingEdgeCases(IntellicrackTestBase):
         try:
             result = generator.generate_json_report(data)
             assert isinstance(result, str)
-        except Exception as e:
+        except Exception:
             pass
 
     def test_pdf_generator_concurrent_generation(self, tmp_path: Path) -> None:
         """PDFReportGenerator handles concurrent generation requests."""
-        mock_app = MagicMock()
-        mock_app.current_binary = "test.exe"
-        mock_app.analysis_results = {"format": "PE32"}
+        analysis_data = {"format": "PE32"}
 
-        generator = PDFReportGenerator(mock_app)
+        fake_app = FakeApplicationInstance(
+            binary_path="test.exe",
+            analysis_results=analysis_data,
+        )
+
+        generator = PDFReportGenerator(app_instance=fake_app)
 
         output_file1 = tmp_path / "report1.pdf"
         output_file2 = tmp_path / "report2.pdf"
 
         try:
-            generator.generate(str(output_file1))
-            generator.generate(str(output_file2))
-        except Exception as e:
+            generator.generate_report(
+                binary_path="test.exe",
+                analysis_results=analysis_data,
+                output_path=str(output_file1),
+            )
+            generator.generate_report(
+                binary_path="test.exe",
+                analysis_results=analysis_data,
+                output_path=str(output_file2),
+            )
+        except Exception:
             pass
 
     def test_report_generator_with_unicode_data(self) -> None:

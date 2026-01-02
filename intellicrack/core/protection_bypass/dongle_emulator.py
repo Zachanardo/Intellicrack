@@ -115,7 +115,15 @@ class USBDescriptor:
     bNumConfigurations: int = 1  # noqa: N815 - USB spec field name
 
     def to_bytes(self) -> bytes:
-        """Serialize descriptor to bytes."""
+        """Serialize descriptor to bytes.
+
+        Converts the USB device descriptor fields into a binary format suitable
+        for USB communication, using little-endian packing as per USB 2.0 spec.
+
+        Returns:
+            bytes: Serialized USB device descriptor bytes in little-endian format.
+
+        """
         return struct.pack(
             "<BBHBBBBHHHBBBB",
             self.bLength,
@@ -146,7 +154,23 @@ class DongleMemory:
     read_only_areas: list[tuple[int, int]] = field(default_factory=list)
 
     def read(self, region: str, offset: int, length: int) -> bytes:
-        """Read from dongle memory region."""
+        """Read from dongle memory region.
+
+        Retrieves data from the specified memory region (ROM, RAM, or EEPROM)
+        at the given offset for the specified length.
+
+        Args:
+            region (str): Memory region name (rom, ram, or eeprom) to read from.
+            offset (int): Byte offset within the region where reading begins.
+            length (int): Number of bytes to read from the region.
+
+        Returns:
+            bytes: The requested memory data as bytes.
+
+        Raises:
+            ValueError: If region is invalid or if read offset and length exceed memory bounds.
+
+        """
         memory_map = {"rom": self.rom, "ram": self.ram, "eeprom": self.eeprom}
         if region not in memory_map:
             error_msg = f"Invalid memory region: {region}"
@@ -160,7 +184,21 @@ class DongleMemory:
         return bytes(mem[offset : offset + length])
 
     def write(self, region: str, offset: int, data: bytes) -> None:
-        """Write to dongle memory region."""
+        """Write to dongle memory region.
+
+        Writes the provided data to the specified memory region (ROM, RAM, or EEPROM)
+        at the given offset. Enforces read-only area protection for ROM regions.
+
+        Args:
+            region (str): Memory region name (rom, ram, or eeprom) to write to.
+            offset (int): Byte offset within the region where writing begins.
+            data (bytes): Bytes to write to memory at the specified offset.
+
+        Raises:
+            ValueError: If region is invalid or if write offset and data length exceed memory bounds.
+            PermissionError: If attempting to write to a protected read-only area in ROM.
+
+        """
         memory_map = {"rom": self.rom, "ram": self.ram, "eeprom": self.eeprom}
         if region not in memory_map:
             error_msg = f"Invalid memory region: {region}"
@@ -180,7 +218,19 @@ class DongleMemory:
         mem[offset : offset + len(data)] = data
 
     def is_protected(self, offset: int, length: int) -> bool:
-        """Check if memory range is protected."""
+        """Check if memory range is protected.
+
+        Determines whether a specified memory range falls within any of the
+        protected areas defined for this dongle memory instance.
+
+        Args:
+            offset (int): Starting byte offset in memory to check.
+            length (int): Number of bytes in the range to check for protection.
+
+        Returns:
+            bool: True if the entire memory range is protected, False otherwise.
+
+        """
         return any(offset >= start and offset + length <= end for start, end in self.protected_areas)
 
 
@@ -204,7 +254,12 @@ class HASPDongle:
     feature_map: dict[int, dict[str, Any]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Initialize RSA key if crypto available."""
+        """Initialize RSA key and feature map for HASP dongle.
+
+        Generates RSA-2048 key if cryptography is available, and initializes
+        the feature map with default license feature settings.
+
+        """
         if CRYPTO_AVAILABLE and self.rsa_key is None:
             self.rsa_key = RSA.generate(2048)
         self.feature_map[self.feature_id] = {
@@ -236,7 +291,12 @@ class SentinelDongle:
     cell_data: dict[int, bytes] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Initialize crypto keys."""
+        """Initialize crypto keys and cell data for Sentinel dongle.
+
+        Generates RSA-2048 key if cryptography is available, and initializes
+        cell data with random bytes for Sentinel memory emulation.
+
+        """
         if CRYPTO_AVAILABLE and self.rsa_key is None:
             self.rsa_key = RSA.generate(2048)
         for i in range(8):
@@ -261,7 +321,12 @@ class WibuKeyDongle:
     active_licenses: set[int] = field(default_factory=set)
 
     def __post_init__(self) -> None:
-        """Initialize license entries."""
+        """Initialize license entries for WibuKey dongle.
+
+        Sets up default license entry with unlimited expiration and
+        high quantity for CodeMeter/WibuKey emulation.
+
+        """
         self.license_entries[1] = {
             "firm_code": self.firm_code,
             "product_code": self.product_code,
@@ -276,7 +341,15 @@ class USBEmulator:
     """USB device emulation for dongles."""
 
     def __init__(self, descriptor: USBDescriptor) -> None:
-        """Initialize USB emulator with device descriptor."""
+        """Initialize USB emulator with device descriptor.
+
+        Creates a USB device emulator instance with the provided descriptor and
+        sets up control and bulk transfer handlers for protocol communication.
+
+        Args:
+            descriptor (USBDescriptor): USB device descriptor containing vendor ID, product ID, and other USB specification metadata.
+
+        """
         self.descriptor = descriptor
         self.configuration = 1
         self.interface = 0
@@ -287,14 +360,34 @@ class USBEmulator:
         self.bulk_transfer_handlers: dict[int, Callable[..., bytes]] = {}
 
     def setup_endpoints(self) -> None:
-        """Configure USB endpoints."""
+        """Configure USB endpoints.
+
+        Initializes control endpoint 0x00, bulk endpoints 0x81/0x02,
+        and interrupt endpoint 0x83 with appropriate packet sizes and directions.
+
+        """
         self.endpoints[0x00] = {"type": "control", "max_packet": 64, "direction": "both"}
         self.endpoints[0x81] = {"type": "bulk", "max_packet": 512, "direction": "in"}
         self.endpoints[0x02] = {"type": "bulk", "max_packet": 512, "direction": "out"}
         self.endpoints[0x83] = {"type": "interrupt", "max_packet": 64, "direction": "in"}
 
     def control_transfer(self, bmRequestType: int, bRequest: int, wValue: int, wIndex: int, data: bytes) -> bytes:
-        """Handle USB control transfer."""
+        """Handle USB control transfer.
+
+        Processes USB control transfers by routing requests to registered handlers
+        or handling standard descriptor requests per USB 2.0 specification.
+
+        Args:
+            bmRequestType (int): Request type field indicating direction and type from USB control transfer.
+            bRequest (int): Request field specifying the command code from USB control transfer.
+            wValue (int): Value field containing request-specific parameter data.
+            wIndex (int): Index field containing request-specific parameter data.
+            data (bytes): Data payload bytes for the control transfer request.
+
+        Returns:
+            bytes: Response data as bytes from the handler or descriptor, or empty bytes if no handler or no response.
+
+        """
         request_key = (bmRequestType << 8) | bRequest
         if request_key in self.control_transfer_handlers:
             handler = self.control_transfer_handlers[request_key]
@@ -313,7 +406,15 @@ class USBEmulator:
         return b""
 
     def get_configuration_descriptor(self) -> bytes:
-        """Generate configuration descriptor."""
+        """Generate configuration descriptor.
+
+        Creates a complete USB configuration descriptor including configuration,
+        interface, and endpoint descriptor data per USB 2.0 specification.
+
+        Returns:
+            bytes: USB configuration descriptor bytes containing configuration, interface, and all endpoint descriptor data.
+
+        """
         config = struct.pack(
             "<BBHBBBBB",
             9,
@@ -343,7 +444,18 @@ class USBEmulator:
         return config + interface + endpoint1 + endpoint2 + endpoint3
 
     def get_string_descriptor(self, index: int) -> bytes:
-        """Get USB string descriptor."""
+        """Get USB string descriptor.
+
+        Retrieves a USB string descriptor by index, returning language ID descriptor
+        or UTF-16 little-endian encoded string descriptors as per USB 2.0 spec.
+
+        Args:
+            index (int): String descriptor index to retrieve (0 for language ID, 1-3 for device strings).
+
+        Returns:
+            bytes: Encoded USB string descriptor bytes in UTF-16 little-endian format, or empty bytes if index not found.
+
+        """
         strings: dict[int, bytes | str] = {
             0: b"\x04\x03\x09\x04",
             1: "SafeNet Inc.",
@@ -361,7 +473,19 @@ class USBEmulator:
         return b""
 
     def bulk_transfer(self, endpoint: int, data: bytes) -> bytes:
-        """Handle USB bulk transfer."""
+        """Handle USB bulk transfer.
+
+        Routes bulk transfer requests to registered endpoint handlers that process
+        the data and return responses for dongle protocol communication.
+
+        Args:
+            endpoint (int): Target endpoint address (0x81 for in, 0x02 for out).
+            data (bytes): Data bytes to transfer on the specified endpoint.
+
+        Returns:
+            bytes: Response data bytes from the endpoint handler, or empty bytes if no handler is registered.
+
+        """
         if endpoint in self.bulk_transfer_handlers:
             handler = self.bulk_transfer_handlers[endpoint]
             result = handler(data)
@@ -369,12 +493,31 @@ class USBEmulator:
         return b""
 
     def register_control_handler(self, bmRequestType: int, bRequest: int, handler: Callable[..., bytes]) -> None:
-        """Register handler for control transfer."""
+        """Register handler for control transfer.
+
+        Associates a handler function with a specific control transfer request type
+        for custom protocol processing when that request is received.
+
+        Args:
+            bmRequestType (int): Request type field value indicating direction and request class.
+            bRequest (int): Request field value specifying the command code.
+            handler (Callable[..., bytes]): Callable function that processes the control transfer and returns response bytes.
+
+        """
         request_key = (bmRequestType << 8) | bRequest
         self.control_transfer_handlers[request_key] = handler
 
     def register_bulk_handler(self, endpoint: int, handler: Callable[..., bytes]) -> None:
-        """Register handler for bulk transfer."""
+        """Register handler for bulk transfer.
+
+        Associates a handler function with a specific bulk endpoint for custom
+        protocol processing when bulk transfers occur on that endpoint.
+
+        Args:
+            endpoint (int): Target endpoint address (0x81 for in, 0x02 for out).
+            handler (Callable[..., bytes]): Callable function that processes the bulk transfer and returns response bytes.
+
+        """
         self.bulk_transfer_handlers[endpoint] = handler
 
 
@@ -382,11 +525,28 @@ class CryptoEngine:
     """Cryptographic operations for dongle emulation."""
 
     def __init__(self) -> None:
-        """Initialize crypto engine."""
+        """Initialize crypto engine.
+
+        Sets up logger for cryptographic operations on dongle emulation.
+
+        """
         self.logger = logging.getLogger("IntellicrackLogger.DongleCrypto")
 
     def hasp_encrypt(self, data: bytes, key: bytes, algorithm: str = "AES") -> bytes:
-        """Perform HASP encryption operation."""
+        """Perform HASP encryption operation.
+
+        Encrypts plaintext data using the specified symmetric cipher algorithm
+        with proper padding. Falls back to XOR encryption if cryptography unavailable.
+
+        Args:
+            data (bytes): Plaintext bytes to encrypt using the specified algorithm.
+            key (bytes): Encryption key bytes (32 bytes for AES, 8 for DES, 24 for DES3).
+            algorithm (str): Cipher algorithm to use ("AES", "DES", "DES3"). Defaults to "AES".
+
+        Returns:
+            bytes: Encrypted data bytes padded to cipher block size, or XOR-encrypted fallback.
+
+        """
         if not CRYPTO_AVAILABLE:
             self.logger.warning("Crypto not available, returning XOR encryption")
             return self._xor_encrypt(data, key)
@@ -416,7 +576,20 @@ class CryptoEngine:
             return self._xor_encrypt(data, key)
 
     def hasp_decrypt(self, data: bytes, key: bytes, algorithm: str = "AES") -> bytes:
-        """Perform HASP decryption operation."""
+        """Perform HASP decryption operation.
+
+        Decrypts ciphertext data using the specified symmetric cipher algorithm
+        with automatic padding removal. Falls back to XOR decryption if cryptography unavailable.
+
+        Args:
+            data (bytes): Ciphertext bytes to decrypt using the specified algorithm.
+            key (bytes): Decryption key bytes (32 bytes for AES, 8 for DES, 24 for DES3).
+            algorithm (str): Cipher algorithm to use ("AES", "DES", "DES3"). Defaults to "AES".
+
+        Returns:
+            bytes: Decrypted plaintext bytes with null-byte padding removed, or XOR-decrypted fallback.
+
+        """
         if not CRYPTO_AVAILABLE:
             self.logger.warning("Crypto not available, returning XOR decryption")
             return self._xor_encrypt(data, key)
@@ -445,7 +618,19 @@ class CryptoEngine:
             return self._xor_encrypt(data, key)
 
     def sentinel_challenge_response(self, challenge: bytes, key: bytes) -> bytes:
-        """Calculate Sentinel challenge-response."""
+        """Calculate Sentinel challenge-response.
+
+        Computes the challenge-response for Sentinel/SafeNet dongle authentication
+        using HMAC-SHA256, truncated to 16 bytes for protocol compatibility.
+
+        Args:
+            challenge (bytes): Challenge bytes from Sentinel dongle authentication request.
+            key (bytes): Key bytes for HMAC computation in Sentinel authentication protocol.
+
+        Returns:
+            bytes: Challenge response as 16-byte HMAC-SHA256 value, or SHA256 digest fallback.
+
+        """
         if not CRYPTO_AVAILABLE:
             return hashlib.sha256(challenge + key).digest()
 
@@ -454,7 +639,19 @@ class CryptoEngine:
         return response[:16]
 
     def wibukey_challenge_response(self, challenge: bytes, key: bytes) -> bytes:
-        """Calculate WibuKey challenge-response."""
+        """Calculate WibuKey challenge-response.
+
+        Computes the challenge-response for WibuKey/CodeMeter dongle authentication
+        using XOR with index-based modification, optionally encrypted with AES.
+
+        Args:
+            challenge (bytes): Challenge bytes from WibuKey dongle authentication request.
+            key (bytes): Key bytes for challenge computation in WibuKey authentication protocol.
+
+        Returns:
+            bytes: Challenge response as 16-byte value with XOR transformation and optional AES encryption.
+
+        """
         response = bytearray(16)
         for i in range(16):
             challenge_byte = challenge[i % len(challenge)]
@@ -470,13 +667,25 @@ class CryptoEngine:
         return bytes(response)
 
     def rsa_sign(self, data: bytes, private_key: object) -> bytes:
-        """Sign data with RSA private key."""
+        """Sign data with RSA private key.
+
+        Creates a cryptographic signature of the provided data using an RSA private key
+        in PKCS#1 v1.5 format with SHA256 hashing. Returns SHA256 digest as fallback.
+
+        Args:
+            data (bytes): Data bytes to sign using RSA private key.
+            private_key (object): RSA private key object for creating PKCS#1 v1.5 signature.
+
+        Returns:
+            bytes: Signature bytes in PKCS#1 v1.5 format, or SHA256 digest hash if signing fails or unavailable.
+
+        """
         if not CRYPTO_AVAILABLE or private_key is None:
             return hashlib.sha256(data).digest()
 
         try:
             h = SHA256.new(data)
-            signer = PKCS1_v1_5.new(private_key)  # type: ignore[arg-type]
+            signer = PKCS1_v1_5.new(private_key)
             signature: bytes = signer.sign(h)
             return signature
         except Exception as e:
@@ -484,7 +693,19 @@ class CryptoEngine:
             return hashlib.sha256(data).digest()
 
     def _xor_encrypt(self, data: bytes, key: bytes) -> bytes:
-        """Perform simple XOR encryption fallback."""
+        """Perform simple XOR encryption fallback.
+
+        Encrypts or decrypts data using simple XOR operation with the provided key,
+        repeating the key as necessary. Used as fallback when cryptography is unavailable.
+
+        Args:
+            data (bytes): Data bytes to XOR encrypt using repeating key pattern.
+            key (bytes): Key bytes for XOR operation, repeated to match data length.
+
+        Returns:
+            bytes: XOR-encrypted bytes using the repeating key pattern.
+
+        """
         result = bytearray(len(data))
         for i in range(len(data)):
             result[i] = data[i] ^ key[i % len(key)]
@@ -497,8 +718,11 @@ class HardwareDongleEmulator:
     def __init__(self, app: object | None = None) -> None:
         """Initialize the hardware dongle emulator.
 
+        Sets up all data structures for emulating multiple dongle types including
+        HASP, Sentinel/SafeNet, and CodeMeter/WibuKey protection devices.
+
         Args:
-            app: Application instance that contains the binary_path attribute
+            app: Application instance that contains the binary_path attribute for binary patching.
 
         """
         self.app = app
@@ -516,11 +740,15 @@ class HardwareDongleEmulator:
     def activate_dongle_emulation(self, dongle_types: list[str] | None = None) -> dict[str, Any]:
         """Activate hardware dongle emulation.
 
+        Orchestrates dongle emulation through virtual device creation, USB device emulation,
+        API hooking, binary patching, and registry spoofing to defeat licensing protection.
+
         Args:
-            dongle_types: List of dongle types to emulate (None for all supported types)
+            dongle_types: List of dongle type names to emulate (SafeNet, HASP, CodeMeter, etc.),
+                or None to emulate all supported protection mechanisms.
 
         Returns:
-            dict: Results of the emulation activation with success status and methods applied
+            Dictionary with success status, list of emulated dongles, methods applied, and any error messages.
 
         """
         if dongle_types is None:
@@ -586,7 +814,15 @@ class HardwareDongleEmulator:
         return results
 
     def _create_virtual_dongles(self, dongle_types: list[str]) -> None:
-        """Create virtual dongle devices with full memory and crypto support."""
+        """Create virtual dongle devices with full memory and crypto support.
+
+        Instantiates HASP, Sentinel, and WibuKey dongle objects with preconfigured
+        memory regions, protected areas, and cryptographic keys for protocol emulation.
+
+        Args:
+            dongle_types (list[str]): List of dongle type names (SafeNet, HASP, CodeMeter, etc.) to create.
+
+        """
         with self.lock:
             for dongle_type in dongle_types:
                 if dongle_type in {"SafeNet", "HASP"}:
@@ -638,7 +874,15 @@ class HardwareDongleEmulator:
         self.logger.info("Created %d virtual dongles with full memory emulation", len(self.virtual_dongles))
 
     def _setup_usb_emulation(self, dongle_types: list[str]) -> None:
-        """Set up USB device emulation for dongles."""
+        """Set up USB device emulation for dongles.
+
+        Configures USB device emulators with appropriate vendor/product IDs and
+        registers handlers for control and bulk transfers specific to each dongle type.
+
+        Args:
+            dongle_types (list[str]): List of dongle type names (HASP, Sentinel, CodeMeter) to configure USB emulation for.
+
+        """
         for dongle_type in dongle_types:
             if dongle_type == "HASP":
                 descriptor = USBDescriptor(
@@ -680,7 +924,20 @@ class HardwareDongleEmulator:
         self.logger.info("Setup USB emulation for %d dongle types", len(self.usb_emulators))
 
     def _hasp_control_handler(self, wValue: int, wIndex: int, data: bytes) -> bytes:
-        """Handle HASP USB control transfers."""
+        """Handle HASP USB control transfers.
+
+        Processes HASP-specific control transfer requests for dongle identification,
+        returning HASP ID, vendor code, feature ID, and seed code based on request type.
+
+        Args:
+            wValue (int): USB transfer wValue field indicating which information to return.
+            wIndex (int): USB transfer wIndex field containing additional request parameters.
+            data (bytes): Control transfer data payload from the request.
+
+        Returns:
+            bytes: Response data bytes containing HASP device information or empty response.
+
+        """
         if not self.hasp_dongles:
             return b"\x00" * 64
 
@@ -696,7 +953,18 @@ class HardwareDongleEmulator:
         return b"\x00" * 64
 
     def _hasp_bulk_out_handler(self, data: bytes) -> bytes:
-        """Handle HASP bulk OUT transfers."""
+        """Handle HASP bulk OUT transfers.
+
+        Processes outgoing bulk transfer commands from the host to the HASP dongle,
+        dispatching to appropriate handlers for login, logout, encryption, and memory operations.
+
+        Args:
+            data (bytes): Bulk transfer payload containing command code and parameters.
+
+        Returns:
+            bytes: Response data bytes from the command handler, or empty bytes if command unrecognized.
+
+        """
         if len(data) < 4:
             return b""
 
@@ -718,7 +986,18 @@ class HardwareDongleEmulator:
         return struct.pack("<I", HASPStatus.HASP_STATUS_OK)
 
     def _hasp_bulk_in_handler(self, data: bytes) -> bytes:
-        """Handle HASP bulk IN transfers."""
+        """Handle HASP bulk IN transfers.
+
+        Handles incoming bulk transfer requests from the host to retrieve dongle
+        information including HASP ID, vendor code, feature ID, and RTC counter.
+
+        Args:
+            data (bytes): Bulk transfer request data containing query parameters.
+
+        Returns:
+            bytes: Response data bytes containing dongle information in structured format.
+
+        """
         if not self.hasp_dongles:
             return b"\x00" * 512
 
@@ -737,7 +1016,18 @@ class HardwareDongleEmulator:
         return bytes(response)
 
     def _hasp_login(self, data: bytes) -> bytes:
-        """Handle HASP login operation."""
+        """Handle HASP login operation.
+
+        Authenticates a login request by verifying the vendor code against emulated
+        dongles and returns a session handle for subsequent operations.
+
+        Args:
+            data (bytes): Login request data containing vendor code and feature ID bytes.
+
+        Returns:
+            bytes: Status code and session handle if successful, or error status code otherwise.
+
+        """
         if len(data) < 4:
             return struct.pack("<I", HASPStatus.HASP_TOO_SHORT)
 
@@ -752,7 +1042,18 @@ class HardwareDongleEmulator:
         return struct.pack("<I", HASPStatus.HASP_KEYNOTFOUND)
 
     def _hasp_logout(self, data: bytes) -> bytes:
-        """Handle HASP logout operation."""
+        """Handle HASP logout operation.
+
+        Terminates a login session by invalidating the session handle and marking
+        the dongle as logged out for security.
+
+        Args:
+            data (bytes): Logout request data containing the session handle to terminate.
+
+        Returns:
+            bytes: Status code indicating successful logout or error code if session handle invalid.
+
+        """
         if len(data) < 4:
             return struct.pack("<I", HASPStatus.HASP_TOO_SHORT)
 
@@ -766,7 +1067,18 @@ class HardwareDongleEmulator:
         return struct.pack("<I", HASPStatus.HASP_INV_HND)
 
     def _hasp_encrypt_command(self, data: bytes) -> bytes:
-        """Handle HASP encrypt command."""
+        """Handle HASP encrypt command.
+
+        Encrypts plaintext data using the emulated dongle's encryption key and
+        algorithm, returning encrypted data in response to host encryption request.
+
+        Args:
+            data (bytes): Encryption request containing session handle, data length, and plaintext bytes.
+
+        Returns:
+            bytes: Status code and encrypted data bytes, or error status if request invalid.
+
+        """
         if len(data) < 8:
             return struct.pack("<I", HASPStatus.HASP_TOO_SHORT)
 
@@ -782,7 +1094,18 @@ class HardwareDongleEmulator:
         return struct.pack("<I", HASPStatus.HASP_INV_HND)
 
     def _hasp_decrypt_command(self, data: bytes) -> bytes:
-        """Handle HASP decrypt command."""
+        """Handle HASP decrypt command.
+
+        Decrypts ciphertext data using the emulated dongle's decryption key and
+        algorithm, returning plaintext in response to host decryption request.
+
+        Args:
+            data (bytes): Decryption request containing session handle, data length, and ciphertext bytes.
+
+        Returns:
+            bytes: Status code and decrypted plaintext bytes, or error status if request invalid.
+
+        """
         if len(data) < 20:
             return struct.pack("<I", HASPStatus.HASP_TOO_SHORT)
 
@@ -798,7 +1121,18 @@ class HardwareDongleEmulator:
         return struct.pack("<I", HASPStatus.HASP_INV_HND)
 
     def _hasp_read_memory(self, data: bytes) -> bytes:
-        """Handle HASP memory read operation."""
+        """Handle HASP memory read operation.
+
+        Reads data from the emulated dongle's EEPROM memory at the specified offset
+        and length, enforcing session authentication and memory bounds.
+
+        Args:
+            data (bytes): Read request containing session handle, memory offset, and byte length.
+
+        Returns:
+            bytes: Status code and memory data bytes if successful, or error status code otherwise.
+
+        """
         if len(data) < 12:
             return struct.pack("<I", HASPStatus.HASP_TOO_SHORT)
 
@@ -816,7 +1150,18 @@ class HardwareDongleEmulator:
         return struct.pack("<I", HASPStatus.HASP_INV_HND)
 
     def _hasp_write_memory(self, data: bytes) -> bytes:
-        """Handle HASP memory write operation."""
+        """Handle HASP memory write operation.
+
+        Writes data to the emulated dongle's EEPROM memory at the specified offset,
+        enforcing session authentication and memory bounds checking.
+
+        Args:
+            data (bytes): Write request containing session handle, memory offset, length, and write data bytes.
+
+        Returns:
+            bytes: Status code indicating successful write or error code if request invalid or bounds exceeded.
+
+        """
         if len(data) < 12:
             return struct.pack("<I", HASPStatus.HASP_TOO_SHORT)
 
@@ -834,7 +1179,20 @@ class HardwareDongleEmulator:
         return struct.pack("<I", HASPStatus.HASP_INV_HND)
 
     def _sentinel_control_handler(self, wValue: int, wIndex: int, data: bytes) -> bytes:
-        """Handle Sentinel USB control transfers."""
+        """Handle Sentinel USB control transfers.
+
+        Processes Sentinel/SafeNet control transfer requests for device identification,
+        returning device ID, vendor ID, serial number, and firmware version based on request.
+
+        Args:
+            wValue (int): USB transfer wValue field indicating which information to return.
+            wIndex (int): USB transfer wIndex field containing additional request parameters.
+            data (bytes): Control transfer payload data from the request.
+
+        Returns:
+            bytes: Response bytes containing requested Sentinel device information or empty response.
+
+        """
         if not self.sentinel_dongles:
             return b"\x00" * 64
 
@@ -850,7 +1208,18 @@ class HardwareDongleEmulator:
         return b"\x00" * 64
 
     def _sentinel_bulk_out_handler(self, data: bytes) -> bytes:
-        """Handle Sentinel bulk OUT transfers."""
+        """Handle Sentinel bulk OUT transfers.
+
+        Dispatches command packets to appropriate Sentinel operation handlers
+        based on command type code in the data payload (query, read, write, encrypt).
+
+        Args:
+            data (bytes): Bulk transfer payload containing command code and operation parameters.
+
+        Returns:
+            bytes: Response bytes from the executed Sentinel operation handler or status code.
+
+        """
         if len(data) < 4:
             return b""
 
@@ -868,7 +1237,18 @@ class HardwareDongleEmulator:
         return struct.pack("<I", SentinelStatus.SP_SUCCESS)
 
     def _sentinel_bulk_in_handler(self, data: bytes) -> bytes:
-        """Handle Sentinel bulk IN transfers."""
+        """Handle Sentinel bulk IN transfers.
+
+        Retrieves previously buffered response data from emulated Sentinel dongle
+        that was populated by earlier OUT transfer operations.
+
+        Args:
+            data (bytes): Bulk IN request data payload (typically unused for Sentinel protocol).
+
+        Returns:
+            bytes: Response buffer containing up to 512 bytes from dongle response buffer.
+
+        """
         if not self.sentinel_dongles:
             return b"\x00" * 512
 
@@ -876,7 +1256,18 @@ class HardwareDongleEmulator:
         return bytes(dongle.response_buffer[:512])
 
     def _sentinel_query(self, data: bytes) -> bytes:
-        """Handle Sentinel query operation."""
+        """Handle Sentinel query operation.
+
+        Responds to Sentinel device query requests by returning dongle identification
+        and status information (device ID, serial number, firmware version, developer ID).
+
+        Args:
+            data (bytes): Query request data bytes (typically unused for basic query operation).
+
+        Returns:
+            bytes: Status code indicating success or device not found error.
+
+        """
         if not self.sentinel_dongles:
             return struct.pack("<I", SentinelStatus.SP_UNIT_NOT_FOUND)
 
@@ -895,7 +1286,18 @@ class HardwareDongleEmulator:
         return struct.pack("<I", SentinelStatus.SP_SUCCESS)
 
     def _sentinel_read(self, data: bytes) -> bytes:
-        """Handle Sentinel read operation."""
+        """Handle Sentinel read operation.
+
+        Reads data from specified cell in Sentinel dongle memory and buffers
+        the result for subsequent IN transfer to the host.
+
+        Args:
+            data (bytes): Read request containing cell ID (4 bytes) and read length (4 bytes).
+
+        Returns:
+            bytes: Status code indicating success, invalid function code, or unit not found.
+
+        """
         if len(data) < 8:
             return struct.pack("<I", SentinelStatus.SP_INVALID_FUNCTION_CODE)
 
@@ -910,7 +1312,19 @@ class HardwareDongleEmulator:
         return struct.pack("<I", SentinelStatus.SP_UNIT_NOT_FOUND)
 
     def _sentinel_write(self, data: bytes) -> bytes:
-        """Handle Sentinel write operation."""
+        """Handle Sentinel write operation.
+
+        Writes data to specified cell in Sentinel dongle memory. Data is padded
+        to 64 bytes with null bytes if needed for memory alignment.
+
+        Args:
+            data (bytes): Write request containing cell ID (4 bytes), data length (4 bytes),
+                  and cell data bytes to write.
+
+        Returns:
+            bytes: Status code indicating success, invalid function code, or unit not found.
+
+        """
         if len(data) < 8:
             return struct.pack("<I", SentinelStatus.SP_INVALID_FUNCTION_CODE)
 
@@ -925,7 +1339,18 @@ class HardwareDongleEmulator:
         return struct.pack("<I", SentinelStatus.SP_UNIT_NOT_FOUND)
 
     def _sentinel_encrypt(self, data: bytes) -> bytes:
-        """Handle Sentinel encryption operation."""
+        """Handle Sentinel encryption operation.
+
+        Encrypts plaintext using AES encryption with the emulated Sentinel dongle's
+        AES key and buffers the encrypted result for subsequent IN transfer.
+
+        Args:
+            data (bytes): Encryption request containing data length (4 bytes) and plaintext bytes.
+
+        Returns:
+            bytes: Status code indicating success, invalid function code, or unit not found.
+
+        """
         if len(data) < 4:
             return struct.pack("<I", SentinelStatus.SP_INVALID_FUNCTION_CODE)
 
@@ -940,7 +1365,20 @@ class HardwareDongleEmulator:
         return struct.pack("<I", SentinelStatus.SP_UNIT_NOT_FOUND)
 
     def _wibukey_control_handler(self, wValue: int, wIndex: int, data: bytes) -> bytes:
-        """Handle WibuKey USB control transfers."""
+        """Handle WibuKey USB control transfers.
+
+        Processes WibuKey/CodeMeter control transfer requests for device identification,
+        returning firmware code, product code, serial number, and version based on request.
+
+        Args:
+            wValue (int): USB transfer wValue field indicating which information to return.
+            wIndex (int): USB transfer wIndex field containing additional request parameters.
+            data (bytes): Control transfer payload data from the request.
+
+        Returns:
+            bytes: Response bytes containing requested WibuKey device information or empty response.
+
+        """
         if not self.wibukey_dongles:
             return b"\x00" * 64
 
@@ -959,7 +1397,18 @@ class HardwareDongleEmulator:
         return b"\x00" * 64
 
     def _wibukey_bulk_out_handler(self, data: bytes) -> bytes:
-        """Handle WibuKey bulk OUT transfers."""
+        """Handle WibuKey bulk OUT transfers.
+
+        Dispatches command packets to appropriate WibuKey operation handlers
+        based on command type code (open, access, encrypt, challenge) in the payload.
+
+        Args:
+            data (bytes): Bulk transfer payload containing command code and operation parameters.
+
+        Returns:
+            bytes: Response bytes from the executed WibuKey operation handler or status code.
+
+        """
         if len(data) < 4:
             return b""
 
@@ -977,7 +1426,18 @@ class HardwareDongleEmulator:
         return struct.pack("<I", 0)
 
     def _wibukey_bulk_in_handler(self, data: bytes) -> bytes:
-        """Handle WibuKey bulk IN transfers."""
+        """Handle WibuKey bulk IN transfers.
+
+        Retrieves WibuKey dongle information including firmware code, product code,
+        feature code, and serial number from the buffered response.
+
+        Args:
+            data (bytes): Bulk IN request data payload (typically unused for WibuKey protocol).
+
+        Returns:
+            bytes: Response buffer containing dongle identification and status information.
+
+        """
         if not self.wibukey_dongles:
             return b"\x00" * 512
 
@@ -996,7 +1456,18 @@ class HardwareDongleEmulator:
         return bytes(response)
 
     def _wibukey_open(self, data: bytes) -> bytes:
-        """Handle WibuKey open operation."""
+        """Handle WibuKey open operation.
+
+        Opens a WibuKey/CodeMeter license container by verifying firmware and
+        product codes, returning a container handle on success.
+
+        Args:
+            data (bytes): Open request containing firm code (4 bytes) and product code (4 bytes).
+
+        Returns:
+            bytes: Error code (0) and container handle on success, or error code (1) if request invalid or no matching dongle.
+
+        """
         if len(data) < 8:
             return struct.pack("<I", 1)
 
@@ -1009,7 +1480,19 @@ class HardwareDongleEmulator:
         return struct.pack("<I", 1)
 
     def _wibukey_access(self, data: bytes) -> bytes:
-        """Handle WibuKey access operation."""
+        """Handle WibuKey access operation.
+
+        Validates access to a license feature in a WibuKey/CodeMeter container,
+        marking the feature as active if enabled and available.
+
+        Args:
+            data (bytes): Access request containing container handle (4 bytes), feature code
+                  (4 bytes), and access type (4 bytes) indicating access permission type.
+
+        Returns:
+            bytes: Error code (0) indicating success, or error code (1) if request invalid or feature unavailable.
+
+        """
         if len(data) < 12:
             return struct.pack("<I", 1)
 
@@ -1025,7 +1508,19 @@ class HardwareDongleEmulator:
         return struct.pack("<I", 1)
 
     def _wibukey_encrypt(self, data: bytes) -> bytes:
-        """Handle WibuKey encrypt operation."""
+        """Handle WibuKey encrypt operation.
+
+        Encrypts plaintext using AES encryption with the WibuKey/CodeMeter dongle's
+        AES key, returning error code and encrypted data on success.
+
+        Args:
+            data (bytes): Encryption request containing container handle (4 bytes), data length
+                  (4 bytes), and plaintext bytes to encrypt.
+
+        Returns:
+            bytes: Error code (0) and encrypted data length on success, or error code (1) if request invalid or container not found.
+
+        """
         if len(data) < 8:
             return struct.pack("<I", 1)
 
@@ -1041,7 +1536,19 @@ class HardwareDongleEmulator:
         return struct.pack("<I", 1)
 
     def _wibukey_challenge(self, data: bytes) -> bytes:
-        """Handle WibuKey challenge-response operation."""
+        """Handle WibuKey challenge-response operation.
+
+        Computes a cryptographic challenge-response using WibuKey/CodeMeter's
+        challenge-response algorithm with the dongle's challenge response key.
+
+        Args:
+            data (bytes): Challenge request containing container handle (4 bytes), challenge
+                  length (4 bytes), and challenge bytes for authentication.
+
+        Returns:
+            bytes: Error code (0) and response data length on success, or error code (1) if request invalid or container not found.
+
+        """
         if len(data) < 20:
             return struct.pack("<I", 1)
 
@@ -1060,7 +1567,15 @@ class HardwareDongleEmulator:
         return struct.pack("<I", 1)
 
     def _hook_dongle_apis(self, dongle_types: list[str]) -> None:
-        """Install comprehensive Frida hooks for dongle APIs."""
+        """Install comprehensive Frida hooks for dongle APIs.
+
+        Generates and installs Frida instrumentation hooks for HASP, Sentinel,
+        and CodeMeter/WibuKey API functions, redirecting calls to emulated handlers.
+
+        Args:
+            dongle_types (list[str]): List of dongle type names (HASP, Sentinel, CodeMeter) to install hooks for.
+
+        """
         if not FRIDA_AVAILABLE:
             self.logger.warning("Frida not available - skipping dongle API hooking")
             return
@@ -1381,7 +1896,13 @@ class HardwareDongleEmulator:
         self.logger.info("Comprehensive dongle API hooks installed for: %s", ", ".join(dongle_types))
 
     def _patch_dongle_checks(self) -> None:
-        """Patch binary instructions that check for dongle presence."""
+        """Patch binary instructions that check for dongle presence.
+
+        Identifies and records binary patches for common dongle presence checks,
+        converting conditional jumps to unconditional jumps to bypass protection.
+        Patches are not applied directly but stored for external patching tools.
+
+        """
         if not self.app or not hasattr(self.app, "binary_path") or not self.app.binary_path:
             return
 
@@ -1466,7 +1987,12 @@ class HardwareDongleEmulator:
             self.logger.exception("Error patching dongle checks: %s", e)
 
     def _spoof_dongle_registry(self) -> None:
-        """Manipulate Windows registry to establish dongle presence."""
+        """Manipulate Windows registry to establish dongle presence.
+
+        Creates registry entries for SafeNet Sentinel, HASP, and CodeMeter/WibuKey
+        dongles to establish installation and availability on the system.
+
+        """
         try:
             if platform.system() != "Windows":
                 self.logger.info("Not on Windows - skipping registry spoofing")
@@ -1535,12 +2061,15 @@ class HardwareDongleEmulator:
     def process_hasp_challenge(self, challenge: bytes, dongle_id: int = 1) -> bytes:
         """Process HASP cryptographic challenge.
 
+        Generates challenge-response using HMAC-SHA256 for challenges >= 16 bytes,
+        or SHA256 hash of challenge concatenated with seed code for shorter challenges.
+
         Args:
-            challenge: Challenge data from protected application
-            dongle_id: ID of HASP dongle to use
+            challenge: Challenge bytes from protected application.
+            dongle_id: ID of specific HASP dongle to use. Defaults to 1.
 
         Returns:
-            bytes: Challenge response
+            Challenge response bytes (16 bytes for HMAC, full hash for SHA256).
 
         """
         if dongle_id not in self.hasp_dongles:
@@ -1558,15 +2087,18 @@ class HardwareDongleEmulator:
     def read_dongle_memory(self, dongle_type: str, dongle_id: int, region: str, offset: int, length: int) -> bytes:
         """Read from dongle memory.
 
+        Reads memory data from specified dongle instance, supporting HASP, Sentinel,
+        and WibuKey/CodeMeter protection dongles with rom, ram, and eeprom regions.
+
         Args:
-            dongle_type: Type of dongle (HASP, Sentinel, WibuKey)
-            dongle_id: ID of specific dongle
-            region: Memory region (rom, ram, eeprom)
-            offset: Offset within region
-            length: Number of bytes to read
+            dongle_type: Type of dongle (HASP, Sentinel, WibuKey). Case-insensitive.
+            dongle_id: ID of specific dongle instance to read from.
+            region: Memory region name (rom, ram, or eeprom).
+            offset: Byte offset within the region.
+            length: Number of bytes to read.
 
         Returns:
-            bytes: Memory data
+            Memory data bytes from the requested region, or empty bytes on error.
 
         """
         try:
@@ -1586,15 +2118,18 @@ class HardwareDongleEmulator:
     def write_dongle_memory(self, dongle_type: str, dongle_id: int, region: str, offset: int, data: bytes) -> bool:
         """Write to dongle memory.
 
+        Writes memory data to specified dongle instance, supporting HASP, Sentinel,
+        and WibuKey/CodeMeter protection dongles with rom, ram, and eeprom regions.
+
         Args:
-            dongle_type: Type of dongle (HASP, Sentinel, WibuKey)
-            dongle_id: ID of specific dongle
-            region: Memory region (rom, ram, eeprom)
-            offset: Offset within region
-            data: Data to write
+            dongle_type: Type of dongle (HASP, Sentinel, WibuKey). Case-insensitive.
+            dongle_id: ID of specific dongle instance to write to.
+            region: Memory region name (rom, ram, or eeprom).
+            offset: Byte offset within the region.
+            data: Bytes to write to dongle memory.
 
         Returns:
-            bool: True if successful
+            True if write succeeded, False if dongle not found or write error occurred.
 
         """
         try:
@@ -1617,11 +2152,14 @@ class HardwareDongleEmulator:
     def generate_emulation_script(self, dongle_types: list[str]) -> str:
         """Generate a Frida script for dongle emulation.
 
+        Retrieves the Frida instrumentation script that was previously generated
+        during emulation setup for the specified dongle types.
+
         Args:
-            dongle_types: List of dongle types to emulate
+            dongle_types: List of dongle types for which to retrieve the script.
 
         Returns:
-            str: Complete Frida script for dongle emulation
+            Frida JavaScript script string for dongle emulation, or empty string if not found.
 
         """
         return next((hook["script"] for hook in self.hooks if hook["type"] == "frida"), "")
@@ -1629,8 +2167,11 @@ class HardwareDongleEmulator:
     def get_emulation_status(self) -> dict[str, Any]:
         """Get the current status of dongle emulation.
 
+        Provides comprehensive status on active hooks, patches, virtual dongles,
+        and availability of backend support (Frida, WinReg, cryptography).
+
         Returns:
-            dict: Status information about emulated dongles and hooks
+            Dictionary containing counts and identifiers for all active emulation components.
 
         """
         return {
@@ -1648,7 +2189,12 @@ class HardwareDongleEmulator:
         }
 
     def clear_emulation(self) -> None:
-        """Clear all dongle emulation hooks and virtual devices."""
+        """Clear all dongle emulation hooks and virtual devices.
+
+        Safely clears all emulation state including Frida hooks, binary patches,
+        and virtual dongle instances using thread-safe locking.
+
+        """
         with self.lock:
             self.hooks.clear()
             self.patches.clear()
@@ -1663,12 +2209,12 @@ class HardwareDongleEmulator:
         """Get configuration for a specific dongle type.
 
         Args:
-            dongle_type: Type of dongle to get configuration for.
+            dongle_type (str): Type of dongle to get configuration for.
                          Valid types: 'hasp', 'sentinel', 'wibukey', 'codemeter',
                          'safenet', 'superpro', 'rockey', 'dinkey'
 
         Returns:
-            Dictionary containing dongle configuration parameters, or None if not found.
+            dict[str, Any] | None: Dictionary containing dongle configuration parameters, or None if not found.
 
         """
         dongle_type_lower = dongle_type.lower().strip()
@@ -1910,12 +2456,15 @@ class HardwareDongleEmulator:
 def activate_hardware_dongle_emulation(app: object, dongle_types: list[str] | None = None) -> dict[str, object]:
     """Activate hardware dongle emulation.
 
+    Convenience function that creates a HardwareDongleEmulator instance and
+    activates emulation for specified dongle types or all supported types if none specified.
+
     Args:
-        app: Application instance with binary_path
-        dongle_types: List of dongle types to emulate
+        app: Application instance containing binary_path attribute for binary patching.
+        dongle_types: List of dongle type names to emulate. If None, emulates all supported types.
 
     Returns:
-        dict: Results of the emulation activation
+        Results dictionary with success status, list of emulated dongles, and methods applied.
 
     """
     emulator = HardwareDongleEmulator(app)

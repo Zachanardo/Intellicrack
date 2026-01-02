@@ -4,7 +4,6 @@ Provides sophisticated emulation for YubiKey, RSA SecurID, and smart cards.
 """
 
 import ctypes
-import ctypes.wintypes
 import logging
 import os
 import secrets
@@ -73,7 +72,11 @@ class HardwareTokenBypass:
             self.kernel32 = None
 
     def _init_scard_constants(self) -> None:
-        """Initialize Windows smart card constants."""
+        """Initialize Windows smart card constants.
+
+        Sets up all required Windows SCard API constants for smart card
+        context management, protocol handling, and card disposition.
+        """
         # SCard context scope
         self.SCARD_SCOPE_USER = 0
         self.SCARD_SCOPE_TERMINAL = 1
@@ -99,11 +102,11 @@ class HardwareTokenBypass:
         """Emulate YubiKey hardware token with OTP generation.
 
         Args:
-            serial_number: Optional YubiKey serial number
+            serial_number: Optional YubiKey serial number.
 
         Returns:
-            Dictionary containing emulation details and OTP
-
+            Dictionary containing emulation details, OTP, serial number,
+            and USB device information.
         """
         if not serial_number:
             serial_number = self._generate_yubikey_serial()
@@ -150,7 +153,11 @@ class HardwareTokenBypass:
         }
 
     def _generate_yubikey_serial(self) -> str:
-        """Generate realistic YubiKey serial number."""
+        """Generate realistic YubiKey serial number.
+
+        Returns:
+            8-digit YubiKey serial number as a string.
+        """
         # YubiKey serial format: 8-digit serial number
         return str(secrets.randbelow(90000000) + 10000000)
 
@@ -158,15 +165,14 @@ class HardwareTokenBypass:
         """Generate YubiKey OTP using Yubico OTP algorithm.
 
         Args:
-            public_id: Public identity string
-            private_id: Private identity bytes
-            aes_key: AES encryption key
-            counter: Usage counter
-            session: Session counter
+            public_id: Public identity string.
+            private_id: Private identity bytes.
+            aes_key: AES encryption key.
+            counter: Usage counter.
+            session: Session counter.
 
         Returns:
-            ModHex encoded OTP string
-
+            ModHex encoded OTP string (public ID + encrypted token).
         """
         # Build OTP data block (16 bytes)
         timestamp = int(time.time() * 8) & 0xFFFFFF  # 24-bit timestamp
@@ -191,7 +197,14 @@ class HardwareTokenBypass:
         return public_id + modhex
 
     def _calculate_crc16(self, data: bytes) -> int:
-        """Calculate CRC16-CCITT checksum."""
+        """Calculate CRC16-CCITT checksum.
+
+        Args:
+            data: Bytes to calculate checksum for.
+
+        Returns:
+            CRC16-CCITT checksum value.
+        """
         crc = 0xFFFF
         for byte in data:
             crc ^= byte
@@ -203,7 +216,15 @@ class HardwareTokenBypass:
         return crc ^ 0xFFFF
 
     def _aes_encrypt(self, data: bytes, key: bytes) -> bytes:
-        """AES-128 ECB encryption for YubiKey OTP."""
+        """AES-128 ECB encryption for YubiKey OTP.
+
+        Args:
+            data: Data to encrypt.
+            key: 16-byte AES key.
+
+        Returns:
+            IV concatenated with encrypted data (IV + ciphertext).
+        """
         import os
 
         from cryptography.hazmat.backends import default_backend
@@ -225,7 +246,14 @@ class HardwareTokenBypass:
         return iv + encrypted_data
 
     def _to_modhex(self, data: bytes) -> str:
-        """Convert bytes to ModHex encoding."""
+        """Convert bytes to ModHex encoding.
+
+        Args:
+            data: Bytes to encode.
+
+        Returns:
+            ModHex encoded string.
+        """
         modhex_chars = "cbdefghijklnrtuv"
         result: list[str] = []
         for byte in data:
@@ -233,7 +261,15 @@ class HardwareTokenBypass:
         return "".join(result)
 
     def _emulate_yubikey_usb(self, serial_number: str) -> dict[str, Any]:
-        """Emulate YubiKey USB device presence."""
+        """Emulate YubiKey USB device presence.
+
+        Args:
+            serial_number: YubiKey serial number.
+
+        Returns:
+            USB device information including vendor ID, product ID,
+            and capabilities.
+        """
         return {
             "vendor_id": 0x1050,  # Yubico vendor ID
             "product_id": 0x0407,  # YubiKey 5 NFC
@@ -256,12 +292,11 @@ class HardwareTokenBypass:
         """Generate RSA SecurID token code.
 
         Args:
-            serial_number: Token serial number
-            seed: 128-bit seed for token generation
+            serial_number: Optional token serial number.
+            seed: Optional 128-bit seed for token generation.
 
         Returns:
-            Dictionary containing token code and metadata
-
+            Dictionary with token_code, next_token, serial_number, and timing info.
         """
         if not serial_number:
             serial_number = self._generate_securid_serial()
@@ -295,7 +330,11 @@ class HardwareTokenBypass:
         }
 
     def _generate_securid_serial(self) -> str:
-        """Generate realistic RSA SecurID serial number."""
+        """Generate realistic RSA SecurID serial number.
+
+        Returns:
+            12-digit SecurID token serial number.
+        """
         # Format: 12-digit token serial starting with 000
         return f"000{secrets.randbelow(900000000) + 100000000!s}"
 
@@ -303,12 +342,11 @@ class HardwareTokenBypass:
         """Calculate RSA SecurID token using AES-based algorithm.
 
         Args:
-            seed: 128-bit seed
-            time_counter: Time-based counter
+            seed: 128-bit seed for token generation.
+            time_counter: Time-based counter value.
 
         Returns:
-            6 or 8 digit token code
-
+            6-8 digit token code zero-padded to token_code_length.
         """
         # SecurID 128-bit AES algorithm
         from cryptography.hazmat.backends import default_backend
@@ -348,11 +386,10 @@ class HardwareTokenBypass:
         """Emulate smart card presence and operations.
 
         Args:
-            card_type: Type of smart card (PIV, CAC, etc.)
+            card_type: Type of smart card (PIV, CAC, Generic).
 
         Returns:
-            Dictionary containing smart card emulation data
-
+            Smart card emulation data with certificates, PIN, and reader info.
         """
         card_id = secrets.token_hex(8).upper()
 
@@ -377,7 +414,14 @@ class HardwareTokenBypass:
         return card_data
 
     def _generate_piv_card_data(self, card_id: str) -> dict[str, Any]:
-        """Generate PIV (Personal Identity Verification) card data."""
+        """Generate PIV (Personal Identity Verification) card data.
+
+        Args:
+            card_id: Unique card identifier.
+
+        Returns:
+            PIV card data including certificates, CHUID, and credentials.
+        """
         return {
             "success": True,
             "card_id": card_id,
@@ -398,7 +442,14 @@ class HardwareTokenBypass:
         }
 
     def _generate_cac_card_data(self, card_id: str) -> dict[str, Any]:
-        """Generate CAC (Common Access Card) data."""
+        """Generate CAC (Common Access Card) data.
+
+        Args:
+            card_id: Unique card identifier.
+
+        Returns:
+            CAC card data including DoD certificates and EDIPI.
+        """
         return {
             "success": True,
             "card_id": card_id,
@@ -418,7 +469,14 @@ class HardwareTokenBypass:
         }
 
     def _generate_generic_card_data(self, card_id: str) -> dict[str, Any]:
-        """Generate generic smart card data."""
+        """Generate generic smart card data.
+
+        Args:
+            card_id: Unique card identifier.
+
+        Returns:
+            dict[str, Any]: Generic smart card data with basic certificates and PIN.
+        """
         return {
             "success": True,
             "card_id": card_id,
@@ -436,7 +494,14 @@ class HardwareTokenBypass:
         }
 
     def _generate_chuid(self, card_id: str) -> bytes:
-        """Generate Card Holder Unique Identifier (CHUID)."""
+        """Generate Card Holder Unique Identifier (CHUID).
+
+        Args:
+            card_id: Unique card identifier (hex string).
+
+        Returns:
+            bytes: CHUID data structure with FASC-N, GUID, expiration, and RSA signature.
+        """
         # CHUID structure for PIV cards
         chuid = bytearray()
 
@@ -483,7 +548,14 @@ class HardwareTokenBypass:
         return bytes(chuid)
 
     def _generate_x509_cert(self, cn: str) -> dict[str, Any]:
-        """Generate X.509 certificate data structure."""
+        """Generate X.509 certificate data structure.
+
+        Args:
+            cn: Common Name for the certificate subject.
+
+        Returns:
+            dict[str, Any]: Certificate data including PEM, DER, and metadata.
+        """
         # Generate key pair
         from cryptography import x509
         from cryptography.hazmat.backends import default_backend
@@ -551,7 +623,15 @@ class HardwareTokenBypass:
         }
 
     def _emulate_card_reader(self, card_id: str, card_type: str) -> str:
-        """Emulate smart card reader on Windows."""
+        """Emulate smart card reader on Windows.
+
+        Args:
+            card_id: Unique card identifier.
+            card_type: Type of smart card (PIV, CAC, Generic).
+
+        Returns:
+            str: Virtual card reader name.
+        """
         if not self.winscard:
             return "Virtual Card Reader"
 
@@ -589,12 +669,11 @@ class HardwareTokenBypass:
         """Bypass hardware token verification for specific applications.
 
         Args:
-            application: Target application name
-            token_type: Type of token to bypass (yubikey, securid, smartcard)
+            application: Target application name.
+            token_type: Type of token to bypass (yubikey, securid, smartcard).
 
         Returns:
-            Dictionary containing bypass status and details
-
+            dict[str, Any]: Bypass result with success status, method, and details.
         """
         bypass_result = {
             "success": False,
@@ -616,7 +695,14 @@ class HardwareTokenBypass:
         return bypass_result
 
     def _bypass_yubikey_verification(self, application: str) -> dict[str, Any]:
-        """Bypass YubiKey verification for specific application."""
+        """Bypass YubiKey verification for specific application.
+
+        Args:
+            application: Target application name.
+
+        Returns:
+            dict[str, Any]: Bypass result with method and details.
+        """
         # Hook into application's YubiKey verification
         if os.name == "nt":
             # Windows-specific hooking
@@ -625,7 +711,14 @@ class HardwareTokenBypass:
         return self._hook_yubikey_unix(application)
 
     def _hook_yubikey_windows(self, application: str) -> dict[str, Any]:
-        """Install hook for YubiKey verification on Windows."""
+        """Install hook for YubiKey verification on Windows.
+
+        Args:
+            application: Target application name.
+
+        Returns:
+            dict[str, Any]: Bypass status with method, hooked functions, and details.
+        """
         try:
             # Check if kernel32 is available
             if not self.kernel32:
@@ -689,7 +782,14 @@ class HardwareTokenBypass:
             return {"success": False, "error": str(e)}
 
     def _hook_yubikey_unix(self, application: str) -> dict[str, Any]:
-        """Install hook for YubiKey verification on Unix systems."""
+        """Install hook for YubiKey verification on Unix systems.
+
+        Args:
+            application: Target application name.
+
+        Returns:
+            dict[str, Any]: Bypass status with LD_PRELOAD details.
+        """
         try:
             # Use LD_PRELOAD technique
             hook_lib = self._create_yubikey_hook_lib()
@@ -707,7 +807,11 @@ class HardwareTokenBypass:
             return {"success": False, "error": str(e)}
 
     def _create_yubikey_hook_dll(self) -> str:
-        """Create Windows DLL for YubiKey API hooking."""
+        """Create Windows DLL for YubiKey API hooking.
+
+        Returns:
+            str: Path to the generated DLL file.
+        """
         # In production, compile this to actual DLL
         # For now, return path to pre-compiled DLL
         dll_path = Path(__file__).parent / "hooks" / "yubikey_hook.dll"
@@ -721,7 +825,11 @@ class HardwareTokenBypass:
         return str(dll_path)
 
     def _create_yubikey_hook_lib(self) -> str:
-        """Create Unix shared library for YubiKey API hooking."""
+        """Create Unix shared library for YubiKey API hooking.
+
+        Returns:
+            str: Path to the generated .so library file.
+        """
         # In production, compile this to actual .so file
         lib_path = Path(__file__).parent / "hooks" / "yubikey_hook.so"
         lib_path.parent.mkdir(exist_ok=True)
@@ -733,7 +841,11 @@ class HardwareTokenBypass:
         return str(lib_path)
 
     def _generate_minimal_dll(self) -> bytes:
-        """Generate minimal valid Windows DLL structure."""
+        """Generate minimal valid Windows DLL structure.
+
+        Returns:
+            bytes: Valid PE/DLL binary structure.
+        """
         # Minimal PE/DLL structure
         dos_header = bytearray(
             [
@@ -776,7 +888,14 @@ class HardwareTokenBypass:
         return bytes(dos_header) + bytes([0] * (128 - len(dos_header))) + pe_header + coff + bytes(optional) + bytes(section) + code
 
     def _bypass_securid_verification(self, application: str) -> dict[str, Any]:
-        """Bypass RSA SecurID verification."""
+        """Bypass RSA SecurID verification.
+
+        Args:
+            application: Target application name.
+
+        Returns:
+            dict[str, Any]: Bypass result with generated token and patched functions.
+        """
         # Generate valid token for any serial
         token_data = self.generate_rsa_securid_token()
 
@@ -792,7 +911,14 @@ class HardwareTokenBypass:
         }
 
     def _bypass_smartcard_verification(self, application: str) -> dict[str, Any]:
-        """Bypass smart card verification."""
+        """Bypass smart card verification.
+
+        Args:
+            application: Target application name.
+
+        Returns:
+            dict[str, Any]: Bypass result with virtual smart card details.
+        """
         # Emulate smart card presence
         card_data = self.emulate_smartcard()
 
@@ -811,11 +937,10 @@ class HardwareTokenBypass:
         """Extract secrets from physical hardware tokens.
 
         Args:
-            device_path: Path to device or memory dump
+            device_path: Optional path to device or memory dump file.
 
         Returns:
-            Extracted secrets and keys
-
+            dict[str, Any]: Dictionary with secrets, keys, certificates, and success status.
         """
         extracted = {"success": False, "secrets": {}, "keys": {}, "certificates": []}
 
@@ -834,7 +959,14 @@ class HardwareTokenBypass:
         return extracted
 
     def _extract_yubikey_secrets(self, data: bytes) -> dict[str, Any]:
-        """Extract YubiKey secrets from memory."""
+        """Extract YubiKey secrets from memory.
+
+        Args:
+            data: Memory dump or device data to scan.
+
+        Returns:
+            dict[str, Any]: Dictionary with yubikey_secrets key containing extracted keys.
+        """
         secrets = {}
 
         # Search for AES keys (16 bytes of high entropy)
@@ -848,7 +980,14 @@ class HardwareTokenBypass:
         return {"yubikey_secrets": secrets}
 
     def _extract_securid_seeds(self, data: bytes) -> dict[str, Any]:
-        """Extract RSA SecurID seeds from memory."""
+        """Extract RSA SecurID seeds from memory.
+
+        Args:
+            data: Memory dump or device data to scan.
+
+        Returns:
+            dict[str, Any]: Dictionary with securid_seeds key containing extracted seeds.
+        """
         seeds = {}
 
         # Search for SecurID seed patterns
@@ -873,7 +1012,14 @@ class HardwareTokenBypass:
         return {"securid_seeds": seeds}
 
     def _extract_smartcard_keys(self, data: bytes) -> dict[str, Any]:
-        """Extract smart card keys from memory."""
+        """Extract smart card keys from memory.
+
+        Args:
+            data: Memory dump or device data to scan.
+
+        Returns:
+            dict[str, Any]: Dictionary with smartcard_keys and certificates keys.
+        """
         keys: dict[str, str] = {}
         certs: list[dict[str, Any]] = []
 
@@ -917,7 +1063,14 @@ class HardwareTokenBypass:
         return {"smartcard_keys": keys, "certificates": certs}
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data."""
+        """Calculate Shannon entropy of data.
+
+        Args:
+            data: Bytes to calculate entropy for.
+
+        Returns:
+            float: Shannon entropy value (0.0 to 8.0).
+        """
         if not data:
             return 0.0
 
@@ -943,12 +1096,11 @@ def bypass_hardware_token(application: str, token_type: str) -> dict[str, Any]:
     """Bypass hardware token.
 
     Args:
-        application: Target application
-        token_type: Type of token (yubikey, securid, smartcard)
+        application: Target application name.
+        token_type: Type of token (yubikey, securid, smartcard).
 
     Returns:
-        Bypass result dictionary
-
+        dict[str, Any]: Bypass result dictionary with success status and details.
     """
     bypasser = HardwareTokenBypass()
 

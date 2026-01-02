@@ -1,4 +1,11 @@
-"""Copyright (C) 2025 Zachary Flint.
+"""Severity level enumerations and utilities for security analysis reporting.
+
+This module provides severity, threat, and confidence level enumerations
+used throughout Intellicrack for security findings classification. It includes
+scoring systems, color mappings, and utility functions for risk assessment
+and finding prioritization.
+
+Copyright (C) 2025 Zachary Flint.
 
 This file is part of Intellicrack.
 
@@ -21,7 +28,20 @@ from typing import Any
 
 
 class SeverityLevel(Enum):
-    """Enumeration for severity levels."""
+    """Enumeration of severity levels for security findings.
+
+    Used to classify the severity or impact of security vulnerabilities,
+    protection weaknesses, and licensing bypass opportunities identified during
+    analysis. Severity levels range from CRITICAL (highest impact) to INFO
+    (lowest impact).
+
+    Attributes:
+        CRITICAL: Most severe findings requiring immediate attention.
+        HIGH: Significant vulnerabilities with major impact.
+        MEDIUM: Moderate findings that should be addressed.
+        LOW: Minor issues with limited impact.
+        INFO: Informational findings and low-priority observations.
+    """
 
     CRITICAL = "critical"
     HIGH = "high"
@@ -31,7 +51,19 @@ class SeverityLevel(Enum):
 
 
 class VulnerabilityLevel(Enum):
-    """Enumeration for vulnerability severity levels (alias for SeverityLevel)."""
+    """Enumeration of vulnerability severity levels.
+
+    Alias enumeration for SeverityLevel used in specific contexts where
+    vulnerability assessment is emphasized. Provides identical severity
+    classifications for consistency across different analysis modules.
+
+    Attributes:
+        CRITICAL: Most severe vulnerabilities requiring immediate attention.
+        HIGH: Significant vulnerabilities with major impact.
+        MEDIUM: Moderate vulnerabilities that should be addressed.
+        LOW: Minor vulnerabilities with limited impact.
+        INFO: Informational vulnerabilities and low-priority observations.
+    """
 
     CRITICAL = "critical"
     HIGH = "high"
@@ -41,7 +73,19 @@ class VulnerabilityLevel(Enum):
 
 
 class SecurityRelevance(Enum):
-    """Enumeration for security relevance levels (alias for SeverityLevel)."""
+    """Enumeration of security relevance levels for findings.
+
+    Provides severity classification based on security research relevance and
+    importance. Used to categorize the relevance of protection mechanisms,
+    licensing systems, and security controls discovered during analysis.
+
+    Attributes:
+        CRITICAL: Most relevant security mechanisms requiring focused analysis.
+        HIGH: Significant security controls with major impact on protection.
+        MEDIUM: Moderately relevant security mechanisms worth investigating.
+        LOW: Minor security mechanisms with limited relevance.
+        INFO: Informational security observations with low relevance.
+    """
 
     CRITICAL = "critical"
     HIGH = "high"
@@ -51,7 +95,19 @@ class SecurityRelevance(Enum):
 
 
 class ThreatLevel(Enum):
-    """Enumeration for threat assessment levels."""
+    """Enumeration of threat assessment levels.
+
+    Classifies the likelihood or urgency of threats and vulnerabilities
+    discovered during security analysis. Threat levels indicate how probable
+    or imminent a protection bypass or licensing crack is.
+
+    Attributes:
+        IMMINENT: Threat is imminent or actively exploitable.
+        LIKELY: Threat is probable and should be addressed soon.
+        POSSIBLE: Threat is possible but not certain.
+        UNLIKELY: Threat is unlikely but still possible.
+        NONE: No threat present or vulnerability not exploitable.
+    """
 
     IMMINENT = "imminent"
     LIKELY = "likely"
@@ -61,7 +117,19 @@ class ThreatLevel(Enum):
 
 
 class ConfidenceLevel(Enum):
-    """Enumeration for analysis confidence levels."""
+    """Enumeration of confidence levels for analysis findings.
+
+    Represents the confidence or certainty in security analysis results.
+    Confidence levels are used as multipliers in risk score calculations to
+    weight findings based on how certain the analysis is about them.
+
+    Attributes:
+        VERY_HIGH: Very high confidence in the finding (90-100% certain).
+        HIGH: High confidence in the finding (70-90% certain).
+        MEDIUM: Medium confidence in the finding (50-70% certain).
+        LOW: Low confidence in the finding (30-50% certain).
+        VERY_LOW: Very low confidence in the finding (0-30% certain).
+    """
 
     VERY_HIGH = "very_high"
     HIGH = "high"
@@ -70,16 +138,15 @@ class ConfidenceLevel(Enum):
     VERY_LOW = "very_low"
 
 
-# Severity level mappings and utilities
-SEVERITY_COLORS = {
-    SeverityLevel.CRITICAL: "#FF0000",  # Red
-    SeverityLevel.HIGH: "#FF6600",  # Orange
-    SeverityLevel.MEDIUM: "#FFAA00",  # Yellow-orange
-    SeverityLevel.LOW: "#FFFF00",  # Yellow
-    SeverityLevel.INFO: "#00AA00",  # Green
+SEVERITY_COLORS: dict[SeverityLevel, str] = {
+    SeverityLevel.CRITICAL: "#FF0000",
+    SeverityLevel.HIGH: "#FF6600",
+    SeverityLevel.MEDIUM: "#FFAA00",
+    SeverityLevel.LOW: "#FFFF00",
+    SeverityLevel.INFO: "#00AA00",
 }
 
-SEVERITY_SCORES = {
+SEVERITY_SCORES: dict[SeverityLevel, float] = {
     SeverityLevel.CRITICAL: 10.0,
     SeverityLevel.HIGH: 7.5,
     SeverityLevel.MEDIUM: 5.0,
@@ -87,7 +154,7 @@ SEVERITY_SCORES = {
     SeverityLevel.INFO: 1.0,
 }
 
-THREAT_SCORES = {
+THREAT_SCORES: dict[ThreatLevel, float] = {
     ThreatLevel.IMMINENT: 10.0,
     ThreatLevel.LIKELY: 7.0,
     ThreatLevel.POSSIBLE: 5.0,
@@ -95,7 +162,7 @@ THREAT_SCORES = {
     ThreatLevel.NONE: 0.0,
 }
 
-CONFIDENCE_MULTIPLIERS = {
+CONFIDENCE_MULTIPLIERS: dict[ConfidenceLevel, float] = {
     ConfidenceLevel.VERY_HIGH: 1.0,
     ConfidenceLevel.HIGH: 0.9,
     ConfidenceLevel.MEDIUM: 0.7,
@@ -111,7 +178,7 @@ def get_severity_from_score(score: float) -> SeverityLevel:
         score: Numeric severity score (typically 0.0-10.0).
 
     Returns:
-        SeverityLevel enum corresponding to the score.
+        Corresponding severity level enum based on the score.
     """
     if score >= 9.0:
         return SeverityLevel.CRITICAL
@@ -129,7 +196,7 @@ def get_threat_from_score(score: float) -> ThreatLevel:
         score: Numeric threat score (typically 0.0-10.0).
 
     Returns:
-        ThreatLevel enum corresponding to the score.
+        Corresponding threat level enum based on the score.
     """
     if score >= 8.0:
         return ThreatLevel.IMMINENT
@@ -167,7 +234,7 @@ def get_severity_color(severity: SeverityLevel) -> str:
         severity: SeverityLevel to get color for.
 
     Returns:
-        Hex color code string for the severity level.
+        Hex color code for the severity level.
     """
     return SEVERITY_COLORS.get(severity, "#808080")
 
@@ -179,7 +246,7 @@ def format_severity_report(findings: list[dict[str, Any]]) -> str:
         findings: List of finding dictionaries with 'severity' key.
 
     Returns:
-        Formatted string report grouped and sorted by severity.
+        Formatted report grouped and sorted by severity.
     """
     if not findings:
         return "No findings to report."
@@ -228,7 +295,8 @@ def aggregate_severity_stats(findings: list[dict[str, Any]]) -> dict[str, Any]:
         findings: List of finding dictionaries to aggregate statistics from.
 
     Returns:
-        Dictionary with aggregated severity statistics including by_severity, risk_distribution, and average_risk_score.
+        Dictionary with aggregated severity statistics including by_severity,
+            risk_distribution, and average_risk_score keys.
     """
     stats: dict[str, Any] = {
         "total_findings": len(findings),
@@ -270,13 +338,13 @@ def aggregate_severity_stats(findings: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def prioritize_findings(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Sort findings by priority (risk score).
+    """Sort findings by priority based on risk score.
 
     Args:
         findings: List of finding dictionaries to prioritize.
 
     Returns:
-        Sorted list of findings ordered by risk score (highest risk first).
+        Sorted list of findings ordered by risk score in descending order.
     """
 
     def get_priority_score(finding: dict[str, Any]) -> float:
@@ -288,13 +356,14 @@ def prioritize_findings(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(findings, key=get_priority_score, reverse=True)
 
 
-# Export commonly used classes and functions
-__all__ = [
+__all__: list[str] = [
+    "CONFIDENCE_MULTIPLIERS",
     "ConfidenceLevel",
     "SEVERITY_COLORS",
     "SEVERITY_SCORES",
     "SecurityRelevance",
     "SeverityLevel",
+    "THREAT_SCORES",
     "ThreatLevel",
     "VulnerabilityLevel",
     "aggregate_severity_stats",

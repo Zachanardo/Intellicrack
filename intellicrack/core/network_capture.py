@@ -43,19 +43,11 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
         count: Maximum number of packets to capture before stopping.
 
     Returns:
-        Dictionary containing:
-        - success: Boolean indicating if capture succeeded
-        - total_packets: Total packets captured
-        - license_packets: Count of license-related packets identified
-        - unique_destinations: Count of unique destination IPs
-        - license_servers: List of detected license server tuples (IP, port)
-        - dns_queries: List of extracted unique DNS query names
-        - top_ports: Top 10 most active destination ports with counts
-        - protocol_distribution: Count of TCP, UDP, and other protocols
-        - packets: First 20 captured packets with detailed information
-        - error: Error message if capture failed (optional)
-        - suggestion: Installation suggestion for missing dependencies (optional)
-
+        Dictionary with packet capture results including success status,
+        total packet count, license-related packet identification, unique
+        destination counts, detected license servers (IP/port tuples), DNS
+        queries, top destination ports, protocol distribution, captured
+        packet details, error information, and dependency suggestions.
 
     Notes:
         - Automatically detects license-related keywords in packet payloads
@@ -65,7 +57,7 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
 
     """
     try:
-        from scapy.all import DNS, IP, TCP, UDP, Raw, sniff  # type: ignore[attr-defined]
+        from scapy.all import DNS, IP, TCP, UDP, Raw, sniff
     except ImportError:
         return {"error": "Scapy not available", "suggestion": "Install with: pip install scapy"}
 
@@ -80,8 +72,6 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
 
             Args:
                 packet: Scapy packet object to process and analyze.
-
-
             """
             packet_info: dict[str, Any] = {
                 "timestamp": time.time(),
@@ -216,20 +206,11 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
         pcap_file: Path to PCAP file to analyze.
 
     Returns:
-        Dictionary containing:
-        - total_packets: Total packet count
-        - protocols: Protocol distribution dictionary
-        - conversations: Source-destination conversation statistics
-        - dns_queries: Extracted DNS query names
-        - http_requests: HTTP request details
-        - tls_handshakes: TLS server names
-        - suspicious_ports: Detected non-standard port activity
-        - license_traffic: License-related network communications
-        - unique_dns_queries: Count of unique DNS queries
-        - unique_conversations: Count of unique conversations
-        - top_talkers: Top 10 conversation partners by packet count
-
-
+        Dictionary with comprehensive packet analysis including total packet
+        count, protocol distribution, source-destination conversations, DNS
+        queries, HTTP requests, TLS handshakes, suspicious port activity,
+        license-related traffic, unique DNS query count, unique conversation
+        count, and top 10 conversation partners.
     """
     try:
         import pyshark
@@ -482,24 +463,11 @@ def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
         pcap_file: Path to PCAP file to parse.
 
     Returns:
-        Dictionary containing:
-        - total_packets: Total number of packets in capture
-        - total_bytes: Total bytes captured
-        - start_time: UNIX timestamp of first packet
-        - end_time: UNIX timestamp of last packet
-        - ip_packets: Count of IPv4 packets
-        - tcp_packets: Count of TCP packets
-        - udp_packets: Count of UDP packets
-        - icmp_packets: Count of ICMP packets
-        - unique_connections: Count of unique source-destination-port tuples
-        - port_scan_indicators: Detected port scanning activity
-        - data_exfiltration_suspects: Connections with >10MB data transfer
-        - duration_seconds: Capture duration in seconds
-        - packets_per_second: Average packet rate
-        - bytes_per_second: Average byte rate
-        - total_port_scans: Count of port scan attempts
-
-
+        Dictionary with low-level packet statistics including total packet and
+        byte counts, start/end timestamps, IPv4/TCP/UDP/ICMP packet counts,
+        unique connection count, port scanning indicators, data exfiltration
+        suspects, capture duration, packet and byte rates, and total port scan
+        attempt count.
     """
     try:
         import dpkt

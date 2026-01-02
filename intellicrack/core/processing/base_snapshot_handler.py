@@ -109,23 +109,56 @@ class BaseSnapshotHandler(ABC):
         """
 
     def _get_current_timestamp(self) -> float:
-        """Get current timestamp for comparison metadata."""
+        """Get current timestamp for comparison metadata.
+
+        Returns:
+            Current Unix timestamp as a float value for use in snapshot
+                metadata and comparison tracking.
+
+        """
         import time
 
         return time.time()
 
     def list_snapshots(self) -> list[str]:
-        """Get list of available snapshot names."""
+        """Get list of available snapshot names.
+
+        Returns:
+            List of snapshot names currently stored in the snapshot handler
+                dictionary, sorted by insertion order.
+
+        """
         return list(self.snapshots.keys())
 
     def get_snapshot_info(self, name: str) -> dict[str, Any]:
-        """Get detailed information about a specific snapshot."""
+        """Get detailed information about a specific snapshot.
+
+        Args:
+            name: Name identifier of the snapshot to retrieve information
+                for.
+
+        Returns:
+            Dictionary containing snapshot information if found, or a
+                dictionary with an "error" key containing the error message if
+                the snapshot does not exist.
+
+        """
         if name not in self.snapshots:
             return {"error": f"Snapshot '{name}' not found"}
         return self.snapshots[name].copy()
 
     def has_snapshot(self, name: str) -> bool:
-        """Check if a snapshot exists."""
+        """Check if a snapshot exists.
+
+        Args:
+            name: Name identifier of the snapshot to check for existence in
+                the handler's snapshot registry.
+
+        Returns:
+            True if the snapshot with the specified name exists in the
+                handler's storage, False otherwise.
+
+        """
         return name in self.snapshots
 
 

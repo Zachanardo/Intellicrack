@@ -4,12 +4,43 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock
+from typing import Any, Callable
 
 import pytest
 
 from intellicrack.core.processing.emulator_manager import EmulatorManager, get_emulator_manager, run_with_qemu, run_with_qiling
+
+
+class FakeQEMUInstance:
+    """Real test double for QEMU instance with complete behavior tracking."""
+
+    def __init__(self, should_fail: bool = False) -> None:
+        self.should_fail = should_fail
+        self.stop_system_called = False
+        self.stop_system_call_count = 0
+        self.is_running = True
+        self.binary_path: str | None = None
+
+    def stop_system(self) -> None:
+        """Track stop_system calls and simulate failures if configured."""
+        self.stop_system_called = True
+        self.stop_system_call_count += 1
+        self.is_running = False
+        if self.should_fail:
+            raise RuntimeError("Shutdown failed")
+
+
+class FakeQilingInstance:
+    """Real test double for Qiling instance with complete state tracking."""
+
+    def __init__(self, binary_path: str) -> None:
+        self.binary_path = binary_path
+        self.is_initialized = True
+        self.execution_count = 0
+
+    def run(self) -> None:
+        """Track execution attempts."""
+        self.execution_count += 1
 
 
 @pytest.fixture
@@ -107,11 +138,11 @@ class TestQEMUEmulatorManagement:
 
     def test_stop_qemu_handles_stopped_instance(self, emulator_manager: EmulatorManager) -> None:
         """stop_qemu handles case where QEMU instance exists but is not running."""
-        mock_qemu = MagicMock()
-        emulator_manager.qemu_instance = mock_qemu
+        fake_qemu = FakeQEMUInstance()
+        emulator_manager.qemu_instance = fake_qemu
         emulator_manager.qemu_running = False
         emulator_manager.stop_qemu()
-        mock_qemu.stop_system.assert_not_called()
+        assert not fake_qemu.stop_system_called
 
 
 class TestQilingEmulatorManagement:
@@ -171,20 +202,20 @@ class TestEmulatorCleanup:
 
     def test_cleanup_stops_running_qemu(self, emulator_manager: EmulatorManager) -> None:
         """cleanup() stops QEMU if running."""
-        mock_qemu = MagicMock()
-        emulator_manager.qemu_instance = mock_qemu
+        fake_qemu = FakeQEMUInstance()
+        emulator_manager.qemu_instance = fake_qemu
         emulator_manager.qemu_running = True
 
         emulator_manager.cleanup()
 
-        mock_qemu.stop_system.assert_called_once()
+        assert fake_qemu.stop_system_called
+        assert fake_qemu.stop_system_call_count == 1
         assert not emulator_manager.qemu_running
 
     def test_cleanup_handles_qemu_stop_errors(self, emulator_manager: EmulatorManager) -> None:
         """cleanup() handles errors during QEMU shutdown gracefully."""
-        mock_qemu = MagicMock()
-        mock_qemu.stop_system.side_effect = RuntimeError("Shutdown failed")
-        emulator_manager.qemu_instance = mock_qemu
+        fake_qemu = FakeQEMUInstance(should_fail=True)
+        emulator_manager.qemu_instance = fake_qemu
         emulator_manager.qemu_running = True
 
         emulator_manager.cleanup()
@@ -233,12 +264,11 @@ class TestRunWithQEMU:
             return {"status": "success", "result": "analysis complete"}
 
         manager = get_emulator_manager()
-        original_ensure = manager.ensure_qemu_running
 
-        def mock_ensure(binary_path: str, config: dict[str, Any] | None = None) -> bool:
+        def fake_ensure(binary_path: str, config: dict[str, Any] | None = None) -> bool:
             return True
 
-        monkeypatch.setattr(manager, "ensure_qemu_running", mock_ensure)
+        monkeypatch.setattr(manager, "ensure_qemu_running", fake_ensure)
 
         result = run_with_qemu(real_binary_path, test_analysis)
 
@@ -252,10 +282,10 @@ class TestRunWithQEMU:
 
         manager = get_emulator_manager()
 
-        def mock_ensure(binary_path: str, config: dict[str, Any] | None = None) -> bool:
+        def fake_ensure(binary_path: str, config: dict[str, Any] | None = None) -> bool:
             return True
 
-        monkeypatch.setattr(manager, "ensure_qemu_running", mock_ensure)
+        monkeypatch.setattr(manager, "ensure_qemu_running", fake_ensure)
 
         result = run_with_qemu(real_binary_path, failing_analysis)
 
@@ -264,19 +294,19 @@ class TestRunWithQEMU:
 
     def test_run_with_qemu_passes_config_to_manager(self, real_binary_path: str, monkeypatch: pytest.MonkeyPatch) -> None:
         """run_with_qemu passes configuration to emulator manager."""
-        config_received = {}
+        config_received: dict[str, Any] = {}
 
         def test_analysis() -> dict[str, Any]:
             return {"status": "success"}
 
         manager = get_emulator_manager()
 
-        def mock_ensure(binary_path: str, config: dict[str, Any] | None = None) -> bool:
+        def fake_ensure(binary_path: str, config: dict[str, Any] | None = None) -> bool:
             if config:
                 config_received.update(config)
             return True
 
-        monkeypatch.setattr(manager, "ensure_qemu_running", mock_ensure)
+        monkeypatch.setattr(manager, "ensure_qemu_running", fake_ensure)
 
         test_config = {"memory": "4G", "cpu": "4"}
         run_with_qemu(real_binary_path, test_analysis, config=test_config)
@@ -303,23 +333,23 @@ class TestRunWithQiling:
 
     def test_run_with_qiling_passes_instance_to_analysis(self, real_binary_path: str, monkeypatch: pytest.MonkeyPatch) -> None:
         """run_with_qiling passes Qiling instance to analysis function."""
-        received_instance = {"instance": None}
+        received_instance: dict[str, Any] = {"instance": None}
 
         def test_analysis(qiling: Any) -> dict[str, Any]:
             received_instance["instance"] = qiling
             return {"status": "success"}
 
         manager = get_emulator_manager()
-        mock_qiling = MagicMock()
+        fake_qiling = FakeQilingInstance(real_binary_path)
 
-        def mock_ensure(binary_path: str) -> Any:
-            return mock_qiling
+        def fake_ensure(binary_path: str) -> Any:
+            return fake_qiling
 
-        monkeypatch.setattr(manager, "ensure_qiling_ready", mock_ensure)
+        monkeypatch.setattr(manager, "ensure_qiling_ready", fake_ensure)
 
         result = run_with_qiling(real_binary_path, test_analysis)
 
-        assert received_instance["instance"] is mock_qiling
+        assert received_instance["instance"] is fake_qiling
         assert result["status"] == "success"
 
     def test_run_with_qiling_handles_analysis_exceptions(self, real_binary_path: str, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -328,12 +358,12 @@ class TestRunWithQiling:
             raise ValueError("Invalid analysis parameter")
 
         manager = get_emulator_manager()
-        mock_qiling = MagicMock()
+        fake_qiling = FakeQilingInstance(real_binary_path)
 
-        def mock_ensure(binary_path: str) -> Any:
-            return mock_qiling
+        def fake_ensure(binary_path: str) -> Any:
+            return fake_qiling
 
-        monkeypatch.setattr(manager, "ensure_qiling_ready", mock_ensure)
+        monkeypatch.setattr(manager, "ensure_qiling_ready", fake_ensure)
 
         result = run_with_qiling(real_binary_path, failing_analysis)
 

@@ -31,7 +31,9 @@ import os
 import shutil
 import tempfile
 import time
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -39,12 +41,12 @@ import pytest
 class MockIntellicrackApp:
     """Mock IntellicrackApp with only the plugin loading functionality."""
 
-    def __init__(self, plugin_base_dir):
+    def __init__(self, plugin_base_dir: str) -> None:
         """Initialize mock app with custom plugin directory."""
         self.logger = logging.getLogger("test_logger")
         self.plugin_base_dir = plugin_base_dir
 
-    def _load_cache_data(self, cache_file):
+    def _load_cache_data(self, cache_file: Path) -> dict[str, Any] | None:
         """Load and parse cache data from file.
 
         Args:
@@ -66,7 +68,9 @@ class MockIntellicrackApp:
             self.logger.debug(f"Failed to load cache data: {e}")
             return None
 
-    def _check_file_modifications(self, plugin_dir, cached_filenames):
+    def _check_file_modifications(
+        self, plugin_dir: str, cached_filenames: dict[str, float]
+    ) -> tuple[bool, dict[str, float]]:
         """Check if files in directory have been modified compared to cache.
 
         Args:
@@ -95,7 +99,9 @@ class MockIntellicrackApp:
 
         return True, remaining
 
-    def _validate_plugin_directory_cache(self, plugin_type, plugin_dir, cached_data):
+    def _validate_plugin_directory_cache(
+        self, plugin_type: str, plugin_dir: str, cached_data: dict[str, Any]
+    ) -> bool:
         """Validate cache for a specific plugin directory.
 
         Args:
@@ -117,7 +123,7 @@ class MockIntellicrackApp:
 
         return len(remaining) == 0 if is_valid else False
 
-    def load_available_plugins(self):
+    def load_available_plugins(self) -> dict[str, list[dict[str, Any]]]:
         """Load available plugins from plugin directory with caching for performance.
 
         This is the actual implementation from main_app.py for testing purposes.
@@ -135,17 +141,17 @@ class MockIntellicrackApp:
             "ghidra": os.path.join(plugin_base_dir, "ghidra_scripts"),
         }
 
-        def is_path_safe(file_path: str, plugin_dir: str) -> bool:
+        def is_path_safe(file_path: str, plugin_dir_path: str) -> bool:
             """Validate that reconstructed path is within allowed plugin directory."""
             try:
-                real_plugin_dir = os.path.realpath(plugin_dir)
+                real_plugin_dir = os.path.realpath(plugin_dir_path)
                 real_file_path = os.path.realpath(file_path)
                 common_path = os.path.commonpath([real_plugin_dir, real_file_path])
                 return common_path == real_plugin_dir
             except (ValueError, OSError):
                 return False
 
-        def is_cache_valid():
+        def is_cache_valid() -> tuple[bool, dict[str, Any] | None]:
             """Check if cache exists and is still valid.
 
             Returns:
@@ -271,7 +277,7 @@ class MockIntellicrackApp:
 
 
 @pytest.fixture
-def temp_plugin_dir():
+def temp_plugin_dir() -> Generator[str, None, None]:
     """Create temporary plugin directory structure for testing."""
     temp_dir = tempfile.mkdtemp(prefix="intellicrack_test_plugins_")
 
@@ -285,7 +291,7 @@ def temp_plugin_dir():
 
 
 @pytest.fixture
-def cache_file():
+def cache_file() -> Generator[Path, None, None]:
     """Get path to cache file and clean it up after test."""
     cache_file_path = Path.home() / ".intellicrack" / "plugin_cache.json"
 
@@ -299,12 +305,14 @@ def cache_file():
 
 
 @pytest.fixture
-def mock_app(temp_plugin_dir):
+def mock_app(temp_plugin_dir: str) -> MockIntellicrackApp:
     """Create mock IntellicrackApp instance for testing."""
     return MockIntellicrackApp(temp_plugin_dir)
 
 
-def create_real_plugin_file(plugin_dir, filename, content="# Test plugin\nprint('Hello')"):
+def create_real_plugin_file(
+    plugin_dir: str, filename: str, content: str = "# Test plugin\nprint('Hello')"
+) -> str:
     """Create a real plugin file with actual content.
 
     Args:
@@ -322,7 +330,7 @@ def create_real_plugin_file(plugin_dir, filename, content="# Test plugin\nprint(
     return file_path
 
 
-def load_plugins_worker(plugin_base_dir):
+def load_plugins_worker(plugin_base_dir: str) -> dict[str, Any]:
     """Worker function to load plugins in separate process for concurrency testing."""
     try:
         app = MockIntellicrackApp(plugin_base_dir)
@@ -340,7 +348,9 @@ def load_plugins_worker(plugin_base_dir):
 class TestPluginCaching:
     """Test suite for plugin caching functionality."""
 
-    def test_initial_scan_creates_cache(self, mock_app, temp_plugin_dir, cache_file, caplog):
+    def test_initial_scan_creates_cache(
+        self, mock_app: MockIntellicrackApp, temp_plugin_dir: str, cache_file: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test that initial plugin scan creates cache file."""
         create_real_plugin_file(
             os.path.join(temp_plugin_dir, "custom_modules"),
@@ -365,7 +375,9 @@ class TestPluginCaching:
 
         assert "Loaded 2 plugins across 3 categories" in caplog.text
 
-    def test_second_call_uses_cache(self, mock_app, temp_plugin_dir, cache_file, caplog):
+    def test_second_call_uses_cache(
+        self, mock_app: MockIntellicrackApp, temp_plugin_dir: str, cache_file: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test that second call uses cache instead of rescanning filesystem."""
         create_real_plugin_file(
             os.path.join(temp_plugin_dir, "custom_modules"),
@@ -386,7 +398,9 @@ class TestPluginCaching:
         assert first_plugins == second_plugins, "Cache returned different data than initial scan"
         assert cache_file.exists(), "Cache file was deleted"
 
-    def test_cache_invalidation_on_file_modification(self, mock_app, temp_plugin_dir, cache_file, caplog):
+    def test_cache_invalidation_on_file_modification(
+        self, mock_app: MockIntellicrackApp, temp_plugin_dir: str, cache_file: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test that modifying a plugin file invalidates cache."""
         plugin_path = create_real_plugin_file(
             os.path.join(temp_plugin_dir, "custom_modules"),
@@ -412,7 +426,9 @@ class TestPluginCaching:
         assert len(plugins["custom"]) == 1
         assert plugins["custom"][0]["size"] > 20, "Modified file size not detected"
 
-    def test_cache_invalidation_on_file_addition(self, mock_app, temp_plugin_dir, cache_file, caplog):
+    def test_cache_invalidation_on_file_addition(
+        self, mock_app: MockIntellicrackApp, temp_plugin_dir: str, cache_file: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test that adding a new plugin file invalidates cache."""
         create_real_plugin_file(
             os.path.join(temp_plugin_dir, "frida_scripts"),
@@ -437,7 +453,9 @@ class TestPluginCaching:
         assert "Loaded 1 plugins from cache" not in caplog.text, "Cache was used despite new file"
         assert len(second_plugins["frida"]) == 2, "New plugin not detected"
 
-    def test_cache_invalidation_on_file_deletion(self, mock_app, temp_plugin_dir, cache_file, caplog):
+    def test_cache_invalidation_on_file_deletion(
+        self, mock_app: MockIntellicrackApp, temp_plugin_dir: str, cache_file: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test that deleting a plugin file invalidates cache."""
         plugin1 = create_real_plugin_file(
             os.path.join(temp_plugin_dir, "ghidra_scripts"),
@@ -463,7 +481,9 @@ class TestPluginCaching:
         assert "Loaded 2 plugins from cache" not in caplog.text, "Cache was used despite file deletion"
         assert len(second_plugins["ghidra"]) == 1, "Deleted plugin still appears in results"
 
-    def test_corrupted_cache_graceful_fallback(self, mock_app, temp_plugin_dir, cache_file, caplog):
+    def test_corrupted_cache_graceful_fallback(
+        self, mock_app: MockIntellicrackApp, temp_plugin_dir: str, cache_file: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test that corrupted cache triggers graceful rescan."""
         create_real_plugin_file(
             os.path.join(temp_plugin_dir, "custom_modules"),
@@ -486,14 +506,18 @@ class TestPluginCaching:
         assert len(plugins["custom"]) == 1, "Failed to recover from corrupted cache"
         assert cache_file.exists(), "Cache was not recreated after corruption"
 
-    def test_empty_plugin_directories(self, mock_app, temp_plugin_dir, cache_file):
+    def test_empty_plugin_directories(
+        self, mock_app: MockIntellicrackApp, temp_plugin_dir: str, cache_file: Path
+    ) -> None:
         """Test handling of empty plugin directories."""
         plugins = mock_app.load_available_plugins()
 
         assert plugins == {"custom": [], "frida": [], "ghidra": []}, "Empty directories returned non-empty results"
         assert cache_file.exists(), "Cache not created for empty directories"
 
-    def test_mixed_valid_and_invalid_files(self, mock_app, temp_plugin_dir, cache_file, caplog):
+    def test_mixed_valid_and_invalid_files(
+        self, mock_app: MockIntellicrackApp, temp_plugin_dir: str, cache_file: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test handling of both valid and invalid plugin files."""
         create_real_plugin_file(
             os.path.join(temp_plugin_dir, "custom_modules"),
@@ -510,7 +534,7 @@ class TestPluginCaching:
         assert len(plugins["custom"]) == 1, "Invalid file was included in results"
         assert plugins["custom"][0]["name"] == "valid", "Wrong plugin detected"
 
-    def test_cache_persists_across_instances(self, temp_plugin_dir, cache_file):
+    def test_cache_persists_across_instances(self, temp_plugin_dir: str, cache_file: Path) -> None:
         """Test that cache persists and works across different app instances."""
         create_real_plugin_file(
             os.path.join(temp_plugin_dir, "frida_scripts"),
@@ -527,7 +551,9 @@ class TestPluginCaching:
         assert plugins1 == plugins2, "Different instances returned different cached data"
         assert len(plugins2["frida"]) == 1
 
-    def test_plugin_metadata_accuracy(self, mock_app, temp_plugin_dir, cache_file):
+    def test_plugin_metadata_accuracy(
+        self, mock_app: MockIntellicrackApp, temp_plugin_dir: str, cache_file: Path
+    ) -> None:
         """Test that cached plugin metadata matches actual file properties."""
         plugin_content = "# Test plugin with some content\ndef analyze(): pass\n"
         plugin_path = create_real_plugin_file(
@@ -547,7 +573,9 @@ class TestPluginCaching:
         assert abs(plugin_info["modified"] - Path(plugin_path).stat().st_mtime) < 0.01
         assert plugin_info["valid"] is True
 
-    def test_all_supported_extensions(self, mock_app, temp_plugin_dir, cache_file):
+    def test_all_supported_extensions(
+        self, mock_app: MockIntellicrackApp, temp_plugin_dir: str, cache_file: Path
+    ) -> None:
         """Test that all documented plugin extensions are detected."""
         extensions_to_test = {
             "custom": [".py"],
@@ -570,7 +598,9 @@ class TestPluginCaching:
         assert len(plugins["frida"]) >= 2
         assert len(plugins["ghidra"]) >= 2
 
-    def test_malicious_cache_path_rejected(self, mock_app, temp_plugin_dir, cache_file, caplog):
+    def test_malicious_cache_path_rejected(
+        self, mock_app: MockIntellicrackApp, temp_plugin_dir: str, cache_file: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test that malicious paths injected into cache are rejected.
 
         Security test for path injection vulnerability (CRITICAL).
@@ -629,7 +659,7 @@ class TestPluginCaching:
                    len(plugins_after["custom"]) == 1, \
                    "Malicious paths were not properly rejected or logged"
 
-    def test_concurrent_cache_access(self, temp_plugin_dir, cache_file):
+    def test_concurrent_cache_access(self, temp_plugin_dir: str, cache_file: Path) -> None:
         """Test that concurrent cache access doesn't corrupt cache file.
 
         Security test for race condition (HIGH).
@@ -686,7 +716,9 @@ class TestPluginCaching:
         except json.JSONDecodeError:
             pytest.fail("Cache file corrupted after concurrent access")
 
-    def test_cache_invalidation_on_directory_deletion(self, mock_app, temp_plugin_dir, cache_file, caplog):
+    def test_cache_invalidation_on_directory_deletion(
+        self, mock_app: MockIntellicrackApp, temp_plugin_dir: str, cache_file: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test that cache is invalidated when entire plugin directory is deleted.
 
         Security test for stale cache entries (HIGH).

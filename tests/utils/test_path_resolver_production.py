@@ -5,10 +5,8 @@ project structure, handling QEMU images, data directories, and project root
 detection for consistent file access in binary analysis workflows.
 """
 
-import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -36,28 +34,28 @@ class TestGetProjectRoot:
 
         assert root.is_absolute()
 
-    def test_respects_environment_variable(self) -> None:
+    def test_respects_environment_variable(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """get_project_root respects INTELLICRACK_ROOT environment variable."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"INTELLICRACK_ROOT": tmpdir}):
-                root = get_project_root()
+            monkeypatch.setenv("INTELLICRACK_ROOT", tmpdir)
+            root = get_project_root()
 
-                assert str(root) == tmpdir
+            assert str(root) == tmpdir
 
-    def test_default_resolution_from_file_location(self) -> None:
+    def test_default_resolution_from_file_location(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """get_project_root resolves from file location when no env var."""
-        with patch.dict(os.environ, {}, clear=True):
-            root = get_project_root()
+        monkeypatch.delenv("INTELLICRACK_ROOT", raising=False)
+        root = get_project_root()
 
-            assert root.exists()
-            assert root.is_dir()
+        assert root.exists()
+        assert root.is_dir()
 
-    def test_resolved_path_contains_intellicrack(self) -> None:
+    def test_resolved_path_contains_intellicrack(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """get_project_root resolves to directory containing intellicrack package."""
-        with patch.dict(os.environ, {}, clear=True):
-            root = get_project_root()
+        monkeypatch.delenv("INTELLICRACK_ROOT", raising=False)
+        root = get_project_root()
 
-            assert (root / "intellicrack").exists() or root.name == "intellicrack"
+        assert (root / "intellicrack").exists() or root.name == "intellicrack"
 
 
 class TestGetDataDir:
@@ -92,14 +90,14 @@ class TestGetQemuImagesDir:
 
         assert isinstance(qemu_dir, Path)
 
-    def test_creates_directory_if_not_exists(self) -> None:
+    def test_creates_directory_if_not_exists(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """get_qemu_images_dir creates directory if it does not exist."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"INTELLICRACK_ROOT": tmpdir}):
-                qemu_dir = get_qemu_images_dir()
+            monkeypatch.setenv("INTELLICRACK_ROOT", tmpdir)
+            qemu_dir = get_qemu_images_dir()
 
-                assert qemu_dir.exists()
-                assert qemu_dir.is_dir()
+            assert qemu_dir.exists()
+            assert qemu_dir.is_dir()
 
     def test_path_contains_qemu_images(self) -> None:
         """get_qemu_images_dir returns path containing qemu_images."""
@@ -161,74 +159,74 @@ class TestResolveQemuImagePath:
 class TestEnsureDataDirectories:
     """Test data directory creation."""
 
-    def test_creates_data_directory(self) -> None:
+    def test_creates_data_directory(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """ensure_data_directories creates data directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"INTELLICRACK_ROOT": tmpdir}):
-                ensure_data_directories()
+            monkeypatch.setenv("INTELLICRACK_ROOT", tmpdir)
+            ensure_data_directories()
 
-                assert get_data_dir().exists()
+            assert get_data_dir().exists()
 
-    def test_creates_qemu_images_directory(self) -> None:
+    def test_creates_qemu_images_directory(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """ensure_data_directories creates qemu_images directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"INTELLICRACK_ROOT": tmpdir}):
-                ensure_data_directories()
+            monkeypatch.setenv("INTELLICRACK_ROOT", tmpdir)
+            ensure_data_directories()
 
-                assert get_qemu_images_dir().exists()
+            assert get_qemu_images_dir().exists()
 
-    def test_creates_cache_directory(self) -> None:
+    def test_creates_cache_directory(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """ensure_data_directories creates cache subdirectory."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"INTELLICRACK_ROOT": tmpdir}):
-                ensure_data_directories()
+            monkeypatch.setenv("INTELLICRACK_ROOT", tmpdir)
+            ensure_data_directories()
 
-                cache_dir = get_data_dir() / "cache"
-                assert cache_dir.exists()
+            cache_dir = get_data_dir() / "cache"
+            assert cache_dir.exists()
 
-    def test_creates_logs_directory(self) -> None:
+    def test_creates_logs_directory(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """ensure_data_directories creates logs subdirectory."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"INTELLICRACK_ROOT": tmpdir}):
-                ensure_data_directories()
+            monkeypatch.setenv("INTELLICRACK_ROOT", tmpdir)
+            ensure_data_directories()
 
-                logs_dir = get_data_dir() / "logs"
-                assert logs_dir.exists()
+            logs_dir = get_data_dir() / "logs"
+            assert logs_dir.exists()
 
-    def test_creates_output_directory(self) -> None:
+    def test_creates_output_directory(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """ensure_data_directories creates output subdirectory."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"INTELLICRACK_ROOT": tmpdir}):
-                ensure_data_directories()
+            monkeypatch.setenv("INTELLICRACK_ROOT", tmpdir)
+            ensure_data_directories()
 
-                output_dir = get_data_dir() / "output"
-                assert output_dir.exists()
+            output_dir = get_data_dir() / "output"
+            assert output_dir.exists()
 
-    def test_idempotent_operation(self) -> None:
+    def test_idempotent_operation(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """ensure_data_directories can be called multiple times safely."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"INTELLICRACK_ROOT": tmpdir}):
-                ensure_data_directories()
-                ensure_data_directories()
+            monkeypatch.setenv("INTELLICRACK_ROOT", tmpdir)
+            ensure_data_directories()
+            ensure_data_directories()
 
-                assert get_data_dir().exists()
+            assert get_data_dir().exists()
 
 
 class TestRealWorldScenarios:
     """Test realistic production usage scenarios."""
 
-    def test_qemu_image_path_resolution_workflow(self) -> None:
+    def test_qemu_image_path_resolution_workflow(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test complete workflow of QEMU image path resolution."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"INTELLICRACK_ROOT": tmpdir}):
-                ensure_data_directories()
+            monkeypatch.setenv("INTELLICRACK_ROOT", tmpdir)
+            ensure_data_directories()
 
-                image_path = resolve_qemu_image_path("windows10.qcow2")
-                image_path.parent.mkdir(parents=True, exist_ok=True)
-                image_path.write_bytes(b"QEMU image data")
+            image_path = resolve_qemu_image_path("windows10.qcow2")
+            image_path.parent.mkdir(parents=True, exist_ok=True)
+            image_path.write_bytes(b"QEMU image data")
 
-                assert image_path.exists()
-                assert image_path.read_bytes() == b"QEMU image data"
+            assert image_path.exists()
+            assert image_path.read_bytes() == b"QEMU image data"
 
     def test_multiple_image_paths(self) -> None:
         """Test resolving multiple QEMU image paths."""
@@ -240,16 +238,16 @@ class TestRealWorldScenarios:
         assert all(isinstance(p, Path) for p in paths)
         assert all("qemu_images" in str(p) for p in paths)
 
-    def test_data_directory_structure_creation(self) -> None:
+    def test_data_directory_structure_creation(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test creating complete data directory structure."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"INTELLICRACK_ROOT": tmpdir}):
-                ensure_data_directories()
+            monkeypatch.setenv("INTELLICRACK_ROOT", tmpdir)
+            ensure_data_directories()
 
-                data_dir = get_data_dir()
-                assert (data_dir / "cache").exists()
-                assert (data_dir / "logs").exists()
-                assert (data_dir / "output").exists()
+            data_dir = get_data_dir()
+            assert (data_dir / "cache").exists()
+            assert (data_dir / "logs").exists()
+            assert (data_dir / "output").exists()
 
 
 class TestEdgeCases:
@@ -285,20 +283,20 @@ class TestEdgeCases:
 
         assert "\u4e2d\u6587" in path.name
 
-    def test_project_root_when_env_var_is_empty_string(self) -> None:
+    def test_project_root_when_env_var_is_empty_string(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """get_project_root handles empty INTELLICRACK_ROOT env var."""
-        with patch.dict(os.environ, {"INTELLICRACK_ROOT": ""}):
-            root = get_project_root()
+        monkeypatch.setenv("INTELLICRACK_ROOT", "")
+        root = get_project_root()
 
-            assert isinstance(root, Path)
+        assert isinstance(root, Path)
 
-    def test_qemu_dir_creation_with_permission_restrictions(self) -> None:
+    def test_qemu_dir_creation_with_permission_restrictions(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """get_qemu_images_dir handles directory creation."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"INTELLICRACK_ROOT": tmpdir}):
-                qemu_dir = get_qemu_images_dir()
+            monkeypatch.setenv("INTELLICRACK_ROOT", tmpdir)
+            qemu_dir = get_qemu_images_dir()
 
-                assert qemu_dir.exists()
+            assert qemu_dir.exists()
 
 
 class TestPathConsistency:

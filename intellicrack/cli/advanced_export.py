@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Advanced Export Options - Comprehensive reporting system for CLI.
 
+Provides flexible export capabilities for binary analysis results in multiple formats:
+JSON, CSV, XML, HTML, Markdown, plain text, YAML (optional), and Excel (optional).
+Supports detailed vulnerability reporting, statistics generation, and compliance
+documentation for software licensing protection analysis.
+
 Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
@@ -27,11 +32,7 @@ import xml.etree.ElementTree as StdET
 from datetime import datetime
 from typing import Any, Protocol, TypedDict, Unpack, runtime_checkable
 
-
-try:
-    import defusedxml.ElementTree as ET  # noqa: N817
-except ImportError:
-    ET = StdET
+from defusedxml import ElementTree as ET
 
 logger = logging.getLogger(__name__)
 
@@ -67,9 +68,6 @@ class WorkbookProtocol(Protocol):
         Args:
             name: Optional name for the worksheet.
 
-        Returns:
-            The created worksheet object.
-
         """
         ...
 
@@ -78,9 +76,6 @@ class WorkbookProtocol(Protocol):
 
         Args:
             properties: Dictionary of format properties.
-
-        Returns:
-            Format object for use with write operations.
 
         """
         ...
@@ -102,9 +97,6 @@ class WorksheetProtocol(Protocol):
             col: Zero-indexed column number.
             data: Data to write to the cell.
             format_obj: Optional format object for cell styling.
-
-        Returns:
-            Integer status code (0 for success).
 
         """
         ...
@@ -148,36 +140,50 @@ class XlsxWorkbookProxy:
         """Add a worksheet to the workbook.
 
         Args:
-            name: Name of the worksheet
+            name: Name of the worksheet.
 
         Returns:
-            The worksheet object
+            object: The worksheet object.
+
+        Raises:
+            TypeError: If workbook does not have add_worksheet method.
 
         """
         if not hasattr(self._workbook, "add_worksheet"):
-            raise TypeError("Invalid workbook: missing add_worksheet method")
+            msg = "Invalid workbook: missing add_worksheet method"
+            raise TypeError(msg)
         return self._workbook.add_worksheet(name)
 
     def add_format(self, properties: dict[str, Any] | None = None) -> object:
         """Add a format to the workbook.
 
         Args:
-            properties: Format properties dictionary
+            properties: Format properties dictionary.
 
         Returns:
-            The format object
+            object: The format object.
+
+        Raises:
+            TypeError: If workbook does not have add_format method.
 
         """
         if properties is None:
             properties = {}
         if not hasattr(self._workbook, "add_format"):
-            raise TypeError("Invalid workbook: missing add_format method")
+            msg = "Invalid workbook: missing add_format method"
+            raise TypeError(msg)
         return self._workbook.add_format(properties)
 
     def close(self) -> None:
-        """Close the workbook."""
+        """Close the workbook and write data to disk.
+
+        Raises:
+            TypeError: If workbook lacks required close method.
+
+        """
         if not hasattr(self._workbook, "close"):
-            raise TypeError("Invalid workbook: missing close method")
+            msg = "Invalid workbook: missing close method"
+            raise TypeError(msg)
         self._workbook.close()
 
 
@@ -188,8 +194,8 @@ class AdvancedExporter:
         """Initialize exporter with analysis data.
 
         Args:
-            binary_path: Path to analyzed binary
-            analysis_results: Dictionary of analysis results
+            binary_path: Path to analyzed binary.
+            analysis_results: Dictionary of analysis results.
 
         """
         self.binary_path = binary_path
@@ -206,11 +212,11 @@ class AdvancedExporter:
         """Export detailed JSON with metadata and structured analysis results.
 
         Args:
-            output_path: Output file path
-            include_raw_data: Whether to include raw binary data excerpts
+            output_path: Output file path.
+            include_raw_data: Whether to include raw binary data excerpts.
 
         Returns:
-            True if export successful
+            bool: True if export successful, False otherwise.
 
         """
         try:
@@ -237,11 +243,11 @@ class AdvancedExporter:
         """Export executive summary in various formats.
 
         Args:
-            output_path: Output file path
-            format_type: Format (markdown, html, txt)
+            output_path: Output file path.
+            format_type: Format (markdown, html, txt).
 
         Returns:
-            True if export successful
+            bool: True if export successful, False otherwise.
 
         """
         summary_data = self._generate_executive_summary()
@@ -263,10 +269,10 @@ class AdvancedExporter:
         """Export detailed vulnerability report.
 
         Args:
-            output_path: Output file path
+            output_path: Output file path.
 
         Returns:
-            True if export successful
+            bool: True if export successful, False otherwise.
 
         """
         try:
@@ -299,11 +305,11 @@ class AdvancedExporter:
         """Export analysis data in CSV format.
 
         Args:
-            output_path: Output file path
-            data_type: Type of data to export (all, vulnerabilities, strings, imports)
+            output_path: Output file path.
+            data_type: Type of data to export (all, vulnerabilities, strings, imports).
 
         Returns:
-            True if export successful
+            bool: True if export successful, False otherwise.
 
         """
         try:
@@ -325,10 +331,10 @@ class AdvancedExporter:
         """Export structured XML report.
 
         Args:
-            output_path: Output file path
+            output_path: Output file path.
 
         Returns:
-            True if export successful
+            bool: True if export successful, False otherwise.
 
         """
         try:
@@ -359,10 +365,10 @@ class AdvancedExporter:
         """Export analysis results as interactive HTML report.
 
         Args:
-            output_path: Output file path
+            output_path: Output file path.
 
         Returns:
-            True if export successful
+            bool: True if export successful, False otherwise.
 
         """
         if not JINJA2_AVAILABLE:
@@ -438,10 +444,10 @@ class AdvancedExporter:
         """Export analysis results as YAML configuration.
 
         Args:
-            output_path: Output file path
+            output_path: Output file path.
 
         Returns:
-            True if export successful
+            bool: True if export successful, False otherwise.
 
         """
         if not YAML_AVAILABLE:
@@ -468,10 +474,10 @@ class AdvancedExporter:
         """Export comprehensive Excel workbook with multiple sheets.
 
         Args:
-            output_path: Output file path
+            output_path: Output file path.
 
         Returns:
-            True if export successful
+            bool: True if export successful, False otherwise.
 
         """
         if not XLSX_AVAILABLE:
@@ -505,7 +511,12 @@ class AdvancedExporter:
             return False
 
     def _generate_summary(self) -> dict[str, Any]:
-        """Generate analysis summary."""
+        """Generate comprehensive analysis summary from results.
+
+        Returns:
+            Summary containing file info, analysis overview, key findings, and security assessment.
+
+        """
         summary: dict[str, Any] = {
             "file_info": {
                 "name": os.path.basename(self.binary_path),
@@ -546,7 +557,12 @@ class AdvancedExporter:
         return summary
 
     def _generate_statistics(self) -> dict[str, Any]:
-        """Generate analysis statistics."""
+        """Generate statistical analysis of results by category.
+
+        Returns:
+            Statistics including analysis time, total categories, data points, and category breakdown.
+
+        """
         categories: dict[str, int] = {}
         data_points: int = 0
 
@@ -565,7 +581,12 @@ class AdvancedExporter:
         return stats
 
     def _generate_recommendations(self) -> list[str]:
-        """Generate security recommendations based on analysis."""
+        """Generate security recommendations based on detected vulnerabilities and protections.
+
+        Returns:
+            List of actionable security recommendations.
+
+        """
         recommendations: list[str] = []
 
         vuln_data = self.analysis_results.get("vulnerabilities", {})
@@ -595,7 +616,12 @@ class AdvancedExporter:
         return recommendations
 
     def _generate_executive_summary(self) -> dict[str, Any]:
-        """Generate executive summary data."""
+        """Generate executive summary with risk assessment and key findings.
+
+        Returns:
+            Executive summary with title, analysis date, binary info, risk assessment, key findings, recommendations, and next steps.
+
+        """
         return {
             "title": f"Security Analysis Report: {os.path.basename(self.binary_path)}",
             "analysis_date": self.export_metadata["export_time"],
@@ -614,7 +640,16 @@ class AdvancedExporter:
         }
 
     def _export_markdown_summary(self, output_path: str, summary_data: dict[str, Any]) -> bool:
-        """Export executive summary as Markdown."""
+        """Export executive summary formatted as Markdown document.
+
+        Args:
+            output_path: File path for markdown export.
+            summary_data: Executive summary data to export.
+
+        Returns:
+            True if export successful, False otherwise.
+
+        """
         content = f"""# {summary_data["title"]}
 
 **Analysis Date:** {summary_data["analysis_date"]}
@@ -650,7 +685,16 @@ class AdvancedExporter:
         return True
 
     def _export_html_summary(self, output_path: str, summary_data: dict[str, Any]) -> bool:
-        """Export executive summary as HTML."""
+        """Export executive summary formatted as HTML document.
+
+        Args:
+            output_path: File path for HTML export.
+            summary_data: Executive summary data to export.
+
+        Returns:
+            True if export successful, False otherwise.
+
+        """
         html_template = """<!DOCTYPE html>
 <html>
 <head>
@@ -722,7 +766,16 @@ class AdvancedExporter:
         return True
 
     def _export_text_summary(self, output_path: str, summary_data: dict[str, Any]) -> bool:
-        """Export executive summary as plain text."""
+        """Export executive summary formatted as plain text document.
+
+        Args:
+            output_path: File path for text export.
+            summary_data: Executive summary data to export.
+
+        Returns:
+            True if export successful, False otherwise.
+
+        """
         content = f"""{summary_data["title"]}
 {"=" * len(summary_data["title"])}
 
@@ -758,7 +811,12 @@ KEY FINDINGS
         return True
 
     def _assess_overall_risk(self) -> dict[str, str]:
-        """Assess overall security risk."""
+        """Assess overall security risk level based on vulnerabilities.
+
+        Returns:
+            Risk assessment with level (HIGH, MEDIUM, LOW) and description.
+
+        """
         vuln_data = self.analysis_results.get("vulnerabilities", {})
 
         if isinstance(vuln_data, dict):
@@ -788,7 +846,12 @@ KEY FINDINGS
         }
 
     def _extract_key_findings(self) -> list[str]:
-        """Extract key findings from analysis results."""
+        """Extract key findings from analysis results.
+
+        Returns:
+            List of key findings including vulnerabilities, missing protections, and suspicious patterns.
+
+        """
         findings: list[str] = []
 
         vuln_data = self.analysis_results.get("vulnerabilities", {})
@@ -808,7 +871,16 @@ KEY FINDINGS
         return findings
 
     def _count_vulnerabilities_by_severity(self, vuln_data: dict[str, Any], severity: str) -> int:
-        """Count vulnerabilities by severity level."""
+        """Count vulnerabilities filtered by specified severity level.
+
+        Args:
+            vuln_data: Vulnerability data dictionary.
+            severity: Severity level to filter by (critical, high, medium, low).
+
+        Returns:
+            Count of vulnerabilities matching the specified severity.
+
+        """
         vulns = vuln_data.get("vulnerabilities", [])
         if not isinstance(vulns, list):
             return 0
@@ -816,7 +888,15 @@ KEY FINDINGS
         return sum(isinstance(vuln, dict) and vuln.get("severity", "").lower() == severity.lower() for vuln in vulns)
 
     def _calculate_risk_score(self, vuln_data: dict[str, Any]) -> float:
-        """Calculate overall risk score."""
+        """Calculate overall risk score based on vulnerability severity.
+
+        Args:
+            vuln_data: Vulnerability data dictionary.
+
+        Returns:
+            float: Risk score from 0.0 to 100.0 based on vulnerabilities found.
+
+        """
         vulns = vuln_data.get("vulnerabilities", [])
         if not isinstance(vulns, list):
             return 0.0
@@ -837,11 +917,11 @@ KEY FINDINGS
         return min(score, 100.0)
 
     def _dict_to_xml(self, data: dict[str, Any] | list[Any] | str | float | bool | None, parent: StdET.Element) -> None:
-        """Convert dictionary to XML elements.
+        """Convert dictionary/list/scalar data recursively to XML elements.
 
         Args:
-            data: Data to convert to XML elements
-            parent: Parent XML element to attach converted data to
+            data: Data to convert to XML elements (dict, list, or scalar).
+            parent: Parent XML element to attach converted data to.
 
         """
         if isinstance(data, dict):
@@ -856,7 +936,12 @@ KEY FINDINGS
             parent.text = str(data)
 
     def _extract_raw_data_samples(self) -> dict[str, str]:
-        """Extract sample raw data from binary."""
+        """Extract sample raw binary data for inclusion in export.
+
+        Returns:
+            dict[str, str]: Dictionary containing hex-encoded samples from header and middle of binary.
+
+        """
         samples: dict[str, str] = {}
 
         try:
@@ -876,7 +961,15 @@ KEY FINDINGS
         return samples
 
     def _export_vulnerabilities_csv(self, output_path: str) -> bool:
-        """Export vulnerabilities as CSV."""
+        """Export vulnerability data to CSV format file.
+
+        Args:
+            output_path: File path for CSV export.
+
+        Returns:
+            bool: True if export successful, False otherwise.
+
+        """
         vuln_data = self.analysis_results.get("vulnerabilities", {})
         vulns = vuln_data.get("vulnerabilities", []) if isinstance(vuln_data, dict) else []
 
@@ -901,7 +994,15 @@ KEY FINDINGS
         return True
 
     def _format_vulnerability_details(self, vuln_data: dict[str, Any]) -> list[dict[str, Any]]:
-        """Format vulnerability details for reporting."""
+        """Format vulnerability details into structured report entries.
+
+        Args:
+            vuln_data: Vulnerability data dictionary.
+
+        Returns:
+            list[dict[str, Any]]: List of formatted vulnerability entries with id, severity, type, location, and metadata.
+
+        """
         vulns = vuln_data.get("vulnerabilities", [])
         if not isinstance(vulns, list):
             return []
@@ -925,7 +1026,15 @@ KEY FINDINGS
         return formatted
 
     def _generate_mitigation_strategies(self, vuln_data: dict[str, Any]) -> list[str]:
-        """Generate mitigation strategies based on vulnerabilities."""
+        """Generate mitigation strategies to address detected vulnerabilities.
+
+        Args:
+            vuln_data: Vulnerability data dictionary.
+
+        Returns:
+            list[str]: List of actionable mitigation strategies.
+
+        """
         return [
             "Implement input validation and sanitization",
             "Use safe string handling functions",
@@ -937,7 +1046,15 @@ KEY FINDINGS
         ]
 
     def _generate_compliance_notes(self, vuln_data: dict[str, Any]) -> dict[str, list[str]]:
-        """Generate compliance-related notes."""
+        """Generate compliance-related notes for standards like OWASP, NIST, and ISO 27001.
+
+        Args:
+            vuln_data: Vulnerability data dictionary.
+
+        Returns:
+            dict[str, list[str]]: Compliance notes organized by standard framework.
+
+        """
         return {
             "OWASP_Top_10": [
                 "Review against OWASP Top 10 vulnerabilities",
@@ -954,7 +1071,15 @@ KEY FINDINGS
         }
 
     def _export_strings_csv(self, output_path: str) -> bool:
-        """Export strings data to CSV format."""
+        """Export extracted strings data to CSV format file.
+
+        Args:
+            output_path: File path for CSV export.
+
+        Returns:
+            bool: True if export successful, False otherwise.
+
+        """
         try:
             strings_data = self.analysis_results.get("strings", []) or []
 
@@ -982,7 +1107,15 @@ KEY FINDINGS
             return False
 
     def _export_imports_csv(self, output_path: str) -> bool:
-        """Export imports data to CSV format."""
+        """Export extracted imports data to CSV format file.
+
+        Args:
+            output_path: File path for CSV export.
+
+        Returns:
+            bool: True if export successful, False otherwise.
+
+        """
         try:
             imports_data = self.analysis_results.get("imports", {}) or {}
 
@@ -1013,7 +1146,15 @@ KEY FINDINGS
             return False
 
     def _export_comprehensive_csv(self, output_path: str) -> bool:
-        """Export comprehensive analysis data to CSV format."""
+        """Export all analysis data to comprehensive CSV format with multiple sheets.
+
+        Args:
+            output_path: Base file path for CSV export (multiple files will be generated).
+
+        Returns:
+            bool: True if all exports successful, False if any failed.
+
+        """
         try:
             base_path = os.path.splitext(output_path)[0]
 
@@ -1046,7 +1187,12 @@ KEY FINDINGS
             return False
 
     def _generate_analysis_config(self) -> dict[str, Any]:
-        """Generate analysis configuration for YAML export."""
+        """Generate analysis configuration settings for YAML export.
+
+        Returns:
+            dict[str, Any]: Analysis configuration with analysis settings, export settings, and tool configuration.
+
+        """
         return {
             "analysis_settings": {
                 "deep_scan": True,
@@ -1068,7 +1214,12 @@ KEY FINDINGS
         }
 
     def _generate_detection_rules(self) -> dict[str, Any]:
-        """Generate detection rules based on analysis results."""
+        """Generate YARA, Snort, and Sigma detection rules based on analysis.
+
+        Returns:
+            dict[str, Any]: Detection rules organized by type (yara_rules, snort_rules, sigma_rules).
+
+        """
         yara_rules: list[dict[str, Any]] = []
         snort_rules: list[dict[str, Any]] = []
         sigma_rules: list[dict[str, Any]] = []
@@ -1206,16 +1357,19 @@ KEY FINDINGS
         cell_format: object | None = None,
         worksheet_name: str = "Summary",
     ) -> WorksheetProtocol | None:
-        """Create summary sheet for Excel export.
+        """Create summary sheet for Excel export with analysis overview.
 
         Args:
-            workbook: xlsxwriter Workbook instance
-            header_format: Header format object (unused, generated internally)
-            cell_format: Cell format object (unused, generated internally)
-            worksheet_name: Name for the worksheet
+            workbook: xlsxwriter Workbook instance.
+            header_format: Header format object (unused, generated internally).
+            cell_format: Cell format object (unused, generated internally).
+            worksheet_name: Name for the worksheet.
 
         Returns:
-            The worksheet object or None if creation failed
+            WorksheetProtocol | None: The worksheet object or None if creation failed.
+
+        Raises:
+            TypeError: If workbook does not conform to WorkbookProtocol.
 
         """
         try:
@@ -1274,16 +1428,19 @@ KEY FINDINGS
         cell_format: object | None = None,
         worksheet_name: str = "Vulnerabilities",
     ) -> WorksheetProtocol | None:
-        """Create vulnerabilities sheet for Excel export.
+        """Create vulnerabilities sheet for Excel export with detailed findings.
 
         Args:
-            workbook: xlsxwriter Workbook instance
-            header_format: Header format object (unused, generated internally)
-            cell_format: Cell format object (unused, generated internally)
-            worksheet_name: Name for the worksheet
+            workbook: xlsxwriter Workbook instance.
+            header_format: Header format object (unused, generated internally).
+            cell_format: Cell format object (unused, generated internally).
+            worksheet_name: Name for the worksheet.
 
         Returns:
-            The worksheet object or None if creation failed
+            WorksheetProtocol | None: The worksheet object or None if creation failed.
+
+        Raises:
+            TypeError: If workbook does not conform to WorkbookProtocol.
 
         """
         try:
@@ -1329,16 +1486,19 @@ KEY FINDINGS
         cell_format: object | None = None,
         worksheet_name: str = "Strings",
     ) -> WorksheetProtocol | None:
-        """Create strings sheet for Excel export.
+        """Create strings sheet for Excel export with extracted string data.
 
         Args:
-            workbook: xlsxwriter Workbook instance
-            header_format: Header format object (unused, generated internally)
-            cell_format: Cell format object (unused, generated internally)
-            worksheet_name: Name for the worksheet
+            workbook: xlsxwriter Workbook instance.
+            header_format: Header format object (unused, generated internally).
+            cell_format: Cell format object (unused, generated internally).
+            worksheet_name: Name for the worksheet.
 
         Returns:
-            The worksheet object or None if creation failed
+            WorksheetProtocol | None: The worksheet object or None if creation failed.
+
+        Raises:
+            TypeError: If workbook does not conform to WorkbookProtocol.
 
         """
         try:
@@ -1383,16 +1543,19 @@ KEY FINDINGS
         cell_format: object | None = None,
         worksheet_name: str = "Imports",
     ) -> WorksheetProtocol | None:
-        """Create imports sheet for Excel export.
+        """Create imports sheet for Excel export with extracted import data.
 
         Args:
-            workbook: xlsxwriter Workbook instance
-            header_format: Header format object (unused, generated internally)
-            cell_format: Cell format object (unused, generated internally)
-            worksheet_name: Name for the worksheet
+            workbook: xlsxwriter Workbook instance.
+            header_format: Header format object (unused, generated internally).
+            cell_format: Cell format object (unused, generated internally).
+            worksheet_name: Name for the worksheet.
 
         Returns:
-            The worksheet object or None if creation failed
+            WorksheetProtocol | None: The worksheet object or None if creation failed.
+
+        Raises:
+            TypeError: If workbook does not conform to WorkbookProtocol.
 
         """
         try:
@@ -1445,16 +1608,19 @@ KEY FINDINGS
         cell_format: object | None = None,
         worksheet_name: str = "Statistics",
     ) -> WorksheetProtocol | None:
-        """Create statistics sheet for Excel export.
+        """Create statistics sheet for Excel export with analysis statistics.
 
         Args:
-            workbook: xlsxwriter Workbook instance
-            header_format: Header format object (unused, generated internally)
-            cell_format: Cell format object (unused, generated internally)
-            worksheet_name: Name for the worksheet
+            workbook: xlsxwriter Workbook instance.
+            header_format: Header format object (unused, generated internally).
+            cell_format: Cell format object (unused, generated internally).
+            worksheet_name: Name for the worksheet.
 
         Returns:
-            The worksheet object or None if creation failed
+            WorksheetProtocol | None: The worksheet object or None if creation failed.
+
+        Raises:
+            TypeError: If workbook does not conform to WorkbookProtocol.
 
         """
         try:
@@ -1499,7 +1665,12 @@ KEY FINDINGS
 
 
 def get_available_formats() -> list[str]:
-    """Get list of available export formats."""
+    """Get list of available export formats based on optional dependencies.
+
+    Returns:
+        list[str]: List of supported format strings (json, markdown, html, txt, csv, xml, and optionally yaml, xlsx).
+
+    """
     formats = ["json", "markdown", "html", "txt", "csv", "xml"]
 
     if YAML_AVAILABLE:
@@ -1534,7 +1705,7 @@ def export_analysis_results(
             - data_type (str): Type of data for CSV export (all, vulnerabilities, strings, imports)
 
     Returns:
-        True if export was successful, False otherwise
+        bool: True if export was successful, False otherwise.
 
     """
     exporter = AdvancedExporter(binary_path, analysis_results)

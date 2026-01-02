@@ -21,8 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 
 
-# Set up package logger
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Import dialog modules with error handling
 # Only set attributes when imports succeed
@@ -110,7 +109,7 @@ except ImportError as e:
     logger.warning("Failed to import program_selector_dialog: %s", e)
 
 # Define package exports - only include successfully imported items
-__all__ = []
+__all__: list[str] = []
 
 # Add successfully imported classes to __all__
 if "DistributedProcessingConfigDialog" in locals():
@@ -165,5 +164,5 @@ if "ProgramSelectorDialog" in locals():
     __all__.extend(["ProgramSelectorDialog", "show_program_selector", "show_smart_program_selector"])
 
 # Package metadata
-__version__ = "0.1.0"
-__author__ = "Intellicrack Development Team"
+__version__: str = "0.1.0"
+__author__: str = "Intellicrack Development Team"

@@ -14,7 +14,19 @@ logger = get_logger(__name__)
 
 
 class ScriptGenerationTool:
-    """LLM tool for generating analysis scripts"""
+    """LLM tool for generating analysis scripts.
+
+    This tool provides AI models with the capability to generate Frida and Ghidra
+    scripts for binary analysis, protection detection, and licensing mechanism
+    circumvention. Supports both dynamic (Frida) and static (Ghidra) analysis
+    workflows with protection-aware script generation.
+
+    Attributes:
+        frida_templates: Dictionary of Frida script templates for various protection
+            analysis tasks including hooking, tracing, patching, and bypassing.
+        ghidra_templates: Dictionary of Ghidra script templates for static binary
+            analysis including function analysis, patching, and deobfuscation.
+    """
 
     frida_templates: dict[str, str]
     ghidra_templates: dict[str, str]
@@ -30,7 +42,13 @@ class ScriptGenerationTool:
         self.ghidra_templates = self._load_ghidra_templates()
 
     def _load_frida_templates(self) -> dict[str, str]:
-        """Load Frida script templates"""
+        """Load Frida script templates.
+
+        Returns:
+            dict[str, str]: Dictionary mapping template names to their Frida script
+                source code. Includes templates for function hooking, API tracing,
+                protection bypasses, memory patching, and SSL pinning bypasses.
+        """
         return {
             "hook_function": """// Hook function: {function_name}
 Java.perform(function() {{
@@ -78,7 +96,13 @@ Java.perform(function() {{
         }
 
     def _load_ghidra_templates(self) -> dict[str, str]:
-        """Load Ghidra script templates"""
+        """Load Ghidra script templates.
+
+        Returns:
+            dict[str, str]: Dictionary mapping template names to their Ghidra script
+                source code. Includes templates for function analysis, byte patching,
+                cryptographic function discovery, and string deobfuscation.
+        """
         return {
             "analyze_functions": '''# Analyze functions in binary
 # @author LLM
@@ -178,7 +202,13 @@ deobfuscate_strings()''',
         }
 
     def get_tool_definition(self) -> dict[str, Any]:
-        """Get tool definition for LLM registration"""
+        """Get tool definition for LLM registration.
+
+        Returns:
+            dict[str, Any]: Tool definition object containing name, description, and
+                JSON schema for parameters accepted by the execute method. Conforms
+                to OpenAI tool specification format.
+        """
         return {
             "name": "script_generation",
             "description": "Generate Frida or Ghidra scripts for binary analysis and manipulation",
@@ -207,7 +237,21 @@ deobfuscate_strings()''',
         }
 
     def execute(self, **kwargs: Any) -> dict[str, Any]:
-        """Execute script generation"""
+        """Execute script generation.
+
+        Args:
+            **kwargs: Variable keyword arguments including:
+                - script_type: Either 'frida' or 'ghidra'
+                - target: Target binary or process name
+                - task: Task description for script generation
+                - protection_info: Optional protection information from DIE analysis
+                - custom_requirements: Additional custom requirements for script
+
+        Returns:
+            dict[str, Any]: Result dictionary containing success status, generated
+                script code, script type, language, target, and task. On error,
+                returns success=False with error message.
+        """
         script_type = kwargs.get("script_type", "")
         target = kwargs.get("target", "")
         task = kwargs.get("task", "")
@@ -236,7 +280,17 @@ deobfuscate_strings()''',
             return {"success": False, "error": str(e)}
 
     def _generate_frida_script(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
-        """Generate Frida script"""
+        """Generate Frida script based on task type and protection analysis.
+
+        Args:
+            target: Target binary or process name to analyze
+            task: Task description determining script type (hook, trace, bypass, patch)
+            protection_info: Dictionary of detected protections and their details
+            requirements: List of custom requirements for script generation
+
+        Returns:
+            str: Complete Frida script source code ready for execution
+        """
         task_lower = task.lower()
 
         # Determine script type based on task
@@ -254,7 +308,18 @@ deobfuscate_strings()''',
             return self._generate_frida_custom(target, task, protection_info, requirements)
 
     def _generate_frida_hook(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
-        """Generate Frida hook script based on detected protections"""
+        """Generate Frida hook script based on detected protections.
+
+        Args:
+            target: Target binary or process name
+            task: Task description for hook generation
+            protection_info: Dictionary of detected protections and their details
+            requirements: List of custom requirements for script
+
+        Returns:
+            str: Frida hook script for intercepting function calls and monitoring
+                execution flow based on protection types
+        """
         script_parts = [f"// Frida Hook Script for {target}", f"// Task: {task}"]
 
         if protection_info:
@@ -341,7 +406,18 @@ if (targetModule) {{
         return "\n".join(script_parts)
 
     def _generate_frida_trace(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
-        """Generate Frida trace script based on protection analysis"""
+        """Generate Frida trace script based on protection analysis.
+
+        Args:
+            target: Target binary or process name
+            task: Task description for trace generation
+            protection_info: Dictionary of detected protections and their details
+            requirements: List of custom requirements for API tracing
+
+        Returns:
+            str: Frida trace script for monitoring API calls related to licensing,
+                anti-analysis, and protection mechanisms
+        """
         script_parts = [f"// Frida Trace Script for {target}", f"// Task: {task}"]
 
         if protection_info:
@@ -444,7 +520,15 @@ if (targetModule) {{
         return "\n".join(script_parts)
 
     def _get_apis_to_trace(self, protection_info: dict[str, Any]) -> list[tuple[str, str]]:
-        """Get list of APIs to trace based on protection info"""
+        """Get list of APIs to trace based on protection info.
+
+        Args:
+            protection_info: Dictionary of detected protections and their details
+
+        Returns:
+            list[tuple[str, str]]: List of (module_name, function_name) tuples
+                representing Windows API calls to intercept and trace
+        """
         # Base APIs always traced
         base_apis = [
             ("kernel32.dll", "CreateFileW"),
@@ -470,7 +554,19 @@ if (targetModule) {{
         return base_apis
 
     def _generate_frida_bypass(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
-        """Generate Frida bypass script"""
+        """Generate Frida bypass script for defeating protection mechanisms.
+
+        Args:
+            target: Target binary or process name
+            task: Task description for bypass generation
+            protection_info: Dictionary of detected protections and their details
+            requirements: List of custom requirements for bypass generation
+
+        Returns:
+            str: Frida script implementing protection bypasses including anti-debug,
+                license checks, trial restrictions, nag screens, and time-based
+                restrictions
+        """
         script_parts = [f"// Frida Bypass Script for {target}", f"// Task: {task}\n"]
 
         # Check protection info
@@ -600,7 +696,19 @@ Interceptor.attach(targetAddr, {
         return "\n".join(script_parts)
 
     def _generate_frida_patch(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
-        """Generate Frida memory patch script"""
+        """Generate Frida memory patch script for in-memory code modification.
+
+        Args:
+            target: Target binary or process name
+            task: Task description for patch generation
+            protection_info: Dictionary of detected protections and their details
+            requirements: List of custom requirements for patching
+
+        Returns:
+            str: Frida script for patching memory locations including anti-debug
+                checks, license validation, integrity verification, and conditional
+                branch modifications
+        """
         script_parts = [
             f"// Frida Memory Patch Script for {target}",
             f"// Task: {task}",
@@ -679,7 +787,18 @@ Interceptor.attach(targetAddr, {
         return "\n".join(script_parts)
 
     def _generate_frida_custom(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
-        """Generate custom Frida script"""
+        """Generate custom Frida script for arbitrary protection analysis.
+
+        Args:
+            target: Target binary or process name
+            task: Task description for custom script generation
+            protection_info: Dictionary of detected protections and their details
+            requirements: List of custom requirements for script
+
+        Returns:
+            str: Frida script with protection-aware function discovery and hooking
+                patterns based on detected protection types and custom requirements
+        """
         script_parts = []
 
         script_parts.append(f"// Custom Frida Script for {target}")
@@ -759,7 +878,17 @@ Process.enumerateModules().forEach(function(module) {{
         return "\n".join(script_parts)
 
     def _generate_ghidra_script(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
-        """Generate Ghidra script"""
+        """Generate Ghidra script for static binary analysis.
+
+        Args:
+            target: Target binary or process name
+            task: Task description determining script type (analyze, patch, deobfuscate)
+            protection_info: Dictionary of detected protections and their details
+            requirements: List of custom requirements for script generation
+
+        Returns:
+            str: Ghidra Python script for automated binary analysis and manipulation
+        """
         # Import here to avoid circular imports
         from ...scripting.ghidra_generator import GhidraScriptGenerator
 
@@ -785,7 +914,17 @@ Process.enumerateModules().forEach(function(module) {{
             return str(generator.generate_custom_script(context))
 
     def _generate_packer_hooks(self, protection_type: str) -> str:
-        """Generate hooks specific to packers/protectors"""
+        """Generate hooks specific to packers/protectors.
+
+        Args:
+            protection_type: Type of packer (UPX, VMProtect, Themida, ASPack, MPRESS,
+                Enigma, Armadillo, Obsidium, or generic protection)
+
+        Returns:
+            str: Frida script with hooking code targeting specific packer/protector
+                mechanisms including decompression, virtualization, anti-dump, and
+                integrity checking routines
+        """
         if protection_type.lower() == "upx":
             return """
 // UPX unpacking hooks
@@ -1042,7 +1181,17 @@ if (virtualAlloc) {{
 }}"""
 
     def _generate_license_hooks(self, details: str) -> str:
-        """Generate license/trial bypass hooks based on protection details"""
+        """Generate license/trial bypass hooks based on protection details.
+
+        Args:
+            details: String description of license protection details including
+                trial, serial, online validation, or hardware-based mechanisms
+
+        Returns:
+            str: Frida script with hooks targeting license validation functions
+                including trial expiration checks, serial key validation, online
+                license server checks, and hardware ID verification
+        """
         # Parse details to customize license hooks
         base_functions = ["CheckLicense", "VerifySerial", "ValidateKey", "IsTrialExpired"]
 
@@ -1078,7 +1227,18 @@ licenseCheckFunctions.forEach(function(funcName) {{
 }});"""
 
     def _generate_anti_analysis_hooks(self, protection_type: str) -> str:
-        """Generate anti-analysis bypass hooks"""
+        """Generate anti-analysis bypass hooks for defeating protection detection.
+
+        Args:
+            protection_type: Type of anti-analysis protection (anti_debug, anti_vm,
+                anti_attach, anti_dump, anti_tamper, timing_check, anti_sandbox)
+
+        Returns:
+            str: Frida script with comprehensive hooks to bypass anti-analysis
+                mechanisms including debugger detection, virtual machine detection,
+                process injection prevention, memory dumping protection, code
+                integrity verification, timing analysis, and sandbox evasion
+        """
         if protection_type.lower() == "anti_debug":
             return """
 // Anti-debug bypass
@@ -1315,7 +1475,16 @@ Process.enumerateModules().forEach(function(module) {{
 }});"""
 
     def _get_target_functions_from_protection(self, protection_info: dict[str, Any]) -> str:
-        """Get JavaScript array of target function names based on protection info"""
+        """Get JavaScript array of target function names based on protection info.
+
+        Args:
+            protection_info: Dictionary of detected protections and their details
+
+        Returns:
+            str: JavaScript-formatted array string of function names likely to be
+                targeted for bypassing protection, customized based on detected
+                protection types
+        """
         target_funcs = ["check", "verify", "validate", "license", "trial", "serial"]
 
         if protection_info:
@@ -1333,5 +1502,10 @@ Process.enumerateModules().forEach(function(module) {{
 
 
 def create_script_tool() -> ScriptGenerationTool:
-    """Factory function to create script generation tool"""
+    """Factory function to create script generation tool.
+
+    Returns:
+        ScriptGenerationTool: Initialized script generation tool instance with
+            Frida and Ghidra templates loaded and ready for use
+    """
     return ScriptGenerationTool()

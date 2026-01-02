@@ -88,7 +88,7 @@ enhanced_deep_license_analysis: Callable[[str], dict[str, Any]] | None
 detect_packing: Callable[[str], dict[str, Any]] | None
 
 try:
-    from .core_analysis import (  # type: ignore[attr-defined]
+    from .core_analysis import (
         analyze_binary_internal,
         calculate_entropy,
         detect_packing,
@@ -194,7 +194,25 @@ _lazy_loaded: dict[str, Any] = {}
 
 
 def __getattr__(name: str) -> object:
-    """Lazy load heavy analysis modules on demand."""
+    """Lazy load heavy analysis modules on demand.
+
+    Implements dynamic attribute resolution for the analysis package, enabling
+    on-demand loading of heavy analysis engines and related classes. This
+    reduces initial import overhead while maintaining seamless access to all
+    analysis components.
+
+    Args:
+        name: The attribute name to lazily import.
+
+    Returns:
+        The loaded module, class, or function object corresponding to the
+            requested name.
+
+    Raises:
+        AttributeError: If the attribute name is not found in the lazy imports
+            registry or the module cannot be loaded successfully.
+        ImportError: If the underlying module import fails during lazy loading.
+    """
     if name in _lazy_loaded:
         return _lazy_loaded[name]
 
@@ -257,7 +275,17 @@ def __getattr__(name: str) -> object:
 
 
 def __dir__() -> list[str]:
-    """Return list of available attributes including lazy imports."""
+    """Return list of available attributes including lazy imports.
+
+    Generates a comprehensive directory of all available attributes in the
+    analysis package, including both directly imported items and lazy-loadable
+    analysis components. This enables proper tab completion and introspection
+    support.
+
+    Returns:
+        Sorted list of available attributes in the module, combining global
+            definitions and lazy import keys.
+    """
     base_attrs = list(globals().keys())
     lazy_attrs = list(_lazy_imports.keys())
     return sorted(set(base_attrs + lazy_attrs))

@@ -67,11 +67,21 @@ class EntropyAnalyzer:
     def analyze_entropy(self, binary_path: str | Path) -> dict[str, Any]:
         """Analyze entropy characteristics of a binary file.
 
+        Computes Shannon entropy for the entire binary file and classifies the
+        entropy level to detect potential packing, encryption, or obfuscation.
+
         Args:
-            binary_path: Path to the binary file
+            binary_path: Path to the binary file to analyze.
 
         Returns:
-            Entropy analysis results
+            Dictionary containing entropy analysis results with the following
+            keys: 'overall_entropy' (float), 'file_size' (int),
+            'entropy_classification' (str), and 'analysis_status' (str).
+            On error, returns a dictionary with 'error' key containing the
+            error message.
+
+        Raises:
+            OSError: If the binary file cannot be read or accessed.
 
         """
         try:
@@ -91,7 +101,19 @@ class EntropyAnalyzer:
             return {"error": str(e)}
 
     def _classify_entropy(self, entropy: float) -> str:
-        """Classify entropy level."""
+        """Classify entropy level based on configured thresholds.
+
+        Categorizes entropy values into 'high', 'medium', or 'low' based on the
+        analyzer's entropy thresholds, used to detect encryption or packing.
+
+        Args:
+            entropy: Entropy value to classify, typically a float between
+                0.0 and 8.0.
+
+        Returns:
+            String classification: 'high' if entropy exceeds the high threshold,
+            'medium' if entropy exceeds the medium threshold, or 'low' otherwise.
+        """
         if entropy >= self.high_entropy_threshold:
             return "high"
         return "medium" if entropy >= self.medium_entropy_threshold else "low"

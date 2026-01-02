@@ -9,7 +9,6 @@ Licensed under GNU General Public License v3.0
 
 import os
 import struct
-from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
@@ -17,6 +16,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QColor,
     QComboBox,
+    QDialog,
     QFileDialog,
     QFont,
     QGroupBox,
@@ -52,21 +52,45 @@ logger = get_logger(__name__)
 
 
 class HexViewerThread(QThread):
-    """Thread for loading large binary files."""
+    """Thread for loading large binary files.
+
+    Loads binary file data asynchronously from disk, emitting progress signals
+    periodically during the load operation. Handles memory limits and chunk-based
+    reading to prevent loading excessive amounts of data into memory.
+    """
 
     data_loaded = pyqtSignal(bytes)
     progress_update = pyqtSignal(int)
     error_occurred = pyqtSignal(str)
 
     def __init__(self, file_path: str, offset: int = 0, size: int | None = None) -> None:
-        """Initialize hex viewer thread with file path, offset, and optional size parameters."""
+        """Initialize hex viewer thread with file path, offset, and optional size parameters.
+
+        Args:
+            file_path: Path to the binary file to load.
+            offset: Starting byte offset in the file (default: 0).
+            size: Number of bytes to read. If None, reads up to max size limit.
+
+        Returns:
+            None
+        """
         super().__init__()
         self.file_path = file_path
         self.offset = offset
         self.size = size
 
     def run(self) -> None:
-        """Load file data in background thread."""
+        """Load file data in background thread.
+
+        Reads binary file data in chunks from disk, emitting progress signals
+        and handling file size limits to prevent memory issues.
+
+        Returns:
+            None
+
+        Raises:
+            Exception: Any exception is caught and emitted via error_occurred signal.
+        """
         try:
             file_size = os.path.getsize(self.file_path)
 
@@ -102,7 +126,14 @@ class HexViewerThread(QThread):
 
 
 class HexViewerWidget(QWidget):
-    """Hex viewer widget with protection analysis integration."""
+    """Hex viewer widget with protection analysis integration.
+
+    Provides comprehensive hex viewing capabilities for binary analysis including
+    PE structure exploration, offset/RVA navigation, pattern searching, and
+    data interpretation tools. Integrates with MemoryForensicsEngine for string
+    extraction and supports highlighting of protection structures and search
+    results.
+    """
 
     # Signals
     #: Offset clicked (type: int)
@@ -113,7 +144,17 @@ class HexViewerWidget(QWidget):
     rva_selected = pyqtSignal(int)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize hex viewer widget with file data, PE analysis components, and UI setup."""
+        """Initialize hex viewer widget with file data, PE analysis components, and UI setup.
+
+        Creates a hex viewer widget with navigation controls, search functionality,
+        PE structure analysis integration, and data interpretation tools.
+
+        Args:
+            parent: Parent widget. If None, creates a top-level widget.
+
+        Returns:
+            None
+        """
         super().__init__(parent)
         self.file_path: str | None = None
         self.file_data: bytes | None = None
@@ -128,7 +169,15 @@ class HexViewerWidget(QWidget):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """Initialize the UI."""
+        """Initialize the UI components and layout.
+
+        Sets up the main layout with control bar, hex viewer, ASCII display,
+        PE structure tree, information panel, and status bar. Configures
+        text displays with monospace font and disables word wrapping.
+
+        Returns:
+            None
+        """
         layout = QVBoxLayout()
 
         # Control bar
@@ -182,7 +231,15 @@ class HexViewerWidget(QWidget):
         self.setLayout(layout)
 
     def _create_control_bar(self) -> QHBoxLayout:
-        """Create control bar with navigation and search."""
+        """Create control bar with navigation and search capabilities.
+
+        Builds a control bar containing file offset navigation, RVA navigation,
+        pattern search with multiple formats (hex, ASCII, Unicode), and display
+        options for customizing bytes per line.
+
+        Returns:
+            Horizontal layout containing navigation, search, and display options.
+        """
         layout = QHBoxLayout()
 
         # Navigation
@@ -256,7 +313,15 @@ class HexViewerWidget(QWidget):
         return layout
 
     def _create_structure_panel(self) -> QWidget:
-        """Create PE structure tree panel."""
+        """Create PE structure tree panel for binary analysis.
+
+        Builds a panel containing a tree view for PE structure navigation,
+        expand/collapse controls, and a structure information display showing
+        details about selected PE sections and headers.
+
+        Returns:
+            QWidget containing PE structure tree and controls.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -305,7 +370,15 @@ class HexViewerWidget(QWidget):
         return widget
 
     def _create_info_panel(self) -> QWidget:
-        """Create information panel."""
+        """Create information panel for data inspection.
+
+        Builds a panel containing selection information display and a data
+        interpreter table that shows various interpretations of selected bytes
+        (integers, floats, characters, etc.) in different endianness formats.
+
+        Returns:
+            QWidget containing selection info and data interpreter table.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -343,7 +416,20 @@ class HexViewerWidget(QWidget):
         return widget
 
     def load_file(self, file_path: str, offset: int = 0, size: int | None = None) -> None:
-        """Load a binary file with PE analysis."""
+        """Load a binary file and perform PE analysis.
+
+        Loads binary file data asynchronously in a background thread,
+        attempts to parse PE file headers for structure analysis, and
+        initializes RVA navigation if the file is a valid PE binary.
+
+        Args:
+            file_path: Path to the binary file to load.
+            offset: Starting byte offset in the file (default: 0).
+            size: Number of bytes to load. If None, loads up to max size limit.
+
+        Returns:
+            None
+        """
         if not os.path.exists(file_path):
             QMessageBox.warning(self, "File Not Found", f"File not found: {file_path}")
             return
@@ -394,7 +480,17 @@ class HexViewerWidget(QWidget):
 
     @pyqtSlot(bytes)
     def on_data_loaded(self, data: bytes) -> None:
-        """Handle loaded data."""
+        """Handle loaded data from background thread.
+
+        Updates the file data, offset spinner range, and refreshes the hex/ASCII
+        display with the newly loaded binary data.
+
+        Args:
+            data: Loaded binary data from file.
+
+        Returns:
+            None
+        """
         self.file_data = data
 
         # Update offset spinner range
@@ -413,7 +509,16 @@ class HexViewerWidget(QWidget):
 
     @pyqtSlot(int)
     def on_load_progress(self, progress: int) -> None:
-        """Handle load progress."""
+        """Handle load progress updates from background thread.
+
+        Updates the status label with the current loading progress percentage.
+
+        Args:
+            progress: Loading progress as percentage (0-100).
+
+        Returns:
+            None
+        """
         if self.file_path is not None:
             self.status_label.setText(
                 f"Loading {os.path.basename(self.file_path)}... {progress}%",
@@ -421,12 +526,30 @@ class HexViewerWidget(QWidget):
 
     @pyqtSlot(str)
     def on_load_error(self, error: str) -> None:
-        """Handle load error."""
+        """Handle errors from background loading thread.
+
+        Displays an error dialog with the error message and updates the status
+        label to indicate load failure.
+
+        Args:
+            error: Error message from loading thread.
+
+        Returns:
+            None
+        """
         QMessageBox.critical(self, "Load Error", f"Error loading file: {error}")
         self.status_label.setText("Load failed")
 
     def update_display(self) -> None:
-        """Update hex and ASCII displays."""
+        """Update hex and ASCII displays based on current file data.
+
+        Formats and displays the current file data in hex and ASCII representations,
+        spacing hex values appropriately, then applies any registered highlighting
+        regions to mark protection structures and search results.
+
+        Returns:
+            None
+        """
         if not self.file_data:
             return
 
@@ -478,12 +601,33 @@ class HexViewerWidget(QWidget):
         self.apply_highlighting()
 
     def apply_highlighting(self) -> None:
-        """Apply highlighting to regions."""
+        """Apply highlighting to all registered regions.
+
+        Iterates through all registered highlight regions (protection structures,
+        search results, etc.) and applies the corresponding color formatting to
+        the hex display using text cursor positioning.
+
+        Returns:
+            None
+        """
         for start, end, color in self.highlighted_regions:
             self.highlight_region(start, end, color)
 
     def highlight_region(self, start: int, end: int, color: QColor) -> None:
-        """Highlight a region in the hex view."""
+        """Highlight a region in the hex view display.
+
+        Colors the hex display bytes within the specified offset range using
+        the provided color. Handles multi-line regions and calculates proper
+        character positions for text cursor positioning.
+
+        Args:
+            start: Starting offset in the file.
+            end: Ending offset in the file.
+            color: Color to use for highlighting.
+
+        Returns:
+            None
+        """
         if not self.file_data:
             return
 
@@ -535,13 +679,34 @@ class HexViewerWidget(QWidget):
                 cursor.movePosition(QTextCursor.MoveOperation.Down)
 
     def go_to_offset(self, offset: int) -> None:
-        """Navigate to specific offset."""
+        """Navigate to specific offset in the binary file.
+
+        Loads and displays file data from the specified offset, updating
+        the hex and ASCII views. Emits offset_selected signal for listeners.
+
+        Args:
+            offset: File offset to navigate to.
+
+        Returns:
+            None
+        """
         if self.file_path and 0 <= offset < os.path.getsize(self.file_path):
             self.load_file(self.file_path, offset)
             self.offset_selected.emit(offset)
 
     def go_to_rva(self, rva: int) -> None:
-        """Navigate to specific RVA."""
+        """Navigate to specific RVA in PE binary.
+
+        Converts relative virtual address to file offset using PE file model
+        and navigates to that location. Displays RVA, file offset, and section
+        information in the structure info panel.
+
+        Args:
+            rva: Relative virtual address in the PE file.
+
+        Returns:
+            None
+        """
         if not self.file_model or not isinstance(self.file_model, PEFileModel):
             QMessageBox.warning(self, "No PE Analysis", "RVA navigation requires PE file analysis")
             return
@@ -562,7 +727,18 @@ class HexViewerWidget(QWidget):
             QMessageBox.warning(self, "Invalid RVA", f"RVA 0x{rva:X} is not valid for this file")
 
     def search_data(self) -> None:
-        """Search for pattern in data."""
+        """Search for pattern in loaded file data.
+
+        Searches for hex, ASCII, or Unicode patterns based on selected search type.
+        Updates the display to navigate to found patterns and highlights them.
+        Shows informational message with found offset or "not found" message.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If the search pattern is invalid for the selected type.
+        """
         if not self.file_data:
             return
 
@@ -615,7 +791,20 @@ class HexViewerWidget(QWidget):
             )
 
     def add_protection_highlight(self, offset: int, size: int, protection_name: str) -> None:
-        """Add highlighting for detected protection region."""
+        """Add highlighting for detected protection region.
+
+        Creates a colored highlight region for the specified offset and size,
+        with the color determined by the protection type. Updates selection
+        information display with protection details.
+
+        Args:
+            offset: Starting offset of the protection region.
+            size: Size of the protection region in bytes.
+            protection_name: Name of the protection type detected.
+
+        Returns:
+            None
+        """
         # Choose color based on protection type
         if "pack" in protection_name.lower():
             color = QColor(255, 200, 200, 100)  # Light red for packers
@@ -638,7 +827,15 @@ class HexViewerWidget(QWidget):
         self.update_display()
 
     def interpret_data_at_cursor(self) -> None:
-        """Interpret data at current cursor position."""
+        """Interpret data at current cursor position in hex display.
+
+        Calculates the byte offset from the current cursor position in the hex
+        display and interprets the bytes at that location as various data types.
+        Updates the data interpreter table with results.
+
+        Returns:
+            None
+        """
         cursor = self.hex_display.textCursor()
         position = cursor.position()
 
@@ -653,7 +850,18 @@ class HexViewerWidget(QWidget):
             self.interpret_bytes(byte_offset)
 
     def interpret_bytes(self, offset: int) -> None:
-        """Interpret bytes at offset as various data types."""
+        """Interpret bytes at offset as various data types.
+
+        Analyzes bytes at the given offset and interprets them as signed/unsigned
+        integers (8/16/32/64-bit), floats, doubles, and ASCII characters. Results
+        are displayed in the data interpreter table.
+
+        Args:
+            offset: Byte offset in the loaded file data.
+
+        Returns:
+            None
+        """
         if not self.file_data or offset >= len(self.file_data):
             return
 
@@ -714,7 +922,19 @@ class HexViewerWidget(QWidget):
             self.interpreter_table.setItem(row, 1, QTableWidgetItem(value))
 
     def export_selection(self) -> None:
-        """Export selected bytes to file."""
+        """Export selected bytes from hex view to a binary file.
+
+        Extracts the currently selected hex bytes from the hex display, parses
+        them into binary data, and writes them to a user-specified file location.
+        Handles hex parsing, file I/O, and displays success/error messages.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If the selected hex data is invalid.
+            OSError: If writing to the file fails.
+        """
         # Get selection from hex display
         cursor = self.hex_display.textCursor()
         if not cursor.hasSelection():
@@ -799,13 +1019,29 @@ class HexViewerWidget(QWidget):
             )
 
     def clear_highlights(self) -> None:
-        """Clear all highlighting."""
+        """Clear all highlighted regions and selection info.
+
+        Removes all registered highlight regions (protection structures,
+        search results), clears the selection information display, and
+        refreshes the hex view to remove all visual highlights.
+
+        Returns:
+            None
+        """
         self.highlighted_regions.clear()
         self.selection_info.clear()
         self.update_display()
 
     def _clear_structure_view(self) -> None:
-        """Clear structure view when no PE analysis available."""
+        """Clear structure view when no PE analysis is available.
+
+        Removes the structure model from the tree view, clears structure info text,
+        and disables RVA navigation controls when PE analysis is not available
+        or fails to initialize.
+
+        Returns:
+            None
+        """
         self.structure_tree.setModel(None)
         self.structure_model = None
         self.file_model = None
@@ -816,21 +1052,55 @@ class HexViewerWidget(QWidget):
         self.goto_rva_btn.setEnabled(False)
 
     def _on_structure_visibility_changed(self, visible: bool) -> None:
-        """Handle structure tree visibility toggle."""
+        """Handle structure tree visibility toggle.
+
+        Shows or hides the PE structure tree view based on the visibility state.
+
+        Args:
+            visible: Whether the structure tree should be visible.
+
+        Returns:
+            None
+        """
         self.structure_tree.setVisible(visible)
 
     def _expand_all_structures(self) -> None:
-        """Expand all items in structure tree."""
+        """Expand all items in structure tree.
+
+        Expands all items in the PE structure tree view to show the
+        complete hierarchy of binary structures and their nested components.
+
+        Returns:
+            None
+        """
         if self.structure_tree.model():
             self.structure_tree.expandAll()
 
     def _collapse_all_structures(self) -> None:
-        """Collapse all items in structure tree."""
+        """Collapse all items in structure tree.
+
+        Collapses all items in the PE structure tree view to minimize the
+        displayed hierarchy and reduce visual clutter in the tree view.
+
+        Returns:
+            None
+        """
         if self.structure_tree.model():
             self.structure_tree.collapseAll()
 
     def _on_structure_clicked(self, index: QModelIndex) -> None:
-        """Handle single click on structure tree item."""
+        """Handle single click on structure tree item.
+
+        Displays information about the clicked structure item in the info panel
+        and highlights its corresponding region in the hex view with a light blue
+        color overlay.
+
+        Args:
+            index: Model index of the clicked item.
+
+        Returns:
+            None
+        """
         if not self.structure_model:
             return
 
@@ -852,7 +1122,18 @@ class HexViewerWidget(QWidget):
             self.apply_highlighting()
 
     def _on_structure_double_clicked(self, index: QModelIndex) -> None:
-        """Handle double click on structure tree item - navigate to location."""
+        """Handle double click on structure tree item for navigation.
+
+        Navigates the hex viewer to the file offset of the double-clicked
+        structure item, emits offset_selected and rva_selected signals for
+        external listeners to handle related operations.
+
+        Args:
+            index: Model index of the double-clicked item.
+
+        Returns:
+            None
+        """
         if not self.structure_model:
             return
 
@@ -872,7 +1153,19 @@ class HexViewerWidget(QWidget):
                 self.rva_selected.emit(rva)
 
     def _on_structure_navigation(self, offset: int, size: int) -> None:
-        """Handle navigation signal from structure model."""
+        """Handle navigation signal from structure model.
+
+        Navigates the hex viewer to the specified offset, highlights the
+        structure region in the hex display with a light orange color,
+        and applies highlighting to show the selected structure.
+
+        Args:
+            offset: File offset to navigate to.
+            size: Size of the structure region in bytes.
+
+        Returns:
+            None
+        """
         self.go_to_offset(offset)
 
         # Add highlight for the structure
@@ -881,11 +1174,32 @@ class HexViewerWidget(QWidget):
         self.apply_highlighting()
 
     def _on_rva_navigation(self, rva: int) -> None:
-        """Handle RVA navigation signal from structure model."""
+        """Handle RVA navigation signal from structure model.
+
+        Delegates RVA navigation to go_to_rva method for proper PE-aware
+        address translation and section information display.
+
+        Args:
+            rva: Relative virtual address to navigate to.
+
+        Returns:
+            None
+        """
         self.go_to_rva(rva)
 
     def _update_structure_info(self, index: QModelIndex) -> None:
-        """Update structure info display."""
+        """Update structure info display panel.
+
+        Retrieves structure information (name, offset, size, RVA, tooltip details)
+        for the specified tree item and displays it in the structure info panel
+        with formatted offset and size values in hexadecimal.
+
+        Args:
+            index: Model index of the structure item.
+
+        Returns:
+            None
+        """
         if not self.structure_model:
             return
 
@@ -918,7 +1232,18 @@ class HexViewerWidget(QWidget):
             self.structure_info_text.append(f"\nDetails:\n{tooltip}")
 
     def _show_context_menu(self, position: QPoint) -> None:
-        """Show context menu for hex display."""
+        """Show context menu for hex display.
+
+        Creates and displays a context menu with options for string extraction
+        (ASCII and Unicode), license pattern search, and selection copying
+        in hex or ASCII formats.
+
+        Args:
+            position: Position where the context menu was requested.
+
+        Returns:
+            None
+        """
         from intellicrack.handlers.pyqt6_handler import QAction, QMenu
 
         menu = QMenu(self)
@@ -959,10 +1284,23 @@ class HexViewerWidget(QWidget):
         menu.exec(self.hex_display.mapToGlobal(position))
 
     def _extract_strings_from_selection(self, wide: bool = False) -> None:
-        """Extract strings from selected hex data."""
-        try:
-            from PyQt6.QtWidgets import QCheckBox, QDialog, QHBoxLayout, QLabel, QPushButton, QSpinBox, QTextEdit, QVBoxLayout
+        """Extract strings from selected hex data in interactive dialog.
 
+        Analyzes selected hex data (or entire loaded file if no selection) and
+        extracts human-readable strings. Displays results in a dialog with
+        filtering for license-related keywords, sorting by category (URLs, paths,
+        license, registry, errors), and export/copy capabilities.
+
+        Args:
+            wide: If True, extracts Unicode (UTF-16) strings; otherwise ASCII.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If hex conversion fails on selected data.
+        """
+        try:
             from intellicrack.core.analysis.memory_forensics_engine import MemoryForensicsEngine
 
             # Get selected data
@@ -1038,7 +1376,15 @@ class HexViewerWidget(QWidget):
             layout.addLayout(button_layout)
 
             def extract_and_display() -> None:
-                """Extract strings and display results."""
+                """Extract strings and display results in the dialog.
+
+                Performs string extraction with current filter settings and
+                categorizes results by type (URLs, paths, registry, etc.).
+                Updates the results display and statistics label with extracted strings.
+
+                Returns:
+                    None
+                """
                 min_length = min_length_spin.value()
                 filter_license = filter_check.isChecked()
 
@@ -1128,7 +1474,15 @@ class HexViewerWidget(QWidget):
                 stats_label.setText(f"Total: {len(strings)} strings | Displayed: {min(len(strings), 600)} strings")
 
             def export_strings() -> None:
-                """Export strings to file."""
+                """Export extracted strings to a text file.
+
+                Saves the extracted strings from the results display to a
+                user-specified text file location using file dialog.
+                Shows confirmation message upon successful export.
+
+                Returns:
+                    None
+                """
                 file_path, _ = QFileDialog.getSaveFileName(
                     dialog,
                     "Export Strings",
@@ -1145,7 +1499,14 @@ class HexViewerWidget(QWidget):
                         QMessageBox.critical(dialog, "Export Error", f"Failed to export: {e!s}")
 
             def copy_all() -> None:
-                """Copy all results to clipboard."""
+                """Copy all extracted strings to the system clipboard.
+
+                Copies the entire results text display to the system clipboard
+                and updates the status label to indicate success.
+
+                Returns:
+                    None
+                """
                 clipboard = QApplication.clipboard()
                 if clipboard is not None:
                     clipboard.setText(results_text.toPlainText())
@@ -1167,8 +1528,24 @@ class HexViewerWidget(QWidget):
             logger.exception("String extraction failed: %s", e, exc_info=True)
             QMessageBox.critical(self, "Extraction Error", f"Failed to extract strings: {e!s}")
 
-    def _extract_unicode_strings(self, data: bytes, min_length: int = 5) -> list[str]:
-        """Extract Unicode (UTF-16) strings from binary data."""
+    def _extract_unicode_strings(
+        self,
+        data: bytes,
+        min_length: int = 5,
+    ) -> list[str]:
+        """Extract Unicode (UTF-16 LE) strings from binary data.
+
+        Scans binary data for UTF-16 LE encoded strings (Windows default) by
+        identifying sequences of printable ASCII characters interleaved with null
+        bytes. Filters results to include only strings meeting minimum length.
+
+        Args:
+            data: Binary data to extract strings from.
+            min_length: Minimum string length to include in results (default: 5).
+
+        Returns:
+            List of extracted Unicode strings found in the binary data.
+        """
         strings = []
         current_string = ""
 
@@ -1192,7 +1569,18 @@ class HexViewerWidget(QWidget):
         return strings
 
     def _extract_all_strings(self) -> None:
-        """Extract all strings from the entire file."""
+        """Extract all strings from the entire loaded file.
+
+        Reads the complete binary file from disk and extracts all strings,
+        temporarily replacing current view data. Restores original data after
+        launching string extraction dialog.
+
+        Returns:
+            None
+
+        Raises:
+            OSError: If reading the binary file fails.
+        """
         if not self.file_path:
             QMessageBox.information(self, "No File", "Please load a file first")
             return
@@ -1217,7 +1605,18 @@ class HexViewerWidget(QWidget):
             QMessageBox.critical(self, "Read Error", f"Failed to read file: {e!s}")
 
     def _find_license_patterns(self) -> None:
-        """Find and highlight license-related patterns in the hex view."""
+        """Find and highlight license-related patterns in the hex view.
+
+        Searches for common licensing keywords (LICENSE, SERIAL, ACTIVATION),
+        UUIDs, and serial number patterns using regex matching. Displays results
+        in a dialog with offset navigation and double-click support.
+
+        Returns:
+            None
+
+        Raises:
+            struct.error: If pattern matching fails on binary data.
+        """
         try:
             import re
 
@@ -1284,7 +1683,14 @@ class HexViewerWidget(QWidget):
             layout.addLayout(button_layout)
 
             def goto_selected() -> None:
-                """Navigate to selected pattern offset."""
+                """Navigate to the selected pattern offset in the hex viewer.
+
+                Extracts the offset from the selected result item in the results list
+                and navigates the hex viewer to that location, then closes the dialog.
+
+                Returns:
+                    None
+                """
                 current_item = results_list.currentItem()
                 if current_item:
                     text = current_item.text()
@@ -1307,7 +1713,15 @@ class HexViewerWidget(QWidget):
             QMessageBox.critical(self, "Search Error", f"Failed to search patterns: {e!s}")
 
     def _copy_hex_selection(self) -> None:
-        """Copy selected hex to clipboard."""
+        """Copy selected hex values to clipboard.
+
+        Extracts selected hex text from the hex display, removes offset and
+        formatting information, preserves hex digits and spaces, and copies
+        the result to the system clipboard.
+
+        Returns:
+            None
+        """
         cursor = self.hex_display.textCursor()
         if selected_text := cursor.selectedText():
             # Clean up hex for copying
@@ -1317,7 +1731,14 @@ class HexViewerWidget(QWidget):
                 clipboard.setText(hex_only)
 
     def _copy_ascii_selection(self) -> None:
-        """Copy ASCII representation to clipboard."""
+        """Copy ASCII representation to clipboard.
+
+        Extracts selected ASCII text from the ASCII display and copies the
+        selected text directly to the system clipboard without modification.
+
+        Returns:
+            None
+        """
         cursor = self.ascii_display.textCursor()
         if selected_text := cursor.selectedText():
             clipboard = QApplication.clipboard()

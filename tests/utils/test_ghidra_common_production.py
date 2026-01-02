@@ -6,9 +6,10 @@ research.
 """
 
 import os
+import subprocess
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from typing import Any, Callable, Optional
 
 import pytest
 
@@ -19,6 +20,101 @@ from intellicrack.utils.ghidra_common import (
     run_ghidra_plugin,
     save_ghidra_script,
 )
+
+
+class FakeProcess:
+    """Real test double for subprocess.Popen."""
+
+    def __init__(
+        self,
+        stdout_data: str = "",
+        stderr_data: str = "",
+        returncode: int = 0,
+        raise_timeout: bool = False,
+        timeout_seconds: float = 1.0,
+    ) -> None:
+        self.stdout_data: str = stdout_data
+        self.stderr_data: str = stderr_data
+        self.returncode: int = returncode
+        self.raise_timeout: bool = raise_timeout
+        self.timeout_seconds: float = timeout_seconds
+        self.killed: bool = False
+        self.communicate_calls: int = 0
+
+    def communicate(self, timeout: Optional[float] = None) -> tuple[str, str]:
+        """Simulate process communication."""
+        self.communicate_calls += 1
+        if self.raise_timeout:
+            raise subprocess.TimeoutExpired("cmd", self.timeout_seconds)
+        return (self.stdout_data, self.stderr_data)
+
+    def kill(self) -> None:
+        """Simulate killing the process."""
+        self.killed = True
+
+
+class FakeApp:
+    """Real test double for application instance with update_output signal."""
+
+    def __init__(self) -> None:
+        self.update_output_calls: list[str] = []
+
+    @property
+    def update_output(self) -> "FakeSignal":
+        """Return fake signal for update_output."""
+        return FakeSignal(self)
+
+
+class FakeSignal:
+    """Real test double for Qt signal."""
+
+    def __init__(self, app: FakeApp) -> None:
+        self.app: FakeApp = app
+        self.emit_calls: list[str] = []
+
+    def emit(self, message: str) -> None:
+        """Record emitted messages."""
+        self.emit_calls.append(message)
+        self.app.update_output_calls.append(message)
+
+
+class FakePopenFactory:
+    """Factory for creating FakeProcess instances with call tracking."""
+
+    def __init__(self, process: FakeProcess) -> None:
+        self.process: FakeProcess = process
+        self.call_args_list: list[tuple[list[str], dict[str, Any]]] = []
+
+    def __call__(self, args: list[str], **kwargs: Any) -> FakeProcess:
+        """Create and track Popen calls."""
+        self.call_args_list.append((args, kwargs))
+        return self.process
+
+    def assert_called_once(self) -> None:
+        """Verify Popen was called exactly once."""
+        assert len(self.call_args_list) == 1, f"Expected 1 call, got {len(self.call_args_list)}"
+
+    @property
+    def call_args(self) -> tuple[tuple[list[str], dict[str, Any]], ...]:
+        """Return call arguments in format similar to Mock.call_args."""
+        if not self.call_args_list:
+            raise AssertionError("No calls made")
+        args, kwargs = self.call_args_list[-1]
+        return (args,), kwargs
+
+
+class FakeRemoveFunction:
+    """Real test double for os.remove that can raise errors."""
+
+    def __init__(self, raise_error: Optional[Exception] = None) -> None:
+        self.raise_error: Optional[Exception] = raise_error
+        self.removed_paths: list[str] = []
+
+    def __call__(self, path: str) -> None:
+        """Simulate file removal."""
+        if self.raise_error:
+            raise self.raise_error
+        self.removed_paths.append(path)
 
 
 class TestRunGhidraPlugin:
@@ -88,7 +184,7 @@ class TestRunGhidraPlugin:
             assert returncode == 1
             assert "Script not found" in stderr
 
-    def test_creates_project_directory(self) -> None:
+    def test_creates_project_directory(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """run_ghidra_plugin creates project directory if it does not exist."""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_dir = Path(tmpdir) / "new_project_dir"
@@ -103,24 +199,22 @@ class TestRunGhidraPlugin:
             script_path = Path(tmpdir) / "script.java"
             script_path.write_text("// test")
 
-            with patch("subprocess.Popen") as mock_popen:
-                mock_process = Mock()
-                mock_process.communicate.return_value = ("output", "")
-                mock_process.returncode = 0
-                mock_popen.return_value = mock_process
+            fake_process = FakeProcess(stdout_data="output", returncode=0)
+            fake_popen = FakePopenFactory(fake_process)
+            monkeypatch.setattr("subprocess.Popen", fake_popen)
 
-                run_ghidra_plugin(
-                    ghidra_path=str(fake_ghidra),
-                    project_dir=str(project_dir),
-                    project_name="test_proj",
-                    binary_path=str(binary_path),
-                    script_dir=tmpdir,
-                    script_name="script.java",
-                )
+            run_ghidra_plugin(
+                ghidra_path=str(fake_ghidra),
+                project_dir=str(project_dir),
+                project_name="test_proj",
+                binary_path=str(binary_path),
+                script_dir=tmpdir,
+                script_name="script.java",
+            )
 
-                assert project_dir.exists()
+            assert project_dir.exists()
 
-    def test_executes_ghidra_command(self) -> None:
+    def test_executes_ghidra_command(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """run_ghidra_plugin executes Ghidra with correct command structure."""
         with tempfile.TemporaryDirectory() as tmpdir:
             fake_ghidra = Path(tmpdir) / "analyzeHeadless"
@@ -132,30 +226,28 @@ class TestRunGhidraPlugin:
             script_path = Path(tmpdir) / "script.java"
             script_path.write_text("// test script")
 
-            with patch("subprocess.Popen") as mock_popen:
-                mock_process = Mock()
-                mock_process.communicate.return_value = ("Ghidra output", "")
-                mock_process.returncode = 0
-                mock_popen.return_value = mock_process
+            fake_process = FakeProcess(stdout_data="Ghidra output", returncode=0)
+            fake_popen = FakePopenFactory(fake_process)
+            monkeypatch.setattr("subprocess.Popen", fake_popen)
 
-                returncode, stdout, stderr = run_ghidra_plugin(
-                    ghidra_path=str(fake_ghidra),
-                    project_dir=tmpdir,
-                    project_name="test_proj",
-                    binary_path=str(binary_path),
-                    script_dir=tmpdir,
-                    script_name="script.java",
-                )
+            returncode, stdout, stderr = run_ghidra_plugin(
+                ghidra_path=str(fake_ghidra),
+                project_dir=tmpdir,
+                project_name="test_proj",
+                binary_path=str(binary_path),
+                script_dir=tmpdir,
+                script_name="script.java",
+            )
 
-                assert returncode == 0
-                assert "Ghidra output" in stdout
-                mock_popen.assert_called_once()
-                call_args = mock_popen.call_args[0][0]
-                assert str(fake_ghidra) in call_args
-                assert "-headless" in call_args
-                assert "-import" in call_args
+            assert returncode == 0
+            assert "Ghidra output" in stdout
+            fake_popen.assert_called_once()
+            call_args = fake_popen.call_args[0][0]
+            assert str(fake_ghidra) in call_args
+            assert "-headless" in call_args
+            assert "-import" in call_args
 
-    def test_handles_timeout(self) -> None:
+    def test_handles_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """run_ghidra_plugin handles timeout during execution."""
         with tempfile.TemporaryDirectory() as tmpdir:
             fake_ghidra = Path(tmpdir) / "analyzeHeadless"
@@ -167,33 +259,24 @@ class TestRunGhidraPlugin:
             script_path = Path(tmpdir) / "script.java"
             script_path.write_text("// test script")
 
-            with patch("subprocess.Popen") as mock_popen:
-                mock_process = Mock()
-                mock_process.communicate.side_effect = [
-                    Exception("TimeoutExpired"),
-                    ("partial output", "partial error"),
-                ]
-                mock_process.kill = Mock()
-                mock_popen.return_value = mock_process
+            fake_process = FakeProcess(raise_timeout=True, timeout_seconds=1.0)
+            fake_popen = FakePopenFactory(fake_process)
+            monkeypatch.setattr("subprocess.Popen", fake_popen)
 
-                import subprocess
+            returncode, stdout, stderr = run_ghidra_plugin(
+                ghidra_path=str(fake_ghidra),
+                project_dir=tmpdir,
+                project_name="test_proj",
+                binary_path=str(binary_path),
+                script_dir=tmpdir,
+                script_name="script.java",
+                timeout=1,
+            )
 
-                mock_process.communicate.side_effect = subprocess.TimeoutExpired("cmd", 1)
+            assert returncode == 124
+            assert "timed out" in stderr
 
-                returncode, stdout, stderr = run_ghidra_plugin(
-                    ghidra_path=str(fake_ghidra),
-                    project_dir=tmpdir,
-                    project_name="test_proj",
-                    binary_path=str(binary_path),
-                    script_dir=tmpdir,
-                    script_name="script.java",
-                    timeout=1,
-                )
-
-                assert returncode == 124
-                assert "timed out" in stderr
-
-    def test_includes_overwrite_flag(self) -> None:
+    def test_includes_overwrite_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """run_ghidra_plugin includes overwrite flag when specified."""
         with tempfile.TemporaryDirectory() as tmpdir:
             fake_ghidra = Path(tmpdir) / "analyzeHeadless"
@@ -205,26 +288,24 @@ class TestRunGhidraPlugin:
             script_path = Path(tmpdir) / "script.java"
             script_path.write_text("// test script")
 
-            with patch("subprocess.Popen") as mock_popen:
-                mock_process = Mock()
-                mock_process.communicate.return_value = ("", "")
-                mock_process.returncode = 0
-                mock_popen.return_value = mock_process
+            fake_process = FakeProcess(returncode=0)
+            fake_popen = FakePopenFactory(fake_process)
+            monkeypatch.setattr("subprocess.Popen", fake_popen)
 
-                run_ghidra_plugin(
-                    ghidra_path=str(fake_ghidra),
-                    project_dir=tmpdir,
-                    project_name="test_proj",
-                    binary_path=str(binary_path),
-                    script_dir=tmpdir,
-                    script_name="script.java",
-                    overwrite=True,
-                )
+            run_ghidra_plugin(
+                ghidra_path=str(fake_ghidra),
+                project_dir=tmpdir,
+                project_name="test_proj",
+                binary_path=str(binary_path),
+                script_dir=tmpdir,
+                script_name="script.java",
+                overwrite=True,
+            )
 
-                call_args = mock_popen.call_args[0][0]
-                assert "-overwrite" in call_args
+            call_args = fake_popen.call_args[0][0]
+            assert "-overwrite" in call_args
 
-    def test_emits_output_to_app_if_provided(self) -> None:
+    def test_emits_output_to_app_if_provided(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """run_ghidra_plugin emits output to application instance if provided."""
         with tempfile.TemporaryDirectory() as tmpdir:
             fake_ghidra = Path(tmpdir) / "analyzeHeadless"
@@ -236,26 +317,22 @@ class TestRunGhidraPlugin:
             script_path = Path(tmpdir) / "script.java"
             script_path.write_text("// test script")
 
-            mock_app = Mock()
-            mock_app.update_output = Mock()
+            fake_app = FakeApp()
+            fake_process = FakeProcess(returncode=0)
+            fake_popen = FakePopenFactory(fake_process)
+            monkeypatch.setattr("subprocess.Popen", fake_popen)
 
-            with patch("subprocess.Popen") as mock_popen:
-                mock_process = Mock()
-                mock_process.communicate.return_value = ("", "")
-                mock_process.returncode = 0
-                mock_popen.return_value = mock_process
+            run_ghidra_plugin(
+                ghidra_path=str(fake_ghidra),
+                project_dir=tmpdir,
+                project_name="test_proj",
+                binary_path=str(binary_path),
+                script_dir=tmpdir,
+                script_name="script.java",
+                app=fake_app,
+            )
 
-                run_ghidra_plugin(
-                    ghidra_path=str(fake_ghidra),
-                    project_dir=tmpdir,
-                    project_name="test_proj",
-                    binary_path=str(binary_path),
-                    script_dir=tmpdir,
-                    script_name="script.java",
-                    app=mock_app,
-                )
-
-                mock_app.update_output.emit.assert_called()
+            assert len(fake_app.update_output.emit_calls) > 0
 
 
 class TestCreateGhidraAnalysisScript:
@@ -516,17 +593,19 @@ class TestCleanupGhidraProject:
             assert Path(tmpdir).exists()
             assert Path(tmpdir, "keep_this.txt").exists()
 
-    def test_handles_cleanup_errors(self) -> None:
+    def test_handles_cleanup_errors(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """cleanup_ghidra_project handles errors during cleanup."""
         with tempfile.TemporaryDirectory() as tmpdir:
             project_name = "test_project"
             project_file = Path(tmpdir) / f"{project_name}.gpr"
             project_file.write_text("data")
 
-            with patch("os.remove", side_effect=PermissionError("Access denied")):
-                result = cleanup_ghidra_project(tmpdir, project_name)
+            fake_remove = FakeRemoveFunction(raise_error=PermissionError("Access denied"))
+            monkeypatch.setattr("os.remove", fake_remove)
 
-                assert result is False
+            result = cleanup_ghidra_project(tmpdir, project_name)
+
+            assert result is False
 
 
 class TestRealWorldScenarios:

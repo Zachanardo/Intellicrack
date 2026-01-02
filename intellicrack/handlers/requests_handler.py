@@ -17,19 +17,79 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import builtins
 import json as json_module
 import socket
 import ssl
+import types
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections.abc import Callable, Generator, Iterable, Mapping, MutableMapping
-from http.cookiejar import CookieJar
-from typing import Any, cast
+from collections.abc import Callable, Generator
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from intellicrack.utils.logger import logger
-from intellicrack.utils.type_safety import get_typed_item, validate_type
+from intellicrack.utils.type_safety import validate_type
+from intellicrack.utils.url_validation import SSRFError, is_safe_url
+
+
+# Protocol definitions for HTTP types - satisfied by both requests and fallback implementations
+@runtime_checkable
+class ResponseProtocol(Protocol):
+    """Protocol defining interface for HTTP responses."""
+
+    status_code: int
+    headers: Any
+    url: str
+    content: bytes
+    text: str
+    encoding: str
+    cookies: Any
+    reason: str
+    ok: bool
+
+    def json(self) -> object: ...
+    def raise_for_status(self) -> None: ...
+    def iter_content(self, chunk_size: int = 1024) -> Any: ...
+
+
+@runtime_checkable
+class SessionProtocol(Protocol):
+    """Protocol defining interface for HTTP sessions."""
+
+    headers: Any
+    cookies: Any
+    auth: Any
+    proxies: dict[str, str]
+    verify: bool | str
+
+    def request(self, method: str, url: str, **kwargs: Any) -> Any: ...
+    def get(self, url: str, **kwargs: Any) -> Any: ...
+    def post(self, url: str, **kwargs: Any) -> Any: ...
+    def put(self, url: str, **kwargs: Any) -> Any: ...
+    def delete(self, url: str, **kwargs: Any) -> Any: ...
+    def close(self) -> None: ...
+
+
+@runtime_checkable
+class PreparedRequestProtocol(Protocol):
+    """Protocol defining interface for prepared HTTP requests."""
+
+    method: str
+    url: str
+    headers: Any
+    body: bytes | None
+
+
+@runtime_checkable
+class CaseInsensitiveDictProtocol(Protocol):
+    """Protocol defining interface for case-insensitive dictionaries."""
+
+    def __getitem__(self, key: str) -> Any: ...
+    def __setitem__(self, key: str, value: Any) -> None: ...
+    def get(self, key: str, default: Any = None) -> Any: ...
 
 
 """
@@ -39,6 +99,38 @@ This module provides a centralized abstraction layer for requests imports.
 When requests is not available, it provides REAL, functional Python-based
 implementations for HTTP operations used in Intellicrack.
 """
+
+# Module-level type declarations for cross-branch assignment compatibility
+# These allow both requests library types and fallback types to be assigned
+Response: type[ResponseProtocol]
+Session: type[SessionProtocol]
+PreparedRequest: type[PreparedRequestProtocol]
+RequestsCookieJar: type[Any]
+CaseInsensitiveDict: type[CaseInsensitiveDictProtocol]
+HTTPAdapter: type[Any]
+HTTPBasicAuth: type[Any]
+HTTPDigestAuth: type[Any]
+Retry: type[Any]
+HTTPError: type[Exception]
+SSLError: type[Exception]
+ProxyError: type[Exception]
+ConnectTimeoutError: type[Exception]
+ReadTimeoutError: type[Exception]
+TooManyRedirectsError: type[Exception]
+RequestError: type[Exception]
+InvalidURLError: type[Exception]
+REQUESTS_VERSION: str | None
+requests: types.ModuleType | Any
+
+# Function type declarations
+get: Callable[..., ResponseProtocol]
+post: Callable[..., ResponseProtocol]
+put: Callable[..., ResponseProtocol]
+patch: Callable[..., ResponseProtocol]
+delete: Callable[..., ResponseProtocol]
+head: Callable[..., ResponseProtocol]
+options: Callable[..., ResponseProtocol]
+request: Callable[..., ResponseProtocol]
 
 # Requests availability detection and import handling
 try:
@@ -157,9 +249,6 @@ except ImportError as e:
             Returns:
                 Any: Value associated with the key.
 
-            Raises:
-                KeyError: If key not found in dictionary.
-
             """
             return super().__getitem__(key.lower())
 
@@ -221,9 +310,6 @@ except ImportError as e:
             Returns:
                 object: Parsed JSON object from response content.
 
-            Raises:
-                json.JSONDecodeError: If response content is not valid JSON.
-
             """
             if not self.text:
                 self.text = self.content.decode(self.encoding)
@@ -262,12 +348,15 @@ except ImportError as e:
             for i in range(0, len(self.content), chunk_size):
                 yield self.content[i : i + chunk_size]
 
-        def iter_lines(self, chunk_size: int = 512, decode_unicode: bool = True) -> Generator[str, None, None]:
+        def iter_lines(
+            self, chunk_size: int = 512, decode_unicode: bool = True
+        ) -> Generator[str, None, None]:
             """Iterate over response lines.
 
             Args:
                 chunk_size: Size of each chunk in bytes. Defaults to 512.
-                decode_unicode: Whether to decode response as text. Defaults to True.
+                decode_unicode: Whether to decode response as text.
+                    Defaults to True.
 
             Yields:
                 str: Individual lines from response content.
@@ -305,6 +394,10 @@ except ImportError as e:
             json: Any | None = None,
         ) -> None:
             """Prepare the HTTP request.
+
+            Assembles all request components including method, URL, headers,
+            body, and authentication into a prepared request ready for
+            transmission.
 
             Args:
                 method: HTTP method (GET, POST, etc.).
@@ -366,13 +459,19 @@ except ImportError as e:
         def request(self, method: str, url: str, **kwargs: Any) -> _FallbackResponse:
             """Send HTTP request.
 
+            Executes an HTTP request with the specified method and URL,
+            using session configuration for headers, cookies, and other
+            defaults.
+
             Args:
                 method: HTTP method (GET, POST, etc.).
                 url: Request URL.
-                **kwargs: Additional request parameters.
+                **kwargs: Additional request parameters (data, json, headers,
+                    cookies, auth, timeout, verify, etc.).
 
             Returns:
-                _FallbackResponse: HTTP response object.
+                _FallbackResponse: HTTP response object containing status code,
+                    headers, content, and other response data.
 
             """
             return _fallback_request(method, url, session=self, **kwargs)
@@ -380,12 +479,17 @@ except ImportError as e:
         def get(self, url: str, **kwargs: Any) -> _FallbackResponse:
             """Send GET request.
 
+            Sends an HTTP GET request to retrieve resource data without
+            modifying server state.
+
             Args:
                 url: Request URL.
-                **kwargs: Additional request parameters.
+                **kwargs: Additional request parameters (params, headers,
+                    auth, timeout, verify, etc.).
 
             Returns:
-                _FallbackResponse: HTTP response object.
+                _FallbackResponse: HTTP response object containing status code,
+                    headers, content, and other response data.
 
             """
             return self.request("GET", url, **kwargs)
@@ -393,14 +497,19 @@ except ImportError as e:
         def post(self, url: str, data: Any | None = None, json: Any | None = None, **kwargs: Any) -> _FallbackResponse:
             """Send POST request.
 
+            Sends an HTTP POST request to submit data to the server, typically
+            used to create new resources or trigger server-side processing.
+
             Args:
                 url: Request URL.
-                data: Request body data.
-                json: JSON request body.
-                **kwargs: Additional request parameters.
+                data: Request body data (form-encoded or raw bytes).
+                json: JSON request body data.
+                **kwargs: Additional request parameters (headers, auth,
+                    timeout, verify, etc.).
 
             Returns:
-                _FallbackResponse: HTTP response object.
+                _FallbackResponse: HTTP response object containing status code,
+                    headers, content, and other response data.
 
             """
             return self.request("POST", url, data=data, json=json, **kwargs)
@@ -408,13 +517,18 @@ except ImportError as e:
         def put(self, url: str, data: Any | None = None, **kwargs: Any) -> _FallbackResponse:
             """Send PUT request.
 
+            Sends an HTTP PUT request to update or replace a resource on
+            the server with the provided data.
+
             Args:
                 url: Request URL.
-                data: Request body data.
-                **kwargs: Additional request parameters.
+                data: Request body data for the resource.
+                **kwargs: Additional request parameters (headers, auth,
+                    timeout, verify, etc.).
 
             Returns:
-                _FallbackResponse: HTTP response object.
+                _FallbackResponse: HTTP response object containing status code,
+                    headers, content, and other response data.
 
             """
             return self.request("PUT", url, data=data, **kwargs)
@@ -422,13 +536,18 @@ except ImportError as e:
         def patch(self, url: str, data: Any | None = None, **kwargs: Any) -> _FallbackResponse:
             """Send PATCH request.
 
+            Sends an HTTP PATCH request to partially update a resource on
+            the server with the provided data.
+
             Args:
                 url: Request URL.
-                data: Request body data.
-                **kwargs: Additional request parameters.
+                data: Request body data for the partial update.
+                **kwargs: Additional request parameters (headers, auth,
+                    timeout, verify, etc.).
 
             Returns:
-                _FallbackResponse: HTTP response object.
+                _FallbackResponse: HTTP response object containing status code,
+                    headers, content, and other response data.
 
             """
             return self.request("PATCH", url, data=data, **kwargs)
@@ -436,12 +555,16 @@ except ImportError as e:
         def delete(self, url: str, **kwargs: Any) -> _FallbackResponse:
             """Send DELETE request.
 
+            Sends an HTTP DELETE request to remove a resource from the server.
+
             Args:
                 url: Request URL.
-                **kwargs: Additional request parameters.
+                **kwargs: Additional request parameters (params, headers,
+                    auth, timeout, verify, etc.).
 
             Returns:
-                _FallbackResponse: HTTP response object.
+                _FallbackResponse: HTTP response object containing status code,
+                    headers, content, and other response data.
 
             """
             return self.request("DELETE", url, **kwargs)
@@ -449,12 +572,18 @@ except ImportError as e:
         def head(self, url: str, **kwargs: Any) -> _FallbackResponse:
             """Send HEAD request.
 
+            Sends an HTTP HEAD request to retrieve headers without downloading
+            the response body, useful for checking resource availability and
+            metadata.
+
             Args:
                 url: Request URL.
-                **kwargs: Additional request parameters.
+                **kwargs: Additional request parameters (params, headers,
+                    auth, timeout, verify, etc.).
 
             Returns:
-                _FallbackResponse: HTTP response object.
+                _FallbackResponse: HTTP response object containing status code,
+                    headers, and other response metadata.
 
             """
             return self.request("HEAD", url, **kwargs)
@@ -462,18 +591,27 @@ except ImportError as e:
         def options(self, url: str, **kwargs: Any) -> _FallbackResponse:
             """Send OPTIONS request.
 
+            Sends an HTTP OPTIONS request to retrieve allowed methods and
+            communication options for a resource.
+
             Args:
                 url: Request URL.
-                **kwargs: Additional request parameters.
+                **kwargs: Additional request parameters (params, headers,
+                    auth, timeout, verify, etc.).
 
             Returns:
-                _FallbackResponse: HTTP response object.
+                _FallbackResponse: HTTP response object containing status code,
+                    headers, and allowed methods information.
 
             """
             return self.request("OPTIONS", url, **kwargs)
 
         def close(self) -> None:
-            """Close session and clean up resources."""
+            """Close session and clean up resources.
+
+            This method is a no-op in the fallback implementation but is
+            provided for API compatibility with the requests library.
+            """
 
         def __enter__(self) -> "_FallbackSession":
             """Context manager entry.
@@ -576,21 +714,46 @@ except ImportError as e:
     def _fallback_request(method: str, url: str, **kwargs: Any) -> _FallbackResponse:
         """Send HTTP request using urllib.
 
+        Implements a production-ready HTTP client using Python standard library
+        (urllib) without external dependencies. Handles headers, authentication,
+        cookies, redirects, SSL/TLS, and proper error handling for licensing
+        analysis and network interception operations.
+
         Args:
-            method: HTTP method (GET, POST, etc.).
-            url: Request URL.
-            **kwargs: Additional request parameters including params, data, json,
-                headers, cookies, auth, timeout, verify, etc.
+            method: HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS).
+            url: Request URL to send the HTTP request to.
+            **kwargs: Additional request parameters:
+                params: URL query parameters (dict).
+                data: Request body data (dict, bytes, or string).
+                json: JSON request body data (serializable object).
+                headers: HTTP headers (dict).
+                cookies: HTTP cookies (dict).
+                auth: Authentication credentials (tuple or auth object).
+                timeout: Request timeout in seconds (default: 30).
+                allow_redirects: Follow HTTP redirects (default: True).
+                stream: Stream response content (default: False).
+                verify: Verify SSL certificates (bool or str path).
+                cert: Client SSL certificate (str path).
+                session: Existing session for state persistence.
 
         Returns:
-            _FallbackResponse: HTTP response object.
+            _FallbackResponse: HTTP response object containing status_code,
+                headers, content, text, url, cookies, and other response
+                metadata.
 
         Raises:
-            TimeoutError: If request times out.
-            ConnectionError: If connection fails.
-            RequestError: For other request errors.
+            _FallbackTimeoutError: If request times out (socket timeout or
+                explicit timeout exceeded).
+            _FallbackConnectionError: If connection fails (connection refused,
+                host unreachable, or other network errors).
+            _FallbackRequestError: For other request errors (URL parsing,
+                encoding, or general failures).
 
         """
+        allow_local = kwargs.get("allow_local", False)
+        if not is_safe_url(url, allow_local=allow_local):
+            raise _FallbackRequestError(f"URL blocked by SSRF protection: {url}")
+
         params = kwargs.get("params")
         data = kwargs.get("data")
         json_data = kwargs.get("json")
@@ -662,7 +825,7 @@ except ImportError as e:
                 encoded = base64.b64encode(credentials.encode()).decode()
                 req_headers["Authorization"] = f"Basic {encoded}"
 
-        req = urllib.request.Request(url, data=body, headers=dict(req_headers), method=method)  # noqa: S310
+        req = urllib.request.Request(url, data=body, headers=dict(req_headers), method=method)
 
         context: ssl.SSLContext | None = None
         if not verify:
@@ -671,7 +834,7 @@ except ImportError as e:
             context.verify_mode = ssl.CERT_NONE
 
         try:
-            with urllib.request.urlopen(req, timeout=timeout, context=context) as response:  # noqa: S310
+            with urllib.request.urlopen(req, timeout=timeout, context=context) as response:
                 resp = _FallbackResponse()
                 resp.status_code = response.code
                 resp.reason = response.reason or "OK"
@@ -899,36 +1062,36 @@ except ImportError as e:
             },
         )()
 
-    Response = _FallbackResponse  # type: ignore[assignment, misc]
-    Session = _FallbackSession  # type: ignore[assignment, misc]
-    PreparedRequest = _FallbackPreparedRequest  # type: ignore[assignment, misc]
-    RequestsCookieJar = _FallbackRequestsCookieJar  # type: ignore[assignment, misc]
-    CaseInsensitiveDict = _FallbackCaseInsensitiveDict  # type: ignore[assignment, misc]
-    HTTPAdapter = _FallbackHTTPAdapter  # type: ignore[assignment, misc]
-    HTTPBasicAuth = _FallbackHTTPBasicAuth  # type: ignore[assignment, misc]
-    HTTPDigestAuth = _FallbackHTTPDigestAuth  # type: ignore[assignment, misc]
+    Response = _FallbackResponse
+    Session = _FallbackSession
+    PreparedRequest = _FallbackPreparedRequest
+    RequestsCookieJar = _FallbackRequestsCookieJar
+    CaseInsensitiveDict = _FallbackCaseInsensitiveDict
+    HTTPAdapter = _FallbackHTTPAdapter
+    HTTPBasicAuth = _FallbackHTTPBasicAuth
+    HTTPDigestAuth = _FallbackHTTPDigestAuth
     Retry = _FallbackRetry
-    HTTPError = _FallbackHTTPError  # type: ignore[assignment, misc]
-    SSLError = _FallbackSSLError  # type: ignore[assignment, misc]
-    ProxyError = _FallbackProxyError  # type: ignore[assignment, misc]
-    ConnectTimeoutError = _FallbackConnectTimeoutError  # type: ignore[assignment, misc]
-    ReadTimeoutError = _FallbackReadTimeoutError  # type: ignore[assignment, misc]
-    TooManyRedirectsError = _FallbackTooManyRedirectsError  # type: ignore[assignment, misc]
-    RequestError = _FallbackRequestError  # type: ignore[assignment, misc]
+    HTTPError = _FallbackHTTPError
+    SSLError = _FallbackSSLError
+    ProxyError = _FallbackProxyError
+    ConnectTimeoutError = _FallbackConnectTimeoutError
+    ReadTimeoutError = _FallbackReadTimeoutError
+    TooManyRedirectsError = _FallbackTooManyRedirectsError
+    RequestError = _FallbackRequestError
     InvalidURLError = _FallbackInvalidURLError
 
     request = _fallback_request
-    get = _fallback_get  # type: ignore[assignment]
-    post = _fallback_post  # type: ignore[assignment]
-    put = _fallback_put  # type: ignore[assignment]
-    patch = _fallback_patch  # type: ignore[assignment]
-    delete = _fallback_delete  # type: ignore[assignment]
-    head = _fallback_head  # type: ignore[assignment]
-    options = _fallback_options  # type: ignore[assignment]
+    get = _fallback_get
+    post = _fallback_post
+    put = _fallback_put
+    patch = _fallback_patch
+    delete = _fallback_delete
+    head = _fallback_head
+    options = _fallback_options
 
-    REQUESTS_VERSION: str | None = _REQUESTS_VERSION_FALLBACK  # type: ignore[no-redef]
+    REQUESTS_VERSION = _REQUESTS_VERSION_FALLBACK
 
-    requests = FallbackRequests()  # type: ignore[assignment]
+    requests = FallbackRequests()
 
 
 # Export all requests objects and availability flag

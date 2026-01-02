@@ -8,7 +8,6 @@ import os
 import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -19,8 +18,19 @@ from intellicrack.ui.dialogs.guided_workflow_wizard import (
 )
 
 
-class MockMainWindow:
-    """Mock main window for parent integration testing."""
+class FakeSignal:
+    """Real signal implementation for testing."""
+
+    def __init__(self) -> None:
+        self.emissions: list[Any] = []
+
+    def emit(self, value: Any) -> None:
+        """Record signal emission."""
+        self.emissions.append(value)
+
+
+class FakeMainWindow:
+    """Real test double for main window parent integration testing."""
 
     def __init__(self) -> None:
         self.binary_path: str = ""
@@ -29,32 +39,55 @@ class MockMainWindow:
         self.static_analyses_run: int = 0
         self.dynamic_analyses_run: int = 0
         self.tab_switches: list[int] = []
+        self._switch_tab_signal: FakeSignal = FakeSignal()
 
     def update_output(self, text: str) -> None:
-        """Mock signal emission."""
+        """Record output update."""
         self.outputs.append(text)
 
     def emit(self, text: str) -> None:
-        """Mock signal emission."""
+        """Record signal emission."""
         self.outputs.append(text)
 
     def load_binary(self, path: str) -> None:
-        """Mock binary loading."""
+        """Record binary loading."""
         self.loaded_binaries.append(path)
 
     def run_static_analysis(self) -> None:
-        """Mock static analysis."""
+        """Record static analysis execution."""
         self.static_analyses_run += 1
 
     def run_dynamic_analysis(self) -> None:
-        """Mock dynamic analysis."""
+        """Record dynamic analysis execution."""
         self.dynamic_analyses_run += 1
 
-    def switch_tab(self) -> MagicMock:
-        """Mock tab switching signal."""
-        mock_signal = MagicMock()
-        mock_signal.emit = lambda idx: self.tab_switches.append(idx)
-        return mock_signal
+    def switch_tab(self) -> FakeSignal:
+        """Return tab switching signal."""
+        return self._switch_tab_signal
+
+
+class FakeFileDialog:
+    """Real test double for QFileDialog."""
+
+    def __init__(self, file_path: str, filter_string: str) -> None:
+        self.file_path: str = file_path
+        self.filter_string: str = filter_string
+
+    @staticmethod
+    def getOpenFileName(
+        parent: Any, caption: str, directory: str, filter_string: str
+    ) -> tuple[str, str]:
+        """Return pre-configured file selection result."""
+        if hasattr(FakeFileDialog, "_next_result"):
+            result = FakeFileDialog._next_result
+            delattr(FakeFileDialog, "_next_result")
+            return result
+        return ("", "")
+
+    @staticmethod
+    def set_next_result(file_path: str, filter_string: str = "") -> None:
+        """Configure next file dialog result."""
+        FakeFileDialog._next_result = (file_path, filter_string)
 
 
 @pytest.fixture
@@ -74,8 +107,8 @@ def wizard(qapp: QApplication) -> GuidedWorkflowWizard:
 
 @pytest.fixture
 def wizard_with_parent(qapp: QApplication) -> GuidedWorkflowWizard:
-    """Create wizard with mock parent."""
-    parent = MockMainWindow()
+    """Create wizard with fake parent."""
+    parent = FakeMainWindow()
     wizard = GuidedWorkflowWizard(parent)
     wizard.parent = parent
     return wizard
@@ -136,7 +169,7 @@ class TestGuidedWorkflowWizardInitialization:
     def test_wizard_accepts_parent_window(self, wizard_with_parent: GuidedWorkflowWizard) -> None:
         """Wizard correctly stores parent reference."""
         assert wizard_with_parent.parent is not None
-        assert isinstance(wizard_with_parent.parent, MockMainWindow)
+        assert isinstance(wizard_with_parent.parent, FakeMainWindow)
 
     def test_wizard_icon_loaded_when_available(self, wizard: GuidedWorkflowWizard) -> None:
         """Wizard loads icon if file exists."""
@@ -197,26 +230,44 @@ class TestFileSelectionPage:
         page = wizard.page(wizard.pageIds()[1])
         assert page.field("binary_path") == "C:\\test.exe"
 
-    def test_browse_file_updates_path(self, wizard: GuidedWorkflowWizard, sample_exe: Path) -> None:
+    def test_browse_file_updates_path(
+        self, wizard: GuidedWorkflowWizard, sample_exe: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Browse file method updates path field."""
-        with patch("intellicrack.ui.dialogs.guided_workflow_wizard.QFileDialog.getOpenFileName", return_value=(str(sample_exe), "")):
-            wizard.browse_file()
-            assert wizard.file_path_edit.text() == str(sample_exe)
+        FakeFileDialog.set_next_result(str(sample_exe), "")
+        monkeypatch.setattr(
+            "intellicrack.ui.dialogs.guided_workflow_wizard.QFileDialog",
+            FakeFileDialog,
+        )
+        wizard.browse_file()
+        assert wizard.file_path_edit.text() == str(sample_exe)
 
-    def test_browse_file_updates_info(self, wizard: GuidedWorkflowWizard, sample_exe: Path) -> None:
+    def test_browse_file_updates_info(
+        self, wizard: GuidedWorkflowWizard, sample_exe: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Browse file updates file info display."""
-        with patch("intellicrack.ui.dialogs.guided_workflow_wizard.QFileDialog.getOpenFileName", return_value=(str(sample_exe), "")):
-            wizard.browse_file()
-            info_text = wizard.file_info_label.text()
-            assert len(info_text) > 0
-            assert "sample.exe" in info_text
+        FakeFileDialog.set_next_result(str(sample_exe), "")
+        monkeypatch.setattr(
+            "intellicrack.ui.dialogs.guided_workflow_wizard.QFileDialog",
+            FakeFileDialog,
+        )
+        wizard.browse_file()
+        info_text = wizard.file_info_label.text()
+        assert len(info_text) > 0
+        assert "sample.exe" in info_text
 
-    def test_browse_file_cancellation_ignored(self, wizard: GuidedWorkflowWizard) -> None:
+    def test_browse_file_cancellation_ignored(
+        self, wizard: GuidedWorkflowWizard, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Cancelling file dialog doesn't change path."""
         original_text = wizard.file_path_edit.text()
-        with patch("intellicrack.ui.dialogs.guided_workflow_wizard.QFileDialog.getOpenFileName", return_value=("", "")):
-            wizard.browse_file()
-            assert wizard.file_path_edit.text() == original_text
+        FakeFileDialog.set_next_result("", "")
+        monkeypatch.setattr(
+            "intellicrack.ui.dialogs.guided_workflow_wizard.QFileDialog",
+            FakeFileDialog,
+        )
+        wizard.browse_file()
+        assert wizard.file_path_edit.text() == original_text
 
     def test_update_file_info_displays_size(self, wizard: GuidedWorkflowWizard, sample_exe: Path) -> None:
         """Update file info shows file size."""
@@ -666,7 +717,7 @@ class TestFactoryFunction:
 
     def test_factory_accepts_parent(self, qapp: QApplication) -> None:
         """Factory function accepts parent parameter."""
-        parent = MockMainWindow()
+        parent = FakeMainWindow()
         wizard = create_guided_workflow_wizard(parent)
         assert wizard.parent == parent
 
@@ -762,7 +813,7 @@ class TestEdgeCases:
 
     def test_wizard_handles_parent_without_switch_tab_signal(self, qapp: QApplication, sample_exe: Path) -> None:
         """Wizard handles parent without switch_tab signal."""
-        parent = MockMainWindow()
+        parent = FakeMainWindow()
         delattr(type(parent), "switch_tab")
         wizard = GuidedWorkflowWizard(parent)
         wizard.file_path_edit.setText(str(sample_exe))

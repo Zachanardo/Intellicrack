@@ -17,10 +17,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
+
 from intellicrack.utils.logger import get_logger
 
 
-logger = get_logger(__name__)
+logger: logging.Logger = get_logger(__name__)
 
 try:
     from .script_execution_manager import ScriptExecutionManager
@@ -29,7 +31,7 @@ try:
 except ImportError as e:
     logger.exception("Execution manager import failed: %s", e)
 
-__all__ = ["ScriptExecutionManager"]
+__all__: list[str] = ["ScriptExecutionManager"]
 
 # Filter out items that are not available
 __all__ = [item for item in __all__ if item in locals()]

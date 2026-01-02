@@ -60,16 +60,6 @@ class BasicBlock:
 
 
 @pytest.fixture
-def temp_workspace() -> Path:
-    """Create temporary workspace for test binaries."""
-    import shutil
-
-    temp_dir = tempfile.mkdtemp(prefix="opaque_predicate_test_")
-    yield Path(temp_dir)
-    shutil.rmtree(temp_dir, ignore_errors=True)
-
-
-@pytest.fixture
 def self_xor_block() -> BasicBlock:
     """Basic block with XOR eax, eax pattern (always sets to 0)."""
     return BasicBlock(

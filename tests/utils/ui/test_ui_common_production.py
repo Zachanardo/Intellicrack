@@ -14,7 +14,7 @@ from __future__ import annotations
 import os
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import pytest
 
@@ -33,7 +33,14 @@ pytestmark = pytest.mark.real_data
 
 try:
     from PyQt6.QtCore import Qt
-    from PyQt6.QtWidgets import QApplication, QVBoxLayout, QWidget
+    from PyQt6.QtWidgets import (
+        QApplication,
+        QGroupBox,
+        QLineEdit,
+        QPushButton,
+        QVBoxLayout,
+        QWidget,
+    )
 
     HAS_PYQT = True
 
@@ -42,6 +49,9 @@ try:
         _app = QApplication(sys.argv)
 except ImportError:
     HAS_PYQT = False
+    QGroupBox = None  # type: ignore[misc,assignment]
+    QLineEdit = None  # type: ignore[misc,assignment]
+    QPushButton = None  # type: ignore[misc,assignment]
 
 
 @pytest.fixture
@@ -66,23 +76,26 @@ class TestCreateBinarySelectionHeader:
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
-        result = create_binary_selection_header(layout)
+        result = create_binary_selection_header(cast(Any, layout))
 
         assert result.group is not None
         assert result.path_edit is not None
         assert result.browse_btn is not None
-        assert result.group.title() == "Target Binary"
-        assert result.browse_btn.text() == "Browse"
+        group = cast(QGroupBox, result.group)
+        browse_btn = cast(QPushButton, result.browse_btn)
+        assert group.title() == "Target Binary"
+        assert browse_btn.text() == "Browse"
 
     def test_create_binary_selection_header_sets_placeholder_text(self) -> None:
         """No binary path shows placeholder in path edit widget."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
-        result = create_binary_selection_header(layout, binary_path="")
+        result = create_binary_selection_header(cast(Any, layout), binary_path="")
 
         assert result.path_edit is not None
-        assert result.path_edit.text() == "(No binary selected)"
+        path_edit = cast(QLineEdit, result.path_edit)
+        assert path_edit.text() == "(No binary selected)"
 
     def test_create_binary_selection_header_with_initial_path(self) -> None:
         """Initial binary path is not set in path edit when provided."""
@@ -90,18 +103,19 @@ class TestCreateBinarySelectionHeader:
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
-        result = create_binary_selection_header(layout, binary_path=test_path)
+        result = create_binary_selection_header(cast(Any, layout), binary_path=test_path)
 
         assert result.path_edit is not None
-        assert result.path_edit.text() == "(No binary selected)"
+        path_edit = cast(QLineEdit, result.path_edit)
+        assert path_edit.text() == "(No binary selected)"
 
     def test_create_binary_selection_header_hides_label_when_requested(self) -> None:
         """Binary selection header respects show_label parameter."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
-        result_with_label = create_binary_selection_header(layout, show_label=True)
-        result_without_label = create_binary_selection_header(layout, show_label=False)
+        result_with_label = create_binary_selection_header(cast(Any, layout), show_label=True)
+        result_without_label = create_binary_selection_header(cast(Any, layout), show_label=False)
 
         assert result_with_label.group is not None
         assert result_without_label.group is not None
@@ -112,7 +126,7 @@ class TestCreateBinarySelectionHeader:
         layout = QVBoxLayout(widget)
         initial_count = layout.count()
 
-        create_binary_selection_header(layout)
+        create_binary_selection_header(cast(Any, layout))
 
         assert layout.count() == initial_count + 1
 
@@ -121,14 +135,14 @@ class TestCreateBinarySelectionHeader:
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
-        def analyze_callback() -> None:
-            pass
+        def analyze_callback(*args: object, **kwargs: object) -> object:
+            return None
 
-        def patch_callback() -> None:
-            pass
+        def patch_callback(*args: object, **kwargs: object) -> object:
+            return None
 
-        extra_buttons = [("Analyze", analyze_callback), ("Patch", patch_callback)]
-        result = create_binary_selection_header(layout, extra_buttons=extra_buttons)
+        extra_buttons: list[tuple[str, Any]] = [("Analyze", analyze_callback), ("Patch", patch_callback)]
+        result = create_binary_selection_header(cast(Any, layout), extra_buttons=extra_buttons)
 
         assert len(result.extra_buttons) == 2
         assert "Analyze" in result.extra_buttons
@@ -139,12 +153,14 @@ class TestCreateBinarySelectionHeader:
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
-        result = create_binary_selection_header(layout, binary_path="test.exe")
+        result = create_binary_selection_header(cast(Any, layout), binary_path="test.exe")
 
         assert result.path_edit is not None
-        assert result.path_edit.isReadOnly() is False
+        path_edit = cast(QLineEdit, result.path_edit)
+        assert path_edit.isReadOnly() is False
         assert result.browse_btn is not None
-        assert result.browse_btn.isEnabled() is True
+        browse_btn = cast(QPushButton, result.browse_btn)
+        assert browse_btn.isEnabled() is True
 
 
 class TestCreateBinarySelectionHeaderWithoutPyQt:
@@ -268,7 +284,7 @@ class TestUICommonEdgeCases:
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
-        result = create_binary_selection_header(layout, extra_buttons=[])
+        result = create_binary_selection_header(cast(Any, layout), extra_buttons=[])
 
         assert len(result.extra_buttons) == 0
 
@@ -281,7 +297,7 @@ class TestUICommonEdgeCases:
         layout = QVBoxLayout(widget)
         long_path = "D:\\" + "very_long_directory\\" * 20 + "binary.exe"
 
-        result = create_binary_selection_header(layout, binary_path=long_path)
+        result = create_binary_selection_header(cast(Any, layout), binary_path=long_path)
 
         assert result.path_edit is not None
 
@@ -293,8 +309,8 @@ class TestUICommonEdgeCases:
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
-        result1 = create_binary_selection_header(layout, binary_path="binary1.exe")
-        result2 = create_binary_selection_header(layout, binary_path="binary2.exe")
+        result1 = create_binary_selection_header(cast(Any, layout), binary_path="binary1.exe")
+        result2 = create_binary_selection_header(cast(Any, layout), binary_path="binary2.exe")
 
         assert result1.group is not None
         assert result2.group is not None

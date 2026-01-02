@@ -30,7 +30,6 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from intellicrack.handlers.numpy_handler import HAS_NUMPY
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT, QFileDialog
 from intellicrack.utils.logger import logger
 
@@ -900,10 +899,9 @@ def _get_ip_geolocation(ip: str) -> dict[str, object]:
         ip: IP address to analyze
 
     Returns:
-        Dictionary containing geolocation information
+        Dictionary containing geolocation information (type, location, country).
 
     """
-    """Get basic geolocation info for IP address."""
     # Simple heuristic-based geolocation
     if ip.startswith("192.168.") or ip.startswith("10.") or ip.startswith("172."):
         return {"type": "private", "location": "local_network"}
@@ -927,10 +925,9 @@ def _analyze_protocol(protocol: str, request: dict[str, object]) -> dict[str, ob
         request: Request dictionary for context
 
     Returns:
-        Dictionary containing protocol analysis results
+        Dictionary containing protocol analysis results with encryption and license-related flags.
 
     """
-    """Analyze protocol-specific characteristics."""
     analysis: dict[str, object] = {"protocol": protocol}
 
     if protocol in {"http", "https"}:
@@ -957,10 +954,9 @@ def _assess_request_security(request: dict[str, object]) -> list[str]:
         request: Request dictionary to analyze
 
     Returns:
-        List of security flag strings
+        list[str]: List of security flag strings
 
     """
-    """Assess security characteristics of the request."""
     flags: list[str] = []
 
     # Check for encrypted protocols
@@ -1004,10 +1000,9 @@ def _analyze_request_timing(request: dict[str, object]) -> dict[str, object]:
         request: Request dictionary containing timestamp
 
     Returns:
-        Dictionary containing timing analysis results
+        Dictionary containing timing analysis results with age, category, and recency information.
 
     """
-    """Analyze timing characteristics of the request."""
     timestamp_val = request.get("timestamp", time.time())
     timestamp = timestamp_val if isinstance(timestamp_val, (int, float)) else time.time()
     age_seconds = time.time() - timestamp
@@ -1027,10 +1022,9 @@ def _categorize_data_size(size_bytes: int) -> str:
         size_bytes: Size in bytes
 
     Returns:
-        Category string (tiny, small, medium, large, very_large)
+        str: Category string (tiny, small, medium, large, very_large)
 
     """
-    """Categorize data transfer size."""
     if size_bytes < 100:
         return "tiny"
     if size_bytes < 1024:
@@ -1047,10 +1041,9 @@ def _categorize_age(age_seconds: float) -> str:
         age_seconds: Age in seconds
 
     Returns:
-        Age category string (very_recent, recent, within_hour, within_day, old)
+        str: Age category string (very_recent, recent, within_hour, within_day, old)
 
     """
-    """Categorize the age of a request."""
     if age_seconds < 60:
         return "very_recent"
     if age_seconds < 300:
@@ -1119,10 +1112,9 @@ def sandbox_process(command: list[str], timeout: int = 60) -> dict[str, object]:
         timeout: Timeout in seconds
 
     Returns:
-        Dictionary containing execution results
+        Dictionary containing execution results with success status, stdout, stderr, and return code.
 
     """
-    """Run a process in a sandboxed environment."""
     try:
         # Basic sandboxing using subprocess with timeout
         result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
@@ -1216,7 +1208,6 @@ def center_on_screen(widget: object) -> None:
 
     from typing import cast
 
-    from PyQt6.QtGui import QScreen
     from PyQt6.QtWidgets import (
         QApplication as QApp,
         QWidget,
@@ -1283,7 +1274,16 @@ def async_wrapper(func: Callable[..., None]) -> Callable[..., threading.Thread]:
     """
 
     def wrapped(*args: object, **kwargs: object) -> threading.Thread:
-        """Inner wrapper function."""
+        """Inner wrapper function.
+
+        Args:
+            *args: Positional arguments to pass to the wrapped function
+            **kwargs: Keyword arguments to pass to the wrapped function
+
+        Returns:
+            threading.Thread: Thread object executing the wrapped function
+
+        """
         thread = threading.Thread(
             target=func,
             args=args,
@@ -1409,10 +1409,9 @@ def _validate_and_enhance_report(report_data: dict[str, object]) -> dict[str, ob
         report_data: Raw report data to validate
 
     Returns:
-        Enhanced report dictionary or None if validation fails
+        dict[str, object] | None: Enhanced report dictionary or None if validation fails
 
     """
-    """Validate and enhance report data before submission."""
     try:
         # Create enhanced report with required fields
         report_metadata: dict[str, object] = {
@@ -1464,11 +1463,9 @@ def _generate_report_id(report_data: dict[str, object]) -> str:
         report_data: Report data to generate ID for
 
     Returns:
-        Unique report ID string
+        str: Unique report ID string
 
     """
-    """Generate unique report ID based on content and timestamp."""
-
     # Create deterministic hash from report content
     content_str = json.dumps(report_data.get("content", {}), sort_keys=True)
     content_hash = hashlib.sha256(content_str.encode()).hexdigest()[:16]
@@ -1487,10 +1484,9 @@ def _create_submission_metadata(report_id: str, endpoint: str | None) -> dict[st
         endpoint: Optional submission endpoint
 
     Returns:
-        Dictionary containing submission metadata
+        Dictionary containing submission metadata with method, endpoint, and timestamps.
 
     """
-    """Create comprehensive submission metadata."""
     return {
         "report_id": report_id,
         "submission_method": "remote" if endpoint else "local",
@@ -1504,7 +1500,17 @@ def _create_submission_metadata(report_id: str, endpoint: str | None) -> dict[st
 
 
 def _submit_to_remote_endpoint(report_data: dict[str, object], endpoint: str, report_id: str) -> dict[str, object]:
-    """Submit report to remote endpoint with comprehensive handling."""
+    """Submit report to remote endpoint with comprehensive handling.
+
+    Args:
+        report_data: Report data dictionary to submit
+        endpoint: Remote endpoint URL for submission
+        report_id: Unique report identifier
+
+    Returns:
+        Submission result with status and delivery information including response and delivery method.
+
+    """
     try:
         # Parse endpoint URL
         if not endpoint.startswith(("http://", "https://")):
@@ -1585,7 +1591,16 @@ def _submit_to_remote_endpoint(report_data: dict[str, object], endpoint: str, re
 
 
 def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> dict[str, object]:
-    """Submit report to local storage with multiple format options."""
+    """Submit report to local storage with multiple format options.
+
+    Args:
+        report_data: Report data dictionary to store
+        report_id: Unique report identifier
+
+    Returns:
+        Storage result with file paths and format information including paths to saved files.
+
+    """
     try:
         # Create reports directory if it doesn't exist
         from pathlib import Path
@@ -1659,7 +1674,16 @@ def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> 
 
 
 def _handle_additional_delivery_methods(report_data: dict[str, object], report_id: str) -> list[dict[str, object]]:
-    """Handle additional delivery methods like email, cloud storage, etc."""
+    """Handle additional delivery methods like email, cloud storage, etc.
+
+    Args:
+        report_data: Report data dictionary for delivery
+        report_id: Unique report identifier
+
+    Returns:
+        list[dict[str, object]]: List of delivery method results
+
+    """
     additional_deliveries = []
 
     try:
@@ -1679,7 +1703,16 @@ def _handle_additional_delivery_methods(report_data: dict[str, object], report_i
 
 
 def _attempt_email_delivery(report_data: dict[str, object], report_id: str) -> dict[str, object] | None:
-    """Attempt to deliver report via email."""
+    """Attempt to deliver report via email.
+
+    Args:
+        report_data: Report data dictionary to send
+        report_id: Unique report identifier
+
+    Returns:
+        dict[str, object] | None: Delivery result dictionary or None if config missing
+
+    """
     # Check for email configuration
     email_config = os.environ.get("INTELLICRACK_EMAIL_CONFIG")
     if not email_config:
@@ -1746,7 +1779,16 @@ def _attempt_email_delivery(report_data: dict[str, object], report_id: str) -> d
 
 
 def _attempt_cloud_storage(report_data: dict[str, object], report_id: str) -> dict[str, object] | None:
-    """Attempt to store report in cloud storage."""
+    """Attempt to store report in cloud storage.
+
+    Args:
+        report_data: Report data dictionary to store
+        report_id: Unique report identifier
+
+    Returns:
+        dict[str, object] | None: Storage result dictionary or None if config missing
+
+    """
     # Check for cloud storage configuration
     cloud_config = os.environ.get("INTELLICRACK_CLOUD_CONFIG")
     if not cloud_config:
@@ -1880,7 +1922,16 @@ def _attempt_cloud_storage(report_data: dict[str, object], report_id: str) -> di
 
 
 def _attempt_database_storage(report_data: dict[str, object], report_id: str) -> dict[str, object] | None:
-    """Attempt to store report in database."""
+    """Attempt to store report in database.
+
+    Args:
+        report_data: Report data dictionary to store
+        report_id: Unique report identifier
+
+    Returns:
+        dict[str, object] | None: Storage result dictionary or None if config missing
+
+    """
     # Check for database configuration
     db_config = os.environ.get("INTELLICRACK_DB_CONFIG")
     if not db_config:
@@ -2098,7 +2149,15 @@ def _attempt_database_storage(report_data: dict[str, object], report_id: str) ->
 
 
 def _generate_report_summary(report_data: dict[str, object]) -> dict[str, object]:
-    """Generate a summary of the report data."""
+    """Generate a summary of the report data.
+
+    Args:
+        report_data: Report data dictionary to summarize
+
+    Returns:
+        Summary dictionary with metadata and analysis of report sections and data types.
+
+    """
     data_types: dict[str, str] = {}
     summary: dict[str, object] = {
         "total_sections": len(report_data),
@@ -2122,7 +2181,15 @@ def _generate_report_summary(report_data: dict[str, object]) -> dict[str, object
 
 
 def _sanitize_report_data(report_data: dict[str, object]) -> dict[str, object]:
-    """Sanitize report data to remove sensitive information."""
+    """Sanitize report data to remove sensitive information.
+
+    Args:
+        report_data: Report data dictionary to sanitize
+
+    Returns:
+        Sanitized report data with sensitive information redacted and masked for security.
+
+    """
     sanitized = report_data.copy()
 
     # Remove or mask sensitive keys
@@ -2148,7 +2215,15 @@ def _sanitize_report_data(report_data: dict[str, object]) -> dict[str, object]:
 
 
 def _format_report_as_text(report_data: dict[str, object]) -> str:
-    """Format report data as human-readable text."""
+    """Format report data as human-readable text.
+
+    Args:
+        report_data: Report data dictionary to format
+
+    Returns:
+        str: Formatted report as human-readable text
+
+    """
     lines = []
     lines.append("INTELLICRACK ANALYSIS REPORT")
     lines.append("=" * 50)
@@ -2201,7 +2276,16 @@ def _format_report_as_text(report_data: dict[str, object]) -> str:
 
 
 def _save_report_as_csv(report_data: dict[str, object], csv_path: str) -> bool:
-    """Save report data as CSV format."""
+    """Save report data as CSV format.
+
+    Args:
+        report_data: Report data dictionary to save
+        csv_path: File path for CSV output
+
+    Returns:
+        bool: True if successfully saved, False otherwise
+
+    """
     try:
         import csv
         from typing import Any
@@ -2238,7 +2322,17 @@ def _save_report_as_csv(report_data: dict[str, object], csv_path: str) -> bool:
 
 
 def _create_report_archive(report_id: str, formats_saved: list[dict[str, object]], archive_path: str) -> bool:
-    """Create compressed archive of all report formats."""
+    """Create compressed archive of all report formats.
+
+    Args:
+        report_id: Unique report identifier
+        formats_saved: List of format information dictionaries
+        archive_path: File path for archive output
+
+    Returns:
+        bool: True if archive created successfully, False otherwise
+
+    """
     _ = report_id
     try:
         import tarfile
@@ -2260,7 +2354,13 @@ def _create_report_archive(report_id: str, formats_saved: list[dict[str, object]
 
 
 def _create_submission_audit_trail(submission_result: dict[str, object], metadata: dict[str, object]) -> None:
-    """Create audit trail for report submission."""
+    """Create audit trail for report submission.
+
+    Args:
+        submission_result: Result dictionary from submission process
+        metadata: Submission metadata dictionary
+
+    """
     try:
         audit_entry = {
             "timestamp": time.time(),
@@ -2350,10 +2450,9 @@ def create_dataset(data: list[dict[str, object]], format: str = "json") -> dict[
         format: Format type for the dataset
 
     Returns:
-        Dictionary containing dataset metadata and data
+        Dictionary containing dataset metadata and data with format and size information.
 
     """
-    """Create a dataset from raw data."""
     dataset: dict[str, object] = {
         "format": format,
         "size": len(data),
@@ -2380,10 +2479,9 @@ def augment_dataset(dataset: list[dict[str, object]], augmentation_config: dict[
         augmentation_config: Configuration for augmentation techniques
 
     Returns:
-        Augmented dataset with additional samples
+        list[dict[str, object]]: Augmented dataset with additional samples
 
     """
-    """Augment a dataset with various techniques."""
     augmented = []
 
     for item in dataset:
@@ -2441,10 +2539,9 @@ def create_full_feature_model(features: list[str], model_type: str = "ensemble")
         model_type: Type of model to create
 
     Returns:
-        Dictionary containing model configuration
+        Dictionary containing model configuration with features and model parameters.
 
     """
-    """Create a model configuration with all features."""
     return {
         "model_type": model_type,
         "features": features,
@@ -2466,10 +2563,9 @@ def predict_vulnerabilities(binary_features: dict[str, object], model: object | 
         model: Optional trained model for prediction
 
     Returns:
-        Dictionary containing vulnerability predictions and risk assessments
+        Dictionary containing vulnerability predictions and risk assessments with severity ratings.
 
     """
-    """Predict vulnerabilities in a binary."""
     _ = model
     # Simplified prediction logic
     predictions = {
@@ -2506,7 +2602,6 @@ def add_code_snippet(snippets: list[dict[str, object]], title: str, code: str, l
         language: Programming language of the code
 
     """
-    """Add a code snippet to a collection."""
     snippets.append(
         {
             "title": title,
@@ -2537,10 +2632,9 @@ def add_image(document: object, image_path: str, caption: str | None = None) -> 
         caption: Optional caption for the image
 
     Returns:
-        True if image exists and can be added, False otherwise
+        True if image exists and can be added, False otherwise.
 
     """
-    """Add an image to a document."""
     _ = document
     # This would typically add to a PDF or HTML document
     logger.info("Adding image %s with caption: %s", image_path, caption)
@@ -2555,7 +2649,6 @@ def add_recommendations(report: dict[str, object], recommendations: list[str]) -
         recommendations: List of recommendation strings
 
     """
-    """Add recommendations to a report."""
     if "recommendations" not in report:
         report["recommendations"] = []
     existing = report["recommendations"]

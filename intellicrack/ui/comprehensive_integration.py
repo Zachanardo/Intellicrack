@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import TYPE_CHECKING, Any
 
 from intellicrack.handlers.pyqt6_handler import QMainWindow, QTabWidget, QWidget
 
@@ -221,8 +220,8 @@ class ComprehensiveR2Integration:
                     tab_widget.addTab(enhanced_dashboard, "Enhanced Analysis")
 
             if hasattr(main_app, "__dict__"):
-                setattr(main_app, "r2_widget", r2_widget)
-                setattr(main_app, "enhanced_dashboard", enhanced_dashboard)
+                main_app.r2_widget = r2_widget
+                main_app.enhanced_dashboard = enhanced_dashboard
 
             # Create UI manager (use isinstance check for type narrowing)
             if isinstance(main_app, QWidget):
@@ -230,7 +229,7 @@ class ComprehensiveR2Integration:
             else:
                 self.ui_manager = R2UIManager(None)
             if hasattr(main_app, "__dict__"):
-                setattr(main_app, "r2_ui_manager", self.ui_manager)
+                main_app.r2_ui_manager = self.ui_manager
 
             self.integration_status["ui_manager"] = True
             self.integration_status["main_app"] = True
@@ -255,7 +254,7 @@ class ComprehensiveR2Integration:
 
             if not hasattr(main_app, "tab_widget") and hasattr(main_app, "__dict__"):
                 tab_widget_obj = QTabWidget()
-                setattr(main_app, "tab_widget", tab_widget_obj)
+                main_app.tab_widget = tab_widget_obj
 
                 # Try to add to layout if it exists
                 if hasattr(main_app, "layout"):
@@ -292,7 +291,7 @@ class ComprehensiveR2Integration:
 
             # Store reference in main app if possible
             if hasattr(main_app, "__dict__"):
-                setattr(main_app, "r2_ui_manager", self.ui_manager)
+                main_app.r2_ui_manager = self.ui_manager
 
             self.integration_status["ui_manager"] = True
 
@@ -323,7 +322,7 @@ class ComprehensiveR2Integration:
             if hasattr(main_app, "menuBar"):
                 menuBar = getattr(main_app, "menuBar", None)
                 if menuBar and callable(menuBar):
-                    if menu_bar_obj := menuBar():
+                    if menuBar():
                         self._add_radare2_menu_items(main_app)
                         self.integration_status["menu_integration"] = True
 
@@ -554,13 +553,13 @@ class ComprehensiveR2Integration:
                         return self.ui_manager.start_analysis(analysis_type)
                     return False
 
-                setattr(main_app, "start_radare2_analysis", start_r2_analysis)
+                main_app.start_radare2_analysis = start_r2_analysis
 
                 def show_r2_config() -> None:
                     if self.ui_manager:
                         self.ui_manager.show_configuration()
 
-                setattr(main_app, "show_radare2_configuration", show_r2_config)
+                main_app.show_radare2_configuration = show_r2_config
 
                 self.logger.info("Fallback functionality added")
 

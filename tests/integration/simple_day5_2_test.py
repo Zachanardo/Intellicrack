@@ -9,6 +9,7 @@ import sys
 import re
 from datetime import datetime
 from enum import Enum
+from typing import Any, Callable
 
 
 class MockAnalysisEvent(Enum):
@@ -27,15 +28,15 @@ class MockUpdateMode(Enum):
 class SimpleStringAnalyzer:
     """Simplified string analyzer for testing Day 5.2 integration."""
 
-    def __init__(self, binary_path):
+    def __init__(self, binary_path: str) -> None:
         self.binary_path = binary_path
 
-    def _calculate_entropy(self, text):
+    def _calculate_entropy(self, text: str) -> float:
         """Calculate Shannon entropy."""
         import math
         if not text:
             return 0.0
-        char_counts = {}
+        char_counts: dict[str, int] = {}
         for char in text:
             char_counts[char] = char_counts.get(char, 0) + 1
         entropy = 0.0
@@ -46,7 +47,7 @@ class SimpleStringAnalyzer:
                 entropy -= probability * math.log2(probability)
         return entropy
 
-    def _detect_license_key_formats(self, content):
+    def _detect_license_key_formats(self, content: str) -> bool:
         """Detect license key formats."""
         dash_pattern = re.compile(r'^[A-Z0-9]{4,8}(-[A-Z0-9]{4,8}){2,7}$', re.IGNORECASE)
         if dash_pattern.match(content):
@@ -54,14 +55,14 @@ class SimpleStringAnalyzer:
         uuid_pattern = re.compile(r'^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$', re.IGNORECASE)
         return bool(uuid_pattern.match(content))
 
-    def _detect_cryptographic_data(self, content):
+    def _detect_cryptographic_data(self, content: str) -> bool:
         """Detect cryptographic data."""
         hex_pattern = re.compile(r'^[0-9A-F]+$', re.IGNORECASE)
         if hex_pattern.match(content) and len(content) % 2 == 0 and len(content) in {32, 40, 64}:
             return True
         return False
 
-    def _analyze_api_function_patterns(self, content):
+    def _analyze_api_function_patterns(self, content: str) -> bool:
         """Analyze API function patterns."""
         apis = ['CreateFileA', 'malloc', 'SSL_connect', 'sqlite3_open']
         return content in apis
@@ -70,17 +71,17 @@ class SimpleStringAnalyzer:
 class SimpleRealtimeAnalyzer:
     """Simplified real-time analyzer for testing Day 5.2 functionality."""
 
-    def __init__(self, update_mode=MockUpdateMode.HYBRID):
+    def __init__(self, update_mode: MockUpdateMode = MockUpdateMode.HYBRID) -> None:
         self.update_mode = update_mode
-        self.watched_binaries = {}
-        self.event_callbacks = {event: [] for event in MockAnalysisEvent}
+        self.watched_binaries: dict[str, Any] = {}
+        self.event_callbacks: dict[MockAnalysisEvent, list[Callable[[Any], None]]] = {event: [] for event in MockAnalysisEvent}
         self.running = False
 
-    def _determine_analysis_components(self, binary_path, trigger_event):
+    def _determine_analysis_components(self, binary_path: str, trigger_event: MockAnalysisEvent) -> list[str]:
         """Determine analysis components - should include enhanced_strings."""
         return ["strings", "enhanced_strings", "imports"]
 
-    def _perform_enhanced_string_analysis(self, r2_mock, binary_path):
+    def _perform_enhanced_string_analysis(self, r2_mock: Any, binary_path: str) -> dict[str, Any]:
         """Enhanced string analysis method - core Day 5.2 functionality."""
         try:
             # Mock string data
@@ -101,14 +102,14 @@ class SimpleRealtimeAnalyzer:
             regular_strings = []
 
             for string_entry in mock_strings:
-                string_content = string_entry.get("string", "")
+                string_content = str(string_entry.get("string", ""))
 
                 # Apply enhanced pattern detection
                 is_license = string_analyzer._detect_license_key_formats(string_content)
                 is_crypto = string_analyzer._detect_cryptographic_data(string_content)
                 is_api = string_analyzer._analyze_api_function_patterns(string_content)
 
-                string_metadata = {
+                string_metadata: dict[str, Any] = {
                     "content": string_content,
                     "address": string_entry.get("vaddr", 0),
                     "size": string_entry.get("size", len(string_content)),
@@ -164,7 +165,7 @@ class SimpleRealtimeAnalyzer:
         except Exception as e:
             return {"error": str(e), "enhanced_features": {"available": False}}
 
-    def _monitor_dynamic_string_patterns(self, r2_mock, binary_path):
+    def _monitor_dynamic_string_patterns(self, r2_mock: Any, binary_path: str) -> dict[str, Any]:
         """Monitor dynamic string generation patterns."""
         try:
             # Mock memory strings
@@ -190,7 +191,7 @@ class SimpleRealtimeAnalyzer:
         except Exception as e:
             return {"error": str(e), "dynamic_extraction_enabled": False}
 
-    def _monitor_string_api_calls(self, r2_mock):
+    def _monitor_string_api_calls(self, r2_mock: Any) -> dict[str, Any]:
         """Monitor string-related API calls."""
         try:
             mock_imports = [
@@ -220,7 +221,7 @@ class SimpleRealtimeAnalyzer:
         except Exception as e:
             return {"error": str(e), "monitoring_active": False}
 
-    def get_status(self):
+    def get_status(self) -> dict[str, Any]:
         """Get analyzer status."""
         return {
             "running": self.running,
@@ -228,7 +229,7 @@ class SimpleRealtimeAnalyzer:
             "watched_binaries": len(self.watched_binaries)
         }
 
-    def register_callback(self, event_type, callback):
+    def register_callback(self, event_type: MockAnalysisEvent, callback: Callable[[Any], None]) -> bool:
         """Register event callback."""
         if event_type in self.event_callbacks:
             self.event_callbacks[event_type].append(callback)
@@ -236,7 +237,7 @@ class SimpleRealtimeAnalyzer:
         return False
 
 
-def test_day5_2_implementation():
+def test_day5_2_implementation() -> int:
     """Test Day 5.2 real-time string monitoring implementation."""
     print("DAY 5.2 REAL-TIME STRING MONITORING VALIDATION")
     print("=" * 50)
@@ -340,8 +341,8 @@ def test_day5_2_implementation():
             print(f"  OK INFO: Update mode: {status['update_mode']}")
 
             # Test callback registration
-            test_events = []
-            def test_callback(update):
+            test_events: list[Any] = []
+            def test_callback(update: Any) -> None:
                 test_events.append(update)
 
             if analyzer.register_callback(MockAnalysisEvent.STRING_ANALYSIS_UPDATED, test_callback):

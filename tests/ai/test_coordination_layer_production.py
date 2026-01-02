@@ -13,6 +13,7 @@ import tempfile
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
+from collections.abc import Iterator
 from typing import Any
 
 import pytest
@@ -21,6 +22,7 @@ from intellicrack.ai.coordination_layer import (
     AICoordinationLayer,
     AnalysisRequest,
     AnalysisStrategy,
+    CacheEntry,
     CoordinatedResult,
 )
 
@@ -42,7 +44,7 @@ def large_binary_file() -> Path:
 
 
 @pytest.fixture
-def cleanup_temp_files(temp_binary_file: Path, large_binary_file: Path):
+def cleanup_temp_files(temp_binary_file: Path, large_binary_file: Path) -> Iterator[None]:
     """Cleanup temporary files after tests."""
     yield
     if temp_binary_file.exists():
@@ -220,7 +222,7 @@ class TestCaching:
         coordinator = AICoordinationLayer()
         coordinator.cache_ttl = timedelta(seconds=1)
 
-        cache_entry = {
+        cache_entry: CacheEntry = {
             "result": CoordinatedResult(),
             "timestamp": datetime.now() - timedelta(seconds=2),
         }
@@ -234,7 +236,7 @@ class TestCaching:
         coordinator = AICoordinationLayer()
         coordinator.cache_ttl = timedelta(hours=1)
 
-        cache_entry = {
+        cache_entry: CacheEntry = {
             "result": CoordinatedResult(),
             "timestamp": datetime.now(),
         }
@@ -386,7 +388,7 @@ class TestEventEmission:
         coordinator = AICoordinationLayer()
         event_received = []
 
-        def event_callback(data: dict, source: str) -> None:
+        def event_callback(data: dict[str, Any], source: str) -> None:
             event_received.append((data, source))
 
         coordinator.event_bus.subscribe(

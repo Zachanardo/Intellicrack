@@ -23,6 +23,30 @@ from intellicrack.core.monitoring.registry_monitor import RegistryMonitor
 class MonitoringConfig:
     """Configuration for monitoring session."""
 
+    enable_api: bool
+    """Enable API monitoring."""
+
+    enable_registry: bool
+    """Enable registry monitoring."""
+
+    enable_file: bool
+    """Enable file monitoring."""
+
+    enable_network: bool
+    """Enable network monitoring."""
+
+    enable_memory: bool
+    """Enable memory monitoring."""
+
+    file_watch_paths: list[str] | None
+    """List of file paths to watch for modifications."""
+
+    network_ports: list[int] | None
+    """List of network ports to monitor."""
+
+    memory_scan_interval: float
+    """Interval in seconds for memory scans."""
+
     def __init__(self) -> None:
         """Initialize default configuration."""
         self.enable_api: bool = True
@@ -42,6 +66,30 @@ class MonitoringSession:
     Manages API, registry, file, network, and memory monitors.
     Provides unified interface for event handling and session control.
     """
+
+    pid: int
+    """Process ID being monitored."""
+
+    process_path: str
+    """Path to process executable."""
+
+    config: MonitoringConfig
+    """Configuration for monitoring."""
+
+    process_info: ProcessInfo
+    """Process information object."""
+
+    aggregator: EventAggregator
+    """Event aggregator instance."""
+
+    monitors: dict[str, BaseMonitor]
+    """Dictionary of active monitors."""
+
+    frida_server: FridaServerManager
+    """Frida server manager instance."""
+
+    _running: bool
+    """Flag indicating if monitoring session is running."""
 
     def __init__(self, pid: int, process_path: str, config: MonitoringConfig | None = None) -> None:
         """Initialize monitoring session.

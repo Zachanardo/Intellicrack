@@ -17,10 +17,7 @@ from typing import Any
 
 import pytest
 
-from intellicrack.core.network.cloud_license_hooker import (
-    CloudLicenseResponseGenerator,
-    run_cloud_license_hooker,
-)
+from intellicrack.core.network.cloud_license_hooker import CloudLicenseResponseGenerator, run_cloud_license_hooker
 
 
 class TestCloudLicenseHookerProduction:
@@ -206,7 +203,7 @@ class TestCloudLicenseHookerProduction:
         assert "signature" in license_data, "WebSocket payload must contain signature"
 
     def test_grpc_license_response_structure(self, hooker: CloudLicenseResponseGenerator) -> None:
-        """gRPC license response uses correct message format."""
+        """GRPC license response uses correct message format."""
         request_info = {
             "timestamp": datetime.now().isoformat(),
             "source": "127.0.0.1:12345",
@@ -422,7 +419,7 @@ class TestCloudLicenseHookerProduction:
                     response = client.recv(1024)
                     if response:
                         responses_received.append(response)
-            except (socket.timeout, ConnectionError):
+            except (TimeoutError, ConnectionError):
                 pass
 
         threads = [threading.Thread(target=send_request) for _ in range(num_connections)]

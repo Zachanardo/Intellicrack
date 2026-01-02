@@ -5,11 +5,25 @@ import threading
 import time
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 
 from intellicrack.core.processing.memory_optimizer import MemoryOptimizer, create_memory_optimizer
+
+
+class FakeAppInstance:
+    """Real test double for application instance."""
+
+    def __init__(self) -> None:
+        self.binary_cache: dict[int, bytes] = {}
+        self.analysis_cache: dict[int, dict[str, Any]] = {}
+        self.temp_analysis_results: list[dict[str, Any]] = []
+        self.temp_scan_data: list[dict[str, Any]] = []
+        self.update_output_calls: list[str] = []
+
+    def update_output(self, message: str) -> None:
+        """Track update_output calls."""
+        self.update_output_calls.append(message)
 
 
 @pytest.fixture
@@ -19,11 +33,15 @@ def optimizer() -> MemoryOptimizer:
 
 
 @pytest.fixture
-def optimizer_with_app() -> MemoryOptimizer:
-    """Create MemoryOptimizer with mock app instance."""
-    mock_app = MagicMock()
-    mock_app.update_output = MagicMock()
-    return MemoryOptimizer(app_instance=mock_app)
+def fake_app() -> FakeAppInstance:
+    """Create a fake app instance."""
+    return FakeAppInstance()
+
+
+@pytest.fixture
+def optimizer_with_app(fake_app: FakeAppInstance) -> MemoryOptimizer:
+    """Create MemoryOptimizer with fake app instance."""
+    return MemoryOptimizer(app_instance=fake_app)
 
 
 class TestMemoryOptimizerInitialization:
@@ -142,18 +160,26 @@ class TestMemoryMonitoring:
         """get_current_memory_usage() updates internal statistics."""
         optimizer.get_current_memory_usage()
 
-        assert optimizer.optimization_stats["current_memory_usage"] >= 0
-        assert optimizer.optimization_stats["peak_memory_usage"] >= 0
+        current = optimizer.optimization_stats["current_memory_usage"]
+        peak = optimizer.optimization_stats["peak_memory_usage"]
+        assert isinstance(current, (int, float))
+        assert isinstance(peak, (int, float))
+        assert current >= 0
+        assert peak >= 0
 
     def test_peak_memory_tracking_increases_with_usage(self, optimizer: MemoryOptimizer) -> None:
         """Peak memory usage increases but never decreases."""
         optimizer.get_current_memory_usage()
-        initial_peak = optimizer.optimization_stats["peak_memory_usage"]
+        initial_peak_val = optimizer.optimization_stats["peak_memory_usage"]
+        assert isinstance(initial_peak_val, (int, float))
+        initial_peak = initial_peak_val
 
         large_data = [b"\x00" * 1024 * 1024 for _ in range(10)]
 
         optimizer.get_current_memory_usage()
-        new_peak = optimizer.optimization_stats["peak_memory_usage"]
+        new_peak_val = optimizer.optimization_stats["peak_memory_usage"]
+        assert isinstance(new_peak_val, (int, float))
+        new_peak = new_peak_val
 
         assert new_peak >= initial_peak
 
@@ -161,7 +187,9 @@ class TestMemoryMonitoring:
         gc.collect()
 
         optimizer.get_current_memory_usage()
-        final_peak = optimizer.optimization_stats["peak_memory_usage"]
+        final_peak_val = optimizer.optimization_stats["peak_memory_usage"]
+        assert isinstance(final_peak_val, (int, float))
+        final_peak = final_peak_val
 
         assert final_peak >= new_peak
 
@@ -179,19 +207,26 @@ class TestMemoryOptimizationExecution:
 
         bytes_saved = optimizer.optimize_memory()
 
-        assert optimizer.optimization_stats["collections_triggered"] >= 1
+        collections = optimizer.optimization_stats["collections_triggered"]
+        assert isinstance(collections, int)
+        assert collections >= 1
         assert isinstance(bytes_saved, int)
 
     def test_optimize_memory_updates_statistics(self, optimizer: MemoryOptimizer) -> None:
         """optimize_memory() updates optimization statistics."""
         optimizer.enabled = True
-        initial_total = optimizer.optimization_stats["total_optimizations"]
+        initial_total_val = optimizer.optimization_stats["total_optimizations"]
+        assert isinstance(initial_total_val, int)
+        initial_total = initial_total_val
 
         optimizer.optimize_memory()
 
-        assert optimizer.optimization_stats["total_optimizations"] == initial_total + 1
+        new_total = optimizer.optimization_stats["total_optimizations"]
+        assert isinstance(new_total, int)
+        assert new_total == initial_total + 1
         assert optimizer.optimization_stats["last_optimization_time"] is not None
-        assert isinstance(optimizer.optimization_stats["last_optimization_time"], float)
+        last_time = optimizer.optimization_stats["last_optimization_time"]
+        assert isinstance(last_time, float)
 
     def test_optimize_memory_respects_technique_settings(self, optimizer: MemoryOptimizer) -> None:
         """optimize_memory() respects enabled/disabled techniques."""
@@ -205,12 +240,16 @@ class TestMemoryOptimizationExecution:
     def test_force_optimization_runs_regardless_of_enabled_state(self, optimizer: MemoryOptimizer) -> None:
         """force_optimization() runs even when optimizer is disabled."""
         optimizer.enabled = False
-        initial_optimizations = optimizer.optimization_stats["total_optimizations"]
+        initial_opt_val = optimizer.optimization_stats["total_optimizations"]
+        assert isinstance(initial_opt_val, int)
+        initial_optimizations = initial_opt_val
 
         bytes_saved = optimizer.force_optimization()
 
         assert isinstance(bytes_saved, int)
-        assert optimizer.optimization_stats["total_optimizations"] > initial_optimizations
+        new_opt = optimizer.optimization_stats["total_optimizations"]
+        assert isinstance(new_opt, int)
+        assert new_opt > initial_optimizations
         assert not optimizer.enabled
 
 
@@ -431,8 +470,10 @@ class TestApplicationSpecificLeakDetection:
 
     def test_check_application_leaks_detects_large_caches(self, optimizer_with_app: MemoryOptimizer) -> None:
         """_check_application_leaks() detects large cache accumulation."""
-        optimizer_with_app.app.binary_cache = dict.fromkeys(range(150), b"\x00" * 1000)
-        optimizer_with_app.app.analysis_cache = {i: {"data": i} for i in range(120)}
+        app = optimizer_with_app.app
+        assert isinstance(app, FakeAppInstance)
+        app.binary_cache = dict.fromkeys(range(150), b"\x00" * 1000)
+        app.analysis_cache = {i: {"data": i} for i in range(120)}
 
         leaks = optimizer_with_app._check_application_leaks()
 
@@ -442,8 +483,10 @@ class TestApplicationSpecificLeakDetection:
         self, optimizer_with_app: MemoryOptimizer
     ) -> None:
         """_check_application_leaks() detects accumulating temporary data."""
-        optimizer_with_app.app.temp_analysis_results = [{"result": i} for i in range(600)]
-        optimizer_with_app.app.temp_scan_data = [{"scan": i} for i in range(550)]
+        app = optimizer_with_app.app
+        assert isinstance(app, FakeAppInstance)
+        app.temp_analysis_results = [{"result": i} for i in range(600)]
+        app.temp_scan_data = [{"scan": i} for i in range(550)]
 
         leaks = optimizer_with_app._check_application_leaks()
 
@@ -510,8 +553,12 @@ class TestOptimizationStatistics:
         """get_optimization_stats() updates current memory usage."""
         stats = optimizer.get_optimization_stats()
 
-        assert stats["current_memory_usage"] >= 0
-        assert stats["current_usage_percentage"] >= 0.0
+        current_mem = stats["current_memory_usage"]
+        usage_pct = stats["current_usage_percentage"]
+        assert isinstance(current_mem, (int, float))
+        assert isinstance(usage_pct, float)
+        assert current_mem >= 0
+        assert usage_pct >= 0.0
 
     def test_reset_stats_clears_all_statistics(self, optimizer: MemoryOptimizer) -> None:
         """reset_stats() resets all optimization statistics to zero."""
@@ -650,11 +697,10 @@ class TestFactoryFunction:
         optimizer = create_memory_optimizer()
         assert isinstance(optimizer, MemoryOptimizer)
 
-    def test_create_memory_optimizer_with_app_instance(self) -> None:
+    def test_create_memory_optimizer_with_app_instance(self, fake_app: FakeAppInstance) -> None:
         """create_memory_optimizer() accepts app instance."""
-        mock_app = MagicMock()
-        optimizer = create_memory_optimizer(app_instance=mock_app)
-        assert optimizer.app is mock_app
+        optimizer = create_memory_optimizer(app_instance=fake_app)
+        assert optimizer.app is fake_app
 
     def test_create_memory_optimizer_with_configuration(self) -> None:
         """create_memory_optimizer() applies configuration parameters."""
@@ -731,12 +777,15 @@ class TestEdgeCasesAndErrorHandling:
         optimizer.optimize_memory()
         optimizer.optimize_memory()
 
-        if optimizer.optimization_stats["total_optimizations"] > 0:
-            expected_avg = (
-                optimizer.optimization_stats["memory_saved"]
-                / optimizer.optimization_stats["total_optimizations"]
-            )
-            assert optimizer.optimization_stats["average_memory_saved"] == expected_avg
+        total_opt = optimizer.optimization_stats["total_optimizations"]
+        assert isinstance(total_opt, int)
+        if total_opt > 0:
+            mem_saved = optimizer.optimization_stats["memory_saved"]
+            avg_saved = optimizer.optimization_stats["average_memory_saved"]
+            assert isinstance(mem_saved, (int, float))
+            assert isinstance(avg_saved, (int, float))
+            expected_avg = mem_saved / total_opt
+            assert avg_saved == expected_avg
 
 
 class TestThreadSafety:

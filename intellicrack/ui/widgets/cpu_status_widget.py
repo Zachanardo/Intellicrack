@@ -102,7 +102,6 @@ class CPUMonitorWorker(QObject):
             A dictionary containing CPU metrics including physical/logical core counts,
             CPU percentages per core, frequency, CPU statistics, load average,
             CPU time distribution, and top CPU-consuming processes.
-
         """
         # Get CPU info
         cpu_info = {
@@ -156,7 +155,6 @@ class CPUMonitorWorker(QObject):
 
         Returns:
             The CPU model name string, or "Unknown CPU" if retrieval fails.
-
         """
         try:
             if platform.system() == "Windows":
@@ -360,7 +358,6 @@ class CPUStatusWidget(QWidget):
 
         Args:
             data: Dictionary containing CPU metrics from the monitoring worker.
-
         """
         self.cpu_data = data
 
@@ -399,7 +396,6 @@ class CPUStatusWidget(QWidget):
 
         Args:
             core_percents: List of CPU usage percentages for each core.
-
         """
         # Create core bars if needed
         while len(self.core_bars) < len(core_percents):
@@ -433,7 +429,6 @@ class CPUStatusWidget(QWidget):
 
         Args:
             processes: List of process dictionaries with pid, name, cpu_percent, and memory_percent.
-
         """
         self.processes_table.setRowCount(len(processes))
 
@@ -459,7 +454,6 @@ class CPUStatusWidget(QWidget):
         Args:
             bar: The progress bar widget to color.
             value: The percentage value used for color selection.
-
         """
         if value >= 90:
             bar.setStyleSheet("QProgressBar::chunk { background-color: #dc3545; }")
@@ -473,6 +467,5 @@ class CPUStatusWidget(QWidget):
 
         Args:
             error_msg: Error message from the monitoring worker.
-
         """
         logger.error("CPU monitoring error: %s", error_msg)

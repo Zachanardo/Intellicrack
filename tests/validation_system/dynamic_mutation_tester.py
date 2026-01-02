@@ -11,7 +11,7 @@ import shutil
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass, asdict
 from datetime import datetime
 
@@ -44,9 +44,9 @@ class MutationTestResult:
     bypass_persistence: bool
     success: bool
     error_message: str | None = None
-    timestamp: str = None
+    timestamp: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp is None:
             self.timestamp = datetime.now().isoformat()
 
@@ -59,9 +59,9 @@ class DynamicMutationReport:
     adaptation_rate: float
     persistence_rate: float
     overall_success: bool
-    timestamp: str = None
+    timestamp: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp is None:
             self.timestamp = datetime.now().isoformat()
 
@@ -69,7 +69,7 @@ class DynamicMutationReport:
 class DynamicMutationTester:
     """Tests Intellicrack's response to real-time protection mutations."""
 
-    def __init__(self, base_dir: str = "C:\\Intellicrack\\tests\\validation_system"):
+    def __init__(self, base_dir: str = "C:\\Intellicrack\\tests\\validation_system") -> None:
         self.base_dir = Path(base_dir)
         self.mutations_dir = self.base_dir / "dynamic_mutations"
         self.mutations_dir.mkdir(exist_ok=True)
@@ -81,7 +81,7 @@ class DynamicMutationTester:
         self.variant_generator = ProtectionVariantGenerator(str(self.mutations_dir))
 
         # Define dynamic mutation types
-        self.dynamic_mutations = {
+        self.dynamic_mutations: dict[str, dict[str, str | Callable[[str, int], str]]] = {
             "changing_protection": {
                 "description": "Protection that changes after each run",
                 "implementation": self._create_changing_protection
@@ -311,6 +311,8 @@ class DynamicMutationTester:
                 raise ValueError(f"Unknown mutation type: {mutation_type}")
 
             implementation = self.dynamic_mutations[mutation_type]["implementation"]
+            if not callable(implementation):
+                raise TypeError(f"Implementation for {mutation_type} is not callable")
 
             # For changing protection, use run count
             # For others, use random ID
@@ -422,7 +424,7 @@ class DynamicMutationTester:
         ]
 
         # Group results by mutation type
-        mutation_results = {}
+        mutation_results: dict[str, list[MutationTestResult]] = {}
         for result in self.test_results:
             if result.mutation_type not in mutation_results:
                 mutation_results[result.mutation_type] = []

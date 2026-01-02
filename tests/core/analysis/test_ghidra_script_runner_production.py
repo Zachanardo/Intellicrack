@@ -8,12 +8,79 @@ Copyright (C) 2025 Zachary Flint
 
 import json
 import struct
+import subprocess
 from pathlib import Path
-from unittest.mock import Mock, patch
+from typing import Any, Dict, List, Optional
 
 import pytest
 
 from intellicrack.core.analysis.ghidra_script_runner import GhidraScript, GhidraScriptRunner
+
+
+class FakeCompletedProcess:
+    """Real test double for subprocess.CompletedProcess."""
+
+    def __init__(
+        self,
+        args: List[str],
+        returncode: int,
+        stdout: str = "",
+        stderr: str = "",
+    ) -> None:
+        self.args = args
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = stderr
+
+
+class FakeSubprocessRunner:
+    """Real test double for subprocess.run that simulates Ghidra execution."""
+
+    def __init__(self, default_returncode: int = 0, default_stdout: str = '{"result": "success"}') -> None:
+        self.default_returncode = default_returncode
+        self.default_stdout = default_stdout
+        self.call_history: List[Dict[str, Any]] = []
+        self.side_effect: Optional[Exception] = None
+
+    def run(
+        self,
+        args: List[str],
+        capture_output: bool = False,
+        text: bool = False,
+        timeout: Optional[int] = None,
+        check: bool = False,
+    ) -> FakeCompletedProcess:
+        """Simulate subprocess.run call."""
+        self.call_history.append({
+            'args': args,
+            'capture_output': capture_output,
+            'text': text,
+            'timeout': timeout,
+            'check': check,
+        })
+
+        if self.side_effect:
+            raise self.side_effect
+
+        return FakeCompletedProcess(
+            args=args,
+            returncode=self.default_returncode,
+            stdout=self.default_stdout,
+            stderr="",
+        )
+
+
+class FakePathClass:
+    """Real test double for Path class that returns specific path."""
+
+    def __init__(self, path_to_return: Path) -> None:
+        self.path_to_return = path_to_return
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Path:
+        """Return the configured path."""
+        if args:
+            return self.path_to_return
+        return self.path_to_return
 
 
 def create_minimal_pe(path: Path) -> Path:
@@ -137,56 +204,57 @@ class TestGhidraScriptDataclass:
 class TestGhidraScriptRunnerInitialization:
     """Test GhidraScriptRunner initialization."""
 
-    def test_initialization_with_valid_path(self, mock_ghidra_path: Path) -> None:
+    def test_initialization_with_valid_path(self, mock_ghidra_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """GhidraScriptRunner initializes with valid Ghidra path."""
-        with patch("intellicrack.core.analysis.ghidra_script_runner.Path") as mock_path:
-            mock_path.return_value = mock_ghidra_path
-            runner = GhidraScriptRunner(mock_ghidra_path)
+        fake_path = FakePathClass(mock_ghidra_path)
+        monkeypatch.setattr("intellicrack.core.analysis.ghidra_script_runner.Path", fake_path)
 
-            assert runner.ghidra_path == mock_ghidra_path
-            assert isinstance(runner.discovered_scripts, dict)
+        runner = GhidraScriptRunner(mock_ghidra_path)
 
-    def test_headless_path_detection_windows(self, mock_ghidra_path: Path) -> None:
+        assert runner.ghidra_path == mock_ghidra_path
+        assert isinstance(runner.discovered_scripts, dict)
+
+    def test_headless_path_detection_windows(self, mock_ghidra_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Runner detects Windows headless analyzer path."""
-        with patch("os.name", "nt"):
-            runner = GhidraScriptRunner(mock_ghidra_path)
+        monkeypatch.setattr("os.name", "nt")
+        runner = GhidraScriptRunner(mock_ghidra_path)
 
-            expected_path = mock_ghidra_path / "support" / "analyzeHeadless.bat"
-            assert str(runner.headless_path).endswith("analyzeHeadless.bat")
+        expected_path = mock_ghidra_path / "support" / "analyzeHeadless.bat"
+        assert str(runner.headless_path).endswith("analyzeHeadless.bat")
 
-    def test_headless_path_detection_unix(self, mock_ghidra_path: Path) -> None:
+    def test_headless_path_detection_unix(self, mock_ghidra_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Runner detects Unix headless analyzer path."""
-        with patch("os.name", "posix"):
-            runner = GhidraScriptRunner(mock_ghidra_path)
+        monkeypatch.setattr("os.name", "posix")
+        runner = GhidraScriptRunner(mock_ghidra_path)
 
-            expected_path = mock_ghidra_path / "support" / "analyzeHeadless"
-            assert "analyzeHeadless" in str(runner.headless_path)
+        expected_path = mock_ghidra_path / "support" / "analyzeHeadless"
+        assert "analyzeHeadless" in str(runner.headless_path)
 
 
 class TestScriptDiscovery:
     """Test script discovery functionality."""
 
-    def test_discover_python_scripts(self, mock_ghidra_path: Path, mock_script_dir: Path) -> None:
+    def test_discover_python_scripts(self, mock_ghidra_path: Path, mock_script_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Runner discovers Python scripts."""
         script_file = mock_script_dir / "test_script.py"
         script_file.write_text("# Test script\npass")
 
-        with patch.object(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir):
-            runner = GhidraScriptRunner(mock_ghidra_path)
+        monkeypatch.setattr(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir)
+        runner = GhidraScriptRunner(mock_ghidra_path)
 
-            assert "test_script" in runner.discovered_scripts
+        assert "test_script" in runner.discovered_scripts
 
-    def test_discover_java_scripts(self, mock_ghidra_path: Path, mock_script_dir: Path) -> None:
+    def test_discover_java_scripts(self, mock_ghidra_path: Path, mock_script_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Runner discovers Java scripts."""
         script_file = mock_script_dir / "java_script.java"
         script_file.write_text("// Java script\npublic class Test {}")
 
-        with patch.object(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir):
-            runner = GhidraScriptRunner(mock_ghidra_path)
+        monkeypatch.setattr(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir)
+        runner = GhidraScriptRunner(mock_ghidra_path)
 
-            assert "java_script" in runner.discovered_scripts
+        assert "java_script" in runner.discovered_scripts
 
-    def test_ignore_non_script_files(self, mock_ghidra_path: Path, mock_script_dir: Path) -> None:
+    def test_ignore_non_script_files(self, mock_ghidra_path: Path, mock_script_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Runner ignores non-script files."""
         readme_file = mock_script_dir / "README.md"
         readme_file.write_text("# README")
@@ -194,17 +262,17 @@ class TestScriptDiscovery:
         init_file = mock_script_dir / "__init__.py"
         init_file.write_text("")
 
-        with patch.object(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir):
-            runner = GhidraScriptRunner(mock_ghidra_path)
+        monkeypatch.setattr(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir)
+        runner = GhidraScriptRunner(mock_ghidra_path)
 
-            assert "README" not in runner.discovered_scripts
-            assert "__init__" not in runner.discovered_scripts
+        assert "README" not in runner.discovered_scripts
+        assert "__init__" not in runner.discovered_scripts
 
 
 class TestScriptMetadataParsing:
     """Test script metadata parsing."""
 
-    def test_parse_script_metadata(self, mock_ghidra_path: Path, mock_script_dir: Path) -> None:
+    def test_parse_script_metadata(self, mock_ghidra_path: Path, mock_script_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Runner parses script metadata from comments."""
         script_content = """# @metadata:output_format=json
 # @metadata:timeout=600
@@ -214,133 +282,140 @@ print('test')
         script_file = mock_script_dir / "metadata_test.py"
         script_file.write_text(script_content)
 
-        with patch.object(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir):
-            runner = GhidraScriptRunner(mock_ghidra_path)
+        monkeypatch.setattr(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir)
+        runner = GhidraScriptRunner(mock_ghidra_path)
 
-            if script := runner.discovered_scripts.get("metadata_test"):
-                assert script.output_format == "json"
+        if script := runner.discovered_scripts.get("metadata_test"):
+            assert script.output_format == "json"
 
-    def test_default_metadata_when_missing(self, mock_ghidra_path: Path, mock_script_dir: Path) -> None:
+    def test_default_metadata_when_missing(self, mock_ghidra_path: Path, mock_script_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Runner uses defaults when metadata is missing."""
         script_file = mock_script_dir / "no_metadata.py"
         script_file.write_text("print('test')")
 
-        with patch.object(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir):
-            runner = GhidraScriptRunner(mock_ghidra_path)
+        monkeypatch.setattr(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir)
+        runner = GhidraScriptRunner(mock_ghidra_path)
 
-            if script := runner.discovered_scripts.get("no_metadata"):
-                assert script.timeout == 300
-                assert script.output_format == "json"
+        if script := runner.discovered_scripts.get("no_metadata"):
+            assert script.timeout == 300
+            assert script.output_format == "json"
 
 
 class TestScriptExecution:
     """Test script execution functionality."""
 
-    def test_run_script_basic(self, mock_ghidra_path: Path, mock_script_dir: Path, test_binary: Path) -> None:
+    def test_run_script_basic(self, mock_ghidra_path: Path, mock_script_dir: Path, test_binary: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Runner executes script and returns results."""
         script_file = mock_script_dir / "basic_script.py"
         script_file.write_text("print('test')")
 
-        with patch.object(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir):
-            runner = GhidraScriptRunner(mock_ghidra_path)
+        monkeypatch.setattr(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir)
+        runner = GhidraScriptRunner(mock_ghidra_path)
 
-            with patch("subprocess.run") as mock_run:
-                mock_run.return_value = Mock(returncode=0, stdout="{\"result\": \"success\"}")
+        fake_subprocess = FakeSubprocessRunner(
+            default_returncode=0,
+            default_stdout='{"result": "success"}',
+        )
+        monkeypatch.setattr("subprocess.run", fake_subprocess.run)
 
-                result = runner.run_script(
-                    binary_path=test_binary,
-                    script_name="basic_script",
-                    parameters={},
-                )
+        result = runner.run_script(
+            binary_path=test_binary,
+            script_name="basic_script",
+            parameters={},
+        )
 
-                assert isinstance(result, dict)
+        assert isinstance(result, dict)
 
-    def test_run_script_with_parameters(self, mock_ghidra_path: Path, mock_script_dir: Path, test_binary: Path) -> None:
+    def test_run_script_with_parameters(self, mock_ghidra_path: Path, mock_script_dir: Path, test_binary: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Runner passes parameters to script."""
         script_file = mock_script_dir / "param_script.py"
         script_file.write_text("print('test')")
 
-        with patch.object(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir):
-            runner = GhidraScriptRunner(mock_ghidra_path)
+        monkeypatch.setattr(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir)
+        runner = GhidraScriptRunner(mock_ghidra_path)
 
-            with patch("subprocess.run") as mock_run:
-                mock_run.return_value = Mock(returncode=0, stdout="{\"result\": \"success\"}")
+        fake_subprocess = FakeSubprocessRunner(
+            default_returncode=0,
+            default_stdout='{"result": "success"}',
+        )
+        monkeypatch.setattr("subprocess.run", fake_subprocess.run)
 
-                result = runner.run_script(
-                    binary_path=test_binary,
-                    script_name="param_script",
-                    parameters={"param1": "value1"},
-                )
+        result = runner.run_script(
+            binary_path=test_binary,
+            script_name="param_script",
+            parameters={"param1": "value1"},
+        )
 
-                assert isinstance(result, dict)
+        assert isinstance(result, dict)
 
 
 class TestScriptManagement:
     """Test script management operations."""
 
-    def test_list_available_scripts(self, mock_ghidra_path: Path, mock_script_dir: Path) -> None:
+    def test_list_available_scripts(self, mock_ghidra_path: Path, mock_script_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """list_available_scripts returns all discovered scripts."""
         for i in range(3):
             script_file = mock_script_dir / f"script{i}.py"
             script_file.write_text("pass")
 
-        with patch.object(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir):
-            runner = GhidraScriptRunner(mock_ghidra_path)
+        monkeypatch.setattr(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir)
+        runner = GhidraScriptRunner(mock_ghidra_path)
 
-            scripts = runner.list_available_scripts()
+        scripts = runner.list_available_scripts()
 
-            assert isinstance(scripts, list)
-            assert len(scripts) >= 0
+        assert isinstance(scripts, list)
+        assert len(scripts) >= 0
 
-    def test_refresh_scripts(self, mock_ghidra_path: Path, mock_script_dir: Path) -> None:
+    def test_refresh_scripts(self, mock_ghidra_path: Path, mock_script_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """refresh_scripts rediscovers scripts."""
         script1 = mock_script_dir / "script1.py"
         script1.write_text("pass")
 
-        with patch.object(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir):
-            runner = GhidraScriptRunner(mock_ghidra_path)
+        monkeypatch.setattr(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir)
+        runner = GhidraScriptRunner(mock_ghidra_path)
 
-            initial_count = len(runner.discovered_scripts)
+        initial_count = len(runner.discovered_scripts)
 
-            script2 = mock_script_dir / "script2.py"
-            script2.write_text("pass")
+        script2 = mock_script_dir / "script2.py"
+        script2.write_text("pass")
 
-            count = runner.refresh_scripts()
+        count = runner.refresh_scripts()
 
-            assert isinstance(count, int)
-            assert count >= initial_count
+        assert isinstance(count, int)
+        assert count >= initial_count
 
 
 class TestErrorHandling:
     """Test error handling."""
 
-    def test_handles_missing_script_directory(self, mock_ghidra_path: Path) -> None:
+    def test_handles_missing_script_directory(self, mock_ghidra_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Runner handles missing script directory gracefully."""
         nonexistent_dir = mock_ghidra_path / "nonexistent_scripts"
 
-        with patch.object(GhidraScriptRunner, "intellicrack_scripts_dir", nonexistent_dir):
-            runner = GhidraScriptRunner(mock_ghidra_path)
+        monkeypatch.setattr(GhidraScriptRunner, "intellicrack_scripts_dir", nonexistent_dir)
+        runner = GhidraScriptRunner(mock_ghidra_path)
 
-            assert isinstance(runner.discovered_scripts, dict)
+        assert isinstance(runner.discovered_scripts, dict)
 
-    def test_handles_script_execution_error(self, mock_ghidra_path: Path, mock_script_dir: Path, test_binary: Path) -> None:
+    def test_handles_script_execution_error(self, mock_ghidra_path: Path, mock_script_dir: Path, test_binary: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Runner handles script execution errors."""
         script_file = mock_script_dir / "error_script.py"
         script_file.write_text("raise Exception('error')")
 
-        with patch.object(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir):
-            runner = GhidraScriptRunner(mock_ghidra_path)
+        monkeypatch.setattr(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir)
+        runner = GhidraScriptRunner(mock_ghidra_path)
 
-            with patch("subprocess.run") as mock_run:
-                mock_run.side_effect = Exception("Execution failed")
+        fake_subprocess = FakeSubprocessRunner()
+        fake_subprocess.side_effect = Exception("Execution failed")
+        monkeypatch.setattr("subprocess.run", fake_subprocess.run)
 
-                result = runner.run_script(
-                    binary_path=test_binary,
-                    script_name="error_script",
-                    parameters={},
-                )
+        result = runner.run_script(
+            binary_path=test_binary,
+            script_name="error_script",
+            parameters={},
+        )
 
-                assert isinstance(result, dict)
+        assert isinstance(result, dict)
 
     def test_handles_nonexistent_script(self, mock_ghidra_path: Path, test_binary: Path) -> None:
         """Runner handles request for nonexistent script."""
@@ -358,14 +433,14 @@ class TestErrorHandling:
 class TestScriptCaching:
     """Test script caching behavior."""
 
-    def test_discovered_scripts_cached(self, mock_ghidra_path: Path, mock_script_dir: Path) -> None:
+    def test_discovered_scripts_cached(self, mock_ghidra_path: Path, mock_script_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Discovered scripts are cached."""
         script_file = mock_script_dir / "cached_script.py"
         script_file.write_text("pass")
 
-        with patch.object(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir):
-            runner = GhidraScriptRunner(mock_ghidra_path)
+        monkeypatch.setattr(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir)
+        runner = GhidraScriptRunner(mock_ghidra_path)
 
-            initial_scripts = dict(runner.discovered_scripts)
+        initial_scripts = dict(runner.discovered_scripts)
 
-            assert runner.discovered_scripts == initial_scripts
+        assert runner.discovered_scripts == initial_scripts

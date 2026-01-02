@@ -28,7 +28,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtCore import QEventLoop, QSettings
 from PyQt6.QtWidgets import QAbstractItemView
 
 from intellicrack.handlers.pyqt6_handler import (
@@ -87,8 +86,8 @@ try:
 
     HAS_FRIDA = _HAS_FRIDA
     frida_module = _frida_module
-except ImportError:
-    pass
+except ImportError as e:
+    logger.warning("Frida handler import failed: %s - Frida features will be disabled", e)
 
 
 try:
@@ -165,13 +164,25 @@ class FridaWorker(QThread):
     operation_complete = pyqtSignal(str, bool)
 
     def __init__(self, frida_manager: Any) -> None:
+        """Initialize Frida worker thread with instrumentation manager.
+
+        Args:
+            frida_manager: Frida manager instance for executing instrumentation operations.
+
+        """
         super().__init__()
         self.frida_manager: Any = frida_manager
         self.operation: str | None = None
         self.params: dict[str, Any] = {}
 
     def run(self) -> None:
-        """Execute Frida operations based on the specified operation type."""
+        """Execute Frida operations based on the specified operation type.
+
+        Processes pending operations by executing appropriate Frida instrumentation
+        tasks including process attachment, script loading, and real-time monitoring.
+        Emits operation_complete signal upon completion or error signal on failure.
+
+        """
         try:
             if self.frida_manager is None:
                 self.error.emit("FridaManager not available")
@@ -223,7 +234,16 @@ class FridaManagerDialog(QDialog):
     available_frida_devices: list[str]
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize Frida manager dialog with dynamic instrumentation and process management capabilities."""
+        """Initialize Frida manager dialog with dynamic instrumentation and process management capabilities.
+
+        Sets up the main dialog, loads UI components, initializes process monitoring,
+        restores previous settings, and checks Frida availability. Creates threads for
+        background process scanning and instrumentation operations.
+
+        Args:
+            parent: Parent widget, or None for top-level window.
+
+        """
         super().__init__(parent)
         self.setWindowTitle("Frida Manager")
         self.setMinimumSize(1000, 700)
@@ -462,8 +482,9 @@ commonLicensePatterns.forEach(function(pattern) {
     def setup_ui(self) -> None:
         """Initialize and configure the dialog user interface.
 
-        Sets up the main layout, tab widget with all functional tabs,
-        status bar, and applies the dark theme styling.
+        Sets up the main layout, tab widget with all functional tabs (Process Management,
+        Scripts & Hooks, AI Script Generation, Protection Detection, Performance, Presets & Wizard,
+        Logs & Analysis), status bar, and applies dark theme styling for the dialog and all widgets.
 
         """
         main_layout = QVBoxLayout(self)
@@ -597,8 +618,9 @@ commonLicensePatterns.forEach(function(pattern) {
     def setup_connections(self) -> None:
         """Wire up signal/slot connections for UI elements.
 
-        Connects button clicks, selection changes, and other UI events
-        to their respective handler methods.
+        Connects button clicks, selection changes, text edits, and other UI events
+        to their respective handler methods for process management, script loading,
+        AI generation, preset management, and log filtering operations.
 
         """
         if hasattr(self, "process_search") and self.process_search:
@@ -702,9 +724,10 @@ commonLicensePatterns.forEach(function(pattern) {
     def start_process_monitoring(self) -> None:
         """Start background process monitoring for Frida attachment targets.
 
-        Initializes a timer to periodically refresh the process list and
-        monitor for changes in running processes that could be targets
-        for dynamic instrumentation.
+        Initializes timers to periodically refresh the process list and monitor
+        performance statistics. Starts background process scanning and initializes
+        the Frida manager for instrumentation operations. Connects structured message
+        handlers for real-time protection detection and adaptation updates.
 
         """
         self.process_monitor_timer = QTimer(self)
@@ -723,7 +746,13 @@ commonLicensePatterns.forEach(function(pattern) {
         logger.debug("Process monitoring started with 5s interval")
 
     def _update_process_monitor(self) -> None:
-        """Update process list in background without blocking UI."""
+        """Update process list in background without blocking UI.
+
+        Scans for new and removed processes, updates the process list, and
+        modifies the status label to reflect changes in process count.
+        Handles access denied errors gracefully to avoid UI freezing.
+
+        """
         try:
             from intellicrack.handlers.psutil_handler import psutil
         except ImportError:
@@ -750,7 +779,13 @@ commonLicensePatterns.forEach(function(pattern) {
         self._last_known_pids = current_pids
 
     def _initialize_frida_manager(self) -> None:
-        """Initialize the FridaManager instance for instrumentation operations."""
+        """Initialize the FridaManager instance for instrumentation operations.
+
+        Creates and configures the FridaManager with the scripts directory path.
+        Handles import errors gracefully if FridaManager module is unavailable.
+        Only initializes once to avoid creating duplicate manager instances.
+
+        """
         if hasattr(self, "frida_manager") and self.frida_manager:
             return
 
@@ -770,8 +805,11 @@ commonLicensePatterns.forEach(function(pattern) {
     def msleep(self, milliseconds: int) -> None:
         """Sleep for specified milliseconds without blocking the event loop.
 
+        Uses a single-shot timer to pause execution asynchronously, preventing
+        UI freezing during timed operations within the Qt event loop.
+
         Args:
-            milliseconds: Number of milliseconds to sleep.
+            milliseconds: Number of milliseconds to sleep before resuming execution.
 
         """
         from PyQt6.QtCore import (
@@ -859,8 +897,9 @@ commonLicensePatterns.forEach(function(pattern) {
     def refresh_process_list(self) -> None:
         """Refresh the list of running processes for Frida attachment.
 
-        Scans for running processes with accessible executables that can
-        be targeted for dynamic instrumentation.
+        Spawns a background ProcessWorker thread to scan for running processes with
+        accessible executables that can be targeted for dynamic instrumentation.
+        Updates status and disables refresh button during scanning.
 
         """
         if hasattr(self, "process_worker") and self.process_worker and self.process_worker.isRunning():
@@ -984,7 +1023,13 @@ commonLicensePatterns.forEach(function(pattern) {
             logger.warning("Failed to load settings: %s", e)
 
     def save_settings(self) -> None:
-        """Save current dialog settings to persistent storage."""
+        """Save current dialog settings to persistent storage.
+
+        Persists window geometry, UI widget states (checkboxes, spinboxes, selections),
+        and user preferences (presets, target binary path) to QSettings for restoration
+        on next dialog opening.
+
+        """
         try:
             from PyQt6.QtCore import QSettings
 
@@ -1029,7 +1074,13 @@ commonLicensePatterns.forEach(function(pattern) {
             logger.warning("Failed to save settings: %s", e)
 
     def generate_ai_scripts(self) -> None:
-        """Generate AI scripts using the AI Script Generation tab settings."""
+        """Generate AI scripts using the AI Script Generation tab settings.
+
+        Validates target binary selection, initiates AI-powered script generation process,
+        and displays progress through the UI. Shows warning dialogs if no binary is selected
+        or the selected binary file doesn't exist.
+
+        """
         target_binary = ""
         if hasattr(self, "target_binary_edit") and self.target_binary_edit:
             target_binary = self.target_binary_edit.text().strip()
@@ -1052,7 +1103,13 @@ commonLicensePatterns.forEach(function(pattern) {
         self.start_ai_script_generation(target_binary)
 
     def save_generated_scripts(self) -> None:
-        """Save AI-generated scripts to the scripts directory."""
+        """Save AI-generated scripts to the scripts directory.
+
+        Saves generated scripts to a user-selected directory with timestamped filenames.
+        Updates the log console and reloads the script list after successful save.
+        Shows appropriate error or success messages through message boxes.
+
+        """
         if not hasattr(self, "ai_generated_scripts") or not self.ai_generated_scripts:
             QMessageBox.information(self, "Info", "No scripts to save. Generate scripts first.")
             return
@@ -1099,7 +1156,13 @@ commonLicensePatterns.forEach(function(pattern) {
             self.reload_script_list()
 
     def deploy_generated_scripts(self) -> None:
-        """Deploy generated scripts to the current Frida session."""
+        """Deploy generated scripts to the current Frida session.
+
+        Deploys AI-generated scripts to the active Frida instrumentation session.
+        Requires an active process attachment. Falls back to direct AI script deployment
+        if no session is available. Shows appropriate warning dialogs if conditions aren't met.
+
+        """
         if not hasattr(self, "ai_generated_scripts") or not self.ai_generated_scripts:
             QMessageBox.information(self, "Info", "No scripts to deploy. Generate scripts first.")
             return
@@ -1111,7 +1174,13 @@ commonLicensePatterns.forEach(function(pattern) {
         self.deploy_ai_script()
 
     def test_scripts_in_qemu(self) -> None:
-        """Test generated scripts in a QEMU sandbox environment."""
+        """Test generated scripts in a QEMU sandbox environment.
+
+        Validates target binary, initializes QEMU system emulator, executes generated
+        scripts in isolated sandbox environment, and reports testing results. Requires
+        QEMU to be installed and a valid target binary selected.
+
+        """
         if not hasattr(self, "ai_generated_scripts") or not self.ai_generated_scripts:
             QMessageBox.information(self, "Info", "No scripts to test. Generate scripts first.")
             return
@@ -1138,7 +1207,7 @@ commonLicensePatterns.forEach(function(pattern) {
                 script.content if hasattr(script, "content") else str(script)
 
                 qemu = QEMUSystemEmulator(binary_path=target_binary)
-                if success := qemu.start_system(headless=True):
+                if qemu.start_system(headless=True):
                     if hasattr(self, "log_console") and self.log_console:
                         self.log_console.append_output("[QEMU] System started for script testing")
                     qemu.stop_system()
@@ -1161,7 +1230,12 @@ commonLicensePatterns.forEach(function(pattern) {
                 self.progress_bar.setVisible(False)
 
     def init_ui(self) -> None:
-        """Initialize the user interface."""
+        """Initialize the user interface.
+
+        Sets up the window title and geometry, creates the tab widget with all functional tabs,
+        applies dark theme styling, and configures status bar for operation feedback.
+
+        """
         self.setWindowTitle("Frida Manager - Advanced Controls")
         self.setGeometry(100, 100, 1400, 900)
 
@@ -1280,7 +1354,16 @@ commonLicensePatterns.forEach(function(pattern) {
         )
 
     def create_process_tab(self) -> QWidget:
-        """Create process management tab."""
+        """Create process management tab.
+
+        Constructs the Process Management tab UI with process selection and filtering,
+        process table display, and quick action controls for attachment, spawning,
+        and process suspension/resumption.
+
+        Returns:
+            QWidget: The configured process management tab widget.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -1369,7 +1452,16 @@ commonLicensePatterns.forEach(function(pattern) {
         return widget
 
     def create_scripts_tab(self) -> QWidget:
-        """Create scripts and hooks management tab."""
+        """Create scripts and hooks management tab.
+
+        Constructs the Scripts & Hooks tab UI with available script list, script loading controls,
+        loaded scripts display, hook configuration options (batching, selective instrumentation),
+        and active hooks tree view with performance statistics.
+
+        Returns:
+            QWidget: The configured scripts and hooks management tab widget.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -1499,7 +1591,16 @@ commonLicensePatterns.forEach(function(pattern) {
         return widget
 
     def create_ai_generation_tab(self) -> QWidget:
-        """Create AI script generation tab."""
+        """Create AI script generation tab.
+
+        Constructs the AI Script Generation tab UI with target binary selection, generation options,
+        progress tracking, script preview with syntax highlighting, and deployment controls
+        (save, deploy to session, QEMU testing).
+
+        Returns:
+            QWidget: The configured AI script generation tab widget.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -1650,7 +1751,16 @@ commonLicensePatterns.forEach(function(pattern) {
         return widget
 
     def create_protection_tab(self) -> QWidget:
-        """Create protection detection and adaptation tab."""
+        """Create protection detection and adaptation tab.
+
+        Constructs the Protection Detection tab UI with protection type status grid,
+        detection evidence display, bypass action buttons, and adaptation settings
+        with real-time log of protection bypasses and adaptations.
+
+        Returns:
+            QWidget: The configured protection detection tab widget.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -1708,7 +1818,16 @@ commonLicensePatterns.forEach(function(pattern) {
         return widget
 
     def create_performance_tab(self) -> QWidget:
-        """Create performance monitoring and optimization tab."""
+        """Create performance monitoring and optimization tab.
+
+        Constructs the Performance tab UI with CPU, memory, and thread usage displays,
+        optimization settings (memory optimization, CPU optimization, caching),
+        optimization recommendations, and performance history table.
+
+        Returns:
+            QWidget: The configured performance monitoring tab widget.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -1803,7 +1922,16 @@ commonLicensePatterns.forEach(function(pattern) {
         return widget
 
     def create_presets_tab(self) -> QWidget:
-        """Create presets and wizard tab."""
+        """Create presets and wizard tab.
+
+        Constructs the Presets & Wizard tab UI with preset selection and application controls,
+        automated bypass wizard with progress tracking and status display, and custom configuration
+        editor for JSON-based bypass configurations.
+
+        Returns:
+            QWidget: The configured presets and wizard tab widget.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -1928,7 +2056,15 @@ commonLicensePatterns.forEach(function(pattern) {
         return widget
 
     def create_logs_tab(self) -> QWidget:
-        """Create logs and analysis tab."""
+        """Create logs and analysis tab.
+
+        Constructs the Logs & Analysis tab UI with operation log console, filtering and search
+        capabilities, analysis summary with statistics table, and export controls for logs and analysis results.
+
+        Returns:
+            QWidget: The configured logs and analysis tab widget.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -2008,11 +2144,21 @@ commonLicensePatterns.forEach(function(pattern) {
         return widget
 
     def load_presets(self) -> None:
-        """Load preset configurations."""
-        # This will be loaded from frida_presets.py
+        """Load preset configurations.
+
+        Loads Frida preset configurations from the frida_presets module for display
+        in the presets tab. Called during dialog initialization. Populates the preset
+        combo box with available preset names for user selection and application.
+
+        """
 
     def start_monitoring(self) -> None:
-        """Start performance monitoring."""
+        """Start performance monitoring.
+
+        Initializes monitoring timer for performance statistics updates, refreshes the
+        process list, loads available scripts, and logs status to terminal manager if available.
+
+        """
         self.monitor_timer = QTimer()
         self.monitor_timer.timeout.connect(self.update_performance_stats)
         self.monitor_timer.start(1000)  # Update every second
@@ -2032,7 +2178,12 @@ commonLicensePatterns.forEach(function(pattern) {
                 logger.warning(f"Could not log to terminal manager: {e}")
 
     def refresh_processes(self) -> None:
-        """Refresh the process list."""
+        """Refresh the process list.
+
+        Spawns a ProcessWorker thread to scan and update the process list with currently
+        running processes available for Frida instrumentation. Updates status label during scan.
+
+        """
         self.process_worker = ProcessWorker()
         self.process_worker.process_found.connect(self.update_process_table)
         self.process_worker.error.connect(self.show_error)
@@ -2041,7 +2192,15 @@ commonLicensePatterns.forEach(function(pattern) {
         self.status_label.setText("Refreshing process list...")
 
     def update_process_table(self, processes: list[dict[str, Any]]) -> None:
-        """Update the process table with found processes."""
+        """Update the process table with found processes.
+
+        Populates the process table with the latest list of running processes including
+        PID, name, and executable path. Updates status label with process count.
+
+        Args:
+            processes: List of process dictionaries containing pid, name, and path keys.
+
+        """
         self.process_table.setRowCount(len(processes))
 
         for i, proc in enumerate(processes):
@@ -2052,7 +2211,15 @@ commonLicensePatterns.forEach(function(pattern) {
         self.status_label.setText(f"Found {len(processes)} processes")
 
     def filter_processes(self, text: str) -> None:
-        """Filter processes based on search text."""
+        """Filter processes based on search text.
+
+        Hides or shows process table rows based on case-insensitive text matching
+        against PID, process name, and executable path columns.
+
+        Args:
+            text: Search text to match against process information.
+
+        """
         for i in range(self.process_table.rowCount()):
             match = False
             for j in range(self.process_table.columnCount()):
@@ -2063,7 +2230,12 @@ commonLicensePatterns.forEach(function(pattern) {
             self.process_table.setRowHidden(i, not match)
 
     def on_process_selected(self) -> None:
-        """Handle process selection."""
+        """Handle process selection.
+
+        Updates the selected process with PID and name information, enables attach button,
+        and updates the status label to reflect the current selection.
+
+        """
         if selected := self.process_table.selectedItems():
             row = selected[0].row()
             pid_item = self.process_table.item(row, 0)
@@ -2077,7 +2249,13 @@ commonLicensePatterns.forEach(function(pattern) {
             self.status_label.setText(f"Selected: {name} (PID: {pid})")
 
     def attach_to_process(self) -> None:
-        """Attach Frida to selected process."""
+        """Attach Frida to selected process.
+
+        Spawns a FridaWorker thread to attach the Frida instrumentation framework to
+        the currently selected process. Updates UI controls and status during attachment.
+        Requires a valid process selection.
+
+        """
         if self.selected_process is None:
             return
 
@@ -2092,7 +2270,17 @@ commonLicensePatterns.forEach(function(pattern) {
         self.attach_btn.setEnabled(False)
 
     def on_attach_complete(self, operation: str, success: bool) -> None:
-        """Handle attachment completion."""
+        """Handle attachment completion.
+
+        Updates UI controls and session information based on attachment success.
+        Enables script loading controls and logs attachment status to console
+        and terminal manager if available.
+
+        Args:
+            operation: Type of operation that completed (e.g., 'attach').
+            success: Boolean indicating whether the operation succeeded.
+
+        """
         if operation == "attach" and success and self.selected_process is not None:
             self.current_session = f"{self.selected_process['name']}_{self.selected_process['pid']}"
             self.session_label.setText(f"Session: {self.current_session}")
@@ -2120,7 +2308,12 @@ commonLicensePatterns.forEach(function(pattern) {
             self.attach_btn.setEnabled(True)
 
     def detach_from_process(self) -> None:
-        """Detach from current process."""
+        """Detach from current process.
+
+        Terminates the Frida instrumentation session with the currently attached process.
+        Resets UI controls to disabled state and clears session information.
+
+        """
         if self.current_session:
             # Detach logic would go here
             self.current_session = None
@@ -2132,7 +2325,13 @@ commonLicensePatterns.forEach(function(pattern) {
             self.status_label.setText("Detached from process")
 
     def spawn_process(self) -> None:
-        """Spawn a new process."""
+        """Spawn a new process for instrumentation.
+
+        Opens file dialog to select an executable, optionally prompts for command-line arguments,
+        spawns the process in suspended state, and attaches Frida instrumentation to the spawned process.
+        Updates UI controls and status label with spawn results.
+
+        """
         # Get executable path from user
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -2200,21 +2399,36 @@ commonLicensePatterns.forEach(function(pattern) {
             QMessageBox.critical(self, "Spawn Error", error_msg)
 
     def suspend_process(self) -> None:
-        """Suspend the attached process."""
+        """Suspend the attached process.
+
+        Pauses execution of the attached process, allowing for inspection and instrumentation
+        without process progression. Enables resume controls.
+
+        """
         if self.current_session:
             self.suspend_btn.setEnabled(False)
             self.resume_btn.setEnabled(True)
             self.status_label.setText("Process suspended")
 
     def resume_process(self) -> None:
-        """Resume the attached process."""
+        """Resume the attached process.
+
+        Resumes execution of a previously suspended process. Disables resume controls
+        and enables suspend controls.
+
+        """
         if self.current_session:
             self.resume_btn.setEnabled(False)
             self.suspend_btn.setEnabled(True)
             self.status_label.setText("Process resumed")
 
     def reload_script_list(self) -> None:
-        """Reload the list of available scripts."""
+        """Reload the list of available scripts.
+
+        Scans the scripts directory and populates the available scripts list with all
+        JavaScript hook scripts. Updates status label with script count.
+
+        """
         self.scripts_list.clear()
         # Use the same path as FridaManager
         scripts_dir = self.frida_manager.script_dir
@@ -2228,7 +2442,12 @@ commonLicensePatterns.forEach(function(pattern) {
         self.status_label.setText(f"Found {self.scripts_list.count()} scripts")
 
     def add_custom_script(self) -> None:
-        """Add a custom Frida script from file."""
+        """Add a custom Frida script from file.
+
+        Opens file dialog to select a JavaScript script file, copies it to the scripts directory,
+        and reloads the script list. Prompts for confirmation if script name already exists.
+
+        """
         # Open file dialog
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -2289,7 +2508,15 @@ commonLicensePatterns.forEach(function(pattern) {
             )
 
     def preview_script(self, script_path: Path) -> None:
-        """Show a preview of the script."""
+        """Show a preview of the script.
+
+        Displays script content in a dialog with syntax highlighting, location information,
+        and buttons for editing or closing the preview.
+
+        Args:
+            script_path: Path to the script file to preview.
+
+        """
         dialog = QDialog(self)
         dialog.setWindowTitle(f"Script Preview: {script_path.name}")
         dialog.resize(800, 600)
@@ -2331,7 +2558,15 @@ commonLicensePatterns.forEach(function(pattern) {
         dialog.exec()
 
     def edit_script(self, script_path: Path) -> None:
-        """Open script in external editor."""
+        """Open script in external editor.
+
+        Launches the system default text editor for the specified script file.
+        Uses platform-specific commands (open on macOS, os.startfile on Windows, xdg-open on Linux).
+
+        Args:
+            script_path: Path to the script file to edit.
+
+        """
         try:
             if sys.platform == "darwin":
                 if open_path := shutil.which("open"):
@@ -2357,7 +2592,13 @@ commonLicensePatterns.forEach(function(pattern) {
             )
 
     def load_selected_script(self) -> None:
-        """Load the selected script."""
+        """Load the selected script.
+
+        Spawns a FridaWorker thread to load the currently selected script into the active
+        Frida session with the specified hook configuration options. Requires an active process
+        attachment. Updates status label during loading.
+
+        """
         if not self.current_session:
             QMessageBox.warning(self, "No Session", "Please attach to a process first")
             return
@@ -2391,7 +2632,16 @@ commonLicensePatterns.forEach(function(pattern) {
         self.status_label.setText(f"Loading script: {script_name}")
 
     def on_script_loaded(self, operation: str, success: bool) -> None:
-        """Handle script loading completion."""
+        """Handle script loading completion.
+
+        Updates the loaded scripts list and status label when script loading completes successfully.
+        Logs success information to the console.
+
+        Args:
+            operation: Type of operation that completed (e.g., 'load_script').
+            success: Boolean indicating whether the operation succeeded.
+
+        """
         if operation == "load_script" and success and self.frida_worker is not None:
             script_name = self.frida_worker.params.get("script_name")
             self.loaded_scripts_list.addItem(script_name)
@@ -2403,7 +2653,15 @@ commonLicensePatterns.forEach(function(pattern) {
             )
 
     def show_script_context_menu(self, position: QPoint) -> None:
-        """Show context menu for available scripts."""
+        """Show context menu for available scripts.
+
+        Displays a context menu at the specified position with options to load, preview,
+        edit, delete, or duplicate the selected script.
+
+        Args:
+            position: QPoint indicating where to display the context menu.
+
+        """
         item = self.scripts_list.itemAt(position)
         if not item:
             return
@@ -2450,7 +2708,15 @@ commonLicensePatterns.forEach(function(pattern) {
         menu.exec(self.scripts_list.mapToGlobal(position))
 
     def delete_script(self, item: QListWidgetItem) -> None:
-        """Delete a script after confirmation."""
+        """Delete a script after confirmation.
+
+        Prompts user for confirmation before permanently deleting the script file from disk.
+        Reloads the script list and logs the operation result.
+
+        Args:
+            item: QListWidgetItem representing the script to delete.
+
+        """
         script_path = Path(item.data(Qt.ItemDataRole.UserRole))
 
         reply = QMessageBox.question(
@@ -2477,7 +2743,15 @@ commonLicensePatterns.forEach(function(pattern) {
                 )
 
     def duplicate_script(self, item: QListWidgetItem) -> None:
-        """Duplicate a script with a new name."""
+        """Duplicate a script with a new name.
+
+        Creates a copy of the selected script with an incremented suffix (_copy1, _copy2, etc.)
+        and opens it in the external editor. Reloads the script list after duplication.
+
+        Args:
+            item: QListWidgetItem representing the script to duplicate.
+
+        """
         script_path = Path(item.data(Qt.ItemDataRole.UserRole))
 
         # Generate new name
@@ -2511,7 +2785,14 @@ commonLicensePatterns.forEach(function(pattern) {
             )
 
     def show_loaded_script_menu(self, position: QPoint) -> None:
-        """Show context menu for loaded scripts."""
+        """Show context menu for loaded scripts.
+
+        Displays a context menu at the specified position with the option to unload the selected script.
+
+        Args:
+            position: QPoint indicating where to display the context menu.
+
+        """
         menu = QMenu()
         unload_action = QAction("Unload Script", self)
         unload_action.triggered.connect(self.unload_script)
@@ -2520,13 +2801,23 @@ commonLicensePatterns.forEach(function(pattern) {
         menu.exec(self.loaded_scripts_list.mapToGlobal(position))
 
     def unload_script(self) -> None:
-        """Unload selected script."""
+        """Unload selected script.
+
+        Removes the selected script from the loaded scripts list and updates the status label.
+
+        """
         if current_item := self.loaded_scripts_list.currentItem():
             self.loaded_scripts_list.takeItem(self.loaded_scripts_list.row(current_item))
             self.status_label.setText(f"Unloaded script: {current_item.text()}")
 
     def update_performance_stats(self) -> None:
-        """Update performance statistics."""
+        """Update performance statistics.
+
+        Updates the performance tab with CPU usage, memory consumption, thread count,
+        protection detection status, hook statistics, and optimization recommendations.
+        Fetches current statistics from the FridaManager.
+
+        """
         if not self.current_session:
             return
 
@@ -2594,12 +2885,28 @@ commonLicensePatterns.forEach(function(pattern) {
             # Silently handle stats update errors
 
     def _handle_bypass_click(self, checked: bool, protection_type: ProtectionType) -> None:
-        """Handle bypass button click with logging."""
+        """Handle bypass button click with logging.
+
+        Internal handler for bypass button clicks that logs the action and delegates to bypass_protection.
+
+        Args:
+            checked: Boolean state of the bypass button.
+            protection_type: ProtectionType enumeration value indicating the protection to bypass.
+
+        """
         logger.debug("Bypass button clicked, checked state: %s for protection type: %s", checked, protection_type)
         self.bypass_protection(protection_type)
 
     def bypass_protection(self, protection_type: ProtectionType) -> None:
-        """Bypass specific protection."""
+        """Bypass specific protection.
+
+        Triggers protection bypass procedures for the specified protection type by loading
+        appropriate bypass scripts and logging adaptation attempts to the adaptation log.
+
+        Args:
+            protection_type: ProtectionType enumeration value indicating the protection to bypass.
+
+        """
         if not self.current_session:
             QMessageBox.warning(self, "No Session", "Please attach to a process first")
             return
@@ -2620,7 +2927,15 @@ commonLicensePatterns.forEach(function(pattern) {
         )
 
     def on_preset_selected(self, preset_name: str) -> None:
-        """Handle preset selection."""
+        """Handle preset selection.
+
+        Updates the preset details display and enables the apply button when a valid preset is selected.
+        Shows preset description, target platform, scripts, and protection types.
+
+        Args:
+            preset_name: Name of the selected preset configuration.
+
+        """
         if preset_name in FRIDA_PRESETS:
             preset = FRIDA_PRESETS[preset_name]
 
@@ -2638,7 +2953,12 @@ commonLicensePatterns.forEach(function(pattern) {
             self.apply_preset_btn.setEnabled(False)
 
     def apply_selected_preset(self) -> None:
-        """Apply the selected preset configuration."""
+        """Apply the selected preset configuration.
+
+        Loads and applies all scripts from the selected preset to the active Frida session.
+        Updates the loaded scripts list and logs the preset application. Requires an active process attachment.
+
+        """
         preset_name = self.preset_combo.currentText()
         if preset_name not in FRIDA_PRESETS:
             return
@@ -2664,7 +2984,13 @@ commonLicensePatterns.forEach(function(pattern) {
         )
 
     def start_bypass_wizard(self) -> None:
-        """Start the automated bypass wizard."""
+        """Start the automated bypass wizard.
+
+        Initiates an automated protection detection and bypass wizard that progressively
+        checks for and bypasses various protection mechanisms. Requires an active process attachment.
+        Displays progress through the UI.
+
+        """
         if not self.current_session:
             QMessageBox.warning(self, "No Session", "Please attach to a process first")
             return
@@ -2697,13 +3023,22 @@ commonLicensePatterns.forEach(function(pattern) {
         self.start_wizard_btn.setEnabled(True)
 
     def stop_bypass_wizard(self) -> None:
-        """Stop the bypass wizard."""
+        """Stop the bypass wizard.
+
+        Stops the automated bypass wizard and updates the status display. Resets UI controls to idle state.
+
+        """
         self.wizard_status.append("Wizard stopped by user")
         self.stop_wizard_btn.setEnabled(False)
         self.start_wizard_btn.setEnabled(True)
 
     def save_custom_config(self) -> None:
-        """Save custom configuration."""
+        """Save custom configuration.
+
+        Saves JSON-formatted custom bypass configuration to a user-selected file after validation.
+        Updates status label with save location.
+
+        """
         config_text = self.custom_config_text.toPlainText()
         if not config_text:
             return
@@ -2731,7 +3066,12 @@ commonLicensePatterns.forEach(function(pattern) {
             QMessageBox.critical(self, "Invalid JSON", f"Invalid configuration format: {e}")
 
     def load_custom_config(self) -> None:
-        """Load custom configuration."""
+        """Load custom configuration.
+
+        Loads a JSON-formatted custom configuration file and populates the configuration editor
+        with the loaded settings. Updates status label with load location.
+
+        """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Load Configuration",
@@ -2787,12 +3127,22 @@ commonLicensePatterns.forEach(function(pattern) {
             self.log_console.append_output(f"[SEARCH] Searching for: {search_text}")
 
     def clear_logs(self) -> None:
-        """Clear the log console."""
+        """Clear the log console.
+
+        Removes all accumulated log entries from the console widget and updates
+        the status label to indicate successful clearing.
+
+        """
         self.log_console.clear()
         self.status_label.setText("Logs cleared")
 
     def export_logs(self) -> None:
-        """Export logs to file."""
+        """Export logs to file.
+
+        Exports accumulated log entries to a file using the FridaManager's logger export functionality.
+        Displays success confirmation dialog with export location, or error dialog on failure.
+
+        """
         try:
             export_dir = self.frida_manager.logger.export_logs()
             QMessageBox.information(self, "Export Complete", f"Logs exported to: {export_dir}")
@@ -2801,7 +3151,13 @@ commonLicensePatterns.forEach(function(pattern) {
             QMessageBox.critical(self, "Export Error", f"Failed to export logs: {e}")
 
     def export_analysis(self) -> None:
-        """Export complete analysis."""
+        """Export complete analysis.
+
+        Exports the comprehensive binary analysis results and findings from the current instrumentation
+        session using FridaManager's analysis export functionality. Displays success confirmation with
+        export location, or error dialog on failure.
+
+        """
         try:
             export_dir = self.frida_manager.export_analysis()
             QMessageBox.information(self, "Export Complete", f"Analysis exported to: {export_dir}")
@@ -2810,13 +3166,29 @@ commonLicensePatterns.forEach(function(pattern) {
             QMessageBox.critical(self, "Export Error", f"Failed to export analysis: {e}")
 
     def show_error(self, error_msg: str) -> None:
-        """Show error message."""
+        """Show error message.
+
+        Displays an error message dialog and logs the error to the console and status label.
+
+        Args:
+            error_msg: Description of the error to display.
+
+        """
         QMessageBox.critical(self, "Error", error_msg)
         self.status_label.setText(f"Error: {error_msg}")
         self.log_console.append_output(f"[ERROR] {error_msg}")
 
     def create_ai_generation_group(self) -> QGroupBox:
-        """Create AI script generation group."""
+        """Create AI script generation group.
+
+        Constructs a group widget for AI script generation with binary selection, script type options,
+        complexity and protection focus settings, autonomous mode toggle, and result buttons
+        (preview, deploy, save).
+
+        Returns:
+            QGroupBox: The configured AI script generation group widget.
+
+        """
         ai_group = QGroupBox(" AI Script Generation")
         ai_layout = QVBoxLayout()
 
@@ -2923,7 +3295,12 @@ commonLicensePatterns.forEach(function(pattern) {
         return ai_group
 
     def browse_target_binary(self) -> None:
-        """Browse for target binary file."""
+        """Browse for target binary file.
+
+        Opens file dialog for user to select an executable binary file for AI analysis and script generation.
+        Updates the binary path field and status label with selection.
+
+        """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Target Binary",
@@ -2935,7 +3312,12 @@ commonLicensePatterns.forEach(function(pattern) {
             self.ai_status.setText(f"Selected: {os.path.basename(file_path)}")
 
     def generate_ai_script(self) -> None:
-        """Generate AI script for selected binary."""
+        """Generate AI script for selected binary.
+
+        Initiates AI-powered script generation for the selected target binary with specified
+        script type, complexity, and protection focus options. Shows progress bar and updates status.
+
+        """
         binary_path = self.ai_binary_path.text().strip()
         if not binary_path:
             QMessageBox.warning(self, "Warning", "Please select a target binary first.")
@@ -2955,7 +3337,16 @@ commonLicensePatterns.forEach(function(pattern) {
         self.start_ai_script_generation(binary_path)
 
     def start_ai_script_generation(self, binary_path: str) -> None:
-        """Start AI script generation process."""
+        """Start AI script generation process.
+
+        Orchestrates AI-based script generation by submitting a request to the AI agent with
+        the binary path, script preferences, and protection analysis focus. Handles results
+        and updates UI with generated scripts or error messages.
+
+        Args:
+            binary_path: Path to the target binary to analyze and generate scripts for.
+
+        """
         try:
             # Import AI components
             from ...ai.orchestrator import get_orchestrator
@@ -3029,7 +3420,13 @@ commonLicensePatterns.forEach(function(pattern) {
             self.ai_progress.setVisible(False)
 
     def analyze_binary_ai(self) -> None:
-        """Analyze binary with AI without generating scripts."""
+        """Analyze binary with AI without generating scripts.
+
+        Submits a binary analysis task to the AI orchestrator to identify protections,
+        vulnerabilities, and analysis complexity without generating bypass scripts.
+        Displays progress and completion status.
+
+        """
         binary_path = self.ai_binary_path.text().strip()
         if not binary_path or not os.path.exists(binary_path):
             QMessageBox.warning(self, "Warning", "Please select a valid target binary first.")
@@ -3080,17 +3477,37 @@ commonLicensePatterns.forEach(function(pattern) {
             self.log_console.append_output(f"[AI ERROR] Analysis failed: {e!s}")
 
     def _accept_and_deploy(self, dialog: QDialog) -> None:
-        """Accept dialog and deploy scripts."""
+        """Accept dialog and deploy scripts.
+
+        Internal helper that closes the preview dialog and triggers AI script deployment.
+
+        Args:
+            dialog: QDialog instance to accept and close.
+
+        """
         dialog.accept()
         self.deploy_ai_script()
 
     def _accept_and_save(self, dialog: QDialog) -> None:
-        """Accept dialog and save scripts."""
+        """Accept dialog and save scripts.
+
+        Internal helper that closes the preview dialog and triggers AI script save operation.
+
+        Args:
+            dialog: QDialog instance to accept and close.
+
+        """
         dialog.accept()
         self.save_ai_script()
 
     def preview_ai_script(self) -> None:
-        """Preview generated AI scripts."""
+        """Preview generated AI scripts.
+
+        Displays a dialog showing the content of AI-generated scripts with syntax highlighting.
+        Supports tabbed view for multiple scripts and includes metadata (success probability, target).
+        Provides buttons to deploy or save the previewed scripts.
+
+        """
         if not self.ai_generated_scripts:
             QMessageBox.information(self, "Info", "No scripts generated yet.")
             return
@@ -3185,7 +3602,13 @@ commonLicensePatterns.forEach(function(pattern) {
         preview_dialog.exec()
 
     def deploy_ai_script(self) -> None:
-        """Deploy generated AI scripts with optional QEMU testing."""
+        """Deploy generated AI scripts with optional QEMU testing.
+
+        Deploys AI-generated Frida scripts to the current instrumentation session or through
+        the ScriptExecutionManager with optional QEMU sandbox testing. Updates loaded scripts
+        list and logs deployment results.
+
+        """
         if not self.ai_generated_scripts:
             QMessageBox.information(self, "Info", "No scripts to deploy.")
             return
@@ -3244,7 +3667,12 @@ commonLicensePatterns.forEach(function(pattern) {
             QMessageBox.critical(self, "Error", f"Failed to deploy scripts: {e!s}")
 
     def save_ai_script(self) -> None:
-        """Save generated AI scripts to files."""
+        """Save generated AI scripts to files.
+
+        Saves AI-generated scripts to a user-selected directory using the AIScriptGenerator.
+        Updates status and logs successful saves. Reloads the script list to show new scripts.
+
+        """
         if not self.ai_generated_scripts:
             QMessageBox.information(self, "Info", "No scripts to save.")
             return
@@ -3289,7 +3717,15 @@ commonLicensePatterns.forEach(function(pattern) {
             QMessageBox.critical(self, "Error", f"Failed to save scripts: {e!s}")
 
     def closeEvent(self, event: QCloseEvent | None) -> None:
-        """Handle dialog close."""
+        """Handle dialog close.
+
+        Saves current settings, cleans up FridaManager resources, stops timers, and
+        requests interruption of background worker threads before accepting the close event.
+
+        Args:
+            event: QCloseEvent or None indicating the close request.
+
+        """
         self.save_settings()
 
         if hasattr(self, "frida_manager") and self.frida_manager:
@@ -3319,14 +3755,30 @@ commonLicensePatterns.forEach(function(pattern) {
             event.accept()
 
     def connect_structured_message_handlers(self) -> None:
-        """Connect to structured message handlers from FridaManager."""
+        """Connect to structured message handlers from FridaManager.
+
+        Registers the display_structured_message callback with FridaManager to receive
+        real-time messages about protection detection, bypasses, and hook execution.
+
+        """
         if hasattr(self.frida_manager, "_ui_message_callback"):
             return
 
         self.frida_manager._ui_message_callback = self.display_structured_message
 
     def display_structured_message(self, message_type: str, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
-        """Display structured message in the UI with rich formatting."""
+        """Display structured message in the UI with rich formatting.
+
+        Routes structured messages from FridaManager to appropriate console output methods based on
+        message type. Updates protection detection display for detection messages.
+
+        Args:
+            message_type: Type of message (error, warning, success, info, status, detection, etc.).
+            session_id: Frida session identifier for context.
+            script_name: Name of the script generating the message.
+            payload: Dictionary containing message data (message, target, action, data keys).
+
+        """
         message = payload.get("message", "")
         target = payload.get("target", "")
         action = payload.get("action", "")
@@ -3351,7 +3803,23 @@ commonLicensePatterns.forEach(function(pattern) {
     def _format_structured_message(
         self, msg_type: str, script_name: str, message: str, target: str, action: str, data: dict[str, Any]
     ) -> str:
-        """Format structured message for console display."""
+        """Format structured message for console display.
+
+        Constructs a formatted message string with script name, target, action, message content,
+        and optional data key-value pairs for console output.
+
+        Args:
+            msg_type: Type of message for classification.
+            script_name: Name of the script generating the message.
+            message: Main message content.
+            target: Target entity (function, module, protection type).
+            action: Action performed or to be performed.
+            data: Dictionary of additional data to display.
+
+        Returns:
+            str: Formatted message string ready for console display.
+
+        """
         parts = [f"[{script_name}]" if script_name else "[FRIDA]"]
 
         if target:
@@ -3369,7 +3837,15 @@ commonLicensePatterns.forEach(function(pattern) {
         return " | ".join(parts)
 
     def _update_protection_display(self, payload: dict[str, Any]) -> None:
-        """Update protection detection display when detection messages are received."""
+        """Update protection detection display when detection messages are received.
+
+        Updates the protection detection grid to mark detected protections with status and evidence.
+        Enables bypass buttons for detected protections.
+
+        Args:
+            payload: Dictionary containing detection data with protection name and evidence list.
+
+        """
         protection_name = payload.get("data", {}).get("protection", "")
         evidence = payload.get("data", {}).get("evidence", [])
 

@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from typing import Generator
 from commercial_binary_manager import CommercialBinaryManager
 
 
@@ -14,12 +15,12 @@ class TestCommercialBinaryManager:
     """Test cases for CommercialBinaryManager production readiness."""
 
     @pytest.fixture
-    def manager(self):
+    def manager(self) -> Generator[CommercialBinaryManager, None, None]:
         """Create a temporary manager instance for testing."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield CommercialBinaryManager(base_dir=temp_dir)
 
-    def test_initialization(self, manager):
+    def test_initialization(self, manager: CommercialBinaryManager) -> None:
         """Test that manager initializes with all required directories."""
         assert manager.base_dir.exists()
         assert manager.binaries_dir.exists()
@@ -28,7 +29,7 @@ class TestCommercialBinaryManager:
         assert manager.logs_dir.exists()
         assert len(manager.supported_software) == 5
 
-    def test_sha256_calculation(self, manager):
+    def test_sha256_calculation(self, manager: CommercialBinaryManager) -> None:
         """Test SHA-256 hash calculation for files."""
         test_file = manager.base_dir / "test.bin"
         test_content = b"Test binary content for hash verification"
@@ -39,7 +40,7 @@ class TestCommercialBinaryManager:
 
         assert calculated_hash == expected_hash
 
-    def test_verify_binary_integrity(self, manager):
+    def test_verify_binary_integrity(self, manager: CommercialBinaryManager) -> None:
         """Test binary integrity verification with and without expected hash."""
         test_file = manager.base_dir / "test.exe"
         test_content = b"Mock executable content"
@@ -62,7 +63,7 @@ class TestCommercialBinaryManager:
         assert is_valid is True
         assert calc_hash == expected_hash
 
-    def test_acquire_binary_from_path(self, manager):
+    def test_acquire_binary_from_path(self, manager: CommercialBinaryManager) -> None:
         """Test acquiring a binary from a local path."""
         # Create a mock binary
         source_file = manager.base_dir / "mock_adobe.exe"
@@ -92,7 +93,7 @@ class TestCommercialBinaryManager:
             assert "sha256" in metadata
             assert "acquisition_time" in metadata
 
-    def test_document_protection_specs(self, manager):
+    def test_document_protection_specs(self, manager: CommercialBinaryManager) -> None:
         """Test documentation of protection specifications."""
         protection_details = {
             "algorithm": "FlexLM v11.16.2",
@@ -115,7 +116,7 @@ class TestCommercialBinaryManager:
             assert specs["protection_details"] == protection_details
             assert "documentation_time" in specs
 
-    def test_verify_vendor_checksum(self, manager):
+    def test_verify_vendor_checksum(self, manager: CommercialBinaryManager) -> None:
         """Test vendor checksum verification for different hash types."""
         test_file = manager.base_dir / "test.bin"
         test_content = b"Test content for checksum verification"
@@ -134,7 +135,7 @@ class TestCommercialBinaryManager:
         md5_hash = hashlib.md5(test_content).hexdigest()
         assert manager.verify_vendor_checksum(test_file, md5_hash, "md5") is True
 
-    def test_list_acquired_binaries(self, manager):
+    def test_list_acquired_binaries(self, manager: CommercialBinaryManager) -> None:
         """Test listing acquired binaries."""
         # Initially empty
         binaries = manager.list_acquired_binaries()
@@ -150,7 +151,7 @@ class TestCommercialBinaryManager:
         assert len(binaries) == 1
         assert binaries[0]["software_name"] == "VMware Workstation Pro"
 
-    def test_generate_acquisition_report(self, manager):
+    def test_generate_acquisition_report(self, manager: CommercialBinaryManager) -> None:
         """Test acquisition report generation."""
         # Add test binaries
         for software in ["Adobe Creative Cloud 2024", "AutoCAD 2024"]:
@@ -168,7 +169,7 @@ class TestCommercialBinaryManager:
         assert "MATLAB R2024a" in report["missing_software"]
         assert "report_generated" in report
 
-    def test_safe_extract_security(self, manager):
+    def test_safe_extract_security(self, manager: CommercialBinaryManager) -> None:
         """Test that safe_extract prevents path traversal attacks."""
         import zipfile
 
@@ -193,7 +194,7 @@ class TestCommercialBinaryManager:
         assert not (extract_dir.parent.parent.parent / "etc" / "passwd").exists()
         assert not Path("/etc/shadow").exists() or (extract_dir / "etc" / "shadow").exists() is False
 
-    def test_extract_from_installer_zip(self, manager):
+    def test_extract_from_installer_zip(self, manager: CommercialBinaryManager) -> None:
         """Test extraction from ZIP installer."""
         import zipfile
 

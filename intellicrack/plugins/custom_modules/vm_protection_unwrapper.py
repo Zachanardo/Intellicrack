@@ -33,7 +33,6 @@ from typing import Any
 import keystone
 
 from intellicrack.handlers.numpy_handler import numpy as np
-from intellicrack.utils.logger import logger
 
 
 try:
@@ -42,7 +41,7 @@ try:
     UNICORN_AVAILABLE = True
 except ImportError:
     UNICORN_AVAILABLE = False
-    unicorn = None  # type: ignore[assignment]
+    unicorn = None
 
 
 """
@@ -107,7 +106,12 @@ class VMContext:
     flags: dict[str, bool] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Initialize VM context with default registers and flags if not provided."""
+        """Initialize VM context with default registers and flags if not provided.
+
+        Populates empty register and flag dictionaries with x86 default values
+        to ensure proper VM execution context initialization.
+
+        """
         if not self.registers:
             # Initialize x86 registers
             self.registers = {
@@ -135,7 +139,12 @@ class VMProtectHandler:
     """VMProtect-specific handling."""
 
     def __init__(self) -> None:
-        """Initialize VMProtect handler with logging and detection capabilities."""
+        """Initialize VMProtect handler with logging and detection capabilities.
+
+        Sets up the handler with version-specific key schedule generators for
+        VMProtect 1.x, 2.x, and 3.x protection schemes.
+
+        """
         self.logger = logging.getLogger(f"{__name__}.VMProtect")
         self.key_schedules = {
             ProtectionType.VMPROTECT_1X: self._vmprotect_1x_key_schedule,
@@ -530,7 +539,12 @@ class CodeVirtualizerHandler:
     """Code Virtualizer-specific handling."""
 
     def __init__(self) -> None:
-        """Initialize Code Virtualizer handler."""
+        """Initialize Code Virtualizer handler with opcode mapping.
+
+        Sets up logging and builds the opcode to instruction mapping
+        for Code Virtualizer VM instruction emulation.
+
+        """
         self.logger = logging.getLogger(f"{__name__}.CodeVirtualizer")
         self.opcode_map = self._build_cv_opcode_map()
 
@@ -638,7 +652,12 @@ class ThemidaHandler:
     """Themida-specific handling."""
 
     def __init__(self) -> None:
-        """Initialize Themida handler with logging and opcode mapping."""
+        """Initialize Themida handler with logging and opcode mapping.
+
+        Sets up the handler with logging and builds the opcode to instruction
+        mapping for Themida VM instruction emulation and analysis.
+
+        """
         self.logger = logging.getLogger(f"{__name__}.Themida")
         self.opcode_map = self._build_themida_opcode_map()
 
@@ -767,22 +786,32 @@ class VMEmulator:
         return handlers
 
     def _init_unicorn(self) -> None:
-        """Initialize Unicorn emulation engine."""
+        """Initialize Unicorn emulation engine.
+
+        Attempts to initialize the Unicorn x86 emulation engine if available,
+        logging warnings if initialization fails or Unicorn is not available.
+
+        """
         if not UNICORN_AVAILABLE or unicorn is None:
             self.logger.warning("Unicorn not available, using fallback emulation")
             return
         try:
-            uc_instance: Any = unicorn.Uc(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)  # type: ignore[attr-defined,no-untyped-call]
+            uc_instance: Any = unicorn.Uc(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
             self.uc = uc_instance
             self._setup_unicorn()
         except (ImportError, AttributeError) as e:
             self.logger.warning("Unicorn initialization failed: %s", e, exc_info=True)
 
     def _setup_unicorn(self) -> None:
-        """Configure Unicorn emulation engine."""
-        if not self.uc or not UNICORN_AVAILABLE or unicorn is None:  # type: ignore[unreachable]
+        """Configure Unicorn emulation engine.
+
+        Sets up memory mapping and registers for Unicorn x86 emulation,
+        with graceful fallback on setup failure.
+
+        """
+        if not self.uc or not UNICORN_AVAILABLE or unicorn is None:
             return
-        try:  # type: ignore[unreachable]
+        try:
             self.uc.mem_map(0x400000, 2 * 1024 * 1024)  # 2MB for code
             self.uc.mem_map(0x600000, 1024 * 1024)  # 1MB for stack
             self.uc.reg_write(unicorn.x86_const.UC_X86_REG_ESP, 0x600000 + 1024 * 1024 - 0x1000)
@@ -1088,7 +1117,12 @@ class VMAnalyzer:
     """VM code analyzer and pattern detector."""
 
     def __init__(self) -> None:
-        """Initialize VM analyzer with logging and protection patterns."""
+        """Initialize VM analyzer with logging and protection patterns.
+
+        Sets up the analyzer with pattern libraries for all supported
+        VM protection types for signature-based detection.
+
+        """
         self.logger = logging.getLogger(f"{__name__}.VMAnalyzer")
         self.patterns = self._load_vm_patterns()
 
@@ -1455,7 +1489,12 @@ class VMProtectionUnwrapper:
     """Run VM protection unwrapper."""
 
     def __init__(self) -> None:
-        """Initialize VM protection unwrapper with analyzer, emulators, and statistics tracking."""
+        """Initialize VM protection unwrapper with analyzer, emulators, and statistics tracking.
+
+        Sets up the main unwrapper engine with VM analysis capabilities, emulators
+        for each protection type, and runtime statistics collection.
+
+        """
         self.logger = logging.getLogger(__name__)
         self.analyzer = VMAnalyzer()
         self.emulators: dict[ProtectionType, VMEmulator] = {}

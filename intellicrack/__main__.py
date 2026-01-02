@@ -37,7 +37,7 @@ import sys
 from .main import main
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Disable pybind11 GIL assertions to prevent EnumType errors
 os.environ["PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF"] = "1"

@@ -24,7 +24,6 @@ import logging
 import os
 import sys
 import time
-from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
@@ -82,7 +81,7 @@ class AITerminalChat:
         self.response_buffer_size = 4096
         self.auto_save = True
 
-        # Available commands - using Any for callable type due to method compatibility
+        # Available commands - mapping command strings to callable handlers
         self.commands: dict[str, Any] = {
             "/help": self._show_help,
             "/clear": self._clear_history,
@@ -100,7 +99,18 @@ class AITerminalChat:
         self._initialize_ai_backend()
 
     def _initialize_ai_backend(self) -> None:
-        """Initialize AI backend connection."""
+        """Initialize AI backend connection.
+
+        Attempts to initialize AI backend in order of preference:
+        1. LLMConfigManager for configuration management
+        2. AIOrchestrator for complex tasks
+        3. AICoordinationLayer as primary backend
+        4. AIAssistant as fallback
+
+        Raises:
+            RuntimeError: If the backend health check fails and all fallbacks are exhausted.
+
+        """
         self.ai_backend = None
         self.llm_manager = None
         self.orchestrator = None
@@ -154,14 +164,23 @@ class AITerminalChat:
                 self.ai_backend = None
 
     def start_chat_session(self) -> None:
-        """Start interactive chat session."""
+        """Start interactive chat session.
+
+        Initializes either rich or basic chat interface depending on Rich availability.
+
+        """
         if self.console:
             self._start_rich_chat()
         else:
             self._start_basic_chat()
 
     def _start_rich_chat(self) -> None:
-        """Start rich terminal chat interface."""
+        """Start rich terminal chat interface.
+
+        Initializes a rich terminal UI with panels, prompts, and progress indicators
+        for interactive AI chat with syntax highlighting for code blocks.
+
+        """
         if not self.console:
             return
         self.console.clear()
@@ -212,7 +231,12 @@ class AITerminalChat:
             self.console.print("\n[yellow]Chat session ended[/yellow]")
 
     def _start_basic_chat(self) -> None:
-        """Start basic terminal chat interface."""
+        """Start basic terminal chat interface.
+
+        Initializes a plain-text terminal UI without rich formatting, suitable
+        for environments where Rich library is unavailable.
+
+        """
         logger.info("Starting basic chat interface")
         sys.stdout.write("Intellicrack AI Assistant\n")
         sys.stdout.write("=" * 25 + "\n")
@@ -258,7 +282,12 @@ class AITerminalChat:
             sys.stdout.flush()
 
     def _process_ai_query(self, user_input: str) -> None:
-        """Process AI query with rich formatting."""
+        """Process AI query with rich formatting.
+
+        Args:
+            user_input: User's input text to process through the AI backend.
+
+        """
         # Add to conversation history
         self.conversation_history.append(
             {
@@ -305,7 +334,12 @@ class AITerminalChat:
             self.conversation_history = self.conversation_history[-self.max_history :]
 
     def _process_ai_query_basic(self, user_input: str) -> None:
-        """Process AI query with basic formatting."""
+        """Process AI query with basic formatting.
+
+        Args:
+            user_input: User's input text to process through the AI backend.
+
+        """
         # Add to conversation history
         self.conversation_history.append(
             {
@@ -334,7 +368,15 @@ class AITerminalChat:
         )
 
     def _get_ai_response(self, user_input: str) -> str:
-        """Get AI response from backend."""
+        """Get AI response from backend.
+
+        Args:
+            user_input: User's input text to process.
+
+        Returns:
+            str: AI-generated response text, or error message if backend unavailable.
+
+        """
         context = self._build_context()
 
         if not self.ai_backend:
@@ -425,7 +467,17 @@ class AITerminalChat:
             return f"AI backend error: {e}\n\nPlease check your AI configuration and try again."
 
     def _prepare_enriched_context(self, user_input: str, base_context: dict[str, Any]) -> dict[str, Any]:
-        """Prepare enriched context for AI responses."""
+        """Prepare enriched context for AI responses.
+
+        Args:
+            user_input: User's input text to analyze for context enrichment.
+            base_context: Base context dictionary to enrich.
+
+        Returns:
+            dict[str, Any]: Enriched context with binary analysis, security analysis,
+                protection status, and conversation context information.
+
+        """
         enriched_context = base_context.copy()
 
         # Add binary analysis context
@@ -519,7 +571,12 @@ class AITerminalChat:
         return enriched_context
 
     def _infer_user_expertise(self) -> str:
-        """Infer user expertise level from conversation history."""
+        """Infer user expertise level from conversation history.
+
+        Returns:
+            str: Expertise level as one of 'beginner', 'intermediate', or 'advanced'.
+
+        """
         if not self.conversation_history:
             return "beginner"
 
@@ -555,7 +612,13 @@ class AITerminalChat:
         return "intermediate" if intermediate_count > INTERMEDIATE_THRESHOLD or advanced_count > 0 else "beginner"
 
     def _build_context(self) -> dict[str, Any]:
-        """Build context for AI responses."""
+        """Build context for AI responses.
+
+        Returns:
+            dict[str, Any]: Context dictionary containing session info, binary info,
+                and analysis summary for AI backend.
+
+        """
         context = {
             "session_info": {
                 "start_time": self.session_start.isoformat(),
@@ -582,7 +645,12 @@ class AITerminalChat:
         return context
 
     def _display_ai_response(self, response: str) -> None:
-        """Display AI response with typing effect."""
+        """Display AI response with typing effect.
+
+        Args:
+            response: The AI response text to display.
+
+        """
         if not RICH_AVAILABLE:
             logger.debug("Displaying AI response in basic mode, length: %d", len(response))
             sys.stdout.write(f"\nAI: {response}\n")
@@ -643,9 +711,9 @@ class AITerminalChat:
             response: The AI response text potentially containing code blocks.
 
         Returns:
-            The processed response with syntax highlighting applied, or the original
-            response string if no code blocks are found or Rich is unavailable.
-            May return a Syntax object or string depending on content.
+            str | object: The processed response with syntax highlighting applied,
+                or the original response string if no code blocks are found or
+                Rich is unavailable.
 
         """
         if not RICH_AVAILABLE:
@@ -663,7 +731,7 @@ class AITerminalChat:
                 match: The regex match object containing code block and language.
 
             Returns:
-                A Syntax object with highlighted code.
+                Syntax: A Syntax object with highlighted code.
 
             """
             language = match.group(1) or "python"
@@ -690,7 +758,12 @@ class AITerminalChat:
         return result_parts[0] if result_parts else response
 
     def _display_analysis_summary(self) -> None:
-        """Display analysis summary using columns layout."""
+        """Display analysis summary using columns layout.
+
+        Renders a formatted display of analysis results including vulnerabilities,
+        strings, and protections found during binary analysis.
+
+        """
         if not RICH_AVAILABLE or not self.analysis_results:
             logger.debug("Cannot display analysis summary: RICH_AVAILABLE=%s, has_results=%s", RICH_AVAILABLE, bool(self.analysis_results))
             logger.warning("Analysis results not available or Rich not installed")
@@ -738,8 +811,13 @@ class AITerminalChat:
             self.console.print(Panel(columns, title="Analysis Summary", border_style="cyan"))
             self.console.print("\n")
 
-    def _show_help(self) -> str | None:
-        """Show help information."""
+    def _show_help(self, args: list[str] | None = None) -> None:
+        """Show help information.
+
+        Args:
+            args: Optional arguments (unused, included for command interface compatibility).
+
+        """
         if self.console:
             help_table = Table(title="AI Chat Commands")
             help_table.add_column("Command", style="cyan")
@@ -768,10 +846,13 @@ class AITerminalChat:
             sys.stdout.write("/quit - Exit chat\n\n")
             sys.stdout.flush()
 
-        return None
+    def _clear_history(self, args: list[str] | None = None) -> None:
+        """Clear conversation history.
 
-    def _clear_history(self) -> str | None:
-        """Clear conversation history."""
+        Args:
+            args: Optional arguments (unused, included for command interface compatibility).
+
+        """
         self.conversation_history.clear()
         logger.info("Conversation history cleared")
 
@@ -781,10 +862,13 @@ class AITerminalChat:
             sys.stdout.write("Conversation history cleared\n")
             sys.stdout.flush()
 
-        return None
+    def _save_conversation(self, args: list[str]) -> None:
+        """Save conversation to file.
 
-    def _save_conversation(self, args: list[str]) -> str | None:
-        """Save conversation to file."""
+        Args:
+            args: Command arguments with optional filename.
+
+        """
         filename = args[0] if args else f"ai_chat_{int(time.time())}.json"
 
         try:
@@ -815,10 +899,16 @@ class AITerminalChat:
                 sys.stdout.write(f"Save failed: {e}\n")
                 sys.stdout.flush()
 
-        return None
+    def _analyze_current_binary(self, args: list[str] | None = None) -> None:
+        """Provide analysis overview of current binary.
 
-    def _analyze_current_binary(self) -> str | None:
-        """Provide analysis overview of current binary."""
+        Args:
+            args: Optional arguments (unused, included for command interface compatibility).
+
+        Returns:
+            None to indicate command completion.
+
+        """
         if not self.binary_path:
             logger.warning("Analyze command called but no binary loaded")
             if self.console:
@@ -826,7 +916,7 @@ class AITerminalChat:
             else:
                 sys.stdout.write("No binary currently loaded\n")
                 sys.stdout.flush()
-            return None
+            return
 
         # Generate analysis overview
         overview = f"Analysis Overview for {os.path.basename(self.binary_path)}:\n\n"
@@ -858,10 +948,15 @@ class AITerminalChat:
             sys.stdout.write(f"AI: {overview}\n")
             sys.stdout.flush()
 
-        return None
+        return
 
-    def _show_context(self) -> str | None:
-        """Show current analysis context."""
+    def _show_context(self, args: list[str] | None = None) -> None:
+        """Show current analysis context.
+
+        Args:
+            args: Optional arguments (unused, included for command interface compatibility).
+
+        """
         context = self._build_context()
 
         logger.debug("Displaying current context with %d keys", len(context))
@@ -878,10 +973,16 @@ class AITerminalChat:
             sys.stdout.write("\n\n")
             sys.stdout.flush()
 
-        return None
+    def _switch_backend(self, args: list[str]) -> None:
+        """Switch AI backend.
 
-    def _switch_backend(self, args: list[str]) -> str | None:
-        """Switch AI backend."""
+        Args:
+            args: Command arguments with optional backend name.
+
+        Returns:
+            None to indicate command completion.
+
+        """
         try:
             available_backends, current_backend = self._get_available_backends()
 
@@ -903,7 +1004,12 @@ class AITerminalChat:
             return None
 
     def _get_available_backends(self) -> tuple[list[str], str]:
-        """Helper to get available backends and current backend."""
+        """Helper to get available backends and current backend.
+
+        Returns:
+            tuple[list[str], str]: Tuple of (available_backends, current_backend).
+
+        """
         available_backends: list[str]
         current_backend: str
         if self.llm_manager and hasattr(self.llm_manager, "list_model_configs"):
@@ -916,7 +1022,13 @@ class AITerminalChat:
         return available_backends, current_backend
 
     def _display_available_backends(self, available_backends: list[str], current_backend: str) -> None:
-        """Helper to display available AI backends."""
+        """Helper to display available AI backends.
+
+        Args:
+            available_backends: List of available backend names.
+            current_backend: Name of the currently active backend.
+
+        """
         if self.console:
             self.console.print("\n[bold cyan]Available AI Backends:[/bold cyan]")
             for backend in available_backends:
@@ -941,8 +1053,17 @@ class AITerminalChat:
             sys.stdout.write("\nUsage: /backend <name>\n")
             sys.stdout.flush()
 
-    def _handle_backend_switch_logic(self, backend_name: str, available_backends: list[str]) -> str | None:
-        """Helper to handle the logic for switching AI backend."""
+    def _handle_backend_switch_logic(self, backend_name: str, available_backends: list[str]) -> None:
+        """Helper to handle the logic for switching AI backend.
+
+        Args:
+            backend_name: Name of the backend to switch to.
+            available_backends: List of available backend names.
+
+        Returns:
+            None to indicate command completion.
+
+        """
         if backend_name not in available_backends:
             error_msg = f"""Backend '{backend_name}' not available. Available backends: {", ".join(available_backends)}"""
             logger.warning("Invalid backend requested: %s", backend_name)
@@ -951,7 +1072,7 @@ class AITerminalChat:
             else:
                 sys.stdout.write(f"{error_msg}\n")
                 sys.stdout.flush()
-            return None
+            return
 
         try:
             if not self.llm_manager:
@@ -976,7 +1097,7 @@ class AITerminalChat:
                 else:
                     sys.stdout.write(f"{msg}\n")
                     sys.stdout.flush()
-            return None
+            return
 
         except Exception as e:
             error_msg = f"Error switching to {backend_name}: {e}"
@@ -986,10 +1107,18 @@ class AITerminalChat:
             else:
                 sys.stdout.write(f"{error_msg}\n")
                 sys.stdout.flush()
-            return None
+            return
 
     def _reinitialize_ai_with_backend(self, backend_name: str) -> None:
-        """Reinitialize AI backend systems with new backend configuration."""
+        """Reinitialize AI backend systems with new backend configuration.
+
+        Args:
+            backend_name: Name of the backend to reinitialize with.
+
+        Raises:
+            RuntimeError: If the new backend health check fails and all fallbacks are exhausted.
+
+        """
         try:
             # Reinitialize orchestrator with new LLM manager
             from intellicrack.ai.orchestrator import AIOrchestrator
@@ -1044,7 +1173,15 @@ class AITerminalChat:
                 self.ai_backend = None
 
     def _quit_chat(self, args: list[str]) -> str:
-        """Exit chat session."""
+        """Exit chat session.
+
+        Args:
+            args: Optional arguments (unused, included for command interface compatibility).
+
+        Returns:
+            str: The string "quit" to signal session termination.
+
+        """
         if self.auto_save and self.conversation_history:
             self._save_conversation([f"auto_save_{int(time.time())}.json"])
 
@@ -1057,8 +1194,16 @@ class AITerminalChat:
 
         return "quit"
 
-    def _load_conversation(self, args: list[str]) -> str | None:
-        """Load conversation from file."""
+    def _load_conversation(self, args: list[str]) -> None:
+        """Load conversation from file.
+
+        Args:
+            args: Command arguments with required filename.
+
+        Returns:
+            None to indicate command completion.
+
+        """
         if not args:
             logger.debug("Load command called without filename argument")
             if self.console:
@@ -1066,7 +1211,7 @@ class AITerminalChat:
             else:
                 sys.stdout.write("Usage: /load <filename>\n")
                 sys.stdout.flush()
-            return None
+            return
 
         filename = args[0]
 
@@ -1091,10 +1236,18 @@ class AITerminalChat:
                 sys.stdout.write(f"Load failed: {e}\n")
                 sys.stdout.flush()
 
-        return None
+        return
 
-    def _export_conversation(self, args: list[str]) -> str | None:
-        """Export conversation in various formats."""
+    def _export_conversation(self, args: list[str]) -> None:
+        """Export conversation in various formats.
+
+        Args:
+            args: Command arguments with optional format (json, txt, md).
+
+        Returns:
+            None to indicate command completion.
+
+        """
         format_type = args[0] if args else "txt"
         filename = f"conversation_export_{int(time.time())}.{format_type}"
 
@@ -1112,7 +1265,7 @@ class AITerminalChat:
                 else:
                     sys.stdout.write(f"Unsupported format: {format_type}\n")
                     sys.stdout.flush()
-                return None
+                return
 
             logger.info("Conversation exported to %s", filename)
             if self.console:
@@ -1129,10 +1282,15 @@ class AITerminalChat:
                 sys.stdout.write(f"Export failed: {e}\n")
                 sys.stdout.flush()
 
-        return None
+        return
 
     def _export_text(self, filename: str) -> None:
-        """Export conversation as plain text."""
+        """Export conversation as plain text.
+
+        Args:
+            filename: Path to output text file.
+
+        """
         with open(filename, "w", encoding="utf-8") as f:
             f.write("Intellicrack AI Chat Session\n")
             f.write(f"Started: {self.session_start}\n")
@@ -1149,7 +1307,12 @@ class AITerminalChat:
                 f.write(f"[{timestamp}] {speaker}: {content}\n\n")
 
     def _export_markdown(self, filename: str) -> None:
-        """Export conversation as Markdown."""
+        """Export conversation as Markdown.
+
+        Args:
+            filename: Path to output markdown file.
+
+        """
         with open(filename, "w", encoding="utf-8") as f:
             f.write("# Intellicrack AI Chat Session\n\n")
             f.write(f"**Started:** {self.session_start}\n")
@@ -1174,8 +1337,11 @@ def launch_ai_chat(binary_path: str | None = None, analysis_results: dict[str, A
     """Launch AI chat interface.
 
     Args:
-        binary_path: Path to current binary
-        analysis_results: Current analysis results
+        binary_path: Path to current binary.
+        analysis_results: Current analysis results dictionary.
+
+    Returns:
+        bool: True if chat session completed successfully, False otherwise.
 
     """
     try:

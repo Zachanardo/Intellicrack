@@ -1,7 +1,7 @@
 """Radare2 import/export analysis module for binary function analysis."""
 
 import logging
-from typing import Any, Union
+from typing import Any
 
 from intellicrack.utils.logger import logger
 
@@ -61,7 +61,9 @@ class R2ImportExportAnalyzer:
         """Perform comprehensive import/export analysis on the binary.
 
         Returns:
-            Complete import/export analysis results
+            dict[str, Any]: Complete import/export analysis results containing imports,
+                exports, dll_dependencies, symbols, relocations, API categories,
+                and security assessment
 
         """
         imports_list: list[dict[str, Any]] = []
@@ -159,7 +161,16 @@ class R2ImportExportAnalyzer:
         return result
 
     def _analyze_imports(self, r2: R2Session | R2SessionPoolAdapter) -> list[dict[str, Any]]:
-        """Analyze imported functions."""
+        """Analyze imported functions from binary using radare2.
+
+        Args:
+            r2: Radare2 session or session pool adapter for command execution
+
+        Returns:
+            list[dict[str, Any]]: List of normalized import dictionaries containing name,
+                address, library, and risk assessment
+
+        """
         imports = []
 
         try:
@@ -199,7 +210,16 @@ class R2ImportExportAnalyzer:
         return imports
 
     def _analyze_exports(self, r2: R2Session | R2SessionPoolAdapter) -> list[dict[str, Any]]:
-        """Analyze exported functions."""
+        """Analyze exported functions from binary using radare2.
+
+        Args:
+            r2: Radare2 session or session pool adapter for command execution
+
+        Returns:
+            list[dict[str, Any]]: List of normalized export dictionaries containing name,
+                address, ordinal, and classification
+
+        """
         exports = []
 
         try:
@@ -229,7 +249,16 @@ class R2ImportExportAnalyzer:
         return exports
 
     def _analyze_dll_dependencies(self, r2: R2Session | R2SessionPoolAdapter) -> list[dict[str, Any]]:
-        """Analyze DLL dependencies and libraries."""
+        """Analyze DLL dependencies and imported libraries from binary.
+
+        Args:
+            r2: Radare2 session or session pool adapter for command execution
+
+        Returns:
+            list[dict[str, Any]]: List of library dependency dictionaries containing name,
+                path, and security impact
+
+        """
         dependencies = []
 
         try:
@@ -258,7 +287,16 @@ class R2ImportExportAnalyzer:
         return dependencies
 
     def _analyze_symbols(self, r2: R2Session | R2SessionPoolAdapter) -> list[dict[str, Any]]:
-        """Analyze symbols in the binary."""
+        """Analyze symbols in the binary including type and binding information.
+
+        Args:
+            r2: Radare2 session or session pool adapter for command execution
+
+        Returns:
+            list[dict[str, Any]]: List of symbol dictionaries containing name, address,
+                type, and relevance assessment
+
+        """
         symbols = []
 
         try:
@@ -288,7 +326,16 @@ class R2ImportExportAnalyzer:
         return symbols
 
     def _analyze_relocations(self, r2: R2Session | R2SessionPoolAdapter) -> list[dict[str, Any]]:
-        """Analyze relocations in the binary."""
+        """Analyze relocations in the binary including relocation types and targets.
+
+        Args:
+            r2: Radare2 session or session pool adapter for command execution
+
+        Returns:
+            list[dict[str, Any]]: List of relocation dictionaries containing address, type,
+                name, and relocation purpose
+
+        """
         relocations = []
 
         try:
@@ -316,7 +363,16 @@ class R2ImportExportAnalyzer:
         return relocations
 
     def _categorize_apis(self, imports: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
-        """Categorize APIs by functionality."""
+        """Categorize imported APIs by their functional category.
+
+        Args:
+            imports: List of import dictionaries to categorize
+
+        Returns:
+            dict[str, list[dict[str, Any]]]: Dictionary mapping category names to lists of
+                APIs in that category
+
+        """
         categories: dict[str, list[dict[str, Any]]] = {
             "system_info": [],
             "file_operations": [],
@@ -386,7 +442,16 @@ class R2ImportExportAnalyzer:
         return categories
 
     def _detect_suspicious_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Detect suspicious API usage patterns."""
+        """Detect suspicious API usage patterns indicating potential code injection or evasion.
+
+        Args:
+            imports: List of import dictionaries to analyze for suspicious patterns
+
+        Returns:
+            list[dict[str, Any]]: List of suspicious API detections with category and risk
+                assessment
+
+        """
         suspicious = []
 
         suspicious_patterns = {
@@ -425,7 +490,16 @@ class R2ImportExportAnalyzer:
         return suspicious
 
     def _identify_license_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Identify APIs commonly used for license validation."""
+        """Identify APIs commonly used for software license validation and activation.
+
+        Args:
+            imports: List of import dictionaries to search for license-related APIs
+
+        Returns:
+            list[dict[str, Any]]: List of license-related API detections with usage purpose
+                and bypass difficulty
+
+        """
         license_apis = []
 
         license_api_patterns = {
@@ -465,7 +539,16 @@ class R2ImportExportAnalyzer:
         return license_apis
 
     def _identify_crypto_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Identify cryptographic APIs."""
+        """Identify cryptographic APIs for encryption, hashing, and key management.
+
+        Args:
+            imports: List of import dictionaries to search for cryptographic APIs
+
+        Returns:
+            list[dict[str, Any]]: List of cryptographic API detections with algorithm type
+                and security strength
+
+        """
         crypto_apis = []
 
         crypto_patterns = {
@@ -495,7 +578,16 @@ class R2ImportExportAnalyzer:
         return crypto_apis
 
     def _identify_anti_analysis_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Identify anti-analysis and anti-debugging APIs."""
+        """Identify anti-analysis and anti-debugging APIs used to evade dynamic analysis.
+
+        Args:
+            imports: List of import dictionaries to search for anti-analysis APIs
+
+        Returns:
+            list[dict[str, Any]]: List of anti-analysis API detections with evasion technique
+                and countermeasures
+
+        """
         anti_analysis_apis = []
 
         anti_analysis_patterns = {
@@ -531,7 +623,16 @@ class R2ImportExportAnalyzer:
         return anti_analysis_apis
 
     def _identify_network_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Identify network-related APIs."""
+        """Identify network-related APIs for communication and data transfer.
+
+        Args:
+            imports: List of import dictionaries to search for network APIs
+
+        Returns:
+            list[dict[str, Any]]: List of network API detections with purpose and protocol
+                information
+
+        """
         network_apis = []
 
         network_patterns = [
@@ -559,7 +660,16 @@ class R2ImportExportAnalyzer:
         return network_apis
 
     def _identify_file_system_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Identify file system APIs."""
+        """Identify file system APIs for file I/O operations.
+
+        Args:
+            imports: List of import dictionaries to search for file system APIs
+
+        Returns:
+            list[dict[str, Any]]: List of file system API detections with operation type
+                and access patterns
+
+        """
         file_apis = []
 
         file_patterns = [
@@ -586,7 +696,16 @@ class R2ImportExportAnalyzer:
         return file_apis
 
     def _identify_registry_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Identify registry APIs."""
+        """Identify Windows registry APIs for configuration and data storage access.
+
+        Args:
+            imports: List of import dictionaries to search for registry APIs
+
+        Returns:
+            list[dict[str, Any]]: List of registry API detections with operation type and
+                typical usage patterns
+
+        """
         registry_apis = []
 
         registry_patterns = ["regopen", "regclose", "regquery", "regset", "regdelete", "regenum"]
@@ -605,7 +724,16 @@ class R2ImportExportAnalyzer:
         return registry_apis
 
     def _identify_process_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Identify process management APIs."""
+        """Identify process management APIs for spawning and manipulating processes.
+
+        Args:
+            imports: List of import dictionaries to search for process management APIs
+
+        Returns:
+            list[dict[str, Any]]: List of process API detections with operation type and
+                security implications
+
+        """
         process_apis = []
 
         process_patterns = [
@@ -630,7 +758,16 @@ class R2ImportExportAnalyzer:
         return process_apis
 
     def _identify_memory_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Identify memory management APIs."""
+        """Identify memory management APIs for dynamic memory allocation and manipulation.
+
+        Args:
+            imports: List of import dictionaries to search for memory management APIs
+
+        Returns:
+            list[dict[str, Any]]: List of memory API detections with operation type and
+                allocation classification
+
+        """
         memory_apis = []
 
         memory_patterns = [
@@ -657,7 +794,16 @@ class R2ImportExportAnalyzer:
         return memory_apis
 
     def _identify_debug_apis(self, imports: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Identify debugging-related APIs."""
+        """Identify debugging-related APIs for detection and anti-debugging purposes.
+
+        Args:
+            imports: List of import dictionaries to search for debugging APIs
+
+        Returns:
+            list[dict[str, Any]]: List of debug API detections with purpose and anti-debug
+                potential assessment
+
+        """
         debug_apis = []
 
         debug_patterns = [
@@ -682,7 +828,17 @@ class R2ImportExportAnalyzer:
 
     # Helper methods for classification and analysis
     def _classify_api_type(self, api_name: str) -> str:
-        """Classify API by its general type."""
+        """Classify API by its general functional type.
+
+        Args:
+            api_name: Name of the API function to classify by pattern matching
+
+        Returns:
+            str: Classification string indicating the API type
+                (file_io, registry, process_management, cryptography,
+                network, or general)
+
+        """
         name_lower = api_name.lower()
 
         if any(pattern in name_lower for pattern in ["file", "read", "write"]):
@@ -698,7 +854,16 @@ class R2ImportExportAnalyzer:
         return "general"
 
     def _assess_api_risk(self, api_name: str) -> str:
-        """Assess the risk level of an API."""
+        """Assess the security risk level of an API.
+
+        Args:
+            api_name: Name of the API function to assess for security risk
+
+        Returns:
+            str: Risk level string ('high', 'medium', or 'low') based on
+                API usage patterns and known injection/evasion techniques
+
+        """
         name_lower = api_name.lower()
 
         high_risk_apis = [
@@ -714,7 +879,16 @@ class R2ImportExportAnalyzer:
         return "medium" if any(api in name_lower for api in medium_risk_apis) else "low"
 
     def _get_api_description(self, api_name: str) -> str:
-        """Get a description of what the API does."""
+        """Get a human-readable description of what the API function does.
+
+        Args:
+            api_name: Name of the API function to describe
+
+        Returns:
+            str: Description string explaining the API's purpose and behavior;
+                returns "Unknown API function" for unrecognized APIs
+
+        """
         api_descriptions = {
             "createfile": "Creates or opens a file or device",
             "readfile": "Reads data from a file",
@@ -729,7 +903,18 @@ class R2ImportExportAnalyzer:
         return api_descriptions.get(api_name.lower(), "Unknown API function")
 
     def _parse_plt_data(self, plt_data: str, imports: list[dict[str, Any]]) -> None:
-        """Parse PLT data and add to imports."""
+        """Parse PLT (Procedure Linkage Table) data and append to imports list.
+
+        Parses PLT section data from radare2 output to extract function names and
+        addresses, then normalizes and appends them to the imports list for unified
+        analysis with other import sources.
+
+        Args:
+            plt_data: String containing PLT section data to parse from radare2 output
+            imports: List of import dictionaries to append parsed PLT entries to;
+                modified in-place with new normalized import entries
+
+        """
         import re
 
         # PLT entries typically have format like:
@@ -766,7 +951,22 @@ class R2ImportExportAnalyzer:
                 )
 
     def _guess_library_from_function(self, function_name: str) -> str:
-        """Guess the library name based on the function name."""
+        """Guess the library name based on the function name using known mappings.
+
+        Uses a comprehensive database of common function names and their associated
+        libraries across platforms (Windows kernel32, user32, Linux libc, etc.)
+        to infer library names when explicit imports are unavailable.
+
+        Args:
+            function_name: Name of the function to identify library for using pattern
+                matching and lookup tables
+
+        Returns:
+            str: Library name string indicating the originating library
+                (e.g., 'libc.so.6', 'kernel32.dll', 'libpthread.so.0')
+                defaults to 'libc.so.6' for unknown Linux functions
+
+        """
         # Common function to library mappings
         function_library_map = {
             # libc functions
@@ -848,7 +1048,16 @@ class R2ImportExportAnalyzer:
         return "libc.so.6"
 
     def _classify_library_type(self, lib_name: str) -> str:
-        """Classify library by its type."""
+        """Classify library by its functional type.
+
+        Args:
+            lib_name: Name of the library to classify by functional role
+
+        Returns:
+            str: Library classification string indicating functional type
+                ('system', 'cryptography', 'network', or 'application')
+
+        """
         name_lower = lib_name.lower()
 
         system_libs = ["kernel32", "user32", "advapi32", "ntdll"]
@@ -862,7 +1071,16 @@ class R2ImportExportAnalyzer:
         return "network" if any(lib in name_lower for lib in network_libs) else "application"
 
     def _assess_library_security_impact(self, lib_name: str) -> str:
-        """Assess the security impact of a library."""
+        """Assess the security impact level of a library on the system.
+
+        Args:
+            lib_name: Name of the library to assess for security impact
+
+        Returns:
+            str: Security impact level string ('high', 'medium', or 'low')
+                on system security and protection mechanisms
+
+        """
         high_impact_libs = ["ntdll", "advapi32", "crypt32"]
         if any(lib in lib_name.lower() for lib in high_impact_libs):
             return "high"
@@ -871,7 +1089,16 @@ class R2ImportExportAnalyzer:
         return "medium" if any(lib in lib_name.lower() for lib in medium_impact_libs) else "low"
 
     def _get_common_apis_for_library(self, lib_name: str) -> list[str]:
-        """Get common APIs for a library."""
+        """Get list of commonly exported APIs for a given library.
+
+        Args:
+            lib_name: Name of the library to get common APIs for from lookup table
+
+        Returns:
+            list[str]: Common API function names exported by the library;
+                empty list if library is not in the common APIs database
+
+        """
         common_apis = {
             "kernel32": ["CreateFile", "ReadFile", "WriteFile", "CreateProcess"],
             "user32": ["MessageBox", "CreateWindow", "ShowWindow"],
@@ -885,7 +1112,16 @@ class R2ImportExportAnalyzer:
     # Each function returns appropriate classifications based on API name analysis
 
     def _get_license_usage_purpose(self, category: str) -> str:
-        """Get the purpose of license API usage."""
+        """Get the purpose of API usage in license validation mechanisms.
+
+        Args:
+            category: License API category string indicating the type of license API
+                (e.g., 'hardware_fingerprinting', 'registry_licensing')
+
+        Returns:
+            str: Description of the API's purpose in license validation
+
+        """
         purposes = {
             "hardware_fingerprinting": "Generate unique hardware identifier",
             "registry_licensing": "Store/retrieve license information",
@@ -897,7 +1133,16 @@ class R2ImportExportAnalyzer:
         return purposes.get(category, "Unknown purpose")
 
     def _assess_bypass_difficulty(self, category: str) -> str:
-        """Assess difficulty of bypassing license mechanism."""
+        """Assess the difficulty of bypassing a license protection mechanism.
+
+        Args:
+            category: License API category string indicating the protection type
+                (e.g., 'hardware_fingerprinting', 'network_licensing')
+
+        Returns:
+            str: Difficulty level string ('low', 'medium', or 'high')
+
+        """
         difficulty_map = {
             "hardware_fingerprinting": "medium",
             "registry_licensing": "low",
@@ -909,7 +1154,16 @@ class R2ImportExportAnalyzer:
         return difficulty_map.get(category, "unknown")
 
     def _identify_crypto_algorithm(self, api_name: str) -> str:
-        """Identify crypto algorithm from API name."""
+        """Identify cryptographic algorithm from API function name.
+
+        Args:
+            api_name: Name of the API function to analyze for algorithm patterns
+
+        Returns:
+            str: Algorithm name string indicating the crypto type
+                (e.g., 'AES', 'DES', 'RSA', 'Hash', 'Unknown')
+
+        """
         if "aes" in api_name.lower():
             return "AES"
         if "des" in api_name.lower():
@@ -919,7 +1173,15 @@ class R2ImportExportAnalyzer:
         return "Hash" if "hash" in api_name.lower() else "Unknown"
 
     def _assess_crypto_strength(self, api_name: str) -> str:
-        """Assess cryptographic strength."""
+        """Assess the cryptographic strength of an API function.
+
+        Args:
+            api_name: Name of the API function to assess for cryptographic strength
+
+        Returns:
+            str: Cryptographic strength level string ('weak', 'medium', or 'strong')
+
+        """
         strong_algos = ["aes", "sha256", "rsa"]
         name_lower = api_name.lower()
         if any(algo in name_lower for algo in strong_algos):
@@ -929,7 +1191,17 @@ class R2ImportExportAnalyzer:
         return "weak" if any(algo in name_lower for algo in weak_algos) else "medium"
 
     def _identify_evasion_technique(self, category: str) -> str:
-        """Identify evasion technique."""
+        """Identify the evasion technique employed by an anti-analysis API.
+
+        Args:
+            category: Anti-analysis API category string indicating the evasion type
+                (e.g., 'debugger_detection', 'vm_detection', 'analysis_evasion')
+
+        Returns:
+            str: Name of the evasion technique string
+                (e.g., 'Anti-debugging', 'Anti-VM', 'Anti-analysis', 'Code obfuscation')
+
+        """
         techniques = {
             "debugger_detection": "Anti-debugging",
             "vm_detection": "Anti-VM",
@@ -939,7 +1211,16 @@ class R2ImportExportAnalyzer:
         return techniques.get(category, "Unknown")
 
     def _suggest_countermeasure(self, category: str) -> str:
-        """Suggest countermeasure for evasion technique."""
+        """Suggest countermeasures for defeating an evasion technique.
+
+        Args:
+            category: Anti-analysis API category string indicating the evasion type
+
+        Returns:
+            str: Description of suggested countermeasure or mitigation strategy
+                to bypass the evasion technique
+
+        """
         countermeasures = {
             "debugger_detection": "Patch debugger checks or use stealthier debugger",
             "vm_detection": "Use physical machine or better VM hiding",
@@ -950,7 +1231,16 @@ class R2ImportExportAnalyzer:
 
     # Additional identification methods for various API categories
     def _identify_network_purpose(self, api_name: str) -> str:
-        """Identify network API purpose."""
+        """Identify the purpose of a network API function.
+
+        Args:
+            api_name: Name of the network API function to identify purpose for
+
+        Returns:
+            str: Description of the network API's purpose
+                (e.g., 'Socket operations', 'HTTP communications', 'FTP operations')
+
+        """
         if "socket" in api_name.lower():
             return "Socket operations"
         if "http" in api_name.lower():
@@ -958,7 +1248,16 @@ class R2ImportExportAnalyzer:
         return "FTP operations" if "ftp" in api_name.lower() else "General networking"
 
     def _identify_network_protocol(self, api_name: str) -> str:
-        """Identify network protocol."""
+        """Identify the network protocol used by an API function.
+
+        Args:
+            api_name: Name of the network API function to identify protocol for
+
+        Returns:
+            str: Protocol name string indicating the network protocol
+                (e.g., 'TCP', 'UDP', 'HTTP', 'Unknown')
+
+        """
         if "tcp" in api_name.lower():
             return "TCP"
         if "udp" in api_name.lower():
@@ -966,7 +1265,16 @@ class R2ImportExportAnalyzer:
         return "HTTP" if "http" in api_name.lower() else "Unknown"
 
     def _identify_file_operation(self, api_name: str) -> str:
-        """Identify file operation type."""
+        """Identify the type of file operation performed by an API.
+
+        Args:
+            api_name: Name of the file API function to identify operation for
+
+        Returns:
+            str: Description of the file operation type
+                (e.g., 'Create/Open', 'Read', 'Write', 'Delete', 'Unknown')
+
+        """
         if "create" in api_name.lower():
             return "Create/Open"
         if "read" in api_name.lower():
@@ -976,7 +1284,23 @@ class R2ImportExportAnalyzer:
         return "Delete" if "delete" in api_name.lower() else "Unknown"
 
     def _identify_file_access_type(self, api_name: str) -> str:
-        """Identify file access type based on API name."""
+        """Identify the file access type (read, write, execute) from API name.
+
+        Analyzes Windows and POSIX file API names against comprehensive pattern
+        databases to infer access modes and operations. Handles CreateFile flags,
+        file operations, and special cases like file mapping operations for
+        accurate access type determination in binary analysis contexts.
+
+        Args:
+            api_name: Name of the file API function to analyze for access patterns
+                and operation types
+
+        Returns:
+            str: Access type string indicating file access modes, potentially
+                including multiple slash-separated types (e.g., 'Read', 'Write',
+                'Read/Write', 'Execute', 'Modify', 'Directory', 'Unknown')
+
+        """
         name_lower = api_name.lower()
 
         # Analyze API name for access patterns
@@ -1113,7 +1437,16 @@ class R2ImportExportAnalyzer:
         return "/".join(unique_types)
 
     def _identify_registry_operation(self, api_name: str) -> str:
-        """Identify registry operation."""
+        """Identify the type of registry operation from API name.
+
+        Args:
+            api_name: Name of the registry API function to identify operation for
+
+        Returns:
+            str: Description of the registry operation type
+                (e.g., 'Open key', 'Query value', 'Set value', 'Unknown')
+
+        """
         if "open" in api_name.lower():
             return "Open key"
         if "query" in api_name.lower():
@@ -1121,7 +1454,21 @@ class R2ImportExportAnalyzer:
         return "Set value" if "set" in api_name.lower() else "Unknown"
 
     def _identify_registry_usage(self, api_name: str) -> str:
-        """Identify typical registry usage based on API name."""
+        """Identify typical registry usage patterns based on API name analysis.
+
+        Analyzes registry API names against pattern databases to infer usage context,
+        such as license key storage, activation checks, system configuration, or
+        persistence mechanisms that may indicate licensing protection patterns.
+
+        Args:
+            api_name: Name of the registry API function to analyze for usage patterns
+
+        Returns:
+            str: Description of the typical registry usage pattern, potentially
+                including multiple semi-colon-separated categories if matched against
+                multiple pattern types (e.g., "License/Activation; System-wide configuration")
+
+        """
         name_lower = api_name.lower()
 
         # Analyze registry API patterns for specific usage types
@@ -1290,7 +1637,16 @@ class R2ImportExportAnalyzer:
         return "; ".join(unique_types)
 
     def _identify_process_operation(self, api_name: str) -> str:
-        """Identify process operation."""
+        """Identify the type of process operation from API name.
+
+        Args:
+            api_name: Name of the process API function to identify operation for
+
+        Returns:
+            str: Description of the process operation type
+                (e.g., 'Create process', 'Open process', 'Terminate process', 'Unknown')
+
+        """
         if "create" in api_name.lower():
             return "Create process"
         if "open" in api_name.lower():
@@ -1298,14 +1654,32 @@ class R2ImportExportAnalyzer:
         return "Terminate process" if "terminate" in api_name.lower() else "Unknown"
 
     def _assess_process_security_implications(self, api_name: str) -> str:
-        """Assess security implications of process APIs."""
+        """Assess the security implications of a process API.
+
+        Args:
+            api_name: Name of the process API function to assess for security risk
+
+        Returns:
+            str: Description of security implications and risk assessment
+                indicating potential code injection or manipulation risks
+
+        """
         dangerous_apis = ["createremotethread", "writeprocessmemory"]
         if any(api in api_name.lower() for api in dangerous_apis):
             return "High - Potential code injection"
         return "Medium - Process manipulation"
 
     def _identify_memory_operation(self, api_name: str) -> str:
-        """Identify memory operation."""
+        """Identify the type of memory operation from API name.
+
+        Args:
+            api_name: Name of the memory API function to identify operation for
+
+        Returns:
+            str: Description of the memory operation type
+                (e.g., 'Allocate', 'Free', 'Copy', 'Unknown')
+
+        """
         if "alloc" in api_name.lower():
             return "Allocate"
         if "free" in api_name.lower():
@@ -1313,42 +1687,104 @@ class R2ImportExportAnalyzer:
         return "Copy" if "copy" in api_name.lower() else "Unknown"
 
     def _identify_allocation_type(self, api_name: str) -> str:
-        """Identify memory allocation type."""
+        """Identify the type of memory allocation from API name.
+
+        Args:
+            api_name: Name of the memory allocation API function to identify type for
+
+        Returns:
+            str: Allocation type string indicating memory region
+                (e.g., 'Virtual memory', 'Heap memory', 'General')
+
+        """
         if "virtual" in api_name.lower():
             return "Virtual memory"
         return "Heap memory" if "heap" in api_name.lower() else "General"
 
     def _identify_debug_purpose(self, api_name: str) -> str:
-        """Identify debug API purpose."""
+        """Identify the purpose of a debugging API function.
+
+        Args:
+            api_name: Name of the debug API function to identify purpose for
+
+        Returns:
+            str: Description of the debug API's purpose
+                (e.g., 'Debugger detection', 'Debug output', 'Debug control')
+
+        """
         if "present" in api_name.lower():
             return "Debugger detection"
         return "Debug output" if "output" in api_name.lower() else "Debug control"
 
     def _assess_anti_debug_potential(self, api_name: str) -> str:
-        """Assess anti-debug potential."""
+        """Assess the anti-debug potential of an API function.
+
+        Args:
+            api_name: Name of the debug API function to assess for anti-debug capability
+
+        Returns:
+            str: Anti-debug potential level string ('High' or 'Low')
+
+        """
         return "High" if "present" in api_name.lower() else "Low"
 
     def _categorize_symbol(self, symbol_name: str) -> str:
-        """Categorize symbol by type."""
+        """Categorize a symbol by its visibility and scope type.
+
+        Args:
+            symbol_name: Name of the symbol to categorize by naming conventions
+
+        Returns:
+            str: Symbol category string ('private', 'constant', or 'public')
+
+        """
         if symbol_name.startswith("_"):
             return "private"
         return "constant" if symbol_name.isupper() else "public"
 
     def _assess_symbol_relevance(self, symbol_name: str) -> str:
-        """Assess symbol relevance for analysis."""
+        """Assess the relevance of a symbol for binary analysis.
+
+        Args:
+            symbol_name: Name of the symbol to assess for relevance to licensing
+
+        Returns:
+            str: Symbol relevance level string ('high' or 'low')
+                for software protection analysis
+
+        """
         important_patterns = ["main", "entry", "init", "license", "key", "validate"]
         if any(pattern in symbol_name.lower() for pattern in important_patterns):
             return "high"
         return "low"
 
     def _analyze_export_purpose(self, export_name: str) -> str:
-        """Analyze export function purpose."""
+        """Analyze the purpose of an exported function.
+
+        Args:
+            export_name: Name of the exported function to analyze purpose for
+
+        Returns:
+            str: Description of the export function's purpose
+                (e.g., 'Entry point', 'DLL function', 'Library function')
+
+        """
         if "main" in export_name.lower():
             return "Entry point"
         return "DLL function" if "dll" in export_name.lower() else "Library function"
 
     def _analyze_relocation_purpose(self, relocation: dict[str, Any]) -> str:
-        """Analyze relocation purpose."""
+        """Analyze the purpose of a relocation entry.
+
+        Args:
+            relocation: Relocation dictionary containing type and target information
+                from the binary's relocation section
+
+        Returns:
+            str: Description of the relocation's purpose and type
+                (e.g., 'Absolute address relocation', 'Relative address relocation')
+
+        """
         reloc_type = relocation.get("type", "")
         if "absolute" in reloc_type.lower():
             return "Absolute address relocation"
@@ -1357,7 +1793,16 @@ class R2ImportExportAnalyzer:
         return "Unknown relocation"
 
     def _generate_api_statistics(self, result: dict[str, Any]) -> dict[str, Any]:
-        """Generate comprehensive API statistics."""
+        """Generate comprehensive statistics about API usage patterns.
+
+        Args:
+            result: Analysis result dictionary containing API categorizations
+
+        Returns:
+            dict[str, Any]: Statistics dictionary with counts and distributions across API
+                categories
+
+        """
         category_distribution: dict[str, int] = {}
         stats: dict[str, Any] = {
             "total_imports": len(result.get("imports", [])),
@@ -1381,7 +1826,16 @@ class R2ImportExportAnalyzer:
         return stats
 
     def _perform_security_assessment(self, result: dict[str, Any]) -> dict[str, Any]:
-        """Perform overall security assessment."""
+        """Perform overall security assessment of the binary's API usage.
+
+        Args:
+            result: Analysis result dictionary containing API detections and categorizations
+
+        Returns:
+            dict[str, Any]: Security assessment dictionary with risk level and security
+                concerns
+
+        """
         security_concerns: list[str] = []
         recommendations: list[str] = []
         threat_indicators: dict[str, Any] = {}
@@ -1415,7 +1869,24 @@ class R2ImportExportAnalyzer:
         return assessment
 
     def _get_api_cross_references(self, r2: R2Session | R2SessionPoolAdapter, imports: list[dict[str, Any]]) -> dict[str, Any]:
-        """Get cross-references for important APIs."""
+        """Get cross-references for important APIs found in the binary.
+
+        Identifies where important APIs like cryptographic functions and license
+        validation routines are called within the binary's code. Focuses on
+        licensing-related and security-critical APIs.
+
+        Args:
+            r2: Radare2 session or session pool adapter for command execution
+                and binary analysis
+            imports: List of import dictionaries to search for cross-references
+                containing API names and metadata
+
+        Returns:
+            dict[str, Any]: Dictionary mapping API names (str) to lists of cross-reference
+                information (list[str]), showing addresses and contexts where each
+                important API is called within the binary
+
+        """
         xrefs = {}
 
         # Focus on license and crypto APIs
@@ -1440,8 +1911,17 @@ class R2ImportExportAnalyzer:
     def get_imports(self) -> dict[str, Any]:
         """Get imports in a simplified format for compatibility.
 
+        Retrieves imported functions from the target binary using radare2's JSON
+        import analysis (iij command). Returns a normalized dictionary format for
+        compatibility with other analysis tools and workflows.
+
         Returns:
-            Dictionary containing imports list with normalized structure.
+            dict[str, Any]: Dictionary containing:
+                - imports (list[dict[str, Any]]): List of normalized import dictionaries,
+                  each containing name, plt, addr, ordinal, libname, type, bind
+                - total_count (int): Total number of imports found
+                - binary_path (str): Path to the analyzed binary
+                - error (str, optional): Error message if import retrieval failed
 
         """
         try:
@@ -1477,12 +1957,30 @@ class R2ImportExportAnalyzer:
 def analyze_binary_imports_exports(binary_path: str, radare2_path: str | None = None) -> dict[str, Any]:
     """Perform comprehensive import/export analysis on a binary.
 
+    Analyzes imports, exports, DLL dependencies, symbols, relocations, and API
+    patterns to identify licensing protection mechanisms, cryptographic routines,
+    and security-relevant API usage. Uses radare2 for robust binary analysis
+    across Windows PE and Linux ELF formats.
+
     Args:
-        binary_path: Path to binary file
-        radare2_path: Optional path to radare2 executable
+        binary_path: Path to the binary file to analyze
+        radare2_path: Optional path to radare2 executable; if None, uses system PATH
 
     Returns:
-        Complete import/export analysis results
+        dict[str, Any]: Complete import/export analysis results containing:
+            - binary_path (str): Path to the analyzed binary
+            - imports (list[dict[str, Any]]): Imported API functions
+            - exports (list[dict[str, Any]]): Exported API functions
+            - dll_dependencies (list[dict[str, Any]]): DLL/shared library dependencies
+            - symbols (list[dict[str, Any]]): Binary symbols and their metadata
+            - relocations (list[dict[str, Any]]): Address relocations
+            - api_categories (dict[str, list]): APIs grouped by functionality
+            - license_apis (list[dict[str, Any]]): License validation APIs detected
+            - crypto_apis (list[dict[str, Any]]): Cryptographic APIs used
+            - anti_analysis_apis (list[dict[str, Any]]): Anti-analysis/anti-debug APIs
+            - security_assessment (dict[str, Any]): Overall risk assessment
+            - api_statistics (dict[str, int]): Statistics on API usage patterns
+            - error (str, optional): Error message if analysis failed
 
     """
     analyzer = R2ImportExportAnalyzer(binary_path, radare2_path)

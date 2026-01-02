@@ -13,11 +13,10 @@ from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import frida
 
-from intellicrack.utils.type_safety import ensure_dict, get_typed_item, validate_type
+from intellicrack.utils.type_safety import ensure_dict, validate_type
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
 
     from frida.core import ScriptExportsSync, ScriptMessage
 
@@ -29,15 +28,30 @@ class MemoryExportsProtocol(Protocol):
     """Protocol for Frida memory exports with read/write/scan methods."""
 
     def read(self, address: int, size: int) -> bytes:
-        """Read memory at address."""
+        """Read memory at address.
+
+        Args:
+            address: Memory address to read from.
+            size: Number of bytes to read.
+        """
         ...
 
     def write(self, address: int, data: bytes) -> bool:
-        """Write data to memory at address."""
+        """Write data to memory at address.
+
+        Args:
+            address: Memory address to write to.
+            data: Bytes to write to memory.
+        """
         ...
 
     def scan(self, pattern: str, limit: int) -> list[dict[str, Any]]:
-        """Scan memory for pattern."""
+        """Scan memory for pattern.
+
+        Args:
+            pattern: Pattern string to search for in memory.
+            limit: Maximum number of matches to return.
+        """
         ...
 
 
@@ -45,7 +59,12 @@ class ModuleExportsProtocol(Protocol):
     """Protocol for Frida module exports with find_export method."""
 
     def find_export(self, module: str, name: str) -> int | None:
-        """Find export by name in module."""
+        """Find export by name in module.
+
+        Args:
+            module: Name of the module to search.
+            name: Name of the exported function.
+        """
         ...
 
 
@@ -109,7 +128,6 @@ class FridaStalkerEngine:
 
         Args:
             session: Frida session to attach the stalker to.
-
         """
         self.session = session
         self.traces: dict[int, StalkerTrace] = {}
@@ -117,7 +135,11 @@ class FridaStalkerEngine:
         self._init_stalker()
 
     def _init_stalker(self) -> None:
-        """Initialize Stalker script."""
+        """Initialize Stalker script.
+
+        Sets up the Frida Stalker engine for instruction-level tracing with
+        thread tracking, basic block detection, and call graph analysis.
+        """
         stalker_script = """
 // Stalker Configuration
 const STALKER_CONFIG = {
@@ -305,7 +327,6 @@ startThreadTrace(Process.getCurrentThreadId());
         Args:
             message: Frida message dictionary containing type and payload.
             data: Additional binary data from Frida (unused).
-
         """
         if message["type"] == "send":
             payload = validate_type(message.get("payload", {}), dict)
@@ -380,7 +401,6 @@ class FridaHeapTracker:
 
         Args:
             session: Frida session to attach heap tracking to.
-
         """
         self.session = session
         self.allocations: dict[int, HeapAllocation] = {}
@@ -388,7 +408,11 @@ class FridaHeapTracker:
         self._init_heap_tracker()
 
     def _init_heap_tracker(self) -> None:
-        """Initialize heap tracking script."""
+        """Initialize heap tracking script.
+
+        Sets up hooks for malloc, free, realloc, and calloc to monitor heap
+        allocations and identify potential memory leaks.
+        """
         heap_script = """
 // Heap allocation tracking
 const allocations = new Map();
@@ -576,7 +600,6 @@ send({ type: 'heap_tracking_ready' });
         Args:
             message: Frida message dictionary containing type and payload.
             data: Additional binary data from Frida (unused).
-
         """
         if message["type"] == "send":
             payload = validate_type(message.get("payload", {}), dict)
@@ -634,7 +657,6 @@ class FridaThreadMonitor:
 
         Args:
             session: Frida session to monitor threads in.
-
         """
         self.session = session
         self.threads: dict[int, ThreadInfo] = {}
@@ -642,7 +664,11 @@ class FridaThreadMonitor:
         self._init_thread_monitor()
 
     def _init_thread_monitor(self) -> None:
-        """Initialize thread monitoring script."""
+        """Initialize thread monitoring script.
+
+        Sets up hooks for Windows CreateThread/ExitThread and POSIX pthread_create/
+        pthread_exit to monitor thread lifecycle events across platforms.
+        """
         thread_script = """
 // Thread monitoring
 const threads = new Map();
@@ -794,7 +820,6 @@ send({ type: 'thread_monitor_ready' });
         Args:
             message: Frida message dictionary containing type and payload.
             data: Additional binary data from Frida (unused).
-
         """
         if message["type"] != "send":
             return
@@ -833,7 +858,6 @@ send({ type: 'thread_monitor_ready' });
 
         Returns:
             List of dictionaries containing current system thread information.
-
         """
         try:
             exports: ScriptExportsSync = self.script.exports_sync
@@ -852,7 +876,6 @@ class FridaExceptionHooker:
 
         Args:
             session: Frida session to hook exceptions in.
-
         """
         self.session = session
         self.exceptions: list[ExceptionInfo] = []
@@ -860,7 +883,12 @@ class FridaExceptionHooker:
         self._init_exception_hooker()
 
     def _init_exception_hooker(self) -> None:
-        """Initialize exception hooking script."""
+        """Initialize exception hooking script.
+
+        Sets up hooks for Windows exception handling (RtlDispatchException,
+        SetUnhandledExceptionFilter), POSIX signal handling (sigaction),
+        and C++ exception handling (__cxa_throw).
+        """
         exception_script = """
 // Exception handling hooks
 const exceptions = [];
@@ -992,7 +1020,6 @@ send({ type: 'exception_hooking_ready' });
         Args:
             message: Frida message dictionary containing type and payload.
             data: Additional binary data from Frida (unused).
-
         """
         if message["type"] == "send":
             payload = validate_type(message.get("payload", {}), dict)
@@ -1030,7 +1057,6 @@ send({ type: 'exception_hooking_ready' });
         """Clear exception history.
 
         Clears both the local exception list and the Frida script exception list.
-
         """
         self.exceptions.clear()
         exports: ScriptExportsSync = self.script.exports_sync
@@ -1053,7 +1079,11 @@ class FridaNativeReplacer:
         self._init_replacer()
 
     def _init_replacer(self) -> None:
-        """Initialize native function replacement."""
+        """Initialize native function replacement.
+
+        Sets up the native function replacement system to intercept and replace
+        function implementations with custom licensing validation replacements.
+        """
         replacer_script = """
 // Native function replacement
 const replacements = new Map();
@@ -1196,7 +1226,6 @@ send({ type: 'replacer_ready' });
         Args:
             message: Frida message dictionary containing type and payload.
             data: Additional binary data from Frida (unused).
-
         """
         if message["type"] == "send":
             payload = validate_type(message.get("payload", {}), dict)
@@ -1241,7 +1270,6 @@ send({ type: 'replacer_ready' });
 
         Returns:
             True if restored successfully, False otherwise.
-
         """
         try:
             exports: ScriptExportsSync = self.script.exports_sync
@@ -1267,7 +1295,11 @@ class FridaRPCInterface:
         self._init_rpc()
 
     def _init_rpc(self) -> None:
-        """Initialize RPC interface."""
+        """Initialize RPC interface.
+
+        Sets up comprehensive RPC operations for memory manipulation, module
+        enumeration, process information, file operations, and Windows registry access.
+        """
         rpc_script = """
 // RPC Interface for complex operations
 
@@ -1610,10 +1642,9 @@ send({ type: 'rpc_ready' });
 
         Returns:
             Bytes read from the specified memory address.
-
         """
         exports: ScriptExportsSync = self.script.exports_sync
-        memory = cast(MemoryExportsProtocol, exports.memory)
+        memory = cast("MemoryExportsProtocol", exports.memory)
         result = memory.read(address, size)
         return result if isinstance(result, bytes) else bytes(result)
 
@@ -1626,10 +1657,9 @@ send({ type: 'rpc_ready' });
 
         Returns:
             True if write succeeded, False otherwise.
-
         """
         exports: ScriptExportsSync = self.script.exports_sync
-        memory = cast(MemoryExportsProtocol, exports.memory)
+        memory = cast("MemoryExportsProtocol", exports.memory)
         result = memory.write(address, data)
         return bool(result)
 
@@ -1642,10 +1672,9 @@ send({ type: 'rpc_ready' });
 
         Returns:
             List of dictionaries containing match address and size.
-
         """
         exports: ScriptExportsSync = self.script.exports_sync
-        memory = cast(MemoryExportsProtocol, exports.memory)
+        memory = cast("MemoryExportsProtocol", exports.memory)
         return validate_type(memory.scan(pattern, limit), list)
 
     def module_find_export(self, module: str, name: str) -> int | None:
@@ -1657,10 +1686,9 @@ send({ type: 'rpc_ready' });
 
         Returns:
             Address of the exported function, or None if not found.
-
         """
         exports: ScriptExportsSync = self.script.exports_sync
-        module_obj = cast(ModuleExportsProtocol, exports.module)
+        module_obj = cast("ModuleExportsProtocol", exports.module)
         result = module_obj.find_export(module, name)
         return int(result) if result is not None else None
 
@@ -1672,7 +1700,6 @@ send({ type: 'rpc_ready' });
 
         Returns:
             Result of the JavaScript evaluation.
-
         """
         exports: ScriptExportsSync = self.script.exports_sync
         result = exports.evaluate(code)
@@ -1687,7 +1714,6 @@ class FridaAdvancedHooking:
 
         Args:
             session: Frida session to attach advanced hooking features to.
-
         """
         self.session = session
         self.stalker: FridaStalkerEngine | None = None
@@ -1702,7 +1728,6 @@ class FridaAdvancedHooking:
 
         Returns:
             FridaStalkerEngine instance for instruction-level tracing.
-
         """
         stalker_instance = FridaStalkerEngine(self.session)
         self.stalker = stalker_instance
@@ -1713,7 +1738,6 @@ class FridaAdvancedHooking:
 
         Returns:
             FridaHeapTracker instance for monitoring heap allocations.
-
         """
         heap_tracker_instance = FridaHeapTracker(self.session)
         self.heap_tracker = heap_tracker_instance
@@ -1724,7 +1748,6 @@ class FridaAdvancedHooking:
 
         Returns:
             FridaThreadMonitor instance for tracking thread creation and termination.
-
         """
         thread_monitor_instance = FridaThreadMonitor(self.session)
         self.thread_monitor = thread_monitor_instance
@@ -1735,7 +1758,6 @@ class FridaAdvancedHooking:
 
         Returns:
             FridaExceptionHooker instance for monitoring exception handlers.
-
         """
         exception_hooker_instance = FridaExceptionHooker(self.session)
         self.exception_hooker = exception_hooker_instance
@@ -1746,7 +1768,6 @@ class FridaAdvancedHooking:
 
         Returns:
             FridaNativeReplacer instance for replacing native function implementations.
-
         """
         native_replacer_instance = FridaNativeReplacer(self.session)
         self.native_replacer = native_replacer_instance
@@ -1757,7 +1778,6 @@ class FridaAdvancedHooking:
 
         Returns:
             FridaRPCInterface instance for complex RPC operations.
-
         """
         rpc_interface_instance = FridaRPCInterface(self.session)
         self.rpc_interface = rpc_interface_instance
@@ -1768,7 +1788,6 @@ class FridaAdvancedHooking:
 
         Returns:
             Self reference for method chaining.
-
         """
         self.init_stalker()
         self.init_heap_tracker()

@@ -13,13 +13,15 @@ the Free Software Foundation, either version 3 of the License, or
 """
 
 import sys
+from collections.abc import Generator
+
 import pytest
 
 from intellicrack.handlers.pyqt6_handler import QApplication
 
 
 @pytest.fixture(scope="module")
-def qapp():
+def qapp() -> Generator[QApplication, None, None]:
     """Create QApplication instance for testing."""
     app = QApplication.instance()
     if app is None:
@@ -30,7 +32,7 @@ def qapp():
 class TestAnimationFunctionality:
     """Test suite for animation enable/disable functionality with real application."""
 
-    def test_enable_animations_injects_transition_css(self, qapp):
+    def test_enable_animations_injects_transition_css(self, qapp: QApplication) -> None:
         """Test that enabling animations injects CSS transition rules into stylesheet."""
         original_stylesheet = qapp.styleSheet()
 
@@ -56,7 +58,7 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
 
         qapp.setStyleSheet(original_stylesheet)
 
-    def test_disable_animations_injects_zero_duration_css(self, qapp):
+    def test_disable_animations_injects_zero_duration_css(self, qapp: QApplication) -> None:
         """Test that disabling animations sets transition duration to 0s."""
         original_stylesheet = qapp.styleSheet()
 
@@ -78,7 +80,7 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
 
         qapp.setStyleSheet(original_stylesheet)
 
-    def test_marker_detection_prevents_duplicate_injection(self, qapp):
+    def test_marker_detection_prevents_duplicate_injection(self, qapp: QApplication) -> None:
         """Test that marker comments prevent duplicate CSS injection."""
         original_stylesheet = qapp.styleSheet()
 
@@ -95,7 +97,7 @@ QPushButton {{ transition: all 0.2s ease-in-out; }}
 
         qapp.setStyleSheet(original_stylesheet)
 
-    def test_remove_disable_marker_when_enabling(self, qapp):
+    def test_remove_disable_marker_when_enabling(self, qapp: QApplication) -> None:
         """Test that enabling animations removes disable marker from stylesheet."""
         original_stylesheet = qapp.styleSheet()
 
@@ -121,7 +123,7 @@ QPushButton {{ transition: all 0.2s ease-in-out; }}
 
         qapp.setStyleSheet(original_stylesheet)
 
-    def test_remove_enable_marker_when_disabling(self, qapp):
+    def test_remove_enable_marker_when_disabling(self, qapp: QApplication) -> None:
         """Test that disabling animations removes enable marker from stylesheet."""
         original_stylesheet = qapp.styleSheet()
 
@@ -148,7 +150,7 @@ QPushButton:hover {{ transition: all 0.15s ease-in-out; }}
 
         qapp.setStyleSheet(original_stylesheet)
 
-    def test_toggle_animations_multiple_times(self, qapp):
+    def test_toggle_animations_multiple_times(self, qapp: QApplication) -> None:
         """Test that toggling animations multiple times maintains stylesheet integrity."""
         original_stylesheet = qapp.styleSheet()
 
@@ -184,7 +186,7 @@ QPushButton {{ transition: all 0.2s ease-in-out; }}
 
         qapp.setStyleSheet(original_stylesheet)
 
-    def test_stylesheet_modification_preserves_existing_styles(self, qapp):
+    def test_stylesheet_modification_preserves_existing_styles(self, qapp: QApplication) -> None:
         """Test that adding animation CSS preserves existing stylesheet rules."""
         test_style = "QPushButton { background-color: red; }"
         qapp.setStyleSheet(test_style)
@@ -201,7 +203,7 @@ QPushButton { transition: all 0.2s ease-in-out; }
 
         qapp.setStyleSheet("")
 
-    def test_empty_stylesheet_animation_injection(self, qapp):
+    def test_empty_stylesheet_animation_injection(self, qapp: QApplication) -> None:
         """Test animation injection on empty stylesheet."""
         qapp.setStyleSheet("")
 
@@ -215,7 +217,7 @@ QPushButton { transition: all 0.2s ease-in-out; }
 
         qapp.setStyleSheet("")
 
-    def test_complex_stylesheet_marker_removal(self, qapp):
+    def test_complex_stylesheet_marker_removal(self, qapp: QApplication) -> None:
         """Test marker removal in complex stylesheets with multiple rules."""
         complex_stylesheet = """
 QMainWindow { background-color: #1E1E1E; }

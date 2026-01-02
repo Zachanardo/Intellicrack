@@ -30,8 +30,8 @@ from typing import Any, NoReturn, TypeVar, cast
 
 from intellicrack.utils.analysis.binary_analysis import analyze_binary
 from intellicrack.utils.exploitation.exploitation import exploit
-from intellicrack.utils.logger import logger as imported_logger
 from intellicrack.utils.patching.patch_generator import generate_patch
+from intellicrack.utils.url_validation import is_safe_url
 
 
 F = TypeVar("F", bound=Callable[..., Any])
@@ -83,11 +83,11 @@ except ImportError as e:
     logger.debug("Architecture import not available: %s", e)
 
 try:
-    from intellicrack.core.exploitation.bypass_engine import BypassEngine
+    from intellicrack.core.exploitation.bypass_engine import BypassEngine, PayloadType as _PayloadType
 
     PayloadEngine = BypassEngine
     PayloadTemplates = None
-    PayloadType = None
+    PayloadType = _PayloadType
 except ImportError as e:
     logger.debug("BypassEngine import not available: %s", e)
 
@@ -694,14 +694,17 @@ def list_templates(category: str | None) -> None:
 @click.option("--param", "-p", multiple=True, help="Template parameters (key=value)")
 @click.option("--output", "-o", help="Output file path")
 def from_template(category: str, template_name: str, architecture: str, param: tuple[str, ...], output: str | None) -> None:
-    """Generate a payload from a predefined template with custom parameters.
+    """Generate a licensing bypass payload from a predefined template with custom parameters.
 
     Creates a payload by loading and customizing a predefined template from
     the template library. Templates provide convenient presets for common
-    exploitation scenarios. Custom parameters can override template defaults.
+    software licensing bypass scenarios. Custom parameters can override template defaults.
+
+    SCOPE: All templates are for software licensing cracking only - license checks,
+    trial extensions, activation bypasses, serial validation, and hardware ID spoofing.
 
     Args:
-        category: Template category name (e.g., 'shell', 'steganography', 'anti_analysis').
+        category: Template category name (e.g., 'license_check', 'trial', 'activation', 'serial', 'hardware_id').
         template_name: Name of the specific template within the category to use.
         architecture: Target processor architecture ('x86', 'x64', 'arm', or 'arm64').
         param: Tuple of template parameter overrides in 'key=value' format (can be multiple).
@@ -745,12 +748,15 @@ def from_template(category: str, template_name: str, architecture: str, param: t
         }
 
         # Determine payload type from template category
+        # Map licensing-related template categories to appropriate payload types
         payload_type_map = {
-            "reverse_shell": PayloadType.REVERSE_SHELL,
-            "bind_shell": PayloadType.BIND_SHELL,
-            "staged": PayloadType.STAGED_PAYLOAD,
+            "license_check": PayloadType.LICENSE_CHECK_BYPASS,
+            "trial": PayloadType.TRIAL_EXTENSION,
+            "activation": PayloadType.ACTIVATION_BYPASS,
+            "serial": PayloadType.SERIAL_VALIDATION_BYPASS,
+            "hardware_id": PayloadType.HARDWARE_ID_SPOOF,
         }
-        payload_type = payload_type_map.get(category.lower(), PayloadType.REVERSE_SHELL)
+        payload_type = payload_type_map.get(category.lower(), PayloadType.LICENSE_CHECK_BYPASS)
 
         result = engine.generate_payload(
             payload_type,
@@ -1559,13 +1565,32 @@ def advanced_payload() -> None:
     default="raw",
     help="Output format",
 )
-def advanced_generate() -> None:
+def advanced_generate(
+    payload_type: str,
+    architecture: str,
+    lhost: str,
+    lport: int,
+    encoding: str,
+    evasion: str,
+    output: str | None,
+    output_format: str,
+) -> None:
     """Generate advanced payload with evasion techniques (currently disabled).
 
     This command previously generated advanced payloads with anti-analysis
     evasion, polymorphic encoding, and metamorphic transformations. This
     functionality has been removed from the current version as Intellicrack
     now focuses on binary analysis and security research capabilities.
+
+    Args:
+        payload_type: Type of payload ('reverse_shell', 'bind_shell', 'meterpreter', 'staged_payload', or 'custom').
+        architecture: Target processor architecture ('x86', 'x64', 'arm', or 'arm64').
+        lhost: Listener host for network callbacks or reverse connections.
+        lport: Listener port for network callbacks or reverse connections.
+        encoding: Encoding method to apply ('none', 'polymorphic', 'metamorphic', 'xor', or 'alpha').
+        evasion: Evasion level ('none', 'low', 'medium', 'high', or 'maximum').
+        output: Optional file path where payload will be saved.
+        output_format: Output format for the payload ('raw', 'exe', 'dll', or 'shellcode').
     """
     try:
         # This functionality has been removed as it was part of out-of-scope exploitation code.
@@ -1832,6 +1857,9 @@ def post_exploit() -> None:
 
 
 @post_exploit.command()
+@click.argument("target_path")
+@click.argument("lhost")
+@click.argument("lport", type=int)
 @click.option(
     "--platform",
     type=click.Choice(["windows", "linux", "macos"]),
@@ -1963,7 +1991,7 @@ def ai_generate(
     focus: str,
     output: str | None,
     *,
-    autonomous_mode: bool,
+    autonomous: bool,
     preview: bool,
 ) -> None:
     """Generate AI-driven scripts for automating licensing protection bypass.
@@ -1979,7 +2007,7 @@ def ai_generate(
         complexity: Script complexity level ('basic' or 'advanced').
         focus: Protection focus ('auto', 'license', 'trial', 'network', 'anti-debug', or 'vm').
         output: Optional directory path where generated scripts will be saved.
-        autonomous_mode: If True, AI will test and refine scripts automatically.
+        autonomous: If True, AI will test and refine scripts automatically.
         preview: If True, display script content before saving to file.
     """
     try:
@@ -2021,7 +2049,7 @@ def ai_generate(
             }
             script_request += f". Focus on {protection_map[focus]} protection."
 
-        if autonomous_mode:
+        if autonomous:
             script_request += " Use autonomous mode with testing and refinement."
             click.echo("🔄 Autonomous mode enabled - AI will test and refine scripts")
 
@@ -3285,13 +3313,18 @@ def cert_test(target: str, url: str, timeout: int) -> None:
         click.echo(f"🌐 Testing HTTPS connection to {url}...")
 
         try:
+            # Validate URL for SSRF protection (allow_local=True for security testing)
+            if not is_safe_url(url, allow_local=True):
+                click.echo(f"Error: URL blocked by security validation: {url}", err=True)
+                sys.exit(1)
+
             context = ssl.create_default_context()
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
 
-            req = urllib.request.Request(url, headers={"User-Agent": "Intellicrack-Test/1.0"})  # noqa: S310
+            req = urllib.request.Request(url, headers={"User-Agent": "Intellicrack-Test/1.0"})
 
-            with urllib.request.urlopen(req, context=context, timeout=timeout) as response:  # noqa: S310
+            with urllib.request.urlopen(req, context=context, timeout=timeout) as response:
                 status_code = response.getcode()
 
                 if status_code == 200:

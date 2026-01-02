@@ -51,12 +51,12 @@ if IS_WINDOWS:
     except ImportError as e:
         logger.exception("Import error in program_discovery: %s", e)
         HAS_WINREG = False
-        winreg = None  # type: ignore[assignment]
-        HKEYType = None  # type: ignore[assignment,misc]
+        winreg = None
+        HKEYType = None
 else:
     HAS_WINREG = False
-    winreg = None  # type: ignore[assignment]
-    HKEYType = None  # type: ignore[assignment,misc]
+    winreg = None
+    HKEYType = None
 
 
 @dataclass
@@ -175,7 +175,12 @@ class ProgramDiscoveryEngine:
     }
 
     def __init__(self, cache_file: str | None = None) -> None:
-        """Initialize the program discovery engine."""
+        """Initialize the program discovery engine.
+
+        Args:
+            cache_file: Optional path to cache file. If not provided, uses default location.
+
+        """
         self.logger = logger
         self.path_discovery = PathDiscovery()
         self.cache_file = cache_file or self._get_default_cache_file()
@@ -186,7 +191,12 @@ class ProgramDiscoveryEngine:
         self._load_cache()
 
     def _get_default_cache_file(self) -> str:
-        """Get default cache file path."""
+        """Get default cache file path.
+
+        Returns:
+            Path to the default cache file.
+
+        """
         cache_dir = Path.home() / ".intellicrack"
         cache_dir.mkdir(exist_ok=True)
         return str(cache_dir / "program_discovery_cache.json")
@@ -195,10 +205,10 @@ class ProgramDiscoveryEngine:
         """Analyze a program from its installation path.
 
         Args:
-            program_path: Path to analyze (can be executable or installation folder)
+            program_path: Path to analyze (can be executable or installation folder).
 
         Returns:
-            ProgramInfo object if analysis successful, None otherwise
+            Program information object if analysis succeeds, None if path does not exist or analysis fails.
 
         """
         try:
@@ -265,10 +275,10 @@ class ProgramDiscoveryEngine:
         """Discover programs from a specific path (like desktop folder).
 
         Args:
-            search_path: Path to search for programs
+            search_path: Path to search for programs.
 
         Returns:
-            List of discovered programs
+            List of discovered programs found in the specified path.
 
         """
         programs: list[ProgramInfo] = []
@@ -293,7 +303,12 @@ class ProgramDiscoveryEngine:
         return programs
 
     def get_installed_programs(self) -> list[ProgramInfo]:
-        """Get list of installed programs from system registry/package manager."""
+        """Get list of installed programs from system registry/package manager.
+
+        Returns:
+            List of installed programs detected via platform-specific methods.
+
+        """
         programs = []
 
         if IS_WINDOWS:
@@ -306,7 +321,12 @@ class ProgramDiscoveryEngine:
         return programs
 
     def scan_executable_directories(self) -> list[ProgramInfo]:
-        """Scan common executable directories for programs."""
+        """Scan common executable directories for programs.
+
+        Returns:
+            List of programs found in common system directories.
+
+        """
         programs: list[ProgramInfo] = []
 
         # Get platform-specific directories
@@ -334,7 +354,15 @@ class ProgramDiscoveryEngine:
         return programs
 
     def _find_main_executable(self, folder_path: Path) -> Path | None:
-        """Find the main executable in a program folder."""
+        """Find the main executable in a program folder.
+
+        Args:
+            folder_path: Directory path to search for executables.
+
+        Returns:
+            Path to main executable if found, None otherwise.
+
+        """
         if not folder_path.is_dir():
             return None
 
@@ -356,7 +384,15 @@ class ProgramDiscoveryEngine:
         return None
 
     def _analyze_installation_folder(self, folder_path: Path) -> dict[str, Any]:
-        """Analyze program installation folder for metadata."""
+        """Analyze program installation folder for metadata.
+
+        Args:
+            folder_path: Directory path to analyze.
+
+        Returns:
+            Dictionary containing analysis results with keys: total_size, file_types, architecture, icon_path, has_licensing, licensing_files.
+
+        """
         analysis: dict[str, Any] = {
             "total_size": 0,
             "file_types": [],
@@ -460,7 +496,15 @@ class ProgramDiscoveryEngine:
         return analysis
 
     def _get_pe_architecture(self, pe_path: Path) -> str:
-        """Get architecture from PE file."""
+        """Get architecture from PE file.
+
+        Args:
+            pe_path: Path to PE executable file to analyze.
+
+        Returns:
+            Architecture string (x86, x64, ARM, ARM64, or Unknown).
+
+        """
         try:
             import struct
 
@@ -501,7 +545,15 @@ class ProgramDiscoveryEngine:
             return "Unknown"
 
     def _get_windows_version_info(self, exe_path: Path) -> tuple[str, str]:
-        """Get version and publisher info from Windows executable."""
+        """Get version and publisher info from Windows executable.
+
+        Args:
+            exe_path: Path to Windows executable file.
+
+        Returns:
+            Tuple of (version, publisher) strings. Returns ("Unknown", "Unknown") if extraction fails.
+
+        """
         try:
             if HAS_WINREG:
                 try:
@@ -528,7 +580,15 @@ class ProgramDiscoveryEngine:
         return "Unknown", "Unknown"
 
     def _get_unix_version_info(self, exe_path: Path) -> tuple[str, str]:
-        """Get version and publisher info from Unix executable."""
+        """Get version and publisher info from Unix executable.
+
+        Args:
+            exe_path: Path to Unix executable file.
+
+        Returns:
+            Tuple of (version, publisher) strings. Returns ("Unknown", "Unknown") if extraction fails.
+
+        """
         try:
             # Try to get version from --version flag
             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
@@ -548,7 +608,16 @@ class ProgramDiscoveryEngine:
         return "Unknown", "Unknown"
 
     def _calculate_analysis_priority(self, program_name: str, install_path: str) -> int:
-        """Calculate analysis priority for a program."""
+        """Calculate analysis priority for a program.
+
+        Args:
+            program_name: Name of the program to evaluate.
+            install_path: Installation path of the program.
+
+        Returns:
+            Priority score for the program (higher = more important for analysis).
+
+        """
         program_name_lower = program_name.lower()
         install_path_lower = install_path.lower()
 
@@ -562,7 +631,12 @@ class ProgramDiscoveryEngine:
         )
 
     def _get_windows_programs(self) -> list[ProgramInfo]:
-        """Get Windows programs from registry."""
+        """Get Windows programs from registry.
+
+        Returns:
+            List of installed programs found in Windows registry.
+
+        """
         if not IS_WINDOWS or not HAS_WINREG:
             return []
 
@@ -577,7 +651,12 @@ class ProgramDiscoveryEngine:
         return programs
 
     def _get_linux_programs(self) -> list[ProgramInfo]:
-        """Get Linux programs from package managers."""
+        """Get Linux programs from package managers.
+
+        Returns:
+            List of installed programs from dpkg and rpm package managers.
+
+        """
         programs = []
 
         # Try different package managers
@@ -614,7 +693,12 @@ class ProgramDiscoveryEngine:
         return programs
 
     def _get_macos_programs(self) -> list[ProgramInfo]:
-        """Get macOS programs from Applications folder."""
+        """Get macOS programs from Applications folder.
+
+        Returns:
+            List of applications found in macOS Applications directories.
+
+        """
         programs = []
 
         app_dirs = ["/Applications", "/System/Applications"]
@@ -636,7 +720,15 @@ class ProgramDiscoveryEngine:
         return programs
 
     def _parse_dpkg_output(self, output: str) -> list[ProgramInfo]:
-        """Parse dpkg output to extract program information."""
+        """Parse dpkg output to extract program information.
+
+        Args:
+            output: Raw dpkg -l command output string.
+
+        Returns:
+            List of installed programs extracted from dpkg output.
+
+        """
         programs = []
 
         for line in output.split("\n")[5:]:  # Skip header lines
@@ -672,7 +764,15 @@ class ProgramDiscoveryEngine:
         return programs
 
     def _parse_rpm_output(self, output: str) -> list[ProgramInfo]:
-        """Parse rpm output to extract program information."""
+        """Parse rpm output to extract program information.
+
+        Args:
+            output: Raw rpm -qa command output string.
+
+        Returns:
+            List of installed programs extracted from rpm output.
+
+        """
         programs = []
 
         for line in output.split("\n"):
@@ -708,7 +808,17 @@ class ProgramDiscoveryEngine:
         return programs
 
     def _scan_registry_path(self, hkey: int | None, path: str, include_system: bool) -> list[ProgramInfo]:
-        """Scan a specific registry path for installed programs."""
+        """Scan a specific registry path for installed programs.
+
+        Args:
+            hkey: Registry hive handle (e.g., HKEY_LOCAL_MACHINE) or None.
+            path: Registry path to scan within the hive.
+            include_system: Whether to include system components in results.
+
+        Returns:
+            List of programs found in the registry path.
+
+        """
         programs: list[ProgramInfo] = []
         self.logger.debug("Scanning registry path %s, include_system=%s", path, include_system)
 
@@ -732,7 +842,18 @@ class ProgramDiscoveryEngine:
         return programs
 
     def _extract_program_from_registry(self, hkey: int, path: str, subkey_name: str, include_system: bool) -> ProgramInfo | None:
-        """Extract program information from a registry entry."""
+        """Extract program information from a registry entry.
+
+        Args:
+            hkey: Registry hive handle (e.g., HKEY_LOCAL_MACHINE).
+            path: Registry path containing the subkey.
+            subkey_name: Name of the registry subkey to extract from.
+            include_system: Whether to include system components.
+
+        Returns:
+            Program information if extraction succeeds, None if registry access fails or entry is invalid.
+
+        """
         if not HAS_WINREG or winreg is None:
             return None
 
@@ -798,7 +919,16 @@ class ProgramDiscoveryEngine:
             return None
 
     def _get_registry_value(self, key: Any, value_name: str) -> str | None:
-        """Get a value from a registry key safely."""
+        """Get a value from a registry key safely.
+
+        Args:
+            key: Open registry key handle.
+            value_name: Name of the value to retrieve.
+
+        Returns:
+            Registry value as string, or None if value does not exist or retrieval fails.
+
+        """
         if not HAS_WINREG or winreg is None:
             return None
 
@@ -810,7 +940,16 @@ class ProgramDiscoveryEngine:
             return None
 
     def _is_system_component(self, display_name: str, subkey_name: str) -> bool:
-        """Check if a program is a system component."""
+        """Check if a program is a system component.
+
+        Args:
+            display_name: Display name of the program from registry.
+            subkey_name: Registry subkey name for the program.
+
+        Returns:
+            True if program matches system component patterns, False otherwise.
+
+        """
         system_indicators = [
             "microsoft visual c++",
             "microsoft .net",
@@ -830,7 +969,12 @@ class ProgramDiscoveryEngine:
         return any(indicator in name_lower or indicator in key_lower for indicator in system_indicators)
 
     def _should_use_cache(self) -> bool:
-        """Check if cached data should be used."""
+        """Check if cached data should be used.
+
+        Returns:
+            True if cache is valid (less than 1 hour old), False otherwise.
+
+        """
         if not self.last_scan_time or not self.programs_cache:
             return False
 
@@ -839,7 +983,12 @@ class ProgramDiscoveryEngine:
         return cache_age < 3600
 
     def _get_cached_programs(self) -> list[ProgramInfo]:
-        """Get programs from cache."""
+        """Get programs from cache.
+
+        Returns:
+            List of cached programs sorted by priority and confidence score.
+
+        """
         program_list = list(self.programs_cache.values())
         program_list.sort(key=lambda p: (p.analysis_priority, p.confidence_score), reverse=True)
         return program_list

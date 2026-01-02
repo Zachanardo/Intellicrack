@@ -4,9 +4,11 @@
 Tests the integration logic without complex imports.
 """
 
+import os
 import tempfile
 from pathlib import Path
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -19,7 +21,7 @@ class BinaryPatch:
     patch_type: str = "defensive"
 
 
-def create_mock_r2_patch():
+def create_mock_r2_patch() -> dict[str, Any]:
     """Create a mock R2 patch for testing."""
     return {
         "address": "0x401000",
@@ -31,7 +33,7 @@ def create_mock_r2_patch():
     }
 
 
-def convert_r2_to_binary_patch(r2_patch, patch_category):
+def convert_r2_to_binary_patch(r2_patch: dict[str, Any], patch_category: str) -> BinaryPatch | None:
     """Convert R2 patch format to binary patch format."""
     try:
         # Extract address
@@ -75,7 +77,7 @@ def convert_r2_to_binary_patch(r2_patch, patch_category):
         return None
 
 
-def validate_patch(patch):
+def validate_patch(patch: BinaryPatch) -> bool:
     """Validate a binary patch."""
     if patch.offset < 0:
         return False
@@ -84,7 +86,7 @@ def validate_patch(patch):
     return len(patch.patched_bytes) <= 1024
 
 
-def apply_patch_to_binary(binary_path, patch):
+def apply_patch_to_binary(binary_path: str, patch: BinaryPatch) -> bool:
     """Apply a single patch to a binary file."""
     try:
         with open(binary_path, "r+b") as f:
@@ -96,7 +98,7 @@ def apply_patch_to_binary(binary_path, patch):
         return False
 
 
-def test_r2_to_binary_conversion():
+def test_r2_to_binary_conversion() -> bool:
     """Test R2 to binary patch conversion."""
     print("Testing R2 to Binary Patch Conversion")
     print("=" * 40)
@@ -133,7 +135,7 @@ def test_r2_to_binary_conversion():
     return success
 
 
-def test_patch_validation():
+def test_patch_validation() -> bool:
     """Test patch validation functionality."""
     print("\nTesting Patch Validation")
     print("=" * 25)
@@ -167,7 +169,7 @@ def test_patch_validation():
     return success
 
 
-def test_binary_patching():
+def test_binary_patching() -> bool:
     """Test actual binary file patching."""
     print("\nTesting Binary File Patching")
     print("=" * 30)
@@ -225,7 +227,7 @@ def test_binary_patching():
         test_binary.unlink(missing_ok=True)
 
 
-def test_integration_workflow():
+def test_integration_workflow() -> bool:
     """Test the complete integration workflow."""
     print("\nTesting Complete Integration Workflow")
     print("=" * 40)
@@ -268,7 +270,7 @@ def test_integration_workflow():
     return success
 
 
-def main():
+def main() -> int:
     """Main test function."""
     print("DAY 4.2 INTEGRATION TESTING: R2 Bypass Generator + Binary Modification")
     print("=" * 75)

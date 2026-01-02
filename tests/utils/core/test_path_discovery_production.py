@@ -13,8 +13,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any
-from unittest.mock import Mock
+from typing import Any, Optional
 
 import pytest
 
@@ -25,6 +24,23 @@ from intellicrack.utils.core.path_discovery import (
     get_path_discovery,
     get_system_path,
 )
+
+
+class FakeConfigManager:
+    """Real test double for configuration manager."""
+
+    def __init__(self) -> None:
+        self.storage: dict[str, Any] = {}
+        self.get_calls: list[str] = []
+        self.set_calls: list[tuple[str, Any]] = []
+
+    def get(self, key: str, default: Any = None) -> Any:
+        self.get_calls.append(key)
+        return self.storage.get(key, default)
+
+    def set(self, key: str, value: Any) -> None:
+        self.set_calls.append((key, value))
+        self.storage[key] = value
 
 
 class TestPathDiscoveryInitialization:
@@ -136,16 +152,13 @@ class TestRealToolDiscovery:
 
     def test_find_tool_with_config_manager(self) -> None:
         """Tool discovery uses config manager when available."""
-        mock_config = Mock()
-        mock_config.get.return_value = None
-        mock_config.set = Mock()
+        fake_config = FakeConfigManager()
 
-        pd = PathDiscovery(config_manager=mock_config)
+        pd = PathDiscovery(config_manager=fake_config)
 
         pd.find_tool("python")
 
-        if hasattr(mock_config, "get"):
-            mock_config.get.assert_called()
+        assert len(fake_config.get_calls) > 0
 
     def test_generic_tool_search(self) -> None:
         """Generic tool search works for unknown tools."""

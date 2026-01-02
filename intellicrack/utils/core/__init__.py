@@ -19,11 +19,45 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 # Import core utilities
-from . import core_utilities, final_utilities
+from . import core_utilities, final_utilities, secure_serialization
 
 # Re-export all from each module
 from .core_utilities import *
 from .final_utilities import *
+from .secure_serialization import (
+    RestrictedUnpickler,
+    SecureJSONEncoder,
+    is_json_serializable,
+    secure_json_decoder_hook,
+    secure_json_dump,
+    secure_json_dumps,
+    secure_json_load,
+    secure_json_loads,
+    secure_pickle_dump,
+    secure_pickle_dumps,
+    secure_pickle_load,
+    secure_pickle_loads,
+    smart_deserialize,
+    smart_serialize,
+)
 
 
-__all__ = ["core_utilities", "final_utilities"]
+__all__ = [
+    "RestrictedUnpickler",
+    "SecureJSONEncoder",
+    "core_utilities",
+    "final_utilities",
+    "is_json_serializable",
+    "secure_json_decoder_hook",
+    "secure_json_dump",
+    "secure_json_dumps",
+    "secure_json_load",
+    "secure_json_loads",
+    "secure_pickle_dump",
+    "secure_pickle_dumps",
+    "secure_pickle_load",
+    "secure_pickle_loads",
+    "secure_serialization",
+    "smart_deserialize",
+    "smart_serialize",
+]

@@ -58,7 +58,13 @@ _gil_safety_initialized: bool = False
 
 
 def _initialize_gil_safety() -> None:
-    """Initialize GIL safety measures lazily."""
+    """Initialize GIL safety measures lazily.
+
+    Sets up thread safety measures for PyTorch operations by initializing
+    the GIL safety module if available. If the module is not available,
+    falls back to using pre-configured environment variables.
+
+    """
     global _gil_safety_initialized
     if not _gil_safety_initialized:
         try:
@@ -80,7 +86,18 @@ _gpu_initialized = False
 
 
 def _initialize_gpu() -> str:
-    """Initialize GPU lazily on first use."""
+    """Initialize GPU lazily on first use.
+
+    Detects and initializes GPU acceleration on first call. Falls back to CPU
+    if GPU detection fails or dependencies are unavailable. Sets thread limits
+    to prevent resource contention. Global state is updated to mark
+    initialization as complete on first call.
+
+    Returns:
+        str: Device string ("cuda:0", "cpu", "xpu", or other valid device
+            identifier) representing the detected or default compute device.
+
+    """
     global _default_device, _gpu_initialized
     if not _gpu_initialized:
         try:
@@ -106,14 +123,18 @@ def _initialize_gpu() -> str:
 def _initialize_gpu_with_timeout(timeout_seconds: int = 5) -> str:
     """Initialize GPU with timeout protection to prevent hanging.
 
+    Spawns a daemon thread to perform GPU initialization with a specified
+    timeout. If initialization exceeds the timeout, defaults to CPU. Handles
+    import errors and runtime exceptions gracefully, logging warnings for
+    failed initialization attempts.
+
     Args:
-        timeout_seconds: Maximum time to wait for GPU initialization
+        timeout_seconds: Maximum time to wait for GPU initialization in
+            seconds. Defaults to 5 seconds.
 
     Returns:
-        str: Device string ("xpu", "cuda", "cpu", etc.)
-
-    Raises:
-        TimeoutError: If GPU initialization takes longer than timeout
+        str: Device string ("xpu:0", "cuda:0", "cpu", or other valid device
+            identifier) representing the detected or default compute device.
 
     """
     import threading
@@ -125,7 +146,14 @@ def _initialize_gpu_with_timeout(timeout_seconds: int = 5) -> str:
     result: dict[str, Any] = {"device": "cpu", "error": None}
 
     def gpu_init_worker() -> None:
-        """Worker thread for GPU initialization."""
+        """Initialize GPU in a separate thread with exception handling.
+
+        Attempts to set up GPU acceleration and updates the result dictionary
+        with the device string. Catches exceptions and logs them for fallback
+        to CPU mode. Updates the shared result dict with device and error
+        information.
+
+        """
         try:
             import os
 
@@ -169,7 +197,18 @@ _config: Optional[Any] = None
 
 
 def _load_config() -> Optional[Any]:
-    """Load configuration from get_config function."""
+    """Load configuration from get_config function.
+
+    Attempts to import and call the get_config function to retrieve the
+    current configuration object. Returns None if the function is not
+    available or callable. Provides lazy initialization of configuration
+    without blocking on import.
+
+    Returns:
+        Optional[Any]: Configuration object (typically dict or Config instance)
+            if loaded successfully, None otherwise.
+
+    """
     get_config_func = _lazy_import_get_config()
     if get_config_func is not None and callable(get_config_func):
         return get_config_func()()
@@ -177,36 +216,85 @@ def _load_config() -> Optional[Any]:
 
 
 def _validate_config(config: Any) -> None:
-    """Validate and log configuration settings."""
+    """Validate and log configuration settings.
+
+    Checks if the configuration object has a validate_config method and
+    invokes it. Logs a warning if validation fails, allowing the application
+    to continue with default settings.
+
+    Args:
+        config: Configuration object to validate. Should have a
+            validate_config method that returns bool.
+
+    """
     if hasattr(config, "validate_config") and not config.validate_config():
         logger.warning("Configuration validation failed - using defaults")
 
 
 def _log_repository_status(config: Any) -> None:
-    """Log repository enablement status."""
+    """Log repository enablement status.
+
+    Checks if the configuration has the is_repository_enabled method and
+    logs an info message if the model repository is enabled.
+
+    Args:
+        config: Configuration object to check repository status. Should have
+            an is_repository_enabled method that takes a string argument.
+
+    """
     if hasattr(config, "is_repository_enabled") and config.is_repository_enabled("model_repository"):
         logger.info("Model repository is enabled")
 
 
 def _log_ghidra_path(config: Any) -> None:
-    """Log Ghidra path configuration."""
+    """Log Ghidra path configuration.
+
+    Retrieves the Ghidra path from the configuration object if available and
+    logs it if it differs from the default 'ghidra' string.
+
+    Args:
+        config: Configuration object to retrieve Ghidra path. Should have a
+            get_ghidra_path method that returns a string or None.
+
+    """
     ghidra_path = getattr(config, "get_ghidra_path", lambda: None)()
     if ghidra_path and ghidra_path != "ghidra":
         logger.info("Ghidra path configured: %s", ghidra_path)
 
 
 def _update_config_with_runtime_defaults(config: Any) -> None:
-    """Update configuration with runtime defaults."""
+    """Update configuration with runtime defaults.
+
+    Updates the configuration object with initialization and version
+    information from the current runtime environment.
+
+    Args:
+        config: Configuration object to update with runtime values. Should have
+            an update method that accepts a dictionary.
+
+    """
     runtime_config = {
-        "initialized": True,  # Mark configuration as initialized
-        "version": __version__,  # Store current version for compatibility checks
+        "initialized": True,
+        "version": __version__,
     }
     if hasattr(config, "update"):
         config.update(runtime_config)
 
 
 def _initialize_config() -> Optional[Any]:
-    """Initialize and validate configuration lazily."""
+    """Initialize and validate configuration lazily.
+
+    Loads and validates the configuration object on first call, then
+    caches it for subsequent calls. Logs various configuration settings
+    and updates with runtime defaults. Subsequent calls return the cached
+    configuration without reloading.
+
+    Returns:
+        Optional[Any]: Configuration object (dict or Config instance) if
+            loaded successfully, empty dict otherwise. On subsequent calls,
+            returns the cached configuration.
+
+    """
     global _config
     if _config is None:
         _config = _load_config() or {}
@@ -235,7 +323,17 @@ _get_config_func: Optional[Callable[[], Any]] = None
 
 
 def _lazy_import_config() -> Optional[Any]:
-    """Lazy import of CONFIG."""
+    """Lazy import of CONFIG.
+
+    Imports the CONFIG object from the config module on first call and
+    caches it for subsequent accesses. Prevents blocking during initial
+    module import by deferring config module access.
+
+    Returns:
+        Optional[Any]: The CONFIG object from the config module, cached for
+            subsequent calls.
+
+    """
     global _config_cached
     if _config_cached is None:
         from .config import CONFIG
@@ -245,7 +343,17 @@ def _lazy_import_config() -> Optional[Any]:
 
 
 def _lazy_import_get_config() -> Optional[Callable[[], Any]]:
-    """Lazy import of get_config function."""
+    """Lazy import of get_config function.
+
+    Imports the get_config function from the config module on first call
+    and caches it for subsequent accesses. Prevents blocking during initial
+    module import by deferring config module access.
+
+    Returns:
+        Optional[Callable[[], Any]]: The get_config function from config
+            module, cached for subsequent calls.
+
+    """
     global _get_config_func
     if _get_config_func is None:
         from .config import get_config as _imported_get_config
@@ -259,7 +367,17 @@ def _lazy_import_get_config() -> Optional[Callable[[], Any]]:
 
 
 def _lazy_import_main() -> Optional[Callable[[], int]]:
-    """Lazy import of main function."""
+    """Lazy import of main function.
+
+    Attempts to import the main function from the main module on first call.
+    Caches the result and returns None if import fails. Logs exceptions for
+    debugging purposes.
+
+    Returns:
+        Optional[Callable[[], int]]: The main function if available and
+            callable, None otherwise.
+
+    """
     global _main
     if _main is None:
         try:
@@ -268,12 +386,21 @@ def _lazy_import_main() -> Optional[Callable[[], int]]:
             _main = _imported_main
         except ImportError as e:
             logger.exception("Failed to import main function: %s", e)
-            _main = False  # Mark as attempted
+            _main = False
     return _main if callable(_main) else None
 
 
 def _lazy_import_app() -> Optional[Any]:
-    """Lazy import of UI application."""
+    """Lazy import of UI application.
+
+    Attempts to import the IntellicrackApp class from the UI module on first
+    call. Caches the result and returns None if import fails. Logs warnings
+    for debugging purposes if import fails.
+
+    Returns:
+        Optional[Any]: The IntellicrackApp class if available, None otherwise.
+
+    """
     global _IntellicrackApp
     if _IntellicrackApp is None:
         try:
@@ -291,7 +418,16 @@ _dashboard: Optional[Any] = None
 
 
 def _lazy_import_dashboard() -> Optional[Any]:
-    """Lazy import of dashboard module."""
+    """Lazy import of dashboard module.
+
+    Attempts to import the dashboard module on first call. Caches the result
+    and returns None if import fails. Logs warnings if the import fails for
+    debugging purposes.
+
+    Returns:
+        Optional[Any]: The dashboard module if available, None otherwise.
+
+    """
     global _dashboard
     if _dashboard is None:
         try:
@@ -305,7 +441,16 @@ def _lazy_import_dashboard() -> Optional[Any]:
 
 
 def _lazy_import_ai() -> Optional[Any]:
-    """Lazy import of ai module."""
+    """Lazy import of ai module.
+
+    Attempts to import the ai module on first call. Caches the result
+    and returns None if import fails. Logs warnings if the import fails for
+    debugging purposes.
+
+    Returns:
+        Optional[Any]: The ai module if available, None otherwise.
+
+    """
     global _ai
     if _ai is None:
         try:
@@ -319,7 +464,15 @@ def _lazy_import_ai() -> Optional[Any]:
 
 
 def _lazy_import_core() -> Optional[Any]:
-    """Lazy import of core module."""
+    """Lazy import of core module.
+
+    Attempts to import the core module. Returns None if import fails.
+    Logs warnings if the import fails for debugging purposes.
+
+    Returns:
+        Optional[Any]: The core module if available, None otherwise.
+
+    """
     try:
         import intellicrack.core as _imported_core
 
@@ -330,7 +483,15 @@ def _lazy_import_core() -> Optional[Any]:
 
 
 def _lazy_import_ui() -> Optional[Any]:
-    """Lazy import of ui module."""
+    """Lazy import of ui module.
+
+    Attempts to import the ui module. Returns None if import fails.
+    Logs warnings if the import fails for debugging purposes.
+
+    Returns:
+        Optional[Any]: The ui module if available, None otherwise.
+
+    """
     try:
         import intellicrack.ui as _imported_ui
 
@@ -341,7 +502,15 @@ def _lazy_import_ui() -> Optional[Any]:
 
 
 def _lazy_import_utils() -> Optional[Any]:
-    """Lazy import of utils module."""
+    """Lazy import of utils module.
+
+    Attempts to import the utils module. Returns None if import fails.
+    Logs warnings if the import fails for debugging purposes.
+
+    Returns:
+        Optional[Any]: The utils module if available, None otherwise.
+
+    """
     try:
         import intellicrack.utils as _imported_utils
 
@@ -352,7 +521,15 @@ def _lazy_import_utils() -> Optional[Any]:
 
 
 def _lazy_import_plugins() -> Optional[Any]:
-    """Lazy import of plugins module."""
+    """Lazy import of plugins module.
+
+    Attempts to import the plugins module. Returns None if import fails.
+    Logs warnings if the import fails for debugging purposes.
+
+    Returns:
+        Optional[Any]: The plugins module if available, None otherwise.
+
+    """
     try:
         import intellicrack.plugins as _imported_plugins
 
@@ -363,7 +540,15 @@ def _lazy_import_plugins() -> Optional[Any]:
 
 
 def _lazy_import_hexview() -> Optional[Any]:
-    """Lazy import of hexview module."""
+    """Lazy import of hexview module.
+
+    Attempts to import the hexview module. Returns None if import fails.
+    Logs warnings if the import fails for debugging purposes.
+
+    Returns:
+        Optional[Any]: The hexview module if available, None otherwise.
+
+    """
     try:
         import intellicrack.hexview as _imported_hexview
 
@@ -408,19 +593,22 @@ def get_version() -> str:
 # Package-level convenience functions
 
 
-def create_app() -> object:
+def create_app() -> Any:
     """Create and return a new Intellicrack application instance.
 
     This factory function creates a fresh instance of the IntellicrackApp,
     which is the main GUI application class. It ensures that all required
     dependencies are available before attempting to create the instance.
+    Performs lazy import of the IntellicrackApp class if not already loaded.
 
     Returns:
-        IntellicrackApp: A new instance of the main application
+        Any: A new instance of the IntellicrackApp main application class.
 
     Raises:
         ImportError: If IntellicrackApp is not available due to missing
-                    dependencies (typically PyQt6 or other UI components)
+            dependencies (typically PyQt6 or other UI components).
+        RuntimeError: If IntellicrackApp failed to load properly during
+            import attempt.
 
     Example:
         .. code-block:: python
@@ -434,7 +622,8 @@ def create_app() -> object:
 
     Note:
         This function checks if the UI module was successfully imported
-        before attempting to create the application instance.
+        before attempting to create the application instance. Caches the
+        IntellicrackApp class for efficiency on subsequent calls.
 
     """
     if _IntellicrackApp is None:
@@ -516,7 +705,26 @@ def get_default_device() -> str:
 
 
 def __getattr__(name: str) -> Optional[Any]:
-    """Lazy loading for module attributes."""
+    """Lazy loading for module attributes.
+
+    Provides dynamic attribute loading for submodules and functions that are
+    not directly imported. Supports lazy loading of ai, core, ui, utils,
+    plugins, hexview, dashboard modules and CONFIG, get_config functions.
+
+    Args:
+        name: The name of the attribute to load. Supported values are 'ai',
+            'core', 'ui', 'utils', 'plugins', 'hexview', 'dashboard',
+            'CONFIG', and 'get_config'.
+
+    Returns:
+        Optional[Any]: The requested module or attribute if available, None
+            if the module/attribute could not be imported.
+
+    Raises:
+        AttributeError: If the requested attribute does not exist or is not
+            supported by the lazy loading mechanism.
+
+    """
     if name == "ai":
         return _lazy_import_ai()
     if name == "core":

@@ -322,7 +322,7 @@ class R2PerformanceOptimizer:
             characteristics: Dictionary of analyzed binary characteristics.
 
         Returns:
-            Complexity level as string: "low", "medium", "high", or "very_high".
+            Complexity level string ("low", "medium", "high", or "very_high").
 
         """
         size = characteristics["file_size"]
@@ -619,7 +619,9 @@ class R2PerformanceOptimizer:
             self.logger.info("Resource monitoring started")
 
     def stop_monitoring(self) -> None:
-        """Stop resource monitoring."""
+        """Stop resource monitoring.
+
+        """
         self._monitoring = False
         if self._monitor_thread:
             self._monitor_thread.join(timeout=5)

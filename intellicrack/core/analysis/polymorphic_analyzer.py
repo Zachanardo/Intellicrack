@@ -316,7 +316,17 @@ class PolymorphicAnalyzer:
         base_address: int,
         max_instructions: int,
     ) -> CodeBlock:
-        """Disassemble code block into instructions."""
+        """Disassemble code block into instructions.
+
+        Args:
+            data: Raw code bytes to disassemble.
+            base_address: Base address for disassembly context.
+            max_instructions: Maximum number of instructions to disassemble.
+
+        Returns:
+            CodeBlock: Code block containing disassembled instructions and metadata.
+
+        """
         instructions = []
         try:
             for insn in self.disassembler.disasm(data, base_address):
@@ -340,7 +350,15 @@ class PolymorphicAnalyzer:
         )
 
     def _identify_polymorphic_engine(self, code_block: CodeBlock) -> PolymorphicEngine:
-        """Identify the polymorphic engine type from code patterns."""
+        """Identify the polymorphic engine type from code patterns.
+
+        Args:
+            code_block: Code block to analyze for engine identification.
+
+        Returns:
+            PolymorphicEngine: Detected polymorphic engine type or UNKNOWN if unidentified.
+
+        """
         if not code_block.instructions:
             return PolymorphicEngine.UNKNOWN
 
@@ -371,7 +389,15 @@ class PolymorphicAnalyzer:
         return PolymorphicEngine.UNKNOWN
 
     def _detect_mutations(self, code_block: CodeBlock) -> list[MutationType]:
-        """Detect types of mutations present in code block."""
+        """Detect types of mutations present in code block.
+
+        Args:
+            code_block: Code block to analyze for mutations.
+
+        Returns:
+            list[MutationType]: List of detected mutation types in the code block.
+
+        """
         mutations = []
 
         if self._detect_instruction_substitution(code_block):
@@ -398,7 +424,15 @@ class PolymorphicAnalyzer:
         return mutations
 
     def _detect_instruction_substitution(self, code_block: CodeBlock) -> bool:
-        """Detect instruction substitution patterns."""
+        """Detect instruction substitution patterns.
+
+        Args:
+            code_block: Code block to analyze for instruction substitution.
+
+        Returns:
+            bool: True if instruction substitution patterns detected, False otherwise.
+
+        """
         if len(code_block.instructions) < 3:
             return False
 
@@ -420,7 +454,15 @@ class PolymorphicAnalyzer:
         return equivalent_sequences >= 2
 
     def _detect_register_renaming(self, code_block: CodeBlock) -> bool:
-        """Detect register renaming patterns."""
+        """Detect register renaming patterns.
+
+        Args:
+            code_block: Code block to analyze for register renaming.
+
+        Returns:
+            bool: True if register renaming patterns detected, False otherwise.
+
+        """
         register_uses: dict[str, int] = defaultdict(int)
 
         for insn in code_block.instructions:
@@ -442,7 +484,15 @@ class PolymorphicAnalyzer:
         return False
 
     def _detect_junk_insertion(self, code_block: CodeBlock) -> bool:
-        """Detect junk code insertion."""
+        """Detect junk code insertion.
+
+        Args:
+            code_block: Code block to analyze for junk code insertion.
+
+        Returns:
+            bool: True if junk code insertion patterns detected, False otherwise.
+
+        """
         junk_patterns = 0
 
         for i, insn in enumerate(code_block.instructions):
@@ -466,7 +516,15 @@ class PolymorphicAnalyzer:
         return junk_patterns >= 3
 
     def _detect_dead_code(self, code_block: CodeBlock) -> bool:
-        """Detect dead code that doesn't affect program state."""
+        """Detect dead code that doesn't affect program state.
+
+        Args:
+            code_block: Code block to analyze for dead code.
+
+        Returns:
+            bool: True if dead code patterns detected, False otherwise.
+
+        """
         dead_code_count = 0
 
         for i, insn in enumerate(code_block.instructions):
@@ -483,7 +541,15 @@ class PolymorphicAnalyzer:
         return dead_code_count >= 2
 
     def _detect_opaque_predicates(self, code_block: CodeBlock) -> bool:
-        """Detect opaque predicates (conditions with constant outcomes)."""
+        """Detect opaque predicates (conditions with constant outcomes).
+
+        Args:
+            code_block: Code block to analyze for opaque predicates.
+
+        Returns:
+            bool: True if opaque predicate patterns detected, False otherwise.
+
+        """
         opaque_count = 0
 
         for i, insn in enumerate(code_block.instructions):
@@ -499,7 +565,15 @@ class PolymorphicAnalyzer:
         return opaque_count >= 1
 
     def _detect_semantic_nops(self, code_block: CodeBlock) -> bool:
-        """Detect semantic NOPs (operations with no net effect)."""
+        """Detect semantic NOPs (operations with no net effect).
+
+        Args:
+            code_block: Code block to analyze for semantic NOPs.
+
+        Returns:
+            bool: True if semantic NOP patterns detected, False otherwise.
+
+        """
         semantic_nop_count = 0
 
         i = 0
@@ -529,7 +603,15 @@ class PolymorphicAnalyzer:
         return semantic_nop_count >= 1
 
     def _detect_code_reordering(self, code_block: CodeBlock) -> bool:
-        """Detect code reordering patterns."""
+        """Detect code reordering patterns.
+
+        Args:
+            code_block: Code block to analyze for code reordering.
+
+        Returns:
+            bool: True if code reordering patterns detected, False otherwise.
+
+        """
         dependencies = self._analyze_data_dependencies(code_block)
 
         independent_sequences = 0
@@ -548,7 +630,12 @@ class PolymorphicAnalyzer:
         return independent_sequences >= 3
 
     def _normalize_instructions(self, code_block: CodeBlock) -> None:
-        """Normalize instructions to semantic representation."""
+        """Normalize instructions to semantic representation.
+
+        Args:
+            code_block: Code block whose instructions to normalize.
+
+        """
         code_block.normalized_instructions = []
 
         for insn in code_block.instructions:
@@ -561,7 +648,15 @@ class PolymorphicAnalyzer:
         ).hexdigest()
 
     def _create_instruction_node(self, insn: Any) -> InstructionNode:
-        """Create normalized instruction node from disassembled instruction."""
+        """Create normalized instruction node from disassembled instruction.
+
+        Args:
+            insn: Disassembled instruction from Capstone.
+
+        Returns:
+            InstructionNode: Normalized instruction node with semantic classification.
+
+        """
         semantic_class = self.INSTRUCTION_SEMANTICS.get(insn.mnemonic, "other")
 
         operand_types = []
@@ -606,7 +701,15 @@ class PolymorphicAnalyzer:
         )
 
     def _extract_behavior_patterns(self, code_block: CodeBlock) -> list[BehaviorPattern]:
-        """Extract invariant behavior patterns from code block."""
+        """Extract invariant behavior patterns from code block.
+
+        Args:
+            code_block: Code block to extract behavior patterns from.
+
+        Returns:
+            list[BehaviorPattern]: List of extracted behavior patterns invariant across mutations.
+
+        """
         data_flow = self._analyze_data_flow(code_block)
         control_flow = self._analyze_control_flow(code_block)
         register_usage = self._analyze_register_usage(code_block)
@@ -640,7 +743,15 @@ class PolymorphicAnalyzer:
         return [pattern]
 
     def _analyze_data_flow(self, code_block: CodeBlock) -> dict[str, set[str]]:
-        """Analyze data flow between instructions."""
+        """Analyze data flow between instructions.
+
+        Args:
+            code_block: Code block to analyze for data flow patterns.
+
+        Returns:
+            dict[str, set[str]]: Data flow graph mapping instruction hashes to dependencies.
+
+        """
         data_flow: dict[str, set[str]] = defaultdict(set)
 
         for node in code_block.normalized_instructions:
@@ -651,7 +762,15 @@ class PolymorphicAnalyzer:
         return dict(data_flow)
 
     def _analyze_control_flow(self, code_block: CodeBlock) -> dict[int, set[int]]:
-        """Analyze control flow graph."""
+        """Analyze control flow graph.
+
+        Args:
+            code_block: Code block to analyze for control flow.
+
+        Returns:
+            dict[int, set[int]]: Control flow graph mapping instruction addresses to successor addresses.
+
+        """
         cfg: dict[int, set[int]] = defaultdict(set)
 
         for i, insn in enumerate(code_block.instructions):
@@ -668,7 +787,15 @@ class PolymorphicAnalyzer:
         return dict(cfg)
 
     def _analyze_register_usage(self, code_block: CodeBlock) -> dict[str, str]:
-        """Analyze register usage patterns."""
+        """Analyze register usage patterns.
+
+        Args:
+            code_block: Code block to analyze for register usage.
+
+        Returns:
+            dict[str, str]: Register usage mapping registers to semantic classes.
+
+        """
         register_usage: dict[str, str] = {}
 
         for insn in code_block.instructions:
@@ -681,7 +808,15 @@ class PolymorphicAnalyzer:
         return register_usage
 
     def _analyze_memory_accesses(self, code_block: CodeBlock) -> list[tuple[str, int, int]]:
-        """Analyze memory access patterns."""
+        """Analyze memory access patterns.
+
+        Args:
+            code_block: Code block to analyze for memory accesses.
+
+        Returns:
+            list[tuple[str, int, int]]: List of (access_type, address, size) tuples.
+
+        """
         accesses = []
 
         for insn in code_block.instructions:
@@ -694,7 +829,15 @@ class PolymorphicAnalyzer:
         return accesses
 
     def _extract_api_calls(self, code_block: CodeBlock) -> list[str]:
-        """Extract API call patterns."""
+        """Extract API call patterns.
+
+        Args:
+            code_block: Code block to extract API calls from.
+
+        Returns:
+            list[str]: List of detected API call patterns (call targets).
+
+        """
         api_calls = []
 
         for insn in code_block.instructions:
@@ -708,7 +851,15 @@ class PolymorphicAnalyzer:
         return api_calls
 
     def _extract_constants(self, code_block: CodeBlock) -> set[int]:
-        """Extract constant values used in code."""
+        """Extract constant values used in code.
+
+        Args:
+            code_block: Code block to extract constants from.
+
+        Returns:
+            set[int]: Set of immediate constant values found in instructions.
+
+        """
         constants = set()
 
         for insn in code_block.instructions:
@@ -721,7 +872,15 @@ class PolymorphicAnalyzer:
         return constants
 
     def _extract_invariants(self, code_block: CodeBlock) -> dict[str, Any]:
-        """Extract code features that remain constant across mutations."""
+        """Extract code features that remain constant across mutations.
+
+        Args:
+            code_block: Code block to extract invariant features from.
+
+        Returns:
+            dict[str, Any]: Invariant features mapping feature names to values.
+
+        """
         semantic_classes = [
             node.semantic_class for node in code_block.normalized_instructions if node.semantic_class not in ["no_operation", "dead_code"]
         ]
@@ -744,7 +903,15 @@ class PolymorphicAnalyzer:
         return invariants
 
     def _identify_decryption_routine(self, code_block: CodeBlock) -> CodeBlock | None:
-        """Identify decryption/decoding routines in polymorphic code."""
+        """Identify decryption/decoding routines in polymorphic code.
+
+        Args:
+            code_block: Code block to search for decryption routines.
+
+        Returns:
+            CodeBlock | None: Code block containing decryption routine if found, None otherwise.
+
+        """
         xor_instructions = []
         loop_instructions = []
 
@@ -772,7 +939,16 @@ class PolymorphicAnalyzer:
         code_block: CodeBlock,
         mutations: list[MutationType],
     ) -> float:
-        """Calculate mutation complexity score."""
+        """Calculate mutation complexity score.
+
+        Args:
+            code_block: Code block containing instructions to analyze.
+            mutations: List of detected mutation types.
+
+        Returns:
+            float: Mutation complexity score between 0.0 and 1.0.
+
+        """
         if not code_block.instructions or not mutations:
             return 0.0
 
@@ -790,7 +966,15 @@ class PolymorphicAnalyzer:
         return min(1.0, complexity)
 
     def _detect_evasion_techniques(self, code_block: CodeBlock) -> list[str]:
-        """Detect anti-analysis evasion techniques."""
+        """Detect anti-analysis evasion techniques.
+
+        Args:
+            code_block: Code block to analyze for evasion techniques.
+
+        Returns:
+            list[str]: List of detected evasion technique names.
+
+        """
         techniques = []
 
         mnemonics = [insn.mnemonic for insn in code_block.instructions]
@@ -815,7 +999,15 @@ class PolymorphicAnalyzer:
         return techniques
 
     def _analyze_data_dependencies(self, code_block: CodeBlock) -> dict[int, set[int]]:
-        """Analyze data dependencies between instructions."""
+        """Analyze data dependencies between instructions.
+
+        Args:
+            code_block: Code block to analyze for data dependencies.
+
+        Returns:
+            dict[int, set[int]]: Data dependency graph mapping instruction addresses to dependent addresses.
+
+        """
         dependencies: dict[int, set[int]] = defaultdict(set)
 
         register_definitions: dict[str, int] = {}
@@ -835,7 +1027,16 @@ class PolymorphicAnalyzer:
         return dict(dependencies)
 
     def _operands_equal(self, op1: Any, op2: Any) -> bool:
-        """Check if two operands are equal."""
+        """Check if two operands are equal.
+
+        Args:
+            op1: First operand to compare.
+            op2: Second operand to compare.
+
+        Returns:
+            bool: True if operands are equivalent, False otherwise.
+
+        """
         if op1.type != op2.type:
             return False
 
@@ -849,7 +1050,15 @@ class PolymorphicAnalyzer:
         return False
 
     def _is_register_operand(self, operand: Any) -> bool:
-        """Check if operand is a register."""
+        """Check if operand is a register.
+
+        Args:
+            operand: Operand to check.
+
+        Returns:
+            bool: True if operand is a register operand, False otherwise.
+
+        """
         return bool(operand.type == X86_OP_REG)
 
     def compare_code_variants(

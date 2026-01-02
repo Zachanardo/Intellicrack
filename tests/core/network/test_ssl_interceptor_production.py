@@ -12,6 +12,7 @@ import os
 import subprocess
 import tempfile
 import time
+from datetime import UTC
 from pathlib import Path
 from typing import Any
 
@@ -317,7 +318,7 @@ class TestSSLInterceptorProduction:
         try:
             first_pid = interceptor.proxy_process.pid if interceptor.proxy_process else None
 
-            result2 = interceptor.start()
+            interceptor.start()
 
             second_pid = interceptor.proxy_process.pid if interceptor.proxy_process else None
 
@@ -409,17 +410,18 @@ class TestSSLInterceptorProduction:
             pytest.skip("Certificate generation not available")
 
         try:
+            from datetime import datetime, timezone
+
             from cryptography import x509
             from cryptography.hazmat.backends import default_backend
-            from datetime import datetime, timezone
 
             cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
 
             validity_days = (cert.not_valid_after_utc - cert.not_valid_before_utc).days
 
             assert validity_days >= 3650, "Certificate must be valid for at least 10 years"
-            assert cert.not_valid_before_utc <= datetime.now(timezone.utc), "Must be valid now"
-            assert cert.not_valid_after_utc > datetime.now(timezone.utc), "Must not be expired"
+            assert cert.not_valid_before_utc <= datetime.now(UTC), "Must be valid now"
+            assert cert.not_valid_after_utc > datetime.now(UTC), "Must not be expired"
         except ImportError:
             pytest.skip("cryptography library not available")
 

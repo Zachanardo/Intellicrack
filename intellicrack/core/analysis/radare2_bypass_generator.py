@@ -1428,8 +1428,7 @@ if __name__ == "__main__":
             crypto_details: Dictionary with initialization_vectors and other AES details.
 
         Returns:
-            str: AES mode identifier ('CBC', 'ECB', 'GCM', etc.).
-
+            AES mode identifier ('CBC', 'ECB', 'GCM', etc.).
         """
         return "CBC" if crypto_details.get("initialization_vectors") else "ECB"
 
@@ -1600,7 +1599,7 @@ if __name__ == "__main__":
             crypto_details: Dictionary with RSA implementation parameters.
 
         Returns:
-            str: RSA padding scheme identifier ('PKCS1', 'OAEP', 'PSS', etc.).
+            RSA padding scheme identifier ('PKCS1', 'OAEP', 'PSS', etc.).
         """
         return "PKCS1"
 
@@ -1875,8 +1874,8 @@ if __name__ == "__main__":
                 bypass-related metadata.
 
         Returns:
-            String describing recommended bypass method: 'nop_conditional',
-                'force_return_true', 'modify_jump_target', or 'nop_instruction'.
+            str: Recommended bypass method - 'nop_conditional', 'force_return_true',
+                'modify_jump_target', or 'nop_instruction'.
         """
         line = pattern.get("line", "").lower()
 
@@ -1923,7 +1922,7 @@ if __name__ == "__main__":
             line: Source code or disassembly line containing cryptographic operation.
 
         Returns:
-            String purpose identifier: 'key_validation', 'integrity_check',
+            str: Purpose identifier - 'key_validation', 'integrity_check',
                 'data_protection', or 'unknown'.
         """
         line_lower = line.lower()
@@ -1947,8 +1946,8 @@ if __name__ == "__main__":
             string_content: License-related string extracted from binary.
 
         Returns:
-            String assessment rating: 'high' for error/warning messages,
-                'medium' for success messages, or 'low' for generic strings.
+            str: Assessment rating - 'high' for error/warning messages, 'medium' for
+                success messages, or 'low' for generic strings.
         """
         content_lower = string_content.lower()
 
@@ -1970,7 +1969,7 @@ if __name__ == "__main__":
                 'validation_type' (simple/cryptographic/online/time_based/hardware_fingerprint).
 
         Returns:
-            String difficulty rating: 'easy', 'medium', or 'hard'.
+            str: Difficulty rating - 'easy', 'medium', or 'hard'.
         """
         complexity = func_info.get("complexity", "low")
         validation_type = func_info.get("validation_type", "simple")
@@ -1993,7 +1992,7 @@ if __name__ == "__main__":
                 simple, cryptographic, online, time_based, or hardware_fingerprint.
 
         Returns:
-            String recommending bypass approach: 'direct_patching', 'crypto_bypass',
+            str: Recommended bypass approach - 'direct_patching', 'crypto_bypass',
                 'network_interception', 'time_manipulation', or 'hardware_spoofing'.
         """
         validation_type = func_info.get("validation_type", "simple")
@@ -2444,8 +2443,8 @@ void apply_patch() {{
                 cryptographic algorithm type (MD5, SHA, AES, DES, RSA, etc.).
 
         Returns:
-            Float feasibility score between 0.0 and 1.0. Hash-based: 0.8,
-                symmetric encryption: 0.5, RSA: 0.2, others: 0.3.
+            float: Feasibility score between 0.0 and 1.0. Hash-based: 0.8, symmetric
+                encryption: 0.5, RSA: 0.2, others: 0.3.
         """
         algorithm = crypto_op.get("algorithm", "Unknown")
 
@@ -2456,7 +2455,7 @@ void apply_patch() {{
         return 0.2 if algorithm in ["RSA"] else 0.3
 
     def _predict_registry_path(self, reg_op: dict[str, Any]) -> str:
-        """Predict registry path for license storage based on registry operation analysis.
+        r"""Predict registry path for license storage based on registry operation analysis.
 
         Analyzes registry operation patterns to predict the most likely registry
         locations where license information is stored, including activation status,
@@ -4020,7 +4019,7 @@ def generate_key():
                 (crypto_operations, hardware_checks, network_operations, etc.).
 
         Returns:
-            String risk level: 'LOW' (score < 30), 'MEDIUM' (30-60), or 'HIGH' (60+).
+            str: Risk level: 'LOW' (score < 30), 'MEDIUM' (30-60), or 'HIGH' (60+).
         """
         risk_score = 0
 
@@ -4552,7 +4551,7 @@ def generate_key():
                 (register_comparison, memory_comparison, function_return_check, etc.).
 
         Returns:
-            String bypass method name: 'set_register_value' (registers),
+            str: Bypass method name: 'set_register_value' (registers),
                 'patch_memory_value' (memory), 'return_value_injection' (functions),
                 'clear_test_bits' (bitwise), or 'nop_instruction' (fallback).
         """
@@ -4705,7 +4704,7 @@ def generate_key():
             cfg: Dictionary containing control flow graph with loop information.
 
         Returns:
-            Boolean: True if decision point is a loop header, False otherwise.
+            True if decision point is a loop header, False otherwise.
         """
         addr = decision_point["address"]
 
@@ -4950,7 +4949,7 @@ def generate_key():
             patches: List of previously generated patch dictionaries with 'address' keys.
 
         Returns:
-            Boolean: True if bypass point has been patched, False otherwise.
+            True if bypass point has been patched, False otherwise.
         """
         point_addr = bypass_point.get("address", 0)
         return any(patch.get("address") == hex(point_addr) for patch in patches)

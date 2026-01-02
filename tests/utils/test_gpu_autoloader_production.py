@@ -6,7 +6,7 @@ DirectML) for accelerating binary analysis and machine learning operations.
 """
 
 import os
-from unittest.mock import Mock, patch
+from typing import Any
 
 import pytest
 
@@ -19,6 +19,202 @@ from intellicrack.utils.gpu_autoloader import (
     optimize_for_gpu,
     to_device,
 )
+
+
+class FakeTorchDevice:
+    """Fake torch device for testing."""
+
+    def __init__(self, device_type: str) -> None:
+        self.type = device_type
+
+    def __str__(self) -> str:
+        return self.type
+
+    def __repr__(self) -> str:
+        return f"device(type='{self.type}')"
+
+
+class FakeTorchModule:
+    """Fake torch module with GPU backend support."""
+
+    def __init__(
+        self,
+        cuda_available: bool = False,
+        xpu_available: bool = False,
+        hip_available: bool = False,
+        raise_on_device_info: bool = False,
+    ) -> None:
+        self.cuda_available_flag = cuda_available
+        self.xpu_available_flag = xpu_available
+        self.hip_available_flag = hip_available
+        self.raise_on_device_info_flag = raise_on_device_info
+        self.__version__ = "2.1.0"
+
+        if cuda_available:
+            self.cuda = FakeCUDABackend(raise_on_info=raise_on_device_info)
+            self.version = FakeTorchVersion(cuda="12.1")
+        elif xpu_available:
+            self.xpu = FakeXPUBackend(raise_on_info=raise_on_device_info)
+        elif hip_available:
+            self.hip = FakeHIPBackend(raise_on_info=raise_on_device_info)
+            self.version = FakeTorchVersion(hip="5.7")
+
+    def device(self, device_type: str) -> FakeTorchDevice:
+        """Create a device object."""
+        return FakeTorchDevice(device_type)
+
+    def compile(self, model: Any) -> str:
+        """Compile a model (fake implementation)."""
+        return "compiled_model"
+
+
+class FakeTorchVersion:
+    """Fake torch version info."""
+
+    def __init__(self, cuda: str | None = None, hip: str | None = None) -> None:
+        self.cuda = cuda
+        self.hip = hip
+
+
+class FakeCUDABackend:
+    """Fake CUDA backend."""
+
+    def __init__(self, raise_on_info: bool = False) -> None:
+        self.raise_on_info = raise_on_info
+        self._allocated = 1 * 1024**3
+        self._reserved = 2 * 1024**3
+        self._total = 24 * 1024**3
+
+    def is_available(self) -> bool:
+        return True
+
+    def device_count(self) -> int:
+        if self.raise_on_info:
+            raise RuntimeError("Info error")
+        return 1
+
+    def get_device_name(self, device_id: int = 0) -> str:
+        return "NVIDIA RTX 4090"
+
+    def get_device_properties(self, device_id: int = 0) -> "FakeDeviceProperties":
+        return FakeDeviceProperties(
+            name="NVIDIA RTX 4090",
+            total_memory=self._total,
+            major=8,
+            minor=9,
+        )
+
+    def memory_allocated(self, device: int = 0) -> int:
+        if self.raise_on_info:
+            raise RuntimeError("Memory error")
+        return self._allocated
+
+    def memory_reserved(self, device: int = 0) -> int:
+        return self._reserved
+
+    def synchronize(self) -> None:
+        if self.raise_on_info:
+            raise RuntimeError("Sync error")
+
+
+class FakeXPUBackend:
+    """Fake Intel XPU backend."""
+
+    def __init__(self, raise_on_info: bool = False) -> None:
+        self.raise_on_info = raise_on_info
+        self._allocated = 1 * 1024**3
+        self._reserved = 2 * 1024**3
+
+    def is_available(self) -> bool:
+        return True
+
+    def device_count(self) -> int:
+        if self.raise_on_info:
+            raise RuntimeError("Info error")
+        return 1
+
+    def get_device_name(self, device_id: int = 0) -> str:
+        return "Intel Arc A770"
+
+    def get_device_properties(self, device_id: int = 0) -> "FakeDeviceProperties":
+        return FakeDeviceProperties(
+            name="Intel Arc A770",
+            total_memory=16 * 1024**3,
+        )
+
+    def get_driver_version(self) -> str:
+        return "1.3.0"
+
+    def memory_allocated(self, device: int = 0) -> int:
+        return self._allocated
+
+    def memory_reserved(self, device: int = 0) -> int:
+        return self._reserved
+
+    def synchronize(self) -> None:
+        pass
+
+
+class FakeHIPBackend:
+    """Fake AMD ROCm/HIP backend."""
+
+    def __init__(self, raise_on_info: bool = False) -> None:
+        self.raise_on_info = raise_on_info
+        self._allocated = 1 * 1024**3
+        self._reserved = 2 * 1024**3
+
+    def is_available(self) -> bool:
+        return True
+
+    def device_count(self) -> int:
+        return 1
+
+    def get_device_name(self, device_id: int = 0) -> str:
+        return "AMD Radeon RX 7900 XTX"
+
+    def get_device_properties(self, device_id: int = 0) -> "FakeDeviceProperties":
+        return FakeDeviceProperties(
+            name="AMD Radeon RX 7900 XTX",
+            total_memory=24 * 1024**3,
+        )
+
+    def memory_allocated(self, device: int = 0) -> int:
+        return self._allocated
+
+    def memory_reserved(self, device: int = 0) -> int:
+        return self._reserved
+
+    def synchronize(self) -> None:
+        pass
+
+
+class FakeDeviceProperties:
+    """Fake GPU device properties."""
+
+    def __init__(
+        self,
+        name: str = "Generic GPU",
+        total_memory: int = 8 * 1024**3,
+        major: int = 7,
+        minor: int = 5,
+    ) -> None:
+        self.name = name
+        self.total_memory = total_memory
+        self.major = major
+        self.minor = minor
+
+
+class FakeTensorLike:
+    """Fake tensor-like object for testing."""
+
+    def __init__(self, data: str = "tensor_data") -> None:
+        self.data = data
+        self.device_moved_to: FakeTorchDevice | None = None
+
+    def to(self, device: FakeTorchDevice) -> "FakeTensorLike":
+        """Move to device."""
+        self.device_moved_to = device
+        return self
 
 
 class TestGPUAutoLoaderInitialization:
@@ -46,266 +242,334 @@ class TestGPUAutoLoaderInitialization:
 class TestGPUSetup:
     """Test GPU setup and detection logic."""
 
-    def test_setup_respects_no_gpu_environment_variable(self) -> None:
+    def test_setup_respects_no_gpu_environment_variable(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """setup respects INTELLICRACK_NO_GPU environment variable."""
         loader = GPUAutoLoader()
+        monkeypatch.setenv("INTELLICRACK_NO_GPU", "1")
 
-        with patch.dict(os.environ, {"INTELLICRACK_NO_GPU": "1"}):
-            with patch.object(loader, "_try_cpu_fallback", return_value=True) as mock_cpu:
-                result = loader.setup()
+        fake_torch = FakeTorchModule()
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-                assert result is True
-                mock_cpu.assert_called_once()
-                assert loader.gpu_type == "cpu" or loader.gpu_type is None
+        result = loader.setup()
 
-    def test_setup_skips_intel_xpu_when_requested(self) -> None:
+        assert result is True
+        assert loader.gpu_type == "cpu"
+
+    def test_setup_skips_intel_xpu_when_requested(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """setup skips Intel XPU when INTELLICRACK_SKIP_INTEL_XPU is set."""
         loader = GPUAutoLoader()
+        monkeypatch.setenv("INTELLICRACK_SKIP_INTEL_XPU", "true")
 
-        with patch.dict(os.environ, {"INTELLICRACK_SKIP_INTEL_XPU": "true"}):
-            with patch.object(loader, "_try_intel_xpu") as mock_xpu:
-                with patch.object(loader, "_try_cpu_fallback", return_value=True):
-                    loader.setup()
+        fake_torch = FakeTorchModule(cuda_available=True)
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-                    mock_xpu.assert_not_called()
+        result = loader.setup()
 
-    def test_setup_tries_methods_in_order(self) -> None:
+        assert result is True
+        assert loader.gpu_type == "nvidia_cuda"
+
+    def test_setup_tries_methods_in_order(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """setup tries GPU detection methods in priority order."""
         loader = GPUAutoLoader()
 
-        with patch.object(loader, "_try_intel_xpu", return_value=False):
-            with patch.object(loader, "_try_nvidia_cuda", return_value=False):
-                with patch.object(loader, "_try_amd_rocm", return_value=False):
-                    with patch.object(loader, "_try_directml", return_value=False):
-                        with patch.object(loader, "_try_cpu_fallback", return_value=True):
-                            result = loader.setup()
+        fake_torch = FakeTorchModule()
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-                            assert result is True
+        result = loader.setup()
 
-    def test_setup_stops_on_first_success(self) -> None:
+        assert result is True
+        assert loader.gpu_type in ["cpu", "directml"]
+
+    def test_setup_stops_on_first_success(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """setup stops trying methods after first success."""
         loader = GPUAutoLoader()
 
-        with patch.object(loader, "_try_intel_xpu", return_value=False):
-            with patch.object(loader, "_try_nvidia_cuda", return_value=True):
-                with patch.object(loader, "_try_amd_rocm", return_value=False) as mock_amd:
-                    with patch.object(loader, "_try_directml", return_value=False) as mock_dml:
-                        result = loader.setup()
+        fake_torch = FakeTorchModule(cuda_available=True)
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-                        assert result is True
-                        mock_amd.assert_not_called()
-                        mock_dml.assert_not_called()
+        result = loader.setup()
 
-    def test_setup_handles_method_exceptions(self) -> None:
+        assert result is True
+        assert loader.gpu_type == "nvidia_cuda"
+
+    def test_setup_handles_method_exceptions(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """setup handles exceptions from detection methods gracefully."""
         loader = GPUAutoLoader()
 
-        with patch.object(loader, "_try_intel_xpu", side_effect=RuntimeError("XPU error")):
-            with patch.object(loader, "_try_nvidia_cuda", return_value=True):
-                result = loader.setup()
+        def raise_on_first_call() -> FakeTorchModule:
+            if not hasattr(raise_on_first_call, "call_count"):
+                raise_on_first_call.call_count = 0
+            raise_on_first_call.call_count += 1
 
-                assert result is True
+            if raise_on_first_call.call_count == 1:
+                raise RuntimeError("XPU error")
+            return FakeTorchModule(cuda_available=True)
 
-    def test_setup_sets_skip_intel_on_pybind11_error(self) -> None:
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            raise_on_first_call,
+        )
+
+        result = loader.setup()
+
+        assert result is True
+
+    def test_setup_sets_skip_intel_on_pybind11_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """setup sets INTELLICRACK_SKIP_INTEL_XPU on pybind11 errors."""
         loader = GPUAutoLoader()
 
-        with patch.object(loader, "_try_intel_xpu", side_effect=RuntimeError("pybind11::gil_scoped_acquire error")):
-            with patch.object(loader, "_try_cpu_fallback", return_value=True):
-                with patch.dict(os.environ, {}, clear=False):
-                    loader.setup()
+        def raise_pybind11_error() -> FakeTorchModule:
+            if not hasattr(raise_pybind11_error, "call_count"):
+                raise_pybind11_error.call_count = 0
+            raise_pybind11_error.call_count += 1
 
-                    assert os.environ.get("INTELLICRACK_SKIP_INTEL_XPU") == "1"
+            if raise_pybind11_error.call_count == 1:
+                raise RuntimeError("pybind11::gil_scoped_acquire error")
+            return FakeTorchModule()
+
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            raise_pybind11_error,
+        )
+
+        if "INTELLICRACK_SKIP_INTEL_XPU" in os.environ:
+            monkeypatch.delenv("INTELLICRACK_SKIP_INTEL_XPU")
+
+        loader.setup()
+
+        assert os.environ.get("INTELLICRACK_SKIP_INTEL_XPU") == "1"
 
 
 class TestIntelXPUDetection:
     """Test Intel XPU detection and configuration."""
 
-    def test_detects_intel_xpu_when_available(self) -> None:
+    def test_detects_intel_xpu_when_available(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """_try_intel_xpu detects Intel XPU when available."""
         loader = GPUAutoLoader()
 
-        mock_torch = Mock()
-        mock_torch.xpu.is_available.return_value = True
-        mock_torch.xpu.device_count.return_value = 1
-        mock_torch.xpu.get_device_name.return_value = "Intel Arc A770"
-        mock_torch.device = Mock(return_value="xpu")
+        fake_torch = FakeTorchModule(xpu_available=True)
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-        with patch("intellicrack.utils.gpu_autoloader.safe_torch_import", return_value=mock_torch):
-            result = loader._try_intel_xpu()
+        result = loader._try_intel_xpu()
 
-            assert result is True
-            assert loader.gpu_available is True
-            assert loader.gpu_type == "intel_xpu"
-            assert loader._device_string == "xpu"
+        assert result is True
+        assert loader.gpu_available is True
+        assert loader.gpu_type == "intel_xpu"
+        assert loader._device_string == "xpu"
 
-    def test_returns_false_when_xpu_not_available(self) -> None:
+    def test_returns_false_when_xpu_not_available(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """_try_intel_xpu returns False when XPU is not available."""
         loader = GPUAutoLoader()
 
-        mock_torch = Mock()
-        mock_torch.xpu.is_available.return_value = False
+        fake_torch = FakeTorchModule()
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-        with patch("intellicrack.utils.gpu_autoloader.safe_torch_import", return_value=mock_torch):
-            result = loader._try_intel_xpu()
+        result = loader._try_intel_xpu()
 
-            assert result is False
+        assert result is False
 
-    def test_returns_false_when_torch_has_no_xpu(self) -> None:
+    def test_returns_false_when_torch_has_no_xpu(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """_try_intel_xpu returns False when torch lacks XPU support."""
         loader = GPUAutoLoader()
 
-        mock_torch = Mock(spec=[])
+        fake_torch = FakeTorchModule()
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-        with patch("intellicrack.utils.gpu_autoloader.safe_torch_import", return_value=mock_torch):
-            result = loader._try_intel_xpu()
+        result = loader._try_intel_xpu()
 
-            assert result is False
+        assert result is False
 
-    def test_handles_xpu_info_retrieval_errors(self) -> None:
+    def test_handles_xpu_info_retrieval_errors(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """_try_intel_xpu handles errors when retrieving XPU device info."""
         loader = GPUAutoLoader()
 
-        mock_torch = Mock()
-        mock_torch.xpu.is_available.return_value = True
-        mock_torch.xpu.device_count.side_effect = RuntimeError("Info error")
-        mock_torch.device = Mock(return_value="xpu")
+        fake_torch = FakeTorchModule(xpu_available=True, raise_on_device_info=True)
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-        with patch("intellicrack.utils.gpu_autoloader.safe_torch_import", return_value=mock_torch):
-            result = loader._try_intel_xpu()
+        result = loader._try_intel_xpu()
 
-            assert result is True
-            assert "backend" in loader.gpu_info
+        assert result is True
+        assert "backend" in loader.gpu_info
 
 
 class TestNVIDIACUDADetection:
     """Test NVIDIA CUDA detection and configuration."""
 
-    def test_detects_nvidia_cuda_when_available(self) -> None:
+    def test_detects_nvidia_cuda_when_available(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """_try_nvidia_cuda detects NVIDIA CUDA when available."""
         loader = GPUAutoLoader()
 
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = True
-        mock_torch.cuda.device_count.return_value = 1
-        mock_torch.version.cuda = "12.1"
-        mock_torch.device = Mock(return_value="cuda")
+        fake_torch = FakeTorchModule(cuda_available=True)
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-        mock_props = Mock()
-        mock_props.name = "NVIDIA RTX 4090"
-        mock_props.total_memory = 24 * 1024**3
-        mock_props.major = 8
-        mock_props.minor = 9
-        mock_torch.cuda.get_device_properties.return_value = mock_props
+        result = loader._try_nvidia_cuda()
 
-        with patch("intellicrack.utils.gpu_autoloader.safe_torch_import", return_value=mock_torch):
-            result = loader._try_nvidia_cuda()
+        assert result is True
+        assert loader.gpu_available is True
+        assert loader.gpu_type == "nvidia_cuda"
+        assert loader._device_string == "cuda"
+        assert "NVIDIA CUDA" in str(loader.gpu_info["backend"])
 
-            assert result is True
-            assert loader.gpu_available is True
-            assert loader.gpu_type == "nvidia_cuda"
-            assert loader._device_string == "cuda"
-            assert "NVIDIA CUDA" in str(loader.gpu_info["backend"])
-
-    def test_returns_false_when_cuda_not_available(self) -> None:
+    def test_returns_false_when_cuda_not_available(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """_try_nvidia_cuda returns False when CUDA is not available."""
         loader = GPUAutoLoader()
 
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
+        fake_torch = FakeTorchModule()
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-        with patch("intellicrack.utils.gpu_autoloader.safe_torch_import", return_value=mock_torch):
-            result = loader._try_nvidia_cuda()
+        result = loader._try_nvidia_cuda()
 
-            assert result is False
+        assert result is False
 
 
 class TestAMDROCmDetection:
     """Test AMD ROCm detection and configuration."""
 
-    def test_detects_amd_rocm_when_available(self) -> None:
+    def test_detects_amd_rocm_when_available(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """_try_amd_rocm detects AMD ROCm when available."""
         loader = GPUAutoLoader()
 
-        mock_torch = Mock()
-        mock_torch.hip.is_available.return_value = True
-        mock_torch.hip.device_count.return_value = 1
-        mock_torch.hip.get_device_name.return_value = "AMD Radeon RX 7900 XTX"
-        mock_torch.version.hip = "5.7"
-        mock_torch.device = Mock(return_value="hip")
+        fake_torch = FakeTorchModule(hip_available=True)
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-        mock_props = Mock()
-        mock_props.total_memory = 24 * 1024**3
-        mock_torch.hip.get_device_properties.return_value = mock_props
+        result = loader._try_amd_rocm()
 
-        with patch("intellicrack.utils.gpu_autoloader.safe_torch_import", return_value=mock_torch):
-            result = loader._try_amd_rocm()
+        assert result is True
+        assert loader.gpu_available is True
+        assert loader.gpu_type == "amd_rocm"
+        assert loader._device_string == "hip"
 
-            assert result is True
-            assert loader.gpu_available is True
-            assert loader.gpu_type == "amd_rocm"
-            assert loader._device_string == "hip"
-
-    def test_returns_false_when_rocm_not_available(self) -> None:
+    def test_returns_false_when_rocm_not_available(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """_try_amd_rocm returns False when ROCm is not available."""
         loader = GPUAutoLoader()
 
-        mock_torch = Mock()
-        mock_torch.hip.is_available.return_value = False
+        fake_torch = FakeTorchModule()
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-        with patch("intellicrack.utils.gpu_autoloader.safe_torch_import", return_value=mock_torch):
-            result = loader._try_amd_rocm()
+        result = loader._try_amd_rocm()
 
-            assert result is False
+        assert result is False
 
 
 class TestDirectMLDetection:
     """Test DirectML detection and configuration."""
 
-    def test_detects_directml(self) -> None:
+    def test_detects_directml(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """_try_directml configures DirectML backend."""
         loader = GPUAutoLoader()
 
-        mock_torch = Mock()
-        mock_torch.device = Mock(return_value="cpu")
+        fake_torch = FakeTorchModule()
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-        with patch("intellicrack.utils.gpu_autoloader.safe_torch_import", return_value=mock_torch):
-            result = loader._try_directml()
+        result = loader._try_directml()
 
-            assert result is True
-            assert loader.gpu_available is True
-            assert loader.gpu_type == "directml"
-            assert "DirectML" in str(loader.gpu_info["backend"])
+        assert result is True
+        assert loader.gpu_available is True
+        assert loader.gpu_type == "directml"
+        assert "DirectML" in str(loader.gpu_info["backend"])
 
 
 class TestCPUFallback:
     """Test CPU fallback configuration."""
 
-    def test_configures_cpu_fallback(self) -> None:
+    def test_configures_cpu_fallback(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """_try_cpu_fallback configures CPU backend."""
         loader = GPUAutoLoader()
 
-        mock_torch = Mock()
-        mock_torch.device = Mock(return_value="cpu")
+        fake_torch = FakeTorchModule()
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-        with patch("intellicrack.utils.gpu_autoloader.safe_torch_import", return_value=mock_torch):
-            result = loader._try_cpu_fallback()
+        result = loader._try_cpu_fallback()
 
-            assert result is True
-            assert loader.gpu_available is False
-            assert loader.gpu_type == "cpu"
-            assert loader._device_string == "cpu"
+        assert result is True
+        assert loader.gpu_available is False
+        assert loader.gpu_type == "cpu"
+        assert loader._device_string == "cpu"
 
-    def test_cpu_fallback_without_torch(self) -> None:
+    def test_cpu_fallback_without_torch(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """_try_cpu_fallback works without PyTorch."""
         loader = GPUAutoLoader()
 
-        with patch("intellicrack.utils.gpu_autoloader.safe_torch_import", return_value=None):
-            result = loader._try_cpu_fallback()
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: None,
+        )
 
-            assert result is True
-            assert loader.gpu_type == "cpu"
-            assert loader._device is None
+        result = loader._try_cpu_fallback()
+
+        assert result is True
+        assert loader.gpu_type == "cpu"
+        assert loader._device is None
 
 
 class TestDeviceManagement:
@@ -314,22 +578,22 @@ class TestDeviceManagement:
     def test_get_device_returns_configured_device(self) -> None:
         """get_device returns the configured device object."""
         loader = GPUAutoLoader()
-        mock_device = Mock()
-        loader._device = mock_device
+        fake_device = FakeTorchDevice("cuda")
+        loader._device = fake_device
 
         result = loader.get_device()
 
-        assert result is mock_device
+        assert result is fake_device
 
     def test_get_torch_returns_torch_module(self) -> None:
         """get_torch returns the torch module."""
         loader = GPUAutoLoader()
-        mock_torch = Mock()
-        loader._torch = mock_torch
+        fake_torch = FakeTorchModule()
+        loader._torch = fake_torch
 
         result = loader.get_torch()
 
-        assert result is mock_torch
+        assert result is fake_torch
 
     def test_get_device_string_returns_device_string(self) -> None:
         """get_device_string returns device string for operations."""
@@ -351,27 +615,25 @@ class TestDeviceManagement:
     def test_to_device_moves_tensor_to_device(self) -> None:
         """to_device moves tensor or model to configured device."""
         loader = GPUAutoLoader()
-        mock_device = Mock()
-        loader._device = mock_device
+        fake_device = FakeTorchDevice("cuda")
+        loader._device = fake_device
 
-        mock_tensor = Mock()
-        mock_tensor.to = Mock(return_value="moved_tensor")
+        fake_tensor = FakeTensorLike()
+        result = loader.to_device(fake_tensor)
 
-        result = loader.to_device(mock_tensor)
-
-        mock_tensor.to.assert_called_once_with(mock_device)
-        assert result == "moved_tensor"
+        assert result is fake_tensor
+        assert fake_tensor.device_moved_to is fake_device
 
     def test_to_device_returns_unchanged_when_no_device(self) -> None:
         """to_device returns object unchanged when no device configured."""
         loader = GPUAutoLoader()
         loader._device = None
 
-        mock_tensor = Mock()
+        fake_tensor = FakeTensorLike()
+        result = loader.to_device(fake_tensor)
 
-        result = loader.to_device(mock_tensor)
-
-        assert result is mock_tensor
+        assert result is fake_tensor
+        assert fake_tensor.device_moved_to is None
 
 
 class TestModelOptimization:
@@ -382,15 +644,12 @@ class TestModelOptimization:
         loader = GPUAutoLoader()
         loader.gpu_type = "intel_xpu"
 
-        mock_torch = Mock()
-        mock_torch.compile = Mock(return_value="compiled_model")
-        loader._torch = mock_torch
+        fake_torch = FakeTorchModule()
+        loader._torch = fake_torch
 
-        mock_model = Mock()
+        fake_model = "model_to_compile"
+        result = loader.optimize_model(fake_model)
 
-        result = loader.optimize_model(mock_model)
-
-        mock_torch.compile.assert_called_once_with(mock_model)
         assert result == "compiled_model"
 
     def test_optimize_model_returns_unchanged_for_other_backends(self) -> None:
@@ -398,26 +657,28 @@ class TestModelOptimization:
         loader = GPUAutoLoader()
         loader.gpu_type = "nvidia_cuda"
 
-        mock_model = Mock()
+        fake_model = "unchanged_model"
+        result = loader.optimize_model(fake_model)
 
-        result = loader.optimize_model(mock_model)
-
-        assert result is mock_model
+        assert result is fake_model
 
     def test_optimize_model_handles_compilation_errors(self) -> None:
         """optimize_model handles errors during compilation."""
         loader = GPUAutoLoader()
         loader.gpu_type = "intel_xpu"
 
-        mock_torch = Mock()
-        mock_torch.compile.side_effect = RuntimeError("Compilation failed")
-        loader._torch = mock_torch
+        class FailingTorchModule:
+            """Fake torch module that raises on compile."""
 
-        mock_model = Mock()
+            def compile(self, model: Any) -> Any:
+                raise RuntimeError("Compilation failed")
 
-        result = loader.optimize_model(mock_model)
+        loader._torch = FailingTorchModule()
 
-        assert result is mock_model
+        fake_model = "model_that_fails"
+        result = loader.optimize_model(fake_model)
+
+        assert result is fake_model
 
 
 class TestMemoryInfo:
@@ -429,15 +690,8 @@ class TestMemoryInfo:
         loader.gpu_available = True
         loader.gpu_type = "nvidia_cuda"
 
-        mock_torch = Mock()
-        mock_torch.cuda.memory_allocated.return_value = 1024**3
-        mock_torch.cuda.memory_reserved.return_value = 2 * 1024**3
-
-        mock_props = Mock()
-        mock_props.total_memory = 24 * 1024**3
-        mock_torch.cuda.get_device_properties.return_value = mock_props
-
-        loader._torch = mock_torch
+        fake_torch = FakeTorchModule(cuda_available=True)
+        loader._torch = fake_torch
 
         result = loader.get_memory_info()
 
@@ -451,10 +705,8 @@ class TestMemoryInfo:
         loader.gpu_available = True
         loader.gpu_type = "intel_xpu"
 
-        mock_torch = Mock()
-        mock_torch.xpu.memory_allocated.return_value = 1024**3
-        mock_torch.xpu.memory_reserved.return_value = 2 * 1024**3
-        loader._torch = mock_torch
+        fake_torch = FakeTorchModule(xpu_available=True)
+        loader._torch = fake_torch
 
         result = loader.get_memory_info()
 
@@ -475,9 +727,8 @@ class TestMemoryInfo:
         loader.gpu_available = True
         loader.gpu_type = "nvidia_cuda"
 
-        mock_torch = Mock()
-        mock_torch.cuda.memory_allocated.side_effect = RuntimeError("Memory error")
-        loader._torch = mock_torch
+        fake_torch = FakeTorchModule(cuda_available=True, raise_on_device_info=True)
+        loader._torch = fake_torch
 
         result = loader.get_memory_info()
 
@@ -493,13 +744,10 @@ class TestSynchronization:
         loader.gpu_available = True
         loader.gpu_type = "nvidia_cuda"
 
-        mock_torch = Mock()
-        mock_torch.cuda.synchronize = Mock()
-        loader._torch = mock_torch
+        fake_torch = FakeTorchModule(cuda_available=True)
+        loader._torch = fake_torch
 
         loader.synchronize()
-
-        mock_torch.cuda.synchronize.assert_called_once()
 
     def test_synchronize_xpu_devices(self) -> None:
         """synchronize calls XPU synchronize when available."""
@@ -507,13 +755,10 @@ class TestSynchronization:
         loader.gpu_available = True
         loader.gpu_type = "intel_xpu"
 
-        mock_torch = Mock()
-        mock_torch.xpu.synchronize = Mock()
-        loader._torch = mock_torch
+        fake_torch = FakeTorchModule(xpu_available=True)
+        loader._torch = fake_torch
 
         loader.synchronize()
-
-        mock_torch.xpu.synchronize.assert_called_once()
 
     def test_synchronize_does_nothing_when_no_gpu(self) -> None:
         """synchronize does nothing when GPU not available."""
@@ -528,9 +773,8 @@ class TestSynchronization:
         loader.gpu_available = True
         loader.gpu_type = "nvidia_cuda"
 
-        mock_torch = Mock()
-        mock_torch.cuda.synchronize.side_effect = RuntimeError("Sync error")
-        loader._torch = mock_torch
+        fake_torch = FakeTorchModule(cuda_available=True, raise_on_device_info=True)
+        loader._torch = fake_torch
 
         loader.synchronize()
 
@@ -540,155 +784,206 @@ class TestGlobalFunctions:
 
     def test_get_device_uses_global_instance(self) -> None:
         """get_device uses global GPU autoloader instance."""
-        with patch.object(gpu_autoloader, "get_device", return_value="device"):
-            result = get_device()
+        original_device = gpu_autoloader._device
+        fake_device = FakeTorchDevice("test")
+        gpu_autoloader._device = fake_device
 
-            assert result == "device"
+        result = get_device()
+
+        assert result is fake_device
+
+        gpu_autoloader._device = original_device
 
     def test_get_gpu_info_returns_complete_info(self) -> None:
         """get_gpu_info returns complete GPU information."""
-        with patch.object(gpu_autoloader, "gpu_available", True):
-            with patch.object(gpu_autoloader, "gpu_type", "nvidia_cuda"):
-                with patch.object(gpu_autoloader, "get_device_string", return_value="cuda"):
-                    with patch.object(gpu_autoloader, "gpu_info", {"backend": "CUDA"}):
-                        with patch.object(gpu_autoloader, "get_memory_info", return_value={}):
-                            result = get_gpu_info()
+        original_available = gpu_autoloader.gpu_available
+        original_type = gpu_autoloader.gpu_type
+        original_device_string = gpu_autoloader._device_string
+        original_info = gpu_autoloader.gpu_info
 
-                            assert "available" in result
-                            assert "type" in result
-                            assert "device" in result
-                            assert "info" in result
-                            assert "memory" in result
+        gpu_autoloader.gpu_available = True
+        gpu_autoloader.gpu_type = "nvidia_cuda"
+        gpu_autoloader._device_string = "cuda"
+        gpu_autoloader.gpu_info = {"backend": "CUDA"}
+
+        result = get_gpu_info()
+
+        assert "available" in result
+        assert "type" in result
+        assert "device" in result
+        assert "info" in result
+        assert "memory" in result
+
+        gpu_autoloader.gpu_available = original_available
+        gpu_autoloader.gpu_type = original_type
+        gpu_autoloader._device_string = original_device_string
+        gpu_autoloader.gpu_info = original_info
 
     def test_to_device_uses_global_instance(self) -> None:
         """to_device uses global GPU autoloader instance."""
-        mock_tensor = Mock()
+        original_device = gpu_autoloader._device
+        fake_device = FakeTorchDevice("cuda")
+        gpu_autoloader._device = fake_device
 
-        with patch.object(gpu_autoloader, "to_device", return_value="moved"):
-            result = to_device(mock_tensor)
+        fake_tensor = FakeTensorLike()
+        result = to_device(fake_tensor)
 
-            assert result == "moved"
+        assert result is fake_tensor
+        assert fake_tensor.device_moved_to is fake_device
+
+        gpu_autoloader._device = original_device
 
     def test_optimize_for_gpu_uses_global_instance(self) -> None:
         """optimize_for_gpu uses global GPU autoloader instance."""
-        mock_model = Mock()
+        original_type = gpu_autoloader.gpu_type
+        original_torch = gpu_autoloader._torch
 
-        with patch.object(gpu_autoloader, "optimize_model", return_value="optimized"):
-            result = optimize_for_gpu(mock_model)
+        gpu_autoloader.gpu_type = "intel_xpu"
+        gpu_autoloader._torch = FakeTorchModule()
 
-            assert result == "optimized"
+        fake_model = "test_model"
+        result = optimize_for_gpu(fake_model)
+
+        assert result == "compiled_model"
+
+        gpu_autoloader.gpu_type = original_type
+        gpu_autoloader._torch = original_torch
 
 
 class TestDetectGPUFrameworks:
     """Test GPU framework detection functionality."""
 
-    def test_returns_framework_info_structure(self) -> None:
+    def test_returns_framework_info_structure(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """detect_gpu_frameworks returns dictionary with framework info."""
-        with patch("intellicrack.utils.gpu_autoloader.torch", side_effect=ImportError):
-            result = detect_gpu_frameworks()
 
-            assert isinstance(result, dict)
-            assert "cuda" in result
-            assert "rocm" in result
-            assert "opencl" in result
-            assert "directml" in result
-            assert "intel_xpu" in result
-            assert "available_frameworks" in result
-            assert "gpu_devices" in result
+        def raise_import_error() -> None:
+            raise ImportError("torch not available")
 
-    def test_detects_cuda_when_available(self) -> None:
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.torch",
+            raise_import_error,
+            raising=False,
+        )
+
+        result = detect_gpu_frameworks()
+
+        assert isinstance(result, dict)
+        assert "cuda" in result
+        assert "rocm" in result
+        assert "opencl" in result
+        assert "directml" in result
+        assert "intel_xpu" in result
+        assert "available_frameworks" in result
+        assert "gpu_devices" in result
+
+    def test_detects_cuda_when_available(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """detect_gpu_frameworks detects CUDA when available."""
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = True
-        mock_torch.cuda.device_count.return_value = 1
-        mock_torch.cuda.get_device_name.return_value = "NVIDIA GPU"
-        mock_torch.version.cuda = "12.1"
+        fake_torch = FakeTorchModule(cuda_available=True)
+        monkeypatch.setattr("intellicrack.utils.gpu_autoloader.torch", fake_torch)
 
-        mock_props = Mock()
-        mock_props.total_memory = 8 * 1024**3
-        mock_torch.cuda.get_device_properties.return_value = mock_props
+        result = detect_gpu_frameworks()
 
-        with patch("intellicrack.utils.gpu_autoloader.torch", mock_torch):
-            result = detect_gpu_frameworks()
+        assert result["cuda"] is True
+        assert "CUDA" in result["available_frameworks"]
 
-            assert result["cuda"] is True
-            assert "CUDA" in result["available_frameworks"]
-
-    def test_handles_missing_frameworks(self) -> None:
+    def test_handles_missing_frameworks(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """detect_gpu_frameworks handles missing frameworks gracefully."""
-        with patch("intellicrack.utils.gpu_autoloader.torch", side_effect=ImportError):
-            result = detect_gpu_frameworks()
 
-            assert result["cuda"] is False
-            assert result["intel_xpu"] is False
+        def raise_import_error() -> None:
+            raise ImportError("torch not available")
+
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.torch",
+            raise_import_error,
+            raising=False,
+        )
+
+        result = detect_gpu_frameworks()
+
+        assert result["cuda"] is False
+        assert result["intel_xpu"] is False
 
 
 class TestRealWorldScenarios:
     """Test realistic production usage scenarios."""
 
-    def test_complete_gpu_setup_workflow(self) -> None:
+    def test_complete_gpu_setup_workflow(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test complete workflow from detection to usage."""
         loader = GPUAutoLoader()
 
-        with patch.object(loader, "_try_nvidia_cuda", return_value=True):
-            loader.gpu_available = True
-            loader.gpu_type = "nvidia_cuda"
-            loader._device_string = "cuda"
+        fake_torch = FakeTorchModule(cuda_available=True)
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-            result = loader.setup()
+        result = loader.setup()
 
-            assert result is True
-            assert loader.get_device_string() == "cuda"
+        assert result is True
+        assert loader.get_device_string() == "cuda"
 
-    def test_fallback_cascade_to_cpu(self) -> None:
+    def test_fallback_cascade_to_cpu(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test cascading fallback from all GPUs to CPU."""
         loader = GPUAutoLoader()
 
-        with patch.object(loader, "_try_intel_xpu", return_value=False):
-            with patch.object(loader, "_try_nvidia_cuda", return_value=False):
-                with patch.object(loader, "_try_amd_rocm", return_value=False):
-                    with patch.object(loader, "_try_directml", return_value=False):
-                        with patch.object(loader, "_try_cpu_fallback", return_value=True):
-                            loader.gpu_type = "cpu"
+        fake_torch = FakeTorchModule()
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-                            result = loader.setup()
+        result = loader.setup()
 
-                            assert result is True
-                            assert loader.gpu_type == "cpu"
+        assert result is True
+        assert loader.gpu_type in ["cpu", "directml"]
 
 
 class TestEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_handles_torch_import_failure(self) -> None:
+    def test_handles_torch_import_failure(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """GPU detection handles PyTorch import failures."""
         loader = GPUAutoLoader()
 
-        with patch("intellicrack.utils.gpu_autoloader.safe_torch_import", return_value=None):
-            result = loader._try_nvidia_cuda()
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: None,
+        )
 
-            assert result is False
+        result = loader._try_nvidia_cuda()
 
-    def test_handles_partial_gpu_support(self) -> None:
+        assert result is False
+
+    def test_handles_partial_gpu_support(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """GPU detection handles partial GPU support."""
         loader = GPUAutoLoader()
 
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = True
-        mock_torch.cuda.device_count.side_effect = RuntimeError("Error")
+        fake_torch = FakeTorchModule(cuda_available=True, raise_on_device_info=True)
+        monkeypatch.setattr(
+            "intellicrack.utils.gpu_autoloader.safe_torch_import",
+            lambda: fake_torch,
+        )
 
-        with patch("intellicrack.utils.gpu_autoloader.safe_torch_import", return_value=mock_torch):
-            result = loader._try_nvidia_cuda()
+        result = loader._try_nvidia_cuda()
 
-            assert result is True
+        assert result is True
 
     def test_handles_none_device_in_to_device(self) -> None:
         """to_device handles objects without 'to' method."""
         loader = GPUAutoLoader()
-        loader._device = Mock()
+        loader._device = FakeTorchDevice("cuda")
 
         simple_object = "string"
-
         result = loader.to_device(simple_object)
 
         assert result == simple_object

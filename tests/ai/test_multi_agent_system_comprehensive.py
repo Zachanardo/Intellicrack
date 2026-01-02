@@ -23,8 +23,9 @@ import time
 import uuid
 from datetime import datetime
 from queue import Queue
+from collections.abc import Callable
+from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -47,33 +48,104 @@ from intellicrack.ai.multi_agent_system import (
 )
 
 
-@pytest.fixture
-def mock_learning_engine() -> MagicMock:
-    """Create a mock learning engine with async update_knowledge."""
-    engine = MagicMock()
-    engine.update_knowledge = AsyncMock()
-    engine.record_experience = MagicMock(return_value=True)
-    return engine
+class FakeLearningEngine:
+    """Real test double for AILearningEngine with call tracking and configurable behavior."""
+
+    def __init__(self) -> None:
+        self.learning_enabled: bool = True
+        self.record_experience_calls: list[dict[str, Any]] = []
+        self.update_knowledge_calls: list[dict[str, Any]] = []
+        self.should_fail_record_experience: bool = False
+        self.should_fail_update_knowledge: bool = False
+
+    def record_experience(
+        self,
+        task_type: str,
+        input_data: object,
+        output_data: object,
+        success: bool,
+        confidence: float,
+        execution_time: float = 0.0,
+        memory_usage: int = 0,
+        error_message: str | None = None,
+        context: dict[str, object] | None = None,
+        metadata: dict[str, object] | None = None,
+    ) -> str:
+        """Record learning experience with call tracking."""
+        call_record: dict[str, Any] = {
+            "task_type": task_type,
+            "input_data": input_data,
+            "output_data": output_data,
+            "success": success,
+            "confidence": confidence,
+            "execution_time": execution_time,
+            "memory_usage": memory_usage,
+            "error_message": error_message,
+            "context": context,
+            "metadata": metadata,
+        }
+        self.record_experience_calls.append(call_record)
+
+        if self.should_fail_record_experience:
+            raise RuntimeError("Configured to fail record_experience")
+
+        return f"record_{len(self.record_experience_calls)}"
+
+    async def update_knowledge(self, knowledge_data: dict[str, Any]) -> bool:
+        """Update knowledge with async support and call tracking."""
+        call_record: dict[str, Any] = {
+            "knowledge_data": knowledge_data,
+            "timestamp": datetime.now(),
+        }
+        self.update_knowledge_calls.append(call_record)
+
+        if self.should_fail_update_knowledge:
+            return False
+
+        return True
+
+    def get_learning_insights(self) -> dict[str, Any]:
+        """Get learning insights."""
+        return {
+            "total_records": len(self.record_experience_calls),
+            "success_rate": 0.85,
+            "operation_types": {},
+        }
+
+    def reset_tracking(self) -> None:
+        """Reset all call tracking."""
+        self.record_experience_calls.clear()
+        self.update_knowledge_calls.clear()
 
 
 @pytest.fixture
-def create_agent_with_mock_learning(mock_learning_engine: MagicMock):
-    """Factory fixture for creating agents with mocked learning engine."""
+def fake_learning_engine() -> FakeLearningEngine:
+    """Create a fake learning engine with call tracking."""
+    return FakeLearningEngine()
+
+
+@pytest.fixture
+def create_agent_with_fake_learning(
+    fake_learning_engine: FakeLearningEngine,
+) -> Callable[[str, AgentRole], BaseAgent]:
+    """Factory fixture for creating agents with fake learning engine."""
     def _create_agent(agent_id: str, role: AgentRole) -> BaseAgent:
         agent = BaseAgent(agent_id=agent_id, role=role)
-        agent.learning_engine = mock_learning_engine
+        object.__setattr__(agent, "learning_engine", fake_learning_engine)
         return agent
     return _create_agent
 
 
 @pytest.fixture
-def create_system_with_mock_agents(mock_learning_engine: MagicMock):
-    """Factory fixture for creating multi-agent system with mocked learning."""
+def create_system_with_fake_agents(
+    fake_learning_engine: FakeLearningEngine,
+) -> Callable[..., MultiAgentSystem]:
+    """Factory fixture for creating multi-agent system with fake learning."""
     def _create_system(*agent_configs: tuple[str, AgentRole]) -> MultiAgentSystem:
         system = MultiAgentSystem()
         for agent_id, role in agent_configs:
             agent = BaseAgent(agent_id=agent_id, role=role)
-            agent.learning_engine = mock_learning_engine
+            object.__setattr__(agent, "learning_engine", fake_learning_engine)
             system.add_agent(agent)
         return system
     return _create_system
@@ -180,11 +252,12 @@ class TestTaskDistribution:
     """Test task distribution among agents."""
 
     @pytest.mark.asyncio
-    async def test_task_execution_binary_analysis(self, create_agent_with_mock_learning) -> None:
+    async def test_task_execution_binary_analysis(
+        self, create_agent_with_fake_learning: Callable[[str, AgentRole], BaseAgent]
+    ) -> None:
         """Agent executes binary analysis task and returns valid results."""
-        agent: BaseAgent = create_agent_with_mock_learning(
-            agent_id="analyzer_agent",
-            role=AgentRole.STATIC_ANALYZER,
+        agent: BaseAgent = create_agent_with_fake_learning(
+            "analyzer_agent", AgentRole.STATIC_ANALYZER
         )
 
         task: AgentTask = AgentTask(
@@ -210,11 +283,12 @@ class TestTaskDistribution:
         assert result["agent_id"] == "analyzer_agent"
 
     @pytest.mark.asyncio
-    async def test_task_execution_reverse_engineering(self, create_agent_with_mock_learning) -> None:
+    async def test_task_execution_reverse_engineering(
+        self, create_agent_with_fake_learning: Callable[[str, AgentRole], BaseAgent]
+    ) -> None:
         """Agent executes reverse engineering task correctly."""
-        agent: BaseAgent = create_agent_with_mock_learning(
-            agent_id="reverse_agent",
-            role=AgentRole.REVERSE_ENGINEER,
+        agent: BaseAgent = create_agent_with_fake_learning(
+            "reverse_agent", AgentRole.REVERSE_ENGINEER
         )
 
         task: AgentTask = AgentTask(
@@ -238,11 +312,12 @@ class TestTaskDistribution:
         assert len(result["result"]["protection_mechanisms"]) > 0
 
     @pytest.mark.asyncio
-    async def test_task_execution_vulnerability_scanning(self, create_agent_with_mock_learning) -> None:
+    async def test_task_execution_vulnerability_scanning(
+        self, create_agent_with_fake_learning: Callable[[str, AgentRole], BaseAgent]
+    ) -> None:
         """Agent executes vulnerability scanning task correctly."""
-        agent: BaseAgent = create_agent_with_mock_learning(
-            agent_id="vuln_hunter",
-            role=AgentRole.VULNERABILITY_HUNTER,
+        agent: BaseAgent = create_agent_with_fake_learning(
+            "vuln_hunter", AgentRole.VULNERABILITY_HUNTER
         )
 
         task: AgentTask = AgentTask(
@@ -271,11 +346,12 @@ class TestTaskDistribution:
             assert "exploitability" in vuln
 
     @pytest.mark.asyncio
-    async def test_task_execution_script_generation(self, create_agent_with_mock_learning) -> None:
+    async def test_task_execution_script_generation(
+        self, create_agent_with_fake_learning: Callable[[str, AgentRole], BaseAgent]
+    ) -> None:
         """Agent executes script generation task correctly."""
-        agent: BaseAgent = create_agent_with_mock_learning(
-            agent_id="script_gen",
-            role=AgentRole.SCRIPT_GENERATOR,
+        agent: BaseAgent = create_agent_with_fake_learning(
+            "script_gen", AgentRole.SCRIPT_GENERATOR
         )
 
         task: AgentTask = AgentTask(
@@ -299,9 +375,11 @@ class TestTaskDistribution:
         assert "check_registration" in result["result"]["script_content"]
 
     @pytest.mark.asyncio
-    async def test_multi_agent_task_distribution(self, create_system_with_mock_agents) -> None:
+    async def test_multi_agent_task_distribution(
+        self, create_system_with_fake_agents: Callable[..., MultiAgentSystem]
+    ) -> None:
         """MultiAgentSystem distributes tasks to appropriate agents."""
-        system: MultiAgentSystem = create_system_with_mock_agents(
+        system: MultiAgentSystem = create_system_with_fake_agents(
             ("analyzer_1", AgentRole.STATIC_ANALYZER),
             ("reverser_1", AgentRole.REVERSE_ENGINEER),
         )
@@ -329,8 +407,8 @@ class TestInterAgentCommunication:
         """MessageRouter routes messages to correct agent queues."""
         router: MessageRouter = MessageRouter()
 
-        queue1: Queue = Queue()
-        queue2: Queue = Queue()
+        queue1: Queue[AgentMessage] = Queue()
+        queue2: Queue[AgentMessage] = Queue()
 
         router.register_agent("agent_1", queue1)
         router.register_agent("agent_2", queue2)
@@ -357,8 +435,8 @@ class TestInterAgentCommunication:
         """MessageRouter handles multiple messages correctly."""
         router: MessageRouter = MessageRouter()
 
-        queue1: Queue = Queue()
-        queue2: Queue = Queue()
+        queue1: Queue[AgentMessage] = Queue()
+        queue2: Queue[AgentMessage] = Queue()
 
         router.register_agent("agent_1", queue1)
         router.register_agent("agent_2", queue2)
@@ -551,9 +629,11 @@ class TestParallelTaskExecution:
     """Test parallel task execution."""
 
     @pytest.mark.asyncio
-    async def test_collaborative_task_execution_parallel(self, create_system_with_mock_agents) -> None:
+    async def test_collaborative_task_execution_parallel(
+        self, create_system_with_fake_agents: Callable[..., MultiAgentSystem]
+    ) -> None:
         """MultiAgentSystem executes collaborative tasks in parallel."""
-        system: MultiAgentSystem = create_system_with_mock_agents(
+        system: MultiAgentSystem = create_system_with_fake_agents(
             ("analyzer_1", AgentRole.STATIC_ANALYZER),
             ("reverser_1", AgentRole.REVERSE_ENGINEER),
             ("vuln_hunter_1", AgentRole.VULNERABILITY_HUNTER),
@@ -586,9 +666,11 @@ class TestParallelTaskExecution:
         system.stop()
 
     @pytest.mark.asyncio
-    async def test_parallel_execution_faster_than_sequential(self, create_system_with_mock_agents) -> None:
+    async def test_parallel_execution_faster_than_sequential(
+        self, create_system_with_fake_agents: Callable[..., MultiAgentSystem]
+    ) -> None:
         """Parallel execution is faster than sequential for multiple tasks."""
-        system: MultiAgentSystem = create_system_with_mock_agents(
+        system: MultiAgentSystem = create_system_with_fake_agents(
             ("agent_0", AgentRole.STATIC_ANALYZER),
             ("agent_1", AgentRole.STATIC_ANALYZER),
             ("agent_2", AgentRole.STATIC_ANALYZER),
@@ -617,9 +699,11 @@ class TestAgentResultAggregation:
     """Test agent result aggregation."""
 
     @pytest.mark.asyncio
-    async def test_result_combination_from_multiple_agents(self, create_system_with_mock_agents) -> None:
+    async def test_result_combination_from_multiple_agents(
+        self, create_system_with_fake_agents: Callable[..., MultiAgentSystem]
+    ) -> None:
         """Results from multiple agents are combined correctly."""
-        system: MultiAgentSystem = create_system_with_mock_agents(
+        system: MultiAgentSystem = create_system_with_fake_agents(
             ("analyzer_1", AgentRole.STATIC_ANALYZER),
             ("reverser_1", AgentRole.REVERSE_ENGINEER),
         )
@@ -645,9 +729,11 @@ class TestAgentResultAggregation:
         system.stop()
 
     @pytest.mark.asyncio
-    async def test_confidence_calculation_from_multiple_agents(self, create_system_with_mock_agents) -> None:
+    async def test_confidence_calculation_from_multiple_agents(
+        self, create_system_with_fake_agents: Callable[..., MultiAgentSystem]
+    ) -> None:
         """Confidence scores are calculated correctly from multiple agents."""
-        system: MultiAgentSystem = create_system_with_mock_agents(
+        system: MultiAgentSystem = create_system_with_fake_agents(
             ("agent_0", AgentRole.STATIC_ANALYZER),
             ("agent_1", AgentRole.STATIC_ANALYZER),
             ("agent_2", AgentRole.STATIC_ANALYZER),
@@ -674,11 +760,12 @@ class TestErrorPropagation:
     """Test error propagation between agents."""
 
     @pytest.mark.asyncio
-    async def test_task_failure_error_propagation(self, create_agent_with_mock_learning) -> None:
+    async def test_task_failure_error_propagation(
+        self, create_agent_with_fake_learning: Callable[[str, AgentRole], BaseAgent]
+    ) -> None:
         """Task failures propagate errors correctly."""
-        agent: BaseAgent = create_agent_with_mock_learning(
-            agent_id="test_agent",
-            role=AgentRole.STATIC_ANALYZER,
+        agent: BaseAgent = create_agent_with_fake_learning(
+            "test_agent", AgentRole.STATIC_ANALYZER
         )
 
         task: AgentTask = AgentTask(
@@ -696,9 +783,11 @@ class TestErrorPropagation:
         assert agent.tasks_failed >= 0
 
     @pytest.mark.asyncio
-    async def test_collaborative_task_failure_handling(self, create_system_with_mock_agents) -> None:
+    async def test_collaborative_task_failure_handling(
+        self, create_system_with_fake_agents: Callable[..., MultiAgentSystem]
+    ) -> None:
         """Collaborative task failures are handled gracefully."""
-        system: MultiAgentSystem = create_system_with_mock_agents(
+        system: MultiAgentSystem = create_system_with_fake_agents(
             ("agent_1", AgentRole.STATIC_ANALYZER),
         )
         system.start()
@@ -756,11 +845,12 @@ class TestTimeoutHandling:
     """Test timeout handling."""
 
     @pytest.mark.asyncio
-    async def test_task_execution_completes_within_reasonable_time(self, create_agent_with_mock_learning) -> None:
+    async def test_task_execution_completes_within_reasonable_time(
+        self, create_agent_with_fake_learning: Callable[[str, AgentRole], BaseAgent]
+    ) -> None:
         """Task execution completes within reasonable timeframe."""
-        agent: BaseAgent = create_agent_with_mock_learning(
-            agent_id="test_agent",
-            role=AgentRole.STATIC_ANALYZER,
+        agent: BaseAgent = create_agent_with_fake_learning(
+            "test_agent", AgentRole.STATIC_ANALYZER
         )
 
         task: AgentTask = AgentTask(
@@ -779,9 +869,11 @@ class TestTimeoutHandling:
         assert result["status"] == "completed"
 
     @pytest.mark.asyncio
-    async def test_collaborative_task_timeout(self, create_system_with_mock_agents) -> None:
+    async def test_collaborative_task_timeout(
+        self, create_system_with_fake_agents: Callable[..., MultiAgentSystem]
+    ) -> None:
         """Collaborative tasks complete within timeout period."""
-        system: MultiAgentSystem = create_system_with_mock_agents(
+        system: MultiAgentSystem = create_system_with_fake_agents(
             ("agent_1", AgentRole.STATIC_ANALYZER),
         )
         system.start()
@@ -817,13 +909,16 @@ class TestAgentLifecycleManagement:
             role=AgentRole.STATIC_ANALYZER,
         )
 
-        assert agent.active is False
+        initial_state: bool = agent.active
+        assert initial_state is False
 
         agent.start()
-        assert agent.active is True
+        started_state: bool = agent.active
+        assert started_state is True
 
         agent.stop()
-        assert agent.active is False
+        stopped_state: bool = agent.active
+        assert stopped_state is False
 
     def test_multi_agent_system_lifecycle(self) -> None:
         """MultiAgentSystem starts and stops all agents correctly."""
@@ -837,19 +932,25 @@ class TestAgentLifecycleManagement:
         for agent in agents:
             system.add_agent(agent)
 
-        assert system.active is False
+        initial_sys_state: bool = system.active
+        assert initial_sys_state is False
         for agent in agents:
-            assert agent.active is False
+            agent_init_state: bool = agent.active
+            assert agent_init_state is False
 
         system.start()
-        assert system.active is True
+        started_sys_state: bool = system.active
+        assert started_sys_state is True
         for agent in agents:
-            assert agent.active is True
+            agent_started_state: bool = agent.active
+            assert agent_started_state is True
 
         system.stop()
-        assert system.active is False
+        stopped_sys_state: bool = system.active
+        assert stopped_sys_state is False
         for agent in agents:
-            assert agent.active is False
+            agent_stopped_state: bool = agent.active
+            assert agent_stopped_state is False
 
     def test_agent_removal_from_system(self) -> None:
         """Agents are removed from system correctly."""
@@ -942,7 +1043,7 @@ class TestLoadBalancing:
 
         assert least_loaded == "agent_2"
 
-    def test_task_distributor_selects_best_agent(self, mock_learning_engine: MagicMock) -> None:
+    def test_task_distributor_selects_best_agent(self, fake_learning_engine: FakeLearningEngine) -> None:
         """TaskDistributor selects best agent based on capabilities and load."""
         system: MultiAgentSystem = MultiAgentSystem()
 
@@ -950,12 +1051,12 @@ class TestLoadBalancing:
             agent_id="agent_1",
             role=AgentRole.STATIC_ANALYZER,
         )
-        agent1.learning_engine = mock_learning_engine
+        object.__setattr__(agent1, "learning_engine", fake_learning_engine)
         agent2: BaseAgent = BaseAgent(
             agent_id="agent_2",
             role=AgentRole.STATIC_ANALYZER,
         )
-        agent2.learning_engine = mock_learning_engine
+        object.__setattr__(agent2, "learning_engine", fake_learning_engine)
 
         agent1.tasks_completed = 10
         agent1.tasks_failed = 0
@@ -999,13 +1100,15 @@ class TestStaticAnalysisAgent:
         assert "control_flow_analysis" in capability_names
 
     @pytest.mark.asyncio
-    async def test_static_analysis_agent_binary_analysis_task(self, mock_learning_engine: MagicMock, tmp_path) -> None:
+    async def test_static_analysis_agent_binary_analysis_task(
+        self, fake_learning_engine: FakeLearningEngine, tmp_path: Path
+    ) -> None:
         """StaticAnalysisAgent executes binary analysis tasks correctly."""
         agent: StaticAnalysisAgent = StaticAnalysisAgent(
             agent_id="static_agent",
             role=AgentRole.STATIC_ANALYZER,
         )
-        agent.learning_engine = mock_learning_engine
+        object.__setattr__(agent, "learning_engine", fake_learning_engine)
 
         test_file = tmp_path / "test.exe"
         test_file.write_bytes(b"MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00")
@@ -1029,9 +1132,11 @@ class TestCollaborationStatistics:
     """Test collaboration statistics tracking."""
 
     @pytest.mark.asyncio
-    async def test_collaboration_stats_tracking(self, create_system_with_mock_agents) -> None:
+    async def test_collaboration_stats_tracking(
+        self, create_system_with_fake_agents: Callable[..., MultiAgentSystem]
+    ) -> None:
         """MultiAgentSystem tracks collaboration statistics correctly."""
-        system: MultiAgentSystem = create_system_with_mock_agents(
+        system: MultiAgentSystem = create_system_with_fake_agents(
             ("agent_1", AgentRole.STATIC_ANALYZER),
         )
         system.start()
@@ -1059,7 +1164,7 @@ class TestCollaborationStatistics:
         """MessageRouter tracks message statistics correctly."""
         router: MessageRouter = MessageRouter()
 
-        queue: Queue = Queue()
+        queue: Queue[AgentMessage] = Queue()
         router.register_agent("agent_1", queue)
 
         initial_log_size: int = len(router.message_log)

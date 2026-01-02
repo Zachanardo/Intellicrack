@@ -42,7 +42,11 @@ if TYPE_CHECKING:
 
 
 def _check_torch_available() -> bool:
-    """Return TORCH_AVAILABLE in a way that prevents mypy type narrowing."""
+    """Return TORCH_AVAILABLE in a way that prevents mypy type narrowing.
+
+    Returns:
+        Whether torch is available.
+    """
     return TORCH_AVAILABLE
 
 
@@ -55,6 +59,9 @@ def _is_torch_cuda_available() -> bool:
     This function exists to prevent mypy from statically narrowing
     the TORCH_AVAILABLE and torch checks, which causes false
     'unreachable code' errors.
+
+    Returns:
+        Whether torch CUDA is available.
     """
     if not _check_torch_available():
         return False
@@ -102,7 +109,11 @@ with contextlib.suppress(ImportError):
 
 
 def _get_torch_memory_allocated() -> int:
-    """Get torch CUDA memory allocated in bytes."""
+    """Get torch CUDA memory allocated in bytes.
+
+    Returns:
+        Memory allocated in bytes, or 0 if unavailable.
+    """
     if not _is_torch_cuda_available():
         return 0
     torch_mod: Any = torch
@@ -115,7 +126,11 @@ def _get_torch_memory_allocated() -> int:
 
 
 def _get_torch_memory_reserved() -> int:
-    """Get torch CUDA memory reserved in bytes."""
+    """Get torch CUDA memory reserved in bytes.
+
+    Returns:
+        Memory reserved in bytes, or 0 if unavailable.
+    """
     if not _is_torch_cuda_available():
         return 0
     torch_mod: Any = torch
@@ -128,7 +143,11 @@ def _get_torch_memory_reserved() -> int:
 
 
 def _torch_empty_cache() -> None:
-    """Clear torch CUDA cache."""
+    """Clear torch CUDA cache.
+
+    Releases all unoccupied cached GPU memory when torch CUDA is available.
+    If CUDA is not available, this function returns silently without action.
+    """
     if not _is_torch_cuda_available():
         return
     torch_mod: Any = torch
@@ -146,15 +165,27 @@ def process_binary_chunks(
 ) -> dict[str, Any]:
     """Process a binary file in chunks using multiple workers.
 
+    Divides a binary file into chunks and processes them in parallel using
+    ProcessPoolExecutor. Tracks GPU memory and processing statistics when
+    torch CUDA is available.
+
     Args:
-        binary_path: Path to the binary file
-        chunk_size: Size of each chunk in bytes
-        processor_func: Function to process each chunk
-        num_workers: Number of worker processes
+        binary_path: Path to the binary file to process.
+        chunk_size: Size of each chunk in bytes (default 1MB).
+        processor_func: Callable to process each chunk, accepting bytes and
+            chunk info dict. If None, uses default chunk processor.
+        num_workers: Number of worker processes. If None, uses CPU count.
 
     Returns:
-        Dict containing processing results
+        Dictionary with keys: file, file_size, chunk_size, num_workers,
+            chunks_processed, processing_time, chunk_results, total_chunks,
+            aggregated, initial_gpu_memory, final_gpu_memory, and
+            gpu_memory_delta (if GPU available).
 
+    Raises:
+        OSError: If binary file cannot be read or accessed.
+        ValueError: If chunk_size or other parameters are invalid.
+        RuntimeError: If chunk processing fails unexpectedly.
     """
     if num_workers is None:
         num_workers = multiprocessing.cpu_count()
@@ -249,14 +280,25 @@ def process_chunk(
 ) -> dict[str, Any]:
     """Process a single chunk of a binary file.
 
+    Reads a specific chunk from a binary file based on offset and size,
+    applies the processor function, and returns results with success status.
+
     Args:
-        binary_path: Path to the binary file
-        chunk_info: Information about the chunk
-        processor_func: Function to process the chunk
+        binary_path: Path to the binary file to read from.
+        chunk_info: Dictionary with 'offset' and 'size' keys specifying
+            the chunk location and size in bytes.
+        processor_func: Callable accepting (bytes, chunk_info dict) that
+            processes the chunk data and returns analysis results.
 
     Returns:
-        Dict containing chunk processing results
+        Dictionary with keys: chunk (input chunk_info), result (processor
+            output), and success (bool). On error, contains chunk, error
+            (string), and success=False.
 
+    Raises:
+        OSError: If binary file cannot be opened or read.
+        ValueError: If chunk_info contains invalid offset or size values.
+        RuntimeError: If processor_func raises an exception.
     """
     try:
         with open(binary_path, "rb") as f:
@@ -286,13 +328,24 @@ def process_distributed_results(
 ) -> dict[str, Any]:
     """Process and aggregate results from distributed processing.
 
+    Separates successful and failed results from distributed workers and
+    applies an aggregation function to successful results. Collects error
+    information from failed results.
+
     Args:
-        results: List of results from distributed workers
-        aggregation_func: Function to aggregate results
+        results: List of result dictionaries from distributed workers,
+            each expected to contain 'success' boolean flag.
+        aggregation_func: Callable to aggregate successful results. If None,
+            uses default aggregation. Accepts list of dicts, returns dict.
 
     Returns:
-        Dict containing aggregated results
+        Dictionary with keys: total_results (int), successful (count),
+            failed (count), aggregated_data (dict from aggregation_func),
+            and errors (list of up to 10 error dicts with chunk and error
+            message).
 
+    Raises:
+        ValueError: If aggregation_func raises an exception.
     """
     if aggregation_func is None:
         aggregation_func = _default_aggregation
@@ -339,14 +392,29 @@ def run_distributed_analysis(
 ) -> dict[str, Any]:
     """Run distributed analysis on a binary.
 
+    Executes parallel analysis tasks (entropy, patterns, strings, hashing)
+    using ThreadPoolExecutor. Supports selective or comprehensive analysis.
+    Initializes GPU autoloader if available.
+
     Args:
-        binary_path: Path to the binary file
-        analysis_type: Type of analysis to perform
-        config: Configuration for distributed processing
+        binary_path: Path to the binary file to analyze.
+        analysis_type: Type of analysis: "comprehensive" runs all tasks,
+            or specific task name ("entropy", "patterns", "strings",
+            "hashing"). Default is "comprehensive".
+        config: Dictionary with configuration keys: num_workers (int),
+            chunk_size (int), timeout (seconds), backend (str). If None,
+            uses defaults based on CPU count.
 
     Returns:
-        Dict containing analysis results
+        Dictionary with keys: binary (path), analysis_type (str), config,
+            start_time, end_time, total_time (seconds), analyses (dict of
+            task results), gpu_device (if available), gpu_info (if
+            available), and error (if exception occurs).
 
+    Raises:
+        OSError: If binary file cannot be accessed.
+        ValueError: If analysis configuration is invalid.
+        RuntimeError: If analysis execution fails.
     """
     if config is None:
         config = {
@@ -419,19 +487,39 @@ def run_distributed_entropy_analysis(
 ) -> dict[str, Any]:
     """Run distributed entropy analysis on a binary.
 
+    Processes a binary in chunks, calculating entropy for each chunk.
+    Identifies high-entropy regions (>7.0) indicating potential packing
+    or encryption.
+
     Args:
-        binary_path: Path to the binary file
-        config: Configuration for distributed processing
+        binary_path: Path to the binary file to analyze.
+        config: Dictionary with keys: chunk_size (int, default 1MB) and
+            num_workers (int, optional). If None, uses defaults.
 
     Returns:
-        Dict containing entropy analysis results
+        Dictionary with keys: file, file_size, chunk_size, num_workers,
+            chunks_processed, processing_time, chunk_results, total_chunks,
+            statistics (dict with average_entropy, max_entropy, min_entropy,
+            high_entropy_chunks), and indicators (list of detected features).
 
+    Raises:
+        OSError: If binary file cannot be accessed.
+        ValueError: If configuration parameters are invalid.
+        RuntimeError: If entropy calculation fails.
     """
     if config is None:
         config = {"chunk_size": 1024 * 1024, "num_workers": None}
 
     def entropy_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[str, Any]:
-        """Calculate entropy for a chunk."""
+        """Calculate entropy for a chunk.
+
+        Args:
+            data: Byte data from the chunk.
+            chunk_info: Dictionary containing chunk metadata.
+
+        Returns:
+            Dictionary containing entropy, size, unique bytes, and offset.
+        """
         if not data:
             return {"entropy": 0.0}
 
@@ -483,14 +571,28 @@ def run_distributed_pattern_search(
 ) -> dict[str, Any]:
     """Run distributed pattern search on a binary.
 
+    Searches for byte patterns across chunks in parallel. Default patterns
+    target licensing-related strings: license, trial, expire, crack, patch,
+    keygen, serial. Aggregates matches and provides offset information and
+    context around matches.
+
     Args:
-        binary_path: Path to the binary file
-        patterns: List of byte patterns to search for
-        config: Configuration for distributed processing
+        binary_path: Path to the binary file to search.
+        patterns: List of bytes patterns to search for. If None, uses
+            default licensing-related patterns.
+        config: Dictionary with keys: chunk_size (int, default 1MB) and
+            num_workers (int, optional). If None, uses defaults.
 
     Returns:
-        Dict containing pattern search results
+        Dictionary with keys: file, file_size, chunk_size, num_workers,
+            chunks_processed, processing_time, chunk_results, total_chunks,
+            pattern_summary (dict mapping pattern text to count and offsets),
+            and total_matches (int).
 
+    Raises:
+        OSError: If binary file cannot be accessed.
+        ValueError: If pattern list is invalid.
+        RuntimeError: If pattern search fails.
     """
     if patterns is None:
         patterns = [
@@ -519,7 +621,15 @@ def run_distributed_pattern_search(
     patterns_to_search = patterns
 
     def pattern_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[str, Any]:
-        """Search for _patterns in a chunk."""
+        """Search for patterns in a chunk.
+
+        Args:
+            data: Byte data from the chunk.
+            chunk_info: Dictionary containing chunk metadata.
+
+        Returns:
+            Dictionary containing count and list of pattern matches.
+        """
         found_patterns: list[dict[str, Any]] = []
 
         for pattern in patterns_to_search:
@@ -580,12 +690,21 @@ def run_distributed_pattern_search(
 def extract_binary_info(binary_path: str) -> dict[str, Any]:
     """Extract basic information from a binary file.
 
+    Reads file metadata and magic bytes to identify binary format (PE, ELF,
+    Mach-O). Computes SHA256 hash and extracts creation/modification times.
+
     Args:
-        binary_path: Path to the binary file
+        binary_path: Path to the binary file to analyze.
 
     Returns:
-        Dict containing binary information
+        Dictionary with keys: path, size (bytes), name (basename), created
+            (timestamp string), modified (timestamp string), sha256 (hex
+            digest), format (PE/ELF/Mach-O/Unknown), and error (if
+            exception occurs).
 
+    Raises:
+        OSError: If file cannot be read or stat information cannot be
+            retrieved.
     """
     info: dict[str, Any] = {
         "path": binary_path,
@@ -630,12 +749,21 @@ def extract_binary_info(binary_path: str) -> dict[str, Any]:
 def extract_binary_features(binary_path: str) -> dict[str, Any]:
     """Extract features from a binary for analysis.
 
+    Computes file size, entropy, string count, and other features using
+    distributed analysis. Results are used for machine learning and
+    protection detection.
+
     Args:
-        binary_path: Path to the binary file
+        binary_path: Path to the binary file to analyze.
 
     Returns:
-        Dict containing extracted features
+        Dictionary with keys: file_size (bytes), entropy (float),
+            strings_count (int), imports_count (int), sections_count (int),
+            and error (if exception occurs).
 
+    Raises:
+        OSError: If binary file cannot be accessed.
+        RuntimeError: If feature extraction fails.
     """
     features: dict[str, Any] = {
         "file_size": 0,
@@ -669,14 +797,27 @@ def run_gpu_accelerator(
 ) -> dict[str, Any]:
     """Run GPU-accelerated processing for supported tasks.
 
+    Attempts to execute processing tasks using available GPU backends
+    (CUDA, OpenCL). Falls back to CPU processing if GPU is unavailable.
+    Supports pattern matching, cryptographic operations, and ML inference.
+
     Args:
-        task_type: Type of GPU task (pattern_matching, crypto, ml_inference)
-        data: Input data for processing
-        config: GPU configuration
+        task_type: Type of GPU task: "pattern_matching", "crypto", or
+            "ml_inference".
+        data: Input dictionary with task-specific data (e.g., data,
+            features, patterns keys).
+        config: GPU configuration dictionary with parameters for the
+            specific task type. If None, uses defaults.
 
     Returns:
-        Dict containing GPU processing results
+        Dictionary with keys: task_type, gpu_available (bool), backend
+            (cuda/opencl/cpu), result (if successful), cpu_result (if
+            fallback), message (str), and error (if exception occurs).
 
+    Raises:
+        OSError: If file operations in GPU tasks fail.
+        ValueError: If data or config parameters are invalid.
+        RuntimeError: If GPU processing fails.
     """
     results: dict[str, Any] = {
         "task_type": task_type,
@@ -721,14 +862,24 @@ def run_incremental_analysis(
 ) -> dict[str, Any]:
     """Run incremental analysis using cached results when possible.
 
+    Uses file SHA256 hash to cache analysis results. Avoids re-analyzing
+    unchanged binaries. Combines cached and newly computed results.
+
     Args:
-        binary_path: Path to the binary file
-        cache_dir: Directory for cache storage
-        force_full: Force full analysis ignoring cache
+        binary_path: Path to the binary file to analyze.
+        cache_dir: Directory for storing cache files. If None, uses
+            `.intellicrack_cache` in binary's directory.
+        force_full: If True, bypasses cache and runs full analysis.
 
     Returns:
-        Dict containing analysis results
+        Dictionary with keys: binary (path), cache_dir, file_hash (SHA256),
+            cached_results (dict), new_results (dict), cache_hits (int),
+            cache_misses (int), and all_results (merged dict).
 
+    Raises:
+        OSError: If binary or cache files cannot be accessed.
+        ValueError: If cache data is corrupted.
+        RuntimeError: If analysis fails.
     """
     if cache_dir is None:
         cache_dir = os.path.join(os.path.dirname(binary_path), ".intellicrack_cache")
@@ -809,13 +960,23 @@ def run_memory_optimized_analysis(
 ) -> dict[str, Any]:
     """Run memory-optimized analysis for large binaries.
 
+    Calculates optimal chunk size based on available memory. Distributes
+    memory usage across worker processes to prevent out-of-memory errors
+    on large files.
+
     Args:
-        binary_path: Path to the binary file
-        max_memory_mb: Maximum memory to use in MB
+        binary_path: Path to the binary file to analyze.
+        max_memory_mb: Maximum memory to allocate in MB (default 1024).
 
     Returns:
-        Dict containing analysis results
+        Dictionary with keys: binary (path), file_size (bytes),
+            max_memory_mb, chunk_size (calculated), num_workers (count),
+            and analysis (dict with analysis results).
 
+    Raises:
+        OSError: If binary file cannot be accessed.
+        ValueError: If memory parameters are invalid.
+        RuntimeError: If analysis fails.
     """
     file_size = os.path.getsize(binary_path)
 
@@ -850,13 +1011,23 @@ def run_pdf_report_generator(
 ) -> dict[str, Any]:
     """Generate a PDF report from analysis results.
 
+    Creates a formatted PDF report from distributed analysis results using
+    PDFReportGenerator. Includes binary information and analysis sections.
+
     Args:
-        analysis_results: Results from binary analysis
-        output_path: Path for output PDF
+        analysis_results: Dictionary containing analysis output with binary
+            (path) and analyses (dict of results by analysis type) keys.
+        output_path: File path for output PDF. If None, defaults to
+            "intellicrack_report.pdf" in current directory.
 
     Returns:
-        Dict containing report generation status
+        Dictionary with keys: output_path (str), status ("success", "error",
+            "pending"), and message (str describing result).
 
+    Raises:
+        ImportError: If PDFReportGenerator cannot be imported.
+        OSError: If output file cannot be written.
+        RuntimeError: If PDF generation fails.
     """
     if output_path is None:
         output_path = "intellicrack_report.pdf"
@@ -899,13 +1070,16 @@ def run_pdf_report_generator(
 def _default_chunk_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[str, Any]:
     """Calculate basic statistics for a data chunk.
 
+    Computes chunk size and counts non-zero bytes as a simple metric for
+    data density analysis.
+
     Args:
-        data: Byte data from the chunk
-        chunk_info: Dictionary containing chunk metadata
+        data: Byte data from the chunk.
+        chunk_info: Dictionary containing chunk metadata with 'offset' key.
 
     Returns:
-        Dict containing size, offset, and non-zero byte count
-
+        Dictionary with keys: size (bytes), offset (from chunk_info), and
+            non_zero_bytes (count of non-zero values).
     """
     return {
         "size": len(data),
@@ -917,12 +1091,15 @@ def _default_chunk_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[st
 def _default_aggregation(results: list[dict[str, Any]]) -> dict[str, Any]:
     """Aggregate results from multiple chunk processing operations.
 
+    Sums total size and non-zero byte counts across all chunks.
+
     Args:
-        results: List of chunk processing results
+        results: List of chunk processing result dictionaries, each with
+            'result' key containing dict with 'size' and 'non_zero_bytes'.
 
     Returns:
-        Dict containing aggregated totals and processing counts
-
+        Dictionary with keys: total_size (bytes), total_non_zero_bytes
+            (count), and chunks_processed (int).
     """
     total_size = 0
     total_non_zero = 0
@@ -943,12 +1120,16 @@ def _default_aggregation(results: list[dict[str, Any]]) -> dict[str, Any]:
 def _aggregate_chunk_results(chunk_results: list[dict[str, Any]]) -> dict[str, Any]:
     """Aggregate results from chunk processing operations.
 
+    Filters for successful chunk results and applies default aggregation.
+    Returns error message if no chunks processed successfully.
+
     Args:
-        chunk_results: List of chunk processing results
+        chunk_results: List of chunk processing result dictionaries with
+            'success' boolean flag and 'result' key.
 
     Returns:
-        Dict containing aggregated results or error if no successful chunks
-
+        Dictionary with aggregated results from successful chunks, or dict
+            with "error" key if no successful chunks exist.
     """
     if successful := [r for r in chunk_results if r.get("success")]:
         return _default_aggregation(successful)
@@ -962,18 +1143,39 @@ def _distributed_string_extraction(
 ) -> dict[str, Any]:
     """Extract strings from binary using distributed processing.
 
+    Extracts ASCII and printable strings from binary chunks in parallel.
+    Uses configurable minimum string length. Aggregates unique strings
+    and provides sample list.
+
     Args:
-        binary_path: Path to the binary file
-        config: Configuration dict with processing parameters
+        binary_path: Path to the binary file to process.
+        config: Configuration dictionary with keys: min_length (int,
+            minimum characters for string match, default 4), chunk_size
+            (default 1MB), num_workers (optional).
 
     Returns:
-        Dict containing extracted strings and statistics
+        Dictionary with keys: file, file_size, chunk_size, num_workers,
+            chunks_processed, processing_time, chunk_results, total_chunks,
+            total_strings (count), unique_strings (count), and
+            sample_strings (list of up to 50 unique strings).
 
+    Raises:
+        OSError: If binary file cannot be accessed.
+        ValueError: If configuration is invalid.
+        RuntimeError: If string extraction fails.
     """
     min_length: int = config.get("min_length", 4)
 
     def string_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[str, Any]:
-        """Extract printable strings from chunk."""
+        """Extract printable strings from chunk.
+
+        Args:
+            data: Byte data from the chunk.
+            chunk_info: Dictionary containing chunk metadata.
+
+        Returns:
+            Dictionary containing string count, extracted strings, and chunk offset.
+        """
         strings: list[dict[str, Any]] = []
         current: list[str] = []
         current_offset = 0
@@ -1038,13 +1240,25 @@ def _distributed_hash_calculation(
 ) -> dict[str, Any]:
     """Calculate multiple hash algorithms using distributed processing.
 
+    Computes file hashes in parallel using ThreadPoolExecutor. Supports
+    multiple algorithms (MD5, SHA1, SHA256, SHA512). Each thread handles
+    one algorithm independently.
+
     Args:
-        binary_path: Path to the binary file
-        config: Configuration dict with hash algorithms and parameters
+        binary_path: Path to the binary file to hash.
+        config: Configuration dictionary with keys: hash_algorithms (list
+            of algorithm names, default ["md5", "sha1", "sha256", "sha512"]),
+            chunk_size (int for reading file, default 8KB), and max_workers
+            (int, default is algorithm count).
 
     Returns:
-        Dict containing calculated hashes for each algorithm
+        Dictionary with keys: hashes (dict mapping algorithm names to hex
+            digests), and config_used (the input config).
 
+    Raises:
+        OSError: If binary file cannot be read.
+        ValueError: If hash algorithm names are invalid.
+        RuntimeError: If hash calculation fails.
     """
     import hashlib
 
@@ -1057,7 +1271,14 @@ def _distributed_hash_calculation(
     results: dict[str, Any] = {"hashes": {}, "config_used": config}
 
     def calculate_hash(algo: str) -> tuple[str, str]:
-        """Calculate hash for given algorithm."""
+        """Calculate hash for given algorithm.
+
+        Args:
+            algo: Name of the hash algorithm.
+
+        Returns:
+            Tuple of algorithm name and hex digest.
+        """
         h = hashlib.new(algo)
 
         with open(binary_path, "rb") as f:
@@ -1084,9 +1305,12 @@ def _distributed_hash_calculation(
 def _check_gpu_backends() -> dict[str, Any]:
     """Check for available GPU acceleration backends.
 
-    Returns:
-        Dict containing GPU availability and device information
+    Probes for CUDA and OpenCL availability. Returns device list if
+    available. Falls back gracefully if GPU libraries are missing.
 
+    Returns:
+        Dictionary with keys: available (bool), backend (cuda/opencl/None),
+            and devices (list of device name strings).
     """
     backends: dict[str, Any] = {
         "available": False,
@@ -1128,13 +1352,23 @@ def _check_gpu_backends() -> dict[str, Any]:
 def _run_cpu_fallback(task_type: str, data: Any) -> dict[str, Any]:
     """Execute CPU fallback processing when GPU is unavailable.
 
+    Handles hash_calculation, analysis, and pattern_matching tasks using
+    pure Python implementations without GPU acceleration.
+
     Args:
-        task_type: Type of processing task
-        data: Input data for processing
+        task_type: Type of task: "hash_calculation", "analysis", or
+            "pattern_matching".
+        data: Input data for processing. Type depends on task_type:
+            str/bytes for hash and pattern tasks, or iterable for analysis.
 
     Returns:
-        Dict containing CPU processing results
+        Dictionary with keys: backend ("cpu"), task_type, message (str),
+            data_info (dict with type and size), processing_time (seconds),
+            and task-specific result keys (cpu_hash, analysis,
+            pattern_matches, or processed).
 
+    Raises:
+        No exceptions raised; returns results dict on all errors.
     """
     start_time = time.time()
 
@@ -1182,13 +1416,21 @@ def _gpu_pattern_matching(
 ) -> dict[str, Any]:
     """Execute GPU-accelerated pattern matching operations.
 
+    Performs pattern matching on binary data using CUDA if available,
+    falling back to CPU for patterns in bytes or bytearray data.
+
     Args:
-        data: Input data containing search content
-        config: Configuration with patterns and processing parameters
+        data: Dictionary with 'data' key containing bytes to search.
+        config: Dictionary with 'patterns' key (list of bytes patterns)
+            and optional device configuration.
 
     Returns:
-        Dict containing pattern matching results and performance metrics
+        Dictionary with keys: patterns_found (count), processing_time
+            (seconds), and backend (cuda/cpu string).
 
+    Raises:
+        ImportError: If torch/CUDA required libraries missing.
+        RuntimeError: If GPU operations fail.
     """
     start_time = time.time()
     patterns_found = 0
@@ -1267,13 +1509,20 @@ def _gpu_crypto_operations(
 ) -> dict[str, Any]:
     """Execute GPU-accelerated cryptographic operations.
 
+    Performs cryptographic operations using CuPy GPU acceleration if
+    available. Falls back to CPU-based SHA256 if CuPy unavailable.
+
     Args:
-        data: Input data for cryptographic processing
-        config: Configuration with operation type and parameters
+        data: Dictionary with 'data' key containing bytes to process.
+        config: Dictionary with 'operation' key (default "hash").
 
     Returns:
-        Dict containing cryptographic results and performance metrics
+        Dictionary with keys: operation (str), result (hex digest or hash
+            value), processing_time (seconds), and backend (cuda/cpu).
 
+    Raises:
+        ImportError: If GPU libraries unavailable.
+        RuntimeError: If cryptographic operation fails.
     """
     import hashlib
 
@@ -1312,13 +1561,25 @@ def _gpu_ml_inference(
 ) -> dict[str, Any]:
     """Execute GPU-accelerated machine learning inference.
 
+    Loads a PyTorch model and runs inference on features using GPU if
+    available. Computes softmax confidence scores. Returns default
+    predictions if model unavailable.
+
     Args:
-        data: Input data containing features for inference
-        config: Configuration with model path and inference parameters
+        data: Dictionary with 'features' key (list of floats for model
+            input).
+        config: Dictionary with optional 'model_path' key (path to PyTorch
+            model file).
 
     Returns:
-        Dict containing predictions, confidence scores and performance metrics
+        Dictionary with keys: predictions (list of floats), confidence
+            (float 0-1), processing_time (seconds), backend (cuda/cpu),
+            and optional error (if PyTorch unavailable).
 
+    Raises:
+        ImportError: If PyTorch not installed.
+        OSError: If model file cannot be read.
+        RuntimeError: If inference fails.
     """
     start_time = time.time()
     predictions: list[float] = [0.5]
@@ -1409,15 +1670,30 @@ def run_dask_distributed_analysis(
 ) -> dict[str, Any]:
     """Run distributed binary analysis using Dask for large-scale processing.
 
+    Uses Dask arrays and bags to distribute binary analysis across cluster
+    nodes or local threads. Automatically detects existing Dask client or
+    creates local threading executor. Computes entropy statistics if
+    available in results.
+
     Args:
-        binary_path: Path to the binary file
-        analysis_func: Function to apply to each chunk
-        chunk_size: Size of each chunk in bytes
-        n_partitions: Number of partitions for Dask
+        binary_path: Path to the binary file to analyze.
+        analysis_func: Callable accepting bytes chunk, returns dict with
+            analysis results.
+        chunk_size: Size of each chunk in bytes (default 1MB).
+        n_partitions: Number of Dask partitions. If None, calculates from
+            file size and chunk size.
 
     Returns:
-        Dictionary with analysis results
+        Dictionary with keys: framework ("dask"), binary_path, chunk_size,
+            file_size, array_shape, array_chunks, distributed_mode
+            (existing_client/local_threads), num_chunks, chunk_results
+            (list), entropy_stats (if entropy in results), processing_time
+            (seconds), success (bool), and optional error/suggestion.
 
+    Raises:
+        ImportError: If Dask or NumPy not installed.
+        OSError: If binary file cannot be read.
+        RuntimeError: If Dask processing fails.
     """
     try:
         import dask
@@ -1546,15 +1822,27 @@ def run_celery_distributed_analysis(
 ) -> dict[str, Any]:
     """Run distributed binary analysis using Celery task queue.
 
+    Divides binary into chunks and submits analysis tasks to Celery worker
+    queue. Aggregates results and computes entropy statistics. Requires
+    running Celery broker (Redis/RabbitMQ).
+
     Args:
-        binary_path: Path to the binary file
-        task_name: Name of the Celery task to execute
-        chunk_size: Size of each chunk in bytes
-        queue_name: Celery queue name
+        binary_path: Path to the binary file to analyze.
+        task_name: Name of Celery task to execute (default "binary_analysis").
+        chunk_size: Size of each chunk in bytes (default 1MB).
+        queue_name: Celery queue name for task routing (default "intellicrack").
 
     Returns:
-        Dictionary with analysis results
+        Dictionary with keys: framework ("celery"), binary_path, task_name,
+            queue_name, file_size, num_chunks, chunk_results (list),
+            entropy_stats (if available), patterns_found (list),
+            processing_time (seconds), success (bool), and optional
+            error/suggestion.
 
+    Raises:
+        ImportError: If Celery or NumPy not installed.
+        OSError: If binary file cannot be read.
+        RuntimeError: If Celery task execution fails.
     """
     try:
         from celery import Celery, group
@@ -1582,7 +1870,14 @@ def run_celery_distributed_analysis(
         app = Celery("intellicrack", broker=f"{redis_url}/0")
 
         def _analyze_chunk_impl(chunk_data: dict[str, Any]) -> dict[str, Any]:
-            """Analyze a binary chunk."""
+            """Analyze a binary chunk.
+
+            Args:
+                chunk_data: Dictionary containing chunk data and metadata.
+
+            Returns:
+                Dictionary containing chunk analysis results.
+            """
             data_bytes: bytes = chunk_data["data"]
             entropy = calculate_byte_entropy(data_bytes)
             patterns_found: list[str] = []
@@ -1656,15 +1951,28 @@ def run_joblib_parallel_analysis(
 ) -> dict[str, Any]:
     """Run parallel binary analysis using joblib for multi-core processing.
 
+    Loads binary once and executes multiple analysis functions in parallel.
+    Aggregates successful results and tracks failures. Supports different
+    execution backends (threading, multiprocessing, loky).
+
     Args:
-        binary_path: Path to the binary file
-        analysis_funcs: List of analysis functions to run in parallel
-        n_jobs: Number of parallel jobs (-1 for all cores)
-        backend: Joblib backend ('threading', 'multiprocessing', 'loky')
+        binary_path: Path to the binary file to analyze.
+        analysis_funcs: List of analysis function callables, each accepting
+            binary bytes and returning analysis dict.
+        n_jobs: Number of parallel jobs (-1 uses all cores, default -1).
+        backend: Joblib backend: "threading", "multiprocessing", or "loky"
+            (default "threading").
 
     Returns:
-        Dictionary with parallel analysis results
+        Dictionary with keys: framework ("joblib"), binary_path, backend,
+            n_jobs, file_size, analyses (list), successful_analyses (count),
+            failed_analyses (count), aggregated_results (dict), processing_time
+            (seconds), success (bool), and optional error.
 
+    Raises:
+        ImportError: If joblib not installed.
+        OSError: If binary file cannot be read.
+        RuntimeError: If analysis execution fails.
     """
     try:
         import joblib
@@ -1691,7 +1999,16 @@ def run_joblib_parallel_analysis(
             data: bytes,
             func_name: str,
         ) -> dict[str, Any]:
-            """Run a single analysis function."""
+            """Run a single analysis function.
+
+            Args:
+                func: Analysis function to execute.
+                data: Binary data to analyze.
+                func_name: Name of the function for tracking.
+
+            Returns:
+                Dictionary containing function name, success status, and results or error.
+            """
             try:
                 result = func(data)
                 return {
@@ -1742,15 +2059,28 @@ def run_joblib_mmap_analysis(
 ) -> dict[str, Any]:
     """Run memory-mapped parallel analysis using joblib for efficient large file processing.
 
+    Uses memory mapping to avoid loading entire file into memory. Slides a
+    window across the binary and analyzes each window in parallel. Detects
+    packed regions and notable licensing-related strings.
+
     Args:
-        binary_path: Path to the binary file
-        window_size: Size of sliding window for analysis
-        step_size: Step size for sliding window
-        n_jobs: Number of parallel jobs
+        binary_path: Path to the binary file to analyze.
+        window_size: Size of sliding window in bytes (default 4096).
+        step_size: Step size for sliding window in bytes (default 1024).
+        n_jobs: Number of parallel jobs (-1 uses all cores, default -1).
 
     Returns:
-        Dictionary with memory-mapped analysis results
+        Dictionary with keys: framework ("joblib_mmap"), binary_path,
+            window_size, step_size, file_size, num_windows, window_results
+            (list), statistics (dict with avg_entropy, max_entropy,
+            min_entropy, packed_regions, packed_percentage), notable_strings
+            (list of up to 50 strings), processing_time (seconds), success
+            (bool), and optional error.
 
+    Raises:
+        ImportError: If joblib or NumPy not installed.
+        OSError: If binary file cannot be read or memory mapped.
+        RuntimeError: If window analysis fails.
     """
     try:
         import mmap
@@ -1782,7 +2112,16 @@ def run_joblib_mmap_analysis(
             win_size: int,
             file_path: str,
         ) -> dict[str, Any]:
-            """Analyze a window of the file using memory mapping."""
+            """Analyze a window of the file using memory mapping.
+
+            Args:
+                offset: Starting offset in the file.
+                win_size: Size of the window to analyze.
+                file_path: Path to the binary file.
+
+            Returns:
+                Dictionary containing offset, entropy, packing status, and strings found.
+            """
             with (
                 open(file_path, "rb") as f,
                 mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped,

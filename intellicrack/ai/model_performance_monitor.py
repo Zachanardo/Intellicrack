@@ -85,7 +85,7 @@ try:
     HAS_TORCH = True
 except ImportError as e:
     logger.error("Import error in model_performance_monitor: %s", e)
-    torch = None  # type: ignore[assignment]
+    torch = None
 
 try:
     import pynvml

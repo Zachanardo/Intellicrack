@@ -48,7 +48,15 @@ _audit_exports = {}
 
 
 def _load_audit_logger() -> None:
-    """Lazy load audit logger exports to prevent circular imports."""
+    """Lazy load audit logger exports to prevent circular imports.
+
+    Loads audit logger exports into the module-level _audit_exports
+    dictionary on first call to enable deferred importing and prevent
+    circular import issues.
+
+    Returns:
+        None
+    """
     global _audit_logger_loaded, _audit_exports
     if not _audit_logger_loaded:
         try:
@@ -83,7 +91,17 @@ def _load_audit_logger() -> None:
 
 
 def __getattr__(name: str) -> object:
-    """Lazy load audit logger attributes."""
+    """Lazy load audit logger attributes.
+
+    Args:
+        name: The name of the attribute to retrieve from the lazy-loaded audit logger exports.
+
+    Returns:
+        object: The requested attribute from _audit_exports.
+
+    Raises:
+        AttributeError: If the requested attribute is not found in _audit_exports.
+    """
     _load_audit_logger()
     if name in _audit_exports:
         return _audit_exports[name]

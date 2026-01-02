@@ -157,9 +157,9 @@ class TestFeatureExtractor:
 
     def test_extract_exploit_features_accounts_for_protections(self, extractor: FeatureExtractor) -> None:
         """Exploit features increase difficulty with more protections."""
-        no_protection_ctx = {"protections": []}
-        few_protections_ctx = {"protections": ["ASLR", "DEP"]}
-        many_protections_ctx = {"protections": ["ASLR", "DEP", "CFG", "SafeSEH"]}
+        no_protection_ctx: dict[str, list[str]] = {"protections": []}
+        few_protections_ctx: dict[str, list[str]] = {"protections": ["ASLR", "DEP"]}
+        many_protections_ctx: dict[str, list[str]] = {"protections": ["ASLR", "DEP", "CFG", "SafeSEH"]}
 
         no_prot_features = extractor.extract_exploit_features(no_protection_ctx)
         few_prot_features = extractor.extract_exploit_features(few_protections_ctx)
@@ -628,7 +628,9 @@ class TestPredictiveIntelligenceEngine:
         assert isinstance(result, PredictionResult)
         assert result.prediction_type == PredictionType.SUCCESS_PROBABILITY
         assert 0.0 <= result.predicted_value <= 1.0
-        assert engine.prediction_stats["total_predictions"] > 0
+        total_predictions = engine.prediction_stats["total_predictions"]
+        assert isinstance(total_predictions, int)
+        assert total_predictions > 0
 
     def test_make_prediction_execution_time_returns_valid_result(self, engine: PredictiveIntelligenceEngine) -> None:
         """Make prediction for execution time works."""
@@ -669,7 +671,9 @@ class TestPredictiveIntelligenceEngine:
         second_result = engine.make_prediction(PredictionType.SUCCESS_PROBABILITY, context)
 
         assert first_result.prediction_id == second_result.prediction_id
-        assert engine.prediction_stats["cache_hits"] > 0
+        cache_hits = engine.prediction_stats["cache_hits"]
+        assert isinstance(cache_hits, int)
+        assert cache_hits > 0
 
     def test_make_prediction_adds_to_history(self, engine: PredictiveIntelligenceEngine) -> None:
         """Predictions are added to history."""
@@ -705,7 +709,9 @@ class TestPredictiveIntelligenceEngine:
 
         engine.verify_prediction_accuracy(result.prediction_id, 0.75)
 
-        assert len(engine.prediction_stats["accuracy_tracking"]) > 0
+        accuracy_tracking = engine.prediction_stats["accuracy_tracking"]
+        assert isinstance(accuracy_tracking, dict)
+        assert len(accuracy_tracking) > 0
 
     def test_verify_prediction_accuracy_updates_model(self, engine: PredictiveIntelligenceEngine) -> None:
         """Verify prediction accuracy updates underlying models."""

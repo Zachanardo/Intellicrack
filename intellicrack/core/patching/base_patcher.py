@@ -45,7 +45,12 @@ class BaseWindowsPatcher(ABC):
         self.requires_ntdll = False
 
     def _initialize_windows_libraries(self) -> None:
-        """Initialize Windows libraries required for patching operations."""
+        """Initialize Windows libraries required for patching operations.
+
+        Raises:
+            RuntimeError: If kernel32 or required Windows libraries cannot be loaded.
+
+        """
         self.kernel32 = get_windows_kernel32()
         if not self.kernel32:
             raise RuntimeError("Failed to load kernel32")

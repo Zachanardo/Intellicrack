@@ -382,7 +382,7 @@ class TestScriptStructureAnalysis:
         """Analysis detects memory operations in script."""
         script: str = "const val = Memory.readU32(ptr('0x401000'));"
 
-        analysis: dict = script_generator._analyze_script_structure(script)
+        analysis: dict[str, bool | int] = script_generator._analyze_script_structure(script)
 
         assert analysis["has_memory_ops"] is True
 
@@ -390,7 +390,7 @@ class TestScriptStructureAnalysis:
         """Analysis detects Interceptor hooks."""
         script: str = "Interceptor.attach(addr, { onEnter: function(args) {} });"
 
-        analysis: dict = script_generator._analyze_script_structure(script)
+        analysis: dict[str, bool | int] = script_generator._analyze_script_structure(script)
 
         assert analysis["has_hooks"] is True
 
@@ -398,7 +398,7 @@ class TestScriptStructureAnalysis:
         """Analysis detects cryptographic operations."""
         script: str = "const hash = crypto.createHash('sha256'); const encrypted = encrypt(data);"
 
-        analysis: dict = script_generator._analyze_script_structure(script)
+        analysis: dict[str, bool | int] = script_generator._analyze_script_structure(script)
 
         assert analysis["has_crypto"] is True
 
@@ -410,7 +410,7 @@ const bar = function() {}
 let baz = () => {}
 """
 
-        analysis: dict = script_generator._analyze_script_structure(script)
+        analysis: dict[str, bool | int] = script_generator._analyze_script_structure(script)
 
         assert analysis["function_count"] >= 2
 
@@ -418,7 +418,7 @@ let baz = () => {}
         """Analysis handles empty scripts gracefully."""
         script: str = ""
 
-        analysis: dict = script_generator._analyze_script_structure(script)
+        analysis: dict[str, bool | int] = script_generator._analyze_script_structure(script)
 
         assert isinstance(analysis, dict)
         assert analysis["has_memory_ops"] is False

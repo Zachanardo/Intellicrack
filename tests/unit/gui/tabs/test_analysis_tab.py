@@ -8,10 +8,10 @@ NO mocked components - validates actual analysis UI behavior.
 import pytest
 import tempfile
 import os
-from unittest.mock import patch
+from typing import Tuple, Optional
 
 try:
-    from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QProgressBar, QPushButton, QTabWidget, QCheckBox
+    from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QProgressBar, QPushButton, QTabWidget, QCheckBox, QFileDialog
     from intellicrack.ui.dialogs.common_imports import QGraphicsView, QTest, Qt
     from intellicrack.core.analysis.analysis_orchestrator import AnalysisOrchestrator
     from intellicrack.protection.protection_detector import ProtectionDetector
@@ -25,6 +25,7 @@ except ImportError:
     QPushButton = None
     QTabWidget = None
     QCheckBox = None
+    QFileDialog = None
     QGraphicsView = None
     QTest = None
     Qt = None
@@ -34,6 +35,29 @@ except ImportError:
     GUI_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not GUI_AVAILABLE, reason="GUI modules not available")
+
+
+class RealFileDialogDouble:
+    """Real test double for QFileDialog with actual call tracking."""
+
+    def __init__(self, file_path: str) -> None:
+        self.file_path: str = file_path
+        self.call_count: int = 0
+        self.last_args: Tuple = ()
+        self.last_kwargs: dict = {}
+
+    def getSaveFileName(self, *args, **kwargs) -> Tuple[str, str]:
+        """Real implementation that returns configured file path."""
+        self.call_count += 1
+        self.last_args = args
+        self.last_kwargs = kwargs
+        return (self.file_path, '')
+
+    def reset(self) -> None:
+        """Reset tracking state."""
+        self.call_count = 0
+        self.last_args = ()
+        self.last_kwargs = {}
 
 
 class TestAnalysisTab:
@@ -244,9 +268,8 @@ class TestAnalysisTab:
                 # Continue with test even if detection fails
             qtbot.wait(100)
 
-    def test_export_functionality_real_data_output(self, qtbot):
+    def test_export_functionality_real_data_output(self, qtbot, monkeypatch):
         """Test REAL export functionality for analysis results."""
-        # Find export buttons
         export_buttons = []
         for button in self.tab.findChildren(QPushButton):
             text = button.text().lower()
@@ -260,12 +283,13 @@ class TestAnalysisTab:
                 export_path = temp_file.name
 
             try:
-                with patch('PyQt6.QtWidgets.QFileDialog.getSaveFileName') as mock_dialog:
-                    mock_dialog.return_value = (export_path, '')
+                dialog_double = RealFileDialogDouble(export_path)
+                monkeypatch.setattr('PyQt6.QtWidgets.QFileDialog.getSaveFileName',
+                                  dialog_double.getSaveFileName)
 
-                    if export_button.isEnabled():
-                        qtbot.mouseClick(export_button, Qt.MouseButton.LeftButton)
-                        qtbot.wait(100)
+                if export_button.isEnabled():
+                    qtbot.mouseClick(export_button, Qt.MouseButton.LeftButton)
+                    qtbot.wait(100)
 
             finally:
                 if os.path.exists(export_path):

@@ -58,7 +58,11 @@ class FileMetadataWidget(QWidget):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """Initialize the user interface."""
+        """Initialize the user interface.
+
+        Sets up all UI components including metadata display labels, timestamps
+        display area, and refresh button with proper signal connections.
+        """
         layout = QVBoxLayout()
 
         # Create metadata display group
@@ -286,12 +290,20 @@ class FileMetadataWidget(QWidget):
         return metadata
 
     def refresh_metadata(self) -> None:
-        """Refresh the metadata for the current file."""
+        """Refresh the metadata for the current file.
+
+        Re-analyzes the current file and updates all metadata displays with the
+        latest information. Only operates if a file is currently loaded.
+        """
         if self.current_file is not None:
             self.analyze_file(self.current_file)
 
     def clear(self) -> None:
-        """Clear all metadata displays."""
+        """Clear all metadata displays.
+
+        Resets all labels and text areas to their initial empty state and
+        disables the refresh button when no file is loaded.
+        """
         self.current_file = None
         self.refresh_button.setEnabled(False)
 
@@ -327,10 +339,17 @@ class FileMetadataWidget(QWidget):
 
 
 class FileTimestampTracker:
-    """Helper class for tracking file timestamps and changes."""
+    """Helper class for tracking file timestamps and changes.
+
+    Maintains a dictionary of tracked files with their initial timestamp data
+    and allows checking for subsequent changes to tracked files.
+    """
 
     def __init__(self) -> None:
-        """Initialize the timestamp tracker."""
+        """Initialize the timestamp tracker.
+
+        Creates an empty tracked files dictionary for storing file data.
+        """
         self.tracked_files: dict[str, dict[str, object]] = {}
 
     def track_file(self, file_path: str) -> dict[str, object]:
@@ -418,12 +437,14 @@ class FileTimestampTracker:
         """Stop tracking a file.
 
         Args:
-            file_path: Path to the file to stop tracking
-
+            file_path: Path to the file to stop tracking.
         """
         if file_path in self.tracked_files:
             del self.tracked_files[file_path]
 
     def clear_all(self) -> None:
-        """Stop tracking all files."""
+        """Stop tracking all files.
+
+        Clears the tracked files dictionary, removing all tracked file entries.
+        """
         self.tracked_files.clear()

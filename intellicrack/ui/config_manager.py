@@ -23,9 +23,10 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import contextlib
 import logging
+import threading
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from typing import Any
+from typing import Any, ClassVar
 
 
 logger = logging.getLogger(__name__)
@@ -130,7 +131,7 @@ class UIConfigManager:
     ALL configuration is stored in the main config. No separate UI config files.
     """
 
-    DEFAULT_THEMES = {
+    DEFAULT_THEMES: ClassVar[dict[str, ThemeConfig]] = {
         "dark": ThemeConfig(
             name="dark",
             primary_color="#00ff00",
@@ -188,8 +189,16 @@ class UIConfigManager:
     }
 
     def __init__(self) -> None:
-        """Initialize the UI configuration manager using main config."""
+        """Initialize the UI configuration manager using main config.
+
+        Loads UI configuration from the main config system or initializes
+        with default settings if no UI configuration exists.
+
+        """
         from intellicrack.core.config_manager import get_config
+
+        # Thread-safety lock for all instance state modifications
+        self._lock = threading.RLock()
 
         # Get the unified config instance
         self.main_config = get_config()
@@ -214,7 +223,12 @@ class UIConfigManager:
         logger.info("UIConfigManager initialized with unified config system")
 
     def _initialize_ui_config(self) -> None:
-        """Initialize UI configuration in main config with defaults."""
+        """Initialize UI configuration in main config with defaults.
+
+        Creates default UI configuration entries in the main config system
+        if they do not already exist.
+
+        """
         ui_config = {
             "theme": asdict(self.DEFAULT_THEMES["dark"]),
             "font": asdict(FontConfig()),
@@ -243,73 +257,62 @@ class UIConfigManager:
         self.main_config.set("ui", ui_config)
         logger.info("Initialized UI configuration in main config")
 
-    def _load_from_main_config(self) -> None:
-        """Load UI configurations from main config."""
-        ui_config_raw: object = self.main_config.get("ui", {})
+    def _load_config_section[T](
+        self,
+        ui_config: dict[str, Any],
+        key: str,
+        config_class: type[T],
+        default_instance: T,
+    ) -> T:
+        """Load a configuration section from ui_config dict.
 
-        # Type guard for ui_config
+        Args:
+            ui_config: The UI configuration dictionary.
+            key: The key to look up in the config.
+            config_class: The dataclass type to create.
+            default_instance: Default instance to use if data is invalid.
+
+        Returns:
+            An instance of config_class populated with data.
+
+        """
+        raw_data: object = ui_config.get(key, asdict(default_instance))
+        if isinstance(raw_data, dict):
+            return config_class(**raw_data)
+        return default_instance
+
+    def _load_from_main_config(self) -> None:
+        """Load UI configurations from main config.
+
+        Reads all UI configuration settings from the main config system
+        and populates instance attributes with validated data.
+
+        """
+        ui_config_raw: object = self.main_config.get("ui", {})
         if not isinstance(ui_config_raw, dict):
             logger.warning("Invalid ui_config type: %s, using empty dict", type(ui_config_raw))
             ui_config_raw = {}
 
         ui_config: dict[str, Any] = ui_config_raw
 
-        # Load theme
+        # Load theme (special handling for string values)
         theme_data_raw: object = ui_config.get("theme", asdict(self.DEFAULT_THEMES["dark"]))
-        # Handle case where theme_data is a string instead of dict
         if isinstance(theme_data_raw, str):
-            theme_name: str = theme_data_raw.lower()
-            if theme_name in self.DEFAULT_THEMES:
-                theme_data: dict[str, Any] = asdict(self.DEFAULT_THEMES[theme_name])
-            else:
-                logger.warning("Unknown theme '%s', using dark theme", theme_name)
-                theme_data = asdict(self.DEFAULT_THEMES["dark"])
+            theme_name = theme_data_raw.lower()
+            self.theme = self.DEFAULT_THEMES.get(theme_name, self.DEFAULT_THEMES["dark"])
         elif isinstance(theme_data_raw, dict):
-            theme_data = theme_data_raw
+            self.theme = ThemeConfig(**theme_data_raw)
         else:
-            logger.warning("Invalid theme data type: %s, using dark theme", type(theme_data_raw))
-            theme_data = asdict(self.DEFAULT_THEMES["dark"])
-        self.theme = ThemeConfig(**theme_data)
+            self.theme = self.DEFAULT_THEMES["dark"]
 
-        # Load font
-        font_data_raw: object = ui_config.get("font", asdict(FontConfig()))
-        if isinstance(font_data_raw, dict):
-            font_data: dict[str, Any] = font_data_raw
-        else:
-            font_data = asdict(FontConfig())
-        self.font = FontConfig(**font_data)
-
-        # Load layout
-        layout_data_raw: object = ui_config.get("layout", asdict(LayoutConfig()))
-        if isinstance(layout_data_raw, dict):
-            layout_data: dict[str, Any] = layout_data_raw
-        else:
-            layout_data = asdict(LayoutConfig())
-        self.layout = LayoutConfig(**layout_data)
-
-        # Load editor
-        editor_data_raw: object = ui_config.get("editor", asdict(EditorConfig()))
-        if isinstance(editor_data_raw, dict):
-            editor_data: dict[str, Any] = editor_data_raw
-        else:
-            editor_data = asdict(EditorConfig())
-        self.editor = EditorConfig(**editor_data)
-
-        # Load animation
-        animation_data_raw: object = ui_config.get("animation", asdict(AnimationConfig()))
-        if isinstance(animation_data_raw, dict):
-            animation_data: dict[str, Any] = animation_data_raw
-        else:
-            animation_data = asdict(AnimationConfig())
-        self.animation = AnimationConfig(**animation_data)
-
-        # Load accessibility
-        accessibility_data_raw: object = ui_config.get("accessibility", asdict(AccessibilityConfig()))
-        if isinstance(accessibility_data_raw, dict):
-            accessibility_data: dict[str, Any] = accessibility_data_raw
-        else:
-            accessibility_data = asdict(AccessibilityConfig())
-        self.accessibility = AccessibilityConfig(**accessibility_data)
+        # Load other configs using helper
+        self.font = self._load_config_section(ui_config, "font", FontConfig, FontConfig())
+        self.layout = self._load_config_section(ui_config, "layout", LayoutConfig, LayoutConfig())
+        self.editor = self._load_config_section(ui_config, "editor", EditorConfig, EditorConfig())
+        self.animation = self._load_config_section(ui_config, "animation", AnimationConfig, AnimationConfig())
+        self.accessibility = self._load_config_section(
+            ui_config, "accessibility", AccessibilityConfig, AccessibilityConfig()
+        )
 
         # Load custom themes
         self.custom_themes = {}
@@ -321,7 +324,12 @@ class UIConfigManager:
                     self.custom_themes[name] = ThemeConfig(**theme_data_item)
 
     def _save_to_main_config(self) -> None:
-        """Save UI configurations to main config."""
+        """Save UI configurations to main config.
+
+        Persists all current UI configuration settings to the main config
+        system, preserving existing settings like recent files and dashboard.
+
+        """
         ui_config = {
             "theme": asdict(self.theme),
             "font": asdict(self.font),
@@ -340,7 +348,12 @@ class UIConfigManager:
 
     # Theme Management
     def get_theme_config(self) -> ThemeConfig:
-        """Get current theme configuration."""
+        """Get current theme configuration.
+
+        Returns:
+            ThemeConfig: The current ThemeConfig object.
+
+        """
         return self.theme
 
     def set_theme(self, theme_name: str) -> bool:
@@ -353,83 +366,153 @@ class UIConfigManager:
             True if theme was applied, False if theme not found
 
         """
-        # Check default themes
-        if theme_name in self.DEFAULT_THEMES:
-            self.theme = self.DEFAULT_THEMES[theme_name]
-            self._save_to_main_config()
-            self._notify_change("theme")
-            return True
+        with self._lock:
+            # Check default themes
+            if theme_name in self.DEFAULT_THEMES:
+                self.theme = self.DEFAULT_THEMES[theme_name]
+                self._save_to_main_config()
+                self._notify_change("theme")
+                return True
 
-        # Check custom themes
-        if theme_name in self.custom_themes:
-            self.theme = self.custom_themes[theme_name]
-            self._save_to_main_config()
-            self._notify_change("theme")
-            return True
+            # Check custom themes
+            if theme_name in self.custom_themes:
+                self.theme = self.custom_themes[theme_name]
+                self._save_to_main_config()
+                self._notify_change("theme")
+                return True
 
-        logger.warning("Theme not found: %s", theme_name)
-        return False
+            logger.warning("Theme not found: %s", theme_name)
+            return False
 
     def create_custom_theme(self, name: str, theme: ThemeConfig) -> None:
-        """Create a custom theme."""
-        self.custom_themes[name] = theme
-        self._save_to_main_config()
-        logger.info("Custom theme created: %s", name)
+        """Create a custom theme.
+
+        Args:
+            name: Name of the custom theme. Custom theme identifier.
+            theme: ThemeConfig object with custom colors and settings.
+
+        """
+        with self._lock:
+            self.custom_themes[name] = theme
+            self._save_to_main_config()
+            logger.info("Custom theme created: %s", name)
 
     # Font Management
     def get_font_config(self) -> FontConfig:
-        """Get current font configuration."""
+        """Get current font configuration.
+
+        Returns:
+            FontConfig: The current FontConfig object.
+
+        """
         return self.font
 
     def set_font_config(self, font_config: FontConfig) -> None:
-        """Set font configuration."""
-        self.font = font_config
-        self._save_to_main_config()
-        self._notify_change("font")
+        """Set font configuration.
+
+        Args:
+            font_config: FontConfig object with new font settings. Configuration
+                to apply to the UI font.
+
+        """
+        with self._lock:
+            self.font = font_config
+            self._save_to_main_config()
+            self._notify_change("font")
 
     # Layout Management
     def get_layout_config(self) -> LayoutConfig:
-        """Get current layout configuration."""
+        """Get current layout configuration.
+
+        Returns:
+            LayoutConfig: The current LayoutConfig object.
+
+        """
         return self.layout
 
     def set_layout_config(self, layout_config: LayoutConfig) -> None:
-        """Set layout configuration."""
-        self.layout = layout_config
-        self._save_to_main_config()
-        self._notify_change("layout")
+        """Set layout configuration.
+
+        Args:
+            layout_config: LayoutConfig object with new layout settings.
+                Configuration to apply to the UI layout.
+
+        """
+        with self._lock:
+            self.layout = layout_config
+            self._save_to_main_config()
+            self._notify_change("layout")
 
     # Editor Configuration
     def get_editor_config(self) -> EditorConfig:
-        """Get current editor configuration."""
+        """Get current editor configuration.
+
+        Returns:
+            EditorConfig: The current EditorConfig object.
+
+        """
         return self.editor
 
     def set_editor_config(self, editor_config: EditorConfig) -> None:
-        """Set editor configuration."""
-        self.editor = editor_config
-        self._save_to_main_config()
-        self._notify_change("editor")
+        """Set editor configuration.
+
+        Args:
+            editor_config: EditorConfig object with new editor settings.
+                Configuration to apply to the code editor.
+
+        """
+        with self._lock:
+            self.editor = editor_config
+            self._save_to_main_config()
+            self._notify_change("editor")
 
     # Animation Configuration
     def get_animation_config(self) -> AnimationConfig:
-        """Get current animation configuration."""
+        """Get current animation configuration.
+
+        Returns:
+            AnimationConfig: The current AnimationConfig object.
+
+        """
         return self.animation
 
     def set_animation_config(self, animation_config: AnimationConfig) -> None:
-        """Set animation configuration."""
-        self.animation = animation_config
-        self._save_to_main_config()
-        self._notify_change("animation")
+        """Set animation configuration.
+
+        Args:
+            animation_config: AnimationConfig object with new animation
+                settings. Configuration to apply to UI animations and
+                transitions.
+
+        """
+        with self._lock:
+            self.animation = animation_config
+            self._save_to_main_config()
+            self._notify_change("animation")
 
     # Accessibility Configuration
     def get_accessibility_config(self) -> AccessibilityConfig:
-        """Get current accessibility configuration."""
+        """Get current accessibility configuration.
+
+        Returns:
+            AccessibilityConfig: The current AccessibilityConfig object.
+
+        """
         return self.accessibility
 
     def set_accessibility_config(self, accessibility_config: AccessibilityConfig) -> None:
-        """Set accessibility configuration."""
-        self.accessibility = accessibility_config
-        self._save_to_main_config()
-        self._notify_change("accessibility")
+        """Set accessibility configuration.
+
+        Args:
+            accessibility_config: AccessibilityConfig object with new
+                accessibility settings. Configuration to apply for
+                accessibility features.
+
+        """
+        with self._lock:
+            self.accessibility = accessibility_config
+            self._save_to_main_config()
+            self._notify_change("accessibility")
 
     # Generic Settings Access (for dashboard, etc.)
     def get_setting(self, key: str, default: object = None) -> object:
@@ -454,68 +537,111 @@ class UIConfigManager:
             value: Value to set
 
         """
-        full_key = f"ui.{key}"
-        self.main_config.set(full_key, value)
+        with self._lock:
+            full_key = f"ui.{key}"
+            self.main_config.set(full_key, value)
 
     # Change Notification System
     def register_callback(self, category: str, callback: Callable[[], None]) -> None:
-        """Register a callback for configuration changes."""
-        if category in self.change_callbacks:
-            self.change_callbacks[category].append(callback)
+        """Register a callback for configuration changes.
+
+        Args:
+            category: Configuration category name. Category to listen for
+                configuration changes.
+            callback: Callable to invoke when configuration changes. Function
+                to call with no arguments when configuration changes.
+
+        """
+        with self._lock:
+            if category in self.change_callbacks:
+                self.change_callbacks[category].append(callback)
 
     def unregister_callback(self, category: str, callback: Callable[[], None]) -> None:
-        """Unregister a change callback."""
-        if category in self.change_callbacks:
-            with contextlib.suppress(ValueError):
-                self.change_callbacks[category].remove(callback)
+        """Unregister a change callback.
+
+        Args:
+            category: Configuration category name. Category to stop listening
+                for configuration changes.
+            callback: Callback to remove. Function to stop calling when
+                configuration changes.
+
+        """
+        with self._lock:
+            if category in self.change_callbacks:
+                with contextlib.suppress(ValueError):
+                    self.change_callbacks[category].remove(callback)
 
     def _notify_change(self, category: str) -> None:
-        """Notify all registered callbacks of a change."""
+        """Notify all registered callbacks of a change.
+
+        Args:
+            category: Configuration category name. Category for which to
+                notify all registered callbacks.
+
+        """
         if category in self.change_callbacks:
             for callback in self.change_callbacks[category]:
                 try:
                     callback()
-                except Exception as e:
-                    logger.exception("Error in change callback: %s", e)
+                except Exception:
+                    logger.exception("Error in change callback")
 
     # Utility Methods
     def get_available_themes(self) -> list[str]:
-        """Get list of available theme names."""
+        """Get list of available theme names.
+
+        Returns:
+            list[str]: List of available theme names including default and
+                custom themes.
+
+        """
         themes = list(self.DEFAULT_THEMES.keys())
         themes.extend(self.custom_themes.keys())
         return themes
 
     def reset_to_defaults(self) -> None:
-        """Reset all UI settings to defaults."""
-        self.theme = self.DEFAULT_THEMES["dark"]
-        self.font = FontConfig()
-        self.layout = LayoutConfig()
-        self.editor = EditorConfig()
-        self.animation = AnimationConfig()
-        self.accessibility = AccessibilityConfig()
-        self.custom_themes = {}
+        """Reset all UI settings to defaults.
 
-        self._save_to_main_config()
+        Resets theme, font, layout, editor, animation, and accessibility
+        settings to their default values and notifies all change callbacks.
 
-        # Notify all categories
-        for category in self.change_callbacks:
-            self._notify_change(category)
+        """
+        with self._lock:
+            self.theme = self.DEFAULT_THEMES["dark"]
+            self.font = FontConfig()
+            self.layout = LayoutConfig()
+            self.editor = EditorConfig()
+            self.animation = AnimationConfig()
+            self.accessibility = AccessibilityConfig()
+            self.custom_themes = {}
 
-        logger.info("UI settings reset to defaults")
+            self._save_to_main_config()
+
+            # Notify all categories
+            for category in self.change_callbacks:
+                self._notify_change(category)
+
+            logger.info("UI settings reset to defaults")
 
 
-# Singleton instance
-_ui_config_manager: UIConfigManager | None = None
+class _UIConfigManagerHolder:
+    """Thread-safe singleton holder for UIConfigManager instance."""
+
+    instance: UIConfigManager | None = None
+    lock: threading.Lock = threading.Lock()
 
 
 def get_ui_config_manager() -> UIConfigManager:
     """Get the singleton UIConfigManager instance.
 
+    This function is thread-safe using double-checked locking pattern.
+
     Returns:
         The UIConfigManager instance
 
     """
-    global _ui_config_manager
-    if _ui_config_manager is None:
-        _ui_config_manager = UIConfigManager()
-    return _ui_config_manager
+    if _UIConfigManagerHolder.instance is None:
+        with _UIConfigManagerHolder.lock:
+            if _UIConfigManagerHolder.instance is None:
+                _UIConfigManagerHolder.instance = UIConfigManager()
+    return _UIConfigManagerHolder.instance

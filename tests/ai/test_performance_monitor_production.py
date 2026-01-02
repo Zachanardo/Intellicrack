@@ -76,6 +76,7 @@ def test_profile_operation_with_exception(perf_monitor: PerformanceMonitor) -> N
     profile = perf_monitor.profiles[0]
 
     assert profile.success is False
+    assert profile.error_message is not None
     assert "Test error" in profile.error_message
 
 
@@ -213,7 +214,7 @@ def test_performance_cache(perf_monitor: PerformanceMonitor) -> None:
 
 def test_cache_expiration(perf_monitor: PerformanceMonitor) -> None:
     """Test cache expiration."""
-    perf_monitor.cache_ttl = 0.1
+    perf_monitor.cache_ttl = 1
     perf_monitor.cache_result("expire_key", {"data": "test"})
 
     time.sleep(0.2)
@@ -224,7 +225,7 @@ def test_cache_expiration(perf_monitor: PerformanceMonitor) -> None:
 
 def test_optimize_cache(perf_monitor: PerformanceMonitor) -> None:
     """Test cache optimization removes expired entries."""
-    perf_monitor.cache_ttl = 0.1
+    perf_monitor.cache_ttl = 1
 
     perf_monitor.cache_result("key1", {"data": 1})
     perf_monitor.cache_result("key2", {"data": 2})

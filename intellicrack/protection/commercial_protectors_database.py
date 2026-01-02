@@ -57,7 +57,12 @@ class CommercialProtectorsDatabase:
         self.protectors = self._build_database()
 
     def _build_database(self) -> dict[str, ProtectorSignature]:
-        """Build comprehensive protector database with real signatures."""
+        """Build comprehensive protector database with real signatures.
+
+        Returns:
+            Dictionary mapping protector names to their signature definitions.
+
+        """
         return {
             # Advanced Virtualizers (8)
             "CodeVirtualizer": ProtectorSignature(
@@ -1021,11 +1026,18 @@ class CommercialProtectorsDatabase:
     def get_bypass_strategy(self, protector_name: str) -> dict[str, Any]:
         """Get bypass strategy for a specific protector.
 
+        Retrieves comprehensive bypass methodology details including difficulty rating,
+        original entry point detection techniques, unpacking/decryption methods, and
+        protection category classification for the specified protector.
+
         Args:
-            protector_name: Name of the protector
+            protector_name: Name of the protector to analyze.
 
         Returns:
-            Bypass strategy information
+            Dictionary containing bypass strategy with keys: 'difficulty' (1-10 scale),
+            'oep_method' (original entry point detection technique),
+            'unpacking_method' (decryption/unpacking approach), 'category' (protection
+            category value). Returns empty dict if protector not found in database.
 
         """
         if protector_name in self.protectors:
@@ -1041,12 +1053,19 @@ class CommercialProtectorsDatabase:
     def find_oep(self, file_data: bytes, protector_name: str) -> int:
         """Find Original Entry Point for packed/protected binary.
 
+        Analyzes binary data to locate the original entry point (OEP) using
+        protector-specific detection methods. Employs ESP-trick analysis, JMP
+        instruction tracing, and pattern matching to identify legitimate code
+        entry points after decompression or unpacking layers are removed.
+
         Args:
-            file_data: Raw file bytes
-            protector_name: Detected protector name
+            file_data: Raw file bytes to analyze for OEP location.
+            protector_name: Detected protector name to select appropriate
+                analysis method.
 
         Returns:
-            OEP offset or -1 if not found
+            OEP offset as integer if found, -1 if protector unknown or OEP
+            not located through pattern analysis.
 
         """
         if protector_name not in self.protectors:
@@ -1288,7 +1307,12 @@ _protectors_db = None
 
 
 def get_protectors_database() -> CommercialProtectorsDatabase:
-    """Get or create global protectors database instance."""
+    """Get or create global protectors database instance.
+
+    Returns:
+        Global CommercialProtectorsDatabase singleton instance.
+
+    """
     global _protectors_db
     if _protectors_db is None:
         _protectors_db = CommercialProtectorsDatabase()

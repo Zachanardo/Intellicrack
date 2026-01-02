@@ -24,15 +24,12 @@ import os
 import zipfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
 
-try:
-    import defusedxml.ElementTree as ET  # noqa: N817
-except ImportError:
-    import xml.etree.ElementTree as ET  # noqa: S405
+from defusedxml import ElementTree as ET
 
 try:
     from jinja2 import Environment, FileSystemLoader, Template
@@ -43,7 +40,7 @@ except ImportError:
     HAS_JINJA2 = False
 
 try:
-    import markdown  # type: ignore[import-untyped]
+    import markdown
 
     _ = markdown.__name__
     HAS_MARKDOWN = True
@@ -91,7 +88,12 @@ class ReportGenerator:
     """Generate analysis reports in multiple formats."""
 
     def __init__(self, output_dir: str = "reports") -> None:
-        """Initialize report generator."""
+        """Initialize the report generator with output directory.
+
+        Args:
+            output_dir: Directory path where generated reports will be saved.
+                Defaults to "reports".
+        """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.template_dir = Path(__file__).parent.parent / "templates" / "reports"
@@ -104,7 +106,23 @@ class ReportGenerator:
             self.jinja_env = None
 
     def generate_report(self, analysis_data: dict[str, Any], format: str = "json", output_file: str | None = None) -> str:
-        """Generate report in specified format."""
+        """Generate an analysis report in the specified output format.
+
+        Args:
+            analysis_data: Dictionary containing analysis results with keys like
+                timestamp, target_file, file_hash, file_size, analysis_type,
+                findings, metadata, vulnerabilities, protections, and recommendations.
+            format: Output format for the report. Supported formats: json, html,
+                pdf, xml, csv, markdown, txt. Defaults to "json".
+            output_file: Optional custom filename for the output report. If not
+                provided, a timestamped filename will be generated automatically.
+
+        Returns:
+            Absolute path to the generated report file.
+
+        Raises:
+            ValueError: If the specified format is not supported.
+        """
         result = self._prepare_analysis_result(analysis_data)
 
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -132,7 +150,17 @@ class ReportGenerator:
         raise ValueError(error_msg)
 
     def _prepare_analysis_result(self, data: dict[str, Any]) -> AnalysisResult:
-        """Prepare analysis data for report generation."""
+        """Prepare raw analysis data into a structured AnalysisResult object.
+
+        Args:
+            data: Dictionary containing raw analysis data with optional keys:
+                timestamp, target_file, file_hash, file_size, analysis_type,
+                findings, metadata, vulnerabilities, protections, recommendations.
+
+        Returns:
+            Structured analysis result object with all fields populated with
+                provided data or sensible defaults.
+        """
         return AnalysisResult(
             timestamp=data.get("timestamp", datetime.datetime.now().isoformat()),
             target_file=data.get("target_file", "Unknown"),
@@ -147,7 +175,15 @@ class ReportGenerator:
         )
 
     def _generate_json_report(self, result: AnalysisResult, output_path: Path) -> str:
-        """Generate JSON format report."""
+        """Generate a JSON-formatted analysis report file.
+
+        Args:
+            result: Structured analysis result object containing report data.
+            output_path: Path object where the JSON report will be written.
+
+        Returns:
+            Absolute path to the generated JSON report file.
+        """
         report_data = asdict(result)
 
         with open(output_path, "w", encoding="utf-8") as f:
@@ -156,7 +192,17 @@ class ReportGenerator:
         return str(output_path)
 
     def _generate_html_report(self, result: AnalysisResult, output_path: Path) -> str:
-        """Generate HTML format report."""
+        """Generate an HTML-formatted analysis report file.
+
+        Uses Jinja2 template if available, otherwise generates HTML from scratch.
+
+        Args:
+            result: Structured analysis result object containing report data.
+            output_path: Path object where the HTML report will be written.
+
+        Returns:
+            Absolute path to the generated HTML report file.
+        """
         if HAS_JINJA2 and self.jinja_env is not None and (self.template_dir / "report.html").exists():
             template = self.jinja_env.get_template("report.html")
             html_content = template.render(result=result)
@@ -169,7 +215,14 @@ class ReportGenerator:
         return str(output_path)
 
     def _generate_html_without_template(self, result: AnalysisResult) -> str:
-        """Generate HTML report without Jinja2."""
+        """Generate HTML report content without Jinja2 templating.
+
+        Args:
+            result: Structured analysis result object containing report data.
+
+        Returns:
+            Complete HTML document as a string, ready to be written to file.
+        """
         return f"""<!DOCTYPE html>
 <html>
 <head>
@@ -223,7 +276,17 @@ class ReportGenerator:
 </html>"""
 
     def _generate_pdf_report(self, result: AnalysisResult, output_path: Path) -> str:
-        """Generate PDF format report."""
+        """Generate a PDF-formatted analysis report file.
+
+        Falls back to HTML format if ReportLab library is not available.
+
+        Args:
+            result: Structured analysis result object containing report data.
+            output_path: Path object where the PDF report will be written.
+
+        Returns:
+            Absolute path to the generated report file (PDF or HTML fallback).
+        """
         if not HAS_REPORTLAB:
             # Fallback to HTML if ReportLab not available
             html_path = output_path.with_suffix(".html")
@@ -334,7 +397,15 @@ class ReportGenerator:
         return str(output_path)
 
     def _generate_xml_report(self, result: AnalysisResult, output_path: Path) -> str:
-        """Generate XML format report."""
+        """Generate an XML-formatted analysis report file.
+
+        Args:
+            result: Structured analysis result object containing report data.
+            output_path: Path object where the XML report will be written.
+
+        Returns:
+            Absolute path to the generated XML report file.
+        """
         root = ET.Element("BinaryAnalysisReport")
 
         # File info
@@ -381,7 +452,15 @@ class ReportGenerator:
         return str(output_path)
 
     def _generate_csv_report(self, result: AnalysisResult, output_path: Path) -> str:
-        """Generate CSV format report."""
+        """Generate a CSV-formatted analysis report file.
+
+        Args:
+            result: Structured analysis result object containing report data.
+            output_path: Path object where the CSV report will be written.
+
+        Returns:
+            Absolute path to the generated CSV report file.
+        """
         with open(output_path, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)
 
@@ -421,7 +500,15 @@ class ReportGenerator:
         return str(output_path)
 
     def _generate_markdown_report(self, result: AnalysisResult, output_path: Path) -> str:
-        """Generate Markdown format report."""
+        """Generate a Markdown-formatted analysis report file.
+
+        Args:
+            result: Structured analysis result object containing report data.
+            output_path: Path object where the Markdown report will be written.
+
+        Returns:
+            Absolute path to the generated Markdown report file.
+        """
         md_content = f"""# Binary Analysis Report
 
 ## File Information
@@ -467,7 +554,15 @@ class ReportGenerator:
         return str(output_path)
 
     def _generate_text_report(self, result: AnalysisResult, output_path: Path) -> str:
-        """Generate plain text format report."""
+        """Generate a plain text-formatted analysis report file.
+
+        Args:
+            result: Structured analysis result object containing report data.
+            output_path: Path object where the text report will be written.
+
+        Returns:
+            Absolute path to the generated text report file.
+        """
         text_content = f"""BINARY ANALYSIS REPORT
 {"=" * 50}
 
@@ -525,7 +620,17 @@ RECOMMENDATIONS
         return str(output_path)
 
     def generate_batch_report(self, analysis_results: list[dict[str, Any]], format: str = "json") -> str:
-        """Generate report for multiple analysis results."""
+        """Generate individual reports for multiple analysis results and archive them.
+
+        Args:
+            analysis_results: List of dictionaries, each containing analysis data
+                for a separate report.
+            format: Output format for all reports. Supported formats: json, html,
+                pdf, xml, csv, markdown, txt. Defaults to "json".
+
+        Returns:
+            Absolute path to the ZIP archive containing all generated reports.
+        """
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         batch_dir = self.output_dir / f"batch_{timestamp}"
         batch_dir.mkdir(parents=True, exist_ok=True)
@@ -545,7 +650,16 @@ RECOMMENDATIONS
         return str(archive_path)
 
     def export_to_archive(self, report_paths: list[str], archive_name: str | None = None) -> str:
-        """Export multiple reports to an archive."""
+        """Export multiple report files into a single ZIP archive.
+
+        Args:
+            report_paths: List of absolute paths to report files to be archived.
+            archive_name: Optional custom name for the archive file. If not
+                provided, a timestamped filename will be generated automatically.
+
+        Returns:
+            Absolute path to the created ZIP archive file.
+        """
         if not archive_name:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             archive_name = f"reports_archive_{timestamp}.zip"
@@ -564,13 +678,29 @@ class ComparisonReportGenerator:
     """Generate comparison reports between multiple binaries."""
 
     def __init__(self, output_dir: str = "reports/comparisons") -> None:
-        """Initialize comparison report generator."""
+        """Initialize the comparison report generator.
+
+        Args:
+            output_dir: Directory path where comparison reports will be saved.
+                Defaults to "reports/comparisons".
+        """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.base_generator = ReportGenerator(output_dir)
 
     def generate_comparison(self, results: list[dict[str, Any]], format: str = "html") -> str:
-        """Generate comparison report."""
+        """Generate a comparison report analyzing differences between multiple analysis results.
+
+        Args:
+            results: List of analysis result dictionaries to compare, each
+                containing target_file, file_hash, vulnerabilities, protections,
+                and other analysis data.
+            format: Output format for the comparison report. Supported formats:
+                html, json. Defaults to "html".
+
+        Returns:
+            Absolute path to the generated comparison report file.
+        """
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = f"comparison_{timestamp}.{format}"
         output_path = self.output_dir / output_file
@@ -582,7 +712,19 @@ class ComparisonReportGenerator:
         return self._generate_json_comparison(comparison_data, output_path)
 
     def _analyze_differences(self, results: list[dict[str, Any]]) -> dict[str, Any]:
-        """Analyze differences between results."""
+        """Analyze and extract differences between multiple analysis results.
+
+        Computes common vulnerabilities, unique vulnerabilities per file, and
+        similarity scores based on vulnerability overlap.
+
+        Args:
+            results: List of analysis result dictionaries to analyze.
+
+        Returns:
+            Dictionary containing comparison data with keys: timestamp,
+                files_compared, common_vulnerabilities, unique_vulnerabilities,
+                common_protections, unique_protections, similarity_score.
+        """
         files_compared: list[dict[str, Any]] = []
         unique_vulnerabilities: dict[str, Any] = {}
 
@@ -623,7 +765,16 @@ class ComparisonReportGenerator:
         return comparison
 
     def _generate_html_comparison(self, data: dict[str, Any], output_path: Path) -> str:
-        """Generate HTML comparison report."""
+        """Generate an HTML-formatted comparison report file.
+
+        Args:
+            data: Dictionary containing comparison analysis data with similarity
+                scores and vulnerability differences.
+            output_path: Path object where the HTML comparison report will be written.
+
+        Returns:
+            Absolute path to the generated HTML comparison report file.
+        """
         html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -669,7 +820,16 @@ class ComparisonReportGenerator:
         return str(output_path)
 
     def _generate_json_comparison(self, data: dict[str, Any], output_path: Path) -> str:
-        """Generate JSON comparison report."""
+        """Generate a JSON-formatted comparison report file.
+
+        Args:
+            data: Dictionary containing comparison analysis data with similarity
+                scores and vulnerability differences.
+            output_path: Path object where the JSON comparison report will be written.
+
+        Returns:
+            Absolute path to the generated JSON comparison report file.
+        """
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
@@ -677,13 +837,46 @@ class ComparisonReportGenerator:
 
 
 def generate_report(analysis_data: dict[str, Any], format: str = "html", output_dir: str = "reports") -> str:
-    """Generate a report."""
+    """Generate an analysis report in the specified format.
+
+    Convenience function that creates a ReportGenerator instance and generates
+    a report with the provided analysis data.
+
+    Args:
+        analysis_data: Dictionary containing analysis results with keys like
+            timestamp, target_file, file_hash, file_size, analysis_type,
+            findings, metadata, vulnerabilities, protections, and recommendations.
+        format: Output format for the report. Supported formats: json, html,
+            pdf, xml, csv, markdown, txt. Defaults to "html".
+        output_dir: Directory path where the report will be saved.
+            Defaults to "reports".
+
+    Returns:
+        Absolute path to the generated report file.
+    """
     generator = ReportGenerator(output_dir)
     return generator.generate_report(analysis_data, format)
 
 
 def export_report(analysis_data: dict[str, Any], format: str = "html", output_path: str | None = None) -> str:
-    """Export analysis report to file."""
+    """Export an analysis report to a specified file path.
+
+    Convenience function that creates a ReportGenerator instance and exports
+    a report to a specific location with an optional custom filename.
+
+    Args:
+        analysis_data: Dictionary containing analysis results with keys like
+            timestamp, target_file, file_hash, file_size, analysis_type,
+            findings, metadata, vulnerabilities, protections, and recommendations.
+        format: Output format for the report. Supported formats: json, html,
+            pdf, xml, csv, markdown, txt. Defaults to "html".
+        output_path: Optional full path (including filename) for the report. If
+            provided as a directory, report will be saved there with an auto-generated
+            filename. Defaults to "reports" directory if not provided.
+
+    Returns:
+        Absolute path to the generated report file.
+    """
     output_dir = Path(output_path).parent if output_path else Path("reports")
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -693,6 +886,23 @@ def export_report(analysis_data: dict[str, Any], format: str = "html", output_pa
 
 
 def generate_comparison_report(results: list[dict[str, Any]], format: str = "html", output_dir: str = "reports/comparisons") -> str:
-    """Generate a comparison report."""
+    """Generate a comparison report for multiple analysis results.
+
+    Convenience function that creates a ComparisonReportGenerator instance and
+    generates a comparison report analyzing differences between the provided
+    analysis results.
+
+    Args:
+        results: List of analysis result dictionaries to compare, each
+            containing target_file, file_hash, vulnerabilities, protections,
+            and other analysis data.
+        format: Output format for the comparison report. Supported formats:
+            html, json. Defaults to "html".
+        output_dir: Directory path where the comparison report will be saved.
+            Defaults to "reports/comparisons".
+
+    Returns:
+        Absolute path to the generated comparison report file.
+    """
     generator = ComparisonReportGenerator(output_dir)
     return generator.generate_comparison(results, format)

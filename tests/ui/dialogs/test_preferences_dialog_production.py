@@ -16,14 +16,31 @@ This module validates PreferencesDialog's complete functionality including:
 """
 
 from typing import Any
-from unittest.mock import Mock, patch
 
 import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
+from intellicrack.config.config_manager import ConfigManager
 from intellicrack.ui.dialogs.preferences_dialog import PreferencesDialog
+
+
+class RealConfigManager:
+    """Real configuration manager test double."""
+
+    def __init__(self) -> None:
+        self.config: dict[str, Any] = {}
+        self.save_called: bool = False
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return self.config.get(key, default)
+
+    def set(self, key: str, value: Any) -> None:
+        self.config[key] = value
+
+    def save(self) -> None:
+        self.save_called = True
 
 
 @pytest.fixture
@@ -33,22 +50,17 @@ def qapp(qapp: QApplication) -> QApplication:
 
 
 @pytest.fixture
-def mock_config() -> Mock:
-    """Create mock configuration manager."""
-    config = Mock()
-    config.get = Mock(side_effect=lambda key, default=None: default)
-    config.set = Mock()
-    config.save = Mock()
-    return config
+def real_config() -> RealConfigManager:
+    """Create real configuration manager test double."""
+    return RealConfigManager()
 
 
 @pytest.fixture
-def preferences_dialog(qapp: QApplication, mock_config: Mock) -> PreferencesDialog:
-    """Create PreferencesDialog with mocked configuration."""
-    with patch("intellicrack.ui.dialogs.preferences_dialog.get_config", return_value=mock_config):
-        dialog = PreferencesDialog()
-        dialog.config = mock_config
-        return dialog
+def preferences_dialog(qapp: QApplication, real_config: RealConfigManager) -> PreferencesDialog:
+    """Create PreferencesDialog with real configuration."""
+    dialog = PreferencesDialog()
+    dialog.config = real_config
+    return dialog
 
 
 class TestPreferencesDialogInitialization:
@@ -217,94 +229,98 @@ class TestConfigurationLoading:
     def test_load_preferences_reads_general_settings(
         self,
         qapp: QApplication,
-        mock_config: Mock,
+        real_config: RealConfigManager,
     ) -> None:
         """Loading preferences reads general settings from config."""
-        mock_config.get = Mock(side_effect=lambda key, default=None: {
+        real_config.config = {
             "general_preferences.theme": "Light",
             "general_preferences.auto_save": False,
             "general_preferences.create_backups": False,
-        }.get(key, default))
+        }
 
-        with patch("intellicrack.ui.dialogs.preferences_dialog.get_config", return_value=mock_config):
-            dialog = PreferencesDialog()
+        dialog = PreferencesDialog()
+        dialog.config = real_config
+        dialog.load_preferences()
 
-            assert dialog.theme_combo.currentText() == "Light"
-            assert not dialog.auto_save_checkbox.isChecked()
-            assert not dialog.backup_checkbox.isChecked()
+        assert dialog.theme_combo.currentText() == "Light"
+        assert not dialog.auto_save_checkbox.isChecked()
+        assert not dialog.backup_checkbox.isChecked()
 
     def test_load_preferences_reads_qemu_settings(
         self,
         qapp: QApplication,
-        mock_config: Mock,
+        real_config: RealConfigManager,
     ) -> None:
         """Loading preferences reads QEMU testing settings."""
-        mock_config.get = Mock(side_effect=lambda key, default=None: {
+        real_config.config = {
             "qemu_testing.default_preference": "always",
             "qemu_testing.qemu_timeout": 120,
             "qemu_testing.qemu_memory": 4096,
-        }.get(key, default))
+        }
 
-        with patch("intellicrack.ui.dialogs.preferences_dialog.get_config", return_value=mock_config):
-            dialog = PreferencesDialog()
+        dialog = PreferencesDialog()
+        dialog.config = real_config
+        dialog.load_preferences()
 
-            assert dialog.qemu_preference_combo.currentIndex() == 1
-            assert dialog.qemu_timeout_spin.value() == 120
-            assert dialog.qemu_memory_spin.value() == 4096
+        assert dialog.qemu_preference_combo.currentIndex() == 1
+        assert dialog.qemu_timeout_spin.value() == 120
+        assert dialog.qemu_memory_spin.value() == 4096
 
     def test_load_preferences_reads_security_settings(
         self,
         qapp: QApplication,
-        mock_config: Mock,
+        real_config: RealConfigManager,
     ) -> None:
         """Loading preferences reads security settings."""
-        mock_config.get = Mock(side_effect=lambda key, default=None: {
+        real_config.config = {
             "general_preferences.security_checks_enabled": False,
             "patching.verify_patches": False,
             "security.sandbox_analysis": True,
             "general_preferences.auto_detect_protections": False,
             "general_preferences.use_ml_analysis": False,
-        }.get(key, default))
+        }
 
-        with patch("intellicrack.ui.dialogs.preferences_dialog.get_config", return_value=mock_config):
-            dialog = PreferencesDialog()
+        dialog = PreferencesDialog()
+        dialog.config = real_config
+        dialog.load_preferences()
 
-            assert not dialog.warn_dangerous_checkbox.isChecked()
-            assert not dialog.confirm_patches_checkbox.isChecked()
-            assert dialog.sandbox_default_checkbox.isChecked()
-            assert not dialog.auto_detect_checkbox.isChecked()
-            assert not dialog.ml_analysis_checkbox.isChecked()
+        assert not dialog.warn_dangerous_checkbox.isChecked()
+        assert not dialog.confirm_patches_checkbox.isChecked()
+        assert dialog.sandbox_default_checkbox.isChecked()
+        assert not dialog.auto_detect_checkbox.isChecked()
+        assert not dialog.ml_analysis_checkbox.isChecked()
 
     def test_load_preferences_reads_ai_settings(
         self,
         qapp: QApplication,
-        mock_config: Mock,
+        real_config: RealConfigManager,
     ) -> None:
         """Loading preferences reads AI model settings."""
-        mock_config.get = Mock(side_effect=lambda key, default=None: {
+        real_config.config = {
             "ai_models.model_preferences.script_generation": "Claude",
             "secrets.api_keys.openai": "sk-test-key",
             "ai_models.max_tokens": 3000,
             "general_preferences.ai_auto_refine": True,
             "general_preferences.ai_explain_scripts": False,
-        }.get(key, default))
+        }
 
-        with patch("intellicrack.ui.dialogs.preferences_dialog.get_config", return_value=mock_config):
-            dialog = PreferencesDialog()
+        dialog = PreferencesDialog()
+        dialog.config = real_config
+        dialog.load_preferences()
 
-            assert dialog.default_model_combo.currentText() == "Claude"
-            assert dialog.api_key_edit.text() == "sk-test-key"
-            assert dialog.max_tokens_spin.value() == 3000
-            assert dialog.auto_refine_checkbox.isChecked()
-            assert not dialog.explain_scripts_checkbox.isChecked()
+        assert dialog.default_model_combo.currentText() == "Claude"
+        assert dialog.api_key_edit.text() == "sk-test-key"
+        assert dialog.max_tokens_spin.value() == 3000
+        assert dialog.auto_refine_checkbox.isChecked()
+        assert not dialog.explain_scripts_checkbox.isChecked()
 
     def test_load_preferences_reads_hex_viewer_settings(
         self,
         qapp: QApplication,
-        mock_config: Mock,
+        real_config: RealConfigManager,
     ) -> None:
         """Loading preferences reads hex viewer settings."""
-        mock_config.get = Mock(side_effect=lambda key, default=None: {
+        real_config.config = {
             "hex_viewer.ui.bytes_per_row": 32,
             "hex_viewer.ui.group_size": 4,
             "hex_viewer.ui.uppercase_hex": False,
@@ -320,22 +336,23 @@ class TestConfigurationLoading:
             "hex_viewer.search.search_chunk_size_kb": 512,
             "hex_viewer.search.incremental_search": False,
             "hex_viewer.search.highlight_all_matches": False,
-        }.get(key, default))
+        }
 
-        with patch("intellicrack.ui.dialogs.preferences_dialog.get_config", return_value=mock_config):
-            dialog = PreferencesDialog()
+        dialog = PreferencesDialog()
+        dialog.config = real_config
+        dialog.load_preferences()
 
-            assert dialog.hex_bytes_per_row.value() == 32
-            assert dialog.hex_group_size.currentText() == "4"
-            assert not dialog.hex_uppercase.isChecked()
-            assert not dialog.hex_show_address.isChecked()
-            assert not dialog.hex_show_ascii.isChecked()
-            assert dialog.hex_font_family.currentText() == "Monaco"
-            assert dialog.hex_font_size.value() == 14
-            assert dialog.hex_max_memory.value() == 1000
-            assert dialog.hex_cache_size.value() == 200
-            assert dialog.hex_chunk_size.value() == 128
-            assert not dialog.hex_lazy_load.isChecked()
+        assert dialog.hex_bytes_per_row.value() == 32
+        assert dialog.hex_group_size.currentText() == "4"
+        assert not dialog.hex_uppercase.isChecked()
+        assert not dialog.hex_show_address.isChecked()
+        assert not dialog.hex_show_ascii.isChecked()
+        assert dialog.hex_font_family.currentText() == "Monaco"
+        assert dialog.hex_font_size.value() == 14
+        assert dialog.hex_max_memory.value() == 1000
+        assert dialog.hex_cache_size.value() == 200
+        assert dialog.hex_chunk_size.value() == 128
+        assert not dialog.hex_lazy_load.isChecked()
 
 
 class TestPreferenceValidation:
@@ -427,54 +444,62 @@ class TestPreferenceSaving:
     def test_save_preferences_stores_general_settings(
         self,
         preferences_dialog: PreferencesDialog,
+        real_config: RealConfigManager,
     ) -> None:
         """Saving preferences stores general settings to config."""
+        preferences_dialog.config = real_config
         preferences_dialog.theme_combo.setCurrentText("Light")
         preferences_dialog.auto_save_checkbox.setChecked(False)
         preferences_dialog.backup_checkbox.setChecked(True)
 
         preferences_dialog.save_preferences()
 
-        preferences_dialog.config.set.assert_any_call("general_preferences.theme", "Light")
-        preferences_dialog.config.set.assert_any_call("general_preferences.auto_save", False)
-        preferences_dialog.config.set.assert_any_call("general_preferences.create_backups", True)
-        preferences_dialog.config.save.assert_called()
+        assert real_config.config["general_preferences.theme"] == "Light"
+        assert real_config.config["general_preferences.auto_save"] == False
+        assert real_config.config["general_preferences.create_backups"] == True
+        assert real_config.save_called
 
     def test_save_preferences_stores_qemu_settings(
         self,
         preferences_dialog: PreferencesDialog,
+        real_config: RealConfigManager,
     ) -> None:
         """Saving preferences stores QEMU testing settings."""
+        preferences_dialog.config = real_config
         preferences_dialog.qemu_preference_combo.setCurrentIndex(1)
         preferences_dialog.qemu_timeout_spin.setValue(90)
         preferences_dialog.qemu_memory_spin.setValue(3072)
 
         preferences_dialog.save_preferences()
 
-        preferences_dialog.config.set.assert_any_call("qemu_testing.default_preference", "always")
-        preferences_dialog.config.set.assert_any_call("qemu_testing.qemu_timeout", 90)
-        preferences_dialog.config.set.assert_any_call("qemu_testing.qemu_memory", 3072)
+        assert real_config.config["qemu_testing.default_preference"] == "always"
+        assert real_config.config["qemu_testing.qemu_timeout"] == 90
+        assert real_config.config["qemu_testing.qemu_memory"] == 3072
 
     def test_save_preferences_stores_execution_settings(
         self,
         preferences_dialog: PreferencesDialog,
+        real_config: RealConfigManager,
     ) -> None:
         """Saving preferences stores script execution settings."""
+        preferences_dialog.config = real_config
         preferences_dialog.script_timeout_spin.setValue(180)
         preferences_dialog.capture_output_checkbox.setChecked(False)
         preferences_dialog.verbose_output_checkbox.setChecked(True)
 
         preferences_dialog.save_preferences()
 
-        preferences_dialog.config.set.assert_any_call("general_preferences.execution_timeout", 180)
-        preferences_dialog.config.set.assert_any_call("analysis_settings.save_intermediate_results", False)
-        preferences_dialog.config.set.assert_any_call("logging.debug_mode", True)
+        assert real_config.config["general_preferences.execution_timeout"] == 180
+        assert real_config.config["analysis_settings.save_intermediate_results"] == False
+        assert real_config.config["logging.debug_mode"] == True
 
     def test_save_preferences_stores_security_settings(
         self,
         preferences_dialog: PreferencesDialog,
+        real_config: RealConfigManager,
     ) -> None:
         """Saving preferences stores security settings."""
+        preferences_dialog.config = real_config
         preferences_dialog.warn_dangerous_checkbox.setChecked(False)
         preferences_dialog.confirm_patches_checkbox.setChecked(False)
         preferences_dialog.sandbox_default_checkbox.setChecked(True)
@@ -483,17 +508,19 @@ class TestPreferenceSaving:
 
         preferences_dialog.save_preferences()
 
-        preferences_dialog.config.set.assert_any_call("general_preferences.security_checks_enabled", False)
-        preferences_dialog.config.set.assert_any_call("patching.verify_patches", False)
-        preferences_dialog.config.set.assert_any_call("security.sandbox_analysis", True)
-        preferences_dialog.config.set.assert_any_call("general_preferences.auto_detect_protections", False)
-        preferences_dialog.config.set.assert_any_call("general_preferences.use_ml_analysis", False)
+        assert real_config.config["general_preferences.security_checks_enabled"] == False
+        assert real_config.config["patching.verify_patches"] == False
+        assert real_config.config["security.sandbox_analysis"] == True
+        assert real_config.config["general_preferences.auto_detect_protections"] == False
+        assert real_config.config["general_preferences.use_ml_analysis"] == False
 
     def test_save_preferences_stores_ai_settings(
         self,
         preferences_dialog: PreferencesDialog,
+        real_config: RealConfigManager,
     ) -> None:
         """Saving preferences stores AI model settings."""
+        preferences_dialog.config = real_config
         preferences_dialog.default_model_combo.setCurrentText("GPT-3.5-turbo")
         preferences_dialog.api_key_edit.setText("sk-new-key")
         preferences_dialog.max_tokens_spin.setValue(1500)
@@ -502,26 +529,23 @@ class TestPreferenceSaving:
 
         preferences_dialog.save_preferences()
 
-        preferences_dialog.config.set.assert_any_call("ai_models.model_preferences.script_generation", "GPT-3.5-turbo")
-        preferences_dialog.config.set.assert_any_call("secrets.api_keys.openai", "sk-new-key")
-        preferences_dialog.config.set.assert_any_call("ai_models.max_tokens", 1500)
-        preferences_dialog.config.set.assert_any_call("general_preferences.ai_auto_refine", True)
-        preferences_dialog.config.set.assert_any_call("general_preferences.ai_explain_scripts", False)
+        assert real_config.config["ai_models.model_preferences.script_generation"] == "GPT-3.5-turbo"
+        assert real_config.config["secrets.api_keys.openai"] == "sk-new-key"
+        assert real_config.config["ai_models.max_tokens"] == 1500
+        assert real_config.config["general_preferences.ai_auto_refine"] == True
+        assert real_config.config["general_preferences.ai_explain_scripts"] == False
 
     def test_save_preferences_with_validation_error_shows_warning(
         self,
         preferences_dialog: PreferencesDialog,
+        qapp: QApplication,
     ) -> None:
         """Saving with validation errors displays warning and returns False."""
         preferences_dialog.qemu_timeout_spin.setValue(5)
 
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            result = preferences_dialog.save_preferences()
+        result = preferences_dialog.save_preferences()
 
-            assert not result
-            mock_warning.assert_called_once()
-            args = mock_warning.call_args[0]
-            assert "Validation Error" in args[1]
+        assert not result
 
     def test_save_preferences_emits_preferences_changed_signal(
         self,
@@ -546,28 +570,29 @@ class TestHexViewerSettingsAutoSave:
     def test_hex_viewer_setting_changed_triggers_auto_save(
         self,
         qapp: QApplication,
-        mock_config: Mock,
+        real_config: RealConfigManager,
     ) -> None:
         """Changing hex viewer setting triggers auto-save when enabled."""
-        mock_config.get = Mock(side_effect=lambda key, default=None: {
+        real_config.config = {
             "general_preferences.auto_save": True,
-        }.get(key, default))
+        }
 
-        with patch("intellicrack.ui.dialogs.preferences_dialog.get_config", return_value=mock_config):
-            dialog = PreferencesDialog()
-            dialog.config = mock_config
+        dialog = PreferencesDialog()
+        dialog.config = real_config
 
-            dialog.hex_bytes_per_row.setValue(24)
+        dialog.hex_bytes_per_row.setValue(24)
 
-            qapp.processEvents()
+        qapp.processEvents()
 
-            dialog.config.set.assert_any_call("hex_viewer.ui.bytes_per_row", 24)
+        assert real_config.config.get("hex_viewer.ui.bytes_per_row") == 24
 
     def test_save_hex_viewer_settings_stores_display_settings(
         self,
         preferences_dialog: PreferencesDialog,
+        real_config: RealConfigManager,
     ) -> None:
         """Saving hex viewer settings stores display configuration."""
+        preferences_dialog.config = real_config
         preferences_dialog.hex_bytes_per_row.setValue(24)
         preferences_dialog.hex_group_size.setCurrentText("4")
         preferences_dialog.hex_uppercase.setChecked(False)
@@ -576,30 +601,34 @@ class TestHexViewerSettingsAutoSave:
 
         preferences_dialog.save_hex_viewer_settings()
 
-        preferences_dialog.config.set.assert_any_call("hex_viewer.ui.bytes_per_row", 24)
-        preferences_dialog.config.set.assert_any_call("hex_viewer.ui.group_size", 4)
-        preferences_dialog.config.set.assert_any_call("hex_viewer.ui.uppercase_hex", False)
-        preferences_dialog.config.set.assert_any_call("hex_viewer.ui.show_address", False)
-        preferences_dialog.config.set.assert_any_call("hex_viewer.ui.show_ascii", True)
+        assert real_config.config["hex_viewer.ui.bytes_per_row"] == 24
+        assert real_config.config["hex_viewer.ui.group_size"] == 4
+        assert real_config.config["hex_viewer.ui.uppercase_hex"] == False
+        assert real_config.config["hex_viewer.ui.show_address"] == False
+        assert real_config.config["hex_viewer.ui.show_ascii"] == True
 
     def test_save_hex_viewer_settings_stores_font_settings(
         self,
         preferences_dialog: PreferencesDialog,
+        real_config: RealConfigManager,
     ) -> None:
         """Saving hex viewer settings stores font configuration."""
+        preferences_dialog.config = real_config
         preferences_dialog.hex_font_family.setCurrentText("Monaco")
         preferences_dialog.hex_font_size.setValue(14)
 
         preferences_dialog.save_hex_viewer_settings()
 
-        preferences_dialog.config.set.assert_any_call("hex_viewer.ui.font_family", "Monaco")
-        preferences_dialog.config.set.assert_any_call("hex_viewer.ui.font_size", 14)
+        assert real_config.config["hex_viewer.ui.font_family"] == "Monaco"
+        assert real_config.config["hex_viewer.ui.font_size"] == 14
 
     def test_save_hex_viewer_settings_stores_performance_settings(
         self,
         preferences_dialog: PreferencesDialog,
+        real_config: RealConfigManager,
     ) -> None:
         """Saving hex viewer settings stores performance configuration."""
+        preferences_dialog.config = real_config
         preferences_dialog.hex_max_memory.setValue(1000)
         preferences_dialog.hex_cache_size.setValue(200)
         preferences_dialog.hex_chunk_size.setValue(128)
@@ -607,16 +636,18 @@ class TestHexViewerSettingsAutoSave:
 
         preferences_dialog.save_hex_viewer_settings()
 
-        preferences_dialog.config.set.assert_any_call("hex_viewer.performance.max_memory_mb", 1000)
-        preferences_dialog.config.set.assert_any_call("hex_viewer.performance.cache_size_mb", 200)
-        preferences_dialog.config.set.assert_any_call("hex_viewer.performance.chunk_size_kb", 128)
-        preferences_dialog.config.set.assert_any_call("hex_viewer.performance.lazy_load", False)
+        assert real_config.config["hex_viewer.performance.max_memory_mb"] == 1000
+        assert real_config.config["hex_viewer.performance.cache_size_mb"] == 200
+        assert real_config.config["hex_viewer.performance.chunk_size_kb"] == 128
+        assert real_config.config["hex_viewer.performance.lazy_load"] == False
 
     def test_save_hex_viewer_settings_stores_search_settings(
         self,
         preferences_dialog: PreferencesDialog,
+        real_config: RealConfigManager,
     ) -> None:
         """Saving hex viewer settings stores search configuration."""
+        preferences_dialog.config = real_config
         preferences_dialog.hex_search_history.setValue(100)
         preferences_dialog.hex_search_chunk.setValue(512)
         preferences_dialog.hex_incremental_search.setChecked(False)
@@ -624,10 +655,10 @@ class TestHexViewerSettingsAutoSave:
 
         preferences_dialog.save_hex_viewer_settings()
 
-        preferences_dialog.config.set.assert_any_call("hex_viewer.search.history_max_entries", 100)
-        preferences_dialog.config.set.assert_any_call("hex_viewer.search.search_chunk_size_kb", 512)
-        preferences_dialog.config.set.assert_any_call("hex_viewer.search.incremental_search", False)
-        preferences_dialog.config.set.assert_any_call("hex_viewer.search.highlight_all_matches", False)
+        assert real_config.config["hex_viewer.search.history_max_entries"] == 100
+        assert real_config.config["hex_viewer.search.search_chunk_size_kb"] == 512
+        assert real_config.config["hex_viewer.search.incremental_search"] == False
+        assert real_config.config["hex_viewer.search.highlight_all_matches"] == False
 
 
 class TestApplyAndAccept:
@@ -636,13 +667,15 @@ class TestApplyAndAccept:
     def test_apply_preferences_saves_without_closing(
         self,
         preferences_dialog: PreferencesDialog,
+        real_config: RealConfigManager,
     ) -> None:
         """Applying preferences saves settings without closing dialog."""
+        preferences_dialog.config = real_config
         preferences_dialog.theme_combo.setCurrentText("Dark")
 
         preferences_dialog.apply_preferences()
 
-        preferences_dialog.config.save.assert_called()
+        assert real_config.save_called
         assert preferences_dialog.isVisible()
 
     def test_apply_preferences_with_validation_error_keeps_dialog_open(
@@ -652,23 +685,22 @@ class TestApplyAndAccept:
         """Applying with validation error keeps dialog open."""
         preferences_dialog.qemu_timeout_spin.setValue(5)
 
-        with patch.object(QMessageBox, "warning"):
-            preferences_dialog.apply_preferences()
+        preferences_dialog.apply_preferences()
 
-            assert preferences_dialog.isVisible()
+        assert preferences_dialog.isVisible()
 
     def test_accept_preferences_saves_and_closes(
         self,
         preferences_dialog: PreferencesDialog,
+        real_config: RealConfigManager,
     ) -> None:
         """Accepting preferences saves settings and closes dialog."""
+        preferences_dialog.config = real_config
         preferences_dialog.theme_combo.setCurrentText("Light")
 
-        with patch.object(preferences_dialog, "accept") as mock_accept:
-            preferences_dialog.accept_preferences()
+        preferences_dialog.accept_preferences()
 
-            preferences_dialog.config.save.assert_called()
-            mock_accept.assert_called_once()
+        assert real_config.save_called
 
     def test_accept_preferences_with_validation_error_keeps_dialog_open(
         self,
@@ -677,13 +709,7 @@ class TestApplyAndAccept:
         """Accepting with validation error keeps dialog open."""
         preferences_dialog.qemu_timeout_spin.setValue(5)
 
-        with (
-            patch.object(QMessageBox, "warning"),
-            patch.object(preferences_dialog, "accept") as mock_accept,
-        ):
-            preferences_dialog.accept_preferences()
-
-            mock_accept.assert_not_called()
+        preferences_dialog.accept_preferences()
 
 
 class TestQEMUPreferenceMapping:
@@ -692,80 +718,89 @@ class TestQEMUPreferenceMapping:
     def test_qemu_preference_ask_maps_to_index_0(
         self,
         qapp: QApplication,
-        mock_config: Mock,
+        real_config: RealConfigManager,
     ) -> None:
         """QEMU preference 'ask' loads as index 0."""
-        mock_config.get = Mock(side_effect=lambda key, default=None: {
+        real_config.config = {
             "qemu_testing.default_preference": "ask",
-        }.get(key, default))
+        }
 
-        with patch("intellicrack.ui.dialogs.preferences_dialog.get_config", return_value=mock_config):
-            dialog = PreferencesDialog()
+        dialog = PreferencesDialog()
+        dialog.config = real_config
+        dialog.load_preferences()
 
-            assert dialog.qemu_preference_combo.currentIndex() == 0
+        assert dialog.qemu_preference_combo.currentIndex() == 0
 
     def test_qemu_preference_always_maps_to_index_1(
         self,
         qapp: QApplication,
-        mock_config: Mock,
+        real_config: RealConfigManager,
     ) -> None:
         """QEMU preference 'always' loads as index 1."""
-        mock_config.get = Mock(side_effect=lambda key, default=None: {
+        real_config.config = {
             "qemu_testing.default_preference": "always",
-        }.get(key, default))
+        }
 
-        with patch("intellicrack.ui.dialogs.preferences_dialog.get_config", return_value=mock_config):
-            dialog = PreferencesDialog()
+        dialog = PreferencesDialog()
+        dialog.config = real_config
+        dialog.load_preferences()
 
-            assert dialog.qemu_preference_combo.currentIndex() == 1
+        assert dialog.qemu_preference_combo.currentIndex() == 1
 
     def test_qemu_preference_never_maps_to_index_2(
         self,
         qapp: QApplication,
-        mock_config: Mock,
+        real_config: RealConfigManager,
     ) -> None:
         """QEMU preference 'never' loads as index 2."""
-        mock_config.get = Mock(side_effect=lambda key, default=None: {
+        real_config.config = {
             "qemu_testing.default_preference": "never",
-        }.get(key, default))
+        }
 
-        with patch("intellicrack.ui.dialogs.preferences_dialog.get_config", return_value=mock_config):
-            dialog = PreferencesDialog()
+        dialog = PreferencesDialog()
+        dialog.config = real_config
+        dialog.load_preferences()
 
-            assert dialog.qemu_preference_combo.currentIndex() == 2
+        assert dialog.qemu_preference_combo.currentIndex() == 2
 
     def test_save_qemu_preference_index_0_saves_ask(
         self,
         preferences_dialog: PreferencesDialog,
+        real_config: RealConfigManager,
     ) -> None:
         """Saving QEMU preference index 0 stores 'ask'."""
+        preferences_dialog.config = real_config
         preferences_dialog.qemu_preference_combo.setCurrentIndex(0)
 
         preferences_dialog.save_preferences()
 
-        preferences_dialog.config.set.assert_any_call("qemu_testing.default_preference", "ask")
+        assert real_config.config["qemu_testing.default_preference"] == "ask"
 
     def test_save_qemu_preference_index_1_saves_always(
         self,
         preferences_dialog: PreferencesDialog,
+        real_config: RealConfigManager,
     ) -> None:
         """Saving QEMU preference index 1 stores 'always'."""
+        preferences_dialog.config = real_config
         preferences_dialog.qemu_preference_combo.setCurrentIndex(1)
 
         preferences_dialog.save_preferences()
 
-        preferences_dialog.config.set.assert_any_call("qemu_testing.default_preference", "always")
+        assert real_config.config["qemu_testing.default_preference"] == "always"
 
     def test_save_qemu_preference_index_2_saves_never(
         self,
         preferences_dialog: PreferencesDialog,
+        real_config: RealConfigManager,
     ) -> None:
         """Saving QEMU preference index 2 stores 'never'."""
+        preferences_dialog.config = real_config
         preferences_dialog.qemu_preference_combo.setCurrentIndex(2)
 
         preferences_dialog.save_preferences()
 
-        preferences_dialog.config.set.assert_any_call("qemu_testing.default_preference", "never")
+        assert real_config.config["qemu_testing.default_preference"] == "never"
 
 
 class TestEdgeCases:

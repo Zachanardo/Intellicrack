@@ -71,7 +71,7 @@ class BinarySimilaritySearch:
         """Load the binary database from file.
 
         Returns:
-            dict[str, Any]: Database dictionary with binary entries.
+            Database dictionary with binary entries.
 
         """
         if not os.path.exists(self.database_path):
@@ -140,7 +140,7 @@ class BinarySimilaritySearch:
             binary_path: Path to the binary file.
 
         Returns:
-            dict[str, Any]: Dictionary of extracted features including entropy, sections, imports, and exports.
+            Dictionary of extracted features including entropy, sections, imports, and exports.
 
         """
         features = {
@@ -178,7 +178,7 @@ class BinarySimilaritySearch:
                     features["characteristics"] = getattr(pe.FILE_HEADER, "Characteristics", 0)
 
                     # Extract section information
-                    sections_list: list[dict[str, Any]] = features["sections"]  # type: ignore[assignment]
+                    sections_list: list[dict[str, Any]] = features["sections"]
                     for section in pe.sections:
                         section_name = section.Name.decode("utf-8", "ignore").strip("\x00")
                         section_info = {
@@ -191,7 +191,7 @@ class BinarySimilaritySearch:
                         sections_list.append(section_info)
 
                     # Extract import information
-                    imports_list: list[str] = features["imports"]  # type: ignore[assignment]
+                    imports_list: list[str] = features["imports"]
                     if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                         for entry in pe.DIRECTORY_ENTRY_IMPORT:
                             dll_name = entry.dll.decode("utf-8", "ignore")
@@ -201,7 +201,7 @@ class BinarySimilaritySearch:
                                     imports_list.append(f"{dll_name}:{imp_name}")
 
                     # Extract export information
-                    exports_list: list[str] = features["exports"]  # type: ignore[assignment]
+                    exports_list: list[str] = features["exports"]
                     if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
                         for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
                             if exp.name:
@@ -229,7 +229,7 @@ class BinarySimilaritySearch:
             min_length: Minimum length of strings to extract.
 
         Returns:
-            list[str]: List of extracted ASCII strings.
+            List of extracted ASCII strings.
 
         """
         from ...utils.core.string_utils import extract_ascii_strings
@@ -244,7 +244,7 @@ class BinarySimilaritySearch:
             threshold: Similarity threshold (0.0 to 1.0).
 
         Returns:
-            list[dict[str, Any]]: List of similar binaries with similarity scores.
+            List of similar binaries with similarity scores.
 
         """
         try:
@@ -291,7 +291,7 @@ class BinarySimilaritySearch:
             features2: Second set of features.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -336,7 +336,7 @@ class BinarySimilaritySearch:
             sections2: Second set of sections.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -374,7 +374,7 @@ class BinarySimilaritySearch:
             list2: Second list.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -403,7 +403,7 @@ class BinarySimilaritySearch:
             features2: Second set of features.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -473,7 +473,7 @@ class BinarySimilaritySearch:
             features2: Second set of features.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -511,7 +511,7 @@ class BinarySimilaritySearch:
             features2: Second set of features.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -544,7 +544,7 @@ class BinarySimilaritySearch:
             features2: Second set of features.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -580,7 +580,7 @@ class BinarySimilaritySearch:
             features2: Second set of features.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -613,7 +613,7 @@ class BinarySimilaritySearch:
             features2: Second set of features.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -640,7 +640,7 @@ class BinarySimilaritySearch:
             features2: Second set of features.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -674,7 +674,7 @@ class BinarySimilaritySearch:
             features2: Second set of features.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -723,7 +723,7 @@ class BinarySimilaritySearch:
             features2: Second set of features.
 
         Returns:
-            dict[str, float]: Dictionary of component weights normalized to sum to 1.0.
+            Dictionary of component weights normalized to sum to 1.0.
 
         """
         weights = {
@@ -764,7 +764,7 @@ class BinarySimilaritySearch:
             imports2: Second set of import names.
 
         Returns:
-            float: Weighted similarity score between 0.0 and 1.0.
+            Weighted similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -811,7 +811,7 @@ class BinarySimilaritySearch:
             features2: Second set of features.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -848,7 +848,7 @@ class BinarySimilaritySearch:
             strings2: Second set of strings.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -897,7 +897,7 @@ class BinarySimilaritySearch:
             s2: Second string.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -932,7 +932,7 @@ class BinarySimilaritySearch:
             strings2: Second set of strings.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -971,7 +971,7 @@ class BinarySimilaritySearch:
             features2: Second set of features.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -1015,7 +1015,7 @@ class BinarySimilaritySearch:
             size2: Second file size in bytes.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -1045,7 +1045,7 @@ class BinarySimilaritySearch:
             entropy2: Second entropy value.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -1071,7 +1071,7 @@ class BinarySimilaritySearch:
             sections2: Second set of sections.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -1111,7 +1111,7 @@ class BinarySimilaritySearch:
             features2: Second set of features.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -1150,7 +1150,7 @@ class BinarySimilaritySearch:
             strings2: Second set of strings.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -1198,7 +1198,7 @@ class BinarySimilaritySearch:
             features2: Second set of features.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -1233,7 +1233,7 @@ class BinarySimilaritySearch:
             strings: List of strings to hash.
 
         Returns:
-            str: Hexadecimal hash string.
+            Hexadecimal hash string.
 
         """
         try:
@@ -1261,7 +1261,7 @@ class BinarySimilaritySearch:
             hash2: Second hash string.
 
         Returns:
-            float: Similarity score between 0.0 and 1.0.
+            Similarity score between 0.0 and 1.0.
 
         """
         try:
@@ -1282,7 +1282,7 @@ class BinarySimilaritySearch:
         """Get statistics about the binary database.
 
         Returns:
-            dict[str, Any]: Dictionary containing total binaries, patterns, average file size, and unique imports/exports.
+            Dictionary containing total binaries, patterns, average file size, and unique imports/exports.
 
         """
         binaries_list = self.database.get("binaries", [])
@@ -1331,7 +1331,7 @@ class BinarySimilaritySearch:
         """Get statistics from the most recent fuzzy string similarity calculation.
 
         Returns:
-            dict[str, int]: Dictionary containing total_comparisons, matches_found, and sample_size.
+            Dictionary containing total_comparisons, matches_found, and sample_size.
 
         """
         return self.fuzzy_match_stats.copy()
@@ -1343,7 +1343,7 @@ class BinarySimilaritySearch:
             binary_path: Path of the binary to remove.
 
         Returns:
-            bool: True if removed successfully, False otherwise.
+            True if removed successfully, False otherwise.
 
         """
         try:
@@ -1368,7 +1368,7 @@ class BinarySimilaritySearch:
             database_path: Path to the database file to load.
 
         Returns:
-            bool: True if successful, False otherwise.
+            True if successful, False otherwise.
 
         """
         try:
@@ -1388,7 +1388,7 @@ class BinarySimilaritySearch:
             threshold: Similarity threshold (0.0 to 1.0).
 
         Returns:
-            list[dict[str, Any]]: List of similar binaries with their similarity scores.
+            List of similar binaries with their similarity scores.
 
         """
         return self.search_similar_binaries(binary_path, threshold)
@@ -1401,7 +1401,7 @@ def create_similarity_search(database_path: str = "binary_database.json") -> Bin
         database_path: Path to the database file.
 
     Returns:
-        BinarySimilaritySearch: Configured BinarySimilaritySearch instance.
+        Configured BinarySimilaritySearch instance.
 
     """
     return BinarySimilaritySearch(database_path)

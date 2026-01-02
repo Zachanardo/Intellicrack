@@ -26,7 +26,7 @@ import threading
 import time
 import types
 from collections import defaultdict, deque
-from collections.abc import AsyncGenerator, Callable, Coroutine, Generator
+from collections.abc import Callable, Coroutine, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta

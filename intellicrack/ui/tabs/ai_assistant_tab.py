@@ -7,7 +7,7 @@ Licensed under GNU General Public License v3.0
 from __future__ import annotations
 
 from collections.abc import ItemsView
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.ai.interactive_assistant import IntellicrackAIAssistant
 from intellicrack.handlers.pyqt6_handler import (
@@ -52,7 +52,7 @@ class APIKeyConfigDialog(QDialog):
         """Initialize the API configuration dialog.
 
         Args:
-            parent: Parent widget for the dialog
+            parent: Parent widget for the dialog.
 
         """
         super().__init__(parent)
@@ -136,7 +136,17 @@ class APIKeyConfigDialog(QDialog):
         self.on_provider_changed(self.provider_combo.currentText())
 
     def on_provider_changed(self, provider_name: str) -> None:
-        """Handle provider selection change."""
+        """Handle provider selection change and update UI visibility.
+
+        Updates the visibility of API key and base URL fields based on the
+        selected provider. Clears previous model selections and status labels.
+
+        Args:
+            provider_name: Name of the selected provider (e.g., "OpenAI",
+                "Anthropic", "Ollama (Local)", "LM Studio (Local)", or
+                "Custom OpenAI-Compatible").
+
+        """
         self.model_combo.clear()
         self.model_info_label.clear()
         self.available_models = []
@@ -173,7 +183,13 @@ class APIKeyConfigDialog(QDialog):
         self.status_label.setText("Click 'Refresh Models' to load available models")
 
     def fetch_available_models(self) -> None:
-        """Fetch available models from the selected provider."""
+        """Fetch available models from the selected provider.
+
+        Fetches models from the provider specified in the provider combo box,
+        updates the model combo box with available options, and displays status
+        messages to the user.
+
+        """
         provider_name = self.provider_combo.currentText()
         api_key = self.api_key_edit.text() if self.api_key_edit.isVisible() else None
         base_url = self.base_url_edit.text() or None
@@ -185,7 +201,6 @@ class APIKeyConfigDialog(QDialog):
         try:
             from intellicrack.ai.api_provider_clients import (
                 AnthropicProviderClient,
-                BaseProviderClient,
                 LMStudioProviderClient,
                 OllamaProviderClient,
                 OpenAIProviderClient,
@@ -233,7 +248,18 @@ class APIKeyConfigDialog(QDialog):
             self.fetch_models_btn.setEnabled(True)
 
     def on_model_selected(self, model_display_name: str) -> None:
-        """Handle model selection and show model information."""
+        """Handle model selection and display detailed model information.
+
+        Displays model information including description, context length,
+        and capabilities in the model info label. Updates max tokens spinner
+        based on the selected model's context window.
+
+        Args:
+            model_display_name: Display name of the selected model in the
+                combo box. Used to identify the corresponding model from
+                the available models list.
+
+        """
         if not self.available_models:
             return
 
@@ -257,7 +283,19 @@ class APIKeyConfigDialog(QDialog):
             self.max_tokens_spin.setMaximum(min(model.context_length, 200000))
 
     def get_config(self) -> dict[str, object]:
-        """Retrieve the current configuration."""
+        """Retrieve the current API configuration from dialog fields.
+
+        Collects all configuration values from the dialog UI elements
+        including provider selection, API credentials, model choice, and
+        generation parameters.
+
+        Returns:
+            dict[str, object]: Dictionary with keys "provider", "api_key",
+                "base_url", "model", "temperature" (float 0.0-2.0), and
+                "max_tokens" (int 100-200000). Values may be None if the
+                corresponding UI field is not visible or empty.
+
+        """
         model_id = self.model_combo.currentData() or self.model_combo.currentText()
 
         return {
@@ -270,7 +308,19 @@ class APIKeyConfigDialog(QDialog):
         }
 
     def set_config(self, config: dict[str, object]) -> None:
-        """Populate the dialog with existing configuration."""
+        """Populate the dialog fields with existing configuration values.
+
+        Updates all dialog UI elements with values from the provided
+        configuration dictionary, performing type validation and safe
+        value retrieval for each field.
+
+        Args:
+            config: Configuration dictionary with keys "provider" (str),
+                "api_key" (str or None), "base_url" (str or None),
+                "model" (str), "temperature" (float), and "max_tokens" (int).
+                Missing or incorrectly-typed keys are skipped with no error.
+
+        """
         provider = config.get("provider")
         if provider is not None and isinstance(provider, str):
             index = self.provider_combo.findText(provider)
@@ -302,13 +352,35 @@ class AIAssistantTab(BaseTab):
     """AI Assistant tab providing AI-powered analysis and script generation."""
 
     def __init__(self, shared_context: dict[str, Any] | None = None, parent: QWidget | None = None) -> None:
-        """Initialize the AI Assistant tab."""
+        """Initialize the AI Assistant tab with context and parent widget.
+
+        Sets up the tab's internal state including AI assistant instance
+        and model configuration storage. Calls parent BaseTab initialization.
+
+        Args:
+            shared_context: Optional dictionary for sharing state and
+                communication between tabs. Used to access analysis results
+                and binary data from other tabs.
+            parent: Optional parent QWidget for this tab. If provided, the
+                tab will be embedded within the parent widget's layout.
+
+        """
         super().__init__(shared_context, parent)
         self.ai_assistant: IntellicrackAIAssistant | None = None
         self.model_configs: dict[str, dict[str, object]] = {}
 
     def setup_content(self) -> None:
-        """Initialize the user interface."""
+        """Initialize the user interface for the AI Assistant tab.
+
+        Sets up the complete AI Assistant tab UI including model configuration,
+        input/output areas, and action buttons. Initializes the AI assistant
+        and loads available models from configured providers.
+
+        Raises:
+            RuntimeError: If layout is not initialized in BaseTab or layout
+                is None when retrieving from parent.
+
+        """
         layout = self.layout()
         if layout is None:
             raise RuntimeError("Layout not initialized in BaseTab")
@@ -422,7 +494,12 @@ class AIAssistantTab(BaseTab):
         self.is_loaded = True
 
     def setup_ai_assistant(self) -> None:
-        """Initialize the AI assistant."""
+        """Initialize the AI assistant.
+
+        Creates and configures an IntellicrackAIAssistant instance, updating
+        the status label with initialization results. Logs any errors that occur.
+
+        """
         try:
             assistant = IntellicrackAIAssistant()
             self.ai_assistant = assistant
@@ -433,7 +510,13 @@ class AIAssistantTab(BaseTab):
             self.status_label.setText(f"Error: {e}")
 
     def configure_model(self) -> None:
-        """Configure API model with provider selection and dynamic model discovery."""
+        """Configure API model with provider selection and dynamic model discovery.
+
+        Displays a configuration dialog for setting up API providers, models,
+        and parameters. Registers the configured model with the LLM manager
+        and reinitializes the AI assistant.
+
+        """
         model = self.model_combo.currentText()
 
         if "Upload Local Model" in model or "Local:" in model:
@@ -534,7 +617,13 @@ class AIAssistantTab(BaseTab):
         logger.info("Model configuration dialog completed")
 
     def perform_analysis(self) -> None:
-        """Perform AI-powered analysis on input."""
+        """Perform AI-powered analysis on input.
+
+        Processes the text from the input field through the AI assistant and
+        displays the analysis results in the output field. Updates status label
+        and manages button states during analysis.
+
+        """
         input_text = self.input_text.toPlainText()
 
         if not input_text:
@@ -565,7 +654,13 @@ class AIAssistantTab(BaseTab):
             self.analyze_btn.setEnabled(True)
 
     def generate_script(self) -> None:
-        """Generate script based on input."""
+        """Generate script based on input.
+
+        Processes script generation request through the AI assistant and
+        displays the generated script in the output field. Updates status label
+        and manages button states during generation.
+
+        """
         input_text = self.input_text.toPlainText()
 
         if not input_text:
@@ -597,7 +692,12 @@ class AIAssistantTab(BaseTab):
             self.generate_script_btn.setEnabled(True)
 
     def export_script(self) -> None:
-        """Export generated script to file."""
+        """Export generated script to file.
+
+        Displays a file save dialog and writes the output text to the selected
+        file. Displays success or error messages to the user.
+
+        """
         from intellicrack.handlers.pyqt6_handler import QFileDialog
 
         file_path, _ = QFileDialog.getSaveFileName(
@@ -619,7 +719,12 @@ class AIAssistantTab(BaseTab):
                 logger.exception("Failed to export script: %s", e)
 
     def copy_to_clipboard(self) -> None:
-        """Copy output to clipboard."""
+        """Copy output to clipboard.
+
+        Copies the text from the output field to the system clipboard and
+        updates the status label with confirmation.
+
+        """
         clipboard = QApplication.clipboard()
         if clipboard is not None:
             clipboard.setText(self.output_text.toPlainText())
@@ -628,7 +733,13 @@ class AIAssistantTab(BaseTab):
             self.status_label.setText("Clipboard not available")
 
     def load_available_models(self) -> None:
-        """Load all available AI models dynamically from configured providers."""
+        """Load all available AI models dynamically from configured providers.
+
+        Discovers and loads AI models from multiple sources including model
+        discovery service, LLM manager, local GGUF models, and repository models.
+        Updates the model combo box and displays appropriate status messages.
+
+        """
         try:
             self.model_combo.clear()
             available_models = []
@@ -716,7 +827,13 @@ class AIAssistantTab(BaseTab):
             self.model_combo.setEnabled(False)
 
     def upload_local_model(self) -> None:
-        """Upload a local model file."""
+        """Upload a local model file.
+
+        Displays a file dialog for selecting GGUF or ONNX model files, imports
+        the selected model using ModelManager, and updates the model combo box
+        with the newly imported model.
+
+        """
         from intellicrack.handlers.pyqt6_handler import QFileDialog, QMessageBox
 
         file_path, _ = QFileDialog.getOpenFileName(
@@ -755,7 +872,13 @@ class AIAssistantTab(BaseTab):
                 QMessageBox.critical(self, "Error", f"Failed to upload model: {e!s}")
 
     def open_model_manager(self) -> None:
-        """Open the model manager dialog."""
+        """Open the model manager dialog.
+
+        Launches the ModelManagerDialog for managing installed AI models,
+        downloading new models, and configuring model parameters. Reloads
+        available models after the dialog closes.
+
+        """
         try:
             from intellicrack.ui.dialogs.model_manager_dialog import ModelManagerDialog
 
@@ -770,7 +893,12 @@ class AIAssistantTab(BaseTab):
             QMessageBox.critical(self, "Error", f"Failed to open model manager: {e!s}")
 
     def clear_all(self) -> None:
-        """Clear all text fields."""
+        """Clear all text fields.
+
+        Clears the input and output text fields, resets the status label,
+        and disables the export script button.
+
+        """
         self.input_text.clear()
         self.output_text.clear()
         self.status_label.setText("Ready")

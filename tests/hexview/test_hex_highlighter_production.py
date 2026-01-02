@@ -272,6 +272,7 @@ class TestHexHighlighter:
         assert success is True
 
         highlight = highlighter.get_highlight_by_id(highlight_id)
+        assert highlight is not None
         assert highlight.color == "#00FF00"
         assert highlight.description == "Updated"
 
@@ -363,6 +364,9 @@ class TestHexHighlighterSpecializedHighlights:
         medium_h = highlighter.get_highlight_by_id(medium_confidence)
         low_h = highlighter.get_highlight_by_id(low_confidence)
 
+        assert high_h is not None
+        assert medium_h is not None
+        assert low_h is not None
         assert high_h.color == "#8800FF"
         assert medium_h.color == "#FF8800"
         assert low_h.color == "#FFCC00"
@@ -405,6 +409,7 @@ class TestHighlightEdgeCases:
         highlight_id = highlighter.add_highlight(100, 101, HighlightType.CUSTOM)
 
         highlight = highlighter.get_highlight_by_id(highlight_id)
+        assert highlight is not None
         assert highlight.size == 1
 
     def test_swapped_start_end(self) -> None:
@@ -418,6 +423,7 @@ class TestHighlightEdgeCases:
         )
 
         highlight = highlighter.get_highlight_by_id(highlight_id)
+        assert highlight is not None
         assert highlight.start == 100
         assert highlight.end == 200
 
@@ -433,4 +439,5 @@ class TestHighlightEdgeCases:
         )
 
         highlight = highlighter.get_highlight_by_id(highlight_id)
+        assert highlight is not None
         assert highlight.alpha == 127

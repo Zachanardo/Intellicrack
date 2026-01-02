@@ -76,7 +76,7 @@ def _generate_memory_write_instructions(address: str, value: int) -> str:
         # Fallback: Generate relative address instruction
         return f"B8{address.replace('0x', '').zfill(8)}C700{value:08X}"
 
-def test_enhanced_patch_instructions():
+def test_enhanced_patch_instructions() -> bool:
     """Test enhanced patch instruction generation."""
     print("DAY 4.1 VALIDATION: Enhanced Patch Instruction Generation")
     print("=" * 60)
@@ -123,7 +123,7 @@ def test_enhanced_patch_instructions():
 
     return True
 
-def main():
+def main() -> int:
     """Main test function."""
     try:
         if success := test_enhanced_patch_instructions():

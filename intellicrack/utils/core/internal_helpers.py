@@ -27,7 +27,7 @@ import threading
 import time
 from collections.abc import Callable
 from ctypes import c_int, c_ulong
-from datetime import UTC, timezone
+from datetime import UTC
 from pathlib import Path
 from typing import Any, BinaryIO
 
@@ -1098,7 +1098,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
     # Read actual memory from current process or target process
     if platform.system() == "Windows":
         import ctypes
-        from ctypes import c_char, wintypes
+        from ctypes import c_char
 
         # Open current process for memory reading
 
@@ -1186,6 +1186,15 @@ def _handle_request(request_type: str, data: dict[str, Any]) -> dict[str, Any]:
     """
 
     def _get_info_wrapper(d: dict[str, Any]) -> dict[str, Any]:
+        """Wrapper for get info handler to standardize interface.
+
+        Args:
+            d: Request data dictionary (unused for get info).
+
+        Returns:
+            Dict containing comprehensive server information.
+
+        """
         logger.debug("Get info request data: %s", d)
         return _handle_get_info()
 
@@ -1234,7 +1243,7 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
     """
     if platform.system() == "Windows":
         import ctypes
-        from ctypes import c_char, c_ulong, wintypes
+        from ctypes import c_char, c_ulong
 
         # Open current process for memory writing
 
@@ -2351,7 +2360,7 @@ def _tensorflow_pattern_matching(data: bytes, pattern: bytes) -> list[int]:
         if matches is not None:
             return matches
         # Fallback if TensorFlow method fails
-        logger.debug("TensorFlow convolution failed, using fallback")  # type: ignore[unreachable]
+        logger.debug("TensorFlow convolution failed, using fallback")
         return _match_pattern(data, pattern)
 
     except Exception as e:
@@ -2605,7 +2614,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
                 try:
                     from safetensors import safe_open
 
-                    with safe_open(model_path, framework="np") as sf:  # type: ignore[no-untyped-call]
+                    with safe_open(model_path, framework="np") as sf:
                         for key in sf:
                             tensors[key] = sf.get_tensor(key)
                             tensor_count += 1
@@ -3256,8 +3265,8 @@ def _generate_generic_tensor_data(dims: list[int], data_type: str, total_element
             scale = 1000
 
         # Generate normally distributed integers
-        tensor_data = np.random.normal(0, scale / 3, total_elements)  # type: ignore[assignment]
-        tensor_data = np.clip(tensor_data, -scale, scale).astype(np.int32)
+        raw_values = np.random.normal(0, scale / 3, total_elements)
+        tensor_data = np.clip(raw_values, -scale, scale).astype(np.int32)
 
         # Add structured patterns for certain positions (common in embeddings)
         if total_elements > 1000:
@@ -3276,17 +3285,17 @@ def _generate_generic_tensor_data(dims: list[int], data_type: str, total_element
 
         # Generate with appropriate distribution for INT8
         # Most values should be small with occasional larger values
-        tensor_data = np.random.normal(0, 30, total_elements)  # type: ignore[assignment]
+        raw_values = np.random.normal(0, 30, total_elements)
 
         # Apply exponential decay for some positions (common pattern)
         for i in range(0, total_elements, 64):
             if i < total_elements:
                 decay_factor = np.exp(-i / total_elements)
                 end_idx = min(i + 64, total_elements)
-                tensor_data[i:end_idx] *= decay_factor
+                raw_values[i:end_idx] *= decay_factor
 
         # Clip to INT8 range and convert
-        tensor_data = np.clip(tensor_data, -127, 127).astype(np.int8)
+        tensor_data = np.clip(raw_values, -127, 127).astype(np.int8)
 
         # Convert to bytes
         data.extend(tensor_data.tobytes())
@@ -3294,8 +3303,8 @@ def _generate_generic_tensor_data(dims: list[int], data_type: str, total_element
     elif data_type == "uint8":
         # UINT8 common for image data and certain quantization schemes
         # Generate with bias toward middle values
-        tensor_data = np.random.beta(2, 2, total_elements) * 255  # type: ignore[assignment]
-        tensor_data = tensor_data.astype(np.uint8)
+        raw_values = np.random.beta(2, 2, total_elements) * 255
+        tensor_data = raw_values.astype(np.uint8)
 
         # Convert to bytes
         data.extend(tensor_data.tobytes())

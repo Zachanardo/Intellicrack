@@ -22,7 +22,7 @@ import os
 from collections.abc import Callable
 from datetime import datetime
 from threading import Thread
-from typing import TYPE_CHECKING, Any, Protocol, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Protocol
 
 from intellicrack.utils.logger import logger
 from intellicrack.utils.torch_gil_safety import _torch_lock, safe_torch_import
@@ -72,12 +72,7 @@ class ModelRepositoryProtocol(Protocol):
     """Protocol for model repository interface."""
 
     def get_available_models(self) -> list[ModelInfoProtocol]:
-        """Get available models from repository.
-
-        Returns:
-            List of model information objects
-
-        """
+        """Get available models from repository."""
         ...
 
     def get_model_details(self, model_id: str) -> ModelInfoProtocol | None:
@@ -85,9 +80,6 @@ class ModelRepositoryProtocol(Protocol):
 
         Args:
             model_id: ID of the model
-
-        Returns:
-            Model information object or None
 
         """
         ...
@@ -105,9 +97,6 @@ class ModelRepositoryProtocol(Protocol):
             destination_path: Path to save the model to
             progress_callback: Optional progress callback
 
-        Returns:
-            Tuple of (success, message)
-
         """
         ...
 
@@ -120,9 +109,6 @@ class LocalFileRepositoryProtocol(ModelRepositoryProtocol):
 
         Args:
             file_path: Path to the model file
-
-        Returns:
-            Model information object or None
 
         """
         ...
@@ -154,7 +140,7 @@ else:
     except ImportError:
         _REPOSITORIES_AVAILABLE = False
 
-        class RepositoryFactory:  # type: ignore[no-redef]
+        class RepositoryFactory:
             """Fallback repository factory when repositories unavailable."""
 
             @staticmethod
@@ -172,7 +158,7 @@ else:
                 logger.debug(f"Fallback repository creation called with {len(args)} args and {len(kwargs)} kwargs")
                 return None
 
-        class DownloadProgressCallback:  # type: ignore[no-redef]
+        class DownloadProgressCallback:
             """Fallback progress callback for downloads."""
 
             def __call__(self, *args: object, **kwargs: object) -> None:
@@ -186,14 +172,26 @@ else:
                 logger.debug(f"Progress callback called with {len(args)} args and {len(kwargs)} kwargs")
 
             def on_progress(self, bytes_downloaded: int, total_bytes: int) -> None:
-                """Handle progress updates."""
+                """Handle progress updates.
+
+                Args:
+                    bytes_downloaded: Number of bytes downloaded
+                    total_bytes: Total bytes to download
+
+                """
                 logger.debug(f"Progress: {bytes_downloaded}/{total_bytes}")
 
             def on_complete(self, success: bool, message: str) -> None:
-                """Handle download completion."""
+                """Handle download completion.
+
+                Args:
+                    success: Whether the download was successful
+                    message: Status message
+
+                """
                 logger.debug(f"Complete: {success}, {message}")
 
-        class ModelInfo:  # type: ignore[no-redef]
+        class ModelInfo:
             """Fallback model information container."""
 
             def __init__(self, *args: object, **kwargs: object) -> None:
@@ -209,7 +207,7 @@ else:
                 self.size: int = 0
                 self.local_path: str | None = None
 
-        class ModelRepositoryInterface:  # type: ignore[no-redef]
+        class ModelRepositoryInterface:
             """Fallback model repository interface."""
 
             def __init__(self, *args: object, **kwargs: object) -> None:
@@ -261,7 +259,7 @@ else:
                 """
                 return False, "Repository not available"
 
-        class LocalFileRepository(ModelRepositoryInterface):  # type: ignore[no-redef,misc]
+        class LocalFileRepository(ModelRepositoryInterface):
             """Fallback local file repository."""
 
             def __init__(self, *args: object, **kwargs: object) -> None:
@@ -318,12 +316,24 @@ class ProgressHandler(DownloadProgressCallback):
         self.complete_callback = complete_callback
 
     def on_progress(self, bytes_downloaded: int, total_bytes: int) -> None:
-        """Handle progress updates."""
+        """Handle progress updates.
+
+        Args:
+            bytes_downloaded: Number of bytes downloaded
+            total_bytes: Total bytes to download
+
+        """
         if self.progress_callback:
             self.progress_callback(bytes_downloaded, total_bytes)
 
     def on_complete(self, success: bool, message: str) -> None:
-        """Handle download completion."""
+        """Handle download completion.
+
+        Args:
+            success: Whether the download was successful
+            message: Status message
+
+        """
         if self.complete_callback:
             self.complete_callback(success, message)
 
@@ -662,7 +672,7 @@ class ModelManager:
             model_type: Type of model to train (e.g., 'classifier', 'regression', 'neural_network')
 
         Returns:
-            bool: True if training successful, False otherwise
+            True if training successful, False otherwise
 
         """
         logger.info(f"Training {model_type} model with data")
@@ -827,7 +837,7 @@ class ModelManager:
             path: Path where to save the model
 
         Returns:
-            bool: True if save successful, False otherwise
+            True if save successful, False otherwise
 
         """
         try:

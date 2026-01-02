@@ -332,10 +332,21 @@ def analyze_compression_ratio(data: bytes) -> float:
 
 
 class StatisticsCalculator:
-    """Helper class for calculating statistics with progress tracking."""
+    """Helper class for calculating statistics with progress tracking.
+
+    This class provides a convenient interface for computing comprehensive
+    binary data statistics with support for progress tracking callbacks.
+
+    Attributes:
+        progress_callback: Optional callback function that receives (current, total)
+            progress updates during statistical calculations.
+    """
 
     def __init__(self) -> None:
-        """Initialize statistics calculator."""
+        """Initialize the statistics calculator.
+
+        Sets up the progress callback as None for later configuration.
+        """
         self.progress_callback: Callable[[int, int], None] | None = None
 
     def set_progress_callback(self, callback: Callable[[int, int], None]) -> None:

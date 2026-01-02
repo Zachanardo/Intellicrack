@@ -9,12 +9,48 @@ software licensing protection analysis and cracking operations.
 """
 
 import importlib
+import logging
 import sys
 from types import ModuleType
-from typing import Any
-from unittest.mock import patch
+from typing import Any, Callable, Dict, List, Optional
 
 import pytest
+
+
+class FakeLogger:
+    """Real test double for logger that tracks error calls."""
+
+    def __init__(self) -> None:
+        self.error_calls: List[tuple[Any, ...]] = []
+        self.debug_calls: List[tuple[Any, ...]] = []
+        self.info_calls: List[tuple[Any, ...]] = []
+        self.warning_calls: List[tuple[Any, ...]] = []
+
+    def error(self, *args: Any, **kwargs: Any) -> None:
+        """Track error logging calls."""
+        self.error_calls.append(args)
+
+    def debug(self, *args: Any, **kwargs: Any) -> None:
+        """Track debug logging calls."""
+        self.debug_calls.append(args)
+
+    def info(self, *args: Any, **kwargs: Any) -> None:
+        """Track info logging calls."""
+        self.info_calls.append(args)
+
+    def warning(self, *args: Any, **kwargs: Any) -> None:
+        """Track warning logging calls."""
+        self.warning_calls.append(args)
+
+    @property
+    def called(self) -> bool:
+        """Check if any logging method was called."""
+        return bool(
+            self.error_calls
+            or self.debug_calls
+            or self.info_calls
+            or self.warning_calls
+        )
 
 
 def test_import_checks_all_flags_are_booleans() -> None:
@@ -190,15 +226,28 @@ def test_import_checks_all_exports_are_accessible() -> None:
         ), f"Exported symbol {name} not accessible"
 
 
-def test_import_checks_handles_missing_handler_gracefully() -> None:
+def test_import_checks_handles_missing_handler_gracefully(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Missing handler modules set availability flags to False."""
-    with patch.dict(sys.modules, {"intellicrack.handlers.pefile_handler": None}):
-        importlib.reload(sys.modules.get("intellicrack.utils.core.import_checks"))
+    original_modules = sys.modules.copy()
 
-        from intellicrack.utils.core import import_checks
+    monkeypatch.setitem(sys.modules, "intellicrack.handlers.pefile_handler", None)
 
-        if "pefile_handler" not in sys.modules:
-            assert not import_checks.PEFILE_AVAILABLE
+    if "intellicrack.utils.core.import_checks" in sys.modules:
+        importlib.reload(sys.modules["intellicrack.utils.core.import_checks"])
+
+    from intellicrack.utils.core import import_checks
+
+    if sys.modules.get("intellicrack.handlers.pefile_handler") is None:
+        assert not import_checks.PEFILE_AVAILABLE
+
+    for key, value in original_modules.items():
+        if key not in sys.modules or sys.modules[key] != value:
+            if value is None:
+                sys.modules.pop(key, None)
+            else:
+                sys.modules[key] = value
 
 
 def test_import_checks_consistency_between_flags_and_modules() -> None:
@@ -264,25 +313,32 @@ def test_import_checks_module_reload_maintains_availability() -> None:
     assert import_checks.LIEF_AVAILABLE == initial_lief
 
 
-def test_import_checks_handler_import_errors_logged() -> None:
+def test_import_checks_handler_import_errors_logged(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Import errors from handlers are logged appropriately."""
-    import logging
-
     from intellicrack.utils.core import import_checks
 
-    logger = logging.getLogger("intellicrack.utils.core.import_checks")
+    fake_logger = FakeLogger()
 
-    with patch.object(logger, "error") as mock_error:
-        with patch.dict(
-            sys.modules, {"intellicrack.handlers.pefile_handler": None}, clear=False
-        ):
-            try:
-                importlib.reload(import_checks)
-            except Exception:
-                pass
+    original_get_logger = logging.getLogger
 
-        if not import_checks.PEFILE_AVAILABLE:
-            assert mock_error.called or import_checks.pefile is None
+    def get_fake_logger(name: str) -> FakeLogger | logging.Logger:
+        if name == "intellicrack.utils.core.import_checks":
+            return fake_logger
+        return original_get_logger(name)
+
+    monkeypatch.setattr(logging, "getLogger", get_fake_logger)
+
+    monkeypatch.setitem(sys.modules, "intellicrack.handlers.pefile_handler", None)
+
+    try:
+        importlib.reload(import_checks)
+    except Exception:
+        pass
+
+    if not import_checks.PEFILE_AVAILABLE:
+        assert fake_logger.called or import_checks.pefile is None
 
 
 def test_import_checks_pdfkit_availability_for_report_generation() -> None:

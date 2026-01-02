@@ -4,7 +4,7 @@
 import os
 from pathlib import Path
 
-def check_tests():
+def check_tests() -> None:
     """Check which test files exist."""
 
     print("=" * 60)

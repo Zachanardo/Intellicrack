@@ -449,7 +449,3 @@ def register() -> ValidationPlugin:
                 sys.path.remove(str(custom_dir))
 
 
-@pytest.fixture
-def temp_workspace(tmp_path: Path) -> Path:
-    """Create temporary workspace for tests."""
-    return tmp_path

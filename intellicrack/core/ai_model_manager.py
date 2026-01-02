@@ -24,7 +24,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import os
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 from intellicrack.ai.llm_backends import LLMConfig, LLMManager, LLMProvider
 from intellicrack.ai.model_cache_manager import get_cache_manager
@@ -58,13 +58,27 @@ class AIModelManager:
         self._initialize_models()
 
     def _get_default_config_path(self) -> str:
-        """Get default configuration path."""
+        """Get default configuration path.
+
+        Creates the necessary directory structure if it does not exist and
+        returns the path to the model configuration file in the user's home
+        directory.
+
+        Returns:
+            Path to the default model configuration file located at
+                ~/.intellicrack/models/model_config.json.
+
+        """
         config_dir = Path.home() / ".intellicrack" / "models"
         config_dir.mkdir(parents=True, exist_ok=True)
         return str(config_dir / "model_config.json")
 
     def _load_configuration(self) -> None:
-        """Load model configuration from file."""
+        """Load model configuration from file.
+
+        Uses default configuration if file does not exist or loading fails.
+
+        """
         if os.path.exists(self.config_path):
             try:
                 with open(self.config_path) as f:
@@ -78,7 +92,11 @@ class AIModelManager:
             self._save_configuration()
 
     def _save_configuration(self) -> None:
-        """Save model configuration to file."""
+        """Save model configuration to file.
+
+        Logs errors if save operation fails.
+
+        """
         try:
             with open(self.config_path, "w") as f:
                 json.dump(self.config, f, indent=2)
@@ -87,7 +105,18 @@ class AIModelManager:
             logger.exception("Failed to save model config: %s", e)
 
     def _get_default_config(self) -> dict[str, Any]:
-        """Get default model configuration."""
+        """Get default model configuration.
+
+        Provides a baseline configuration for all supported AI model providers,
+        including OpenAI, Anthropic, Google, and local model backends. Each
+        model has provider-specific parameters and default values.
+
+        Returns:
+            Default model configuration dictionary containing models section
+                with provider configurations, default model name, cache
+                settings, and performance monitoring flags.
+
+        """
         return {
             "models": {
                 "gpt-4": {
@@ -133,7 +162,11 @@ class AIModelManager:
         }
 
     def _initialize_models(self) -> None:
-        """Initialize configured models."""
+        """Initialize configured models.
+
+        Sets the default active model if available.
+
+        """
         for model_name, model_config in self.config["models"].items():
             if model_config.get("enabled", False):
                 try:
@@ -151,9 +184,18 @@ class AIModelManager:
     def _setup_model(self, name: str, config: dict[str, Any]) -> None:
         """Set up individual model.
 
+        Initializes a model based on its provider type (OpenAI, Anthropic,
+        Google, or local). Registers the model in the internal models registry
+        for later lazy-loading and use.
+
         Args:
-            name: Model name
-            config: Model configuration
+            name: Model name identifying the model instance.
+            config: Model configuration dictionary containing provider type,
+                API keys, and model-specific parameters.
+
+        Raises:
+            ValueError: If an unknown or unsupported provider is specified in
+                the configuration.
 
         """
         provider = config.get("provider", "local")
@@ -176,7 +218,22 @@ class AIModelManager:
         }
 
     def _setup_openai_model(self, name: str, config: dict[str, Any]) -> None:
-        """Set up OpenAI model."""
+        """Set up OpenAI model.
+
+        Configures an OpenAI model by creating an LLMConfig and registering
+        it with the LLM manager. API keys are resolved from the config or the
+        OPENAI_API_KEY environment variable.
+
+        Args:
+            name: Model name identifying the OpenAI model instance.
+            config: Model configuration dictionary containing API key, max
+                tokens, temperature, and other OpenAI-specific parameters.
+
+        Raises:
+            ValueError: If no API key is provided in the config or found in
+                the OPENAI_API_KEY environment variable.
+
+        """
         api_key = config.get("api_key") or os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError(f"No API key for OpenAI model {name}")
@@ -192,7 +249,22 @@ class AIModelManager:
         self.llm_manager.add_provider(LLMProvider.OPENAI, llm_config)
 
     def _setup_anthropic_model(self, name: str, config: dict[str, Any]) -> None:
-        """Set up Anthropic model."""
+        """Set up Anthropic model.
+
+        Configures an Anthropic model by creating an LLMConfig and registering
+        it with the LLM manager. API keys are resolved from the config or the
+        ANTHROPIC_API_KEY environment variable.
+
+        Args:
+            name: Model name identifying the Anthropic model instance.
+            config: Model configuration dictionary containing API key, max
+                tokens, temperature, and other Anthropic-specific parameters.
+
+        Raises:
+            ValueError: If no API key is provided in the config or found in
+                the ANTHROPIC_API_KEY environment variable.
+
+        """
         api_key = config.get("api_key") or os.getenv("ANTHROPIC_API_KEY")
         if not api_key:
             raise ValueError(f"No API key for Anthropic model {name}")
@@ -208,7 +280,22 @@ class AIModelManager:
         self.llm_manager.add_provider(LLMProvider.ANTHROPIC, llm_config)
 
     def _setup_google_model(self, name: str, config: dict[str, Any]) -> None:
-        """Set up Google model."""
+        """Set up Google model.
+
+        Configures a Google model by creating an LLMConfig and registering
+        it with the LLM manager. API keys are resolved from the config or the
+        GOOGLE_API_KEY environment variable.
+
+        Args:
+            name: Model name identifying the Google model instance.
+            config: Model configuration dictionary containing API key, max
+                tokens, temperature, and other Google-specific parameters.
+
+        Raises:
+            ValueError: If no API key is provided in the config or found in
+                the GOOGLE_API_KEY environment variable.
+
+        """
         api_key = config.get("api_key") or os.getenv("GOOGLE_API_KEY")
         if not api_key:
             raise ValueError(f"No API key for Google model {name}")
@@ -224,7 +311,18 @@ class AIModelManager:
         self.llm_manager.add_provider(LLMProvider.GOOGLE, llm_config)
 
     def _setup_local_model(self, name: str, config: dict[str, Any]) -> None:
-        """Set up local model."""
+        """Set up local model.
+
+        Configures a locally-hosted model by validating the model path and
+        preparing it for lazy-loading. If the model path is invalid or does
+        not exist, logs a warning and returns without raising an error.
+
+        Args:
+            name: Model name identifying the local model instance.
+            config: Model configuration dictionary containing model_path and
+                other model-specific parameters for local backends.
+
+        """
         model_path = config.get("model_path")
         if not model_path or not os.path.exists(model_path):
             logger.warning("Model path not found for %s: %s", name, model_path)
@@ -237,11 +335,21 @@ class AIModelManager:
     def get_model(self, name: str | None = None) -> Any:
         """Get a model instance.
 
+        Retrieves a model instance by name, using the active model if no name
+        is specified. Models are lazy-loaded on first access and cached for
+        subsequent requests.
+
         Args:
-            name: Model name (uses active model if not specified)
+            name: Model name (uses active model if not specified).
 
         Returns:
-            Model instance
+            Model instance loaded from cache or constructed on first access.
+
+        Raises:
+            ValueError: If model name is not specified and no active model is
+                set.
+            ValueError: If the specified model is not found in the loaded
+                models registry.
 
         """
         model_name: str | None = name or self.active_model
@@ -262,12 +370,20 @@ class AIModelManager:
     def _load_model(self, name: str, model_info: dict[str, Any]) -> Any:
         """Load actual model instance.
 
+        Loads a model instance from cache if available, otherwise delegates to
+        the appropriate provider-specific loader. Supports caching to avoid
+        redundant load operations.
+
         Args:
-            name: Model name
-            model_info: Model information
+            name: Model name used for cache key and logging purposes.
+            model_info: Model information dictionary containing provider type
+                and configuration.
 
         Returns:
-            Loaded model instance
+            Loaded model instance or provider handle for API-based models.
+
+        Raises:
+            ValueError: If provider type is unknown or not supported.
 
         """
         provider: str = model_info["provider"]
@@ -292,12 +408,25 @@ class AIModelManager:
     def _load_local_model(self, name: str, config: dict[str, Any]) -> dict[str, Any]:
         """Load local model from disk.
 
+        Attempts to load the model using the transformers library, with
+        llama.cpp as a fallback backend if transformers is unavailable. Caches
+        loaded models to avoid redundant disk operations.
+
         Args:
-            name: Model name
-            config: Model configuration
+            name: Model name used for cache key and logging purposes.
+            config: Model configuration dictionary containing model_path and
+                other parameters.
 
         Returns:
-            Loaded model
+            Dictionary with 'model' and 'tokenizer' keys for transformers
+                backend, or 'model' and 'tokenizer' set to None for
+                llama.cpp backend.
+
+        Raises:
+            ValueError: If model path is invalid, not a string, or does not
+                exist on the filesystem.
+            RuntimeError: If no local model backend is available (neither
+                transformers nor llama-cpp-python installed).
 
         """
         model_path: Any = config.get("model_path")
@@ -310,7 +439,7 @@ class AIModelManager:
                 raise ValueError(f"Invalid model path: {model_path}")
 
             model: Any = AutoModel.from_pretrained(model_path)
-            tokenizer: Any = AutoTokenizer.from_pretrained(model_path)  # type: ignore[no-untyped-call]
+            tokenizer: Any = AutoTokenizer.from_pretrained(model_path)
 
             # Cache the model
             if self.config.get("cache_enabled", True):
@@ -341,8 +470,16 @@ class AIModelManager:
     def set_active_model(self, name: str) -> None:
         """Set the active model.
 
+        Sets the specified model as the active/default model for subsequent
+        operations. Validates that the model exists in the loaded models
+        registry before activation.
+
         Args:
-            name: Model name
+            name: Model name to set as active.
+
+        Raises:
+            ValueError: If the specified model is not found in the loaded
+                models registry.
 
         """
         if name not in self.models:
@@ -363,11 +500,21 @@ class AIModelManager:
     def get_model_info(self, name: str | None = None) -> dict[str, Any]:
         """Get model information.
 
+        Retrieves configuration and metadata for a model, including provider
+        type, configuration parameters, and lazy-loaded instance handle.
+
         Args:
-            name: Model name (uses active model if not specified)
+            name: Model name (uses active model if not specified).
 
         Returns:
-            Model information dictionary
+            Model information dictionary containing provider type, config, and
+                instance keys.
+
+        Raises:
+            ValueError: If model name is not specified and no active model is
+                set.
+            ValueError: If the specified model is not found in the loaded
+                models registry.
 
         """
         model_name: str | None = name or self.active_model
@@ -384,8 +531,8 @@ class AIModelManager:
         """Configure a model.
 
         Args:
-            name: Model name
-            config: Model configuration
+            name: Model name.
+            config: Model configuration dictionary.
 
         """
         if name not in self.config["models"]:
@@ -402,8 +549,14 @@ class AIModelManager:
     def enable_model(self, name: str) -> None:
         """Enable a model.
 
+        Enables a configured model by setting its enabled flag and initializing
+        it for use. The model must exist in the configuration file.
+
         Args:
-            name: Model name
+            name: Model name to enable.
+
+        Raises:
+            ValueError: If model is not found in the configuration file.
 
         """
         if name not in self.config["models"]:
@@ -419,8 +572,15 @@ class AIModelManager:
     def disable_model(self, name: str) -> None:
         """Disable a model.
 
+        Disables a configured model by setting its enabled flag and unloading
+        it from memory. Updates the active model if the disabled model is
+        currently active.
+
         Args:
-            name: Model name
+            name: Model name to disable.
+
+        Raises:
+            ValueError: If model is not found in the configuration file.
 
         """
         if name not in self.config["models"]:
@@ -442,11 +602,21 @@ class AIModelManager:
     def get_performance_stats(self, name: str | None = None) -> dict[str, Any]:
         """Get performance statistics for a model.
 
+        Retrieves performance metrics for a model from the performance monitor,
+        including inference time, throughput, and resource utilization if
+        performance monitoring is enabled.
+
         Args:
-            name: Model name (uses active model if not specified)
+            name: Model name (uses active model if not specified).
 
         Returns:
-            Performance statistics
+            Performance statistics dictionary containing timing, throughput,
+                and resource metrics, or a message indicating performance
+                monitoring is disabled.
+
+        Raises:
+            ValueError: If model name is not specified and no active model is
+                set.
 
         """
         model_name: str | None = name or self.active_model
@@ -460,7 +630,11 @@ class AIModelManager:
         raise ValueError("No model specified and no active model set")
 
     def cleanup(self) -> None:
-        """Cleanup resources."""
+        """Cleanup resources.
+
+        Clears cache and unloads all models.
+
+        """
         # Clear cache
         if self.cache_manager:
             self.cache_manager.clear()

@@ -31,7 +31,6 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from intellicrack.utils.runtime.runner_functions import (
     get_resource_path,

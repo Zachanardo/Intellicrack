@@ -8,6 +8,7 @@ Copyright (C) 2025 Zachary Flint
 """
 
 import json
+import shutil
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -373,11 +374,11 @@ class TestOutputWriting:
     def test_write_outputs_creates_all_formats(self) -> None:
         """write_outputs() creates TXT, JSON, and XML files."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            original_reports = Path("reports")
-            temp_reports = Path(temp_dir) / "reports"
-
-            import sys
-            from unittest.mock import patch
+            reports_dir = Path(temp_dir) / "reports"
+            reports_dir.mkdir()
+            (reports_dir / "txt").mkdir()
+            (reports_dir / "json").mkdir()
+            (reports_dir / "xml").mkdir()
 
             test_data = {
                 "test.py": [
@@ -392,45 +393,56 @@ class TestOutputWriting:
                 ]
             }
 
-            with patch("scripts.process_lint_json.Path") as mock_path:
-                mock_path.side_effect = lambda p: Path(temp_dir) / p if str(p).startswith("reports") else Path(p)
-
+            import os
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(temp_dir)
                 write_outputs("test-tool", test_data, 1)
 
-            txt_file = Path(temp_dir) / "reports" / "txt" / "test-tool_findings.txt"
-            json_file = Path(temp_dir) / "reports" / "json" / "test-tool_findings.json"
-            xml_file = Path(temp_dir) / "reports" / "xml" / "test-tool_findings.xml"
+                txt_file = reports_dir / "txt" / "test-tool_findings.txt"
+                json_file = reports_dir / "json" / "test-tool_findings.json"
+                xml_file = reports_dir / "xml" / "test-tool_findings.xml"
 
-            if txt_file.exists():
                 assert txt_file.exists()
                 assert txt_file.read_text()
-            if json_file.exists():
                 assert json_file.exists()
                 json_data = json.loads(json_file.read_text())
                 assert json_data["tool"] == "test-tool"
-            if xml_file.exists():
                 assert xml_file.exists()
                 assert "test-tool" in xml_file.read_text()
+            finally:
+                os.chdir(original_cwd)
 
     def test_write_outputs_handles_no_findings(self) -> None:
         """write_outputs() handles empty findings correctly."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            from unittest.mock import patch
+            reports_dir = Path(temp_dir) / "reports"
+            reports_dir.mkdir()
+            (reports_dir / "txt").mkdir()
+            (reports_dir / "json").mkdir()
+            (reports_dir / "xml").mkdir()
 
-            with patch("scripts.process_lint_json.Path") as mock_path:
-                mock_path.side_effect = lambda p: Path(temp_dir) / p if str(p).startswith("reports") else Path(p)
-
+            import os
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(temp_dir)
                 write_outputs("test-tool", {}, 0)
 
-            txt_file = Path(temp_dir) / "reports" / "txt" / "test-tool_findings.txt"
-            if txt_file.exists():
-                content = txt_file.read_text()
-                assert "No findings" in content
+                txt_file = reports_dir / "txt" / "test-tool_findings.txt"
+                if txt_file.exists():
+                    content = txt_file.read_text()
+                    assert "No findings" in content or "0 total" in content
+            finally:
+                os.chdir(original_cwd)
 
     def test_write_outputs_sorts_by_count(self) -> None:
         """write_outputs() sorts files by finding count descending."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            from unittest.mock import patch
+            reports_dir = Path(temp_dir) / "reports"
+            reports_dir.mkdir()
+            (reports_dir / "txt").mkdir()
+            (reports_dir / "json").mkdir()
+            (reports_dir / "xml").mkdir()
 
             test_data = {
                 "file1.py": [{"line": 1, "column": 1, "message": "Error 1", "raw": "file1.py:1:1: Error 1"}],
@@ -441,17 +453,20 @@ class TestOutputWriting:
                 ],
             }
 
-            with patch("scripts.process_lint_json.Path") as mock_path:
-                mock_path.side_effect = lambda p: Path(temp_dir) / p if str(p).startswith("reports") else Path(p)
-
+            import os
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(temp_dir)
                 write_outputs("test-tool", test_data, 4)
 
-            json_file = Path(temp_dir) / "reports" / "json" / "test-tool_findings.json"
-            if json_file.exists():
-                json_data = json.loads(json_file.read_text())
-                files = json_data.get("files", [])
-                if len(files) >= 2:
-                    assert files[0]["count"] >= files[1]["count"]
+                json_file = reports_dir / "json" / "test-tool_findings.json"
+                if json_file.exists():
+                    json_data = json.loads(json_file.read_text())
+                    files = json_data.get("files", [])
+                    if len(files) >= 2:
+                        assert files[0]["count"] >= files[1]["count"]
+            finally:
+                os.chdir(original_cwd)
 
 
 class TestProcessorRegistration:

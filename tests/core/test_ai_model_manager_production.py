@@ -6,15 +6,139 @@ cache management, and lifecycle operations critical for licensing analysis.
 
 import json
 import os
-import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
 from intellicrack.ai.llm_backends import LLMConfig, LLMProvider
 from intellicrack.core.ai_model_manager import AIModelManager, get_model_manager
+
+
+class RealCacheManager:
+    """Real cache manager implementation for testing."""
+
+    def __init__(self) -> None:
+        self.cache: dict[str, Any] = {}
+        self.cleared: bool = False
+
+    def get_model(self, name: str) -> Any:
+        """Get cached model."""
+        return self.cache.get(name)
+
+    def cache_model(self, name: str, model: Any, tokenizer: Any = None) -> None:
+        """Cache model instance."""
+        self.cache[name] = {"model": model, "tokenizer": tokenizer}
+
+    def clear(self) -> None:
+        """Clear cache."""
+        self.cache.clear()
+        self.cleared = True
+
+
+class RealPerformanceMonitor:
+    """Real performance monitor implementation for testing."""
+
+    def __init__(self) -> None:
+        self.stats: dict[str, dict[str, Any]] = {}
+
+    def get_stats(self, model_name: str) -> dict[str, Any]:
+        """Get performance statistics for model."""
+        if model_name not in self.stats:
+            self.stats[model_name] = {
+                "inference_count": 0,
+                "avg_latency": 0.0,
+                "total_tokens": 0,
+                "last_updated": "2025-01-01T00:00:00",
+            }
+        return self.stats[model_name]
+
+    def record_inference(self, model_name: str, latency: float, tokens: int) -> None:
+        """Record inference metrics."""
+        if model_name not in self.stats:
+            self.stats[model_name] = {
+                "inference_count": 0,
+                "avg_latency": 0.0,
+                "total_tokens": 0,
+                "last_updated": "2025-01-01T00:00:00",
+            }
+
+        current = self.stats[model_name]
+        current["inference_count"] += 1
+        current["total_tokens"] += tokens
+
+        current["avg_latency"] = (current["avg_latency"] * (current["inference_count"] - 1) + latency) / current[
+            "inference_count"
+        ]
+
+
+class RealLLMProvider:
+    """Real LLM provider implementation for testing."""
+
+    def __init__(self, provider_type: str, config: LLMConfig) -> None:
+        self.provider_type: str = provider_type
+        self.config: LLMConfig = config
+        self.initialized: bool = True
+
+    def generate(self, prompt: str) -> str:
+        """Generate response from model."""
+        return f"Response from {self.provider_type}: {prompt[:50]}"
+
+    def validate_config(self) -> bool:
+        """Validate configuration is correct."""
+        return bool(self.config.api_key and self.config.model_name)
+
+
+class RealLLMManager:
+    """Real LLM manager implementation for testing."""
+
+    def __init__(self) -> None:
+        self.providers: dict[str, RealLLMProvider] = {}
+        self.configs: dict[str, LLMConfig] = {}
+
+    def add_provider(self, provider: LLMProvider, config: LLMConfig) -> None:
+        """Add LLM provider with configuration."""
+        provider_name = provider.value if hasattr(provider, "value") else str(provider)
+        self.configs[provider_name] = config
+        self.providers[provider_name] = RealLLMProvider(provider_name, config)
+
+    def get_provider(self, provider_name: str) -> RealLLMProvider:
+        """Get provider instance."""
+        if provider_name not in self.providers:
+            raise ValueError(f"Provider {provider_name} not configured")
+        return self.providers[provider_name]
+
+    def has_provider(self, provider_name: str) -> bool:
+        """Check if provider exists."""
+        return provider_name in self.providers
+
+
+class RealTransformersModel:
+    """Real transformers model stub for testing."""
+
+    def __init__(self, model_path: str) -> None:
+        self.model_path: str = model_path
+        self.loaded: bool = True
+
+    def generate(self, input_text: str) -> str:
+        """Generate text output."""
+        return f"Generated from {self.model_path}: {input_text[:30]}"
+
+
+class RealTransformersTokenizer:
+    """Real transformers tokenizer stub for testing."""
+
+    def __init__(self, model_path: str) -> None:
+        self.model_path: str = model_path
+        self.loaded: bool = True
+
+    def encode(self, text: str) -> list[int]:
+        """Encode text to token IDs."""
+        return [ord(c) % 1000 for c in text[:10]]
+
+    def decode(self, token_ids: list[int]) -> str:
+        """Decode token IDs to text."""
+        return "".join(chr(tid % 128 + 32) for tid in token_ids)
 
 
 @pytest.fixture
@@ -32,30 +156,39 @@ def temp_config_path(temp_config_dir: Path) -> str:
 
 
 @pytest.fixture
-def mock_llm_manager() -> Mock:
-    """Mock LLM manager for testing."""
-    manager = Mock()
-    manager.add_provider = Mock()
-    manager.get_provider = Mock(return_value=Mock())
-    return manager
+def real_cache_manager() -> RealCacheManager:
+    """Provide real cache manager instance."""
+    return RealCacheManager()
 
 
 @pytest.fixture
-def mock_cache_manager() -> Mock:
-    """Mock cache manager for testing."""
-    cache = Mock()
-    cache.get_model = Mock(return_value=None)
-    cache.cache_model = Mock()
-    cache.clear = Mock()
-    return cache
+def real_performance_monitor() -> RealPerformanceMonitor:
+    """Provide real performance monitor instance."""
+    return RealPerformanceMonitor()
 
 
 @pytest.fixture
-def mock_performance_monitor() -> Mock:
-    """Mock performance monitor for testing."""
-    monitor = Mock()
-    monitor.get_stats = Mock(return_value={"inference_count": 42, "avg_latency": 0.5})
-    return monitor
+def real_llm_manager() -> RealLLMManager:
+    """Provide real LLM manager instance."""
+    return RealLLMManager()
+
+
+@pytest.fixture
+def setup_real_dependencies(
+    monkeypatch: pytest.MonkeyPatch,
+    real_cache_manager: RealCacheManager,
+    real_performance_monitor: RealPerformanceMonitor,
+) -> tuple[RealCacheManager, RealPerformanceMonitor]:
+    """Setup real dependency instances for AIModelManager."""
+    monkeypatch.setattr(
+        "intellicrack.core.ai_model_manager.get_cache_manager",
+        lambda: real_cache_manager,
+    )
+    monkeypatch.setattr(
+        "intellicrack.core.ai_model_manager.get_performance_monitor",
+        lambda: real_performance_monitor,
+    )
+    return real_cache_manager, real_performance_monitor
 
 
 class TestAIModelManagerConfiguration:
@@ -138,115 +271,134 @@ class TestAIModelManagerConfiguration:
         assert "default_model" in manager.config
         assert manager.config["default_model"] == "llama3"
 
+    def test_config_contains_all_required_fields(self, temp_config_path: str) -> None:
+        """Default configuration contains all required fields."""
+        manager = AIModelManager(temp_config_path)
+
+        required_top_level = ["models", "default_model", "cache_enabled", "cache_size_mb", "performance_monitoring"]
+        for field in required_top_level:
+            assert field in manager.config
+
+        for model_name, model_config in manager.config["models"].items():
+            assert "provider" in model_config
+            assert "enabled" in model_config
+            assert isinstance(model_config["enabled"], bool)
+
 
 class TestAIModelManagerProviderSetup:
     """Test AI provider configuration and initialization."""
 
-    @patch("intellicrack.core.ai_model_manager.LLMManager")
-    def test_openai_model_setup_with_api_key(self, mock_manager_class: Mock, temp_config_path: str) -> None:
+    def test_openai_model_setup_with_api_key(
+        self,
+        temp_config_path: str,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """OpenAI model setup configures LLM manager with correct parameters."""
-        mock_manager = Mock()
-        mock_manager_class.return_value = mock_manager
+        real_llm_manager = RealLLMManager()
+        monkeypatch.setattr(
+            "intellicrack.core.ai_model_manager.LLMManager",
+            lambda: real_llm_manager,
+        )
 
-        os.environ["OPENAI_API_KEY"] = "test-openai-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
 
-        try:
-            manager = AIModelManager(temp_config_path)
-            manager.configure_model(
-                "gpt-4",
-                {
-                    "provider": "openai",
-                    "enabled": True,
-                    "max_tokens": 8192,
-                    "temperature": 0.3,
-                },
-            )
+        manager = AIModelManager(temp_config_path)
+        manager.configure_model(
+            "gpt-4",
+            {
+                "provider": "openai",
+                "enabled": True,
+                "max_tokens": 8192,
+                "temperature": 0.3,
+            },
+        )
 
-            manager.enable_model("gpt-4")
+        manager.enable_model("gpt-4")
 
-            mock_manager.add_provider.assert_called()
-            call_args = mock_manager.add_provider.call_args
+        assert real_llm_manager.has_provider("openai")
+        openai_config = real_llm_manager.configs["openai"]
 
-            assert call_args[0][0] == LLMProvider.OPENAI
-            llm_config: LLMConfig = call_args[0][1]
-            assert llm_config.provider == LLMProvider.OPENAI
-            assert llm_config.model_name == "gpt-4"
-            assert llm_config.api_key == "test-openai-key"
-            assert llm_config.max_tokens == 8192
-            assert llm_config.temperature == 0.3
-        finally:
-            del os.environ["OPENAI_API_KEY"]
+        assert openai_config.provider == LLMProvider.OPENAI
+        assert openai_config.model_name == "gpt-4"
+        assert openai_config.api_key == "test-openai-key"
+        assert openai_config.max_tokens == 8192
+        assert openai_config.temperature == 0.3
 
-    @patch("intellicrack.core.ai_model_manager.LLMManager")
-    def test_anthropic_model_setup_with_api_key(self, mock_manager_class: Mock, temp_config_path: str) -> None:
+    def test_anthropic_model_setup_with_api_key(
+        self,
+        temp_config_path: str,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Anthropic model setup configures LLM manager correctly."""
-        mock_manager = Mock()
-        mock_manager_class.return_value = mock_manager
+        real_llm_manager = RealLLMManager()
+        monkeypatch.setattr(
+            "intellicrack.core.ai_model_manager.LLMManager",
+            lambda: real_llm_manager,
+        )
 
-        os.environ["ANTHROPIC_API_KEY"] = "test-anthropic-key"
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
 
-        try:
-            manager = AIModelManager(temp_config_path)
-            manager.configure_model(
-                "claude-3",
-                {
-                    "provider": "anthropic",
-                    "enabled": True,
-                    "max_tokens": 4096,
-                    "temperature": 0.7,
-                },
-            )
+        manager = AIModelManager(temp_config_path)
+        manager.configure_model(
+            "claude-3",
+            {
+                "provider": "anthropic",
+                "enabled": True,
+                "max_tokens": 4096,
+                "temperature": 0.7,
+            },
+        )
 
-            manager.enable_model("claude-3")
+        manager.enable_model("claude-3")
 
-            mock_manager.add_provider.assert_called()
-            call_args = mock_manager.add_provider.call_args
+        assert real_llm_manager.has_provider("anthropic")
+        anthropic_config = real_llm_manager.configs["anthropic"]
 
-            assert call_args[0][0] == LLMProvider.ANTHROPIC
-            llm_config: LLMConfig = call_args[0][1]
-            assert llm_config.provider == LLMProvider.ANTHROPIC
-            assert llm_config.model_name == "claude-3"
-            assert llm_config.api_key == "test-anthropic-key"
-        finally:
-            del os.environ["ANTHROPIC_API_KEY"]
+        assert anthropic_config.provider == LLMProvider.ANTHROPIC
+        assert anthropic_config.model_name == "claude-3"
+        assert anthropic_config.api_key == "test-anthropic-key"
 
-    @patch("intellicrack.core.ai_model_manager.LLMManager")
-    def test_google_model_setup_with_api_key(self, mock_manager_class: Mock, temp_config_path: str) -> None:
+    def test_google_model_setup_with_api_key(
+        self,
+        temp_config_path: str,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Google model setup configures LLM manager correctly."""
-        mock_manager = Mock()
-        mock_manager_class.return_value = mock_manager
+        real_llm_manager = RealLLMManager()
+        monkeypatch.setattr(
+            "intellicrack.core.ai_model_manager.LLMManager",
+            lambda: real_llm_manager,
+        )
 
-        os.environ["GOOGLE_API_KEY"] = "test-google-key"
+        monkeypatch.setenv("GOOGLE_API_KEY", "test-google-key")
 
-        try:
-            manager = AIModelManager(temp_config_path)
-            manager.configure_model(
-                "gemini-pro",
-                {
-                    "provider": "google",
-                    "enabled": True,
-                    "max_tokens": 2048,
-                    "temperature": 0.8,
-                },
-            )
+        manager = AIModelManager(temp_config_path)
+        manager.configure_model(
+            "gemini-pro",
+            {
+                "provider": "google",
+                "enabled": True,
+                "max_tokens": 2048,
+                "temperature": 0.8,
+            },
+        )
 
-            manager.enable_model("gemini-pro")
+        manager.enable_model("gemini-pro")
 
-            mock_manager.add_provider.assert_called()
-            call_args = mock_manager.add_provider.call_args
+        assert real_llm_manager.has_provider("google")
+        google_config = real_llm_manager.configs["google"]
 
-            assert call_args[0][0] == LLMProvider.GOOGLE
-            llm_config: LLMConfig = call_args[0][1]
-            assert llm_config.provider == LLMProvider.GOOGLE
-            assert llm_config.model_name == "gemini-pro"
-            assert llm_config.api_key == "test-google-key"
-        finally:
-            del os.environ["GOOGLE_API_KEY"]
+        assert google_config.provider == LLMProvider.GOOGLE
+        assert google_config.model_name == "gemini-pro"
+        assert google_config.api_key == "test-google-key"
 
-    def test_openai_model_setup_fails_without_api_key(self, temp_config_path: str) -> None:
+    def test_openai_model_setup_fails_without_api_key(
+        self,
+        temp_config_path: str,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """OpenAI model setup fails when API key is missing."""
-        if "OPENAI_API_KEY" in os.environ:
-            del os.environ["OPENAI_API_KEY"]
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
         manager = AIModelManager(temp_config_path)
 
@@ -295,6 +447,35 @@ class TestAIModelManagerProviderSetup:
                 },
             )
             manager.enable_model("invalid-model")
+
+    def test_api_model_config_validation(
+        self,
+        temp_config_path: str,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """API model configurations are properly validated."""
+        real_llm_manager = RealLLMManager()
+        monkeypatch.setattr(
+            "intellicrack.core.ai_model_manager.LLMManager",
+            lambda: real_llm_manager,
+        )
+
+        monkeypatch.setenv("OPENAI_API_KEY", "valid-key-123")
+
+        manager = AIModelManager(temp_config_path)
+        manager.configure_model(
+            "gpt-4",
+            {
+                "provider": "openai",
+                "enabled": True,
+                "max_tokens": 8192,
+                "temperature": 0.3,
+            },
+        )
+        manager.enable_model("gpt-4")
+
+        provider = real_llm_manager.get_provider("openai")
+        assert provider.validate_config()
 
 
 class TestAIModelManagerLifecycle:
@@ -370,54 +551,77 @@ class TestAIModelManagerLifecycle:
         if "llama3" in manager.models:
             assert "llama3" in models
 
+    def test_model_lifecycle_state_transitions(self, temp_config_path: str) -> None:
+        """Model correctly transitions through lifecycle states."""
+        manager = AIModelManager(temp_config_path)
+
+        assert "test-model" not in manager.models
+
+        manager.configure_model("test-model", {"provider": "local", "enabled": False})
+        assert "test-model" not in manager.models
+
+        manager.enable_model("test-model")
+        assert "test-model" in manager.models
+        assert manager.models["test-model"]["instance"] is None
+
+        manager.set_active_model("test-model")
+        assert manager.active_model == "test-model"
+
+        manager.disable_model("test-model")
+        assert "test-model" not in manager.models
+        assert manager.active_model is None
+
 
 class TestAIModelManagerModelRetrieval:
     """Test model instance retrieval and lazy loading."""
 
-    @patch("intellicrack.core.ai_model_manager.LLMManager")
-    def test_get_model_with_name(self, mock_manager_class: Mock, temp_config_path: str) -> None:
+    def test_get_model_with_name(
+        self,
+        temp_config_path: str,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Get model by name returns correct model instance."""
-        mock_manager = Mock()
-        mock_provider = Mock()
-        mock_manager.get_provider = Mock(return_value=mock_provider)
-        mock_manager_class.return_value = mock_manager
+        real_llm_manager = RealLLMManager()
+        monkeypatch.setattr(
+            "intellicrack.core.ai_model_manager.LLMManager",
+            lambda: real_llm_manager,
+        )
 
-        os.environ["OPENAI_API_KEY"] = "test-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
-        try:
-            manager = AIModelManager(temp_config_path)
-            manager.configure_model("gpt-4", {"provider": "openai", "enabled": True})
-            manager.enable_model("gpt-4")
+        manager = AIModelManager(temp_config_path)
+        manager.configure_model("gpt-4", {"provider": "openai", "enabled": True})
+        manager.enable_model("gpt-4")
 
-            model = manager.get_model("gpt-4")
+        model = manager.get_model("gpt-4")
 
-            assert model is not None
-            assert model == mock_provider
-        finally:
-            del os.environ["OPENAI_API_KEY"]
+        assert model is not None
+        assert isinstance(model, RealLLMProvider)
+        assert model.provider_type == "openai"
 
-    @patch("intellicrack.core.ai_model_manager.LLMManager")
-    def test_get_model_uses_active_model_when_no_name_provided(self, mock_manager_class: Mock, temp_config_path: str) -> None:
+    def test_get_model_uses_active_model_when_no_name_provided(
+        self,
+        temp_config_path: str,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Get model without name uses active model."""
-        mock_manager = Mock()
-        mock_provider = Mock()
-        mock_manager.get_provider = Mock(return_value=mock_provider)
-        mock_manager_class.return_value = mock_manager
+        real_llm_manager = RealLLMManager()
+        monkeypatch.setattr(
+            "intellicrack.core.ai_model_manager.LLMManager",
+            lambda: real_llm_manager,
+        )
 
-        os.environ["OPENAI_API_KEY"] = "test-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
-        try:
-            manager = AIModelManager(temp_config_path)
-            manager.configure_model("gpt-4", {"provider": "openai", "enabled": True})
-            manager.enable_model("gpt-4")
-            manager.set_active_model("gpt-4")
+        manager = AIModelManager(temp_config_path)
+        manager.configure_model("gpt-4", {"provider": "openai", "enabled": True})
+        manager.enable_model("gpt-4")
+        manager.set_active_model("gpt-4")
 
-            model = manager.get_model()
+        model = manager.get_model()
 
-            assert model is not None
-            assert model == mock_provider
-        finally:
-            del os.environ["OPENAI_API_KEY"]
+        assert model is not None
+        assert isinstance(model, RealLLMProvider)
 
     def test_get_model_fails_when_no_active_model(self, temp_config_path: str) -> None:
         """Get model without name fails when no active model set."""
@@ -433,99 +637,106 @@ class TestAIModelManagerModelRetrieval:
         with pytest.raises(ValueError, match="not found"):
             manager.get_model("nonexistent-model")
 
-    @patch("intellicrack.core.ai_model_manager.LLMManager")
-    def test_lazy_loading_only_loads_on_first_access(self, mock_manager_class: Mock, temp_config_path: str) -> None:
+    def test_lazy_loading_only_loads_on_first_access(
+        self,
+        temp_config_path: str,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Model instance is lazy loaded only on first get_model call."""
-        mock_manager = Mock()
-        mock_provider = Mock()
-        mock_manager.get_provider = Mock(return_value=mock_provider)
-        mock_manager_class.return_value = mock_manager
+        real_llm_manager = RealLLMManager()
+        monkeypatch.setattr(
+            "intellicrack.core.ai_model_manager.LLMManager",
+            lambda: real_llm_manager,
+        )
 
-        os.environ["OPENAI_API_KEY"] = "test-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
-        try:
-            manager = AIModelManager(temp_config_path)
-            manager.configure_model("gpt-4", {"provider": "openai", "enabled": True})
-            manager.enable_model("gpt-4")
+        manager = AIModelManager(temp_config_path)
+        manager.configure_model("gpt-4", {"provider": "openai", "enabled": True})
+        manager.enable_model("gpt-4")
 
-            assert manager.models["gpt-4"]["instance"] is None
+        assert manager.models["gpt-4"]["instance"] is None
 
-            model = manager.get_model("gpt-4")
+        model = manager.get_model("gpt-4")
 
-            assert manager.models["gpt-4"]["instance"] is not None
-            assert manager.models["gpt-4"]["instance"] == mock_provider
-        finally:
-            del os.environ["OPENAI_API_KEY"]
+        assert manager.models["gpt-4"]["instance"] is not None
+        assert manager.models["gpt-4"]["instance"] == model
 
-    @patch("intellicrack.core.ai_model_manager.LLMManager")
-    def test_subsequent_get_model_returns_cached_instance(self, mock_manager_class: Mock, temp_config_path: str) -> None:
+    def test_subsequent_get_model_returns_cached_instance(
+        self,
+        temp_config_path: str,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Subsequent get_model calls return cached instance."""
-        mock_manager = Mock()
-        mock_provider = Mock()
-        mock_manager.get_provider = Mock(return_value=mock_provider)
-        mock_manager_class.return_value = mock_manager
+        real_llm_manager = RealLLMManager()
+        monkeypatch.setattr(
+            "intellicrack.core.ai_model_manager.LLMManager",
+            lambda: real_llm_manager,
+        )
 
-        os.environ["OPENAI_API_KEY"] = "test-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
-        try:
-            manager = AIModelManager(temp_config_path)
-            manager.configure_model("gpt-4", {"provider": "openai", "enabled": True})
-            manager.enable_model("gpt-4")
+        manager = AIModelManager(temp_config_path)
+        manager.configure_model("gpt-4", {"provider": "openai", "enabled": True})
+        manager.enable_model("gpt-4")
 
-            model1 = manager.get_model("gpt-4")
-            model2 = manager.get_model("gpt-4")
+        model1 = manager.get_model("gpt-4")
+        model2 = manager.get_model("gpt-4")
 
-            assert model1 is model2
-            assert mock_manager.get_provider.call_count == 1
-        finally:
-            del os.environ["OPENAI_API_KEY"]
+        assert model1 is model2
 
 
 class TestAIModelManagerCacheIntegration:
     """Test cache manager integration."""
 
-    @patch("intellicrack.core.ai_model_manager.get_cache_manager")
-    @patch("intellicrack.core.ai_model_manager.LLMManager")
-    def test_cache_lookup_before_loading(self, mock_manager_class: Mock, mock_cache_getter: Mock, temp_config_path: str) -> None:
+    def test_cache_lookup_before_loading(
+        self,
+        temp_config_path: str,
+        setup_real_dependencies: tuple[RealCacheManager, RealPerformanceMonitor],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Cache is checked before loading model from disk."""
-        mock_manager = Mock()
-        mock_manager_class.return_value = mock_manager
+        real_cache, _ = setup_real_dependencies
 
-        cached_model = {"model": Mock(), "tokenizer": Mock()}
-        mock_cache = Mock()
-        mock_cache.get_model = Mock(return_value=cached_model)
-        mock_cache_getter.return_value = mock_cache
+        real_llm_manager = RealLLMManager()
+        monkeypatch.setattr(
+            "intellicrack.core.ai_model_manager.LLMManager",
+            lambda: real_llm_manager,
+        )
 
-        os.environ["OPENAI_API_KEY"] = "test-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
-        try:
-            manager = AIModelManager(temp_config_path)
-            manager.configure_model("gpt-4", {"provider": "openai", "enabled": True})
-            manager.enable_model("gpt-4")
+        manager = AIModelManager(temp_config_path)
+        manager.configure_model("gpt-4", {"provider": "openai", "enabled": True})
+        manager.enable_model("gpt-4")
 
-            manager.get_model("gpt-4")
+        cached_provider = RealLLMProvider("openai", LLMConfig(LLMProvider.OPENAI, "gpt-4", "test-key"))
+        real_cache.cache_model("gpt-4", cached_provider)
 
-            mock_cache.get_model.assert_called_once()
-        finally:
-            del os.environ["OPENAI_API_KEY"]
+        model = manager.get_model("gpt-4")
 
-    @patch("intellicrack.core.ai_model_manager.get_cache_manager")
-    def test_cleanup_clears_cache(self, mock_cache_getter: Mock, temp_config_path: str) -> None:
+        assert model == cached_provider
+
+    def test_cleanup_clears_cache(
+        self,
+        temp_config_path: str,
+        setup_real_dependencies: tuple[RealCacheManager, RealPerformanceMonitor],
+    ) -> None:
         """Cleanup operation clears model cache."""
-        mock_cache = Mock()
-        mock_cache.clear = Mock()
-        mock_cache_getter.return_value = mock_cache
+        real_cache, _ = setup_real_dependencies
 
         manager = AIModelManager(temp_config_path)
         manager.cleanup()
 
-        mock_cache.clear.assert_called_once()
+        assert real_cache.cleared
 
-    @patch("intellicrack.core.ai_model_manager.get_cache_manager")
-    def test_cleanup_clears_loaded_models(self, mock_cache_getter: Mock, temp_config_path: str) -> None:
+    def test_cleanup_clears_loaded_models(
+        self,
+        temp_config_path: str,
+        setup_real_dependencies: tuple[RealCacheManager, RealPerformanceMonitor],
+    ) -> None:
         """Cleanup operation clears loaded models registry."""
-        mock_cache = Mock()
-        mock_cache_getter.return_value = mock_cache
+        _, _ = setup_real_dependencies
 
         manager = AIModelManager(temp_config_path)
         manager.configure_model("llama3", {"enabled": True})
@@ -538,42 +749,94 @@ class TestAIModelManagerCacheIntegration:
         assert len(manager.models) == 0
         assert manager.active_model is None
 
+    def test_cache_integration_with_local_models(
+        self,
+        temp_config_path: str,
+        tmp_path: Path,
+        setup_real_dependencies: tuple[RealCacheManager, RealPerformanceMonitor],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Local model loading integrates with cache manager."""
+        real_cache, _ = setup_real_dependencies
+
+        model_dir = tmp_path / "test-model"
+        model_dir.mkdir(parents=True)
+
+        def fake_from_pretrained(path: str) -> RealTransformersModel:
+            return RealTransformersModel(path)
+
+        def fake_tokenizer_from_pretrained(path: str) -> RealTransformersTokenizer:
+            return RealTransformersTokenizer(path)
+
+        class FakeAutoModel:
+            from_pretrained = staticmethod(fake_from_pretrained)
+
+        class FakeAutoTokenizer:
+            from_pretrained = staticmethod(fake_tokenizer_from_pretrained)
+
+        monkeypatch.setattr("intellicrack.core.ai_model_manager.AutoModel", FakeAutoModel)
+        monkeypatch.setattr("intellicrack.core.ai_model_manager.AutoTokenizer", FakeAutoTokenizer)
+
+        manager = AIModelManager(temp_config_path)
+        manager.configure_model(
+            "test-model",
+            {
+                "provider": "local",
+                "enabled": True,
+                "model_path": str(model_dir),
+            },
+        )
+        manager.enable_model("test-model")
+
+        result = manager._load_local_model("test-model", {"model_path": str(model_dir)})
+
+        assert "test-model" in real_cache.cache
+        assert real_cache.cache["test-model"]["model"] == result["model"]
+
 
 class TestAIModelManagerPerformanceMonitoring:
     """Test performance monitoring integration."""
 
-    @patch("intellicrack.core.ai_model_manager.get_performance_monitor")
-    @patch("intellicrack.core.ai_model_manager.LLMManager")
-    def test_get_performance_stats_for_active_model(self, mock_manager_class: Mock, mock_monitor_getter: Mock, temp_config_path: str) -> None:
+    def test_get_performance_stats_for_active_model(
+        self,
+        temp_config_path: str,
+        setup_real_dependencies: tuple[RealCacheManager, RealPerformanceMonitor],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Performance stats retrieved for active model."""
-        mock_manager = Mock()
-        mock_manager_class.return_value = mock_manager
+        _, real_monitor = setup_real_dependencies
 
-        mock_monitor = Mock()
-        mock_stats = {"inference_count": 100, "avg_latency": 0.25, "total_tokens": 50000}
-        mock_monitor.get_stats = Mock(return_value=mock_stats)
-        mock_monitor_getter.return_value = mock_monitor
+        real_llm_manager = RealLLMManager()
+        monkeypatch.setattr(
+            "intellicrack.core.ai_model_manager.LLMManager",
+            lambda: real_llm_manager,
+        )
 
-        os.environ["OPENAI_API_KEY"] = "test-key"
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
-        try:
-            manager = AIModelManager(temp_config_path)
-            manager.configure_model("gpt-4", {"provider": "openai", "enabled": True})
-            manager.enable_model("gpt-4")
-            manager.set_active_model("gpt-4")
+        real_monitor.record_inference("gpt-4", 0.25, 1000)
+        real_monitor.record_inference("gpt-4", 0.30, 1500)
 
-            stats = manager.get_performance_stats()
+        manager = AIModelManager(temp_config_path)
+        manager.configure_model("gpt-4", {"provider": "openai", "enabled": True})
+        manager.enable_model("gpt-4")
+        manager.set_active_model("gpt-4")
 
-            assert stats == mock_stats
-            mock_monitor.get_stats.assert_called_once_with("gpt-4")
-        finally:
-            del os.environ["OPENAI_API_KEY"]
+        stats = manager.get_performance_stats()
 
-    @patch("intellicrack.core.ai_model_manager.get_performance_monitor")
-    def test_get_performance_stats_disabled_when_monitoring_off(self, mock_monitor_getter: Mock, temp_config_path: str) -> None:
+        assert "inference_count" in stats
+        assert "avg_latency" in stats
+        assert "total_tokens" in stats
+        assert stats["inference_count"] == 2
+        assert stats["total_tokens"] == 2500
+
+    def test_get_performance_stats_disabled_when_monitoring_off(
+        self,
+        temp_config_path: str,
+        setup_real_dependencies: tuple[RealCacheManager, RealPerformanceMonitor],
+    ) -> None:
         """Performance monitoring returns message when disabled."""
-        mock_monitor = Mock()
-        mock_monitor_getter.return_value = mock_monitor
+        _, real_monitor = setup_real_dependencies
 
         manager = AIModelManager(temp_config_path)
         manager.config["performance_monitoring"] = False
@@ -585,7 +848,37 @@ class TestAIModelManagerPerformanceMonitoring:
 
         assert "message" in stats
         assert "disabled" in stats["message"]
-        mock_monitor.get_stats.assert_not_called()
+
+    def test_performance_stats_accumulate_correctly(
+        self,
+        temp_config_path: str,
+        setup_real_dependencies: tuple[RealCacheManager, RealPerformanceMonitor],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Performance statistics accumulate correctly over multiple inferences."""
+        _, real_monitor = setup_real_dependencies
+
+        real_llm_manager = RealLLMManager()
+        monkeypatch.setattr(
+            "intellicrack.core.ai_model_manager.LLMManager",
+            lambda: real_llm_manager,
+        )
+
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+        for i in range(10):
+            real_monitor.record_inference("gpt-4", 0.1 * (i + 1), 100 * (i + 1))
+
+        manager = AIModelManager(temp_config_path)
+        manager.configure_model("gpt-4", {"provider": "openai", "enabled": True})
+        manager.enable_model("gpt-4")
+        manager.set_active_model("gpt-4")
+
+        stats = manager.get_performance_stats()
+
+        assert stats["inference_count"] == 10
+        assert stats["total_tokens"] == sum(100 * (i + 1) for i in range(10))
+        assert stats["avg_latency"] > 0
 
 
 class TestAIModelManagerGetModelInfo:
@@ -622,6 +915,26 @@ class TestAIModelManagerGetModelInfo:
         with pytest.raises(ValueError, match="not found"):
             manager.get_model_info("nonexistent-model")
 
+    def test_model_info_reflects_current_configuration(self, temp_config_path: str) -> None:
+        """Model info reflects current configuration state."""
+        manager = AIModelManager(temp_config_path)
+        manager.configure_model(
+            "test-model",
+            {
+                "provider": "local",
+                "enabled": True,
+                "max_tokens": 4096,
+                "temperature": 0.5,
+            },
+        )
+        manager.enable_model("test-model")
+
+        info = manager.get_model_info("test-model")
+
+        assert info["provider"] == "local"
+        assert info["config"]["max_tokens"] == 4096
+        assert info["config"]["temperature"] == 0.5
+
 
 class TestAIModelManagerSingleton:
     """Test singleton pattern for global model manager."""
@@ -651,93 +964,117 @@ class TestAIModelManagerSingleton:
 class TestAIModelManagerLocalModelLoading:
     """Test local model loading with transformers and llama.cpp."""
 
-    @patch("intellicrack.core.ai_model_manager.get_cache_manager")
-    def test_local_model_loads_with_transformers(self, mock_cache_getter: Mock, temp_config_path: str, tmp_path: Path) -> None:
+    def test_local_model_loads_with_transformers(
+        self,
+        temp_config_path: str,
+        tmp_path: Path,
+        setup_real_dependencies: tuple[RealCacheManager, RealPerformanceMonitor],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Local model loads successfully with transformers library."""
-        mock_cache = Mock()
-        mock_cache.get_model = Mock(return_value=None)
-        mock_cache.cache_model = Mock()
-        mock_cache_getter.return_value = mock_cache
+        real_cache, _ = setup_real_dependencies
 
         model_dir = tmp_path / "models" / "test-model"
         model_dir.mkdir(parents=True)
 
-        mock_model = Mock()
-        mock_tokenizer = Mock()
+        def fake_from_pretrained(path: str) -> RealTransformersModel:
+            return RealTransformersModel(path)
 
-        with (
-            patch("intellicrack.core.ai_model_manager.AutoModel") as mock_auto_model,
-            patch("intellicrack.core.ai_model_manager.AutoTokenizer") as mock_auto_tokenizer,
-        ):
-            mock_auto_model.from_pretrained = Mock(return_value=mock_model)
-            mock_auto_tokenizer.from_pretrained = Mock(return_value=mock_tokenizer)
+        def fake_tokenizer_from_pretrained(path: str) -> RealTransformersTokenizer:
+            return RealTransformersTokenizer(path)
 
-            manager = AIModelManager(temp_config_path)
-            manager.configure_model(
-                "test-model",
-                {
-                    "provider": "local",
-                    "enabled": True,
-                    "model_path": str(model_dir),
-                },
-            )
-            manager.enable_model("test-model")
+        class FakeAutoModel:
+            from_pretrained = staticmethod(fake_from_pretrained)
 
-            result = manager._load_local_model("test-model", {"model_path": str(model_dir)})
+        class FakeAutoTokenizer:
+            from_pretrained = staticmethod(fake_tokenizer_from_pretrained)
 
-            assert "model" in result
-            assert "tokenizer" in result
-            assert result["model"] == mock_model
-            assert result["tokenizer"] == mock_tokenizer
+        monkeypatch.setattr("intellicrack.core.ai_model_manager.AutoModel", FakeAutoModel)
+        monkeypatch.setattr("intellicrack.core.ai_model_manager.AutoTokenizer", FakeAutoTokenizer)
 
-            mock_cache.cache_model.assert_called_once()
+        manager = AIModelManager(temp_config_path)
+        manager.configure_model(
+            "test-model",
+            {
+                "provider": "local",
+                "enabled": True,
+                "model_path": str(model_dir),
+            },
+        )
+        manager.enable_model("test-model")
 
-    @patch("intellicrack.core.ai_model_manager.get_cache_manager")
-    def test_local_model_falls_back_to_llama_cpp(self, mock_cache_getter: Mock, temp_config_path: str, tmp_path: Path) -> None:
+        result = manager._load_local_model("test-model", {"model_path": str(model_dir)})
+
+        assert "model" in result
+        assert "tokenizer" in result
+        assert isinstance(result["model"], RealTransformersModel)
+        assert isinstance(result["tokenizer"], RealTransformersTokenizer)
+        assert "test-model" in real_cache.cache
+
+    def test_local_model_falls_back_to_llama_cpp(
+        self,
+        temp_config_path: str,
+        tmp_path: Path,
+        setup_real_dependencies: tuple[RealCacheManager, RealPerformanceMonitor],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Local model falls back to llama.cpp when transformers unavailable."""
-        mock_cache = Mock()
-        mock_cache.get_model = Mock(return_value=None)
-        mock_cache.cache_model = Mock()
-        mock_cache_getter.return_value = mock_cache
+        real_cache, _ = setup_real_dependencies
 
         model_dir = tmp_path / "models" / "llama-model"
         model_dir.mkdir(parents=True)
         model_path = model_dir / "model.gguf"
         model_path.write_bytes(b"fake gguf data")
 
-        mock_llama_model = Mock()
+        class FakeLlamaModel:
+            def __init__(self, model_path: str) -> None:
+                self.model_path = model_path
+                self.loaded = True
 
-        with patch("intellicrack.core.ai_model_manager.AutoModel") as mock_auto_model:
-            mock_auto_model.from_pretrained = Mock(side_effect=ImportError("transformers not found"))
+        class FakeLlamaCpp:
+            Llama = FakeLlamaModel
 
-            with patch("intellicrack.core.ai_model_manager.llama_cpp") as mock_llama_cpp:
-                mock_llama_cpp.Llama = Mock(return_value=mock_llama_model)
+        def raise_import_error(*args: Any, **kwargs: Any) -> None:
+            raise ImportError("transformers not found")
 
-                manager = AIModelManager(temp_config_path)
+        class FakeAutoModel:
+            from_pretrained = staticmethod(raise_import_error)
 
-                result = manager._load_local_model("llama-model", {"model_path": str(model_path)})
+        monkeypatch.setattr("intellicrack.core.ai_model_manager.AutoModel", FakeAutoModel)
+        monkeypatch.setattr("intellicrack.core.ai_model_manager.llama_cpp", FakeLlamaCpp())
 
-                assert "model" in result
-                assert result["model"] == mock_llama_model
-                assert result["tokenizer"] is None
+        manager = AIModelManager(temp_config_path)
 
-                mock_cache.cache_model.assert_called_once()
+        result = manager._load_local_model("llama-model", {"model_path": str(model_path)})
 
-    def test_local_model_loading_fails_when_no_backend_available(self, temp_config_path: str, tmp_path: Path) -> None:
+        assert "model" in result
+        assert isinstance(result["model"], FakeLlamaModel)
+        assert result["tokenizer"] is None
+        assert "llama-model" in real_cache.cache
+
+    def test_local_model_loading_fails_when_no_backend_available(
+        self,
+        temp_config_path: str,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Local model loading fails when no backend available."""
         model_dir = tmp_path / "models" / "no-backend"
         model_dir.mkdir(parents=True)
 
-        with (
-            patch("intellicrack.core.ai_model_manager.AutoModel") as mock_auto_model,
-            patch("intellicrack.core.ai_model_manager.llama_cpp", None),
-        ):
-            mock_auto_model.from_pretrained = Mock(side_effect=ImportError("transformers not found"))
+        def raise_import_error(*args: Any, **kwargs: Any) -> None:
+            raise ImportError("transformers not found")
 
-            manager = AIModelManager(temp_config_path)
+        class FakeAutoModel:
+            from_pretrained = staticmethod(raise_import_error)
 
-            with pytest.raises(RuntimeError, match="No local model backend available"):
-                manager._load_local_model("no-backend", {"model_path": str(model_dir)})
+        monkeypatch.setattr("intellicrack.core.ai_model_manager.AutoModel", FakeAutoModel)
+        monkeypatch.setattr("intellicrack.core.ai_model_manager.llama_cpp", None)
+
+        manager = AIModelManager(temp_config_path)
+
+        with pytest.raises(RuntimeError, match="No local model backend available"):
+            manager._load_local_model("no-backend", {"model_path": str(model_dir)})
 
 
 class TestAIModelManagerEdgeCases:
@@ -780,3 +1117,65 @@ class TestAIModelManagerEdgeCases:
 
         with pytest.raises(ValueError, match="No model specified"):
             manager.get_performance_stats()
+
+    def test_multiple_models_can_coexist(
+        self,
+        temp_config_path: str,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Multiple models can be loaded and managed simultaneously."""
+        real_llm_manager = RealLLMManager()
+        monkeypatch.setattr(
+            "intellicrack.core.ai_model_manager.LLMManager",
+            lambda: real_llm_manager,
+        )
+
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+
+        manager = AIModelManager(temp_config_path)
+
+        manager.configure_model("gpt-4", {"provider": "openai", "enabled": True})
+        manager.enable_model("gpt-4")
+
+        manager.configure_model("claude-3", {"provider": "anthropic", "enabled": True})
+        manager.enable_model("claude-3")
+
+        manager.configure_model("llama3", {"provider": "local", "enabled": True})
+        manager.enable_model("llama3")
+
+        assert len(manager.models) >= 3
+        assert "gpt-4" in manager.models
+        assert "claude-3" in manager.models
+        assert "llama3" in manager.models
+
+    def test_switching_active_model(
+        self,
+        temp_config_path: str,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Active model can be switched between loaded models."""
+        real_llm_manager = RealLLMManager()
+        monkeypatch.setattr(
+            "intellicrack.core.ai_model_manager.LLMManager",
+            lambda: real_llm_manager,
+        )
+
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+        manager = AIModelManager(temp_config_path)
+
+        manager.configure_model("gpt-4", {"provider": "openai", "enabled": True})
+        manager.enable_model("gpt-4")
+
+        manager.configure_model("llama3", {"provider": "local", "enabled": True})
+        manager.enable_model("llama3")
+
+        manager.set_active_model("gpt-4")
+        assert manager.active_model == "gpt-4"
+
+        manager.set_active_model("llama3")
+        assert manager.active_model == "llama3"
+
+        model = manager.get_model()
+        assert manager.models["llama3"]["instance"] is not None

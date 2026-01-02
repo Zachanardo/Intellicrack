@@ -24,6 +24,7 @@ from typing import Any
 
 import pytest
 
+
 try:
     from intellicrack.core.network.protocol_fingerprinter import ProtocolFingerprinter
     PROTOCOL_FINGERPRINTER_AVAILABLE = True
@@ -52,7 +53,7 @@ class TestConnectionTimeoutHandling:
         try:
             sock.connect(("192.0.2.1", 27000))
             pytest.fail("Connection should have timed out")
-        except socket.timeout:
+        except TimeoutError:
             pass
         except OSError:
             pass
@@ -67,7 +68,7 @@ class TestConnectionTimeoutHandling:
         try:
             data = sock.recv(1024)
             assert data == b"" or isinstance(data, bytes)
-        except (socket.timeout, OSError):
+        except (TimeoutError, OSError):
             pass
         finally:
             sock.close()
@@ -115,7 +116,7 @@ class TestSocketErrorHandling:
         try:
             sock.connect(("192.0.2.255", 80))
             pytest.fail("Network should be unreachable")
-        except (OSError, socket.timeout):
+        except (TimeoutError, OSError):
             pass
         finally:
             sock.close()
@@ -261,7 +262,7 @@ class TestResourceExhaustion:
         buffer_size = 10 * 1024 * 1024
 
         try:
-            for i in range(100):
+            for _i in range(100):
                 large_buffers.append(bytearray(buffer_size))
         except MemoryError:
             pass
@@ -273,7 +274,7 @@ class TestResourceExhaustion:
         max_connections = 10
         active_connections = []
 
-        for i in range(max_connections):
+        for _i in range(max_connections):
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(0.1)
             active_connections.append(sock)
@@ -356,7 +357,7 @@ class TestConcurrentNetworkAccess:
             sock.settimeout(0.1)
             try:
                 sock.connect(("127.0.0.1", 65535))
-            except (OSError, socket.timeout):
+            except (TimeoutError, OSError):
                 pass
             finally:
                 sock.close()
@@ -504,7 +505,7 @@ class TestLoadBalancingAndFailover:
                 connected = True
                 sock.close()
                 break
-            except (OSError, socket.timeout):
+            except (TimeoutError, OSError):
                 sock.close()
                 continue
 

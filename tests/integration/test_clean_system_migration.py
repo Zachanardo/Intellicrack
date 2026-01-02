@@ -5,29 +5,38 @@ This module tests that Intellicrack properly initializes and creates default
 configurations when starting from a completely clean state.
 """
 
+from __future__ import annotations
+
 import json
 import os
-import sys
 import tempfile
 import unittest
 import threading
+from dataclasses import dataclass
 from pathlib import Path
 import shutil
-
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from typing import Any
 
 from intellicrack.core.config_manager import IntellicrackConfig, get_config
-from intellicrack.ai.llm_config_manager import LLMConfigManager, LLMConfig
+from intellicrack.ai.llm_config_manager import LLMConfigManager
 from intellicrack.cli.config_manager import ConfigManager as CLIConfigManager
 from intellicrack.cli.config_profiles import ProfileManager
 from intellicrack.ui.theme_manager import ThemeManager
 
 
+@dataclass
+class LLMConfig:
+    """Simple LLM configuration for testing."""
+
+    provider: str
+    model_name: str
+    api_key: str
+
+
 class RealCleanSystemSimulator:
     """Real clean system simulator for production testing without mocks."""
 
-    def __init__(self, temp_dir):
+    def __init__(self, temp_dir: str) -> None:
         """Initialize clean system simulator with real capabilities."""
         self.temp_dir = temp_dir
         self.config_dir = Path(temp_dir) / "config"
@@ -41,11 +50,11 @@ class RealCleanSystemSimulator:
         # Real system state tracking
         self.is_clean_system = True
         self.config_created = False
-        self.directories_created = set()
+        self.directories_created: set[str] = set()
         self.env_file_created = False
 
         # Real tool discovery results
-        self.available_tools = {
+        self.available_tools: dict[str, dict[str, Any]] = {
             'ghidra': {'available': True, 'path': '/usr/bin/ghidra', 'version': '10.3.2'},
             'radare2': {'available': True, 'path': '/usr/bin/r2', 'version': '5.8.8'},
             'frida': {'available': True, 'path': '/usr/local/bin/frida', 'version': '16.0.19'},
@@ -54,7 +63,7 @@ class RealCleanSystemSimulator:
             'binary_ninja': {'available': False, 'path': None, 'version': None}
         }
 
-    def ensure_clean_state(self):
+    def ensure_clean_state(self) -> None:
         """Ensure completely clean system state."""
         if self.config_path.exists():
             self.config_path.unlink()
@@ -69,11 +78,14 @@ class RealCleanSystemSimulator:
         self.directories_created.clear()
         self.env_file_created = False
 
-    def simulate_tool_discovery(self, tool_name):
+    def simulate_tool_discovery(self, tool_name: str) -> dict[str, Any]:
         """Simulate real tool discovery process."""
-        return self.available_tools.get(tool_name, {'available': False, 'path': None})
+        result = self.available_tools.get(tool_name)
+        if result is None:
+            return {'available': False, 'path': None}
+        return result
 
-    def create_config_structure(self):
+    def create_config_structure(self) -> dict[str, Any]:
         """Create real configuration structure."""
         self.config_dir.mkdir(parents=True, exist_ok=True)
         self.config_created = True
@@ -87,10 +99,10 @@ class RealCleanSystemSimulator:
                 "auto_updates": True
             },
             "directories": {
-                "logs": str(self.temp_dir / "logs"),
-                "output": str(self.temp_dir / "output"),
-                "cache": str(self.temp_dir / "cache"),
-                "temp": str(self.temp_dir / "temp")
+                "logs": str(Path(self.temp_dir) / "logs"),
+                "output": str(Path(self.temp_dir) / "output"),
+                "cache": str(Path(self.temp_dir) / "cache"),
+                "temp": str(Path(self.temp_dir) / "temp")
             },
             "ui_preferences": {
                 "theme": "light",
@@ -171,7 +183,7 @@ class RealCleanSystemSimulator:
 
         return default_config
 
-    def create_env_file(self):
+    def create_env_file(self) -> None:
         """Create real .env file with defaults."""
         env_content = """# Intellicrack Environment Configuration
 # Generated automatically for clean system initialization
@@ -198,7 +210,7 @@ DEFENSIVE_ANALYSIS_MODE=true
 
         self.env_file_created = True
 
-    def ensure_directories(self, directories):
+    def ensure_directories(self, directories: dict[str, str]) -> None:
         """Ensure required directories exist."""
         for key, path in directories.items():
             dir_path = Path(path)
@@ -209,14 +221,14 @@ DEFENSIVE_ANALYSIS_MODE=true
 class RealConfigManagerSimulator:
     """Real config manager simulator for production testing."""
 
-    def __init__(self, clean_system_sim):
+    def __init__(self, clean_system_sim: RealCleanSystemSimulator) -> None:
         """Initialize with clean system simulator."""
         self.clean_system_sim = clean_system_sim
-        self.config_data = {}
+        self.config_data: dict[str, Any] = {}
         self.is_initialized = False
         self.migration_performed = False
 
-    def initialize_clean_system(self):
+    def initialize_clean_system(self) -> dict[str, Any]:
         """Initialize configuration for clean system."""
         if not self.is_initialized:
             self.config_data = self.clean_system_sim.create_config_structure()
@@ -225,10 +237,10 @@ class RealConfigManagerSimulator:
 
         return self.config_data
 
-    def get_config_value(self, key_path):
+    def get_config_value(self, key_path: str) -> Any:
         """Get configuration value by key path."""
         keys = key_path.split('.')
-        current = self.config_data
+        current: Any = self.config_data
 
         for key in keys:
             if isinstance(current, dict) and key in current:
@@ -238,10 +250,10 @@ class RealConfigManagerSimulator:
 
         return current
 
-    def set_config_value(self, key_path, value):
+    def set_config_value(self, key_path: str, value: Any) -> None:
         """Set configuration value by key path."""
         keys = key_path.split('.')
-        current = self.config_data
+        current: dict[str, Any] = self.config_data
 
         for key in keys[:-1]:
             if key not in current:
@@ -250,7 +262,7 @@ class RealConfigManagerSimulator:
 
         current[keys[-1]] = value
 
-    def migrate_from_clean_system(self):
+    def migrate_from_clean_system(self) -> bool:
         """Perform migration operations for clean system."""
         if not self.migration_performed:
             # Simulate migration operations
@@ -262,18 +274,18 @@ class RealConfigManagerSimulator:
 class RealLLMManagerSimulator:
     """Real LLM manager simulator for production testing."""
 
-    def __init__(self, config_sim):
+    def __init__(self, config_sim: RealConfigManagerSimulator) -> None:
         """Initialize with config simulator."""
         self.config_sim = config_sim
-        self.model_configs = {}
-        self.profiles = {}
-        self.metrics = {}
+        self.model_configs: dict[str, LLMConfig] = {}
+        self.profiles: dict[str, dict[str, Any]] = {}
+        self.metrics: dict[str, Any] = {}
         self.is_initialized = False
 
         # Initialize with real default profiles
         self._initialize_default_profiles()
 
-    def _initialize_default_profiles(self):
+    def _initialize_default_profiles(self) -> None:
         """Initialize with real default profiles."""
         self.profiles = {
             "fast": {
@@ -310,19 +322,19 @@ class RealLLMManagerSimulator:
             }
         }
 
-    def list_model_configs(self):
+    def list_model_configs(self) -> dict[str, LLMConfig]:
         """List all model configurations."""
         return self.model_configs.copy()
 
-    def list_profiles(self):
+    def list_profiles(self) -> dict[str, dict[str, Any]]:
         """List all profiles."""
         return self.profiles.copy()
 
-    def load_model_config(self, model_name):
+    def load_model_config(self, model_name: str) -> LLMConfig | None:
         """Load model configuration."""
         return self.model_configs.get(model_name)
 
-    def save_model_config(self, model_name, config):
+    def save_model_config(self, model_name: str, config: LLMConfig) -> None:
         """Save model configuration."""
         self.model_configs[model_name] = config
 
@@ -338,16 +350,16 @@ class RealLLMManagerSimulator:
 class RealCLIManagerSimulator:
     """Real CLI manager simulator for production testing."""
 
-    def __init__(self, config_sim):
+    def __init__(self, config_sim: RealConfigManagerSimulator) -> None:
         """Initialize with config simulator."""
         self.config_sim = config_sim
-        self.cli_config = {}
+        self.cli_config: dict[str, Any] = {}
         self.is_initialized = False
 
         # Initialize with real defaults
         self._initialize_defaults()
 
-    def _initialize_defaults(self):
+    def _initialize_defaults(self) -> None:
         """Initialize with real CLI defaults."""
         self.cli_config = {
             "output_format": "json",
@@ -363,10 +375,10 @@ class RealCLIManagerSimulator:
             "startup_commands": []
         }
 
-    def get(self, key):
+    def get(self, key: str) -> Any:
         """Get configuration value."""
         keys = key.split('.')
-        current = self.cli_config
+        current: Any = self.cli_config
 
         for k in keys:
             if isinstance(current, dict) and k in current:
@@ -376,11 +388,11 @@ class RealCLIManagerSimulator:
 
         return current
 
-    def set(self, key, value):
+    def set(self, key: str, value: Any) -> None:
         """Set configuration value."""
         if '.' in key:
             keys = key.split('.')
-            current = self.cli_config
+            current: dict[str, Any] = self.cli_config
 
             for k in keys[:-1]:
                 if k not in current:
@@ -395,14 +407,14 @@ class RealCLIManagerSimulator:
 class RealThemeManagerSimulator:
     """Real theme manager simulator for production testing."""
 
-    def __init__(self, config_sim):
+    def __init__(self, config_sim: RealConfigManagerSimulator) -> None:
         """Initialize with config simulator."""
         self.config_sim = config_sim
         self.current_theme = "light"
         self.available_themes = ["light", "dark", "high_contrast", "blue"]
         self.is_initialized = False
 
-    def set_theme(self, theme_name):
+    def set_theme(self, theme_name: str) -> bool:
         """Set current theme."""
         if theme_name in self.available_themes:
             self.current_theme = theme_name
@@ -414,7 +426,7 @@ class RealThemeManagerSimulator:
             return True
         return False
 
-    def get_available_themes(self):
+    def get_available_themes(self) -> list[str]:
         """Get list of available themes."""
         return self.available_themes.copy()
 
@@ -422,32 +434,32 @@ class RealThemeManagerSimulator:
 class RealLoggerSimulator:
     """Real logger simulator for production testing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize logger simulator."""
-        self.logs = {
+        self.logs: dict[str, list[str]] = {
             'info': [],
             'warning': [],
             'error': [],
             'debug': []
         }
 
-    def info(self, message):
+    def info(self, message: str) -> None:
         """Log info message."""
         self.logs['info'].append(message)
 
-    def warning(self, message):
+    def warning(self, message: str) -> None:
         """Log warning message."""
         self.logs['warning'].append(message)
 
-    def error(self, message):
+    def error(self, message: str) -> None:
         """Log error message."""
         self.logs['error'].append(message)
 
-    def debug(self, message):
+    def debug(self, message: str) -> None:
         """Log debug message."""
         self.logs['debug'].append(message)
 
-    def get_logs(self, level=None):
+    def get_logs(self, level: str | None = None) -> dict[str, list[str]] | list[str]:
         """Get logs by level."""
         return self.logs.get(level, []) if level else self.logs.copy()
 
@@ -455,20 +467,22 @@ class RealLoggerSimulator:
 class RealQApplicationSimulator:
     """Real QApplication simulator for production testing."""
 
-    def __init__(self):
+    _instance: RealQApplicationSimulator | None = None
+
+    def __init__(self) -> None:
         """Initialize QApplication simulator."""
         self.is_active = True
         self.theme_applied = False
         self.stylesheet = ""
 
     @staticmethod
-    def instance():
+    def instance() -> RealQApplicationSimulator:
         """Return singleton instance."""
-        if not hasattr(RealQApplicationSimulator, '_instance'):
+        if RealQApplicationSimulator._instance is None:
             RealQApplicationSimulator._instance = RealQApplicationSimulator()
         return RealQApplicationSimulator._instance
 
-    def setStyleSheet(self, stylesheet):
+    def setStyleSheet(self, stylesheet: str) -> None:
         """Set application stylesheet."""
         self.stylesheet = stylesheet
         self.theme_applied = True
@@ -477,19 +491,19 @@ class RealQApplicationSimulator:
 class RealQSettingsSimulator:
     """Real QSettings simulator for production testing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize QSettings simulator."""
-        self.settings_data = {}
+        self.settings_data: dict[str, Any] = {}
 
-    def value(self, key, default=None):
+    def value(self, key: str, default: Any = None) -> Any:
         """Get setting value."""
         return self.settings_data.get(key, default)
 
-    def setValue(self, key, value):
+    def setValue(self, key: str, value: Any) -> None:
         """Set setting value."""
         self.settings_data[key] = value
 
-    def contains(self, key):
+    def contains(self, key: str) -> bool:
         """Check if setting exists."""
         return key in self.settings_data
 
@@ -497,18 +511,18 @@ class RealQSettingsSimulator:
 class RealSystemToolSimulator:
     """Real system tool simulator for production testing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize tool simulator."""
-        self.available_tools = {
+        self.available_tools: dict[str, str | None] = {
             'ghidra': '/usr/bin/ghidra',
             'r2': '/usr/bin/r2',
             'frida': '/usr/local/bin/frida',
-            'x64dbg': None,  # Not available
-            'ida': None,     # Not available
-            'binary_ninja': None  # Not available
+            'x64dbg': None,
+            'ida': None,
+            'binary_ninja': None
         }
 
-    def which(self, tool_name):
+    def which(self, tool_name: str) -> str | None:
         """Simulate shutil.which functionality."""
         return self.available_tools.get(tool_name)
 
@@ -516,7 +530,7 @@ class RealSystemToolSimulator:
 class TestCleanSystemMigration(unittest.TestCase):
     """Test migration and initialization from a completely clean system."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test environment with no existing configs."""
         # Create completely empty temp directory
         self.temp_dir = tempfile.mkdtemp()
@@ -540,13 +554,13 @@ class TestCleanSystemMigration(unittest.TestCase):
         self.config_dir = self.clean_system_sim.config_dir
         self.home_dir = self.clean_system_sim.home_dir
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         """Clean up test environment."""
         # Clean up temp directory
         if Path(self.temp_dir).exists():
             shutil.rmtree(self.temp_dir)
 
-    def test_clean_system_creates_default_config(self):
+    def test_clean_system_creates_default_config(self) -> None:
         """Test that a clean system creates proper default configuration."""
         # Verify no config exists initially
         self.assertFalse(self.config_path.exists())
@@ -579,17 +593,18 @@ class TestCleanSystemMigration(unittest.TestCase):
         # Verify .env file was created by simulator
         self.assertTrue(self.env_path.exists())
 
-    def test_clean_system_ui_preferences_defaults(self):
+    def test_clean_system_ui_preferences_defaults(self) -> None:
         """Test that UI preferences have proper defaults on clean system."""
         # Initialize clean system configuration
         config_data = self.config_manager_sim.initialize_clean_system()
 
         # Check UI preference defaults using real simulator
         ui_prefs = config_data.get("ui_preferences")
-        self.assertIsNotNone(ui_prefs)
+        assert ui_prefs is not None
 
         # Window geometry defaults
         window_geom = ui_prefs.get("window_geometry")
+        assert window_geom is not None
         self.assertEqual(window_geom["width"], 1200)
         self.assertEqual(window_geom["height"], 800)
         self.assertEqual(window_geom["x"], 100)
@@ -603,22 +618,22 @@ class TestCleanSystemMigration(unittest.TestCase):
 
         # Splitter defaults
         splitter_states = ui_prefs.get("splitter_states")
-        self.assertIsNotNone(splitter_states)
+        assert splitter_states is not None
         self.assertEqual(splitter_states.get("main_splitter"), [700, 500])
 
         # Toolbar defaults
         toolbar_positions = ui_prefs.get("toolbar_positions")
-        self.assertIsNotNone(toolbar_positions)
+        assert toolbar_positions is not None
         self.assertTrue(toolbar_positions.get("main_toolbar", {}).get("visible", True))
 
-    def test_clean_system_llm_configuration_defaults(self):
+    def test_clean_system_llm_configuration_defaults(self) -> None:
         """Test that LLM configuration has proper defaults on clean system."""
         # Initialize clean system configuration
         config_data = self.config_manager_sim.initialize_clean_system()
 
         # Check LLM configuration structure using real simulator
         llm_config = config_data.get("llm_configuration")
-        self.assertIsNotNone(llm_config)
+        assert llm_config is not None
 
         # Check default structure
         self.assertIn("models", llm_config)
@@ -648,14 +663,14 @@ class TestCleanSystemMigration(unittest.TestCase):
         # Auto-load should be disabled by default
         self.assertFalse(llm_config["auto_load_models"])
 
-    def test_clean_system_cli_configuration_defaults(self):
+    def test_clean_system_cli_configuration_defaults(self) -> None:
         """Test that CLI configuration has proper defaults on clean system."""
         # Initialize clean system configuration
         config_data = self.config_manager_sim.initialize_clean_system()
 
         # Check CLI configuration using real simulator
         cli_config = config_data.get("cli_configuration")
-        self.assertIsNotNone(cli_config)
+        assert cli_config is not None
 
         # Check default profile
         self.assertIn("profiles", cli_config)
@@ -681,14 +696,14 @@ class TestCleanSystemMigration(unittest.TestCase):
         self.assertEqual(cli_config["custom_commands"], {})
         self.assertEqual(cli_config["startup_commands"], [])
 
-    def test_clean_system_qemu_testing_defaults(self):
+    def test_clean_system_qemu_testing_defaults(self) -> None:
         """Test that QEMU testing configuration has proper defaults."""
         # Initialize clean system configuration
         config_data = self.config_manager_sim.initialize_clean_system()
 
         # Check QEMU testing configuration using real simulator
         qemu_config = config_data.get("qemu_testing")
-        self.assertIsNotNone(qemu_config)
+        assert qemu_config is not None
 
         # Check defaults
         self.assertEqual(qemu_config["default_preference"], "ask")
@@ -699,7 +714,7 @@ class TestCleanSystemMigration(unittest.TestCase):
         self.assertEqual(qemu_config["timeout"], 30)
         self.assertEqual(qemu_config["memory_limit"], 512)
 
-    def test_clean_system_tool_discovery(self):
+    def test_clean_system_tool_discovery(self) -> None:
         """Test that tool discovery works on clean system."""
         # Use real tool simulator instead of mocks
         # Initialize clean system configuration which includes tool discovery
@@ -707,7 +722,7 @@ class TestCleanSystemMigration(unittest.TestCase):
 
         # Check discovered tools using real simulator
         tools = config_data.get("tools")
-        self.assertIsNotNone(tools)
+        assert tools is not None
 
         # Available tools should be discovered
         self.assertIn("ghidra", tools)
@@ -733,13 +748,14 @@ class TestCleanSystemMigration(unittest.TestCase):
         self.assertFalse(x64dbg_result['available'])
         self.assertIsNone(x64dbg_result['path'])
 
-    def test_clean_system_directory_creation(self):
+    def test_clean_system_directory_creation(self) -> None:
         """Test that required directories are created on clean system."""
         # Initialize clean system configuration
         config_data = self.config_manager_sim.initialize_clean_system()
 
         # Get directory configuration using real simulator
         dirs = config_data.get("directories")
+        assert dirs is not None
 
         # Ensure directories using real simulator
         self.clean_system_sim.ensure_directories(dirs)
@@ -750,7 +766,7 @@ class TestCleanSystemMigration(unittest.TestCase):
             self.assertTrue(dir_path.exists(), f"Directory {key} should be created")
             self.assertIn(key, self.clean_system_sim.directories_created)
 
-    def test_clean_system_env_file_creation(self):
+    def test_clean_system_env_file_creation(self) -> None:
         """Test that .env file is created with defaults on clean system."""
         # Initialize clean system configuration (which creates .env file)
         self.config_manager_sim.initialize_clean_system()
@@ -769,7 +785,7 @@ class TestCleanSystemMigration(unittest.TestCase):
         self.assertIn("# OPENAI_API_KEY=", env_content)
         self.assertIn("# ANTHROPIC_API_KEY=", env_content)
 
-    def test_clean_system_llm_manager_initialization(self):
+    def test_clean_system_llm_manager_initialization(self) -> None:
         """Test LLM config manager initializes properly on clean system."""
         # Use real LLM manager simulator instead of mocks
         # Initialize clean system first
@@ -800,12 +816,12 @@ class TestCleanSystemMigration(unittest.TestCase):
 
         # Should be able to retrieve it
         loaded = self.llm_manager_sim.load_model_config("test-model")
-        self.assertIsNotNone(loaded)
+        assert loaded is not None
         self.assertEqual(loaded.model_name, "test-model")
         self.assertEqual(loaded.provider, "test")
         self.assertEqual(loaded.api_key, "test-key")
 
-    def test_clean_system_cli_manager_initialization(self):
+    def test_clean_system_cli_manager_initialization(self) -> None:
         """Test CLI config manager initializes properly on clean system."""
         # Use real CLI manager simulator instead of mocks
         # Initialize clean system first
@@ -829,7 +845,7 @@ class TestCleanSystemMigration(unittest.TestCase):
         self.cli_manager_sim.set("aliases.test", "test command")
         self.assertEqual(self.cli_manager_sim.get("aliases.test"), "test command")
 
-    def test_clean_system_theme_manager_initialization(self):
+    def test_clean_system_theme_manager_initialization(self) -> None:
         """Test theme manager initializes properly on clean system."""
         # Use real theme manager simulator instead of mocks
         # Initialize clean system first
@@ -854,7 +870,7 @@ class TestCleanSystemMigration(unittest.TestCase):
         self.assertFalse(invalid_result)
         self.assertEqual(self.theme_manager_sim.current_theme, "dark")  # Should remain unchanged
 
-    def test_clean_system_no_migration_errors(self):
+    def test_clean_system_no_migration_errors(self) -> None:
         """Test that no migration errors occur on clean system."""
         # Use real logger simulator instead of mocks
         # Initialize clean system configuration
@@ -872,7 +888,7 @@ class TestCleanSystemMigration(unittest.TestCase):
         error_logs_after = self.logger_sim.get_logs('error')
         self.assertEqual(len(error_logs_after), 0, "No errors should occur after migration")
 
-    def test_clean_system_complete_workflow(self):
+    def test_clean_system_complete_workflow(self) -> None:
         """Test complete workflow on clean system."""
         # Step 1: Initialize clean system configuration
         config_data = self.config_manager_sim.initialize_clean_system()
@@ -897,7 +913,7 @@ class TestCleanSystemMigration(unittest.TestCase):
         # Step 5: Verify all configurations persist in simulators
         # Check LLM config
         saved_llm_config = self.llm_manager_sim.load_model_config("gpt4")
-        self.assertIsNotNone(saved_llm_config)
+        assert saved_llm_config is not None
         self.assertEqual(saved_llm_config.provider, "openai")
         self.assertEqual(saved_llm_config.model_name, "gpt-4")
 
@@ -921,7 +937,7 @@ class TestCleanSystemMigration(unittest.TestCase):
         self.assertIn("cli_configuration", saved_config)
         self.assertIn("ui_preferences", saved_config)
 
-    def test_clean_system_handles_permission_errors(self):
+    def test_clean_system_handles_permission_errors(self) -> None:
         """Test that clean system handles permission errors gracefully."""
         # Simulate permission issues using real error handling
         # Create config directory first
@@ -956,12 +972,12 @@ class TestCleanSystemMigration(unittest.TestCase):
             except OSError:
                 pass
 
-    def test_clean_system_concurrent_initialization(self):
+    def test_clean_system_concurrent_initialization(self) -> None:
         """Test concurrent initialization on clean system."""
-        results = []
-        errors = []
+        results: list[tuple[int, str, str | None]] = []
+        errors: list[tuple[int, str]] = []
 
-        def create_config_simulator(thread_id):
+        def create_config_simulator(thread_id: int) -> None:
             """Create config simulator from a thread."""
             try:
                 # Create separate simulators for each thread to test concurrency

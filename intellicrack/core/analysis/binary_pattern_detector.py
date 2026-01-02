@@ -76,7 +76,12 @@ class BinaryPattern:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Validate pattern configuration."""
+        """Validate pattern configuration.
+
+        Raises:
+            ValueError: If pattern and mask lengths do not match, or if confidence
+                is not in the range [0.0, 1.0].
+        """
         if len(self.pattern_bytes) != len(self.mask):
             raise ValueError(f"Pattern and mask length mismatch for {self.name}")
         if not 0.0 <= self.confidence <= 1.0:
@@ -103,7 +108,7 @@ class BinaryPatternDetector:
     """Advanced binary pattern detection with production-ready algorithms."""
 
     def __init__(self) -> None:
-        """Initialize binary pattern detector."""
+        """Initialize binary pattern detector with empty pattern database and caches."""
         self.patterns: dict[str, list[BinaryPattern]] = defaultdict(list)
         self.compiled_patterns: dict[str, Any] = {}
         self.relocation_cache: dict[str, list[tuple[int, str]]] = {}
@@ -123,7 +128,11 @@ class BinaryPatternDetector:
         self._initialize_core_patterns()
 
     def _initialize_core_patterns(self) -> None:
-        """Initialize sophisticated binary patterns for modern licensing protection detection."""
+        """Initialize sophisticated binary patterns for modern licensing protection detection.
+
+        Configures patterns for anti-debug, protection systems, licensing mechanisms,
+        packers, and virtualization platforms commonly used in software protection.
+        """
         # Advanced anti-debug patterns with mutation resistance
         self.add_pattern(
             BinaryPattern(
@@ -450,7 +459,7 @@ class BinaryPatternDetector:
             pattern: The binary pattern to extract.
 
         Returns:
-            dict[str, Any]: Extracted instruction semantics and raw pattern data.
+            Extracted instruction semantics and raw pattern data.
         """
         if not CAPSTONE_AVAILABLE:
             return {"raw": pattern.pattern_bytes}
@@ -486,7 +495,7 @@ class BinaryPatternDetector:
             pattern: The binary pattern to build.
 
         Returns:
-            dict[str, Any]: Relocation-aware pattern structure with offsets.
+            Relocation-aware pattern structure with offsets.
         """
         reloc_points = [i for i in range(len(pattern.pattern_bytes) - 3) if pattern.mask[i : i + 4] == b"\x00\x00\x00\x00"]
         return {
@@ -503,7 +512,7 @@ class BinaryPatternDetector:
             patterns: Categories to scan. Defaults to all categories.
 
         Returns:
-            list[PatternMatch]: Detected pattern matches sorted by confidence.
+            Detected pattern matches sorted by confidence.
         """
         matches = []
 
@@ -532,7 +541,7 @@ class BinaryPatternDetector:
             pattern: Pattern to search for.
 
         Returns:
-            list[PatternMatch]: Detected matches for the pattern.
+            Detected matches for the pattern.
         """
         matches = []
 
@@ -557,7 +566,7 @@ class BinaryPatternDetector:
             pattern: Pattern to match exactly.
 
         Returns:
-            list[PatternMatch]: Exact pattern matches found.
+            Exact pattern matches found.
         """
         matches = []
         pattern_bytes = pattern.pattern_bytes
@@ -604,7 +613,7 @@ class BinaryPatternDetector:
             pattern: Wildcard pattern to match.
 
         Returns:
-            list[PatternMatch]: Wildcard pattern matches found.
+            Wildcard pattern matches found.
         """
         matches: list[PatternMatch] = []
         key = f"{pattern.category}:{pattern.name}"
@@ -661,7 +670,7 @@ class BinaryPatternDetector:
             pattern: Pattern with mask to verify against.
 
         Returns:
-            bool: True if pattern matches with mask, False otherwise.
+            True if pattern matches with mask, False otherwise.
         """
         if len(data) != len(pattern.pattern_bytes):
             return False
@@ -676,7 +685,7 @@ class BinaryPatternDetector:
             pattern: Position-independent pattern to match.
 
         Returns:
-            list[PatternMatch]: Matched position-independent code patterns.
+            Matched position-independent code patterns.
         """
         if not CAPSTONE_AVAILABLE:
             return self._wildcard_match(data, pattern)
@@ -726,7 +735,7 @@ class BinaryPatternDetector:
             cs: Capstone disassembler instance.
 
         Returns:
-            bool: True if instruction sequence matches, False otherwise.
+            True if instruction sequence matches, False otherwise.
         """
         try:
             code = data[offset : offset + 100]
@@ -759,7 +768,7 @@ class BinaryPatternDetector:
             cs: Capstone disassembler instance.
 
         Returns:
-            int: Total byte size of instruction sequence.
+            Total byte size of instruction sequence.
         """
         size = 0
         code = data[offset : offset + 100]
@@ -779,7 +788,7 @@ class BinaryPatternDetector:
             pattern: Relocation-aware pattern to match.
 
         Returns:
-            list[PatternMatch]: Matched patterns with relocation information.
+            Matched patterns with relocation information.
         """
         matches: list[PatternMatch] = []
         key = f"{pattern.category}:{pattern.name}"
@@ -839,7 +848,7 @@ class BinaryPatternDetector:
             base_offset: Base offset for absolute offset calculation.
 
         Returns:
-            bool: True if pattern matches with relocations considered, False otherwise.
+            True if pattern matches with relocations considered, False otherwise.
         """
         if len(data) < len(pattern):
             return False
@@ -866,7 +875,7 @@ class BinaryPatternDetector:
             pattern: Cross-reference pattern to match.
 
         Returns:
-            list[PatternMatch]: Matched patterns with cross-reference data.
+            Matched patterns with cross-reference data.
         """
         # First do basic matching
         matches = self._wildcard_match(data, pattern) if pattern.mask else self._exact_match(data, pattern)
@@ -888,7 +897,7 @@ class BinaryPatternDetector:
             data: Binary data to extract relocations from.
 
         Returns:
-            list[tuple[int, str]]: List of relocations with RVA and type.
+            List of relocations with RVA and type.
         """
         if not PEFILE_AVAILABLE or data[:2] != b"MZ":
             return []
@@ -915,7 +924,7 @@ class BinaryPatternDetector:
             offset: Offset to find references to.
 
         Returns:
-            list[int]: Sorted list of unique offsets that reference the target.
+            Sorted list of unique offsets that reference the target.
         """
         xrefs = []
 
@@ -979,7 +988,7 @@ class BinaryPatternDetector:
             size: Number of bytes to disassemble.
 
         Returns:
-            list[str]: List of disassembled instruction strings.
+            List of disassembled instruction strings.
         """
         if not CAPSTONE_AVAILABLE:
             return []
@@ -1015,7 +1024,7 @@ class BinaryPatternDetector:
             **kwargs: Additional pattern attributes.
 
         Returns:
-            bool: True if pattern added successfully, False otherwise.
+            True if pattern added successfully, False otherwise.
         """
         try:
             # Convert hex strings to bytes
@@ -1046,7 +1055,7 @@ class BinaryPatternDetector:
             file_path: Path to write pattern database to.
 
         Returns:
-            bool: True if export successful, False otherwise.
+            True if export successful, False otherwise.
         """
         try:
             import json
@@ -1077,7 +1086,14 @@ class BinaryPatternDetector:
             return False
 
     def import_patterns(self, file_path: Path) -> int:
-        """Import patterns from file."""
+        """Import patterns from file.
+
+        Args:
+            file_path: Path to pattern database file to import.
+
+        Returns:
+            Number of patterns imported.
+        """
         try:
             import json
 
@@ -1108,7 +1124,11 @@ class BinaryPatternDetector:
             return 0
 
     def get_pattern_statistics(self) -> dict[str, Any]:
-        """Get pattern database statistics."""
+        """Get pattern database statistics.
+
+        Returns:
+            Statistics including pattern counts and categories.
+        """
         match_types: dict[str, int] = defaultdict(int)
         categories: dict[str, int] = {}
 

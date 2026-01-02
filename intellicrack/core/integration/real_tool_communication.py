@@ -259,7 +259,7 @@ class SharedMemoryManager:
                 return None
 
     def _reset_pointers(self) -> None:
-        """Reset read/write pointers."""
+        """Reset read/write pointers to initial state."""
         with self.lock:
             if self.memory is None:
                 return
@@ -403,7 +403,12 @@ class ToolMonitor:
         self.monitor_thread.start()
 
     def _monitor_loop(self) -> None:
-        """Run main monitoring loop."""
+        """Run main monitoring loop for tool health checks.
+
+        Periodically checks process health, CPU/memory usage, and heartbeat
+        status for all registered tools.
+
+        """
         while self.monitoring:
             with self.lock:
                 for tool, status in list(self.tools.items()):
@@ -897,7 +902,12 @@ class RealToolCommunicator:
         logger.info("Tool communicator started")
 
     def _message_loop(self) -> None:
-        """Run main message processing loop."""
+        """Process incoming messages from shared memory.
+
+        Runs continuously while the communicator is active, reading serialized
+        messages from shared memory and delegating them to appropriate handlers.
+
+        """
         while self.running:
             try:
                 # Read message from shared memory
@@ -1039,7 +1049,12 @@ class RealToolCommunicator:
         return self.monitor.get_all_status()
 
     def stop(self) -> None:
-        """Stop the communicator."""
+        """Stop the communicator and clean up resources.
+
+        Stops the monitoring loop and message processing thread, then closes
+        the shared memory connection.
+
+        """
         self.running = False
         self.monitor.stop_monitoring()
 
@@ -1109,6 +1124,12 @@ def main() -> None:
         communicator = RealToolCommunicator()
 
         def message_handler(msg: ToolMessage) -> None:
+            """Handle received tool messages.
+
+            Args:
+                msg: ToolMessage received from another tool.
+
+            """
             logger.info("Received message: %s", msg.data)
 
         communicator.register_tool(tool_type, args.pid, message_handler)

@@ -27,7 +27,7 @@ from collections import OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import IO, Any, cast
+from typing import IO, Any
 
 # Import from common import checks
 from ..utils.core.import_checks import PSUTIL_AVAILABLE, psutil
@@ -54,17 +54,58 @@ except ImportError as e:
     logger.exception("Import error in large_file_handler: %s", e)
     PYQT6_AVAILABLE = False
 
-    class QObjectBase:  # type: ignore[no-redef]
+    class QObjectBase:
         pass
 
-    class QThreadBase:  # type: ignore[no-redef]
+    class QThreadBase:
         pass
 
-    class QTimer:  # type: ignore[no-redef]
+    class QTimer:
         pass
 
     def pyqtSignal(*args: Any, **kwargs: Any) -> Any:
-        return None
+        """Create a fallback signal object when PyQt6 is not available.
+
+        Args:
+            *args: Variable positional arguments for signal signature.
+            **kwargs: Variable keyword arguments for signal configuration.
+
+        Returns:
+            A callable proxy object that mimics PyQt6 signal behavior.
+
+        """
+        class SignalProxy:
+            """Proxy object that mimics PyQt6 signal behavior."""
+
+            def emit(self, *args: Any, **kwargs: Any) -> None:
+                """Emit the signal (no-op in fallback mode).
+
+                Args:
+                    *args: Variable positional arguments for signal emission.
+                    **kwargs: Variable keyword arguments for signal emission.
+
+                """
+                pass
+
+            def connect(self, slot: Callable[..., Any]) -> None:
+                """Connect a slot to the signal (no-op in fallback mode).
+
+                Args:
+                    slot: Callable slot to connect to the signal.
+
+                """
+                pass
+
+            def disconnect(self, slot: Callable[..., Any] | None = None) -> None:
+                """Disconnect a slot from the signal (no-op in fallback mode).
+
+                Args:
+                    slot: Callable slot to disconnect from the signal, or None to disconnect all.
+
+                """
+                pass
+
+        return SignalProxy()
 
 
 __all__ = [
@@ -97,7 +138,17 @@ class LoadingStrategy(Enum):
 
 @dataclass
 class MemoryConfig:
-    """Configuration for memory usage."""
+    """Configuration for memory usage.
+
+    Args:
+        max_memory_mb: Maximum memory usage in MB.
+        chunk_size_mb: Chunk size in MB.
+        cache_size_mb: Cache size in MB.
+        memory_threshold: Memory usage threshold as a fraction (0.0-1.0).
+        enable_compression: Whether to enable chunk compression.
+        prefetch_chunks: Number of chunks to prefetch ahead.
+
+    """
 
     max_memory_mb: int = 500  # Maximum memory usage in MB
     chunk_size_mb: int = 10  # Chunk size in MB
@@ -109,7 +160,17 @@ class MemoryConfig:
 
 @dataclass
 class FileRegion:
-    """Represents a region of a file."""
+    """Represents a region of a file.
+
+    Args:
+        offset: Starting byte offset of the region.
+        size: Size of the region in bytes.
+        data: Binary data for the region, or None if not yet loaded.
+        last_accessed: Timestamp of last access for cache eviction.
+        ref_count: Reference count for cache management.
+        compressed: Whether the region data is compressed.
+
+    """
 
     offset: int
     size: int
@@ -123,14 +184,28 @@ class FileCache:
     """LRU cache for file regions with memory management."""
 
     def __init__(self, config: MemoryConfig) -> None:
-        """Initialize the FileCache with memory configuration."""
+        """Initialize the FileCache with memory configuration.
+
+        Args:
+            config: Memory configuration for cache sizing.
+
+        """
         self.config = config
         self.regions: OrderedDict[int, FileRegion] = OrderedDict()
         self.total_memory = 0
         self.lock = threading.RLock()
 
     def get_region(self, offset: int, size: int) -> FileRegion | None:
-        """Get a cached region containing the requested data."""
+        """Get a cached region containing the requested data.
+
+        Args:
+            offset: Starting byte offset to search for.
+            size: Number of bytes to retrieve.
+
+        Returns:
+            Cached region containing the data or None if not found.
+
+        """
         with self.lock:
             # Check if we have a region that contains this data
             for region_offset, region in self.regions.items():
@@ -143,7 +218,15 @@ class FileCache:
             return None
 
     def add_region(self, region: FileRegion) -> bool:
-        """Add a region to the cache."""
+        """Add a region to the cache.
+
+        Args:
+            region: File region to add.
+
+        Returns:
+            True if region was added successfully.
+
+        """
         with self.lock:
             # Check if we have enough memory
             region_size = len(region.data) if region.data else 0
@@ -168,7 +251,11 @@ class FileCache:
             return True
 
     def _evict_oldest(self) -> None:
-        """Evict the oldest region from cache."""
+        """Evict the oldest region from cache.
+
+        Removes the oldest cached region based on access time and reference count.
+
+        """
         if not self.regions:
             return
 
@@ -193,18 +280,35 @@ class FileCache:
         logger.debug("Evicted region: offset=0x%s, size=%s", region.offset, region.size)
 
     def release_region(self, region: FileRegion) -> None:
-        """Release a reference to a region."""
+        """Release a reference to a region.
+
+        Args:
+            region: File region to release.
+
+        """
         with self.lock:
             region.ref_count = max(0, region.ref_count - 1)
 
     def clear(self) -> None:
-        """Clear all cached regions."""
+        """Clear all cached regions.
+
+        Removes all regions from cache and resets memory tracking.
+
+        """
         with self.lock:
             self.regions.clear()
             self.total_memory = 0
 
     def cleanup_old_regions(self, max_age: float = 60) -> int:
-        """Remove regions that haven't been accessed recently."""
+        """Remove regions that haven't been accessed recently.
+
+        Args:
+            max_age: Maximum age in seconds for cached regions.
+
+        Returns:
+            Number of regions removed.
+
+        """
         with self.lock:
             current_time = time.time()
             old_regions = [
@@ -221,7 +325,12 @@ class FileCache:
             return removed_count
 
     def get_stats(self) -> dict[str, Any]:
-        """Get cache statistics."""
+        """Get cache statistics.
+
+        Returns:
+            Dictionary containing cache statistics including regions count, memory usage, and utilization.
+
+        """
         with self.lock:
             return {
                 "regions": len(self.regions),
@@ -235,18 +344,32 @@ class MemoryMonitor:
     """Monitors system memory usage and adjusts caching strategy."""
 
     def __init__(self, config: MemoryConfig) -> None:
-        """Initialize the MemoryMonitor with memory configuration."""
+        """Initialize the MemoryMonitor with memory configuration.
+
+        Args:
+            config: Memory configuration for monitoring thresholds.
+
+        """
         self.config = config
         self.callbacks: list[Callable[[float], None]] = []
         self.monitoring = False
         self.thread: threading.Thread | None = None
 
     def add_callback(self, callback: Callable[[float], None]) -> None:
-        """Add a callback for memory usage changes."""
+        """Add a callback for memory usage changes.
+
+        Args:
+            callback: Callable to invoke with memory usage percentage.
+
+        """
         self.callbacks.append(callback)
 
     def start_monitoring(self) -> None:
-        """Start memory monitoring in background thread."""
+        """Start memory monitoring in background thread.
+
+        Spawns a daemon thread that monitors system memory usage.
+
+        """
         if self.monitoring:
             return
 
@@ -256,14 +379,22 @@ class MemoryMonitor:
         logger.debug("Memory monitoring started")
 
     def stop_monitoring(self) -> None:
-        """Stop memory monitoring."""
+        """Stop memory monitoring.
+
+        Terminates the background monitoring thread.
+
+        """
         self.monitoring = False
         if self.thread:
             self.thread.join(timeout=1.0)
         logger.debug("Memory monitoring stopped")
 
     def _monitor_loop(self) -> None:
-        """Run main monitoring loop."""
+        """Run main monitoring loop.
+
+        Continuously monitors system memory and invokes registered callbacks.
+
+        """
         while self.monitoring:
             try:
                 if PSUTIL_AVAILABLE and psutil is not None:
@@ -298,7 +429,7 @@ class MemoryMonitor:
 
 if PYQT6_AVAILABLE:
 
-    class BackgroundLoader(QThreadBase):  # type: ignore[misc]
+    class BackgroundLoader(QThreadBase):
         """Background thread for loading file data."""
 
         progress_updated = pyqtSignal(int)
@@ -306,7 +437,14 @@ if PYQT6_AVAILABLE:
         error_occurred = pyqtSignal(str)
 
         def __init__(self, file_path: str, cache: FileCache, config: MemoryConfig) -> None:
-            """Initialize the BackgroundLoader with file path, cache, and configuration."""
+            """Initialize the BackgroundLoader with file path, cache, and configuration.
+
+            Args:
+                file_path: Path to the file being loaded.
+                cache: FileCache instance for storing loaded regions.
+                config: Memory configuration for chunk sizing.
+
+            """
             super().__init__()
             self.file_path = file_path
             self.cache = cache
@@ -316,7 +454,13 @@ if PYQT6_AVAILABLE:
             self.should_stop = False
 
         def queue_load(self, offset: int, size: int) -> None:
-            """Queue a region for loading."""
+            """Queue a region for loading.
+
+            Args:
+                offset: Starting byte offset.
+                size: Number of bytes to load.
+
+            """
             with self.queue_lock:
                 request = (offset, size)
                 if request not in self.load_queue:
@@ -324,7 +468,11 @@ if PYQT6_AVAILABLE:
                     logger.debug("Queued load: offset=0x%s, size=%s", offset, size)
 
         def run(self) -> None:
-            """Run main loading loop."""
+            """Run main loading loop.
+
+            Processes queued load requests and emits signals for progress updates.
+
+            """
             try:
                 with open(self.file_path, "rb") as file:
                     while not self.should_stop:
@@ -358,12 +506,16 @@ if PYQT6_AVAILABLE:
                     self.error_occurred.emit(str(e))
 
         def stop(self) -> None:
-            """Stop the background loader."""
+            """Stop the background loader.
+
+            Signals the thread to terminate gracefully.
+
+            """
             self.should_stop = True
 
 else:
 
-    class BackgroundLoader(threading.Thread):  # type: ignore[no-redef]
+    class BackgroundLoader(threading.Thread):
         """Background thread for loading file data."""
 
         progress_updated = None
@@ -371,7 +523,14 @@ else:
         error_occurred = None
 
         def __init__(self, file_path: str, cache: FileCache, config: MemoryConfig) -> None:
-            """Initialize the BackgroundLoader with file path, cache, and configuration."""
+            """Initialize the BackgroundLoader with file path, cache, and configuration.
+
+            Args:
+                file_path: Path to the file being loaded.
+                cache: FileCache instance for storing loaded regions.
+                config: Memory configuration for chunk sizing.
+
+            """
             super().__init__(daemon=True)
             self.file_path = file_path
             self.cache = cache
@@ -381,7 +540,13 @@ else:
             self.should_stop = False
 
         def queue_load(self, offset: int, size: int) -> None:
-            """Queue a region for loading."""
+            """Queue a region for loading.
+
+            Args:
+                offset: Starting byte offset.
+                size: Number of bytes to load.
+
+            """
             with self.queue_lock:
                 request = (offset, size)
                 if request not in self.load_queue:
@@ -389,7 +554,11 @@ else:
                     logger.debug("Queued load: offset=0x%s, size=%s", offset, size)
 
         def run(self) -> None:
-            """Run main loading loop."""
+            """Run main loading loop.
+
+            Processes queued load requests and adds regions to cache.
+
+            """
             try:
                 with open(self.file_path, "rb") as file:
                     while not self.should_stop:
@@ -416,7 +585,11 @@ else:
                 logger.exception("Background loader thread error: %s", e)
 
         def stop(self) -> None:
-            """Stop the background loader."""
+            """Stop the background loader.
+
+            Signals the thread to terminate gracefully.
+
+            """
             self.should_stop = True
 
 
@@ -424,7 +597,14 @@ class LargeFileHandler:
     """Enhanced file handler optimized for large files."""
 
     def __init__(self, file_path: str, read_only: bool = True, config: MemoryConfig | None = None) -> None:
-        """Initialize the LargeFileHandler with file path, read-only mode, and configuration."""
+        """Initialize the LargeFileHandler with file path, read-only mode, and configuration.
+
+        Args:
+            file_path: Path to the file to be handled.
+            read_only: If True, file is opened in read-only mode.
+            config: Optional custom memory configuration; uses application defaults if None.
+
+        """
         from intellicrack.core.config_manager import get_config
 
         self.file_path = file_path
@@ -483,7 +663,16 @@ class LargeFileHandler:
         self._initialize_file()
 
     def _initialize_file(self) -> None:
-        """Initialize file access based on size and available memory."""
+        """Initialize file access based on size and available memory.
+
+        Determines optimal loading strategy and initializes caching mechanisms.
+
+        Raises:
+            OSError: If file cannot be accessed or read.
+            ValueError: If file path is invalid or file size cannot be determined.
+            RuntimeError: If initialization of loading strategy fails.
+
+        """
         try:
             # Get file size
             self.file_size = os.path.getsize(self.file_path)
@@ -534,7 +723,11 @@ class LargeFileHandler:
             raise
 
     def _init_direct_load(self) -> None:
-        """Initialize direct loading strategy."""
+        """Initialize direct loading strategy.
+
+        Loads the entire file into memory when file size is under 100MB.
+
+        """
         try:
             with open(self.file_path, "rb") as f:
                 data = f.read()
@@ -552,7 +745,11 @@ class LargeFileHandler:
             self._init_streaming()
 
     def _init_memory_map(self) -> None:
-        """Initialize memory mapping strategy."""
+        """Initialize memory mapping strategy.
+
+        Sets up memory mapping for files between 100MB and 1GB.
+
+        """
         try:
             self.file_handle = open(self.file_path, "rb")  # noqa: SIM115, pylint: disable=consider-using-with
             self.mmap_file = mmap.mmap(
@@ -569,7 +766,11 @@ class LargeFileHandler:
             self._init_streaming()
 
     def _init_streaming(self) -> None:
-        """Initialize streaming strategy."""
+        """Initialize streaming strategy.
+
+        Sets up on-demand loading for files larger than 1GB.
+
+        """
         # Streaming doesn't require initialization
         # Data is loaded on-demand through the cache
         logger.debug("Initialized streaming mode")
@@ -578,11 +779,11 @@ class LargeFileHandler:
         """Read data from the file using the optimal strategy.
 
         Args:
-            offset: Starting byte offset
-            size: Number of bytes to read
+            offset: Starting byte offset.
+            size: Number of bytes to read.
 
         Returns:
-            Read binary data
+            Binary data from the specified offset and size.
 
         """
         if offset < 0 or size <= 0 or offset >= self.file_size:
@@ -604,7 +805,16 @@ class LargeFileHandler:
         return self._read_streaming(offset, size)
 
     def _read_direct(self, offset: int, size: int) -> bytes:
-        """Read using direct loading (cached data)."""
+        """Read using direct loading (cached data).
+
+        Args:
+            offset: Starting byte offset.
+            size: Number of bytes to read.
+
+        Returns:
+            Binary data from the specified offset and size.
+
+        """
         region = self.cache.get_region(offset, size)
         if region and region.data:
             start_in_region = offset - region.offset
@@ -616,7 +826,16 @@ class LargeFileHandler:
         return b""  # Should not happen with direct loading
 
     def _read_mmap(self, offset: int, size: int) -> bytes:
-        """Read using memory mapping."""
+        """Read using memory mapping.
+
+        Args:
+            offset: Starting byte offset.
+            size: Number of bytes to read.
+
+        Returns:
+            Binary data from the specified offset and size.
+
+        """
         if not self.mmap_file:
             return self._read_streaming(offset, size)
 
@@ -627,7 +846,16 @@ class LargeFileHandler:
             return self._read_streaming(offset, size)
 
     def _read_streaming(self, offset: int, size: int) -> bytes:
-        """Read using streaming with cache."""
+        """Read using streaming with cache.
+
+        Args:
+            offset: Starting byte offset.
+            size: Number of bytes to read.
+
+        Returns:
+            Binary data from the specified offset and size.
+
+        """
         # Check cache first
         region = self.cache.get_region(offset, size)
         if region and region.data:
@@ -676,7 +904,12 @@ class LargeFileHandler:
         return b""
 
     def _prefetch_chunks(self, next_offset: int) -> None:
-        """Prefetch chunks for better performance."""
+        """Prefetch chunks for better performance.
+
+        Args:
+            next_offset: Starting offset for prefetching next chunks.
+
+        """
         if self.config.prefetch_chunks > 0 and self.background_loader and self.loading_strategy == LoadingStrategy.PROGRESSIVE:
             chunk_size = self.config.chunk_size_mb * 1024 * 1024
 
@@ -689,7 +922,12 @@ class LargeFileHandler:
                     )
 
     def _on_memory_pressure(self, memory_usage: float) -> None:
-        """Handle memory pressure by adjusting cache."""
+        """Handle memory pressure by adjusting cache.
+
+        Args:
+            memory_usage: Current system memory usage as a fraction (0.0-1.0).
+
+        """
         if memory_usage > self.config.memory_threshold:
             # Reduce cache size
             old_size = self.config.cache_size_mb
@@ -708,7 +946,11 @@ class LargeFileHandler:
             )
 
     def _periodic_cleanup(self) -> None:
-        """Periodic cleanup of cache and resources."""
+        """Periodic cleanup of cache and resources.
+
+        Removes stale cache regions and access patterns on a timer.
+
+        """
         try:
             # Clean old access patterns
             current_time = time.time()
@@ -730,11 +972,21 @@ class LargeFileHandler:
             logger.warning("Periodic cleanup error: %s", e)
 
     def get_file_size(self) -> int:
-        """Get the file size."""
+        """Get the file size.
+
+        Returns:
+            Total file size in bytes.
+
+        """
         return self.file_size
 
     def get_stats(self) -> dict[str, Any]:
-        """Get performance and usage statistics."""
+        """Get performance and usage statistics.
+
+        Returns:
+            Dictionary containing file size, strategies, cache stats, and access patterns.
+
+        """
         cache_stats = self.cache.get_stats()
 
         # Analyze access patterns
@@ -754,7 +1006,15 @@ class LargeFileHandler:
         }
 
     def _calculate_sequential_ratio(self, patterns: list[tuple[int, int, float]]) -> float:
-        """Calculate the ratio of sequential vs random access."""
+        """Calculate the ratio of sequential vs random access.
+
+        Args:
+            patterns: List of (offset, size, timestamp) tuples representing access patterns.
+
+        Returns:
+            Ratio of sequential accesses to total accesses (0.0-1.0).
+
+        """
         if len(patterns) < 2:
             return 0.0
 
@@ -772,7 +1032,11 @@ class LargeFileHandler:
         return sequential_count / total_count if total_count > 0 else 0.0
 
     def close(self) -> None:
-        """Close the file handler and clean up resources."""
+        """Close the file handler and clean up resources.
+
+        Stops background loading, closes memory maps, and clears cache.
+
+        """
         try:
             # Stop background loader
             if self.background_loader:
@@ -802,5 +1066,9 @@ class LargeFileHandler:
             logger.exception("Error closing large file handler: %s", e)
 
     def __del__(self) -> None:
-        """Cleanup when object is destroyed."""
+        """Cleanup when object is destroyed.
+
+        Ensures resources are properly released on garbage collection.
+
+        """
         self.close()

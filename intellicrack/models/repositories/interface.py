@@ -86,11 +86,23 @@ class ModelInfo:
         self.local_path = local_path
 
     def is_downloaded(self) -> bool:
-        """Check if the model is downloaded locally."""
+        """Check if the model is downloaded locally.
+
+        Returns:
+            bool: True if the model file exists at the local path, False
+                otherwise.
+
+        """
         return self.local_path is not None and os.path.exists(self.local_path)
 
     def get_size_human_readable(self) -> str:
-        """Return the size in a human-readable format."""
+        """Return the size in a human-readable format.
+
+        Returns:
+            str: The model size as a formatted string with appropriate units
+                (B, KB, MB, or GB).
+
+        """
         if self.size_bytes < 1024:
             return f"{self.size_bytes} B"
         if self.size_bytes < 1024 * 1024:
@@ -100,7 +112,13 @@ class ModelInfo:
         return f"{self.size_bytes / (1024 * 1024 * 1024):.1f} GB"
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert the model info to a dictionary for serialization."""
+        """Convert the model info to a dictionary for serialization.
+
+        Returns:
+            dict[str, Any]: A dictionary containing all model information with
+                string keys and Any values.
+
+        """
         return {
             "model_id": self.model_id,
             "name": self.name,
@@ -119,7 +137,17 @@ class ModelInfo:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ModelInfo":
-        """Create a ModelInfo instance from a dictionary."""
+        """Create a ModelInfo instance from a dictionary.
+
+        Args:
+            data: A dictionary containing model information with string keys
+                and values of any type.
+
+        Returns:
+            ModelInfo: A new ModelInfo instance populated with data from the
+                dictionary.
+
+        """
         return cls(
             model_id=data.get("model_id", ""),
             name=data.get("name", ""),

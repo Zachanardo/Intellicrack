@@ -5,8 +5,7 @@ real performance tracking of hex viewer operations.
 """
 
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock
+from typing import Any, Generator, cast
 
 import pytest
 from PyQt6.QtWidgets import QApplication
@@ -14,17 +13,86 @@ from PyQt6.QtWidgets import QApplication
 from intellicrack.hexview.performance_monitor import PerformanceMonitor, PerformanceWidget
 
 
+class FakeFileHandler:
+    """Real file handler test double for performance monitoring tests."""
+
+    def __init__(self) -> None:
+        self.file_size_mb: float = 100.5
+        self.memory_strategy: str = "chunked"
+        self.loading_strategy: str = "lazy"
+        self.sequential_ratio: float = 0.75
+        self.background_loader_active: bool = True
+        self.cache_regions: int = 50
+        self.total_memory_mb: float = 25.0
+        self.max_memory_mb: float = 100.0
+        self.utilization: float = 0.25
+        self.access_patterns: int = 1000
+        self.sequential_optimize_called: bool = False
+        self.random_optimize_called: bool = False
+        self.stats_call_count: int = 0
+        self._raise_error: bool = False
+        self._return_none: bool = False
+
+    def get_performance_stats(self) -> dict[str, Any] | None:
+        """Return performance statistics."""
+        self.stats_call_count += 1
+
+        if self._raise_error:
+            raise RuntimeError("Test error")
+
+        if self._return_none:
+            return None
+
+        return {
+            "file_size_mb": self.file_size_mb,
+            "memory_strategy": self.memory_strategy,
+            "loading_strategy": self.loading_strategy,
+            "sequential_ratio": self.sequential_ratio,
+            "background_loader_active": self.background_loader_active,
+            "cache_stats": {
+                "regions": self.cache_regions,
+                "total_memory_mb": self.total_memory_mb,
+                "max_memory_mb": self.max_memory_mb,
+                "utilization": self.utilization,
+            },
+            "access_patterns": self.access_patterns,
+        }
+
+    def optimize_for_sequential_access(self) -> None:
+        """Track sequential optimization calls."""
+        self.sequential_optimize_called = True
+
+    def optimize_for_random_access(self) -> None:
+        """Track random optimization calls."""
+        self.random_optimize_called = True
+
+    def set_error_mode(self, raise_error: bool) -> None:
+        """Configure error simulation."""
+        self._raise_error = raise_error
+
+    def set_none_return(self, return_none: bool) -> None:
+        """Configure None return simulation."""
+        self._return_none = return_none
+
+    def reset_optimization_flags(self) -> None:
+        """Reset optimization tracking flags."""
+        self.sequential_optimize_called = False
+        self.random_optimize_called = False
+
+
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Generator[QApplication, None, None]:
     """Create QApplication instance for Qt tests."""
-    app = QApplication.instance()
-    if app is None:
+    existing = QApplication.instance()
+    if existing is not None and isinstance(existing, QApplication):
+        yield existing
+    else:
         app = QApplication([])
-    yield app
+        yield app
 
 
 @pytest.fixture
-def performance_widget(qapp: QApplication) -> PerformanceWidget:
+def performance_widget(qapp: QApplication) -> Generator[PerformanceWidget, None, None]:
     """Create performance widget instance."""
     widget = PerformanceWidget()
     yield widget
@@ -39,26 +107,9 @@ def performance_monitor() -> PerformanceMonitor:
 
 
 @pytest.fixture
-def mock_file_handler() -> MagicMock:
-    """Create mock file handler with performance stats."""
-    handler = MagicMock()
-    handler.get_performance_stats.return_value = {
-        "file_size_mb": 100.5,
-        "memory_strategy": "chunked",
-        "loading_strategy": "lazy",
-        "sequential_ratio": 0.75,
-        "background_loader_active": True,
-        "cache_stats": {
-            "regions": 50,
-            "total_memory_mb": 25.0,
-            "max_memory_mb": 100.0,
-            "utilization": 0.25,
-        },
-        "access_patterns": 1000,
-    }
-    handler.optimize_for_sequential_access = MagicMock()
-    handler.optimize_for_random_access = MagicMock()
-    return handler
+def fake_file_handler() -> FakeFileHandler:
+    """Create fake file handler with performance stats."""
+    return FakeFileHandler()
 
 
 class TestPerformanceWidgetInitialization:
@@ -112,11 +163,11 @@ class TestPerformanceWidgetFileHandler:
     """Test file handler management."""
 
     def test_set_file_handler(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Setting file handler updates widget state."""
-        performance_widget.set_file_handler(mock_file_handler)
-        assert performance_widget.file_handler is mock_file_handler
+        performance_widget.set_file_handler(fake_file_handler)
+        assert performance_widget.file_handler is fake_file_handler
         assert len(performance_widget.stats_history) == 0
 
     def test_update_display_without_handler(self, performance_widget: PerformanceWidget) -> None:
@@ -125,36 +176,38 @@ class TestPerformanceWidgetFileHandler:
         performance_widget.update_display()
 
     def test_update_display_with_handler(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Update display with file handler updates all metrics."""
-        performance_widget.set_file_handler(mock_file_handler)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
         assert len(performance_widget.stats_history) == 1
         assert "timestamp" in performance_widget.stats_history[0]
+        assert fake_file_handler.stats_call_count == 1
 
     def test_update_display_limits_history(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Stats history respects max_history limit."""
         performance_widget.max_history = 10
-        performance_widget.set_file_handler(mock_file_handler)
+        performance_widget.set_file_handler(fake_file_handler)
 
         for _ in range(15):
             performance_widget.update_display()
 
         assert len(performance_widget.stats_history) == 10
+        assert fake_file_handler.stats_call_count == 15
 
 
 class TestOverviewTabUpdates:
     """Test overview tab metric updates."""
 
     def test_file_information_updates(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """File information displays correctly."""
-        performance_widget.set_file_handler(mock_file_handler)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
         assert "100.5 MB" in performance_widget.file_size_label.text()
@@ -162,52 +215,52 @@ class TestOverviewTabUpdates:
         assert "lazy" in performance_widget.loading_strategy_label.text()
 
     def test_sequential_ratio_displays(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Sequential ratio displays as percentage."""
-        performance_widget.set_file_handler(mock_file_handler)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
         ratio_text = performance_widget.sequential_ratio_label.text()
         assert "75" in ratio_text or "0.75" in ratio_text
 
     def test_large_file_optimization_status(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Large file shows optimization active."""
-        performance_widget.set_file_handler(mock_file_handler)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
         status_text = performance_widget.optimization_status.text()
         assert "Large file optimization active" in status_text
 
     def test_small_file_optimization_status(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Small file shows standard handling."""
-        mock_file_handler.get_performance_stats.return_value["file_size_mb"] = 10.0
-        performance_widget.set_file_handler(mock_file_handler)
+        fake_file_handler.file_size_mb = 10.0
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
         status_text = performance_widget.optimization_status.text()
         assert "Standard file handling" in status_text
 
     def test_background_loader_active_status(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Background loader active status displays."""
-        performance_widget.set_file_handler(mock_file_handler)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
         status_text = performance_widget.background_loader_status.text()
         assert "Active" in status_text
 
     def test_background_loader_inactive_status(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Background loader inactive status displays."""
-        mock_file_handler.get_performance_stats.return_value["background_loader_active"] = False
-        performance_widget.set_file_handler(mock_file_handler)
+        fake_file_handler.background_loader_active = False
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
         status_text = performance_widget.background_loader_status.text()
@@ -218,33 +271,32 @@ class TestMemoryTabUpdates:
     """Test memory tab metric updates."""
 
     def test_memory_usage_displays(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Memory usage displays correctly."""
-        performance_widget.set_file_handler(mock_file_handler)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
         assert "25.0 MB" in performance_widget.memory_used_label.text()
         assert "100.0 MB" in performance_widget.memory_limit_label.text()
 
     def test_memory_progress_bar(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Memory progress bar updates correctly."""
-        performance_widget.set_file_handler(mock_file_handler)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
         assert performance_widget.memory_progress.value() == 25
 
     def test_memory_progress_caps_at_100(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Memory progress caps at 100%."""
-        stats = mock_file_handler.get_performance_stats.return_value
-        stats["cache_stats"]["total_memory_mb"] = 150.0
-        stats["cache_stats"]["max_memory_mb"] = 100.0
+        fake_file_handler.total_memory_mb = 150.0
+        fake_file_handler.max_memory_mb = 100.0
 
-        performance_widget.set_file_handler(mock_file_handler)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
         assert performance_widget.memory_progress.value() <= 100
@@ -254,10 +306,10 @@ class TestCacheTabUpdates:
     """Test cache tab metric updates."""
 
     def test_cache_statistics_display(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Cache statistics display correctly."""
-        performance_widget.set_file_handler(mock_file_handler)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
         assert "50" in performance_widget.cache_regions_label.text()
@@ -265,10 +317,10 @@ class TestCacheTabUpdates:
         assert "25.0%" in performance_widget.cache_utilization_label.text()
 
     def test_cache_progress_bar(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Cache progress bar updates correctly."""
-        performance_widget.set_file_handler(mock_file_handler)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
         assert performance_widget.cache_progress.value() == 25
@@ -278,10 +330,10 @@ class TestPatternsTabUpdates:
     """Test access patterns tab updates."""
 
     def test_pattern_counts_calculation(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Pattern counts calculate from sequential ratio."""
-        performance_widget.set_file_handler(mock_file_handler)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
         sequential_text = performance_widget.sequential_count_label.text()
@@ -297,24 +349,26 @@ class TestAutoOptimization:
     """Test automatic optimization functionality."""
 
     def test_auto_optimize_sequential(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Auto optimize for sequential access when ratio > 0.7."""
-        performance_widget.set_file_handler(mock_file_handler)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.auto_optimize()
 
-        mock_file_handler.optimize_for_sequential_access.assert_called_once()
+        assert fake_file_handler.sequential_optimize_called
+        assert not fake_file_handler.random_optimize_called
         assert "sequential" in performance_widget.optimization_status.text().lower()
 
     def test_auto_optimize_random(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Auto optimize for random access when ratio <= 0.7."""
-        mock_file_handler.get_performance_stats.return_value["sequential_ratio"] = 0.3
-        performance_widget.set_file_handler(mock_file_handler)
+        fake_file_handler.sequential_ratio = 0.3
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.auto_optimize()
 
-        mock_file_handler.optimize_for_random_access.assert_called_once()
+        assert fake_file_handler.random_optimize_called
+        assert not fake_file_handler.sequential_optimize_called
         assert "random" in performance_widget.optimization_status.text().lower()
 
     def test_auto_optimize_without_handler(self, performance_widget: PerformanceWidget) -> None:
@@ -323,11 +377,11 @@ class TestAutoOptimization:
         performance_widget.auto_optimize()
 
     def test_auto_optimize_handles_errors(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Auto optimize handles errors gracefully."""
-        mock_file_handler.get_performance_stats.side_effect = RuntimeError("Test error")
-        performance_widget.set_file_handler(mock_file_handler)
+        fake_file_handler.set_error_mode(True)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.auto_optimize()
 
 
@@ -335,10 +389,10 @@ class TestClearStats:
     """Test statistics clearing."""
 
     def test_clear_stats_empties_history(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Clear stats empties history."""
-        performance_widget.set_file_handler(mock_file_handler)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
         assert len(performance_widget.stats_history) > 0
 
@@ -346,10 +400,10 @@ class TestClearStats:
         assert len(performance_widget.stats_history) == 0
 
     def test_clear_stats_clears_pattern_table(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Clear stats clears pattern table."""
-        performance_widget.set_file_handler(mock_file_handler)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.pattern_table.setRowCount(10)
 
         performance_widget.clear_stats()
@@ -375,31 +429,31 @@ class TestPerformanceMonitor:
         widget.update_timer.stop()
 
     def test_set_file_handler_without_widget(
-        self, performance_monitor: PerformanceMonitor, mock_file_handler: MagicMock
+        self, performance_monitor: PerformanceMonitor, fake_file_handler: FakeFileHandler
     ) -> None:
         """Setting file handler without widget stores reference."""
-        performance_monitor.set_file_handler(mock_file_handler)
-        assert performance_monitor.file_handler is mock_file_handler
+        performance_monitor.set_file_handler(fake_file_handler)
+        assert performance_monitor.file_handler is fake_file_handler
 
     def test_set_file_handler_with_widget(
-        self, qapp: QApplication, performance_monitor: PerformanceMonitor, mock_file_handler: MagicMock
+        self, qapp: QApplication, performance_monitor: PerformanceMonitor, fake_file_handler: FakeFileHandler
     ) -> None:
         """Setting file handler with widget updates both."""
-        widget = performance_monitor.create_widget()
-        performance_monitor.set_file_handler(mock_file_handler)
+        widget = cast(PerformanceWidget, performance_monitor.create_widget())
+        performance_monitor.set_file_handler(fake_file_handler)
 
-        assert performance_monitor.file_handler is mock_file_handler
-        assert widget.file_handler is mock_file_handler
+        assert performance_monitor.file_handler is fake_file_handler
+        assert widget.file_handler is fake_file_handler
         widget.update_timer.stop()
 
     def test_create_widget_after_handler_set(
-        self, qapp: QApplication, performance_monitor: PerformanceMonitor, mock_file_handler: MagicMock
+        self, qapp: QApplication, performance_monitor: PerformanceMonitor, fake_file_handler: FakeFileHandler
     ) -> None:
         """Creating widget after setting handler connects them."""
-        performance_monitor.set_file_handler(mock_file_handler)
-        widget = performance_monitor.create_widget()
+        performance_monitor.set_file_handler(fake_file_handler)
+        widget = cast(PerformanceWidget, performance_monitor.create_widget())
 
-        assert widget.file_handler is mock_file_handler
+        assert widget.file_handler is fake_file_handler
         widget.update_timer.stop()
 
     def test_get_stats_summary_without_handler(
@@ -410,10 +464,10 @@ class TestPerformanceMonitor:
         assert stats == {}
 
     def test_get_stats_summary_with_handler(
-        self, performance_monitor: PerformanceMonitor, mock_file_handler: MagicMock
+        self, performance_monitor: PerformanceMonitor, fake_file_handler: FakeFileHandler
     ) -> None:
         """Stats summary with handler returns formatted stats."""
-        performance_monitor.set_file_handler(mock_file_handler)
+        performance_monitor.set_file_handler(fake_file_handler)
         stats = performance_monitor.get_stats_summary()
 
         assert "file_size_mb" in stats
@@ -431,11 +485,11 @@ class TestPerformanceMonitor:
         assert stats["optimization_active"] is True
 
     def test_get_stats_summary_small_file(
-        self, performance_monitor: PerformanceMonitor, mock_file_handler: MagicMock
+        self, performance_monitor: PerformanceMonitor, fake_file_handler: FakeFileHandler
     ) -> None:
         """Stats summary shows optimization inactive for small files."""
-        mock_file_handler.get_performance_stats.return_value["file_size_mb"] = 10.0
-        performance_monitor.set_file_handler(mock_file_handler)
+        fake_file_handler.file_size_mb = 10.0
+        performance_monitor.set_file_handler(fake_file_handler)
         stats = performance_monitor.get_stats_summary()
 
         assert stats["optimization_active"] is False
@@ -445,48 +499,43 @@ class TestEdgeCases:
     """Test edge cases and error handling."""
 
     def test_update_display_with_none_stats(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Update display handles None stats gracefully."""
-        mock_file_handler.get_performance_stats.return_value = None
-        performance_widget.set_file_handler(mock_file_handler)
+        fake_file_handler.set_none_return(True)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
     def test_update_display_with_exception(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Update display handles exceptions gracefully."""
-        mock_file_handler.get_performance_stats.side_effect = RuntimeError("Test error")
-        performance_widget.set_file_handler(mock_file_handler)
+        fake_file_handler.set_error_mode(True)
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
     def test_zero_memory_limit_handling(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Zero memory limit doesn't cause division by zero."""
-        stats = mock_file_handler.get_performance_stats.return_value
-        stats["cache_stats"]["max_memory_mb"] = 0
-
-        performance_widget.set_file_handler(mock_file_handler)
+        fake_file_handler.max_memory_mb = 0
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
     def test_missing_cache_stats(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Missing cache stats handled gracefully."""
-        mock_file_handler.get_performance_stats.return_value = {
-            "file_size_mb": 50.0,
-            "memory_strategy": "test",
-        }
-        performance_widget.set_file_handler(mock_file_handler)
+        handler = MinimalFileHandler()
+        performance_widget.set_file_handler(handler)
         performance_widget.update_display()
 
     def test_zero_access_patterns(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Zero access patterns doesn't cause division by zero."""
-        mock_file_handler.get_performance_stats.return_value["access_patterns"] = 0
-        performance_widget.set_file_handler(mock_file_handler)
+        fake_file_handler.access_patterns = 0
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
 
@@ -494,27 +543,23 @@ class TestMetricAccuracy:
     """Test metric calculation accuracy."""
 
     def test_cache_utilization_percentage_calculation(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Cache utilization converts to percentage correctly."""
-        stats = mock_file_handler.get_performance_stats.return_value
-        stats["cache_stats"]["utilization"] = 0.567
-
-        performance_widget.set_file_handler(mock_file_handler)
+        fake_file_handler.utilization = 0.567
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
         utilization_text = performance_widget.cache_utilization_label.text()
         assert "56.7%" in utilization_text
 
     def test_sequential_random_split_accuracy(
-        self, performance_widget: PerformanceWidget, mock_file_handler: MagicMock
+        self, performance_widget: PerformanceWidget, fake_file_handler: FakeFileHandler
     ) -> None:
         """Sequential/random split calculates accurately."""
-        stats = mock_file_handler.get_performance_stats.return_value
-        stats["access_patterns"] = 500
-        stats["sequential_ratio"] = 0.6
-
-        performance_widget.set_file_handler(mock_file_handler)
+        fake_file_handler.access_patterns = 500
+        fake_file_handler.sequential_ratio = 0.6
+        performance_widget.set_file_handler(fake_file_handler)
         performance_widget.update_display()
 
         sequential_text = performance_widget.sequential_count_label.text()
@@ -522,3 +567,14 @@ class TestMetricAccuracy:
 
         assert "300" in sequential_text
         assert "200" in random_text
+
+
+class MinimalFileHandler:
+    """Minimal file handler for testing missing cache stats."""
+
+    def get_performance_stats(self) -> dict[str, Any]:
+        """Return minimal stats without cache information."""
+        return {
+            "file_size_mb": 50.0,
+            "memory_strategy": "test",
+        }

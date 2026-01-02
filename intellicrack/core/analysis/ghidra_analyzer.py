@@ -27,21 +27,13 @@ import subprocess
 import tempfile
 
 
-try:
-    import defusedxml.ElementTree as ET  # noqa: N817
-except ImportError:
-    import xml.etree.ElementTree as ET  # noqa: S405
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Thread
 from typing import Any, Protocol
 
-
-try:
-    from defusedxml.ElementTree import Element
-except ImportError:
-    from xml.etree.ElementTree import Element  # noqa: S405
+from defusedxml import ElementTree as ET
+from defusedxml.ElementTree import Element
 
 from intellicrack.core.config_manager import get_config
 from intellicrack.utils.subprocess_security import secure_popen
@@ -51,7 +43,11 @@ class SignalProtocol(Protocol):
     """Protocol for Qt signal."""
 
     def emit(self, arg: str) -> None:
-        """Emit signal with string argument."""
+        """Emit signal with string argument.
+
+        Args:
+            arg: The string message to emit.
+        """
         pass
 
 
@@ -123,12 +119,22 @@ class GhidraOutputParser:
 
     def __init__(self) -> None:
         """Initialize the GhidraOutputParser with an empty result."""
-        self.result = None
+        self.result: GhidraAnalysisResult | None = None
 
     def parse_xml_output(self, xml_content: str) -> GhidraAnalysisResult:
-        """Parse Ghidra XML output format."""
+        """Parse Ghidra XML output format.
+
+        Args:
+            xml_content: XML string containing Ghidra analysis output.
+
+        Returns:
+            Parsed analysis result containing functions, data types, and metadata.
+
+        Raises:
+            ValueError: If XML parsing fails or output format is invalid.
+        """
         try:
-            root = ET.fromstring(xml_content)  # noqa: S314
+            root = ET.fromstring(xml_content)
 
             # Extract binary information
             binary_info = root.find(".//PROGRAM")
@@ -223,7 +229,14 @@ class GhidraOutputParser:
             raise ValueError(f"Failed to parse XML output: {e}") from e
 
     def _parse_xml_function(self, func_elem: Element) -> GhidraFunction:
-        """Parse a function element from XML."""
+        """Parse a function element from XML.
+
+        Args:
+            func_elem: XML element containing function definition.
+
+        Returns:
+            Parsed function with all extracted metadata.
+        """
         name = func_elem.get("NAME", "unknown")
         address = int(func_elem.get("ENTRY_POINT", "0"), 16)
         size = int(func_elem.get("SIZE", "0"), 16)
@@ -295,7 +308,14 @@ class GhidraOutputParser:
         )
 
     def _parse_xml_datatype(self, dt_elem: Element) -> GhidraDataType:
-        """Parse a data type element from XML."""
+        """Parse a data type element from XML.
+
+        Args:
+            dt_elem: XML element containing data type definition.
+
+        Returns:
+            Parsed data type with members and attributes.
+        """
         name = dt_elem.get("NAME", "unknown")
         size = int(dt_elem.get("SIZE", "0"), 10)
         category = dt_elem.get("CATEGORY", "unknown")
@@ -322,7 +342,17 @@ class GhidraOutputParser:
         )
 
     def parse_json_output(self, json_content: str) -> GhidraAnalysisResult:
-        """Parse Ghidra JSON output format."""
+        """Parse Ghidra JSON output format.
+
+        Args:
+            json_content: JSON string containing Ghidra analysis output.
+
+        Returns:
+            Parsed analysis result containing functions, data types, and metadata.
+
+        Raises:
+            ValueError: If JSON parsing fails or output format is invalid.
+        """
         try:
             data = json.loads(json_content)
 
@@ -388,7 +418,14 @@ class GhidraOutputParser:
             raise ValueError(f"Failed to parse JSON output: {e}") from e
 
     def _parse_json_function(self, func_data: dict[str, Any]) -> GhidraFunction:
-        """Parse function data from JSON."""
+        """Parse function data from JSON.
+
+        Args:
+            func_data: Dictionary containing parsed function data from JSON.
+
+        Returns:
+            Parsed function with all extracted metadata.
+        """
         return GhidraFunction(
             name=func_data.get("name", "unknown"),
             address=int(func_data.get("address", "0"), 16),
@@ -408,7 +445,14 @@ class GhidraOutputParser:
         )
 
     def _parse_json_datatype(self, dt_data: dict[str, Any]) -> GhidraDataType:
-        """Parse data type from JSON."""
+        """Parse data type from JSON.
+
+        Args:
+            dt_data: Dictionary containing parsed data type from JSON.
+
+        Returns:
+            Parsed data type with members and attributes.
+        """
         return GhidraDataType(
             name=dt_data.get("name", "unknown"),
             size=dt_data.get("size", 0),
@@ -419,7 +463,14 @@ class GhidraOutputParser:
         )
 
     def parse_text_output(self, text_content: str) -> GhidraAnalysisResult:
-        """Parse Ghidra text-based output (from scripts)."""
+        """Parse Ghidra text-based output (from scripts).
+
+        Args:
+            text_content: Text string containing Ghidra analysis output.
+
+        Returns:
+            Parsed analysis result containing functions, strings, and metadata.
+        """
         functions = {}
         strings = []
         imports = []
@@ -488,7 +539,16 @@ class GhidraOutputParser:
         )
 
     def _extract_function_context(self, text: str, position: int, context_lines: int = 50) -> str:
-        """Extract context around a function definition."""
+        """Extract context around a function definition.
+
+        Args:
+            text: The full text to extract context from.
+            position: Character position to center context around.
+            context_lines: Number of lines to include before and after position.
+
+        Returns:
+            Context text extracted around the specified position.
+        """
         lines = text.split("\n")
         current_line = text[:position].count("\n")
 
@@ -498,7 +558,16 @@ class GhidraOutputParser:
         return "\n".join(lines[start:end])
 
     def _parse_text_function(self, name: str, address: int, context: str) -> GhidraFunction:
-        """Parse function details from text context."""
+        """Parse function details from text context.
+
+        Args:
+            name: Function name extracted from text.
+            address: Function address in hexadecimal.
+            context: Text context containing function definition.
+
+        Returns:
+            Parsed function with extracted metadata.
+        """
         # Extract signature if available
         sig_pattern = rf"{re.escape(name)}\s*\(([^)]*)\)\s*->\s*(\S+)"
         sig_match = re.search(sig_pattern, context)
@@ -569,7 +638,13 @@ class GhidraOutputParser:
 
 
 def _run_ghidra_thread(main_app: MainAppProtocol, command: list[str], temp_dir: str) -> None:
-    """Run the Ghidra command in a background thread and clean up afterward."""
+    """Run the Ghidra command in a background thread and clean up afterward.
+
+    Args:
+        main_app: Application interface protocol for signal emission.
+        command: Command-line arguments to execute Ghidra.
+        temp_dir: Temporary directory for Ghidra project files.
+    """
     try:
         main_app.update_output.emit(f"[Ghidra] Running command: {' '.join(command)}")
         # Use secure subprocess wrapper with validation
@@ -715,14 +790,22 @@ class GhidraScriptManager:
     ]
 
     def __init__(self, ghidra_install_dir: str) -> None:
-        """Initialize the GhidraAnalyzer with the Ghidra installation directory."""
+        """Initialize the GhidraScriptManager with the Ghidra installation directory.
+
+        Args:
+            ghidra_install_dir: Path to the Ghidra installation directory.
+        """
         self.ghidra_install_dir = Path(ghidra_install_dir)
         self.scripts_dir = self.ghidra_install_dir / "Ghidra" / "Features" / "Base" / "ghidra_scripts"
         self.user_scripts_dir = Path.home() / "ghidra_scripts"
         self.custom_scripts = self._load_custom_scripts()
 
     def _load_custom_scripts(self) -> list[dict[str, Any]]:
-        """Load custom Intellicrack Ghidra scripts."""
+        """Load custom Intellicrack Ghidra scripts.
+
+        Returns:
+            List of script metadata dictionaries.
+        """
         custom_scripts = []
         script_dirs = [self.scripts_dir, self.user_scripts_dir]
 
@@ -741,7 +824,14 @@ class GhidraScriptManager:
         return custom_scripts
 
     def _is_intellicrack_script(self, script_file: Path) -> bool:
-        """Check if script is an Intellicrack-specific analysis script."""
+        """Check if script is an Intellicrack-specific analysis script.
+
+        Args:
+            script_file: Path to the script file to check.
+
+        Returns:
+            True if script contains Intellicrack markers, False otherwise.
+        """
         intellicrack_markers = [
             "@intellicrack",
             "INTELLICRACK",
@@ -755,7 +845,14 @@ class GhidraScriptManager:
             return False
 
     def _parse_script_metadata(self, script_file: Path) -> dict[str, Any]:
-        """Parse script metadata from comments."""
+        """Parse script metadata from comments.
+
+        Args:
+            script_file: Path to the script file to parse.
+
+        Returns:
+            Metadata dictionary containing name, description, parameters, and output format.
+        """
         params: dict[str, str] = {}
         metadata: dict[str, Any] = {
             "name": script_file.name,
@@ -783,7 +880,14 @@ class GhidraScriptManager:
         return metadata
 
     def get_script_for_analysis(self, analysis_type: str) -> list[dict[str, Any]]:
-        """Select appropriate script based on analysis type."""
+        """Select appropriate script based on analysis type.
+
+        Args:
+            analysis_type: Type of analysis to select scripts for (licensing, protection, unpacking, strings, comprehensive).
+
+        Returns:
+            List of selected scripts with their metadata.
+        """
         analysis_map = {
             "licensing": ["FindSerialValidation.py", "ExtractCryptoRoutines.py"],
             "protection": ["IdentifyProtectionSchemes.py", "AnalyzeAntiDebug.py"],
@@ -814,7 +918,14 @@ class GhidraScriptManager:
         return selected_scripts or [self.LICENSING_SCRIPTS[0]]
 
     def build_script_chain(self, scripts: list[dict[str, Any]]) -> list[str]:
-        """Build command-line arguments for script chaining."""
+        """Build command-line arguments for script chaining.
+
+        Args:
+            scripts: List of script metadata dictionaries to chain together.
+
+        Returns:
+            Command-line arguments for Ghidra headless execution.
+        """
         script_args = []
 
         for script in scripts:
@@ -833,7 +944,13 @@ class GhidraScriptManager:
 
 
 def run_advanced_ghidra_analysis(main_app: MainAppProtocol, analysis_type: str = "comprehensive", scripts: list[str] | None = None) -> None:
-    """Launch a Ghidra headless analysis session with intelligent script selection."""
+    """Launch a Ghidra headless analysis session with intelligent script selection.
+
+    Args:
+        main_app: Application interface protocol for signal emission and status updates.
+        analysis_type: Type of analysis to perform (licensing, protection, unpacking, strings, comprehensive).
+        scripts: Optional list of specific script names to execute instead of auto-selection.
+    """
     if not main_app.current_binary:
         main_app.update_output.emit("[Ghidra] Error: No binary loaded.")
         return
@@ -919,7 +1036,14 @@ def run_advanced_ghidra_analysis(main_app: MainAppProtocol, analysis_type: str =
 
 
 def _identify_licensing_functions(result: GhidraAnalysisResult) -> list[tuple[int, GhidraFunction]]:
-    """Identify functions potentially related to licensing/protection."""
+    """Identify functions potentially related to licensing/protection.
+
+    Args:
+        result: Ghidra analysis result containing functions, strings, and imports.
+
+    Returns:
+        List of (address, function) tuples for licensing-related functions.
+    """
     licensing_keywords = [
         "license",
         "serial",
@@ -991,7 +1115,16 @@ def _identify_licensing_functions(result: GhidraAnalysisResult) -> list[tuple[in
 
 
 def export_ghidra_results(result: GhidraAnalysisResult, output_path: str, format: str = "json") -> Path:
-    """Export Ghidra analysis results in various formats."""
+    """Export Ghidra analysis results in various formats.
+
+    Args:
+        result: Ghidra analysis result to export.
+        output_path: File path where results will be written.
+        format: Output format (json or xml).
+
+    Returns:
+        Path object pointing to the created output file.
+    """
     output_path_obj = Path(output_path)
 
     if format == "json":

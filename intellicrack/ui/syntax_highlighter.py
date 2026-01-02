@@ -72,7 +72,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
             italic: Whether text should be italic
 
         Returns:
-            Configured text format
+            Configured text format with the specified color and styling properties
 
         """
         text_format = QTextCharFormat()
@@ -679,6 +679,9 @@ class SyntaxHighlighter(QSyntaxHighlighter):
 
         Args:
             text: The text block to highlight
+
+        Returns:
+            None
 
         """
         if text is None:

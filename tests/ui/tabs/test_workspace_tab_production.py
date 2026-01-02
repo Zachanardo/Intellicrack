@@ -11,7 +11,7 @@ import json
 import os
 import struct
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from typing import Any
 
 import pytest
 from PyQt6.QtCore import Qt
@@ -20,13 +20,119 @@ from PyQt6.QtWidgets import QTreeWidgetItem
 from intellicrack.ui.tabs.workspace_tab import WorkspaceTab
 
 
+class FakeMainWindow:
+    """Fake main window for testing."""
+
+    def __init__(self) -> None:
+        self.status_message: str = ""
+        self.binary_path: str | None = None
+
+    def show_status_message(self, message: str) -> None:
+        self.status_message = message
+
+    def update_binary_info(self, path: str) -> None:
+        self.binary_path = path
+
+
+class FakeLogHandler:
+    """Fake log message handler for testing."""
+
+    def __init__(self) -> None:
+        self.messages: list[tuple[str, str]] = []
+
+    def __call__(self, message: str, level: str = "INFO") -> None:
+        self.messages.append((message, level))
+
+    def has_message(self, text: str) -> bool:
+        return any(text in msg for msg, _ in self.messages)
+
+    def clear(self) -> None:
+        self.messages.clear()
+
+
+class FakeAppContext:
+    """Fake application context for testing."""
+
+    def __init__(self) -> None:
+        self.current_binary: str | None = None
+        self.current_project: str | None = None
+        self.analysis_results: dict[str, Any] = {}
+
+    def set_binary(self, path: str) -> None:
+        self.current_binary = path
+
+    def set_project(self, path: str) -> None:
+        self.current_project = path
+
+    def get_analysis(self, binary_path: str) -> dict[str, Any]:
+        return self.analysis_results.get(binary_path, {})
+
+    def store_analysis(self, binary_path: str, results: dict[str, Any]) -> None:
+        self.analysis_results[binary_path] = results
+
+
+class FakeTaskManager:
+    """Fake task manager for testing."""
+
+    def __init__(self) -> None:
+        self.tasks: list[dict[str, Any]] = []
+        self.running_tasks: list[str] = []
+
+    def submit_task(self, task_name: str, **kwargs: Any) -> str:
+        task_id = f"task_{len(self.tasks)}"
+        self.tasks.append({"id": task_id, "name": task_name, "kwargs": kwargs})
+        self.running_tasks.append(task_id)
+        return task_id
+
+    def cancel_task(self, task_id: str) -> None:
+        if task_id in self.running_tasks:
+            self.running_tasks.remove(task_id)
+
+    def get_task_status(self, task_id: str) -> str:
+        return "running" if task_id in self.running_tasks else "completed"
+
+    def clear(self) -> None:
+        self.tasks.clear()
+        self.running_tasks.clear()
+
+
 @pytest.fixture
-def workspace_tab(qtbot: object) -> WorkspaceTab:
+def fake_main_window() -> FakeMainWindow:
+    """Create fake main window."""
+    return FakeMainWindow()
+
+
+@pytest.fixture
+def fake_log_handler() -> FakeLogHandler:
+    """Create fake log handler."""
+    return FakeLogHandler()
+
+
+@pytest.fixture
+def fake_app_context() -> FakeAppContext:
+    """Create fake app context."""
+    return FakeAppContext()
+
+
+@pytest.fixture
+def fake_task_manager() -> FakeTaskManager:
+    """Create fake task manager."""
+    return FakeTaskManager()
+
+
+@pytest.fixture
+def workspace_tab(
+    qtbot: object,
+    fake_main_window: FakeMainWindow,
+    fake_log_handler: FakeLogHandler,
+    fake_app_context: FakeAppContext,
+    fake_task_manager: FakeTaskManager,
+) -> WorkspaceTab:
     shared_context = {
-        "main_window": MagicMock(),
-        "log_message": MagicMock(),
-        "app_context": MagicMock(),
-        "task_manager": MagicMock()
+        "main_window": fake_main_window,
+        "log_message": fake_log_handler,
+        "app_context": fake_app_context,
+        "task_manager": fake_task_manager
     }
     tab = WorkspaceTab(shared_context)
     qtbot.addWidget(tab)

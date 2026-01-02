@@ -4,7 +4,9 @@ Tests real file metadata extraction and display.
 """
 
 import time
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -16,7 +18,7 @@ from intellicrack.ui.widgets.file_metadata_widget import FileMetadataWidget
 
 
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Any:
     """Create QApplication instance."""
     app = QApplication.instance()
     if app is None:
@@ -33,7 +35,7 @@ def test_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def metadata_widget(qapp: QApplication) -> FileMetadataWidget:
+def metadata_widget(qapp: Any) -> Generator[FileMetadataWidget, None, None]:
     """Create file metadata widget."""
     widget = FileMetadataWidget()
     yield widget

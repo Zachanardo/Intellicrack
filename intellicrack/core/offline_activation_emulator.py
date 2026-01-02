@@ -142,14 +142,31 @@ class OfflineActivationEmulator:
     """Production-ready offline activation emulation system."""
 
     def __init__(self) -> None:
-        """Initialize the OfflineActivationEmulator with cryptographic backend and WMI client."""
+        """Initialize the OfflineActivationEmulator with cryptographic backend and WMI client.
+
+        Sets up cryptographic primitives and platform-specific system interfaces needed
+        for activation emulation. Initializes activation algorithm registry and known
+        licensing scheme database on Windows platforms.
+
+        """
         self.backend = default_backend()
         self.wmi_client = wmi.WMI() if platform.system() == "Windows" else None
         self.activation_algorithms = self._initialize_algorithms()
         self.known_schemes = self._load_known_schemes()
 
     def _initialize_algorithms(self) -> dict[str, Any]:
-        """Initialize known activation algorithms."""
+        """Initialize known activation algorithms.
+
+        Populates a dictionary mapping vendor identifiers to their corresponding
+        activation response generation functions. Supports major commercial vendors
+        (Microsoft, Adobe, Autodesk, VMware, MATLAB, SolidWorks) and custom
+        cryptographic schemes (RSA, AES, ECC).
+
+        Returns:
+            dict[str, Any]: Dictionary mapping algorithm names to activation handler
+                functions.
+
+        """
         algorithms = {
             "microsoft": self._microsoft_activation,
             "adobe": self._adobe_activation,
@@ -165,7 +182,17 @@ class OfflineActivationEmulator:
         return algorithms
 
     def _load_known_schemes(self) -> dict[str, dict[str, Any]]:
-        """Load database of known activation schemes."""
+        """Load database of known activation schemes.
+
+        Provides reference implementations of licensing mechanisms from major
+        commercial software vendors. Contains activation type, algorithm selection,
+        hardware binding status, and format specifications for each product.
+
+        Returns:
+            dict[str, dict[str, Any]]: Dictionary mapping product identifiers to
+                activation scheme specifications.
+
+        """
         schemes = {
             "microsoft_office": {
                 "type": ActivationType.CHALLENGE_RESPONSE,
@@ -190,7 +217,19 @@ class OfflineActivationEmulator:
         return schemes
 
     def get_hardware_profile(self) -> HardwareProfile:
-        """Get actual hardware profile from system."""
+        """Get actual hardware profile from system.
+
+        Gathers comprehensive hardware identifiers from the system including
+        CPU ID, motherboard serial, disk serial, network interface addresses,
+        BIOS serial, system UUID, volume serial, and machine GUID. Uses WMI
+        queries on Windows and system utilities (dmidecode, hdparm, etc.) on
+        Unix-like systems with fallback mechanisms for each component.
+
+        Returns:
+            HardwareProfile: Hardware profile containing all system hardware
+                identifiers.
+
+        """
         logger.debug("Retrieving CPU ID...")
         cpu_id = self._get_cpu_id()
         logger.debug("CPU ID: %s", cpu_id)
@@ -491,7 +530,23 @@ class OfflineActivationEmulator:
         return str(uuid.uuid4()).upper()
 
     def generate_hardware_id(self, profile: HardwareProfile | None = None, algorithm: str = "standard") -> str:
-        """Generate hardware ID from profile."""
+        """Generate hardware ID from profile.
+
+        Creates hardware identifiers from system components using multiple
+        algorithms suited to different commercial software protection schemes.
+        Supports standard hash-based, Microsoft-style XOR, Adobe LEID,
+        and custom PBKDF2-based generation methods.
+
+        Args:
+            profile: HardwareProfile | None: Hardware profile object; generates from
+                system if not provided. Defaults to None.
+            algorithm: str: Generation method (standard, microsoft, adobe, or custom).
+                Defaults to "standard".
+
+        Returns:
+            str: Formatted hardware ID string suitable for activation requests.
+
+        """
         logger.debug("Generating hardware ID using algorithm: %s", algorithm)
         if not profile:
             profile = self.get_hardware_profile()
@@ -1473,10 +1528,12 @@ class OfflineActivationEmulator:
         transformation on installation ID groups and pads with random data.
 
         Args:
-            installation_id: Installation identifier from activation request.
+            installation_id (str): Installation identifier from activation request
+                to transform into phone activation code.
 
         Returns:
-            9-group confirmation code in hyphen-separated format for phone entry.
+            str: 9-group confirmation code in hyphen-separated format for phone entry
+                (e.g., "123456-234567-345678-456789-567890-678901-789012-890123-901234").
 
         """
         # Convert installation ID to numeric groups
@@ -1513,11 +1570,14 @@ class OfflineActivationEmulator:
         and expiration checks in commercial software.
 
         Args:
-            product_id: Commercial software product identifier to target.
+            product_id (str): Commercial software product identifier to target
+                for trial bypass data generation.
 
         Returns:
-            Dictionary containing trial reset, registry keys, license files,
-            date bypass, and network bypass strategies.
+            dict[str, Any]: Dictionary containing trial_reset (file/registry deletion
+                targets), registry_keys (activation entries), license_files (multi-format
+                license outputs), date_bypass (time freeze settings), and network_bypass
+                (hosts/firewall rules) strategies for comprehensive trial defeat.
 
         """
         logger.debug("Generating trial restriction bypass data for product: %s", product_id)
@@ -1539,10 +1599,14 @@ class OfflineActivationEmulator:
         deletion targets and machine ID spoofing data for trial reset attacks.
 
         Args:
-            product_id: Target software product identifier.
+            product_id (str): Target software product identifier for which to
+                generate trial reset deletion targets.
 
         Returns:
-            Dictionary with file paths, registry keys, and spoofing GUIDs.
+            dict[str, Any]: Dictionary containing delete_files (list of trial data
+                file paths), registry_keys_to_delete (HKEY entries for trial state),
+                guid_to_regenerate (new GUID for machine binding), and machine_id_spoof
+                (spoofed hardware identifier).
 
         """
         return {
@@ -1566,10 +1630,13 @@ class OfflineActivationEmulator:
         license keys, activation dates, expiration dates, and feature flags.
 
         Args:
-            product_id: Target software product identifier.
+            product_id (str): Target software product identifier for which to
+                generate Registry activation entries.
 
         Returns:
-            Dictionary mapping Registry paths to activation values.
+            dict[str, str]: Dictionary mapping Windows Registry paths (HKEY_LOCAL_MACHINE
+                or HKEY_CURRENT_USER keys) to activation values including license
+                keys, activation dates, expiry dates, and feature strings.
 
         """
         return {
@@ -1588,10 +1655,13 @@ class OfflineActivationEmulator:
         license directories.
 
         Args:
-            product_id: Target software product identifier.
+            product_id (str): Target software product identifier for which to
+                generate license files in multiple formats.
 
         Returns:
-            Dictionary mapping filename to license file bytes (XML, JSON, DAT, TXT).
+            dict[str, bytes]: Dictionary mapping filename to license file bytes
+                (license.xml, license.json, license.dat, license.txt) containing
+                full activation response data in respective formats.
 
         """
         # Generate proper activation response
@@ -1628,7 +1698,9 @@ class OfflineActivationEmulator:
         suitable for resetting trial evaluation periods.
 
         Returns:
-            Dictionary with system time freeze dates and NTP override configuration.
+            dict[str, Any]: Dictionary containing system time freeze dates, trial
+                start date, last check date, timezone, and NTP server override
+                configuration for date bypass attacks.
 
         """
         utc_tz = UTC
@@ -1648,7 +1720,9 @@ class OfflineActivationEmulator:
         common activation domains for major software vendors.
 
         Returns:
-            Dictionary with hosts entries, firewall rules, and proxy configuration.
+            dict[str, Any]: Dictionary containing hosts file entries (list of IP
+                address to domain mappings), firewall rules (list of blocking rules),
+                and proxy configuration (dict with http/https proxy settings).
 
         """
         return {
@@ -1677,8 +1751,11 @@ class OfflineActivationEmulator:
         hardware-locked activation schemes.
 
         Returns:
-            MachineProfile object containing complete system identification data
-            for activation request generation and license bypass operations.
+            MachineProfile: MachineProfile object containing complete system
+                identification data (machine_id, cpu_id, motherboard_serial,
+                disk_serial, mac_address, hostname, username, os_version,
+                install_date, install_path, product_version) for activation
+                request generation and hardware binding bypass operations.
 
         """
         hostname = socket.gethostname()
@@ -1730,7 +1807,9 @@ class OfflineActivationEmulator:
         for activation request crafting and hardware-locked license bypasses.
 
         Returns:
-            MAC address string in standard colon-separated hexadecimal format.
+            str: MAC address string in standard colon-separated hexadecimal format
+                (e.g., "00:1B:44:AA:BB:CC") with OUI prefix from Cisco, VMware,
+                Parallels, VirtualBox, or other recognized manufacturers.
 
         """
         # Real OUI prefixes from major manufacturers
@@ -1760,9 +1839,10 @@ class OfflineActivationEmulator:
         signature algorithms, and machine binding mechanisms used by these products.
 
         Returns:
-            Dictionary mapping product identifiers to their activation pattern
-            specifications including request format, encryption, signatures, and
-            validation mechanisms.
+            dict[str, dict[str, Any]]: Dictionary mapping product identifiers
+                (adobe_cc, autodesk, microsoft, vmware) to their activation pattern
+                specifications including request_format, encryption, signature algorithm,
+                machine_binding list, and response_validation method.
 
         """
         return {
@@ -1804,12 +1884,16 @@ class OfflineActivationEmulator:
         binary for compatibility with various licensing server implementations.
 
         Args:
-            product_id: Target software product identifier.
-            serial_number: Software product serial number or license code.
-            format: Request output format (XML, JSON, BASE64, or BINARY).
+            product_id (str): Target software product identifier for activation
+                request.
+            serial_number (str): Software product serial number or license code
+                to embed in request.
+            format (RequestFormat): Request output format (XML, JSON, BASE64, or
+                BINARY). Defaults to RequestFormat.XML.
 
         Returns:
-            Activation request string in specified format, ready for server submission.
+            str: Activation request string in specified format, ready for server
+                submission with embedded digital signature.
 
         """
         logger.debug(
@@ -1849,10 +1933,14 @@ class OfflineActivationEmulator:
         signature for tamper detection. Compatible with XML-based licensing servers.
 
         Args:
-            request: Extended activation request containing all machine and product data.
+            request (ExtendedActivationRequest): Extended activation request
+                containing all machine profile, product data, serial number,
+                and timestamp information.
 
         Returns:
-            XML-formatted activation request string with signature element.
+            str: XML-formatted activation request string with embedded signature
+                element and machine profile metadata suitable for licensing server
+                submission.
 
         """
         root = ElementTree.Element("ActivationRequest")
@@ -1892,10 +1980,13 @@ class OfflineActivationEmulator:
         Suitable for modern licensing systems using JSON APIs.
 
         Args:
-            request: Extended activation request with machine profile.
+            request (ExtendedActivationRequest): Extended activation request
+                containing machine profile, product identifiers, and timestamp
+                data.
 
         Returns:
-            JSON-formatted activation request string with signature field.
+            str: JSON-formatted activation request string with signature field
+                containing base64-encoded RSA signature for authentication.
 
         """
         data = {
@@ -1933,10 +2024,14 @@ class OfflineActivationEmulator:
         binary activation protocols.
 
         Args:
-            request: Extended activation request with packed binary data.
+            request (ExtendedActivationRequest): Extended activation request
+                containing request ID, product identifiers, machine profile,
+                and serial number data to pack into binary format.
 
         Returns:
-            Base64-encoded activation request with embedded signature.
+            str: Base64-encoded activation request containing packed request data,
+                machine fingerprints, and embedded RSA signature for binary
+                protocol transmission.
 
         """
         # Pack data into binary format
@@ -1969,10 +2064,14 @@ class OfflineActivationEmulator:
         Returns hex-encoded representation for transmission.
 
         Args:
-            request: Extended activation request for binary packing.
+            request (ExtendedActivationRequest): Extended activation request
+                containing request ID, product identifiers, machine profile
+                components, and serial number for binary packet construction.
 
         Returns:
-            Hexadecimal string representation of binary activation request.
+            str: Hexadecimal string representation of binary activation request
+                packet with magic header, hashed identifiers, and RSA PSS
+                signature for authentication.
 
         """
         # Create binary packet
@@ -2013,10 +2112,11 @@ class OfflineActivationEmulator:
         hashing. Used for tamper-proof request transmission to servers.
 
         Args:
-            data: Raw activation request data to sign.
+            data (bytes): Raw activation request data to sign with RSA private key.
 
         Returns:
-            RSA PSS signature bytes.
+            bytes: RSA PSS signature (256 bytes for RSA-2048) with SHA256 hashing
+                and maximum salt length padding for digital authentication.
 
         """
         # Generate signing key
@@ -2038,10 +2138,14 @@ class OfflineActivationEmulator:
         with 100,000 iterations. Key format: 5-character groups separated by hyphens.
 
         Args:
-            request: Extended activation request with product and machine identifiers.
+            request (ExtendedActivationRequest): Extended activation request
+                containing product ID, machine profile, and serial number data
+                for PBKDF2 key derivation.
 
         Returns:
-            Formatted license key string derived from request cryptographic material.
+            str: Formatted license key string (32 bytes, 64 hex chars) derived from
+                request cryptographic material with 5-character group formatting
+                separated by hyphens.
 
         """
         # Create license data
@@ -2068,10 +2172,14 @@ class OfflineActivationEmulator:
         identifiers using serial number as key. Format: 5-character groups.
 
         Args:
-            request: Extended activation request with machine profile and serial.
+            request (ExtendedActivationRequest): Extended activation request
+                containing machine profile (CPU ID, disk serial, MAC address)
+                and serial number for HMAC computation.
 
         Returns:
-            Formatted activation code string from HMAC computation.
+            str: Formatted activation code string derived from HMAC-SHA256
+                computation (20 hex characters formatted as 5-character groups
+                separated by hyphens).
 
         """
         # Combine machine identifiers
@@ -2091,11 +2199,14 @@ class OfflineActivationEmulator:
         ACTFILE1 magic header and IV for offline deployment.
 
         Args:
-            response: Activation response with license key and codes.
-            output_path: File system path where activation file will be written.
+            response (ActivationResponse): Activation response containing license
+                key, activation code, expiration timestamp, features, and digital
+                signature to encrypt and embed in file.
+            output_path (str): File system path where activation file will be
+                written as AES-CBC encrypted binary with magic header.
 
         Returns:
-            Path to created activation file.
+            str: Path to created activation file (same as output_path parameter).
 
         """
         data = {
@@ -2141,10 +2252,12 @@ class OfflineActivationEmulator:
         profile identifiers. Suitable for defeating challenge-response activation.
 
         Args:
-            challenge: Challenge string from licensing server (base64 or raw bytes).
+            challenge (str): Challenge string from licensing server (base64 or
+                raw bytes format).
 
         Returns:
-            Base64-encoded response suitable for server validation.
+            str: Base64-encoded response (SHA256 digest) suitable for server
+                validation and challenge-response authentication bypass.
 
         """
         logger.debug("Bypassing challenge-response for challenge: %s", challenge)
@@ -2193,22 +2306,21 @@ class OfflineActivationEmulator:
         Used for testing license file integrity and compatibility with target systems.
 
         Args:
-            file_path: Path to the license file to validate.
-            hardware_id: Optional hardware ID to verify hardware-locked licenses against.
+            file_path (str): Path to the license file to validate.
+            hardware_id (str | None): Optional hardware ID to verify hardware-locked
+                licenses against; if None, generates current system hardware ID.
 
         Returns:
-            Dictionary containing validation results with keys:
-                - valid: Boolean indicating overall validity
-                - format: Detected file format (xml, json, binary, text)
-                - license_key: Extracted license key if present
-                - activation_code: Extracted activation code if present
-                - expiry_date: License expiration date if present
-                - expired: Boolean indicating if license is expired
-                - hardware_locked: Boolean indicating if license is hardware-locked
-                - hardware_match: Boolean indicating if hardware ID matches (if applicable)
-                - features: List of licensed features
-                - signature_valid: Boolean indicating if digital signature is valid
-                - errors: List of validation errors encountered
+            dict[str, Any]: Dictionary containing validation results with keys:
+                valid (bool): overall validity status; format (str): detected file
+                format (xml, json, binary, text); license_key (str): extracted
+                license key if present; activation_code (str): extracted activation
+                code if present; expiry_date (str): License expiration date in ISO
+                format if present; expired (bool): whether license is expired;
+                hardware_locked (bool): whether license is hardware-locked;
+                hardware_match (bool): whether hardware ID matches if applicable;
+                features (list): list of licensed features; signature_valid (bool):
+                whether digital signature is valid; errors (list): validation errors.
 
         """
         logger.debug("Validating license file: %s", file_path)
@@ -2263,7 +2375,23 @@ class OfflineActivationEmulator:
             return result
 
     def _detect_and_parse_license_format(self, file_content: bytes, result: dict[str, Any]) -> dict[str, Any] | None:
-        """Detect license file format and parse content accordingly."""
+        """Detect license file format and parse content accordingly.
+
+        Analyzes file magic bytes and structure to identify license file format
+        (XML, JSON, binary, or text) and invokes appropriate parsing handler.
+        Updates result dictionary with format type for validation tracking.
+
+        Args:
+            file_content (bytes): Raw license file bytes to analyze for format
+                detection via magic bytes and header structure.
+            result (dict[str, Any]): Result dictionary to update with format
+                identification and parsing errors.
+
+        Returns:
+            dict[str, Any] | None: Parsed license data dictionary containing
+                extracted license fields, or None if format is unrecognized.
+
+        """
         license_data: dict[str, Any] = {}
 
         if file_content.startswith(b"<?xml") or file_content.startswith(b"<License"):
@@ -2292,7 +2420,24 @@ class OfflineActivationEmulator:
         return license_data
 
     def _parse_xml_license(self, content: bytes, result: dict[str, Any]) -> dict[str, Any]:
-        """Parse XML format license file."""
+        """Parse XML format license file.
+
+        Extracts license information from XML-formatted license files including
+        license key, activation code, expiry date, hardware ID binding, features,
+        and digital signature. Handles XML parsing errors gracefully.
+
+        Args:
+            content (bytes): XML license file content in bytes format containing
+                license elements and structured metadata.
+            result (dict[str, Any]): Result dictionary to populate with extracted
+                license data and parsing errors.
+
+        Returns:
+            dict[str, Any]: Dictionary with extracted license file data including
+                license_key, activation_code, expiry_date, hardware_locked,
+                hardware_id, features list, and signature.
+
+        """
         license_data: dict[str, Any] = {}
         try:
             root = ElementTree.fromstring(content)
@@ -2335,7 +2480,24 @@ class OfflineActivationEmulator:
         return license_data
 
     def _parse_json_license(self, content: bytes, result: dict[str, Any]) -> dict[str, Any]:
-        """Parse JSON format license file."""
+        """Parse JSON format license file.
+
+        Extracts license information from JSON-formatted license files including
+        license key, activation code, expiry date, hardware binding, features,
+        and signature. Handles JSON parsing errors gracefully.
+
+        Args:
+            content (bytes): JSON license file content in bytes format containing
+                UTF-8 encoded JSON license structure.
+            result (dict[str, Any]): Result dictionary to populate with extracted
+                license data and JSON parsing errors.
+
+        Returns:
+            dict[str, Any]: Dictionary with extracted license file data including
+                license_key, activation_code, expiry_date, hardware_locked,
+                hardware_id, features list, and signature.
+
+        """
         license_data: dict[str, Any] = {}
         try:
             data = json.loads(content.decode("utf-8"))
@@ -2371,7 +2533,26 @@ class OfflineActivationEmulator:
         return license_data
 
     def _parse_binary_license(self, content: bytes, result: dict[str, Any]) -> dict[str, Any]:
-        """Parse binary format license file."""
+        """Parse binary format license file.
+
+        Extracts license information from binary-formatted license files including
+        encrypted AES data with magic headers, license keys, activation codes,
+        expiry timestamps, and feature lists. Handles both encrypted ACTF format
+        and LICX structured binary formats. Updates result dictionary with
+        extracted fields and decryption status.
+
+        Args:
+            content (bytes): Binary license file content in bytes with magic header
+                (ACTF or LICX) and struct-packed license data.
+            result (dict[str, Any]): Result dictionary to populate with extracted
+                license data, decryption status, and parsing errors.
+
+        Returns:
+            dict[str, Any]: Dictionary with extracted license file data including
+                license key, activation code, features, hardware lock status,
+                version, expiry timestamp, and decryption information.
+
+        """
         license_data: dict[str, Any] = {}
         try:
             offset = 0
@@ -2453,7 +2634,25 @@ class OfflineActivationEmulator:
         return license_data
 
     def _parse_text_license(self, content: str, result: dict[str, Any]) -> dict[str, Any]:
-        """Parse text format license file."""
+        """Parse text format license file.
+
+        Extracts license information from human-readable text-formatted license
+        files by parsing key-value pairs separated by colons. Extracts license
+        key, activation code, expiry date, hardware lock status, and feature
+        list from lines marked with bullet points.
+
+        Args:
+            content (str): Text license file content as decoded UTF-8 string with
+                key-value pairs and feature list sections.
+            result (dict[str, Any]): Result dictionary to populate with extracted
+                license data from text parsing.
+
+        Returns:
+            dict[str, Any]: Dictionary with extracted license file data including
+                license key, activation code, expiry date, hardware lock status,
+                and features list from text format file.
+
+        """
         license_data: dict[str, Any] = {}
 
         for line in content.split("\n"):
@@ -2480,7 +2679,21 @@ class OfflineActivationEmulator:
         return license_data
 
     def _validate_license_expiry(self, license_data: dict[str, Any], result: dict[str, Any]) -> None:
-        """Validate license expiration status."""
+        """Validate license expiration status.
+
+        Checks if a license has expired by parsing expiry date from license data
+        and comparing against current system time. Handles multiple date formats
+        including ISO 8601 timestamps and Unix timestamps. Updates result
+        dictionary with expiry date and expiration status.
+
+        Args:
+            license_data (dict[str, Any]): Dictionary containing extracted license
+                information including optional expiry_date (ISO 8601 string) and
+                expiry_timestamp (Unix timestamp) fields.
+            result (dict[str, Any]): Result dictionary to update with expiry_date
+                (ISO string) and expired (boolean) status.
+
+        """
         expiry_date = None
 
         if license_data.get("expiry_date"):
@@ -2502,7 +2715,24 @@ class OfflineActivationEmulator:
             result["expired"] = now > expiry_date
 
     def _validate_hardware_binding(self, license_data: dict[str, Any], hardware_id: str | None, result: dict[str, Any]) -> None:
-        """Validate hardware ID binding if applicable."""
+        """Validate hardware ID binding if applicable.
+
+        Checks if a hardware-locked license is bound to the current system or
+        a specified hardware ID. If the license is not hardware-locked, validation
+        passes automatically. For hardware-locked licenses, compares embedded
+        hardware ID against provided hardware ID or current system hardware ID.
+        Records mismatch errors in result dictionary.
+
+        Args:
+            license_data (dict[str, Any]): Dictionary containing extracted license
+                information including optional hardware_id and hardware_locked
+                boolean fields.
+            hardware_id (str | None): Optional hardware ID to validate against;
+                generates current system hardware ID if None.
+            result (dict[str, Any]): Result dictionary to update with hardware_match
+                (boolean) and error list for hardware binding validation.
+
+        """
         if not result["hardware_locked"]:
             result["hardware_match"] = True
             return
@@ -2521,7 +2751,22 @@ class OfflineActivationEmulator:
             result["hardware_match"] = True
 
     def _validate_signature(self, file_content: bytes, license_data: dict[str, Any], result: dict[str, Any]) -> None:
-        """Validate digital signature if present."""
+        """Validate digital signature if present.
+
+        Checks the validity of RSA digital signatures embedded in license files.
+        Decodes base64-encoded signatures and validates signature length (256 bytes
+        for RSA-2048). Records signature validity and encoding errors in result
+        dictionary for license validation tracking.
+
+        Args:
+            file_content (bytes): Raw license file bytes for signature context
+                during validation.
+            license_data (dict[str, Any]): Dictionary containing extracted license
+                information including optional base64-encoded signature field.
+            result (dict[str, Any]): Result dictionary to update with signature_valid
+                (boolean) status and signature encoding errors in error list.
+
+        """
         if "signature" not in license_data:
             result["signature_valid"] = True
             return
@@ -2542,7 +2787,20 @@ class OfflineActivationEmulator:
             result["errors"].append("Invalid signature encoding")
 
     def _extract_license_features(self, license_data: dict[str, Any], result: dict[str, Any]) -> None:
-        """Extract and populate licensed features."""
+        """Extract and populate licensed features.
+
+        Extracts the list of licensed features from parsed license data and
+        populates the result dictionary. Features represent software capabilities
+        or modules that are enabled by the license (e.g., 'Premium', 'Enterprise',
+        'Advanced Reporting', etc.).
+
+        Args:
+            license_data (dict[str, Any]): Dictionary containing extracted license
+                information with optional features list field (list of strings).
+            result (dict[str, Any]): Result dictionary to populate with features
+                list from license data.
+
+        """
         if license_data.get("features"):
             result["features"] = license_data["features"]
 
@@ -2554,16 +2812,17 @@ class OfflineActivationEmulator:
         with different software licensing systems.
 
         Args:
-            response: ActivationResponse object containing license data to export.
-            file_path: Destination file path for the exported license file.
-            format_type: Output format - 'xml', 'json', 'binary', or 'text'.
+            response (ActivationResponse): ActivationResponse object containing
+                license key, activation code, expiry date, features, hardware lock
+                status, and signature data to export.
+            file_path (str): Destination file path for the exported license file
+                in the local file system.
+            format_type (str): Output format - 'xml', 'json', 'binary', or 'text'.
+                Defaults to "xml".
 
         Returns:
-            The file path where the license was exported.
-
-        Raises:
-            ValueError: If an unsupported format type is specified.
-            IOError: If the file cannot be written.
+            str: The file path where the license was exported (same as file_path
+                parameter).
 
         """
         logger.debug("Exporting license to %s in %s format", file_path, format_type)

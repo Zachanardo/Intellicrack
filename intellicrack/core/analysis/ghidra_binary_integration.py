@@ -25,7 +25,7 @@ class GhidraBinaryIntegration:
         """Initialize Ghidra integration.
 
         Args:
-            ghidra_path: Path to Ghidra installation directory
+            ghidra_path: Path to Ghidra installation directory.
 
         """
         self.ghidra_path = ghidra_path
@@ -40,11 +40,11 @@ class GhidraBinaryIntegration:
         """Analyze license validation routines in binary.
 
         Args:
-            binary_path: Path to binary to analyze
-            deep_analysis: Perform comprehensive analysis if True
+            binary_path: Path to binary to analyze.
+            deep_analysis: Perform comprehensive analysis if True.
 
         Returns:
-            Dictionary with license validation analysis results
+            Dictionary with license validation analysis results.
 
         """
         try:
@@ -72,10 +72,10 @@ class GhidraBinaryIntegration:
         """Detect protection schemes and packers.
 
         Args:
-            binary_path: Path to binary to analyze
+            binary_path: Path to binary to analyze.
 
         Returns:
-            Dictionary with detected protections
+            Dictionary with detected protections.
 
         """
         try:
@@ -113,10 +113,10 @@ class GhidraBinaryIntegration:
         """Analyze cryptographic routines and algorithms.
 
         Args:
-            binary_path: Path to binary to analyze
+            binary_path: Path to binary to analyze.
 
         Returns:
-            Dictionary with crypto analysis results
+            Dictionary with crypto analysis results.
 
         """
         try:
@@ -158,10 +158,10 @@ class GhidraBinaryIntegration:
         """Generate keygen template from license validation algorithm.
 
         Args:
-            binary_path: Path to binary to analyze
+            binary_path: Path to binary to analyze.
 
         Returns:
-            Dictionary with keygen template and algorithm details
+            Dictionary with keygen template and algorithm details.
 
         """
         try:
@@ -187,10 +187,10 @@ class GhidraBinaryIntegration:
         """Deobfuscate control flow and remove junk code.
 
         Args:
-            binary_path: Path to binary to analyze
+            binary_path: Path to binary to analyze.
 
         Returns:
-            Dictionary with deobfuscation results
+            Dictionary with deobfuscation results.
 
         """
         try:
@@ -216,10 +216,10 @@ class GhidraBinaryIntegration:
         """Automatically decrypt obfuscated strings.
 
         Args:
-            binary_path: Path to binary to analyze
+            binary_path: Path to binary to analyze.
 
         Returns:
-            Dictionary with decrypted strings
+            Dictionary with decrypted strings.
 
         """
         try:
@@ -247,10 +247,10 @@ class GhidraBinaryIntegration:
         """Detect anti-analysis techniques.
 
         Args:
-            binary_path: Path to binary to analyze
+            binary_path: Path to binary to analyze.
 
         Returns:
-            Dictionary with detected anti-analysis techniques
+            Dictionary with detected anti-analysis techniques.
 
         """
         try:
@@ -292,11 +292,11 @@ class GhidraBinaryIntegration:
         """Perform comprehensive binary analysis using multiple Ghidra scripts.
 
         Args:
-            binary_path: Path to binary to analyze
-            include_decompilation: Include full decompilation if True
+            binary_path: Path to binary to analyze.
+            include_decompilation: Include full decompilation if True.
 
         Returns:
-            Dictionary with comprehensive analysis results
+            Dictionary with comprehensive analysis results.
 
         """
         try:
@@ -324,11 +324,11 @@ class GhidraBinaryIntegration:
         """Automatically unpack packed binary.
 
         Args:
-            binary_path: Path to packed binary
-            max_iterations: Maximum unpacking iterations
+            binary_path: Path to packed binary.
+            max_iterations: Maximum unpacking iterations.
 
         Returns:
-            Dictionary with unpacking results
+            Dictionary with unpacking results.
 
         """
         try:
@@ -354,10 +354,10 @@ class GhidraBinaryIntegration:
         """Analyze network communication routines.
 
         Args:
-            binary_path: Path to binary to analyze
+            binary_path: Path to binary to analyze.
 
         Returns:
-            Dictionary with network analysis results
+            Dictionary with network analysis results.
 
         """
         try:
@@ -392,10 +392,10 @@ class GhidraBinaryIntegration:
         7. Detect anti-analysis techniques
 
         Args:
-            binary_path: Path to binary to crack
+            binary_path: Path to binary to crack.
 
         Returns:
-            Dictionary with complete workflow results
+            Dictionary with complete workflow results.
 
         """
         self.logger.info("Starting licensing crack workflow for %s", binary_path.name)
@@ -431,7 +431,7 @@ class GhidraBinaryIntegration:
         """Get list of dynamically discovered Ghidra scripts.
 
         Returns:
-            List of dictionaries with script information
+            List of dictionaries with script information.
 
         """
         return self.script_runner.list_available_scripts()
@@ -440,10 +440,10 @@ class GhidraBinaryIntegration:
         """Get information about a specific dynamically discovered script.
 
         Args:
-            script_name: Name of script
+            script_name: Name of script.
 
         Returns:
-            Dictionary with script information or None
+            Dictionary with script information or None if script not found.
 
         """
         if script := self.script_runner._get_script(script_name):
@@ -462,7 +462,7 @@ class GhidraBinaryIntegration:
         """Refresh the list of discovered scripts from filesystem.
 
         Returns:
-            Number of scripts discovered
+            Number of scripts discovered.
 
         """
         return self.script_runner.refresh_scripts()

@@ -22,7 +22,7 @@ Common report generation utilities to avoid code duplication.
 """
 
 from collections.abc import Callable
-from typing import Any, Protocol
+from typing import Protocol
 
 from intellicrack.utils.logger import logger
 
@@ -31,7 +31,12 @@ class ReportGenerator(Protocol):
     """Protocol for objects with generate_report method."""
 
     def generate_report(self, filename: str) -> str | None:
-        """Generate report and return path."""
+        """Generate report and return path.
+
+        Args:
+            filename: Output filename for the report.
+
+        """
         ...
 
 
@@ -50,8 +55,7 @@ def generate_analysis_report(
         generator_func: Optional function to generate the report content
 
     Returns:
-        str or None: Path to generated report file, or None if cancelled
-
+        Path to generated report file, or None if cancelled
     """
     try:
         from ..ui.ui_helpers import ask_yes_no_question, show_file_dialog
@@ -88,8 +92,7 @@ def _generate_default_report(filename: str, report_type: str, results_data: obje
         results_data: Results to include
 
     Returns:
-        str: Path to generated report
-
+        Path to generated report file, or None if an error occurs
     """
     html_content = f"""
     <!DOCTYPE html>
@@ -131,7 +134,6 @@ def ensure_html_extension(filename: str) -> str:
 
     Returns:
         Filename with .html extension
-
     """
     return filename if filename.endswith(".html") else f"{filename}.html"
 
@@ -146,7 +148,6 @@ def handle_pyqt6_report_generation(app: object, report_type: str, generator: Rep
 
     Returns:
         Path to generated report file, or None if cancelled
-
     """
     try:
         import importlib.util

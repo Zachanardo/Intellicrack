@@ -22,11 +22,10 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
-from typing import Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast, runtime_checkable
 
 from intellicrack.handlers.pyqt6_handler import (
     QLabel,
-    QMainWindow,
     QPlainTextEdit,
     QPushButton,
     QSplitter,
@@ -38,22 +37,30 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 
 from ..utils.logger import log_all_methods
-from .tabs.ai_assistant_tab import AIAssistantTab
-from .tabs.analysis_tab import AnalysisTab
-from .tabs.dashboard_tab import DashboardTab
-from .tabs.exploitation_tab import ExploitationTab
-from .tabs.settings_tab import SettingsTab
-from .tabs.terminal_tab import TerminalTab
-from .tabs.tools_tab import ToolsTab
-from .tabs.workspace_tab import WorkspaceTab
 from .theme_manager import get_theme_manager
+
+
+if TYPE_CHECKING:
+    from .tabs.ai_assistant_tab import AIAssistantTab  # noqa: TC004
+    from .tabs.analysis_tab import AnalysisTab  # noqa: TC004
+    from .tabs.dashboard_tab import DashboardTab  # noqa: TC004
+    from .tabs.exploitation_tab import ExploitationTab  # noqa: TC004
+    from .tabs.settings_tab import SettingsTab  # noqa: TC004
+    from .tabs.terminal_tab import TerminalTab  # noqa: TC004
+    from .tabs.tools_tab import ToolsTab  # noqa: TC004
+    from .tabs.workspace_tab import WorkspaceTab  # noqa: TC004
 
 
 logger = logging.getLogger(__name__)
 
 
+@runtime_checkable
 class _MainWindowProtocol(Protocol):
-    """Protocol defining the main window interface expected by UIManager."""
+    """Protocol defining the main window interface expected by UIManager.
+
+    This protocol is runtime checkable, allowing isinstance() validation
+    to verify that main window instances implement required methods.
+    """
 
     central_widget: QWidget
     main_layout: QVBoxLayout
@@ -75,7 +82,7 @@ class _MainWindowProtocol(Protocol):
     app_context: Any
     task_manager: Any
 
-    def setCentralWidget(self, widget: QWidget) -> None: ...
+    def setCentralWidget(self, widget: QWidget) -> None: ...  # noqa: N802
     def create_toolbar(self) -> None: ...
     def clear_output(self) -> None: ...
     def log_message(self, message: str, level: str = "INFO") -> None: ...
@@ -89,9 +96,24 @@ class UIManager:
         """Initialize the UI Manager.
 
         Args:
-            main_window: The main application window.
+            main_window: The main application window implementing _MainWindowProtocol.
 
+        Raises:
+            TypeError: If main_window does not implement required protocol methods.
         """
+        required_methods = ["setCentralWidget", "create_toolbar", "clear_output", "log_message"]
+        missing_methods = [
+            method for method in required_methods
+            if not callable(getattr(main_window, method, None))
+        ]
+
+        if missing_methods:
+            missing_str = ", ".join(missing_methods)
+            raise TypeError(
+                f"main_window must implement _MainWindowProtocol. "
+                f"Missing required methods: {missing_str}"
+            )
+
         self.logger = logger
         self.main_window: _MainWindowProtocol = main_window
         self.theme_manager = get_theme_manager()
@@ -143,6 +165,15 @@ class UIManager:
 
     def create_modular_tabs(self) -> None:
         """Create all modular tab instances."""
+        from .tabs.ai_assistant_tab import AIAssistantTab
+        from .tabs.analysis_tab import AnalysisTab
+        from .tabs.dashboard_tab import DashboardTab
+        from .tabs.exploitation_tab import ExploitationTab
+        from .tabs.settings_tab import SettingsTab
+        from .tabs.terminal_tab import TerminalTab
+        from .tabs.tools_tab import ToolsTab
+        from .tabs.workspace_tab import WorkspaceTab
+
         shared_context = {
             "main_window": self.main_window,
             "log_message": self.main_window.log_message,

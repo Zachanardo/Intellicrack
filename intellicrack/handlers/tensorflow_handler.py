@@ -38,7 +38,7 @@ def _to_float(value: object) -> float:
 
     Raises:
         TypeError: If the value cannot be converted to float.
-        ValueError: If the value cannot be converted to float.
+        ValueError: If float conversion fails for certain string or bytes values.
 
     """
     if isinstance(value, float):
@@ -96,10 +96,10 @@ def _safe_tensorflow_import(
         timeout: Maximum time in seconds to wait for TensorFlow import.
 
     Returns:
-        A tuple of (success: bool, modules: dict or None, error: Exception or None).
+        Tuple containing import success status, TensorFlow modules dictionary, and any import error.
 
     Raises:
-        TimeoutError: If TensorFlow import takes longer than the specified timeout.
+        TimeoutError: If TensorFlow import exceeds the specified timeout duration.
 
     """
     import_success: bool = False
@@ -107,6 +107,10 @@ def _safe_tensorflow_import(
     tf_modules: dict[str, object] = {}
 
     def _import_tensorflow() -> None:
+        """Import TensorFlow and populate modules dictionary.
+
+        Sets import_success, import_error, and tf_modules based on import result.
+        """
         nonlocal import_success, import_error, tf_modules
         try:
             import tensorflow as tf
@@ -137,7 +141,18 @@ def _safe_tensorflow_import(
 
 
 def ensure_tensorflow_loaded() -> None:
-    """Ensure TensorFlow is loaded (lazy loading)."""
+    """Ensure TensorFlow is loaded (lazy loading).
+
+    Initializes TensorFlow modules with automatic fallback implementations
+    if the real TensorFlow library is unavailable. Sets up GPU memory growth
+    for compatible hardware and handles timeout scenarios gracefully.
+
+    Raises:
+        ImportError: If TensorFlow import fails and no fallback is available.
+        TimeoutError: If TensorFlow import exceeds the timeout duration.
+        Exception: If any other error occurs during TensorFlow import.
+
+    """
     global _tf_initialized, HAS_TENSORFLOW, TENSORFLOW_VERSION, tf, keras_module, layers_module, models_module, optimizers_module
 
     if _tf_initialized:
@@ -472,6 +487,9 @@ class FallbackDenseLayer:
 
         Returns:
             Output tensor after applying weights, bias, and activation.
+
+        Raises:
+            RuntimeError: If layer weights are not initialized.
 
         """
         if not self.built:
@@ -928,7 +946,7 @@ class FallbackModel:
             f.write(b"FALLBACK_MODEL")
 
     def summary(self) -> None:
-        """Print model summary."""
+        """Print model summary to log output."""
         logger.info("Model: %s", self.name)
         logger.info("Layers: %d", len(self.layers))
         for i, layer in enumerate(self.layers):
@@ -1323,7 +1341,7 @@ class FallbackSavedModel:
             path: Directory path to check for saved model.
 
         Returns:
-            Boolean indicating if a saved model exists at path.
+            True if a saved model exists at path, False otherwise.
 
         """
         logger.info(f"Checking for saved model in {path} (fallback mode).")
@@ -1602,27 +1620,72 @@ class FallbackTensorFlow:
 
 # Provide backwards compatibility aliases
 def get_tf() -> object:
-    """Get TensorFlow module (real or fallback)."""
+    """Get TensorFlow module (real or fallback).
+
+    Returns the current TensorFlow module instance, which may be either
+    the real TensorFlow library or the FallbackTensorFlow implementation
+    depending on availability and import success.
+
+    Returns:
+        TensorFlow module instance (tf or FallbackTensorFlow).
+
+    """
     return tf
 
 
 def get_keras() -> object:
-    """Get Keras module (real or fallback)."""
+    """Get Keras module (real or fallback).
+
+    Returns the current Keras module instance for neural network construction,
+    which may be either the real TensorFlow Keras API or the FallbackKeras
+    implementation depending on availability.
+
+    Returns:
+        Keras module instance (tf.keras or FallbackKeras).
+
+    """
     return keras_module
 
 
 def get_layers() -> object:
-    """Get layers module (real or fallback)."""
+    """Get layers module (real or fallback).
+
+    Returns the current layers module instance for accessing neural network
+    layer implementations, which may be either the real TensorFlow Keras layers
+    or the FallbackKerasLayers implementation.
+
+    Returns:
+        Layers module instance (tf.keras.layers or FallbackKerasLayers).
+
+    """
     return layers_module
 
 
 def get_models() -> object:
-    """Get models module (real or fallback)."""
+    """Get models module (real or fallback).
+
+    Returns the current models module instance for building sequential and
+    functional neural network models, which may be either the real TensorFlow
+    Keras models API or the FallbackKerasModels implementation.
+
+    Returns:
+        Models module instance (tf.keras.models or FallbackKerasModels).
+
+    """
     return models_module
 
 
 def get_optimizers() -> object:
-    """Get optimizers module (real or fallback)."""
+    """Get optimizers module (real or fallback).
+
+    Returns the current optimizers module instance for accessing gradient-based
+    optimization algorithms, which may be either the real TensorFlow Keras
+    optimizers API or the FallbackKerasOptimizers implementation.
+
+    Returns:
+        Optimizers module instance (tf.keras.optimizers or FallbackKerasOptimizers).
+
+    """
     return optimizers_module
 
 

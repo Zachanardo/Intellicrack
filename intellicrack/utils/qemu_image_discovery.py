@@ -20,7 +20,7 @@ from pathlib import Path
 from .path_resolver import get_project_root
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -38,7 +38,7 @@ class QEMUImageInfo:
 class QEMUImageDiscovery:
     """Discovers and catalogs QEMU images from configured directories."""
 
-    SUPPORTED_FORMATS = [
+    SUPPORTED_FORMATS: list[str] = [
         ".qcow2",
         ".qcow",
         ".img",
@@ -54,14 +54,19 @@ class QEMUImageDiscovery:
         ".parallels",
         ".bochs",
     ]
+    """Supported QEMU image file formats."""
 
     def __init__(self) -> None:
         """Initialize QEMU image discovery."""
         self._cache: list[QEMUImageInfo] = []
-        self._cache_valid = False
+        self._cache_valid: bool = False
 
     def get_search_directories(self) -> list[Path]:
-        """Get list of directories to search for QEMU images."""
+        """Get list of directories to search for QEMU images.
+
+        Returns:
+            list[Path]: List of directories to search for QEMU images.
+        """
         project_root = get_project_root()
 
         directories = [
@@ -80,7 +85,14 @@ class QEMUImageDiscovery:
         return existing_dirs
 
     def detect_os_type(self, filename: str) -> str:
-        """Detect OS type from filename patterns."""
+        """Detect OS type from filename patterns.
+
+        Args:
+            filename: The filename to analyze.
+
+        Returns:
+            str: Detected OS type (windows, linux, bsd, macos, or unknown).
+        """
         filename_lower = filename.lower()
 
         patterns = {
@@ -96,7 +108,14 @@ class QEMUImageDiscovery:
         )
 
     def detect_architecture(self, filename: str) -> str:
-        """Detect architecture from filename patterns."""
+        """Detect architecture from filename patterns.
+
+        Args:
+            filename: The filename to analyze.
+
+        Returns:
+            str: Detected architecture (x86_64, x86, arm64, arm, or x86_64 as default).
+        """
         filename_lower = filename.lower()
 
         patterns = {
@@ -112,7 +131,14 @@ class QEMUImageDiscovery:
         )
 
     def discover_images(self, force_refresh: bool = False) -> list[QEMUImageInfo]:
-        """Discover all QEMU images in search directories."""
+        """Discover all QEMU images in search directories.
+
+        Args:
+            force_refresh: Whether to force a cache refresh.
+
+        Returns:
+            list[QEMUImageInfo]: List of discovered QEMU image information objects.
+        """
         if self._cache_valid and not force_refresh:
             return self._cache
 
@@ -158,17 +184,38 @@ class QEMUImageDiscovery:
         return discovered_images
 
     def get_images_by_os(self, os_type: str) -> list[QEMUImageInfo]:
-        """Get all images for a specific OS type."""
+        """Get all images for a specific OS type.
+
+        Args:
+            os_type: The OS type to filter by.
+
+        Returns:
+            list[QEMUImageInfo]: List of QEMU images matching the specified OS type.
+        """
         all_images = self.discover_images()
         return [img for img in all_images if img.os_type.lower() == os_type.lower()]
 
     def get_images_by_format(self, format_type: str) -> list[QEMUImageInfo]:
-        """Get all images of a specific format."""
+        """Get all images of a specific format.
+
+        Args:
+            format_type: The format type to filter by.
+
+        Returns:
+            list[QEMUImageInfo]: List of QEMU images matching the specified format.
+        """
         all_images = self.discover_images()
         return [img for img in all_images if img.format.lower() == format_type.lower()]
 
     def find_image(self, filename: str) -> QEMUImageInfo | None:
-        """Find a specific image by filename."""
+        """Find a specific image by filename.
+
+        Args:
+            filename: The filename to search for.
+
+        Returns:
+            QEMUImageInfo | None: The QEMU image information if found, otherwise None.
+        """
         all_images = self.discover_images()
 
         for image in all_images:
@@ -184,11 +231,16 @@ class QEMUImageDiscovery:
         logger.debug("QEMU image cache invalidated")
 
 
-_discovery_instance = None
+_discovery_instance: QEMUImageDiscovery | None = None
+"""Module-level singleton instance of QEMU image discovery."""
 
 
 def get_qemu_discovery() -> QEMUImageDiscovery:
-    """Get singleton QEMU image discovery instance."""
+    """Get singleton QEMU image discovery instance.
+
+    Returns:
+        QEMUImageDiscovery: The singleton QEMU image discovery instance.
+    """
     global _discovery_instance
     if _discovery_instance is None:
         _discovery_instance = QEMUImageDiscovery()

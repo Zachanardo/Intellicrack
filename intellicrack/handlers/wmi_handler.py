@@ -38,15 +38,42 @@ with warnings.catch_warnings():
         logger.warning("WMI not available (Windows-only library): %s", e)
 
         class FallbackWMI:
-            """Fallback WMI class for non-Windows platforms."""
+            """Fallback WMI class for non-Windows platforms.
+
+            Provides a minimal implementation of WMI for systems where the wmi
+            library is not available. All method calls return empty lists to
+            gracefully degrade functionality.
+            """
 
             def __init__(self) -> None:
+                """Initialize the fallback WMI handler.
+
+                Logs an error message indicating that the fallback WMI has been
+                activated due to import failure.
+                """
                 logger.error("WMI fallback activated due to import failure")
 
             def __getattr__(self, name: str) -> object:
+                """Handle dynamic attribute access with a fallback function.
+
+                Args:
+                    name: The name of the attribute being accessed.
+
+                Returns:
+                    A callable that logs the call and returns an empty list.
+                """
                 logger.debug("WMI fallback: Accessing %s", name)
 
                 def fallback_func(*args: Any, **kwargs: Any) -> list[Any]:
+                    """Execute a no-op fallback function.
+
+                    Args:
+                        *args: Variable length positional arguments (unused).
+                        **kwargs: Arbitrary keyword arguments (unused).
+
+                    Returns:
+                        An empty list.
+                    """
                     logger.debug("WMI fallback call args: %s kwargs: %s", args, kwargs)
                     return []
 

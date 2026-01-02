@@ -2,13 +2,10 @@ from __future__ import annotations
 
 import os
 import struct
-import sys
 from pathlib import Path
 from typing import Any
 
 import pytest
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 try:
     from intellicrack.hexview.checksums import (

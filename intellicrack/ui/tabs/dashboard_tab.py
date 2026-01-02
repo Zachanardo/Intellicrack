@@ -19,13 +19,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 import os
 from datetime import datetime
 from typing import Any, Protocol
 
 from intellicrack.handlers.pyqt6_handler import (
+    QColor,
     QDialog,
     QFileDialog,
+    QFont,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -45,6 +48,9 @@ from ..widgets.cpu_status_widget import CPUStatusWidget
 from ..widgets.gpu_status_widget import GPUStatusWidget
 from ..widgets.system_monitor_widget import SystemMonitorWidget
 from .base_tab import BaseTab
+
+
+logger = logging.getLogger(__name__)
 
 
 class AppContextProtocol(Protocol):
@@ -94,13 +100,26 @@ class DashboardTab(BaseTab):
 
         super().__init__(context_dict, parent)
 
-        # Subscribe to configuration changes
+        # Subscribe to configuration changes with automatic cleanup
         self.config_manager.register_callback("theme", self.apply_theme)
+        self.register_callback_for_cleanup("theme", self.apply_theme)
+
         self.config_manager.register_callback("layout.dashboard", self.update_layout)
+        self.register_callback_for_cleanup("layout.dashboard", self.update_layout)
+
         self.config_manager.register_callback("font", self.update_fonts)
+        self.register_callback_for_cleanup("font", self.update_fonts)
 
     def setup_content(self) -> None:
-        """Set up the simplified dashboard content."""
+        """Set up the simplified dashboard content.
+
+        Initializes the dashboard layout with quick start panel, recent files,
+        and system monitoring panels based on configuration settings.
+
+        Returns:
+            None
+
+        """
         layout_config = self.config_manager.get_layout_config()
         layout = self.layout()
         if layout is None:
@@ -329,7 +348,16 @@ class DashboardTab(BaseTab):
         return panel
 
     def open_file_action(self) -> None:
-        """Handle Open File button action."""
+        """Handle Open File button action.
+
+        Opens a file dialog to select a binary file for analysis. When a file
+        is selected, adds it to recent files, emits binary_selected signal,
+        and logs the activity.
+
+        Returns:
+            None
+
+        """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Open File for Analysis",
@@ -348,7 +376,20 @@ class DashboardTab(BaseTab):
                 self.log_activity(f"Opened file: {os.path.basename(file_path)}")
 
     def select_program_from_target(self) -> None:
-        """Handle Select Program from Target button action."""
+        """Handle Select Program from Target button action.
+
+        Opens a program selector dialog to choose from running processes.
+        Handles errors gracefully by falling back to file browser if dialog
+        unavailable.
+
+        Returns:
+            None
+
+        Raises:
+            ImportError: If program selector dialog module is not available.
+            Exception: If dialog execution encounters unexpected errors.
+
+        """
         try:
             from ..dialogs.program_selector_dialog import ProgramSelectorDialog
 
@@ -394,9 +435,12 @@ class DashboardTab(BaseTab):
         Args:
             message: Activity message to log with timestamp.
 
+        Returns:
+            None
+
         """
         timestamp = datetime.now().strftime("%H:%M:%S")
-        print(f"[{timestamp}] {message}")
+        logger.info("[%s] %s", timestamp, message)
 
     def create_system_monitor_panel(self) -> SystemMonitorWidget:
         """Create system monitoring panel.
@@ -419,7 +463,16 @@ class DashboardTab(BaseTab):
         return self.system_monitor
 
     def handle_system_alert(self, alert_type: str, message: str) -> None:
-        """Handle system monitoring alerts."""
+        """Handle system monitoring alerts.
+
+        Args:
+            alert_type: Type of system alert (e.g., 'CPU', 'Memory', 'Disk').
+            message: Alert message describing the system condition.
+
+        Returns:
+            None
+
+        """
         # Log the alert to activity log
         self.log_activity(f"[SYSTEM ALERT - {alert_type}] {message}")
 
@@ -466,7 +519,15 @@ class DashboardTab(BaseTab):
         return self.cpu_status
 
     def open_project(self) -> None:
-        """Perform project opening for Quick Start."""
+        """Perform project opening for Quick Start.
+
+        Opens a file dialog to select an Intellicrack project file (.icp).
+        When selected, adds to recent files and emits project_opened signal.
+
+        Returns:
+            None
+
+        """
         project_file, _ = QFileDialog.getOpenFileName(
             self,
             "Open Project",
@@ -480,7 +541,15 @@ class DashboardTab(BaseTab):
             self.log_activity(f"Opened project: {os.path.basename(project_file)}")
 
     def populate_recent_files(self) -> None:
-        """Populate the recent files list."""
+        """Populate the recent files list.
+
+        Loads recent files from configuration, filters to max count, and
+        populates the recent files list widget with items.
+
+        Returns:
+            None
+
+        """
         self.recent_files_list.clear()
 
         recent_files_setting = self.config_manager.get_setting("recent_files", [])
@@ -505,9 +574,9 @@ class DashboardTab(BaseTab):
                 if isinstance(show_file_icons, bool) and show_file_icons:
                     file_ext = os.path.splitext(file_path)[1].lower()
                     icon_prefix = "🗃️"
-                    if file_ext in [".exe", ".dll"]:
+                    if file_ext in {".exe", ".dll"}:
                         icon_prefix = "[CFG]️"
-                    elif file_ext in [".so", ".dylib", ".icp"]:
+                    elif file_ext in {".so", ".dylib", ".icp"}:
                         icon_prefix = ""
                     item.setText(f"{icon_prefix} {os.path.basename(file_path)}")
 
@@ -559,13 +628,29 @@ class DashboardTab(BaseTab):
         self.populate_recent_files()
 
     def clear_recent_files(self) -> None:
-        """Clear the recent files list."""
+        """Clear the recent files list.
+
+        Removes all entries from the recent files history and clears the
+        list widget display.
+
+        Returns:
+            None
+
+        """
         self.config_manager.set_setting("recent_files", [])
         self.recent_files_list.clear()
         self.log_activity("Recent files list cleared")
 
     def cleanup(self) -> None:
-        """Cleanup resources when tab is closed."""
+        """Cleanup resources when tab is closed.
+
+        Stops all monitoring threads (system, GPU, CPU) and unregisters
+        configuration callbacks via base class cleanup.
+
+        Returns:
+            None
+
+        """
         # Stop system monitoring
         if hasattr(self, "system_monitor"):
             self.system_monitor.stop_monitoring()
@@ -581,12 +666,8 @@ class DashboardTab(BaseTab):
             self.cpu_status.stop_monitoring()
             self.log_activity("CPU monitoring stopped")
 
-        # Unregister callbacks
-        self.config_manager.unregister_callback("theme", self.apply_theme)
-        self.config_manager.unregister_callback("layout.dashboard", self.update_layout)
-        self.config_manager.unregister_callback("font", self.update_fonts)
-
-        # Call parent cleanup
+        # Callbacks are automatically unregistered by base class via register_callback_for_cleanup()
+        # Call parent cleanup which handles callback unregistration
         super().cleanup()
 
     def _style_quick_start_button(self, button: QPushButton, base_color: str) -> None:
@@ -596,12 +677,12 @@ class DashboardTab(BaseTab):
             button: QPushButton to apply styling to.
             base_color: Base color string (hex format) for button theming.
 
+        Returns:
+            None
+
         """
         theme = self.config_manager.get_theme_config()
         font_config = self.config_manager.get_font_config()
-
-        # Calculate hover and pressed colors with better contrast
-        from PyQt6.QtGui import QColor
 
         base = QColor(base_color)
         # Make base color darker for better contrast with white text
@@ -638,73 +719,146 @@ class DashboardTab(BaseTab):
         """)
 
     def apply_theme(self) -> None:
-        """Apply theme changes to dashboard components."""
-        if not self.is_loaded:
+        """Apply theme changes to dashboard components.
+
+        Updates stylesheet colors and appearance based on current theme
+        configuration. Safely handles missing attributes and widget state.
+
+        Returns:
+            None
+
+        Raises:
+            AttributeError: If expected config attributes are missing.
+            RuntimeError: If widget rendering encounters errors.
+
+        """
+        if not getattr(self, "is_loaded", False):
+            return
+        if not hasattr(self, "config_manager"):
             return
 
-        theme = self.config_manager.get_theme_config()
+        try:
+            theme = self.config_manager.get_theme_config()
 
-        # Update main widget background
-        self.setStyleSheet(f"""
-            QWidget {{
-                background-color: {theme.background_color};
-                color: {theme.text_color};
-            }}
-        """)
-
-        # Update bottom panel tabs
-        if hasattr(self, "bottom_panel"):
-            self.bottom_panel.setStyleSheet(f"""
-                QTabWidget::pane {{
-                    background-color: {theme.panel_color};
-                    border: 1px solid {theme.border_color};
-                    border-radius: {theme.border_radius}px;
-                }}
-                QTabBar::tab {{
-                    background-color: {theme.panel_color};
+            self.setStyleSheet(f"""
+                QWidget {{
+                    background-color: {theme.background_color};
                     color: {theme.text_color};
-                    padding: 8px 16px;
-                    margin-right: 2px;
-                }}
-                QTabBar::tab:selected {{
-                    background-color: {theme.accent_color};
-                    color: white;
-                }}
-                QTabBar::tab:hover {{
-                    background-color: {theme.hover_color};
                 }}
             """)
 
+            if hasattr(self, "bottom_panel"):
+                self.bottom_panel.setStyleSheet(f"""
+                    QTabWidget::pane {{
+                        background-color: {theme.panel_color};
+                        border: 1px solid {theme.border_color};
+                        border-radius: {theme.border_radius}px;
+                    }}
+                    QTabBar::tab {{
+                        background-color: {theme.panel_color};
+                        color: {theme.text_color};
+                        padding: 8px 16px;
+                        margin-right: 2px;
+                    }}
+                    QTabBar::tab:selected {{
+                        background-color: {theme.accent_color};
+                        color: white;
+                    }}
+                    QTabBar::tab:hover {{
+                        background-color: {theme.hover_color};
+                    }}
+                """)
+        except (AttributeError, RuntimeError) as e:
+            logger.debug("Theme application skipped: %s", e)
+
     def update_layout(self) -> None:
-        """Update layout configuration when settings change."""
-        if not self.is_loaded:
+        """Update layout configuration when settings change.
+
+        Applies spacing and margin settings from layout configuration to the
+        dashboard's main layout. Safely handles missing widget state.
+
+        Returns:
+            None
+
+        Raises:
+            AttributeError: If expected config attributes are missing.
+            RuntimeError: If layout updates encounter errors.
+
+        """
+        if not getattr(self, "is_loaded", False):
+            return
+        if not hasattr(self, "config_manager"):
             return
 
-        layout_config = self.config_manager.get_layout_config()
-
-        layout = self.layout()
-        if layout is not None:
-            layout.setSpacing(layout_config.panel_spacing)
-            layout.setContentsMargins(
-                layout_config.margin_size,
-                layout_config.margin_size,
-                layout_config.margin_size,
-                layout_config.margin_size,
-            )
+        try:
+            layout_config = self.config_manager.get_layout_config()
+            layout = self.layout()
+            if layout is not None:
+                layout.setSpacing(layout_config.panel_spacing)
+                layout.setContentsMargins(
+                    layout_config.margin_size,
+                    layout_config.margin_size,
+                    layout_config.margin_size,
+                    layout_config.margin_size,
+                )
+        except (AttributeError, RuntimeError) as e:
+            logger.debug("Layout update skipped: %s", e)
 
     def update_fonts(self) -> None:
-        """Update font configuration when settings change."""
-        if not self.is_loaded:
+        """Update font configuration when settings change.
+
+        Applies font configuration to the dashboard widget and all child
+        widgets. Safely handles missing widget state and configuration.
+
+        Returns:
+            None
+
+        Raises:
+            AttributeError: If expected config attributes are missing.
+            RuntimeError: If font updates encounter errors.
+
+        """
+        if not getattr(self, "is_loaded", False):
+            return
+        if not hasattr(self, "config_manager"):
             return
 
-        font_config = self.config_manager.get_font_config()
+        try:
+            font_config = self.config_manager.get_font_config()
+            font = QFont(font_config.family, font_config.base_size)
+            self.setFont(font)
+            for widget in self.findChildren(QWidget):
+                widget.setFont(font)
+        except (AttributeError, RuntimeError) as e:
+            logger.debug("Font update skipped: %s", e)
 
-        # Update widget fonts
-        from PyQt6.QtGui import QFont
+    def refresh_from_manager(self, dashboard_manager: Any) -> None:
+        """Refresh dashboard UI from DashboardManager stats.
 
-        font = QFont(font_config.family, font_config.base_size)
-        self.setFont(font)
+        Args:
+            dashboard_manager: DashboardManager instance with updated stats.
 
-        # Update all child widgets
-        for widget in self.findChildren(QWidget):
-            widget.setFont(font)
+        Returns:
+            None
+
+        """
+        if dashboard_manager is None:
+            return
+
+        try:
+            if hasattr(dashboard_manager, "stats"):
+                stats = dashboard_manager.stats
+                if stats.get("binary"):
+                    binary_info = stats["binary"]
+                    self.log_activity(
+                        f"Binary loaded: {binary_info.get('name', 'Unknown')} "
+                        f"({binary_info.get('size_formatted', 'Unknown size')})",
+                    )
+
+            if hasattr(dashboard_manager, "recent_activities"):
+                for activity in dashboard_manager.recent_activities[:5]:
+                    desc = activity.get("description", "")
+                    if desc:
+                        self.log_activity(desc)
+        except (AttributeError, KeyError, TypeError):
+            pass

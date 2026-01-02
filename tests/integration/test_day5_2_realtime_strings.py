@@ -6,13 +6,10 @@ real-time analyzer framework.
 """
 
 import sys
-import os
 import time
 import tempfile
 from datetime import datetime
-
-# Add intellicrack to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "intellicrack"))
+from typing import Any, Optional
 
 try:
     from intellicrack.core.analysis.radare2_realtime_analyzer import (
@@ -30,12 +27,12 @@ except ImportError as e:
 class TestRealTimeStringMonitoring:
     """Test class for Day 5.2 real-time string monitoring."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize test."""
-        self.realtime_analyzer = None
-        self.test_events = []
+        self.realtime_analyzer: Any = None
+        self.test_events: list[Any] = []
 
-    def test_enhanced_string_component_integration(self):
+    def test_enhanced_string_component_integration(self) -> bool:
         """Test that enhanced_strings component is properly integrated."""
         print("Testing Enhanced String Component Integration:")
         print("=" * 55)
@@ -58,7 +55,7 @@ class TestRealTimeStringMonitoring:
             print(f"FAIL ERROR: {e}")
             return False
 
-    def test_enhanced_string_analysis_method(self):
+    def test_enhanced_string_analysis_method(self) -> bool:
         """Test the enhanced string analysis method exists and has proper structure."""
         print("\nTesting Enhanced String Analysis Method:")
         print("=" * 45)
@@ -93,7 +90,7 @@ class TestRealTimeStringMonitoring:
             print(f"FAIL ERROR: {e}")
             return False
 
-    def test_event_system_integration(self):
+    def test_event_system_integration(self) -> bool:
         """Test that string analysis events are properly integrated."""
         print("\nTesting Event System Integration:")
         print("=" * 35)
@@ -109,10 +106,10 @@ class TestRealTimeStringMonitoring:
                 # Set up event callback to capture events
                 self.test_events = []
 
-                def test_callback(update):
+                def test_callback(update: Any) -> None:
                     self.test_events.append(update)
 
-                analyzer.register_callback(AnalysisEvent.STRING_ANALYSIS_UPDATED, test_callback)
+                analyzer.register_event_callback(AnalysisEvent.STRING_ANALYSIS_UPDATED, test_callback)
                 print("OK PASS: Event callback registration successful")
 
                 return True
@@ -124,7 +121,7 @@ class TestRealTimeStringMonitoring:
             print(f"FAIL ERROR: {e}")
             return False
 
-    def test_string_analyzer_integration(self):
+    def test_string_analyzer_integration(self) -> bool:
         """Test integration with the enhanced string analyzer from Day 5.1."""
         print("\nTesting String Analyzer Integration:")
         print("=" * 40)
@@ -165,7 +162,7 @@ class TestRealTimeStringMonitoring:
             print(f"FAIL ERROR: {e}")
             return False
 
-    def test_realtime_monitoring_capabilities(self):
+    def test_realtime_monitoring_capabilities(self) -> bool:
         """Test that real-time monitoring capabilities are properly structured."""
         print("\nTesting Real-time Monitoring Capabilities:")
         print("=" * 45)
@@ -196,7 +193,7 @@ class TestRealTimeStringMonitoring:
             return False
 
 
-def main():
+def main() -> int:
     """Main test function."""
     print("DAY 5.2 REAL-TIME STRING MONITORING TESTING")
     print("=" * 50)

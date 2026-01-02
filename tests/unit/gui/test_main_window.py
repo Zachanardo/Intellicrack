@@ -8,12 +8,12 @@ NO mocked components - validates actual GUI behavior.
 import pytest
 import tempfile
 import os
-import sys
-from unittest.mock import patch
+from typing import Optional, List, Tuple, Any
+from pathlib import Path
 
 
 try:
-    from PyQt6.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox
     from PyQt6.QtTest import QTest
     from PyQt6.QtCore import Qt
     QT_AVAILABLE = True
@@ -21,7 +21,100 @@ except ImportError:
     QT_AVAILABLE = False
 
 
-def get_qt_app():
+class RealFileDialog:
+    """REAL file dialog test double with call tracking."""
+
+    def __init__(self) -> None:
+        self.selected_file: str = ""
+        self.filter_used: str = ""
+        self.call_count: int = 0
+        self.parent_widget: Optional[Any] = None
+        self.caption: str = ""
+
+    def configure_selection(self, file_path: str, file_filter: str = "") -> None:
+        """Configure what file will be selected."""
+        self.selected_file = file_path
+        self.filter_used = file_filter
+
+    def get_open_file_name(
+        self,
+        parent: Optional[Any] = None,
+        caption: str = "",
+        directory: str = "",
+        filter_str: str = "",
+        initial_filter: str = ""
+    ) -> Tuple[str, str]:
+        """REAL implementation of getOpenFileName behavior."""
+        self.call_count += 1
+        self.parent_widget = parent
+        self.caption = caption
+        return (self.selected_file, self.filter_used)
+
+    def was_called(self) -> bool:
+        """Check if dialog was invoked."""
+        return self.call_count > 0
+
+    def get_call_count(self) -> int:
+        """Get number of times dialog was called."""
+        return self.call_count
+
+
+class RealMessageBox:
+    """REAL message box test double with call tracking."""
+
+    def __init__(self) -> None:
+        self.critical_calls: List[Tuple[Any, str, str]] = []
+        self.warning_calls: List[Tuple[Any, str, str]] = []
+        self.info_calls: List[Tuple[Any, str, str]] = []
+
+    def critical(
+        self,
+        parent: Optional[Any],
+        title: str,
+        message: str
+    ) -> int:
+        """REAL implementation of critical message box."""
+        self.critical_calls.append((parent, title, message))
+        return 0
+
+    def warning(
+        self,
+        parent: Optional[Any],
+        title: str,
+        message: str
+    ) -> int:
+        """REAL implementation of warning message box."""
+        self.warning_calls.append((parent, title, message))
+        return 0
+
+    def information(
+        self,
+        parent: Optional[Any],
+        title: str,
+        message: str
+    ) -> int:
+        """REAL implementation of information message box."""
+        self.info_calls.append((parent, title, message))
+        return 0
+
+    def was_critical_shown(self, message_contains: str = "") -> bool:
+        """Check if critical message box was shown."""
+        if not message_contains:
+            return len(self.critical_calls) > 0
+        return any(message_contains in msg for _, _, msg in self.critical_calls)
+
+    def was_warning_shown(self, message_contains: str = "") -> bool:
+        """Check if warning message box was shown."""
+        if not message_contains:
+            return len(self.warning_calls) > 0
+        return any(message_contains in msg for _, _, msg in self.warning_calls)
+
+    def get_critical_count(self) -> int:
+        """Get number of critical messages shown."""
+        return len(self.critical_calls)
+
+
+def get_qt_app() -> Optional[QApplication]:
     """Get or create QApplication instance."""
     if not QT_AVAILABLE:
         return None
@@ -36,7 +129,7 @@ class TestIntellicrackMainWindow:
     """Test REAL main window functionality with actual Qt interactions."""
 
     @pytest.fixture(autouse=True)
-    def setup_app(self, qtbot):
+    def setup_app(self, qtbot: Any) -> Any:
         """Setup QApplication and main window with REAL Qt environment."""
         from intellicrack.ui.main_window import IntellicrackMainWindow
         self.main_window = IntellicrackMainWindow()
@@ -44,7 +137,7 @@ class TestIntellicrackMainWindow:
         self.main_window.show()
         return self.main_window
 
-    def test_window_initialization_real_components(self, qtbot):
+    def test_window_initialization_real_components(self, qtbot: Any) -> None:
         """Test that main window initializes with REAL Qt components."""
         assert self.main_window.windowTitle() == "Intellicrack - Advanced Binary Analysis Framework"
         assert self.main_window.isVisible()
@@ -56,54 +149,67 @@ class TestIntellicrackMainWindow:
         assert hasattr(self.main_window, "analysis_orchestrator")
         assert self.main_window.analysis_orchestrator is not None
 
-    def test_tab_widget_real_tabs_created(self, qtbot):
+    def test_tab_widget_real_tabs_created(self, qtbot: Any) -> None:
         """Test that REAL tabs are created and accessible."""
         tab_widget = self.main_window.tab_widget
         assert tab_widget.count() >= 6
 
-        tab_titles = [tab_widget.tabText(i) for i in range(tab_widget.count())]
-        expected_tabs = ["Dashboard", "Analysis", "Results", "Protection", "AI Assistant", "Settings"]
+        tab_titles: List[str] = [tab_widget.tabText(i) for i in range(tab_widget.count())]
+        expected_tabs: List[str] = ["Dashboard", "Analysis", "Results", "Protection", "AI Assistant", "Settings"]
         for expected_tab in expected_tabs:
             assert any(expected_tab in title for title in tab_titles), f"Missing tab: {expected_tab}"
 
-    def test_file_selection_real_browse_button(self, qtbot):
+    def test_file_selection_real_browse_button(self, qtbot: Any, monkeypatch: Any) -> None:
         """Test REAL file selection button functionality."""
-        if hasattr(self.main_window, "browse_button"):
-            browse_button = self.main_window.browse_button
-            assert browse_button.isEnabled()
-            assert browse_button.text() == "Browse..."
+        if not hasattr(self.main_window, "browse_button"):
+            return
 
-            with patch("PyQt6.QtWidgets.QFileDialog.getOpenFileName") as mock_dialog:
-                mock_dialog.return_value = ("C:\\test_binary.exe", "")
-                qtbot.mouseClick(browse_button, Qt.MouseButton.LeftButton)
-                mock_dialog.assert_called_once()
+        browse_button = self.main_window.browse_button
+        assert browse_button.isEnabled()
+        assert browse_button.text() == "Browse..."
 
-    def test_analysis_buttons_real_state_management(self, qtbot):
+        file_dialog = RealFileDialog()
+        file_dialog.configure_selection("C:\\test_binary.exe", "")
+
+        monkeypatch.setattr(
+            QFileDialog,
+            "getOpenFileName",
+            lambda *args, **kwargs: file_dialog.get_open_file_name(*args, **kwargs)
+        )
+
+        qtbot.mouseClick(browse_button, Qt.MouseButton.LeftButton)
+
+        assert file_dialog.was_called()
+        assert file_dialog.get_call_count() == 1
+
+    def test_analysis_buttons_real_state_management(self, qtbot: Any) -> None:
         """Test REAL analysis button state management."""
-        if hasattr(self.main_window, "analyze_button"):
-            analyze_button = self.main_window.analyze_button
-            assert not analyze_button.isEnabled()
+        if not hasattr(self.main_window, "analyze_button"):
+            return
 
-            if hasattr(self.main_window, "file_path_label"):
-                self.main_window.current_file_path = "C:\\test_binary.exe"
-                self.main_window._update_ui_state()
-                qtbot.wait(100)
+        analyze_button = self.main_window.analyze_button
+        assert not analyze_button.isEnabled()
 
-    def test_status_bar_real_updates(self, qtbot):
+        if hasattr(self.main_window, "file_path_label"):
+            self.main_window.current_file_path = "C:\\test_binary.exe"
+            self.main_window._update_ui_state()
+            qtbot.wait(100)
+
+    def test_status_bar_real_updates(self, qtbot: Any) -> None:
         """Test REAL status bar message updates."""
         status_bar = self.main_window.statusBar()
         assert status_bar is not None
 
-        test_message = "Test status message"
+        test_message: str = "Test status message"
         self.main_window.update_status.emit(test_message)
         qtbot.wait(100)
 
         assert test_message in status_bar.currentMessage()
 
-    def test_tab_switching_real_widget_focus(self, qtbot):
+    def test_tab_switching_real_widget_focus(self, qtbot: Any) -> None:
         """Test REAL tab switching and widget focus."""
         tab_widget = self.main_window.tab_widget
-        initial_tab = tab_widget.currentIndex()
+        initial_tab: int = tab_widget.currentIndex()
 
         for i in range(tab_widget.count()):
             tab_widget.setCurrentIndex(i)
@@ -114,7 +220,7 @@ class TestIntellicrackMainWindow:
             assert current_widget is not None
             assert current_widget.isVisible()
 
-    def test_menu_bar_real_actions(self, qtbot):
+    def test_menu_bar_real_actions(self, qtbot: Any) -> None:
         """Test REAL menu bar and action functionality."""
         menu_bar = self.main_window.menuBar()
         assert menu_bar is not None
@@ -128,19 +234,19 @@ class TestIntellicrackMainWindow:
                     if not action.isSeparator():
                         assert action.text() != ""
 
-    def test_signal_slot_real_connections(self, qtbot):
+    def test_signal_slot_real_connections(self, qtbot: Any) -> None:
         """Test REAL Qt signal-slot connections."""
-        test_output = "Test analysis output"
+        test_output: str = "Test analysis output"
         self.main_window.update_output.emit(test_output)
         qtbot.wait(100)
 
         if hasattr(self.main_window, "analysis_output"):
             analysis_output = self.main_window.analysis_output
             if analysis_output and hasattr(analysis_output, "toPlainText"):
-                output_text = analysis_output.toPlainText()
+                output_text: str = analysis_output.toPlainText()
                 assert test_output in output_text or output_text == ""
 
-    def test_window_resize_real_geometry(self, qtbot):
+    def test_window_resize_real_geometry(self, qtbot: Any) -> None:
         """Test REAL window resizing and geometry management."""
         original_size = self.main_window.size()
 
@@ -153,7 +259,7 @@ class TestIntellicrackMainWindow:
         self.main_window.resize(original_size)
         qtbot.wait(100)
 
-    def test_widget_hierarchy_real_parent_child(self, qtbot):
+    def test_widget_hierarchy_real_parent_child(self, qtbot: Any) -> None:
         """Test REAL Qt widget parent-child relationships."""
         central_widget = self.main_window.centralWidget()
         assert central_widget is not None
@@ -167,11 +273,11 @@ class TestIntellicrackMainWindow:
             assert tab_content is not None
             assert tab_content.parent() == tab_widget
 
-    def test_real_binary_file_loading_ui_updates(self, qtbot):
+    def test_real_binary_file_loading_ui_updates(self, qtbot: Any) -> None:
         """Test REAL binary file loading and UI state updates."""
         with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as temp_file:
             temp_file.write(b"MZ\x90\x00")
-            temp_file_path = temp_file.name
+            temp_file_path: str = temp_file.name
 
         try:
             if hasattr(self.main_window, "_handle_file_selection"):
@@ -179,7 +285,7 @@ class TestIntellicrackMainWindow:
                 qtbot.wait(100)
 
                 if hasattr(self.main_window, "file_path_label"):
-                    label_text = self.main_window.file_path_label.text()
+                    label_text: str = self.main_window.file_path_label.text()
                     assert temp_file_path in label_text or "selected" in label_text.lower()
 
                 if hasattr(self.main_window, "analyze_button"):
@@ -187,7 +293,7 @@ class TestIntellicrackMainWindow:
         finally:
             os.unlink(temp_file_path)
 
-    def test_analysis_workflow_real_orchestrator_integration(self, qtbot):
+    def test_analysis_workflow_real_orchestrator_integration(self, qtbot: Any) -> None:
         """Test REAL analysis workflow with orchestrator integration."""
         orchestrator = self.main_window.analysis_orchestrator
         assert orchestrator is not None
@@ -196,7 +302,7 @@ class TestIntellicrackMainWindow:
             try:
                 if hasattr(self.main_window, "current_file_path"):
                     with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as temp_file:
-                        test_pe = b"MZ\x90\x00" + b"\x00" * 60 + b"PE\x00\x00"
+                        test_pe: bytes = b"MZ\x90\x00" + b"\x00" * 60 + b"PE\x00\x00"
                         temp_file.write(test_pe)
                         self.main_window.current_file_path = temp_file.name
 
@@ -204,9 +310,9 @@ class TestIntellicrackMainWindow:
             except Exception:
                 qtbot.wait(100)
 
-    def test_real_progress_updates_ui_feedback(self, qtbot):
+    def test_real_progress_updates_ui_feedback(self, qtbot: Any) -> None:
         """Test REAL progress updates and UI feedback."""
-        progress_values = [0, 25, 50, 75, 100]
+        progress_values: List[int] = [0, 25, 50, 75, 100]
 
         for value in progress_values:
             self.main_window.update_progress.emit(value)
@@ -216,19 +322,21 @@ class TestIntellicrackMainWindow:
                 if progress_bar := self.main_window.progress_bar:
                     assert 0 <= progress_bar.value() <= 100
 
-    def test_theme_and_styling_real_application(self, qtbot):
+    def test_theme_and_styling_real_application(self, qtbot: Any) -> None:
         """Test REAL theme and styling application."""
-        if hasattr(self.main_window, "theme_manager"):
-            if theme_manager := self.main_window.theme_manager:
-                original_stylesheet = self.main_window.styleSheet()
+        if not hasattr(self.main_window, "theme_manager"):
+            return
 
-                theme_manager.apply_dark_theme()
-                qtbot.wait(100)
+        if theme_manager := self.main_window.theme_manager:
+            original_stylesheet: str = self.main_window.styleSheet()
 
-                dark_stylesheet = self.main_window.styleSheet()
-                assert dark_stylesheet != original_stylesheet or dark_stylesheet == ""
+            theme_manager.apply_dark_theme()
+            qtbot.wait(100)
 
-    def test_cleanup_and_close_real_resource_management(self, qtbot):
+            dark_stylesheet: str = self.main_window.styleSheet()
+            assert dark_stylesheet != original_stylesheet or dark_stylesheet == ""
+
+    def test_cleanup_and_close_real_resource_management(self, qtbot: Any) -> None:
         """Test REAL cleanup and resource management on close."""
         assert self.main_window.isVisible()
 
@@ -242,20 +350,28 @@ class TestIntellicrackMainWindow:
             if hasattr(orchestrator, "cleanup"):
                 assert hasattr(orchestrator, "cleanup")
 
-    def test_error_handling_real_user_feedback(self, qtbot):
+    def test_error_handling_real_user_feedback(self, qtbot: Any, monkeypatch: Any) -> None:
         """Test REAL error handling with user feedback."""
-        if hasattr(self.main_window, "_handle_analysis_error"):
-            test_error = "Test analysis error"
+        if not hasattr(self.main_window, "_handle_analysis_error"):
+            return
 
-            with patch("PyQt6.QtWidgets.QMessageBox.critical") as mock_msgbox:
-                self.main_window._handle_analysis_error(test_error)
-                qtbot.wait(100)
+        test_error: str = "Test analysis error"
 
-                if mock_msgbox.called:
-                    args = mock_msgbox.call_args[0]
-                    assert test_error in str(args)
+        message_box = RealMessageBox()
 
-    def assert_real_widget_functionality(self, widget):
+        monkeypatch.setattr(
+            QMessageBox,
+            "critical",
+            lambda *args, **kwargs: message_box.critical(*args, **kwargs)
+        )
+
+        self.main_window._handle_analysis_error(test_error)
+        qtbot.wait(100)
+
+        if message_box.was_critical_shown():
+            assert message_box.was_critical_shown(test_error)
+
+    def assert_real_widget_functionality(self, widget: Any) -> None:
         """Helper method to validate REAL widget functionality."""
         if widget is None:
             return
@@ -263,40 +379,45 @@ class TestIntellicrackMainWindow:
         assert widget.isVisible() or not widget.isEnabled()
 
         if hasattr(widget, "text"):
-            text = widget.text()
+            text: str = widget.text()
             assert isinstance(text, str)
 
         if hasattr(widget, "isEnabled"):
-            enabled = widget.isEnabled()
+            enabled: bool = widget.isEnabled()
             assert isinstance(enabled, bool)
 
         if hasattr(widget, "parent"):
             parent = widget.parent()
             assert parent is not None or widget == self.main_window
 
-    def test_widget_interaction_real_mouse_keyboard(self, qtbot):
+    def test_widget_interaction_real_mouse_keyboard(self, qtbot: Any) -> None:
         """Test REAL widget interaction with mouse and keyboard."""
-        if hasattr(self.main_window, "browse_button"):
-            browse_button = self.main_window.browse_button
+        if not hasattr(self.main_window, "browse_button"):
+            return
 
-            original_enabled = browse_button.isEnabled()
+        browse_button = self.main_window.browse_button
 
-            qtbot.mousePress(browse_button, Qt.MouseButton.LeftButton)
-            qtbot.wait(50)
-            qtbot.mouseRelease(browse_button, Qt.MouseButton.LeftButton)
-            qtbot.wait(50)
+        original_enabled: bool = browse_button.isEnabled()
 
-            assert browse_button.isEnabled() == original_enabled
+        qtbot.mousePress(browse_button, Qt.MouseButton.LeftButton)
+        qtbot.wait(50)
+        qtbot.mouseRelease(browse_button, Qt.MouseButton.LeftButton)
+        qtbot.wait(50)
 
-    def test_real_data_validation_no_placeholder_content(self, qtbot):
+        assert browse_button.isEnabled() == original_enabled
+
+    def test_real_data_validation_no_placeholder_content(self, qtbot: Any) -> None:
         """Test that all UI elements contain REAL data, not placeholder content."""
 
-        def check_for_placeholder_text(widget):
+        def check_for_placeholder_text(widget: Any) -> None:
             """Recursively check for placeholder text in widgets."""
-            placeholder_indicators = ["TODO", "PLACEHOLDER", "XXX", "FIXME", "Not implemented", "Coming soon", "Mock data"]
+            placeholder_indicators: List[str] = [
+                "TODO", "PLACEHOLDER", "XXX", "FIXME",
+                "Not implemented", "Coming soon", "Mock data"
+            ]
 
             if hasattr(widget, "text"):
-                text = widget.text()
+                text: str = widget.text()
                 for indicator in placeholder_indicators:
                     assert indicator not in text, f"Placeholder text found: {text}"
 

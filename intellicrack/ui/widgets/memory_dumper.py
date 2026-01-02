@@ -21,7 +21,6 @@ from __future__ import annotations
 import os
 import platform
 import shutil
-from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -77,7 +76,7 @@ class MemoryDumperWidget(QWidget):
         self.setup_ui()
 
     def setup_ui(self) -> None:
-        """Set up the memory dumper UI."""
+        """Set up the memory dumper user interface with all controls and widgets."""
         layout = QVBoxLayout(self)
 
         # Title
@@ -224,7 +223,7 @@ class MemoryDumperWidget(QWidget):
             self._refresh_linux_processes()
 
     def _refresh_windows_processes(self) -> None:
-        """Refresh Windows process list."""
+        """Refresh the process list for Windows using psutil or tasklist fallback."""
         try:
             from intellicrack.handlers.psutil_handler import psutil
 
@@ -264,7 +263,7 @@ class MemoryDumperWidget(QWidget):
                 self.output_log.append(f"Failed to enumerate processes: {e}")
 
     def _refresh_linux_processes(self) -> None:
-        """Refresh Linux process list."""
+        """Refresh the process list for Linux using psutil or /proc filesystem fallback."""
         try:
             from intellicrack.handlers.psutil_handler import psutil
 
@@ -291,7 +290,7 @@ class MemoryDumperWidget(QWidget):
                 self.output_log.append(f"Failed to enumerate processes: {e}")
 
     def attach_to_process(self) -> None:
-        """Attach to selected process."""
+        """Attach to the selected process and initiate memory region scanning."""
         if self.process_combo.currentData():
             pid = self.process_combo.currentData()
         else:
@@ -312,7 +311,7 @@ class MemoryDumperWidget(QWidget):
         self.scan_memory_regions()
 
     def scan_memory_regions(self) -> None:
-        """Scan memory regions of attached process."""
+        """Scan and enumerate all memory regions of the attached process."""
         if not self.current_process:
             self.output_log.append("No process attached")
             return
@@ -325,7 +324,7 @@ class MemoryDumperWidget(QWidget):
             self._scan_linux_regions()
 
     def _scan_windows_regions(self) -> None:
-        """Scan Windows process memory regions."""
+        """Scan Windows process memory regions using VirtualQueryEx API."""
         try:
             import ctypes
             from ctypes import wintypes
@@ -398,7 +397,7 @@ class MemoryDumperWidget(QWidget):
             self.output_log.append(f"Error scanning regions: {e}")
 
     def _scan_linux_regions(self) -> None:
-        """Scan Linux process memory regions."""
+        """Scan Linux process memory regions by parsing /proc/[pid]/maps file."""
         try:
             maps_file = f"/proc/{self.current_process}/maps"
             with open(maps_file) as f:
@@ -509,7 +508,7 @@ class MemoryDumperWidget(QWidget):
         return not (self.private_check.isChecked() and "p" not in perms)
 
     def dump_selected_regions(self) -> None:
-        """Dump selected memory regions."""
+        """Dump the user-selected memory regions to files in a chosen directory."""
         selected_rows = {item.row() for item in self.regions_table.selectedItems()}
         if not selected_rows:
             self.output_log.append("No regions selected")
@@ -540,7 +539,7 @@ class MemoryDumperWidget(QWidget):
         self.dump_thread.start()
 
     def dump_all_regions(self) -> None:
-        """Dump all memory regions."""
+        """Dump all enumerated memory regions to files in a chosen directory."""
         if self.regions_table.rowCount() == 0:
             self.output_log.append("No regions to dump")
             return
@@ -589,7 +588,7 @@ class MemoryDumperWidget(QWidget):
         }
 
     def update_progress(self, value: int) -> None:
-        """Update progress bar.
+        """Update progress bar with the current completion percentage.
 
         Args:
             value: Progress value between 0 and 100.
@@ -598,7 +597,7 @@ class MemoryDumperWidget(QWidget):
         self.progress_bar.setValue(value)
 
     def dump_finished(self) -> None:
-        """Handle dump completion."""
+        """Handle dump completion by hiding progress bar and logging completion message."""
         self.progress_bar.setVisible(False)
         self.output_log.append("Memory dump completed")
 
@@ -641,7 +640,7 @@ class MemoryDumpThread(QThread):
         self.options = options
 
     def run(self) -> None:
-        """Execute memory dump."""
+        """Execute the memory dump for all selected regions with progress reporting."""
         total = len(self.rows)
 
         for i, row in enumerate(self.rows):
@@ -675,11 +674,14 @@ class MemoryDumpThread(QThread):
             self.progress.emit(int((i + 1) / total * 100))
 
     def _dump_windows_region(self, addr: int, size: int) -> None:
-        """Dump Windows memory region.
+        """Dump a Windows process memory region using ReadProcessMemory API.
 
         Args:
             addr: Memory address to dump from.
             size: Number of bytes to dump.
+
+        Raises:
+            Exception: If the process cannot be opened or memory cannot be read.
 
         """
         import ctypes
@@ -725,7 +727,7 @@ class MemoryDumpThread(QThread):
             kernel32.CloseHandle(h_process)
 
     def _dump_linux_region(self, addr: int, size: int) -> None:
-        """Dump Linux memory region.
+        """Dump a Linux process memory region by reading /proc/[pid]/mem file.
 
         Args:
             addr: Memory address to dump from.
@@ -755,7 +757,7 @@ class MemoryDumpThread(QThread):
             self.log.emit(f"Failed to read memory at 0x{addr:016X}: {e}")
 
     def _extract_strings(self, data: bytes, base_addr: int) -> None:
-        """Extract printable strings from memory dump.
+        """Extract printable ASCII strings from memory dump data.
 
         Args:
             data: Memory bytes to extract strings from.

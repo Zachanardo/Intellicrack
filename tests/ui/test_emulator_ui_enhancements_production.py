@@ -8,8 +8,7 @@ Copyright (C) 2025 Zachary Flint
 
 import pytest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-from typing import Any
+from typing import Any, Callable
 
 from intellicrack.handlers.pyqt6_handler import QApplication, QWidget, QMessageBox
 from intellicrack.ui.emulator_ui_enhancements import (
@@ -18,6 +17,128 @@ from intellicrack.ui.emulator_ui_enhancements import (
     show_emulator_warning,
     EmulatorRequiredDecorator,
 )
+
+
+class FakeEmulatorManager:
+    """Real test double for EmulatorManager with configurable behavior."""
+
+    def __init__(self) -> None:
+        self.qemu_running: bool = False
+        self.qiling_ready: bool = False
+        self.ensure_qemu_running_called: bool = False
+        self.ensure_qemu_running_call_count: int = 0
+        self.ensure_qemu_running_binary_path: str | None = None
+        self.ensure_qiling_ready_called: bool = False
+        self.ensure_qiling_ready_call_count: int = 0
+        self.ensure_qiling_ready_binary_path: str | None = None
+        self.qemu_start_success: bool = True
+        self.qiling_init_success: bool = True
+
+    def ensure_qemu_running(self, binary_path: str) -> bool:
+        """Track QEMU startup calls and return configured result."""
+        self.ensure_qemu_running_called = True
+        self.ensure_qemu_running_call_count += 1
+        self.ensure_qemu_running_binary_path = binary_path
+        return self.qemu_start_success
+
+    def ensure_qiling_ready(self, binary_path: str) -> bool:
+        """Track Qiling initialization calls and return configured result."""
+        self.ensure_qiling_ready_called = True
+        self.ensure_qiling_ready_call_count += 1
+        self.ensure_qiling_ready_binary_path = binary_path
+        return self.qiling_init_success
+
+
+class FakeQMessageBoxExec:
+    """Real test double for QMessageBox.exec with configurable return value."""
+
+    def __init__(self, return_value: QMessageBox.StandardButton) -> None:
+        self.return_value: QMessageBox.StandardButton = return_value
+        self.called: bool = False
+        self.call_count: int = 0
+
+    def __call__(self, *args: Any, **kwargs: Any) -> QMessageBox.StandardButton:
+        """Track calls and return configured value."""
+        self.called = True
+        self.call_count += 1
+        return self.return_value
+
+
+class FakeQMessageBoxWarning:
+    """Real test double for QMessageBox.warning static method."""
+
+    def __init__(self) -> None:
+        self.called: bool = False
+        self.call_count: int = 0
+        self.parent: QWidget | None = None
+        self.title: str = ""
+        self.message: str = ""
+
+    def __call__(
+        self,
+        parent: QWidget | None,
+        title: str,
+        message: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> QMessageBox.StandardButton:
+        """Track warning dialog calls."""
+        self.called = True
+        self.call_count += 1
+        self.parent = parent
+        self.title = title
+        self.message = message
+        return QMessageBox.StandardButton.Ok
+
+
+class FakeQMessageBoxCritical:
+    """Real test double for QMessageBox.critical static method."""
+
+    def __init__(self) -> None:
+        self.called: bool = False
+        self.call_count: int = 0
+        self.parent: QWidget | None = None
+        self.title: str = ""
+        self.message: str = ""
+
+    def __call__(
+        self,
+        parent: QWidget | None,
+        title: str,
+        message: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> QMessageBox.StandardButton:
+        """Track critical dialog calls."""
+        self.called = True
+        self.call_count += 1
+        self.parent = parent
+        self.title = title
+        self.message = message
+        return QMessageBox.StandardButton.Ok
+
+
+class FakeShowEmulatorWarning:
+    """Real test double for show_emulator_warning function."""
+
+    def __init__(self, return_value: bool = True) -> None:
+        self.return_value: bool = return_value
+        self.called: bool = False
+        self.call_count: int = 0
+        self.parent: QWidget | None = None
+        self.emulator_type: str = ""
+        self.feature_name: str = ""
+
+    def __call__(
+        self, parent: QWidget | None, emulator_type: str, feature_name: str
+    ) -> bool:
+        """Track warning calls and return configured value."""
+        self.called = True
+        self.call_count += 1
+        self.parent = parent
+        self.emulator_type = emulator_type
+        self.feature_name = feature_name
+        return self.return_value
 
 
 @pytest.fixture
@@ -35,6 +156,12 @@ def emulator_status_widget(qapp: QApplication) -> EmulatorStatusWidget:
     widget = EmulatorStatusWidget()
     yield widget
     widget.deleteLater()
+
+
+@pytest.fixture
+def fake_emulator_manager() -> FakeEmulatorManager:
+    """Provide fake emulator manager for testing."""
+    return FakeEmulatorManager()
 
 
 class TestEmulatorStatusWidget:
@@ -237,64 +364,66 @@ class TestEmulatorWarningDialog:
     """Test emulator warning dialog functionality."""
 
     def test_show_emulator_warning_qemu_displays_correct_message(
-        self, qapp: QApplication
+        self, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Showing QEMU warning displays correct message and buttons."""
         parent = QWidget()
 
-        with patch.object(QMessageBox, "exec") as mock_exec:
-            mock_exec.return_value = QMessageBox.StandardButton.Yes
+        fake_exec = FakeQMessageBoxExec(QMessageBox.StandardButton.Yes)
+        monkeypatch.setattr(QMessageBox, "exec", fake_exec)
 
-            result = show_emulator_warning(parent, "QEMU", "Create Snapshot")
+        result = show_emulator_warning(parent, "QEMU", "Create Snapshot")
 
-            assert result is True
-            mock_exec.assert_called_once()
+        assert result is True
+        assert fake_exec.called
+        assert fake_exec.call_count == 1
 
         parent.deleteLater()
 
     def test_show_emulator_warning_qiling_displays_correct_message(
-        self, qapp: QApplication
+        self, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Showing Qiling warning displays correct message and initializes automatically."""
         parent = QWidget()
 
-        with patch.object(QMessageBox, "exec") as mock_exec:
-            mock_exec.return_value = QMessageBox.StandardButton.No
+        fake_exec = FakeQMessageBoxExec(QMessageBox.StandardButton.No)
+        monkeypatch.setattr(QMessageBox, "exec", fake_exec)
 
-            result = show_emulator_warning(parent, "Qiling", "Dynamic Analysis")
+        result = show_emulator_warning(parent, "Qiling", "Dynamic Analysis")
 
-            assert result is False
-            mock_exec.assert_called_once()
+        assert result is False
+        assert fake_exec.called
+        assert fake_exec.call_count == 1
 
         parent.deleteLater()
 
     def test_show_emulator_warning_user_accepts_returns_true(
-        self, qapp: QApplication
+        self, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """User accepting emulator warning returns True."""
         parent = QWidget()
 
-        with patch.object(QMessageBox, "exec") as mock_exec:
-            mock_exec.return_value = QMessageBox.StandardButton.Yes
+        fake_exec = FakeQMessageBoxExec(QMessageBox.StandardButton.Yes)
+        monkeypatch.setattr(QMessageBox, "exec", fake_exec)
 
-            result = show_emulator_warning(parent, "QEMU", "Test Feature")
+        result = show_emulator_warning(parent, "QEMU", "Test Feature")
 
-            assert result is True
+        assert result is True
 
         parent.deleteLater()
 
     def test_show_emulator_warning_user_rejects_returns_false(
-        self, qapp: QApplication
+        self, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """User rejecting emulator warning returns False."""
         parent = QWidget()
 
-        with patch.object(QMessageBox, "exec") as mock_exec:
-            mock_exec.return_value = QMessageBox.StandardButton.No
+        fake_exec = FakeQMessageBoxExec(QMessageBox.StandardButton.No)
+        monkeypatch.setattr(QMessageBox, "exec", fake_exec)
 
-            result = show_emulator_warning(parent, "QEMU", "Test Feature")
+        result = show_emulator_warning(parent, "QEMU", "Test Feature")
 
-            assert result is False
+        assert result is False
 
         parent.deleteLater()
 
@@ -303,7 +432,10 @@ class TestEmulatorRequiredDecorator:
     """Test EmulatorRequiredDecorator functionality with real emulator checks."""
 
     def test_requires_qemu_decorator_allows_execution_when_qemu_running(
-        self, qapp: QApplication
+        self,
+        qapp: QApplication,
+        fake_emulator_manager: FakeEmulatorManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Decorator allows execution when QEMU is running."""
 
@@ -317,21 +449,27 @@ class TestEmulatorRequiredDecorator:
                 self.executed = True
                 return "success"
 
-        with patch(
-            "intellicrack.core.processing.emulator_manager.get_emulator_manager"
-        ) as mock_get_manager:
-            mock_manager = MagicMock()
-            mock_manager.qemu_running = True
-            mock_get_manager.return_value = mock_manager
+        fake_emulator_manager.qemu_running = True
 
-            obj = TestClass()
-            result = obj.test_method()
+        def fake_get_manager() -> FakeEmulatorManager:
+            return fake_emulator_manager
 
-            assert result == "success"
-            assert obj.executed is True
+        monkeypatch.setattr(
+            "intellicrack.core.processing.emulator_manager.get_emulator_manager",
+            fake_get_manager,
+        )
+
+        obj = TestClass()
+        result = obj.test_method()
+
+        assert result == "success"
+        assert obj.executed is True
 
     def test_requires_qemu_decorator_starts_qemu_when_user_accepts(
-        self, qapp: QApplication
+        self,
+        qapp: QApplication,
+        fake_emulator_manager: FakeEmulatorManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Decorator starts QEMU when not running and user accepts warning."""
 
@@ -346,29 +484,41 @@ class TestEmulatorRequiredDecorator:
                 self.executed = True
                 return "success"
 
-        with patch(
-            "intellicrack.core.processing.emulator_manager.get_emulator_manager"
-        ) as mock_get_manager, patch(
-            "intellicrack.ui.emulator_ui_enhancements.show_emulator_warning"
-        ) as mock_warning:
+        fake_emulator_manager.qemu_running = False
+        fake_emulator_manager.qemu_start_success = True
 
-            mock_manager = MagicMock()
-            mock_manager.qemu_running = False
-            mock_manager.ensure_qemu_running.return_value = True
-            mock_get_manager.return_value = mock_manager
-            mock_warning.return_value = True
+        def fake_get_manager() -> FakeEmulatorManager:
+            return fake_emulator_manager
 
-            obj = TestClass()
-            result = obj.test_method()
+        fake_warning = FakeShowEmulatorWarning(return_value=True)
 
-            assert result == "success"
-            assert obj.executed is True
-            mock_manager.ensure_qemu_running.assert_called_once_with(obj.binary_path)
+        monkeypatch.setattr(
+            "intellicrack.core.processing.emulator_manager.get_emulator_manager",
+            fake_get_manager,
+        )
+        monkeypatch.setattr(
+            "intellicrack.ui.emulator_ui_enhancements.show_emulator_warning",
+            fake_warning,
+        )
+
+        obj = TestClass()
+        result = obj.test_method()
+
+        assert result == "success"
+        assert obj.executed is True
+        assert fake_emulator_manager.ensure_qemu_running_called
+        assert fake_emulator_manager.ensure_qemu_running_call_count == 1
+        assert (
+            fake_emulator_manager.ensure_qemu_running_binary_path == obj.binary_path
+        )
 
         obj.deleteLater()
 
     def test_requires_qemu_decorator_blocks_execution_when_user_rejects(
-        self, qapp: QApplication
+        self,
+        qapp: QApplication,
+        fake_emulator_manager: FakeEmulatorManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Decorator blocks execution when QEMU not running and user rejects."""
 
@@ -383,27 +533,32 @@ class TestEmulatorRequiredDecorator:
                 self.executed = True
                 return "success"
 
-        with patch(
-            "intellicrack.core.processing.emulator_manager.get_emulator_manager"
-        ) as mock_get_manager, patch(
-            "intellicrack.ui.emulator_ui_enhancements.show_emulator_warning"
-        ) as mock_warning:
+        fake_emulator_manager.qemu_running = False
 
-            mock_manager = MagicMock()
-            mock_manager.qemu_running = False
-            mock_get_manager.return_value = mock_manager
-            mock_warning.return_value = False
+        def fake_get_manager() -> FakeEmulatorManager:
+            return fake_emulator_manager
 
-            obj = TestClass()
-            result = obj.test_method()
+        fake_warning = FakeShowEmulatorWarning(return_value=False)
 
-            assert result is None
-            assert obj.executed is False
+        monkeypatch.setattr(
+            "intellicrack.core.processing.emulator_manager.get_emulator_manager",
+            fake_get_manager,
+        )
+        monkeypatch.setattr(
+            "intellicrack.ui.emulator_ui_enhancements.show_emulator_warning",
+            fake_warning,
+        )
+
+        obj = TestClass()
+        result = obj.test_method()
+
+        assert result is None
+        assert obj.executed is False
 
         obj.deleteLater()
 
     def test_requires_qemu_decorator_shows_error_when_no_binary_selected(
-        self, qapp: QApplication
+        self, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Decorator shows error when no binary is selected."""
 
@@ -418,18 +573,24 @@ class TestEmulatorRequiredDecorator:
                 self.executed = True
                 return "success"
 
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            obj = TestClass()
-            result = obj.test_method()
+        fake_warning = FakeQMessageBoxWarning()
+        monkeypatch.setattr(QMessageBox, "warning", fake_warning)
 
-            assert result is None
-            assert obj.executed is False
-            mock_warning.assert_called_once()
+        obj = TestClass()
+        result = obj.test_method()
+
+        assert result is None
+        assert obj.executed is False
+        assert fake_warning.called
+        assert fake_warning.call_count == 1
 
         obj.deleteLater()
 
     def test_requires_qemu_decorator_shows_error_when_qemu_fails_to_start(
-        self, qapp: QApplication
+        self,
+        qapp: QApplication,
+        fake_emulator_manager: FakeEmulatorManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Decorator shows error when QEMU fails to start."""
 
@@ -444,31 +605,40 @@ class TestEmulatorRequiredDecorator:
                 self.executed = True
                 return "success"
 
-        with patch(
-            "intellicrack.core.processing.emulator_manager.get_emulator_manager"
-        ) as mock_get_manager, patch(
-            "intellicrack.ui.emulator_ui_enhancements.show_emulator_warning"
-        ) as mock_warning, patch.object(
-            QMessageBox, "critical"
-        ) as mock_critical:
+        fake_emulator_manager.qemu_running = False
+        fake_emulator_manager.qemu_start_success = False
 
-            mock_manager = MagicMock()
-            mock_manager.qemu_running = False
-            mock_manager.ensure_qemu_running.return_value = False
-            mock_get_manager.return_value = mock_manager
-            mock_warning.return_value = True
+        def fake_get_manager() -> FakeEmulatorManager:
+            return fake_emulator_manager
 
-            obj = TestClass()
-            result = obj.test_method()
+        fake_warning = FakeShowEmulatorWarning(return_value=True)
+        fake_critical = FakeQMessageBoxCritical()
 
-            assert result is None
-            assert obj.executed is False
-            mock_critical.assert_called_once()
+        monkeypatch.setattr(
+            "intellicrack.core.processing.emulator_manager.get_emulator_manager",
+            fake_get_manager,
+        )
+        monkeypatch.setattr(
+            "intellicrack.ui.emulator_ui_enhancements.show_emulator_warning",
+            fake_warning,
+        )
+        monkeypatch.setattr(QMessageBox, "critical", fake_critical)
+
+        obj = TestClass()
+        result = obj.test_method()
+
+        assert result is None
+        assert obj.executed is False
+        assert fake_critical.called
+        assert fake_critical.call_count == 1
 
         obj.deleteLater()
 
     def test_requires_qiling_decorator_allows_execution_when_qiling_ready(
-        self, qapp: QApplication
+        self,
+        qapp: QApplication,
+        fake_emulator_manager: FakeEmulatorManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Decorator allows execution when Qiling is ready."""
 
@@ -482,22 +652,30 @@ class TestEmulatorRequiredDecorator:
                 self.executed = True
                 return "success"
 
-        with patch(
-            "intellicrack.core.processing.emulator_manager.get_emulator_manager"
-        ) as mock_get_manager:
-            mock_manager = MagicMock()
-            mock_manager.ensure_qiling_ready.return_value = True
-            mock_get_manager.return_value = mock_manager
+        fake_emulator_manager.qiling_init_success = True
 
-            obj = TestClass()
-            result = obj.test_method()
+        def fake_get_manager() -> FakeEmulatorManager:
+            return fake_emulator_manager
 
-            assert result == "success"
-            assert obj.executed is True
-            mock_manager.ensure_qiling_ready.assert_called_once_with(obj.binary_path)
+        monkeypatch.setattr(
+            "intellicrack.core.processing.emulator_manager.get_emulator_manager",
+            fake_get_manager,
+        )
+
+        obj = TestClass()
+        result = obj.test_method()
+
+        assert result == "success"
+        assert obj.executed is True
+        assert fake_emulator_manager.ensure_qiling_ready_called
+        assert fake_emulator_manager.ensure_qiling_ready_call_count == 1
+        assert fake_emulator_manager.ensure_qiling_ready_binary_path == obj.binary_path
 
     def test_requires_qiling_decorator_shows_error_when_qiling_fails(
-        self, qapp: QApplication
+        self,
+        qapp: QApplication,
+        fake_emulator_manager: FakeEmulatorManager,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Decorator shows error when Qiling fails to initialize."""
 
@@ -512,25 +690,31 @@ class TestEmulatorRequiredDecorator:
                 self.executed = True
                 return "success"
 
-        with patch(
-            "intellicrack.core.processing.emulator_manager.get_emulator_manager"
-        ) as mock_get_manager, patch.object(QMessageBox, "critical") as mock_critical:
+        fake_emulator_manager.qiling_init_success = False
 
-            mock_manager = MagicMock()
-            mock_manager.ensure_qiling_ready.return_value = False
-            mock_get_manager.return_value = mock_manager
+        def fake_get_manager() -> FakeEmulatorManager:
+            return fake_emulator_manager
 
-            obj = TestClass()
-            result = obj.test_method()
+        fake_critical = FakeQMessageBoxCritical()
 
-            assert result is None
-            assert obj.executed is False
-            mock_critical.assert_called_once()
+        monkeypatch.setattr(
+            "intellicrack.core.processing.emulator_manager.get_emulator_manager",
+            fake_get_manager,
+        )
+        monkeypatch.setattr(QMessageBox, "critical", fake_critical)
+
+        obj = TestClass()
+        result = obj.test_method()
+
+        assert result is None
+        assert obj.executed is False
+        assert fake_critical.called
+        assert fake_critical.call_count == 1
 
         obj.deleteLater()
 
     def test_requires_qiling_decorator_blocks_execution_when_no_binary(
-        self, qapp: QApplication
+        self, qapp: QApplication, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Decorator blocks execution when no binary is selected for Qiling."""
 
@@ -545,12 +729,15 @@ class TestEmulatorRequiredDecorator:
                 self.executed = True
                 return "success"
 
-        with patch.object(QMessageBox, "warning") as mock_warning:
-            obj = TestClass()
-            result = obj.test_method()
+        fake_warning = FakeQMessageBoxWarning()
+        monkeypatch.setattr(QMessageBox, "warning", fake_warning)
 
-            assert result is None
-            assert obj.executed is False
-            mock_warning.assert_called_once()
+        obj = TestClass()
+        result = obj.test_method()
+
+        assert result is None
+        assert obj.executed is False
+        assert fake_warning.called
+        assert fake_warning.call_count == 1
 
         obj.deleteLater()

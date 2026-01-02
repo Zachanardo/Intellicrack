@@ -17,8 +17,7 @@ Tests validate REAL event aggregation capabilities:
 import queue
 import threading
 import time
-from typing import Any
-from unittest.mock import MagicMock
+from typing import Any, Callable
 
 import pytest
 
@@ -272,7 +271,12 @@ class TestCallbackRegistration:
     def test_event_aggregator_registers_event_callbacks(self) -> None:
         """EventAggregator registers event callbacks."""
         aggregator = EventAggregator()
-        callback = MagicMock()
+
+        callback_called = False
+
+        def callback(event: MonitorEvent) -> None:
+            nonlocal callback_called
+            callback_called = True
 
         aggregator.on_event(callback)
 
@@ -281,7 +285,12 @@ class TestCallbackRegistration:
     def test_event_aggregator_registers_stats_callbacks(self) -> None:
         """EventAggregator registers statistics callbacks."""
         aggregator = EventAggregator()
-        stats_callback = MagicMock()
+
+        stats_callback_called = False
+
+        def stats_callback(stats: dict[str, Any]) -> None:
+            nonlocal stats_callback_called
+            stats_callback_called = True
 
         aggregator.on_stats_update(stats_callback)
 
@@ -290,7 +299,12 @@ class TestCallbackRegistration:
     def test_event_aggregator_registers_error_callbacks(self) -> None:
         """EventAggregator registers error callbacks."""
         aggregator = EventAggregator()
-        error_callback = MagicMock()
+
+        error_callback_called = False
+
+        def error_callback(error: Exception) -> None:
+            nonlocal error_callback_called
+            error_callback_called = True
 
         aggregator.on_error(error_callback)
 
@@ -299,7 +313,14 @@ class TestCallbackRegistration:
     def test_event_aggregator_executes_event_callbacks(self) -> None:
         """EventAggregator executes callbacks when processing events."""
         aggregator = EventAggregator()
-        callback = MagicMock()
+
+        callback_count = 0
+        received_event = None
+
+        def callback(event: MonitorEvent) -> None:
+            nonlocal callback_count, received_event
+            callback_count += 1
+            received_event = event
 
         aggregator.on_event(callback)
         aggregator.start()
@@ -316,16 +337,30 @@ class TestCallbackRegistration:
 
         time.sleep(TIMEOUT_SHORT)
 
-        callback.assert_called_once()
+        assert callback_count == 1
+        assert received_event is not None
 
         aggregator.stop()
 
     def test_event_aggregator_executes_multiple_callbacks(self) -> None:
         """EventAggregator executes all registered callbacks."""
         aggregator = EventAggregator()
-        callback1 = MagicMock()
-        callback2 = MagicMock()
-        callback3 = MagicMock()
+
+        callback1_count = 0
+        callback2_count = 0
+        callback3_count = 0
+
+        def callback1(event: MonitorEvent) -> None:
+            nonlocal callback1_count
+            callback1_count += 1
+
+        def callback2(event: MonitorEvent) -> None:
+            nonlocal callback2_count
+            callback2_count += 1
+
+        def callback3(event: MonitorEvent) -> None:
+            nonlocal callback3_count
+            callback3_count += 1
 
         aggregator.on_event(callback1)
         aggregator.on_event(callback2)
@@ -344,17 +379,27 @@ class TestCallbackRegistration:
 
         time.sleep(TIMEOUT_SHORT)
 
-        callback1.assert_called_once()
-        callback2.assert_called_once()
-        callback3.assert_called_once()
+        assert callback1_count == 1
+        assert callback2_count == 1
+        assert callback3_count == 1
 
         aggregator.stop()
 
     def test_event_aggregator_handles_callback_exceptions(self) -> None:
         """EventAggregator continues processing when callback raises exception."""
         aggregator = EventAggregator()
-        failing_callback = MagicMock(side_effect=RuntimeError("Callback error"))
-        working_callback = MagicMock()
+
+        failing_callback_called = False
+        working_callback_called = False
+
+        def failing_callback(event: MonitorEvent) -> None:
+            nonlocal failing_callback_called
+            failing_callback_called = True
+            raise RuntimeError("Callback error")
+
+        def working_callback(event: MonitorEvent) -> None:
+            nonlocal working_callback_called
+            working_callback_called = True
 
         aggregator.on_event(failing_callback)
         aggregator.on_event(working_callback)
@@ -372,8 +417,8 @@ class TestCallbackRegistration:
 
         time.sleep(TIMEOUT_SHORT)
 
-        failing_callback.assert_called_once()
-        working_callback.assert_called_once()
+        assert failing_callback_called
+        assert working_callback_called
 
         aggregator.stop()
 
@@ -764,9 +809,23 @@ class TestCompleteWorkflow:
         """Complete event aggregation workflow from start to stop."""
         aggregator = EventAggregator(max_queue_size=100)
 
-        event_callback = MagicMock()
-        stats_callback = MagicMock()
-        error_callback = MagicMock()
+        event_callback_count = 0
+        stats_callback_count = 0
+        error_callback_count = 0
+        received_events = []
+
+        def event_callback(event: MonitorEvent) -> None:
+            nonlocal event_callback_count
+            event_callback_count += 1
+            received_events.append(event)
+
+        def stats_callback(stats: dict[str, Any]) -> None:
+            nonlocal stats_callback_count
+            stats_callback_count += 1
+
+        def error_callback(error: Exception) -> None:
+            nonlocal error_callback_count
+            error_callback_count += 1
 
         aggregator.on_event(event_callback)
         aggregator.on_stats_update(stats_callback)
@@ -811,7 +870,8 @@ class TestCompleteWorkflow:
 
         time.sleep(TIMEOUT_LONG)
 
-        assert event_callback.call_count == 3
+        assert event_callback_count == 3
+        assert len(received_events) == 3
 
         stats = aggregator.get_stats()
         assert stats["total_events"] == 3

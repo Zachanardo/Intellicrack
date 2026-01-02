@@ -9,16 +9,19 @@ import sys
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Any, cast
+
+from intellicrack.utils.path_resolver import get_project_root
 
 
 class ProductionReadinessValidator:
     """Validates all modern protection bypasses are production-ready."""
 
-    def __init__(self):
-        self.test_results = []
-        self.critical_failures = []
+    def __init__(self) -> None:
+        self.test_results: list[bool] = []
+        self.critical_failures: list[str] = []
 
-    def test_no_placeholder_strings(self):
+    def test_no_placeholder_strings(self) -> bool:
         """CRITICAL TEST: Verify NO placeholder strings exist in code."""
         print("\n CRITICAL TEST: Searching for placeholder strings...")
         print("=" * 60)
@@ -102,7 +105,7 @@ class ProductionReadinessValidator:
             self.test_results.append(False)
             return False
 
-    def test_radare2_integration_fields(self):
+    def test_radare2_integration_fields(self) -> bool:
         """Test radare2_vulnerability_engine.py has all integration fields."""
         print("\n🔗 Testing Radare2 Integration Fields...")
         file_path = get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py"
@@ -179,7 +182,7 @@ class ProductionReadinessValidator:
             self.test_results.append(False)
             return False
 
-    def test_bypass_modules_exist(self):
+    def test_bypass_modules_exist(self) -> bool:
         """Verify all bypass modules exist and have required methods."""
         print("\n🛡️ Testing Bypass Module Files...")
         print("=" * 35)
@@ -210,7 +213,7 @@ class ProductionReadinessValidator:
         all_modules_ok = True
 
         for module in modules_to_check:
-            file_path = get_project_root() / module['path']
+            file_path = get_project_root() / cast(str, module['path'])
 
             if not file_path.exists():
                 print(f"  FAIL Module not found: {module['path']}")
@@ -244,7 +247,7 @@ class ProductionReadinessValidator:
         self.test_results.append(all_modules_ok)
         return all_modules_ok
 
-    def test_production_functionality(self):
+    def test_production_functionality(self) -> bool:
         """Test that methods return real data, not placeholders."""
         print("\n[CFG]️ Testing Production Functionality...")
         print("=" * 40)
@@ -298,7 +301,7 @@ class ProductionReadinessValidator:
             self.test_results.append(False)
             return False
 
-    def generate_documentation(self):
+    def generate_documentation(self) -> bool:
         """Generate checkpoint documentation."""
         print("\n Generating Documentation...")
         print("=" * 35)
@@ -359,7 +362,7 @@ This checkpoint {'certifies' if all(self.test_results) else 'CANNOT certify'} th
         return True
 
 
-def main():
+def main() -> int:
     """Execute Day 6.3 Production Readiness Checkpoint."""
     print("=" * 70)
     print("DAY 6.3: PRODUCTION READINESS CHECKPOINT 6 - STANDALONE")

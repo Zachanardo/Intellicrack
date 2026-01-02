@@ -228,7 +228,6 @@ class SampleDatabase:
 
         Args:
             min_confidence: Minimum confidence threshold
-            min_confidence: Minimum confidence threshold
             verified_only: Only include verified samples
 
         Returns:
@@ -455,7 +454,12 @@ class SampleDatabase:
         return sha256.hexdigest()
 
     def _load_index(self) -> None:
-        """Load database index from disk."""
+        """Load database index from disk.
+
+        Loads the JSON index file from disk and populates the internal index
+        dictionary. If the file doesn't exist or fails to load, initializes
+        an empty index.
+        """
         if self.index_file.exists():
             try:
                 with open(self.index_file, encoding="utf-8") as f:
@@ -470,7 +474,11 @@ class SampleDatabase:
                 self.index = {}
 
     def _save_index(self) -> None:
-        """Save database index to disk."""
+        """Save database index to disk.
+
+        Serializes the current index dictionary to JSON format and writes it
+        to the index file. Handles exceptions gracefully if the write fails.
+        """
         try:
             data = {file_hash: asdict(metadata) for file_hash, metadata in self.index.items()}
 

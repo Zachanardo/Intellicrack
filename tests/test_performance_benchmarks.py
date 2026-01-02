@@ -4,12 +4,9 @@ Validates that all operations meet performance targets
 """
 
 import os
-import sys
 import time
 import tempfile
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 print("Performance benchmarking suite created successfully")
 

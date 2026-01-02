@@ -20,7 +20,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 from __future__ import annotations
 
 import traceback
-from collections.abc import Sized
 from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
 from intellicrack.utils.logger import logger
@@ -166,15 +165,34 @@ try:
                 self.master = master
 
             def draw(self) -> None:
+                """Draw the figure on the canvas."""
                 pass
 
             def get_tk_widget(self) -> Any:
+                """Get the Tk widget for embedding.
+
+                Returns:
+                    The canvas widget itself.
+
+                """
                 return self
 
             def pack(self, **kwargs: Any) -> None:
+                """Pack the widget in the parent container.
+
+                Args:
+                    **kwargs: Tkinter pack layout options.
+
+                """
                 pass
 
             def grid(self, **kwargs: Any) -> None:
+                """Grid the widget in the parent container.
+
+                Args:
+                    **kwargs: Tkinter grid layout options.
+
+                """
                 pass
 
         _canvas_tk_class = _FallbackTkCanvas
@@ -198,7 +216,12 @@ try:
                 self._size_policy: tuple[Any, ...] | None = None
 
             def draw(self) -> None:
-                """Draw the Qt canvas using fallback rendering."""
+                """Draw the Qt canvas using fallback rendering.
+
+                Renders the matplotlib figure if savefig is available,
+                otherwise logs that no rendering is available.
+
+                """
                 if hasattr(self.figure, "savefig"):
                     logger.debug("Qt canvas fallback draw() - using figure rendering")
                 else:
@@ -215,11 +238,19 @@ try:
                 logger.debug("Qt canvas setSizePolicy() called with args: %s", args)
 
             def update(self) -> None:
-                """Update the canvas."""
+                """Update the canvas.
+
+                Triggers a redraw of the canvas by calling draw().
+
+                """
                 self.draw()
 
             def repaint(self) -> None:
-                """Repaint the canvas."""
+                """Repaint the canvas.
+
+                Triggers a redraw of the canvas by calling draw().
+
+                """
                 self.draw()
 
         FigureCanvasQTAgg = _FallbackQtCanvas
@@ -1270,15 +1301,22 @@ except ImportError as e:
             self.figure: object = figure
 
         def draw(self) -> None:
-            """Draw the canvas."""
+            """Draw the canvas.
+
+            Renders the figure by calling _render_components if available,
+            then logs the draw operation for debugging.
+
+            """
             if hasattr(self.figure, "_render_components"):
                 self.figure._render_components()
             logger.debug("Canvas draw() called - processing figure data")
 
         def draw_idle(self) -> None:
-            """Schedule a draw.
+            """Schedule a draw for deferred execution.
 
             In fallback mode, this executes immediately instead of being deferred.
+            Calls draw() and logs the operation.
+
             """
             self.draw()
             logger.debug("Canvas draw_idle() called - executed immediately")
@@ -1287,6 +1325,8 @@ except ImportError as e:
             """Flush GUI events.
 
             In fallback mode, this is a no-op but processes pending operations.
+            Logs when this method is called.
+
             """
             logger.debug("Canvas flush_events() called - fallback mode")
 
@@ -1303,7 +1343,11 @@ except ImportError as e:
             self.figure: object = figure
 
         def draw(self) -> None:
-            """Draw the canvas."""
+            """Draw the canvas.
+
+            Renders the figure if savefig is available, then logs the draw operation.
+
+            """
             if hasattr(self.figure, "savefig"):
                 logger.debug("Qt canvas rendering figure")
             logger.debug("FallbackFigureCanvasQTAgg draw() called")
@@ -2063,7 +2107,13 @@ startxref
 
         @staticmethod
         def use(backend: str, **kwargs: Any) -> None:
-            """Set the matplotlib backend (fallback does nothing)."""
+            """Set the matplotlib backend (fallback does nothing).
+
+            Args:
+                backend: Name of the matplotlib backend to use.
+                **kwargs: Additional backend-specific keyword arguments.
+
+            """
             pass
 
     _fallback_mpl = FallbackMatplotlib()
@@ -2073,7 +2123,12 @@ MATPLOTLIB_AVAILABLE = HAS_MATPLOTLIB
 
 
 def get_plt() -> Any:
-    """Get pyplot module or fallback."""
+    """Get pyplot module or fallback.
+
+    Returns:
+        Any: The matplotlib.pyplot module or the FallbackPyplot instance.
+
+    """
     if HAS_MATPLOTLIB:
         import matplotlib.pyplot as plt
 
@@ -2082,7 +2137,12 @@ def get_plt() -> Any:
 
 
 def get_figure_class() -> type[Any]:
-    """Get Figure class or fallback."""
+    """Get Figure class or fallback.
+
+    Returns:
+        type[Any]: The matplotlib.figure.Figure class or FallbackFigure class.
+
+    """
     if HAS_MATPLOTLIB:
         from matplotlib.figure import Figure as _MplFigure
 
@@ -2091,7 +2151,12 @@ def get_figure_class() -> type[Any]:
 
 
 def get_axes_class() -> type[Any]:
-    """Get Axes class or fallback."""
+    """Get Axes class or fallback.
+
+    Returns:
+        type[Any]: The matplotlib.axes.Axes class or FallbackAxes class.
+
+    """
     if HAS_MATPLOTLIB:
         from matplotlib.axes import Axes as _MplAxes
 
@@ -2100,7 +2165,12 @@ def get_axes_class() -> type[Any]:
 
 
 def get_rectangle_class() -> type[Any]:
-    """Get Rectangle class or fallback."""
+    """Get Rectangle class or fallback.
+
+    Returns:
+        type[Any]: The matplotlib.patches.Rectangle class or FallbackRectangle class.
+
+    """
     if HAS_MATPLOTLIB:
         from matplotlib.patches import Rectangle as _MplRectangle
 
@@ -2109,7 +2179,12 @@ def get_rectangle_class() -> type[Any]:
 
 
 def get_circle_class() -> type[Any]:
-    """Get Circle class or fallback."""
+    """Get Circle class or fallback.
+
+    Returns:
+        type[Any]: The matplotlib.patches.Circle class or FallbackCircle class.
+
+    """
     if HAS_MATPLOTLIB:
         from matplotlib.patches import Circle as _MplCircle
 
@@ -2118,7 +2193,12 @@ def get_circle_class() -> type[Any]:
 
 
 def get_polygon_class() -> type[Any]:
-    """Get Polygon class or fallback."""
+    """Get Polygon class or fallback.
+
+    Returns:
+        type[Any]: The matplotlib.patches.Polygon class or FallbackPolygon class.
+
+    """
     if HAS_MATPLOTLIB:
         from matplotlib.patches import Polygon as _MplPolygon
 
@@ -2127,7 +2207,12 @@ def get_polygon_class() -> type[Any]:
 
 
 def get_funcformatter_class() -> type[Any]:
-    """Get FuncFormatter class or fallback."""
+    """Get FuncFormatter class or fallback.
+
+    Returns:
+        type[Any]: The matplotlib.ticker.FuncFormatter class or FallbackFuncFormatter class.
+
+    """
     if HAS_MATPLOTLIB:
         from matplotlib.ticker import FuncFormatter as _MplFuncFormatter
 
@@ -2136,7 +2221,12 @@ def get_funcformatter_class() -> type[Any]:
 
 
 def get_maxnlocator_class() -> type[Any]:
-    """Get MaxNLocator class or fallback."""
+    """Get MaxNLocator class or fallback.
+
+    Returns:
+        type[Any]: The matplotlib.ticker.MaxNLocator class or FallbackMaxNLocator class.
+
+    """
     if HAS_MATPLOTLIB:
         from matplotlib.ticker import MaxNLocator as _MplMaxNLocator
 
@@ -2145,7 +2235,12 @@ def get_maxnlocator_class() -> type[Any]:
 
 
 def get_pdfpages_class() -> type[Any]:
-    """Get PdfPages class or fallback."""
+    """Get PdfPages class or fallback.
+
+    Returns:
+        type[Any]: The matplotlib.backends.backend_pdf.PdfPages class or FallbackPdfPages class.
+
+    """
     if HAS_MATPLOTLIB:
         from matplotlib.backends.backend_pdf import PdfPages as _MplPdfPages
 
@@ -2154,7 +2249,12 @@ def get_pdfpages_class() -> type[Any]:
 
 
 def get_mpl() -> Any:
-    """Get matplotlib module or fallback."""
+    """Get matplotlib module or fallback.
+
+    Returns:
+        Any: The matplotlib module or the FallbackMatplotlib instance.
+
+    """
     if HAS_MATPLOTLIB:
         import matplotlib as mpl
 

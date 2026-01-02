@@ -172,7 +172,16 @@ class AnalysisStatsGenerator:
 
     @staticmethod
     def _calculate_correlation(values1: list[float], values2: list[float]) -> float:
-        """Calculate Pearson correlation coefficient."""
+        """Calculate Pearson correlation coefficient.
+
+        Args:
+            values1: First list of numeric values to correlate
+            values2: Second list of numeric values to correlate
+
+        Returns:
+            float: Pearson correlation coefficient between -1 and 1
+
+        """
         try:
             if len(values1) != len(values2) or len(values1) < 2:
                 return 0.0
@@ -259,10 +268,8 @@ class AnalysisStatsGenerator:
             default_return: Default value to return if an error occurs during execution
 
         Returns:
-            The result of executing stats_function, or default_return if an exception occurs
-
-        Raises:
-            None: All exceptions are caught and logged
+            object: The result of executing stats_function, or default_return if an exception
+                occurs
 
         """
         try:
@@ -289,6 +296,9 @@ class AnalysisStatsGenerator:
         Returns:
             List of recommendation strings from compute_recommendations, or a
             default list with a generic recommendation if an exception occurs
+
+        Raises:
+            No exceptions are propagated; all errors are caught and logged
 
         """
         try:
@@ -502,11 +512,23 @@ class PerformanceTracker:
         self.start_times: dict[str, float] = {}
 
     def start_operation(self, operation_name: str) -> None:
-        """Start tracking an operation."""
+        """Start tracking an operation.
+
+        Args:
+            operation_name: Name of the operation to track for performance monitoring
+
+        """
         self.start_times[operation_name] = time.time()
 
     def end_operation(self, operation_name: str, item_count: int = 1) -> None:
-        """End tracking an operation and record metrics."""
+        """End tracking an operation and record metrics.
+
+        Args:
+            operation_name: Name of the operation being tracked to update performance
+                metrics
+            item_count: Number of items processed in this operation (default: 1)
+
+        """
         try:
             if operation_name in self.start_times:
                 duration = time.time() - self.start_times[operation_name]
@@ -538,7 +560,13 @@ class PerformanceTracker:
             logger.debug("Performance tracking failed: %s", e, exc_info=True)
 
     def get_metrics(self) -> dict[str, Any]:
-        """Get all collected metrics."""
+        """Get all collected metrics.
+
+        Returns:
+            dict[str, Any]: Dictionary containing all collected performance metrics with
+                operation names as keys and metric dictionaries as values
+
+        """
         return dict(self.metrics)
 
     def reset_metrics(self) -> None:

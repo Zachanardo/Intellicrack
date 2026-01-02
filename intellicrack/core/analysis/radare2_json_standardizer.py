@@ -23,7 +23,7 @@ import json
 import os
 import shutil
 import uuid
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from ...utils.logger import get_logger
@@ -850,6 +850,12 @@ class R2JSONStandardizer:
         filled_fields = 0
 
         def count_fields(obj: dict[str, Any] | list[Any], path: str = "") -> None:
+            """Count field presence in nested data structures.
+
+            Args:
+                obj: Dictionary or list to count fields in.
+                path: Current path in the nested structure for tracking.
+            """
             nonlocal total_fields, filled_fields
             if isinstance(obj, dict):
                 for key, value in obj.items():
@@ -1772,6 +1778,11 @@ class R2JSONStandardizer:
         type_counts: dict[str, int] = {}
 
         def count_types(obj: object) -> None:
+            """Recursively count data types in nested structures.
+
+            Args:
+                obj: Object to analyze and count data type occurrences.
+            """
             if isinstance(obj, dict):
                 type_counts["dict"] = type_counts.get("dict", 0) + 1
                 for value in obj.values():
@@ -1806,6 +1817,11 @@ class R2JSONStandardizer:
         values = []
 
         def extract_values(obj: object) -> None:
+            """Recursively extract numeric values from nested structures.
+
+            Args:
+                obj: Object to recursively search for numeric values.
+            """
             if isinstance(obj, dict):
                 for value in obj.values():
                     extract_values(value)

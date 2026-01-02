@@ -19,11 +19,9 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
-import sys
 import tempfile
 from pathlib import Path
-from typing import Any
-from unittest.mock import Mock, patch
+from typing import Any, Callable
 
 import pytest
 
@@ -40,6 +38,124 @@ from intellicrack.utils.core.core_utilities import (
     run_cli_mode,
     run_gui_mode,
 )
+
+
+class FakeSignal:
+    """Fake signal implementation for testing Qt-like signals."""
+
+    def __init__(self) -> None:
+        self.call_count: int = 0
+        self.call_args_list: list[tuple[Any, ...]] = []
+
+    def emit(self, *args: Any, **kwargs: Any) -> None:
+        self.call_count += 1
+        self.call_args_list.append(args)
+
+
+class FakeApp:
+    """Fake application instance for testing tool dispatch."""
+
+    def __init__(self) -> None:
+        self.update_output = FakeSignal()
+
+
+class FakeArgs:
+    """Fake argument parser result for CLI/GUI testing."""
+
+    def __init__(
+        self,
+        binary: str | None = None,
+        analyze: bool = False,
+        crack: bool = False,
+        output: str | None = None,
+    ) -> None:
+        self.binary = binary
+        self.analyze = analyze
+        self.crack = crack
+        self.output = output
+
+
+class FakeAnalyzer:
+    """Fake analyzer for deep runtime monitoring tests."""
+
+    def __init__(self, return_value: dict[str, Any] | None = None, should_fail: bool = False) -> None:
+        self.return_value = return_value or {"api_calls": [], "memory_reads": []}
+        self.should_fail = should_fail
+        self.call_count: int = 0
+        self.call_args_list: list[tuple[Any, ...]] = []
+
+    def __call__(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        self.call_count += 1
+        self.call_args_list.append(args)
+        if self.should_fail:
+            raise RuntimeError("Process not found")
+        return self.return_value
+
+
+class FakeAnalysisRunner:
+    """Fake analysis runner for CLI tests."""
+
+    def __init__(self, return_value: dict[str, Any] | None = None, should_fail: bool = False) -> None:
+        self.return_value = return_value or {"summary": {"protection": "None"}}
+        self.should_fail = should_fail
+        self.call_count: int = 0
+
+    def __call__(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        self.call_count += 1
+        if self.should_fail:
+            raise RuntimeError("Analysis failed")
+        return self.return_value
+
+
+class FakeCrackRunner:
+    """Fake autonomous crack runner for CLI tests."""
+
+    def __init__(self, return_value: dict[str, Any] | None = None) -> None:
+        self.return_value = return_value or {"success": True, "message": "Cracked"}
+        self.call_count: int = 0
+
+    def __call__(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        self.call_count += 1
+        return self.return_value
+
+
+class FakeQApplication:
+    """Fake QApplication for GUI mode tests."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.exec_called: bool = False
+
+    def exec(self) -> int:
+        self.exec_called = True
+        return 0
+
+
+class FakeLauncher:
+    """Fake launcher for GUI mode tests."""
+
+    def __init__(self, should_fail: bool = False) -> None:
+        self.should_fail = should_fail
+        self.call_count: int = 0
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        self.call_count += 1
+        if self.should_fail:
+            raise RuntimeError("Launch failed")
+        return None
+
+
+class FakeQApplicationClass:
+    """Fake QApplication class for GUI mode tests."""
+
+    def __init__(self, should_fail: bool = False) -> None:
+        self.should_fail = should_fail
+        self.call_count: int = 0
+
+    def __call__(self, *args: Any, **kwargs: Any) -> FakeQApplication:
+        self.call_count += 1
+        if self.should_fail:
+            raise ImportError("PyQt6 not found")
+        return FakeQApplication(*args, **kwargs)
 
 
 class TestToolRegistry:
@@ -141,15 +257,14 @@ class TestDispatchTool:
 
         TOOL_REGISTRY["mock_dispatch_tool"] = mock_tool
 
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
         params = {"data": "test_data"}
 
         result = dispatch_tool(app, "mock_dispatch_tool", params)
 
         assert result["status"] == "success"
         assert result["result"] == "test_data"
-        assert app.update_output.emit.call_count >= 2
+        assert app.update_output.call_count >= 2
 
         TOOL_REGISTRY.clear()
         TOOL_REGISTRY.update(original_registry)
@@ -158,8 +273,7 @@ class TestDispatchTool:
         """Test dispatching an unknown tool returns error."""
         original_registry = TOOL_REGISTRY.copy()
 
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
 
         result = dispatch_tool(app, "nonexistent_tool", {})
 
@@ -180,8 +294,7 @@ class TestDispatchTool:
         TOOL_REGISTRY["tool_analyze_binary"] = test_tool
         TOOL_REGISTRY["tool_analyze_license"] = test_tool
 
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
 
         result = dispatch_tool(app, "analyze", {})
 
@@ -201,8 +314,7 @@ class TestDispatchTool:
 
         TOOL_REGISTRY["failing_tool"] = failing_tool
 
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
 
         result = dispatch_tool(app, "failing_tool", {})
 
@@ -421,36 +533,39 @@ class TestOnMessage:
 class TestDeepRuntimeMonitoring:
     """Test deep runtime monitoring function."""
 
-    def test_deep_runtime_monitoring_basic(self) -> None:
+    def test_deep_runtime_monitoring_basic(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test basic deep runtime monitoring execution."""
-        with patch("intellicrack.utils.core.core_utilities.analyzer_drm") as mock_analyzer:
-            mock_analyzer.return_value = {"api_calls": [], "memory_reads": []}
+        fake_analyzer = FakeAnalyzer()
 
-            result = deep_runtime_monitoring("test.exe")
+        monkeypatch.setattr("intellicrack.utils.core.core_utilities.analyzer_drm", fake_analyzer)
 
-            assert isinstance(result, dict)
-            if "status" in result:
-                assert result["status"] in ["success", "error"]
+        result = deep_runtime_monitoring("test.exe")
 
-    def test_deep_runtime_monitoring_with_config(self) -> None:
+        assert isinstance(result, dict)
+        if "status" in result:
+            assert result["status"] in ["success", "error"]
+
+    def test_deep_runtime_monitoring_with_config(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test deep runtime monitoring with configuration."""
-        with patch("intellicrack.utils.core.core_utilities.analyzer_drm") as mock_analyzer:
-            mock_analyzer.return_value = {"data": "monitored"}
+        fake_analyzer = FakeAnalyzer(return_value={"data": "monitored"})
 
-            config = {"timeout": 60000, "hooks": ["RegQueryValue", "CreateFile"]}
-            result = deep_runtime_monitoring("target.exe", config)
+        monkeypatch.setattr("intellicrack.utils.core.core_utilities.analyzer_drm", fake_analyzer)
 
-            assert isinstance(result, dict)
+        config = {"timeout": 60000, "hooks": ["RegQueryValue", "CreateFile"]}
+        result = deep_runtime_monitoring("target.exe", config)
 
-    def test_deep_runtime_monitoring_handles_error(self) -> None:
+        assert isinstance(result, dict)
+
+    def test_deep_runtime_monitoring_handles_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test deep runtime monitoring handles errors gracefully."""
-        with patch("intellicrack.utils.core.core_utilities.analyzer_drm") as mock_analyzer:
-            mock_analyzer.side_effect = RuntimeError("Process not found")
+        fake_analyzer = FakeAnalyzer(should_fail=True)
 
-            result = deep_runtime_monitoring("nonexistent.exe")
+        monkeypatch.setattr("intellicrack.utils.core.core_utilities.analyzer_drm", fake_analyzer)
 
-            assert result["status"] == "error"
-            assert "error" in result
+        result = deep_runtime_monitoring("nonexistent.exe")
+
+        assert result["status"] == "error"
+        assert "error" in result
 
 
 class TestRunCLIMode:
@@ -467,151 +582,167 @@ class TestRunCLIMode:
 
     def test_run_cli_mode_no_binary(self) -> None:
         """Test CLI mode fails without binary."""
-        args = Mock()
-        args.binary = None
+        args = FakeArgs(binary=None)
 
         result = run_cli_mode(args)
 
         assert result == 1
 
-    def test_run_cli_mode_with_analysis(self, temp_binary: Path) -> None:
+    def test_run_cli_mode_with_analysis(self, temp_binary: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test CLI mode runs analysis."""
-        with patch("intellicrack.utils.core.core_utilities.run_comprehensive_analysis") as mock_analysis:
-            mock_analysis.return_value = {"summary": {"protection": "None"}}
+        fake_analysis = FakeAnalysisRunner()
 
-            args = Mock()
-            args.binary = str(temp_binary)
-            args.analyze = True
-            args.crack = False
-            args.output = None
+        monkeypatch.setattr("intellicrack.utils.core.core_utilities.run_comprehensive_analysis", fake_analysis)
 
-            result = run_cli_mode(args)
+        args = FakeArgs(
+            binary=str(temp_binary),
+            analyze=True,
+            crack=False,
+            output=None,
+        )
 
-            assert result == 0
+        result = run_cli_mode(args)
 
-    def test_run_cli_mode_with_crack(self, temp_binary: Path) -> None:
+        assert result == 0
+
+    def test_run_cli_mode_with_crack(self, temp_binary: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test CLI mode runs autonomous crack."""
-        with patch("intellicrack.utils.core.core_utilities.run_autonomous_crack") as mock_crack:
-            mock_crack.return_value = {"success": True, "message": "Cracked"}
+        fake_crack = FakeCrackRunner()
 
-            args = Mock()
-            args.binary = str(temp_binary)
-            args.analyze = False
-            args.crack = True
-            args.output = None
+        monkeypatch.setattr("intellicrack.utils.core.core_utilities.run_autonomous_crack", fake_crack)
 
-            result = run_cli_mode(args)
+        args = FakeArgs(
+            binary=str(temp_binary),
+            analyze=False,
+            crack=True,
+            output=None,
+        )
 
-            assert result == 0
+        result = run_cli_mode(args)
 
-    def test_run_cli_mode_saves_output(self, temp_binary: Path) -> None:
+        assert result == 0
+
+    def test_run_cli_mode_saves_output(self, temp_binary: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test CLI mode saves results to file."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch("intellicrack.utils.core.core_utilities.run_comprehensive_analysis") as mock_analysis:
-                mock_analysis.return_value = {"summary": {"status": "complete"}}
+            fake_analysis = FakeAnalysisRunner(return_value={"summary": {"status": "complete"}})
 
-                args = Mock()
-                args.binary = str(temp_binary)
-                args.analyze = True
-                args.crack = False
-                args.output = tmpdir
+            monkeypatch.setattr("intellicrack.utils.core.core_utilities.run_comprehensive_analysis", fake_analysis)
 
-                result = run_cli_mode(args)
-
-                output_file = Path(tmpdir) / "intellicrack_results.json"
-                assert output_file.exists()
-
-                with open(output_file, encoding="utf-8") as f:
-                    saved_results = json.load(f)
-                    assert "analysis" in saved_results
-
-    def test_run_cli_mode_handles_exception(self, temp_binary: Path) -> None:
-        """Test CLI mode handles exceptions gracefully."""
-        with patch("intellicrack.utils.core.core_utilities.run_comprehensive_analysis") as mock_analysis:
-            mock_analysis.side_effect = RuntimeError("Analysis failed")
-
-            args = Mock()
-            args.binary = str(temp_binary)
-            args.analyze = True
-            args.crack = False
-            args.output = None
+            args = FakeArgs(
+                binary=str(temp_binary),
+                analyze=True,
+                crack=False,
+                output=tmpdir,
+            )
 
             result = run_cli_mode(args)
 
-            assert result == 1
+            output_file = Path(tmpdir) / "intellicrack_results.json"
+            assert output_file.exists()
+
+            with open(output_file, encoding="utf-8") as f:
+                saved_results = json.load(f)
+                assert "analysis" in saved_results
+
+    def test_run_cli_mode_handles_exception(self, temp_binary: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test CLI mode handles exceptions gracefully."""
+        fake_analysis = FakeAnalysisRunner(should_fail=True)
+
+        monkeypatch.setattr("intellicrack.utils.core.core_utilities.run_comprehensive_analysis", fake_analysis)
+
+        args = FakeArgs(
+            binary=str(temp_binary),
+            analyze=True,
+            crack=False,
+            output=None,
+        )
+
+        result = run_cli_mode(args)
+
+        assert result == 1
 
 
 class TestRunGUIMode:
     """Test GUI mode execution."""
 
-    def test_run_gui_mode_import_error(self) -> None:
+    def test_run_gui_mode_import_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test GUI mode handles missing PyQt6 gracefully."""
-        with patch("intellicrack.utils.core.core_utilities.QApplication") as mock_qapp:
-            mock_qapp.side_effect = ImportError("PyQt6 not found")
+        fake_qapp_class = FakeQApplicationClass(should_fail=True)
 
-            args = Mock()
-            result = run_gui_mode(args)
+        monkeypatch.setattr("intellicrack.utils.core.core_utilities.QApplication", fake_qapp_class)
 
-            assert result == 1
+        args = FakeArgs()
+        result = run_gui_mode(args)
 
-    def test_run_gui_mode_launch_error(self) -> None:
+        assert result == 1
+
+    def test_run_gui_mode_launch_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test GUI mode handles launch errors."""
-        with patch("intellicrack.utils.core.core_utilities.QApplication"):
-            with patch("intellicrack.utils.core.core_utilities.launch") as mock_launch:
-                mock_launch.side_effect = RuntimeError("Launch failed")
+        fake_launcher = FakeLauncher(should_fail=True)
+        fake_qapp_class = FakeQApplicationClass(should_fail=False)
 
-                args = Mock()
-                result = run_gui_mode(args)
+        monkeypatch.setattr("intellicrack.utils.core.core_utilities.QApplication", fake_qapp_class)
+        monkeypatch.setattr("intellicrack.utils.core.core_utilities.launch", fake_launcher)
 
-                assert result == 1
+        args = FakeArgs()
+        result = run_gui_mode(args)
+
+        assert result == 1
 
 
 class TestMain:
     """Test main entry point."""
 
-    def test_main_default_gui_mode(self) -> None:
+    def test_main_default_gui_mode(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test main defaults to GUI mode."""
-        with patch("intellicrack.utils.core.core_utilities.run_gui_mode") as mock_gui:
-            mock_gui.return_value = 0
+        fake_gui = FakeAnalysisRunner(return_value=0)
 
-            result = main([])
+        monkeypatch.setattr("intellicrack.utils.core.core_utilities.run_gui_mode", fake_gui)
 
-            assert result == 0
-            assert mock_gui.called
+        result = main([])
 
-    def test_main_cli_flag(self) -> None:
+        assert result == 0
+        assert fake_gui.call_count > 0
+
+    def test_main_cli_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test main respects --cli flag."""
-        with patch("intellicrack.utils.core.core_utilities.run_cli_mode") as mock_cli:
-            mock_cli.return_value = 0
+        fake_cli = FakeAnalysisRunner(return_value=0)
 
-            with tempfile.NamedTemporaryFile(suffix=".exe") as f:
-                result = main(["--cli", f.name])
+        monkeypatch.setattr("intellicrack.utils.core.core_utilities.run_cli_mode", fake_cli)
 
-    def test_main_keyboard_interrupt(self) -> None:
+        with tempfile.NamedTemporaryFile(suffix=".exe") as f:
+            result = main(["--cli", f.name])
+
+    def test_main_keyboard_interrupt(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test main handles keyboard interrupt."""
-        with patch("intellicrack.utils.core.core_utilities.run_gui_mode") as mock_gui:
-            mock_gui.side_effect = KeyboardInterrupt()
+        def raise_keyboard_interrupt(*args: Any, **kwargs: Any) -> int:
+            raise KeyboardInterrupt()
 
-            result = main([])
+        monkeypatch.setattr("intellicrack.utils.core.core_utilities.run_gui_mode", raise_keyboard_interrupt)
 
-            assert result == 1
+        result = main([])
 
-    def test_main_verbose_logging(self) -> None:
+        assert result == 1
+
+    def test_main_verbose_logging(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test main configures verbose logging."""
-        with patch("intellicrack.utils.core.core_utilities.run_gui_mode") as mock_gui:
-            mock_gui.return_value = 0
+        fake_gui = FakeAnalysisRunner(return_value=0)
 
-            result = main(["-vv"])
+        monkeypatch.setattr("intellicrack.utils.core.core_utilities.run_gui_mode", fake_gui)
 
-            assert result == 0
+        result = main(["-vv"])
 
-    def test_main_binary_argument(self) -> None:
+        assert result == 0
+
+    def test_main_binary_argument(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test main accepts binary argument."""
-        with patch("intellicrack.utils.core.core_utilities.run_cli_mode") as mock_cli:
-            mock_cli.return_value = 0
+        fake_cli = FakeAnalysisRunner(return_value=0)
 
-            with tempfile.NamedTemporaryFile(suffix=".exe") as f:
-                result = main([f.name])
+        monkeypatch.setattr("intellicrack.utils.core.core_utilities.run_cli_mode", fake_cli)
+
+        with tempfile.NamedTemporaryFile(suffix=".exe") as f:
+            result = main([f.name])
 
 
 class TestCoreUtilitiesIntegration:
@@ -629,8 +760,7 @@ class TestCoreUtilitiesIntegration:
 
         register_tool("integration_test_tool", integration_tool)
 
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
         params = {"data": "integration_data"}
 
         result = dispatch_tool(app, "integration_test_tool", params)
@@ -657,8 +787,7 @@ class TestCoreUtilitiesIntegration:
 
         register(plugin_info)
 
-        app = Mock()
-        app.update_output = Mock()
+        app = FakeApp()
 
         result = dispatch_tool(app, "plugin_analyzer_plugin_deep_analyze", {"target": "test.exe"})
 

@@ -19,19 +19,18 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import gc
-import hashlib
-import hmac
 import json
 import os
-import pickle  # noqa: S403
 import time
+import types
 from collections import OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any
 
+from ..utils.core.secure_serialization import secure_pickle_dump, secure_pickle_load
 from ..utils.logger import get_logger
 
 
@@ -40,113 +39,6 @@ GPU_AUTOLOADER_AVAILABLE = False
 get_device: Callable[[], str] | None = None
 get_gpu_info: Callable[[], dict[str, object]] | None = None
 to_device: Callable[[Any], Any] | None = None
-
-# Security configuration for pickle
-PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
-
-
-def secure_pickle_dump(obj: object, file_path: str) -> None:
-    """Securely dump object with integrity check.
-
-    Args:
-        obj: Object to serialize and save with integrity check
-        file_path: Path to save the pickled object
-
-    """
-    # Serialize object
-    data = pickle.dumps(obj)
-
-    # Calculate HMAC for integrity
-    mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
-
-    # Write MAC + data
-    with open(file_path, "wb") as f:
-        f.write(mac)
-        f.write(data)
-
-
-class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
-    """Restricted unpickler that only allows safe classes."""
-
-    def find_class(self, module: str, name: str) -> type[Any]:
-        """Override ``find_class`` to restrict allowed classes.
-
-        Args:
-            module: Module name to load from
-            name: Class name to load
-
-        Returns:
-            type[Any]: The requested class type
-
-        Raises:
-            UnpicklingError: If the class is not in the allowed list
-        """
-        # Allow only safe modules and classes
-        ALLOWED_MODULES = {
-            "numpy",
-            "numpy.core.multiarray",
-            "numpy.core.numeric",
-            "pandas",
-            "pandas.core.frame",
-            "pandas.core.series",
-            "sklearn",
-            "torch",
-            "tensorflow",
-            "__builtin__",
-            "builtins",
-            "collections",
-            "collections.abc",
-        }
-
-        # Allow model classes from our own modules
-        if module.startswith("intellicrack."):
-            return cast("type[Any]", super().find_class(module, name))
-
-        # Check if module is in allowed list
-        if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
-            return cast("type[Any]", super().find_class(module, name))
-
-        # Deny everything else
-        raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
-
-
-def secure_pickle_load(file_path: str) -> object:
-    """Securely load object with integrity verification and restricted unpickling.
-
-    Args:
-        file_path: Path to the pickled file to load
-
-    Returns:
-        object: The unpickled object
-
-    Raises:
-        ValueError: If integrity check fails
-
-    """
-    with open(file_path, "rb") as f:
-        # Read MAC
-        stored_mac = f.read(32)  # SHA256 produces 32 bytes
-        data = f.read()
-
-    # Verify integrity
-    expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
-    if not hmac.compare_digest(stored_mac, expected_mac):
-        raise ValueError("Pickle file integrity check failed - possible tampering detected")
-
-    # Load object with restricted unpickler
-    try:
-        # Try using joblib first (safer for ML models)
-        import io
-
-        import joblib
-
-        return joblib.load(io.BytesIO(data))
-    except ImportError:
-        # Fallback to restricted pickle unpickler
-        import io
-
-        return RestrictedUnpickler(io.BytesIO(data)).load()
-
 
 gpu_autoloader: Any = None
 
@@ -166,13 +58,15 @@ try:
 except ImportError:
     pass
 
+torch: types.ModuleType | None
+
 try:
     import torch as _torch_module
 
-    torch: Any = _torch_module
+    torch = _torch_module
     HAS_TORCH = True
 except ImportError:
-    torch_module: Any = None
+    torch = None
     HAS_TORCH = False
 
 

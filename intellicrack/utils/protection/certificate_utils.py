@@ -20,7 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import datetime
 import logging
-from typing import Any, cast
+from typing import Any
 
 from intellicrack.utils.logger import logger
 
@@ -52,15 +52,15 @@ def generate_self_signed_cert(
     """Generate a self-signed certificate for SSL/TLS operations.
 
     Args:
-        common_name: Common name for the certificate
-        organization: Organization name
-        country: Country code
-        state: State or province
-        locality: City or locality
-        valid_days: Number of days the certificate should be valid
+        common_name: Common name for the certificate.
+        organization: Organization name.
+        country: Country code.
+        state: State or province.
+        locality: City or locality.
+        valid_days: Number of days the certificate should be valid.
 
     Returns:
-        Tuple of (certificate_pem, private_key_pem) or None if generation fails
+        Certificate and private key in PEM format, or None if generation fails.
 
     """
     logger = logging.getLogger("IntellicrackLogger.CertUtils")
@@ -166,10 +166,10 @@ def load_certificate_from_file(cert_path: str) -> x509.Certificate | None:
     """Load certificate from PEM file.
 
     Args:
-        cert_path: Path to certificate file
+        cert_path: Path to certificate file.
 
     Returns:
-        Certificate object or None if loading fails
+        Certificate object from the PEM file, or None if loading fails.
 
     """
     logger = logging.getLogger("IntellicrackLogger.CertUtils")
@@ -195,10 +195,10 @@ def verify_certificate_validity(cert: x509.Certificate) -> bool:
     """Verify if certificate is currently valid.
 
     Args:
-        cert: Certificate to verify
+        cert: Certificate to verify.
 
     Returns:
-        True if certificate is valid, False otherwise
+        True if certificate is valid and not expired, False otherwise.
 
     """
     try:
@@ -214,10 +214,10 @@ def get_certificate_info(cert: x509.Certificate) -> dict[str, Any]:
     """Extract information from certificate.
 
     Args:
-        cert: Certificate to analyze
+        cert: Certificate to analyze.
 
     Returns:
-        Dictionary containing certificate information
+        Dictionary containing subject, issuer, validity dates, serial number, and extensions.
 
     """
     try:

@@ -45,18 +45,18 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class EntropyWindow:
-    """Represents entropy analysis for a specific window of data.
+    """Represent entropy analysis for a specific window of data.
 
     Attributes:
-        offset: Byte offset where window begins in the binary file
-        size: Size of the window in bytes
-        entropy: Shannon entropy value for the window (0-8 bits)
-        byte_distribution: Histogram of byte frequencies in window
-        unique_bytes: Count of distinct byte values present
-        printable_ratio: Proportion of ASCII printable characters (0.0-1.0)
-        null_ratio: Proportion of null bytes (0x00) (0.0-1.0)
-        high_entropy_ratio: Proportion of bytes with value > 127 (0.0-1.0)
-        classification: Human-readable classification of window content
+        offset: Byte offset where window begins in the binary file.
+        size: Size of the window in bytes.
+        entropy: Shannon entropy value for the window (0-8 bits).
+        byte_distribution: Histogram of byte frequencies in window.
+        unique_bytes: Count of distinct byte values present.
+        printable_ratio: Proportion of ASCII printable characters (0.0-1.0).
+        null_ratio: Proportion of null bytes (0x00) (0.0-1.0).
+        high_entropy_ratio: Proportion of bytes with value > 127 (0.0-1.0).
+        classification: Human-readable classification of window content.
 
     """
 
@@ -72,9 +72,9 @@ class EntropyWindow:
 
 
 class StreamingEntropyAnalyzer(StreamingAnalyzer):
-    """Streaming analyzer for entropy analysis of large binaries.
+    """Perform streaming entropy analysis on large binaries.
 
-    Performs chunk-based entropy calculation on multi-GB files without
+    Executes chunk-based entropy calculation on multi-GB files without
     loading entire binary into memory. Analyzes Shannon entropy, byte
     distribution, and content classification to identify packed code,
     encryption, and compression protection mechanisms.
@@ -92,8 +92,8 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         """Initialize streaming entropy analyzer.
 
         Args:
-            window_size: Size of sliding window for entropy calculation (default 1MB)
-            stride: Step size between windows (default 512KB)
+            window_size: Size of sliding window for entropy calculation (default 1MB).
+            stride: Step size between windows (default 512KB).
 
         """
         self.window_size: int = window_size
@@ -107,7 +107,7 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         """Initialize analyzer before entropy analysis begins.
 
         Args:
-            file_path: Path to binary being analyzed
+            file_path: Path to binary being analyzed.
 
         """
         self.global_byte_counts = defaultdict(int)
@@ -120,10 +120,10 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         """Analyze entropy in a single chunk.
 
         Args:
-            context: Chunk context with data and metadata
+            context: Chunk context with data and metadata.
 
         Returns:
-            Partial entropy analysis for this chunk
+            Partial entropy analysis for this chunk.
 
         """
         try:
@@ -210,10 +210,10 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         """Merge entropy analysis results from all chunks.
 
         Args:
-            results: List of partial results from each chunk
+            results: List of partial results from each chunk.
 
         Returns:
-            Merged entropy analysis results
+            Merged entropy analysis results.
 
         """
         try:
@@ -291,10 +291,10 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         """Finalize entropy analysis with insights and recommendations.
 
         Args:
-            merged_results: Merged results from all chunks
+            merged_results: Merged results from all chunks.
 
         Returns:
-            Final analysis results with enhancements
+            Final analysis results with enhancements.
 
         """
         try:
@@ -347,11 +347,11 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         identical) to 8 (perfectly random distribution).
 
         Args:
-            byte_counts: Dictionary mapping byte values (0-255) to occurrence counts
-            total_bytes: Total number of bytes in the distribution
+            byte_counts: Dictionary mapping byte values (0-255) to occurrence counts.
+            total_bytes: Total number of bytes in the distribution.
 
         Returns:
-            Shannon entropy value between 0.0 and 8.0 bits
+            Shannon entropy value between 0.0 and 8.0 bits.
 
         """
         if total_bytes == 0:
@@ -373,12 +373,12 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         detection of packing and encryption protection mechanisms.
 
         Args:
-            entropy: Shannon entropy value (0.0-8.0 bits)
-            printable_ratio: Proportion of ASCII printable bytes (0.0-1.0)
-            null_ratio: Proportion of null bytes (0.0-1.0)
+            entropy: Shannon entropy value (0.0-8.0 bits).
+            printable_ratio: Proportion of ASCII printable bytes (0.0-1.0).
+            null_ratio: Proportion of null bytes (0.0-1.0).
 
         Returns:
-            Classification string describing section type
+            Classification string describing section type.
 
         """
         if null_ratio > 0.9:
@@ -402,10 +402,10 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         high, very_high) to provide statistical summary of protection types.
 
         Args:
-            entropies: List of entropy values from analyzed chunks
+            entropies: List of entropy values from analyzed chunks.
 
         Returns:
-            Dictionary mapping threshold names to counts of values in each range
+            Dictionary mapping threshold names to counts of values in each range.
 
         """
         distribution = {"very_low": 0, "low": 0, "medium": 0, "high": 0, "very_high": 0}
@@ -432,10 +432,10 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         may be used as licensing protection.
 
         Args:
-            results: Merged analysis results dictionary
+            results: Merged analysis results dictionary.
 
         Returns:
-            Human-readable summary string with key findings
+            Human-readable summary string with key findings.
 
         """
         global_entropy = results.get("global_entropy", 0.0)
@@ -466,10 +466,10 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         decryption routine examination.
 
         Args:
-            results: Merged analysis results dictionary
+            results: Merged analysis results dictionary.
 
         Returns:
-            List of recommendation strings for further investigation
+            List of recommendation strings for further investigation.
 
         """
         recommendations: list[str] = []
@@ -507,18 +507,15 @@ def analyze_entropy_streaming(
     other protection mechanisms by examining Shannon entropy patterns.
 
     Args:
-        binary_path: Path to binary file to analyze
-        window_size: Size of sliding window for entropy calculation (default 1MB)
-        stride: Step size between windows (default 512KB)
-        progress_callback: Optional callback function for progress updates
-            receiving StreamingProgress object with analysis metrics
+        binary_path: Path to binary file to analyze.
+        window_size: Size of sliding window for entropy calculation (default 1MB).
+        stride: Step size between windows (default 512KB).
+        progress_callback: Optional callback function receiving progress updates
+            with StreamingProgress object containing analysis metrics.
 
     Returns:
         Complete entropy analysis results including global entropy, distribution,
-        classification, high-entropy regions, and recommendations
-
-    Raises:
-        Exception: If file not found or analysis encounters errors
+        classification, high-entropy regions, and recommendations.
 
     """
     try:

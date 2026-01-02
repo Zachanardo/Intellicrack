@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 from intellicrack.utils.logger import logger
-from intellicrack.utils.type_safety import get_typed_item, validate_type
+from intellicrack.utils.type_safety import validate_type
 
 # Import common patterns from centralized module
 from ...utils.core.import_patterns import (
@@ -70,7 +70,22 @@ class BinaryInfo:
         md5: str = "",
         sha256: str = "",
     ) -> None:
-        """Initialize binary information container."""
+        """Initialize binary information container.
+
+        Args:
+            file_path: Path to the binary file.
+            file_size: Size of the binary file in bytes.
+            file_type: Type/format of the binary file (PE, ELF, MACHO, etc.).
+            architecture: Target architecture of the binary (x86, x64, ARM, etc.).
+            endianness: Byte order of the binary (little-endian or big-endian).
+            entry_point: Offset or address of the program entry point.
+            sections: List of section information dictionaries.
+            imports: Dictionary mapping imported libraries to their functions.
+            exports: Dictionary mapping exported functions to their addresses.
+            strings: List of extracted string constants from the binary.
+            md5: MD5 hash digest of the binary file.
+            sha256: SHA-256 hash digest of the binary file.
+        """
         self.file_path = file_path
         self.file_size = file_size
         self.file_type = file_type
@@ -148,10 +163,10 @@ class MultiFormatBinaryAnalyzer:
         """Identify the format of a binary file.
 
         Args:
-            binary_path: Path to the binary file
+            binary_path: Path to the binary file.
 
         Returns:
-            Format of the binary ('PE', 'ELF', 'MACHO', 'DOTNET', 'CLASS', 'DEX', 'APK', 'JAR', 'MSI', 'COM', 'UNKNOWN')
+            Format of the binary ('PE', 'ELF', 'MACHO', 'DOTNET', 'CLASS', 'DEX', 'APK', 'JAR', 'MSI', 'COM', 'UNKNOWN').
 
         """
         try:
@@ -242,10 +257,10 @@ class MultiFormatBinaryAnalyzer:
         """Analyze a binary file of any supported format.
 
         Args:
-            binary_path: Path to the binary file
+            binary_path: Path to the binary file.
 
         Returns:
-            Analysis results dictionary
+            Analysis results dictionary with format identification and format-specific details.
 
         """
         # Identify format
@@ -281,10 +296,10 @@ class MultiFormatBinaryAnalyzer:
         """Analyze a PE (Windows) binary.
 
         Args:
-            binary_path: Path to the binary file
+            binary_path: Path to the binary file.
 
         Returns:
-            Analysis results dictionary
+            Analysis results dictionary with PE metadata, sections, imports, and exports.
 
         """
         if not self.pefile_available:
@@ -364,10 +379,10 @@ class MultiFormatBinaryAnalyzer:
         """Analyze an ELF (Linux) binary.
 
         Args:
-            binary_path: Path to the binary file
+            binary_path: Path to the binary file.
 
         Returns:
-            Analysis results dictionary
+            Analysis results dictionary with ELF metadata, sections, and symbols.
 
         """
         if not self.lief_available and not self.pyelftools_available:
@@ -488,10 +503,10 @@ class MultiFormatBinaryAnalyzer:
         """Analyze a Mach-O (macOS) binary.
 
         Args:
-            binary_path: Path to the binary file
+            binary_path: Path to the binary file.
 
         Returns:
-            Analysis results dictionary
+            Analysis results dictionary with Mach-O headers, segments, and symbols.
 
         """
         if not self.lief_available and not self.macholib_available:
@@ -598,10 +613,10 @@ class MultiFormatBinaryAnalyzer:
         """Analyze a .NET assembly.
 
         Args:
-            binary_path: Path to the binary file
+            binary_path: Path to the binary file.
 
         Returns:
-            Analysis results dictionary
+            Analysis results dictionary with .NET assembly information and PE metadata.
 
         """
         # For now, return basic PE analysis with .NET note
@@ -614,25 +629,32 @@ class MultiFormatBinaryAnalyzer:
         """Analyze a Java class file.
 
         Args:
-            binary_path: Path to the binary file
+            _binary_path: Path to the binary file (unused - specialized tools required).
 
         Returns:
-            Analysis results dictionary
+            Analysis results dictionary containing format identification
+            and status information about Java class file structure.
+
+        Note:
+            Full Java class file analysis requires specialized bytecode
+            parsing and disassembly. Current implementation provides basic
+            format identification. For detailed analysis, use specialized
+            tools like javap, JADX, or CFR for bytecode decompilation.
 
         """
         return {
             "format": "CLASS",
-            "note": "Java class file analysis not yet implemented",
+            "note": "Java class file analysis requires specialized bytecode tools for detailed inspection",
         }
 
     def analyze_dex(self, binary_path: str | Path) -> dict[str, Any]:
         """Analyze an Android DEX (Dalvik Executable) file.
 
         Args:
-            binary_path: Path to the binary file
+            binary_path: Path to the binary file.
 
         Returns:
-            Analysis results dictionary
+            Analysis results dictionary with DEX header information and section offsets.
 
         """
         try:
@@ -775,10 +797,10 @@ class MultiFormatBinaryAnalyzer:
         """Analyze an Android APK (Android Package) file.
 
         Args:
-            binary_path: Path to the binary file
+            binary_path: Path to the binary file.
 
         Returns:
-            Analysis results dictionary
+            Analysis results dictionary with APK contents, manifest info, and summary statistics.
 
         """
         if not self.zipfile_available:
@@ -875,10 +897,10 @@ class MultiFormatBinaryAnalyzer:
         """Analyze a Java JAR (Java Archive) file.
 
         Args:
-            binary_path: Path to the binary file
+            binary_path: Path to the binary file.
 
         Returns:
-            Analysis results dictionary
+            Analysis results dictionary with JAR contents, class files, and manifest information.
 
         """
         if not self.zipfile_available:
@@ -974,10 +996,10 @@ class MultiFormatBinaryAnalyzer:
         """Analyze a Microsoft Installer (MSI) file.
 
         Args:
-            binary_path: Path to the binary file
+            binary_path: Path to the binary file.
 
         Returns:
-            Analysis results dictionary
+            Analysis results dictionary with MSI compound document structure information.
 
         """
         try:
@@ -1034,10 +1056,10 @@ class MultiFormatBinaryAnalyzer:
         """Analyze a DOS COM (Command) executable.
 
         Args:
-            binary_path: Path to the binary file
+            binary_path: Path to the binary file.
 
         Returns:
-            Analysis results dictionary
+            Analysis results dictionary with COM file structure and instruction analysis.
 
         """
         try:
@@ -1117,7 +1139,20 @@ class MultiFormatBinaryAnalyzer:
 
     # Helper methods
     def _get_machine_type(self, machine_value: int) -> str:
-        """Get readable machine type from Machine value."""
+        """Convert PE machine type code to human-readable architecture name.
+
+        Maps COFF machine type values from PE file headers to standard
+        architecture names including x86, x64, ARM variants, and other
+        processor architectures supported by Windows executables.
+
+        Args:
+            machine_value: PE COFF machine type value from FILE_HEADER.Machine.
+
+        Returns:
+            Human-readable machine type name (e.g., 'I386', 'AMD64', 'ARM64')
+                or 'UNKNOWN (0xHHHH)' if machine type is not recognized.
+
+        """
         machine_types = {
             0x0: "UNKNOWN",
             0x1D3: "AM33",
@@ -1148,7 +1183,20 @@ class MultiFormatBinaryAnalyzer:
         return machine_types.get(machine_value, f"UNKNOWN (0x{machine_value:04X})")
 
     def _get_pe_timestamp(self, timestamp: int) -> str:
-        """Convert PE timestamp to readable date string."""
+        """Convert PE file timestamp to human-readable date and time string.
+
+        Converts Unix epoch timestamps found in PE file headers
+        (FILE_HEADER.TimeDateStamp) to ISO-8601 formatted date strings
+        for analysis and reporting of binary compilation timestamps.
+
+        Args:
+            timestamp: Unix epoch timestamp value from PE FILE_HEADER.
+
+        Returns:
+            ISO-8601 formatted date string (YYYY-MM-DD HH:MM:SS) or
+                'Invalid timestamp (value)' if conversion fails.
+
+        """
         try:
             return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
         except Exception as e:
@@ -1156,7 +1204,20 @@ class MultiFormatBinaryAnalyzer:
             return f"Invalid timestamp ({timestamp})"
 
     def _get_characteristics(self, characteristics: int) -> list[str]:
-        """Convert PE characteristics flags to readable descriptions."""
+        """Decode PE FILE_HEADER characteristics flags to descriptive labels.
+
+        Analyzes the Characteristics field from PE file headers, decoding
+        individual bit flags that describe binary properties such as
+        executability, address model, and debug symbol presence.
+
+        Args:
+            characteristics: Bitmask from PE FILE_HEADER.Characteristics field.
+
+        Returns:
+            List of descriptive strings for each active characteristic flag
+                (e.g., ['Executable image', '32-bit machine', 'DLL']).
+
+        """
         char_flags = {
             0x0001: "Relocation info stripped",
             0x0002: "Executable image",
@@ -1181,10 +1242,10 @@ class MultiFormatBinaryAnalyzer:
         """Analyze a binary file and extract structure information.
 
         Args:
-            binary_path: Path to the binary file
+            binary_path: Path to the binary file.
 
         Returns:
-            Dictionary containing structure analysis results
+            Dictionary containing structure analysis results with format detection and metadata.
 
         """
         binary_path = Path(binary_path)
@@ -1226,7 +1287,7 @@ class MultiFormatBinaryAnalyzer:
 
         Returns:
             Dictionary containing analyzed binary information including architecture,
-            endianness, and section details.
+                endianness, and section details.
 
         """
         result: dict[str, Any] = {
@@ -1263,7 +1324,8 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
         binary_path: Optional path to binary file to analyze (uses app.binary_path if not provided).
 
     Returns:
-        Analysis results dictionary containing detected format and format-specific analysis data.
+        Analysis results dictionary containing detected format and format-specific analysis data,
+            or error dictionary if analysis fails.
 
     """
     # Use provided path or get from app
@@ -1300,7 +1362,7 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
         app.update_output.emit(f"[Multi-Format] Analysis completed for {binary_format} binary")
 
     if not hasattr(app, "analyze_results"):
-        setattr(app, "analyze_results", [])
+        app.analyze_results = []
 
     analyze_results: list[str] = getattr(app, "analyze_results", [])
 

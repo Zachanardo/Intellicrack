@@ -14,6 +14,7 @@ import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
+from collections.abc import Generator
 from typing import Any
 
 import pytest
@@ -135,7 +136,7 @@ class TestModelPerformanceMonitor:
     """Test ModelPerformanceMonitor functionality."""
 
     @pytest.fixture
-    def temp_save_dir(self) -> Path:
+    def temp_save_dir(self) -> Generator[Path, None, None]:
         """Create temporary save directory."""
         temp_dir = tempfile.mkdtemp(prefix="perf_monitor_test_")
         save_path = Path(temp_dir)
@@ -501,7 +502,7 @@ class TestPerformanceMonitorEdgeCases:
     """Test edge cases and error handling."""
 
     @pytest.fixture
-    def monitor(self) -> ModelPerformanceMonitor:
+    def monitor(self) -> Generator[ModelPerformanceMonitor, None, None]:
         """Create monitor for edge case testing."""
         temp_dir = tempfile.mkdtemp(prefix="perf_edge_")
         monitor = ModelPerformanceMonitor(save_dir=temp_dir)

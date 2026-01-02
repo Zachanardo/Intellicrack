@@ -551,7 +551,22 @@ class LicenseAnalyzer:
         return validations
 
     def _analyze_serial_validation_context(self, address: int, context_bytes: bytes) -> dict[str, Any] | None:
-        """Analyze code context around a potential serial validation pattern."""
+        """Analyze code context around a potential serial validation pattern.
+
+        Examines the byte sequence around a detected serial validation pattern to
+        determine confidence level based on presence of loop instructions,
+        comparison operations, and string handling instructions.
+
+        Args:
+            address: Memory address of the pattern match.
+            context_bytes: Bytes surrounding the pattern for context analysis.
+
+        Returns:
+            Dictionary with context analysis including has_loop, has_comparison,
+            has_string_op, and confidence fields, or None if insufficient data
+            (less than 10 bytes provided).
+
+        """
         if len(context_bytes) < 10:
             return None
 
@@ -682,7 +697,23 @@ class LicenseAnalyzer:
         return trial_checks
 
     def _evaluate_trial_check_confidence(self, context_bytes: bytes) -> str:
-        """Evaluate confidence level for a trial check pattern match."""
+        """Evaluate confidence level for a trial check pattern match.
+
+        Analyzes surrounding code context to determine how likely a detected
+        pattern represents actual trial period checking. Assigns confidence
+        based on presence of time-related strings, conditional jumps, and
+        comparison operations.
+
+        Args:
+            context_bytes: Bytes surrounding the pattern for confidence
+                evaluation. Must be at least 20 bytes for reliable analysis.
+
+        Returns:
+            Confidence level string: 'high' (3+ indicators), 'medium'
+            (2+ indicators), 'low' (1+ indicator), or 'none' (no indicators
+            or insufficient data).
+
+        """
         if len(context_bytes) < 20:
             return "none"
 
@@ -1361,10 +1392,6 @@ class LicenseAnalyzer:
             List of dictionaries containing reference information.
 
         """
-        import struct
-
-        import capstone
-
         references = []
         regions = self._get_memory_regions()
         regions_in_range = [r for r in regions if r["base_address"] <= end_addr and r["base_address"] + r["size"] >= start_addr]
@@ -1405,8 +1432,6 @@ class LicenseAnalyzer:
             List of dictionaries with reference details.
 
         """
-        import capstone
-
         references = []
         for insn in md.disasm(memory, region_start):
             if ref := self._check_direct_branch(insn, target_address):
@@ -1528,8 +1553,6 @@ class LicenseAnalyzer:
             List of dictionaries with branch and reference details.
 
         """
-        import capstone
-
         references = []
         try:
             if code_memory := self.read_memory(address, min(scan_range, 0x1000)):
@@ -2767,7 +2790,7 @@ class LicenseAnalyzer:
                     )
 
                 # Move to next region
-                current_address = ctypes.cast(mbi.BaseAddress, ctypes.c_ulong).value + mbi.RegionSize  # type: ignore[type-var]  # type: ignore[type-var]
+                current_address = cast("int", ctypes.cast(mbi.BaseAddress, ctypes.c_ulong).value) + mbi.RegionSize
             else:
                 # Move forward on error
                 current_address += 0x1000
@@ -2890,8 +2913,8 @@ class LicenseAnalyzer:
             # 4. Check for gaps (potential hidden regions)
             if i > 0:
                 prev_entry = vad_entries[i - 1]
-                prev_end = ctypes.cast(prev_entry["base_address"], ctypes.c_ulong).value + prev_entry["region_size"]  # type: ignore[type-var]
-                current_start = ctypes.cast(entry["base_address"], ctypes.c_ulong).value  # type: ignore[type-var]
+                prev_end = cast("int", ctypes.cast(prev_entry["base_address"], ctypes.c_ulong).value) + prev_entry["region_size"]
+                current_start = cast("int", ctypes.cast(entry["base_address"], ctypes.c_ulong).value)
 
                 gap_size = current_start - prev_end
                 if gap_size > 0x10000:  # Significant gap (> 64KB)
@@ -2945,7 +2968,8 @@ class LicenseAnalyzer:
 
                     # Try to get module name
                     try:
-                        if module_name := self._get_module_name_at_address(ctypes.cast(entry["base_address"], ctypes.c_ulong).value):  # type: ignore[type-var]
+                        base_addr = cast("int", ctypes.cast(entry["base_address"], ctypes.c_ulong).value)
+                        if module_name := self._get_module_name_at_address(base_addr):
                             region_info["module_name"] = module_name
                             region_info["confidence"] = 1.0
                     except (KeyError, TypeError) as e:
@@ -3008,8 +3032,8 @@ class LicenseAnalyzer:
             current = vad_entries[i]
             next_region = vad_entries[i + 1]
 
-            current_end = ctypes.cast(current["base_address"], ctypes.c_ulong).value + current["region_size"]  # type: ignore[type-var]
-            next_start = ctypes.cast(next_region["base_address"], ctypes.c_ulong).value  # type: ignore[type-var]
+            current_end = cast("int", ctypes.cast(current["base_address"], ctypes.c_ulong).value) + current["region_size"]
+            next_start = cast("int", ctypes.cast(next_region["base_address"], ctypes.c_ulong).value)
 
             gap_size = next_start - current_end
 
@@ -3063,7 +3087,7 @@ class LicenseAnalyzer:
 
         # 1. Check for unlisted executable regions
         all_regions = self._get_all_memory_regions_raw()
-        vad_addresses = {ctypes.cast(e["base_address"], ctypes.c_ulong).value for e in vad_entries}  # type: ignore[type-var]
+        vad_addresses = {cast("int", ctypes.cast(e["base_address"], ctypes.c_ulong).value) for e in vad_entries}
 
         for region in all_regions:
             if region["base_address"] not in vad_addresses and region["is_executable"]:
@@ -3084,7 +3108,7 @@ class LicenseAnalyzer:
             # Check if region starts with common shellcode patterns
             try:
                 if first_bytes := self.read_memory(
-                    ctypes.cast(region["base_address"], ctypes.c_ulong).value,  # type: ignore[type-var]
+                    cast("int", ctypes.cast(region["base_address"], ctypes.c_ulong).value),
                     min(16, region["region_size"]),
                 ):
                     # Common shellcode/injection patterns
@@ -3161,14 +3185,14 @@ class LicenseAnalyzer:
                 if mbi.State == 0x1000:  # MEM_COMMIT
                     regions.append(
                         {
-                            "base_address": ctypes.cast(mbi.BaseAddress, ctypes.c_ulong).value,  # type: ignore[type-var]
+                            "base_address": cast("int", ctypes.cast(mbi.BaseAddress, ctypes.c_ulong).value),
                             "size": mbi.RegionSize,
                             "protection": mbi.Protect,
                             "is_executable": bool(mbi.Protect & 0xF0),
                         },
                     )
 
-                current_address = ctypes.cast(mbi.BaseAddress, ctypes.c_ulong).value + mbi.RegionSize  # type: ignore[type-var]
+                current_address = cast("int", ctypes.cast(mbi.BaseAddress, ctypes.c_ulong).value) + mbi.RegionSize
             else:
                 break
 
@@ -3368,7 +3392,7 @@ class LicenseAnalyzer:
             # Look for committed, writable regions
             if entry["state"] == "COMMIT" and entry["is_writable"]:
                 # Sample the region to check for unused space
-                region_addr = ctypes.cast(entry["base_address"], ctypes.c_ulong).value  # type: ignore[type-var]
+                region_addr = cast("int", ctypes.cast(entry["base_address"], ctypes.c_ulong).value)
                 region_size = min(entry["region_size"], 0x10000)  # Limit scan size
 
                 try:
@@ -3444,7 +3468,7 @@ class LicenseAnalyzer:
                 if region["type"] != "IMAGE":
                     continue
 
-                region_addr = ctypes.cast(region["base_address"], ctypes.c_ulong).value  # type: ignore[type-var]
+                region_addr = cast("int", ctypes.cast(region["base_address"], ctypes.c_ulong).value)
                 region_size = min(region["region_size"], 0x100000)
 
                 memory = self.read_memory(region_addr, region_size)
@@ -4128,7 +4152,7 @@ class LicenseAnalyzer:
         return self.patch_bytes(address, patch)
 
     def manipulate_registry(self, key_path: str, value_name: str, new_value: str | int | bytes) -> bool:
-        """Manipulate registry entries for license keys.
+        r"""Manipulate registry entries for license keys.
 
         Writes license key information or other values to Windows registry,
         supporting string, DWORD, and binary value types.
@@ -4350,7 +4374,19 @@ class LicenseAnalyzer:
         return None
 
     def enumerate_processes(self) -> list[dict[str, Any]]:
-        """Enumerate all running processes."""
+        """Enumerate all running processes.
+
+        Iterates through all active processes on the system and collects
+        process identification and resource information for analysis.
+
+        Returns:
+            List of dictionaries containing process information with keys:
+            - pid: Process identifier (integer)
+            - name: Process name from executable (string)
+            - exe: Full path to executable file (string, may be empty)
+            - memory: Memory information dictionary (empty dict if unavailable)
+
+        """
         processes = []
 
         for proc in psutil.process_iter(["pid", "name", "exe", "memory_info"]):
@@ -4369,7 +4405,24 @@ class LicenseAnalyzer:
         return processes
 
     def enumerate_modules(self, pid: int | None = None) -> list[dict[str, Any]]:
-        """Enumerate loaded modules in process."""
+        """Enumerate loaded modules in process.
+
+        Retrieves all loaded DLLs and memory-mapped files for a target process,
+        including their base addresses and sizes. Useful for locating protection
+        libraries and analyzing module dependencies.
+
+        Args:
+            pid: Process ID to enumerate modules for. If None, uses the
+                currently attached process (self.pid). Returns empty list if
+                no process is available.
+
+        Returns:
+            List of dictionaries containing module information with keys:
+            - base: Base address of the module in memory (integer)
+            - size: Size of the mapped module in bytes (integer)
+            - path: Full file system path to the module (string)
+
+        """
         target_pid = pid or self.pid
         if not target_pid:
             return []
@@ -4388,10 +4441,10 @@ class LicenseAnalyzer:
         """Compile hex string pattern to bytes.
 
         Args:
-            pattern_hex: Hex string pattern (e.g., "48 8B 05" or "488B05")
+            pattern_hex: Hex string pattern (e.g., "48 8B 05" or "488B05").
 
         Returns:
-            Compiled bytes pattern
+            Bytes pattern compiled from hex string.
 
         """
         # Remove spaces and convert to bytes
@@ -4406,11 +4459,11 @@ class LicenseAnalyzer:
         """Allocate memory in the target process.
 
         Args:
-            size: Size of memory to allocate
-            protection: Memory protection flags (default PAGE_EXECUTE_READWRITE)
+            size: Size of memory to allocate in bytes.
+            protection: Memory protection flags (default PAGE_EXECUTE_READWRITE).
 
         Returns:
-            Address of allocated memory or 0 on failure
+            Address of allocated memory or 0 on failure.
 
         """
         if not self.process_handle:
@@ -4432,12 +4485,12 @@ class LicenseAnalyzer:
         """Change memory protection flags.
 
         Args:
-            address: Memory address
-            size: Size of region
-            protection: New protection flags
+            address: Memory address to change protection for.
+            size: Size of region to change.
+            protection: New memory protection flags.
 
         Returns:
-            True if successful
+            True if successful, False otherwise.
 
         """
         if not self.process_handle:
@@ -4463,10 +4516,10 @@ class LicenseAnalyzer:
         """Query memory information at specific address.
 
         Args:
-            address: Memory address to query
+            address: Memory address to query.
 
         Returns:
-            Dictionary with memory region information
+            Dictionary with memory region information.
 
         """
         if not self.process_handle:
@@ -4507,7 +4560,7 @@ class LicenseAnalyzer:
         """Enumerate all memory regions in the process.
 
         Returns:
-            List of memory region information dictionaries
+            List of memory region information dictionaries.
 
         """
         if not self.process_handle:

@@ -35,6 +35,14 @@ class DashboardManager:
     This class manages the dashboard UI, providing an intuitive interface with
     project statistics, recent activities, and quick access to common functions.
     Supports real-time updates and comprehensive monitoring of application state.
+
+    Attributes:
+        app: Reference to the main application instance.
+        logger: Logger instance for dashboard operations.
+        stats: Dictionary containing current dashboard statistics.
+        recent_activities: List of recent activities with timestamps.
+        max_recent_activities: Maximum number of recent activities to retain.
+
     """
 
     def __init__(self, app: object) -> None:
@@ -42,13 +50,6 @@ class DashboardManager:
 
         Args:
             app: Main application instance for accessing application state.
-
-        Attributes:
-            app: Reference to the main application instance.
-            logger: Logger instance for dashboard operations.
-            stats: Dictionary containing current dashboard statistics.
-            recent_activities: List of recent activities with timestamps.
-            max_recent_activities: Maximum number of recent activities to retain.
 
         """
         self.app: Any = app
@@ -102,10 +103,27 @@ class DashboardManager:
 
         Tracks information about applied patches and modifications to binaries.
         """
+        applied_count = 0
+        pending_count = 0
+        last_patch_time: str | None = None
+
+        if hasattr(self.app, "patches") and isinstance(self.app.patches, list):
+            applied_count = len(self.app.patches)
+
+        if hasattr(self.app, "potential_patches") and isinstance(self.app.potential_patches, list):
+            pending_count = len(self.app.potential_patches)
+
+        patch_activities = [
+            a for a in self.recent_activities
+            if a.get("type", "").lower() in {"patch", "patching", "binary_patch"}
+        ]
+        if patch_activities:
+            last_patch_time = patch_activities[0].get("timestamp")
+
         self.stats["patches"] = {
-            "applied_count": 0,
-            "pending_count": 0,
-            "last_patch_time": None,
+            "applied_count": applied_count,
+            "pending_count": pending_count,
+            "last_patch_time": last_patch_time,
         }
 
     def _update_analysis_stats(self) -> None:
@@ -114,10 +132,30 @@ class DashboardManager:
         Tracks metrics related to analysis operations including number of files
         analyzed and analysis timestamps.
         """
+        analysis_types = ("analysis", "analyze", "scan", "detection", "protection")
+        analysis_activities = [
+            a for a in self.recent_activities
+            if any(t in a.get("type", "").lower() for t in analysis_types)
+        ]
+        total_analyses = len(analysis_activities)
+
+        recent_analysis_time: str | None = None
+        if analysis_activities:
+            recent_analysis_time = analysis_activities[0].get("timestamp")
+
+        protection_activities = [
+            a for a in self.recent_activities
+            if "protection" in a.get("type", "").lower() or "detect" in a.get("description", "").lower()
+        ]
+        protection_detections = len(protection_activities)
+
+        if hasattr(self.app, "analysis_count"):
+            total_analyses = max(total_analyses, int(self.app.analysis_count))
+
         self.stats["analysis"] = {
-            "total_analyses": 0,
-            "recent_analysis_time": None,
-            "protection_detections": 0,
+            "total_analyses": total_analyses,
+            "recent_analysis_time": recent_analysis_time,
+            "protection_detections": protection_detections,
         }
 
     def _update_license_stats(self) -> None:
@@ -126,10 +164,38 @@ class DashboardManager:
         Tracks information about license validations, serials generated, and
         licensing protection analysis.
         """
+        license_types = ("license", "validation", "serial", "keygen", "activation")
+        license_activities = [
+            a for a in self.recent_activities
+            if any(t in a.get("type", "").lower() for t in license_types)
+        ]
+
+        validations_performed = sum(
+            1 for a in license_activities
+            if "validation" in a.get("type", "").lower() or "validate" in a.get("description", "").lower()
+        )
+
+        serials_generated = sum(
+            1 for a in license_activities
+            if any(s in a.get("type", "").lower() for s in ("serial", "keygen"))
+            or "generated" in a.get("description", "").lower()
+        )
+
+        last_validation_time: str | None = None
+        validation_activities = [
+            a for a in license_activities
+            if "validation" in a.get("type", "").lower()
+        ]
+        if validation_activities:
+            last_validation_time = validation_activities[0].get("timestamp")
+
+        if hasattr(self.app, "serial_count"):
+            serials_generated = max(serials_generated, int(self.app.serial_count))
+
         self.stats["licensing"] = {
-            "validations_performed": 0,
-            "serials_generated": 0,
-            "last_validation_time": None,
+            "validations_performed": validations_performed,
+            "serials_generated": serials_generated,
+            "last_validation_time": last_validation_time,
         }
 
     def _update_advanced_analysis_stats(self) -> None:
@@ -138,10 +204,35 @@ class DashboardManager:
         Tracks metrics for advanced analysis features including dynamic analysis,
         vulnerability detection, and exploitation attempts.
         """
+        dynamic_types = ("dynamic", "runtime", "frida", "debug", "trace")
+        dynamic_activities = [
+            a for a in self.recent_activities
+            if any(t in a.get("type", "").lower() for t in dynamic_types)
+        ]
+        dynamic_analyses = len(dynamic_activities)
+
+        vuln_types = ("vulnerability", "vuln", "cve", "weakness", "flaw")
+        vuln_activities = [
+            a for a in self.recent_activities
+            if any(t in a.get("type", "").lower() for t in vuln_types)
+            or any(t in a.get("description", "").lower() for t in vuln_types)
+        ]
+        vulnerabilities_found = len(vuln_activities)
+
+        exploit_types = ("exploit", "payload", "rop", "shellcode", "bypass")
+        exploit_activities = [
+            a for a in self.recent_activities
+            if any(t in a.get("type", "").lower() for t in exploit_types)
+        ]
+        exploits_generated = len(exploit_activities)
+
+        if hasattr(self.app, "exploit_count"):
+            exploits_generated = max(exploits_generated, int(self.app.exploit_count))
+
         self.stats["advanced_analysis"] = {
-            "dynamic_analyses": 0,
-            "vulnerabilities_found": 0,
-            "exploits_generated": 0,
+            "dynamic_analyses": dynamic_analyses,
+            "vulnerabilities_found": vulnerabilities_found,
+            "exploits_generated": exploits_generated,
         }
 
     def get_stats(self) -> dict[str, Any]:

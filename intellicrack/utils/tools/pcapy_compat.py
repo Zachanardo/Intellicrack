@@ -72,6 +72,9 @@ class ScapyPacketReader:
         Args:
             filter_str (str): BPF filter expression
 
+        Returns:
+            None
+
         """
         self.filter = filter_str
 
@@ -81,6 +84,9 @@ class ScapyPacketReader:
         Args:
             count (int): Number of packets to capture (0 = infinite)
             callback (callable): Function to call for each packet
+
+        Raises:
+            RuntimeError: If Scapy is not available or packet capture fails.
 
         """
         if not SCAPY_AVAILABLE or scapy_module is None:
@@ -109,7 +115,15 @@ class ScapyPacketReader:
             raise RuntimeError(f"Packet capture failed: {e}")
 
     def __iter__(self) -> Iterator[tuple[float, bytes]]:
-        """Iterator interface for packet capture."""
+        """Iterator interface for packet capture.
+
+        Yields:
+            tuple[float, bytes]: Tuple of (timestamp, raw_packet_bytes) for each captured packet.
+
+        Raises:
+            RuntimeError: If Scapy is not available or packet capture fails.
+
+        """
         if not SCAPY_AVAILABLE or scapy_module is None:
             raise RuntimeError("Scapy not available for packet capture")
 
@@ -140,7 +154,7 @@ def get_packet_capture_interface() -> ModuleType | None:
     """Get a packet capture interface using Scapy.
 
     Returns:
-        module: Scapy module or None if unavailable
+        ModuleType | None: Scapy module if available, None otherwise.
 
     """
     return scapy_module if SCAPY_AVAILABLE else None
@@ -153,7 +167,8 @@ def create_pcap_reader(interface: str = "any") -> ScapyPacketReader | None:
         interface (str): Network interface to capture from
 
     Returns:
-        ScapyPacketReader: Packet capture reader or None if unavailable
+        ScapyPacketReader | None: Packet capture reader if Scapy is available,
+            None otherwise.
 
     """
     if not SCAPY_AVAILABLE:

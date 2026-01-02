@@ -5,10 +5,9 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from PyQt6.QtCore import QEvent, QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtGui import QCloseEvent, QFont
 from PyQt6.QtWidgets import (
-    QAbstractButton,
     QButtonGroup,
     QCheckBox,
     QDialog,
@@ -48,7 +47,13 @@ class TrialResetWorker(QThread):
     update = pyqtSignal(int)  # For progress bar
 
     def __init__(self, engine: TrialResetEngine, operation: str, params: dict[str, Any]) -> None:
-        """Initialize the TrialResetWorker with an engine, operation, and parameters."""
+        """Initialize the TrialResetWorker with an engine, operation, and parameters.
+
+        Args:
+            engine: Trial reset engine instance for performing reset operations.
+            operation: Type of operation to perform (scan, reset, monitor, backup).
+            params: Dictionary containing operation-specific parameters.
+        """
         super().__init__()
         self.engine = engine
         self.operation = operation
@@ -131,7 +136,11 @@ class TrialResetDialog(QDialog):
     """Comprehensive trial reset engine interface."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the TrialResetDialog with an optional parent."""
+        """Initialize the TrialResetDialog with an optional parent.
+
+        Args:
+            parent: Optional parent widget for the dialog.
+        """
         super().__init__(parent)
         self.engine: TrialResetEngine = TrialResetEngine()
         self.current_trial_info: TrialInfo | None = None
@@ -181,7 +190,11 @@ class TrialResetDialog(QDialog):
         self.setLayout(layout)
 
     def create_scan_tab(self) -> QWidget:
-        """Create trial scan tab."""
+        """Create trial scan tab.
+
+        Returns:
+            Configured widget for trial scanning interface.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -248,7 +261,11 @@ class TrialResetDialog(QDialog):
         return widget
 
     def create_reset_tab(self) -> QWidget:
-        """Create trial reset tab."""
+        """Create trial reset tab.
+
+        Returns:
+            Configured widget for trial reset interface.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -274,7 +291,7 @@ class TrialResetDialog(QDialog):
         for name, value, description in strategies:
             radio = QRadioButton(f"{name}")
             radio.setToolTip(description)
-            setattr(radio, "strategy", value)
+            radio.strategy = value
             if value == "clean_uninstall":
                 radio.setChecked(True)
             self.strategy_group.addButton(radio)
@@ -343,7 +360,11 @@ class TrialResetDialog(QDialog):
         return widget
 
     def create_monitor_tab(self) -> QWidget:
-        """Create trial monitoring tab."""
+        """Create trial monitoring tab.
+
+        Returns:
+            Configured widget for trial monitoring interface.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -415,7 +436,11 @@ class TrialResetDialog(QDialog):
         return widget
 
     def create_advanced_tab(self) -> QWidget:
-        """Create advanced options tab."""
+        """Create advanced options tab.
+
+        Returns:
+            Configured widget for advanced trial reset options.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -505,7 +530,11 @@ class TrialResetDialog(QDialog):
         return widget
 
     def create_history_tab(self) -> QWidget:
-        """Create scan history tab."""
+        """Create scan history tab.
+
+        Returns:
+            Configured widget for viewing scan history.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -557,12 +586,21 @@ class TrialResetDialog(QDialog):
         self.worker.start()
 
     def _quick_scan_helper(self, checked: bool, software: str) -> None:
-        """Helper method for quick scan button clicked signal."""
+        """Helper method for quick scan button clicked signal.
+
+        Args:
+            checked: Button checked state.
+            software: Software name to scan for.
+        """
         logger.debug("Quick scan button clicked, checked state: %s for software: %s", checked, software)
         self.quick_scan(software)
 
     def quick_scan(self, software: str) -> None:
-        """Quick scan for known software."""
+        """Quick scan for known software.
+
+        Args:
+            software: Software name to scan for.
+        """
         self.product_name_input.setText(software)
         self.scan_for_trial()
 
@@ -680,7 +718,11 @@ class TrialResetDialog(QDialog):
         self.log("Stopped monitoring")
 
     def update_monitor_display(self, result: dict[str, Any]) -> None:
-        """Update monitor display with trial status."""
+        """Update monitor display with trial status.
+
+        Args:
+            result: Dictionary containing operation results from worker.
+        """
         if result.get("operation") != "monitor":
             return
 
@@ -960,7 +1002,11 @@ class TrialResetDialog(QDialog):
                 self.handle_worker_error(f"Export failed: {e}")
 
     def display_trial_info(self, trial_info: TrialInfo) -> None:
-        """Display trial information in tree widget."""
+        """Display trial information in tree widget.
+
+        Args:
+            trial_info: Trial information object to display.
+        """
         self.trial_info_tree.clear()
 
         # Basic info
@@ -1001,7 +1047,11 @@ class TrialResetDialog(QDialog):
         self.trial_info_tree.expandAll()
 
     def handle_worker_result(self, result: dict[str, Any]) -> None:
-        """Handle worker thread results."""
+        """Handle worker thread results.
+
+        Args:
+            result: Dictionary containing worker operation results.
+        """
         operation = result.get("operation")
 
         if operation == "scan":
@@ -1067,13 +1117,21 @@ class TrialResetDialog(QDialog):
             self.progress_bar.setVisible(False)
 
     def handle_worker_error(self, error: str) -> None:
-        """Handle worker thread errors."""
+        """Handle worker thread errors.
+
+        Args:
+            error: Error message from worker thread.
+        """
         self.log(f"Error: {error}")
         self.progress_bar.setVisible(False)
         QMessageBox.critical(self, "Error", error)
 
     def log(self, message: str) -> None:
-        """Log message to console."""
+        """Log message to console.
+
+        Args:
+            message: Message text to log.
+        """
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.console.append(f"[{timestamp}] {message}")
 
@@ -1081,7 +1139,11 @@ class TrialResetDialog(QDialog):
             scrollbar.setValue(scrollbar.maximum())
 
     def closeEvent(self, event: QCloseEvent | None) -> None:
-        """Handle dialog close."""
+        """Handle dialog close.
+
+        Args:
+            event: Close event from Qt framework.
+        """
         if not event:
             return
         if self.monitor_worker:

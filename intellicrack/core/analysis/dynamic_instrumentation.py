@@ -31,7 +31,14 @@ class SignalProtocol(Protocol):
     """Protocol for Qt signal."""
 
     def emit(self, arg: str) -> None:
-        """Emit signal with string argument."""
+        """Emit signal with string argument.
+
+        Args:
+            arg: String argument to emit in the signal.
+
+        Returns:
+            None
+        """
         ...
 
 
@@ -57,12 +64,12 @@ def on_message(
     Args:
         main_app: Reference to the main application window that receives output
             updates via signals.
-        message: Frida message object containing either payload data or error information.
+        message: Frida message object containing either payload data or error
+            information.
         data: Optional binary data payload from Frida script (typically unused).
 
     Returns:
         None
-
     """
     msg_type: str = message.get("type", "")
     if msg_type == "send":
@@ -84,18 +91,18 @@ def run_instrumentation_thread(main_app: MainAppProtocol, binary_path: str, scri
         main_app: Reference to the main application window for emitting status
             updates via signals.
         binary_path: Absolute file path to the binary executable to instrument.
-        script_source: Frida JavaScript instrumentation code to inject and execute
-            in the target process.
+        script_source: Frida JavaScript instrumentation code to inject and
+            execute in the target process.
 
     Returns:
         None
 
     Raises:
-        frida.ProcessNotFoundError: If the spawned process terminates unexpectedly
-            before analysis completion.
-        frida.TransportError: If Frida communication with the target process fails.
-        Exception: For any other unexpected errors during instrumentation.
-
+        ProcessNotFoundError: If the spawned process terminates prematurely
+            before instrumentation can be completed.
+        TransportError: If communication with the Frida server fails due to
+            network or transport layer issues.
+        Exception: For any unexpected errors during instrumentation execution.
     """
     try:
         main_app.update_output.emit("[Dynamic Instrumentation] Starting instrumentation thread...")
@@ -148,8 +155,8 @@ def run_dynamic_instrumentation(main_app: MainAppProtocol) -> None:
         None
 
     Raises:
-        None: Errors are caught internally and communicated via main_app signals.
-
+        None: This function handles all exceptions internally and communicates
+            errors through the main_app signal interface.
     """
     if not main_app.current_binary:
         main_app.update_output.emit("[Dynamic Instrumentation] Error: No binary loaded.")

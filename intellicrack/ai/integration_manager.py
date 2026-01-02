@@ -65,7 +65,7 @@ try:
 except ImportError:
     logger.warning("QEMUManager not available")
 
-    class QEMUManager:  # type: ignore[no-redef]
+    class QEMUManager:
         """Fallback QEMUManager providing static validation and safe dry-run only."""
 
         def __init__(self, *_args: object, **_kwargs: object) -> None:

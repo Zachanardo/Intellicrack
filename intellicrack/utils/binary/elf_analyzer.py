@@ -101,7 +101,9 @@ class ELFAnalyzer:
         return self.data[:4] == self.ELFMAG
 
     def _parse_header(self) -> None:
-        """Parse ELF header information."""
+        """Parse ELF header information.
+
+        """
         if not self.data:
             return
 

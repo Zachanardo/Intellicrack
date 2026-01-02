@@ -13,16 +13,18 @@ import logging
 import re
 import uuid
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
 
+BinaryAnalyzer: type[Any] | None
+
 try:
     from ..core.analysis.binary_analyzer import BinaryAnalyzer
 except ImportError:
-    BinaryAnalyzer = None  # type: ignore[misc,assignment]
+    BinaryAnalyzer = None
 
 try:
     from ..utils.logger import get_logger
@@ -204,7 +206,7 @@ class AIScriptGenerator:
             enhanced_script = self._apply_protection_enhancements(base_script, protection)
 
             # Add anti-detection mechanisms based on difficulty
-            if difficulty in ["Hard", "Very Hard"]:
+            if difficulty in {"Hard", "Very Hard"}:
                 enhanced_script = self._add_advanced_evasion(enhanced_script)
 
             # Optimize performance based on detected patterns
@@ -218,11 +220,8 @@ class AIScriptGenerator:
 
             return enhanced_script
 
-        except Exception as e:
-            import traceback
-
-            logger.exception("Error generating enhanced script: %s", e)
-            logger.exception(traceback.format_exc())
+        except Exception:
+            logger.exception("Error generating enhanced script")
             # In development, re-raise to aid debugging
             import os
 
@@ -1860,8 +1859,8 @@ DateSpoofer.spoofAllDateSources();
                 patches=[],
             )
 
-        except Exception as e:
-            logger.exception("Failed to generate Frida script: %s", e)
+        except Exception:
+            logger.exception("Failed to generate Frida script")
             return None
 
     def generate_ghidra_script(
@@ -1929,8 +1928,8 @@ DateSpoofer.spoofAllDateSources();
                 patches=patches,
             )
 
-        except Exception as e:
-            logger.exception("Failed to generate Ghidra script: %s", e)
+        except Exception:
+            logger.exception("Failed to generate Ghidra script")
             return None
 
     def save_script(
@@ -2083,8 +2082,8 @@ DateSpoofer.spoofAllDateSources();
                 patches=patches,
             )
 
-        except Exception as e:
-            logger.exception("Failed to refine script: %s", e)
+        except Exception:
+            logger.exception("Failed to refine script")
             return None
 
     def _analyze_binary_for_scripting(self, binary_path: str) -> dict[str, Any]:

@@ -8,7 +8,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import sys
-from unittest.mock import MagicMock, patch
+from typing import Any
 
 import pytest
 
@@ -16,9 +16,130 @@ from intellicrack.handlers.pyqt6_handler import QApplication
 from intellicrack.utils.ui.ui_setup_functions import setup_dataset_tab, setup_memory_monitor
 
 
+class FakeParentWidget:
+    """Production test double for PyQt6 parent widget.
+
+    Provides real implementation of parent widget behavior for testing
+    UI setup functions without requiring Qt GUI system initialization.
+    """
+
+    def __init__(self, name: str = "FakeParent") -> None:
+        """Initialize fake parent widget.
+
+        Args:
+            name: Name identifier for the parent widget
+        """
+        self._name: str = name
+        self._children: list[Any] = []
+        self._layout: Any | None = None
+        self._visible: bool = True
+        self._enabled: bool = True
+
+    @property
+    def __class__(self) -> type["FakeParentWidget"]:
+        """Return class for isinstance checks."""
+        return FakeParentWidget
+
+    def setLayout(self, layout: Any) -> None:
+        """Set the widget's layout.
+
+        Args:
+            layout: Layout object to set
+        """
+        self._layout = layout
+
+    def layout(self) -> Any | None:
+        """Get current layout.
+
+        Returns:
+            Current layout object or None
+        """
+        return self._layout
+
+    def addChild(self, child: Any) -> None:
+        """Add child widget.
+
+        Args:
+            child: Child widget to add
+        """
+        self._children.append(child)
+
+    def children(self) -> list[Any]:
+        """Get list of child widgets.
+
+        Returns:
+            List of child widgets
+        """
+        return self._children.copy()
+
+    def setVisible(self, visible: bool) -> None:
+        """Set widget visibility.
+
+        Args:
+            visible: True to show, False to hide
+        """
+        self._visible = visible
+
+    def isVisible(self) -> bool:
+        """Check if widget is visible.
+
+        Returns:
+            True if visible, False otherwise
+        """
+        return self._visible
+
+    def setEnabled(self, enabled: bool) -> None:
+        """Set widget enabled state.
+
+        Args:
+            enabled: True to enable, False to disable
+        """
+        self._enabled = enabled
+
+    def isEnabled(self) -> bool:
+        """Check if widget is enabled.
+
+        Returns:
+            True if enabled, False otherwise
+        """
+        return self._enabled
+
+
+class FakeHasLayoutParent:
+    """Test double that implements hasattr(parent, 'setLayout') check."""
+
+    def __init__(self) -> None:
+        """Initialize parent with setLayout capability."""
+        self._layout: Any | None = None
+
+    def setLayout(self, layout: Any) -> None:
+        """Set layout on parent.
+
+        Args:
+            layout: Layout to set
+        """
+        self._layout = layout
+
+
+class FakePyQtModule:
+    """Test double for HAS_PYQT module constant manipulation."""
+
+    def __init__(self, has_pyqt: bool = True) -> None:
+        """Initialize with PyQt availability state.
+
+        Args:
+            has_pyqt: Whether PyQt6 should appear available
+        """
+        self.has_pyqt: bool = has_pyqt
+
+
 @pytest.fixture(scope="module")
 def qapp() -> QApplication:
-    """Create QApplication instance for widget tests."""
+    """Create QApplication instance for widget tests.
+
+    Returns:
+        QApplication instance for test session
+    """
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)
@@ -31,7 +152,7 @@ class TestSetupDatasetTab:
 
     def test_creates_dataset_tab_widget(self, qapp: QApplication) -> None:
         """Test function creates dataset management tab widget."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         tab = setup_dataset_tab(parent)
 
@@ -39,7 +160,7 @@ class TestSetupDatasetTab:
 
     def test_dataset_tab_has_combo_box(self, qapp: QApplication) -> None:
         """Test dataset tab includes dataset selection combo box."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         tab = setup_dataset_tab(parent)
 
@@ -50,7 +171,7 @@ class TestSetupDatasetTab:
 
     def test_dataset_tab_has_browse_button(self, qapp: QApplication) -> None:
         """Test dataset tab includes browse button."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         tab = setup_dataset_tab(parent)
 
@@ -61,7 +182,7 @@ class TestSetupDatasetTab:
 
     def test_dataset_tab_has_preview_table(self, qapp: QApplication) -> None:
         """Test dataset tab includes preview table."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         tab = setup_dataset_tab(parent)
 
@@ -72,7 +193,7 @@ class TestSetupDatasetTab:
 
     def test_dataset_tab_has_operation_buttons(self, qapp: QApplication) -> None:
         """Test dataset tab includes operation buttons."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         tab = setup_dataset_tab(parent)
 
@@ -89,14 +210,14 @@ class TestSetupDatasetTab:
             if btn := tab.findChild(type(tab), btn_name):
                 assert btn.objectName() == btn_name
 
-    def test_dataset_tab_returns_none_without_pyqt(self, qapp: QApplication) -> None:
+    def test_dataset_tab_returns_none_without_pyqt(self, qapp: QApplication, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test function returns None when PyQt6 is unavailable."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
-        with patch("intellicrack.utils.ui.ui_setup_functions.HAS_PYQT", False):
-            tab = setup_dataset_tab(parent)
+        monkeypatch.setattr("intellicrack.utils.ui.ui_setup_functions.HAS_PYQT", False)
+        tab = setup_dataset_tab(parent)
 
-            assert tab is None
+        assert tab is None
 
 
 class TestSetupMemoryMonitor:
@@ -104,7 +225,7 @@ class TestSetupMemoryMonitor:
 
     def test_creates_memory_monitor_widget(self, qapp: QApplication) -> None:
         """Test function creates memory monitoring widget."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         widget = setup_memory_monitor(parent)
 
@@ -112,7 +233,7 @@ class TestSetupMemoryMonitor:
 
     def test_memory_monitor_has_current_value_label(self, qapp: QApplication) -> None:
         """Test memory monitor includes current memory value label."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         widget = setup_memory_monitor(parent)
 
@@ -123,7 +244,7 @@ class TestSetupMemoryMonitor:
 
     def test_memory_monitor_has_peak_value_label(self, qapp: QApplication) -> None:
         """Test memory monitor includes peak memory value label."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         widget = setup_memory_monitor(parent)
 
@@ -134,7 +255,7 @@ class TestSetupMemoryMonitor:
 
     def test_memory_monitor_has_available_value_label(self, qapp: QApplication) -> None:
         """Test memory monitor includes available memory value label."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         widget = setup_memory_monitor(parent)
 
@@ -147,7 +268,7 @@ class TestSetupMemoryMonitor:
 
     def test_memory_monitor_has_usage_bar(self, qapp: QApplication) -> None:
         """Test memory monitor includes memory usage progress bar."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         widget = setup_memory_monitor(parent)
 
@@ -158,7 +279,7 @@ class TestSetupMemoryMonitor:
 
     def test_memory_monitor_has_control_buttons(self, qapp: QApplication) -> None:
         """Test memory monitor includes control buttons."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         widget = setup_memory_monitor(parent)
 
@@ -176,7 +297,7 @@ class TestSetupMemoryMonitor:
 
     def test_memory_monitor_has_process_table(self, qapp: QApplication) -> None:
         """Test memory monitor includes process memory table."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         widget = setup_memory_monitor(parent)
 
@@ -185,14 +306,14 @@ class TestSetupMemoryMonitor:
         if process_table := widget.findChild(type(widget), "process_memory_table"):
             assert process_table.objectName() == "process_memory_table"
 
-    def test_memory_monitor_returns_none_without_pyqt(self, qapp: QApplication) -> None:
+    def test_memory_monitor_returns_none_without_pyqt(self, qapp: QApplication, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test function returns None when PyQt6 is unavailable."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
-        with patch("intellicrack.utils.ui.ui_setup_functions.HAS_PYQT", False):
-            widget = setup_memory_monitor(parent)
+        monkeypatch.setattr("intellicrack.utils.ui.ui_setup_functions.HAS_PYQT", False)
+        widget = setup_memory_monitor(parent)
 
-            assert widget is None
+        assert widget is None
 
 
 @pytest.mark.integration
@@ -201,7 +322,7 @@ class TestUISetupIntegration:
 
     def test_dataset_tab_complete_initialization(self, qapp: QApplication) -> None:
         """Test complete dataset tab initialization workflow."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         tab = setup_dataset_tab(parent)
 
@@ -213,7 +334,7 @@ class TestUISetupIntegration:
 
     def test_memory_monitor_complete_initialization(self, qapp: QApplication) -> None:
         """Test complete memory monitor initialization workflow."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         widget = setup_memory_monitor(parent)
 
@@ -225,8 +346,7 @@ class TestUISetupIntegration:
 
     def test_widget_hierarchy_with_parent(self, qapp: QApplication) -> None:
         """Test widgets are created with proper parent hierarchy."""
-        parent = MagicMock()
-        parent.__class__.__name__ = "MainWindow"
+        parent = FakeParentWidget("MainWindow")
 
         dataset_tab = setup_dataset_tab(parent)
         memory_monitor = setup_memory_monitor(parent)
@@ -236,7 +356,7 @@ class TestUISetupIntegration:
 
     def test_multiple_tab_creation(self, qapp: QApplication) -> None:
         """Test creating multiple tabs doesn't cause conflicts."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         tab1 = setup_dataset_tab(parent)
         tab2 = setup_dataset_tab(parent)
@@ -247,7 +367,7 @@ class TestUISetupIntegration:
 
     def test_multiple_monitor_creation(self, qapp: QApplication) -> None:
         """Test creating multiple monitors doesn't cause conflicts."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
         monitor1 = setup_memory_monitor(parent)
         monitor2 = setup_memory_monitor(parent)
@@ -256,16 +376,16 @@ class TestUISetupIntegration:
         assert monitor2 is not None
         assert monitor1 is not monitor2
 
-    def test_headless_operation_fallback(self) -> None:
+    def test_headless_operation_fallback(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test headless operation when PyQt6 is unavailable."""
-        parent = MagicMock()
+        parent = FakeHasLayoutParent()
 
-        with patch("intellicrack.utils.ui.ui_setup_functions.HAS_PYQT", False):
-            dataset_tab = setup_dataset_tab(parent)
-            memory_monitor = setup_memory_monitor(parent)
+        monkeypatch.setattr("intellicrack.utils.ui.ui_setup_functions.HAS_PYQT", False)
+        dataset_tab = setup_dataset_tab(parent)
+        memory_monitor = setup_memory_monitor(parent)
 
-            assert dataset_tab is None
-            assert memory_monitor is None
+        assert dataset_tab is None
+        assert memory_monitor is None
 
     def test_setup_functions_with_none_parent(self, qapp: QApplication) -> None:
         """Test setup functions handle None parent gracefully."""

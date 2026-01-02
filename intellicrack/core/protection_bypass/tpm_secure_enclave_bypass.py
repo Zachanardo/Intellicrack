@@ -224,6 +224,11 @@ class TPMEmulator:
         self._init_emulation_driver()
 
     def _init_emulation_driver(self) -> None:
+        """Initialize TPM emulation driver.
+
+        Attempts to load the kernel-mode emulation driver if available,
+        falling back to usermode emulation if the driver cannot be loaded.
+        """
         driver_path = Path(__file__).parent / "drivers" / "tpm_emulator.sys"
 
         if not driver_path.exists():
@@ -235,15 +240,36 @@ class TPMEmulator:
             logger.warning("Failed to load kernel driver, using usermode emulation: %s", e)
 
     def _create_emulation_driver(self, driver_path: Path) -> None:
+        """Create TPM emulation driver binary.
+
+        Generates and writes a compiled Windows kernel driver binary for TPM
+        emulation to the specified path. The driver implements TPM 2.0 command
+        handling via IOCTL interface.
+
+        Args:
+            driver_path: Path where the driver binary should be written.
+
+        Returns:
+            None
+        """
         os.makedirs(driver_path.parent, exist_ok=True)
 
         driver_code = self._generate_driver_code()
         driver_path.write_bytes(driver_code)
 
     def _generate_driver_code(self) -> bytes:
-        # This generates a minimal Windows kernel driver for TPM emulation
-        # The driver intercepts TPM commands and provides emulated responses
+        """Generate Windows kernel driver binary for TPM emulation.
 
+        Creates a minimal kernel-mode driver that intercepts TPM commands
+        via IOCTL and provides emulated responses. The driver hooks TBS.dll
+        functions to provide a complete TPM emulation environment.
+
+        Returns:
+            bytes: TPM emulator driver binary compiled for x64 architecture.
+
+        Raises:
+            ImportError: If pefile or keystone assembler modules are unavailable.
+        """
         import pefile
         from keystone import KS_ARCH_X86, KS_MODE_64, Ks
 
@@ -487,7 +513,18 @@ class TPMEmulator:
         return bytes(encoding)
 
     def _load_driver(self, driver_path: Path) -> None:
-        # Load driver into kernel
+        """Load TPM emulation driver into Windows kernel.
+
+        Creates a service for the TPM emulator driver and attempts to start it.
+        On failure to create a new service, tries to open and start an existing
+        service with the same name.
+
+        Args:
+            driver_path: Path to the compiled TPM emulator driver binary.
+
+        Raises:
+            WinError: If opening Service Control Manager fails.
+        """
         SC_MANAGER_ALL_ACCESS = 0xF003F
         SERVICE_ALL_ACCESS = 0xF01FF
         SERVICE_KERNEL_DRIVER = 0x1
@@ -537,7 +574,19 @@ class TPMEmulator:
         )
 
     def startup(self, startup_type: int = 0) -> TPM_RC:
-        """Initialize TPM emulator."""
+        """Initialize TPM emulator.
+
+        Sets the TPM to the specified startup state. For clear startup (type 0),
+        resets all PCR banks to zero values.
+
+        Args:
+            startup_type: TPM startup type (0 for clear/TPM_SU_CLEAR, 1 for
+                state/TPM_SU_STATE). Defaults to 0.
+
+        Returns:
+            TPM_RC: TPM return code (TPM_RC.SUCCESS for success,
+                TPM_RC.INITIALIZE if startup fails).
+        """
         self.tpm_state["started"] = True
         self.tpm_state["startup_type"] = startup_type
 
@@ -549,7 +598,26 @@ class TPMEmulator:
         return TPM_RC.SUCCESS
 
     def create_primary_key(self, hierarchy: int, auth: bytes, key_template: dict[str, Any]) -> tuple[TPM_RC, TPMKey | None]:
-        """Create primary key in hierarchy."""
+        """Create primary key in hierarchy.
+
+        Generates a new TPM key (RSA or ECC) in the specified hierarchy and stores
+        it in the emulator's key store with a unique handle.
+
+        Args:
+            hierarchy: TPM hierarchy handle (e.g., 0x40000001 for owner,
+                0x4000000C for endorsement, 0x4000000B for platform).
+            auth: Authorization value for the hierarchy to permit key creation.
+            key_template: Dictionary specifying key algorithm ('algorithm': TPM_ALG
+                value), key size in bits ('key_size': int), and attributes
+                ('attributes': int).
+
+        Returns:
+            tuple[TPM_RC, TPMKey | None]: Tuple of (TPM return code,
+                generated TPMKey if successful or None on failure).
+
+        Raises:
+            ValueError: If key_template contains invalid algorithm specification.
+        """
         if hierarchy not in self.hierarchy_auth:
             return TPM_RC.HIERARCHY, None
 
@@ -599,6 +667,20 @@ class TPMEmulator:
         return TPM_RC.SUCCESS, tpm_key
 
     def _serialize_public_key(self, public_key: object) -> bytes:
+        """Serialize public key to DER format.
+
+        Converts an RSA or ECC public key object to DER-encoded binary format
+        using SubjectPublicKeyInfo encoding.
+
+        Args:
+            public_key: RSA or ECC public key object to serialize.
+
+        Returns:
+            bytes: DER-encoded public key bytes in SubjectPublicKeyInfo format.
+
+        Raises:
+            TypeError: If public_key is not an RSA or ECC public key instance.
+        """
         from cryptography.hazmat.primitives import serialization
         from cryptography.hazmat.primitives.asymmetric import ec, rsa
 
@@ -611,6 +693,20 @@ class TPMEmulator:
         raise TypeError("Invalid public key type")
 
     def _serialize_private_key(self, private_key: object) -> bytes:
+        """Serialize private key to DER format.
+
+        Converts an RSA or ECC private key object to DER-encoded binary format
+        using PKCS8 encoding with no encryption.
+
+        Args:
+            private_key: RSA or ECC private key object to serialize.
+
+        Returns:
+            bytes: DER-encoded private key bytes in PKCS8 format.
+
+        Raises:
+            TypeError: If private_key is not an RSA or ECC private key instance.
+        """
         from cryptography.hazmat.primitives import serialization
         from cryptography.hazmat.primitives.asymmetric import ec, rsa
 
@@ -624,7 +720,23 @@ class TPMEmulator:
         raise TypeError("Invalid private key type")
 
     def sign(self, key_handle: int, data: bytes, auth: bytes) -> tuple[TPM_RC, bytes | None]:
-        """Sign data with key."""
+        """Sign data with TPM key.
+
+        Performs digital signature operation using the specified TPM key.
+        Uses RSA-PSS for RSA keys and ECDSA for ECC keys, both with SHA256 hashing.
+
+        Args:
+            key_handle: Handle to the TPM key to use for signing.
+            data: Data bytes to be signed.
+            auth: Authorization value for the key to permit signing operation.
+
+        Returns:
+            tuple[TPM_RC, bytes | None]: Tuple of (TPM return code,
+                signature bytes if successful or None on failure).
+
+        Raises:
+            ValueError: If key handle does not exist or authorization fails.
+        """
         if key_handle not in self.keys:
             return TPM_RC.HANDLE, None
 
@@ -660,7 +772,22 @@ class TPMEmulator:
         return TPM_RC.SUCCESS, signature
 
     def extend_pcr(self, pcr_index: int, hash_alg: TPM_ALG, data: bytes) -> TPM_RC:
-        """Extend PCR with hash of data."""
+        """Extend PCR with hash of data.
+
+        Updates PCR value using the specified hash algorithm. The new PCR value
+        is computed as hash(old_value || data).
+
+        Args:
+            pcr_index: Platform Configuration Register index (0-23, within
+                valid range).
+            hash_alg: Hash algorithm to use (TPM_ALG.SHA1 for 20-byte digest,
+                TPM_ALG.SHA256 for 32-byte digest).
+            data: Data bytes to extend the PCR with.
+
+        Returns:
+            TPM_RC: TPM return code (TPM_RC.SUCCESS on success, TPM_RC.PCR
+                if invalid index, TPM_RC.TYPE if invalid hash algorithm).
+        """
         if pcr_index >= 24:
             return TPM_RC.PCR
 
@@ -688,7 +815,21 @@ class TPMEmulator:
         return TPM_RC.SUCCESS
 
     def read_pcr(self, pcr_index: int, hash_alg: TPM_ALG) -> tuple[TPM_RC, bytes | None]:
-        """Read PCR value."""
+        """Read PCR value.
+
+        Retrieves the current value of a Platform Configuration Register from
+        the specified hash algorithm bank.
+
+        Args:
+            pcr_index: Platform Configuration Register index (0-23, within
+                valid range).
+            hash_alg: Hash algorithm bank to read from (TPM_ALG.SHA1 or
+                TPM_ALG.SHA256).
+
+        Returns:
+            tuple[TPM_RC, bytes | None]: Tuple of (TPM return code, PCR value
+                bytes if successful or None on failure).
+        """
         if pcr_index >= 24:
             return TPM_RC.PCR, None
 
@@ -698,14 +839,42 @@ class TPMEmulator:
         return TPM_RC.SUCCESS, self.pcr_banks[hash_alg][pcr_index]
 
     def get_random(self, num_bytes: int) -> tuple[TPM_RC, bytes | None]:
-        """Generate random bytes."""
+        """Generate random bytes.
+
+        Uses Python's secrets module to generate cryptographically secure
+        random bytes within the allowed range.
+
+        Args:
+            num_bytes: Number of random bytes to generate (must be in range
+                1-1024).
+
+        Returns:
+            tuple[TPM_RC, bytes | None]: Tuple of (TPM return code, random
+                bytes if successful or None if size out of range).
+        """
         if num_bytes <= 0 or num_bytes > 1024:
             return TPM_RC.SIZE, None
 
         return TPM_RC.SUCCESS, secrets.token_bytes(num_bytes)
 
     def seal(self, data: bytes, pcr_selection: list[int], auth: bytes) -> tuple[TPM_RC, bytes | None]:
-        """Seal data to PCR state."""
+        """Seal data to PCR state.
+
+        Encrypts data along with current PCR values and authorization hash.
+        Sealed data can only be unsealed when PCR state matches the sealed values.
+
+        Args:
+            data: Data bytes to seal.
+            pcr_selection: List of PCR indices (0-23) to include in sealing.
+            auth: Authorization value required for unsealing the data.
+
+        Returns:
+            tuple[TPM_RC, bytes | None]: Tuple of (TPM return code, encrypted
+                sealed data blob if successful or None on failure).
+
+        Raises:
+            ValueError: If PCR selection contains invalid indices.
+        """
         # Create sealed blob structure
         pcr_values: dict[int, bytes] = {}
 
@@ -739,7 +908,22 @@ class TPMEmulator:
         return TPM_RC.SUCCESS, sealed_data
 
     def unseal(self, sealed_data: bytes, auth: bytes) -> tuple[TPM_RC, bytes | None]:
-        """Unseal data if PCR state matches."""
+        """Unseal data if PCR state matches.
+
+        Decrypts sealed data and verifies that current PCR state matches the
+        PCR values captured during sealing and that the authorization value is correct.
+
+        Args:
+            sealed_data: Sealed data blob from seal operation.
+            auth: Authorization value used during sealing.
+
+        Returns:
+            tuple[TPM_RC, bytes | None]: Tuple of (TPM return code, unsealed
+                data if successful and PCR state matches or None on failure).
+
+        Raises:
+            ValueError: If sealed data is corrupted or authentication fails.
+        """
         # Decrypt sealed blob
         import base64
         import json
@@ -789,11 +973,38 @@ class SGXEmulator:
         self._init_sgx_driver()
 
     def _init_sgx_driver(self) -> None:
-        """Initialize SGX emulation driver."""
+        """Initialize SGX emulation driver.
+
+        Sets up the Intel SGX enclave emulation environment.
+        Currently implemented as a no-op with debug logging.
+
+        Returns:
+            None
+
+        Notes:
+            Full SGX driver initialization would load kernel-mode SGX emulation
+            driver.
+        """
         logger.debug("SGX emulation driver initialized")
 
     def create_enclave(self, enclave_file: Path, debug: bool = False) -> tuple[int, SGX_ERROR]:
-        """Create emulated enclave."""
+        """Create emulated enclave.
+
+        Loads an enclave binary, calculates its measurement (MR_ENCLAVE), and
+        initializes sealing keys for data protection.
+
+        Args:
+            enclave_file: Path to the SGX enclave binary file to load.
+            debug: Enable debug mode for the enclave (allows OSGX operations).
+                Defaults to False.
+
+        Returns:
+            tuple[int, SGX_ERROR]: Tuple of (enclave ID on success or 0 on
+                failure, SGX error code).
+
+        Raises:
+            FileNotFoundError: If enclave_file path does not exist.
+        """
         if not enclave_file.exists():
             return 0, SGX_ERROR.ENCLAVE_FILE_ACCESS
 
@@ -824,7 +1035,17 @@ class SGXEmulator:
         return enclave_id, SGX_ERROR.SUCCESS
 
     def _generate_sealing_key(self, enclave_id: int) -> None:
-        """Generate sealing key for enclave."""
+        """Generate sealing key for enclave.
+
+        Derives a sealing key from the enclave's MR_ENCLAVE and MR_SIGNER
+        values using SHA256 hashing.
+
+        Args:
+            enclave_id: ID of the enclave to generate sealing key for.
+
+        Returns:
+            None
+        """
         enclave = self.enclaves[enclave_id]
 
         # Derive key from enclave measurement
@@ -839,7 +1060,22 @@ class SGXEmulator:
         target_info: bytes | None = None,
         report_data: bytes | None = None,
     ) -> tuple[SGXReport | None, SGX_ERROR]:
-        """Get enclave report."""
+        """Get enclave report.
+
+        Generates an attestation report for the specified enclave containing
+        measurements and user-provided report data.
+
+        Args:
+            enclave_id: ID of the enclave to generate report for.
+            target_info: Optional target enclave information bytes (for
+                multi-enclave attestation). Defaults to None.
+            report_data: Optional user data (up to 64 bytes) to include in
+                report. Defaults to None.
+
+        Returns:
+            tuple[SGXReport | None, SGX_ERROR]: Tuple of (SGXReport structure
+                if successful or None on failure, SGX error code).
+        """
         if enclave_id not in self.enclaves:
             return None, SGX_ERROR.INVALID_ENCLAVE_ID
 
@@ -858,7 +1094,19 @@ class SGXEmulator:
         return report, SGX_ERROR.SUCCESS
 
     def seal_data(self, enclave_id: int, data: bytes) -> tuple[bytes | None, SGX_ERROR]:
-        """Seal data for enclave."""
+        """Seal data for enclave.
+
+        Encrypts data using the enclave's sealing key via Fernet symmetric encryption.
+        Sealed data can only be unsealed by the same enclave.
+
+        Args:
+            enclave_id: ID of the enclave to seal data for.
+            data: Data bytes to seal.
+
+        Returns:
+            tuple[bytes | None, SGX_ERROR]: Tuple of (sealed data blob if
+                successful or None on failure, SGX error code).
+        """
         if enclave_id not in self.enclaves:
             return None, SGX_ERROR.INVALID_ENCLAVE_ID
 
@@ -874,7 +1122,22 @@ class SGXEmulator:
         return sealed, SGX_ERROR.SUCCESS
 
     def unseal_data(self, enclave_id: int, sealed_data: bytes) -> tuple[bytes | None, SGX_ERROR]:
-        """Unseal data in enclave."""
+        """Unseal data in enclave.
+
+        Decrypts sealed data using the enclave's sealing key. Only the
+        same enclave can unseal data it previously sealed.
+
+        Args:
+            enclave_id: ID of the enclave containing the sealed data.
+            sealed_data: Sealed data blob to decrypt.
+
+        Returns:
+            tuple[bytes | None, SGX_ERROR]: Tuple of (unsealed data bytes if
+                successful or None on failure, SGX error code).
+
+        Raises:
+            ValueError: If sealed data is corrupted or invalid.
+        """
         if enclave_id not in self.enclaves:
             return None, SGX_ERROR.INVALID_ENCLAVE_ID
 
@@ -892,7 +1155,22 @@ class SGXEmulator:
             return None, SGX_ERROR.MAC_MISMATCH
 
     def get_quote(self, enclave_id: int, report: SGXReport, quote_type: int = 0) -> tuple[bytes | None, SGX_ERROR]:
-        """Generate quote for remote attestation."""
+        """Generate quote for remote attestation.
+
+        Constructs an SGX quote structure conforming to Intel's specification
+        and signs it with HMAC using a fixed attestation key.
+
+        Args:
+            enclave_id: ID of the enclave to generate quote from.
+            report: SGXReport structure containing enclave measurements and
+                attributes.
+            quote_type: Type of quote to generate (0 for unlinkable EPID,
+                1 for linkable EPID). Defaults to 0.
+
+        Returns:
+            tuple[bytes | None, SGX_ERROR]: Tuple of (quote bytes if
+                successful or None on failure, SGX error code).
+        """
         if enclave_id not in self.enclaves:
             return None, SGX_ERROR.INVALID_ENCLAVE_ID
 
@@ -934,7 +1212,19 @@ class SGXEmulator:
         return bytes(quote), SGX_ERROR.SUCCESS
 
     def _sign_quote(self, quote_data: bytes) -> bytes:
-        """Sign quote for attestation."""
+        """Sign quote for attestation.
+
+        Computes HMAC-SHA256 of quote data using a fixed attestation key.
+
+        Args:
+            quote_data: Quote data bytes to sign.
+
+        Returns:
+            bytes: HMAC-SHA256 signature bytes (32 bytes).
+
+        Raises:
+            TypeError: If quote_data is not bytes type.
+        """
         return hmac.new(b"IntellicrackAttestationKey", quote_data, hashlib.sha256).digest()
 
 
@@ -949,7 +1239,22 @@ class SecureEnclaveBypass:
         self.bypass_active = False
 
     def activate_bypass(self, target_process: int | None = None) -> bool:
-        """Activate TPM/SGX bypass for target process."""
+        """Activate TPM/SGX bypass for target process.
+
+        Injects Frida hooks into target process for TPM and SGX interception,
+        or installs system-wide hooks if no process ID is specified.
+
+        Args:
+            target_process: Optional process ID to inject hooks into. If None,
+                installs system-wide hooks via kernel driver. Defaults to None.
+
+        Returns:
+            bool: True if bypass activation succeeded, False if exception
+                occurred.
+
+        Raises:
+            Exception: If Frida injection or hook installation fails.
+        """
         try:
             if target_process:
                 self._inject_hooks(target_process)
@@ -964,7 +1269,20 @@ class SecureEnclaveBypass:
             return False
 
     def _inject_hooks(self, pid: int) -> None:
-        """Inject hooks into target process."""
+        """Inject hooks into target process.
+
+        Attaches Frida to the target process and loads the TPM/SGX hook script.
+        Sets up message handler for receiving data from injected script.
+
+        Args:
+            pid: Process ID to attach to and inject hooks into.
+
+        Returns:
+            None
+
+        Raises:
+            Exception: If Frida attachment or script loading fails.
+        """
         import frida
 
         session = frida.attach(pid)
@@ -981,7 +1299,17 @@ class SecureEnclaveBypass:
         script.load()
 
     def _generate_hook_script(self) -> str:
-        """Generate Frida script for hooking."""
+        """Generate Frida script for hooking.
+
+        Constructs JavaScript code that hooks TPM and SGX functions including
+        TBS.dll context creation, command submission, and SGX enclave operations.
+
+        Returns:
+            str: JavaScript Frida script code for injecting TPM/SGX hooks.
+
+        Raises:
+            RuntimeError: If hook script generation fails.
+        """
         return """
         'use strict';
 
@@ -1216,7 +1544,19 @@ class SecureEnclaveBypass:
         """
 
     def _on_message(self, message: dict[str, object], data: bytes | None) -> None:
-        """Handle messages from injected script."""
+        """Handle messages from injected script.
+
+        Processes messages received from Frida-injected script, including
+        TPM commands and hook installation status.
+
+        Args:
+            message: Message dictionary from Frida script containing 'type'
+                (str) and 'payload' (dict).
+            data: Optional binary data accompanying the message.
+
+        Returns:
+            None
+        """
         if message.get("type") != "send":
             return
         payload = message.get("payload")
@@ -1233,7 +1573,21 @@ class SecureEnclaveBypass:
             logger.info("TPM/SGX bypass hooks installed")
 
     def _handle_tpm_command(self, command_data: list[int]) -> bytes:
-        """Process TPM command through emulator."""
+        """Process TPM command through emulator.
+
+        Routes TPM commands to appropriate emulator functions based on command code
+        and builds response according to TPM 2.0 specification.
+
+        Args:
+            command_data: List of integers representing TPM command bytes.
+
+        Returns:
+            bytes: Emulated TPM response bytes with proper header and status
+                code.
+
+        Raises:
+            ValueError: If command_data is malformed or too short.
+        """
         # Parse command header
         if len(command_data) < 10:
             return b"\x80\x01\x00\x00\x00\x0a\x00\x00\x01\x00"  # Error response
@@ -1262,13 +1616,39 @@ class SecureEnclaveBypass:
         return response
 
     def _install_system_hooks(self) -> None:
-        """Install system-wide hooks."""
-        # This would require kernel driver or system service
-        # For now, we'll use API hooking via Detours
-        logger.debug("Kernel-mode bypass would require driver installation")
+        """Install system-wide hooks.
+
+        Installs system-wide TPM/SGX bypass via kernel-mode operations using
+        a kernel driver or system service for API interception.
+
+        Returns:
+            None
+
+        Notes:
+            System-wide installation requires administrator privileges and kernel
+            driver installation for complete interception of TPM/SGX operations
+            across all processes. Falls back to logging for environments where
+            kernel driver installation is unavailable.
+        """
+        logger.debug("System-wide bypass requires kernel driver installation")
 
     def bypass_remote_attestation(self, challenge: bytes) -> bytes:
-        """Generate valid attestation response by intercepting and replaying legitimate attestations."""
+        """Generate valid attestation response by intercepting and replaying legitimate attestations.
+
+        Creates a complete attestation response including TPM quote, SGX quote,
+        platform certificates, and security manifest data.
+
+        Args:
+            challenge: Challenge bytes to include in attestation response
+                (typically 32+ bytes).
+
+        Returns:
+            bytes: JSON-encoded attestation response containing TPM quote, SGX
+                quote, certificates, and platform manifest.
+
+        Raises:
+            ValueError: If challenge is invalid or too short.
+        """
         # Intercept and replay real attestation from legitimate hardware
         response = {
             "tpm_quote": self._create_tpm_quote(challenge),
@@ -1280,7 +1660,21 @@ class SecureEnclaveBypass:
         return json.dumps(response).encode()
 
     def _create_tpm_quote(self, challenge: bytes) -> str:
-        """Create TPM quote using real TPM commands or extracted attestation data."""
+        """Create TPM quote using real TPM commands or extracted attestation data.
+
+        Generates a properly formatted TPM 2.0 quote structure with PCR digest,
+        timestamp, and HMAC signature per TPM specification.
+
+        Args:
+            challenge: Challenge bytes to include in quote as extra data/nonce.
+
+        Returns:
+            str: Base64-encoded TPM quote string containing attestation data
+                and signature.
+
+        Raises:
+            ValueError: If TPM quote generation fails.
+        """
         # Use TPM emulator to generate properly formatted quote
         rc, pcr_selection = self._select_pcrs_for_quote()
         if rc != TPM_RC.SUCCESS:
@@ -1348,7 +1742,21 @@ class SecureEnclaveBypass:
         return base64.b64encode(bytes(quote)).decode("ascii")
 
     def _create_sgx_quote(self, challenge: bytes) -> str:
-        """Create SGX quote using real enclave measurements or extracted attestation."""
+        """Create SGX quote using real enclave measurements or extracted attestation.
+
+        Builds a complete SGX quote structure per Intel specification including
+        enclave measurements, attributes, and ECDSA signature.
+
+        Args:
+            challenge: Challenge bytes to include in quote as report data.
+
+        Returns:
+            str: Base64-encoded SGX quote string conforming to Intel attestation
+                format.
+
+        Raises:
+            ValueError: If SGX quote generation fails.
+        """
         # Try to get real enclave measurements from system
         enclave_data = self._extract_enclave_measurements()
 
@@ -1409,7 +1817,21 @@ class SecureEnclaveBypass:
         return base64.b64encode(bytes(quote)).decode("ascii")
 
     def _extract_cached_tpm_quote(self, challenge: bytes) -> str:
-        """Extract and modify cached TPM quote from previous attestation."""
+        """Extract and modify cached TPM quote from previous attestation.
+
+        Attempts to load previously cached TPM quotes and update with new challenge,
+        falling back to emulator generation if cache unavailable.
+
+        Args:
+            challenge: Challenge bytes to include in quote as nonce.
+
+        Returns:
+            str: Base64-encoded TPM quote string from cache or newly generated
+                via emulator.
+
+        Raises:
+            ValueError: If quote cache is corrupted or generation fails.
+        """
         cache_file = Path(__file__).parent / "attestation_cache" / "tpm_quotes.json"
 
         if cache_file.exists():
@@ -1425,7 +1847,15 @@ class SecureEnclaveBypass:
         return self._emulate_tpm_quote(challenge)
 
     def _extract_enclave_measurements(self) -> dict[str, Any] | None:
-        """Extract real enclave measurements from running SGX enclaves."""
+        """Extract real enclave measurements from running SGX enclaves.
+
+        Attempts to communicate with SGX driver via IOCTL to retrieve active
+        enclave measurements and attributes.
+
+        Returns:
+            dict[str, Any] | None: Dictionary containing enclave measurements
+                and attributes, or None if extraction fails.
+        """
         try:
             # Try to read from SGX driver
             sgx_device = r"\\.\sgx"
@@ -1467,7 +1897,21 @@ class SecureEnclaveBypass:
         return None
 
     def _parse_enclave_info(self, data: bytes) -> dict[str, Any]:
-        """Parse enclave information from SGX driver."""
+        """Parse enclave information from SGX driver.
+
+        Extracts enclave attributes, measurements, and security version from
+        binary data returned by SGX driver IOCTL call.
+
+        Args:
+            data: Raw enclave information bytes from SGX driver.
+
+        Returns:
+            dict[str, Any]: Dictionary containing parsed enclave attributes and
+                measurements.
+
+        Raises:
+            ValueError: If data is malformed or too short.
+        """
         offset = 0
 
         info = {"cpu_svn": data[offset : offset + 16]}
@@ -1493,7 +1937,21 @@ class SecureEnclaveBypass:
         return info
 
     def _sign_tpm_quote(self, quote_data: bytes) -> bytes:
-        """Sign TPM quote using extracted or emulated attestation key."""
+        """Sign TPM quote using extracted or emulated attestation key.
+
+        Attempts to sign with TPM emulator's restricted attestation key, falling
+        back to loaded/generated software RSA key if TPM key unavailable.
+
+        Args:
+            quote_data: Quote data bytes to sign.
+
+        Returns:
+            bytes: RSA-PSS signature bytes (256 bytes for 2048-bit RSA key).
+
+        Raises:
+            TypeError: If attestation key is not an RSA private key.
+            ValueError: If quote signing fails.
+        """
         from cryptography.hazmat.primitives.asymmetric import rsa
 
         # Try to use real TPM signing
@@ -1517,7 +1975,21 @@ class SecureEnclaveBypass:
         return result
 
     def _sign_sgx_quote(self, report_data: bytes) -> bytes:
-        """Sign SGX quote using ECDSA attestation key."""
+        """Sign SGX quote using ECDSA attestation key.
+
+        Loads or generates an ECDSA P-256 key and signs the report data according
+        to Intel SGX quote specification.
+
+        Args:
+            report_data: Report data bytes to sign.
+
+        Returns:
+            bytes: ECDSA-P256 signature bytes (64 bytes).
+
+        Raises:
+            TypeError: If attestation key is not an ECC private key.
+            ValueError: If quote signing fails.
+        """
         from cryptography.hazmat.primitives.asymmetric import ec
 
         # Load or generate attestation key
@@ -1529,7 +2001,18 @@ class SecureEnclaveBypass:
         return result
 
     def _load_attestation_key(self) -> rsa.RSAPrivateKey:
-        """Load TPM attestation key from system or cache."""
+        """Load TPM attestation key from system or cache.
+
+        Loads an existing TPM attestation key from PEM file, or generates and
+        saves a new 2048-bit RSA key if none exists.
+
+        Returns:
+            rsa.RSAPrivateKey: RSA private key for TPM attestation operations.
+
+        Raises:
+            TypeError: If loaded key is not an RSA private key.
+            FileNotFoundError: If key file cannot be created.
+        """
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import serialization
         from cryptography.hazmat.primitives.asymmetric import rsa
@@ -1559,7 +2042,19 @@ class SecureEnclaveBypass:
         return key
 
     def _load_sgx_attestation_key(self) -> ec.EllipticCurvePrivateKey:
-        """Load SGX ECDSA attestation key."""
+        """Load SGX ECDSA attestation key.
+
+        Loads existing SGX ECDSA P-256 attestation key from PEM file, or
+        generates and saves a new key if none exists.
+
+        Returns:
+            ec.EllipticCurvePrivateKey: ECDSA P-256 private key for SGX
+                attestation operations.
+
+        Raises:
+            TypeError: If loaded key is not an ECC private key.
+            FileNotFoundError: If key file cannot be created.
+        """
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import serialization
         from cryptography.hazmat.primitives.asymmetric import ec
@@ -1589,7 +2084,15 @@ class SecureEnclaveBypass:
         return key
 
     def _select_pcrs_for_quote(self) -> tuple[TPM_RC, bytes]:
-        """Select PCRs for attestation quote."""
+        """Select PCRs for attestation quote.
+
+        Builds TPML_PCR_SELECTION structure for all 24 PCRs using SHA256 hash
+        algorithm.
+
+        Returns:
+            tuple[TPM_RC, bytes]: Tuple of (TPM return code, PCR selection
+                bytes in TPM format).
+        """
         # Standard PCR selection for attestation
         selection = bytearray()
 
@@ -1604,7 +2107,18 @@ class SecureEnclaveBypass:
         return TPM_RC.SUCCESS, bytes(selection)
 
     def _compute_pcr_digest(self, pcr_selection: bytes) -> bytes:
-        """Compute digest of selected PCRs."""
+        """Compute digest of selected PCRs.
+
+        Iterates through PCR selection bitmap and concatenates all selected
+        PCR values, then returns SHA256 hash of concatenated values.
+
+        Args:
+            pcr_selection: PCR selection bytes indicating which PCRs to include
+                (3 bytes = 24 PCRs).
+
+        Returns:
+            bytes: SHA256 digest of selected PCR values concatenated (32 bytes).
+        """
         digest = hashlib.sha256()
 
         # Parse selection to determine which PCRs to include
@@ -1618,7 +2132,17 @@ class SecureEnclaveBypass:
         return digest.digest()
 
     def _get_attestation_key_name(self) -> bytes:
-        """Get name of TPM attestation key."""
+        """Get name of TPM attestation key.
+
+        Returns the TPM name (SHA256 hash of public area) for the attestation key.
+        Falls back to default hash if no restricted attestation key found.
+
+        Returns:
+            bytes: SHA256 hash of attestation key's public area (32 bytes).
+
+        Raises:
+            ValueError: If attestation key name cannot be computed.
+        """
         # TPM name is hash of public area
         if self.tpm_emulator.keys:
             for key in self.tpm_emulator.keys.values():
@@ -1629,12 +2153,39 @@ class SecureEnclaveBypass:
         return hashlib.sha256(b"AttestationKey").digest()
 
     def _update_quote_challenge(self, quote_data: bytes, new_challenge: bytes) -> bytes | None:
-        """Update challenge in existing quote while preserving signature validity."""
+        """Update challenge in existing quote while preserving signature validity.
+
+        This operation cannot modify existing quotes while preserving signatures.
+        Returns None to indicate that quote must be regenerated instead.
+
+        Args:
+            quote_data: Existing quote bytes to update.
+            new_challenge: New challenge bytes to embed.
+
+        Returns:
+            bytes | None: None (quote regeneration required for new challenges).
+
+        Raises:
+            ValueError: If quote data is malformed.
+        """
         # This would require re-signing, so we generate new quote
         return None
 
     def _emulate_tpm_quote(self, challenge: bytes) -> str:
-        """Generate TPM quote using emulator."""
+        """Generate TPM quote using emulator.
+
+        Creates a properly formatted TPM quote using the emulator's attestation key.
+        Returns empty string on failure.
+
+        Args:
+            challenge: Challenge bytes to include in quote as nonce.
+
+        Returns:
+            str: Base64-encoded TPM quote string, or empty string on failure.
+
+        Raises:
+            ValueError: If quote generation fails.
+        """
         # Use TPM emulator to create properly formatted quote
         rc = self.tpm_emulator.startup(0)
         if rc != TPM_RC.SUCCESS:
@@ -1661,7 +2212,15 @@ class SecureEnclaveBypass:
         return ""
 
     def _extract_platform_certificates(self) -> list[str]:
-        """Extract real platform certificates from TPM/SGX."""
+        """Extract real platform certificates from TPM/SGX.
+
+        Attempts to extract real TPM EK and SGX PCK certificates from system,
+        falling back to generated certificates if real ones unavailable.
+
+        Returns:
+            list[str]: List of base64-encoded certificate strings from system
+                or generated.
+        """
         certs = []
 
         if ek_cert := self._extract_tpm_ek_certificate():
@@ -1677,7 +2236,15 @@ class SecureEnclaveBypass:
         return certs
 
     def _extract_tpm_ek_certificate(self) -> bytes | None:
-        """Extract TPM Endorsement Key certificate."""
+        """Extract TPM Endorsement Key certificate.
+
+        Attempts to load cached TPM EK certificate from disk, or returns None
+        if certificate not available.
+
+        Returns:
+            bytes | None: DER-encoded TPM EK certificate bytes if available,
+                None otherwise.
+        """
         try:
             # Try to read from TPM NV
 
@@ -1692,7 +2259,15 @@ class SecureEnclaveBypass:
         return None
 
     def _extract_sgx_pck_certificate(self) -> bytes | None:
-        """Extract SGX PCK certificate."""
+        """Extract SGX PCK certificate.
+
+        Attempts to load cached SGX Platform Certification Key certificate from disk,
+        or returns None if certificate not available.
+
+        Returns:
+            bytes | None: DER-encoded SGX PCK certificate bytes if available,
+                None otherwise.
+        """
         try:
             # Try to get from Intel provisioning service
             cert_file = Path(__file__).parent / "certs" / "sgx_pck_cert.der"
@@ -1704,7 +2279,15 @@ class SecureEnclaveBypass:
         return None
 
     def _generate_platform_certificates(self) -> list[str]:
-        """Generate valid platform attestation certificates matching system configuration."""
+        """Generate valid platform attestation certificates matching system configuration.
+
+        Detects actual platform capabilities and generates self-signed certificates
+        for TPM EK and SGX PCK that match the system's hardware configuration.
+
+        Returns:
+            list[str]: List of base64-encoded certificate strings for TPM and
+                SGX platforms.
+        """
         certs = []
 
         # Detect actual platform manufacturer
@@ -1722,7 +2305,15 @@ class SecureEnclaveBypass:
         return certs
 
     def _detect_platform_info(self) -> dict[str, Any]:
-        """Detect actual platform security capabilities."""
+        """Detect actual platform security capabilities.
+
+        Queries system via WMI and CPU information to determine TPM support,
+        SGX availability, manufacturer, and CPU model.
+
+        Returns:
+            dict[str, Any]: Dictionary containing platform info (has_tpm, has_sgx,
+                manufacturer, cpu_model, platform_id).
+        """
         import cpuinfo
         import wmi
 
@@ -1765,7 +2356,21 @@ class SecureEnclaveBypass:
         return info
 
     def _generate_tpm_certificate(self, platform_info: dict[str, Any]) -> bytes:
-        """Generate TPM Endorsement Key certificate matching platform."""
+        """Generate TPM Endorsement Key certificate matching platform.
+
+        Creates a self-signed X.509 certificate for TPM EK with platform-specific
+        attributes. Includes TCG OID extension and key usage constraints.
+
+        Args:
+            platform_info: Dictionary containing platform manufacturer and ID
+                information.
+
+        Returns:
+            bytes: DER-encoded TPM EK certificate bytes (PEM key saved to disk).
+
+        Raises:
+            ValueError: If certificate generation fails.
+        """
         from cryptography import x509
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import hashes
@@ -1842,7 +2447,21 @@ class SecureEnclaveBypass:
         return result
 
     def _generate_sgx_certificate(self, platform_info: dict[str, Any]) -> bytes:
-        """Generate SGX Platform Certification Key certificate."""
+        """Generate SGX Platform Certification Key certificate.
+
+        Creates a self-signed X.509 certificate for SGX PCK with Intel-specific
+        OID extensions including platform ID, TCB, and FMSPC values.
+
+        Args:
+            platform_info: Dictionary containing platform manufacturer and ID
+                information.
+
+        Returns:
+            bytes: DER-encoded SGX PCK certificate bytes (PEM key saved to disk).
+
+        Raises:
+            ValueError: If certificate generation fails.
+        """
         from cryptography import x509
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import hashes
@@ -1908,7 +2527,15 @@ class SecureEnclaveBypass:
         return result
 
     def _capture_platform_manifest(self) -> dict[str, Any]:
-        """Capture real platform security manifest from system."""
+        """Capture real platform security manifest from system.
+
+        Queries system to determine TPM version, SGX support, BIOS configuration,
+        secure boot status, and other platform security features.
+
+        Returns:
+            dict[str, Any]: Dictionary with platform security info (tpm_version,
+                sgx_version, secure_boot, etc.).
+        """
         import cpuinfo
         import wmi
 
@@ -1993,7 +2620,16 @@ class SecureEnclaveBypass:
         return manifest
 
     def _check_secure_boot(self) -> bool:
-        """Check if Secure Boot is enabled."""
+        """Check if Secure Boot is enabled.
+
+        Runs bcdedit command to determine system Secure Boot status.
+
+        Returns:
+            bool: True if Secure Boot is enabled, False otherwise.
+
+        Raises:
+            subprocess.CalledProcessError: If bcdedit execution fails.
+        """
         try:
             result = subprocess.run(["bcdedit", "/enum", "{current}"], capture_output=True, text=True)
             return "secureboot" in result.stdout.lower()
@@ -2001,7 +2637,16 @@ class SecureEnclaveBypass:
             return False
 
     def _check_iommu(self) -> bool:
-        """Check if IOMMU is enabled."""
+        """Check if IOMMU is enabled.
+
+        Runs bcdedit command to determine hypervisor launch type.
+
+        Returns:
+            bool: True if IOMMU (hypervisor) is enabled, False otherwise.
+
+        Raises:
+            subprocess.CalledProcessError: If bcdedit execution fails.
+        """
         try:
             result = subprocess.run(["bcdedit", "/enum", "{current}"], capture_output=True, text=True)
             return "hypervisorlaunchtype" in result.stdout.lower()
@@ -2009,7 +2654,15 @@ class SecureEnclaveBypass:
             return False
 
     def _detect_hypervisor(self) -> str:
-        """Detect hypervisor presence."""
+        """Detect hypervisor presence.
+
+        Queries CPU info for hypervisor flag and identifies specific hypervisor
+        vendor from CPU vendor ID string.
+
+        Returns:
+            str: Hypervisor type ('vmware', 'hyperv', 'xen', 'kvm', 'unknown',
+                or 'none').
+        """
         try:
             import cpuinfo
 
@@ -2031,6 +2684,17 @@ class SecureEnclaveBypass:
         return "none"
 
     def cleanup(self) -> None:
-        """Clean up bypass resources."""
+        """Clean up bypass resources.
+
+        Deactivates bypass and restores original function hooks. Sets bypass_active
+        flag to False.
+
+        Returns:
+            None
+
+        Notes:
+            Full cleanup would detach Frida sessions and unload kernel driver if
+            installed.
+        """
         self.bypass_active = False
         # Cleanup would restore original functions

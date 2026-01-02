@@ -23,8 +23,7 @@ import hmac
 import os
 import struct
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock
+from typing import Any, Optional
 
 import pytest
 
@@ -46,6 +45,25 @@ from intellicrack.core.protection_bypass.dongle_emulator import (
 
 if CRYPTO_AVAILABLE:
     from Crypto.Cipher import AES, DES, DES3
+
+
+class FakeApplication:
+    """Real test double for application object used by dongle emulator."""
+
+    def __init__(self, binary_path: Optional[str] = None) -> None:
+        self.binary_path: Optional[str] = binary_path
+        self.config: dict[str, Any] = {}
+        self.logger: Optional[Any] = None
+        self.status: str = "initialized"
+
+    def get_config(self, key: str, default: Any = None) -> Any:
+        return self.config.get(key, default)
+
+    def set_config(self, key: str, value: Any) -> None:
+        self.config[key] = value
+
+    def log(self, message: str, level: str = "info") -> None:
+        pass
 
 
 @pytest.fixture
@@ -117,11 +135,15 @@ def usb_emulator(usb_descriptor: USBDescriptor) -> USBEmulator:
 
 
 @pytest.fixture
-def dongle_emulator() -> HardwareDongleEmulator:
+def fake_app() -> FakeApplication:
+    """Create fake application for testing."""
+    return FakeApplication()
+
+
+@pytest.fixture
+def dongle_emulator(fake_app: FakeApplication) -> HardwareDongleEmulator:
     """Create dongle emulator instance."""
-    app = MagicMock()
-    app.binary_path = None
-    return HardwareDongleEmulator(app)
+    return HardwareDongleEmulator(fake_app)
 
 
 @pytest.fixture
@@ -962,11 +984,10 @@ class TestHardwareDongleEmulator:
         assert len(dongle_emulator.hooks) == 0
         assert len(dongle_emulator.patches) == 0
 
-    def test_patch_dongle_checks_identifies_patterns(self, dongle_emulator: HardwareDongleEmulator, test_binary_path: Path) -> None:
+    def test_patch_dongle_checks_identifies_patterns(self, test_binary_path: Path) -> None:
         """Patch dongle checks identifies dongle check patterns in binary."""
-        app = MagicMock()
-        app.binary_path = str(test_binary_path)
-        emulator = HardwareDongleEmulator(app)
+        fake_app = FakeApplication(binary_path=str(test_binary_path))
+        emulator = HardwareDongleEmulator(fake_app)
 
         emulator._patch_dongle_checks()
 
@@ -1000,10 +1021,9 @@ class TestActivateHardwareDongleEmulation:
 
     def test_activate_hardware_dongle_emulation_success(self) -> None:
         """Activate hardware dongle emulation function succeeds."""
-        app = MagicMock()
-        app.binary_path = None
+        fake_app = FakeApplication()
 
-        results = activate_hardware_dongle_emulation(app, ["HASP"])
+        results = activate_hardware_dongle_emulation(fake_app, ["HASP"])
 
         assert "success" in results
         assert "emulated_dongles" in results

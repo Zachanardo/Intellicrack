@@ -337,7 +337,20 @@ class HookObfuscator:
             return None
 
     def _get_cave_size(self, address: int) -> int:
-        """Get size of code cave at address."""
+        """Get size of code cave at address.
+
+        Scans memory from the given address forward, counting consecutive
+        null bytes (0x00) or INT3 instructions (0xCC) to determine the size
+        of the code cave.
+
+        Args:
+            address: Memory address to check for code cave presence and size.
+
+        Returns:
+            int: Size of code cave in bytes, or 0 if no cave found or read
+                failed.
+
+        """
         try:
             data = self._read_memory(address, 1024)
             if not data:
@@ -356,7 +369,20 @@ class HookObfuscator:
             return 0
 
     def _allocate_trampoline_space(self, size: int) -> int:
-        """Allocate memory for trampoline code."""
+        """Allocate memory for trampoline code.
+
+        Uses Windows VirtualAlloc API to allocate executable memory with
+        read-write permissions for storing trampoline jump sequences.
+        Windows-specific implementation.
+
+        Args:
+            size: Number of bytes to allocate for trampoline space.
+
+        Returns:
+            int: Allocated memory address as integer, or 0 on failure or
+                non-Windows platform.
+
+        """
         logger.debug("Allocating %s bytes for trampoline", size)
 
         try:
@@ -389,7 +415,25 @@ class HookObfuscator:
         final_handler: int,
         chain_length: int,
     ) -> list[int]:
-        """Build chain of trampolines."""
+        """Build chain of trampolines.
+
+        Constructs a sequence of jump instructions that form a chain from the
+        initial target through multiple intermediate trampolines before reaching
+        the final handler. Each trampoline is 32 bytes and jumps to the next
+        one in the chain, making direct hook destination analysis more difficult.
+
+        Args:
+            start_address: Starting memory address where trampoline chain
+                begins.
+            final_handler: Final handler address that chain terminates at.
+            chain_length: Number of intermediate trampolines to create in
+                chain.
+
+        Returns:
+            list[int]: List of trampoline addresses in correct order, or empty
+                list on failure.
+
+        """
         chain_addresses = []
         current_addr = start_address
 
@@ -414,7 +458,20 @@ class HookObfuscator:
             return []
 
     def _generate_jmp_code(self, target: int) -> bytes:
-        """Generate x86/x64 JMP instruction."""
+        """Generate x86/x64 JMP instruction.
+
+        Generates platform-appropriate JMP bytecode that jumps to the target
+        address. For 64-bit systems, uses MOV RAX + JMP RAX. For 32-bit,
+        uses relative JMP with displacement calculation.
+
+        Args:
+            target: Target memory address for the JMP instruction to jump to.
+
+        Returns:
+            bytes: Bytes representing the complete JMP instruction opcode and
+                operands.
+
+        """
         import platform
 
         if is_64bit := platform.machine().endswith("64"):
@@ -433,7 +490,21 @@ class HookObfuscator:
         ])
 
     def _install_jump_to_chain(self, target: int, chain_start: int) -> bool:
-        """Install initial jump from target to trampoline chain."""
+        """Install initial jump from target to trampoline chain.
+
+        Overwrites the first bytes at the target address with a JMP instruction
+        that redirects execution to the beginning of the trampoline chain.
+        Flushes instruction cache after writing to ensure CPU sees new code.
+
+        Args:
+            target: Target memory address where jump instruction is installed.
+            chain_start: Start address of the trampoline chain to jump to.
+
+        Returns:
+            bool: True if jump installed and cache flushed successfully, False
+                on failure.
+
+        """
         try:
             jmp_code = self._generate_jmp_code(chain_start)
 
@@ -448,7 +519,20 @@ class HookObfuscator:
             return False
 
     def _read_memory(self, address: int, size: int) -> bytes | None:
-        """Read memory at address."""
+        """Read memory at address.
+
+        Uses Windows ReadProcessMemory API to read bytes from the current
+        process memory at the specified address. Windows-specific implementation.
+
+        Args:
+            address: Memory address to read from.
+            size: Number of bytes to read from memory.
+
+        Returns:
+            bytes | None: Bytes containing memory contents, or None if read
+                failed or non-Windows platform.
+
+        """
         try:
             if hasattr(ctypes, "windll"):
                 kernel32 = ctypes.windll.kernel32
@@ -474,7 +558,21 @@ class HookObfuscator:
             return None
 
     def _write_memory(self, address: int, data: bytes) -> bool:
-        """Write memory at address."""
+        """Write memory at address.
+
+        Uses Windows VirtualProtect and WriteProcessMemory APIs to write bytes
+        to the current process memory. Handles memory protection changes and
+        restores original protection after write. Windows-specific implementation.
+
+        Args:
+            address: Memory address to write to.
+            data: Bytes to write to the specified memory address.
+
+        Returns:
+            bool: True if write successful, False on failure or non-Windows
+                platform.
+
+        """
         try:
             if hasattr(ctypes, "windll"):
                 kernel32 = ctypes.windll.kernel32
@@ -519,7 +617,20 @@ class HookObfuscator:
             return False
 
     def _flush_instruction_cache(self, address: int, size: int) -> None:
-        """Flush instruction cache."""
+        """Flush instruction cache.
+
+        Uses Windows FlushInstructionCache API to invalidate the CPU instruction
+        cache for the specified memory range, ensuring that newly written code
+        is executed rather than cached versions. Windows-specific implementation.
+
+        Args:
+            address: Memory address to flush instruction cache from.
+            size: Size in bytes of the range to flush from cache.
+
+        Returns:
+            None
+
+        """
         try:
             if hasattr(ctypes, "windll"):
                 kernel32 = ctypes.windll.kernel32
@@ -538,7 +649,23 @@ class HookObfuscator:
         handler: int,
         original_bytes: bytes,
     ) -> str:
-        """Calculate integrity hash for hook."""
+        """Calculate integrity hash for hook.
+
+        Computes a SHA-256 hash of the hook's target address, handler address,
+        and original code bytes combined as a string. Used to detect if hook
+        has been modified or tampered with during integrity monitoring.
+
+        Args:
+            target: Target memory address where hook is installed.
+            handler: Handler function address that hook redirects to.
+            original_bytes: Original code bytes at target before hook
+                installation.
+
+        Returns:
+            str: SHA-256 hexdigest string representing the hook's integrity
+                hash.
+
+        """
         data = f"{target}{handler}{original_bytes.hex()}".encode()
         return hashlib.sha256(data).hexdigest()
 
@@ -547,6 +674,10 @@ class HookObfuscator:
 
         Periodically checks if hooks are still active and haven't been
         tampered with. Re-applies hooks if removed by target.
+
+        Returns:
+            None
+
         """
         if self.integrity_monitor_active:
             logger.warning("Integrity monitor already running")
@@ -564,7 +695,15 @@ class HookObfuscator:
         self._integrity_thread.start()
 
     def _integrity_monitor_loop(self) -> None:
-        """Run integrity monitoring loop."""
+        """Run integrity monitoring loop.
+
+        Continuously checks installed hooks for tampering and restores
+        them if necessary.
+
+        Returns:
+            None
+
+        """
         logger.info("Integrity monitor loop started")
 
         check_interval = 2.0
@@ -593,7 +732,21 @@ class HookObfuscator:
         logger.info("Integrity monitor loop stopped")
 
     def _check_hook_integrity(self, hook_info: HookInfo) -> bool:
-        """Check if hook is still intact."""
+        """Check if hook is still intact.
+
+        Reads the current bytes at the target address and compares them against
+        the original bytes stored in hook_info. Returns True if they differ,
+        indicating the hook has been modified or removed.
+
+        Args:
+            hook_info: Hook information object containing target address and
+                original bytes.
+
+        Returns:
+            bool: True if hook has been modified or tampered with, False if
+                intact.
+
+        """
         try:
             if current_bytes := self._read_memory(hook_info.target_address, 16):
                 return current_bytes != hook_info.original_bytes
@@ -606,7 +759,21 @@ class HookObfuscator:
             return False
 
     def _reinstall_hook(self, hook_info: HookInfo) -> bool:
-        """Reinstall tampered hook."""
+        """Reinstall tampered hook.
+
+        Called by the integrity monitor when a hook is detected as tampered with.
+        Recreates the hook using the same type and configuration as the original.
+        Currently supports indirect_chain hooks; other types return False.
+
+        Args:
+            hook_info: Hook information object containing target, handler, and
+                hook type.
+
+        Returns:
+            bool: True if hook was successfully reinstalled, False on failure or
+                unsupported hook type.
+
+        """
         try:
             logger.info("Reinstalling hook at %s", hex(hook_info.target_address))
 
@@ -623,7 +790,15 @@ class HookObfuscator:
             return False
 
     def stop_integrity_monitor(self) -> None:
-        """Stop integrity monitoring."""
+        """Stop integrity monitoring.
+
+        Halts the background integrity monitoring thread and waits for
+        it to finish.
+
+        Returns:
+            None
+
+        """
         if not self.integrity_monitor_active:
             return
 
@@ -644,11 +819,12 @@ class HookObfuscator:
         Alternative to inline hooks, harder to detect.
 
         Args:
-            address: Address to hook
-            handler: Handler function
+            address: Address to hook.
+            handler: Handler function to call when breakpoint is triggered.
 
         Returns:
-            True if hardware breakpoint installed successfully
+            bool: True if hardware breakpoint installed successfully, False on
+                failure or if all debug registers are in use.
 
         """
         logger.info("Installing hardware breakpoint hook at %s", hex(address))
@@ -718,10 +894,11 @@ class HookObfuscator:
         that can be used for trampoline placement.
 
         Args:
-            module: Module name to scan
+            module: Module name to scan for code caves.
 
         Returns:
-            List of code cave addresses
+            list[int]: List of code cave addresses found in the module, or
+                empty list if none found or operation failed.
 
         """
         logger.info("Scanning for code caves in module: %s", module)
@@ -781,7 +958,22 @@ class HookObfuscator:
             return caves
 
     def _find_cave_in_data(self, base_addr: int, data: bytes) -> int | None:
-        """Find code cave in memory data."""
+        """Find code cave in memory data.
+
+        Scans the provided memory data for sequences of null bytes (0x00) or
+        INT3 instructions (0xCC) that are at least 32 bytes long. Returns the
+        absolute address of the first suitable code cave found, or None if none
+        exists.
+
+        Args:
+            base_addr: Base memory address corresponding to the start of data.
+            data: Memory data bytes to scan for code cave patterns.
+
+        Returns:
+            int | None: Absolute address of code cave if found, or None if no
+                suitable cave exists.
+
+        """
         min_cave_size = 32
         current_cave_start = None
         current_cave_size = 0
@@ -806,7 +998,8 @@ class HookObfuscator:
         Creates new trampolines at different addresses.
 
         Returns:
-            True if hooks rotated successfully
+            bool: True if hooks rotated successfully, False if no hooks were
+                rotated or operation failed.
 
         """
         logger.info("Rotating hooks to avoid detection")
@@ -829,7 +1022,20 @@ class HookObfuscator:
             return False
 
     def _rotate_single_hook(self, hook_info: HookInfo) -> bool:
-        """Rotate a single hook to new location."""
+        """Rotate a single hook to new location.
+
+        Attempts to find a new code cave and move the hook's trampoline to avoid
+        signature-based detection. Restores original bytes and reinstalls hook
+        at new location if a suitable cave is found.
+
+        Args:
+            hook_info: Hook information object to rotate to new location.
+
+        Returns:
+            bool: True if hook successfully rotated to new location, False if no
+                suitable cave found or operation failed.
+
+        """
         try:
             if new_cave := self._find_code_cave(96):
                 logger.debug("Found new code cave at 0x%X for hook rotation", new_cave)
@@ -852,7 +1058,10 @@ class HookObfuscator:
         """Get status of all installed hooks.
 
         Returns:
-            Dictionary with hook statistics
+            dict[str, int | list[str] | bool]: Dictionary with hook
+                statistics including total hooks, active hook addresses,
+                integrity monitor status, tampering attempts, and code caves
+                found.
 
         """
         with self._lock:
@@ -868,7 +1077,7 @@ class HookObfuscator:
         """Remove all installed hooks and restore original code.
 
         Returns:
-            True if all hooks removed successfully
+            bool: True if all hooks removed successfully, False otherwise.
 
         """
         logger.info("Removing all hooks")

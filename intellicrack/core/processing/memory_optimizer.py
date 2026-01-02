@@ -3,7 +3,6 @@
 import gc
 import logging
 import os
-import sys
 import time
 from types import TracebackType
 from typing import Any
@@ -341,7 +340,11 @@ class MemoryOptimizer:
             self.logger.exception("Error during data structure optimization: %s", e)
 
     def _optimize_application_structures(self) -> list[str]:
-        """Optimize application-specific data structures."""
+        """Optimize application-specific data structures.
+
+        Returns:
+            list[str]: List of optimization descriptions applied.
+        """
         optimizations: list[str] = []
 
         try:
@@ -384,7 +387,11 @@ class MemoryOptimizer:
         return optimizations
 
     def _optimize_python_objects(self) -> list[str]:
-        """Optimize general Python objects for memory efficiency."""
+        """Optimize general Python objects for memory efficiency.
+
+        Returns:
+            list[str]: List of optimization descriptions applied.
+        """
         optimizations: list[str] = []
 
         try:
@@ -440,7 +447,11 @@ class MemoryOptimizer:
         return optimizations
 
     def _cleanup_circular_references(self) -> list[str]:
-        """Clean up circular references that prevent garbage collection."""
+        """Clean up circular references that prevent garbage collection.
+
+        Returns:
+            list[str]: List of cleanup descriptions applied.
+        """
         optimizations: list[str] = []
 
         try:
@@ -469,7 +480,11 @@ class MemoryOptimizer:
         return optimizations
 
     def _optimize_caches(self) -> list[str]:
-        """Optimize various caches throughout the application."""
+        """Optimize various caches throughout the application.
+
+        Returns:
+            list[str]: List of cache optimization descriptions applied.
+        """
         optimizations: list[str] = []
 
         try:
@@ -626,7 +641,11 @@ class MemoryOptimizer:
             return f"error: {e!s}"
 
     def _find_large_objects(self) -> list[tuple[str, int, float]]:
-        """Find large objects that may indicate memory leaks."""
+        """Find large objects that may indicate memory leaks.
+
+        Returns:
+            list[tuple[str, int, float]]: List of (object_type, count, size_mb) tuples.
+        """
         try:
             import sys
             from collections import defaultdict
@@ -701,7 +720,11 @@ class MemoryOptimizer:
             return (0, 0)
 
     def _check_application_leaks(self) -> list[str]:
-        """Check for application-specific memory leaks."""
+        """Check for application-specific memory leaks.
+
+        Returns:
+            list[str]: List of detected application memory leak descriptions.
+        """
         leaks: list[str] = []
 
         if not self.app:
@@ -744,7 +767,11 @@ class MemoryOptimizer:
         return leaks
 
     def _check_resource_leaks(self) -> list[str]:
-        """Check for system resource leaks (threads, file handles)."""
+        """Check for system resource leaks (threads, file handles).
+
+        Returns:
+            list[str]: List of detected system resource leak descriptions.
+        """
         leaks = []
 
         try:
@@ -907,7 +934,11 @@ class MemoryOptimizer:
         return (used_mb, total_mb, usage_percentage)
 
     def __enter__(self) -> "MemoryOptimizer":
-        """Context manager entry."""
+        """Context manager entry.
+
+        Returns:
+            MemoryOptimizer: The memory optimizer instance.
+        """
         self.enable()
         return self
 
@@ -917,7 +948,13 @@ class MemoryOptimizer:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        """Context manager exit."""
+        """Context manager exit.
+
+        Args:
+            exc_type: The exception type if an exception occurred, None otherwise.
+            exc_val: The exception instance if an exception occurred, None otherwise.
+            exc_tb: The traceback object if an exception occurred, None otherwise.
+        """
         if exc_type:
             self.logger.exception(
                 "Memory optimizer exiting due to %s: %s",

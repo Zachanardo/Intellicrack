@@ -227,6 +227,7 @@ class TestValidationError:
             value='{"timeout": "invalid", "max_depth": -1}'
         )
         assert "config.analysis.settings" in str(error.field_name)
+        assert error.value is not None
         assert "invalid" in error.value
 
 
@@ -487,6 +488,7 @@ class TestExceptionPracticalScenarios:
             )
 
         error = exc_info.value
+        assert error.target is not None
         assert "Adobe Creative Cloud" in error.target
         assert error.technique == "rsa_keygen_reversal"
 
@@ -514,4 +516,5 @@ class TestExceptionPracticalScenarios:
 
         error = exc_info.value
         assert error.service_name == "ghidra_headless"
+        assert error.url is not None
         assert "localhost:13100" in error.url

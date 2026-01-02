@@ -17,7 +17,6 @@ import tempfile
 import time
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -339,12 +338,16 @@ class TestTrainingThreadRealTraining:
         config = TrainingConfiguration(epochs=5, batch_size=4, use_early_stopping=False)
         thread = TrainingThread(config)
 
-        assert thread.paused is False
+        paused_before: bool = thread.paused
+        assert paused_before is False
+
         thread.pause_training()
-        assert thread.paused is True
+        paused_after_pause: bool = thread.paused
+        assert paused_after_pause is True
 
         thread.resume_training()
-        assert thread.paused is False
+        paused_after_resume: bool = thread.paused
+        assert paused_after_resume is False
 
     def test_training_stop(self) -> None:
         """Training can be stopped."""
@@ -656,6 +659,12 @@ class TestEnhancedTrainingInterface:
         """Configuration widgets have default values from config."""
         interface = EnhancedTrainingInterface()
 
+        assert interface.model_name_edit is not None
+        assert interface.learning_rate_spin is not None
+        assert interface.batch_size_spin is not None
+        assert interface.epochs_spin is not None
+        assert interface.validation_split_spin is not None
+
         assert interface.model_name_edit.text() == "intellicrack_model"
         assert interface.learning_rate_spin.value() == 0.001
         assert interface.batch_size_spin.value() == 32
@@ -665,6 +674,11 @@ class TestEnhancedTrainingInterface:
     def test_save_configuration_to_file(self, tmp_path: Path) -> None:
         """Configuration can be saved to JSON file."""
         interface = EnhancedTrainingInterface()
+
+        assert interface.model_name_edit is not None
+        assert interface.learning_rate_spin is not None
+        assert interface.batch_size_spin is not None
+        assert interface.epochs_spin is not None
 
         interface.model_name_edit.setText("test_model")
         interface.learning_rate_spin.setValue(0.0005)
@@ -696,6 +710,9 @@ class TestEnhancedTrainingInterface:
     def test_validation_split_slider_spinbox_sync(self) -> None:
         """Validation split slider and spinbox stay synchronized."""
         interface = EnhancedTrainingInterface()
+
+        assert interface.validation_split_slider is not None
+        assert interface.validation_split_spin is not None
 
         interface.validation_split_slider.setValue(30)
         assert interface.validation_split_spin.value() == 0.30
@@ -810,16 +827,19 @@ class TestRealWorldTrainingWorkflows:
         conn.commit()
         conn.close()
 
-        original_expanduser = os.path.expanduser
+        class FakeExpandUser:
+            def __init__(self, db_path: Path) -> None:
+                self.db_path = db_path
+                self.original_expanduser = os.path.expanduser
 
-        def mock_expanduser(path: str) -> str:
-            if "~/.intellicrack/analysis.db" in path:
-                return str(db_path)
-            return original_expanduser(path)
+            def __call__(self, path: str) -> str:
+                if "~/.intellicrack/analysis.db" in path:
+                    return str(self.db_path)
+                return self.original_expanduser(path)
 
-        import intellicrack.ai.enhanced_training_interface
+        fake_expanduser = FakeExpandUser(db_path)
         original_func = os.path.expanduser
-        os.path.expanduser = mock_expanduser
+        os.path.expanduser = fake_expanduser  # type: ignore[assignment]
 
         try:
             config = TrainingConfiguration(epochs=2, batch_size=4)

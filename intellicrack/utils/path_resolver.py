@@ -21,7 +21,7 @@ def get_project_root() -> Path:
     """Get the project root directory.
 
     Returns:
-        Path object pointing to the project root directory.
+        The project root directory path.
 
     """
     if intellicrack_root_env := os.environ.get("INTELLICRACK_ROOT"):
@@ -36,7 +36,7 @@ def get_data_dir() -> Path:
     """Get the data directory within the project.
 
     Returns:
-        Path object pointing to the data directory.
+        The data directory path within the project.
 
     """
     return get_project_root() / "data"
@@ -49,7 +49,7 @@ def get_qemu_images_dir() -> Path:
     """Get the QEMU images directory.
 
     Returns:
-        Path object pointing to the QEMU images directory (intellicrack/assets/qemu_images/).
+        The QEMU images directory path (intellicrack/assets/qemu_images/).
 
     """
     project_root = get_project_root()
@@ -71,7 +71,7 @@ def resolve_qemu_image_path(image_name: str) -> Path:
         image_name: Name of the QEMU image file, may include paths.
 
     Returns:
-        Path object pointing to the resolved QEMU image file.
+        The resolved QEMU image file path.
 
     """
     # Remove any hardcoded path prefixes

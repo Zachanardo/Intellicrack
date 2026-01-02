@@ -103,7 +103,8 @@ class ServiceHealthChecker:
             url: URL to check
 
         Returns:
-            Dictionary with health check results
+            Dictionary with health check results containing url, healthy, status_code,
+            response_time, error, and timestamp keys.
 
         """
         default_timeout = 5.0
@@ -149,7 +150,8 @@ class ServiceHealthChecker:
             url: WebSocket URL to check
 
         Returns:
-            Dictionary with health check results
+            Dictionary with health check results containing url, healthy, connected,
+            response_time, error, and timestamp keys.
 
         """
         default_timeout = 5.0
@@ -190,7 +192,9 @@ class ServiceHealthChecker:
             service_name: Name of the service to check
 
         Returns:
-            Dictionary with service health information
+            Dictionary with service health information including service name,
+            health status, URL, and timestamp. May include error details if
+            the health check fails.
 
         """
         cache_key = service_name
@@ -243,8 +247,11 @@ class ServiceHealthChecker:
     async def check_all_services(self) -> dict[str, dict[str, Any]]:
         """Check health of all configured services.
 
+        Performs parallel health checks on all services configured in the
+        application configuration.
+
         Returns:
-            Dictionary mapping service names to health check results
+            Dictionary mapping service names to health check results.
 
         """
         service_urls = self.config.get("service_urls", {})
@@ -277,8 +284,11 @@ class ServiceHealthChecker:
     async def check_critical_services(self) -> dict[str, dict[str, Any]]:
         """Check health of critical services only.
 
+        Checks only critical services: ollama_api, local_llm_server, and
+        proxy_server. Services not configured are skipped.
+
         Returns:
-            Dictionary mapping service names to health check results
+            Dictionary mapping service names to health check results.
 
         """
         critical_services = ["ollama_api", "local_llm_server", "proxy_server"]
@@ -313,12 +323,15 @@ class ServiceHealthChecker:
     async def wait_for_service(self, service_name: str, check_interval: float = 2.0) -> bool:
         """Wait for a service to become available.
 
+        Polls the service at regular intervals until it becomes healthy or
+        a default 30-second timeout is reached.
+
         Args:
             service_name: Name of the service to wait for
             check_interval: Time between checks in seconds
 
         Returns:
-            True if service became available, False if timeout
+            True if service became available within timeout, False otherwise.
 
         """
         default_timeout = 30.0
@@ -381,8 +394,11 @@ _health_checker = None
 def get_health_checker() -> ServiceHealthChecker:
     """Get the singleton ServiceHealthChecker instance.
 
+    Creates the instance on first call and returns the same instance
+    on all subsequent calls.
+
     Returns:
-        ServiceHealthChecker instance
+        Singleton ServiceHealthChecker instance.
 
     """
     global _health_checker
@@ -394,11 +410,15 @@ def get_health_checker() -> ServiceHealthChecker:
 async def check_service_health(service_name: str) -> dict[str, Any]:
     """Check health of a specific service.
 
+    Convenience function that retrieves the singleton health checker
+    and performs a health check on the specified service.
+
     Args:
-        service_name: Name of the service
+        service_name: Name of the service to check
 
     Returns:
-        Health check results
+        Dictionary with service health information including health status,
+        response times, error details, and timestamp.
 
     """
     checker = get_health_checker()
@@ -408,8 +428,11 @@ async def check_service_health(service_name: str) -> dict[str, Any]:
 async def check_all_services_health() -> dict[str, dict[str, Any]]:
     """Check health of all configured services.
 
+    Convenience function that retrieves the singleton health checker
+    and performs health checks on all configured services in parallel.
+
     Returns:
-        Dictionary of health check results
+        Dictionary mapping service names to their health check results.
 
     """
     checker = get_health_checker()

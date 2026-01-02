@@ -22,17 +22,18 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import datetime
-import hashlib
-import hmac
 import json
 import logging
 import os
-import pickle  # noqa: S403
 import time
 from pathlib import Path
 from typing import Any, Protocol
 
 from intellicrack.core.config_manager import get_config
+from intellicrack.utils.core.secure_serialization import (
+    secure_pickle_dump,
+    secure_pickle_load,
+)
 from intellicrack.utils.logger import logger
 
 
@@ -55,10 +56,7 @@ try:
 except ImportError as e:
     logger.exception("Import error in incremental_manager: %s", e)
     PYQT_AVAILABLE = False
-    QMessageBox = None  # type: ignore[assignment, misc]
-
-# Security configuration for pickle
-PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
+    QMessageBox = None
 
 
 class AppProtocol(Protocol):
@@ -90,119 +88,6 @@ if PYQT_AVAILABLE and QMessageBox is not None:
         ) -> int: ...
 
 
-def secure_pickle_dump(obj: object, file_path: str | Path) -> None:
-    """Securely dump object with integrity check.
-
-    Args:
-        obj: Python object to serialize and dump to file.
-        file_path: Path to write the pickled object with HMAC integrity check.
-
-    Raises:
-        OSError: If file cannot be written.
-        pickle.PicklingError: If object cannot be serialized.
-
-    """
-    # Serialize object
-    data = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
-
-    # Calculate HMAC for integrity
-    mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
-
-    # Write MAC + data
-    with open(file_path, "wb") as f:
-        f.write(mac)
-        f.write(data)
-
-
-class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
-    """Restricted unpickler that only allows safe classes."""
-
-    def find_class(self, module: str, name: str) -> type[Any]:
-        """Override find_class to restrict allowed classes.
-
-        Args:
-            module: Module name to check for safety.
-            name: Class name to check for safety.
-
-        Returns:
-            The class object if allowed.
-
-        Raises:
-            pickle.UnpicklingError: If module or class is not in allowed list.
-
-        """
-        # Allow only safe modules and classes
-        ALLOWED_MODULES = {
-            "numpy",
-            "numpy.core.multiarray",
-            "numpy.core.numeric",
-            "pandas",
-            "pandas.core.frame",
-            "pandas.core.series",
-            "sklearn",
-            "torch",
-            "tensorflow",
-            "__builtin__",
-            "builtins",
-            "collections",
-            "collections.abc",
-            "datetime",
-        }
-
-        # Allow classes from our own modules
-        if module.startswith("intellicrack."):
-            result: type[Any] = super().find_class(module, name)
-            return result
-
-        # Check if module is in allowed list
-        if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
-            result = super().find_class(module, name)
-            return result
-
-        # Deny everything else
-        raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
-
-
-def secure_pickle_load(file_path: str | Path) -> object:
-    """Securely load object with integrity verification.
-
-    Args:
-        file_path: Path to the pickled file to load.
-
-    Returns:
-        Deserialized Python object from the pickled file.
-
-    Raises:
-        ValueError: If integrity check fails indicating possible tampering.
-        OSError: If file cannot be read.
-        pickle.UnpicklingError: If object cannot be deserialized.
-
-    """
-    try:
-        # Try joblib first as it's safer for ML models
-        import joblib
-
-        return joblib.load(file_path)
-    except (ImportError, ValueError):
-        # Fallback to pickle with restricted unpickler
-        pass
-
-    with open(file_path, "rb") as f:
-        # Read MAC
-        stored_mac = f.read(32)  # SHA256 produces 32 bytes
-        data = f.read()
-
-    # Verify integrity
-    expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
-    if not hmac.compare_digest(stored_mac, expected_mac):
-        raise ValueError("Pickle file integrity check failed - possible tampering detected")
-
-    # Load object using RestrictedUnpickler
-    import io
-
-    return RestrictedUnpickler(io.BytesIO(data)).load()
-
-
 class IncrementalAnalysisManager:
     """Incremental analysis manager to avoid reprocessing unchanged code.
 
@@ -219,7 +104,15 @@ class IncrementalAnalysisManager:
     """
 
     def __init__(self, config: dict[str, Any] | None = None) -> None:
-        """Initialize the incremental analysis manager with configuration and cache setup."""
+        """Initialize the incremental analysis manager with configuration and cache setup.
+
+        Args:
+            config: Optional configuration dictionary with cache settings.
+
+        Returns:
+            None.
+
+        """
         self.config = config or {}
         self.logger = logging.getLogger("IntellicrackLogger.IncrementalAnalysis")
 
@@ -268,6 +161,9 @@ class IncrementalAnalysisManager:
         Validates cache integrity and removes any corrupted or outdated entries.
         Also loads chunk cache and file hash mappings for incremental analysis.
 
+        Returns:
+            None.
+
         """
         metadata_path = self.cache_dir / "metadata.json"
         index_path = self.cache_dir / "index.json"
@@ -310,6 +206,9 @@ class IncrementalAnalysisManager:
         the necessary directory structure. Called when no existing cache
         is found or when cache needs to be reset due to corruption.
 
+        Returns:
+            None.
+
         """
         self.cache = {}
         self.analysis_cache = {}
@@ -347,10 +246,14 @@ class IncrementalAnalysisManager:
         """Validate cache file before loading.
 
         Args:
-            file_path: Path to the cache file
+            file_path: Path to the cache file.
 
         Returns:
-            bool: True if file is safe to load
+            True if file is safe to load.
+
+        Raises:
+            OSError: If file metadata cannot be accessed due to permissions
+                or filesystem errors.
 
         """
         if not os.path.exists(file_path):
@@ -367,7 +270,7 @@ class IncrementalAnalysisManager:
             stat_info = Path(file_path).stat()
             # Ensure file is owned by current user
             if hasattr(os, "getuid"):
-                current_uid = os.getuid()  # type: ignore[attr-defined]
+                current_uid = os.getuid()
                 if stat_info.st_uid != current_uid:
                     self.logger.warning("Cache file not owned by current user, rejecting")
                     return False
@@ -379,6 +282,10 @@ class IncrementalAnalysisManager:
 
         The cache index contains metadata about all cached analyses
         including file paths, timestamps, and hash information.
+
+        Returns:
+            None.
+
         """
         if not self.enable_caching:
             return
@@ -406,7 +313,7 @@ class IncrementalAnalysisManager:
         """Save the cache index to disk.
 
         Returns:
-            True if save successful, False otherwise
+            bool: True if save successful, False otherwise.
 
         """
         if not self.enable_caching:
@@ -447,7 +354,12 @@ class IncrementalAnalysisManager:
             return False
 
     def _cleanup_invalid_entries(self) -> None:
-        """Clean up cache entries that reference non-existent files."""
+        """Clean up cache entries that reference non-existent files.
+
+        Returns:
+            None.
+
+        """
         invalid_hashes = []
 
         for binary_hash, entry in self.cache.items():
@@ -472,10 +384,10 @@ class IncrementalAnalysisManager:
         """Set the current binary for analysis.
 
         Args:
-            binary_path: Path to the binary file to analyze
+            binary_path: Path to the binary file to analyze.
 
         Returns:
-            True if binary is found in cache, False if new analysis needed
+            bool: True if binary is found in cache, False if new analysis needed.
 
         """
         if not os.path.exists(binary_path):
@@ -504,10 +416,11 @@ class IncrementalAnalysisManager:
         """Calculate a SHA-256 hash of the file contents.
 
         Args:
-            file_path: Path to the file to hash
+            file_path: Path to the file to hash.
 
         Returns:
-            Hexadecimal hash string, or None if error
+            str | None: Hexadecimal hash string, or None if error occurs
+                during hashing.
 
         """
         try:
@@ -528,10 +441,11 @@ class IncrementalAnalysisManager:
         """Get cached analysis results for the current binary.
 
         Args:
-            analysis_type: Type of analysis to retrieve
+            analysis_type: Type of analysis to retrieve.
 
         Returns:
-            Cached analysis results, or None if not available
+            object | None: Cached analysis results, or None if not available
+                or if validation fails.
 
         """
         if not self.enable_caching or not self.current_binary_hash:
@@ -580,11 +494,11 @@ class IncrementalAnalysisManager:
         """Cache analysis results for the current binary.
 
         Args:
-            analysis_type: Type of analysis being cached
-            results: Analysis results to cache
+            analysis_type: Type of analysis being cached.
+            results: Analysis results to cache.
 
         Returns:
-            True if caching successful, False otherwise
+            bool: True if caching successful, False otherwise.
 
         """
         if not self.enable_caching or not self.current_binary_hash:
@@ -626,10 +540,10 @@ class IncrementalAnalysisManager:
         """Clear the cache for a specific binary or all binaries.
 
         Args:
-            binary_hash: Specific binary hash to clear, or None for all
+            binary_hash: Specific binary hash to clear, or None for all.
 
         Returns:
-            True if clearing successful, False otherwise
+            bool: True if clearing successful, False otherwise.
 
         """
         if binary_hash:
@@ -647,10 +561,10 @@ class IncrementalAnalysisManager:
         """Remove a specific cache entry.
 
         Args:
-            binary_hash: Hash of the binary to remove
+            binary_hash: Hash of the binary to remove.
 
         Returns:
-            True if removal successful, False otherwise
+            bool: True if removal successful, False otherwise.
 
         """
         if binary_hash not in self.cache:
@@ -684,7 +598,8 @@ class IncrementalAnalysisManager:
         """Get cache statistics and usage information.
 
         Returns:
-            Dictionary containing cache statistics
+            dict[str, Any]: Dictionary containing cache statistics including
+                total binaries, cache files, and size information.
 
         """
         if not self.enable_caching:
@@ -716,10 +631,10 @@ class IncrementalAnalysisManager:
         """Clean up old cache entries based on age.
 
         Args:
-            max_age_days: Maximum age in days, uses config default if None
+            max_age_days: Maximum age in days, uses config default if None.
 
         Returns:
-            Number of entries cleaned up
+            int: Number of cache entries cleaned up.
 
         """
         if not self.enable_caching:
@@ -751,11 +666,13 @@ class IncrementalAnalysisManager:
         """Perform incremental analysis on a binary file.
 
         Args:
-            binary_path: Path to the binary file to analyze
-            analysis_types: List of analysis types to perform (optional)
+            binary_path: Path to the binary file to analyze.
+            analysis_types: List of analysis types to perform, or None for
+                default types.
 
         Returns:
-            Dictionary containing analysis results and cache information
+            dict[str, Any]: Dictionary containing analysis results, cache usage
+                information, and performance metrics.
 
         """
         results: dict[str, Any] = {
@@ -838,11 +755,12 @@ class IncrementalAnalysisManager:
         """Perform specific type of analysis on binary.
 
         Args:
-            binary_path: Path to binary file
-            analysis_type: Type of analysis to perform
+            binary_path: Path to binary file.
+            analysis_type: Type of analysis to perform.
 
         Returns:
-            Analysis results or None if failed
+            dict[str, Any] | None: Analysis results as a dictionary, or None
+                if analysis failed or analysis type is unknown.
 
         """
         try:
@@ -862,7 +780,16 @@ class IncrementalAnalysisManager:
             return None
 
     def _basic_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Perform basic file analysis."""
+        """Perform basic file analysis.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            dict[str, Any]: Dictionary containing file size, modification time,
+                hash, and analysis type.
+
+        """
         stat_info = Path(binary_path).stat()
         return {
             "file_size": stat_info.st_size,
@@ -872,7 +799,16 @@ class IncrementalAnalysisManager:
         }
 
     def _entropy_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Entropy analysis of binary."""
+        """Calculate entropy analysis of binary.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            dict[str, Any]: Dictionary containing entropy value, sample size,
+                and analysis type.
+
+        """
         try:
             with open(binary_path, "rb") as f:
                 data = f.read(8192)  # Sample first 8KB
@@ -901,7 +837,16 @@ class IncrementalAnalysisManager:
             return {"entropy": 0.0, "analysis_type": "entropy", "error": "Failed to read file"}
 
     def _strings_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Perform string extraction analysis."""
+        """Extract and analyze strings from binary.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            dict[str, Any]: Dictionary containing string count, sample strings,
+                and analysis type.
+
+        """
         try:
             import re
 
@@ -922,7 +867,16 @@ class IncrementalAnalysisManager:
             return {"strings_count": 0, "analysis_type": "strings", "error": "Failed to read file"}
 
     def _headers_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Perform basic headers analysis."""
+        """Analyze binary file headers to determine file type.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            dict[str, Any]: Dictionary containing file type, header bytes,
+                and analysis type.
+
+        """
         try:
             with open(binary_path, "rb") as f:
                 header = f.read(64)  # Read first 64 bytes
@@ -955,7 +909,10 @@ def run_analysis_manager(app: AppProtocol) -> None:
     This is the main entry point for the standalone incremental analysis feature.
 
     Args:
-        app: Main application instance
+        app: Main application instance.
+
+    Returns:
+        None.
 
     """
     if not PYQT_AVAILABLE or QMessageBox is None:

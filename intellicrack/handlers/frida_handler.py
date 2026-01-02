@@ -33,13 +33,9 @@ import subprocess
 import sys
 import time
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from intellicrack.utils.logger import log_all_methods, logger
-
-
-if TYPE_CHECKING:
-    from typing import TypeAlias
 
 
 # Frida availability detection and import handling (must come before terminal_manager to avoid circular imports)
@@ -1139,7 +1135,6 @@ except ImportError as e:
 
         Raises:
             ValueError: If process name not found.
-            TypeError: If target type is invalid.
 
         """
         device = get_local_device()
@@ -1175,6 +1170,9 @@ except ImportError as e:
         Returns:
             Process ID of spawned process.
 
+        Raises:
+            Exception: If process spawning fails.
+
         """
         device = get_local_device()
         return device.spawn(program, argv, envp, env, cwd)
@@ -1187,6 +1185,9 @@ except ImportError as e:
         Args:
             pid: Process ID to resume.
 
+        Returns:
+            None
+
         """
         device = get_local_device()
         return device.resume(pid)
@@ -1198,6 +1199,9 @@ except ImportError as e:
 
         Args:
             pid: Process ID to terminate.
+
+        Returns:
+            None
 
         """
         device = get_local_device()
@@ -1248,7 +1252,7 @@ except ImportError as e:
         kill = staticmethod(kill)
         enumerate_devices = staticmethod(enumerate_devices)
 
-    frida = FallbackFrida()  # type: ignore[assignment]
+    frida = FallbackFrida()
 
 
 # Export all Frida objects and availability flag

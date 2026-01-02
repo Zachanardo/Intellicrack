@@ -21,25 +21,19 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 
 
-# Set up package logger
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
-# Import reporting modules with error handling
 try:
     from .pdf_generator import PDFReportGenerator, run_report_generation
 except ImportError as e:
     logger.warning("Failed to import pdf_generator: %s", e)
 
-# Define package exports
-__all__ = [
-    # From pdf_generator
+__all__: list[str] = [
     "PDFReportGenerator",
     "run_report_generation",
 ]
 
-# Filter out items that are not available
 __all__ = [item for item in __all__ if item in locals()]
 
-# Package metadata
-__version__ = "0.1.0"
-__author__ = "Intellicrack Development Team"
+__version__: str = "0.1.0"
+__author__: str = "Intellicrack Development Team"

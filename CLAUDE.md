@@ -88,6 +88,11 @@ licensing systems by their own developers and security teams.
   emojis in any output.
 - **ALL code must include proper type hints and annotations** - Every function,
   method, and variable must have explicit type checking.
+- **Use Google-style docstrings** for all functions, methods, and classes
+- **ALL code must pass `ruff check`** - Lint all new and modified code with ruff
+  and fix all findings before considering work complete
+- **ALL code must be `mypy --strict` compliant** - Full strict mode type checking
+  with no errors
 - **Follow common development principles (where relevant) including:** •
   **SOLID** (Single Responsibility Principle, Open/Closed Principle, Liskov
   Substitution Principle, Interface Segregation Principle, and Dependency
@@ -140,10 +145,17 @@ production use.**
 
 ### User Clarification
 
-When receiving a work prompt, Claude must use the AskUserQuestion tool to obtain
-clarifying information before proceeding with implementation. Never assume
-details that weren't explicitly provided by the user - ask for specifics on
-architecture decisions, implementation approaches, or ambiguous requirements.
+**MANDATORY:** When the user **initiates a new task**, use the AskUserQuestion
+tool to gather clarifying information before implementation. This applies to new
+features, significant modifications, or ambiguous requirements. Ask about scope,
+approach, and constraints.
+
+This does NOT apply to mid-task feedback, critiques, or corrections - act on
+those directly without additional questions.
+
+**However**, if during a task you encounter ambiguity on approach, design choices,
+or how to handle variables/edge cases, NEVER assume - use AskUserQuestion to
+confirm the correct path forward.
 
 ### Error Handling
 

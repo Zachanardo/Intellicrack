@@ -23,15 +23,15 @@ class MemoryForensicsTool:
     """LLM tool for running memory forensics analysis using Volatility3"""
 
     def __init__(self) -> None:
-        """Initialize memory forensics tool"""
+        """Initialize memory forensics tool."""
         self.engine: Any | None = get_memory_forensics_engine()
         self.analysis_cache: dict[str, dict[str, Any]] = {}
 
     def get_tool_definition(self) -> dict[str, Any]:
-        """Get tool definition for LLM registration
+        """Get tool definition for LLM registration.
 
         Returns:
-            Tool definition dictionary
+            dict[str, Any]: Tool definition dictionary
 
         """
         return {
@@ -97,13 +97,16 @@ class MemoryForensicsTool:
         }
 
     def execute(self, **kwargs: Any) -> dict[str, Any]:
-        """Execute memory forensics analysis
+        """Execute memory forensics analysis.
 
         Args:
-            **kwargs: Tool parameters
+            **kwargs: Tool parameters including dump_path, analysis_profile, deep_analysis,
+                analyze_processes, analyze_network, analyze_modules, security_focus,
+                extract_strings, and detailed_output.
 
         Returns:
-            Analysis results dictionary
+            dict[str, Any]: Analysis results dictionary containing success status, artifacts,
+                and optional process, network, module, and security analysis data.
 
         """
         dump_path = kwargs.get("dump_path")
@@ -236,7 +239,16 @@ class MemoryForensicsTool:
             return {"success": False, "error": str(e)}
 
     def _format_processes(self, processes: list[Any], security_focus: bool) -> list[dict[str, Any]]:
-        """Format process information for LLM consumption"""
+        """Format process information for LLM consumption.
+
+        Args:
+            processes: List of process objects from memory analysis.
+            security_focus: If True, filter to only suspicious or hidden processes.
+
+        Returns:
+            list[dict[str, Any]]: Formatted process data for LLM consumption.
+
+        """
         formatted_processes = []
 
         for process in processes:
@@ -266,7 +278,16 @@ class MemoryForensicsTool:
         return formatted_processes
 
     def _format_network_connections(self, connections: list[Any], security_focus: bool) -> list[dict[str, Any]]:
-        """Format network connection information for LLM consumption"""
+        """Format network connection information for LLM consumption.
+
+        Args:
+            connections: List of network connection objects from memory analysis.
+            security_focus: If True, filter to only external connections.
+
+        Returns:
+            list[dict[str, Any]]: Formatted network connection data for LLM consumption.
+
+        """
         formatted_connections = []
 
         for conn in connections:
@@ -293,7 +314,16 @@ class MemoryForensicsTool:
         return formatted_connections
 
     def _format_modules(self, modules: list[Any], security_focus: bool) -> list[dict[str, Any]]:
-        """Format module information for LLM consumption"""
+        """Format module information for LLM consumption.
+
+        Args:
+            modules: List of module objects from memory analysis.
+            security_focus: If True, filter to only suspicious modules.
+
+        Returns:
+            list[dict[str, Any]]: Formatted module data for LLM consumption.
+
+        """
         formatted_modules = []
 
         for module in modules:
@@ -322,7 +352,15 @@ class MemoryForensicsTool:
         return formatted_modules
 
     def _format_security_findings(self, findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Format security findings for LLM consumption"""
+        """Format security findings for LLM consumption.
+
+        Args:
+            findings: List of security finding dictionaries from memory analysis.
+
+        Returns:
+            list[dict[str, Any]]: Formatted security findings for LLM consumption.
+
+        """
         return [
             {
                 "type": finding.get("type", "unknown"),
@@ -335,7 +373,17 @@ class MemoryForensicsTool:
         ]
 
     def _assess_security_posture(self, analysis_result: Any) -> dict[str, Any]:
-        """Assess overall security posture of the memory dump"""
+        """Assess overall security posture of the memory dump.
+
+        Args:
+            analysis_result: Analysis result object containing artifacts, processes, modules,
+                and network connection data.
+
+        Returns:
+            dict[str, Any]: Security assessment including overall_risk, indicators_count,
+                hidden_processes, suspicious_modules, risk_factors, and recommendations.
+
+        """
         assessment = {
             "overall_risk": "low",
             "indicators_count": len(analysis_result.security_findings),
@@ -393,14 +441,15 @@ class MemoryForensicsTool:
         return assessment
 
     def analyze_specific_process(self, dump_path: str, process_id: int) -> dict[str, Any]:
-        """Analyze a specific process from memory dump
+        """Analyze a specific process from memory dump.
 
         Args:
-            dump_path: Path to memory dump
-            process_id: Process ID to analyze
+            dump_path: Path to memory dump file.
+            process_id: Process ID to analyze.
 
         Returns:
-            Process-specific analysis results
+            dict[str, Any]: Process-specific analysis results including success status,
+                process_id, dump_path, and analysis_result.
 
         """
         try:
@@ -425,5 +474,10 @@ class MemoryForensicsTool:
 
 
 def create_memory_forensics_tool() -> MemoryForensicsTool:
-    """Factory function to create memory forensics tool"""
+    """Factory function to create memory forensics tool.
+
+    Returns:
+        MemoryForensicsTool: Initialized memory forensics tool instance.
+
+    """
     return MemoryForensicsTool()

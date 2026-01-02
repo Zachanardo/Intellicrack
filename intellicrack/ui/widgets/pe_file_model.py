@@ -29,7 +29,20 @@ except ImportError as e:
 
 @dataclass
 class FileStructure:
-    """Provide file structure information."""
+    """Represent a file structure component with metadata and properties.
+
+    Contains information about a specific structure within a binary file,
+    such as headers, sections, or data directories, including its location,
+    size, and associated properties.
+
+    Attributes:
+        name: Name identifying the structure component.
+        offset: File offset where this structure begins.
+        size: Size in bytes of this structure.
+        description: Human-readable description of the structure.
+        structure_type: Classification of structure (header, section, directory, etc.).
+        properties: Dictionary mapping property names to property values.
+    """
 
     name: str
     offset: int
@@ -41,7 +54,20 @@ class FileStructure:
 
 @dataclass
 class SectionInfo:
-    """PE section information."""
+    """Encapsulate PE section information and permission attributes.
+
+    Stores metadata about a PE section including its virtual and raw addresses,
+    sizes, and characteristics, with helper properties for permission checking.
+
+    Attributes:
+        name: Section name as a null-terminated string.
+        virtual_address: Virtual address of the section in memory.
+        virtual_size: Size of the section in memory.
+        raw_offset: File offset of the section's raw data.
+        raw_size: Size of the section's raw data in the file.
+        characteristics: Section characteristics flags (executable, writable, readable).
+        entropy: Calculated Shannon entropy of the section data, or None if not calculated.
+    """
 
     name: str
     virtual_address: int
@@ -53,23 +79,46 @@ class SectionInfo:
 
     @property
     def is_executable(self) -> bool:
-        """Check if section is executable."""
+        """Check if section is executable.
+
+        Returns:
+            True if section has execute permissions, False otherwise.
+        """
         return bool(self.characteristics & 0x20000000)  # IMAGE_SCN_MEM_EXECUTE
 
     @property
     def is_writable(self) -> bool:
-        """Check if section is writable."""
+        """Check if section is writable.
+
+        Returns:
+            True if section has write permissions, False otherwise.
+        """
         return bool(self.characteristics & 0x80000000)  # IMAGE_SCN_MEM_WRITE
 
     @property
     def is_readable(self) -> bool:
-        """Check if section is readable."""
+        """Check if section is readable.
+
+        Returns:
+            True if section has read permissions, False otherwise.
+        """
         return bool(self.characteristics & 0x40000000)  # IMAGE_SCN_MEM_READ
 
 
 @dataclass
 class ImportInfo:
-    """Import information."""
+    """Represent a PE import table entry with function resolution details.
+
+    Stores information about an imported function including the source DLL,
+    function name, ordinal, virtual address, and hint value for lookup optimization.
+
+    Attributes:
+        dll_name: Name of the DLL exporting the function.
+        function_name: Name of the imported function.
+        ordinal: Function ordinal for ordinal-based imports, or None for name-based imports.
+        address: Virtual address of the imported function.
+        hint: Import name table index for optimization, or None if not available.
+    """
 
     dll_name: str
     function_name: str
@@ -80,7 +129,17 @@ class ImportInfo:
 
 @dataclass
 class ExportInfo:
-    """Export information."""
+    """Represent a PE export table entry with forwarding information.
+
+    Stores metadata about an exported function including its name, ordinal,
+    virtual address, and optional forwarder reference for re-export handling.
+
+    Attributes:
+        function_name: Name of the exported function.
+        ordinal: Ordinal number assigned to the function in the export table.
+        address: Virtual address of the exported function.
+        forwarder: Optional re-export reference in the format "DLL.Function" or None.
+    """
 
     function_name: str
     ordinal: int
@@ -89,10 +148,25 @@ class ExportInfo:
 
 
 class BinaryFileModel(ABC):
-    """Abstract base class for binary file models."""
+    """Abstract base class for binary file format models.
+
+    Defines the interface for parsing and analyzing different binary file formats,
+    with methods for RVA/offset conversion, section retrieval, and structure extraction.
+    Subclasses must implement format-specific parsing logic.
+    """
 
     def __init__(self, file_path: str) -> None:
-        """Initialize binary file model with file path validation and basic file information."""
+        """Initialize binary file model with file path validation and basic file information.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+
+        Raises:
+            FileNotFoundError: If the specified file does not exist.
+
+        Returns:
+            None.
+        """
         self.file_path = Path(file_path)
         if not self.file_path.exists():
             error_msg = f"File not found: {file_path}"
@@ -104,30 +178,77 @@ class BinaryFileModel(ABC):
 
     @abstractmethod
     def parse_file(self) -> None:
-        """Parse the binary file structure."""
+        """Parse the binary file structure.
+
+        Parses format-specific headers, sections, imports, exports, and other
+        structural information from the binary file.
+
+        Raises:
+            Exception: If parsing fails or the file format is invalid.
+        """
 
     @abstractmethod
     def rva_to_offset(self, rva: int) -> int | None:
-        """Convert RVA to file offset."""
+        """Convert RVA to file offset.
+
+        Args:
+            rva: Relative Virtual Address to convert.
+
+        Returns:
+            File offset corresponding to the RVA, or None if conversion fails.
+        """
 
     @abstractmethod
     def offset_to_rva(self, offset: int) -> int | None:
-        """Convert file offset to RVA."""
+        """Convert file offset to RVA.
+
+        Args:
+            offset: File offset to convert.
+
+        Returns:
+            Relative Virtual Address corresponding to the offset, or None if conversion fails.
+        """
 
     @abstractmethod
     def get_sections(self) -> list[SectionInfo]:
-        """Get file sections."""
+        """Get file sections.
+
+        Returns:
+            list[SectionInfo]: List of section information objects from the binary file.
+        """
 
     @abstractmethod
     def get_structures(self) -> list[FileStructure]:
-        """Get file structures for tree view."""
+        """Get file structures for tree view.
+
+        Returns:
+            list[FileStructure]: List of file structure objects for hierarchical visualization.
+        """
 
 
 class PEFileModel(BinaryFileModel):
-    """PE file model with comprehensive structure parsing."""
+    """PE file model implementing comprehensive Portable Executable format parsing.
+
+    Provides complete analysis of PE structures including headers, sections,
+    imports, exports, and digital certificates with RVA/offset conversion capabilities.
+    Requires the pefile library for PE parsing functionality.
+    """
 
     def __init__(self, file_path: str) -> None:
-        """Initialize PE file model with comprehensive analysis of Portable Executable structure."""
+        """Initialize PE file model with comprehensive analysis of Portable Executable structure.
+
+        Parses the PE file immediately upon initialization, loading all structural
+        information including headers, sections, imports, exports, and certificates.
+
+        Args:
+            file_path: Path to the PE file to analyze.
+
+        Raises:
+            ImportError: If pefile library is not available for PE parsing.
+
+        Returns:
+            None.
+        """
         super().__init__(file_path)
 
         if not PEFILE_AVAILABLE:
@@ -148,7 +269,18 @@ class PEFileModel(BinaryFileModel):
         self.parse_file()
 
     def parse_file(self) -> None:
-        """Parse PE file structure."""
+        """Parse PE file structure and populate internal data structures.
+
+        Performs comprehensive parsing of the PE file including DOS header,
+        NT headers, sections, imports, exports, certificates, and builds
+        a hierarchical structure tree for visualization.
+
+        Raises:
+            Exception: If PE file parsing fails or the PE library encounters errors.
+
+        Returns:
+            None.
+        """
         try:
             logger.debug("Parsing PE file: %s", self.file_path)
 
@@ -184,7 +316,11 @@ class PEFileModel(BinaryFileModel):
             raise
 
     def _parse_sections(self) -> None:
-        """Parse PE sections."""
+        """Parse PE sections from the loaded PE object.
+
+        Extracts all sections from the PE file and calculates entropy for
+        each section containing raw data. Populates self.sections list.
+        """
         self.sections = []
 
         if self.pe is None:
@@ -207,7 +343,14 @@ class PEFileModel(BinaryFileModel):
             self.sections.append(section_info)
 
     def _calculate_section_entropy(self, section: SectionInfo) -> float:
-        """Calculate entropy for a section."""
+        """Calculate entropy for a section.
+
+        Args:
+            section: Section information object to analyze.
+
+        Returns:
+            Shannon entropy value for the section data (0.0-8.0 range).
+        """
         try:
             with open(self.file_path, "rb") as f:
                 f.seek(section.raw_offset)
@@ -240,7 +383,12 @@ class PEFileModel(BinaryFileModel):
             return 0.0
 
     def _parse_imports(self) -> None:
-        """Parse PE imports."""
+        """Parse PE imports from import address table.
+
+        Extracts all imported functions from the PE import directory,
+        including DLL names, function names, ordinals, and addresses.
+        Populates self.imports list. Handles missing import directories gracefully.
+        """
         self.imports = []
 
         if self.pe is None or not hasattr(self.pe, "DIRECTORY_ENTRY_IMPORT"):
@@ -262,9 +410,15 @@ class PEFileModel(BinaryFileModel):
 
         except Exception as e:
             logger.warning("Failed to parse imports: %s", e, exc_info=True)
+            return
 
     def _parse_exports(self) -> None:
-        """Parse PE exports."""
+        """Parse PE exports from export address table.
+
+        Extracts all exported functions from the PE export directory,
+        including function names, ordinals, addresses, and forwarders.
+        Populates self.exports list. Handles missing export directories gracefully.
+        """
         self.exports = []
 
         if self.pe is None or not hasattr(self.pe, "DIRECTORY_ENTRY_EXPORT"):
@@ -282,18 +436,30 @@ class PEFileModel(BinaryFileModel):
 
         except Exception as e:
             logger.warning("Failed to parse exports: %s", e, exc_info=True)
+            return
 
     def _extract_certificates(self) -> None:
-        """Extract digital certificates from PE file."""
+        """Extract digital certificates from PE file.
+
+        Extracts certificate information from the PE Authenticode data directory
+        and populates self.certificates with CodeSigningInfo containing signing details,
+        trust status, and certificate chain information. Handles extraction failures gracefully.
+        """
         try:
             self.certificates = extract_pe_certificates(str(self.file_path))
             logger.debug("Certificate extraction completed. Signed: %s", self.certificates.is_signed)
         except Exception as e:
             logger.warning("Failed to extract certificates: %s", e, exc_info=True)
             self.certificates = CodeSigningInfo(is_signed=False)
+            return
 
     def _build_structures(self) -> None:
-        """Build structure hierarchy for tree view."""
+        """Build structure hierarchy for tree view visualization.
+
+        Constructs a hierarchical representation of the PE file structure including
+        DOS header, NT headers, sections, and data directories. Populates self.structures
+        with FileStructure objects containing metadata and properties for visualization.
+        """
         self.structures = []
 
         if self.pe is None:
@@ -401,7 +567,14 @@ class PEFileModel(BinaryFileModel):
             # pylint: enable=no-member
 
     def rva_to_offset(self, rva: int) -> int | None:
-        """Convert RVA to file offset."""
+        """Convert RVA to file offset.
+
+        Args:
+            rva: Relative Virtual Address to convert.
+
+        Returns:
+            File offset corresponding to the RVA, or None if conversion fails or PE is not loaded.
+        """
         if not self.pe:
             return None
 
@@ -415,7 +588,14 @@ class PEFileModel(BinaryFileModel):
             return None
 
     def offset_to_rva(self, offset: int) -> int | None:
-        """Convert file offset to RVA."""
+        """Convert file offset to RVA.
+
+        Args:
+            offset: File offset to convert.
+
+        Returns:
+            Relative Virtual Address corresponding to the offset, or None if conversion fails or PE is not loaded.
+        """
         if not self.pe:
             return None
 
@@ -429,49 +609,110 @@ class PEFileModel(BinaryFileModel):
             return None
 
     def get_sections(self) -> list[SectionInfo]:
-        """Get PE sections."""
+        """Get PE sections.
+
+        Returns:
+            List of section information objects containing virtual/raw addresses,
+            sizes, characteristics, and entropy values.
+        """
         return self.sections
 
     def get_structures(self) -> list[FileStructure]:
-        """Get file structures for tree view."""
+        """Get file structures for tree view.
+
+        Returns:
+            List of file structure objects for hierarchical visualization including
+            headers, sections, and data directories.
+        """
         return self.structures
 
     def get_imports(self) -> list[ImportInfo]:
-        """Get PE imports."""
+        """Get all PE imported functions.
+
+        Returns:
+            List of import information objects containing DLL names, function names,
+            ordinals, and addresses.
+        """
         return self.imports
 
     def get_exports(self) -> list[ExportInfo]:
-        """Get PE exports."""
+        """Get all PE exported functions.
+
+        Returns:
+            List of export information objects containing function names, ordinals,
+            addresses, and forwarder references.
+        """
         return self.exports
 
     def get_certificates(self) -> CodeSigningInfo | None:
-        """Get digital certificate information."""
+        """Get digital certificate information.
+
+        Returns:
+            CodeSigningInfo object with certificate details, trust status, and
+            certificate chain, or None if not extracted.
+        """
         return self.certificates
 
     def get_section_at_rva(self, rva: int) -> SectionInfo | None:
-        """Get section containing the given RVA."""
+        """Get section containing the given RVA.
+
+        Args:
+            rva: Relative Virtual Address to search for.
+
+        Returns:
+            Section information object containing the RVA, or None if no section
+            contains the specified address.
+        """
         return next(
             (section for section in self.sections if section.virtual_address <= rva < section.virtual_address + section.virtual_size),
             None,
         )
 
     def get_section_at_offset(self, offset: int) -> SectionInfo | None:
-        """Get section containing the given file offset."""
+        """Get section containing the given file offset.
+
+        Args:
+            offset: File offset to search for.
+
+        Returns:
+            Section information object containing the offset, or None if no section
+            contains the specified offset.
+        """
         return next(
             (section for section in self.sections if section.raw_offset <= offset < section.raw_offset + section.raw_size),
             None,
         )
 
     def is_valid_rva(self, rva: int) -> bool:
-        """Check if RVA is valid."""
+        """Check if RVA is valid.
+
+        Args:
+            rva: Relative Virtual Address to validate.
+
+        Returns:
+            True if the RVA can be converted to a valid file offset, False otherwise.
+        """
         return self.rva_to_offset(rva) is not None
 
     def is_valid_offset(self, offset: int) -> bool:
-        """Check if file offset is valid."""
+        """Check if file offset is valid.
+
+        Args:
+            offset: File offset to validate.
+
+        Returns:
+            True if the offset is within the file bounds, False otherwise.
+        """
         return 0 <= offset < self.file_size
 
     def get_file_info(self) -> dict[str, Any]:
-        """Get comprehensive file information."""
+        """Get comprehensive file information.
+
+        Returns:
+            Dictionary containing file metadata including path, size, image base,
+            entry point, section/import/export counts, machine type, timestamp,
+            parsing status, and digital signing information.
+        """
         info = {
             "file_path": str(self.file_path),
             "file_size": self.file_size,
@@ -502,7 +743,20 @@ class PEFileModel(BinaryFileModel):
 
 
 def create_file_model(file_path: str) -> BinaryFileModel | None:
-    """Create appropriate file model."""
+    """Create appropriate file model based on binary file format.
+
+    Detects the file format by examining the file header and instantiates
+    the appropriate BinaryFileModel subclass for the detected format.
+    Currently supports PE (Portable Executable) format with extensibility
+    for ELF and other binary formats.
+
+    Args:
+        file_path: Path to the binary file to analyze.
+
+    Returns:
+        Appropriate BinaryFileModel instance for the detected file format
+        (e.g., PEFileModel), or None if the format is unsupported.
+    """
     try:
         # Check file format
         with open(file_path, "rb") as f:

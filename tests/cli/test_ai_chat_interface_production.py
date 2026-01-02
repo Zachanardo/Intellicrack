@@ -13,11 +13,68 @@ import json
 import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 
 from intellicrack.cli.ai_chat_interface import AITerminalChat, launch_ai_chat
+
+
+class FakeAIBackendChatWithContext:
+    """Fake AI backend that implements chat_with_context method."""
+
+    def __init__(self, response: str = "This is a test response") -> None:
+        self.response = response
+        self.call_count = 0
+        self.last_query: str | None = None
+        self.last_context: dict[str, Any] | None = None
+
+    def chat_with_context(self, query: str, context: dict[str, Any]) -> dict[str, str]:
+        self.call_count += 1
+        self.last_query = query
+        self.last_context = context
+        return {"response": self.response}
+
+
+class FakeAIBackendAnalyzeWithLLM:
+    """Fake AI backend that implements analyze_with_llm method."""
+
+    def __init__(self, response: str = "Detailed analysis response") -> None:
+        self.response = response
+        self.call_count = 0
+        self.last_query: str | None = None
+        self.last_context: dict[str, Any] | None = None
+
+    def analyze_with_llm(self, query: str, context: dict[str, Any]) -> dict[str, str]:
+        self.call_count += 1
+        self.last_query = query
+        self.last_context = context
+        return {"analysis": self.response}
+
+
+class FakeAIBackendAskQuestion:
+    """Fake AI backend that implements ask_question method."""
+
+    def __init__(self, response: str = "Simple answer") -> None:
+        self.response = response
+        self.call_count = 0
+        self.last_question: str | None = None
+
+    def ask_question(self, question: str) -> str:
+        self.call_count += 1
+        self.last_question = question
+        return self.response
+
+
+class FakeSaveConversation:
+    """Fake _save_conversation method for testing quit command."""
+
+    def __init__(self) -> None:
+        self.call_count = 0
+        self.last_args: list[Any] | None = None
+
+    def __call__(self, args: list[Any]) -> None:
+        self.call_count += 1
+        self.last_args = args
 
 
 class TestAITerminalChatInitialization:
@@ -123,7 +180,7 @@ class TestConversationHistoryManagement:
 
         chat = AITerminalChat(binary_path=str(test_binary), analysis_results=results)
         context = chat._build_context()
-        enriched = chat._prepare_enriched_context(context)
+        enriched = chat._prepare_enriched_context("analyze binary", context)
 
         assert "binary_analysis" in enriched
         assert enriched["binary_analysis"]["binary_name"] == "vuln_binary.exe"
@@ -153,10 +210,9 @@ class TestChatCommands:
         chat.conversation_history.append({"timestamp": "2024-01-01", "type": "user", "content": "test"})
         assert len(chat.conversation_history) == 1
 
-        result = chat._clear_history([])
+        chat._clear_history([])
 
         assert len(chat.conversation_history) == 0
-        assert result is None
 
     def test_save_conversation_creates_file(self, tmp_path: Path) -> None:
         chat = AITerminalChat()
@@ -169,10 +225,9 @@ class TestChatCommands:
         )
 
         output_file = tmp_path / "test_conversation.json"
-        result = chat._save_conversation([str(output_file)])
+        chat._save_conversation([str(output_file)])
 
         assert output_file.exists()
-        assert result is None
 
         with open(output_file) as f:
             data = json.load(f)
@@ -197,9 +252,8 @@ class TestChatCommands:
         with open(input_file, "w") as f:
             json.dump(conversation_data, f)
 
-        result = chat._load_conversation([str(input_file)])
+        chat._load_conversation([str(input_file)])
 
-        assert result is None
         assert len(chat.conversation_history) == 2
         assert chat.conversation_history[0]["content"] == "Test query"
         assert chat.conversation_history[1]["content"] == "Test response"
@@ -214,9 +268,8 @@ class TestChatCommands:
         )
 
         output_file = tmp_path / "export.txt"
-        result = chat._export_conversation(["txt", str(output_file)])
+        chat._export_conversation(["txt", str(output_file)])
 
-        assert result is None
         assert output_file.exists()
 
         content = output_file.read_text()
@@ -248,20 +301,20 @@ class TestChatCommands:
         test_binary.write_bytes(b"MZ\x90\x00")
 
         chat = AITerminalChat(binary_path=str(test_binary))
-        result = chat._show_context([])
+        chat._show_context([])
 
-        assert result is None
-
-    def test_quit_command_saves_auto_save(self, tmp_path: Path) -> None:
+    def test_quit_command_saves_auto_save(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         chat = AITerminalChat()
         chat.auto_save = True
         chat.conversation_history.append({"timestamp": "2024-01-01", "type": "user", "content": "test"})
 
-        with patch.object(chat, "_save_conversation") as mock_save:
-            result = chat._quit_chat([])
+        fake_save = FakeSaveConversation()
+        monkeypatch.setattr(chat, "_save_conversation", fake_save)
 
-            assert result == "quit"
-            mock_save.assert_called_once()
+        result = chat._quit_chat([])
+
+        assert result == "quit"
+        assert fake_save.call_count == 1
 
 
 class TestAIResponseProcessing:
@@ -279,41 +332,38 @@ class TestAIResponseProcessing:
     def test_get_ai_response_with_mock_backend(self) -> None:
         chat = AITerminalChat()
 
-        mock_backend = MagicMock()
-        mock_backend.chat_with_context.return_value = {"response": "This is a test response"}
-        chat.ai_backend = mock_backend
+        fake_backend = FakeAIBackendChatWithContext(response="This is a test response")
+        chat.ai_backend = fake_backend
 
         response = chat._get_ai_response("What vulnerabilities were found?")
 
         assert response == "This is a test response"
-        mock_backend.chat_with_context.assert_called_once()
+        assert fake_backend.call_count == 1
+        assert fake_backend.last_query == "What vulnerabilities were found?"
 
     def test_get_ai_response_with_analyze_llm_method(self) -> None:
         chat = AITerminalChat()
 
-        mock_backend = MagicMock()
-        del mock_backend.chat_with_context
-        mock_backend.analyze_with_llm.return_value = {"analysis": "Detailed analysis response"}
-        chat.ai_backend = mock_backend
+        fake_backend = FakeAIBackendAnalyzeWithLLM(response="Detailed analysis response")
+        chat.ai_backend = fake_backend
 
         response = chat._get_ai_response("Analyze this binary")
 
         assert response == "Detailed analysis response"
-        mock_backend.analyze_with_llm.assert_called_once()
+        assert fake_backend.call_count == 1
+        assert fake_backend.last_query == "Analyze this binary"
 
     def test_get_ai_response_with_ask_question_method(self) -> None:
         chat = AITerminalChat()
 
-        mock_backend = MagicMock()
-        del mock_backend.chat_with_context
-        del mock_backend.analyze_with_llm
-        mock_backend.ask_question.return_value = "Simple answer"
-        chat.ai_backend = mock_backend
+        fake_backend = FakeAIBackendAskQuestion(response="Simple answer")
+        chat.ai_backend = fake_backend
 
         response = chat._get_ai_response("Simple question")
 
         assert response == "Simple answer"
-        mock_backend.ask_question.assert_called_once()
+        assert fake_backend.call_count == 1
+        assert fake_backend.last_question == "Simple question"
 
     def test_infer_user_expertise_beginner(self) -> None:
         chat = AITerminalChat()
@@ -399,21 +449,54 @@ int main() { return 0; }
         assert result is not None
 
 
+class FakeAITerminalChatSuccess:
+    """Fake AITerminalChat that starts successfully."""
+
+    def __init__(self, binary_path: str | None = None, analysis_results: dict[str, Any] | None = None) -> None:
+        self.binary_path = binary_path
+        self.analysis_results = analysis_results
+        self.start_chat_session_called = False
+
+    def start_chat_session(self) -> None:
+        self.start_chat_session_called = True
+
+
+class FakeAITerminalChatFailure:
+    """Fake AITerminalChat that raises error on start."""
+
+    def __init__(self, binary_path: str | None = None, analysis_results: dict[str, Any] | None = None) -> None:
+        self.binary_path = binary_path
+        self.analysis_results = analysis_results
+
+    def start_chat_session(self) -> None:
+        raise RuntimeError("Test error")
+
+
 class TestLaunchAIChat:
     """Test AI chat launch function."""
 
-    def test_launch_ai_chat_initializes_successfully(self) -> None:
-        with patch.object(AITerminalChat, "start_chat_session") as mock_start:
-            result = launch_ai_chat(binary_path=None, analysis_results=None)
+    def test_launch_ai_chat_initializes_successfully(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        fake_chat_instance = FakeAITerminalChatSuccess()
 
-            assert result is True
-            mock_start.assert_called_once()
+        def fake_init(binary_path: str | None = None, analysis_results: dict[str, Any] | None = None) -> FakeAITerminalChatSuccess:
+            return fake_chat_instance
 
-    def test_launch_ai_chat_handles_exceptions(self) -> None:
-        with patch.object(AITerminalChat, "start_chat_session", side_effect=RuntimeError("Test error")):
-            result = launch_ai_chat()
+        monkeypatch.setattr("intellicrack.cli.ai_chat_interface.AITerminalChat", fake_init)
 
-            assert result is False
+        result = launch_ai_chat(binary_path=None, analysis_results=None)
+
+        assert result is True
+        assert fake_chat_instance.start_chat_session_called is True
+
+    def test_launch_ai_chat_handles_exceptions(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        def fake_init(binary_path: str | None = None, analysis_results: dict[str, Any] | None = None) -> FakeAITerminalChatFailure:
+            return FakeAITerminalChatFailure(binary_path, analysis_results)
+
+        monkeypatch.setattr("intellicrack.cli.ai_chat_interface.AITerminalChat", fake_init)
+
+        result = launch_ai_chat()
+
+        assert result is False
 
 
 class TestEndToEndConversation:
@@ -439,7 +522,7 @@ class TestEndToEndConversation:
         assert "binary_info" in context
         assert "analysis_summary" in context
 
-        enriched = chat._prepare_enriched_context(context)
+        enriched = chat._prepare_enriched_context("workflow test", context)
         assert "security_analysis" in enriched
         assert enriched["security_analysis"]["has_high"] is True
 

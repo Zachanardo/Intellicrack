@@ -520,7 +520,7 @@ class AdvancedToolDiscovery:
     search_cache: dict[str, dict[str, Any]]
 
     def __init__(self) -> None:
-        """Initialize tool discovery system."""
+        """Initialize the tool discovery system with validators and configuration."""
         self.validators = {
             "ghidra": ToolValidator.validate_ghidra,
             "radare2": ToolValidator.validate_radare2,
@@ -746,7 +746,7 @@ class AdvancedToolDiscovery:
         return tool_info
 
     def _search_in_path(self, executables: list[str]) -> str | None:
-        """Search for tool in PATH.
+        """Search for tool in PATH environment variable.
 
         Args:
             executables: List of executable names to search for.
@@ -892,7 +892,7 @@ class AdvancedToolDiscovery:
         return None
 
     def _get_installation_paths(self, tool_name: str) -> list[str]:
-        """Get tool-specific installation search paths.
+        """Get tool-specific installation search paths based on platform and tool type.
 
         Args:
             tool_name: Name of the tool to get paths for.
@@ -1026,7 +1026,7 @@ class AdvancedToolDiscovery:
         return paths
 
     def _validate_and_populate(self, tool_path: str, tool_name: str) -> dict[str, Any]:
-        """Validate tool and populate information.
+        """Validate tool and populate information with validation results.
 
         Args:
             tool_path: Path to the tool executable.

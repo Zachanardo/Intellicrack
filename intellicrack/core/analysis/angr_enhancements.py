@@ -27,13 +27,9 @@ import hashlib
 import logging
 import time
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
 from intellicrack.utils.type_safety import validate_type
-
-
-if TYPE_CHECKING:
-    from claripy.ast.bv import BV
 
 
 class ExplorationTechniqueBase:
@@ -210,7 +206,7 @@ class LicensePathPrioritizer(ExplorationTechniqueBase):
             state: Angr execution state to score
 
         Returns:
-            float: Prioritization score (higher = more relevant to licensing)
+            Prioritization score (higher = more relevant to licensing).
 
         """
         score = 0.0
@@ -260,7 +256,7 @@ class LicensePathPrioritizer(ExplorationTechniqueBase):
             state: Angr execution state to check for loops
 
         Returns:
-            float: Loop penalty score (higher penalty = more iterations detected)
+            Loop penalty score (higher penalty = more iterations detected).
 
         """
         penalty = 0.0
@@ -291,7 +287,7 @@ class LicensePathPrioritizer(ExplorationTechniqueBase):
             state: Angr execution state to hash
 
         Returns:
-            str: 16-character hexadecimal SHA256 hash of state characteristics
+            16-character hexadecimal SHA256 hash of state characteristics.
 
         """
         try:
@@ -381,6 +377,9 @@ class ConstraintOptimizer(ExplorationTechniqueBase):
         Args:
             state: Angr execution state with constraints to optimize
 
+        Returns:
+            None.
+
         """
         if not hasattr(state, "solver") or not state.solver.constraints:
             return
@@ -414,7 +413,7 @@ class ConstraintOptimizer(ExplorationTechniqueBase):
             constraints: Sequence of constraints to hash
 
         Returns:
-            str: 16-character hexadecimal SHA256 hash of constraint set
+            16-character hexadecimal SHA256 hash of constraint set.
 
         """
         constraint_strs = [str(c) for c in constraints[:50]]
@@ -483,7 +482,7 @@ class StateMerger(ExplorationTechniqueBase):
             states: Sequence of execution states to group
 
         Returns:
-            List of state groups suitable for merging
+            List of state groups suitable for merging.
 
         """
         addr_groups = defaultdict(list)
@@ -503,7 +502,7 @@ class StateMerger(ExplorationTechniqueBase):
             states: States to merge into a single representative state
 
         Returns:
-            Merged state or None if merge fails
+            Merged state or None if merge fails.
 
         """
         if not states:
@@ -581,7 +580,7 @@ class CryptVerifySignature(WindowsLicensingSimProcedure):
             dwFlags: Verification flags
 
         Returns:
-            int: 1 (TRUE) indicating successful verification
+            1 (TRUE) indicating successful verification.
 
         """
         self.logger.info("CryptVerifySignature called at %s", hex(self.state.addr))
@@ -634,7 +633,7 @@ class WinVerifyTrust(WindowsLicensingSimProcedure):
             pWinTrustData: Pointer to WINTRUST_DATA structure
 
         Returns:
-            int: 0 (ERROR_SUCCESS) indicating verified trust status
+            0 (ERROR_SUCCESS) indicating verified trust status.
 
         """
         self.logger.info("WinVerifyTrust called at %s", hex(self.state.addr))
@@ -684,7 +683,7 @@ class RegQueryValueExW(WindowsLicensingSimProcedure):
             lpcbData: Pointer to data size
 
         Returns:
-            int: 0 (ERROR_SUCCESS) indicating successful registry query
+            0 (ERROR_SUCCESS) indicating successful registry query.
 
         """
         self.logger.info("RegQueryValueExW called at %s", hex(self.state.addr))
@@ -747,7 +746,7 @@ class RegOpenKeyExW(WindowsLicensingSimProcedure):
             phkResult: Pointer to output key handle
 
         Returns:
-            int: 0 (ERROR_SUCCESS) indicating successful key open
+            0 (ERROR_SUCCESS) indicating successful key open.
 
         """
         self.logger.info("RegOpenKeyExW called at %s", hex(self.state.addr))
@@ -809,7 +808,7 @@ class GetVolumeInformationW(WindowsLicensingSimProcedure):
             nFileSystemNameSize: Filesystem name buffer size
 
         Returns:
-            int: 1 (TRUE) indicating successful volume information retrieval
+            1 (TRUE) indicating successful volume information retrieval.
 
         """
         self.logger.info("GetVolumeInformationW called at %s", hex(self.state.addr))
@@ -851,7 +850,7 @@ class CreateFileW(WindowsLicensingSimProcedure):
             hTemplateFile: Template file handle
 
         Returns:
-            Any: File handle for opened file
+            File handle for opened file.
 
         """
         self.logger.info("CreateFileW called at %s", hex(self.state.addr))
@@ -960,7 +959,7 @@ class ReadFile(WindowsLicensingSimProcedure):
             lpOverlapped: Pointer to overlapped I/O structure
 
         Returns:
-            int: 1 (TRUE) indicating successful file read
+            1 (TRUE) indicating successful file read.
 
         """
         self.logger.info("ReadFile called at %s", hex(self.state.addr))
@@ -1019,7 +1018,7 @@ class WriteFile(WindowsLicensingSimProcedure):
             lpOverlapped: Pointer to overlapped I/O structure
 
         Returns:
-            int: 1 (TRUE) indicating successful file write
+            1 (TRUE) indicating successful file write.
 
         """
         self.logger.info("WriteFile called at %s", hex(self.state.addr))
@@ -1071,7 +1070,7 @@ class GetComputerNameW(WindowsLicensingSimProcedure):
             nSize: Size of buffer or pointer to name length
 
         Returns:
-            int: 1 (TRUE) indicating successful name retrieval
+            1 (TRUE) indicating successful name retrieval.
 
         """
         self.logger.info("GetComputerNameW called at %s", hex(self.state.addr))
@@ -1102,6 +1101,9 @@ class GetSystemTime(WindowsLicensingSimProcedure):
         Args:
             lpSystemTime: Pointer to SYSTEMTIME structure output
 
+        Returns:
+            None.
+
         """
         self.logger.info("GetSystemTime called at %s", hex(self.state.addr))
 
@@ -1130,7 +1132,7 @@ class GetTickCount(WindowsLicensingSimProcedure):
         license validation checks and timing attack detection logic.
 
         Returns:
-            object: Symbolic bitvector representing system tick count
+            Any: Symbolic bitvector representing system tick count
 
         """
         self.logger.info("GetTickCount called at %s", hex(self.state.addr))
@@ -1159,7 +1161,7 @@ class VirtualAlloc(WindowsLicensingSimProcedure):
             flProtect: Memory protection flags
 
         Returns:
-            Any: Allocated memory address or symbolic value
+            Allocated memory address or symbolic value.
 
         """
         self.logger.info("VirtualAlloc called at %s", hex(self.state.addr))
@@ -1248,7 +1250,7 @@ class VirtualFree(WindowsLicensingSimProcedure):
             dwFreeType: Deallocation type flags
 
         Returns:
-            int: 1 (TRUE) indicating successful deallocation
+            1 (TRUE) indicating successful deallocation.
 
         """
         self.logger.info("VirtualFree called at %s", hex(self.state.addr))
@@ -1298,7 +1300,7 @@ class NtQueryInformationProcess(WindowsLicensingSimProcedure):
             ReturnLength: Pointer to actual data length returned
 
         Returns:
-            int: 0 (STATUS_SUCCESS) indicating successful query
+            0 (STATUS_SUCCESS) indicating successful query.
 
         """
         self.logger.info("NtQueryInformationProcess called at %s", hex(self.state.addr))
@@ -1355,7 +1357,7 @@ class MessageBoxA(WindowsLicensingSimProcedure):
             uType: Message box type and button flags
 
         Returns:
-            int: 1 (IDOK) indicating user clicked OK button
+            1 (IDOK) indicating user clicked OK button.
 
         """
         self.logger.info("MessageBoxA called at %s", hex(self.state.addr))
@@ -1439,7 +1441,7 @@ class Socket(WindowsLicensingSimProcedure):
             protocol: Protocol type (IPPROTO_TCP, IPPROTO_UDP, etc.)
 
         Returns:
-            object: Symbolic bitvector representing socket descriptor
+            Any: Symbolic bitvector representing socket descriptor.
 
         """
         self.logger.info("socket called at %s", hex(self.state.addr))
@@ -1477,7 +1479,7 @@ class Connect(WindowsLicensingSimProcedure):
             namelen: Size of sockaddr structure
 
         Returns:
-            int: 0 (SUCCESS) indicating successful connection
+            0 (SUCCESS) indicating successful connection.
 
         """
         self.logger.info("connect called at %s", hex(self.state.addr))
@@ -1530,7 +1532,7 @@ class Send(WindowsLicensingSimProcedure):
             flags: Send operation flags
 
         Returns:
-            object: Number of bytes sent
+            Any: Number of bytes sent or symbolic value if symbolic.
 
         """
         self.logger.info("send called at %s", hex(self.state.addr))
@@ -1556,7 +1558,7 @@ class Recv(WindowsLicensingSimProcedure):
             flags: Receive operation flags
 
         Returns:
-            Any: Number of bytes received
+            Number of bytes received.
 
         """
         self.logger.info("recv called at %s", hex(self.state.addr))
@@ -1584,7 +1586,7 @@ def install_license_simprocedures(project: Any) -> int:
         project: Angr project to install simprocedures on
 
     Returns:
-        int: Number of successfully installed simprocedures
+        Number of successfully installed simprocedures.
 
     """
     logger = logging.getLogger("IntellicrackLogger.SimProcedureInstaller")
@@ -1662,7 +1664,7 @@ class LicenseValidationDetector:
             state: Angr state to analyze
 
         Returns:
-            dict: Validation detection results with type, confidence, and evidence
+            Validation detection results with type, confidence, and evidence.
 
         """
         results: dict[str, Any] = {"validation_type": None, "confidence": 0.0, "evidence": []}
@@ -1700,7 +1702,7 @@ class LicenseValidationDetector:
             pattern: Byte pattern to search for
 
         Returns:
-            List of memory addresses where pattern was found
+            List of memory addresses where pattern was found.
 
         """
         matches: list[str] = []
@@ -1731,7 +1733,7 @@ class LicenseValidationDetector:
             constraints: Set of symbolic constraints to analyze
 
         Returns:
-            float: Confidence score for license validation indicators
+            Confidence score for license validation indicators.
 
         """
         score = 0.0
@@ -1759,7 +1761,7 @@ def create_enhanced_simgr(project: Any, initial_state: Any, *, enable_state_merg
         enable_state_merging: Enable state merging to reduce path explosion
 
     Returns:
-        Configured exploration manager with advanced exploration techniques
+        Configured exploration manager with advanced exploration techniques.
 
     """
     logger = logging.getLogger("IntellicrackLogger.EnhancedSimGr")

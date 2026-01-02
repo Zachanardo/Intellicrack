@@ -63,7 +63,7 @@ class TestChecksumCalculation:
         worker = ChecksumWorker(data=test_data)
         worker.set_algorithms(["md5"])
 
-        results = {}
+        results: dict[str, str] = {}
         worker.result.connect(results.update)
         worker.run()
 
@@ -78,7 +78,7 @@ class TestChecksumCalculation:
         worker = ChecksumWorker(data=test_data)
         worker.set_algorithms(["sha256"])
 
-        results = {}
+        results: dict[str, str] = {}
         worker.result.connect(results.update)
         worker.run()
 
@@ -92,7 +92,7 @@ class TestChecksumCalculation:
         worker = ChecksumWorker(data=test_data)
         worker.set_algorithms(["md5", "sha1", "sha256"])
 
-        results = {}
+        results: dict[str, str] = {}
         worker.result.connect(results.update)
         worker.run()
 
@@ -116,7 +116,7 @@ class TestChecksumCalculation:
             worker = ChecksumWorker(file_path=tmp_path)
             worker.set_algorithms(["md5"])
 
-            results = {}
+            results: dict[str, str] = {}
             worker.result.connect(results.update)
             worker.run()
 
@@ -153,7 +153,7 @@ class TestChecksumWorkerEdgeCases:
         worker = ChecksumWorker(data=empty_data)
         worker.set_algorithms(["md5"])
 
-        results = {}
+        results: dict[str, str] = {}
         worker.result.connect(results.update)
         worker.run()
 
@@ -167,7 +167,7 @@ class TestChecksumWorkerEdgeCases:
         worker = ChecksumWorker(data=large_data)
         worker.set_algorithms(["sha256"])
 
-        results = {}
+        results: dict[str, str] = {}
         worker.result.connect(results.update)
         worker.run()
 
@@ -178,7 +178,7 @@ class TestChecksumWorkerEdgeCases:
         worker = ChecksumWorker(file_path="D:\nonexistent\file.bin")
         worker.set_algorithms(["md5"])
 
-        results = {}
+        results: dict[str, str] = {}
         worker.result.connect(results.update)
         worker.run()
 
@@ -220,7 +220,7 @@ class TestChecksumAlgorithmSupport:
         worker = ChecksumWorker(data=test_data)
         worker.set_algorithms(["crc32"])
 
-        results = {}
+        results: dict[str, str] = {}
         worker.result.connect(results.update)
         worker.run()
 

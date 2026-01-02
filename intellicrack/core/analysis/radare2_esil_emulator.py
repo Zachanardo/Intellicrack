@@ -359,6 +359,7 @@ class RadareESILEmulator:
 
         Raises:
             RuntimeError: If register read fails
+            TypeError: If radare2 returns unexpected result type
 
         """
         with self._lock:
@@ -419,6 +420,7 @@ class RadareESILEmulator:
 
         Raises:
             RuntimeError: If memory read fails
+            TypeError: If radare2 returns unexpected result type
 
         """
         with self._lock:
@@ -498,6 +500,9 @@ class RadareESILEmulator:
         Args:
             address: Address of breakpoint to remove
 
+        Returns:
+            None
+
         """
         with self._lock:
             if address in self.breakpoints:
@@ -512,8 +517,12 @@ class RadareESILEmulator:
         """Add ESIL operation hook.
 
         Args:
-            hook_type: Type of operation to hook (e.g., 'mem_read', 'mem_write', 'reg_write')
+            hook_type: Type of operation to hook (e.g., 'mem_read',
+                'mem_write', 'reg_write')
             callback: Callback function
+
+        Returns:
+            None
 
         """
         with self._lock:
@@ -528,6 +537,9 @@ class RadareESILEmulator:
         Args:
             address: Starting address of taint source
             size: Size of taint region in bytes
+
+        Returns:
+            None
 
         """
         with self._lock:
@@ -547,6 +559,7 @@ class RadareESILEmulator:
 
         Raises:
             RuntimeError: If step execution fails
+            TypeError: If instruction info contains invalid format
 
         """
         with self._lock:
@@ -879,6 +892,10 @@ class RadareESILEmulator:
         Returns:
             Evaluation result
 
+        Raises:
+            TypeError: If variable name encountered in AST (unsafe operation)
+            ValueError: If unsupported AST node type is encountered
+
         """
         if isinstance(node, ast.Expression):
             return self._eval_node(node.body)
@@ -1008,6 +1025,7 @@ class RadareESILEmulator:
 
         Raises:
             RuntimeError: If emulation fails
+            TypeError: If target string cannot be resolved to address
 
         """
         trace: list[dict[str, Any]] = []
@@ -1336,6 +1354,10 @@ class RadareESILEmulator:
 
         This method should be called when done with the emulator to properly
         release resources and return sessions to the pool.
+
+        Returns:
+            None
+
         """
         with self._lock:
             if self.session:
@@ -1368,6 +1390,9 @@ class RadareESILEmulator:
             exc_type: Exception type
             exc_val: Exception value
             exc_tb: Exception traceback
+
+        Returns:
+            None
 
         """
         self.cleanup()

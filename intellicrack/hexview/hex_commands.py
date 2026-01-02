@@ -859,7 +859,12 @@ class CommandManager:
         return self.current_index < len(self.command_history) - 1
 
     def clear_history(self) -> None:
-        """Clear the command history."""
+        """Clear the command history.
+
+        Removes all commands from the history and resets the current index.
+        After calling this, both undo and redo operations will be unavailable.
+
+        """
         self.command_history.clear()
         self.current_index = -1
         logger.debug("Cleared command history")

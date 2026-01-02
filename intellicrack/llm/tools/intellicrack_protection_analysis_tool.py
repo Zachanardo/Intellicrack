@@ -26,19 +26,31 @@ logger = get_logger(__name__)
 
 
 class DIEAnalysisTool:
-    """LLM tool for running protection analysis and interpreting results"""
+    """LLM tool for running protection analysis and interpreting results.
+
+    This tool provides AI models with the ability to run comprehensive protection
+    analysis on binary files, detecting packers, protectors, cryptors, licensing
+    schemes, DRM, and hardware dongles. Results are formatted for LLM consumption
+    with bypass recommendations and vulnerability analysis.
+    """
 
     def __init__(self) -> None:
-        """Initialize protection analysis tool"""
+        """Initialize protection analysis tool.
+
+        Sets up detector, analysis cache, and AI assistant components for
+        comprehensive protection detection and LLM-based analysis.
+
+        """
         self.detector: IntellicrackAdvancedProtection = IntellicrackAdvancedProtection()
         self.analysis_cache: dict[str, dict[str, Any]] = {}
         self.ai_assistant: IntellicrackAIAssistant = IntellicrackAIAssistant()
 
     def get_tool_definition(self) -> dict[str, Any]:
-        """Get tool definition for LLM registration
+        """Get tool definition for LLM registration.
 
         Returns:
-            Tool definition dictionary
+            dict[str, Any]: Tool definition dictionary containing name, description,
+                and parameters schema for LLM integration.
 
         """
         return {
@@ -84,13 +96,21 @@ class DIEAnalysisTool:
         }
 
     def execute(self, **kwargs: Any) -> dict[str, Any]:
-        """Execute DIE analysis
+        """Execute protection detection and analysis workflow.
 
         Args:
-            **kwargs: Tool parameters
+            **kwargs: Tool parameters including:
+                - file_path (str): Path to the binary file to analyze.
+                - scan_mode (str): Scan mode selection ("normal", "deep", "heuristic", "all").
+                - extract_strings (bool): Whether to extract and analyze strings.
+                - analyze_entropy (bool): Whether to perform entropy analysis.
+                - check_certificates (bool): Whether to extract digital certificates.
+                - export_format (str): Output format ("json", "text", "yara").
 
         Returns:
-            Analysis results dictionary
+            dict[str, Any]: Analysis results containing protections, entropy analysis,
+                certificates, bypass recommendations, and optional AI analysis.
+                Returns error dictionary if analysis fails.
 
         """
         file_path = kwargs.get("file_path")
@@ -240,7 +260,17 @@ class DIEAnalysisTool:
             return {"success": False, "error": str(e)}
 
     def _format_protections(self, analysis: AdvancedProtectionAnalysis) -> list[dict[str, Any]]:
-        """Format protection detections for LLM consumption"""
+        """Format protection detections for LLM consumption.
+
+        Args:
+            analysis (AdvancedProtectionAnalysis): Advanced protection analysis results
+                containing detection data.
+
+        Returns:
+            list[dict[str, Any]]: List of protection dictionaries with name, type,
+                confidence, category, and optional version and details fields.
+
+        """
         protections: list[dict[str, Any]] = []
 
         for detection in analysis.detections:
@@ -262,7 +292,17 @@ class DIEAnalysisTool:
         return protections
 
     def _categorize_protection(self, protection_type: ProtectionType) -> str:
-        """Categorize protection type for AI understanding"""
+        """Categorize protection type for AI understanding.
+
+        Args:
+            protection_type (ProtectionType): The protection type enumeration value
+                to categorize.
+
+        Returns:
+            str: Categorized protection name (e.g., "compression", "anti-tampering",
+                "encryption", "licensing", "digital_rights", "hardware_protection").
+
+        """
         categories: dict[ProtectionType, str] = {
             ProtectionType.PACKER: "compression",
             ProtectionType.PROTECTOR: "anti-tampering",
@@ -275,7 +315,17 @@ class DIEAnalysisTool:
         return categories.get(protection_type, "unknown")
 
     def _generate_bypass_recommendations(self, analysis: AdvancedProtectionAnalysis) -> dict[str, list[str]]:
-        """Generate bypass recommendations based on detections"""
+        """Generate bypass recommendations based on detections.
+
+        Args:
+            analysis (AdvancedProtectionAnalysis): Advanced protection analysis results
+                containing detection data.
+
+        Returns:
+            dict[str, list[str]]: Dictionary mapping protection names to lists of
+                bypass recommendations and techniques.
+
+        """
         return {
             detection.name: (
                 detection.bypass_recommendations or self._get_generic_bypass_methods(detection.type)
@@ -284,7 +334,16 @@ class DIEAnalysisTool:
         }
 
     def _get_generic_bypass_methods(self, protection_type: ProtectionType) -> list[str]:
-        """Get generic bypass methods by protection type"""
+        """Get generic bypass methods by protection type.
+
+        Args:
+            protection_type (ProtectionType): The protection type enumeration value.
+
+        Returns:
+            list[str]: List of generic bypass techniques and tools applicable to
+                the protection type. Returns generic fallback if type is unknown.
+
+        """
         methods: dict[ProtectionType, list[str]] = {
             ProtectionType.PACKER: [
                 "Use unpacking tools (UPX, PEiD)",
@@ -320,7 +379,17 @@ class DIEAnalysisTool:
         return methods.get(protection_type, ["Manual analysis required"])
 
     def _format_entropy_analysis(self, entropy_info: list[EntropyInfo]) -> dict[str, Any]:
-        """Format entropy analysis for AI interpretation"""
+        """Format entropy analysis for AI interpretation.
+
+        Args:
+            entropy_info (list[EntropyInfo]): List of entropy information objects for
+                binary sections.
+
+        Returns:
+            dict[str, Any]: Formatted analysis containing sections list, packed/encrypted
+                section lists, average entropy, max entropy, and packing likelihood.
+
+        """
         sections_list: list[dict[str, Any]] = []
         packed_sections: list[str] = []
         encrypted_sections: list[str] = []
@@ -375,7 +444,16 @@ class DIEAnalysisTool:
         return analysis
 
     def _format_certificates(self, certificates: list[CertificateInfo]) -> list[dict[str, Any]]:
-        """Format certificate information"""
+        """Format certificate information for output.
+
+        Args:
+            certificates (list[CertificateInfo]): List of certificate information objects.
+
+        Returns:
+            list[dict[str, Any]]: List of certificate dictionaries containing subject,
+                issuer, validity status, trust status, algorithm, and optional dates.
+
+        """
         cert_list = []
 
         for cert in certificates:
@@ -397,7 +475,17 @@ class DIEAnalysisTool:
         return cert_list
 
     def _format_strings(self, strings: list[StringInfo]) -> list[dict[str, Any]]:
-        """Format suspicious strings"""
+        """Format suspicious strings for analysis output.
+
+        Args:
+            strings (list[StringInfo]): List of suspicious string information objects.
+
+        Returns:
+            list[dict[str, Any]]: List of string dictionaries containing value (limited
+                to 100 chars), offset in hex, encoding, and category classification.
+                Limited to top 50 strings for performance.
+
+        """
         return [
             {
                 "value": s.value[:100],  # Limit length
@@ -409,7 +497,16 @@ class DIEAnalysisTool:
         ]
 
     def _categorize_string(self, string: str) -> str:
-        """Categorize suspicious string"""
+        """Categorize suspicious string by content type.
+
+        Args:
+            string (str): The string value to categorize.
+
+        Returns:
+            str: Category classification ("api_call", "anti_debug", "licensing",
+                "network", "system_command", or "other").
+
+        """
         string_lower = string.lower()
 
         if any(api in string_lower for api in ["kernel32", "ntdll", "virtualprotect"]):
@@ -426,7 +523,17 @@ class DIEAnalysisTool:
             return "other"
 
     def _generate_text_report(self, analysis: AdvancedProtectionAnalysis) -> str:
-        """Generate human-readable text report"""
+        """Generate human-readable text report of analysis results.
+
+        Args:
+            analysis (AdvancedProtectionAnalysis): Advanced protection analysis results
+                to format.
+
+        Returns:
+            str: Formatted text report containing file info, packing/protection status,
+                detections, entropy analysis, and digital certificates.
+
+        """
         lines = []
 
         lines.append("DIE Analysis Report")
@@ -472,14 +579,19 @@ class DIEAnalysisTool:
         return "\n".join(lines)
 
     def analyze_batch(self, file_paths: list[str], scan_mode: str = "normal") -> dict[str, Any]:
-        """Analyze multiple files in batch
+        """Analyze multiple files in batch mode.
 
         Args:
-            file_paths: List of file paths
-            scan_mode: Scan mode to use
+            file_paths (list[str]): List of file paths to analyze for protection
+                detections using the specified scan mode.
+            scan_mode (str): Scan mode to use for all files ("normal", "deep",
+                "heuristic", "all"). Defaults to "normal".
 
         Returns:
-            Batch analysis results
+            dict[str, Any]: Batch analysis results containing total file count,
+                analyzed count, error count, protection detection count, and per-file
+                analysis results. Each file entry contains type, protection status,
+                and detected protection names.
 
         """
         analyzed_count = 0
@@ -523,14 +635,20 @@ class DIEAnalysisTool:
         return results
 
     def compare_files(self, file1: str, file2: str) -> dict[str, Any]:
-        """Compare two files for protection similarities
+        """Compare two files for protection similarities.
 
         Args:
-            file1: First file path
-            file2: Second file path
+            file1 (str): Path to first binary file for comparison. Must be a valid
+                file path pointing to an analyzable binary.
+            file2 (str): Path to second binary file for comparison. Must be a valid
+                file path pointing to an analyzable binary.
 
         Returns:
-            Comparison results
+            dict[str, Any]: Comparison results containing filenames, common protections,
+                unique protections per file, similarity score, and optional import hash
+                matching status. Includes file1/file2 basenames, same_protections list,
+                unique_to_file1 list, unique_to_file2 list, similarity_score float,
+                and optional import_hash_match boolean.
 
         """
         # Analyze both files
@@ -573,7 +691,17 @@ class DIEAnalysisTool:
         return comparison
 
     def _should_analyze_license_patterns(self, analysis: AdvancedProtectionAnalysis) -> bool:
-        """Determine if license pattern analysis would be beneficial"""
+        """Determine if license pattern analysis would be beneficial.
+
+        Args:
+            analysis (AdvancedProtectionAnalysis): Advanced protection analysis results
+                to evaluate.
+
+        Returns:
+            bool: True if license-related imports, suspicious strings, or commercial
+                compilers are detected indicating benefit from licensing analysis.
+
+        """
         # Check for license-related imports
         if hasattr(analysis, "imports") and analysis.imports:
             license_imports = [
@@ -604,7 +732,19 @@ class DIEAnalysisTool:
         return False
 
     def _analyze_license_patterns_for_llm(self, file_path: str, analysis: AdvancedProtectionAnalysis) -> dict[str, Any]:
-        """Analyze license patterns for LLM consumption"""
+        """Analyze license patterns for LLM consumption.
+
+        Args:
+            file_path (str): Path to the binary file being analyzed.
+            analysis (AdvancedProtectionAnalysis): Advanced protection analysis results
+                containing detection data.
+
+        Returns:
+            dict[str, Any]: License pattern analysis results including detection patterns,
+                relevant strings, import context (network, crypto, registry APIs),
+                license type classification, and LLM guidance. Returns error dict on failure.
+
+        """
         try:
             # Prepare input data for AI license analysis
             patterns_list: list[dict[str, Any]] = []
@@ -671,27 +811,68 @@ class DIEAnalysisTool:
             return {"error": str(e)}
 
     def _check_for_network_apis(self, analysis: AdvancedProtectionAnalysis) -> bool:
-        """Check if network APIs are imported"""
+        """Check if network APIs are imported.
+
+        Args:
+            analysis (AdvancedProtectionAnalysis): Advanced protection analysis results
+                to check.
+
+        Returns:
+            bool: True if network DLLs (ws2_32.dll, winhttp.dll, wininet.dll) are
+                imported in the analyzed binary.
+
+        """
         if not hasattr(analysis, "imports") or not analysis.imports:
             return False
         network_dlls = ["ws2_32.dll", "winhttp.dll", "wininet.dll"]
         return any(dll in analysis.imports for dll in network_dlls)
 
     def _check_for_crypto_apis(self, analysis: AdvancedProtectionAnalysis) -> bool:
-        """Check if crypto APIs are imported"""
+        """Check if crypto APIs are imported.
+
+        Args:
+            analysis (AdvancedProtectionAnalysis): Advanced protection analysis results
+                to check.
+
+        Returns:
+            bool: True if cryptographic DLLs (crypt32.dll, advapi32.dll, bcrypt.dll)
+                are imported in the analyzed binary.
+
+        """
         if not hasattr(analysis, "imports") or not analysis.imports:
             return False
         crypto_dlls = ["crypt32.dll", "advapi32.dll", "bcrypt.dll"]
         return any(dll in analysis.imports for dll in crypto_dlls)
 
     def _check_for_registry_apis(self, analysis: AdvancedProtectionAnalysis) -> bool:
-        """Check if registry APIs are imported"""
+        """Check if registry APIs are imported.
+
+        Args:
+            analysis (AdvancedProtectionAnalysis): Advanced protection analysis results
+                to check.
+
+        Returns:
+            bool: True if registry API DLL (advapi32.dll) is imported in the analyzed binary.
+
+        """
         if not hasattr(analysis, "imports") or not analysis.imports:
             return False
         return "advapi32.dll" in analysis.imports
 
     def _get_license_llm_guidance(self, license_type: str, detections: list[DetectionResult]) -> str:
-        """Get LLM-specific guidance for license analysis"""
+        """Get LLM-specific guidance for license analysis.
+
+        Args:
+            license_type (str): The detected license type classification ("trial_based",
+                "serial_based", "activation_based", or "unknown").
+            detections (list[DetectionResult]): List of protection detections to provide
+                protection-specific guidance.
+
+        Returns:
+            str: Formatted guidance string for LLM consumption with analysis recommendations
+                specific to the license type and detected protection mechanisms.
+
+        """
         guidance = f"Detected {license_type} licensing. "
 
         if license_type == "trial_based":
@@ -719,5 +900,15 @@ class DIEAnalysisTool:
 
 
 def create_die_tool() -> DIEAnalysisTool:
-    """Factory function to create DIE analysis tool"""
+    """Create and return an initialized DIE analysis tool.
+
+    Factory function that instantiates and returns a protection analysis tool
+    configured for analysis operations and LLM integration.
+
+    Returns:
+        DIEAnalysisTool: Initialized protection analysis tool instance ready for
+            analysis operations and LLM integration.
+
+    """
     return DIEAnalysisTool()
+

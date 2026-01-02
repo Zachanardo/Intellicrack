@@ -52,7 +52,11 @@ class BaseNetworkAnalyzer:
         """
 
         def packet_handler(packet: object) -> None:
-            """Process each captured packet."""
+            """Process each captured packet.
+
+            Args:
+                packet: The captured network packet to process.
+            """
             if not is_running_check():
                 return
 

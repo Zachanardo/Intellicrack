@@ -132,7 +132,12 @@ class PinningReport:
 
     @property
     def has_pinning(self) -> bool:
-        """Check if any pinning was detected."""
+        """Check if any pinning was detected.
+
+        Returns:
+            True if pinning was detected in the binary
+
+        """
         return len(self.detected_pins) > 0 or len(self.pinning_locations) > 0
 
 
@@ -159,6 +164,9 @@ class PinningDetector:
 
         Returns:
             List of detected certificate hashes
+
+        Raises:
+            FileNotFoundError: If binary file is not found
 
         """
         self.binary_path = Path(binary_path)
@@ -226,7 +234,11 @@ class PinningDetector:
         return locations
 
     def _determine_platform(self) -> None:
-        """Determine binary platform."""
+        """Determine binary platform based on binary type.
+
+        Sets the platform attribute based on the binary format detected
+        by LIEF parsing.
+        """
         if isinstance(self.binary, lief.PE.Binary):
             self.platform = "windows"
         elif isinstance(self.binary, lief.ELF.Binary):
@@ -240,7 +252,12 @@ class PinningDetector:
         logger.debug("Detected platform: %s", self.platform)
 
     def _detect_android_pinning_logic(self) -> list[PinningLocation]:
-        """Detect Android-specific pinning logic."""
+        """Detect Android-specific pinning logic.
+
+        Returns:
+            List of detected pinning locations
+
+        """
         locations: list[PinningLocation] = []
 
         if self.binary_path is not None and self.binary_path.suffix.lower() in [".apk", ".aab"]:
@@ -268,7 +285,12 @@ class PinningDetector:
         return locations
 
     def _detect_ios_pinning_logic(self) -> list[PinningLocation]:
-        """Detect iOS-specific pinning logic."""
+        """Detect iOS-specific pinning logic.
+
+        Returns:
+            List of detected pinning locations
+
+        """
         locations = []
 
         strings = self._extract_strings()
@@ -325,7 +347,12 @@ class PinningDetector:
         return locations
 
     def _detect_windows_pinning_logic(self) -> list[PinningLocation]:
-        """Detect Windows-specific pinning logic."""
+        """Detect Windows-specific pinning logic.
+
+        Returns:
+            List of detected pinning locations
+
+        """
         locations: list[PinningLocation] = []
 
         if not isinstance(self.binary, lief.PE.Binary):
@@ -355,7 +382,12 @@ class PinningDetector:
         return locations
 
     def _detect_linux_pinning_logic(self) -> list[PinningLocation]:
-        """Detect Linux-specific pinning logic."""
+        """Detect Linux-specific pinning logic.
+
+        Returns:
+            List of detected pinning locations
+
+        """
         locations: list[PinningLocation] = []
 
         if not isinstance(self.binary, lief.ELF.Binary):
@@ -629,7 +661,16 @@ class PinningDetector:
         return report
 
     def _generate_bypass_recommendations(self, pinning_methods: list[str], detected_pins: list[PinningInfo]) -> list[str]:
-        """Generate bypass recommendations based on detected pinning."""
+        """Generate bypass recommendations based on detected pinning.
+
+        Args:
+            pinning_methods: List of detected pinning method types
+            detected_pins: List of detected pinning configurations
+
+        Returns:
+            List of bypass recommendations
+
+        """
         recommendations = []
 
         if "network_security_config" in pinning_methods:
@@ -661,7 +702,12 @@ class PinningDetector:
         return recommendations
 
     def _extract_strings(self) -> set[str]:
-        """Extract strings from binary."""
+        """Extract strings from binary.
+
+        Returns:
+            Set of extracted string patterns
+
+        """
         if not self.binary_path:
             return set()
 
@@ -675,7 +721,12 @@ class PinningDetector:
             return set()
 
     def _get_imported_functions(self) -> set[str]:
-        """Get list of imported function names."""
+        """Get list of imported function names.
+
+        Returns:
+            Set of imported function names
+
+        """
         if not self.binary:
             return set()
 

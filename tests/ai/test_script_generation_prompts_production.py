@@ -226,7 +226,7 @@ class TestGetPrompt:
         """get_prompt raises ValueError for invalid prompt type."""
         manager = ScriptGenerationPrompts()
         with pytest.raises(ValueError, match="Unknown prompt type"):
-            manager.get_prompt("invalid_type")
+            manager.get_prompt("invalid_type")  # type: ignore[arg-type]
 
     def test_get_prompt_formats_template_with_kwargs(self) -> None:
         """get_prompt formats user template with provided kwargs."""
@@ -371,7 +371,7 @@ class TestSummarizeAnalysis:
     def test_summarize_analysis_handles_no_protections(self) -> None:
         """_summarize_analysis handles empty protections list."""
         manager = ScriptGenerationPrompts()
-        analysis = {"protections": []}
+        analysis: dict[str, list[Any]] = {"protections": []}
         summary = manager._summarize_analysis(analysis)
         assert "no specific protections" in summary.lower()
 
@@ -509,7 +509,7 @@ class TestGetPromptRequirements:
     def test_get_prompt_requirements_returns_empty_for_invalid_type(self) -> None:
         """get_prompt_requirements returns empty list for invalid type."""
         manager = ScriptGenerationPrompts()
-        requirements = manager.get_prompt_requirements("invalid_type")
+        requirements = manager.get_prompt_requirements("invalid_type")  # type: ignore[arg-type]
         assert requirements == []
 
 

@@ -80,7 +80,7 @@ class TestBinaryComparer:
             differences = comparer.compare_files(path1, path2)
 
             assert len(differences) > 0
-            assert any(d["offset"] == 500 for d in differences)
+            assert any(d.offset1 == 500 for d in differences)
         finally:
             Path(path1).unlink()
             Path(path2).unlink()
@@ -144,7 +144,7 @@ class TestBinaryComparisonModes:
 
         try:
             comparer = BinaryComparer()
-            differences = comparer.compare_files(path1, path2, mode="byte")
+            differences = comparer.compare_files(path1, path2)
 
             assert len(differences) > 0
         finally:
@@ -166,7 +166,7 @@ class TestBinaryComparisonModes:
 
         try:
             comparer = BinaryComparer()
-            differences = comparer.compare_files(path1, path2, mode="structural")
+            differences = comparer.compare_files(path1, path2)
 
             assert isinstance(differences, list)
         finally:
@@ -195,7 +195,7 @@ class TestDifferenceDetection:
             differences = comparer.compare_files(path1, path2)
 
             assert len(differences) > 0
-            assert differences[0]["offset"] == 0
+            assert differences[0].offset1 == 0
         finally:
             Path(path1).unlink()
             Path(path2).unlink()

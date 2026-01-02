@@ -210,7 +210,7 @@ class Container(dict[str, Any]):
             name: Attribute name to retrieve.
 
         Returns:
-            The value associated with the attribute name.
+            Any: The value associated with the attribute name.
 
         Raises:
             AttributeError: If the attribute is not found.
@@ -260,7 +260,14 @@ class Section:
     _data: bytes | None
 
     def __init__(self, header: Container, name: str, stream: BinaryIO) -> None:
-        """Initialize section."""
+        """Initialize section.
+
+        Args:
+            header: Section header container.
+            name: Section name.
+            stream: Binary file stream.
+
+        """
         self.header = header
         self.name = name
         self.stream = stream
@@ -270,7 +277,7 @@ class Section:
         """Get section data.
 
         Returns:
-            Raw binary data from the section.
+            bytes: Raw binary data from the section.
 
         """
         if self._data is None and self.header.sh_type != ENUM_SH_TYPE.SHT_NOBITS:
@@ -282,7 +289,7 @@ class Section:
         """Check if section is null.
 
         Returns:
-            True if section type is SHT_NULL, False otherwise.
+            bool: True if section type is SHT_NULL, False otherwise.
 
         """
         return bool(self.header.sh_type == ENUM_SH_TYPE.SHT_NULL)
@@ -292,7 +299,7 @@ class Section:
         """Get data size.
 
         Returns:
-            Size of the section data in bytes.
+            int: Size of the section data in bytes.
 
         """
         return int(self.header.sh_size)
@@ -302,7 +309,7 @@ class Section:
         """Get data alignment.
 
         Returns:
-            Alignment requirement for the section in bytes.
+            int: Alignment requirement for the section in bytes.
 
         """
         return int(self.header.sh_addralign)
@@ -318,7 +325,7 @@ class StringTableSection(Section):
             offset: Byte offset within the string table.
 
         Returns:
-            String at the specified offset.
+            str: Null-terminated string at the specified offset.
 
         """
         section_data = self.data()
@@ -355,7 +362,18 @@ class Symbol:
         st_shndx: int,
         name: str = "",
     ) -> None:
-        """Initialize symbol."""
+        """Initialize symbol.
+
+        Args:
+            st_name: String table offset of symbol name.
+            st_value: Symbol value or address.
+            st_size: Size of symbol (if applicable).
+            st_info: Symbol type and binding attributes.
+            st_other: Symbol visibility and reserved bits.
+            st_shndx: Section index where symbol is defined.
+            name: Human-readable symbol name.
+
+        """
         self.st_name = st_name
         self.st_value = st_value
         self.st_size = st_size
@@ -369,7 +387,12 @@ class Symbol:
 
     @property
     def entry(self) -> Container:
-        """Get symbol entry."""
+        """Get symbol entry.
+
+        Returns:
+            Container: Container with symbol header fields.
+
+        """
         return Container(
             st_name=self.st_name,
             st_value=self.st_value,
@@ -389,14 +412,22 @@ class SymbolTableSection(Section):
     def __init__(
         self, header: Container, name: str, stream: BinaryIO, elffile: ELFFile
     ) -> None:
-        """Initialize symbol table."""
+        """Initialize symbol table.
+
+        Args:
+            header: Section header container.
+            name: Section name.
+            stream: Binary file stream.
+            elffile: Parent ELFFile object.
+
+        """
         super().__init__(header, name, stream)
         self.elffile = elffile
         self._symbols = []
         self._parse_symbols()
 
     def _parse_symbols(self) -> None:
-        """Parse symbol table."""
+        """Parse symbol table entries from section data."""
         section_data = self.data()
         if not section_data:
             return
@@ -444,7 +475,7 @@ class SymbolTableSection(Section):
             index: Symbol index.
 
         Returns:
-            Symbol object at the specified index, or None if not found.
+            Symbol | None: Symbol object at the specified index, or None if not found.
 
         """
         return self._symbols[index] if 0 <= index < len(self._symbols) else None
@@ -453,7 +484,7 @@ class SymbolTableSection(Section):
         """Get number of symbols.
 
         Returns:
-            Total number of symbols in the symbol table.
+            int: Total number of symbols in the symbol table.
 
         """
         return len(self._symbols)
@@ -462,7 +493,7 @@ class SymbolTableSection(Section):
         """Iterate over symbols.
 
         Returns:
-            Iterator yielding all symbols in the table.
+            Iterator[Symbol]: Iterator yielding all symbols in the table.
 
         """
         return iter(self._symbols)
@@ -478,7 +509,14 @@ class Relocation:
     r_type: int
 
     def __init__(self, r_offset: int, r_info: int, r_addend: int = 0) -> None:
-        """Initialize relocation."""
+        """Initialize relocation.
+
+        Args:
+            r_offset: Relocation offset in the section.
+            r_info: Relocation type and symbol index.
+            r_addend: Relocation addend (for RELA entries).
+
+        """
         self.r_offset = r_offset
         self.r_info = r_info
         self.r_addend = r_addend
@@ -492,7 +530,12 @@ class Relocation:
 
     @property
     def entry(self) -> Container:
-        """Get relocation entry."""
+        """Get relocation entry.
+
+        Returns:
+            Container: Container with relocation header fields.
+
+        """
         return Container(r_offset=self.r_offset, r_info=self.r_info, r_addend=self.r_addend)
 
 
@@ -505,14 +548,22 @@ class RelocationSection(Section):
     def __init__(
         self, header: Container, name: str, stream: BinaryIO, elffile: ELFFile
     ) -> None:
-        """Initialize relocation section."""
+        """Initialize relocation section.
+
+        Args:
+            header: Section header container.
+            name: Section name.
+            stream: Binary file stream.
+            elffile: Parent ELFFile object.
+
+        """
         super().__init__(header, name, stream)
         self.elffile = elffile
         self._relocations = []
         self._parse_relocations()
 
     def _parse_relocations(self) -> None:
-        """Parse relocations."""
+        """Parse relocation entries from section data."""
         section_data = self.data()
         if not section_data:
             return
@@ -547,7 +598,7 @@ class RelocationSection(Section):
         """Get number of relocations.
 
         Returns:
-            Total number of relocations in the section.
+            int: Total number of relocations in the section.
 
         """
         return len(self._relocations)
@@ -559,7 +610,7 @@ class RelocationSection(Section):
             index: Relocation index.
 
         Returns:
-            Relocation object at the specified index, or None if not found.
+            Relocation | None: Relocation object at the specified index, or None if not found.
 
         """
         if 0 <= index < len(self._relocations):
@@ -570,7 +621,7 @@ class RelocationSection(Section):
         """Iterate over relocations.
 
         Returns:
-            Iterator yielding all relocations in the section.
+            Iterator[Relocation]: Iterator yielding all relocations in the section.
 
         """
         return iter(self._relocations)
@@ -583,13 +634,24 @@ class Dynamic:
     d_val: int
 
     def __init__(self, d_tag: int, d_val: int) -> None:
-        """Initialize dynamic entry."""
+        """Initialize dynamic entry.
+
+        Args:
+            d_tag: Dynamic entry tag type.
+            d_val: Dynamic entry value or address.
+
+        """
         self.d_tag = d_tag
         self.d_val = d_val
 
     @property
     def entry(self) -> Container:
-        """Get dynamic entry."""
+        """Get dynamic entry.
+
+        Returns:
+            Container: Container with dynamic entry fields.
+
+        """
         return Container(d_tag=self.d_tag, d_val=self.d_val)
 
 
@@ -602,14 +664,22 @@ class DynamicSection(Section):
     def __init__(
         self, header: Container, name: str, stream: BinaryIO, elffile: ELFFile
     ) -> None:
-        """Initialize dynamic section."""
+        """Initialize dynamic section.
+
+        Args:
+            header: Section header container.
+            name: Section name.
+            stream: Binary file stream.
+            elffile: Parent ELFFile object.
+
+        """
         super().__init__(header, name, stream)
         self.elffile = elffile
         self._dynamics = []
         self._parse_dynamics()
 
     def _parse_dynamics(self) -> None:
-        """Parse dynamic entries."""
+        """Parse dynamic section entries from section data."""
         section_data = self.data()
         if not section_data:
             return
@@ -640,7 +710,7 @@ class DynamicSection(Section):
         """Iterate over dynamic tags.
 
         Returns:
-            Iterator yielding all dynamic entries.
+            Iterator[Dynamic]: Iterator yielding all dynamic entries.
 
         """
         return iter(self._dynamics)
@@ -652,7 +722,7 @@ class DynamicSection(Section):
             tag: Dynamic tag value to search for.
 
         Returns:
-            Dynamic entry matching the tag, or None if not found.
+            Dynamic | None: Dynamic entry matching the tag, or None if not found.
 
         """
         return next((dyn for dyn in self._dynamics if dyn.d_tag == tag), None)
@@ -664,8 +734,8 @@ class NoteSection(Section):
     def iter_notes(self) -> Iterator[Container]:
         """Iterate over notes in the note section.
 
-        Returns:
-            Iterator yielding Container objects for each note.
+        Yields:
+            Container: Each note entry found in the section.
 
         """
         section_data = self.data()
@@ -700,7 +770,13 @@ class Segment:
     _data: bytes | None
 
     def __init__(self, header: Container, stream: BinaryIO) -> None:
-        """Initialize segment."""
+        """Initialize segment.
+
+        Args:
+            header: Program header container.
+            stream: Binary file stream.
+
+        """
         self.header = header
         self.stream = stream
         self._data = None
@@ -709,7 +785,7 @@ class Segment:
         """Get segment data.
 
         Returns:
-            Raw binary data from the segment.
+            bytes: Raw binary data from the segment.
 
         """
         if self._data is None and self.header.p_filesz > 0:
@@ -719,42 +795,82 @@ class Segment:
 
     @property
     def p_type(self) -> int:
-        """Get segment type."""
+        """Get segment type.
+
+        Returns:
+            int: The segment type value.
+
+        """
         return int(self.header.p_type)
 
     @property
     def p_flags(self) -> int:
-        """Get segment flags."""
+        """Get segment flags.
+
+        Returns:
+            int: The segment flags value.
+
+        """
         return int(self.header.p_flags)
 
     @property
     def p_offset(self) -> int:
-        """Get file offset."""
+        """Get file offset.
+
+        Returns:
+            int: Offset of segment in the file.
+
+        """
         return int(self.header.p_offset)
 
     @property
     def p_vaddr(self) -> int:
-        """Get virtual address."""
+        """Get virtual address.
+
+        Returns:
+            int: Virtual address of segment in memory.
+
+        """
         return int(self.header.p_vaddr)
 
     @property
     def p_paddr(self) -> int:
-        """Get physical address."""
+        """Get physical address.
+
+        Returns:
+            int: Physical address of segment in memory.
+
+        """
         return int(self.header.p_paddr)
 
     @property
     def p_filesz(self) -> int:
-        """Get file size."""
+        """Get file size.
+
+        Returns:
+            int: Size of segment in file.
+
+        """
         return int(self.header.p_filesz)
 
     @property
     def p_memsz(self) -> int:
-        """Get memory size."""
+        """Get memory size.
+
+        Returns:
+            int: Size of segment in memory.
+
+        """
         return int(self.header.p_memsz)
 
     @property
     def p_align(self) -> int:
-        """Get alignment."""
+        """Get alignment.
+
+        Returns:
+            int: Alignment requirement for segment.
+
+        """
         return int(self.header.p_align)
 
 
@@ -765,7 +881,7 @@ class InterpSegment(Segment):
         """Get interpreter name.
 
         Returns:
-            Path to the program interpreter (e.g., /lib64/ld-linux-x86-64.so.2).
+            str: Path to the program interpreter (e.g., /lib64/ld-linux-x86-64.so.2).
 
         """
         segment_data = self.data()
@@ -780,8 +896,8 @@ class NoteSegment(Segment):
     def iter_notes(self) -> Iterator[Container]:
         """Iterate over notes in the note segment.
 
-        Returns:
-            Iterator yielding Container objects for each note.
+        Yields:
+            Container: Each note entry found in the segment.
 
         """
         segment_data = self.data()
@@ -829,7 +945,7 @@ class DWARFInfo:
         """Iterate over compilation units (empty for fallback).
 
         Returns:
-            Empty iterator as fallback does not support DWARF parsing.
+            Iterator[Any]: Empty iterator as fallback does not support DWARF parsing.
 
         """
         return iter([])
@@ -839,9 +955,6 @@ class DWARFInfo:
 
         Args:
             refaddr: Reference address (unused in fallback).
-
-        Returns:
-            None as fallback does not support DWARF parsing.
 
         """
         return
@@ -868,7 +981,7 @@ class DIE:
         """Get parent DIE.
 
         Returns:
-            None as fallback does not support parent DIE traversal.
+            DIE | None: None as fallback does not support parent DIE traversal.
 
         """
         return None
@@ -877,7 +990,7 @@ class DIE:
         """Iterate over children.
 
         Returns:
-            Empty iterator as fallback does not support child DIE traversal.
+            Iterator[DIE]: Empty iterator as fallback does not support child DIE traversal.
 
         """
         return iter([])
@@ -897,7 +1010,12 @@ class ELFFile:
     _string_table: bytes | None
 
     def __init__(self, stream: BinaryIO) -> None:
-        """Initialize ELF file parser."""
+        """Initialize ELF file parser.
+
+        Args:
+            stream: Binary file stream to parse.
+
+        """
         self.stream = stream
         self.little_endian = True
         self.elfclass = 64
@@ -1095,7 +1213,7 @@ class ELFFile:
             offset: Byte offset in the string table.
 
         Returns:
-            Null-terminated string at the specified offset.
+            str: Null-terminated string at the specified offset.
 
         """
         if not self._string_table or offset >= len(self._string_table):
@@ -1108,11 +1226,21 @@ class ELFFile:
         return self._string_table[offset:end].decode("latin-1", errors="ignore")
 
     def num_sections(self) -> int:
-        """Get number of sections."""
+        """Get number of sections.
+
+        Returns:
+            int: Total number of sections in the ELF file.
+
+        """
         return len(self._sections)
 
     def num_segments(self) -> int:
-        """Get number of segments."""
+        """Get number of segments.
+
+        Returns:
+            int: Total number of program segments in the ELF file.
+
+        """
         return len(self._segments)
 
     def get_section(self, n: int) -> Section | None:
@@ -1122,7 +1250,7 @@ class ELFFile:
             n: Section index.
 
         Returns:
-            Section object at the specified index, or None if not found.
+            Section | None: Section object at the specified index, or None if not found.
 
         """
         return self._sections[n] if 0 <= n < len(self._sections) else None
@@ -1134,7 +1262,7 @@ class ELFFile:
             name: Section name to search for.
 
         Returns:
-            Section object with the specified name, or None if not found.
+            Section | None: Section object with the specified name, or None if not found.
 
         """
         return next((section for section in self._sections if section.name == name), None)
@@ -1146,29 +1274,54 @@ class ELFFile:
             n: Segment index.
 
         Returns:
-            Segment object at the specified index, or None if not found.
+            Segment | None: Segment object at the specified index, or None if not found.
 
         """
         return self._segments[n] if 0 <= n < len(self._segments) else None
 
     def iter_sections(self) -> Iterator[Section]:
-        """Iterate over sections."""
+        """Iterate over sections.
+
+        Returns:
+            Iterator[Section]: Iterator yielding all sections in the ELF file.
+
+        """
         return iter(self._sections)
 
     def iter_segments(self) -> Iterator[Segment]:
-        """Iterate over segments."""
+        """Iterate over segments.
+
+        Returns:
+            Iterator[Segment]: Iterator yielding all program segments.
+
+        """
         return iter(self._segments)
 
     def has_dwarf_info(self) -> bool:
-        """Check if file has DWARF debug info."""
+        """Check if file has DWARF debug info.
+
+        Returns:
+            bool: True if DWARF debug sections are present, False otherwise.
+
+        """
         return any(section.name.startswith(".debug_") for section in self._sections)
 
     def get_dwarf_info(self) -> DWARFInfo | None:
-        """Get DWARF info (basic fallback)."""
+        """Get DWARF info (basic fallback).
+
+        Returns:
+            DWARFInfo | None: DWARFInfo object if debug sections exist, None otherwise.
+
+        """
         return DWARFInfo(self) if self.has_dwarf_info() else None
 
     def get_machine_arch(self) -> str:
-        """Get machine architecture."""
+        """Get machine architecture.
+
+        Returns:
+            str: Human-readable architecture name or "unknown" if not determinable.
+
+        """
         if not self.header:
             return "unknown"
 
@@ -1192,7 +1345,7 @@ def describe_e_type(e_type: int | str, elffile: Any = None) -> str:  # noqa: ARG
         elffile: Optional ELF file object (for compatibility).
 
     Returns:
-        Human-readable description of the ELF file type.
+        str: Human-readable description of the ELF file type.
 
     """
     if isinstance(e_type, str):
@@ -1215,7 +1368,7 @@ def describe_p_type(p_type: int | str) -> str:
         p_type: Program header type value.
 
     Returns:
-        Human-readable description of the program header type.
+        str: Human-readable description of the program header type.
 
     """
     if isinstance(p_type, str):
@@ -1241,7 +1394,7 @@ def describe_sh_type(sh_type: int | str) -> str:
         sh_type: Section header type value.
 
     Returns:
-        Human-readable description of the section header type.
+        str: Human-readable description of the section header type.
 
     """
     if isinstance(sh_type, str):

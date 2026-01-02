@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import logging
 import math
 from typing import TYPE_CHECKING
@@ -27,6 +29,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QKeyEvent,
     QLabel,
     QLineEdit,
+    QMenu,
     QMouseEvent,
     QPainter,
     QPaintEvent,
@@ -40,11 +43,15 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 
 
-logger = logging.getLogger(__name__)
-
-
 if TYPE_CHECKING:
-    from intellicrack.handlers.pyqt6_handler import QWidget as QWidgetType
+    from intellicrack.handlers.pyqt6_handler import QCheckBox
+
+ASCII_PRINTABLE_START = 32
+ASCII_PRINTABLE_END = 126
+BYTE_MAX_VALUE = 255
+
+
+logger = logging.getLogger(__name__)
 
 
 class HexViewerWidget(QWidget):
@@ -99,7 +106,12 @@ class HexViewerWidget(QWidget):
         setter(hint)
 
     def setup_ui(self) -> None:
-        """Set up the hex viewer UI with control bar, display area, and status bar."""
+        """Set up the hex viewer UI with control bar, display area, and status bar.
+
+        Initializes all UI components including search box, offset box, edit
+        mode toggle, hex display widget, scrollbar, and status label.
+
+        """
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
@@ -155,7 +167,13 @@ class HexViewerWidget(QWidget):
         self.hex_display.update()
 
     def update_scrollbar(self) -> None:
-        """Update scrollbar range based on data size."""
+        """Update scrollbar range based on data size.
+
+        Calculates the total number of lines in the data and adjusts the
+        scrollbar range and page step accordingly to reflect the current
+        data size and visible area.
+
+        """
         if not self.data:
             self.v_scrollbar.setRange(0, 0)
             return
@@ -177,7 +195,13 @@ class HexViewerWidget(QWidget):
         self.hex_display.update()
 
     def search_hex(self) -> None:
-        """Search for hex pattern in data and highlight matches."""
+        """Search for hex pattern in data and highlight matches.
+
+        Retrieves the hex pattern from search_box, validates it, and searches
+        for matching sequences in the loaded binary data. Updates cursor
+        position and selection to the first match found.
+
+        """
         pattern = self.search_box.text().strip()
         if not pattern:
             return
@@ -205,7 +229,13 @@ class HexViewerWidget(QWidget):
             self.status_label.setText("Pattern not found")
 
     def goto_offset(self) -> None:
-        """Jump to specified offset in the hex view."""
+        """Jump to specified offset in the hex view.
+
+        Parses the hexadecimal offset from offset_box and scrolls to that
+        location in the binary data. Updates cursor position and view
+        accordingly.
+
+        """
         try:
             offset = int(self.offset_box.text(), 16)
             if 0 <= offset < len(self.data):
@@ -227,8 +257,10 @@ class HexViewerWidget(QWidget):
         line = offset // self.bytes_per_line
         self.v_scrollbar.setValue(line - self.hex_display.visible_lines() // 2)
 
-    def toggle_edit_mode(self, checked: bool) -> None:
+    def toggle_edit_mode(self, checked: bool) -> None:  # noqa: FBT001
         """Toggle edit mode.
+
+        This is a Qt slot connected to a checkbox signal that passes a boolean.
 
         Args:
             checked: True to enable editing, False to disable.
@@ -249,7 +281,7 @@ class HexViewerWidget(QWidget):
             return
 
         byte_val = self.data[offset]
-        ascii_val = chr(byte_val) if 32 <= byte_val <= 126 else "."
+        ascii_val = chr(byte_val) if ASCII_PRINTABLE_START <= byte_val <= ASCII_PRINTABLE_END else "."
 
         selection_info = "None"
         if self.selection_start != -1 and self.selection_end != -1:
@@ -261,13 +293,375 @@ class HexViewerWidget(QWidget):
             f"Offset: 0x{offset:08X} | Byte: 0x{byte_val:02X} ({byte_val}) '{ascii_val}' | Selection: {selection_info}",
         )
 
-    def show_context_menu(self) -> None:
-        """Show context menu for hex viewer operations."""
-        pass
+    def show_context_menu(self, pos: QPoint | None = None) -> None:
+        """Show context menu for hex viewer operations.
+
+        Displays a context menu with options for common hex viewer operations
+        such as copy, paste, and data export.
+
+        Args:
+            pos: Position where the context menu was requested.
+
+        """
+        from intellicrack.handlers.pyqt6_handler import QMenu
+
+        menu = QMenu(self)
+        menu.setStyleSheet(self._get_context_menu_stylesheet())
+
+        has_selection = self.selection_start >= 0 and self.selection_end > self.selection_start
+        has_data = len(self.data) > 0
+
+        self._add_copy_actions_to_menu(menu, has_selection=has_selection)
+        menu.addSeparator()
+        self._add_edit_actions_to_menu(menu, has_selection=has_selection)
+        menu.addSeparator()
+        self._add_navigation_actions_to_menu(menu, has_data=has_data)
+        menu.addSeparator()
+        self._add_export_actions_to_menu(menu, has_selection=has_selection, has_data=has_data)
+        menu.addSeparator()
+        self._add_toggle_edit_action_to_menu(menu)
+
+        menu.exec(self.mapToGlobal(pos) if pos else self.cursor().pos())
+
+    def _get_context_menu_stylesheet(self) -> str:
+        """Return the stylesheet for context menus.
+
+        Returns:
+            CSS stylesheet string for styling QMenu context menus with dark theme.
+
+        """
+        return """
+            QMenu {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #3d3d3d;
+            }
+            QMenu::item:selected {
+                background-color: #3d3d3d;
+            }
+            QMenu::separator {
+                height: 1px;
+                background: #3d3d3d;
+                margin: 4px 8px;
+            }
+        """
+
+    def _add_copy_actions_to_menu(self, menu: QMenu, *, has_selection: bool) -> None:
+        """Add copy-related actions to the context menu.
+
+        Args:
+            menu: The QMenu to add actions to.
+            has_selection: Whether there is an active selection.
+
+        """
+        action = menu.addAction("Copy as Hex")
+        action.setEnabled(has_selection)
+        action.triggered.connect(self._copy_selection_as_hex)
+
+        action = menu.addAction("Copy as ASCII")
+        action.setEnabled(has_selection)
+        action.triggered.connect(self._copy_selection_as_ascii)
+
+        action = menu.addAction("Copy as C Array")
+        action.setEnabled(has_selection)
+        action.triggered.connect(self._copy_selection_as_c_array)
+
+        action = menu.addAction("Copy as Python Bytes")
+        action.setEnabled(has_selection)
+        action.triggered.connect(self._copy_selection_as_python)
+
+    def _add_edit_actions_to_menu(self, menu: QMenu, *, has_selection: bool) -> None:
+        """Add edit-related actions to the context menu.
+
+        Args:
+            menu: The QMenu to add actions to.
+            has_selection: Whether there is an active selection.
+
+        """
+        action = menu.addAction("Paste")
+        action.setEnabled(self.edit_mode and has_selection)
+        action.triggered.connect(self._paste_from_clipboard)
+
+        action = menu.addAction("Fill Selection...")
+        action.setEnabled(self.edit_mode and has_selection)
+        action.triggered.connect(self._fill_selection)
+
+    def _add_navigation_actions_to_menu(self, menu: QMenu, *, has_data: bool) -> None:
+        """Add navigation-related actions to the context menu.
+
+        Args:
+            menu: The QMenu to add actions to.
+            has_data: Whether there is data loaded.
+
+        """
+        action = menu.addAction("Select All")
+        action.setEnabled(has_data)
+        action.triggered.connect(self._select_all)
+
+        menu.addSeparator()
+
+        action = menu.addAction("Go to Offset...")
+        action.setEnabled(has_data)
+        action.triggered.connect(self._show_goto_dialog)
+
+        action = menu.addAction("Find...")
+        action.setEnabled(has_data)
+        action.triggered.connect(self._focus_search_box)
+
+    def _focus_search_box(self) -> None:
+        """Set focus to the search box."""
+        self.search_box.setFocus()
+
+    def _add_export_actions_to_menu(
+        self, menu: QMenu, *, has_selection: bool, has_data: bool
+    ) -> None:
+        """Add export-related actions to the context menu.
+
+        Args:
+            menu: The QMenu to add actions to.
+            has_selection: Whether there is an active selection.
+            has_data: Whether there is data loaded.
+
+        """
+        action = menu.addAction("Export Selection...")
+        action.setEnabled(has_selection)
+        action.triggered.connect(self._export_selection)
+
+        action = menu.addAction("Export All...")
+        action.setEnabled(has_data)
+        action.triggered.connect(self._export_all)
+
+    def _add_toggle_edit_action_to_menu(self, menu: QMenu) -> None:
+        """Add toggle edit mode action to the context menu.
+
+        Args:
+            menu: The QMenu to add actions to.
+
+        """
+        action = menu.addAction("Toggle Edit Mode")
+        action.setCheckable(True)
+        action.setChecked(self.edit_mode)
+        action.triggered.connect(self._toggle_edit_mode)
+
+    def _toggle_edit_mode(self) -> None:
+        """Toggle the edit mode state."""
+        self.edit_toggle.setChecked(not self.edit_mode)
+
+    def _copy_selection_as_hex(self) -> None:
+        """Copy the selected bytes as hex string to clipboard."""
+        from intellicrack.handlers.pyqt6_handler import QApplication
+
+        if self.selection_start < 0 or self.selection_end <= self.selection_start:
+            return
+
+        selected_data = self.data[self.selection_start:self.selection_end]
+        hex_str = " ".join(f"{b:02X}" for b in selected_data)
+
+        clipboard = QApplication.clipboard()
+        if clipboard:
+            clipboard.setText(hex_str)
+            self.status_label.setText(f"Copied {len(selected_data)} bytes as hex")
+
+    def _copy_selection_as_ascii(self) -> None:
+        """Copy the selected bytes as ASCII string to clipboard."""
+        from intellicrack.handlers.pyqt6_handler import QApplication
+
+        if self.selection_start < 0 or self.selection_end <= self.selection_start:
+            return
+
+        selected_data = self.data[self.selection_start:self.selection_end]
+        ascii_str = "".join(
+            chr(b) if ASCII_PRINTABLE_START <= b <= ASCII_PRINTABLE_END else "."
+            for b in selected_data
+        )
+
+        clipboard = QApplication.clipboard()
+        if clipboard:
+            clipboard.setText(ascii_str)
+            self.status_label.setText(f"Copied {len(selected_data)} bytes as ASCII")
+
+    def _copy_selection_as_c_array(self) -> None:
+        """Copy the selected bytes as C array to clipboard."""
+        from intellicrack.handlers.pyqt6_handler import QApplication
+
+        if self.selection_start < 0 or self.selection_end <= self.selection_start:
+            return
+
+        selected_data = self.data[self.selection_start:self.selection_end]
+        lines: list[str] = []
+        for i in range(0, len(selected_data), 16):
+            chunk = selected_data[i:i + 16]
+            hex_values = ", ".join(f"0x{b:02X}" for b in chunk)
+            lines.append(f"    {hex_values},")
+
+        c_array = "unsigned char data[] = {\n" + "\n".join(lines) + "\n};"
+
+        clipboard = QApplication.clipboard()
+        if clipboard:
+            clipboard.setText(c_array)
+            self.status_label.setText(f"Copied {len(selected_data)} bytes as C array")
+
+    def _copy_selection_as_python(self) -> None:
+        """Copy the selected bytes as Python bytes literal to clipboard."""
+        from intellicrack.handlers.pyqt6_handler import QApplication
+
+        if self.selection_start < 0 or self.selection_end <= self.selection_start:
+            return
+
+        selected_data = self.data[self.selection_start:self.selection_end]
+        hex_str = "".join(f"\\x{b:02x}" for b in selected_data)
+        python_bytes = f'b"{hex_str}"'
+
+        clipboard = QApplication.clipboard()
+        if clipboard:
+            clipboard.setText(python_bytes)
+            self.status_label.setText(f"Copied {len(selected_data)} bytes as Python")
+
+    def _paste_from_clipboard(self) -> None:
+        """Paste hex data from clipboard at selection start."""
+        from intellicrack.handlers.pyqt6_handler import QApplication
+
+        if not self.edit_mode or self.selection_start < 0:
+            return
+
+        clipboard = QApplication.clipboard()
+        if not clipboard:
+            return
+
+        text = clipboard.text().strip()
+        if not text:
+            return
+
+        try:
+            new_bytes = bytes.fromhex(text.replace(" ", ""))
+        except ValueError:
+            self.status_label.setText("Clipboard does not contain valid hex data")
+            return
+
+        end_pos = min(self.selection_start + len(new_bytes), len(self.data))
+        bytes_to_write = end_pos - self.selection_start
+
+        self.data[self.selection_start:end_pos] = new_bytes[:bytes_to_write]
+        self.data_modified.emit(self.selection_start, bytes(new_bytes[:bytes_to_write]))
+        self.hex_display.update()
+        self.status_label.setText(f"Pasted {bytes_to_write} bytes at 0x{self.selection_start:08X}")
+
+    def _fill_selection(self) -> None:
+        """Fill the selection with a specified byte value."""
+        from intellicrack.handlers.pyqt6_handler import QInputDialog
+
+        if not self.edit_mode or self.selection_start < 0:
+            return
+
+        text, ok = QInputDialog.getText(
+            self,
+            "Fill Selection",
+            "Enter byte value (hex, e.g. 00 or 90):",
+        )
+
+        if ok and text:
+            try:
+                fill_byte = int(text.strip(), 16)
+                if not 0 <= fill_byte <= BYTE_MAX_VALUE:
+                    raise ValueError("Byte out of range")
+
+                fill_len = self.selection_end - self.selection_start
+                fill_data = bytes([fill_byte]) * fill_len
+                self.data[self.selection_start:self.selection_end] = fill_data
+                self.data_modified.emit(self.selection_start, fill_data)
+                self.hex_display.update()
+                self.status_label.setText(
+                    f"Filled {fill_len} bytes with 0x{fill_byte:02X}"
+                )
+            except ValueError:
+                self.status_label.setText("Invalid byte value")
+
+    def _select_all(self) -> None:
+        """Select all data in the viewer."""
+        if len(self.data) > 0:
+            self.selection_start = 0
+            self.selection_end = len(self.data)
+            self.selection_changed.emit(self.selection_start, self.selection_end)
+            self.hex_display.update()
+            self.status_label.setText(f"Selected all {len(self.data)} bytes")
+
+    def _show_goto_dialog(self) -> None:
+        """Show dialog to go to a specific offset."""
+        from intellicrack.handlers.pyqt6_handler import QInputDialog
+
+        text, ok = QInputDialog.getText(
+            self,
+            "Go to Offset",
+            "Enter offset (hex, e.g. 1000 or 0x1000):",
+        )
+
+        if ok and text:
+            try:
+                text = text.strip().lower()
+                if text.startswith("0x"):
+                    offset = int(text, 16)
+                else:
+                    offset = int(text, 16)
+
+                if 0 <= offset < len(self.data):
+                    self.cursor_pos = offset
+                    self.scroll_to_offset(offset)
+                    self.hex_display.update()
+                    self.status_label.setText(f"Jumped to offset 0x{offset:08X}")
+                else:
+                    self.status_label.setText("Offset out of range")
+            except ValueError:
+                self.status_label.setText("Invalid offset")
+
+    def _export_selection(self) -> None:
+        """Export the selected bytes to a file."""
+        from intellicrack.handlers.pyqt6_handler import QFileDialog
+
+        if self.selection_start < 0 or self.selection_end <= self.selection_start:
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Selection",
+            "",
+            "Binary Files (*.bin);;All Files (*.*)",
+        )
+
+        if file_path:
+            try:
+                with open(file_path, "wb") as f:
+                    f.write(self.data[self.selection_start:self.selection_end])
+                self.status_label.setText(
+                    f"Exported {self.selection_end - self.selection_start} bytes to {file_path}"
+                )
+            except OSError as e:
+                self.status_label.setText(f"Export failed: {e}")
+
+    def _export_all(self) -> None:
+        """Export all data to a file."""
+        from intellicrack.handlers.pyqt6_handler import QFileDialog
+
+        if len(self.data) == 0:
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export All Data",
+            "",
+            "Binary Files (*.bin);;All Files (*.*)",
+        )
+
+        if file_path:
+            try:
+                with open(file_path, "wb") as f:
+                    f.write(self.data)
+                self.status_label.setText(f"Exported {len(self.data)} bytes to {file_path}")
+            except OSError as e:
+                self.status_label.setText(f"Export failed: {e}")
 
 
 class HexDisplay(QWidget):
-    """Customize widget for rendering hex data."""
+    """Custom widget for rendering hex data."""
 
     cursor_moved = pyqtSignal(int)
 
@@ -276,6 +670,9 @@ class HexDisplay(QWidget):
 
         Args:
             parent: Parent HexViewerWidget that manages this display.
+
+        Raises:
+            ValueError: If parent is None, as HexDisplay requires a parent.
 
         """
         super().__init__(parent)
@@ -312,8 +709,10 @@ class HexDisplay(QWidget):
         """
         return self.height() // self.char_height
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:
+    def paintEvent(self, event: QPaintEvent | None) -> None:  # noqa: N802
         """Paint the hex display.
+
+        Qt override method - camelCase required.
 
         Args:
             event: Paint event containing the region to repaint.
@@ -385,7 +784,7 @@ class HexDisplay(QWidget):
                     break
 
                 byte_val = self.hex_viewer.data[byte_offset]
-                ascii_char = chr(byte_val) if 32 <= byte_val <= 126 else "."
+                ascii_char = chr(byte_val) if ASCII_PRINTABLE_START <= byte_val <= ASCII_PRINTABLE_END else "."
 
                 # Highlight selection
                 if self.hex_viewer.selection_start <= byte_offset < self.hex_viewer.selection_end:
@@ -401,8 +800,10 @@ class HexDisplay(QWidget):
                 painter.drawText(x, y, ascii_char)
                 x += self.char_width
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
         """Handle mouse clicks.
+
+        Qt override method - camelCase required.
 
         Args:
             event: Mouse press event with button and position information.
@@ -418,8 +819,10 @@ class HexDisplay(QWidget):
             self.update()
             self.cursor_moved.emit(pos)
 
-    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
+    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
         """Handle mouse drag for selection.
+
+        Qt override method - camelCase required.
 
         Args:
             event: Mouse move event with position and button state.
@@ -433,8 +836,10 @@ class HexDisplay(QWidget):
                 self.hex_viewer.selection_end = pos + 1
                 self.update()
 
-    def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:
+    def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:  # noqa: N802
         """Handle mouse release.
+
+        Qt override method - camelCase required.
 
         Args:
             event: Mouse release event with button information.
@@ -449,8 +854,10 @@ class HexDisplay(QWidget):
             self.hex_viewer.selection_end = end
             self.hex_viewer.selection_changed.emit(start, end)
 
-    def keyPressEvent(self, event: QKeyEvent | None) -> None:
+    def keyPressEvent(self, event: QKeyEvent | None) -> None:  # noqa: N802
         """Handle keyboard input.
+
+        Qt override method - camelCase required.
 
         Args:
             event: Key press event with key code and modifiers.

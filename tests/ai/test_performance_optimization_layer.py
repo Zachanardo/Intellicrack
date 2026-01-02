@@ -6,6 +6,7 @@ and resource management with real operations.
 
 import os
 import time
+from collections.abc import Callable
 from typing import Any
 
 import pytest
@@ -280,7 +281,7 @@ class TestParallelExecutor:
         def multiply(x: int, y: int) -> int:
             return x * y
 
-        operations = [
+        operations: list[tuple[Callable[..., Any], tuple[Any, ...], dict[str, Any]]] = [
             (add, (2, 3), {}),
             (multiply, (4, 5), {}),
             (add, (10, 20), {})
@@ -359,7 +360,7 @@ class TestCacheManager:
 
     def test_cache_eviction_lru_policy(self) -> None:
         """Test LRU eviction when cache is full."""
-        cache = CacheManager(max_size_mb=0.001)
+        cache = CacheManager(max_size_mb=1)
 
         cache.set("key1", "a" * 1000, ttl_seconds=60)
         cache.set("key2", "b" * 1000, ttl_seconds=60)

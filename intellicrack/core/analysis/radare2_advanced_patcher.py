@@ -16,13 +16,9 @@ import logging
 import struct
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import r2pipe
-
-
-if TYPE_CHECKING:
-    from r2pipe import open as R2Open
 
 
 logger = logging.getLogger(__name__)
@@ -90,7 +86,7 @@ class Radare2AdvancedPatcher:
             write_mode: Enable write mode for binary modifications.
 
         Returns:
-            bool: True if binary opened successfully, False otherwise.
+            True if binary opened successfully, False otherwise.
 
         """
         try:
@@ -133,7 +129,7 @@ class Radare2AdvancedPatcher:
             size: Size of NOP sled in bytes.
 
         Returns:
-            PatchInfo: Patch information containing original and patched bytes.
+            Patch information containing original and patched bytes.
 
         Raises:
             RuntimeError: If Radare2 session is not opened.
@@ -169,7 +165,7 @@ class Radare2AdvancedPatcher:
         """Get NOP instruction for current architecture.
 
         Returns:
-            bytes: NOP instruction bytes for the current architecture.
+            NOP instruction bytes for the current architecture.
 
         """
         nop_map: dict[Architecture, bytes] = {
@@ -192,7 +188,7 @@ class Radare2AdvancedPatcher:
             entries: List of new entry addresses.
 
         Returns:
-            PatchInfo: Patch information containing original and patched bytes.
+            Patch information containing original and patched bytes.
 
         Raises:
             RuntimeError: If Radare2 session is not opened.
@@ -241,7 +237,7 @@ class Radare2AdvancedPatcher:
             custom_prologue: Optional custom prologue bytes to use instead of generated ones.
 
         Returns:
-            PatchInfo: Patch information containing original and patched bytes.
+            Patch information containing original and patched bytes.
 
         Raises:
             RuntimeError: If Radare2 session is not opened.
@@ -284,7 +280,7 @@ class Radare2AdvancedPatcher:
             skip_bytes: Number of bytes to allocate on stack.
 
         Returns:
-            bytes: Generated prologue instructions for current architecture.
+            Generated prologue instructions for current architecture.
 
         """
         if self.architecture == Architecture.X86_64:
@@ -330,7 +326,7 @@ class Radare2AdvancedPatcher:
             custom_epilogue: Optional custom epilogue bytes to use instead of generated ones.
 
         Returns:
-            PatchInfo: Patch information containing original and patched bytes.
+            Patch information containing original and patched bytes.
 
         Raises:
             RuntimeError: If Radare2 session is not opened.
@@ -376,7 +372,7 @@ class Radare2AdvancedPatcher:
             func_size: Size of function in bytes.
 
         Returns:
-            int: Address of epilogue instruction.
+            Address of epilogue instruction.
 
         Raises:
             RuntimeError: If Radare2 session is not opened.
@@ -410,7 +406,7 @@ class Radare2AdvancedPatcher:
         """Generate standard function epilogue.
 
         Returns:
-            bytes: Generated epilogue instructions for current architecture.
+            Generated epilogue instructions for current architecture.
 
         """
         if self.architecture == Architecture.X86_64:
@@ -447,7 +443,7 @@ class Radare2AdvancedPatcher:
             address: Address of conditional jump instruction to invert.
 
         Returns:
-            PatchInfo: Patch information containing original and patched bytes.
+            Patch information containing original and patched bytes.
 
         Raises:
             RuntimeError: If Radare2 session is not opened.
@@ -529,7 +525,7 @@ class Radare2AdvancedPatcher:
             inverted_mnemonic: Target inverted mnemonic.
 
         Returns:
-            bytes: Inverted jump instruction bytes.
+            Inverted jump instruction bytes.
 
         """
         # For x86/x64, conditional jumps differ by one bit in many cases
@@ -594,7 +590,7 @@ class Radare2AdvancedPatcher:
             return_value: New return value to set.
 
         Returns:
-            PatchInfo: Patch information containing original and patched bytes.
+            Patch information containing original and patched bytes.
 
         Raises:
             RuntimeError: If Radare2 session is not opened.
@@ -676,7 +672,7 @@ class Radare2AdvancedPatcher:
             value: Immediate value to move.
 
         Returns:
-            bytes: Encoded ARM64 mov immediate instruction.
+            Encoded ARM64 mov immediate instruction.
 
         """
         # Simplified encoding for common values
@@ -699,7 +695,7 @@ class Radare2AdvancedPatcher:
             value: Immediate value to move.
 
         Returns:
-            bytes: Encoded ARM mov immediate instruction.
+            Encoded ARM mov immediate instruction.
 
         """
         if value <= 0xFF:
@@ -718,7 +714,7 @@ class Radare2AdvancedPatcher:
             new_target: New target address for the call.
 
         Returns:
-            PatchInfo: Patch information containing original and patched bytes.
+            Patch information containing original and patched bytes.
 
         Raises:
             RuntimeError: If Radare2 session is not opened.
@@ -965,7 +961,7 @@ class Radare2AdvancedPatcher:
             preserve_original: If True, preserve original function via trampoline.
 
         Returns:
-            PatchInfo: Patch information containing original and patched bytes.
+            Patch information containing original and patched bytes.
 
         Raises:
             RuntimeError: If Radare2 session is not opened during non-preserve mode.
@@ -1259,7 +1255,7 @@ class Radare2AdvancedPatcher:
             hook_size: Size of hook code in bytes.
 
         Returns:
-            int: Address of created trampoline code cave.
+            Address of created trampoline code cave.
 
         Raises:
             RuntimeError: If Radare2 session is not opened.
@@ -1290,7 +1286,7 @@ class Radare2AdvancedPatcher:
             size: Minimum size of code cave in bytes.
 
         Returns:
-            int: Address of suitable code cave.
+            Address of suitable code cave.
 
         Raises:
             RuntimeError: If Radare2 session is not opened.
@@ -1329,7 +1325,7 @@ class Radare2AdvancedPatcher:
         """Apply anti-debugging defeat patches.
 
         Returns:
-            list[PatchInfo]: List of patches applied for anti-debugging defeat.
+            List of patches applied for anti-debugging defeat.
 
         Raises:
             RuntimeError: If Radare2 session is not opened.
@@ -1412,7 +1408,7 @@ class Radare2AdvancedPatcher:
             patch: Patch to apply.
 
         Returns:
-            bool: True if patch applied successfully, False otherwise.
+            True if patch applied successfully, False otherwise.
 
         """
         try:
@@ -1430,7 +1426,7 @@ class Radare2AdvancedPatcher:
             patch: Patch to revert.
 
         Returns:
-            bool: True if patch reverted successfully, False otherwise.
+            True if patch reverted successfully, False otherwise.
 
         """
         try:
@@ -1445,7 +1441,7 @@ class Radare2AdvancedPatcher:
         """Read binary content safely using a context manager.
 
         Returns:
-            bytes: Binary file contents.
+            Binary file contents.
 
         """
         with open(self.binary_path, "rb") as f:
@@ -1458,7 +1454,7 @@ class Radare2AdvancedPatcher:
             output_file: Path to output JSON file.
 
         Returns:
-            bool: True if patches saved successfully, False otherwise.
+            True if patches saved successfully, False otherwise.
 
         """
         try:
@@ -1501,7 +1497,7 @@ class Radare2AdvancedPatcher:
             patch_file: Path to JSON patch file.
 
         Returns:
-            bool: True if patches loaded and applied successfully, False otherwise.
+            True if patches loaded and applied successfully, False otherwise.
 
         """
         try:
@@ -1541,7 +1537,7 @@ class Radare2AdvancedPatcher:
             script_type: Type of script to generate (python, radare2, or c).
 
         Returns:
-            str: Generated patch script code.
+            Generated patch script code.
 
         Raises:
             ValueError: If script_type is not supported.
@@ -1562,7 +1558,7 @@ class Radare2AdvancedPatcher:
         """Generate Python patching script.
 
         Returns:
-            str: Python script that applies stored patches.
+            Python script that applies stored patches.
 
         """
         script = [
@@ -1600,7 +1596,7 @@ class Radare2AdvancedPatcher:
         """Generate Radare2 script.
 
         Returns:
-            str: Radare2 script that applies stored patches.
+            Radare2 script that applies stored patches.
 
         """
         script = ["#!/usr/bin/r2 -qi"]
@@ -1616,7 +1612,7 @@ class Radare2AdvancedPatcher:
         """Generate C patcher program.
 
         Returns:
-            str: C program that applies stored patches.
+            C program that applies stored patches.
 
         """
         script = [
@@ -1683,6 +1679,9 @@ def main() -> None:
     Command-line interface for applying various patches to binaries using Radare2.
     Supports NOP sled generation, jump inversion, return value modification,
     call target redirection, and anti-debugging defeat patches.
+
+    Returns:
+        None
 
     """
     import argparse

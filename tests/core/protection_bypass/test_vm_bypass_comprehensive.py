@@ -91,7 +91,7 @@ def sample_binary_no_vm_detection(tmp_path: Path) -> Path:
 def mock_app_with_binary(sample_binary_with_vm_detection: Path) -> object:
     """Create mock application object with binary path."""
     class MockApp:
-        def __init__(self, binary_path: Path):
+        def __init__(self, binary_path: Path) -> None:
             self.binary_path = str(binary_path)
 
     return MockApp(sample_binary_with_vm_detection)
@@ -101,7 +101,7 @@ def mock_app_with_binary(sample_binary_with_vm_detection: Path) -> object:
 def mock_app_no_binary() -> object:
     """Create mock application object without binary path."""
     class MockApp:
-        def __init__(self):
+        def __init__(self) -> None:
             self.binary_path = None
 
     return MockApp()
@@ -837,7 +837,7 @@ class TestEdgeCases:
         empty_binary.write_bytes(b"")
 
         class MockApp:
-            def __init__(self, path: Path):
+            def __init__(self, path: Path) -> None:
                 self.binary_path = str(path)
 
         app = MockApp(empty_binary)
@@ -858,7 +858,7 @@ class TestEdgeCases:
         large_binary.write_bytes(bytes(large_data))
 
         class MockApp:
-            def __init__(self, path: Path):
+            def __init__(self, path: Path) -> None:
                 self.binary_path = str(path)
 
         app = MockApp(large_binary)
@@ -964,7 +964,7 @@ class TestRealWorldScenarios:
         assert "vmware" in artifacts_str
 
         class MockApp:
-            def __init__(self, path: Path):
+            def __init__(self, path: Path) -> None:
                 self.binary_path = str(path)
 
         app = MockApp(vmware_protected_binary)
@@ -984,7 +984,7 @@ class TestRealWorldScenarios:
         assert "virtualbox" in artifacts_str or "vbox" in artifacts_str
 
         class MockApp:
-            def __init__(self, path: Path):
+            def __init__(self, path: Path) -> None:
                 self.binary_path = str(path)
 
         app = MockApp(virtualbox_protected_binary)
@@ -1025,7 +1025,7 @@ class TestRealWorldScenarios:
         assert len(analysis["detection_methods"]) >= 3
 
         class MockApp:
-            def __init__(self, path: Path):
+            def __init__(self, path: Path) -> None:
                 self.binary_path = str(path)
 
         app = MockApp(binary_path)

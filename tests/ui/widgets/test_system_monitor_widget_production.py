@@ -10,9 +10,9 @@ Licensed under GNU General Public License v3.0
 import json
 import sys
 import time
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
-from unittest.mock import patch
 
 import pytest
 
@@ -22,7 +22,7 @@ from intellicrack.ui.widgets.system_monitor_widget import SystemMetrics, SystemM
 
 
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Generator[Any, None, None]:
     """Create QApplication instance for widget tests."""
     app = QApplication.instance()
     if app is None:
@@ -32,7 +32,7 @@ def qapp() -> QApplication:
 
 
 @pytest.fixture
-def system_monitor_worker() -> SystemMonitorWorker:
+def system_monitor_worker() -> Generator[SystemMonitorWorker, None, None]:
     """Create system monitor worker for testing."""
     worker = SystemMonitorWorker()
     yield worker
@@ -40,7 +40,7 @@ def system_monitor_worker() -> SystemMonitorWorker:
 
 
 @pytest.fixture
-def system_monitor_widget(qapp: QApplication) -> SystemMonitorWidget:
+def system_monitor_widget(qapp: QApplication) -> Generator[SystemMonitorWidget, None, None]:
     """Create system monitor widget for testing."""
     widget = SystemMonitorWidget()
     yield widget
@@ -265,6 +265,7 @@ class TestSystemMonitorWidget:
 
         assert alert_triggered
         assert alert_type == "cpu"
+        assert alert_message is not None
         assert "85.0%" in alert_message
 
     def test_pause_button_stops_updates(

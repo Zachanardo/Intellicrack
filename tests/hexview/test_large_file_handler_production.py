@@ -101,6 +101,7 @@ class TestFileCache:
         cache.add_region(region)
 
         retrieved = cache.get_region(0, 100)
+        assert retrieved is not None
         assert retrieved.ref_count == 1
 
         cache.release_region(retrieved)

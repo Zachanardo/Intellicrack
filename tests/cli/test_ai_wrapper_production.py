@@ -11,10 +11,8 @@ These tests validate that AI-controllable wrapper correctly:
 
 import json
 import subprocess
-import tempfile
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
+from typing import Any, cast
 
 import pytest
 
@@ -26,6 +24,62 @@ from intellicrack.cli.ai_wrapper import (
     PendingAction,
     create_ai_prompt,
 )
+
+
+class FakeInput:
+    """Test double for input() function."""
+
+    def __init__(self, response: str) -> None:
+        self.response: str = response
+        self.calls: list[str] = []
+
+    def __call__(self, prompt: str = "") -> str:
+        self.calls.append(prompt)
+        return self.response
+
+
+class FakeConfirmationManager:
+    """Test double for ConfirmationManager."""
+
+    def __init__(self, will_confirm: bool = True) -> None:
+        self.will_confirm: bool = will_confirm
+        self.confirmation_requests: list[PendingAction] = []
+        self.action_history: list[dict[str, Any]] = []
+
+    def request_confirmation(self, action: PendingAction) -> bool:
+        self.confirmation_requests.append(action)
+        return self.will_confirm
+
+
+class FakeSubprocessResult:
+    """Test double for subprocess.CompletedProcess."""
+
+    def __init__(self, returncode: int, stdout: str, stderr: str) -> None:
+        self.returncode: int = returncode
+        self.stdout: str = stdout
+        self.stderr: str = stderr
+
+
+class FakeSubprocessRunner:
+    """Test double for subprocess.run."""
+
+    def __init__(self, result: FakeSubprocessResult) -> None:
+        self.result: FakeSubprocessResult = result
+        self.calls: list[tuple[list[str], dict[str, Any]]] = []
+
+    def __call__(self, cmd: list[str], **kwargs: Any) -> FakeSubprocessResult:
+        self.calls.append((cmd, kwargs))
+        return self.result
+
+
+class FakePendingAction:
+    """Test double for action history entries."""
+
+    def __init__(self, action_type: ActionType, approved: bool) -> None:
+        self.action_type: ActionType = action_type
+        self.approved: bool = approved
+        self.action_id: str = f"fake_{action_type.value}"
+        self.timestamp: float = 0.0
 
 
 class TestConfirmationManager:
@@ -56,7 +110,7 @@ class TestConfirmationManager:
         assert approved is True
         assert len(manager.action_history) == 0
 
-    def test_action_history_tracking(self) -> None:
+    def test_action_history_tracking(self, monkeypatch: pytest.MonkeyPatch) -> None:
         manager = ConfirmationManager()
 
         action = PendingAction(
@@ -69,14 +123,16 @@ class TestConfirmationManager:
             timestamp=0.0,
         )
 
-        with patch("builtins.input", return_value="y"):
-            approved = manager.request_confirmation(action)
+        fake_input = FakeInput("y")
+        monkeypatch.setattr("builtins.input", fake_input)
+
+        approved = manager.request_confirmation(action)
 
         assert approved is True
         assert len(manager.action_history) == 1
         assert manager.action_history[0]["approved"] is True
 
-    def test_rejection_tracking(self) -> None:
+    def test_rejection_tracking(self, monkeypatch: pytest.MonkeyPatch) -> None:
         manager = ConfirmationManager()
 
         action = PendingAction(
@@ -89,8 +145,10 @@ class TestConfirmationManager:
             timestamp=0.0,
         )
 
-        with patch("builtins.input", return_value="n"):
-            approved = manager.request_confirmation(action)
+        fake_input = FakeInput("n")
+        monkeypatch.setattr("builtins.input", fake_input)
+
+        approved = manager.request_confirmation(action)
 
         assert approved is False
         assert len(manager.action_history) == 1
@@ -173,59 +231,72 @@ class TestIntellicrackAIInterface:
 
     def test_execute_command_cancelled(self) -> None:
         interface = IntellicrackAIInterface()
+        fake_manager = FakeConfirmationManager(will_confirm=False)
+        interface.confirmation_manager = cast(ConfirmationManager, fake_manager)
 
-        with patch.object(interface.confirmation_manager, "request_confirmation", return_value=False):
-            result = interface.execute_command(["test"], "Test command")
+        result = interface.execute_command(["test"], "Test command")
 
         assert result["status"] == "cancelled"
         assert "User declined" in result["message"]
 
-    def test_execute_command_success(self) -> None:
+    def test_execute_command_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         interface = IntellicrackAIInterface()
 
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stdout = '{"test": "success"}'
-        mock_result.stderr = ""
+        fake_result = FakeSubprocessResult(
+            returncode=0,
+            stdout='{"test": "success"}',
+            stderr=""
+        )
+        fake_runner = FakeSubprocessRunner(fake_result)
+        monkeypatch.setattr("subprocess.run", fake_runner)
 
-        with patch.object(interface.confirmation_manager, "request_confirmation", return_value=True):
-            with patch("subprocess.run", return_value=mock_result):
-                result = interface.execute_command(["--format", "json"], "Test")
+        fake_manager = FakeConfirmationManager(will_confirm=True)
+        interface.confirmation_manager = cast(ConfirmationManager, fake_manager)
+
+        result = interface.execute_command(["--format", "json"], "Test")
 
         assert result["status"] == "success"
         assert result["exit_code"] == 0
 
-    def test_analyze_binary_basic(self, tmp_path: Path) -> None:
+    def test_analyze_binary_basic(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         test_binary = tmp_path / "test.exe"
         test_binary.write_bytes(b"MZ\x90\x00")
 
         interface = IntellicrackAIInterface()
 
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stdout = json.dumps({"file_type": "PE", "success": True})
-        mock_result.stderr = ""
+        fake_result = FakeSubprocessResult(
+            returncode=0,
+            stdout=json.dumps({"file_type": "PE", "success": True}),
+            stderr=""
+        )
+        fake_runner = FakeSubprocessRunner(fake_result)
+        monkeypatch.setattr("subprocess.run", fake_runner)
 
-        with patch.object(interface.confirmation_manager, "request_confirmation", return_value=True):
-            with patch("subprocess.run", return_value=mock_result):
-                result = interface.analyze_binary(str(test_binary))
+        fake_manager = FakeConfirmationManager(will_confirm=True)
+        interface.confirmation_manager = cast(ConfirmationManager, fake_manager)
+
+        result = interface.analyze_binary(str(test_binary))
 
         assert result["status"] == "success"
 
-    def test_suggest_patches(self, tmp_path: Path) -> None:
+    def test_suggest_patches(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         test_binary = tmp_path / "patch_test.exe"
         test_binary.write_bytes(b"MZ\x90\x00")
 
         interface = IntellicrackAIInterface()
 
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stdout = json.dumps({"patches": []})
-        mock_result.stderr = ""
+        fake_result = FakeSubprocessResult(
+            returncode=0,
+            stdout=json.dumps({"patches": []}),
+            stderr=""
+        )
+        fake_runner = FakeSubprocessRunner(fake_result)
+        monkeypatch.setattr("subprocess.run", fake_runner)
 
-        with patch.object(interface.confirmation_manager, "request_confirmation", return_value=True):
-            with patch("subprocess.run", return_value=mock_result):
-                result = interface.suggest_patches(str(test_binary))
+        fake_manager = FakeConfirmationManager(will_confirm=True)
+        interface.confirmation_manager = cast(ConfirmationManager, fake_manager)
+
+        result = interface.suggest_patches(str(test_binary))
 
         assert result["status"] == "success"
 
@@ -234,9 +305,21 @@ class TestIntellicrackAIInterface:
 
         interface.confirmation_manager.action_history.extend(
             [
-                {"action": MagicMock(), "approved": True, "timestamp": 0.0},
-                {"action": MagicMock(), "approved": False, "timestamp": 1.0},
-                {"action": MagicMock(), "approved": True, "timestamp": 2.0},
+                {
+                    "action": FakePendingAction(ActionType.ANALYSIS, True),
+                    "approved": True,
+                    "timestamp": 0.0
+                },
+                {
+                    "action": FakePendingAction(ActionType.PATCHING, False),
+                    "approved": False,
+                    "timestamp": 1.0
+                },
+                {
+                    "action": FakePendingAction(ActionType.BYPASS_OPERATION, True),
+                    "approved": True,
+                    "timestamp": 2.0
+                },
             ]
         )
 
@@ -449,21 +532,25 @@ class TestAIToolsConfiguration:
 class TestEndToEndScenarios:
     """Test complete AI-driven workflows."""
 
-    def test_analyze_and_patch_workflow(self, tmp_path: Path) -> None:
+    def test_analyze_and_patch_workflow(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         test_binary = tmp_path / "workflow_test.exe"
         test_binary.write_bytes(b"MZ\x90\x00" * 100)
 
         interface = IntellicrackAIInterface()
 
-        mock_analyze_result = MagicMock()
-        mock_analyze_result.returncode = 0
-        mock_analyze_result.stdout = json.dumps({"protections": ["vmprotect"]})
-        mock_analyze_result.stderr = ""
+        fake_result = FakeSubprocessResult(
+            returncode=0,
+            stdout=json.dumps({"protections": ["vmprotect"]}),
+            stderr=""
+        )
+        fake_runner = FakeSubprocessRunner(fake_result)
+        monkeypatch.setattr("subprocess.run", fake_runner)
 
-        with patch.object(interface.confirmation_manager, "request_confirmation", return_value=True):
-            with patch("subprocess.run", return_value=mock_analyze_result):
-                analyze_result = interface.analyze_binary(str(test_binary), ["comprehensive"])
-                assert analyze_result["status"] == "success"
+        fake_manager = FakeConfirmationManager(will_confirm=True)
+        interface.confirmation_manager = cast(ConfirmationManager, fake_manager)
+
+        analyze_result = interface.analyze_binary(str(test_binary), ["comprehensive"])
+        assert analyze_result["status"] == "success"
 
         summary = interface.get_session_summary()
         assert summary["total_actions"] >= 1

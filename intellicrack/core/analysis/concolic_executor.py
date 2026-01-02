@@ -134,7 +134,7 @@ class NativeConcolicState:
         """Check if the execution state has been terminated.
 
         Returns:
-            True if the state is terminated, False otherwise.
+            bool: True if the state is terminated, False otherwise.
         """
         return self.is_terminated_flag
 
@@ -151,7 +151,7 @@ class NativeConcolicState:
         """Create a copy of this state for path branching.
 
         Returns:
-            A new NativeConcolicState object with copied memory and registers.
+            NativeConcolicState: A new NativeConcolicState object with copied memory and registers.
         """
         new_state = NativeConcolicState(self.pc, self.memory.copy(), self.registers.copy())
         new_state.symbolic_memory = self.symbolic_memory.copy()
@@ -200,7 +200,7 @@ class NativeConcolicState:
             reg: Register name (e.g., 'rax', 'rbx').
 
         Returns:
-            The integer value stored in the register, or 0 if register does not exist.
+            int: The integer value stored in the register, or 0 if register does not exist.
         """
         return self.registers.get(reg, 0)
 
@@ -230,7 +230,7 @@ class NativeConcolicState:
             size: Number of bytes to read (default 4).
 
         Returns:
-            Integer value read from memory (little-endian).
+            int: Integer value read from memory (little-endian).
         """
         value = 0
         for i in range(size):
@@ -404,7 +404,7 @@ class NativeManticore:
         """Extract the entry point from a PE (Windows) binary.
 
         Returns:
-            The entry point address in the PE binary.
+            int: The entry point address in the PE binary.
         """
         if self.binary_data is None:
             return 0x401000
@@ -428,7 +428,7 @@ class NativeManticore:
         """Extract the entry point from an ELF (Linux) binary.
 
         Returns:
-            The entry point address in the ELF binary.
+            int: The entry point address in the ELF binary.
         """
         if self.binary_data is None:
             return 0x8048000
@@ -960,7 +960,7 @@ class NativeManticore:
             operand: The operand string to parse.
 
         Returns:
-            The integer value of the operand.
+            int: The integer value of the operand.
         """
         operand = operand.strip()
 
@@ -1033,7 +1033,7 @@ class NativeManticore:
             expr: The address expression (e.g., 'rbp-0x10', 'rbx+rcx*4-8').
 
         Returns:
-            The calculated effective address.
+            int: The calculated effective address.
         """
         expr = expr.strip()
 
@@ -1173,7 +1173,7 @@ class NativeManticore:
             instruction_bytes: Raw instruction bytes.
 
         Returns:
-            Estimated length of the instruction in bytes.
+            int: Estimated length of the instruction in bytes.
         """
         if not instruction_bytes:
             return 1
@@ -1205,7 +1205,7 @@ class NativeManticore:
             instruction_bytes: Raw instruction bytes.
 
         Returns:
-            The calculated instruction length in bytes.
+            int: The calculated instruction length in bytes.
         """
         if len(instruction_bytes) < 2:
             return len(instruction_bytes)
@@ -1246,7 +1246,7 @@ class NativeManticore:
             state: The execution state to check for branching.
 
         Returns:
-            List of new states created from branching, or empty list if no branching.
+            list[NativeConcolicState]: List of new states created from branching, or empty list if no branching.
         """
         new_states: list[NativeConcolicState] = []
 
@@ -1277,7 +1277,7 @@ class NativeManticore:
             condition: The branch condition string.
 
         Returns:
-            True if the branch should be explored, False otherwise.
+            bool: True if the branch should be explored, False otherwise.
         """
         branch_key = f"{state.pc:x}_{condition}"
         if branch_key in self.explored_branches:
@@ -1293,7 +1293,7 @@ class NativeManticore:
             condition: The condition string to negate.
 
         Returns:
-            The negated condition string.
+            str: The negated condition string.
         """
         negations = {
             "OF==1": "OF==0",
@@ -1329,7 +1329,7 @@ class NativeManticore:
             instruction_bytes: Raw instruction bytes to check.
 
         Returns:
-            True if the instruction is an indirect branch, False otherwise.
+            bool: True if the instruction is an indirect branch, False otherwise.
         """
         if not instruction_bytes:
             return False
@@ -1351,7 +1351,7 @@ class NativeManticore:
             state: The execution state to analyze.
 
         Returns:
-            List of possible target addresses for the indirect branch.
+            list[int]: List of possible target addresses for the indirect branch.
         """
         targets: list[int] = []
 
@@ -1376,7 +1376,7 @@ class NativeManticore:
             addr: The address to validate.
 
         Returns:
-            True if the address is within a known code section, False otherwise.
+            bool: True if the address is within a known code section, False otherwise.
         """
         return any(section["start"] <= addr < section["end"] for section in self.code_sections)
 
@@ -1388,7 +1388,7 @@ class NativeManticore:
             max_count: Maximum number of states to return.
 
         Returns:
-            Prioritized list of states up to max_count.
+            list[NativeConcolicState]: Prioritized list of states up to max_count.
         """
         if len(states) <= max_count:
             return states
@@ -1422,7 +1422,7 @@ class NativeManticore:
         """Get all execution states created during analysis.
 
         Returns:
-            List of all NativeConcolicState objects.
+            list[NativeConcolicState]: List of all NativeConcolicState objects.
         """
         return list(self.all_states.values())
 
@@ -1430,7 +1430,7 @@ class NativeManticore:
         """Get all terminated execution states.
 
         Returns:
-            List of terminated NativeConcolicState objects.
+            list[NativeConcolicState]: List of terminated NativeConcolicState objects.
         """
         return self.terminated_states
 
@@ -1438,7 +1438,7 @@ class NativeManticore:
         """Get all ready (non-terminated) execution states.
 
         Returns:
-            List of ready NativeConcolicState objects.
+            list[NativeConcolicState]: List of ready NativeConcolicState objects.
         """
         return self.ready_states
 
@@ -1512,7 +1512,7 @@ class ConcolicExecutionEngine:
             avoid_addresses: Optional list of addresses to avoid.
 
         Returns:
-            Dictionary containing exploration results with keys 'success', 'paths_explored', and 'inputs'.
+            dict[str, Any]: Dictionary containing exploration results with keys 'success', 'paths_explored', and 'inputs'.
         """
         try:
             self._logger.info("Starting concolic execution on %s", self.binary_path)
@@ -1587,7 +1587,7 @@ class ConcolicExecutionEngine:
             license_check_address: Optional address of the license check function.
 
         Returns:
-            Dictionary with bypass results including 'success', 'bypass_found', and input data.
+            dict[str, Any]: Dictionary with bypass results including 'success', 'bypass_found', and input data.
         """
         try:
             self._logger.info("Finding license bypass for %s", self.binary_path)
@@ -1642,7 +1642,7 @@ class ConcolicExecutionEngine:
         """Automatically discover license check function address.
 
         Returns:
-            The address of a license check function, or None if not found.
+            int | None: The address of a license check function, or None if not found.
         """
         try:
             if not LIEF_AVAILABLE or lief_module is None:
@@ -1695,7 +1695,7 @@ class ConcolicExecutionEngine:
             **kwargs: Keyword arguments containing analysis configuration.
 
         Returns:
-            Dictionary with extracted and validated analysis parameters.
+            dict[str, object]: Dictionary with extracted and validated analysis parameters.
         """
         return {
             "target_functions": kwargs.get("target_functions", []),
@@ -1716,7 +1716,7 @@ class ConcolicExecutionEngine:
             max_depth: Maximum exploration depth for the analysis.
 
         Returns:
-            Dictionary with initialized analysis result fields.
+            dict[str, Any]: Dictionary with initialized analysis result fields.
         """
         return {
             "binary": self.binary_path,
@@ -1740,7 +1740,7 @@ class ConcolicExecutionEngine:
             **kwargs: Optional analysis configuration parameters.
 
         Returns:
-            Dictionary containing analysis results with paths, coverage, and findings.
+            dict[str, Any]: Dictionary containing analysis results with paths, coverage, and findings.
         """
         time.time()
 
@@ -1765,7 +1765,7 @@ class ConcolicExecutionEngine:
             **kwargs: Optional analysis configuration parameters.
 
         Returns:
-            Dictionary with analysis results including paths explored and test cases.
+            dict[str, Any]: Dictionary with analysis results including paths explored and test cases.
         """
         start_time = time.time()
 
@@ -1870,7 +1870,7 @@ class ConcolicExecutionEngine:
             binary_path: Optional path to the binary (overrides initial path if provided).
 
         Returns:
-            Dictionary containing analysis results.
+            dict[str, Any]: Dictionary containing analysis results.
         """
         if binary_path:
             self.binary_path = binary_path
@@ -1891,7 +1891,7 @@ def run_concolic_execution(app: object, target_binary: str) -> dict[str, Any]:
         target_binary: Path to the binary file to analyze.
 
     Returns:
-        Dictionary containing concolic execution results.
+        dict[str, Any]: Dictionary containing concolic execution results.
     """
     engine = ConcolicExecutionEngine(target_binary)
     return engine.execute(target_binary)

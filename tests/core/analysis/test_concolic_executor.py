@@ -10,7 +10,6 @@ import struct
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -37,6 +36,56 @@ try:
     Z3_AVAILABLE = True
 except ImportError:
     pass
+
+
+class FakeApplicationContext:
+    """Real test double for application context object.
+
+    Represents an application context that concolic execution functions
+    might receive as a parameter. This is a real implementation that stores
+    configuration and state rather than a mock.
+    """
+
+    def __init__(self) -> None:
+        """Initialize fake application context with default configuration."""
+        self.config: Dict[str, Any] = {
+            "timeout": 300,
+            "max_states": 1000,
+            "verbose": False,
+        }
+        self.logger: logging.Logger = logging.getLogger("FakeApp")
+        self.session_data: Dict[str, Any] = {}
+        self.execution_history: List[str] = []
+
+    def get_config(self, key: str, default: Any = None) -> Any:
+        """Get configuration value by key.
+
+        Args:
+            key: Configuration key to retrieve.
+            default: Default value if key not found.
+
+        Returns:
+            Configuration value or default.
+        """
+        return self.config.get(key, default)
+
+    def set_config(self, key: str, value: Any) -> None:
+        """Set configuration value.
+
+        Args:
+            key: Configuration key to set.
+            value: Value to store.
+        """
+        self.config[key] = value
+
+    def log_execution(self, binary_path: str) -> None:
+        """Log execution of a binary analysis.
+
+        Args:
+            binary_path: Path to analyzed binary.
+        """
+        self.execution_history.append(binary_path)
+        self.logger.info("Logged execution: %s", binary_path)
 
 
 @pytest.fixture
@@ -977,7 +1026,7 @@ class TestRunConcolicExecution:
 
     def test_run_concolic_execution_creates_engine(self, simple_pe_binary: Path) -> None:
         """run_concolic_execution creates engine and executes."""
-        app = MagicMock()
+        app = FakeApplicationContext()
 
         results = run_concolic_execution(app, str(simple_pe_binary))
 
@@ -985,7 +1034,7 @@ class TestRunConcolicExecution:
 
     def test_run_concolic_execution_returns_results(self, simple_pe_binary: Path) -> None:
         """run_concolic_execution returns execution results."""
-        app = MagicMock()
+        app = FakeApplicationContext()
 
         results = run_concolic_execution(app, str(simple_pe_binary))
 

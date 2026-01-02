@@ -990,14 +990,6 @@ class TestExportComparison:
         assert len(comparison["common_exports"]) == 3
 
 
-@pytest.fixture
-def temp_workspace(tmp_path: Path) -> Path:
-    """Create temporary workspace for test files."""
-    workspace: Path = tmp_path / "export_analyzer_tests"
-    workspace.mkdir(parents=True, exist_ok=True)
-    return workspace
-
-
 def test_convenience_function_analyze_exports() -> None:
     """Convenience function analyzes exports from binary path."""
     kernel32_path: str = r"C:\Windows\System32\kernel32.dll"

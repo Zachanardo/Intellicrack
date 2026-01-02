@@ -1,4 +1,7 @@
-"""Result utilities for Intellicrack core shared functionality.
+"""Provide common result dictionary operations to eliminate code duplication.
+
+This module offers utility classes and functions for handling standardized
+result dictionaries across the Intellicrack analysis framework.
 
 This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint.
@@ -15,12 +18,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
-"""
-
-"""
-Result Dictionary Utilities
-
-Common functionality for result dictionary operations to eliminate code duplication.
 """
 
 

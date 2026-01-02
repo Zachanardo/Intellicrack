@@ -32,6 +32,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QPushButton,
     QSplitter,
     QStandardItem,
+    QCloseEvent,
     QStandardItemModel,
     QSyntaxHighlighter,
     Qt,
@@ -58,7 +59,11 @@ class SignatureSyntaxHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for ICP signature format."""
 
     def __init__(self, parent: QTextDocument) -> None:
-        """Initialize the SignatureSyntaxHighlighter with default values."""
+        """Initialize the SignatureSyntaxHighlighter with default values.
+
+        Args:
+            parent: The QTextDocument to apply syntax highlighting to.
+        """
         super().__init__(parent)
         self.highlighting_rules = []
 
@@ -120,7 +125,11 @@ class SignatureSyntaxHighlighter(QSyntaxHighlighter):
             self.highlighting_rules.append((re.compile(escaped_op), operator_format))
 
     def highlightBlock(self, text: str | None) -> None:
-        """Apply syntax highlighting to a block of text."""
+        """Apply syntax highlighting to a block of text.
+
+        Args:
+            text: The text block to highlight, or None to skip.
+        """
         if text is None:
             return
         for pattern, fmt in self.highlighting_rules:
@@ -138,7 +147,12 @@ class SignatureTestWorker(QThread):
     progress_update = pyqtSignal(int, str)
 
     def __init__(self, signature_content: str, test_files: list[str]) -> None:
-        """Initialize the SignatureTestWorker with default values."""
+        """Initialize the SignatureTestWorker with default values.
+
+        Args:
+            signature_content: The signature content to test.
+            test_files: List of file paths to test the signature against.
+        """
         super().__init__()
         self.signature_content = signature_content
         self.test_files = test_files
@@ -146,7 +160,11 @@ class SignatureTestWorker(QThread):
         self.logger = logger
 
     def run(self) -> None:
-        """Run signature tests."""
+        """Run signature tests.
+
+        Tests the signature against all configured test files and emits
+        progress and completion signals.
+        """
         for i, file_path in enumerate(self.test_files):
             try:
                 # Update progress
@@ -172,7 +190,15 @@ class SignatureTestWorker(QThread):
         self.progress_update.emit(100, "Complete")
 
     def _test_signature_on_file(self, file_path: str) -> dict[str, object]:
-        """Test signature against a single file."""
+        """Test signature against a single file.
+
+        Args:
+            file_path: Path to the file to test.
+
+        Returns:
+            Dictionary with keys 'success' (bool), 'message' (str),
+            and 'execution_time' (float).
+        """
         test_start_time = time.time()
         try:
             # Create temporary signature file
@@ -227,7 +253,11 @@ class SignatureEditorDialog(QDialog):
     """Run signature editor dialog."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the signature editor dialog with UI components and data structures."""
+        """Initialize the signature editor dialog with UI components and data structures.
+
+        Args:
+            parent: Optional parent widget for the dialog.
+        """
         super().__init__(parent)
         self.setWindowTitle("ICP Signature Editor")
         self.setModal(True)
@@ -280,7 +310,11 @@ class SignatureEditorDialog(QDialog):
         self.load_signature_databases()
 
     def init_ui(self) -> None:
-        """Initialize the user interface."""
+        """Initialize the user interface.
+
+        Creates and arranges all UI components including toolbars, panels,
+        and dialog buttons.
+        """
         layout = QVBoxLayout()
 
         # Toolbar
@@ -313,7 +347,11 @@ class SignatureEditorDialog(QDialog):
         self.setLayout(layout)
 
     def _create_toolbar(self) -> QHBoxLayout:
-        """Create toolbar with main actions."""
+        """Create toolbar with main actions.
+
+        Returns:
+            QHBoxLayout: Horizontal layout containing toolbar buttons and controls.
+        """
         layout = QHBoxLayout()
 
         # Database selection
@@ -352,11 +390,19 @@ class SignatureEditorDialog(QDialog):
         return layout
 
     def _on_db_combo_changed(self, text: str) -> None:
-        """Handle database combo box change."""
+        """Handle database combo box change.
+
+        Args:
+            text: The newly selected database name.
+        """
         self.load_signatures_from_database(text)
 
     def _create_signature_browser(self) -> QWidget:
-        """Create signature browser panel."""
+        """Create signature browser panel.
+
+        Returns:
+            QWidget: Widget containing the signature browser UI.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -392,11 +438,19 @@ class SignatureEditorDialog(QDialog):
         return widget
 
     def _on_search_input_changed(self, text: str) -> None:
-        """Handle search input change."""
+        """Handle search input change.
+
+        Args:
+            text: The current search input text.
+        """
         self.filter_signatures(text)
 
     def _create_editor_panel(self) -> QWidget:
-        """Create editor and testing panel."""
+        """Create editor and testing panel.
+
+        Returns:
+            QWidget: Widget containing editor and testing tabs.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -420,7 +474,11 @@ class SignatureEditorDialog(QDialog):
         return widget
 
     def _create_editor_tab(self) -> QWidget:
-        """Create signature editor tab."""
+        """Create signature editor tab.
+
+        Returns:
+            QWidget: Widget containing the signature editor UI.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -504,7 +562,11 @@ class SignatureEditorDialog(QDialog):
         return widget
 
     def _create_testing_tab(self) -> QWidget:
-        """Create signature testing tab."""
+        """Create signature testing tab.
+
+        Returns:
+            QWidget: Widget containing the signature testing UI.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -595,7 +657,11 @@ class SignatureEditorDialog(QDialog):
         return widget
 
     def _create_template_tab(self) -> QWidget:
-        """Create signature template tab."""
+        """Create signature template tab.
+
+        Returns:
+            QWidget: Widget containing the template browser UI.
+        """
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -664,7 +730,11 @@ class SignatureEditorDialog(QDialog):
         return widget
 
     def load_signature_databases(self) -> None:
-        """Load available signature databases."""
+        """Load available signature databases.
+
+        Searches common directories for signature database files (.sg format)
+        and populates the database combo box.
+        """
         self.db_combo.clear()
         self.signature_databases.clear()
 
@@ -686,7 +756,11 @@ class SignatureEditorDialog(QDialog):
             self.load_signatures_from_database(self.db_combo.currentText())
 
     def load_signatures_from_database(self, db_name: str) -> None:
-        """Load signatures from selected database."""
+        """Load signatures from selected database.
+
+        Args:
+            db_name: The name of the database to load.
+        """
         if not db_name or db_name not in self.signature_databases:
             return
 
@@ -705,7 +779,14 @@ class SignatureEditorDialog(QDialog):
             QMessageBox.warning(self, "Load Error", f"Failed to load database {db_name}: {e!s}")
 
     def _parse_signature_file(self, content: str) -> list[dict[str, str]]:
-        """Parse signature file content into individual signatures."""
+        """Parse signature file content into individual signatures.
+
+        Args:
+            content: The signature file content to parse.
+
+        Returns:
+            list[dict[str, str]]: List of parsed signature dictionaries.
+        """
         signatures: list[dict[str, str]] = []
 
         # Split content by signature blocks
@@ -743,7 +824,11 @@ class SignatureEditorDialog(QDialog):
         return signatures
 
     def _update_signature_list(self) -> None:
-        """Update signature list display."""
+        """Update signature list display.
+
+        Refreshes the signature list widget with current signatures, applying
+        search filters and color coding.
+        """
         self.signature_list.clear()
 
         search_term = self.search_input.text().lower()
@@ -767,11 +852,19 @@ class SignatureEditorDialog(QDialog):
             self.signature_list.addItem(item)
 
     def filter_signatures(self, text: str) -> None:
-        """Filter signatures by search text."""
+        """Filter signatures by search text.
+
+        Args:
+            text: The search text to filter signatures.
+        """
         self._update_signature_list()
 
     def load_signature_from_list(self, item: QListWidgetItem) -> None:
-        """Load signature from list selection."""
+        """Load signature from list selection.
+
+        Args:
+            item: The selected list widget item.
+        """
         sig_data_raw = item.data(Qt.ItemDataRole.UserRole)
         if not isinstance(sig_data_raw, dict):
             return
@@ -788,7 +881,11 @@ class SignatureEditorDialog(QDialog):
         self._update_signature_info(sig_data)
 
     def _update_signature_info(self, sig_data: dict[str, str]) -> None:
-        """Update signature info display."""
+        """Update signature info display.
+
+        Args:
+            sig_data: Dictionary containing signature metadata and content.
+        """
         info_text = f"""Name: {sig_data["name"]}
 Type: {sig_data["type"]}
 Version: {sig_data["version"]}
@@ -800,7 +897,10 @@ Content Preview:
         self.sig_info_text.setPlainText(info_text)
 
     def new_signature(self) -> None:
-        """Create new signature."""
+        """Create new signature.
+
+        Clears editor and loads basic signature template.
+        """
         self.current_signature_path = None
 
         # Clear editor
@@ -834,7 +934,11 @@ ep:
         self.signature_editor.setPlainText(template)
 
     def load_signature_file(self) -> None:
-        """Load signature from file."""
+        """Load signature from file.
+
+        Opens file dialog and loads selected signature file into the editor.
+        Extracts metadata from file comments.
+        """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Load Signature File",
@@ -858,7 +962,11 @@ ep:
                 QMessageBox.critical(self, "Load Error", f"Failed to load file: {e!s}")
 
     def _extract_metadata_from_content(self, content: str) -> None:
-        """Extract metadata from signature content."""
+        """Extract metadata from signature content.
+
+        Args:
+            content: The signature content to extract metadata from.
+        """
         lines = content.split("\n")
 
         for line in lines:
@@ -878,7 +986,11 @@ ep:
                     self.sig_description_input.setText(comment[12:].strip())
 
     def save_signature(self) -> None:
-        """Save current signature."""
+        """Save current signature.
+
+        Saves the current signature to a file, prompting for filename if needed.
+        Adds metadata comments to the signature content.
+        """
         if not self.signature_editor.toPlainText().strip():
             QMessageBox.warning(self, "Save Error", "No signature content to save")
             return
@@ -909,7 +1021,11 @@ ep:
                 QMessageBox.critical(self, "Save Error", f"Failed to save file: {e!s}")
 
     def _build_signature_content(self) -> str:
-        """Build complete signature content with metadata."""
+        """Build complete signature content with metadata.
+
+        Returns:
+            Complete signature content with metadata header.
+        """
         metadata_header = f"""// Name: {self.sig_name_input.text()}
 // Type: {self.sig_type_combo.currentText()}
 // Version: {self.sig_version_input.text()}
@@ -936,7 +1052,11 @@ ep:
         return metadata_header + "\n".join(filtered_lines)
 
     def validate_signature_syntax(self) -> None:
-        """Validate signature syntax."""
+        """Validate signature syntax.
+
+        Checks for required sections, balanced braces, and valid hex patterns.
+        Displays validation results in a message box.
+        """
         content = self.signature_editor.toPlainText()
 
         if not content.strip():
@@ -965,7 +1085,10 @@ ep:
             QMessageBox.information(self, "Validation", "Signature syntax is valid")
 
     def format_signature(self) -> None:
-        """Format signature content."""
+        """Format signature content.
+
+        Applies proper indentation to signature content based on brace nesting.
+        """
         content = self.signature_editor.toPlainText()
 
         # Basic formatting
@@ -988,7 +1111,10 @@ ep:
         self.signature_editor.setPlainText("\n".join(formatted_lines))
 
     def show_template_menu(self) -> None:
-        """Show template insertion menu."""
+        """Show template insertion menu.
+
+        Switches the tab widget to the template tab for template selection.
+        """
         # Switch to template tab
         parent_widget = self.signature_editor.parent()
         while parent_widget and not isinstance(parent_widget, QTabWidget):
@@ -998,7 +1124,12 @@ ep:
             parent_widget.setCurrentIndex(2)  # Template tab
 
     def load_template_category(self, current_item: QListWidgetItem | None, previous_item: QListWidgetItem | None) -> None:
-        """Load templates for selected category."""
+        """Load templates for selected category.
+
+        Args:
+            current_item: The newly selected category item.
+            previous_item: The previously selected category item.
+        """
         if not current_item:
             return
 
@@ -1035,7 +1166,14 @@ ep:
             self._update_template_preview()
 
     def _get_templates_for_category(self, category: str) -> dict[str, str]:
-        """Get templates for a specific category."""
+        """Get templates for a specific category.
+
+        Args:
+            category: The template category name.
+
+        Returns:
+            Dictionary mapping template names to template content.
+        """
         try:
             from ...data.signature_templates import SignatureTemplates
 
@@ -1046,7 +1184,14 @@ ep:
             return self._get_builtin_templates(category)
 
     def _get_builtin_templates(self, category: str) -> dict[str, str]:
-        """Fallback built-in templates."""
+        """Fallback built-in templates.
+
+        Args:
+            category: The template category name.
+
+        Returns:
+            Dictionary mapping template names to template content.
+        """
         if category == "Basic Patterns":
             return {
                 "Simple Hex Pattern": """ep:
@@ -1076,7 +1221,10 @@ ep:
         return {}
 
     def _update_template_preview(self) -> None:
-        """Update template preview."""
+        """Update template preview.
+
+        Updates the preview text widget with the selected template content.
+        """
         current_item = self.template_list.currentItem()
         if not current_item:
             return
@@ -1093,13 +1241,19 @@ ep:
             self.template_preview.setPlainText(templates[template_name])
 
     def insert_template(self) -> None:
-        """Insert selected template into editor."""
+        """Insert selected template into editor.
+
+        Inserts the template preview content at the cursor position.
+        """
         if template_content := self.template_preview.toPlainText():
             cursor = self.signature_editor.textCursor()
             cursor.insertText(template_content + "\n\n")
 
     def add_test_file(self) -> None:
-        """Add individual test file."""
+        """Add individual test file.
+
+        Opens file dialog to select and add a single test file.
+        """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Add Test File",
@@ -1111,7 +1265,10 @@ ep:
             self.test_files_list.addItem(file_path)
 
     def add_test_folder(self) -> None:
-        """Add all files from folder for testing."""
+        """Add all files from folder for testing.
+
+        Opens directory dialog and adds all executable files from selected folder.
+        """
         if folder_path := QFileDialog.getExistingDirectory(
             self,
             "Add Test Folder",
@@ -1123,11 +1280,18 @@ ep:
                     self.test_files_list.addItem(str(file_path))
 
     def clear_test_files(self) -> None:
-        """Clear test files list."""
+        """Clear test files list.
+
+        Removes all files from the test files list.
+        """
         self.test_files_list.clear()
 
     def run_signature_tests(self) -> None:
-        """Run signature tests."""
+        """Run signature tests.
+
+        Initiates signature testing against selected test files in a background thread.
+        Updates UI with progress and results.
+        """
         signature_content = self.signature_editor.toPlainText()
         if not signature_content.strip():
             QMessageBox.warning(self, "Test Error", "No signature content to test")
@@ -1165,7 +1329,10 @@ ep:
         self.test_worker.start()
 
     def stop_signature_tests(self) -> None:
-        """Stop running signature tests."""
+        """Stop running signature tests.
+
+        Terminates the currently running test worker thread.
+        """
         if self.test_worker and self.test_worker.isRunning():
             self.test_worker.terminate()
             self.test_worker.wait()
@@ -1174,7 +1341,14 @@ ep:
 
     @pyqtSlot(str, bool, str, float)
     def _on_test_completed(self, file_path: str, success: bool, result: str, execution_time: float) -> None:
-        """Handle individual test completion."""
+        """Handle individual test completion.
+
+        Args:
+            file_path: Path to the tested file.
+            success: Whether the signature matched the file.
+            result: Result message describing the match or failure.
+            execution_time: Time taken to test the file in seconds.
+        """
         row = self.test_results_model.rowCount()
         self.test_results_model.insertRow(row)
 
@@ -1218,11 +1392,19 @@ ep:
 
     @pyqtSlot(int, str)
     def _on_test_progress(self, progress: int, current_file: str) -> None:
-        """Handle test progress update."""
+        """Handle test progress update.
+
+        Args:
+            progress: Current progress percentage (0-100).
+            current_file: Name of the file currently being tested.
+        """
         self.test_summary_label.setText(f"Testing: {current_file} ({progress}%)")
 
     def _on_tests_finished(self) -> None:
-        """Handle test completion."""
+        """Handle test completion.
+
+        Updates UI to reflect test completion and displays summary statistics.
+        """
         # Re-enable test button, disable stop button
         self.run_test_btn.setEnabled(True)
         self.stop_test_btn.setEnabled(False)
@@ -1245,7 +1427,10 @@ ep:
         self.test_worker = None
 
     def add_signature_database(self) -> None:
-        """Add new signature database."""
+        """Add new signature database.
+
+        Opens file dialog to select and add a new signature database file.
+        """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Add Signature Database",
@@ -1260,13 +1445,37 @@ ep:
             self.db_combo.setCurrentText(db_name)
 
     def refresh_signatures(self) -> None:
-        """Refresh signature list."""
+        """Refresh signature list.
+
+        Reloads the currently selected database and updates the signature list.
+        """
         if current_db := self.db_combo.currentText():
             self.load_signatures_from_database(current_db)
 
+    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+        """Handle dialog close with proper thread cleanup.
+
+        Ensures any running test worker is properly terminated before
+        closing the dialog to prevent resource leaks.
+
+        Args:
+            event: Close event from Qt framework.
+
+        """
+        if self.test_worker is not None and self.test_worker.isRunning():
+            self.test_worker.quit()
+            if not self.test_worker.wait(2000):
+                self.test_worker.terminate()
+                self.test_worker.wait()
+            self.test_worker = None
+        super().closeEvent(event)
+
 
 def main() -> None:
-    """Test the signature editor dialog."""
+    """Test the signature editor dialog.
+
+    Entry point for testing the signature editor dialog in standalone mode.
+    """
     app = QApplication([])
 
     dialog = SignatureEditorDialog()

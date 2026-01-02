@@ -31,11 +31,11 @@ def find_all_pattern_offsets(data: bytes, pattern: bytes) -> list[int]:
     """Find all occurrences of a pattern in binary data.
 
     Args:
-        data: Binary data to search
-        pattern: Pattern to find
+        data: Binary data to search.
+        pattern: Pattern to find.
 
     Returns:
-        List of offsets where pattern was found
+        List of offsets where pattern was found.
 
     """
     offsets = []
@@ -53,11 +53,11 @@ def analyze_binary_for_strings(binary_path: str, search_strings: list[str]) -> d
     """Analyze a binary file for specific strings.
 
     Args:
-        binary_path: Path to the binary file
-        search_strings: List of strings to search for
+        binary_path: Path to the binary file.
+        search_strings: List of strings to search for.
 
     Returns:
-        Dictionary with analysis results
+        Dictionary with analysis results including strings_found, confidence, and error.
 
     """
     results: dict[str, Any] = {

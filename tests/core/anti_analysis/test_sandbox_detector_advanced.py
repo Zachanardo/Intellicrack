@@ -18,7 +18,7 @@ pytestmark = pytest.mark.skip(reason="All tests disabled - violated no-mock poli
 class TestSandboxDetectorAdvanced:
     """Disabled test class."""
 
-    def test_placeholder(self):
+    def test_placeholder(self) -> None:
         """Placeholder to prevent empty test class errors."""
         pytest.skip("All tests disabled - require removal of mocks")
 

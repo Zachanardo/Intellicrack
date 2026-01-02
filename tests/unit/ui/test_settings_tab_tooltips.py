@@ -12,6 +12,8 @@ the Free Software Foundation, either version 3 of the License, or
 """
 
 import sys
+from collections.abc import Generator
+from typing import Any
 import pytest
 from weakref import WeakKeyDictionary
 
@@ -25,7 +27,7 @@ from intellicrack.handlers.pyqt6_handler import (
 
 
 @pytest.fixture(scope="module")
-def qapp():
+def qapp() -> Generator[QApplication, None, None]:
     """Create QApplication instance for testing."""
     app = QApplication.instance()
     if app is None:
@@ -34,10 +36,11 @@ def qapp():
 
 
 @pytest.fixture
-def test_widgets(qapp):
+def test_widgets(qapp: QApplication) -> Generator[list[QWidget], None, None]:
     """Create real Qt widgets for testing."""
-    widgets = []
+    widgets: list[QWidget] = []
     for i in range(5):
+        widget: QWidget
         if i < 3:
             widget = QPushButton(f"Button {i}")
             widget.setToolTip(f"Tooltip for button {i}")
@@ -54,9 +57,9 @@ def test_widgets(qapp):
 class TestTooltipFunctionality:
     """Test suite for tooltip enable/disable functionality with real widgets."""
 
-    def test_disable_tooltips_stores_and_clears(self, qapp, test_widgets):
+    def test_disable_tooltips_stores_and_clears(self, qapp: QApplication, test_widgets: list[QWidget]) -> None:
         """Test that disabling tooltips stores originals and clears them from real widgets."""
-        original_tooltips = WeakKeyDictionary()
+        original_tooltips: WeakKeyDictionary[QWidget, str] = WeakKeyDictionary()
 
         for widget in test_widgets:
             if tooltip := widget.toolTip():
@@ -71,9 +74,9 @@ class TestTooltipFunctionality:
 
         assert len(original_tooltips) == 3
 
-    def test_enable_tooltips_restores_originals(self, qapp, test_widgets):
+    def test_enable_tooltips_restores_originals(self, qapp: QApplication, test_widgets: list[QWidget]) -> None:
         """Test that enabling tooltips restores previously stored values on real widgets."""
-        original_tooltips = WeakKeyDictionary()
+        original_tooltips: WeakKeyDictionary[QWidget, str] = WeakKeyDictionary()
 
         for widget in test_widgets:
             if tooltip := widget.toolTip():
@@ -89,11 +92,11 @@ class TestTooltipFunctionality:
             assert widget.toolTip() == original_tooltips[widget]
             assert widget.toolTip().startswith("Tooltip for button")
 
-    def test_null_widget_handling(self, qapp):
+    def test_null_widget_handling(self, qapp: QApplication) -> None:
         """Test that None values in widget list are handled gracefully."""
-        test_list = [None, QPushButton("Test"), None, QLabel("Label")]
+        test_list: list[QWidget | None] = [None, QPushButton("Test"), None, QLabel("Label")]
 
-        original_tooltips = WeakKeyDictionary()
+        original_tooltips: WeakKeyDictionary[QWidget, str] = WeakKeyDictionary()
 
         for widget in test_list:
             if widget is None:
@@ -105,9 +108,9 @@ class TestTooltipFunctionality:
             if widget is not None:
                 widget.deleteLater()
 
-    def test_weak_reference_cleanup(self, qapp):
+    def test_weak_reference_cleanup(self, qapp: QApplication) -> None:
         """Test that WeakKeyDictionary properly releases references when widgets are deleted."""
-        original_tooltips = WeakKeyDictionary()
+        original_tooltips: WeakKeyDictionary[QWidget, str] = WeakKeyDictionary()
 
         widget1 = QPushButton("Button 1")
         widget1.setToolTip("Tooltip 1")
@@ -120,15 +123,15 @@ class TestTooltipFunctionality:
         assert len(original_tooltips) == 2
 
         widget1.deleteLater()
-        widget1 = None
+        del widget1
 
         qapp.processEvents()
 
         widget2.deleteLater()
 
-    def test_tooltip_persistence_across_enable_disable_cycles(self, qapp, test_widgets):
+    def test_tooltip_persistence_across_enable_disable_cycles(self, qapp: QApplication, test_widgets: list[QWidget]) -> None:
         """Test that tooltips remain consistent across multiple enable/disable cycles."""
-        original_tooltips = WeakKeyDictionary()
+        original_tooltips: WeakKeyDictionary[QWidget, str] = WeakKeyDictionary()
 
         original_values = {id(widget): widget.toolTip() for widget in test_widgets[:3]}
         for _ in range(3):
@@ -144,7 +147,7 @@ class TestTooltipFunctionality:
         for widget in test_widgets[:3]:
             assert widget.toolTip() == original_values[id(widget)]
 
-    def test_tooltip_duration_settings(self, qapp, test_widgets):
+    def test_tooltip_duration_settings(self, qapp: QApplication, test_widgets: list[QWidget]) -> None:
         """Test that tooltip duration is properly set for enabled and disabled states."""
         for widget in test_widgets:
             widget.setToolTipDuration(0)
@@ -154,9 +157,9 @@ class TestTooltipFunctionality:
             widget.setToolTipDuration(-1)
             assert widget.toolTipDuration() == -1
 
-    def test_empty_tooltip_widgets_not_stored(self, qapp, test_widgets):
+    def test_empty_tooltip_widgets_not_stored(self, qapp: QApplication, test_widgets: list[QWidget]) -> None:
         """Test that widgets without tooltips are not stored in the dictionary."""
-        original_tooltips = WeakKeyDictionary()
+        original_tooltips: WeakKeyDictionary[QWidget, str] = WeakKeyDictionary()
 
         for widget in test_widgets:
             if tooltip := widget.toolTip():
@@ -166,19 +169,19 @@ class TestTooltipFunctionality:
         assert test_widgets[3] not in original_tooltips
         assert test_widgets[4] not in original_tooltips
 
-    def test_complex_widget_hierarchy(self, qapp):
+    def test_complex_widget_hierarchy(self, qapp: QApplication) -> None:
         """Test tooltip handling with nested widget hierarchies."""
         container = QWidget()
         layout = QVBoxLayout(container)
 
-        buttons = []
+        buttons: list[QPushButton] = []
         for i in range(3):
             btn = QPushButton(f"Nested Button {i}")
             btn.setToolTip(f"Nested tooltip {i}")
             layout.addWidget(btn)
             buttons.append(btn)
 
-        original_tooltips = WeakKeyDictionary()
+        original_tooltips: WeakKeyDictionary[QWidget, str] = WeakKeyDictionary()
 
         all_widgets = [container] + buttons
         for widget in all_widgets:

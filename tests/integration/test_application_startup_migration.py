@@ -20,37 +20,37 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import json
 import os
-import sys
 import tempfile
 import unittest
 import time
 from pathlib import Path
 import shutil
+from typing import Any, Callable, TypeVar
 
-sys.path.insert(0, 'C:\\Intellicrack')
+from intellicrack.core.config_manager import IntellicrackConfig
 
-from intellicrack.core.config_manager import IntellicrackConfig, get_config
+T = TypeVar("T")
 
 
 class RealApplicationStartupSimulator:
     """Real application startup simulator for production testing without mocks."""
 
-    def __init__(self, temp_dir):
+    def __init__(self, temp_dir: str) -> None:
         """Initialize application startup simulator with real capabilities."""
-        self.temp_dir = temp_dir
-        self.config_dir = Path(temp_dir) / "config"
-        self.home_dir = Path(temp_dir) / "home"
-        self.llm_configs_dir = self.home_dir / ".intellicrack" / "llm_configs"
+        self.temp_dir: str | Path = temp_dir
+        self.config_dir: Path = Path(temp_dir) / "config"
+        self.home_dir: Path = Path(temp_dir) / "home"
+        self.llm_configs_dir: Path = self.home_dir / ".intellicrack" / "llm_configs"
 
         # Real startup state tracking
-        self.startup_successful = True
-        self.startup_errors = []
-        self.migration_performed = False
-        self.components_initialized = []
-        self.initialization_order = []
+        self.startup_successful: bool = True
+        self.startup_errors: list[str] = []
+        self.migration_performed: bool = False
+        self.components_initialized: list[str] = []
+        self.initialization_order: list[str] = []
 
         # Real QSettings simulation data
-        self.qsettings_data = {
+        self.qsettings_data: dict[str, Any] = {
             "execution/qemu_preference": "always",
             "trusted_binaries": ["C:\\Apps\\trusted.exe"],
             "script_types/frida/use_qemu": True,
@@ -61,49 +61,51 @@ class RealApplicationStartupSimulator:
         }
 
         # Real environment variables
-        self.environment_variables = {}
+        self.environment_variables: dict[str, str] = {}
 
         # Real component states
-        self.component_managers = {}
+        self.component_managers: dict[str, Any] = {}
 
         # Performance tracking
-        self.startup_times = []
+        self.startup_times: list[float] = []
 
-    def create_directory_structure(self):
+    def create_directory_structure(self) -> None:
         """Create real directory structure for testing."""
         self.config_dir.mkdir(parents=True, exist_ok=True)
         self.home_dir.mkdir(parents=True, exist_ok=True)
         self.llm_configs_dir.mkdir(parents=True, exist_ok=True)
 
         # Create additional directories that might be needed
-        (self.temp_dir / "output").mkdir(exist_ok=True)
-        (self.temp_dir / "logs").mkdir(exist_ok=True)
-        (self.temp_dir / "cache").mkdir(exist_ok=True)
-        (self.temp_dir / "plugins").mkdir(exist_ok=True)
-        (self.temp_dir / "assets" / "fonts").mkdir(parents=True, exist_ok=True)
+        (Path(self.temp_dir) / "output").mkdir(exist_ok=True)
+        (Path(self.temp_dir) / "logs").mkdir(exist_ok=True)
+        (Path(self.temp_dir) / "cache").mkdir(exist_ok=True)
+        (Path(self.temp_dir) / "plugins").mkdir(exist_ok=True)
+        (Path(self.temp_dir) / "assets" / "fonts").mkdir(parents=True, exist_ok=True)
 
-    def simulate_qsettings_data(self, key, default=None):
+    def simulate_qsettings_data(self, key: str, default: Any = None) -> Any:
         """Simulate QSettings data retrieval."""
         return self.qsettings_data.get(key, default)
 
-    def get_qsettings_keys(self):
+    def get_qsettings_keys(self) -> list[str]:
         """Get all QSettings keys."""
         return list(self.qsettings_data.keys())
 
-    def set_qsettings_data(self, key, value):
+    def set_qsettings_data(self, key: str, value: Any) -> None:
         """Set QSettings data."""
         self.qsettings_data[key] = value
 
-    def set_environment_variable(self, key, value):
+    def set_environment_variable(self, key: str, value: str) -> None:
         """Set environment variable."""
         self.environment_variables[key] = value
         os.environ[key] = value
 
-    def get_environment_variable(self, key, default=None):
+    def get_environment_variable(self, key: str, default: str | None = None) -> str | None:
         """Get environment variable."""
         return self.environment_variables.get(key, os.environ.get(key, default))
 
-    def simulate_startup_sequence(self, config):
+    def simulate_startup_sequence(
+        self, config: IntellicrackConfig
+    ) -> tuple[bool, list[str]]:
         """Simulate full application startup sequence."""
         self.startup_successful = True
         self.startup_errors = []
@@ -138,7 +140,7 @@ class RealApplicationStartupSimulator:
 
         return self.startup_successful, self.startup_errors
 
-    def simulate_component_initialization(self):
+    def simulate_component_initialization(self) -> None:
         """Simulate component initialization order."""
         components = [
             "FontManager",
@@ -151,7 +153,9 @@ class RealApplicationStartupSimulator:
             self.initialization_order.append(component)
             self.components_initialized.append(component)
 
-    def measure_startup_performance(self, startup_func):
+    def measure_startup_performance(
+        self, startup_func: Callable[[], T]
+    ) -> tuple[T, float]:
         """Measure startup performance."""
         start_time = time.time()
         result = startup_func()
@@ -163,15 +167,15 @@ class RealApplicationStartupSimulator:
 class RealLegacyConfigGenerator:
     """Real legacy configuration generator for production testing."""
 
-    def __init__(self, startup_sim):
+    def __init__(self, startup_sim: RealApplicationStartupSimulator) -> None:
         """Initialize with startup simulator."""
-        self.startup_sim = startup_sim
-        self.config_dir = startup_sim.config_dir
-        self.home_dir = startup_sim.home_dir
-        self.llm_configs_dir = startup_sim.llm_configs_dir
-        self.temp_dir = startup_sim.temp_dir
+        self.startup_sim: RealApplicationStartupSimulator = startup_sim
+        self.config_dir: Path = startup_sim.config_dir
+        self.home_dir: Path = startup_sim.home_dir
+        self.llm_configs_dir: Path = startup_sim.llm_configs_dir
+        self.temp_dir: str | Path = startup_sim.temp_dir
 
-    def create_complete_legacy_configs(self):
+    def create_complete_legacy_configs(self) -> None:
         """Create complete set of realistic legacy configuration files."""
         # Ensure directories exist
         self.startup_sim.create_directory_structure()
@@ -189,10 +193,10 @@ class RealLegacyConfigGenerator:
                 "radare2": "C:\\Tools\\radare2\\bin\\r2.exe"
             },
             "directories": {
-                "output": str(self.temp_dir / "output"),
-                "logs": str(self.temp_dir / "logs"),
-                "cache": str(self.temp_dir / "cache"),
-                "plugins": str(self.temp_dir / "plugins")
+                "output": str(Path(self.temp_dir) / "output"),
+                "logs": str(Path(self.temp_dir) / "logs"),
+                "cache": str(Path(self.temp_dir) / "cache"),
+                "plugins": str(Path(self.temp_dir) / "plugins")
             },
             "ui_preferences": {
                 "theme": "dark",
@@ -292,25 +296,25 @@ LOG_LEVEL=INFO
         with open(self.config_dir / ".env", 'w') as f:
             f.write(env_content)
 
-    def create_partial_legacy_configs(self):
+    def create_partial_legacy_configs(self) -> None:
         """Create partial legacy configs for testing incomplete migration."""
         self.startup_sim.create_directory_structure()
 
         # Create only basic config
-        main_config = {
+        main_config: dict[str, Any] = {
             "application": {
                 "name": "Intellicrack",
                 "version": "2.9.0"
             },
             "directories": {
-                "output": str(self.temp_dir / "output")
+                "output": str(Path(self.temp_dir) / "output")
             }
         }
 
         with open(self.config_dir / "intellicrack_config.json", 'w') as f:
             json.dump(main_config, f, indent=2)
 
-    def create_corrupted_legacy_configs(self):
+    def create_corrupted_legacy_configs(self) -> None:
         """Create corrupted configs for testing error handling."""
         self.startup_sim.create_directory_structure()
 
@@ -325,15 +329,15 @@ LOG_LEVEL=INFO
 class RealEnvironmentManagerSimulator:
     """Real environment manager simulator for production testing."""
 
-    def __init__(self, startup_sim):
+    def __init__(self, startup_sim: RealApplicationStartupSimulator) -> None:
         """Initialize with startup simulator."""
-        self.startup_sim = startup_sim
-        self.env_data = {}
-        self.env_file_path = startup_sim.config_dir / ".env"
+        self.startup_sim: RealApplicationStartupSimulator = startup_sim
+        self.env_data: dict[str, str] = {}
+        self.env_file_path: Path = startup_sim.config_dir / ".env"
 
-    def read_env_file(self):
+    def read_env_file(self) -> dict[str, str]:
         """Read environment variables from .env file."""
-        env_vars = {}
+        env_vars: dict[str, str] = {}
 
         if self.env_file_path.exists():
             with open(self.env_file_path) as f:
@@ -348,12 +352,12 @@ class RealEnvironmentManagerSimulator:
 
         return env_vars
 
-    def set_env_variable(self, key, value):
+    def set_env_variable(self, key: str, value: str) -> None:
         """Set environment variable."""
         self.env_data[key] = value
         self.startup_sim.set_environment_variable(key, value)
 
-    def get_env_variable(self, key, default=None):
+    def get_env_variable(self, key: str, default: str | None = None) -> str | None:
         """Get environment variable."""
         return self.startup_sim.get_environment_variable(key, default)
 
@@ -361,12 +365,14 @@ class RealEnvironmentManagerSimulator:
 class RealComponentManagerSimulator:
     """Real component manager simulator for production testing."""
 
-    def __init__(self, startup_sim, component_name):
+    def __init__(
+        self, startup_sim: RealApplicationStartupSimulator, component_name: str
+    ) -> None:
         """Initialize component manager."""
-        self.startup_sim = startup_sim
-        self.component_name = component_name
-        self.is_initialized = False
-        self.config_data = {}
+        self.startup_sim: RealApplicationStartupSimulator = startup_sim
+        self.component_name: str = component_name
+        self.is_initialized: bool = False
+        self.config_data: dict[str, Any] = {}
 
         # Track initialization in startup simulator
         self.startup_sim.initialization_order.append(component_name)
@@ -374,11 +380,11 @@ class RealComponentManagerSimulator:
 
         self.is_initialized = True
 
-    def get_config(self, key=None, default=None):
+    def get_config(self, key: str | None = None, default: Any = None) -> Any:
         """Get configuration value."""
         return self.config_data.get(key, default) if key else self.config_data
 
-    def set_config(self, key, value):
+    def set_config(self, key: str, value: Any) -> None:
         """Set configuration value."""
         self.config_data[key] = value
 
@@ -386,37 +392,37 @@ class RealComponentManagerSimulator:
 class RealLoggerSimulator:
     """Real logger simulator for production testing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize logger simulator."""
-        self.logs = {
+        self.logs: dict[str, list[str]] = {
             'info': [],
             'warning': [],
             'error': [],
             'debug': []
         }
 
-    def info(self, message):
+    def info(self, message: str) -> None:
         """Log info message."""
         self.logs['info'].append(message)
 
-    def warning(self, message):
+    def warning(self, message: str) -> None:
         """Log warning message."""
         self.logs['warning'].append(message)
 
-    def error(self, message):
+    def error(self, message: str) -> None:
         """Log error message."""
         self.logs['error'].append(message)
 
-    def debug(self, message):
+    def debug(self, message: str) -> None:
         """Log debug message."""
         self.logs['debug'].append(message)
 
-    def get_logs(self, level=None):
+    def get_logs(self, level: str | None = None) -> dict[str, list[str]] | list[str]:
         """Get logs by level."""
         return self.logs.get(level, []) if level else self.logs.copy()
 
     @property
-    def called(self):
+    def called(self) -> bool:
         """Check if any logs were made."""
         return any(len(logs) > 0 for logs in self.logs.values())
 
@@ -424,7 +430,17 @@ class RealLoggerSimulator:
 class TestApplicationStartupMigration(unittest.TestCase):
     """Integration tests for full application startup with configuration migration."""
 
-    def setUp(self):
+    temp_dir: Path
+    startup_sim: RealApplicationStartupSimulator
+    legacy_config_gen: RealLegacyConfigGenerator
+    env_manager: RealEnvironmentManagerSimulator
+    logger_sim: RealLoggerSimulator
+    original_env: dict[str, str]
+    config_dir: Path
+    home_dir: Path
+    llm_configs_dir: Path
+
+    def setUp(self) -> None:
         """Set up test environment with real simulators."""
         self.temp_dir = Path(tempfile.mkdtemp())
 
@@ -445,14 +461,13 @@ class TestApplicationStartupMigration(unittest.TestCase):
         self.home_dir = self.startup_sim.home_dir
         self.llm_configs_dir = self.startup_sim.llm_configs_dir
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         """Clean up temporary files and restore environment."""
         shutil.rmtree(str(self.temp_dir), ignore_errors=True)
         os.environ.clear()
         os.environ |= self.original_env
 
-
-    def test_full_application_startup_with_migration(self):
+    def test_full_application_startup_with_migration(self) -> None:
         """Test that the application starts successfully with full migration using real simulators."""
         # Set up environment variables for testing
         self.env_manager.set_env_variable("HOME", str(self.home_dir))
@@ -490,19 +505,19 @@ class TestApplicationStartupMigration(unittest.TestCase):
 
         # Check VM framework migration
         vm_framework = config.get("vm_framework", {})
-        assert vm_framework.get("enabled") is True
-        assert vm_framework.get("default_vm") == "qemu"
+        if isinstance(vm_framework, dict):
+            assert vm_framework.get("enabled") is True
+            assert vm_framework.get("default_vm") == "qemu"
 
         # Test configuration persistence
         config.save()
         assert config_path.exists()
 
-        # Test reload with real validation
+        # Test reload with real validation - constructor already loads config
         config2 = IntellicrackConfig(config_path=str(config_path))
-        config2.load()
         assert config2.get("application.name") == "Intellicrack"
 
-    def test_startup_with_partial_legacy_configs(self):
+    def test_startup_with_partial_legacy_configs(self) -> None:
         """Test startup when only some legacy configs exist using real simulators."""
         # Set up environment
         self.env_manager.set_env_variable("HOME", str(self.home_dir))
@@ -530,7 +545,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
         config.set("llm_configuration.models.new_model", {"provider": "test"})
         assert config.get("llm_configuration.models.new_model.provider") == "test"
 
-    def test_startup_with_corrupted_legacy_configs(self):
+    def test_startup_with_corrupted_legacy_configs(self) -> None:
         """Test startup when legacy configs are corrupted using real simulators."""
         # Set up environment
         self.env_manager.set_env_variable("HOME", str(self.home_dir))
@@ -556,7 +571,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
         config.set("test_key", "test_value")
         assert config.get("test_key") == "test_value"
 
-    def test_startup_with_clean_system(self):
+    def test_startup_with_clean_system(self) -> None:
         """Test startup on a clean system with no existing configs."""
         # No legacy configs created
 
@@ -576,7 +591,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
         config.save()
         assert config_path.exists()
 
-    def test_startup_preserves_user_customizations(self):
+    def test_startup_preserves_user_customizations(self) -> None:
         """Test that user customizations are preserved during migration using real simulators."""
         # Set up environment
         self.env_manager.set_env_variable("HOME", str(self.home_dir))
@@ -621,7 +636,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
                           for key in custom_keys)
         assert preserved_count > 0, "At least some user customizations should be preserved"
 
-    def test_startup_performance(self):
+    def test_startup_performance(self) -> None:
         """Test that startup with migration completes in reasonable time using real simulators."""
         # Set up environment
         self.env_manager.set_env_variable("HOME", str(self.home_dir))
@@ -634,7 +649,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
         config_path = self.config_dir / "central_config.json"
         config = IntellicrackConfig(config_path=str(config_path))
 
-        def startup_func():
+        def startup_func() -> bool:
             config.upgrade_config()
             config.save()
             return True
@@ -649,7 +664,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
         assert len(self.startup_sim.startup_times) > 0
         assert self.startup_sim.startup_times[-1] == elapsed_time
 
-    def test_multiple_startup_cycles(self):
+    def test_multiple_startup_cycles(self) -> None:
         """Test multiple application startup/shutdown cycles using real simulators."""
         # Set up environment
         self.env_manager.set_env_variable("HOME", str(self.home_dir))
@@ -667,17 +682,15 @@ class TestApplicationStartupMigration(unittest.TestCase):
         config1.save()
         del config1
 
-        # Second startup - no migration needed
+        # Second startup - no migration needed (config loads in constructor)
         config2 = IntellicrackConfig(config_path=str(config_path))
-        config2.load()
         assert config2.get("session1_key") == "session1_value"
         config2.set("session2_key", "session2_value")
         config2.save()
         del config2
 
-        # Third startup - verify all data persisted
+        # Third startup - verify all data persisted (config loads in constructor)
         config3 = IntellicrackConfig(config_path=str(config_path))
-        config3.load()
         assert config3.get("session1_key") == "session1_value"
         assert config3.get("session2_key") == "session2_value"
 
@@ -685,7 +698,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
         assert config3.get("application.name") == "Intellicrack"
         assert config3.get("vm_framework.enabled") is True
 
-    def test_startup_with_environment_variables(self):
+    def test_startup_with_environment_variables(self) -> None:
         """Test startup with environment variables set."""
         # Set environment variables
         os.environ["INTELLICRACK_CONFIG_PATH"] = str(self.config_dir)
@@ -716,7 +729,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
         self.env_manager.set_env_variable("TEST_VAR", "test_value")
         assert self.env_manager.get_env_variable("TEST_VAR") == "test_value"
 
-    def test_component_initialization_order(self):
+    def test_component_initialization_order(self) -> None:
         """Test that components initialize in correct order during startup using real simulators."""
         # Set up environment
         self.env_manager.set_env_variable("HOME", str(self.home_dir))

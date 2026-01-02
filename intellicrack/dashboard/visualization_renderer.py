@@ -83,7 +83,7 @@ class GraphNode:
         """Convert node to dictionary representation.
 
         Returns:
-            Dictionary with node properties and metadata
+            Dictionary containing node id, label, x, y, z coordinates, size, color, shape, and data.
 
         """
         return {
@@ -126,7 +126,7 @@ class GraphEdge:
         """Convert edge to dictionary representation.
 
         Returns:
-            Dictionary with edge properties and metadata
+            Dictionary containing edge source, target, weight, color, style, label, and data.
 
         """
         return {
@@ -147,7 +147,7 @@ class VisualizationRenderer:
         """Initialize visualization renderer.
 
         Args:
-            config: Renderer configuration
+            config: Optional renderer configuration dictionary with cache settings.
 
         """
         self.config = config or {}
@@ -180,7 +180,7 @@ class VisualizationRenderer:
         """Load chart templates for JavaScript rendering.
 
         Returns:
-            Dictionary mapping template names to JavaScript code templates
+            Dictionary mapping template names (d3_force_graph, chartjs_line, three_js_3d_graph) to JavaScript code.
 
         """
         return {
@@ -455,14 +455,14 @@ class VisualizationRenderer:
         """Render a graph visualization.
 
         Args:
-            nodes: Graph nodes
-            edges: Graph edges
-            render_type: Type of rendering (force, hierarchical, circular)
-            dimensions: Width and height
-            container_id: Container element ID
+            nodes: Graph nodes with position and styling information.
+            edges: Graph edges connecting nodes with weights and colors.
+            render_type: Type of rendering layout - force, hierarchical, or circular.
+            dimensions: Width and height tuple for visualization bounds.
+            container_id: HTML container element ID for rendering.
 
         Returns:
-            Visualization data including JavaScript code
+            Dictionary containing visualization type, JavaScript code, static image, and metadata.
 
         """
         # Check cache
@@ -532,14 +532,14 @@ class VisualizationRenderer:
         """Render a heatmap visualization.
 
         Args:
-            data: 2D array of values
-            labels_x: X-axis labels
-            labels_y: Y-axis labels
-            title: Chart title
-            color_scheme: Color scheme name
+            data: 2D array of numerical values to visualize.
+            labels_x: X-axis labels for columns.
+            labels_y: Y-axis labels for rows.
+            title: Chart title for display.
+            color_scheme: Color scheme name (heatmap, diverging, sequential, categorical).
 
         Returns:
-            Visualization data
+            Dictionary with visualization type, base64 encoded image, title, and shape metadata.
 
         """
         if not HAS_MATPLOTLIB:
@@ -589,12 +589,12 @@ class VisualizationRenderer:
         """Render a timeline visualization.
 
         Args:
-            events: List of events with timestamps
-            width: Timeline width
-            height: Timeline height
+            events: List of events with timestamps and metadata.
+            width: Timeline width in pixels.
+            height: Timeline height in pixels.
 
         Returns:
-            Visualization data
+            Dictionary with visualization type, JavaScript code, static image, and event metadata.
 
         """
         if not events:
@@ -686,12 +686,12 @@ class VisualizationRenderer:
         """Render metrics chart.
 
         Args:
-            metrics: List of metric data points
-            chart_type: Type of chart (line, bar, area)
-            title: Chart title
+            metrics: List of metric data points with names, timestamps, and values.
+            chart_type: Type of chart - line, bar, or area.
+            title: Chart title for display.
 
         Returns:
-            Visualization data
+            Dictionary with visualization type, chart type, JavaScript code, static image, and dataset metadata.
 
         """
         if not metrics:
@@ -739,11 +739,11 @@ class VisualizationRenderer:
         """Render 3D call graph visualization.
 
         Args:
-            functions: List of functions with metadata
-            calls: List of function calls
+            functions: List of functions with metadata including name and complexity.
+            calls: List of function calls with caller, callee, and call count information.
 
         Returns:
-            3D visualization data
+            Dictionary with 3D visualization type, JavaScript code, and node/edge metadata.
 
         """
         # Create nodes from functions
@@ -796,10 +796,10 @@ class VisualizationRenderer:
         """Render interactive data explorer.
 
         Args:
-            data: Hierarchical data structure
+            data: Hierarchical data structure with nested nodes and children.
 
         Returns:
-            Interactive explorer visualization
+            Dictionary with interactive explorer visualization type, JavaScript code, and data.
 
         """
         # Generate D3.js tree explorer
@@ -885,9 +885,9 @@ class VisualizationRenderer:
         """Apply hierarchical layout to nodes.
 
         Args:
-            nodes: Graph nodes
-            edges: Graph edges
-            dimensions: Width and height
+            nodes: Graph nodes to layout.
+            edges: Graph edges to consider for layout hierarchy.
+            dimensions: Width and height tuple for layout bounds.
 
         """
         width, height = dimensions
@@ -934,8 +934,8 @@ class VisualizationRenderer:
         """Apply circular layout to nodes.
 
         Args:
-            nodes: Graph nodes
-            dimensions: Width and height
+            nodes: Graph nodes to position in circular arrangement.
+            dimensions: Width and height tuple for layout bounds.
 
         """
         width, height = dimensions
@@ -959,13 +959,13 @@ class VisualizationRenderer:
         """Generate JavaScript for static graph layout.
 
         Args:
-            nodes: Graph nodes
-            edges: Graph edges
-            container_id: Container ID
-            dimensions: Width and height
+            nodes: Graph nodes with positions.
+            edges: Graph edges connecting nodes.
+            container_id: HTML container element ID for rendering.
+            dimensions: Width and height tuple for SVG dimensions.
 
         Returns:
-            JavaScript code
+            JavaScript code for D3.js static graph rendering.
 
         """
         width, height = dimensions
@@ -1016,12 +1016,12 @@ class VisualizationRenderer:
         """Render static graph image using matplotlib.
 
         Args:
-            nodes: Graph nodes
-            edges: Graph edges
-            dimensions: Width and height
+            nodes: Graph nodes with positioning information.
+            edges: Graph edges with styling information.
+            dimensions: Width and height tuple for image size in pixels.
 
         Returns:
-            Base64 encoded image
+            Base64 encoded PNG image as data URI string.
 
         """
         width, height = dimensions
@@ -1092,11 +1092,11 @@ class VisualizationRenderer:
         """Render static timeline using matplotlib.
 
         Args:
-            events: Timeline events
-            dimensions: Width and height
+            events: Timeline events with timestamp and source information.
+            dimensions: Width and height tuple for image size in pixels.
 
         Returns:
-            Base64 encoded image
+            Base64 encoded PNG image as data URI string.
 
         """
         width, height = dimensions
@@ -1123,7 +1123,7 @@ class VisualizationRenderer:
         # Format x-axis as time
         from matplotlib.dates import DateFormatter
 
-        ax.xaxis.set_major_formatter(DateFormatter("%H:%M:%S"))  # type: ignore[no-untyped-call]
+        ax.xaxis.set_major_formatter(DateFormatter("%H:%M:%S"))
 
         fig.tight_layout()
 
@@ -1140,12 +1140,12 @@ class VisualizationRenderer:
         """Render static metrics chart using matplotlib.
 
         Args:
-            grouped: Grouped metric data
-            chart_type: Chart type
-            title: Chart title
+            grouped: Grouped metric data organized by metric name.
+            chart_type: Chart type as string (line, bar, or area).
+            title: Chart title for display.
 
         Returns:
-            Base64 encoded image
+            Base64 encoded PNG image as data URI string.
 
         """
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -1187,10 +1187,10 @@ class VisualizationRenderer:
         """Get matplotlib colormap.
 
         Args:
-            color_scheme: Color scheme name
+            color_scheme: Color scheme name to retrieve.
 
         Returns:
-            Colormap name string
+            Colormap name string for matplotlib.
 
         """
         colormaps = {
@@ -1205,10 +1205,10 @@ class VisualizationRenderer:
         """Get color for function node.
 
         Args:
-            func: Function metadata
+            func: Function metadata dictionary.
 
         Returns:
-            Color hex string
+            Color hex string based on function complexity.
 
         """
         complexity = func.get("complexity", 0)
@@ -1220,10 +1220,10 @@ class VisualizationRenderer:
         """Get color for function call edge.
 
         Args:
-            call: Call metadata
+            call: Call metadata dictionary.
 
         Returns:
-            Color hex string
+            Color hex string based on call frequency.
 
         """
         count = call.get("count", 1)
@@ -1235,11 +1235,11 @@ class VisualizationRenderer:
         """Create a thumbnail using PIL.
 
         Args:
-            image_data: Raw image data
-            size: Thumbnail size
+            image_data: Raw image data as bytes.
+            size: Thumbnail size as width and height tuple.
 
         Returns:
-            Base64 encoded thumbnail or None if PIL unavailable
+            Base64 encoded thumbnail as data URI string, or None if PIL unavailable.
 
         """
         if not HAS_PIL:

@@ -102,10 +102,10 @@ class R2StringAnalyzer:
                     r2 = r2_raw
                 elif isinstance(r2_raw, R2SessionPoolAdapter):
                     # R2SessionPoolAdapter has _execute_command, treat as R2Session for type checking
-                    r2 = r2_raw  # type: ignore[assignment]
+                    r2 = r2_raw
                 else:
                     # This branch is unreachable but kept for defensive programming
-                    result["error"] = "Invalid R2 session type"  # type: ignore[unreachable]
+                    result["error"] = "Invalid R2 session type"
                     return result
 
                 # Get all strings using different radare2 commands
@@ -228,7 +228,7 @@ class R2StringAnalyzer:
 
         """
         if not isinstance(string_data, dict):
-            return None  # type: ignore[unreachable]
+            return None
 
         # Extract string content
         content_raw = string_data.get("string", "")
@@ -1598,10 +1598,10 @@ class R2StringAnalyzer:
                     r2 = r2_raw
                 elif isinstance(r2_raw, R2SessionPoolAdapter):
                     # R2SessionPoolAdapter has _execute_command, treat as R2Session for type checking
-                    r2 = r2_raw  # type: ignore[assignment]
+                    r2 = r2_raw
                 else:
                     # This branch is unreachable but kept for defensive programming
-                    return {"error": "Invalid R2 session type"}  # type: ignore[unreachable]
+                    return {"error": "Invalid R2 session type"}
 
                 validation_strings = []
 
@@ -1684,10 +1684,10 @@ class R2StringAnalyzer:
                     r2 = r2_raw
                 elif isinstance(r2_raw, R2SessionPoolAdapter):
                     # R2SessionPoolAdapter has _execute_command, treat as R2Session for type checking
-                    r2 = r2_raw  # type: ignore[assignment]
+                    r2 = r2_raw
                 else:
                     # This branch is unreachable but kept for defensive programming
-                    return {"strings": [], "error": "Invalid R2 session type"}  # type: ignore[unreachable]
+                    return {"strings": [], "error": "Invalid R2 session type"}
 
                 raw_strings = r2._execute_command("izzj", expect_json=True)
 

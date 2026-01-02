@@ -12,11 +12,165 @@ Licensed under GNU GPL v3.0
 
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock, patch
 
 import pytest
 
 from intellicrack.ui.gpu_analysis import GpuAnalysis
+
+
+class FakeSignal:
+    """Real test double for Qt signal emission tracking."""
+
+    def __init__(self) -> None:
+        self.emissions: list[tuple[Any, ...]] = []
+        self.call_count: int = 0
+
+    def emit(self, *args: Any) -> None:
+        """Track signal emissions."""
+        self.emissions.append(args)
+        self.call_count += 1
+
+    @property
+    def called(self) -> bool:
+        """Check if signal was emitted."""
+        return self.call_count > 0
+
+    @property
+    def call_args(self) -> tuple[Any, ...] | None:
+        """Get last emission args."""
+        return self.emissions[-1] if self.emissions else None
+
+    @property
+    def call_args_list(self) -> list[tuple[Any, ...]]:
+        """Get all emission args."""
+        return self.emissions
+
+
+class FakeWidget:
+    """Real test double for Qt widget."""
+
+    def __init__(self) -> None:
+        self.visible: bool = False
+        self.closed: bool = False
+
+    def show(self) -> None:
+        """Show widget."""
+        self.visible = True
+
+    def close(self) -> None:
+        """Close widget."""
+        self.visible = False
+        self.closed = True
+
+
+class FakeDialog(FakeWidget):
+    """Real test double for Qt dialog."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.accepted: bool = False
+        self.rejected: bool = False
+
+    def accept(self) -> None:
+        """Accept dialog."""
+        self.accepted = True
+        self.close()
+
+    def reject(self) -> None:
+        """Reject dialog."""
+        self.rejected = True
+        self.close()
+
+
+class FakeApplication:
+    """Real test double for Qt application with binary data."""
+
+    def __init__(self, binary_data: bytes | None = None, current_file: str | None = None) -> None:
+        self.binary_data = binary_data
+        self.current_file = current_file
+        self.loaded_binary_path: str | None = None
+        self.update_output = FakeSignal()
+        self._central_widget = FakeWidget()
+
+    def centralWidget(self) -> FakeWidget:
+        """Get central widget."""
+        return self._central_widget
+
+
+class FakeGPUAnalysisResults:
+    """Real test double for GPU analysis results."""
+
+    def __init__(
+        self,
+        framework_used: str = "cpu",
+        gpu_available: bool = False,
+        analyses: dict[str, Any] | None = None,
+    ) -> None:
+        self.framework_used = framework_used
+        self.gpu_available = gpu_available
+        self.analyses = analyses if analyses is not None else {}
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary format."""
+        return {
+            "framework_used": self.framework_used,
+            "gpu_available": self.gpu_available,
+            "analyses": self.analyses,
+        }
+
+
+class FakeGPUAcceleratedAnalysis:
+    """Real test double for GPU accelerated analysis function."""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[bytes, dict[str, Any]]] = []
+        self.results: FakeGPUAnalysisResults | None = None
+        self.should_fail: bool = False
+        self.failure_exception: Exception | None = None
+
+    def __call__(self, binary_data: bytes, options: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Execute fake GPU analysis."""
+        self.calls.append((binary_data, options or {}))
+
+        if self.should_fail:
+            raise self.failure_exception or RuntimeError("GPU analysis failed")
+
+        if self.results is None:
+            self.results = FakeGPUAnalysisResults()
+
+        return self.results.to_dict()
+
+    def set_results(self, results: FakeGPUAnalysisResults) -> None:
+        """Configure analysis results."""
+        self.results = results
+
+    def set_failure(self, exception: Exception) -> None:
+        """Configure analysis to fail."""
+        self.should_fail = True
+        self.failure_exception = exception
+
+    @property
+    def called(self) -> bool:
+        """Check if analysis was called."""
+        return len(self.calls) > 0
+
+
+class FakeQDialog:
+    """Real test double for QDialog class."""
+
+    def __init__(self) -> None:
+        self.instances: list[FakeDialog] = []
+
+    def __call__(self, *args: Any, **kwargs: Any) -> FakeDialog:
+        """Create new dialog instance."""
+        dialog = FakeDialog()
+        self.instances.append(dialog)
+        return dialog
+
+    @property
+    def called(self) -> bool:
+        """Check if dialog was created."""
+        return len(self.instances) > 0
 
 
 @pytest.fixture
@@ -32,14 +186,13 @@ def mock_binary_path(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def mock_app(mock_binary_path: Path) -> Mock:
-    """Create mock application with binary data."""
-    app = Mock()
-    app.binary_data = mock_binary_path.read_bytes()
-    app.current_file = str(mock_binary_path)
-    app.update_output = Mock()
-    app.centralWidget = Mock(return_value=Mock())
-    return app
+def mock_app(mock_binary_path: Path) -> FakeApplication:
+    """Create fake application with binary data."""
+    binary_data = mock_binary_path.read_bytes()
+    return FakeApplication(
+        binary_data=binary_data,
+        current_file=str(mock_binary_path),
+    )
 
 
 @pytest.fixture
@@ -87,7 +240,7 @@ class TestGpuAnalysisBinaryDataExtraction:
     def test_binary_data_extracted_from_app_attribute(
         self,
         gpu_analysis: GpuAnalysis,
-        mock_app: Mock,
+        mock_app: FakeApplication,
     ) -> None:
         """Binary data extracted from app.binary_data attribute."""
         binary_data = gpu_analysis._get_binary_data(mock_app)
@@ -99,12 +252,15 @@ class TestGpuAnalysisBinaryDataExtraction:
     def test_binary_data_extracted_from_current_file(
         self,
         gpu_analysis: GpuAnalysis,
-        mock_app: Mock,
+        mock_binary_path: Path,
     ) -> None:
         """Binary data extracted from app.current_file path."""
-        mock_app.binary_data = None
+        app = FakeApplication(
+            binary_data=None,
+            current_file=str(mock_binary_path),
+        )
 
-        binary_data = gpu_analysis._get_binary_data(mock_app)
+        binary_data = gpu_analysis._get_binary_data(app)
 
         assert binary_data is not None
         assert binary_data.startswith(b"MZ")
@@ -114,12 +270,9 @@ class TestGpuAnalysisBinaryDataExtraction:
         gpu_analysis: GpuAnalysis,
     ) -> None:
         """Binary data extraction returns None when no data available."""
-        mock_app = Mock()
-        mock_app.binary_data = None
-        mock_app.current_file = None
-        mock_app.loaded_binary_path = None
+        app = FakeApplication(binary_data=None, current_file=None)
 
-        binary_data = gpu_analysis._get_binary_data(mock_app)
+        binary_data = gpu_analysis._get_binary_data(app)
 
         assert binary_data is None
 
@@ -130,40 +283,45 @@ class TestGpuAnalysisExecutionWorkflow:
     def test_gpu_analysis_runs_with_binary_data(
         self,
         gpu_analysis: GpuAnalysis,
-        mock_app: Mock,
+        mock_app: FakeApplication,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """GPU analysis executes when binary data is available."""
-        with patch("intellicrack.ui.gpu_analysis.run_gpu_accelerated_analysis") as mock_run:
-            mock_run.return_value = {
-                "framework_used": "opencl",
-                "gpu_available": True,
-                "analyses": {
+        fake_analysis = FakeGPUAcceleratedAnalysis()
+        fake_analysis.set_results(
+            FakeGPUAnalysisResults(
+                framework_used="opencl",
+                gpu_available=True,
+                analyses={
                     "pattern_search": [
                         {"pattern": "license", "match_count": 5},
                     ],
                     "entropy": {"average_entropy": 6.5},
                 },
-            }
+            )
+        )
 
-            gpu_analysis.run_gpu_accelerated_analysis(mock_app)
+        monkeypatch.setattr(
+            "intellicrack.ui.gpu_analysis.run_gpu_accelerated_analysis",
+            fake_analysis,
+        )
 
-            assert mock_run.called
-            assert mock_app.update_output.emit.called
+        gpu_analysis.run_gpu_accelerated_analysis(mock_app)
+
+        assert fake_analysis.called
+        assert mock_app.update_output.called
 
     def test_gpu_analysis_fails_without_binary_data(
         self,
         gpu_analysis: GpuAnalysis,
     ) -> None:
         """GPU analysis fails gracefully without binary data."""
-        mock_app = Mock()
-        mock_app.binary_data = None
-        mock_app.current_file = None
-        mock_app.update_output = Mock()
+        app = FakeApplication(binary_data=None, current_file=None)
 
-        gpu_analysis.run_gpu_accelerated_analysis(mock_app)
+        gpu_analysis.run_gpu_accelerated_analysis(app)
 
-        assert mock_app.update_output.emit.called
-        error_call = str(mock_app.update_output.emit.call_args)
+        assert app.update_output.called
+        error_call = str(app.update_output.call_args)
         assert "ERROR" in error_call or "No binary" in error_call
 
 
@@ -173,7 +331,7 @@ class TestGpuAnalysisResultsProcessing:
     def test_results_processing_displays_framework_used(
         self,
         gpu_analysis: GpuAnalysis,
-        mock_app: Mock,
+        mock_app: FakeApplication,
     ) -> None:
         """Results processing displays GPU framework used."""
         results = {
@@ -184,14 +342,14 @@ class TestGpuAnalysisResultsProcessing:
 
         gpu_analysis._process_analysis_results(mock_app, results)
 
-        assert mock_app.update_output.emit.called
-        output_calls = [str(call) for call in mock_app.update_output.emit.call_args_list]
+        assert mock_app.update_output.called
+        output_calls = [str(call) for call in mock_app.update_output.call_args_list]
         assert any("cuda" in call for call in output_calls)
 
     def test_results_processing_displays_pattern_matches(
         self,
         gpu_analysis: GpuAnalysis,
-        mock_app: Mock,
+        mock_app: FakeApplication,
     ) -> None:
         """Results processing displays pattern search matches."""
         results = {
@@ -207,13 +365,13 @@ class TestGpuAnalysisResultsProcessing:
 
         gpu_analysis._process_analysis_results(mock_app, results)
 
-        output_calls = [str(call) for call in mock_app.update_output.emit.call_args_list]
+        output_calls = [str(call) for call in mock_app.update_output.call_args_list]
         assert any("10" in call or "matches" in call for call in output_calls)
 
     def test_results_processing_displays_entropy_analysis(
         self,
         gpu_analysis: GpuAnalysis,
-        mock_app: Mock,
+        mock_app: FakeApplication,
     ) -> None:
         """Results processing displays entropy analysis results."""
         results = {
@@ -229,13 +387,13 @@ class TestGpuAnalysisResultsProcessing:
 
         gpu_analysis._process_analysis_results(mock_app, results)
 
-        output_calls = [str(call) for call in mock_app.update_output.emit.call_args_list]
+        output_calls = [str(call) for call in mock_app.update_output.call_args_list]
         assert any("7.2" in call or "entropy" in call.lower() for call in output_calls)
 
     def test_results_processing_displays_high_entropy_sections(
         self,
         gpu_analysis: GpuAnalysis,
-        mock_app: Mock,
+        mock_app: FakeApplication,
     ) -> None:
         """Results processing displays high-entropy sections (potential packing)."""
         results = {
@@ -251,13 +409,13 @@ class TestGpuAnalysisResultsProcessing:
 
         gpu_analysis._process_analysis_results(mock_app, results)
 
-        output_calls = [str(call) for call in mock_app.update_output.emit.call_args_list]
+        output_calls = [str(call) for call in mock_app.update_output.call_args_list]
         assert any("2" in call and ("high-entropy" in call.lower() or "encrypted" in call.lower()) for call in output_calls)
 
     def test_results_processing_stores_analysis_data(
         self,
         gpu_analysis: GpuAnalysis,
-        mock_app: Mock,
+        mock_app: FakeApplication,
     ) -> None:
         """Results processing stores analysis for further use."""
         results = {
@@ -313,41 +471,63 @@ class TestGpuAnalysisProgressDialogManagement:
     def test_progress_dialog_shown_during_analysis(
         self,
         gpu_analysis: GpuAnalysis,
-        mock_app: Mock,
+        mock_app: FakeApplication,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Progress dialog is shown during GPU analysis."""
-        with patch("intellicrack.ui.gpu_analysis.run_gpu_accelerated_analysis") as mock_run:
-            with patch("intellicrack.ui.gpu_analysis.QDialog") as mock_dialog:
-                mock_run.return_value = {
-                    "framework_used": "cpu",
-                    "gpu_available": False,
-                    "analyses": {},
-                }
-                mock_dialog_instance = Mock()
-                mock_dialog.return_value = mock_dialog_instance
+        fake_analysis = FakeGPUAcceleratedAnalysis()
+        fake_analysis.set_results(
+            FakeGPUAnalysisResults(
+                framework_used="cpu",
+                gpu_available=False,
+                analyses={},
+            )
+        )
 
-                gpu_analysis.run_gpu_accelerated_analysis(mock_app)
+        fake_dialog_class = FakeQDialog()
 
-                assert mock_dialog_instance.show.called or mock_dialog.called
+        monkeypatch.setattr(
+            "intellicrack.ui.gpu_analysis.run_gpu_accelerated_analysis",
+            fake_analysis,
+        )
+        monkeypatch.setattr(
+            "intellicrack.ui.gpu_analysis.QDialog",
+            fake_dialog_class,
+        )
+
+        gpu_analysis.run_gpu_accelerated_analysis(mock_app)
+
+        assert fake_dialog_class.called or any(
+            dialog.visible for dialog in fake_dialog_class.instances
+        )
 
     def test_progress_dialog_hidden_after_analysis(
         self,
         gpu_analysis: GpuAnalysis,
-        mock_app: Mock,
+        mock_app: FakeApplication,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Progress dialog is hidden after analysis completes."""
-        gpu_analysis.progress_dialog = Mock()
+        fake_progress_dialog = FakeDialog()
+        gpu_analysis.progress_dialog = fake_progress_dialog
 
-        with patch("intellicrack.ui.gpu_analysis.run_gpu_accelerated_analysis") as mock_run:
-            mock_run.return_value = {
-                "framework_used": "cpu",
-                "gpu_available": False,
-                "analyses": {},
-            }
+        fake_analysis = FakeGPUAcceleratedAnalysis()
+        fake_analysis.set_results(
+            FakeGPUAnalysisResults(
+                framework_used="cpu",
+                gpu_available=False,
+                analyses={},
+            )
+        )
 
-            gpu_analysis.run_gpu_accelerated_analysis(mock_app)
+        monkeypatch.setattr(
+            "intellicrack.ui.gpu_analysis.run_gpu_accelerated_analysis",
+            fake_analysis,
+        )
 
-            assert gpu_analysis.progress_dialog.close.called or gpu_analysis.progress_dialog is None
+        gpu_analysis.run_gpu_accelerated_analysis(mock_app)
+
+        assert fake_progress_dialog.closed or gpu_analysis.progress_dialog is None
 
 
 class TestGpuAnalysisCleanup:
@@ -358,11 +538,12 @@ class TestGpuAnalysisCleanup:
         gpu_analysis: GpuAnalysis,
     ) -> None:
         """Cleanup hides any active progress dialog."""
-        gpu_analysis.progress_dialog = Mock()
+        fake_dialog = FakeDialog()
+        gpu_analysis.progress_dialog = fake_dialog
 
         gpu_analysis.cleanup()
 
-        assert gpu_analysis.progress_dialog is None or gpu_analysis.progress_dialog.close.called
+        assert gpu_analysis.progress_dialog is None or fake_dialog.closed
 
     def test_cleanup_clears_current_analysis(
         self,

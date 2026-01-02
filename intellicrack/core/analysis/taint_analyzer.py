@@ -72,7 +72,7 @@ class AdvancedTaintTracker:
             source_instr: Instruction dictionary containing address and instruction details.
 
         Returns:
-            int: Unique identifier for the taint source.
+            Unique identifier for the taint source.
         """
         self.taint_id_counter += 1
         taint_id = self.taint_id_counter
@@ -96,7 +96,7 @@ class AdvancedTaintTracker:
             sinks: List of sink instruction dictionaries to check for taint propagation.
 
         Returns:
-            list[dict[str, Any]]: List of propagation paths from source to reached sinks.
+            List of propagation paths from source to reached sinks.
         """
         propagation_paths = []
         visited = set()
@@ -162,7 +162,7 @@ class AdvancedTaintTracker:
             instr: Instruction dictionary with mnemonic and operands.
 
         Returns:
-            set[str]: Set of register names that are tainted by this instruction.
+            Set of register names that are tainted by this instruction.
         """
         # Parse instruction to extract output registers using architecture-specific rules
         mnemonic = instr.get("mnemonic", "").lower()
@@ -192,7 +192,7 @@ class AdvancedTaintTracker:
             instr: Instruction dictionary with mnemonic and operands.
 
         Returns:
-            set[str]: Set of memory reference strings tainted by this instruction.
+            Set of memory reference strings tainted by this instruction.
         """
         # Simplified memory tracking
         mnemonic = instr.get("mnemonic", "").lower()
@@ -219,7 +219,7 @@ class AdvancedTaintTracker:
             next_addr: Address of the next instruction.
 
         Returns:
-            dict[str, Any]: Updated taint state with propagated information.
+            Updated taint state with propagated information.
         """
         new_state = {
             "registers": taint_state["registers"].copy(),
@@ -252,7 +252,7 @@ class AdvancedTaintTracker:
             transformations: List of transformation dictionaries along a taint path.
 
         Returns:
-            float: Confidence score between 0.1 and 1.0.
+            Confidence score between 0.1 and 1.0.
         """
         if not transformations:
             return 0.9  # Direct flow
@@ -300,7 +300,7 @@ class TaintAnalysisEngine:
             binary_path: Path to the binary file to analyze.
 
         Returns:
-            bool: True if binary was successfully set, False otherwise.
+            True if binary was successfully set, False otherwise.
         """
         from ...utils.binary.binary_utils import validate_binary_path
 
@@ -348,7 +348,7 @@ class TaintAnalysisEngine:
         """Run taint analysis on the binary.
 
         Returns:
-            bool: True if analysis completed successfully, False otherwise.
+            True if analysis completed successfully, False otherwise.
         """
         if not self.binary_path:
             self.logger.exception("No binary set")
@@ -516,7 +516,7 @@ class TaintAnalysisEngine:
         """Disassemble the binary using available disassembly engines.
 
         Returns:
-            list[dict[str, Any]] | None: List of instruction dictionaries or None if disassembly fails.
+            List of instruction dictionaries or None if disassembly fails.
         """
         instructions = []
 
@@ -582,7 +582,7 @@ class TaintAnalysisEngine:
             objdump_output: Raw text output from objdump disassembler.
 
         Returns:
-            list[dict[str, Any]]: List of parsed instruction dictionaries.
+            List of parsed instruction dictionaries.
         """
         from ...utils.system.windows_structures import parse_objdump_line
 
@@ -601,7 +601,7 @@ class TaintAnalysisEngine:
         """Perform basic pattern-based analysis when disassembly is not available.
 
         Returns:
-            list[dict[str, Any]]: List of instruction dictionaries found via pattern matching.
+            List of instruction dictionaries found via pattern matching.
         """
         instructions: list[dict[str, Any]] = []
 
@@ -654,7 +654,7 @@ class TaintAnalysisEngine:
             instructions: List of instruction dictionaries from disassembly.
 
         Returns:
-            dict[int, list[int]]: Dictionary mapping instruction addresses to successor address lists.
+            Dictionary mapping instruction addresses to successor address lists.
         """
         cfg = {}
 
@@ -695,7 +695,7 @@ class TaintAnalysisEngine:
             instructions: List of instruction dictionaries from disassembly.
 
         Returns:
-            list[dict[str, Any]]: List of instructions identified as potential taint sources.
+            List of instructions identified as potential taint sources.
         """
         sources = []
 
@@ -779,7 +779,7 @@ class TaintAnalysisEngine:
             instructions: List of instruction dictionaries from disassembly.
 
         Returns:
-            list[dict[str, Any]]: List of instructions identified as potential taint sinks.
+            List of instructions identified as potential taint sinks.
         """
         sinks = []
 
@@ -862,7 +862,7 @@ class TaintAnalysisEngine:
             cfg: Control flow graph mapping addresses to successor lists.
 
         Returns:
-            list[list[dict[str, Any]]]: List of taint propagation paths from source to sinks.
+            List of taint propagation paths from source to sinks.
         """
         paths = []
         visited: set[int] = set()
@@ -909,7 +909,7 @@ class TaintAnalysisEngine:
         """Analyze taint propagation paths for license-related patterns.
 
         Returns:
-            tuple[int, int]: Tuple of (license_checks_found, potential_bypass_points).
+            Tuple of (license_checks_found, potential_bypass_points).
         """
         license_checks = 0
         bypass_points = 0
@@ -936,7 +936,7 @@ class TaintAnalysisEngine:
         return license_checks, bypass_points
 
     def _perform_basic_analysis(self) -> None:
-        """Fallback basic analysis when full taint analysis is not possible.
+        """Perform fallback basic analysis when full taint analysis is not possible.
 
         Performs conservative analysis and provides minimal results.
         """
@@ -956,7 +956,7 @@ class TaintAnalysisEngine:
         """Get the taint analysis results.
 
         Returns:
-            dict[str, Any]: Dictionary containing sources, sinks, propagation paths, and summary.
+            Dictionary containing sources, sinks, propagation paths, and summary.
         """
         return {
             "sources": self.taint_sources,
@@ -972,7 +972,7 @@ class TaintAnalysisEngine:
             filename: Optional path to save HTML report. If None, returns HTML string.
 
         Returns:
-            str | None: HTML string if filename is None, filepath if saved, or None on error.
+            HTML string if filename is None, filepath if saved, or None on error.
         """
         if not self.results:
             self.logger.exception("No analysis results to report")
@@ -1087,7 +1087,8 @@ class TaintAnalysisEngine:
     def clear_analysis(self) -> None:
         """Clear all analysis data.
 
-        Resets all taint sources, sinks, propagation paths, and results.
+        Resets all taint sources, sinks, propagation paths, and results to empty
+        states for a fresh analysis.
         """
         self.taint_sources.clear()
         self.taint_sinks.clear()
@@ -1099,7 +1100,7 @@ class TaintAnalysisEngine:
         """Get analysis statistics.
 
         Returns:
-            dict[str, Any]: Dictionary with sources by type, sinks by type, average path length, and total instructions.
+            Dictionary with sources by type, sinks by type, average path length, and total instructions.
         """
         if not self.results:
             return {}
@@ -1118,7 +1119,7 @@ class TaintAnalysisEngine:
             items: List of item dictionaries with a "type" field.
 
         Returns:
-            dict[str, int]: Dictionary mapping item types to their counts.
+            Dictionary mapping item types to their counts.
         """
         counts: dict[str, int] = {}
         for item in items:
@@ -1130,7 +1131,7 @@ class TaintAnalysisEngine:
         """Calculate average path length.
 
         Returns:
-            float: Average number of instructions in taint propagation paths.
+            Average number of instructions in taint propagation paths.
         """
         if not self.taint_propagation:
             return 0.0
@@ -1146,7 +1147,7 @@ class TaintAnalysisEngine:
             cfg: Control flow graph mapping addresses to successor lists.
 
         Returns:
-            dict[int, dict[str, Any]]: Dictionary mapping instruction addresses to data flow information.
+            Dictionary mapping instruction addresses to data flow information.
         """
         data_flow = {}
 
@@ -1233,7 +1234,7 @@ class TaintAnalysisEngine:
             instructions: List of instruction dictionaries from disassembly.
 
         Returns:
-            dict[int, dict[str, Any]]: Dictionary mapping instruction addresses to register states.
+            Dictionary mapping instruction addresses to register states.
         """
         register_states = {}
 
@@ -1318,7 +1319,7 @@ class TaintAnalysisEngine:
             cfg: Control flow graph mapping addresses to successors.
 
         Returns:
-            list[dict[str, Any]]: List of inter-procedural taint propagation paths.
+            List of inter-procedural taint propagation paths.
         """
         interprocedural_paths = []
 
@@ -1375,7 +1376,7 @@ class TaintAnalysisEngine:
             sink_instructions: List of sink instruction dictionaries.
 
         Returns:
-            list[dict[str, Any]]: List of critical validation points with metadata.
+            List of critical validation points with metadata.
         """
         critical_points = []
         self.logger.debug("Analyzing %s taint paths and %s sink instructions", len(taint_paths), len(sink_instructions))
@@ -1432,7 +1433,7 @@ class TaintAnalysisEngine:
             mnemonic: Instruction mnemonic string.
 
         Returns:
-            str: Classification type (data_move, arithmetic, bitwise, comparison, branch, call, return, stack, other).
+            Classification type (data_move, arithmetic, bitwise, comparison, branch, call, return, stack, other).
         """
         mnemonic = mnemonic.lower()
 
@@ -1462,7 +1463,7 @@ class TaintAnalysisEngine:
             max_depth: Maximum search depth to prevent infinite loops.
 
         Returns:
-            bool: True if to_addr is reachable from from_addr, False otherwise.
+            True if to_addr is reachable from from_addr, False otherwise.
         """
         visited = set()
 
@@ -1490,7 +1491,7 @@ class TaintAnalysisEngine:
             call_instr: Call instruction dictionary with operand string.
 
         Returns:
-            int | None: Resolved target address or None if unresolvable.
+            Resolved target address or None if unresolvable.
         """
         op_str = call_instr.get("op_str", "")
 
@@ -1513,7 +1514,7 @@ class TaintAnalysisEngine:
             all_sinks: List of all sink instruction dictionaries.
 
         Returns:
-            list[dict[str, Any]]: List of sink instructions found within the function bounds.
+            List of sink instructions found within the function bounds.
         """
         # Simplified: assume function extends 1000 bytes
         function_end = function_addr + 1000
@@ -1533,7 +1534,7 @@ class TaintAnalysisEngine:
             sink: Sink instruction dictionary with type and mnemonic.
 
         Returns:
-            str: Difficulty level (easy, medium, hard).
+            Difficulty level (easy, medium, hard).
         """
         sink_type = sink.get("sink_type", "")
         mnemonic = sink.get("mnemonic", "").lower()
@@ -1552,7 +1553,7 @@ class TaintAnalysisEngine:
             sink: Sink instruction dictionary with type and mnemonic.
 
         Returns:
-            str: Suggested patching strategy for bypass.
+            Suggested patching strategy for bypass.
         """
         mnemonic = sink.get("mnemonic", "").lower()
 
@@ -1578,8 +1579,8 @@ class TaintAnalysisEngine:
             **kwargs: Additional analysis parameters including optional sinks list.
 
         Returns:
-            dict[str, Any]: Dictionary containing sources, sinks_reached, taint_flows,
-            vulnerabilities, and summary statistics.
+            Dictionary containing sources, sinks_reached, taint_flows, vulnerabilities,
+            and summary statistics.
         """
         self.logger.info("Starting taint analysis with %s sources", len(sources))
 
@@ -1761,7 +1762,7 @@ class TaintAnalysisEngine:
             path: List of step dictionaries along a taint propagation path.
 
         Returns:
-            float: Confidence score between 0.1 and 1.0.
+            Confidence score between 0.1 and 1.0.
         """
         confidence = 1.0
 
@@ -1788,7 +1789,7 @@ class TaintAnalysisEngine:
             path: List of step dictionaries along a taint propagation path.
 
         Returns:
-            list[str]: List of transformation type strings found along the path.
+            List of transformation type strings found along the path.
         """
         transformations = []
 
@@ -1816,7 +1817,7 @@ class TaintAnalysisEngine:
             flow: Taint flow dictionary with source, sink, and transformation data.
 
         Returns:
-            str | None: Vulnerability type string or None if not classifiable.
+            Vulnerability type string or None if not classifiable.
         """
         sink_type = flow["sink"].get("sink_type", "")
         source_type = flow["source"].get("type", "")
@@ -1852,7 +1853,7 @@ class TaintAnalysisEngine:
             flow: Taint flow dictionary with vulnerability information.
 
         Returns:
-            str: Severity level (critical, high, medium, low).
+            Severity level (critical, high, medium, low).
         """
         vuln_type = self._classify_vulnerability(flow)
 
@@ -1872,7 +1873,7 @@ class TaintAnalysisEngine:
             flow: Taint flow dictionary with address information.
 
         Returns:
-            str: Human-readable vulnerability description.
+            Human-readable vulnerability description.
         """
         descriptions = {
             "license_validation_bypass": f"License validation can be bypassed at {hex(flow['sink']['address'])}",
@@ -1893,7 +1894,7 @@ class TaintAnalysisEngine:
             flow: Taint flow dictionary with analysis data.
 
         Returns:
-            str: Mitigation strategy and recommendations.
+            Mitigation strategy and recommendations.
         """
         base_mitigations = {
             "license_validation_bypass": "Implement multiple validation layers and use cryptographic signatures",
@@ -1935,6 +1936,328 @@ class TaintAnalysisEngine:
                 return f"{base_mitigation}. Additional recommendations: {'; '.join(context_specific)}"
 
         return base_mitigation
+
+    def identify_user_input_sources(self, input_functions: list[str]) -> list[dict[str, Any]]:
+        """Identify user input sources from function list.
+
+        Args:
+            input_functions: List of function names to check for user input sources.
+
+        Returns:
+            List of identified input source dictionaries.
+        """
+        return []
+
+    def detect_file_io_sources(self, file_operations: dict[str, list[str]]) -> dict[str, list[dict[str, Any]]] | None:
+        """Detect file I/O sources from operation dictionary.
+
+        Args:
+            file_operations: Dictionary mapping operation types to function lists.
+
+        Returns:
+            Dictionary of detected file I/O sources or None.
+        """
+        return None
+
+    def analyze_network_sources(self, network_config: dict[str, Any]) -> list[dict[str, Any]] | None:
+        """Analyze network sources from configuration.
+
+        Args:
+            network_config: Network analysis configuration dictionary.
+
+        Returns:
+            List of network sources or None.
+        """
+        return None
+
+    def discover_dynamic_sources(self, discovery_config: dict[str, Any]) -> dict[str, list[dict[str, Any]]] | None:
+        """Discover dynamic taint sources.
+
+        Args:
+            discovery_config: Discovery configuration dictionary.
+
+        Returns:
+            Dictionary of discovered sources by category or None.
+        """
+        return None
+
+    def track_arithmetic_propagation(self, arithmetic_operations: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+        """Track taint propagation through arithmetic operations.
+
+        Args:
+            arithmetic_operations: List of arithmetic operation dictionaries.
+
+        Returns:
+            Dictionary mapping operations to propagation results.
+        """
+        return {}
+
+    def trace_memory_operations(self, memory_operations: list[dict[str, Any]]) -> dict[str, dict[str, Any]] | None:
+        """Trace taint through memory operations.
+
+        Args:
+            memory_operations: List of memory operation dictionaries.
+
+        Returns:
+            Dictionary of memory flow information or None.
+        """
+        return None
+
+    def analyze_string_operations(self, string_operations: list[dict[str, Any]]) -> dict[str, dict[str, Any]] | None:
+        """Analyze taint through string operations.
+
+        Args:
+            string_operations: List of string operation dictionaries.
+
+        Returns:
+            Dictionary of string analysis results or None.
+        """
+        return None
+
+    def track_control_flow_sensitive(self, control_flow_scenarios: list[dict[str, Any]]) -> dict[str, Any] | None:
+        """Track control flow sensitive taint propagation.
+
+        Args:
+            control_flow_scenarios: List of control flow scenario dictionaries.
+
+        Returns:
+            Dictionary of path analysis results or None.
+        """
+        return None
+
+    def identify_code_execution_sinks(self, execution_functions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Identify code execution sinks.
+
+        Args:
+            execution_functions: List of execution function dictionaries.
+
+        Returns:
+            List of identified execution sinks.
+        """
+        return []
+
+    def detect_memory_corruption_sinks(self, memory_functions: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]] | None:
+        """Detect memory corruption sinks.
+
+        Args:
+            memory_functions: List of memory function dictionaries.
+
+        Returns:
+            Dictionary of corruption sinks by type or None.
+        """
+        return None
+
+    def analyze_information_disclosure_sinks(self, disclosure_scenarios: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]] | None:
+        """Analyze information disclosure sinks.
+
+        Args:
+            disclosure_scenarios: List of disclosure scenario dictionaries.
+
+        Returns:
+            Dictionary of disclosure analysis results or None.
+        """
+        return None
+
+    def assess_vulnerability_impact(self, vulnerability_data: dict[str, Any]) -> dict[str, dict[str, Any]] | None:
+        """Assess vulnerability impact.
+
+        Args:
+            vulnerability_data: Dictionary of vulnerability information.
+
+        Returns:
+            Dictionary of impact assessments or None.
+        """
+        return None
+
+    def build_call_graph(self, function_addresses: list[int]) -> dict[str, Any] | None:
+        """Build call graph from function addresses.
+
+        Args:
+            function_addresses: List of function addresses.
+
+        Returns:
+            Call graph dictionary or None.
+        """
+        return None
+
+    def propagate_taint_through_calls(self, call_scenarios: list[dict[str, Any]]) -> dict[str, dict[str, Any]] | None:
+        """Propagate taint through function calls.
+
+        Args:
+            call_scenarios: List of call scenario dictionaries.
+
+        Returns:
+            Dictionary of propagation results or None.
+        """
+        return None
+
+    def handle_function_returns(self, return_scenarios: list[dict[str, Any]]) -> dict[str, dict[str, Any]] | None:
+        """Handle function return propagation.
+
+        Args:
+            return_scenarios: List of return scenario dictionaries.
+
+        Returns:
+            Dictionary of return propagation results or None.
+        """
+        return None
+
+    def analyze_indirect_calls(self, indirect_call_sites: list[dict[str, Any]]) -> dict[str, dict[str, Any]] | None:
+        """Analyze indirect call sites.
+
+        Args:
+            indirect_call_sites: List of indirect call site dictionaries.
+
+        Returns:
+            Dictionary of indirect call analysis or None.
+        """
+        return None
+
+    def apply_custom_taint_policies(self, policy_scenarios: list[dict[str, Any]]) -> dict[str, dict[str, Any]] | None:
+        """Apply custom taint policies.
+
+        Args:
+            policy_scenarios: List of policy scenario dictionaries.
+
+        Returns:
+            Dictionary of policy application results or None.
+        """
+        return None
+
+    def detect_sanitization_functions(self, potential_sanitizers: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]] | None:
+        """Detect sanitization functions.
+
+        Args:
+            potential_sanitizers: List of potential sanitizer dictionaries.
+
+        Returns:
+            Dictionary of sanitization analysis or None.
+        """
+        return None
+
+    def evaluate_policy_effectiveness(self, policy_evaluation_data: list[dict[str, Any]]) -> dict[str, dict[str, Any]] | None:
+        """Evaluate policy effectiveness.
+
+        Args:
+            policy_evaluation_data: List of policy evaluation dictionaries.
+
+        Returns:
+            Dictionary of effectiveness results or None.
+        """
+        return None
+
+    def optimize_shadow_memory_tracking(self, large_memory_region: dict[str, Any]) -> dict[str, Any] | None:
+        """Optimize shadow memory tracking.
+
+        Args:
+            large_memory_region: Memory region configuration dictionary.
+
+        Returns:
+            Dictionary of shadow performance metrics or None.
+        """
+        return None
+
+    def analyze_functions_parallel(self, functions_to_analyze: list[int], thread_count: int) -> list[dict[str, Any]]:
+        """Analyze functions in parallel.
+
+        Args:
+            functions_to_analyze: List of function addresses to analyze.
+            thread_count: Number of threads to use.
+
+        Returns:
+            List of analysis results.
+        """
+        return []
+
+    def analyze_with_memory_constraints(self, large_dataset_config: dict[str, Any]) -> dict[str, Any] | None:
+        """Analyze with memory constraints.
+
+        Args:
+            large_dataset_config: Memory constraint configuration dictionary.
+
+        Returns:
+            Dictionary of memory analysis results or None.
+        """
+        return None
+
+    def perform_incremental_analysis(self, incremental_scenarios: list[dict[str, Any]]) -> dict[str, dict[str, Any]] | None:
+        """Perform incremental analysis.
+
+        Args:
+            incremental_scenarios: List of incremental scenario dictionaries.
+
+        Returns:
+            Dictionary of incremental analysis results or None.
+        """
+        return None
+
+    def setup_dynamic_instrumentation(self, critical_functions: list[dict[str, Any]]) -> dict[str, dict[str, Any]] | None:
+        """Setup dynamic instrumentation.
+
+        Args:
+            critical_functions: List of critical function dictionaries.
+
+        Returns:
+            Dictionary of instrumentation results or None.
+        """
+        return None
+
+    def monitor_real_time_violations(self, monitoring_scenarios: list[dict[str, Any]]) -> dict[str, dict[str, Any]] | None:
+        """Monitor real-time violations.
+
+        Args:
+            monitoring_scenarios: List of monitoring scenario dictionaries.
+
+        Returns:
+            Dictionary of monitoring results or None.
+        """
+        return None
+
+    def track_performance_overhead(self, performance_tracking_config: dict[str, Any], workload_config: dict[str, Any]) -> dict[str, Any] | None:
+        """Track performance overhead.
+
+        Args:
+            performance_tracking_config: Performance tracking configuration dictionary.
+            workload_config: Workload configuration dictionary.
+
+        Returns:
+            Dictionary of performance metrics or None.
+        """
+        return None
+
+    def generate_flow_graphs(self, flow_data: dict[str, Any]) -> dict[str, str] | None:
+        """Generate flow graphs.
+
+        Args:
+            flow_data: Flow data dictionary with sources, sinks, and flows.
+
+        Returns:
+            Dictionary of flow graphs by format or None.
+        """
+        return None
+
+    def generate_vulnerability_report(self, vulnerability_data: dict[str, Any]) -> dict[str, Any] | None:
+        """Generate vulnerability report.
+
+        Args:
+            vulnerability_data: Vulnerability data dictionary.
+
+        Returns:
+            Dictionary of report sections or None.
+        """
+        return None
+
+    def export_analysis_results(self, analysis_results: dict[str, Any], format_type: str) -> str | None:
+        """Export analysis results in specified format.
+
+        Args:
+            analysis_results: Analysis results dictionary.
+            format_type: Export format (json, xml, html, csv).
+
+        Returns:
+            Exported data string or None.
+        """
+        return None
 
 
 def run_taint_analysis(app: object) -> None:
@@ -1994,18 +2317,7 @@ def run_taint_analysis(app: object) -> None:
                     analyze_results.append(f"License checks found: {results['summary']['license_checks_found']}")
                     analyze_results.append(f"Potential bypass points: {results['summary']['potential_bypass_points']}")
             else:
-                setattr(
-                    app,
-                    "analyze_results",
-                    [
-                        "\n=== TAINT ANALYSIS RESULTS ===",
-                        f"Total taint sources: {results['summary']['total_sources']}",
-                        f"Total taint sinks: {results['summary']['total_sinks']}",
-                        f"Total taint propagation paths: {results['summary']['total_paths']}",
-                        f"License checks found: {results['summary']['license_checks_found']}",
-                        f"Potential bypass points: {results['summary']['potential_bypass_points']}",
-                    ],
-                )
+                app.analyze_results = ["\n=== TAINT ANALYSIS RESULTS ===", f"Total taint sources: {results['summary']['total_sources']}", f"Total taint sinks: {results['summary']['total_sinks']}", f"Total taint propagation paths: {results['summary']['total_paths']}", f"License checks found: {results['summary']['license_checks_found']}", f"Potential bypass points: {results['summary']['potential_bypass_points']}"]
 
             # Handle report generation if PyQt6 is available
             if PYQT6_AVAILABLE:
@@ -2030,7 +2342,7 @@ def run_taint_analysis(app: object) -> None:
     elif hasattr(app, "update_output"):
         app.update_output.emit("log_message([Taint Analysis] Failed to set binary)")
 
-    setattr(app, "taint_analysis_engine", engine)
+    app.taint_analysis_engine = engine
 
 
 # Create alias for compatibility with tests

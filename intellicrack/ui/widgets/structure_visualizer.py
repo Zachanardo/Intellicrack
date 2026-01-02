@@ -48,7 +48,11 @@ class StructureVisualizerWidget(QWidget):
     header_field_selected = pyqtSignal(str, str, Any)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize structure visualizer widget with binary structure analysis capabilities."""
+        """Initialize structure visualizer widget with binary structure analysis capabilities.
+
+        Args:
+            parent: Parent widget for this widget, or None for no parent.
+        """
         super().__init__(parent)
         self.current_binary: str | None = None
         self.structures: dict[str, Any] = {}
@@ -57,7 +61,13 @@ class StructureVisualizerWidget(QWidget):
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        """Set up the UI components."""
+        """Set up the UI components.
+
+        Initializes all UI widgets including controls, splitter, tabs, and detail panels.
+
+        Returns:
+            None
+        """
         layout = QVBoxLayout(self)
 
         # Controls
@@ -122,7 +132,14 @@ class StructureVisualizerWidget(QWidget):
         self._init_views()
 
     def _init_views(self) -> None:
-        """Initialize the different view widgets."""
+        """Initialize the different view widgets.
+
+        Creates and configures all view tabs including tree view, headers table,
+        sections table, imports/exports, and memory map visualization.
+
+        Returns:
+            None
+        """
         # Tree view
         self.tree_view = QTreeWidget()
         self.tree_view.setHeaderLabel("Binary Structure")
@@ -178,7 +195,15 @@ class StructureVisualizerWidget(QWidget):
             self.structure_widget.addTab(self.memory_map, "Memory Map")
 
     def set_structure_data(self, data: dict[str, Any]) -> None:
-        """Set structure data for visualization."""
+        """Set structure data for visualization.
+
+        Args:
+            data: Dictionary containing binary structure information including headers,
+                sections, imports/exports, and other binary format-specific data.
+
+        Returns:
+            None
+        """
         self.structure_data = data
         self.binary_format = data.get("format", "Unknown")
 
@@ -187,11 +212,25 @@ class StructureVisualizerWidget(QWidget):
         self.update_details()
 
     def load_structure(self, data: dict[str, Any]) -> None:
-        """Load structure data for visualization (alias for set_structure_data)."""
+        """Load structure data for visualization (alias for set_structure_data).
+
+        Args:
+            data: Dictionary containing binary structure information.
+
+        Returns:
+            None
+        """
         self.set_structure_data(data)
 
     def update_view(self) -> None:
-        """Update the current view."""
+        """Update the current view.
+
+        Updates the visualization based on the currently selected view mode
+        (Tree View, Headers, Sections, Imports/Exports, or Memory Map).
+
+        Returns:
+            None
+        """
         if not self.structure_data:
             return
 
@@ -215,7 +254,14 @@ class StructureVisualizerWidget(QWidget):
                 self.structure_widget.setCurrentIndex(4)
 
     def _update_tree_view(self) -> None:
-        """Update the tree view with structure data."""
+        """Update the tree view with structure data.
+
+        Clears the tree view and populates it with binary structure information
+        based on the detected binary format (PE, ELF, Mach-O, or generic).
+
+        Returns:
+            None
+        """
         self.tree_view.clear()
 
         if self.binary_format == "PE":
@@ -229,7 +275,14 @@ class StructureVisualizerWidget(QWidget):
             self._build_generic_tree()
 
     def _build_pe_tree(self) -> None:
-        """Build PE structure tree."""
+        """Build PE structure tree.
+
+        Constructs a tree view representation of PE (Portable Executable) binary structure
+        including DOS header, PE header, sections, and data directories.
+
+        Returns:
+            None
+        """
         root = QTreeWidgetItem(self.tree_view, ["PE Structure"])
 
         # DOS Header
@@ -292,7 +345,14 @@ class StructureVisualizerWidget(QWidget):
         self.tree_view.expandAll()
 
     def _build_elf_tree(self) -> None:
-        """Build ELF structure tree."""
+        """Build ELF structure tree.
+
+        Constructs a tree view representation of ELF (Executable and Linkable Format) binary
+        structure including headers, program headers, and sections.
+
+        Returns:
+            None
+        """
         root = QTreeWidgetItem(self.tree_view, ["ELF Structure"])
 
         # ELF Header
@@ -339,7 +399,14 @@ class StructureVisualizerWidget(QWidget):
         self.tree_view.expandAll()
 
     def _build_macho_tree(self) -> None:
-        """Build Mach-O structure tree for macOS/iOS binaries."""
+        """Build Mach-O structure tree for macOS/iOS binaries.
+
+        Constructs a tree view representation of Mach-O binary structure including
+        headers, load commands, sections, and dynamic libraries.
+
+        Returns:
+            None
+        """
         root = QTreeWidgetItem(self.tree_view, ["Mach-O Structure"])
 
         if "macho_header" in self.structure_data:
@@ -465,7 +532,16 @@ class StructureVisualizerWidget(QWidget):
         self.tree_view.expandAll()
 
     def _get_macho_magic_name(self, magic: int) -> str:
-        """Get Mach-O magic number name."""
+        """Get Mach-O magic number name.
+
+        Args:
+            magic: The magic number value to look up. Standard Mach-O magic
+                values include 0xFEEDFACE (32-bit), 0xFEEDFACF (64-bit), and
+                0xCAFEBABE (Universal).
+
+        Returns:
+            Human-readable name for the magic number or 'Unknown' if not found.
+        """
         magic_names = {
             0xFEEDFACE: "MH_MAGIC (32-bit)",
             0xCEFAEDFE: "MH_CIGAM (32-bit, swapped)",
@@ -477,7 +553,15 @@ class StructureVisualizerWidget(QWidget):
         return magic_names.get(magic, "Unknown")
 
     def _get_macho_cpu_name(self, cpu_type: int) -> str:
-        """Get Mach-O CPU type name."""
+        """Get Mach-O CPU type name.
+
+        Args:
+            cpu_type: The CPU type value to look up. Common values include 7
+                (x86), 0x01000007 (x86_64), 12 (ARM), and 0x0100000C (ARM64).
+
+        Returns:
+            Human-readable CPU type name or 'Unknown' with hex value if not found.
+        """
         cpu_names = {
             1: "VAX",
             6: "MC680x0",
@@ -496,7 +580,15 @@ class StructureVisualizerWidget(QWidget):
         return cpu_names.get(cpu_type, f"Unknown (0x{cpu_type:X})")
 
     def _get_macho_file_type(self, file_type: int) -> str:
-        """Get Mach-O file type name."""
+        """Get Mach-O file type name.
+
+        Args:
+            file_type: The file type value to look up. Common values include 1
+                (MH_OBJECT), 2 (MH_EXECUTE), 6 (MH_DYLIB), and 8 (MH_BUNDLE).
+
+        Returns:
+            Human-readable file type name or 'Unknown' with value if not found.
+        """
         file_types = {
             1: "MH_OBJECT",
             2: "MH_EXECUTE",
@@ -514,7 +606,16 @@ class StructureVisualizerWidget(QWidget):
         return file_types.get(file_type, f"Unknown ({file_type})")
 
     def _get_macho_load_cmd_name(self, cmd: int) -> str:
-        """Get Mach-O load command name."""
+        """Get Mach-O load command name.
+
+        Args:
+            cmd: The load command value to look up. Standard load commands include
+                0x1 (LC_SEGMENT), 0x19 (LC_SEGMENT_64), 0x1B (LC_UUID), and
+                0x1D (LC_CODE_SIGNATURE).
+
+        Returns:
+            Human-readable load command name or 'LC_UNKNOWN' with hex value if not found.
+        """
         cmd_names = {
             0x1: "LC_SEGMENT",
             0x2: "LC_SYMTAB",
@@ -573,7 +674,15 @@ class StructureVisualizerWidget(QWidget):
         return cmd_names.get(cmd, f"LC_UNKNOWN (0x{cmd:X})")
 
     def _add_macho_flags(self, parent: QTreeWidgetItem, flags: int) -> None:
-        """Add Mach-O header flags as tree items."""
+        """Add Mach-O header flags as tree items.
+
+        Args:
+            parent: The parent tree widget item to add flags to.
+            flags: The flags value to decode and display.
+
+        Returns:
+            None
+        """
         flag_definitions = [
             (0x1, "MH_NOUNDEFS", "No undefined references"),
             (0x2, "MH_INCRLINK", "Incremental link"),
@@ -608,7 +717,14 @@ class StructureVisualizerWidget(QWidget):
                 QTreeWidgetItem(parent, [flag_name, description])
 
     def _build_generic_tree(self) -> None:
-        """Build generic structure tree."""
+        """Build generic structure tree.
+
+        Constructs a tree view representation of binary structure for unknown formats
+        using a generic dictionary/list traversal approach.
+
+        Returns:
+            None
+        """
         root = QTreeWidgetItem(self.tree_view, [f"{self.binary_format} Structure"])
 
         # Recursively build tree from data
@@ -617,7 +733,15 @@ class StructureVisualizerWidget(QWidget):
         self.tree_view.expandAll()
 
     def _add_dict_to_tree(self, data: dict[str, Any] | list[Any], parent: QTreeWidgetItem) -> None:
-        """Recursively add dictionary/list data to tree."""
+        """Recursively add dictionary/list data to tree.
+
+        Args:
+            data: Dictionary or list to traverse and add to the tree.
+            parent: The parent tree widget item to add data to.
+
+        Returns:
+            None
+        """
         if isinstance(data, dict):
             for key, value in data.items():
                 if isinstance(value, (dict, list)):
@@ -635,7 +759,14 @@ class StructureVisualizerWidget(QWidget):
                     QTreeWidgetItem(parent, [f"[{i}]", str(item)])
 
     def _update_headers_view(self) -> None:
-        """Update headers table view."""
+        """Update headers table view.
+
+        Clears and populates the headers table based on the binary format
+        (PE, ELF, or generic).
+
+        Returns:
+            None
+        """
         self.headers_table.setRowCount(0)
 
         if self.binary_format == "PE":
@@ -646,7 +777,14 @@ class StructureVisualizerWidget(QWidget):
             self._populate_generic_headers()
 
     def _populate_pe_headers(self) -> None:
-        """Populate PE headers in table."""
+        """Populate PE headers in table.
+
+        Extracts DOS header, PE header, file header, and optional header
+        fields from the structure data and populates the headers table.
+
+        Returns:
+            None
+        """
         row = 0
 
         # DOS Header fields
@@ -713,7 +851,14 @@ class StructureVisualizerWidget(QWidget):
                 row += 1
 
     def _update_sections_view(self) -> None:
-        """Update sections table view."""
+        """Update sections table view.
+
+        Clears and populates the sections table with binary section information
+        including names, addresses, and sizes, with highlighting for suspicious sections.
+
+        Returns:
+            None
+        """
         self.sections_table.setRowCount(0)
 
         if "sections" not in self.structure_data:
@@ -753,7 +898,14 @@ class StructureVisualizerWidget(QWidget):
                         item.setBackground(QBrush(QColor(255, 200, 200)))
 
     def _update_imports_exports_view(self) -> None:
-        """Update imports/exports view."""
+        """Update imports/exports view.
+
+        Clears and populates the imports and exports tables with imported/exported
+        functions, with highlighting for suspicious imports.
+
+        Returns:
+            None
+        """
         # Clear tables
         self.imports_table.setRowCount(0)
         self.exports_table.setRowCount(0)
@@ -788,7 +940,14 @@ class StructureVisualizerWidget(QWidget):
                 self.exports_table.setItem(row, 3, QTableWidgetItem(export.get("forwarded", "")))
 
     def _update_memory_map(self) -> None:
-        """Update memory map visualization."""
+        """Update memory map visualization.
+
+        Creates a visual representation of binary sections in memory with
+        color-coded characteristics (executable, writable, read-only).
+
+        Returns:
+            None
+        """
         if not PYQTGRAPH_AVAILABLE or "sections" not in self.structure_data:
             return
 
@@ -827,7 +986,14 @@ class StructureVisualizerWidget(QWidget):
         self.memory_map.getAxis("left").setTicks([y_ticks])
 
     def update_details(self) -> None:
-        """Update the details panel."""
+        """Update the details panel.
+
+        Refreshes the details text panel with structure analysis summary,
+        section statistics, and suspicious indicator warnings.
+
+        Returns:
+            None
+        """
         if not self.structure_data:
             return
 
@@ -872,7 +1038,18 @@ class StructureVisualizerWidget(QWidget):
 
     # Helper methods
     def _is_suspicious_section(self, section: dict[str, Any]) -> bool:
-        """Check if a section has suspicious characteristics."""
+        """Check if a section has suspicious characteristics.
+
+        Examines section name, characteristics flags, and size anomalies to
+        identify potentially obfuscated, packed, or modified code sections.
+
+        Args:
+            section: Section information dictionary to analyze. Expected keys
+                include 'name', 'characteristics', 'virtual_size', and 'raw_size'.
+
+        Returns:
+            True if the section exhibits suspicious characteristics, False otherwise.
+        """
         name = section.get("name", "").lower()
 
         # Check for unusual section names
@@ -899,7 +1076,19 @@ class StructureVisualizerWidget(QWidget):
         return False
 
     def _is_suspicious_import(self, func_name: str) -> bool:
-        """Check if an import is suspicious."""
+        """Check if an import is suspicious.
+
+        Identifies commonly exploited or suspicious API functions that may
+        indicate anti-debugging, code injection, or system manipulation.
+
+        Args:
+            func_name: Function name to check against suspicious function list.
+                Examples include VirtualProtect, CreateRemoteThread, and
+                IsDebuggerPresent.
+
+        Returns:
+            True if the function is in the suspicious imports list, False otherwise.
+        """
         if not func_name:
             return False
 
@@ -926,7 +1115,18 @@ class StructureVisualizerWidget(QWidget):
         return func_name in suspicious_funcs
 
     def _is_executable_section(self, section: dict[str, Any]) -> bool:
-        """Check if section is executable."""
+        """Check if section is executable.
+
+        Tests the characteristics flags for execute permission based on binary
+        format (PE uses 0x20000000, ELF uses 0x1 flag).
+
+        Args:
+            section: Section information dictionary to check. Requires the
+                'characteristics' key to determine executable status.
+
+        Returns:
+            True if the section has executable characteristics, False otherwise.
+        """
         chars = section.get("characteristics", 0)
 
         if self.binary_format == "PE":
@@ -934,7 +1134,18 @@ class StructureVisualizerWidget(QWidget):
         return bool(chars & 0x1) if self.binary_format == "ELF" else False
 
     def _is_writable_section(self, section: dict[str, Any]) -> bool:
-        """Check if section is writable."""
+        """Check if section is writable.
+
+        Tests the characteristics flags for write permission based on binary
+        format (PE uses 0x80000000, ELF uses 0x2 flag).
+
+        Args:
+            section: Section information dictionary to check. Requires the
+                'characteristics' key to determine writable status.
+
+        Returns:
+            True if the section has writable characteristics, False otherwise.
+        """
         chars = section.get("characteristics", 0)
 
         if self.binary_format == "PE":
@@ -942,7 +1153,17 @@ class StructureVisualizerWidget(QWidget):
         return bool(chars & 0x2) if self.binary_format == "ELF" else False
 
     def _get_machine_name(self, machine: int) -> str:
-        """Get machine type name."""
+        """Get machine type name.
+
+        Maps PE machine type values to human-readable CPU architecture names.
+
+        Args:
+            machine: The machine type value to look up. Common PE machine values
+                include 0x014C (x86), 0x8664 (x64), 0x01C0 (ARM), and 0xAA64 (ARM64).
+
+        Returns:
+            Human-readable machine type name or 'Unknown' with hex value if not found.
+        """
         machines = {
             0x014C: "x86 (32-bit)",
             0x8664: "x64 (AMD64)",
@@ -953,7 +1174,17 @@ class StructureVisualizerWidget(QWidget):
         return machines.get(machine, f"Unknown (0x{machine:04X})")
 
     def _get_subsystem_name(self, subsystem: int) -> str:
-        """Get subsystem name."""
+        """Get subsystem name.
+
+        Maps PE subsystem values to human-readable subsystem type names.
+
+        Args:
+            subsystem: The subsystem value to look up. Common PE subsystem values
+                include 2 (Windows GUI), 3 (Windows Console), and 10 (EFI Application).
+
+        Returns:
+            Human-readable subsystem name or 'Unknown' with value if not found.
+        """
         subsystems = {
             0: "Unknown",
             1: "Native",
@@ -972,7 +1203,14 @@ class StructureVisualizerWidget(QWidget):
         return subsystems.get(subsystem, f"Unknown ({subsystem})")
 
     def _populate_elf_headers(self) -> None:
-        """Populate ELF headers in table."""
+        """Populate ELF headers in table.
+
+        Extracts ELF header fields from structure data and populates
+        the headers table with standard ELF header information.
+
+        Returns:
+            None
+        """
         if "elf_header" not in self.structure_data:
             return
         header = self.structure_data["elf_header"]
@@ -996,7 +1234,14 @@ class StructureVisualizerWidget(QWidget):
             self.headers_table.setItem(row, 2, QTableWidgetItem(desc))
 
     def _populate_generic_headers(self) -> None:
-        """Populate generic headers."""
+        """Populate generic headers.
+
+        Extracts all non-dict and non-list data from structure data
+        and populates the headers table with generic information.
+
+        Returns:
+            None
+        """
         row = 0
 
         # Add any header-like data from structure
@@ -1009,7 +1254,14 @@ class StructureVisualizerWidget(QWidget):
                 row += 1
 
     def _on_tree_selection(self) -> None:
-        """Handle tree item selection."""
+        """Handle tree item selection.
+
+        Emits a signal when a tree item is selected with the header type
+        and selected field information.
+
+        Returns:
+            None
+        """
         if items := self.tree_view.selectedItems():
             item = items[0]
             # Get path to item
@@ -1024,7 +1276,14 @@ class StructureVisualizerWidget(QWidget):
                 self.header_field_selected.emit(path[0], path[-1], item.text(1) if item.columnCount() > 1 else "")
 
     def _on_section_selection(self) -> None:
-        """Handle section selection."""
+        """Handle section selection.
+
+        Emits a signal when a section is selected with the section name
+        and section data.
+
+        Returns:
+            None
+        """
         if items := self.sections_table.selectedItems():
             row = items[0].row()
             if row < len(self.structure_data.get("sections", [])):
@@ -1032,7 +1291,17 @@ class StructureVisualizerWidget(QWidget):
                 self.section_selected.emit(section.get("name", ""), section)
 
     def export_structure(self) -> None:
-        """Export structure data."""
+        """Export structure data.
+
+        Displays a file save dialog and exports the structure data to JSON
+        or formatted text format based on the selected file extension.
+
+        Returns:
+            None
+
+        Raises:
+            Exception: If the export operation fails (caught and displayed to user).
+        """
         import json
 
         from intellicrack.handlers.pyqt6_handler import QFileDialog, QMessageBox
@@ -1062,7 +1331,14 @@ class StructureVisualizerWidget(QWidget):
                 QMessageBox.critical(self, "Export Error", f"Failed to export: {e!s}")
 
     def _format_structure_text(self) -> str:
-        """Format structure data as readable text."""
+        """Format structure data as readable text.
+
+        Returns:
+            Formatted text representation of the binary structure analysis.
+
+        Raises:
+            KeyError: If expected structure data keys are missing.
+        """
         text = "Binary Structure Analysis\n"
         text += f"{'=' * 50}\n\n"
 

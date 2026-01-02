@@ -47,14 +47,27 @@ class VMWorkflowManager:
     ) -> dict[str, Any]:
         """Run complete analysis roundtrip: create VM, modify binary, test, and export.
 
+        This method orchestrates a complete workflow for binary analysis, including
+        VM snapshot creation, binary modification via script execution, test validation,
+        and file export to user-selected location. All operations are wrapped with
+        comprehensive error handling and cleanup procedures.
+
         Args:
-            binary_path: Path to original binary for analysis
-            modification_script_content: Script content for binary modification
-            test_script_content: Script content for testing modified binary
-            platform: Target platform ('windows' or 'linux')
+            binary_path: Path to original binary for analysis.
+            modification_script_content: Script content for binary modification.
+            test_script_content: Script content for testing modified binary.
+            platform: Target platform ('windows' or 'linux'). Defaults to 'windows'.
 
         Returns:
-            Dictionary with results including success status, paths, and test results
+            Dictionary with results including success status, paths, test results,
+            and VM snapshot identifier. Contains 'success' key (bool), 'modified_binary_path'
+            (str), 'modification_result' dict, 'test_result' dict, and 'vm_snapshot_used'
+            (str) on success. On failure, includes 'error' (str) and 'stage' (str)
+            indicating failure point.
+
+        Raises:
+            RuntimeError: If snapshot creation fails, binary upload fails, modification
+                script execution fails, or file download fails.
 
         """
         self.logger.info("Starting full analysis roundtrip for %s", binary_path)
@@ -257,7 +270,21 @@ class VMWorkflowManager:
                 self.logger.exception("Failed to cleanup temporary directory: %s", e)
 
     def _upload_binary_to_vm(self, snapshot_id: str, local_path: str, remote_path: str) -> bool:
-        """Upload binary file to VM via SFTP."""
+        """Upload binary file to VM via SFTP.
+
+        Establishes SFTP connection to the specified VM snapshot and uploads the
+        binary file from local filesystem to remote path, creating parent directories
+        as needed and setting executable permissions.
+
+        Args:
+            snapshot_id: VM snapshot identifier for target VM.
+            local_path: Local filesystem path to binary file to be uploaded.
+            remote_path: Remote path on VM where binary should be uploaded.
+
+        Returns:
+            True if upload succeeded, False otherwise.
+
+        """
         try:
             snapshot = self.qemu_manager.snapshots[snapshot_id]
             # Access public method instead of private
@@ -298,7 +325,21 @@ class VMWorkflowManager:
         output_path: str,
         input_path: str,
     ) -> str:
-        """Wrap modification script with OUTPUT_PATH contract and validation."""
+        """Wrap modification script with OUTPUT_PATH contract and validation.
+
+        Wraps user-provided modification script with environment variable exports
+        (INPUT_PATH, OUTPUT_PATH) and validates that output file is created after
+        script execution, enforcing contract compliance.
+
+        Args:
+            script_content: User-provided modification script content to be wrapped.
+            output_path: Remote path where modified binary should be saved.
+            input_path: Remote path to original binary for modification.
+
+        Returns:
+            Wrapped bash script with contract enforcement and validation.
+
+        """
         return f"""#!/bin/bash
 # Modification script wrapper with OUTPUT_PATH contract
 export OUTPUT_PATH="{output_path}"
@@ -323,7 +364,19 @@ exit 0
 """
 
     def _wrap_test_script(self, script_content: str, modified_binary_path: str) -> str:
-        """Wrap test script with modified binary path."""
+        """Wrap test script with modified binary path.
+
+        Wraps user-provided test script with MODIFIED_BINARY environment variable
+        export containing the path to the modified binary for testing.
+
+        Args:
+            script_content: User-provided test script content to be wrapped.
+            modified_binary_path: Remote path to modified binary for testing.
+
+        Returns:
+            Wrapped bash script with binary path injection.
+
+        """
         return f"""#!/bin/bash
 # Test script wrapper
 export MODIFIED_BINARY="{modified_binary_path}"
@@ -339,7 +392,23 @@ exit $?
 """
 
     def _get_user_export_path(self, suggested_filename: str) -> str | None:
-        """Open file dialog for user to select export location."""
+        """Open file dialog for user to select export location.
+
+        Displays a Qt file save dialog allowing user to select where to export the
+        modified binary. Creates default directory if it doesn't exist and prepends
+        'modified_' to suggested filename.
+
+        Args:
+            suggested_filename: Original binary filename to use as suggestion for
+                the save dialog.
+
+        Returns:
+            Selected file path if user confirmed selection, None if cancelled.
+
+        Raises:
+            RuntimeError: If no QApplication instance is available.
+
+        """
         app = QApplication.instance()
         if app is None:
             self.logger.error("No QApplication instance found")

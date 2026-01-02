@@ -136,7 +136,9 @@ class TestProtectionTypeEnum:
     def test_protection_type_comparison(self) -> None:
         """ProtectionType enum members can be compared."""
         assert ProtectionType.ANTI_DEBUG == ProtectionType.ANTI_DEBUG
-        assert ProtectionType.ANTI_DEBUG != ProtectionType.LICENSE
+        anti_debug: ProtectionType = ProtectionType.ANTI_DEBUG
+        license_type: ProtectionType = ProtectionType.LICENSE
+        assert anti_debug != license_type
 
 
 class TestHookCategoryEnum:
@@ -203,7 +205,9 @@ class TestHookCategoryEnum:
     def test_hook_category_comparison(self) -> None:
         """HookCategory enum members can be compared."""
         assert HookCategory.CRITICAL == HookCategory.CRITICAL
-        assert HookCategory.CRITICAL != HookCategory.LOW
+        critical: HookCategory = HookCategory.CRITICAL
+        low: HookCategory = HookCategory.LOW
+        assert critical != low
 
 
 class TestModuleExports:

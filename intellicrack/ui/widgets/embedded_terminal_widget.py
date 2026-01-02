@@ -705,9 +705,6 @@ class EmbeddedTerminalWidget(QWidget):
         Args:
             text: Text to send to process stdin.
 
-        Raises:
-            Exception: If writing to process stdin fails.
-
         """
         if self._process is None or not self._running:
             logger.warning("Cannot send input: no process running")

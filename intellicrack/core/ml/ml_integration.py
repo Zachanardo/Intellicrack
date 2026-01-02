@@ -47,10 +47,16 @@ class MLAnalysisIntegration:
     ) -> None:
         """Initialize ML analysis integration.
 
+        Sets up the ML classifier, optional incremental learning, and optional
+        sample database for the binary analysis pipeline.
+
         Args:
-            model_path: Path to trained model
-            enable_incremental_learning: Enable incremental learning
-            enable_sample_database: Enable sample database
+            model_path: Optional path to a trained model file. If None, searches
+                default locations for the model.
+            enable_incremental_learning: Whether to enable incremental learning
+                capabilities for continuous model improvement.
+            enable_sample_database: Whether to initialize the sample database
+                for tracking verified protection samples.
 
         """
         self.logger = logging.getLogger(__name__)
@@ -87,12 +93,26 @@ class MLAnalysisIntegration:
     ) -> dict[str, Any]:
         """Classify a binary using ML model.
 
+        Performs ML-based classification of the binary to detect protection
+        mechanisms and returns confidence scores along with alternative predictions
+        if requested.
+
         Args:
-            binary_path: Path to binary file
-            include_alternatives: Include alternative predictions
+            binary_path: Path to the binary file to classify.
+            include_alternatives: If True, includes top alternative predictions
+                in the results.
 
         Returns:
-            Classification results dictionary
+            Dictionary containing classification results with keys:
+            - enabled: Whether ML classification is available
+            - primary_protection: Detected protection type
+            - confidence: Confidence score (0-1)
+            - confidence_level: Categorical confidence level
+            - model_version: Version of the trained model
+            - reliable: Whether the prediction is reliable
+            - alternatives: Top predictions (if include_alternatives=True)
+            - warning: Low confidence warning message (if applicable)
+            - error: Error message (if classification failed)
 
         """
         if not self.enabled:
@@ -133,11 +153,20 @@ class MLAnalysisIntegration:
     def analyze_with_ml(self, binary_path: str | Path) -> dict[str, Any]:
         """Perform comprehensive ML-enhanced analysis.
 
+        Runs full ML analysis on the binary, including classification,
+        recommended tools, active learning queries, and sample database statistics.
+
         Args:
-            binary_path: Path to binary file
+            binary_path: Path to the binary file to analyze.
 
         Returns:
-            Complete analysis results
+            Dictionary containing complete analysis results with keys:
+            - binary_path: Path to the analyzed binary
+            - ml_enabled: Whether ML analysis is enabled
+            - classification: Classification results (if ML enabled)
+            - recommended_tools: Tools recommended for detected protection
+            - active_learning: Active learning requirements (if applicable)
+            - database_stats: Sample database statistics (if enabled)
 
         """
         binary_path = Path(binary_path)
@@ -185,14 +214,18 @@ class MLAnalysisIntegration:
     ) -> bool:
         """Add a verified sample to the learning system.
 
+        Adds a manually verified binary sample to both the sample database and
+        incremental learner for model improvement.
+
         Args:
-            binary_path: Path to binary file
-            protection_type: Verified protection type
-            verified: Whether this is a verified sample
-            notes: Additional notes
+            binary_path: Path to the binary file to add.
+            protection_type: The verified protection mechanism used by the binary.
+            verified: Whether this sample has been manually verified.
+            notes: Optional additional notes about the sample.
 
         Returns:
-            True if successful
+            True if the sample was successfully added to all enabled systems,
+            False otherwise.
 
         """
         success = True
@@ -241,13 +274,21 @@ class MLAnalysisIntegration:
     ) -> dict[str, Any]:
         """Retrain model with new samples.
 
+        Retrains the ML model using either samples from the database or the
+        incremental learner buffer. Performs cross-validation and saves the
+        updated model.
+
         Args:
-            use_database: Use samples from database
-            min_confidence: Minimum confidence for training
-            n_estimators: Number of estimators
+            use_database: If True, uses samples from the sample database.
+                If False, uses samples from incremental learner.
+            min_confidence: Minimum confidence threshold for samples to be
+                included in training data.
+            n_estimators: Number of estimators for the random forest model.
 
         Returns:
-            Training results
+            Dictionary containing training results with keys:
+            - error: Error message (if training failed)
+            - Training metrics and model performance data (if successful)
 
         """
         if not self.enabled:
@@ -290,7 +331,9 @@ class MLAnalysisIntegration:
         """Get statistics about the learning system.
 
         Returns:
-            Statistics dictionary
+            Dictionary containing learning system statistics including model
+            information, incremental learning buffer stats, and sample database
+            statistics.
 
         """
         stats: dict[str, Any] = {
@@ -316,10 +359,11 @@ class MLAnalysisIntegration:
         """Categorize confidence score.
 
         Args:
-            confidence: Confidence score (0-1)
+            confidence: Confidence score between 0 and 1.
 
         Returns:
-            Confidence level string
+            str: Confidence level string ("very_high", "high", "medium", "low", or
+                "very_low") based on the confidence score thresholds.
 
         """
         if confidence >= 0.90:
@@ -334,10 +378,12 @@ class MLAnalysisIntegration:
         """Get recommended tools for a protection scheme.
 
         Args:
-            protection: Protection scheme name
+            protection: Name of the protection scheme to get recommendations for.
 
         Returns:
-            Dictionary of recommended tools by category
+            Dictionary with tool recommendations organized by category
+            (unpackers, analyzers, techniques). Returns default recommendations
+            for unknown protection types.
 
         """
         tool_recommendations = {

@@ -94,12 +94,26 @@ class LayerInfo:
     dependencies: list[ValidationLayer] = field(default_factory=list)
 
     def add_evidence(self, evidence: str) -> None:
-        """Add evidence for this layer detection."""
+        """Add evidence for this layer detection.
+
+        Args:
+            evidence: Evidence string to add if not already present
+
+        Returns:
+            None
+        """
         if evidence not in self.evidence:
             self.evidence.append(evidence)
 
     def add_dependency(self, layer: ValidationLayer) -> None:
-        """Add a layer dependency."""
+        """Add a layer dependency.
+
+        Args:
+            layer: Validation layer to add as dependency if not already present
+
+        Returns:
+            None
+        """
         if layer not in self.dependencies:
             self.dependencies.append(layer)
 
@@ -113,23 +127,54 @@ class DependencyGraph:
         self._layers: set[ValidationLayer] = set()
 
     def add_layer(self, layer: ValidationLayer) -> None:
-        """Add a layer to the graph."""
+        """Add a layer to the graph.
+
+        Args:
+            layer: Validation layer to add to the graph
+
+        Returns:
+            None
+        """
         self._layers.add(layer)
         if layer not in self._graph:
             self._graph[layer] = set()
 
     def add_dependency(self, dependent: ValidationLayer, dependency: ValidationLayer) -> None:
-        """Add a dependency relationship: dependent depends on dependency."""
+        """Add a dependency relationship: dependent depends on dependency.
+
+        Args:
+            dependent: Layer that has the dependency
+            dependency: Layer that is depended on
+
+        Returns:
+            None
+        """
         self.add_layer(dependent)
         self.add_layer(dependency)
         self._graph[dependent].add(dependency)
 
     def get_dependencies(self, layer: ValidationLayer) -> set[ValidationLayer]:
-        """Get all dependencies for a layer."""
+        """Get all dependencies for a layer.
+
+        Args:
+            layer: Validation layer to retrieve dependencies for
+
+        Returns:
+            Set of ValidationLayer objects that the given layer depends on
+        """
         return self._graph.get(layer, set())
 
     def topological_sort(self) -> list[ValidationLayer]:
-        """Return layers in topologically sorted order (dependencies first)."""
+        """Return layers in topologically sorted order (dependencies first).
+
+        Performs depth-first search with cycle detection to produce an ordering
+        where all dependencies of a layer appear before the layer itself.
+
+        Returns:
+            List of ValidationLayer objects sorted topologically such that
+                dependencies appear before dependents. If a cycle is detected,
+                warning is logged and the cycle is skipped.
+        """
         visited = set()
         temp_mark = set()
         result = []
@@ -255,7 +300,20 @@ class ValidationLayerDetector:
         self,
         binary: lief.PE.Binary | lief.ELF.Binary | lief.MachO.Binary | lief.COFF.Binary,
     ) -> LayerInfo | None:
-        """Detect OS-level validation (CryptoAPI, Schannel, system trust store)."""
+        """Detect OS-level validation (CryptoAPI, Schannel, system trust store).
+
+        Analyzes binary imports for Windows CryptoAPI and Schannel libraries
+        that indicate OS-level certificate validation mechanisms.
+
+        Args:
+            binary: Parsed binary object (PE, ELF, Mach-O, or COFF format)
+                to analyze for OS-level certificate validation
+
+        Returns:
+            LayerInfo with OS_LEVEL validation type and confidence score,
+                populated with evidence of OS-level validation functions.
+                Returns None if no OS-level validation indicators detected.
+        """
         layer_info = LayerInfo(
             layer_type=ValidationLayer.OS_LEVEL,
             confidence=0.0,
@@ -291,7 +349,20 @@ class ValidationLayerDetector:
         self,
         binary: lief.PE.Binary | lief.ELF.Binary | lief.MachO.Binary | lief.COFF.Binary,
     ) -> LayerInfo | None:
-        """Detect library-level validation (OpenSSL, NSS, BoringSSL)."""
+        """Detect library-level validation (OpenSSL, NSS, BoringSSL).
+
+        Analyzes binary imports for cryptographic libraries (OpenSSL, NSS,
+        BoringSSL) that provide TLS/SSL certificate validation mechanisms.
+
+        Args:
+            binary: Parsed binary object (PE, ELF, Mach-O, or COFF format)
+                to analyze for library-level certificate validation
+
+        Returns:
+            LayerInfo with LIBRARY_LEVEL validation type and confidence score,
+                populated with evidence of TLS/SSL library usage. Returns None
+                if no library-level validation indicators detected.
+        """
         layer_info = LayerInfo(
             layer_type=ValidationLayer.LIBRARY_LEVEL,
             confidence=0.0,
@@ -332,7 +403,23 @@ class ValidationLayerDetector:
         binary: lief.PE.Binary | lief.ELF.Binary | lief.MachO.Binary | lief.COFF.Binary,
         target_path: Path,
     ) -> LayerInfo | None:
-        """Detect application-level pinning (hardcoded certs, custom logic)."""
+        """Detect application-level pinning (hardcoded certs, custom logic).
+
+        Searches for indicators of certificate pinning and custom validation
+        logic including hardcoded certificate hashes, embedded certificates,
+        and pinning-related string identifiers.
+
+        Args:
+            binary: Parsed binary object (PE, ELF, Mach-O, or COFF format)
+                to analyze for application-level certificate pinning
+            target_path: Path to the binary file for embedded certificate
+                detection
+
+        Returns:
+            LayerInfo with APPLICATION_LEVEL validation type and confidence
+                score, populated with evidence of application-level pinning.
+                Returns None if no application-level pinning detected.
+        """
         layer_info = LayerInfo(
             layer_type=ValidationLayer.APPLICATION_LEVEL,
             confidence=0.0,
@@ -376,7 +463,23 @@ class ValidationLayerDetector:
         binary: lief.PE.Binary | lief.ELF.Binary | lief.MachO.Binary | lief.COFF.Binary,
         target_path: Path,
     ) -> LayerInfo | None:
-        """Detect server-level validation (network-based license checking)."""
+        """Detect server-level validation (network-based license checking).
+
+        Identifies server-side validation mechanisms through analysis of
+        activation keywords, license server indicators, and HTTP/HTTPS
+        endpoint references in binary strings.
+
+        Args:
+            binary: Parsed binary object (PE, ELF, Mach-O, or COFF format)
+                to analyze for server-level validation indicators
+            target_path: Path to the binary file for embedded certificate
+                analysis
+
+        Returns:
+            LayerInfo with SERVER_LEVEL validation type and confidence
+                score, populated with evidence of network-based validation.
+                Returns None if no server-level validation detected.
+        """
         layer_info = LayerInfo(
             layer_type=ValidationLayer.SERVER_LEVEL,
             confidence=0.0,
@@ -410,7 +513,19 @@ class ValidationLayerDetector:
         return layer_info if layer_info.confidence > 0.0 else None
 
     def _contains_certificate_hashes(self, strings: set[str]) -> bool:
-        """Check if strings contain certificate hashes (SHA-256 or SHA-1)."""
+        """Check if strings contain certificate hashes (SHA-256 or SHA-1).
+
+        Examines strings for hexadecimal patterns matching SHA-256 (64 chars)
+        and SHA-1 (40 chars) hash lengths.
+
+        Args:
+            strings: Set of strings to search for hexadecimal certificate
+                hashes
+
+        Returns:
+            True if valid SHA-256 or SHA-1 format hashes are found in
+                strings, False otherwise
+        """
         for string in strings:
             clean_string = "".join(c for c in string if c.isalnum())
 
@@ -423,7 +538,19 @@ class ValidationLayerDetector:
         return False
 
     def _contains_embedded_certificates(self, target_path: Path) -> bool:
-        """Check if binary contains embedded certificate data."""
+        """Check if binary contains embedded certificate data.
+
+        Searches binary file for PEM-format certificate markers (BEGIN
+        CERTIFICATE, RSA PRIVATE KEY) and DER-format indicators (MII prefix).
+
+        Args:
+            target_path: Path to the binary file to check for embedded
+                certificate data
+
+        Returns:
+            True if certificate PEM or DER format markers are found in
+                binary, False otherwise
+        """
         try:
             with open(target_path, "rb") as f:
                 content = f.read()
@@ -441,13 +568,38 @@ class ValidationLayerDetector:
             return False
 
     def _contains_http_endpoints(self, strings: set[str]) -> bool:
-        """Check if strings contain HTTP/HTTPS endpoints."""
+        """Check if strings contain HTTP/HTTPS endpoints.
+
+        Searches for protocol schemes (http://, https://) and common API
+        path patterns (/api/, /v1/, /v2/, etc.) in string set.
+
+        Args:
+            strings: Set of strings to search for HTTP/HTTPS endpoint URLs
+                and API paths
+
+        Returns:
+            True if HTTP/HTTPS protocols or common API path indicators are
+                found in strings, False otherwise
+        """
         http_indicators = ["http://", "https://", "api.", "/api/", "/v1/", "/v2/"]
 
         return any(any(indicator in string for indicator in http_indicators) for string in strings)
 
     def _establish_dependencies(self, layers: dict[ValidationLayer, LayerInfo]) -> None:
-        """Establish dependency relationships between detected layers."""
+        """Establish dependency relationships between detected layers.
+
+        Builds hierarchical dependencies where application-level validation
+        depends on library/OS validation, and library validation depends
+        on OS validation.
+
+        Args:
+            layers: Dictionary mapping ValidationLayer enum types to their
+                corresponding LayerInfo objects with detected confidence and
+                evidence
+
+        Returns:
+            None
+        """
         if ValidationLayer.APPLICATION_LEVEL in layers and ValidationLayer.LIBRARY_LEVEL in layers:
             layers[ValidationLayer.APPLICATION_LEVEL].add_dependency(
                 ValidationLayer.LIBRARY_LEVEL,
@@ -483,12 +635,17 @@ class ValidationLayerDetector:
     ) -> DependencyGraph:
         """Build a dependency graph from detected layers.
 
+        Constructs a directed graph where edges represent dependency
+        relationships between validation layers, enabling topological
+        sorting for staged bypass planning.
+
         Args:
-            layers: List of detected LayerInfo objects
+            layers: List of detected LayerInfo objects with populated
+                dependency information
 
         Returns:
-            DependencyGraph representing layer dependencies
-
+            DependencyGraph object representing all layer dependency
+                relationships for topological analysis
         """
         graph = DependencyGraph()
 

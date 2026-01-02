@@ -28,7 +28,7 @@ import subprocess
 import tempfile
 import time
 import uuid
-from typing import Any, cast
+from typing import Any
 
 import psutil
 
@@ -88,7 +88,11 @@ class SandboxDetector(BaseDetector):
         self._profile_system()
 
     def _build_dynamic_signatures(self) -> dict[str, Any]:
-        """Build sandbox signatures dynamically based on system analysis."""
+        """Build sandbox signatures dynamically based on system analysis.
+
+        Returns:
+            dict[str, Any]: Mapping of sandbox types to their detection signatures and patterns.
+        """
         import json
 
         signatures: dict[str, Any] = {}
@@ -264,7 +268,11 @@ class SandboxDetector(BaseDetector):
         return signatures
 
     def _build_behavioral_patterns(self) -> dict[str, Any]:
-        """Build behavioral patterns for sandbox detection."""
+        """Build behavioral patterns for sandbox detection.
+
+        Returns:
+            dict[str, Any]: Mapping of behavioral patterns used for sandbox detection.
+        """
         import psutil
 
         patterns: dict[str, Any] = {}
@@ -365,7 +373,11 @@ class SandboxDetector(BaseDetector):
         return patterns
 
     def _get_common_directories(self) -> list[str]:
-        """Get common directories where sandbox artifacts might be found."""
+        """Get common directories where sandbox artifacts might be found.
+
+        Returns:
+            list[str]: List of directory paths to check for sandbox artifacts.
+        """
         dirs: list[str] = []
 
         # Windows paths
@@ -416,7 +428,11 @@ class SandboxDetector(BaseDetector):
         return valid_dirs
 
     def _build_vm_signatures(self) -> dict[str, Any]:
-        """Build virtualization platform signatures."""
+        """Build virtualization platform signatures.
+
+        Returns:
+            dict[str, Any]: Mapping of VM platforms to their detection signatures.
+        """
         vm_sigs: dict[str, Any] = {
             "vmware": {
                 "files": [
@@ -492,7 +508,11 @@ class SandboxDetector(BaseDetector):
         return vm_sigs
 
     def _get_common_processes(self) -> list[str]:
-        """Get list of common processes for real systems."""
+        """Get list of common processes for real systems.
+
+        Returns:
+            list[str]: List of common process names found in real systems.
+        """
         if platform.system() == "Windows":
             return [
                 "explorer.exe",
@@ -631,7 +651,11 @@ class SandboxDetector(BaseDetector):
                 self.detection_cache[f"profile_{sandbox_name}"] = True
 
     def _check_hardware_indicators(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check hardware indicators for sandbox/VM detection."""
+        """Check hardware indicators for sandbox/VM detection.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         indicators: dict[str, Any] = {"detected": False, "confidence": 0, "details": []}
 
         try:
@@ -710,7 +734,11 @@ class SandboxDetector(BaseDetector):
         return detected, confidence, indicators
 
     def _check_registry_indicators(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check Windows registry for sandbox indicators."""
+        """Check Windows registry for sandbox indicators.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         indicators: dict[str, Any] = {"detected": False, "confidence": 0, "details": []}
 
         if platform.system() != "Windows":
@@ -773,7 +801,11 @@ class SandboxDetector(BaseDetector):
         return detected, confidence, indicators
 
     def _check_virtualization_artifacts(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for virtualization artifacts."""
+        """Check for virtualization artifacts.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         artifacts: dict[str, Any] = {"detected": False, "confidence": 0, "details": []}
 
         # Check loaded drivers/modules
@@ -905,7 +937,11 @@ class SandboxDetector(BaseDetector):
             return results
 
     def _check_environment(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for sandbox-specific environment variables and settings."""
+        """Check for sandbox-specific environment variables and settings.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"suspicious_env": [], "username": None, "computername": None}
 
         try:
@@ -974,7 +1010,11 @@ class SandboxDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_behavioral(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for behavioral indicators of sandbox environment."""
+        """Check for behavioral indicators of sandbox environment.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"anomalies": []}
 
         try:
@@ -1017,7 +1057,11 @@ class SandboxDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_resource_limits(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for resource limitations typical of sandboxes."""
+        """Check for resource limitations typical of sandboxes.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"limitations": []}
 
         try:
@@ -1079,7 +1123,11 @@ class SandboxDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_network(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check network connectivity and configuration."""
+        """Check network connectivity and configuration.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"network_anomalies": [], "connections": 0}
 
         try:
@@ -1161,7 +1209,11 @@ class SandboxDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_user_interaction(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for signs of user interaction."""
+        """Check for signs of user interaction.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"interaction_signs": []}
 
         try:
@@ -1222,7 +1274,11 @@ class SandboxDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_file_system_artifacts(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for sandbox-specific files and directories."""
+        """Check for sandbox-specific files and directories.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"artifacts_found": []}
 
         try:
@@ -1269,7 +1325,11 @@ class SandboxDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_process_monitoring(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for process monitoring and injection."""
+        """Check for process monitoring and injection.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"monitoring_signs": []}
 
         try:
@@ -1337,7 +1397,11 @@ class SandboxDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_time_acceleration(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for time acceleration using RDTSC instruction."""
+        """Check for time acceleration using RDTSC instruction.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"time_anomaly": False, "rdtsc_drift": 0.0, "qpc_drift": 0.0}
 
         try:
@@ -1532,8 +1596,8 @@ class SandboxDetector(BaseDetector):
                 exec_mem = mmap.mmap(
                     -1,
                     len(code),
-                    mmap.MAP_PRIVATE | mmap.MAP_ANONYMOUS,  # type: ignore[attr-defined]
-                    mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC,  # type: ignore[attr-defined]
+                    mmap.MAP_PRIVATE | mmap.MAP_ANONYMOUS,
+                    mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC,
                 )
                 exec_mem.write(code)
 
@@ -1568,7 +1632,11 @@ class SandboxDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_api_hooks(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for API hooking commonly used by sandboxes."""
+        """Check for API hooking commonly used by sandboxes.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"hooked_apis": []}
 
         try:
@@ -1610,7 +1678,11 @@ class SandboxDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_mouse_movement(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check for human-like mouse movement."""
+        """Check for human-like mouse movement.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"mouse_active": False, "movement_count": 0}
 
         try:
@@ -1629,7 +1701,7 @@ class SandboxDetector(BaseDetector):
                             def __repr__(self) -> str:
                                 return f"POINT(x={self.x}, y={self.y})"
 
-                        wintypes.POINT = POINT  # type: ignore[misc,assignment]
+                        wintypes.POINT = POINT
 
                 except (ImportError, AttributeError) as e:
                     self.logger.warning(
@@ -1662,7 +1734,14 @@ class SandboxDetector(BaseDetector):
                                 return hash((self.x, self.y))
 
                             def distance_to(self, other: "POINT") -> float:
-                                """Calculate distance to another point."""
+                                """Calculate distance to another point.
+
+                                Args:
+                                    other: Another POINT instance.
+
+                                Returns:
+                                    float: Euclidean distance between the two points.
+                                """
                                 return float(((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5)
 
                         class RECT(ctypes.Structure):
@@ -1740,7 +1819,7 @@ class SandboxDetector(BaseDetector):
                                 super().__init__()
                                 self.dwOSVersionInfoSize = ctypes.sizeof(self)
 
-                    wintypes = _IntellicrackWindowsAPI()  # type: ignore[assignment]
+                    wintypes = _IntellicrackWindowsAPI()
 
                 user32 = ctypes.windll.user32
 
@@ -1832,7 +1911,11 @@ class SandboxDetector(BaseDetector):
         return False, 0.0, details
 
     def _get_system_uptime(self) -> int | None:
-        """Get system uptime in seconds."""
+        """Get system uptime in seconds.
+
+        Returns:
+            int | None: System uptime in seconds, or None if unavailable.
+        """
         try:
             if platform.system() == "Windows":
                 kernel32 = ctypes.windll.kernel32
@@ -1844,7 +1927,15 @@ class SandboxDetector(BaseDetector):
             return None
 
     def _ip_in_network(self, ip: str, network: str) -> bool:
-        """Check if IP is in network range."""
+        """Check if IP is in network range.
+
+        Args:
+            ip: IP address to check.
+            network: Network range (CIDR notation).
+
+        Returns:
+            bool: True if IP is in network range, False otherwise.
+        """
         try:
             import ipaddress
 
@@ -1858,7 +1949,14 @@ class SandboxDetector(BaseDetector):
             return ip_parts[:3] == network_parts[:3]
 
     def _identify_sandbox_type(self, detections: dict[str, Any]) -> str:
-        """Identify specific sandbox based on detections."""
+        """Identify specific sandbox based on detections.
+
+        Args:
+            detections: Dictionary of detection results from various checks.
+
+        Returns:
+            str: Identified sandbox type or "unknown" if not determined.
+        """
         sandbox_scores: dict[str, int] = {}
 
         # Analyze all detection details
@@ -1891,7 +1989,14 @@ class SandboxDetector(BaseDetector):
         return "Generic Sandbox"
 
     def _calculate_evasion_difficulty(self, detections: dict[str, Any]) -> int:
-        """Calculate how difficult it is to evade sandbox detection."""
+        """Calculate how difficult it is to evade sandbox detection.
+
+        Args:
+            detections: Dictionary of detection results from various checks.
+
+        Returns:
+            int: Difficulty level from 1 (easy) to 10 (very difficult).
+        """
         # Methods that are hard to evade
         hard_methods = ["file_system", "process_monitoring", "api_hooks"]
         medium_methods = ["environment_checks", "network_connectivity"]
@@ -1899,7 +2004,11 @@ class SandboxDetector(BaseDetector):
         return self.calculate_detection_score(detections, hard_methods, medium_methods)
 
     def generate_sandbox_evasion(self) -> str:
-        """Generate code to evade sandbox detection."""
+        """Generate code to evade sandbox detection.
+
+        Returns:
+            str: C/C++ code for sandbox evasion techniques.
+        """
         return """
 // Sandbox Evasion Code
 #include <windows.h>
@@ -1981,11 +2090,19 @@ Sleep(30000);  // 30 seconds
 """
 
     def get_aggressive_methods(self) -> list[str]:
-        """Get list of method names that are considered aggressive."""
+        """Get list of method names that are considered aggressive.
+
+        Returns:
+            list[str]: List of aggressive detection method names.
+        """
         return ["time_acceleration", "mouse_movement"]
 
     def get_detection_type(self) -> str:
-        """Get the type of detection this class performs."""
+        """Get the type of detection this class performs.
+
+        Returns:
+            str: Detection type identifier ("sandbox").
+        """
         return "sandbox"
 
     def evade_with_behavioral_adaptation(self, aggressive: bool = False) -> dict[str, Any]:
@@ -2342,7 +2459,7 @@ Sleep(30000);  // 30 seconds
                 changes.append("DNS resolution verified")
 
             if strategy["anti_monitoring"].get("detect_and_exit", {}).get("enabled"):
-                if monitoring_detected := self._check_for_monitoring_tools():
+                if self._check_for_monitoring_tools():
                     changes.append("Monitoring tools detected - exiting gracefully")
                     return changes
 
@@ -2401,7 +2518,7 @@ Sleep(30000);  // 30 seconds
                     class POINT(ctypes.Structure):
                         _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
 
-                wintypes = _TempWinTypes()  # type: ignore[assignment]
+                wintypes = _TempWinTypes()
 
             user32 = ctypes.windll.user32
             positions = []
@@ -2842,7 +2959,11 @@ Sleep(30000);  // 30 seconds
             return False
 
     def _check_environment_variables(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check environment variables for sandbox indicators."""
+        """Check environment variables for sandbox indicators.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"suspicious_vars": [], "sandbox_indicators": []}
 
         try:
@@ -2884,7 +3005,11 @@ Sleep(30000);  // 30 seconds
         return False, 0.0, details
 
     def _check_parent_process(self) -> tuple[bool, float, dict[str, Any]]:
-        """Analyze parent process for sandbox indicators."""
+        """Analyze parent process for sandbox indicators.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"parent_name": None, "parent_cmdline": None, "suspicious": False}
 
         try:
@@ -2936,7 +3061,11 @@ Sleep(30000);  // 30 seconds
         return False, 0.0, details
 
     def _check_cpuid_hypervisor(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check CPUID for hypervisor presence using hypervisor bit."""
+        """Check CPUID for hypervisor presence using hypervisor bit.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"hypervisor_present": False, "cpu_brand": None, "hypervisor_vendor": None}
 
         try:
@@ -3036,7 +3165,11 @@ Sleep(30000);  // 30 seconds
         return False, 0.0, details
 
     def _check_mac_address_artifacts(self) -> tuple[bool, float, dict[str, Any]]:
-        """Check MAC addresses for VM/sandbox vendor patterns."""
+        """Check MAC addresses for VM/sandbox vendor patterns.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"mac_addresses": [], "suspicious_vendors": []}
 
         try:
@@ -3079,7 +3212,11 @@ Sleep(30000);  // 30 seconds
         return False, 0.0, details
 
     def _check_browser_automation(self) -> tuple[bool, float, dict[str, Any]]:
-        """Detect browser automation frameworks used in sandboxes."""
+        """Detect browser automation frameworks used in sandboxes.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"automation_indicators": [], "detected_frameworks": []}
 
         try:
@@ -3162,7 +3299,11 @@ Sleep(30000);  // 30 seconds
         return False, 0.0, details
 
     def _check_advanced_timing(self) -> tuple[bool, float, dict[str, Any]]:
-        """Advanced timing checks using multiple methods to detect time manipulation."""
+        """Advanced timing checks using multiple methods to detect time manipulation.
+
+        Returns:
+            tuple[bool, float, dict[str, Any]]: Tuple containing (detected, confidence_score, details_dict).
+        """
         details: dict[str, Any] = {"timing_anomalies": [], "methods_checked": []}
 
         try:

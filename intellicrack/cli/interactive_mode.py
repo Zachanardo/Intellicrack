@@ -60,7 +60,14 @@ class IntellicrackShell(cmd.Cmd):
         self.ai_chat: AITerminalChat | None = None
 
     def do_load(self, arg: str) -> None:
-        """Load a binary file for analysis: load <filepath>."""
+        """Load a binary file for analysis: load <filepath>.
+
+        Args:
+            arg: File path to load for analysis.
+
+        Returns:
+            None
+        """
         if not arg:
             logger.warning("Usage: load <filepath>")
             return
@@ -74,7 +81,14 @@ class IntellicrackShell(cmd.Cmd):
         logger.info("Loaded: %s", filepath)
 
     def do_analyze(self, arg: str) -> None:
-        """Analyze the currently loaded file."""
+        """Analyze the currently loaded file.
+
+        Args:
+            arg: Unused command argument.
+
+        Returns:
+            None
+        """
         if not self.current_file:
             logger.exception("No file loaded. Use 'load' command first.")
             return
@@ -87,27 +101,62 @@ class IntellicrackShell(cmd.Cmd):
             logger.exception("Analysis failed: %s", e, exc_info=True)
 
     def do_status(self, arg: str) -> None:
-        """Show current status."""
+        """Show current status.
+
+        Args:
+            arg: Unused command argument.
+
+        Returns:
+            None
+        """
         logger.info("Current file: %s", self.current_file or "None")
         logger.info("Analysis results: %s", "Available" if self.analysis_results else "None")
 
     def do_clear(self, arg: str) -> None:
-        """Clear current session."""
+        """Clear current session.
+
+        Args:
+            arg: Unused command argument.
+
+        Returns:
+            None
+        """
         self.current_file = None
         self.analysis_results = None
         logger.info("Session cleared")
 
     def do_exit(self, arg: str) -> bool:
-        """Exit the interactive shell."""
+        """Exit the interactive shell.
+
+        Args:
+            arg: Unused command argument.
+
+        Returns:
+            True to signal the shell to exit.
+        """
         logger.info("Goodbye!")
         return True
 
     def do_quit(self, arg: str) -> bool:
-        """Exit the interactive shell."""
+        """Exit the interactive shell.
+
+        Args:
+            arg: Unused command argument.
+
+        Returns:
+            True to signal the shell to exit.
+        """
         return self.do_exit(arg)
 
     def do_scan(self, arg: str) -> None:
-        """Scan for vulnerabilities: scan [--vulns]."""
+        """Scan for vulnerabilities: scan [--vulns].
+
+        Args:
+            arg: Optional command arguments for scan options.
+
+        Returns:
+            None
+        """
         if not self.current_file:
             logger.exception("No file loaded. Use 'load' command first.")
             return
@@ -130,7 +179,14 @@ class IntellicrackShell(cmd.Cmd):
             logger.exception("Scan failed: %s", e, exc_info=True)
 
     def do_strings(self, arg: str) -> None:
-        """Extract strings from the loaded file: strings [min_length]."""
+        """Extract strings from the loaded file: strings [min_length].
+
+        Args:
+            arg: Optional minimum string length parameter.
+
+        Returns:
+            None
+        """
         if not self.current_file:
             logger.exception("No file loaded. Use 'load' command first.")
             return
@@ -154,7 +210,14 @@ class IntellicrackShell(cmd.Cmd):
             logger.exception("String extraction failed: %s", e, exc_info=True)
 
     def do_export(self, arg: str) -> None:
-        """Export analysis results: export <format> <output_file>."""
+        """Export analysis results: export <format> <output_file>.
+
+        Args:
+            arg: Export format and output file path.
+
+        Returns:
+            None
+        """
         if not self.analysis_results:
             logger.exception("No analysis results. Run 'analyze' first.")
             return
@@ -209,7 +272,14 @@ class IntellicrackShell(cmd.Cmd):
             logger.exception("Export failed: %s", e, exc_info=True)
 
     def do_hexview(self, arg: str) -> None:
-        """Open hex viewer for the loaded file."""
+        """Open hex viewer for the loaded file.
+
+        Args:
+            arg: Unused command argument.
+
+        Returns:
+            None
+        """
         if not self.current_file:
             logger.exception("No file loaded. Use 'load' command first.")
             return
@@ -226,7 +296,14 @@ class IntellicrackShell(cmd.Cmd):
             logger.exception("Hex viewer failed: %s", e, exc_info=True)
 
     def do_protection(self, arg: str) -> None:
-        """Analyze protection mechanisms."""
+        """Analyze protection mechanisms.
+
+        Args:
+            arg: Unused command argument.
+
+        Returns:
+            None
+        """
         if not self.current_file:
             logger.exception("No file loaded. Use 'load' command first.")
             return
@@ -249,7 +326,14 @@ class IntellicrackShell(cmd.Cmd):
             logger.exception("Protection analysis failed: %s", e, exc_info=True)
 
     def do_patch(self, arg: str) -> None:
-        """Generate patches for the loaded file: patch <output_file>."""
+        """Generate patches for the loaded file: patch <output_file>.
+
+        Args:
+            arg: Output file path for generated patches.
+
+        Returns:
+            None
+        """
         if not self.current_file:
             logger.exception("No file loaded. Use 'load' command first.")
             return
@@ -279,7 +363,14 @@ class IntellicrackShell(cmd.Cmd):
             logger.exception("Patch generation failed: %s", e, exc_info=True)
 
     def do_ai(self, arg: str) -> None:
-        """Interact with AI assistant: ai <question>."""
+        """Interact with AI assistant: ai <question>.
+
+        Args:
+            arg: Question or prompt for the AI assistant.
+
+        Returns:
+            None
+        """
         if not arg:
             logger.warning("Usage: ai <question>")
             return
@@ -299,7 +390,14 @@ class IntellicrackShell(cmd.Cmd):
             logger.exception("AI assistant error: %s", e, exc_info=True)
 
     def do_help(self, arg: str) -> None:
-        """Show help for commands."""
+        """Show help for commands.
+
+        Args:
+            arg: Optional command name to get help for.
+
+        Returns:
+            None
+        """
         if arg:
             super().do_help(arg)
         else:
@@ -327,7 +425,11 @@ class IntellicrackShell(cmd.Cmd):
 
 
 def main() -> int:
-    """Launch interactive mode."""
+    """Launch interactive mode.
+
+    Returns:
+        int: Exit code (0 on success).
+    """
     shell = IntellicrackShell()
     try:
         shell.cmdloop()

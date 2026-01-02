@@ -14,6 +14,9 @@ import struct
 from pathlib import Path
 from typing import Any
 
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
 import capstone
 import pytest
 
@@ -608,7 +611,7 @@ class TestRealBinaryDetection:
     @pytest.fixture
     def legitimate_pe_binaries(self) -> list[Path]:
         """Provide paths to legitimate PE binaries for testing."""
-        binaries_dir = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate")
+        binaries_dir = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate"
         return list(binaries_dir.glob("*.exe"))
 
     def test_crypto_detection_on_real_pe_binaries(self, legitimate_pe_binaries: list[Path]) -> None:
@@ -635,7 +638,7 @@ class TestRealBinaryDetection:
     @pytest.fixture
     def protected_binaries(self) -> list[Path]:
         """Provide paths to protected binaries for testing."""
-        binaries_dir = Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected")
+        binaries_dir = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected"
         return list(binaries_dir.glob("*.exe"))
 
     def test_crypto_detection_on_protected_binaries(self, protected_binaries: list[Path]) -> None:

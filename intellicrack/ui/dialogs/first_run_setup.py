@@ -53,13 +53,27 @@ class SetupWorker(QThread):
     finished = pyqtSignal(bool)
 
     def __init__(self, tasks: list[str]) -> None:
-        """Initialize the SetupWorker with default values."""
+        """Initialize the SetupWorker.
+
+        Args:
+            tasks: List of task identifiers to execute during setup.
+
+        Returns:
+            None
+        """
         super().__init__()
         self.tasks = tasks
         self.success = True
 
     def run(self) -> None:
-        """Run setup tasks."""
+        """Execute setup tasks in sequence.
+
+        Iterates through all registered tasks, emits progress signals, and
+        handles any errors that occur during installation.
+
+        Returns:
+            None
+        """
         total_tasks = len(self.tasks)
 
         for i, task in enumerate(self.tasks):
@@ -79,7 +93,22 @@ class SetupWorker(QThread):
         self.finished.emit(self.success)
 
     def _install_package(self, package: str) -> None:
-        """Install a Python package."""
+        """Install a Python package via pip.
+
+        Executes pip install command for the specified package(s) and logs
+        any errors that occur during installation.
+
+        Args:
+            package: Package name or space-separated list of package names
+                to install.
+
+        Returns:
+            None
+
+        Raises:
+            Exception: Any exception during subprocess execution is caught
+                and logged without propagation.
+        """
         try:
             cmd = [sys.executable, "-m", "pip", "install", *package.split()]
             result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
@@ -95,14 +124,33 @@ class FirstRunSetupDialog(QDialog):
     """Dialog for first-run setup."""
 
     def __init__(self, missing_components: dict[str, bool], parent: QWidget | None = None) -> None:
-        """Initialize the FirstRunSetupDialog with default values."""
+        """Initialize the FirstRunSetupDialog.
+
+        Creates a dialog for configuring missing components on first run of
+        Intellicrack, allowing users to install or skip component setup.
+
+        Args:
+            missing_components: Dictionary mapping component names to boolean
+                flags indicating if they are missing.
+            parent: Parent widget for the dialog.
+
+        Returns:
+            None
+        """
         super().__init__(parent)
         self.missing_components = missing_components
         self.setup_complete = False
         self.init_ui()
 
     def init_ui(self) -> None:
-        """Initialize the UI."""
+        """Initialize the user interface.
+
+        Constructs the dialog layout with title, description, component
+        selection checkboxes, progress indicators, and action buttons.
+
+        Returns:
+            None
+        """
         self.setWindowTitle("First Run Setup - Intellicrack")
         self.setMinimumWidth(600)
         self.setMinimumHeight(400)
@@ -179,7 +227,15 @@ class FirstRunSetupDialog(QDialog):
         self.setLayout(layout)
 
     def start_setup(self) -> None:
-        """Start the setup process."""
+        """Start the component installation process.
+
+        Gathers selected components from checkboxes, shows progress UI
+        elements, disables buttons, and launches the SetupWorker thread
+        to execute installations.
+
+        Returns:
+            None
+        """
         tasks = [task_id for task_id, checkbox in self.component_checks.items() if checkbox.isChecked()]
         if not tasks:
             self.accept()
@@ -202,12 +258,33 @@ class FirstRunSetupDialog(QDialog):
         self.worker.start()
 
     def update_status(self, status: str) -> None:
-        """Update status label."""
+        """Update status label and log output.
+
+        Displays the provided status message in the status label widget and
+        appends it to the log output text area for user visibility.
+
+        Args:
+            status: Status message to display.
+
+        Returns:
+            None
+        """
         self.status_label.setText(status)
         self.log_output.append(status)
 
     def setup_finished(self, success: bool) -> None:
-        """Handle setup completion."""
+        """Handle setup completion and update UI accordingly.
+
+        Updates the dialog UI based on setup success or failure, enabling
+        the setup button with appropriate text and enabling/disabling the
+        skip button based on outcome.
+
+        Args:
+            success: Flag indicating whether setup completed successfully.
+
+        Returns:
+            None
+        """
         self.setup_complete = True
 
         if success:

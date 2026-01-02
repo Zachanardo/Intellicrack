@@ -7,8 +7,9 @@ import os
 import sys
 import tempfile
 from datetime import datetime
+from typing import Any
 
-def create_test_binary_with_modern_protections():
+def create_test_binary_with_modern_protections() -> str:
     """Create a test binary to simulate modern protection analysis."""
     test_program = '''
 #include <stdio.h>
@@ -42,7 +43,7 @@ int main(int argc, char *argv[]) {
 class MockCETBypass:
     """Mock CET bypass module for testing."""
 
-    def get_available_bypass_techniques(self):
+    def get_available_bypass_techniques(self) -> list[str]:
         """Return mock bypass techniques."""
         return [
             "ret2csu_bypass",
@@ -55,7 +56,7 @@ class MockCETBypass:
 class MockCFIBypass:
     """Mock CFI bypass module for testing."""
 
-    def get_available_bypass_methods(self):
+    def get_available_bypass_methods(self) -> list[str]:
         """Return mock bypass methods."""
         return [
             "rop_chain_cfi_bypass",
@@ -64,11 +65,11 @@ class MockCFIBypass:
             "function_pointer_corruption"
         ]
 
-    def find_rop_gadgets(self):
+    def find_rop_gadgets(self) -> list[str]:
         """Mock ROP gadget finder."""
         return ["pop rdi; ret", "pop rsi; ret", "mov rax, [rdi]; ret"]
 
-    def find_jop_gadgets(self):
+    def find_jop_gadgets(self) -> list[str]:
         """Mock JOP gadget finder."""
         return ["jmp rax", "call qword ptr [rdi]", "jmp qword ptr [rsi+0x10]"]
 
@@ -76,14 +77,14 @@ class MockCFIBypass:
 class MockR2VulnerabilityEngine:
     """Mock radare2 vulnerability engine for testing."""
 
-    def __init__(self, binary_path):
+    def __init__(self, binary_path: str) -> None:
         self.binary_path = binary_path
 
         # Initialize CET/CFI bypass modules (this is what we're testing)
         self.cet_bypass = MockCETBypass()
         self.cfi_bypass = MockCFIBypass()
 
-    def _analyze_modern_protections(self, r2=None):
+    def _analyze_modern_protections(self, r2: Any = None) -> dict[str, Any]:
         """Analyze modern binary protections (CET, CFI, etc.)."""
         return {
             'cet_enabled': True,
@@ -94,7 +95,7 @@ class MockR2VulnerabilityEngine:
             'protection_level': 'high'
         }
 
-    def _analyze_cet_bypass_opportunities(self, r2=None, vuln_results=None):
+    def _analyze_cet_bypass_opportunities(self, r2: Any = None, vuln_results: Any = None) -> dict[str, Any]:
         """Analyze CET bypass opportunities using existing CET bypass module."""
         if not self.cet_bypass:
             return {}
@@ -107,7 +108,7 @@ class MockR2VulnerabilityEngine:
             'success_probability': 0.75
         }
 
-    def _analyze_cfi_bypass_opportunities(self, r2=None, vuln_results=None):
+    def _analyze_cfi_bypass_opportunities(self, r2: Any = None, vuln_results: Any = None) -> dict[str, Any]:
         """Analyze CFI bypass opportunities using existing CFI bypass module."""
         if not self.cfi_bypass:
             return {}
@@ -125,7 +126,7 @@ class MockR2VulnerabilityEngine:
             'success_probability': 0.60
         }
 
-    def analyze_vulnerabilities(self):
+    def analyze_vulnerabilities(self) -> dict[str, Any]:
         """Mock vulnerability analysis with modern protection fields."""
         return {
             'vulnerabilities': [
@@ -144,10 +145,10 @@ class MockR2VulnerabilityEngine:
 class TestCETCFIIntegration:
     """Test CET/CFI bypass integration with radare2 vulnerability detection."""
 
-    def __init__(self):
-        self.test_results = []
+    def __init__(self) -> None:
+        self.test_results: list[bool] = []
 
-    def test_cet_bypass_module_integration(self):
+    def test_cet_bypass_module_integration(self) -> bool:
         """Test CET bypass module is properly integrated."""
         print("Testing CET Bypass Module Integration:")
         print("=" * 40)
@@ -188,7 +189,7 @@ class TestCETCFIIntegration:
             self.test_results.append(False)
             return False
 
-    def test_cfi_bypass_module_integration(self):
+    def test_cfi_bypass_module_integration(self) -> bool:
         """Test CFI bypass module is properly integrated."""
         print("\nTesting CFI Bypass Module Integration:")
         print("=" * 40)
@@ -232,7 +233,7 @@ class TestCETCFIIntegration:
             self.test_results.append(False)
             return False
 
-    def test_modern_protection_analysis_methods(self):
+    def test_modern_protection_analysis_methods(self) -> bool:
         """Test modern protection analysis methods are available."""
         print("\nTesting Modern Protection Analysis Methods:")
         print("=" * 45)
@@ -268,7 +269,7 @@ class TestCETCFIIntegration:
             self.test_results.append(False)
             return False
 
-    def test_vulnerability_analysis_includes_modern_protections(self):
+    def test_vulnerability_analysis_includes_modern_protections(self) -> bool:
         """Test vulnerability analysis includes modern protection fields."""
         print("\nTesting Vulnerability Analysis Includes Modern Protections:")
         print("=" * 58)
@@ -308,7 +309,7 @@ class TestCETCFIIntegration:
             self.test_results.append(False)
             return False
 
-    def test_bypass_integration_workflow(self):
+    def test_bypass_integration_workflow(self) -> bool:
         """Test the complete bypass integration workflow."""
         print("\nTesting Complete Bypass Integration Workflow:")
         print("=" * 48)
@@ -349,7 +350,7 @@ class TestCETCFIIntegration:
             return False
 
 
-def main():
+def main() -> int:
     """Execute Day 6.1 CET/CFI bypass integration testing."""
     print("DAY 6.1 CET/CFI BYPASS INTEGRATION TESTING")
     print("=" * 50)

@@ -88,7 +88,6 @@ import shutil
 import subprocess
 import tempfile
 import types
-import xml.etree.ElementTree as ET  # noqa: S405
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -98,26 +97,60 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 
+from defusedxml import ElementTree as ET
+
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class PinConfig:
-    """Certificate pin configuration."""
+    """Certificate pin configuration for a single pin.
+
+    Represents a single certificate pin extracted from an Android
+    application's pinning configuration, including the hash algorithm,
+    the hash value, and the source where it was detected.
+
+    Attributes:
+        digest_algorithm: Hash algorithm used (e.g., "SHA-256", "SHA-1").
+        hash_value: The hash value of the certificate's public key in
+            Base64 format.
+        source: Source where the pin was detected (e.g.,
+            "network_security_config", "base_config", "okhttp").
+    """
 
     digest_algorithm: str
     hash_value: str
     source: str
 
     def __hash__(self) -> int:
-        """Hash for set/dict storage."""
+        """Generate hash value for set and dict storage.
+
+        Returns:
+            Numeric hash based on configuration attributes.
+        """
         return hash((self.digest_algorithm, self.hash_value, self.source))
 
 
 @dataclass
 class DomainConfig:
-    """Domain-specific pinning configuration."""
+    """Domain-specific pinning configuration for certificate validation.
+
+    Represents the certificate pinning configuration that applies to
+    specific domains or a wildcard ("*") for base configuration. Contains
+    domain names, their associated pins, and expiration information.
+
+    Attributes:
+        domains: List of domain names (e.g., ["example.com"]) or ["*"]
+            for base/wildcard configuration.
+        pins: List of PinConfig objects representing certificate pins
+            that are valid for these domains.
+        include_subdomains: Whether subdomains should be included in
+            the domain matching (default False).
+        expiration: Optional expiration date for the pin configuration
+            as an ISO date string (e.g., "2026-01-01"), or None if
+            no expiration is set.
+    """
 
     domains: list[str]
     pins: list[PinConfig]
@@ -125,13 +158,30 @@ class DomainConfig:
     expiration: str | None = None
 
     def __hash__(self) -> int:
-        """Hash for set/dict storage."""
+        """Generate hash value for set and dict storage.
+
+        Returns:
+            Numeric hash based on domain configuration attributes.
+        """
         return hash((tuple(self.domains), tuple(self.pins), self.include_subdomains))
 
 
 @dataclass
 class NetworkSecurityConfig:
-    """Android Network Security Configuration representation."""
+    """Android Network Security Configuration representation.
+
+    Represents the complete network security configuration parsed from
+    an APK's network_security_config.xml file, including domain-specific
+    settings, base configuration, and debug overrides.
+
+    Attributes:
+        domain_configs: List of DomainConfig objects for domain-specific
+            pinning configurations.
+        base_config: Base configuration that applies when no
+            domain-specific configuration matches, or None if not defined.
+        debug_overrides: Debug-specific configuration that may bypass
+            pinning in debug builds, or None if not defined.
+    """
 
     domain_configs: list[DomainConfig] = field(default_factory=list)
     base_config: DomainConfig | None = None
@@ -139,7 +189,11 @@ class NetworkSecurityConfig:
 
     @property
     def has_pinning(self) -> bool:
-        """Check if any pinning is configured."""
+        """Check if any pinning is configured.
+
+        Returns:
+            True if any pinning configuration exists, False otherwise.
+        """
         if self.base_config and self.base_config.pins:
             return True
         return any(dc.pins for dc in self.domain_configs)
@@ -147,7 +201,25 @@ class NetworkSecurityConfig:
 
 @dataclass
 class PinningInfo:
-    """General certificate pinning information."""
+    """General certificate pinning information detected in application.
+
+    Represents a detected certificate pin or pinning configuration from
+    various sources in the APK including network security config, OkHttp
+    code, hardcoded certificates, or Base64-encoded certificates.
+
+    Attributes:
+        location: File path or location in code where pin was detected
+            (relative to APK or decompiled directory).
+        pin_type: Type of pinning detected ("okhttp", "hardcoded_cert",
+            "base64_cert", "network_security_config", etc.).
+        domains: List of domain names that this pin applies to.
+        hashes: List of certificate hash values (typically SHA-256)
+            as strings (e.g., "sha256/AAAA...").
+        confidence: Confidence score (0.0 to 1.0) indicating how
+            confident the detection is.
+        additional_info: Dictionary of additional detection metadata
+            (e.g., class name, detection method, file type, format).
+    """
 
     location: str
     pin_type: str
@@ -157,7 +229,11 @@ class PinningInfo:
     additional_info: dict[str, str] = field(default_factory=dict)
 
     def __hash__(self) -> int:
-        """Hash for set/dict storage."""
+        """Generate hash value for set and dict storage.
+
+        Returns:
+            Numeric hash based on pinning information attributes.
+        """
         return hash((self.location, self.pin_type, tuple(self.domains), tuple(self.hashes)))
 
 
@@ -172,7 +248,12 @@ class APKAnalyzer:
     """
 
     def __init__(self) -> None:
-        """Initialize APK analyzer."""
+        """Initialize APK analyzer with empty state.
+
+        Sets up instance variables for managing APK extraction and
+        decompilation paths. All paths start as None and are populated
+        as the analyzer processes the APK.
+        """
         self.temp_dir: Path | None = None
         self.apk_path: Path | None = None
         self.extracted_path: Path | None = None
@@ -181,16 +262,23 @@ class APKAnalyzer:
     def extract_apk(self, apk_path: str) -> str:
         """Extract APK file to temporary directory.
 
+        Extracts the APK (which is a ZIP archive) to a temporary
+        directory and stores paths for later analysis. Validates that
+        the file exists and is a valid ZIP archive before extraction.
+        Creates temporary directories with intellicrack_apk_ prefix.
+
         Args:
-            apk_path: Path to APK file
+            apk_path: Path to APK file to extract.
 
         Returns:
-            Path to extracted directory
+            Path to extracted directory containing APK contents as a
+            string.
 
         Raises:
-            FileNotFoundError: If APK file doesn't exist
-            zipfile.BadZipFile: If APK is corrupted
-
+            FileNotFoundError: If APK file at apk_path doesn't exist.
+            BadZipFile: If APK is not a valid ZIP file.
+            RuntimeError: If extraction fails for any reason. Cleanup
+                is automatically performed before raising exception.
         """
         self.apk_path = Path(apk_path)
 
@@ -217,14 +305,34 @@ class APKAnalyzer:
         return str(self.extracted_path)
 
     def parse_network_security_config(self, apk_path: str | None = None) -> NetworkSecurityConfig:
-        """Parse Android Network Security Configuration.
+        """Parse Android Network Security Configuration from APK.
+
+        Extracts and parses the network_security_config.xml file from
+        an Android APK to identify certificate pinning configurations,
+        domain-specific settings, base configurations, and debug
+        overrides that define how the application validates server
+        certificates.
 
         Args:
-            apk_path: Path to APK file (if not already extracted)
+            apk_path: Path to APK file to analyze. If provided and APK
+                is not already extracted, it will be extracted first.
+                If None, uses previously extracted APK path.
 
         Returns:
-            NetworkSecurityConfig object with parsed configuration
+            NetworkSecurityConfig object containing all parsed
+            configurations including domain-specific pins, base config,
+            and debug overrides. Returns empty NetworkSecurityConfig
+            if network_security_config.xml is not found or cannot be
+            parsed.
 
+        Raises:
+            RuntimeError: If APK has not been extracted and no apk_path
+                is provided.
+
+        Notes:
+            Returns empty NetworkSecurityConfig rather than raising if
+            XML file is missing or malformed, allowing analysis to
+            continue with other detection methods.
         """
         if apk_path and not self.extracted_path:
             self.extract_apk(apk_path)
@@ -239,10 +347,7 @@ class APKAnalyzer:
             return NetworkSecurityConfig()
 
         try:
-            # S314: XML parsing is safe here - we're analyzing APK files for security research
-            # The XML comes from static APK extraction, not live user input
-            # Any XML attack would only affect the offline analysis process
-            tree = ET.parse(nsc_path)  # noqa: S314
+            tree = ET.parse(nsc_path)
             root = tree.getroot()
 
             config = NetworkSecurityConfig()
@@ -267,7 +372,21 @@ class APKAnalyzer:
             return NetworkSecurityConfig()
 
     def _parse_domain_config(self, elem: ET.Element) -> DomainConfig | None:
-        """Parse domain-config XML element."""
+        """Parse domain-config XML element.
+
+        Extracts domain names, pinning configuration, subdomain inclusion
+        settings, and expiration dates from an Android network security
+        configuration domain-config element.
+
+        Args:
+            elem: XML element containing domain configuration from
+                network_security_config.xml.
+
+        Returns:
+            Parsed DomainConfig object containing domains, pins, and
+            configuration settings, or None if no domains are found in
+            the element.
+        """
         domains = [domain_elem.text.strip() for domain_elem in elem.findall("domain") if domain_elem.text]
         if not domains:
             return None
@@ -299,7 +418,21 @@ class APKAnalyzer:
         return DomainConfig(domains=domains, pins=[], include_subdomains=include_subdomains)
 
     def _parse_base_config(self, elem: ET.Element) -> DomainConfig | None:
-        """Parse base-config or debug-overrides element."""
+        """Parse base-config or debug-overrides element.
+
+        Extracts pinning configuration from base-config or
+        debug-overrides elements that apply globally to all domains
+        when no domain-specific configuration matches.
+
+        Args:
+            elem: XML element containing base or debug override
+                configuration from network_security_config.xml.
+
+        Returns:
+            Parsed DomainConfig object with domains set to ["*"] and
+            include_subdomains=True if pins are found, or None if
+            no pin-set element is present.
+        """
         pins = []
         pin_set = elem.find("pin-set")
         if pin_set is not None:
@@ -314,14 +447,25 @@ class APKAnalyzer:
         return None
 
     def detect_okhttp_pinning(self, apk_path: str | None = None) -> list[PinningInfo]:
-        """Detect OkHttp CertificatePinner usage.
+        """Detect OkHttp CertificatePinner usage in decompiled APK code.
+
+        Searches decompiled smali code for OkHttp CertificatePinner
+        builder patterns and extracts domain-to-certificate-hash
+        mappings. Uses regex patterns to identify both direct builder
+        calls and const-string encoded pinning configurations.
 
         Args:
-            apk_path: Path to APK file
+            apk_path: Path to APK file to analyze. If provided and APK
+                is not already extracted, it will be extracted first.
+                If None, uses previously extracted APK path.
 
         Returns:
-            List of detected OkHttp pinning configurations
+            List of PinningInfo objects containing detected OkHttp
+            pinning configurations with domain names, certificate hashes,
+            location in code, and confidence scores.
 
+        Raises:
+            RuntimeError: If APK cannot be extracted and apk_path is None.
         """
         if apk_path and not self.extracted_path:
             self.extract_apk(apk_path)
@@ -387,14 +531,26 @@ class APKAnalyzer:
         return pinning_infos
 
     def find_hardcoded_certs(self, apk_path: str | None = None) -> list[PinningInfo]:
-        """Find hardcoded certificates in APK.
+        """Find hardcoded certificates in APK assets and resources.
+
+        Searches for certificate files (.pem, .crt, .der, .cer, .p12, .pfx)
+        in the assets/ and res/raw/ directories and extracts their public
+        key SHA-256 hashes. Also searches decompiled code for Base64-encoded
+        certificates.
 
         Args:
-            apk_path: Path to APK file
+            apk_path: Path to APK file to analyze. If provided and APK
+                is not already extracted, it will be extracted first.
+                If None, uses previously extracted APK path.
 
         Returns:
-            List of detected hardcoded certificates
+            List of PinningInfo objects containing detected hardcoded
+            certificates with their file locations, SHA-256 hashes,
+            subject information, and certificate subjects.
 
+        Raises:
+            RuntimeError: If APK has not been extracted and no apk_path
+                is provided.
         """
         if apk_path and not self.extracted_path:
             self.extract_apk(apk_path)
@@ -425,11 +581,19 @@ class APKAnalyzer:
         return pinning_infos
 
     def _decompile_apk(self) -> bool:
-        """Decompile APK using apktool.
+        """Decompile APK using apktool to access source code.
+
+        Uses the apktool command-line utility to decompile the extracted
+        APK into smali (Dalvik assembly) code and resources. Requires
+        apktool to be installed and available in PATH.
 
         Returns:
-            True if successful, False otherwise
+            True if decompilation succeeded and decompiled_path is set,
+            False if apktool is not available or decompilation fails.
 
+        Notes:
+            Sets self.decompiled_path to the decompiled output directory
+            on success. Has a 300-second timeout for decompilation.
         """
         if not self.temp_dir or not self.apk_path:
             return False
@@ -459,14 +623,27 @@ class APKAnalyzer:
             return False
 
     def _extract_certificate_info(self, cert_file: Path) -> PinningInfo | None:
-        """Extract information from certificate file.
+        """Extract pinning information from a certificate file.
+
+        Attempts to load a certificate file in PEM or DER format,
+        extracts the public key, computes its SHA-256 hash, and
+        retrieves associated domain names from the certificate's
+        Subject Alternative Name extension.
 
         Args:
-            cert_file: Path to certificate file
+            cert_file: Path to certificate file to analyze. Can be
+                in PEM, DER, or other supported X.509 formats.
 
         Returns:
-            PinningInfo if valid certificate, None otherwise
+            PinningInfo object containing the certificate's SHA-256
+            hash, location, associated domains, and subject information,
+            or None if the file cannot be parsed as a valid X.509
+            certificate.
 
+        Notes:
+            Tries PEM format first, then falls back to DER format.
+            Extracts SubjectAlternativeName (SAN) extension for domains
+            if available.
         """
         try:
             cert_data = cert_file.read_bytes()
@@ -513,11 +690,22 @@ class APKAnalyzer:
             return None
 
     def _find_base64_certs(self) -> list[PinningInfo]:
-        """Find Base64-encoded certificates in decompiled code.
+        """Find Base64-encoded certificates in decompiled smali code.
+
+        Searches through decompiled smali code for two types of Base64
+        certificate encoding patterns:
+        1. PEM format certificates wrapped in BEGIN/END markers
+        2. DER format certificates as const-string values
 
         Returns:
-            List of detected certificates
+            List of PinningInfo objects containing detected Base64-encoded
+            certificates with their SHA-256 hashes, source file locations,
+            and confidence scores based on detection method.
 
+        Notes:
+            Returns empty list if APK has not been decompiled yet. Marks
+            PEM-detected certificates with 0.90 confidence and DER-detected
+            with 0.85 confidence.
         """
         if not self.decompiled_path:
             return []
@@ -607,7 +795,16 @@ class APKAnalyzer:
         return pinning_infos
 
     def cleanup(self) -> None:
-        """Clean up temporary files."""
+        """Clean up temporary files and directories created during analysis.
+
+        Removes the entire temporary directory tree created for APK
+        extraction and decompilation, including all extracted files,
+        decompiled code, and intermediate artifacts.
+
+        Notes:
+            This method is safe to call multiple times. If cleanup
+            fails, a warning is logged but no exception is raised.
+        """
         if self.temp_dir and self.temp_dir.exists():
             try:
                 shutil.rmtree(self.temp_dir)
@@ -616,7 +813,14 @@ class APKAnalyzer:
                 logger.warning("Failed to clean up temp directory: %s", e)
 
     def __enter__(self) -> "APKAnalyzer":
-        """Context manager entry."""
+        """Enter context manager for APK analysis.
+
+        Enables APKAnalyzer to be used with the 'with' statement for
+        automatic resource cleanup via __exit__.
+
+        Returns:
+            The APKAnalyzer instance for use in the with block.
+        """
         return self
 
     def __exit__(
@@ -625,6 +829,23 @@ class APKAnalyzer:
         exc_val: BaseException | None,
         exc_tb: types.TracebackType | None,
     ) -> Literal[False]:
-        """Context manager exit."""
+        """Exit context manager and clean up resources.
+
+        Automatically cleans up temporary files and directories created
+        during APK analysis. This method is called when exiting a 'with'
+        block, ensuring proper resource cleanup even if exceptions occur.
+
+        Args:
+            exc_type: Exception type if an exception occurred in the
+                with block, or None if no exception occurred.
+            exc_val: Exception value (instance) if an exception occurred,
+                or None if no exception occurred.
+            exc_tb: Traceback object if an exception occurred, or None
+                if no exception occurred.
+
+        Returns:
+            False to propagate any exceptions that occurred in the
+            with block (do not suppress exceptions).
+        """
         self.cleanup()
         return False

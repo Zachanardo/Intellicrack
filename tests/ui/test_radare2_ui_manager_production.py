@@ -11,13 +11,31 @@ import json
 import os
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QApplication, QMainWindow, QTabWidget
 
 from intellicrack.ui.radare2_ui_manager import R2UIManager, create_r2_ui_manager, integrate_radare2_ui_comprehensive
+
+
+class FakeWorker:
+    """Real test double for QThread worker simulating analysis background thread."""
+
+    def __init__(self) -> None:
+        self._running: bool = True
+        self._terminate_called: bool = False
+
+    def isRunning(self) -> bool:
+        return self._running
+
+    def terminate(self) -> None:
+        self._terminate_called = True
+        self._running = False
+
+    def wait(self, timeout: int = 5000) -> bool:
+        self._running = False
+        return True
 
 
 @pytest.fixture
@@ -279,13 +297,12 @@ class TestR2UIManagerCleanup:
         if "r2_widget" in manager.ui_components:
             r2_widget = manager.ui_components["r2_widget"]
             if hasattr(r2_widget, "current_worker"):
-                mock_worker = MagicMock()
-                mock_worker.isRunning.return_value = True
-                r2_widget.current_worker = mock_worker
+                fake_worker = FakeWorker()
+                r2_widget.current_worker = fake_worker
 
                 manager.cleanup()
 
-                assert mock_worker.terminate.called or not hasattr(r2_widget, "current_worker")
+                assert fake_worker._terminate_called or not hasattr(r2_widget, "current_worker")
 
 
 class TestR2UIManagerFactoryFunctions:

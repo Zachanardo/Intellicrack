@@ -1,5 +1,18 @@
 """GPU-accelerated binary analysis functions.
 
+This module provides GPU-accelerated implementations of common binary analysis
+operations including pattern search and entropy calculation. It supports multiple
+GPU frameworks with automatic detection and selection:
+
+- PyTorch XPU: Intel GPU support via OneAPI
+- CuPy: NVIDIA GPU via CUDA
+- Numba CUDA: NVIDIA GPU via Numba JIT compilation
+- PyCUDA: NVIDIA GPU via native CUDA interface
+
+The module automatically detects available frameworks and selects the best one,
+with automatic fallback to CPU if no GPU is available. All GPU operations include
+proper memory management and error handling.
+
 Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
@@ -26,16 +39,16 @@ from typing import Any
 from intellicrack.handlers.numpy_handler import numpy as np
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
-XPU_DEVICE = "xpu:0"
+XPU_DEVICE: str = "xpu:0"
 
 # GPU framework availability flags
-PYCUDA_AVAILABLE = False
-CUPY_AVAILABLE = False
-NUMBA_CUDA_AVAILABLE = False
-XPU_AVAILABLE = False
-PYTORCH_AVAILABLE = False
+PYCUDA_AVAILABLE: bool = False
+CUPY_AVAILABLE: bool = False
+NUMBA_CUDA_AVAILABLE: bool = False
+XPU_AVAILABLE: bool = False
+PYTORCH_AVAILABLE: bool = False
 
 # Declare optional dependency variables at module level
 torch: Any = None
@@ -47,13 +60,13 @@ numba: Any = None
 numba_cuda: Any = None
 
 # Check if CUDA is disabled via environment
-CUDA_DISABLED = os.environ.get("CUDA_VISIBLE_DEVICES") == "-1"
-INTEL_GPU_PREFERRED = os.environ.get("INTELLICRACK_GPU_TYPE") == "intel"
+CUDA_DISABLED: bool = os.environ.get("CUDA_VISIBLE_DEVICES") == "-1"
+INTEL_GPU_PREFERRED: bool = os.environ.get("INTELLICRACK_GPU_TYPE") == "intel"
 
 # Try importing PyTorch with XPU support first if preferred
 if INTEL_GPU_PREFERRED or not CUDA_DISABLED:
     try:
-        import torch as _torch  # type: ignore[import-not-found,unused-ignore]
+        import torch as _torch
 
         torch = _torch
         PYTORCH_AVAILABLE = True
@@ -76,11 +89,11 @@ if INTEL_GPU_PREFERRED or not CUDA_DISABLED:
 # Try importing CUDA frameworks only if not disabled
 if not CUDA_DISABLED:
     try:
-        import pycuda.autoinit  # type: ignore[import-not-found,unused-ignore]
-        import pycuda.driver as _cuda  # type: ignore[import-not-found,unused-ignore]
+        import pycuda.autoinit
+        import pycuda.driver as _cuda
         from pycuda import (
-            compiler as _compiler,  # type: ignore[import-not-found,unused-ignore]
-            gpuarray as _gpuarray,  # type: ignore[import-not-found,unused-ignore]
+            compiler as _compiler,
+            gpuarray as _gpuarray,
         )
 
         cuda = _cuda
@@ -94,7 +107,7 @@ if not CUDA_DISABLED:
         logger.debug("PyCUDA initialization failed: %s", e)
 
     try:
-        import cupy as _cp  # type: ignore[import-not-found,unused-ignore]
+        import cupy as _cp
 
         cp = _cp
         CUPY_AVAILABLE = True
@@ -105,8 +118,8 @@ if not CUDA_DISABLED:
         logger.debug("CuPy initialization failed: %s", e)
 
     try:
-        import numba as _numba  # type: ignore[import-not-found,unused-ignore]
-        from numba import cuda as _numba_cuda  # type: ignore[import-not-found,unused-ignore]
+        import numba as _numba
+        from numba import cuda as _numba_cuda
 
         numba = _numba
         numba_cuda = _numba_cuda
@@ -121,16 +134,46 @@ else:
 
 
 class GPUAccelerator:
-    """GPU acceleration for binary analysis tasks."""
+    """GPU acceleration for binary analysis tasks.
+
+    Provides GPU-accelerated implementations of pattern search and entropy calculation
+    using multiple GPU frameworks (PyTorch XPU, CuPy, Numba CUDA, PyCUDA) with
+    automatic framework detection and CPU fallback.
+
+    Attributes:
+        framework (str): Name of the selected GPU framework ('xpu', 'cupy', 'numba',
+            'pycuda', or 'cpu').
+        device_info (dict[str, Any]): Information about the selected GPU device.
+
+    """
 
     def __init__(self) -> None:
-        """Initialize GPU accelerator."""
-        self.framework = self._detect_best_framework()
-        self.device_info = self._get_device_info()
+        """Initialize GPU accelerator.
+
+        Detects the best available GPU framework and initializes device information.
+        Supports PyTorch XPU, CuPy, Numba CUDA, and PyCUDA backends with automatic
+        fallback to CPU when no GPU is available.
+
+        Returns:
+            None
+
+        """
+        self.framework: str = self._detect_best_framework()
+        self.device_info: dict[str, Any] = self._get_device_info()
         logger.info("GPU Accelerator initialized with %s", self.framework)
 
     def _detect_best_framework(self) -> str:
-        """Detect the best available GPU framework."""
+        """Detect the best available GPU framework.
+
+        Prioritizes Intel GPU (XPU) if preferred or only available, then checks for
+        CUDA frameworks in order: CuPy, Numba CUDA, PyCUDA. Falls back to CPU if no
+        GPU frameworks are available.
+
+        Returns:
+            str: Name of the best available GPU framework ('xpu', 'cupy', 'numba',
+                'pycuda', or 'cpu').
+
+        """
         # Prioritize Intel GPU if preferred or only option available
         if INTEL_GPU_PREFERRED and XPU_AVAILABLE:
             return "xpu"
@@ -149,7 +192,17 @@ class GPUAccelerator:
         return "xpu" if XPU_AVAILABLE else "cpu"
 
     def _get_device_info(self) -> dict[str, Any]:
-        """Get GPU device information."""
+        """Get GPU device information.
+
+        Retrieves device information from the currently selected GPU framework,
+        including device name, compute capability, memory statistics, and other
+        hardware-specific attributes.
+
+        Returns:
+            dict[str, Any]: Dictionary containing GPU device information with
+                framework-specific keys and values. Empty dict if no GPU available.
+
+        """
         if self.framework == "xpu" and XPU_AVAILABLE:
             return self._get_xpu_device_info()
         if self.framework == "cupy" and CUPY_AVAILABLE:
@@ -161,6 +214,20 @@ class GPUAccelerator:
         return {}
 
     def _get_xpu_device_info(self) -> dict[str, Any]:
+        """Get Intel XPU device information.
+
+        Retrieves detailed information about Intel XPU devices including device name,
+        device count, driver version, and current memory allocation/reservation stats.
+
+        Returns:
+            dict[str, Any]: Dictionary with keys: 'name' (str), 'device_type' (str),
+                'device_count' (int), 'driver_version' (str), 'memory_allocated' (int),
+                'memory_reserved' (int). Empty dict if retrieval fails.
+
+        Raises:
+            Exception: Caught and logged if device info retrieval fails, returns empty dict.
+
+        """
         info = {}
         try:
             device_count = torch.xpu.device_count()
@@ -180,6 +247,20 @@ class GPUAccelerator:
         return info
 
     def _get_cupy_device_info(self) -> dict[str, Any]:
+        """Get CuPy device information.
+
+        Retrieves detailed information about NVIDIA GPU devices via CuPy including
+        device name, compute capability, total/free memory, and multiprocessor count.
+
+        Returns:
+            dict[str, Any]: Dictionary with keys: 'name' (str), 'compute_capability'
+                (tuple), 'memory_total' (int), 'memory_free' (int),
+                'multiprocessor_count' (int). Empty dict if retrieval fails.
+
+        Raises:
+            Exception: Caught and logged if device info retrieval fails, returns empty dict.
+
+        """
         info = {}
         try:
             device = cp.cuda.Device()
@@ -195,6 +276,20 @@ class GPUAccelerator:
         return info
 
     def _get_pycuda_device_info(self) -> dict[str, Any]:
+        """Get PyCUDA device information.
+
+        Retrieves detailed information about NVIDIA GPU devices via PyCUDA including
+        device name, compute capability, total memory, and multiprocessor count.
+
+        Returns:
+            dict[str, Any]: Dictionary with keys: 'name' (str), 'compute_capability'
+                (tuple), 'memory_total' (int), 'multiprocessor_count' (int).
+                Empty dict if retrieval fails.
+
+        Raises:
+            Exception: Caught and logged if device info retrieval fails, returns empty dict.
+
+        """
         info = {}
         try:
             device = cuda.Device(0)
@@ -210,6 +305,20 @@ class GPUAccelerator:
         return info
 
     def _get_numba_device_info(self) -> dict[str, Any]:
+        """Get Numba CUDA device information.
+
+        Retrieves detailed information about NVIDIA GPU devices via Numba CUDA including
+        device name, compute capability, total/free memory.
+
+        Returns:
+            dict[str, Any]: Dictionary with keys: 'name' (str), 'compute_capability'
+                (tuple), 'memory_total' (int), 'memory_free' (int).
+                Empty dict if retrieval fails.
+
+        Raises:
+            Exception: Caught and logged if device info retrieval fails, returns empty dict.
+
+        """
         info = {}
         try:
             device = numba_cuda.get_current_device()
@@ -226,12 +335,18 @@ class GPUAccelerator:
     def parallel_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
         """GPU-accelerated pattern search in binary data.
 
+        Searches for all occurrences of a byte pattern in binary data using the best
+        available GPU framework. Falls back to CPU if no GPU is available. Execution
+        time and framework used are included in results.
+
         Args:
-            data: Binary data to search in
-            pattern: Pattern to search for
+            data (bytes): Binary data to search in.
+            pattern (bytes): Byte pattern to search for.
 
         Returns:
-            Dictionary with match count and positions
+            dict[str, Any]: Dictionary with keys: 'match_count' (int), 'positions'
+                (list[int]), 'execution_time' (float), 'framework' (str), and
+                optionally 'matches' (list) with matched data.
 
         """
         start_time = time.time()
@@ -252,7 +367,24 @@ class GPUAccelerator:
         return result
 
     def _xpu_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
-        """Native PyTorch XPU implementation of pattern search."""
+        """Native PyTorch XPU implementation of pattern search.
+
+        Uses Intel XPU for efficient pattern matching via sliding window approach
+        with tensor operations. Results are limited to first 1000 matches for
+        performance reasons.
+
+        Args:
+            data (bytes): Binary data to search in.
+            pattern (bytes): Byte pattern to search for.
+
+        Returns:
+            dict[str, Any]: Dictionary with keys: 'match_count' (int), 'positions'
+                (list[int]), 'matches' (list[dict]), 'method' (str).
+
+        Raises:
+            Exception: Caught and logged if XPU pattern search fails, falls back to CPU.
+
+        """
         try:
             # Clear XPU cache for optimal performance
             torch.xpu.empty_cache()
@@ -314,7 +446,23 @@ class GPUAccelerator:
             return self._cpu_pattern_search(data, pattern)
 
     def _cupy_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
-        """CuPy implementation of pattern search."""
+        """CuPy implementation of pattern search.
+
+        Uses NVIDIA GPU via CuPy with custom CUDA kernel for parallel pattern matching.
+        Results are limited to first 1000 matches for performance reasons.
+
+        Args:
+            data (bytes): Binary data to search in.
+            pattern (bytes): Byte pattern to search for.
+
+        Returns:
+            dict[str, Any]: Dictionary with keys: 'match_count' (int), 'positions'
+                (list[int]), 'method' (str).
+
+        Raises:
+            Exception: Caught and logged if CuPy pattern search fails, falls back to CPU.
+
+        """
         try:
             # Convert to GPU arrays
             data_gpu = cp.asarray(np.frombuffer(data, dtype=np.uint8))
@@ -376,7 +524,23 @@ class GPUAccelerator:
             return self._cpu_pattern_search(data, pattern)
 
     def _numba_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
-        """Numba CUDA implementation of pattern search."""
+        """Numba CUDA implementation of pattern search.
+
+        Uses Numba CUDA JIT compilation for GPU-accelerated pattern matching.
+        Results are limited to first 1000 matches for performance reasons.
+
+        Args:
+            data (bytes): Binary data to search in.
+            pattern (bytes): Byte pattern to search for.
+
+        Returns:
+            dict[str, Any]: Dictionary with keys: 'match_count' (int), 'positions'
+                (list[int]), 'method' (str).
+
+        Raises:
+            Exception: Caught and logged if Numba pattern search fails, falls back to CPU.
+
+        """
         try:
             data_np = np.frombuffer(data, dtype=np.uint8)
             pattern_np = np.frombuffer(pattern, dtype=np.uint8)
@@ -418,21 +582,43 @@ class GPUAccelerator:
     def _create_pattern_match_kernel(self) -> Any:
         """Create Numba CUDA pattern matching kernel.
 
+        Compiles and returns a Numba CUDA kernel function that performs parallel
+        pattern matching on GPU arrays. Uses atomic operations for match counting.
+
         Returns:
-            Numba CUDA compiled function for pattern matching.
+            Any: Compiled Numba CUDA kernel function with signature (data, pattern,
+                matches, positions) -> None.
+
+        Raises:
+            RuntimeError: If Numba CUDA is not available or not properly initialized.
 
         """
         if not NUMBA_CUDA_AVAILABLE or numba_cuda is None:
             raise RuntimeError("Numba CUDA not available")
 
-        @numba_cuda.jit  # type: ignore[misc,attr-defined,unused-ignore,untyped-decorator]
+        @numba_cuda.jit
         def pattern_match_kernel(
             data: Any,
             pattern: Any,
             matches: Any,
             positions: Any,
         ) -> None:
-            idx = numba_cuda.grid(1)  # type: ignore[attr-defined,unused-ignore]
+            """Numba CUDA kernel for parallel pattern matching.
+
+            Performs byte-by-byte pattern comparison in parallel across GPU threads.
+            Updates match count and stores matching positions using atomic operations.
+
+            Args:
+                data: GPU array of bytes to search.
+                pattern: GPU array of pattern bytes to match.
+                matches: GPU array storing total match count (length 1).
+                positions: GPU array storing matched positions (length 1000).
+
+            Returns:
+                None
+
+            """
+            idx = numba_cuda.grid(1)
             if idx <= len(data) - len(pattern):
                 match = True
                 for i in range(len(pattern)):
@@ -441,14 +627,30 @@ class GPUAccelerator:
                         break
 
                 if match:
-                    match_idx = numba_cuda.atomic.add(matches, 0, 1)  # type: ignore[attr-defined,unused-ignore]
+                    match_idx = numba_cuda.atomic.add(matches, 0, 1)
                     if match_idx < len(positions):
                         positions[match_idx] = idx
 
         return pattern_match_kernel
 
     def _pycuda_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
-        """PyCUDA implementation of pattern search."""
+        """PyCUDA implementation of pattern search.
+
+        Uses PyCUDA with compiled CUDA kernel for GPU-accelerated pattern matching.
+        Results are limited to first 1000 matches for performance reasons.
+
+        Args:
+            data (bytes): Binary data to search in.
+            pattern (bytes): Byte pattern to search for.
+
+        Returns:
+            dict[str, Any]: Dictionary with keys: 'match_count' (int), 'positions'
+                (list[int]), 'method' (str).
+
+        Raises:
+            Exception: Caught and logged if PyCUDA pattern search fails, falls back to CPU.
+
+        """
         try:
             # Convert to numpy arrays
             data_np = np.frombuffer(data, dtype=np.uint8)
@@ -518,7 +720,20 @@ class GPUAccelerator:
             return self._cpu_pattern_search(data, pattern)
 
     def _cpu_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
-        """CPU fallback for pattern search."""
+        """CPU fallback for pattern search.
+
+        Performs pattern matching on CPU using native Python string search method.
+        Results are limited to first 1000 matches for performance and memory reasons.
+
+        Args:
+            data (bytes): Binary data to search in.
+            pattern (bytes): Byte pattern to search for.
+
+        Returns:
+            dict[str, Any]: Dictionary with keys: 'match_count' (int), 'positions'
+                (list[int]), 'method' (str).
+
+        """
         positions = []
         start = 0
         while True:
@@ -539,12 +754,19 @@ class GPUAccelerator:
     def entropy_calculation(self, data: bytes, block_size: int = 1024) -> dict[str, Any]:
         """GPU-accelerated entropy calculation.
 
+        Calculates Shannon entropy for fixed-size blocks of binary data using the best
+        available GPU framework. Returns per-block entropies as well as aggregate
+        statistics (average, min, max).
+
         Args:
-            data: Binary data to analyze
-            block_size: Size of blocks for entropy calculation
+            data (bytes): Binary data to analyze.
+            block_size (int): Size of blocks for entropy calculation in bytes.
+                Defaults to 1024.
 
         Returns:
-            Dictionary with entropy values
+            dict[str, Any]: Dictionary with keys: 'block_entropies' (list[float]),
+                'average_entropy' (float), 'max_entropy' (float), 'min_entropy' (float),
+                'execution_time' (float), 'framework' (str).
 
         """
         start_time = time.time()
@@ -563,7 +785,24 @@ class GPUAccelerator:
         return result
 
     def _xpu_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
-        """Native PyTorch XPU implementation of entropy calculation."""
+        """Native PyTorch XPU implementation of entropy calculation.
+
+        Calculates Shannon entropy for each block using Intel XPU acceleration via
+        PyTorch bincount and tensor operations for histogram generation.
+
+        Args:
+            data (bytes): Binary data to analyze.
+            block_size (int): Size of blocks for entropy calculation in bytes.
+
+        Returns:
+            dict[str, Any]: Dictionary with keys: 'block_entropies' (list[float]),
+                'average_entropy' (float), 'max_entropy' (float), 'min_entropy' (float),
+                'method' (str).
+
+        Raises:
+            Exception: Caught and logged if XPU entropy calculation fails, falls back to CPU.
+
+        """
         try:
             data_np = np.frombuffer(data, dtype=np.uint8)
             num_blocks = len(data_np) // block_size
@@ -607,7 +846,24 @@ class GPUAccelerator:
             return self._cpu_entropy(data, block_size)
 
     def _cupy_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
-        """CuPy implementation of entropy calculation."""
+        """CuPy implementation of entropy calculation.
+
+        Calculates Shannon entropy for each block using CuPy GPU acceleration via
+        bincount and log operations for histogram generation and entropy computation.
+
+        Args:
+            data (bytes): Binary data to analyze.
+            block_size (int): Size of blocks for entropy calculation in bytes.
+
+        Returns:
+            dict[str, Any]: Dictionary with keys: 'block_entropies' (list[float]),
+                'average_entropy' (float), 'max_entropy' (float), 'min_entropy' (float),
+                'method' (str).
+
+        Raises:
+            Exception: Caught and logged if CuPy entropy calculation fails, falls back to CPU.
+
+        """
         try:
             data_np = np.frombuffer(data, dtype=np.uint8)
             num_blocks = len(data_np) // block_size
@@ -639,7 +895,24 @@ class GPUAccelerator:
             return self._cpu_entropy(data, block_size)
 
     def _numba_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
-        """Numba CUDA implementation of entropy calculation."""
+        """Numba CUDA implementation of entropy calculation.
+
+        Calculates Shannon entropy for each block using Numba CUDA JIT-compiled kernels
+        that compute histograms and entropy values in parallel on GPU.
+
+        Args:
+            data (bytes): Binary data to analyze.
+            block_size (int): Size of blocks for entropy calculation in bytes.
+
+        Returns:
+            dict[str, Any]: Dictionary with keys: 'block_entropies' (list[float]),
+                'average_entropy' (float), 'max_entropy' (float), 'min_entropy' (float),
+                'method' (str).
+
+        Raises:
+            Exception: Caught and logged if Numba entropy calculation fails, falls back to CPU.
+
+        """
         try:
             kernel = self._create_entropy_kernel()
 
@@ -673,23 +946,44 @@ class GPUAccelerator:
     def _create_entropy_kernel(self) -> Any:
         """Create Numba CUDA entropy calculation kernel.
 
+        Compiles and returns a Numba CUDA kernel that calculates Shannon entropy for
+        data blocks using histogram computation and log-based entropy formula.
+
         Returns:
-            Numba CUDA compiled function for entropy calculation.
+            Any: Compiled Numba CUDA kernel function with signature
+                (data, block_size, entropies) -> None.
+
+        Raises:
+            RuntimeError: If Numba CUDA is not available or not properly initialized.
 
         """
         if not NUMBA_CUDA_AVAILABLE or numba_cuda is None or numba is None:
             raise RuntimeError("Numba CUDA not available")
 
-        @numba_cuda.jit  # type: ignore[misc,attr-defined,unused-ignore,untyped-decorator]
+        @numba_cuda.jit
         def entropy_kernel(
             data: Any,
             block_size: Any,
             entropies: Any,
         ) -> None:
-            block_idx = numba_cuda.grid(1)  # type: ignore[attr-defined,unused-ignore]
+            """Numba CUDA kernel for entropy calculation.
+
+            Computes Shannon entropy for a data block in parallel on GPU. Each thread
+            computes the entropy for one block using histogram computation.
+
+            Args:
+                data: GPU array of bytes to analyze.
+                block_size: Size of each block in bytes.
+                entropies: GPU array for storing computed entropy values.
+
+            Returns:
+                None
+
+            """
+            block_idx = numba_cuda.grid(1)
             if block_idx < len(entropies):
                 # Calculate histogram for this block
-                hist = numba_cuda.local.array(256, numba.float32)  # type: ignore[attr-defined,unused-ignore]
+                hist = numba_cuda.local.array(256, numba.float32)
                 for i in range(256):
                     hist[i] = 0
 
@@ -704,14 +998,28 @@ class GPUAccelerator:
                 for i in range(256):
                     if hist[i] > 0:
                         p = hist[i] / block_size
-                        entropy -= p * numba.cuda.libdevice.log2f(p)  # type: ignore[attr-defined,unused-ignore]
+                        entropy -= p * numba.cuda.libdevice.log2f(p)
 
                 entropies[block_idx] = entropy
 
         return entropy_kernel
 
     def _cpu_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
-        """CPU fallback for entropy calculation."""
+        """CPU fallback for entropy calculation.
+
+        Calculates Shannon entropy for each block using NumPy histogram and log
+        operations for entropy computation on CPU.
+
+        Args:
+            data (bytes): Binary data to analyze.
+            block_size (int): Size of blocks for entropy calculation in bytes.
+
+        Returns:
+            dict[str, Any]: Dictionary with keys: 'block_entropies' (list[float]),
+                'average_entropy' (float), 'max_entropy' (float), 'min_entropy' (float),
+                'method' (str).
+
+        """
         data_np = np.frombuffer(data, dtype=np.uint8)
         num_blocks = len(data_np) // block_size
         entropies = []
@@ -739,12 +1047,19 @@ class GPUAccelerator:
     def hash_computation(self, data: bytes, algorithms: list[str] | None = None) -> dict[str, Any]:
         """GPU-accelerated hash computation.
 
+        Computes cryptographic hashes for binary data using supported algorithms.
+        Currently supports CRC32 and Adler32, with GPU acceleration for CRC32 when
+        CuPy is available.
+
         Args:
-            data: Binary data to hash
-            algorithms: List of hash algorithms to compute
+            data (bytes): Binary data to hash.
+            algorithms (list[str] | None): List of hash algorithms to compute.
+                Supported values: 'crc32', 'adler32'. Defaults to ['crc32', 'adler32'].
 
         Returns:
-            Dictionary with hash values
+            dict[str, Any]: Dictionary with keys: 'hashes' (dict[str, str]),
+                'execution_time' (float), 'framework' (str). Hash values are
+                hexadecimal strings.
 
         """
         if algorithms is None:
@@ -771,7 +1086,21 @@ class GPUAccelerator:
         }
 
     def _cupy_crc32(self, data: bytes) -> str:
-        """CuPy implementation of CRC32."""
+        """CuPy implementation of CRC32.
+
+        Computes CRC32 checksum using CuPy with GPU acceleration. Falls back to
+        zlib CPU implementation if CuPy computation fails.
+
+        Args:
+            data (bytes): Binary data to hash.
+
+        Returns:
+            str: Hexadecimal string representation of the CRC32 hash (8 characters).
+
+        Raises:
+            Exception: Caught and logged if CuPy CRC32 calculation fails, falls back to zlib.
+
+        """
         try:
             # Simple CRC32 implementation for demonstration
             data_gpu = cp.asarray(np.frombuffer(data, dtype=np.uint8))
@@ -806,11 +1135,19 @@ class GPUAccelerator:
 
 
 # Global accelerator instance
-gpu_accelerator = None
+gpu_accelerator: GPUAccelerator | None = None
 
 
 def get_gpu_accelerator() -> GPUAccelerator:
-    """Get or create GPU accelerator instance."""
+    """Get or create GPU accelerator instance.
+
+    Returns a singleton GPUAccelerator instance, creating one on first call.
+    Subsequent calls return the cached instance.
+
+    Returns:
+        GPUAccelerator: The global GPU accelerator instance.
+
+    """
     global gpu_accelerator
     if gpu_accelerator is None:
         gpu_accelerator = GPUAccelerator()

@@ -488,20 +488,32 @@ class TestScriptExecutionErrors:
         assert len(result.errors) > 0
 
 
+class FakeFridaSession:
+    """Real test double for Frida session."""
+
+    def __init__(self) -> None:
+        self.detach_called: bool = False
+        self.detach_count: int = 0
+
+    def detach(self) -> None:
+        """Simulate session detachment."""
+        self.detach_called = True
+        self.detach_count += 1
+
+
 class TestSessionManagement:
     """Test script session management."""
 
     def test_stop_script_session(self, manager: FridaScriptManager) -> None:
         """Script sessions can be stopped."""
-        from unittest.mock import MagicMock
-
-        mock_session = MagicMock()
+        fake_session = FakeFridaSession()
         session_id = "test_session"
-        manager.active_sessions[session_id] = mock_session
+        manager.active_sessions[session_id] = fake_session
 
         manager.stop_script(session_id)
 
-        mock_session.detach.assert_called_once()
+        assert fake_session.detach_called
+        assert fake_session.detach_count == 1
         assert session_id not in manager.active_sessions
 
 

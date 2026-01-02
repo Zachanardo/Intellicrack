@@ -16,8 +16,7 @@ Tests validate real file system operations including:
 import os
 import tempfile
 from pathlib import Path
-from typing import Any
-from unittest.mock import Mock, patch
+from typing import Any, Callable
 
 import pytest
 
@@ -30,6 +29,32 @@ from intellicrack.ai.ai_file_tools import (
     FileSearchTool,
     create_approval_dialog,
 )
+
+
+class FakeApprovalDialog:
+    """Real test double for approval dialog with call tracking."""
+
+    def __init__(self, approval_result: bool = True) -> None:
+        self.approval_result: bool = approval_result
+        self.call_count: int = 0
+        self.last_operation: str = ""
+        self.last_target: str = ""
+        self.last_purpose: str = ""
+
+    def __call__(
+        self, operation: str, target: str, purpose: str = ""
+    ) -> bool:
+        self.call_count += 1
+        self.last_operation = operation
+        self.last_target = target
+        self.last_purpose = purpose
+        return self.approval_result
+
+    def reset(self) -> None:
+        self.call_count = 0
+        self.last_operation = ""
+        self.last_target = ""
+        self.last_purpose = ""
 
 
 @pytest.fixture
@@ -109,17 +134,32 @@ def large_file_directory(temp_test_dir: Path) -> Path:
 
 
 @pytest.fixture
-def mock_approval() -> Any:
-    """Mock user approval to always approve."""
-    with patch("intellicrack.ai.ai_file_tools.create_approval_dialog", return_value=True):
-        yield
+def approval_always_approved(monkeypatch: pytest.MonkeyPatch) -> FakeApprovalDialog:
+    """Replace approval dialog with test double that always approves."""
+    fake_approval = FakeApprovalDialog(approval_result=True)
+    monkeypatch.setattr(
+        "intellicrack.ai.ai_file_tools.create_approval_dialog",
+        fake_approval
+    )
+    return fake_approval
+
+
+@pytest.fixture
+def approval_always_denied(monkeypatch: pytest.MonkeyPatch) -> FakeApprovalDialog:
+    """Replace approval dialog with test double that always denies."""
+    fake_approval = FakeApprovalDialog(approval_result=False)
+    monkeypatch.setattr(
+        "intellicrack.ai.ai_file_tools.create_approval_dialog",
+        fake_approval
+    )
+    return fake_approval
 
 
 class TestFileSearchTool:
     """Test file search functionality with real file system operations."""
 
     def test_search_finds_license_files_by_pattern(
-        self, license_file_structure: Path, mock_approval: Any
+        self, license_file_structure: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """File search finds license files matching patterns."""
         search_tool = FileSearchTool()
@@ -135,7 +175,7 @@ class TestFileSearchTool:
         assert any("license" in name for name in found_names)
 
     def test_search_respects_depth_limit(
-        self, nested_directory_structure: Path, mock_approval: Any
+        self, nested_directory_structure: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """File search respects maximum depth limit."""
         search_tool = FileSearchTool()
@@ -153,7 +193,7 @@ class TestFileSearchTool:
         assert not too_deep_found, "Search exceeded depth limit"
 
     def test_search_with_custom_patterns(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """File search uses custom patterns correctly."""
         (temp_test_dir / "custom.xyz").write_text("Custom file")
@@ -172,7 +212,7 @@ class TestFileSearchTool:
         assert "special_config.abc" in found_names
 
     def test_search_returns_file_metadata(
-        self, license_file_structure: Path, mock_approval: Any
+        self, license_file_structure: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """File search returns complete metadata for each file."""
         search_tool = FileSearchTool()
@@ -192,7 +232,7 @@ class TestFileSearchTool:
             assert Path(file_info["path"]).name == file_info["name"]
 
     def test_search_counts_directories_and_files(
-        self, license_file_structure: Path, mock_approval: Any
+        self, license_file_structure: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """File search accurately counts scanned directories and files."""
         search_tool = FileSearchTool()
@@ -204,7 +244,7 @@ class TestFileSearchTool:
         assert result["total_files_checked"] > 0
 
     def test_search_nonexistent_path_returns_error(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """File search with nonexistent path returns error."""
         search_tool = FileSearchTool()
@@ -216,7 +256,7 @@ class TestFileSearchTool:
         assert "does not exist" in result["message"].lower()
 
     def test_search_file_instead_of_directory_returns_error(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """File search with file path instead of directory returns error."""
         test_file = temp_test_dir / "test.txt"
@@ -230,7 +270,7 @@ class TestFileSearchTool:
         assert "not a directory" in result["message"].lower()
 
     def test_quick_license_scan_finds_priority_files(
-        self, license_file_structure: Path, mock_approval: Any
+        self, license_file_structure: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Quick license scan finds high-priority license files."""
         search_tool = FileSearchTool()
@@ -247,7 +287,7 @@ class TestFileSearchTool:
         )
 
     def test_search_case_insensitive_matching(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """File search uses case-insensitive pattern matching."""
         (temp_test_dir / "LICENSE.TXT").write_text("Uppercase license")
@@ -266,7 +306,7 @@ class TestFileReadTool:
     """Test file reading functionality with various file types and sizes."""
 
     def test_read_small_text_file(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Small text file is read correctly with UTF-8 encoding."""
         test_file = temp_test_dir / "small.txt"
@@ -283,7 +323,7 @@ class TestFileReadTool:
         assert result["size"] == len(content.encode("utf-8"))
 
     def test_read_large_file_within_limit(
-        self, large_file_directory: Path, mock_approval: Any
+        self, large_file_directory: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Large file within size limit is read successfully."""
         large_file = large_file_directory / "medium_5mb.txt"
@@ -296,7 +336,7 @@ class TestFileReadTool:
         assert result["size"] > 5 * 1024 * 1024
 
     def test_read_file_exceeding_size_limit_returns_error(
-        self, large_file_directory: Path, mock_approval: Any
+        self, large_file_directory: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """File exceeding size limit returns error."""
         large_file = large_file_directory / "large_15mb.txt"
@@ -308,7 +348,7 @@ class TestFileReadTool:
         assert "too large" in result["message"].lower()
 
     def test_read_binary_file(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Binary file is detected and handled correctly."""
         binary_file = temp_test_dir / "binary.dat"
@@ -324,7 +364,7 @@ class TestFileReadTool:
         assert "[Binary file" in result["content"]
 
     def test_read_file_with_latin1_encoding(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """File with Latin-1 encoding is read with fallback encoding."""
         test_file = temp_test_dir / "latin1.txt"
@@ -338,7 +378,7 @@ class TestFileReadTool:
         assert result["encoding"] in ["latin-1", "cp1252", "ascii"]
 
     def test_read_nonexistent_file_returns_error(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Reading nonexistent file returns error."""
         nonexistent = temp_test_dir / "nonexistent.txt"
@@ -369,7 +409,7 @@ class TestFileReadTool:
             read_tool.set_max_file_size(-1000)
 
     def test_read_multiple_files_batch_operation(
-        self, license_file_structure: Path, mock_approval: Any
+        self, license_file_structure: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Multiple files are read in batch operation."""
         files = [
@@ -387,7 +427,7 @@ class TestFileReadTool:
         assert result["total_size"] > 0
 
     def test_read_multiple_files_filters_invalid_paths(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Batch read filters out invalid paths."""
         valid_file = temp_test_dir / "valid.txt"
@@ -406,7 +446,7 @@ class TestFileReadTool:
         assert result["total_files"] == 1
 
     def test_read_multiple_files_respects_size_limit(
-        self, large_file_directory: Path, mock_approval: Any
+        self, large_file_directory: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Batch read respects per-file size limits."""
         files = [
@@ -432,7 +472,7 @@ class TestAIFileTools:
         assert tools.read_tool.max_file_size == custom_size
 
     def test_search_for_license_files_integration(
-        self, license_file_structure: Path, mock_approval: Any
+        self, license_file_structure: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Integrated search finds license files."""
         tools = AIFileTools()
@@ -443,7 +483,7 @@ class TestAIFileTools:
         assert len(result["files_found"]) > 0
 
     def test_read_file_integration(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Integrated file read works correctly."""
         test_file = temp_test_dir / "integration_test.txt"
@@ -457,7 +497,7 @@ class TestAIFileTools:
         assert result["content"] == content
 
     def test_read_multiple_files_integration(
-        self, license_file_structure: Path, mock_approval: Any
+        self, license_file_structure: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Integrated batch read works correctly."""
         files = [
@@ -472,7 +512,7 @@ class TestAIFileTools:
         assert len(result["files_read"]) == len(files)
 
     def test_analyze_program_directory_complete_workflow(
-        self, license_file_structure: Path, mock_approval: Any
+        self, license_file_structure: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Complete program directory analysis workflow."""
         program_path = license_file_structure / "MyApp.exe"
@@ -490,7 +530,7 @@ class TestAIFileTools:
         assert summary["program_name"] == "MyApp"
 
     def test_analyze_program_directory_reads_license_files(
-        self, license_file_structure: Path, mock_approval: Any
+        self, license_file_structure: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Program analysis reads license file contents."""
         program_path = license_file_structure / "MyApp.exe"
@@ -509,7 +549,7 @@ class TestPerformanceWithLargeDirectories:
     """Test performance with large directory structures."""
 
     def test_search_large_directory_tree_performance(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """File search completes in reasonable time with large directory tree."""
         import time
@@ -535,7 +575,7 @@ class TestPerformanceWithLargeDirectories:
         assert elapsed < 5.0, f"Search took too long: {elapsed:.2f}s"
 
     def test_read_many_small_files_performance(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Reading many small files completes in reasonable time."""
         import time
@@ -560,7 +600,7 @@ class TestMemoryEfficiency:
     """Test memory efficiency with large files."""
 
     def test_large_file_read_memory_efficiency(
-        self, large_file_directory: Path, mock_approval: Any
+        self, large_file_directory: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Large file read doesn't cause excessive memory usage."""
         import gc
@@ -579,7 +619,7 @@ class TestMemoryEfficiency:
         gc.collect()
 
     def test_batch_read_cleans_up_memory(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Batch file reading cleans up memory between files."""
         import gc
@@ -606,7 +646,7 @@ class TestErrorHandling:
     """Test comprehensive error handling."""
 
     def test_search_handles_permission_errors_gracefully(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """File search handles permission errors gracefully."""
         restricted_dir = temp_test_dir / "restricted"
@@ -620,7 +660,7 @@ class TestErrorHandling:
         assert result["status"] in ["success", "error"]
 
     def test_read_handles_file_corruption_gracefully(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """File read handles corrupted files gracefully."""
         corrupted_file = temp_test_dir / "corrupted.txt"
@@ -637,36 +677,38 @@ class TestApprovalMechanism:
     """Test user approval mechanism."""
 
     def test_search_denied_returns_denied_status(
-        self, temp_test_dir: Path
+        self, temp_test_dir: Path, approval_always_denied: FakeApprovalDialog
     ) -> None:
         """File search returns denied status when user denies."""
-        with patch("intellicrack.ai.ai_file_tools.create_approval_dialog", return_value=False):
-            search_tool = FileSearchTool()
-            result = search_tool.search_license_files(str(temp_test_dir))
+        search_tool = FileSearchTool()
+        result = search_tool.search_license_files(str(temp_test_dir))
 
-            assert result["status"] == "denied"
-            assert "denied" in result["message"].lower()
+        assert result["status"] == "denied"
+        assert "denied" in result["message"].lower()
+        assert approval_always_denied.call_count == 1
+        assert approval_always_denied.last_operation == "search_directory"
 
     def test_read_denied_returns_denied_status(
-        self, temp_test_dir: Path
+        self, temp_test_dir: Path, approval_always_denied: FakeApprovalDialog
     ) -> None:
         """File read returns denied status when user denies."""
         test_file = temp_test_dir / "test.txt"
         test_file.write_text("Test content")
 
-        with patch("intellicrack.ai.ai_file_tools.create_approval_dialog", return_value=False):
-            read_tool = FileReadTool()
-            result = read_tool.read_file_content(str(test_file))
+        read_tool = FileReadTool()
+        result = read_tool.read_file_content(str(test_file))
 
-            assert result["status"] == "denied"
-            assert "denied" in result["message"].lower()
+        assert result["status"] == "denied"
+        assert "denied" in result["message"].lower()
+        assert approval_always_denied.call_count == 1
+        assert approval_always_denied.last_operation == "read_file"
 
 
 class TestRealWorldScenarios:
     """Test real-world usage scenarios."""
 
     def test_analyze_realistic_application_structure(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Analyze realistic application directory structure."""
         app_dir = temp_test_dir / "RealApp"
@@ -691,7 +733,7 @@ class TestRealWorldScenarios:
         assert len(result["license_files_found"]) > 0
 
     def test_search_complex_license_patterns(
-        self, temp_test_dir: Path, mock_approval: Any
+        self, temp_test_dir: Path, approval_always_approved: FakeApprovalDialog
     ) -> None:
         """Search finds complex license file patterns."""
         (temp_test_dir / "app_license_v2.txt").write_text("License v2")

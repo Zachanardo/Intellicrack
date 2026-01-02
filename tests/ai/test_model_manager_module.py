@@ -25,7 +25,6 @@ import threading
 import time
 from pathlib import Path
 from typing import Any, Callable
-from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest
@@ -100,8 +99,9 @@ def sample_pytorch_model(temp_models_dir: Path) -> tuple[object, Path]:
                 self.fc2 = nn.Linear(5, 2)
 
             def forward(self, x: torch.Tensor) -> torch.Tensor:
-                x = torch.relu(self.fc1(x))
-                return self.fc2(x)
+                hidden: torch.Tensor = torch.relu(self.fc1(x))
+                output: torch.Tensor = self.fc2(hidden)
+                return output
 
         model = SimpleModel()
         model.eval()
@@ -117,20 +117,33 @@ def sample_pytorch_model(temp_models_dir: Path) -> tuple[object, Path]:
 def sample_tensorflow_model(temp_models_dir: Path) -> tuple[object, Path]:
     """Create real TensorFlow model and save to disk."""
     try:
-        from intellicrack.handlers.tensorflow_handler import tensorflow as tf
+        from intellicrack.handlers.tensorflow_handler import tf
 
-        keras = tf.keras
+        keras: object = getattr(tf, "keras", None)
+        if keras is None:
+            pytest.skip("TensorFlow keras module not available")
 
-        model = keras.Sequential(
-            [
-                keras.layers.Dense(5, activation="relu", input_shape=(10,)),
-                keras.layers.Dense(2, activation="softmax"),
-            ]
-        )
-        model.compile(optimizer="adam", loss="sparse_categorical_crossentropy")
+        sequential_cls: Callable[..., object] | None = getattr(keras, "Sequential", None)
+        layers_mod: object = getattr(keras, "layers", None)
+        if sequential_cls is None or layers_mod is None:
+            pytest.skip("TensorFlow keras.Sequential or layers not available")
+
+        dense_cls: Callable[..., object] | None = getattr(layers_mod, "Dense", None)
+        if dense_cls is None:
+            pytest.skip("TensorFlow keras.layers.Dense not available")
+
+        layer1: object = dense_cls(5, activation="relu", input_shape=(10,))
+        layer2: object = dense_cls(2, activation="softmax")
+        model: object = sequential_cls([layer1, layer2])
+
+        compile_method: Callable[..., None] | None = getattr(model, "compile", None)
+        if compile_method is not None:
+            compile_method(optimizer="adam", loss="sparse_categorical_crossentropy")
 
         model_path = temp_models_dir / "tf_model.h5"
-        model.save(model_path)
+        save_method: Callable[..., None] | None = getattr(model, "save", None)
+        if save_method is not None:
+            save_method(model_path)
         return model, model_path
     except ImportError:
         pytest.skip("TensorFlow not available")
@@ -208,7 +221,12 @@ class TestModelCache:
 
         assert retrieved is model
         assert retrieved["type"] == "test"
-        assert np.array_equal(retrieved["data"], model["data"])
+        model_data = model["data"]
+        retrieved_data = retrieved["data"]
+        assert np.array_equal(
+            model_data if isinstance(model_data, np.ndarray) else np.asarray(model_data),
+            retrieved_data if isinstance(retrieved_data, np.ndarray) else np.asarray(retrieved_data),
+        )
 
     def test_cache_eviction_removes_oldest_accessed(self) -> None:
         """Cache evicts least recently accessed model when full."""
@@ -943,19 +961,19 @@ class TestStandaloneFunctions:
         assert "models" in result
         assert "model_count" in result
 
-    def test_configure_ai_provider_saves_configuration(self, tmp_path: Path) -> None:
+    def test_configure_ai_provider_saves_configuration(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """configure_ai_provider saves provider configuration to disk."""
-        with patch("pathlib.Path.home", return_value=tmp_path):
-            result = configure_ai_provider(
-                "openai",
-                {"api_key": "test_key_1234567890", "model": "gpt-4"},
-            )
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+        result = configure_ai_provider(
+            "openai",
+            {"api_key": "test_key_1234567890", "model": "gpt-4"},
+        )
 
-            assert result["success"] is True
-            assert result["provider"] == "openai"
+        assert result["success"] is True
+        assert result["provider"] == "openai"
 
-            config_file = tmp_path / ".intellicrack" / "ai_provider_config.json"
-            assert config_file.exists()
+        config_file = tmp_path / ".intellicrack" / "ai_provider_config.json"
+        assert config_file.exists()
 
 
 class TestRealWorldScenarios:

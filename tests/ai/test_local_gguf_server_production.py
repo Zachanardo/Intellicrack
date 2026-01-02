@@ -9,12 +9,120 @@ import tempfile
 import threading
 import time
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, Mock, patch
+from typing import Any, Optional
 
 import pytest
 
 from intellicrack.ai.local_gguf_server import GGUFModelManager, LocalGGUFServer, create_gguf_server_with_intel_gpu
+
+
+class FakeLlamaModel:
+    """Real test double for llama-cpp-python Llama model."""
+
+    def __init__(
+        self,
+        model_path: str,
+        n_ctx: int = 2048,
+        n_gpu_layers: int = 0,
+        n_threads: Optional[int] = None,
+        verbose: bool = True,
+    ) -> None:
+        self.model_path: str = model_path
+        self.n_ctx: int = n_ctx
+        self.n_gpu_layers: int = n_gpu_layers
+        self.n_threads: Optional[int] = n_threads
+        self.verbose: bool = verbose
+        self.is_loaded: bool = True
+        self.call_count: int = 0
+
+    def __call__(
+        self,
+        prompt: str,
+        max_tokens: int = 256,
+        temperature: float = 0.7,
+        top_p: float = 0.95,
+        echo: bool = False,
+        stop: Optional[list[str]] = None,
+    ) -> dict[str, Any]:
+        """Generate completion for prompt."""
+        self.call_count += 1
+        return {
+            "id": f"cmpl-{self.call_count}",
+            "object": "text_completion",
+            "created": int(time.time()),
+            "model": self.model_path,
+            "choices": [
+                {
+                    "text": f"Generated response for: {prompt[:50]}",
+                    "index": 0,
+                    "logprobs": None,
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {
+                "prompt_tokens": len(prompt.split()),
+                "completion_tokens": 10,
+                "total_tokens": len(prompt.split()) + 10,
+            },
+        }
+
+    def create_chat_completion(
+        self,
+        messages: list[dict[str, str]],
+        temperature: float = 0.7,
+        top_p: float = 0.95,
+        max_tokens: int = 256,
+        stream: bool = False,
+    ) -> dict[str, Any]:
+        """Generate chat completion for messages."""
+        self.call_count += 1
+        last_message = messages[-1]["content"] if messages else "Hello"
+        return {
+            "id": f"chatcmpl-{self.call_count}",
+            "object": "chat.completion",
+            "created": int(time.time()),
+            "model": self.model_path,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": f"Response to: {last_message[:50]}",
+                    },
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {
+                "prompt_tokens": sum(len(m.get("content", "").split()) for m in messages),
+                "completion_tokens": 10,
+                "total_tokens": sum(len(m.get("content", "").split()) for m in messages) + 10,
+            },
+        }
+
+    def __del__(self) -> None:
+        """Cleanup on deletion."""
+        self.is_loaded = False
+
+
+class FakeLlamaModelWithError:
+    """Test double that simulates model loading errors."""
+
+    def __init__(
+        self,
+        model_path: str,
+        n_ctx: int = 2048,
+        n_gpu_layers: int = 0,
+        n_threads: Optional[int] = None,
+        verbose: bool = True,
+    ) -> None:
+        raise RuntimeError(f"Failed to load model: {model_path}")
+
+
+class FakeModelWithoutDel:
+    """Test double for model without __del__ method."""
+
+    def __init__(self) -> None:
+        self.is_loaded: bool = True
 
 
 @pytest.fixture
@@ -108,20 +216,26 @@ class TestLocalGGUFServer:
         not LocalGGUFServer().can_run(),
         reason="Flask or llama-cpp not available",
     )
-    def test_load_model_with_valid_file(self, mock_gguf_model_file: Path) -> None:
+    def test_load_model_with_valid_file(
+        self,
+        mock_gguf_model_file: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """load_model attempts to load valid GGUF file."""
         server = LocalGGUFServer()
 
-        with patch("intellicrack.ai.local_gguf_server.Llama") as mock_llama:
-            mock_llama.return_value = Mock()
-            if result := server.load_model(str(mock_gguf_model_file)):
-                assert server.model is not None
-                assert server.model_path == str(mock_gguf_model_file)
+        import intellicrack.ai.local_gguf_server as server_module
+
+        monkeypatch.setattr(server_module, "Llama", FakeLlamaModel)
+
+        if result := server.load_model(str(mock_gguf_model_file)):
+            assert server.model is not None
+            assert server.model_path == str(mock_gguf_model_file)
 
     def test_unload_model_clears_state(self) -> None:
         """unload_model clears model and path."""
         server = LocalGGUFServer()
-        server.model = Mock()
+        server.model = FakeModelWithoutDel()
         server.model_path = "test_path"
 
         server.unload_model()
@@ -381,38 +495,65 @@ class TestServerLifecycle:
 class TestModelLoadingOptions:
     """Tests for model loading parameter handling."""
 
-    def test_load_model_with_custom_context_length(self, mock_gguf_model_file: Path) -> None:
+    def test_load_model_with_custom_context_length(
+        self,
+        mock_gguf_model_file: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """load_model accepts custom context length."""
         server = LocalGGUFServer()
 
-        with patch("intellicrack.ai.local_gguf_server.Llama"):
-            server.load_model(str(mock_gguf_model_file), context_length=8192)
+        import intellicrack.ai.local_gguf_server as server_module
 
-    def test_load_model_with_gpu_layers(self, mock_gguf_model_file: Path) -> None:
+        monkeypatch.setattr(server_module, "Llama", FakeLlamaModel)
+
+        server.load_model(str(mock_gguf_model_file), context_length=8192)
+
+    def test_load_model_with_gpu_layers(
+        self,
+        mock_gguf_model_file: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """load_model accepts GPU layer configuration."""
         server = LocalGGUFServer()
 
-        with patch("intellicrack.ai.local_gguf_server.Llama"):
-            server.load_model(str(mock_gguf_model_file), gpu_layers=32)
+        import intellicrack.ai.local_gguf_server as server_module
 
-    def test_load_model_with_custom_threads(self, mock_gguf_model_file: Path) -> None:
+        monkeypatch.setattr(server_module, "Llama", FakeLlamaModel)
+
+        server.load_model(str(mock_gguf_model_file), gpu_layers=32)
+
+    def test_load_model_with_custom_threads(
+        self,
+        mock_gguf_model_file: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """load_model accepts custom thread count."""
         server = LocalGGUFServer()
 
-        with patch("intellicrack.ai.local_gguf_server.Llama"):
-            server.load_model(str(mock_gguf_model_file), threads=8)
+        import intellicrack.ai.local_gguf_server as server_module
 
-    def test_load_model_stores_configuration(self, mock_gguf_model_file: Path) -> None:
+        monkeypatch.setattr(server_module, "Llama", FakeLlamaModel)
+
+        server.load_model(str(mock_gguf_model_file), threads=8)
+
+    def test_load_model_stores_configuration(
+        self,
+        mock_gguf_model_file: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """load_model stores configuration in model_config."""
         server = LocalGGUFServer()
 
-        with patch("intellicrack.ai.local_gguf_server.Llama") as mock_llama:
-            mock_llama.return_value = Mock()
-            server.load_model(str(mock_gguf_model_file), context_length=4096, gpu_layers=16)
+        import intellicrack.ai.local_gguf_server as server_module
 
-            if server.model:
-                assert "model_path" in server.model_config
-                assert server.model_config["model_name"] == "test_model.gguf"
+        monkeypatch.setattr(server_module, "Llama", FakeLlamaModel)
+
+        server.load_model(str(mock_gguf_model_file), context_length=4096, gpu_layers=16)
+
+        if server.model:
+            assert "model_path" in server.model_config
+            assert server.model_config["model_name"] == "test_model.gguf"
 
 
 class TestErrorHandling:
@@ -432,8 +573,7 @@ class TestErrorHandling:
     def test_unload_model_handles_errors(self) -> None:
         """unload_model handles errors during unloading."""
         server = LocalGGUFServer()
-        server.model = Mock()
-        delattr(server.model, "__del__")
+        server.model = FakeModelWithoutDel()
 
         server.unload_model()
 
@@ -475,12 +615,18 @@ class TestConvenienceFunction:
         if server is not None:
             assert server.port == 9000
 
-    def test_create_server_returns_none_without_dependencies(self) -> None:
+    def test_create_server_returns_none_without_dependencies(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """create_gguf_server_with_intel_gpu returns None if dependencies missing."""
-        with patch("intellicrack.ai.local_gguf_server.HAS_FLASK", False):
-            server = create_gguf_server_with_intel_gpu()
+        import intellicrack.ai.local_gguf_server as server_module
 
-            assert server is None
+        monkeypatch.setattr(server_module, "HAS_FLASK", False)
+
+        server = create_gguf_server_with_intel_gpu()
+
+        assert server is None
 
 
 class TestGPUDetection:

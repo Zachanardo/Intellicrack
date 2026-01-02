@@ -11,12 +11,141 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from typing import Any
 
 import pytest
 
 from intellicrack.handlers.pyqt6_handler import QMessageBox
 from intellicrack.ui.tabs.project_workspace_tab import DashboardTab
+
+
+class FakeMainWindow:
+    """Test double for main window."""
+
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+
+    def __getattr__(self, name: str) -> Any:
+        def method(*args: Any, **kwargs: Any) -> None:
+            self.calls.append(f"{name}({args}, {kwargs})")
+
+        return method
+
+
+class FakeLogMessage:
+    """Test double for log message function."""
+
+    def __init__(self) -> None:
+        self.messages: list[tuple[str, ...]] = []
+
+    def __call__(self, *args: str) -> None:
+        self.messages.append(args)
+
+
+class FakeAppContext:
+    """Test double for application context."""
+
+    def __init__(self) -> None:
+        self.data: dict[str, Any] = {}
+
+    def __getattr__(self, name: str) -> Any:
+        return self.data.get(name)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name == "data":
+            object.__setattr__(self, name, value)
+        else:
+            self.data[name] = value
+
+
+class FakeTaskManager:
+    """Test double for task manager."""
+
+    def __init__(self) -> None:
+        self.tasks: list[str] = []
+
+    def add_task(self, task: str) -> None:
+        self.tasks.append(task)
+
+    def __getattr__(self, name: str) -> Any:
+        def method(*args: Any, **kwargs: Any) -> None:
+            pass
+
+        return method
+
+
+class FakeFileDialog:
+    """Test double for QFileDialog."""
+
+    def __init__(self, return_path: str = "", return_filter: str = "") -> None:
+        self.return_path: str = return_path
+        self.return_filter: str = return_filter
+
+    def getSaveFileName(
+        self,
+        parent: Any = None,
+        caption: str = "",
+        directory: str = "",
+        filter: str = "",
+        initialFilter: str = "",
+    ) -> tuple[str, str]:
+        return (self.return_path, self.return_filter)
+
+    def getOpenFileName(
+        self,
+        parent: Any = None,
+        caption: str = "",
+        directory: str = "",
+        filter: str = "",
+        initialFilter: str = "",
+    ) -> tuple[str, str]:
+        return (self.return_path, self.return_filter)
+
+
+class FakeMessageBox:
+    """Test double for QMessageBox."""
+
+    def __init__(self) -> None:
+        self.information_called: bool = False
+        self.warning_called: bool = False
+        self.critical_called: bool = False
+        self.question_called: bool = False
+        self.question_response: Any = QMessageBox.StandardButton.No
+        self.last_parent: Any = None
+        self.last_title: str = ""
+        self.last_message: str = ""
+
+    def information(self, parent: Any, title: str, message: str) -> None:
+        self.information_called = True
+        self.last_parent = parent
+        self.last_title = title
+        self.last_message = message
+
+    def warning(self, parent: Any, title: str, message: str) -> None:
+        self.warning_called = True
+        self.last_parent = parent
+        self.last_title = title
+        self.last_message = message
+
+    def critical(self, parent: Any, title: str, message: str) -> None:
+        self.critical_called = True
+        self.last_parent = parent
+        self.last_title = title
+        self.last_message = message
+
+    def question(
+        self,
+        parent: Any,
+        title: str,
+        message: str,
+        buttons: Any = None,
+        defaultButton: Any = None,
+    ) -> Any:
+        self.question_called = True
+        self.last_parent = parent
+        self.last_title = title
+        self.last_message = message
+        return self.question_response
 
 
 class TestProjectWorkspaceTabInitialization:
@@ -26,10 +155,10 @@ class TestProjectWorkspaceTabInitialization:
     def shared_context(self) -> dict[str, object]:
         """Create shared context for tab."""
         return {
-            "main_window": MagicMock(),
-            "log_message": MagicMock(),
-            "app_context": MagicMock(),
-            "task_manager": MagicMock(),
+            "main_window": FakeMainWindow(),
+            "log_message": FakeLogMessage(),
+            "app_context": FakeAppContext(),
+            "task_manager": FakeTaskManager(),
         }
 
     @pytest.fixture
@@ -125,6 +254,7 @@ class TestProjectManagement:
         self,
         dashboard_tab: DashboardTab,
         temp_project_dir: str,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Saving project creates valid project file."""
         dashboard_tab.current_binary_path = os.path.join(temp_project_dir, "test.exe")
@@ -132,9 +262,13 @@ class TestProjectManagement:
 
         project_file = os.path.join(temp_project_dir, "test.icp")
 
-        with patch("intellicrack.ui.tabs.project_workspace_tab.QFileDialog.getSaveFileName") as mock_dialog:
-            mock_dialog.return_value = (project_file, "")
-            dashboard_tab.save_project()
+        fake_dialog = FakeFileDialog(project_file, "")
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.project_workspace_tab.QFileDialog",
+            fake_dialog,
+        )
+
+        dashboard_tab.save_project()
 
         assert os.path.exists(project_file)
 
@@ -147,18 +281,23 @@ class TestProjectManagement:
     def test_save_project_without_binary(
         self,
         dashboard_tab: DashboardTab,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Saving project without binary shows information message."""
         dashboard_tab.current_binary_path = None
 
-        with patch.object(QMessageBox, "information") as mock_info:
-            dashboard_tab.save_project()
-            mock_info.assert_called_once()
+        fake_messagebox = FakeMessageBox()
+        monkeypatch.setattr(QMessageBox, "information", fake_messagebox.information)
+
+        dashboard_tab.save_project()
+
+        assert fake_messagebox.information_called
 
     def test_open_project_loads_binary(
         self,
         dashboard_tab: DashboardTab,
         temp_project_dir: str,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Opening project loads associated binary."""
         binary_path = os.path.join(temp_project_dir, "test.exe")
@@ -169,9 +308,13 @@ class TestProjectManagement:
         with open(project_file, "w", encoding="utf-8") as f:
             json.dump(project_data, f)
 
-        with patch("intellicrack.ui.tabs.project_workspace_tab.QFileDialog.getOpenFileName") as mock_dialog:
-            mock_dialog.return_value = (project_file, "")
-            dashboard_tab.open_project()
+        fake_dialog = FakeFileDialog(project_file, "")
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.project_workspace_tab.QFileDialog",
+            fake_dialog,
+        )
+
+        dashboard_tab.open_project()
 
         assert dashboard_tab.current_binary_path == binary_path
 
@@ -179,6 +322,7 @@ class TestProjectManagement:
         self,
         dashboard_tab: DashboardTab,
         temp_project_dir: str,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Opening project handles missing binary file."""
         project_file = os.path.join(temp_project_dir, "test.icp")
@@ -186,27 +330,42 @@ class TestProjectManagement:
         with open(project_file, "w", encoding="utf-8") as f:
             json.dump(project_data, f)
 
-        with patch("intellicrack.ui.tabs.project_workspace_tab.QFileDialog.getOpenFileName") as mock_dialog:
-            mock_dialog.return_value = (project_file, "")
-            with patch.object(QMessageBox, "warning") as mock_warning:
-                dashboard_tab.open_project()
-                mock_warning.assert_called_once()
+        fake_dialog = FakeFileDialog(project_file, "")
+        fake_messagebox = FakeMessageBox()
+
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.project_workspace_tab.QFileDialog",
+            fake_dialog,
+        )
+        monkeypatch.setattr(QMessageBox, "warning", fake_messagebox.warning)
+
+        dashboard_tab.open_project()
+
+        assert fake_messagebox.warning_called
 
     def test_open_project_handles_invalid_file(
         self,
         dashboard_tab: DashboardTab,
         temp_project_dir: str,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Opening invalid project file shows error."""
         project_file = os.path.join(temp_project_dir, "invalid.icp")
         with open(project_file, "w", encoding="utf-8") as f:
             f.write("invalid json")
 
-        with patch("intellicrack.ui.tabs.project_workspace_tab.QFileDialog.getOpenFileName") as mock_dialog:
-            mock_dialog.return_value = (project_file, "")
-            with patch.object(QMessageBox, "critical") as mock_critical:
-                dashboard_tab.open_project()
-                mock_critical.assert_called_once()
+        fake_dialog = FakeFileDialog(project_file, "")
+        fake_messagebox = FakeMessageBox()
+
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.project_workspace_tab.QFileDialog",
+            fake_dialog,
+        )
+        monkeypatch.setattr(QMessageBox, "critical", fake_messagebox.critical)
+
+        dashboard_tab.open_project()
+
+        assert fake_messagebox.critical_called
 
 
 class TestBinaryManagement:
@@ -352,52 +511,70 @@ class TestAnalysisOperations:
     def test_save_analysis_results_without_binary(
         self,
         dashboard_tab: DashboardTab,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Saving analysis without binary shows information message."""
-        with patch.object(QMessageBox, "information") as mock_info:
-            dashboard_tab.save_analysis_results()
-            mock_info.assert_called_once()
+        fake_messagebox = FakeMessageBox()
+        monkeypatch.setattr(QMessageBox, "information", fake_messagebox.information)
+
+        dashboard_tab.save_analysis_results()
+
+        assert fake_messagebox.information_called
 
     def test_save_analysis_results_emits_signal(
         self,
         dashboard_tab: DashboardTab,
         temp_binary: str,
         qtbot: object,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Saving analysis emits analysis_saved signal."""
         dashboard_tab.load_binary(temp_binary)
 
         results_file = tempfile.mktemp(suffix=".json")
 
-        with patch("intellicrack.ui.tabs.project_workspace_tab.QFileDialog.getSaveFileName") as mock_dialog:
-            mock_dialog.return_value = (results_file, "")
-            with qtbot.waitSignal(dashboard_tab.analysis_saved, timeout=1000) as blocker:
-                dashboard_tab.save_analysis_results()
+        fake_dialog = FakeFileDialog(results_file, "")
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.project_workspace_tab.QFileDialog",
+            fake_dialog,
+        )
 
-            assert blocker.args[0] == results_file
+        with qtbot.waitSignal(dashboard_tab.analysis_saved, timeout=1000) as blocker:
+            dashboard_tab.save_analysis_results()
+
+        assert blocker.args[0] == results_file
 
     def test_export_results_without_binary(
         self,
         dashboard_tab: DashboardTab,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Exporting results without binary shows information message."""
-        with patch.object(QMessageBox, "information") as mock_info:
-            dashboard_tab.export_results()
-            mock_info.assert_called_once()
+        fake_messagebox = FakeMessageBox()
+        monkeypatch.setattr(QMessageBox, "information", fake_messagebox.information)
+
+        dashboard_tab.export_results()
+
+        assert fake_messagebox.information_called
 
     def test_export_results_as_csv(
         self,
         dashboard_tab: DashboardTab,
         temp_binary: str,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Exporting results as CSV creates valid file."""
         dashboard_tab.load_binary(temp_binary)
 
         csv_file = tempfile.mktemp(suffix=".csv")
 
-        with patch("intellicrack.ui.tabs.project_workspace_tab.QFileDialog.getSaveFileName") as mock_dialog:
-            mock_dialog.return_value = (csv_file, "")
-            dashboard_tab.export_results()
+        fake_dialog = FakeFileDialog(csv_file, "")
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.project_workspace_tab.QFileDialog",
+            fake_dialog,
+        )
+
+        dashboard_tab.export_results()
 
         assert os.path.exists(csv_file)
 
@@ -412,15 +589,20 @@ class TestAnalysisOperations:
         self,
         dashboard_tab: DashboardTab,
         temp_binary: str,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Exporting results as JSON creates valid file."""
         dashboard_tab.load_binary(temp_binary)
 
         json_file = tempfile.mktemp(suffix=".json")
 
-        with patch("intellicrack.ui.tabs.project_workspace_tab.QFileDialog.getSaveFileName") as mock_dialog:
-            mock_dialog.return_value = (json_file, "")
-            dashboard_tab.export_results()
+        fake_dialog = FakeFileDialog(json_file, "")
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.project_workspace_tab.QFileDialog",
+            fake_dialog,
+        )
+
+        dashboard_tab.export_results()
 
         assert os.path.exists(json_file)
 
@@ -435,15 +617,20 @@ class TestAnalysisOperations:
         self,
         dashboard_tab: DashboardTab,
         temp_binary: str,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Exporting results as text creates valid file."""
         dashboard_tab.load_binary(temp_binary)
 
         txt_file = tempfile.mktemp(suffix=".txt")
 
-        with patch("intellicrack.ui.tabs.project_workspace_tab.QFileDialog.getSaveFileName") as mock_dialog:
-            mock_dialog.return_value = (txt_file, "")
-            dashboard_tab.export_results()
+        fake_dialog = FakeFileDialog(txt_file, "")
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.project_workspace_tab.QFileDialog",
+            fake_dialog,
+        )
+
+        dashboard_tab.export_results()
 
         assert os.path.exists(txt_file)
 
@@ -458,38 +645,57 @@ class TestAnalysisOperations:
         self,
         dashboard_tab: DashboardTab,
         temp_binary: str,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Export handles I/O errors gracefully."""
         dashboard_tab.load_binary(temp_binary)
 
-        with patch("intellicrack.ui.tabs.project_workspace_tab.QFileDialog.getSaveFileName") as mock_dialog:
-            mock_dialog.return_value = ("/invalid/path/file.json", "")
-            with patch.object(QMessageBox, "critical") as mock_critical:
-                dashboard_tab.export_results()
-                mock_critical.assert_called_once()
+        fake_dialog = FakeFileDialog("/invalid/path/file.json", "")
+        fake_messagebox = FakeMessageBox()
+
+        monkeypatch.setattr(
+            "intellicrack.ui.tabs.project_workspace_tab.QFileDialog",
+            fake_dialog,
+        )
+        monkeypatch.setattr(QMessageBox, "critical", fake_messagebox.critical)
+
+        dashboard_tab.export_results()
+
+        assert fake_messagebox.critical_called
 
     def test_clear_analysis_confirms_action(
         self,
         dashboard_tab: DashboardTab,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Clear analysis requests confirmation."""
-        with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.No) as mock_question:
-            dashboard_tab.clear_analysis()
-            mock_question.assert_called_once()
+        fake_messagebox = FakeMessageBox()
+        fake_messagebox.question_response = QMessageBox.StandardButton.No
+
+        monkeypatch.setattr(QMessageBox, "question", fake_messagebox.question)
+
+        dashboard_tab.clear_analysis()
+
+        assert fake_messagebox.question_called
 
     def test_clear_analysis_resets_on_confirmation(
         self,
         dashboard_tab: DashboardTab,
         temp_binary: str,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Clear analysis resets data when confirmed."""
         dashboard_tab.load_binary(temp_binary)
 
-        with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes):
-            dashboard_tab.clear_analysis()
+        fake_messagebox = FakeMessageBox()
+        fake_messagebox.question_response = QMessageBox.StandardButton.Yes
 
-            assert "No binary loaded" in dashboard_tab.binary_info_label.text()
-            assert "Vulnerabilities Found: 0" in dashboard_tab.vulns_found_label.text()
+        monkeypatch.setattr(QMessageBox, "question", fake_messagebox.question)
+
+        dashboard_tab.clear_analysis()
+
+        assert "No binary loaded" in dashboard_tab.binary_info_label.text()
+        assert "Vulnerabilities Found: 0" in dashboard_tab.vulns_found_label.text()
 
 
 class TestActivityLogging:

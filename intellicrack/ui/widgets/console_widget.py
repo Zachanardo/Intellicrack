@@ -35,7 +35,6 @@ from intellicrack.handlers.pyqt6_handler import (
     QObject,
     QPushButton,
     QRegularExpression,
-    QScrollBar,
     QSyntaxHighlighter,
     Qt,
     QTextCharFormat,
@@ -46,6 +45,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +148,9 @@ class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
         Args:
             text: The text block to apply syntax highlighting to.
 
+        Returns:
+            None
+
         """
         if text is None:
             return
@@ -177,9 +180,6 @@ class ConsoleWidget(QWidget):
             parent: Parent widget, typically the main window.
             enable_input: If True, enables command input field and emits command_entered
                          signal when commands are submitted.
-
-        Raises:
-            No exceptions are raised during initialization.
 
         """
         super().__init__(parent)
@@ -281,9 +281,6 @@ class ConsoleWidget(QWidget):
             level: Log level indicator (ERROR, WARNING, SUCCESS, INFO, DEBUG, or RAW
                   for no prefix). Defaults to "INFO".
 
-        Returns:
-            None
-
         Note:
             When line count exceeds max_lines, oldest 100 lines are automatically
             removed to prevent excessive memory consumption.
@@ -316,9 +313,6 @@ class ConsoleWidget(QWidget):
         Args:
             text: The error message to append.
 
-        Returns:
-            None
-
         """
         self.append_output(text, "ERROR")
 
@@ -327,9 +321,6 @@ class ConsoleWidget(QWidget):
 
         Args:
             text: The warning message to append.
-
-        Returns:
-            None
 
         """
         self.append_output(text, "WARNING")
@@ -340,9 +331,6 @@ class ConsoleWidget(QWidget):
         Args:
             text: The success message to append.
 
-        Returns:
-            None
-
         """
         self.append_output(text, "SUCCESS")
 
@@ -351,9 +339,6 @@ class ConsoleWidget(QWidget):
 
         Args:
             text: The info message to append.
-
-        Returns:
-            None
 
         """
         self.append_output(text, "INFO")
@@ -364,19 +349,11 @@ class ConsoleWidget(QWidget):
         Args:
             text: The debug message to append.
 
-        Returns:
-            None
-
         """
         self.append_output(text, "DEBUG")
 
     def clear(self) -> None:
-        """Clear all text from the console output.
-
-        Returns:
-            None
-
-        """
+        """Clear all text from the console output."""
         self.output.clear()
 
     def apply_filter(self, filter_text: str) -> None:
@@ -385,9 +362,6 @@ class ConsoleWidget(QWidget):
         Args:
             filter_text: The filter type to apply (All, Errors, Warnings, Success,
                         Info, or Debug). Currently logs the filter action.
-
-        Returns:
-            None
 
         Note:
             This method provides a record of filter changes via console output.
@@ -405,9 +379,6 @@ class ConsoleWidget(QWidget):
 
         Args:
             search_term: The text string to search for. Empty string clears highlighting.
-
-        Returns:
-            None
 
         Note:
             Search is case-sensitive and uses QTextEdit's built-in find mechanism.
@@ -453,9 +424,6 @@ class ConsoleWidget(QWidget):
         Args:
             state: Checkbox state value (2 for checked, 0 for unchecked).
 
-        Returns:
-            None
-
         """
         if state == 2:
             self.output.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
@@ -467,12 +435,6 @@ class ConsoleWidget(QWidget):
 
         Opens a file save dialog and writes all console output to the selected file
         with UTF-8 encoding. Provides user feedback on success or failure.
-
-        Returns:
-            None
-
-        Raises:
-            Exception: File I/O errors are caught and logged to the console.
 
         """
         from intellicrack.handlers.pyqt6_handler import QFileDialog
@@ -577,12 +539,12 @@ class ConsoleWidget(QWidget):
             int: The number of matches found.
 
         """
+        from intellicrack.handlers.pyqt6_handler import QTextEdit
+
         if not search_text:
             empty_selections: list[QTextEdit.ExtraSelection] = []
             self.output.setExtraSelections(empty_selections)
             return 0
-
-        from intellicrack.handlers.pyqt6_handler import QTextEdit
 
         extra_selections: list[QTextEdit.ExtraSelection] = []
         highlight_format = QTextCharFormat()
@@ -684,9 +646,6 @@ class ConsoleWidget(QWidget):
 
         Args:
             max_lines: Maximum number of lines to keep before trimming oldest lines.
-
-        Returns:
-            None
 
         """
         self.max_lines = max_lines

@@ -8,6 +8,8 @@ NO mocked components - validates actual hex display and navigation.
 import pytest
 import tempfile
 import os
+from typing import Any
+from collections.abc import Generator
 
 try:
     from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QTableWidget
@@ -31,7 +33,7 @@ class TestHexViewerWidget:
     """Test REAL hex viewer widget functionality with actual binary data."""
 
     @pytest.fixture(autouse=True)
-    def setup_widget(self, qtbot):
+    def setup_widget(self, qtbot: Any) -> HexViewerWidget:
         """Setup HexViewerWidget with REAL Qt environment."""
         self.widget = HexViewerWidget()
         qtbot.addWidget(self.widget)
@@ -39,7 +41,7 @@ class TestHexViewerWidget:
         return self.widget
 
     @pytest.fixture
-    def sample_binary_file(self):
+    def sample_binary_file(self) -> Generator[tuple[str, bytes], None, None]:
         """Create REAL binary file for testing."""
         with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as temp_file:
             # Create realistic binary data
@@ -58,7 +60,7 @@ class TestHexViewerWidget:
         if os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
 
-    def test_widget_initialization_real_components(self, qtbot):
+    def test_widget_initialization_real_components(self, qtbot: Any) -> None:
         """Test that hex viewer initializes with REAL Qt components."""
         assert isinstance(self.widget, QWidget)
         assert self.widget.isVisible()
@@ -70,7 +72,7 @@ class TestHexViewerWidget:
         # Should have either text or table components for hex display
         assert len(hex_displays) > 0 or len(tables) > 0, "Should have hex display components"
 
-    def test_file_loading_real_binary_data(self, qtbot, sample_binary_file):
+    def test_file_loading_real_binary_data(self, qtbot: Any, sample_binary_file: tuple[str, bytes]) -> None:
         """Test REAL binary file loading and display."""
         file_path, expected_data = sample_binary_file
 
@@ -91,7 +93,7 @@ class TestHexViewerWidget:
             self.widget.set_data(expected_data)
             qtbot.wait(100)
 
-    def test_hex_display_real_formatting(self, qtbot, sample_binary_file):
+    def test_hex_display_real_formatting(self, qtbot: Any, sample_binary_file: tuple[str, bytes]) -> None:
         """Test REAL hex data display and formatting."""
         file_path, binary_data = sample_binary_file
 
@@ -121,7 +123,7 @@ class TestHexViewerWidget:
                                 except ValueError:
                                     pass  # May contain non-hex characters like addresses
 
-    def test_ascii_display_real_text_representation(self, qtbot, sample_binary_file):
+    def test_ascii_display_real_text_representation(self, qtbot: Any, sample_binary_file: tuple[str, bytes]) -> None:
         """Test REAL ASCII/text representation of binary data."""
         file_path, binary_data = sample_binary_file
 
@@ -143,7 +145,7 @@ class TestHexViewerWidget:
                 # May contain the text or show dots for non-printable
                 assert 'Hello' in content or '.' in content or content == ""
 
-    def test_navigation_real_offset_jumping(self, qtbot, sample_binary_file):
+    def test_navigation_real_offset_jumping(self, qtbot: Any, sample_binary_file: tuple[str, bytes]) -> None:
         """Test REAL navigation and offset jumping functionality."""
         file_path, binary_data = sample_binary_file
 
@@ -176,7 +178,7 @@ class TestHexViewerWidget:
                     control.setText("20")
                 qtbot.wait(50)
 
-    def test_search_functionality_real_pattern_finding(self, qtbot, sample_binary_file):
+    def test_search_functionality_real_pattern_finding(self, qtbot: Any, sample_binary_file: tuple[str, bytes]) -> None:
         """Test REAL search functionality with actual patterns."""
         file_path, binary_data = sample_binary_file
 
@@ -206,7 +208,7 @@ class TestHexViewerWidget:
                     elif isinstance(results, int):
                         assert results == expected_offset
 
-    def test_selection_real_byte_range(self, qtbot, sample_binary_file):
+    def test_selection_real_byte_range(self, qtbot: Any, sample_binary_file: tuple[str, bytes]) -> None:
         """Test REAL byte selection and range highlighting."""
         file_path, binary_data = sample_binary_file
 
@@ -229,7 +231,7 @@ class TestHexViewerWidget:
                 assert self.widget.selection_start == start_offset
                 assert self.widget.selection_end == end_offset
 
-    def test_large_file_handling_real_performance(self, qtbot):
+    def test_large_file_handling_real_performance(self, qtbot: Any) -> None:
         """Test REAL large file handling and performance."""
         # Create larger test file
         with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as temp_file:
@@ -252,7 +254,7 @@ class TestHexViewerWidget:
             if os.path.exists(large_file_path):
                 os.unlink(large_file_path)
 
-    def test_export_functionality_real_data_output(self, qtbot, sample_binary_file):
+    def test_export_functionality_real_data_output(self, qtbot: Any, sample_binary_file: tuple[str, bytes]) -> None:
         """Test REAL data export functionality."""
         file_path, binary_data = sample_binary_file
 
@@ -282,7 +284,7 @@ class TestHexViewerWidget:
                 if os.path.exists(export_path):
                     os.unlink(export_path)
 
-    def test_editing_capabilities_real_modifications(self, qtbot, sample_binary_file):
+    def test_editing_capabilities_real_modifications(self, qtbot: Any, sample_binary_file: tuple[str, bytes]) -> None:
         """Test REAL hex editing capabilities if supported."""
         file_path, binary_data = sample_binary_file
 
@@ -306,7 +308,7 @@ class TestHexViewerWidget:
                 modified_byte = self.widget.get_byte(5)
                 assert modified_byte == new_byte
 
-    def test_highlighting_real_pattern_emphasis(self, qtbot, sample_binary_file):
+    def test_highlighting_real_pattern_emphasis(self, qtbot: Any, sample_binary_file: tuple[str, bytes]) -> None:
         """Test REAL highlighting of patterns and structures."""
         file_path, binary_data = sample_binary_file
 
@@ -332,7 +334,7 @@ class TestHexViewerWidget:
                 # Should have some formatting applied
                 assert text_format is not None
 
-    def test_context_menu_real_operations(self, qtbot, sample_binary_file):
+    def test_context_menu_real_operations(self, qtbot: Any, sample_binary_file: tuple[str, bytes]) -> None:
         """Test REAL context menu operations."""
         file_path, binary_data = sample_binary_file
 
@@ -353,7 +355,7 @@ class TestHexViewerWidget:
 
             # Context menu should appear (but we won't interact with it in tests)
 
-    def test_status_updates_real_information(self, qtbot, sample_binary_file):
+    def test_status_updates_real_information(self, qtbot: Any, sample_binary_file: tuple[str, bytes]) -> None:
         """Test REAL status updates and information display."""
         file_path, binary_data = sample_binary_file
 
@@ -383,14 +385,14 @@ class TestHexViewerWidget:
                     # Should contain numbers for actual data
                     assert any(c.isdigit() for c in text)
 
-    def test_real_data_validation_no_placeholder_content(self, qtbot):
+    def test_real_data_validation_no_placeholder_content(self, qtbot: Any) -> None:
         """Test that widget contains REAL functionality, not placeholder content."""
         placeholder_indicators = [
             "TODO", "PLACEHOLDER", "XXX", "FIXME",
             "Not implemented", "Coming soon", "Mock data"
         ]
 
-        def check_widget_content(widget):
+        def check_widget_content(widget: Any) -> None:
             """Check widget for placeholder content."""
             if hasattr(widget, 'text'):
                 text = widget.text()
@@ -406,7 +408,7 @@ class TestHexViewerWidget:
         for child in self.widget.findChildren(object):
             check_widget_content(child)
 
-    def test_memory_efficiency_real_large_file_handling(self, qtbot):
+    def test_memory_efficiency_real_large_file_handling(self, qtbot: Any) -> None:
         """Test REAL memory efficiency with large files."""
         # Create very large test file (1MB)
         with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as temp_file:

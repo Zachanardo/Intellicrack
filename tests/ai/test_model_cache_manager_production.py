@@ -13,6 +13,7 @@ import os
 import pickle
 import tempfile
 import time
+from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import Any
 
@@ -23,8 +24,10 @@ import torch.nn as nn
 from intellicrack.ai.model_cache_manager import (
     CacheEntry,
     ModelCacheManager,
-    RestrictedUnpickler,
     get_cache_manager,
+)
+from intellicrack.utils.core.secure_serialization import (
+    RestrictedUnpickler,
     secure_pickle_dump,
     secure_pickle_load,
 )
@@ -68,6 +71,7 @@ class TestSecurePickle:
             loaded_obj = secure_pickle_load(temp_path)
 
             assert loaded_obj == test_obj
+            assert isinstance(loaded_obj, dict)
             assert loaded_obj["key"] == "value"
             assert loaded_obj["numbers"] == [1, 2, 3]
             assert loaded_obj["nested"]["a"] == "b"
@@ -117,6 +121,7 @@ class TestSecurePickle:
             secure_pickle_dump(complex_obj, temp_path)
             loaded_obj = secure_pickle_load(temp_path)
 
+            assert isinstance(loaded_obj, dict)
             assert loaded_obj["lists"] == [[1, 2], [3, 4]]
             assert loaded_obj["tuples"] == ((5, 6), (7, 8))
             assert loaded_obj["sets"] == {9, 10, 11}
@@ -163,7 +168,7 @@ class TestModelCacheManager:
     """Test model cache manager functionality."""
 
     @pytest.fixture
-    def temp_cache_dir(self) -> Path:
+    def temp_cache_dir(self) -> Generator[Path, None, None]:
         """Create temporary cache directory."""
         temp_dir = Path(tempfile.mkdtemp())
         yield temp_dir
@@ -211,7 +216,9 @@ class TestModelCacheManager:
         assert "test-model" in cache_manager.cache
         assert cache_manager.current_memory_usage > 0
 
-        retrieved_model, retrieved_tokenizer = cache_manager.get("test-model")
+        result = cache_manager.get("test-model")
+        assert result is not None
+        retrieved_model, retrieved_tokenizer = result
 
         assert retrieved_model is model
         assert retrieved_tokenizer is tokenizer
@@ -397,7 +404,7 @@ class TestModelCacheManager:
         model1 = SimplePyTorchModel()
         model2 = SimplePyTorchModel()
 
-        load_functions = {
+        load_functions: dict[str, Callable[[], tuple[object, object | None]]] = {
             "model1": lambda: (model1, None),
             "model2": lambda: (model2, None),
         }
@@ -466,7 +473,7 @@ class TestModelCacheManager:
     def test_load_function_error_handling(self, cache_manager: ModelCacheManager) -> None:
         """Cache manager handles load function errors gracefully."""
 
-        def failing_load_function() -> None:
+        def failing_load_function() -> tuple[object, object | None]:
             """Load function that raises exception."""
             raise RuntimeError("Load failed")
 

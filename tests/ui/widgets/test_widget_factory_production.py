@@ -5,6 +5,8 @@ input fields, button layouts, list widgets, and grouped widgets for
 standardized UI component creation.
 """
 
+from typing import Any
+
 import pytest
 
 from intellicrack.handlers.pyqt6_handler import QApplication, QFont, Qt
@@ -20,7 +22,7 @@ from intellicrack.ui.widgets.widget_factory import (
 
 
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Any:
     """Create QApplication instance for tests."""
     app = QApplication.instance()
     if app is None:
@@ -35,9 +37,10 @@ def test_create_tree_widget_basic(qapp: QApplication) -> None:
     tree = create_tree_widget(headers)
 
     assert tree is not None
-    assert tree.headerItem() is not None
+    header_item = tree.headerItem()
+    assert header_item is not None
     for i, header in enumerate(headers):
-        assert tree.headerItem().text(i) == header
+        assert header_item.text(i) == header
 
 
 def test_create_tree_widget_with_callback(qapp: QApplication) -> None:
@@ -210,8 +213,9 @@ def test_create_grouped_widget_contains_content(qapp: QApplication) -> None:
 
     group = create_grouped_widget("Group", button)
 
-    assert group.layout() is not None
-    assert group.layout().count() > 0
+    layout = group.layout()
+    assert layout is not None
+    assert layout.count() > 0
 
 
 def test_create_standard_dialog_buttons_basic(qapp: QApplication) -> None:
@@ -277,6 +281,8 @@ def test_input_field_accepts_user_input(qapp: QApplication) -> None:
 
 def test_button_layout_buttons_are_clickable(qapp: QApplication) -> None:
     """Button layout creates clickable buttons."""
+    from intellicrack.handlers.pyqt6_handler import QPushButton
+
     clicked = [False]
 
     def callback() -> None:
@@ -286,8 +292,11 @@ def test_button_layout_buttons_are_clickable(qapp: QApplication) -> None:
 
     layout = create_button_layout(button_configs)
 
-    button = layout.itemAt(0).widget()
+    layout_item = layout.itemAt(0)
+    assert layout_item is not None
+    button = layout_item.widget()
     assert button is not None
+    assert isinstance(button, QPushButton)
 
     button.click()
 
@@ -349,6 +358,8 @@ def test_tree_widget_empty_headers(qapp: QApplication) -> None:
 
 def test_button_layout_preserves_button_order(qapp: QApplication) -> None:
     """Button layout preserves button order."""
+    from intellicrack.handlers.pyqt6_handler import QPushButton
+
     button_configs = [
         {"text": "First", "callback": lambda: None},
         {"text": "Second", "callback": lambda: None},
@@ -357,9 +368,18 @@ def test_button_layout_preserves_button_order(qapp: QApplication) -> None:
 
     layout = create_button_layout(button_configs, add_stretch=False)
 
-    first_button = layout.itemAt(0).widget()
-    second_button = layout.itemAt(1).widget()
-    third_button = layout.itemAt(2).widget()
+    item0 = layout.itemAt(0)
+    item1 = layout.itemAt(1)
+    item2 = layout.itemAt(2)
+    assert item0 is not None and item1 is not None and item2 is not None
+
+    first_button = item0.widget()
+    second_button = item1.widget()
+    third_button = item2.widget()
+
+    assert isinstance(first_button, QPushButton)
+    assert isinstance(second_button, QPushButton)
+    assert isinstance(third_button, QPushButton)
 
     assert first_button.text() == "First"
     assert second_button.text() == "Second"
@@ -396,7 +416,9 @@ def test_tree_widget_single_header(qapp: QApplication) -> None:
     tree = create_tree_widget(["Single Column"])
 
     assert tree.columnCount() == 1
-    assert tree.headerItem().text(0) == "Single Column"
+    header_item = tree.headerItem()
+    assert header_item is not None
+    assert header_item.text(0) == "Single Column"
 
 
 def test_grouped_widget_title_display(qapp: QApplication) -> None:

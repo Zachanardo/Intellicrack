@@ -15,7 +15,6 @@ import threading
 import time
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -24,6 +23,26 @@ from intellicrack.plugins.remote_executor import (
     _run_plugin_in_sandbox,
     create_remote_executor,
 )
+
+
+class FakeServiceUrlProvider:
+    """Fake implementation for get_service_url testing."""
+
+    def __init__(self, url: str) -> None:
+        self.url = url
+
+    def __call__(self) -> str:
+        return self.url
+
+
+class FakeSecretProvider:
+    """Fake implementation for get_secret testing."""
+
+    def __init__(self, secret: str | None) -> None:
+        self.secret = secret
+
+    def __call__(self) -> str | None:
+        return self.secret
 
 
 @pytest.fixture
@@ -67,36 +86,36 @@ class TestRemotePluginExecutorInitialization:
         assert executor.remote_port == 9999
         assert executor.shared_secret is not None
 
-    def test_executor_initialization_from_config(self) -> None:
+    def test_executor_initialization_from_config(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """RemotePluginExecutor initializes from configuration."""
-        with patch("intellicrack.plugins.remote_executor.get_service_url") as mock_url:
-            mock_url.return_value = "ws://config-host:8888/"
+        fake_url_provider = FakeServiceUrlProvider("ws://config-host:8888/")
+        monkeypatch.setattr("intellicrack.plugins.remote_executor.get_service_url", fake_url_provider)
 
-            executor = RemotePluginExecutor()
+        executor = RemotePluginExecutor()
 
-            assert executor.remote_host == "config-host"
-            assert executor.remote_port == 8888
+        assert executor.remote_host == "config-host"
+        assert executor.remote_port == 8888
 
-    def test_executor_generates_shared_secret(self) -> None:
+    def test_executor_generates_shared_secret(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """RemotePluginExecutor generates shared secret if not configured."""
-        with patch("intellicrack.plugins.remote_executor.get_secret") as mock_get:
-            mock_get.return_value = None
+        fake_secret_provider = FakeSecretProvider(None)
+        monkeypatch.setattr("intellicrack.plugins.remote_executor.get_secret", fake_secret_provider)
 
-            executor = RemotePluginExecutor(remote_host="localhost", remote_port=8765)
+        executor = RemotePluginExecutor(remote_host="localhost", remote_port=8765)
 
-            assert executor.shared_secret is not None
-            assert len(executor.shared_secret) > 0
+        assert executor.shared_secret is not None
+        assert len(executor.shared_secret) > 0
 
-    def test_executor_uses_configured_secret(self) -> None:
+    def test_executor_uses_configured_secret(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """RemotePluginExecutor uses configured shared secret."""
         test_secret = "configured_secret_12345"
 
-        with patch("intellicrack.plugins.remote_executor.get_secret") as mock_get:
-            mock_get.return_value = test_secret
+        fake_secret_provider = FakeSecretProvider(test_secret)
+        monkeypatch.setattr("intellicrack.plugins.remote_executor.get_secret", fake_secret_provider)
 
-            executor = RemotePluginExecutor(remote_host="localhost", remote_port=8765)
+        executor = RemotePluginExecutor(remote_host="localhost", remote_port=8765)
 
-            assert executor.shared_secret == test_secret.encode()
+        assert executor.shared_secret == test_secret.encode()
 
 
 class TestSerializationDeserialization:
@@ -109,7 +128,6 @@ class TestSerializationDeserialization:
         encoded = remote_executor._serialize_safe(data)
 
         assert isinstance(encoded, str)
-        # Decode to verify
         decoded_bytes = base64.b64decode(encoded)
         decoded_data = json.loads(decoded_bytes.decode("utf-8"))
         assert decoded_data == data
@@ -194,7 +212,6 @@ class TestConnectionTesting:
 
     def test_test_connection_success(self) -> None:
         """test_connection returns True for successful connection."""
-        # Start a simple server
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_socket.bind(("localhost", 18768))
@@ -218,7 +235,6 @@ class TestConnectionTesting:
 
     def test_test_connection_failure(self, remote_executor: RemotePluginExecutor) -> None:
         """test_connection returns False for failed connection."""
-        # Use a port that's not listening
         executor = RemotePluginExecutor(remote_host="localhost", remote_port=65533)
         result = executor.test_connection()
 
@@ -233,7 +249,7 @@ class TestConnectionTesting:
         elapsed = time.time() - start
 
         assert result is False
-        assert elapsed < 10.0  # Should timeout within reasonable time
+        assert elapsed < 10.0
 
 
 class TestRunPluginInSandbox:
@@ -326,7 +342,7 @@ class TestHMACAuthentication:
         signature = hmac.new(remote_executor.shared_secret, request_json.encode("utf-8"), hashlib.sha256).hexdigest()
 
         assert isinstance(signature, str)
-        assert len(signature) == 64  # SHA256 hex digest length
+        assert len(signature) == 64
 
     def test_hmac_signature_verification(self) -> None:
         """HMAC signature verification works correctly."""
@@ -385,7 +401,7 @@ class TestErrorHandling:
         elapsed = time.time() - start
 
         assert isinstance(result, list)
-        assert elapsed < 60.0  # Should timeout before default 30s + overhead
+        assert elapsed < 60.0
 
 
 class TestMessageProtocol:
@@ -433,8 +449,6 @@ class TestResourceCleanup:
 
     def test_temporary_plugin_file_cleanup(self) -> None:
         """Temporary plugin files are cleaned up after execution."""
-        # This is tested implicitly in the server handler
-        # The handler should remove temporary files after execution
         pass
 
 
@@ -449,16 +463,16 @@ class TestCreateRemoteExecutor:
         assert executor.remote_host == "test-host"
         assert executor.remote_port == 9999
 
-    def test_create_remote_executor_from_config(self) -> None:
+    def test_create_remote_executor_from_config(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """create_remote_executor creates executor from config."""
-        with patch("intellicrack.plugins.remote_executor.get_service_url") as mock_url:
-            mock_url.return_value = "ws://factory-host:7777/"
+        fake_url_provider = FakeServiceUrlProvider("ws://factory-host:7777/")
+        monkeypatch.setattr("intellicrack.plugins.remote_executor.get_service_url", fake_url_provider)
 
-            executor = create_remote_executor()
+        executor = create_remote_executor()
 
-            assert isinstance(executor, RemotePluginExecutor)
-            assert executor.remote_host == "factory-host"
-            assert executor.remote_port == 7777
+        assert isinstance(executor, RemotePluginExecutor)
+        assert executor.remote_host == "factory-host"
+        assert executor.remote_port == 7777
 
 
 class TestConcurrentExecution:
@@ -545,7 +559,6 @@ class TestSecurityFeatures:
 
     def test_json_only_serialization(self, remote_executor: RemotePluginExecutor) -> None:
         """Only JSON serialization is allowed for security."""
-        # Verify that pickle or other formats are rejected
         with pytest.raises(ValueError, match="only JSON is allowed"):
             remote_executor._deserialize_safe("data", expected_type="pickle")
 
@@ -565,7 +578,6 @@ class TestPluginClassDetection:
             def analyze(self) -> str:
                 return "analyzed"
 
-        # This would be tested in the server handler
         assert hasattr(Plugin, "analyze")
 
     def test_detects_custom_plugin_class(self) -> None:

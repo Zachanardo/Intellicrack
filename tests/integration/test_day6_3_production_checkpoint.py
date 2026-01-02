@@ -11,6 +11,16 @@ import hashlib
 from datetime import datetime
 from pathlib import Path
 
+
+def get_project_root() -> Path:
+    """Get the project root directory."""
+    current = Path(__file__).resolve()
+    while current.parent != current:
+        if (current / "pyproject.toml").exists() or (current / "intellicrack").is_dir():
+            return current
+        current = current.parent
+    return Path.cwd()
+
 # Import actual modules to test real functionality
 try:
     from intellicrack.core.analysis.radare2_vulnerability_engine import R2VulnerabilityEngine
@@ -25,7 +35,7 @@ except ImportError as e:
     MODULES_AVAILABLE = False
 
 
-def create_cet_protected_binary():
+def create_cet_protected_binary() -> str:
     """Create a test binary with CET protection indicators."""
     test_program = '''
 #include <stdio.h>
@@ -92,11 +102,11 @@ int main(int argc, char *argv[]) {
 class ProductionReadinessValidator:
     """Validates all modern protection bypasses are production-ready."""
 
-    def __init__(self):
-        self.test_results = []
-        self.critical_failures = []
+    def __init__(self) -> None:
+        self.test_results: list[bool] = []
+        self.critical_failures: list[str] = []
 
-    def test_no_placeholder_strings(self):
+    def test_no_placeholder_strings(self) -> bool:
         """CRITICAL TEST: Verify NO placeholder strings exist in code."""
         print("\n CRITICAL TEST: Searching for placeholder strings...")
         print("=" * 60)
@@ -155,7 +165,7 @@ class ProductionReadinessValidator:
             self.test_results.append(False)
             return False
 
-    def test_cet_bypass_functionality(self):
+    def test_cet_bypass_functionality(self) -> bool:
         """Test CET bypass produces real bypass techniques."""
         print("\n🛡️ Testing CET Bypass Functionality...")
         print("=" * 40)
@@ -193,7 +203,7 @@ class ProductionReadinessValidator:
             self.test_results.append(False)
             return False
 
-    def test_cfi_bypass_functionality(self):
+    def test_cfi_bypass_functionality(self) -> bool:
         """Test CFI bypass produces real gadgets and techniques."""
         print("\n Testing CFI Bypass Functionality...")
         print("=" * 40)
@@ -219,7 +229,7 @@ class ProductionReadinessValidator:
             self.test_results.append(False)
             return False
 
-    def test_hardware_bypass_functionality(self):
+    def test_hardware_bypass_functionality(self) -> bool:
         """Test hardware protection bypasses are functional."""
         print("\n Testing Hardware Protection Bypasses...")
         print("=" * 45)
@@ -255,7 +265,7 @@ class ProductionReadinessValidator:
             self.test_results.append(False)
             return False
 
-    def test_integration_with_radare2(self):
+    def test_integration_with_radare2(self) -> bool:
         """Test all bypasses are integrated with radare2 vulnerability engine."""
         print("\n🔗 Testing Radare2 Integration...")
         print("=" * 35)
@@ -310,7 +320,7 @@ class ProductionReadinessValidator:
             self.test_results.append(False)
             return False
 
-    def test_real_world_bypass_capability(self):
+    def test_real_world_bypass_capability(self) -> bool:
         """Test bypasses work against real protections (not simulated)."""
         print("\n🌍 Testing Real-World Bypass Capability...")
         print("=" * 45)
@@ -356,7 +366,7 @@ class ProductionReadinessValidator:
             self.test_results.append(True)
             return True
 
-    def generate_documentation(self):
+    def generate_documentation(self) -> bool:
         """Generate documentation of successful bypass tests."""
         print("\n Generating Documentation...")
         print("=" * 35)
@@ -422,7 +432,7 @@ This checkpoint certifies that all modern protection bypass mechanisms have been
         return True
 
 
-def main():
+def main() -> int:
     """Execute Day 6.3 Production Readiness Checkpoint 6."""
     print("=" * 70)
     print("DAY 6.3: PRODUCTION READINESS CHECKPOINT 6")

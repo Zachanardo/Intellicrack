@@ -30,7 +30,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import msgpack
 
@@ -87,13 +87,21 @@ class BaseResult:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
+        """Convert to dictionary representation.
+
+        Returns:
+            Dictionary representation of the result with type converted to string value.
+        """
         result = asdict(self)
         result["type"] = self.type.value
         return result
 
     def calculate_hash(self) -> str:
-        """Calculate unique hash for this result."""
+        """Calculate unique hash for this result.
+
+        Returns:
+            SHA256 hexdigest of the result data.
+        """
         data = json.dumps(self.to_dict(), sort_keys=True)
         return hashlib.sha256(data.encode()).hexdigest()
 
@@ -233,7 +241,18 @@ class ControlFlowResult(BaseResult):
 
 
 class ResultSerializer:
-    """Unified serialization handler for all result types."""
+    """Unified serialization handler for all result types.
+
+    Handles serialization and deserialization of analysis results across
+    multiple formats (JSON, MessagePack, binary) with optional compression
+    and AES encryption.
+
+    Attributes:
+        format: The serialization format to use.
+        compression_enabled: Whether to compress serialized data.
+        encryption_key: Optional encryption key for AES encryption.
+        result_classes: Mapping of result types to their class implementations.
+    """
 
     format: DataFormat
     compression_enabled: bool
@@ -241,7 +260,11 @@ class ResultSerializer:
     result_classes: dict[ResultType, type[BaseResult]]
 
     def __init__(self, format: DataFormat = DataFormat.MSGPACK) -> None:
-        """Initialize serializer with specified format."""
+        """Initialize serializer with specified format.
+
+        Args:
+            format: Serialization format to use (defaults to MSGPACK).
+        """
         self.format = format
         self.compression_enabled = True
         self.encryption_key = None
@@ -259,7 +282,17 @@ class ResultSerializer:
         }
 
     def serialize(self, result: BaseResult) -> bytes:
-        """Serialize analysis result to bytes."""
+        """Serialize analysis result to bytes.
+
+        Args:
+            result: The analysis result to serialize.
+
+        Returns:
+            Serialized bytes of the result, optionally compressed and encrypted.
+
+        Raises:
+            ValueError: If the configured format is not supported.
+        """
         # Convert to dictionary
         data = result.to_dict()
 
@@ -292,7 +325,18 @@ class ResultSerializer:
         return serialized
 
     def deserialize(self, data: bytes, result_type: ResultType) -> BaseResult:
-        """Deserialize bytes to analysis result."""
+        """Deserialize bytes to analysis result.
+
+        Args:
+            data: Serialized bytes to deserialize.
+            result_type: Expected result type to instantiate.
+
+        Returns:
+            Deserialized result object of the specified type.
+
+        Raises:
+            ValueError: If the format is not supported or data is invalid.
+        """
         # Decrypt if needed
         if self.encryption_key:
             data = self._decrypt_data(data)
@@ -326,7 +370,14 @@ class ResultSerializer:
         return result_class(**result_dict)
 
     def _binary_serialize(self, data: dict[str, Any]) -> bytes:
-        """Serialize data with custom binary format for maximum efficiency."""
+        """Serialize data with custom binary format for maximum efficiency.
+
+        Args:
+            data: Dictionary to serialize in binary format.
+
+        Returns:
+            Binary serialized data with header, version, and length prefix.
+        """
         # Binary format: [header][type][data_length][data]
         header = b"ICRK"  # Intellicrack magic bytes
         version = struct.pack("H", 1)
@@ -338,7 +389,17 @@ class ResultSerializer:
         return header + version + data_length + data_bytes
 
     def _binary_deserialize(self, data: bytes) -> dict[str, Any]:
-        """Deserialize custom binary format."""
+        """Deserialize custom binary format.
+
+        Args:
+            data: Binary serialized data with header, version, and msgpack payload.
+
+        Returns:
+            Deserialized dictionary from binary format.
+
+        Raises:
+            ValueError: If binary format is invalid or protocol version is not supported.
+        """
         # Check header
         if data[:4] != b"ICRK":
             raise ValueError("Invalid binary format")
@@ -367,7 +428,14 @@ class ResultSerializer:
             return validate_type(msgpack.unpackb(data_bytes, raw=False, timestamp=3), dict)
 
     def _encrypt_data(self, data: bytes) -> bytes:
-        """Encrypt data using AES."""
+        """Encrypt data using AES.
+
+        Args:
+            data: Plaintext bytes to encrypt.
+
+        Returns:
+            IV prepended to AES-CBC encrypted ciphertext.
+        """
         from Crypto.Cipher import AES  # noqa: S413
         from Crypto.Random import get_random_bytes  # noqa: S413
         from Crypto.Util.Padding import pad
@@ -384,7 +452,14 @@ class ResultSerializer:
         return iv + encrypted
 
     def _decrypt_data(self, data: bytes) -> bytes:
-        """Decrypt AES encrypted data."""
+        """Decrypt AES encrypted data.
+
+        Args:
+            data: IV prepended to AES-CBC encrypted ciphertext.
+
+        Returns:
+            Decrypted plaintext bytes.
+        """
         from Crypto.Cipher import AES  # noqa: S413
         from Crypto.Util.Padding import unpad
 
@@ -398,7 +473,14 @@ class ResultSerializer:
         return unpad(cipher.decrypt(encrypted), AES.block_size)
 
     def batch_serialize(self, results: list[BaseResult]) -> bytes:
-        """Serialize multiple results efficiently."""
+        """Serialize multiple results efficiently.
+
+        Args:
+            results: List of results to serialize as a batch.
+
+        Returns:
+            Serialized batch data with ID and count metadata.
+        """
         batch_data = {
             "batch_id": hashlib.sha256(str(datetime.now()).encode()).hexdigest()[:16],
             "count": len(results),
@@ -408,7 +490,14 @@ class ResultSerializer:
         return self.serialize_dict(batch_data)
 
     def serialize_dict(self, data: dict[str, Any]) -> bytes:
-        """Serialize dictionary directly."""
+        """Serialize dictionary directly.
+
+        Args:
+            data: Dictionary to serialize.
+
+        Returns:
+            Serialized dictionary bytes, optionally compressed and encrypted.
+        """
         if self.format == DataFormat.JSON:
             serialized = json.dumps(data, cls=CustomJSONEncoder).encode()
         elif self.format == DataFormat.MSGPACK:
@@ -423,10 +512,21 @@ class ResultSerializer:
 
 
 class CustomJSONEncoder(json.JSONEncoder):
-    """Customize JSON encoder for complex types."""
+    """Customize JSON encoder for complex types.
+
+    Extends the standard JSON encoder to handle bytes, Enums, Path objects,
+    and custom objects with to_dict methods.
+    """
 
     def default(self, obj: object) -> object:
-        """Encode complex objects to JSON-serializable format."""
+        """Encode complex objects to JSON-serializable format.
+
+        Args:
+            obj: Object to encode.
+
+        Returns:
+            JSON-serializable representation of the object.
+        """
         if isinstance(obj, bytes):
             return base64.b64encode(obj).decode("ascii")
         if isinstance(obj, Enum):
@@ -437,11 +537,22 @@ class CustomJSONEncoder(json.JSONEncoder):
 
 
 class ResultConverter:
-    """Convert between different tool formats."""
+    """Convert between different tool formats.
+
+    Provides static methods to convert analysis output from various tools
+    (Ghidra, IDA Pro, Radare2, Frida) into a standardized result format.
+    """
 
     @staticmethod
     def ghidra_to_standard(ghidra_data: dict[str, Any]) -> list[BaseResult]:
-        """Convert Ghidra output to standard format."""
+        """Convert Ghidra output to standard format.
+
+        Args:
+            ghidra_data: Ghidra analysis output dictionary.
+
+        Returns:
+            List of standardized result objects.
+        """
         results: list[BaseResult] = []
 
         # Convert functions
@@ -479,7 +590,14 @@ class ResultConverter:
 
     @staticmethod
     def ida_to_standard(ida_data: dict[str, Any]) -> list[BaseResult]:
-        """Convert IDA Pro output to standard format."""
+        """Convert IDA Pro output to standard format.
+
+        Args:
+            ida_data: IDA Pro analysis output dictionary.
+
+        Returns:
+            List of standardized result objects.
+        """
         results: list[BaseResult] = []
 
         # Convert functions
@@ -518,7 +636,14 @@ class ResultConverter:
 
     @staticmethod
     def radare2_to_standard(r2_data: dict[str, Any]) -> list[BaseResult]:
-        """Convert Radare2 output to standard format."""
+        """Convert Radare2 output to standard format.
+
+        Args:
+            r2_data: Radare2 analysis output dictionary.
+
+        Returns:
+            List of standardized result objects.
+        """
         results: list[BaseResult] = []
 
         # Convert functions from aflj output
@@ -554,8 +679,15 @@ class ResultConverter:
 
     @staticmethod
     def frida_to_standard(frida_data: dict[str, Any]) -> list[BaseResult]:
-        """Convert Frida output to standard format."""
-        results = []
+        """Convert Frida output to standard format.
+
+        Args:
+            frida_data: Frida instrumentation output dictionary.
+
+        Returns:
+            List of standardized result objects.
+        """
+        results: list[BaseResult] = []
 
         # Convert API calls
         for call in frida_data.get("api_calls", []):
@@ -593,7 +725,14 @@ class ResultConverter:
 
     @staticmethod
     def standard_to_json(results: list[BaseResult]) -> str:
-        """Convert standard results to JSON for export."""
+        """Convert standard results to JSON for export.
+
+        Args:
+            results: List of standardized result objects.
+
+        Returns:
+            JSON string with results and summary statistics.
+        """
         export_data: dict[str, Any] = {
             "version": "1.0",
             "timestamp": datetime.now().isoformat(),

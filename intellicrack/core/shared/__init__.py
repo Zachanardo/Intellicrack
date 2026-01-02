@@ -23,12 +23,6 @@ import contextlib
 with contextlib.suppress(ImportError):
     from .bypass_config import BypassConfig
 
-"""
-Shared Core Components
-
-Common utilities and configurations used across multiple core modules.
-"""
-
 __all__ = [
     "BypassConfig",
 ]

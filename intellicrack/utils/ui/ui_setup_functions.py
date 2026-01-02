@@ -68,6 +68,12 @@ else:
         """Production fallback widget for headless operation."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize the headless widget.
+
+            Args:
+                args: Positional arguments for widget creation.
+                kwargs: Keyword arguments for widget creation.
+            """
             self._args = args
             self._kwargs = kwargs
             self._attributes: dict[str, object] = {}
@@ -78,43 +84,103 @@ else:
             self._name = kwargs.get("objectName", f"widget_{id(self)}")
 
         def setParent(self, parent: object) -> None:
+            """Set the parent widget.
+
+            Args:
+                parent: Parent widget or None.
+            """
             self._parent = parent
             if parent and hasattr(parent, "_children"):
                 parent._children.append(self)
 
         def show(self) -> None:
+            """Show the widget."""
             self._visible = True
 
         def hide(self) -> None:
+            """Hide the widget."""
             self._visible = False
 
         def setEnabled(self, enabled: bool) -> None:
+            """Enable or disable the widget.
+
+            Args:
+                enabled: True to enable, False to disable.
+            """
             self._enabled = enabled
 
         def setText(self, text: str) -> None:
+            """Set the widget text.
+
+            Args:
+                text: Text to set.
+            """
             self._attributes["text"] = text
 
         def text(self) -> str:
+            """Get the widget text.
+
+            Returns:
+                Current widget text.
+            """
             result = self._attributes.get("text", "")
             return str(result) if result is not None else ""
 
         def setValue(self, value: int) -> None:
+            """Set the widget value.
+
+            Args:
+                value: Value to set.
+            """
             self._attributes["value"] = value
 
         def value(self) -> int:
+            """Get the widget value.
+
+            Returns:
+                Current widget value.
+            """
             result = self._attributes.get("value", 0)
             return int(result) if isinstance(result, (int, float)) else 0
 
         def addWidget(self, widget: object) -> None:
+            """Add a widget to the layout.
+
+            Args:
+                widget: Widget to add.
+            """
             if widget and hasattr(widget, "setParent"):
                 widget.setParent(self)
 
         def addLayout(self, layout: object) -> None:
+            """Add a layout to the widget.
+
+            Args:
+                layout: Layout to add.
+            """
             if layout:
                 self._children.append(layout)
 
         def __getattr__(self, name: str) -> Callable[..., None]:
+            """Get a method for undefined attributes.
+
+            Args:
+                name: Attribute name.
+
+            Returns:
+                A callable that logs the attempted access and stores results.
+            """
             def method(*args: object, **kwargs: object) -> None:
+                if name.startswith("_"):
+                    return None
+                if name.startswith("set"):
+                    value = args[0] if args else kwargs.get("value")
+                    attr_name = name[3:].lower() if len(name) > 3 else name
+                    if attr_name:
+                        self._attributes[attr_name] = value
+                elif name.startswith("get") or name.startswith("is"):
+                    attr_name = name[3:].lower() if name.startswith("get") and len(name) > 3 else name
+                    return self._attributes.get(attr_name)
                 return None
 
             return method
@@ -123,40 +189,87 @@ else:
         """Production fallback layout for headless operation."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize the headless layout.
+
+            Args:
+                args: Positional arguments for layout creation.
+                kwargs: Keyword arguments for layout creation.
+            """
             super().__init__(*args, **kwargs)
             self._spacing = 0
             self._margin: tuple[int, int, int, int] = (0, 0, 0, 0)
 
         def setSpacing(self, spacing: int) -> None:
+            """Set the spacing between layout items.
+
+            Args:
+                spacing: Spacing value in pixels.
+            """
             self._spacing = spacing
 
         def setContentsMargins(self, left: int, top: int, right: int, bottom: int) -> None:
+            """Set the layout margins.
+
+            Args:
+                left: Left margin in pixels.
+                top: Top margin in pixels.
+                right: Right margin in pixels.
+                bottom: Bottom margin in pixels.
+            """
             self._margin = (left, top, right, bottom)
 
     class HeadlessTimer:
         """Production fallback timer for headless operation."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize the headless timer.
+
+            Args:
+                args: Positional arguments for timer creation.
+                kwargs: Keyword arguments for timer creation.
+            """
             self._interval = 1000
             self._active = False
             self._single_shot = False
 
         def start(self, interval: int | None = None) -> None:
+            """Start the timer.
+
+            Args:
+                interval: Optional interval in milliseconds to set before starting.
+            """
             if interval:
                 self._interval = interval
             self._active = True
 
         def stop(self) -> None:
+            """Stop the timer."""
             self._active = False
 
         def setInterval(self, interval: int) -> None:
+            """Set the timer interval.
+
+            Args:
+                interval: Interval in milliseconds.
+            """
             self._interval = interval
 
         def setSingleShot(self, single: bool) -> None:
+            """Set single-shot mode for the timer.
+
+            Args:
+                single: True for single-shot, False for repeating.
+            """
             self._single_shot = single
 
         @staticmethod
         def singleShot(interval: int, callback: Callable[..., None]) -> None:
+            """Execute a callback after a delay.
+
+            Args:
+                interval: Delay in milliseconds.
+                callback: Callable to execute.
+            """
             if callable(callback):
                 callback()
 

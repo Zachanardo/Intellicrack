@@ -4,7 +4,6 @@ This tool verifies which DLLs are actually loaded at runtime and from what locat
 helping diagnose PATH priority issues and version conflicts.
 """
 import ctypes
-import ctypes.util
 import os
 from pathlib import Path
 

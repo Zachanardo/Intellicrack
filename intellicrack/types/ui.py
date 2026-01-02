@@ -90,12 +90,7 @@ class WidgetProtocol(Protocol):
         ...
 
     def isEnabled(self) -> bool:  # noqa: N802
-        """Check if the widget is enabled.
-
-        Returns:
-            True if the widget is enabled, False otherwise.
-
-        """
+        """Check if the widget is enabled."""
         ...
 
     def setVisible(self, visible: bool) -> None:  # noqa: N802, FBT001
@@ -108,29 +103,27 @@ class WidgetProtocol(Protocol):
         ...
 
     def isVisible(self) -> bool:  # noqa: N802
-        """Check if the widget is visible.
-
-        Returns:
-            True if the widget is visible, False otherwise.
-
-        """
+        """Check if the widget is visible."""
         ...
 
     def show(self) -> None:
-        """Show the widget."""
+        """Show the widget.
+
+        Does not return a value.
+
+        """
         ...
 
     def hide(self) -> None:
-        """Hide the widget."""
+        """Hide the widget.
+
+        Does not return a value.
+
+        """
         ...
 
     def close(self) -> bool:
-        """Close the widget.
-
-        Returns:
-            True if the widget was closed, False otherwise.
-
-        """
+        """Close the widget."""
         ...
 
     def setLayout(self, layout: object) -> None:  # noqa: N802
@@ -138,6 +131,8 @@ class WidgetProtocol(Protocol):
 
         Args:
             layout: The layout to set (typically a QLayout or LayoutProtocol).
+
+        Does not return a value.
 
         """
         ...
@@ -168,9 +163,6 @@ class MessageBoxProtocol(Protocol):
             buttons: Buttons to show (OR'd StandardButton values).
             default_button: Default button.
 
-        Returns:
-            The button that was clicked (StandardButton value).
-
         """
         ...
 
@@ -190,9 +182,6 @@ class MessageBoxProtocol(Protocol):
             text: Message text.
             buttons: Buttons to show.
             default_button: Default button.
-
-        Returns:
-            The button that was clicked.
 
         """
         ...
@@ -214,9 +203,6 @@ class MessageBoxProtocol(Protocol):
             buttons: Buttons to show.
             default_button: Default button.
 
-        Returns:
-            The button that was clicked.
-
         """
         ...
 
@@ -236,9 +222,6 @@ class MessageBoxProtocol(Protocol):
             text: Question text.
             buttons: Buttons to show.
             default_button: Default button.
-
-        Returns:
-            The button that was clicked.
 
         """
         ...
@@ -263,9 +246,6 @@ class FileDialogProtocol(Protocol):
             directory: Initial directory.
             file_filter: File filter string.
 
-        Returns:
-            Tuple of (selected_file, selected_filter).
-
         """
         ...
 
@@ -284,9 +264,6 @@ class FileDialogProtocol(Protocol):
             directory: Initial directory.
             file_filter: File filter string.
 
-        Returns:
-            Tuple of (selected_file, selected_filter).
-
         """
         ...
 
@@ -303,9 +280,6 @@ class FileDialogProtocol(Protocol):
             caption: Dialog caption.
             directory: Initial directory.
 
-        Returns:
-            Selected directory path or empty string.
-
         """
         ...
 
@@ -320,6 +294,8 @@ class SignalProtocol(Protocol):
         Args:
             *args: Arguments to pass to connected slots.
 
+        Does not return a value.
+
         """
         ...
 
@@ -328,6 +304,8 @@ class SignalProtocol(Protocol):
 
         Args:
             slot: The callable to connect.
+
+        Does not return a value.
 
         """
         ...
@@ -338,6 +316,8 @@ class SignalProtocol(Protocol):
         Args:
             slot: The callable to disconnect (or None to disconnect all).
 
+        Does not return a value.
+
         """
         ...
 
@@ -347,12 +327,7 @@ class LineEditProtocol(Protocol):
     """Protocol for line edit widgets."""
 
     def text(self) -> str:
-        """Get the current text.
-
-        Returns:
-            The current text content.
-
-        """
+        """Get the current text."""
         ...
 
     def setText(self, text: str) -> None:  # noqa: N802
@@ -360,6 +335,8 @@ class LineEditProtocol(Protocol):
 
         Args:
             text: The text to set.
+
+        Does not return a value.
 
         """
         ...
@@ -370,16 +347,13 @@ class LineEditProtocol(Protocol):
         Args:
             read_only: Whether the widget should be read-only.
 
+        Does not return a value.
+
         """
         ...
 
     def isReadOnly(self) -> bool:  # noqa: N802
-        """Check if read-only.
-
-        Returns:
-            True if read-only, False otherwise.
-
-        """
+        """Check if read-only."""
         ...
 
 
@@ -388,12 +362,7 @@ class PushButtonProtocol(Protocol):
     """Protocol for push button widgets."""
 
     def text(self) -> str:
-        """Get the button text.
-
-        Returns:
-            The button text.
-
-        """
+        """Get the button text."""
         ...
 
     def setText(self, text: str) -> None:  # noqa: N802
@@ -401,6 +370,8 @@ class PushButtonProtocol(Protocol):
 
         Args:
             text: The text to set.
+
+        Does not return a value.
 
         """
         ...
@@ -411,11 +382,17 @@ class PushButtonProtocol(Protocol):
         Args:
             enabled: Whether the button should be enabled.
 
+        Does not return a value.
+
         """
         ...
 
     def click(self) -> None:
-        """Programmatically click the button."""
+        """Programmatically click the button.
+
+        Does not return a value.
+
+        """
         ...
 
 
@@ -424,12 +401,7 @@ class GroupBoxProtocol(Protocol):
     """Protocol for group box widgets."""
 
     def title(self) -> str:
-        """Get the group box title.
-
-        Returns:
-            The title string.
-
-        """
+        """Get the group box title."""
         ...
 
     def setTitle(self, title: str) -> None:  # noqa: N802
@@ -437,6 +409,8 @@ class GroupBoxProtocol(Protocol):
 
         Args:
             title: The title to set.
+
+        Does not return a value.
 
         """
         ...
@@ -465,12 +439,21 @@ class LayoutProtocol(Protocol):
             stretch: Optional stretch factor.
             alignment: Optional alignment flags.
 
+        Does not return a value.
+
         """
         ...
 
 
 class DialogResult(BaseModel):
-    """Result from a dialog interaction."""
+    """Result from a dialog interaction.
+
+    Attributes:
+        accepted: Whether the dialog was accepted.
+        button_clicked: The button that was clicked (StandardButton value).
+        data: Any data returned by the dialog.
+
+    """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -480,7 +463,14 @@ class DialogResult(BaseModel):
 
 
 class FileDialogResult(BaseModel):
-    """Result from a file dialog."""
+    """Result from a file dialog.
+
+    Attributes:
+        path: Selected file or directory path.
+        filter_used: The filter string that was selected.
+        cancelled: Whether the dialog was cancelled without selection.
+
+    """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -494,6 +484,13 @@ class BinarySelectionWidgets(BaseModel):
 
     This model replaces the dict[str, Any] return type of
     create_binary_selection_header().
+
+    Attributes:
+        group: The QGroupBox widget container for the binary selection interface.
+        path_edit: The QLineEdit widget displaying the selected binary file path.
+        browse_btn: The QPushButton widget for opening file selection dialogs.
+        extra_buttons: Additional buttons mapped by name for extended functionality.
+
     """
 
     model_config = ConfigDict(frozen=False, extra="allow", arbitrary_types_allowed=True)
@@ -525,6 +522,8 @@ class HeadlessWidget:
         Args:
             enabled: Whether the widget should be enabled.
 
+        Does not return a value.
+
         """
         self._enabled = enabled
 
@@ -532,7 +531,7 @@ class HeadlessWidget:
         """Check if the widget is enabled.
 
         Returns:
-            True if the widget is enabled, False otherwise.
+            bool: True if the widget is enabled, False otherwise.
 
         """
         return self._enabled
@@ -543,6 +542,8 @@ class HeadlessWidget:
         Args:
             visible: Whether the widget should be visible.
 
+        Does not return a value.
+
         """
         self._visible = visible
 
@@ -550,24 +551,32 @@ class HeadlessWidget:
         """Check if the widget is visible.
 
         Returns:
-            True if the widget is visible, False otherwise.
+            bool: True if the widget is visible, False otherwise.
 
         """
         return self._visible
 
     def show(self) -> None:
-        """Show the widget."""
+        """Show the widget.
+
+        Does not return a value.
+
+        """
         self._visible = True
 
     def hide(self) -> None:
-        """Hide the widget."""
+        """Hide the widget.
+
+        Does not return a value.
+
+        """
         self._visible = False
 
     def close(self) -> bool:
         """Close the widget.
 
         Returns:
-            True always for headless widgets.
+            bool: True always for headless widgets.
 
         """
         self._visible = False
@@ -578,6 +587,8 @@ class HeadlessWidget:
 
         Args:
             layout: The layout to set (ignored in headless mode).
+
+        Does not return a value.
 
         """
 
@@ -606,7 +617,7 @@ class HeadlessMessageBox:
             default_button: Default button (ignored in headless mode).
 
         Returns:
-            StandardButton.Ok always.
+            int: StandardButton.Ok always.
 
         """
         import logging
@@ -632,7 +643,7 @@ class HeadlessMessageBox:
             default_button: Default button (ignored in headless mode).
 
         Returns:
-            StandardButton.Ok always.
+            int: StandardButton.Ok always.
 
         """
         import logging
@@ -658,7 +669,7 @@ class HeadlessMessageBox:
             default_button: Default button (ignored in headless mode).
 
         Returns:
-            StandardButton.Ok always.
+            int: StandardButton.Ok always.
 
         """
         import logging
@@ -684,7 +695,7 @@ class HeadlessMessageBox:
             default_button: Default button to return.
 
         Returns:
-            The default button if set, otherwise StandardButton.Yes.
+            int: The default button if set, otherwise StandardButton.Yes.
 
         """
         import logging
@@ -717,7 +728,7 @@ class HeadlessFileDialog:
             file_filter: File filter (ignored).
 
         Returns:
-            Empty tuple ("", "").
+            tuple[str, str]: Empty tuple ("", "").
 
         """
         return ("", "")
@@ -738,7 +749,7 @@ class HeadlessFileDialog:
             file_filter: File filter (ignored).
 
         Returns:
-            Empty tuple ("", "").
+            tuple[str, str]: Empty tuple ("", "").
 
         """
         return ("", "")
@@ -757,7 +768,7 @@ class HeadlessFileDialog:
             directory: Initial directory (ignored).
 
         Returns:
-            Empty string.
+            str: Empty string.
 
         """
         return ""
@@ -776,6 +787,13 @@ class QtMessageBoxAdapter:
 
         At runtime, if parent is a QWidget, it's returned directly.
         If parent is None or a HeadlessWidget, None is returned.
+
+        Args:
+            parent: The parent widget to convert.
+
+        Returns:
+            object: The Qt-compatible parent object or None.
+
         """
         if parent is None:
             return None
@@ -791,7 +809,19 @@ class QtMessageBoxAdapter:
         buttons: int = StandardButton.Ok,
         default_button: int = StandardButton.NoButton,
     ) -> int:
-        """Show an information message box using Qt."""
+        """Show an information message box using Qt.
+
+        Args:
+            parent: Parent widget for the dialog.
+            title: Dialog title.
+            text: Dialog message text.
+            buttons: Button flags to display.
+            default_button: Default button to select.
+
+        Returns:
+            int: The button clicked by the user (StandardButton value).
+
+        """
         try:
             from PyQt6.QtWidgets import QMessageBox, QWidget
 
@@ -818,7 +848,19 @@ class QtMessageBoxAdapter:
         buttons: int = StandardButton.Ok,
         default_button: int = StandardButton.NoButton,
     ) -> int:
-        """Show a warning message box using Qt."""
+        """Show a warning message box using Qt.
+
+        Args:
+            parent: Parent widget for the dialog.
+            title: Dialog title.
+            text: Dialog message text.
+            buttons: Button flags to display.
+            default_button: Default button to select.
+
+        Returns:
+            int: The button clicked by the user (StandardButton value).
+
+        """
         try:
             from PyQt6.QtWidgets import QMessageBox, QWidget
 
@@ -845,7 +887,19 @@ class QtMessageBoxAdapter:
         buttons: int = StandardButton.Ok,
         default_button: int = StandardButton.NoButton,
     ) -> int:
-        """Show a critical message box using Qt."""
+        """Show a critical message box using Qt.
+
+        Args:
+            parent: Parent widget for the dialog.
+            title: Dialog title.
+            text: Dialog message text.
+            buttons: Button flags to display.
+            default_button: Default button to select.
+
+        Returns:
+            int: The button clicked by the user (StandardButton value).
+
+        """
         try:
             from PyQt6.QtWidgets import QMessageBox, QWidget
 
@@ -872,7 +926,19 @@ class QtMessageBoxAdapter:
         buttons: int = StandardButton.Yes | StandardButton.No,
         default_button: int = StandardButton.NoButton,
     ) -> int:
-        """Show a question message box using Qt."""
+        """Show a question message box using Qt.
+
+        Args:
+            parent: Parent widget for the dialog.
+            title: Dialog title.
+            text: Dialog message text.
+            buttons: Button flags to display.
+            default_button: Default button to select.
+
+        Returns:
+            int: The button clicked by the user (StandardButton value).
+
+        """
         try:
             from PyQt6.QtWidgets import QMessageBox, QWidget
 
@@ -897,7 +963,15 @@ class QtFileDialogAdapter:
 
     @staticmethod
     def _get_qt_parent(parent: WidgetProtocol | None) -> object:
-        """Convert Protocol parent to Qt-compatible parent."""
+        """Convert Protocol parent to Qt-compatible parent.
+
+        Args:
+            parent: The parent widget to convert.
+
+        Returns:
+            object: The Qt-compatible parent object or None.
+
+        """
         if parent is None:
             return None
         if isinstance(parent, HeadlessWidget):
@@ -911,7 +985,18 @@ class QtFileDialogAdapter:
         directory: str = "",
         file_filter: str = "",
     ) -> tuple[str, str]:
-        """Show an open file dialog using Qt."""
+        """Show an open file dialog using Qt.
+
+        Args:
+            parent: Parent widget for the dialog.
+            caption: Dialog window title.
+            directory: Initial directory path.
+            file_filter: File type filter string.
+
+        Returns:
+            tuple[str, str]: Tuple of (selected_file_path, selected_filter).
+
+        """
         try:
             from PyQt6.QtWidgets import QFileDialog, QWidget
 
@@ -936,7 +1021,18 @@ class QtFileDialogAdapter:
         directory: str = "",
         file_filter: str = "",
     ) -> tuple[str, str]:
-        """Show a save file dialog using Qt."""
+        """Show a save file dialog using Qt.
+
+        Args:
+            parent: Parent widget for the dialog.
+            caption: Dialog window title.
+            directory: Initial directory path.
+            file_filter: File type filter string.
+
+        Returns:
+            tuple[str, str]: Tuple of (selected_file_path, selected_filter).
+
+        """
         try:
             from PyQt6.QtWidgets import QFileDialog, QWidget
 
@@ -960,7 +1056,17 @@ class QtFileDialogAdapter:
         caption: str = "",
         directory: str = "",
     ) -> str:
-        """Show a directory selection dialog using Qt."""
+        """Show a directory selection dialog using Qt.
+
+        Args:
+            parent: Parent widget for the dialog.
+            caption: Dialog window title.
+            directory: Initial directory path.
+
+        Returns:
+            str: Selected directory path or empty string if cancelled.
+
+        """
         try:
             from PyQt6.QtWidgets import QFileDialog, QWidget
 
@@ -982,11 +1088,11 @@ def get_message_box() -> type[HeadlessMessageBox] | type[QtMessageBoxAdapter]:
     """Get the appropriate MessageBox implementation.
 
     Returns:
-        QtMessageBoxAdapter if PyQt6 is available, HeadlessMessageBox otherwise.
+        type[HeadlessMessageBox] | type[QtMessageBoxAdapter]: QtMessageBoxAdapter if PyQt6 is available, HeadlessMessageBox otherwise.
 
     """
     try:
-        from PyQt6.QtWidgets import QMessageBox  # noqa: F401
+        from PyQt6.QtWidgets import QMessageBox
 
         return QtMessageBoxAdapter
     except ImportError:
@@ -997,11 +1103,11 @@ def get_file_dialog() -> type[HeadlessFileDialog] | type[QtFileDialogAdapter]:
     """Get the appropriate FileDialog implementation.
 
     Returns:
-        QtFileDialogAdapter if PyQt6 is available, HeadlessFileDialog otherwise.
+        type[HeadlessFileDialog] | type[QtFileDialogAdapter]: QtFileDialogAdapter if PyQt6 is available, HeadlessFileDialog otherwise.
 
     """
     try:
-        from PyQt6.QtWidgets import QFileDialog  # noqa: F401
+        from PyQt6.QtWidgets import QFileDialog
 
         return QtFileDialogAdapter
     except ImportError:

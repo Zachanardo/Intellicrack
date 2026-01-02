@@ -37,11 +37,12 @@ def log_message(message: str, level: str = "INFO") -> str:
     """Log a message at the specified level and return the message.
 
     Args:
-        message: The message to log
-        level: The log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        message: The message to log.
+        level: The log level (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+            Defaults to "INFO".
 
     Returns:
-        The original message (allows chaining with emit calls)
+        The original message unmodified to allow chaining with emit calls.
 
     """
     level = level.upper()
@@ -62,10 +63,11 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
     """Log function entry, exit, arguments, return value, and exceptions.
 
     Args:
-        func: The function to decorate
+        func: The function to decorate.
 
     Returns:
-        The wrapped function with logging
+        The wrapped function with logging enabled for both sync and async
+            functions.
 
     """
     # Thread-local storage to prevent recursion
@@ -75,7 +77,21 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
 
     @functools.wraps(func)
     def wrapper(*args: object, **kwargs: object) -> object:
-        """Wrap function for debug logging."""
+        """Wrap function for debug logging.
+
+        Args:
+            *args: Positional arguments to pass to the wrapped function.
+            **kwargs: Keyword arguments to pass to the wrapped function.
+
+        Returns:
+            The return value from the wrapped function.
+
+        Raises:
+            OSError: If an OS-level error occurs during function execution.
+            ValueError: If a value error occurs during function execution.
+            RuntimeError: If a runtime error occurs during function execution.
+
+        """
         # Check if we're already in a logging call to prevent recursion
         if hasattr(local, "in_logger") and local.in_logger:
             # Just call the function without logging to avoid recursion
@@ -95,7 +111,28 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
 
             # Safely represent arguments to avoid issues with large objects
             def safe_repr(obj: object, max_len: int = 100) -> str:
-                """Safely represent an object as a string."""
+                """Safely represent an object as a string.
+
+                Args:
+                    obj: The object to represent as a string.
+                    max_len: Maximum length of the representation. Defaults to
+                        100.
+
+                Returns:
+                    A safe string representation of the object, or
+                        "<repr_failed>" if representation fails.
+
+                Raises:
+                    TypeError: If repr() fails with a type error (caught and
+                        handled internally).
+                    ValueError: If repr() fails with a value error (caught and
+                        handled internally).
+                    AttributeError: If repr() fails with an attribute error
+                        (caught and handled internally).
+                    RecursionError: If repr() causes a recursion error (caught
+                        and handled internally).
+
+                """
                 try:
                     r = repr(obj)
                     if len(r) > max_len:
@@ -129,6 +166,23 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
 
         @functools.wraps(func)
         async def async_wrapper(*args: object, **kwargs: object) -> object:
+            """Async wrapper function for debug logging.
+
+            Args:
+                *args: Positional arguments to pass to the wrapped async
+                    function.
+                **kwargs: Keyword arguments to pass to the wrapped async
+                    function.
+
+            Returns:
+                The return value from the wrapped async function.
+
+            Raises:
+                OSError: If an OS-level error occurs during function execution.
+                ValueError: If a value error occurs during function execution.
+                RuntimeError: If a runtime error occurs during function execution.
+
+            """
             # Check if we're already in a logging call to prevent recursion
             if hasattr(local, "in_logger") and local.in_logger:
                 return await func(*args, **kwargs)
@@ -146,7 +200,28 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
 
                 # Use the same safe_repr function for async too
                 def safe_repr(obj: object, max_len: int = 100) -> str:
-                    """Safely represent an object as a string."""
+                    """Safely represent an object as a string.
+
+                    Args:
+                        obj: The object to represent as a string.
+                        max_len: Maximum length of the representation. Defaults to
+                            100.
+
+                    Returns:
+                        A safe string representation of the object, or
+                            "<repr_failed>" if representation fails.
+
+                    Raises:
+                        TypeError: If repr() fails with a type error (caught and
+                            handled internally).
+                        ValueError: If repr() fails with a value error (caught and
+                            handled internally).
+                        AttributeError: If repr() fails with an attribute error
+                            (caught and handled internally).
+                        RecursionError: If repr() causes a recursion error (caught
+                            and handled internally).
+
+                    """
                     try:
                         r = repr(obj)
                         if len(r) > max_len:
@@ -184,10 +259,10 @@ def log_all_methods[C: type](cls: C) -> C:
     """Class decorator to apply log_function_call to all methods of a class.
 
     Args:
-        cls: The class to decorate
+        cls: The class to decorate.
 
     Returns:
-        The class with all methods decorated
+        The class with all public methods decorated with logging.
 
     """
     for attr_name, attr_value in cls.__dict__.items():
@@ -205,13 +280,13 @@ def setup_logger(
     """Set up a logger with the specified configuration.
 
     Args:
-        name: Logger name
-        level: Logging level (default: INFO)
-        log_file: Optional log file path
-        format_string: Optional format string for log messages
+        name: Logger name. Defaults to "Intellicrack".
+        level: Logging level. Defaults to logging.INFO.
+        log_file: Optional log file path.
+        format_string: Optional format string for log messages.
 
     Returns:
-        Configured logger instance
+        Configured logger instance with console and optional file handlers.
 
     """
     target_logger = logging.getLogger(name)
@@ -223,7 +298,6 @@ def setup_logger(
 
     formatter = logging.Formatter(format_string)
 
-    import codecs
     import io
 
     if sys.platform == "win32":
@@ -261,10 +335,11 @@ def get_logger(name: str | None = None) -> logging.Logger:
     """Get a logger instance.
 
     Args:
-        name: Logger name (default: caller's module name)
+        name: Logger name. Defaults to the caller's module name if not
+            specified.
 
     Returns:
-        Logger instance
+        A configured logger instance for the specified name or caller's module.
 
     """
     if name is None:
@@ -287,10 +362,11 @@ def configure_logging(
     """Configure logging for the entire application.
 
     Args:
-        level: Logging level
-        log_file: Optional log file path
-        format_string: Optional format string
-        enable_comprehensive: Whether to enable comprehensive function logging
+        level: Logging level. Defaults to logging.INFO.
+        log_file: Optional log file path.
+        format_string: Optional format string.
+        enable_comprehensive: Whether to enable comprehensive function logging.
+            Defaults to False.
 
     """
     # Set up the root logger
@@ -315,12 +391,17 @@ def setup_logging(
     """Set up logging for the application with optional log rotation.
 
     Args:
-        level: The logging level as a string (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        log_file: Optional log file path
-        enable_rotation: Whether to enable log rotation
-        max_bytes: Max size of each log file before rotation (default: 10MB)
-        backup_count: Number of backup files to keep (default: 5)
-        enable_console: Whether to enable console logging (default: True)
+        level: The logging level as a string (DEBUG, INFO, WARNING, ERROR,
+            CRITICAL). Defaults to "INFO".
+        log_file: Optional log file path.
+        enable_rotation: Whether to enable log rotation. Defaults to True.
+        max_bytes: Max size of each log file before rotation. Defaults to 10MB
+            (10485760 bytes).
+        backup_count: Number of backup files to keep. Defaults to 5.
+        enable_console: Whether to enable console logging. Defaults to True.
+
+    Raises:
+        TypeError: If the specified log level string is invalid.
 
     """
     # Convert string level to logging constant
@@ -398,14 +479,16 @@ def setup_persistent_logging(
     """Set up persistent logging with automatic rotation.
 
     Args:
-        log_dir: Directory for log files (default: ~/intellicrack/logs)
-        log_name: Base name for log files
-        enable_rotation: Whether to enable log rotation
-        max_bytes: Max size of each log file before rotation (default: 10MB)
-        backup_count: Number of backup files to keep (default: 5)
+        log_dir: Directory for log files. Defaults to ~/intellicrack/logs if
+            not specified.
+        log_name: Base name for log files. Defaults to "intellicrack".
+        enable_rotation: Whether to enable log rotation. Defaults to True.
+        max_bytes: Max size of each log file before rotation. Defaults to 10MB
+            (10485760 bytes).
+        backup_count: Number of backup files to keep. Defaults to 5.
 
     Returns:
-        str: Path to the log file
+        Path to the log file.
 
     """
     import os

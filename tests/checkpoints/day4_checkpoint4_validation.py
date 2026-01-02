@@ -31,7 +31,7 @@ class BinaryPatch:
     patch_type: str = "defensive"
 
 
-def test_enhanced_patch_instruction_generation():
+def test_enhanced_patch_instruction_generation() -> bool:
     """Test enhanced patch instruction generation from Day 4.1."""
     print("Test 1: Enhanced Patch Instruction Generation Validation")
     print("-" * 55)
@@ -125,7 +125,7 @@ def test_enhanced_patch_instruction_generation():
     return success
 
 
-def test_memory_write_instruction_generation():
+def test_memory_write_instruction_generation() -> bool:
     """Test enhanced memory write instruction generation from Day 4.1."""
     print("\nTest 2: Enhanced Memory Write Instruction Generation")
     print("-" * 50)
@@ -171,12 +171,12 @@ def test_memory_write_instruction_generation():
     return success
 
 
-def test_r2_to_binary_patch_integration():
+def test_r2_to_binary_patch_integration() -> bool:
     """Test R2 to binary patch integration from Day 4.2."""
     print("\nTest 3: R2 to Binary Patch Integration")
     print("-" * 40)
 
-    def convert_r2_to_binary_patch(r2_patch: dict, patch_category: str) -> BinaryPatch | None:
+    def convert_r2_to_binary_patch(r2_patch: dict[str, Any], patch_category: str) -> BinaryPatch | None:
         """Convert R2 patch to binary patch format."""
         try:
             # Extract address
@@ -259,7 +259,7 @@ def test_r2_to_binary_patch_integration():
     return success
 
 
-def test_binary_patch_application():
+def test_binary_patch_application() -> bool:
     """Test binary patch application from Day 4.2."""
     print("\nTest 4: Binary Patch Application")
     print("-" * 35)
@@ -306,8 +306,8 @@ def test_binary_patch_application():
             return False
 
         # Verify patch was applied
-        with open(test_binary, "rb") as f:
-            patched_content = f.read()
+        with open(test_binary, "rb") as verify_file:
+            patched_content = verify_file.read()
 
         verification_success = patched_content[:6] == patch.patched_bytes
 
@@ -325,7 +325,7 @@ def test_binary_patch_application():
         test_binary.unlink(missing_ok=True)
 
 
-def test_comprehensive_forbidden_patterns():
+def test_comprehensive_forbidden_patterns() -> bool:
     """Test for any remaining forbidden patterns in patch generation."""
     print("\nTest 5: Comprehensive Forbidden Pattern Scan")
     print("-" * 45)
@@ -384,7 +384,7 @@ def test_comprehensive_forbidden_patterns():
     return success
 
 
-def main():
+def main() -> int:
     """Main validation function."""
     print("DAY 4.3 PRODUCTION READINESS CHECKPOINT 4")
     print("=" * 50)

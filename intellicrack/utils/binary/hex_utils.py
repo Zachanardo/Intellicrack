@@ -32,12 +32,13 @@ def create_hex_dump(data: bytes | bytearray, bytes_per_line: int = 16, start_off
     """Create a formatted hex dump of binary data.
 
     Args:
-        data: Binary data to dump
-        bytes_per_line: Number of bytes per line
-        start_offset: Starting offset for display
+        data: Binary data to dump.
+        bytes_per_line: Number of bytes per line.
+        start_offset: Starting offset for display.
 
     Returns:
-        Formatted hex dump string
+        Formatted hex dump string with offset, hex representation, and ASCII
+            representation on each line.
 
     """
     lines = []
@@ -67,10 +68,13 @@ def hex_to_bytes(hex_string: str) -> bytes:
     r"""Convert hex string to bytes, handling various formats.
 
     Args:
-        hex_string: Hex string (supports spaces, 0x prefix, \\x format)
+        hex_string: Hex string (supports spaces, 0x prefix, \\x format).
 
     Returns:
-        Converted bytes
+        Converted bytes from the hex string.
+
+    Raises:
+        ValueError: If the hex string is invalid or cannot be converted to bytes.
 
     """
     # Remove common formatting
@@ -92,12 +96,12 @@ def bytes_to_hex(data: bytes, format_style: str = "plain", uppercase: bool = Fal
     r"""Convert bytes to hex string in various formats.
 
     Args:
-        data: Binary data
-        format_style: Output format ('plain', 'spaces', '0x', '\\x', 'c_array')
-        uppercase: Use uppercase hex characters
+        data: Binary data to convert.
+        format_style: Output format ('plain', 'spaces', '0x', '\\x', 'c_array').
+        uppercase: Use uppercase hex characters.
 
     Returns:
-        Formatted hex string
+        Formatted hex string in the requested format.
 
     """
     hex_str = data.hex().upper() if uppercase else data.hex()
@@ -119,12 +123,12 @@ def find_pattern(data: bytes, pattern: bytes, max_results: int | None = None) ->
     """Find all occurrences of a pattern in data.
 
     Args:
-        data: Data to search
-        pattern: Pattern to find
-        max_results: Maximum number of results to return
+        data: Data to search.
+        pattern: Pattern to find.
+        max_results: Maximum number of results to return (None for unlimited).
 
     Returns:
-        List of offsets where pattern was found
+        List of byte offsets where pattern was found.
 
     """
     results = []
@@ -148,11 +152,14 @@ def calculate_checksum(data: bytes, algorithm: str = "sum8") -> int:
     """Calculate checksum of data.
 
     Args:
-        data: Binary data
-        algorithm: Checksum algorithm ('sum8', 'sum16', 'xor')
+        data: Binary data to checksum.
+        algorithm: Checksum algorithm ('sum8', 'sum16', 'xor').
 
     Returns:
-        Checksum value
+        Checksum value as an integer.
+
+    Raises:
+        ValueError: If the algorithm is unknown or not supported.
 
     """
     if algorithm == "sum8":
@@ -173,12 +180,13 @@ def patch_bytes(data: bytearray, offset: int, patch_data: bytes) -> bool:
     """Patch bytes at specified offset.
 
     Args:
-        data: Data to patch (modified in place)
-        offset: Offset to patch at
-        patch_data: Data to write
+        data: Data to patch (modified in place).
+        offset: Offset to patch at.
+        patch_data: Data to write.
 
     Returns:
-        True if successful
+        True if patch was successful, False if offset is out of bounds or
+            an exception occurred.
 
     """
     try:
@@ -198,13 +206,14 @@ def nop_range(data: bytearray, start: int, end: int, arch: str = "x86") -> bool:
     """Fill range with NOP instructions.
 
     Args:
-        data: Data to patch (modified in place)
-        start: Start offset
-        end: End offset
-        arch: Architecture for NOP instruction
+        data: Data to patch (modified in place).
+        start: Start offset.
+        end: End offset.
+        arch: Architecture for NOP instruction ('x86', 'x64', 'arm', 'arm64').
 
     Returns:
-        True if successful
+        True if range was successfully filled with NOPs, False if architecture
+            is unknown, range is invalid, or fill operation failed.
 
     """
     nop_bytes = {
@@ -246,12 +255,13 @@ def compare_bytes(data1: bytes, data2: bytes, context: int = 3) -> list[dict[str
     """Compare two byte sequences and find differences.
 
     Args:
-        data1: First data
-        data2: Second data
-        context: Number of context bytes to show
+        data1: First data to compare.
+        data2: Second data to compare.
+        context: Number of context bytes to show around each difference.
 
     Returns:
-        List of differences with context
+        List of dictionaries containing differences with context bytes and
+            difference details (offset, byte values, etc.).
 
     """
     differences = []
@@ -298,11 +308,11 @@ def format_address(address: int, width: int = 8) -> str:
     """Format address for display.
 
     Args:
-        address: Address value
-        width: Width in hex digits
+        address: Address value to format.
+        width: Width in hex digits for zero-padding.
 
     Returns:
-        Formatted address string
+        Formatted address string with '0x' prefix and zero-padded hex digits.
 
     """
     return f"0x{address:0{width}x}"
@@ -312,10 +322,10 @@ def is_printable_ascii(data: bytes) -> bool:
     """Check if data contains only printable ASCII characters.
 
     Args:
-        data: Data to check
+        data: Data to check.
 
     Returns:
-        True if all bytes are printable ASCII
+        True if all bytes are printable ASCII (in range 32-126), False otherwise.
 
     """
     return all(32 <= b < 127 for b in data)
@@ -324,11 +334,14 @@ def is_printable_ascii(data: bytes) -> bool:
 def detect_encoding(data: bytes) -> str | None:
     """Try to detect the encoding of data.
 
+    Checks for BOM markers and attempts to decode as various common encodings.
+
     Args:
-        data: Data to analyze
+        data: Data to analyze.
 
     Returns:
-        Detected encoding name or None
+        Detected encoding name ('utf-8-sig', 'utf-16-le', 'utf-16-be', 'utf-8',
+            'ascii', 'utf-16', 'latin-1') or None if encoding cannot be detected.
 
     """
     # Check for UTF-8 BOM

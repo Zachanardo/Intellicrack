@@ -15,7 +15,6 @@ import threading
 import time
 from pathlib import Path
 from typing import Any
-from unittest.mock import patch
 
 import pytest
 import requests
@@ -80,10 +79,8 @@ class SimpleHTTPServerThread(threading.Thread):
 
             if self.use_ssl:
                 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-                # Create self-signed certificate for testing
                 with tempfile.NamedTemporaryFile(suffix=".pem", delete=False) as cert_file:
                     cert_path = Path(cert_file.name)
-                    # Generate self-signed cert using OpenSSL (simplified for testing)
                     cert_path.write_text(
                         "-----BEGIN CERTIFICATE-----\n"
                         "MIICpDCCAYwCCQC5Z5Z5Z5Z5ZjANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAls\n"
@@ -101,6 +98,33 @@ class SimpleHTTPServerThread(threading.Thread):
         if self.server:
             self.server.shutdown()
             self.server.server_close()
+
+
+class FakeIntellicrackConfig:
+    """Real test double for IntellicrackConfig."""
+
+    def __init__(self, config_data: dict[str, Any]) -> None:
+        """Initialize fake config with provided data.
+
+        Args:
+            config_data: Configuration dictionary to use
+        """
+        self._config: dict[str, Any] = config_data
+
+    def get(self, section: str, key: str, default: Any = None) -> Any:
+        """Get configuration value.
+
+        Args:
+            section: Configuration section
+            key: Configuration key
+            default: Default value if not found
+
+        Returns:
+            Configuration value or default
+        """
+        if section in self._config and key in self._config[section]:
+            return self._config[section][key]
+        return default
 
 
 @pytest.fixture(scope="module")
@@ -192,7 +216,6 @@ class TestSecureHTTPClient:
 
     def test_connection_timeout_raises_exception(self, http_client: SecureHTTPClient) -> None:
         """Connection timeout raises appropriate exception."""
-        # Use a non-routable IP address to force timeout
         url = "http://10.255.255.1/"
 
         with pytest.raises(requests.exceptions.RequestException):
@@ -202,12 +225,10 @@ class TestSecureHTTPClient:
         """Retry strategy is properly configured in session."""
         adapter = http_client.session.get_adapter("http://example.com")
         assert adapter is not None
-        # Verify retry is configured (max_retries should be set)
         assert adapter.max_retries is not None
 
     def test_http_500_triggers_retry(self, http_client: SecureHTTPClient) -> None:
         """HTTP 500 errors trigger retry logic."""
-        # This test validates that 500 is in the retry status codes
         adapter = http_client.session.get_adapter("http://example.com")
         if hasattr(adapter.max_retries, "status_forcelist"):
             assert 500 in adapter.max_retries.status_forcelist
@@ -221,7 +242,6 @@ class TestSecureHTTPClient:
 
         assert response1.status_code == 200
         assert response2.status_code == 200
-        # Same session should be reused
         assert http_client.session is not None
 
     def test_put_request_success(self, http_client: SecureHTTPClient, test_http_server: int) -> None:
@@ -230,7 +250,6 @@ class TestSecureHTTPClient:
 
         response = http_client.put(url, json={"update": "data"})
 
-        # Server responds to all methods
         assert response.status_code in [200, 201]
 
     def test_delete_request_success(self, http_client: SecureHTTPClient, test_http_server: int) -> None:
@@ -248,7 +267,6 @@ class TestSecureHTTPClient:
 
     def test_connection_refused_raises_exception(self, http_client: SecureHTTPClient) -> None:
         """Connection refused raises appropriate exception."""
-        # Use a port that's not listening
         url = "http://localhost:65534/"
 
         with pytest.raises(requests.exceptions.RequestException):
@@ -257,35 +275,40 @@ class TestSecureHTTPClient:
     def test_client_close_releases_resources(self, http_client: SecureHTTPClient) -> None:
         """Client close properly releases session resources."""
         http_client.close()
-        # After closing, session should still exist but be closed
         assert http_client.session is not None
 
 
 class TestProxyConfiguration:
     """Test suite for proxy configuration functionality."""
 
-    def test_proxy_disabled_by_default(self) -> None:
+    def test_proxy_disabled_by_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Proxy is disabled by default."""
-        with patch("intellicrack.utils.http_utils.IntellicrackConfig") as mock_config:
-            mock_config.return_value._config = {"network": {"proxy_enabled": False}}
-            client = SecureHTTPClient()
-            assert client.session.proxies == {}
+        fake_config = FakeIntellicrackConfig({"network": {"proxy_enabled": False}})
 
-    def test_proxy_configuration_with_auth(self) -> None:
+        import intellicrack.utils.http_utils
+        monkeypatch.setattr(intellicrack.utils.http_utils, "IntellicrackConfig", lambda: fake_config)
+
+        client = SecureHTTPClient()
+        assert client.session.proxies == {}
+
+    def test_proxy_configuration_with_auth(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Proxy configuration includes authentication when provided."""
-        with patch("intellicrack.utils.http_utils.IntellicrackConfig") as mock_config:
-            mock_config.return_value._config = {
-                "network": {
-                    "proxy_enabled": True,
-                    "proxy_host": "proxy.example.com",
-                    "proxy_port": 8080,
-                    "proxy_username": "user",
-                    "proxy_password": "pass",
-                }
+        fake_config = FakeIntellicrackConfig({
+            "network": {
+                "proxy_enabled": True,
+                "proxy_host": "proxy.example.com",
+                "proxy_port": 8080,
+                "proxy_username": "user",
+                "proxy_password": "pass",
             }
-            client = SecureHTTPClient()
-            assert "http" in client.session.proxies
-            assert "proxy.example.com:8080" in client.session.proxies["http"]
+        })
+
+        import intellicrack.utils.http_utils
+        monkeypatch.setattr(intellicrack.utils.http_utils, "IntellicrackConfig", lambda: fake_config)
+
+        client = SecureHTTPClient()
+        assert "http" in client.session.proxies
+        assert "proxy.example.com:8080" in client.session.proxies["http"]
 
 
 class TestRetryMechanism:
@@ -293,7 +316,6 @@ class TestRetryMechanism:
 
     def test_retry_on_connection_error(self, http_client: SecureHTTPClient) -> None:
         """Connection errors trigger retry attempts."""
-        # Access retry configuration
         adapter = http_client.session.get_adapter("http://example.com")
         assert adapter.max_retries is not None
 
@@ -345,7 +367,6 @@ class TestSSLErrorHandling:
 
     def test_ssl_error_provides_helpful_message(self, http_client: SecureHTTPClient) -> None:
         """SSL errors provide helpful error messages."""
-        # Test with a URL that would have SSL issues
         url = "https://self-signed.badssl.com/"
 
         with pytest.raises(requests.exceptions.SSLError):
@@ -394,14 +415,13 @@ class TestErrorRecovery:
 
     def test_network_failure_handling(self, http_client: SecureHTTPClient) -> None:
         """Network failures are handled gracefully."""
-        url = "http://192.0.2.1/"  # TEST-NET-1, guaranteed to fail
+        url = "http://192.0.2.1/"
 
         with pytest.raises(requests.exceptions.RequestException):
             http_client.get(url, timeout=1)
 
     def test_malformed_response_handling(self, http_client: SecureHTTPClient) -> None:
         """Malformed responses are handled appropriately."""
-        # Invalid URL should raise exception
         with pytest.raises(requests.exceptions.RequestException):
             http_client.get("http://[::1:invalid")
 
@@ -432,20 +452,18 @@ class TestThreadSafety:
 
         assert len(results) == 5
         successful = [r for r in results if r is not None and r.status_code == 200]
-        assert len(successful) >= 4  # Allow for some variance
+        assert len(successful) >= 4
 
 
 class TestEnvironmentVariables:
     """Test suite for environment variable configuration."""
 
-    def test_ca_bundle_from_env_variable(self, temp_workspace: Path) -> None:
+    def test_ca_bundle_from_env_variable(self, temp_workspace: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """CA bundle can be configured via environment variable."""
         ca_bundle = temp_workspace / "env-ca-bundle.crt"
         ca_bundle.write_text("ENV CA BUNDLE")
 
-        with patch.dict("os.environ", {"REQUESTS_CA_BUNDLE": str(ca_bundle)}):
-            client = SecureHTTPClient()
-            # Should use environment CA bundle if no override
-            verify = client._get_ssl_verify()
-            # Either the env path or True (if config overrides)
-            assert verify is True or verify == str(ca_bundle)
+        monkeypatch.setenv("REQUESTS_CA_BUNDLE", str(ca_bundle))
+        client = SecureHTTPClient()
+        verify = client._get_ssl_verify()
+        assert verify is True or verify == str(ca_bundle)

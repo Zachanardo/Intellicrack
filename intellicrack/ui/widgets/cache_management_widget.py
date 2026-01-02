@@ -116,9 +116,6 @@ class CacheStatsWidget(QWidget):
             stats: Dictionary containing cache statistics with keys like
                 'stats', 'cache_size_mb', 'max_entries', and 'max_size_mb'.
 
-        Raises:
-            Exception: Logs exceptions but continues gracefully.
-
         """
         try:
             stats_data = stats.get("stats", {})
@@ -365,11 +362,11 @@ class CacheManagementWidget(QWidget):
     def update_details(self, stats: dict[str, Any]) -> None:
         """Update cache details text.
 
-        Args:
-            stats: Dictionary containing cache statistics and configuration.
-
         Extracts cache metrics, AI coordination performance stats if available,
         and timestamp information to display in the details text widget.
+
+        Args:
+            stats: Dictionary containing cache statistics and configuration.
 
         """
         details: list[str] = []
@@ -536,10 +533,10 @@ class CacheManagementWidget(QWidget):
     def closeEvent(self, event: QCloseEvent | None) -> None:
         """Clean up on close.
 
+        Stops the auto-refresh timer before closing the widget.
+
         Args:
             event: The close event object from Qt.
-
-        Stops the auto-refresh timer before closing the widget.
 
         """
         if hasattr(self, "timer"):

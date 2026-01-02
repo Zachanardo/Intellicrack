@@ -32,21 +32,44 @@ class OSDetectionMixin:
     """
 
     def _detect_os(self) -> str:
-        """Detect operating system."""
+        """Detect operating system.
+
+        Returns:
+            str: The name of the detected operating system for the current
+                execution environment (e.g., "windows", "linux").
+        """
         return detect_operating_system()
 
     def _detect_target_os(self) -> str:
-        """Detect target operating system."""
+        """Detect target operating system.
+
+        Returns:
+            str: The name of the detected target operating system for the
+                system being analyzed or targeted (e.g., "windows", "linux").
+        """
         return detect_operating_system()
 
     def _is_windows(self) -> bool:
-        """Check if running on Windows."""
+        """Check if running on Windows.
+
+        Returns:
+            bool: True if the operating system is Windows, False otherwise.
+        """
         return self._detect_os() == "windows"
 
     def _is_linux(self) -> bool:
-        """Check if running on Linux."""
+        """Check if running on Linux.
+
+        Returns:
+            bool: True if the operating system is Linux, False otherwise.
+        """
         return self._detect_os() == "linux"
 
     def detect_platform(self) -> str:
-        """Detect the current platform (public method for compatibility)."""
+        """Detect the current platform (public method for compatibility).
+
+        Returns:
+            str: The name of the detected platform as a string representing
+                the current operating system (e.g., "windows", "linux").
+        """
         return self._detect_os()

@@ -34,6 +34,7 @@ from typing import Any
 
 from ..utils.logger import log_all_methods
 
+
 logger = logging.getLogger(__name__)
 
 MultiFormatBinaryAnalyzer: type[Any] | None = None
@@ -90,7 +91,6 @@ def detect_file_type(file_path: str | Path) -> str:
 
     Returns:
         File extension lowercase or "unknown" if no extension found
-
     """
     if detect_file_type_impl is not None:
         return detect_file_type_impl(str(file_path))
@@ -104,7 +104,19 @@ except ImportError:
     logger.warning("Failed to import calculate_entropy from ..utils.protection_utils, using fallback.")
 
     def calculate_entropy(data: bytes) -> float:
-        """Calculate entropy of binary data."""
+        """Calculate Shannon entropy of binary data.
+
+        Computes the entropy value for a block of binary data using Shannon's
+        entropy formula. This is useful for detecting compression, encryption,
+        or other patterns in binary analysis.
+
+        Args:
+            data: Binary data to calculate entropy for
+
+        Returns:
+            Entropy value between 0.0 and 8.0 for 8-bit bytes
+
+        """
         if not data:
             return 0.0
 
@@ -130,10 +142,19 @@ logger.debug("Binary analyzer module loaded")
 
 @log_all_methods
 class BinaryAnalyzer:
-    """Run binary analyzer coordinating multiple analysis techniques."""
+    """Run binary analyzer coordinating multiple analysis techniques.
+
+    Provides comprehensive binary file analysis capabilities including format
+    detection, file hashing, entropy analysis, string extraction, and protection
+    detection for licensing protection research.
+    """
 
     def __init__(self) -> None:
-        """Initialize the binary analyzer."""
+        """Initialize the binary analyzer.
+
+        Sets up the analyzer with sub-analyzers for PE, ELF, and multi-format
+        analysis. Initializes analysis cache and supported file format list.
+        """
         self.logger = logging.getLogger(__name__)
         self.logger.info("Initializing BinaryAnalyzer.")
 
@@ -312,12 +333,34 @@ class BinaryAnalyzer:
         return results
 
     def _get_file_cache_key(self, file_path: Path) -> str:
-        """Generate cache key for file."""
+        """Generate cache key for file.
+
+        Creates a unique cache key based on file path, size, and modification
+        time to cache analysis results and avoid redundant processing of
+        unchanged files.
+
+        Args:
+            file_path: Path to the file
+
+        Returns:
+            str: Unique cache key combining path, size, and modification time
+
+        """
         stat = file_path.stat()
         return f"{file_path}_{stat.st_size}_{stat.st_mtime}"
 
     def _analyze_basic_info(self, file_path: Path, results: dict[str, Any], options: dict[str, Any] | None) -> None:
-        """Analyze basic file information."""
+        """Analyze basic file information.
+
+        Extracts fundamental file metadata including timestamps, permissions,
+        file size, and MIME type. This information is essential for initial
+        binary analysis and licensing protection detection.
+
+        Args:
+            file_path: Path to the binary file
+            results: Dictionary to store analysis results
+            options: Optional configuration dictionary
+        """
         self.logger.debug("Extracting basic file metadata for %s", file_path)
         try:
             stat_info = file_path.stat()
@@ -339,7 +382,16 @@ class BinaryAnalyzer:
             results["warnings"].append(f"Basic info analysis failed: {e!s}")
 
     def _detect_file_type(self, file_path: Path, results: dict[str, Any]) -> None:
-        """Detect file type using multiple methods."""
+        """Detect file type using multiple methods.
+
+        Identifies binary file format by analyzing magic bytes and file
+        extension. Supports PE, ELF, Mach-O, DEX, APK, JAR, and other formats
+        relevant to licensing protection analysis.
+
+        Args:
+            file_path: Path to the binary file
+            results: Dictionary to store analysis results
+        """
         self.logger.debug("Detecting file type for %s using magic bytes and extension.", file_path)
         try:
             # Magic byte detection
@@ -397,7 +449,16 @@ class BinaryAnalyzer:
             results["warnings"].append(f"File type detection failed: {e!s}")
 
     def _calculate_hashes(self, file_path: Path, results: dict[str, Any]) -> None:
-        """Calculate various hash values for the file."""
+        """Calculate various hash values for the file.
+
+        Computes multiple cryptographic hashes (SHA256, SHA512, SHA3-256,
+        BLAKE2b) for the binary file. Hash values are used for binary
+        fingerprinting, integrity verification, and threat intelligence lookup.
+
+        Args:
+            file_path: Path to the binary file
+            results: Dictionary to store analysis results
+        """
         self.logger.debug("Calculating hashes (sha256, sha512, sha3_256, blake2b) for %s", file_path)
         try:
             hash_algos: dict[str, Any] = {
@@ -423,7 +484,18 @@ class BinaryAnalyzer:
             results["warnings"].append(f"Hash calculation failed: {e!s}")
 
     def _analyze_format_specific(self, file_path: Path, results: dict[str, Any], options: dict[str, Any] | None) -> None:
-        """Perform format-specific analysis."""
+        """Perform format-specific analysis.
+
+        Delegates to multi-format analyzer to extract format-specific details
+        such as sections, imports, exports, and architecture information. This
+        analysis is critical for understanding binary structure and licensing
+        protection mechanisms.
+
+        Args:
+            file_path: Path to the binary file
+            results: Dictionary to store analysis results
+            options: Optional configuration dictionary
+        """
         self.logger.debug("Performing format-specific analysis for %s", file_path)
         try:
             if not self.multi_format_analyzer:
@@ -461,7 +533,17 @@ class BinaryAnalyzer:
             results["warnings"].append(f"Format-specific analysis failed: {e!s}")
 
     def _extract_strings(self, file_path: Path, results: dict[str, Any], options: dict[str, Any] | None) -> None:
-        """Extract printable strings from the binary."""
+        """Extract printable strings from the binary.
+
+        Extracts ASCII and Unicode strings from the binary file and identifies
+        suspicious patterns related to licensing, credentials, and protection
+        mechanisms. String analysis is essential for licensing bypass analysis.
+
+        Args:
+            file_path: Path to the binary file
+            results: Dictionary to store analysis results
+            options: Optional configuration dictionary
+        """
         self.logger.debug("Extracting strings from %s", file_path)
         try:
             min_length = 4
@@ -591,7 +673,18 @@ class BinaryAnalyzer:
             results["warnings"].append(f"String extraction failed: {e!s}")
 
     def _categorize_string_pattern(self, pattern: str) -> str:
-        """Categorize string patterns."""
+        """Categorize string patterns.
+
+        Classifies discovered string patterns into semantic categories such as
+        security, licensing, network, system, memory, and database related
+        patterns for analysis filtering.
+
+        Args:
+            pattern: String pattern to categorize
+
+        Returns:
+            Category name for the pattern
+        """
         categories = {
             "security": [
                 "password",
@@ -627,7 +720,16 @@ class BinaryAnalyzer:
         )
 
     def _analyze_entropy(self, file_path: Path, results: dict[str, Any]) -> None:
-        """Analyze entropy of file sections."""
+        """Analyze entropy of file sections.
+
+        Calculates Shannon entropy for the entire file and individual sections
+        to detect compression, encryption, and packing signatures. High entropy
+        indicates possible licensing protection mechanisms.
+
+        Args:
+            file_path: Path to the binary file
+            results: Dictionary to store analysis results
+        """
         self.logger.debug("Analyzing entropy for %s", file_path)
         try:
             with open(file_path, "rb") as f:
@@ -697,7 +799,18 @@ class BinaryAnalyzer:
             results["warnings"].append(f"Entropy analysis failed: {e!s}")
 
     def _interpret_entropy(self, entropy: float) -> str:
-        """Interpret entropy value."""
+        """Interpret entropy value.
+
+        Translates numerical entropy values into human-readable descriptions
+        indicating the type of content (structured, compressed, encrypted, etc.)
+        for analysis reporting.
+
+        Args:
+            entropy: Entropy value to interpret
+
+        Returns:
+            Human-readable interpretation of entropy value
+        """
         if entropy < 1.0:
             return "Very low entropy - likely highly structured or repetitive data"
         if entropy < 3.0:
@@ -711,7 +824,17 @@ class BinaryAnalyzer:
         return "Extremely high entropy - likely encrypted or packed"
 
     def _analyze_protections(self, file_path: Path, results: dict[str, Any]) -> None:
-        """Analyze protection mechanisms."""
+        """Analyze protection mechanisms.
+
+        Detects licensing protections, anti-analysis techniques, and copy
+        protection indicators. Uses format-specific and generic checks to
+        identify common protection schemes like ASLR, DEP, packing, and
+        protection APIs.
+
+        Args:
+            file_path: Path to the binary file
+            results: Dictionary to store analysis results
+        """
         self.logger.debug("Analyzing protection mechanisms for %s", file_path)
         try:
             protections: dict[str, Any] = {"detected": [], "indicators": [], "analysis": {}}
@@ -744,7 +867,17 @@ class BinaryAnalyzer:
             results["warnings"].append(f"Protection analysis failed: {e!s}")
 
     def _check_pe_protections(self, file_path: Path, results: dict[str, Any], protections: dict[str, Any]) -> None:
-        """Check PE-specific protections."""
+        """Check PE-specific protections.
+
+        Analyzes Portable Executable files for Windows-specific protection
+        mechanisms including ASLR support, high entropy sections indicating
+        packing, and protection-related API imports used in licensing checks.
+
+        Args:
+            file_path: Path to the binary file
+            results: Dictionary containing analysis results
+            protections: Dictionary to update with protection findings
+        """
         # Check for ASLR, DEP, etc.
         if "format_analysis" not in results:
             return
@@ -778,14 +911,35 @@ class BinaryAnalyzer:
                         protections["indicators"].append(f"Protection API: {func}")
 
     def _check_elf_protections(self, file_path: Path, results: dict[str, Any], protections: dict[str, Any]) -> None:
-        """Check ELF-specific protections."""
+        """Check ELF-specific protections.
+
+        Analyzes ELF executables for Unix/Linux-specific protection mechanisms
+        including stack canaries, position-independent code, read-only
+        relocation tables, and other hardening techniques that may protect
+        licensing mechanisms.
+
+        Args:
+            file_path: Path to the binary file
+            results: Dictionary containing analysis results
+            protections: Dictionary to update with protection findings
+        """
         # Check for stack canaries, RELRO, etc.
         if "format_analysis" in results:
             # This would need more detailed ELF analysis
             protections["indicators"].append("ELF protection analysis requires deeper inspection")
 
     def _check_generic_protections(self, file_path: Path, results: dict[str, Any], protections: dict[str, Any]) -> None:
-        """Check generic protection indicators."""
+        """Check generic protection indicators.
+
+        Detects cross-platform protection indicators applicable to any binary
+        format including high entropy sections, suspicious string patterns, and
+        behavioral indicators of licensing protection schemes.
+
+        Args:
+            file_path: Path to the binary file
+            results: Dictionary containing analysis results
+            protections: Dictionary to update with protection findings
+        """
         # High entropy check
         entropy_info = results.get("entropy", {})
         if entropy_info.get("overall", 0) > 7.5:
@@ -798,7 +952,15 @@ class BinaryAnalyzer:
                 protections["indicators"].append(f"Suspicious string: {interesting['pattern']}")
 
     def _generate_recommendations(self, results: dict[str, Any]) -> None:
-        """Generate analysis recommendations."""
+        """Generate analysis recommendations.
+
+        Produces actionable recommendations based on binary analysis results,
+        including relevant tools for further investigation, potential
+        protection mechanisms detected, and next steps for licensing analysis.
+
+        Args:
+            results: Dictionary containing analysis results
+        """
         recommendations = []
 
         file_type = results.get("file_type", {}).get("format", "Unknown")
@@ -868,10 +1030,6 @@ class BinaryAnalyzer:
         Returns:
             BinaryInfo object containing structured analysis data, or None if
             BinaryInfo is unavailable or analysis fails
-
-        Raises:
-            Exception: Logged internally if BinaryInfo creation fails
-
         """
         if BinaryInfo is None:
             return None
@@ -941,22 +1099,52 @@ class BinaryAnalyzer:
             return None
 
     def get_supported_formats(self) -> list[str]:
-        """Get list of supported file formats."""
+        """Get list of supported file formats.
+
+        Returns a copy of the list of binary formats that the analyzer supports
+        for comprehensive analysis.
+
+        Returns:
+            List of supported file format extensions
+        """
         return self.supported_formats.copy()
 
     def is_supported_format(self, file_path: str | Path) -> bool:
-        """Check if file format is supported."""
+        """Check if file format is supported.
+
+        Verifies whether the given file's format is supported by the binary
+        analyzer for comprehensive analysis.
+
+        Args:
+            file_path: Path to the file to check
+
+        Returns:
+            bool: True if the file format is supported, False otherwise
+
+        """
         file_path = Path(file_path)
         extension = file_path.suffix.lower().lstrip(".")
         return extension in self.supported_formats
 
     def clear_cache(self) -> None:
-        """Clear analysis cache."""
+        """Clear analysis cache.
+
+        Removes all cached analysis results from memory. This clears the internal
+        analysis_cache dictionary completely.
+        """
         self.analysis_cache.clear()
         self.logger.info("Analysis cache cleared")
 
     def get_cache_stats(self) -> dict[str, int]:
-        """Get cache statistics."""
+        """Get cache statistics.
+
+        Retrieves current cache statistics including the number of cached
+        analysis results and estimated memory usage.
+
+        Returns:
+            dict[str, int]: Dictionary with cache statistics
+
+        """
         return {
             "cached_files": len(self.analysis_cache),
             "cache_memory_mb": sum(len(str(results)) for results in self.analysis_cache.values()) // (1024 * 1024),

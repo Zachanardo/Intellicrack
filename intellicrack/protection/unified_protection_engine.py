@@ -35,7 +35,6 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
-import numpy.typing as npt
 
 
 try:
@@ -174,9 +173,9 @@ class UnifiedProtectionEngine:
         """Initialize unified protection engine.
 
         Args:
-            enable_protection: Enable protection analysis
-            enable_heuristics: Enable heuristic analysis
-            cache_config: Cache configuration options
+            enable_protection: Enable protection analysis.
+            enable_heuristics: Enable heuristic analysis.
+            cache_config: Cache configuration options.
 
         """
         self.enable_protection = enable_protection
@@ -195,12 +194,12 @@ class UnifiedProtectionEngine:
         """Perform unified protection analysis.
 
         Args:
-            file_path: Path to file to analyze
-            deep_scan: Perform deep analysis
-            timeout: Analysis timeout in seconds
+            file_path: Path to file to analyze.
+            deep_scan: Perform deep analysis.
+            timeout: Analysis timeout in seconds.
 
         Returns:
-            Unified protection analysis result
+            Unified protection analysis result.
 
         """
         import time
@@ -295,7 +294,19 @@ class UnifiedProtectionEngine:
         return result
 
     def _run_protection_analysis(self, file_path: str, deep_scan: bool) -> AdvancedProtectionAnalysis | None:
-        """Run protection analysis."""
+        """Run protection analysis on binary.
+
+        Args:
+            file_path: Path to the binary file to analyze for protection
+                mechanisms.
+            deep_scan: Whether to perform deep scan or normal scan of the
+                binary.
+
+        Returns:
+            AdvancedProtectionAnalysis result containing detected protections,
+                or None if analysis fails.
+
+        """
         try:
             if self.protection_detector is None:
                 return None
@@ -312,7 +323,18 @@ class UnifiedProtectionEngine:
             return None
 
     def _run_heuristic_analysis(self, file_path: str) -> dict[str, Any] | None:
-        """Run heuristic analysis."""
+        """Run heuristic analysis on file.
+
+        Args:
+            file_path: Path to the file to analyze using heuristic techniques
+                including entropy analysis and pattern detection.
+
+        Returns:
+            Dictionary of heuristic analysis results containing entropy metrics,
+                packing indicators, and suspicious patterns, or None if
+                analysis fails.
+
+        """
         try:
             heuristics: dict[str, Any] = {}
 
@@ -400,7 +422,15 @@ class UnifiedProtectionEngine:
             return None
 
     def _merge_protection_results(self, result: UnifiedProtectionResult, protection_analysis: AdvancedProtectionAnalysis) -> None:
-        """Merge protection results into unified result."""
+        """Merge protection results into unified result.
+
+        Args:
+            result: Unified protection result to merge protection data
+                into.
+            protection_analysis: Protection analysis results containing
+                detected protections to merge.
+
+        """
         result.file_type = protection_analysis.file_type
         result.architecture = protection_analysis.architecture
         result.is_packed = protection_analysis.is_packed
@@ -429,7 +459,15 @@ class UnifiedProtectionEngine:
                 result.has_licensing = True
 
     def _merge_heuristic_results(self, result: UnifiedProtectionResult, heuristics: dict[str, Any]) -> None:
-        """Merge heuristic results into unified result."""
+        """Merge heuristic results into unified result.
+
+        Args:
+            result: Unified protection result to merge heuristic findings
+                into.
+            heuristics: Heuristic analysis results dictionary to merge
+                containing entropy and pattern data.
+
+        """
         if heuristics.get("likely_packed"):
             result.is_packed = True
             protection: dict[str, Any] = {
@@ -453,7 +491,19 @@ class UnifiedProtectionEngine:
             result.protections.append(protection_info)
 
     def _run_icp_analysis(self, file_path: str, deep_scan: bool) -> ICPScanResult | None:
-        """Run ICP engine analysis."""
+        """Run ICP engine analysis on file.
+
+        Args:
+            file_path: Path to the file to analyze using the integrated
+                protection checker engine.
+            deep_scan: Whether to perform deep scan or normal scan of
+                the file.
+
+        Returns:
+            ICPScanResult containing ICP engine detection findings, or
+                None if analysis fails.
+
+        """
         try:
             ICPScanMode = _get_icp_scan_mode()
             icp_mode = ICPScanMode.DEEP if deep_scan else ICPScanMode.NORMAL
@@ -474,7 +524,15 @@ class UnifiedProtectionEngine:
             return None
 
     def _merge_icp_results(self, result: UnifiedProtectionResult, icp_result: ICPScanResult) -> None:
-        """Merge ICP engine results into unified result."""
+        """Merge ICP engine results into unified result.
+
+        Args:
+            result: Unified protection result to merge ICP detections
+                into.
+            icp_result: ICP scan results containing signature-based
+                detections to merge.
+
+        """
         # Update file info if not already set
         if result.file_type == "Unknown" and icp_result.file_infos:
             result.file_type = icp_result.file_infos[0].filetype
@@ -513,7 +571,16 @@ class UnifiedProtectionEngine:
                 result.has_licensing = True
 
     def _map_icp_type(self, icp_type: str) -> str:
-        """Map ICP detection types to our unified types."""
+        """Map ICP detection types to our unified types.
+
+        Args:
+            icp_type: ICP detection type string to map to unified format.
+
+        Returns:
+            Unified protection type string normalized to standard
+                protection categories.
+
+        """
         type_mapping: dict[str, str] = {
             "Packer": "packer",
             "Protector": "protector",
@@ -530,7 +597,13 @@ class UnifiedProtectionEngine:
         return type_mapping.get(icp_type, "unknown")
 
     def _consolidate_results(self, result: UnifiedProtectionResult) -> None:
-        """Consolidate and deduplicate results from multiple sources."""
+        """Consolidate and deduplicate results from multiple sources.
+
+        Args:
+            result: Unified protection result to consolidate by merging
+                duplicate detections from multiple analysis engines.
+
+        """
         # Group protections by name
         protection_groups: dict[str, list[dict[str, Any]]] = {}
         for protection in result.protections:
@@ -569,7 +642,13 @@ class UnifiedProtectionEngine:
         result.protections = consolidated
 
     def _generate_bypass_strategies(self, result: UnifiedProtectionResult) -> None:
-        """Generate comprehensive bypass strategies."""
+        """Generate comprehensive bypass strategies.
+
+        Args:
+            result: Unified protection result to analyze and generate
+                targeted bypass strategies for.
+
+        """
         strategies: list[dict[str, Any]] = []
 
         # Analyze protection combinations
@@ -646,7 +725,13 @@ class UnifiedProtectionEngine:
         result.bypass_strategies = strategies
 
     def _calculate_confidence(self, result: UnifiedProtectionResult) -> None:
-        """Calculate overall confidence score."""
+        """Calculate overall confidence score.
+
+        Args:
+            result: Unified protection result to calculate weighted
+                confidence score for based on detection sources.
+
+        """
         if not result.protections:
             result.confidence_score = 0.0
             return
@@ -676,7 +761,18 @@ class UnifiedProtectionEngine:
             result.confidence_score = 0.0
 
     def get_quick_summary(self, file_path: str) -> dict[str, Any]:
-        """Get quick protection summary without deep analysis."""
+        """Get quick protection summary without deep analysis.
+
+        Args:
+            file_path: Path to the file to generate a quick protection
+                summary for.
+
+        Returns:
+            Dictionary with protection summary containing protected status,
+                protection count, main protection name, and confidence
+                score.
+
+        """
         # Try to get cached result first
         cached_result = self.cache.get(file_path, "deep_scan:False,timeout:60")
         if cached_result is None:
@@ -720,18 +816,24 @@ class UnifiedProtectionEngine:
         """Backward-compatible alias for analyze method.
 
         Args:
-            file_path: Path to file to analyze
-            deep_scan: Perform deep analysis
-            timeout: Analysis timeout in seconds
+            file_path: Path to file to analyze.
+            deep_scan: Perform deep analysis.
+            timeout: Analysis timeout in seconds.
 
         Returns:
-            Unified protection analysis result
+            Unified protection analysis result.
 
         """
         return self.analyze(file_path, deep_scan, timeout)
 
     def get_cache_stats(self) -> dict[str, Any]:
-        """Get cache statistics."""
+        """Get cache statistics.
+
+        Returns:
+            Dictionary containing cache statistics including entry count,
+                total size, hit rate, and other performance metrics.
+
+        """
         return self.cache.get_cache_info()
 
     def clear_cache(self) -> None:
@@ -743,7 +845,7 @@ class UnifiedProtectionEngine:
         """Clean up invalid cache entries.
 
         Returns:
-            Number of entries removed
+            Number of entries removed.
 
         """
         removed = self.cache.cleanup_invalid()
@@ -758,10 +860,10 @@ class UnifiedProtectionEngine:
         """Remove specific file from cache.
 
         Args:
-            file_path: Path to file to remove from cache
+            file_path: Path to file to remove from cache.
 
         Returns:
-            True if removed, False if not found
+            True if removed, False if not found.
 
         """
         removed = False
@@ -778,6 +880,11 @@ class UnifiedProtectionEngine:
         """Invalidate cache entries for a specific file.
 
         This is useful when a file has been modified.
+
+        Args:
+            file_path: Path to the file to remove from cache to force
+                re-analysis on next request.
+
         """
         self.remove_from_cache(file_path)
 
@@ -785,7 +892,7 @@ class UnifiedProtectionEngine:
         """Get cache size information.
 
         Returns:
-            Tuple of (entry_count, size_in_mb)
+            Tuple of (entry_count, size_in_mb).
 
         """
         stats = self.cache.get_stats()
@@ -795,10 +902,10 @@ class UnifiedProtectionEngine:
         """Perform comprehensive entropy analysis using multiple techniques.
 
         Args:
-            data: Binary data to analyze
+            data: Binary data to analyze.
 
         Returns:
-            Dictionary containing results from multiple entropy analysis methods
+            Dictionary containing results from multiple entropy analysis methods.
 
         """
         results: dict[str, Any] = {
@@ -843,10 +950,10 @@ class UnifiedProtectionEngine:
         """Calculate Shannon entropy of data.
 
         Args:
-            data: Binary data to analyze
+            data: Binary data to analyze.
 
         Returns:
-            Shannon entropy value (0-8 bits)
+            Shannon entropy value (0-8 bits).
 
         """
         if not data:
@@ -869,12 +976,12 @@ class UnifiedProtectionEngine:
         """Calculate entropy using sliding window technique.
 
         Args:
-            data: Binary data to analyze
-            window_size: Size of sliding window
-            step_size: Step size for window movement
+            data: Binary data to analyze.
+            window_size: Size of sliding window.
+            step_size: Step size for window movement.
 
         Returns:
-            List of entropy values for each window position
+            List of entropy values for each window position.
 
         """
         if len(data) < window_size:
@@ -892,10 +999,10 @@ class UnifiedProtectionEngine:
         """Estimate Kolmogorov complexity using compression ratio.
 
         Args:
-            data: Binary data to analyze
+            data: Binary data to analyze.
 
         Returns:
-            Estimated complexity (0-1, higher means more complex/random)
+            Estimated complexity (0-1, higher means more complex/random).
 
         """
         if not data:
@@ -921,10 +1028,10 @@ class UnifiedProtectionEngine:
         """Analyze compression ratios using multiple algorithms.
 
         Args:
-            data: Binary data to analyze
+            data: Binary data to analyze.
 
         Returns:
-            Dictionary of compression algorithm names to compression ratios
+            Dictionary of compression algorithm names to compression ratios.
 
         """
         if not data:
@@ -956,11 +1063,11 @@ class UnifiedProtectionEngine:
         """Perform chi-square test for randomness.
 
         Args:
-            data: Binary data to analyze
-            significance_level: Significance level for hypothesis testing
+            data: Binary data to analyze.
+            significance_level: Significance level for hypothesis testing.
 
         Returns:
-            Dictionary containing test results
+            Dictionary containing test results.
 
         """
         if not data:
@@ -1016,10 +1123,10 @@ class UnifiedProtectionEngine:
         """Analyze byte value distribution characteristics.
 
         Args:
-            data: Binary data to analyze
+            data: Binary data to analyze.
 
         Returns:
-            Dictionary containing distribution statistics
+            Dictionary containing distribution statistics.
 
         """
         if not data:
@@ -1056,7 +1163,13 @@ _unified_engine: UnifiedProtectionEngine | None = None
 
 
 def get_unified_engine() -> UnifiedProtectionEngine:
-    """Get or create unified protection engine instance."""
+    """Get or create unified protection engine instance.
+
+    Returns:
+        Singleton UnifiedProtectionEngine instance that provides unified
+            protection analysis across multiple detection methods.
+
+    """
     global _unified_engine
     if _unified_engine is None:
         _unified_engine = UnifiedProtectionEngine()

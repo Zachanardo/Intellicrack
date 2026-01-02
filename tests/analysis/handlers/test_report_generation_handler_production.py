@@ -13,6 +13,7 @@ import json
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -105,15 +106,17 @@ class TestReportFileOperations:
     @staticmethod
     def test_report_handles_large_datasets() -> None:
         """Report generator processes large analysis results efficiently."""
-        large_dataset = {
-            "detections": [f"protection_{i}" for i in range(LARGE_DATASET_SIZE)],
-            "metadata": {"count": LARGE_DATASET_SIZE}
+        detections: list[str] = [f"protection_{i}" for i in range(LARGE_DATASET_SIZE)]
+        metadata: dict[str, int] = {"count": LARGE_DATASET_SIZE}
+        large_dataset: dict[str, Any] = {
+            "detections": detections,
+            "metadata": metadata,
         }
 
         serialized = json.dumps(large_dataset)
 
         assert serialized != ""
-        assert large_dataset["metadata"]["count"] == LARGE_DATASET_SIZE
+        assert metadata["count"] == LARGE_DATASET_SIZE
 
 
 class TestReportFormatting:
@@ -169,15 +172,18 @@ class TestReportMetadata:
     @staticmethod
     def test_report_includes_file_information() -> None:
         """Report includes analyzed file metadata."""
-        file_info = {
-            "path": r"D:\test\sample.exe",
-            "size": 1024000,
-            "hash": "abc123def456"
+        file_path = r"D:\test\sample.exe"
+        file_size = 1024000
+        file_hash = "abc123def456"
+        file_info: dict[str, str | int] = {
+            "path": file_path,
+            "size": file_size,
+            "hash": file_hash,
         }
 
-        assert file_info["path"].endswith(".exe")
-        assert file_info["size"] > 0
-        assert len(file_info["hash"]) > 0
+        assert file_path.endswith(".exe")
+        assert file_size > 0
+        assert len(file_hash) > 0
 
 
 class TestReportErrorHandling:
@@ -186,7 +192,7 @@ class TestReportErrorHandling:
     @staticmethod
     def test_report_handles_missing_data() -> None:
         """Report generator handles missing analysis data gracefully."""
-        empty_results = {}
+        empty_results: dict[str, Any] = {}
 
         try:
             serialized = json.dumps(empty_results)
@@ -230,14 +236,15 @@ class TestReportIntegration:
     @staticmethod
     def test_report_includes_multiple_sections() -> None:
         """Report contains all required sections and information."""
-        report_sections = {
+        details_list: list[str] = ["VMProtect 3.5", "Themida 3.1", "Code Virtualizer"]
+        report_sections: dict[str, Any] = {
             "header": {"title": "Analysis Report", "date": datetime.now().isoformat()},
             "summary": {"total_protections": EXPECTED_SECTION_COUNT, "confidence": 0.92},
-            "details": ["VMProtect 3.5", "Themida 3.1", "Code Virtualizer"],
-            "footer": {"tool": "Intellicrack", "version": "1.0"}
+            "details": details_list,
+            "footer": {"tool": "Intellicrack", "version": "1.0"},
         }
 
         assert "header" in report_sections
         assert "summary" in report_sections
         assert "details" in report_sections
-        assert len(report_sections["details"]) == EXPECTED_SECTION_COUNT
+        assert len(details_list) == EXPECTED_SECTION_COUNT

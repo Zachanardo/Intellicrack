@@ -18,7 +18,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import os
-import sys
 from typing import Any
 
 
@@ -47,7 +46,7 @@ except ImportError:
     # Running outside Ghidra environment
     GHIDRA_AVAILABLE = False
 
-    class GhidraScriptBase:  # type: ignore[no-redef]
+    class GhidraScriptBase:
         """Base class for Ghidra scripts when running outside Ghidra environment.
 
         This implementation provides the necessary interface for scripts that
@@ -378,7 +377,7 @@ def get_current_program() -> Any:
     return globals().get("current_program") if GHIDRA_AVAILABLE else None
 
 
-class AntiAnalysisDetector(GhidraScriptBase):  # type: ignore[misc]
+class AntiAnalysisDetector(GhidraScriptBase):
     """Ghidra script to detect anti-analysis techniques in binaries.
 
     Identifies various anti-debugging, anti-VM, and anti-analysis patterns

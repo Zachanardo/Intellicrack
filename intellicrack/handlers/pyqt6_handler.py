@@ -24,14 +24,6 @@ from typing import ClassVar
 from intellicrack.utils.logger import logger
 
 
-"""
-PyQt6 Import Handler
-
-This module provides a centralized abstraction layer for all PyQt6 imports.
-It handles PyQt6 availability detection and provides fallback implementations
-when PyQt6 is not available.
-"""
-
 # PyQt6 availability detection and import handling
 try:
     # QtCore imports
@@ -252,7 +244,18 @@ except ImportError as e:
     import weakref
 
     def log_all_methods(cls: type) -> type:
-        """Decorator that logs all method calls for debugging."""
+        """Decorate a class to log all method calls for debugging.
+
+        This decorator enables logging of all method invocations on the decorated
+        class for debugging purposes in headless or testing environments.
+
+        Args:
+            cls: The class to decorate.
+
+        Returns:
+            type: The decorated class with logging capabilities.
+
+        """
         return cls
 
     @log_all_methods
@@ -265,6 +268,13 @@ except ImportError as e:
         _cleanup_registered: bool = False
 
         def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize a fallback widget instance.
+
+            Args:
+                *args: Positional arguments (ignored for compatibility).
+                **kwargs: Keyword arguments, 'parent' specifies the parent widget.
+
+            """
             self._properties: dict[str, object] = {}
             self._children: list[object] = []
             self._parent = kwargs.get("parent")
@@ -284,6 +294,12 @@ except ImportError as e:
                 FallbackWidget._cleanup_registered = True
 
         def show(self) -> bool:
+            """Show the widget.
+
+            Returns:
+                True if the widget was successfully shown, False if destroyed.
+
+            """
             if not self._destroyed:
                 self._visible = True
                 logger.debug(f"Widget {self.__class__.__name__} shown (headless mode)")
@@ -291,6 +307,12 @@ except ImportError as e:
             return True
 
         def hide(self) -> bool:
+            """Hide the widget.
+
+            Returns:
+                True if the widget was successfully hidden, False if destroyed.
+
+            """
             if not self._destroyed:
                 self._visible = False
                 logger.debug(f"Widget {self.__class__.__name__} hidden (headless mode)")
@@ -298,6 +320,15 @@ except ImportError as e:
             return True
 
         def setEnabled(self, enabled: object) -> bool:
+            """Enable or disable the widget.
+
+            Args:
+                enabled: Whether to enable the widget.
+
+            Returns:
+                True if successfully enabled, False if destroyed.
+
+            """
             if not self._destroyed:
                 self._enabled = bool(enabled)
                 logger.debug(f"Widget {self.__class__.__name__} enabled={self._enabled}")
@@ -430,9 +461,6 @@ except ImportError as e:
             Returns:
                 int | None: 0 if destroyed, 1 if completed normally, 0 on interrupt.
 
-            Raises:
-                KeyboardInterrupt: When interrupted by user.
-
             """
             if self._destroyed:
                 return 0
@@ -542,7 +570,11 @@ except ImportError as e:
             return cls()
 
         def processEvents(self) -> None:
-            """Process pending events and timers."""
+            """Process pending events and timers.
+
+            This method processes all queued events and executes timer callbacks.
+
+            """
             if self._destroyed:
                 return
 
@@ -572,7 +604,7 @@ except ImportError as e:
                         except Exception as e:
                             logger.error(f"Timer callback error: {e}")
 
-                    if single_shot := timer_info.get("single_shot"):
+                    if timer_info.get("single_shot"):
                         self._timers.remove(timer_info)
                     else:
                         interval = timer_info.get("interval")
@@ -583,6 +615,7 @@ except ImportError as e:
             """Quit the widget event loop.
 
             Cleans up all instances and clears the event queue.
+
             """
             _ = self._destroyed
             FallbackWidget._running = False
@@ -634,7 +667,7 @@ except ImportError as e:
                 callback_name = getattr(callback, "__name__", str(callback))
                 logger.debug(f"Connected signal {signal_name} to {callback_name}")
 
-        def disconnect(self, signal_name: str, callback: object = None) -> None:
+        def disconnect(self, signal_name: str, callback: object | None = None) -> None:
             """Disconnect a callback from a signal.
 
             Args:
@@ -669,7 +702,7 @@ except ImportError as e:
                         except Exception as e:
                             logger.error(f"Signal callback error for {signal_name}: {e}")
 
-        def _emit_event(self, event_type: str, data: object = None) -> None:
+        def _emit_event(self, event_type: str, data: object | None = None) -> None:
             """Emit an internal event to the event queue.
 
             Args:
@@ -739,10 +772,13 @@ except ImportError as e:
             return method
 
         def deleteLater(self) -> None:
-            """Schedule the widget for deletion."""
+            """Schedule the widget for deletion.
 
+            The widget will be cleaned up asynchronously.
+
+            """
             def cleanup() -> None:
-                """Clean up the widget."""
+                """Clean up the widget and remove from instances."""
                 self._cleanup()
                 if self in FallbackWidget._instances:
                     FallbackWidget._instances.discard(self)
@@ -1265,6 +1301,20 @@ except ImportError as e:
             return 0xFFFFFFFF
 
     def _set_qt_globals(names: list[str], value: object) -> None:
+        """Set multiple names in global scope to the same value.
+
+        This helper function assigns the same value to multiple global variable
+        names, useful for batch initialization of Qt fallback classes or null
+        values in headless environments.
+
+        Args:
+            names: List of global variable names to set.
+            value: The value to assign to each global name.
+
+        Returns:
+            None
+
+        """
         glb = globals()
         for name in names:
             glb[name] = value
@@ -1473,7 +1523,7 @@ except ImportError as e:
                     callback_name = getattr(callback, "__name__", str(callback))
                     logger.debug(f"Signal {self._name} connected to {callback_name}")
 
-            def disconnect(self, callback: object = None) -> None:
+            def disconnect(self, callback: object | None = None) -> None:
                 """Disconnect a callback from this signal.
 
                 Args:
@@ -1566,31 +1616,38 @@ except ImportError as e:
             def decorator(func: F) -> F:
                 """Apply the pyqt slot decorator to a function.
 
+                This decorator wraps a function to add PyQt slot metadata, logging,
+                and type checking capabilities for signal/slot connections in
+                headless environments.
+
                 Args:
                     func: The function to decorate.
 
                 Returns:
-                    object: The wrapped function.
+                    F: The wrapped function with slot metadata and logging.
 
                 """
-                setattr(func, "_pyqt_slot", True)
-                setattr(func, "_slot_types", types)
-                setattr(func, "_slot_result", kwargs.get("result"))
+                func._pyqt_slot = True
+                func._slot_types = types
+                func._slot_result = kwargs.get("result")
                 func_name = getattr(func, "__name__", str(func))
-                setattr(func, "_slot_name", kwargs.get("name", func_name))
+                func._slot_name = kwargs.get("name", func_name)
 
                 def wrapper(*args: object, **kw: object) -> Any:
                     """Execute the slot function with logging and type checking.
 
+                    Calls the decorated function with arguments, performs return type
+                    checking if a result type was specified, and logs all invocations.
+
                     Args:
-                        *args: Positional arguments.
-                        **kw: Keyword arguments.
+                        *args: Positional arguments to pass to the wrapped function.
+                        **kw: Keyword arguments to pass to the wrapped function.
 
                     Returns:
-                        object: The function result.
+                        Any: The function result returned by the wrapped function.
 
                     Raises:
-                        Exception: Any exception from the wrapped function.
+                        Exception: Any exception raised by the wrapped function.
 
                     """
                     try:
@@ -1612,12 +1669,12 @@ except ImportError as e:
                         logger.error(f"Slot {slot_name} error: {e}")
                         raise
 
-                setattr(wrapper, "_pyqt_slot", True)
-                setattr(wrapper, "_slot_types", types)
+                wrapper._pyqt_slot = True
+                wrapper._slot_types = types
                 slot_result = getattr(func, "_slot_result", None)
-                setattr(wrapper, "_slot_result", slot_result)
+                wrapper._slot_result = slot_result
                 slot_name = getattr(func, "_slot_name", str(func))
-                setattr(wrapper, "_slot_name", slot_name)
+                wrapper._slot_name = slot_name
 
                 return cast("F", wrapper)
 
@@ -1626,16 +1683,21 @@ except ImportError as e:
         globals()["pyqtSlot"] = fallback_pyqtSlot
 
         def qRgba(r: int, g: int, b: int, a: int) -> int:
-            """Production-ready RGBA color value creation for headless environments.
+            """Create an RGBA color value for headless/testing environments.
+
+            Converts individual red, green, blue, and alpha components into a
+            single 32-bit RGBA integer value. Components are clamped to the
+            valid range [0, 255] before encoding.
 
             Args:
-                r: Red component (0-255).
-                g: Green component (0-255).
-                b: Blue component (0-255).
-                a: Alpha component (0-255).
+                r: Red component value (0-255), clamped if outside range.
+                g: Green component value (0-255), clamped if outside range.
+                b: Blue component value (0-255), clamped if outside range.
+                a: Alpha component value (0-255), clamped if outside range.
 
             Returns:
-                int: The RGBA color value as a 32-bit integer.
+                int: The RGBA color value as a 32-bit integer with layout
+                    0xAARRGGBB.
 
             """
             r = max(0, min(255, r))
@@ -1650,14 +1712,18 @@ except ImportError as e:
         globals()["Qt"] = None
 
         def fallback_pyqtSignal_null(*args: object, **kwargs: object) -> object:
-            """Fallback pyqtSignal implementation for minimal PyQt6 compatibility.
+            """Provide a null-op pyqtSignal implementation for minimal compatibility.
+
+            This fallback implementation is used when PyQt6 is unavailable and
+            the application is not in testing mode. It returns a no-op lambda
+            function to prevent ImportError and allow graceful degradation.
 
             Args:
-                *args: Positional arguments (ignored).
+                *args: Positional arguments (signal types, ignored).
                 **kwargs: Keyword arguments (ignored).
 
             Returns:
-                object: A no-op lambda function.
+                object: A callable no-op lambda function that does nothing.
 
             """
             return lambda: None
@@ -1665,14 +1731,19 @@ except ImportError as e:
         globals()["pyqtSignal"] = fallback_pyqtSignal_null
 
         def fallback_pyqtSlot_null(*args: object, **kwargs: object) -> object:
-            """Fallback pyqtSlot decorator for minimal PyQt6 compatibility.
+            """Provide a null-op pyqtSlot decorator for minimal compatibility.
+
+            This fallback implementation is used when PyQt6 is unavailable and
+            the application is not in testing mode. It returns an identity
+            decorator to prevent ImportError and allow graceful degradation.
 
             Args:
-                *args: Positional arguments (ignored).
+                *args: Positional arguments (slot types, ignored).
                 **kwargs: Keyword arguments (ignored).
 
             Returns:
-                object: A no-op lambda function.
+                object: A callable identity decorator that returns its argument
+                    unchanged.
 
             """
             return lambda x: x

@@ -6,6 +6,7 @@ NO MOCKS - ALL TESTS USE REAL PROTECTED BINARIES AND PRODUCE REAL RESULTS.
 
 import pytest
 from pathlib import Path
+from typing import Any
 
 from intellicrack.protection.protection_detector import ProtectionDetector
 from tests.base_test import BaseIntellicrackTest
@@ -15,13 +16,13 @@ class TestProtectionDetector(BaseIntellicrackTest):
     """Test protection detection with REAL protected binaries."""
 
     @pytest.fixture(autouse=True)
-    def setup(self, real_protected_binary, real_packed_binary):
+    def setup(self, real_protected_binary: Any, real_packed_binary: Any) -> None:
         """Set up test with real protected binaries."""
         self.detector = ProtectionDetector()
         self.protected_binary = real_protected_binary
         self.packed_binary = real_packed_binary
 
-    def test_anti_debug_detection_real(self):
+    def test_anti_debug_detection_real(self) -> None:
         """Test REAL anti-debugging technique detection."""
         # Detect anti-debug in real protected binary
         anti_debug = self.detector.detect_anti_debug(self.protected_binary)
@@ -48,7 +49,7 @@ class TestProtectionDetector(BaseIntellicrackTest):
             ]
             assert any(t in technique['name'] for t in valid_techniques)
 
-    def test_packer_identification_real(self):
+    def test_packer_identification_real(self) -> None:
         """Test REAL packer/protector identification."""
         # Identify packer in real packed binary
         packer_info = self.detector.identify_packer(self.packed_binary)
@@ -74,7 +75,7 @@ class TestProtectionDetector(BaseIntellicrackTest):
                 ]
                 assert any(p in packer['name'] for p in known_packers)
 
-    def test_obfuscation_analysis_real(self):
+    def test_obfuscation_analysis_real(self) -> None:
         """Test REAL code obfuscation analysis."""
         # Analyze obfuscation in real binary
         obfuscation = self.detector.analyze_obfuscation(self.protected_binary)
@@ -99,7 +100,7 @@ class TestProtectionDetector(BaseIntellicrackTest):
             ]
             assert technique['type'] in valid_types
 
-    def test_encryption_detection_real(self):
+    def test_encryption_detection_real(self) -> None:
         """Test REAL encryption/encoding detection."""
         # Detect encryption in real binary
         encryption = self.detector.detect_encryption(self.protected_binary)
@@ -120,7 +121,7 @@ class TestProtectionDetector(BaseIntellicrackTest):
             if section['name'] != '.rsrc':  # Resources can have high entropy
                 assert section['entropy'] > 7.0
 
-    def test_anti_tampering_detection_real(self):
+    def test_anti_tampering_detection_real(self) -> None:
         """Test REAL anti-tampering mechanism detection."""
         # Detect anti-tampering in real protected binary
         anti_tamper = self.detector.detect_anti_tampering(self.protected_binary)
@@ -144,7 +145,7 @@ class TestProtectionDetector(BaseIntellicrackTest):
             ]
             assert mechanism['type'] in valid_types
 
-    def test_virtualization_detection_real(self):
+    def test_virtualization_detection_real(self) -> None:
         """Test REAL code virtualization detection."""
         # Detect virtualization in real binary
         virtualization = self.detector.detect_virtualization(self.protected_binary)
@@ -164,7 +165,7 @@ class TestProtectionDetector(BaseIntellicrackTest):
             ]
             assert len(virtualization['vm_handlers']) > 0
 
-    def test_anti_analysis_detection_real(self):
+    def test_anti_analysis_detection_real(self) -> None:
         """Test REAL anti-analysis technique detection."""
         # Detect anti-analysis in real binary
         anti_analysis = self.detector.detect_anti_analysis(self.protected_binary)
@@ -188,7 +189,7 @@ class TestProtectionDetector(BaseIntellicrackTest):
             ]
             assert technique['category'] in valid_categories
 
-    def test_license_check_detection_real(self):
+    def test_license_check_detection_real(self) -> None:
         """Test REAL license/registration check detection."""
         # Detect license checks in real binary
         license_checks = self.detector.detect_license_checks(self.protected_binary)
@@ -209,7 +210,7 @@ class TestProtectionDetector(BaseIntellicrackTest):
                     'feature_flags', 'dongle_check'
                 ]
 
-    def test_import_obfuscation_detection_real(self):
+    def test_import_obfuscation_detection_real(self) -> None:
         """Test REAL import table obfuscation detection."""
         # Detect import obfuscation
         import_obf = self.detector.detect_import_obfuscation(self.protected_binary)
@@ -228,7 +229,7 @@ class TestProtectionDetector(BaseIntellicrackTest):
                     'proxy_functions', 'delayed_imports', 'manual_mapping'
                 ]
 
-    def test_string_protection_detection_real(self):
+    def test_string_protection_detection_real(self) -> None:
         """Test REAL string protection/encryption detection."""
         # Detect string protection
         string_protection = self.detector.detect_string_protection(self.protected_binary)
@@ -248,7 +249,7 @@ class TestProtectionDetector(BaseIntellicrackTest):
             ]
             assert string_protection['encrypted_strings_count'] > 0
 
-    def test_comprehensive_protection_scan_real(self):
+    def test_comprehensive_protection_scan_real(self) -> None:
         """Test REAL comprehensive protection scanning."""
         # Perform full protection scan
         full_scan = self.detector.comprehensive_scan(self.protected_binary)
@@ -278,7 +279,7 @@ class TestProtectionDetector(BaseIntellicrackTest):
                 'Unicorn Engine', 'QEMU', 'Manual', 'Custom Script'
             ]
 
-    def test_protection_timeline_real(self):
+    def test_protection_timeline_real(self) -> None:
         """Test REAL protection technique timeline analysis."""
         # Analyze when protections are applied
         timeline = self.detector.analyze_protection_timeline(self.protected_binary)

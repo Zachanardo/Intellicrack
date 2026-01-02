@@ -1,5 +1,11 @@
 """Project management CLI for Intellicrack.
 
+This module provides command-line interface functionality for managing binary
+analysis projects, including creating, loading, deleting, and exporting projects
+containing analyzed binaries, reports, scripts, and patches. Projects are stored
+in a hierarchical directory structure with metadata tracking for efficient
+organization of licensing protection analysis data.
+
 Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
@@ -38,17 +44,47 @@ logger.debug("Project manager module loaded")
 
 
 class ProjectManager:
-    """Manage Intellicrack analysis projects."""
+    """Manage Intellicrack analysis projects.
+
+    Provides functionality for creating, loading, deleting, and managing
+    binary analysis projects for licensing protection research. Each project
+    maintains metadata and separate directories for binaries, analysis results,
+    reports, scripts, patches, and logs.
+    """
 
     def __init__(self) -> None:
-        """Initialize project manager."""
+        """Initialize project manager.
+
+        Creates the projects directory if it does not exist and initializes
+        the current_project attribute to None.
+
+        Args:
+
+        Returns:
+            None
+        """
         self.projects_dir = Path.home() / ".intellicrack" / "projects"
         logger.debug("Projects directory: %s", self.projects_dir)
         self.projects_dir.mkdir(parents=True, exist_ok=True)
         self.current_project: dict[str, Any] | None = None
 
     def create_project(self, name: str, description: str = "") -> Path:
-        """Create a new analysis project."""
+        """Create a new analysis project.
+
+        Creates a new project directory with subdirectories for binaries, analysis,
+        reports, scripts, patches, and logs. Initializes project metadata in a
+        project.json file.
+
+        Args:
+            name: Name of the project to create.
+            description: Optional description of the project.
+
+        Returns:
+            Path: Path to the created project directory.
+
+        Raises:
+            ValueError: If a project with the given name already exists.
+        """
         project_dir = self.projects_dir / name
 
         if project_dir.exists():
@@ -82,7 +118,20 @@ class ProjectManager:
         return project_dir
 
     def load_project(self, name: str) -> dict[str, Any]:
-        """Load an existing project."""
+        """Load an existing project.
+
+        Loads project metadata from project.json and stores the project information
+        in the current_project attribute.
+
+        Args:
+            name: Name of the project to load.
+
+        Returns:
+            dict[str, Any]: Project metadata dictionary from project.json.
+
+        Raises:
+            ValueError: If the project does not exist.
+        """
         project_dir = self.projects_dir / name
 
         if not project_dir.exists():
@@ -97,7 +146,15 @@ class ProjectManager:
         return metadata
 
     def list_projects(self) -> list[dict[str, Any]]:
-        """List all available projects."""
+        """List all available projects.
+
+        Args:
+
+        Returns:
+            list[dict[str, Any]]: List of project dictionaries containing name,
+                description, creation time, modification time, and path for each
+                project.
+        """
         projects = []
 
         for project_dir in self.projects_dir.iterdir():
@@ -117,7 +174,21 @@ class ProjectManager:
         return projects
 
     def delete_project(self, name: str) -> None:
-        """Delete a project and all its data."""
+        """Delete a project and all its data.
+
+        Creates a backup archive of the project before deletion and removes the
+        project directory. Clears the current_project attribute if the deleted
+        project is currently loaded.
+
+        Args:
+            name: Name of the project to delete.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If the project does not exist.
+        """
         project_dir = self.projects_dir / name
 
         if not project_dir.exists():
@@ -142,7 +213,23 @@ class ProjectManager:
             self.current_project = None
 
     def add_file_to_project(self, project_name: str, file_path: str) -> dict[str, Any]:
-        """Add a binary file to project."""
+        """Add a binary file to project.
+
+        Copies a file to the project's binaries directory and updates the project
+        metadata with file information including size and SHA256 hash.
+
+        Args:
+            project_name: Name of the project.
+            file_path: Path to the file to add.
+
+        Returns:
+            dict[str, Any]: File information dictionary containing name, path,
+                size, add timestamp, and SHA256 hash.
+
+        Raises:
+            ValueError: If the project does not exist.
+            FileNotFoundError: If the file does not exist.
+        """
         project_dir = self.projects_dir / project_name
 
         if not project_dir.exists():
@@ -178,7 +265,17 @@ class ProjectManager:
         return file_info
 
     def _calculate_file_hash(self, file_path: str | Path) -> str:
-        """Calculate SHA256 hash of file."""
+        """Calculate SHA256 hash of file.
+
+        Computes the SHA256 hash of the specified file and returns the
+        hexadecimal representation.
+
+        Args:
+            file_path: Path to the file to hash.
+
+        Returns:
+            str: Hexadecimal string representation of the SHA256 hash.
+        """
         import hashlib
 
         sha256_hash = hashlib.sha256()
@@ -189,7 +286,23 @@ class ProjectManager:
         return sha256_hash.hexdigest()
 
     def export_project(self, project_name: str, output_path: str | None = None) -> Path:
-        """Export project as archive."""
+        """Export project as archive.
+
+        Creates a ZIP archive of the project directory. If output_path is not
+        specified, exports to the current working directory with default naming
+        convention.
+
+        Args:
+            project_name: Name of the project to export.
+            output_path: Optional custom output path for the archive. If not
+                specified, exports to current working directory with default naming.
+
+        Returns:
+            Path: Path to the created archive file.
+
+        Raises:
+            ValueError: If the project does not exist.
+        """
         project_dir = self.projects_dir / project_name
 
         if not project_dir.exists():
@@ -207,7 +320,24 @@ class ProjectManager:
         return output_archive_path
 
     def import_project(self, archive_path: str) -> str:
-        """Import project from archive."""
+        """Import project from archive.
+
+        Extracts a project archive and imports it into the projects directory.
+        If a project with the same name already exists, creates a unique name
+        by appending a counter. Validates that the archive contains a valid
+        project.json file.
+
+        Args:
+            archive_path: Path to the project archive file.
+
+        Returns:
+            str: Name of the imported project.
+
+        Raises:
+            FileNotFoundError: If the archive file does not exist.
+            ValueError: If the archive is not a valid project archive (missing
+                project.json).
+        """
         archive_file: Path = Path(archive_path)
 
         if not archive_file.exists():
@@ -255,7 +385,17 @@ class ProjectManager:
 
 
 def main() -> int:
-    """Project management CLI."""
+    """Project management CLI.
+
+    Entry point for the command-line interface. Supports creating, listing,
+    loading, deleting, adding files to, exporting, and importing projects.
+    Returns 0 on success or 1 on error.
+
+    Args:
+
+    Returns:
+        int: Exit code (0 for success, 1 for error).
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description="Intellicrack Project Manager")

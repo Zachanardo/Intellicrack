@@ -18,10 +18,13 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import json
 import threading
 import time
-from collections.abc import Generator
+import types
+from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import Any
 
@@ -30,10 +33,17 @@ from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+Flask: type[Any] | None
+jsonify: Callable[..., Any] | None
+request: Any
+Response: type[Any] | None
+CORS: type[Any] | None
+Llama: type[Any] | None
+
 try:
     import requests as requests_module
 
-    requests: Any = requests_module
+    requests: types.ModuleType | None = requests_module
 except ImportError as e:
     logger.exception("Import error in local_gguf_server: %s", e)
     requests = None
@@ -45,23 +55,23 @@ try:
     HAS_FLASK = True
 except ImportError as e:
     logger.exception("Import error in local_gguf_server: %s", e)
-    Flask = None  # type: ignore[assignment, misc]
-    jsonify = None  # type: ignore[assignment]
-    request = None  # type: ignore[assignment]
+    Flask = None
+    jsonify = None
+    request = None
     CORS = None
-    Response = None  # type: ignore[assignment, misc]
+    Response = None
     HAS_FLASK = False
 
 try:
     import llama_cpp as llama_cpp_module
     from llama_cpp import Llama
 
-    llama_cpp: Any = llama_cpp_module
+    llama_cpp: types.ModuleType | None = llama_cpp_module
     HAS_LLAMA_CPP = True
 except ImportError as e:
     logger.exception("Import error in local_gguf_server: %s", e)
     llama_cpp = None
-    Llama = None  # type: ignore[assignment, misc]
+    Llama = None
     HAS_LLAMA_CPP = False
 
 # Try to import Intel GPU libraries
@@ -335,7 +345,7 @@ class LocalGGUFServer:
             # Load the model - check at runtime if Llama is available
             assert Llama is not None, "Llama class not available"
 
-            self.model = Llama(model_path=str(model_path_obj), **model_params)  # type: ignore[arg-type]
+            self.model = Llama(model_path=str(model_path_obj), **model_params)
             self.model_path = str(model_path_obj)
             self.model_config = {
                 "model_path": str(model_path_obj),
@@ -444,7 +454,7 @@ class LocalGGUFServer:
             logger.exception("Flask app or jsonify not available")
             return
 
-        @self.app.route("/health", methods=["GET"])  # type: ignore[untyped-decorator]
+        @self.app.route("/health", methods=["GET"])
         def health() -> object:
             """Health check endpoint.
 
@@ -464,7 +474,7 @@ class LocalGGUFServer:
                 },
             )
 
-        @self.app.route("/models", methods=["GET"])  # type: ignore[untyped-decorator]
+        @self.app.route("/models", methods=["GET"])
         def list_models() -> object:
             """List available models.
 
@@ -479,7 +489,7 @@ class LocalGGUFServer:
                 },
             )
 
-        @self.app.route("/gpu_info", methods=["GET"])  # type: ignore[untyped-decorator]
+        @self.app.route("/gpu_info", methods=["GET"])
         def gpu_info() -> object:
             """Get detailed GPU information.
 
@@ -509,7 +519,7 @@ class LocalGGUFServer:
 
             return jsonify(gpu_details)
 
-        @self.app.route("/v1/chat/completions", methods=["POST"])  # type: ignore[untyped-decorator]
+        @self.app.route("/v1/chat/completions", methods=["POST"])
         def chat_completions() -> object:
             """OpenAI-compatible chat completions endpoint.
 
@@ -544,7 +554,7 @@ class LocalGGUFServer:
                 logger.exception("Chat completion error: %s", e)
                 return jsonify({"error": "Internal server error during chat completion"}), 500
 
-        @self.app.route("/v1/completions", methods=["POST"])  # type: ignore[untyped-decorator]
+        @self.app.route("/v1/completions", methods=["POST"])
         def completions() -> object:
             """OpenAI-compatible completions endpoint.
 
@@ -576,7 +586,7 @@ class LocalGGUFServer:
                 logger.exception("Completion error: %s", e)
                 return jsonify({"error": "Internal server error during completion"}), 500
 
-        @self.app.route("/load_model", methods=["POST"])  # type: ignore[untyped-decorator]
+        @self.app.route("/load_model", methods=["POST"])
         def load_model_endpoint() -> object:
             """Load a new model.
 
@@ -611,7 +621,7 @@ class LocalGGUFServer:
                 logger.exception("Model loading error: %s", e)
                 return jsonify({"error": "Internal server error during model loading"}), 500
 
-        @self.app.route("/unload_model", methods=["POST"])  # type: ignore[untyped-decorator]
+        @self.app.route("/unload_model", methods=["POST"])
         def unload_model_endpoint() -> object:
             """Unload the current model.
 

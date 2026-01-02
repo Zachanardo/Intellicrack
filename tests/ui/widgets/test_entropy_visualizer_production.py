@@ -190,7 +190,7 @@ class TestEntropyVisualizerDataLoading:
     def test_load_data_rejects_non_bytes(self, entropy_visualizer: EntropyVisualizer) -> None:
         """Loading non-bytes data raises TypeError."""
         with pytest.raises(TypeError):
-            entropy_visualizer.load_data("not bytes", block_size=256)  # type: ignore
+            entropy_visualizer.load_data("not bytes", block_size=256)
 
     def test_load_data_rejects_empty_bytes(self, entropy_visualizer: EntropyVisualizer) -> None:
         """Loading empty bytes raises ValueError."""

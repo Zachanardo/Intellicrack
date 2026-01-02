@@ -41,7 +41,7 @@ def safe_import_numpy() -> Any:
     """Safely import numpy with fallback.
 
     Returns:
-        Any: Either the real numpy module or a NumpyFallback instance.
+        Either the real numpy module or a NumpyFallback instance.
 
     """
     global NUMPY_AVAILABLE
@@ -70,7 +70,7 @@ def safe_import_pandas() -> Any:
     """Safely import pandas with fallback.
 
     Returns:
-        Any: Either the real pandas module or a PandasFallback instance.
+        Either the real pandas module or a PandasFallback instance.
 
     """
     global PANDAS_AVAILABLE
@@ -96,7 +96,7 @@ def safe_import_sklearn() -> Any:
     """Safely import sklearn with fallback.
 
     Returns:
-        Any: Either the real sklearn module or a SklearnFallback instance.
+        Either the real sklearn module or a SklearnFallback instance.
 
     """
     global SKLEARN_AVAILABLE
@@ -122,7 +122,11 @@ def safe_import_lief() -> Any:
     """Safely import lief with fallback.
 
     Returns:
-        Any: Either the real lief module or a LiefFallback instance.
+        Either the real lief module or a LiefFallback instance.
+
+    Raises:
+        ImportError: May raise and catch internally when lief handler
+            is unavailable.
 
     """
     global LIEF_AVAILABLE
@@ -142,7 +146,12 @@ def safe_import_lief() -> Any:
 
 
 def safe_import_pyelftools() -> bool:
-    """Safely import pyelftools with fallback."""
+    """Safely import pyelftools with fallback.
+
+    Returns:
+        bool: True if pyelftools is available, False otherwise.
+
+    """
     global PYELFTOOLS_AVAILABLE
     try:
         from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile, bytes2str
@@ -173,7 +182,7 @@ def _create_randn_fallback(shape: tuple[int, ...]) -> object:
         shape: Tuple specifying the shape of the array to generate.
 
     Returns:
-        object: Nested list representing random normal distributed values.
+        Nested list representing random normal distributed values.
 
     Raises:
         ValueError: If shape has more than 4 dimensions.
@@ -205,7 +214,7 @@ def _create_rand_fallback(shape: tuple[int, ...]) -> object:
         shape: Tuple specifying the shape of the array to generate.
 
     Returns:
-        object: Nested list representing random uniform distributed values.
+        Nested list representing random uniform distributed values.
 
     Raises:
         ValueError: If shape has more than 2 dimensions.
@@ -233,7 +242,7 @@ def _create_random_int_fallback(low: int, high: int, size: int | None) -> int | 
         size: Number of random integers to generate, or None for single value.
 
     Returns:
-        int | list[int]: Single integer or list of random integers.
+        Single integer or list of random integers.
 
     """
     import random
@@ -252,7 +261,7 @@ def _create_random_uniform_fallback(low: float, high: float, size: int | None) -
         size: Number of values to generate, or None for single value.
 
     Returns:
-        float | list[float]: Single float or list of uniform random values.
+        Single float or list of uniform random values.
 
     """
     import random
@@ -271,7 +280,7 @@ def _create_random_normal_fallback(loc: float, scale: float, size: int | None) -
         size: Number of values to generate, or None for single value.
 
     Returns:
-        float | list[float]: Single float or list of normally distributed values.
+        Single float or list of normally distributed values.
 
     """
     import random
@@ -290,7 +299,7 @@ def _create_random_choice_fallback(a: list[Any], size: int | None, p: list[float
         p: Probabilities for weighted sampling, or None for uniform.
 
     Returns:
-        object: Single element or list of randomly chosen elements.
+        Single element or list of randomly chosen elements.
 
     """
     import random
@@ -312,7 +321,7 @@ def _create_random_float_fallback(size: int | None) -> float | list[float]:
         size: Number of floats to generate, or None for single value.
 
     Returns:
-        float | list[float]: Single float or list of random floats in [0, 1).
+        Single float or list of random floats in [0, 1).
 
     """
     import random
@@ -326,7 +335,7 @@ def create_numpy_fallback() -> Any:
     """Create a minimal numpy fallback.
 
     Returns:
-        Any: A minimal numpy replacement module.
+        A minimal numpy replacement module.
 
     """
 
@@ -346,7 +355,7 @@ def create_numpy_fallback() -> Any:
                 data: Input data to convert.
 
             Returns:
-                list: Array-like list representation.
+                Array-like list representation.
 
             """
             if isinstance(data, list):
@@ -361,7 +370,7 @@ def create_numpy_fallback() -> Any:
                 shape: Integer or tuple specifying shape.
 
             Returns:
-                list: Array of zeros with specified shape.
+                Array of zeros with specified shape.
 
             """
             if isinstance(shape, int):
@@ -378,7 +387,7 @@ def create_numpy_fallback() -> Any:
                 data: List of numeric values.
 
             Returns:
-                float: Mean value.
+                Mean value.
 
             """
             if not data:
@@ -393,7 +402,7 @@ def create_numpy_fallback() -> Any:
                 data: List of numeric values.
 
             Returns:
-                float: Sum of values.
+                Sum of values.
 
             """
             import builtins
@@ -408,7 +417,7 @@ def create_numpy_fallback() -> Any:
                 condition: List of boolean values.
 
             Returns:
-                list: Indices where condition is True.
+                Indices where condition is True.
 
             """
             return [i for i, val in enumerate(condition) if val]
@@ -424,7 +433,7 @@ def create_numpy_fallback() -> Any:
                     *shape: Variable-length shape arguments.
 
                 Returns:
-                    object: Normally distributed random values.
+                    Normally distributed random values.
 
                 """
                 return _create_randn_fallback(shape)
@@ -437,7 +446,7 @@ def create_numpy_fallback() -> Any:
                     *shape: Variable-length shape arguments.
 
                 Returns:
-                    object: Uniformly distributed random values.
+                    Uniformly distributed random values.
 
                 """
                 return _create_rand_fallback(shape)
@@ -452,7 +461,7 @@ def create_numpy_fallback() -> Any:
                     size: Number of values, or None for single value.
 
                 Returns:
-                    int | list[int]: Random integer or list of integers.
+                    Random integer or list of integers.
 
                 """
                 return _create_random_int_fallback(low, high, size)
@@ -467,7 +476,7 @@ def create_numpy_fallback() -> Any:
                     size: Number of values, or None for single value.
 
                 Returns:
-                    float | list[float]: Random float or list of floats.
+                    Random float or list of floats.
 
                 """
                 return _create_random_uniform_fallback(low, high, size)
@@ -482,7 +491,7 @@ def create_numpy_fallback() -> Any:
                     size: Number of values, or None for single value.
 
                 Returns:
-                    float | list[float]: Normally distributed random value(s).
+                    Normally distributed random value(s).
 
                 """
                 return _create_random_normal_fallback(loc, scale, size)
@@ -497,7 +506,7 @@ def create_numpy_fallback() -> Any:
                     p: Probabilities for weighted sampling.
 
                 Returns:
-                    Any | list[Any]: Randomly chosen element(s).
+                    Randomly chosen element(s).
 
                 """
                 return _create_random_choice_fallback(a, size, p)
@@ -510,7 +519,7 @@ def create_numpy_fallback() -> Any:
                     size: Number of floats, or None for single.
 
                 Returns:
-                    float | list[float]: Random float(s) in [0, 1).
+                    Random float(s) in [0, 1).
 
                 """
                 return _create_random_float_fallback(size)
@@ -522,7 +531,7 @@ def create_pandas_fallback() -> Any:
     """Create a minimal pandas fallback.
 
     Returns:
-        Any: A minimal pandas replacement module.
+        A minimal pandas replacement module.
 
     """
 
@@ -547,7 +556,7 @@ def create_pandas_fallback() -> Any:
             """Convert DataFrame to dictionary.
 
             Returns:
-                dict: Dictionary representation of data.
+                Dictionary representation of data.
 
             """
             return self.data
@@ -556,7 +565,7 @@ def create_pandas_fallback() -> Any:
             """Get length of DataFrame.
 
             Returns:
-                int: Number of rows.
+                Number of rows.
 
             """
             return len(next(iter(self.data.values()))) if self.data else 0
@@ -574,7 +583,7 @@ def create_sklearn_fallback() -> Any:
     """Create a minimal sklearn fallback.
 
     Returns:
-        Any: A minimal sklearn replacement module.
+        A minimal sklearn replacement module.
 
     """
 
@@ -598,7 +607,7 @@ def create_sklearn_fallback() -> Any:
                 y: Training labels.
 
             Returns:
-                RandomForestFallback: Self for chaining.
+                Self for chaining.
 
             """
             logger.debug("RandomForest fallback fit called with %s samples and %s labels", len(X), len(y))
@@ -611,7 +620,7 @@ def create_sklearn_fallback() -> Any:
                 X: Features to predict on.
 
             Returns:
-                list: Predicted labels (all zeros).
+                Predicted labels (all zeros).
 
             """
             return [0] * len(X)
@@ -623,7 +632,7 @@ def create_sklearn_fallback() -> Any:
                 X: Features to predict on.
 
             Returns:
-                list: Predicted probabilities (50/50 for two classes).
+                Predicted probabilities (50/50 for two classes).
 
             """
             return [[0.5, 0.5] for _ in X]
@@ -649,7 +658,7 @@ def create_sklearn_fallback() -> Any:
                 X: Features to cluster.
 
             Returns:
-                list: Cluster labels (all zeros).
+                Cluster labels (all zeros).
 
             """
             return [0] * len(X)
@@ -664,7 +673,7 @@ def create_sklearn_fallback() -> Any:
                 X: Data to fit.
 
             Returns:
-                StandardScalerFallback: Self for chaining.
+                Self for chaining.
 
             """
             logger.debug("StandardScaler fallback fit called with %s samples", len(X))
@@ -677,7 +686,7 @@ def create_sklearn_fallback() -> Any:
                 X: Data to transform.
 
             Returns:
-                list: Unchanged data.
+                Unchanged data.
 
             """
             return X
@@ -689,7 +698,7 @@ def create_sklearn_fallback() -> Any:
                 X: Data to fit and transform.
 
             Returns:
-                list: Unchanged data.
+                Unchanged data.
 
             """
             return X
@@ -724,7 +733,7 @@ def create_lief_fallback() -> Any:
     """Create a minimal lief fallback.
 
     Returns:
-        Any: A minimal lief replacement module.
+        A minimal lief replacement module.
 
     """
 
@@ -744,7 +753,7 @@ def create_lief_fallback() -> Any:
                     filename: Path to ELF file.
 
                 Returns:
-                    None: Fallback does not perform actual parsing.
+                    None.
 
                 """
                 logger.debug("ELF fallback parse called for: %s", filename)
@@ -757,7 +766,7 @@ def create_lief_fallback() -> Any:
                 filename: Path to binary file.
 
             Returns:
-                None: Fallback does not perform actual parsing.
+                None.
 
             """
             logger.debug("Lief fallback parse called for: %s", filename)
@@ -863,7 +872,7 @@ def get_dependency_status() -> dict[str, bool]:
     """Get status of all dependencies.
 
     Returns:
-        dict: Dictionary mapping dependency names to availability status (bool).
+        Dictionary mapping dependency names to availability status.
 
     """
     status = {

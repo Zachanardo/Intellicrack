@@ -85,7 +85,7 @@ class SerialNumberGenerator:
         """Initialize common serial generation algorithms.
 
         Returns:
-            dict[str, Callable[[int], str]]: Mapping of algorithm names to their implementation functions.
+            Mapping of algorithm names to their implementation functions.
 
         """
         algorithms: dict[str, Callable[[int], str]] = {
@@ -107,7 +107,7 @@ class SerialNumberGenerator:
         """Initialize checksum calculation functions.
 
         Returns:
-            dict[str, Callable[[str], str]]: Mapping of checksum algorithm names to their implementation functions.
+            Mapping of checksum algorithm names to their implementation functions.
 
         """
         checksums: dict[str, Callable[[str], str]] = {
@@ -133,7 +133,7 @@ class SerialNumberGenerator:
             valid_serials: List of known valid serial numbers to analyze.
 
         Returns:
-            dict[str, Any]: Analysis results including detected format, length, structure, checksum algorithm, patterns, and confidence scores.
+            Analysis results including detected format, length, structure, checksum algorithm, patterns, and confidence scores.
 
         """
         logger.info("Starting serial algorithm analysis for %s valid serials.", len(valid_serials))
@@ -177,7 +177,7 @@ class SerialNumberGenerator:
             serials: List of serial numbers to analyze for format detection.
 
         Returns:
-            SerialFormat: The detected format (NUMERIC, ALPHANUMERIC, HEXADECIMAL, BASE32, UUID, MICROSOFT, or CUSTOM).
+            The detected format (NUMERIC, ALPHANUMERIC, HEXADECIMAL, BASE32, UUID, MICROSOFT, or CUSTOM).
 
         """
         if not serials:
@@ -219,7 +219,7 @@ class SerialNumberGenerator:
             serials: List of serial numbers to analyze for length patterns.
 
         Returns:
-            dict[str, int]: Statistics including min, max, mode, and clean (separators removed) length metrics.
+            Statistics including min, max, mode, and clean (separators removed) length metrics.
 
         """
         lengths = [len(s) for s in serials]
@@ -243,7 +243,7 @@ class SerialNumberGenerator:
             serials: List of serial numbers to analyze for structural patterns.
 
         Returns:
-            dict[str, Any]: Structure analysis including groups, separators, and group length statistics.
+            Structure analysis including groups, separators, and group length statistics.
 
         """
         structure: dict[str, Any] = {"groups": [], "separators": [], "group_lengths": []}
@@ -272,7 +272,7 @@ class SerialNumberGenerator:
             serials: List of serial numbers to analyze for checksum detection.
 
         Returns:
-            dict[str, Any]: Mapping of detected checksum algorithms to their accuracy scores.
+            Mapping of detected checksum algorithms to their accuracy scores.
 
         """
         results = {}
@@ -293,7 +293,7 @@ class SerialNumberGenerator:
             checksum_func: Callable checksum function that takes a string and returns a checksum.
 
         Returns:
-            bool: True if the serial passes checksum validation, False otherwise.
+            True if the serial passes checksum validation, False otherwise.
 
         """
         try:
@@ -322,7 +322,7 @@ class SerialNumberGenerator:
             serials: List of serial numbers to analyze for patterns.
 
         Returns:
-            list[dict[str, Any]]: List of detected patterns with their characteristics.
+            List of detected patterns with their characteristics.
 
         """
         patterns = []
@@ -366,7 +366,7 @@ class SerialNumberGenerator:
             algorithm: Name of the algorithm to test.
 
         Returns:
-            float: Confidence score from 0.0 to 1.0 indicating match quality.
+            Confidence score from 0.0 to 1.0 indicating match quality.
 
         """
         score = 0.0
@@ -393,7 +393,7 @@ class SerialNumberGenerator:
             seed: Optional seed value (int, str, or bytes) to influence serial generation randomness.
 
         Returns:
-            GeneratedSerial: The generated serial number with metadata and validation information.
+            The generated serial number with metadata and validation information.
 
         """
         logger.debug("Generating serial with constraints: %s, seed: %s", constraints, seed)
@@ -421,7 +421,7 @@ class SerialNumberGenerator:
             seed: Optional seed value to influence Z3 solver behavior.
 
         Returns:
-            GeneratedSerial: The generated serial or fallback random serial if constraints unsatisfiable.
+            The generated serial or fallback random serial if constraints unsatisfiable.
 
         """
         # Create bit vectors for serial characters
@@ -544,7 +544,7 @@ class SerialNumberGenerator:
             constraints: SerialConstraints object specifying format and generation parameters.
 
         Returns:
-            GeneratedSerial: The randomly generated serial number with metadata.
+            The randomly generated serial number with metadata.
 
         """
         if constraints.custom_alphabet:
@@ -592,7 +592,7 @@ class SerialNumberGenerator:
             constraints: SerialConstraints object (unused but required by interface).
 
         Returns:
-            GeneratedSerial: Microsoft-format serial with confidence score.
+            Microsoft-format serial with confidence score.
 
         """
         # Microsoft uses specific algorithm with mod 7 check
@@ -620,7 +620,7 @@ class SerialNumberGenerator:
             constraints: SerialConstraints object (unused but required by interface).
 
         Returns:
-            GeneratedSerial: UUID v4 format serial with perfect confidence.
+            UUID v4 format serial with perfect confidence.
 
         """
         import uuid
@@ -643,7 +643,7 @@ class SerialNumberGenerator:
             length: Desired length of generated serial (default 16).
 
         Returns:
-            str: Serial number with Luhn checksum validation.
+            Serial number with Luhn checksum validation.
 
         """
         # Note: Using random module for generating serials, not cryptographic purposes
@@ -661,7 +661,7 @@ class SerialNumberGenerator:
             data: String data to calculate checksum for.
 
         Returns:
-            str: Luhn checksum digit as a string.
+            Luhn checksum digit as a string.
 
         """
         digits = [int(d) for d in data if d.isdigit()]
@@ -675,7 +675,7 @@ class SerialNumberGenerator:
             digits: List of integers to calculate check digit for.
 
         Returns:
-            int: The Luhn check digit (0-9).
+            The Luhn check digit (0-9).
 
         """
         total = 0
@@ -697,7 +697,7 @@ class SerialNumberGenerator:
             serial: Serial number to verify.
 
         Returns:
-            bool: True if Luhn checksum is valid, False otherwise.
+            True if Luhn checksum is valid, False otherwise.
 
         """
         digits = [int(d) for d in serial if d.isdigit()]
@@ -765,7 +765,7 @@ class SerialNumberGenerator:
             data: String data to calculate checksum for.
 
         Returns:
-            str: Verhoeff checksum digit as a string.
+            Verhoeff checksum digit as a string.
 
         """
         # Implementation of Verhoeff algorithm

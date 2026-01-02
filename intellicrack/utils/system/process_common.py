@@ -39,7 +39,11 @@ def run_subprocess_safely(cmd: list[str], timeout: int = 30, capture_output: boo
         capture_output: Whether to capture stdout/stderr
 
     Returns:
-        CompletedProcess result
+        Completed subprocess result with returncode, stdout, and stderr
+
+    Raises:
+        FileNotFoundError: If command executable not found
+        subprocess.TimeoutExpired: If command exceeds timeout duration
 
     """
     try:
@@ -67,7 +71,11 @@ def create_popen_safely(cmd: list[str], **kwargs: Any) -> subprocess.Popen[str]:
         **kwargs: Additional Popen arguments
 
     Returns:
-        Popen process object
+        Running process with stdout and stderr piped to caller
+
+    Raises:
+        FileNotFoundError: If command executable not found
+        OSError: If process creation fails
 
     """
     defaults: dict[str, Any] = {
@@ -94,7 +102,11 @@ def create_suspended_process_with_context(
         logger_instance: Optional logger instance
 
     Returns:
-        dict: Contains process_info and context, or error info
+        Dictionary containing success status, process_info, context on success, or
+        error information on failure
+
+    Raises:
+        Exception: If process creation or context retrieval fails
 
     """
     if logger_instance is None:

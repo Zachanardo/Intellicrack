@@ -38,7 +38,12 @@ class StarForceVersion:
     variant: str
 
     def __str__(self) -> str:
-        """Return string representation of StarForce version."""
+        """Return string representation of StarForce version.
+
+        Returns:
+            str: String representation including version numbers and variant,
+                formatted as "StarForce <major>.<minor>.<build> <variant>".
+        """
         return f"StarForce {self.major}.{self.minor}.{self.build} {self.variant}"
 
 
@@ -109,7 +114,10 @@ class StarForceDetector:
     SECTION_NAMES = [".sforce", ".sf", ".protect", ".sfdata", ".sfcode", ".sfeng", ".sfrsc"]
 
     def __init__(self) -> None:
-        """Initialize StarForce detector."""
+        """Initialize StarForce detector.
+
+        Sets up Windows API functions and compiles YARA detection rules.
+        """
         self.logger = logging.getLogger(__name__)
         self._advapi32: WinDLL | None = None
         self._kernel32: WinDLL | None = None
@@ -143,7 +151,13 @@ class StarForceDetector:
             self.logger.debug("Failed to setup Windows API functions: %s", e)
 
     def _compile_yara_rules(self) -> Any | None:
-        """Compile YARA rules for StarForce signature detection."""
+        """Compile YARA rules for StarForce signature detection.
+
+        Returns:
+            Any | None: Compiled YARA rules object for matching StarForce
+                signatures in binaries, or None if YARA is unavailable or
+                compilation fails.
+        """
         if not YARA_AVAILABLE:
             return None
 
@@ -224,11 +238,11 @@ class StarForceDetector:
         """Perform comprehensive StarForce detection.
 
         Args:
-            target_path: Path to executable to analyze
+            target_path: Path to executable to analyze.
 
         Returns:
-            StarForceDetection results with confidence score
-
+            Comprehensive StarForce detection results with version, drivers, services,
+            registry keys, protected sections, and confidence score.
         """
         drivers = self._detect_drivers()
         services = self._detect_services()
@@ -268,7 +282,13 @@ class StarForceDetector:
         )
 
     def _detect_drivers(self) -> list[str]:
-        """Detect StarForce kernel drivers."""
+        """Detect StarForce kernel drivers.
+
+        Returns:
+            list[str]: List of detected StarForce kernel driver file names
+                found in the Windows System32 drivers directory. Empty list
+                if no drivers are detected.
+        """
         detected = []
 
         system_root = Path(r"C:\Windows\System32\drivers")
@@ -281,7 +301,13 @@ class StarForceDetector:
         return detected
 
     def _detect_services(self) -> list[str]:
-        """Detect StarForce Windows services."""
+        """Detect StarForce Windows services.
+
+        Returns:
+            list[str]: List of detected StarForce Windows service names
+                found through Service Control Manager queries. Empty list if
+                no services are detected or API access fails.
+        """
         if not self._advapi32:
             return []
 
@@ -308,7 +334,14 @@ class StarForceDetector:
         return detected
 
     def _detect_registry_keys(self) -> list[str]:
-        """Detect StarForce registry keys."""
+        """Detect StarForce registry keys.
+
+        Returns:
+            list[str]: List of detected StarForce registry key paths found
+                in HKEY_LOCAL_MACHINE hive, including service entries and
+                protection technology configuration. Empty list if no keys
+                are detected.
+        """
         detected = []
 
         for key_path in self.REGISTRY_KEYS:
@@ -322,7 +355,18 @@ class StarForceDetector:
         return detected
 
     def _detect_protected_sections(self, target_path: Path) -> list[str]:
-        """Detect StarForce protected PE sections."""
+        """Detect StarForce protected PE sections.
+
+        Args:
+            target_path: Path to the executable file to analyze for StarForce
+                PE sections.
+
+        Returns:
+            list[str]: List of detected StarForce protected PE section names
+                found in the executable, including encrypted sections marked
+                with "(encrypted)" suffix. Empty list if pefile is unavailable
+                or no protected sections are found.
+        """
         if not PEFILE_AVAILABLE:
             return []
 
@@ -348,7 +392,17 @@ class StarForceDetector:
         return detected
 
     def _detect_version(self, target_path: Path) -> StarForceVersion | None:
-        """Detect StarForce version from executable."""
+        """Detect StarForce version from executable.
+
+        Args:
+            target_path: Path to the executable file to analyze for StarForce
+                version information.
+
+        Returns:
+            StarForceVersion | None: Detected StarForce version with major,
+                minor, build numbers and variant (Pro/Standard), or None if
+                unable to determine version from file analysis.
+        """
         if not PEFILE_AVAILABLE:
             return None
 
@@ -380,7 +434,17 @@ class StarForceDetector:
         return None
 
     def _parse_version_string(self, version_str: str) -> StarForceVersion | None:
-        """Parse version string to extract StarForce version."""
+        """Parse version string to extract StarForce version.
+
+        Args:
+            version_str: Version string to parse, extracted from executable
+                file version info or metadata.
+
+        Returns:
+            StarForceVersion | None: Parsed StarForce version object with
+                extracted major, minor, and build numbers, or None if parsing
+                fails or version string does not contain StarForce version info.
+        """
         import re
 
         pattern = r"StarForce[^\d]*(\d+)\.(\d+)\.?(\d*)"
@@ -396,7 +460,18 @@ class StarForceDetector:
         return None
 
     def _yara_scan(self, target_path: Path) -> list[dict[str, str]]:
-        """Scan executable with YARA rules."""
+        """Scan executable with YARA rules.
+
+        Args:
+            target_path: Path to the executable file to scan for StarForce
+                signatures using compiled YARA rules.
+
+        Returns:
+            list[dict[str, str]]: List of YARA rule matches, each containing
+                keys for "rule" (rule name), "version" (protection version),
+                and "description" (rule description). Empty list if no matches
+                or YARA rules are unavailable.
+        """
         if not self._yara_rules:
             return []
 
@@ -426,7 +501,22 @@ class StarForceDetector:
         sections: list[str],
         yara_matches: list[dict[str, str]],
     ) -> float:
-        """Calculate detection confidence score."""
+        """Calculate detection confidence score.
+
+        Args:
+            drivers: List of detected kernel drivers found on system.
+            services: List of detected Windows services running on system.
+            registry_keys: List of detected registry keys in HKEY_LOCAL_MACHINE
+                hive.
+            sections: List of detected protected PE sections in executable.
+            yara_matches: List of YARA signature matches found in binary.
+
+        Returns:
+            float: Confidence score between 0.0 and 1.0 indicating likelihood
+                of StarForce protection detection. Score is weighted by
+                detection type (drivers: 0.3, services: 0.2, registry: 0.15,
+                sections: 0.2, YARA: 0.15).
+        """
         score = 0.0
 
         if drivers:
@@ -447,7 +537,16 @@ class StarForceDetector:
         return min(score, 1.0)
 
     def _get_driver_paths(self, drivers: list[str]) -> dict[str, str]:
-        """Get full paths for detected drivers."""
+        """Get full paths for detected drivers.
+
+        Args:
+            drivers: List of detected driver file names to locate.
+
+        Returns:
+            dict[str, str]: Dictionary mapping driver names to their full
+                system paths in Windows System32 drivers directory. Only
+                includes drivers that exist on the file system.
+        """
         paths = {}
         system_root = Path(r"C:\Windows\System32\drivers")
 
@@ -459,7 +558,16 @@ class StarForceDetector:
         return paths
 
     def _get_service_status(self, services: list[str]) -> dict[str, str]:
-        """Get status information for detected services."""
+        """Get status information for detected services.
+
+        Args:
+            services: List of service names to query for status information.
+
+        Returns:
+            dict[str, str]: Dictionary mapping service names to their current
+                status strings (STOPPED, RUNNING, PAUSED, etc.). Empty dict
+                if API access fails or no status information is available.
+        """
         if not self._advapi32:
             return {}
 
@@ -515,7 +623,13 @@ class StarForceDetector:
         return status_info
 
     def _detect_scsi_miniport(self) -> bool:
-        """Detect StarForce SCSI miniport driver."""
+        """Detect StarForce SCSI miniport driver.
+
+        Returns:
+            bool: True if StarForce SCSI miniport driver is detected in
+                registry under Scsi drivers, False if not detected or registry
+                access fails.
+        """
         try:
             key = winreg.OpenKey(
                 winreg.HKEY_LOCAL_MACHINE,

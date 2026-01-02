@@ -18,6 +18,8 @@ from intellicrack.ai.protection_aware_script_gen import (
 from intellicrack.models.protection_knowledge_base import get_protection_knowledge_base
 from intellicrack.protection.unified_protection_engine import get_unified_engine
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 
 class TestProtectionAwareScriptGeneratorInitialization:
     """Test generator initialization and template loading."""
@@ -79,22 +81,22 @@ class TestFridaScriptGeneration:
     @pytest.fixture(scope="class")
     def vmprotect_binary(self) -> Path:
         """Path to VMProtect-protected test binary."""
-        return Path("D:/Intellicrack/tests/fixtures/binaries/protected/vmprotect_protected.exe")
+        return PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "vmprotect_protected.exe"
 
     @pytest.fixture(scope="class")
     def themida_binary(self) -> Path:
         """Path to Themida-protected test binary."""
-        return Path("D:/Intellicrack/tests/fixtures/binaries/protected/themida_protected.exe")
+        return PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "themida_protected.exe"
 
     @pytest.fixture(scope="class")
     def hasp_binary(self) -> Path:
         """Path to HASP-protected test binary."""
-        return Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected/hasp_sentinel_protected.exe")
+        return PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "hasp_sentinel_protected.exe"
 
     @pytest.fixture(scope="class")
     def flexlm_binary(self) -> Path:
         """Path to FlexLM-protected test binary."""
-        return Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected/flexlm_license_protected.exe")
+        return PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "flexlm_license_protected.exe"
 
     def test_generate_vmprotect_bypass_frida_script(
         self, generator: ProtectionAwareScriptGenerator, vmprotect_binary: Path
@@ -248,9 +250,7 @@ class TestGhidraScriptGeneration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Ghidra script must perform automated HASP API analysis."""
-        hasp_binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/pe/protected/hasp_sentinel_protected.exe"
-        )
+        hasp_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "hasp_sentinel_protected.exe"
 
         if not hasp_binary.exists():
             pytest.skip(f"HASP test binary not found: {hasp_binary}")
@@ -276,9 +276,7 @@ class TestGhidraScriptGeneration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Ghidra script must discover protection APIs automatically."""
-        flexlm_binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/pe/protected/flexlm_license_protected.exe"
-        )
+        flexlm_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "flexlm_license_protected.exe"
 
         if not flexlm_binary.exists():
             pytest.skip(f"FlexLM test binary not found: {flexlm_binary}")
@@ -299,9 +297,7 @@ class TestGhidraScriptGeneration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Ghidra script must apply binary patches."""
-        vmprotect_binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/protected/vmprotect_protected.exe"
-        )
+        vmprotect_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "vmprotect_protected.exe"
 
         if not vmprotect_binary.exists():
             pytest.skip(f"VMProtect test binary not found: {vmprotect_binary}")
@@ -337,7 +333,7 @@ class TestRadare2ScriptGeneration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Radare2 scripts must use proper r2 command syntax."""
-        binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/7zip.exe")
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "7zip.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")
@@ -360,9 +356,7 @@ class TestProtectionDetectionIntegration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Must detect VMProtect and generate VMProtect-specific bypass."""
-        vmprotect_binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/protected/vmprotect_protected.exe"
-        )
+        vmprotect_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "vmprotect_protected.exe"
 
         if not vmprotect_binary.exists():
             pytest.skip(f"VMProtect test binary not found: {vmprotect_binary}")
@@ -381,9 +375,7 @@ class TestProtectionDetectionIntegration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Must detect Themida and generate Themida-specific bypass."""
-        themida_binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/protected/themida_protected.exe"
-        )
+        themida_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "themida_protected.exe"
 
         if not themida_binary.exists():
             pytest.skip(f"Themida test binary not found: {themida_binary}")
@@ -402,9 +394,7 @@ class TestProtectionDetectionIntegration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Unprotected binaries must generate basic analysis scripts."""
-        unprotected_binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/7zip.exe"
-        )
+        unprotected_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "7zip.exe"
 
         if not unprotected_binary.exists():
             pytest.skip(f"Test binary not found: {unprotected_binary}")
@@ -422,9 +412,7 @@ class TestProtectionDetectionIntegration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Confidence scores must reflect detection accuracy."""
-        vmprotect_binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/protected/vmprotect_protected.exe"
-        )
+        vmprotect_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "vmprotect_protected.exe"
 
         if not vmprotect_binary.exists():
             pytest.skip(f"Test binary not found: {vmprotect_binary}")
@@ -449,7 +437,7 @@ class TestScriptMetadataGeneration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Generated scripts must include target binary metadata."""
-        binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/vlc.exe")
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "vlc.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")
@@ -465,9 +453,7 @@ class TestScriptMetadataGeneration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Scripts must document detected protections."""
-        hasp_binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/pe/protected/hasp_sentinel_protected.exe"
-        )
+        hasp_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "hasp_sentinel_protected.exe"
 
         if not hasp_binary.exists():
             pytest.skip(f"Test binary not found: {hasp_binary}")
@@ -483,9 +469,7 @@ class TestScriptMetadataGeneration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Result must include recommended bypass techniques."""
-        vmprotect_binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/protected/vmprotect_protected.exe"
-        )
+        vmprotect_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "vmprotect_protected.exe"
 
         if not vmprotect_binary.exists():
             pytest.skip(f"Test binary not found: {vmprotect_binary}")
@@ -503,9 +487,7 @@ class TestScriptMetadataGeneration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Result must include time estimate for bypass."""
-        hasp_binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/pe/protected/hasp_sentinel_protected.exe"
-        )
+        hasp_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "hasp_sentinel_protected.exe"
 
         if not hasp_binary.exists():
             pytest.skip(f"Test binary not found: {hasp_binary}")
@@ -518,9 +500,7 @@ class TestScriptMetadataGeneration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Result must list required tools for bypass."""
-        flexlm_binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/pe/protected/flexlm_license_protected.exe"
-        )
+        flexlm_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "flexlm_license_protected.exe"
 
         if not flexlm_binary.exists():
             pytest.skip(f"Test binary not found: {flexlm_binary}")
@@ -545,9 +525,7 @@ class TestAIPromptGeneration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """AI prompts must guide script enhancement."""
-        vmprotect_binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/protected/vmprotect_protected.exe"
-        )
+        vmprotect_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "vmprotect_protected.exe"
 
         if not vmprotect_binary.exists():
             pytest.skip(f"Test binary not found: {vmprotect_binary}")
@@ -564,9 +542,7 @@ class TestAIPromptGeneration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """AI prompts must include protection-specific context."""
-        hasp_binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/pe/protected/hasp_sentinel_protected.exe"
-        )
+        hasp_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "hasp_sentinel_protected.exe"
 
         if not hasp_binary.exists():
             pytest.skip(f"Test binary not found: {hasp_binary}")
@@ -583,9 +559,7 @@ class TestAIPromptGeneration:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """AI prompts must suggest effective bypass techniques."""
-        vmprotect_binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/protected/vmprotect_protected.exe"
-        )
+        vmprotect_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "vmprotect_protected.exe"
 
         if not vmprotect_binary.exists():
             pytest.skip(f"Test binary not found: {vmprotect_binary}")
@@ -618,9 +592,7 @@ class TestMultiProtectionScenarios:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Must handle binaries with multiple protection layers."""
-        enterprise_binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/pe/protected/enterprise_license_check.exe"
-        )
+        enterprise_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "enterprise_license_check.exe"
 
         if not enterprise_binary.exists():
             pytest.skip(f"Test binary not found: {enterprise_binary}")
@@ -640,9 +612,7 @@ class TestMultiProtectionScenarios:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Must identify and prioritize primary protection."""
-        binary = Path(
-            "D:/Intellicrack/tests/fixtures/binaries/pe/protected/hasp_sentinel_protected.exe"
-        )
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "protected" / "hasp_sentinel_protected.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")
@@ -795,7 +765,7 @@ class TestScriptSyntaxValidation:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Frida scripts must have balanced braces and brackets."""
-        binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/vlc.exe")
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "vlc.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")
@@ -819,7 +789,7 @@ class TestScriptSyntaxValidation:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Ghidra scripts must have valid Java class structure."""
-        binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/vlc.exe")
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "vlc.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")
@@ -844,7 +814,7 @@ class TestEnhanceAIScriptGeneration:
 
     def test_enhance_with_real_binary(self) -> None:
         """AI enhancement must work with real binaries."""
-        binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/7zip.exe")
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "7zip.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")
@@ -908,7 +878,7 @@ class TestPerformanceWithLargeBinaries:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Script generation must complete within reasonable time."""
-        large_binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/firefox.exe")
+        large_binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "firefox.exe"
 
         if not large_binary.exists():
             pytest.skip(f"Test binary not found: {large_binary}")
@@ -937,7 +907,7 @@ class TestScriptTypeValidation:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Default script type must be Frida."""
-        binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/7zip.exe")
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "7zip.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")
@@ -953,7 +923,7 @@ class TestScriptTypeValidation:
         self, generator: ProtectionAwareScriptGenerator
     ) -> None:
         """Explicit Ghidra type must generate Ghidra scripts."""
-        binary = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate/vlc.exe")
+        binary = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "pe" / "legitimate" / "vlc.exe"
 
         if not binary.exists():
             pytest.skip(f"Test binary not found: {binary}")

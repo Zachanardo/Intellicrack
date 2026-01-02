@@ -26,7 +26,7 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, cast
+from typing import Any
 
 from intellicrack.utils.type_safety import validate_type
 
@@ -388,6 +388,25 @@ class TrainingConfiguration:
 
     dropout_rate: float = 0.5
 
+    # Learning rate scheduling parameters
+    warmup_epochs: int = 5
+    min_learning_rate: float = 1e-6
+    lr_schedule: str = "cosine"
+    lr_decay_rate: float = 0.95
+    lr_decay_steps: int = 10
+    lr_drop_rate: float = 0.5
+    lr_drop_epochs: list[int] | None = None
+
+    # One-cycle learning rate policy parameters
+    lr_max: float = 0.01
+    lr_div_factor: float = 25.0
+    lr_pct_start: float = 0.3
+
+    # Cosine restarts parameters
+    lr_restart_period: int = 20
+    lr_restart_mult: float = 1.0
+    lr_restart_decay: float = 0.9
+
 
 @dataclass
 class ModelMetrics:
@@ -422,8 +441,8 @@ class TrainingThread(QThread):
         """
         super().__init__()
         self.config = config
-        self.should_stop = False
-        self.paused = False
+        self.should_stop: bool = False
+        self.paused: bool = False
 
     def run(self) -> None:
         """Run the training process in a separate thread.
@@ -1761,9 +1780,9 @@ class HyperparameterOptimizationWidget(QWidget):
 
         for trial in range(num_trials):
             params = {
-                "learning_rate": random.uniform(*param_ranges["learning_rate"]),
-                "batch_size": random.choice(range(*param_ranges["batch_size"])),
-                "hidden_layers": random.choice(range(*param_ranges["hidden_layers"])),
+                "learning_rate": random.uniform(*param_ranges["learning_rate"]),  # noqa: S311 - ML hyperparameter search
+                "batch_size": random.choice(range(*param_ranges["batch_size"])),  # noqa: S311 - ML hyperparameter search
+                "hidden_layers": random.choice(range(*param_ranges["hidden_layers"])),  # noqa: S311 - ML hyperparameter search
             }
             accuracy, loss = self._evaluate_hyperparameters(params)
 

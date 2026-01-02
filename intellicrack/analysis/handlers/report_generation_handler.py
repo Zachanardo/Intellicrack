@@ -28,6 +28,8 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 
+PYQT6_AVAILABLE: bool = False
+
 if TYPE_CHECKING:
     from PyQt6.QtCore import (
         QObject as _QObject,
@@ -93,42 +95,84 @@ else:
 
             @staticmethod
             def globalInstance() -> "QThreadPool | None":
-                """Return the global thread pool instance."""
+                """Return the global thread pool instance.
+
+                Returns:
+                    Global thread pool instance or None if unavailable.
+
+                """
                 return None
 
             def start(self, runnable: "QRunnable") -> None:
-                """Start a runnable task."""
+                """Start a runnable task.
+
+                Args:
+                    runnable: QRunnable task to start.
+
+                """
 
         class _SignalConnector:
             """Production-ready signal connector that manages callbacks when PyQt6 is unavailable."""
 
             def __init__(self) -> None:
+                """Initialize the signal connector with an empty callbacks list."""
                 self._callbacks: list[Callable[..., Any]] = []
 
             def connect(self, callback: Callable[..., Any]) -> None:
-                """Connect a callback to this signal."""
+                """Connect a callback to this signal.
+
+                Args:
+                    callback: Callable to invoke when signal is emitted.
+
+                """
                 if callback not in self._callbacks:
                     self._callbacks.append(callback)
 
             def disconnect(self, callback: Callable[..., Any] | None = None) -> None:
-                """Disconnect a callback or all callbacks from this signal."""
+                """Disconnect a callback or all callbacks from this signal.
+
+                Args:
+                    callback: Callable to disconnect, or None to clear all.
+
+                """
                 if callback is None:
                     self._callbacks.clear()
                 elif callback in self._callbacks:
                     self._callbacks.remove(callback)
 
             def emit(self, *args: object, **kwargs: object) -> None:
-                """Emit the signal to all connected callbacks."""
+                """Emit the signal to all connected callbacks.
+
+                Args:
+                    *args: Positional arguments to pass to callbacks.
+                    **kwargs: Keyword arguments to pass to callbacks.
+
+                """
                 for callback in self._callbacks[:]:
                     with contextlib.suppress(Exception):
                         callback(*args, **kwargs)
 
             def __call__(self, *args: object, **kwargs: object) -> None:
-                """Allow direct calling of the signal."""
+                """Allow direct calling of the signal.
+
+                Args:
+                    *args: Positional arguments to pass to callbacks.
+                    **kwargs: Keyword arguments to pass to callbacks.
+
+                """
                 self.emit(*args, **kwargs)
 
         def pyqtSignal(*args: object, **kwargs: object) -> Callable[..., _SignalConnector]:
-            """Fallback pyqtSignal function when PyQt6 is not available."""
+            """Fallback pyqtSignal function when PyQt6 is not available.
+
+            Args:
+                *args: Signal argument types (ignored in fallback).
+                **kwargs: Signal keyword arguments (ignored in fallback).
+
+            Returns:
+                A callable that creates signal connector instances.
+
+            """
 
             def signal_property() -> _SignalConnector:
                 return _SignalConnector()
@@ -173,17 +217,32 @@ else:
                 self._current_index: int = 0
 
             def addItems(self, items: list[str]) -> None:
-                """Add items to the combo box."""
+                """Add items to the combo box.
+
+                Args:
+                    items: List of item strings to add.
+
+                """
                 self._items.extend(items)
 
             def currentText(self) -> str:
-                """Get the current text."""
+                """Get the current text.
+
+                Returns:
+                    The text of the current item, or empty string if out of bounds.
+
+                """
                 if 0 <= self._current_index < len(self._items):
                     return self._items[self._current_index]
                 return ""
 
             def setCurrentIndex(self, index: int) -> None:
-                """Set the current index."""
+                """Set the current index.
+
+                Args:
+                    index: The index to set as current.
+
+                """
                 if 0 <= index < len(self._items):
                     old_text = self.currentText()
                     self._current_index = index
@@ -192,7 +251,12 @@ else:
                         self.currentTextChanged.emit(new_text)
 
             def setCurrentText(self, text: str) -> None:
-                """Set the current text."""
+                """Set the current text.
+
+                Args:
+                    text: The text to set as current.
+
+                """
                 try:
                     index = self._items.index(text)
                     self.setCurrentIndex(index)
@@ -271,7 +335,7 @@ else:
                     file_filter: File filter string (e.g., "Text Files (*.txt)").
 
                 Returns:
-                    Tuple of (selected_file_path, selected_filter).
+                    Tuple containing selected file path and selected filter.
 
                 """
                 return ("", "")
@@ -320,11 +384,21 @@ else:
                 self._text: str = text
 
             def setText(self, text: str) -> None:
-                """Set the button text."""
+                """Set the button text.
+
+                Args:
+                    text: The text to display on the button.
+
+                """
                 self._text = text
 
             def text(self) -> str:
-                """Get the button text."""
+                """Get the button text.
+
+                Returns:
+                    The current button text.
+
+                """
                 return self._text
 
         class QVBoxLayout:
@@ -371,10 +445,10 @@ except ImportError:
         """Create a logger instance with the given name.
 
         Args:
-            name: The name for the logger instance
+            name: The name for the logger instance.
 
         Returns:
-            A logging.Logger instance
+            A logging.Logger instance.
 
         """
         return logging.getLogger(name)
@@ -384,7 +458,14 @@ logger = get_logger(__name__)
 
 
 class ReportGeneratorWorkerSignals(QObject):
-    """Signals for report generation worker."""
+    """Signals for report generation worker.
+
+    Attributes:
+        finished: Signal emitted when report generation completes.
+        error: Signal emitted with error tuple (exc_type, exc_value, traceback).
+        result: Signal emitted with report generation result dict.
+        progress: Signal emitted with progress message string.
+    """
 
     finished = pyqtSignal()
     error = pyqtSignal(tuple)
@@ -393,7 +474,15 @@ class ReportGeneratorWorkerSignals(QObject):
 
 
 class ReportGeneratorWorker(QRunnable):
-    """Worker thread for report generation."""
+    """Worker thread for report generation.
+
+    Attributes:
+        result: The unified protection analysis result.
+        format_type: Report output format (html, markdown, json).
+        output_path: Filesystem path where report will be saved.
+        options: Dictionary of report generation configuration options.
+        signals: Signal emitter for work progress and completion.
+    """
 
     def __init__(self, result: UnifiedProtectionResult, format_type: str, output_path: str, options: dict[str, Any]) -> None:
         """Initialize the report generator worker.
@@ -413,7 +502,16 @@ class ReportGeneratorWorker(QRunnable):
         self.signals = ReportGeneratorWorkerSignals()
 
     def run(self) -> None:
-        """Generate the report."""
+        """Generate the report.
+
+        Generates a report in the specified format using the unified protection
+        result and emits progress/result signals. Handles report generation
+        with error recovery and finally emits completion signal.
+
+        Raises:
+            Exception: Any exception during report generation is caught,
+                logged, and propagated via the error signal.
+        """
         try:
             from ...protection.icp_report_generator import ICPReportGenerator, ReportOptions
 
@@ -453,7 +551,20 @@ class ReportGeneratorWorker(QRunnable):
 
 
 class ReportOptionsDialog(QDialog):
-    """Dialog for selecting report generation options."""
+    """Dialog for selecting report generation options.
+
+    Attributes:
+        format_combo: Combo box for selecting report format (HTML, Markdown, JSON).
+        include_summary: Checkbox for including executive summary in report.
+        include_technical: Checkbox for including technical details section.
+        include_strings: Checkbox for including string analysis results.
+        include_entropy: Checkbox for including entropy visualization.
+        include_bypass: Checkbox for including bypass strategy recommendations.
+        include_recommendations: Checkbox for including security recommendations.
+        include_raw_json: Checkbox for including raw ICP JSON data.
+        generate_btn: Button to generate the report with selected options.
+        cancel_btn: Button to cancel report generation dialog.
+    """
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the report options dialog.
@@ -468,7 +579,13 @@ class ReportOptionsDialog(QDialog):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """Initialize the user interface for the report options dialog."""
+        """Initialize the user interface for the report options dialog.
+
+        Creates and configures the dialog layout with format selection,
+        content options, and action buttons. Sets up all checkboxes, combo
+        boxes, and pushbuttons with appropriate connections.
+
+        """
         layout = QVBoxLayout()
 
         # Format selection
@@ -534,7 +651,16 @@ class ReportOptionsDialog(QDialog):
         self.setLayout(layout)
 
     def _on_format_changed(self, format_text: str) -> None:
-        """Handle format change."""
+        """Handle format change.
+
+        Adjusts available options based on selected report format. Entropy
+        visualization is disabled for non-HTML formats since it requires
+        HTML rendering capabilities.
+
+        Args:
+            format_text: The new format text selected.
+
+        """
         # Disable entropy visualization for non-HTML formats
         if format_text != "HTML":
             self.include_entropy.setChecked(False)
@@ -543,7 +669,18 @@ class ReportOptionsDialog(QDialog):
             self.include_entropy.setEnabled(True)
 
     def get_options(self) -> dict[str, Any]:
-        """Get selected options."""
+        """Get selected options.
+
+        Collects the current state of all dialog controls and returns them
+        as a dictionary for use in report generation configuration.
+
+        Returns:
+            Dictionary mapping option names to their selected boolean values
+                and the selected report format. Keys include: format, include_summary,
+                include_technical, include_strings, include_entropy, include_bypass,
+                include_recommendations, and include_raw_json.
+
+        """
         return {
             "format": self.format_combo.currentText().lower(),
             "include_summary": self.include_summary.isChecked(),
@@ -559,7 +696,16 @@ class ReportOptionsDialog(QDialog):
 class ReportGenerationHandler(QObject):
     """Handle comprehensive report generation based on protection analysis.
 
-    Supports multiple output formats and customizable content.
+    Supports multiple output formats (HTML, Markdown, JSON) and customizable
+    content options. Manages report generation in background worker threads
+    using PyQt signals for progress and completion notification.
+
+    Attributes:
+        report_ready: Signal emitted with successful report generation dict.
+        report_error: Signal emitted with error message string.
+        report_progress: Signal emitted with progress message string.
+        thread_pool: Global thread pool for background report generation.
+        current_result: Most recent unified protection analysis result.
     """
 
     # Signals
@@ -579,12 +725,29 @@ class ReportGenerationHandler(QObject):
         self.current_result: UnifiedProtectionResult | None = None
 
     def on_analysis_complete(self, result: UnifiedProtectionResult) -> None:
-        """Handle slot when protection analysis completes."""
+        """Handle slot when protection analysis completes.
+
+        Stores the protection analysis result for use in subsequent report
+        generation operations. Logs the receipt of analysis data.
+
+        Args:
+            result: The unified protection analysis result.
+
+        """
         self.current_result = result
         logger.info("Report generation handler received analysis for: %s", result.file_path)
 
     def generate_report(self, parent_widget: QWidget | None = None) -> None:
-        """Show options dialog and generate report based on user selection."""
+        """Show options dialog and generate report based on user selection.
+
+        Displays a dialog for the user to select report format and content
+        options. If the user confirms, prompts for output file location and
+        initiates background report generation with signal notifications.
+
+        Args:
+            parent_widget: Optional parent widget for the dialog.
+
+        """
         if not self.current_result:
             self.report_error.emit("No analysis result available")
             return
@@ -637,7 +800,16 @@ class ReportGenerationHandler(QObject):
             self.thread_pool.start(worker)
 
     def _on_report_ready(self, result: dict[str, Any]) -> None:
-        """Handle report generation completion."""
+        """Handle report generation completion.
+
+        Checks for successful report generation and emits the result signal.
+        Logs the output path for reference by the user.
+
+        Args:
+            result: Dictionary containing report generation result data with
+                keys 'success', 'path', and 'format'.
+
+        """
         if result.get("success"):
             self.report_ready.emit(result)
 
@@ -645,7 +817,16 @@ class ReportGenerationHandler(QObject):
             logger.info(msg)
 
     def _on_worker_error(self, error_tuple: tuple[type[BaseException], BaseException, str]) -> None:
-        """Handle worker thread errors."""
+        """Handle worker thread errors.
+
+        Logs the error details including exception type, value, and formatted
+        traceback. Emits the error signal with a user-friendly error message.
+
+        Args:
+            error_tuple: Tuple containing exception type, value, and traceback
+                string from the worker thread.
+
+        """
         _exc_type, exc_value, exc_traceback = error_tuple
         error_msg = f"Report generation failed: {exc_value}"
         logger.error("%s\n%s", error_msg, exc_traceback)

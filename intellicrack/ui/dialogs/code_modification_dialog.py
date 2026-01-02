@@ -21,7 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QCloseEvent,
@@ -62,10 +62,6 @@ from ...ai.llm_backends import LLMManager
 from ...utils.logger import get_logger
 
 
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-
 logger = get_logger(__name__)
 
 
@@ -73,7 +69,11 @@ class DiffSyntaxHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for diff text."""
 
     def __init__(self, parent: QTextDocument | None = None) -> None:
-        """Initialize the DiffSyntaxHighlighter with default values."""
+        """Initialize the DiffSyntaxHighlighter with default values.
+
+        Args:
+            parent: Optional parent text document.
+        """
         super().__init__(parent)
 
         # Define colors for different diff elements
@@ -99,7 +99,11 @@ class DiffSyntaxHighlighter(QSyntaxHighlighter):
         self.formats["header"] = header_format
 
     def highlightBlock(self, text: str | None) -> None:
-        """Highlight a block of diff text."""
+        """Highlight a block of diff text.
+
+        Args:
+            text: The text block to highlight, or None to skip highlighting.
+        """
         if not text:
             return
 
@@ -121,7 +125,12 @@ class ModificationAnalysisThread(QThread):
     error_occurred = pyqtSignal(str)
 
     def __init__(self, modifier: IntelligentCodeModifier, request: ModificationRequest) -> None:
-        """Initialize the ModificationAnalysisThread with default values."""
+        """Initialize the ModificationAnalysisThread with default values.
+
+        Args:
+            modifier: The intelligent code modifier instance.
+            request: The modification request to analyze.
+        """
         super().__init__()
         self.modifier: IntelligentCodeModifier = modifier
         self.request: ModificationRequest = request
@@ -141,7 +150,12 @@ class CodeModificationDialog(QDialog):
     """Dialog for intelligent code modification with diff viewing."""
 
     def __init__(self, project_root: str | None = None, parent: QWidget | None = None) -> None:
-        """Initialize the CodeModificationDialog with default values."""
+        """Initialize the CodeModificationDialog with default values.
+
+        Args:
+            project_root: Optional project root directory path.
+            parent: Optional parent widget.
+        """
         super().__init__(parent)
         self.setWindowTitle("Intelligent Code Modification")
         self.setMinimumSize(1200, 800)
@@ -159,7 +173,11 @@ class CodeModificationDialog(QDialog):
         self.load_project_context()
 
     def setup_ui(self) -> None:
-        """Set up the user interface."""
+        """Set up the user interface.
+
+        Initializes all UI elements including tabs for modification requests,
+        code changes, and history, along with status bar controls.
+        """
         layout = QVBoxLayout(self)
 
         # Main tabs
@@ -201,7 +219,11 @@ class CodeModificationDialog(QDialog):
         layout.addLayout(status_layout)
 
     def setup_request_tab(self, tab_widget: QWidget) -> None:
-        """Set up the modification request tab."""
+        """Set up the modification request tab.
+
+        Args:
+            tab_widget: The tab widget to set up.
+        """
         layout = QVBoxLayout(tab_widget)
 
         # Request form
@@ -280,7 +302,11 @@ class CodeModificationDialog(QDialog):
         layout.addWidget(context_group)
 
     def setup_changes_tab(self, tab_widget: QWidget) -> None:
-        """Set up the code changes review tab."""
+        """Set up the code changes review tab.
+
+        Args:
+            tab_widget: The tab widget to set up.
+        """
         layout = QVBoxLayout(tab_widget)
 
         main_splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -398,7 +424,11 @@ class CodeModificationDialog(QDialog):
         layout.addWidget(main_splitter)
 
     def setup_history_tab(self, tab_widget: QWidget) -> None:
-        """Set up the modification history tab."""
+        """Set up the modification history tab.
+
+        Args:
+            tab_widget: The tab widget to set up.
+        """
         layout = QVBoxLayout(tab_widget)
 
         # Controls
@@ -440,7 +470,12 @@ class CodeModificationDialog(QDialog):
         layout.addWidget(self.history_tree)
 
     def load_project_context(self) -> None:
-        """Load project context information."""
+        """Load project context information.
+
+        Gathers project context from the project root, including files analyzed,
+        programming languages used, and counts of functions and classes. Displays
+        this information in the project context pane.
+        """
         try:
             self.status_label.setText("Loading project context...")
 
@@ -477,7 +512,11 @@ class CodeModificationDialog(QDialog):
             QMessageBox.warning(self, "Error", f"Failed to load project context:\n{e}")
 
     def add_target_file(self) -> None:
-        """Add a target file to the request."""
+        """Add a target file to the request.
+
+        Opens a file dialog allowing the user to select a Python or JavaScript
+        file to be added to the target files list for the modification request.
+        """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Target File",
@@ -494,20 +533,33 @@ class CodeModificationDialog(QDialog):
                 self.target_files_list.addItem(file_path)
 
     def remove_target_file(self) -> None:
-        """Remove selected target file."""
+        """Remove selected target file.
+
+        Removes the currently selected file from the target files list.
+        Does nothing if no file is selected.
+        """
         current_row = self.target_files_list.currentRow()
         if current_row >= 0:
             self.target_files_list.takeItem(current_row)
 
     def clear_request(self) -> None:
-        """Clear the modification request form."""
+        """Clear the modification request form.
+
+        Resets all input fields in the modification request tab, including
+        description, target files, requirements, and constraints.
+        """
         self.description_edit.clear()
         self.target_files_list.clear()
         self.requirements_edit.clear()
         self.constraints_edit.clear()
 
     def analyze_modifications(self) -> None:
-        """Analyze the modification request."""
+        """Analyze the modification request.
+
+        Validates the modification request form and starts a background analysis
+        thread to generate code changes. Shows progress bar and status updates
+        during analysis. Switches to the changes tab on completion.
+        """
         description: str = self.description_edit.toPlainText().strip()
         if not description:
             QMessageBox.information(self, "Info", "Please enter a description.")
@@ -549,7 +601,11 @@ class CodeModificationDialog(QDialog):
         self.analysis_thread.start()
 
     def on_analysis_complete(self, changes: list[CodeChange]) -> None:
-        """Handle completion of analysis."""
+        """Handle completion of analysis.
+
+        Args:
+            changes: The list of code changes found.
+        """
         self.analyze_btn.setEnabled(True)
         self.progress_bar.setVisible(False)
 
@@ -564,7 +620,11 @@ class CodeModificationDialog(QDialog):
                 parent_widget.setCurrentIndex(1)
 
     def on_analysis_error(self, error_message: str) -> None:
-        """Handle analysis error."""
+        """Handle analysis error.
+
+        Args:
+            error_message: The error message from the analysis.
+        """
         self.analyze_btn.setEnabled(True)
         self.progress_bar.setVisible(False)
 
@@ -572,7 +632,12 @@ class CodeModificationDialog(QDialog):
         QMessageBox.critical(self, "Analysis Error", f"Failed to analyze modifications:\n{error_message}")
 
     def populate_changes_tree(self) -> None:
-        """Populate the changes tree with current changes."""
+        """Populate the changes tree with current changes.
+
+        Updates the tree widget to display all changes in current_changes,
+        including change ID, file name, modification type, confidence score,
+        and status. Color codes items based on confidence level.
+        """
         self.changes_tree.clear()
 
         for change in self.current_changes:
@@ -602,7 +667,12 @@ class CodeModificationDialog(QDialog):
             self.changes_tree.resizeColumnToContents(i)
 
     def on_change_selected(self) -> None:
-        """Handle change selection."""
+        """Handle change selection.
+
+        Updates the change details pane and diff viewers when a change is
+        selected in the changes tree. Displays change metadata, original code,
+        modified code, and unified diff format.
+        """
         current_item: QTreeWidgetItem | None = self.changes_tree.currentItem()
         if not current_item:
             return
@@ -638,21 +708,33 @@ class CodeModificationDialog(QDialog):
         self.modified_code.setPlainText(change.modified_code)
 
     def select_all_changes(self) -> None:
-        """Select all changes."""
+        """Select all changes.
+
+        Marks all items in the changes tree as checked, enabling bulk selection
+        for applying multiple changes at once.
+        """
         for i in range(self.changes_tree.topLevelItemCount()):
             item: QTreeWidgetItem | None = self.changes_tree.topLevelItem(i)
             if item is not None:
                 item.setCheckState(0, Qt.CheckState.Checked)
 
     def select_no_changes(self) -> None:
-        """Deselect all changes."""
+        """Deselect all changes.
+
+        Unchecks all items in the changes tree, clearing the current selection
+        of changes to be applied or rejected.
+        """
         for i in range(self.changes_tree.topLevelItemCount()):
             item: QTreeWidgetItem | None = self.changes_tree.topLevelItem(i)
             if item is not None:
                 item.setCheckState(0, Qt.CheckState.Unchecked)
 
     def get_selected_change_ids(self) -> list[str]:
-        """Get IDs of selected changes."""
+        """Get IDs of selected changes.
+
+        Returns:
+            List of selected change IDs.
+        """
         change_ids: list[str] = []
         for i in range(self.changes_tree.topLevelItemCount()):
             item: QTreeWidgetItem | None = self.changes_tree.topLevelItem(i)
@@ -663,7 +745,12 @@ class CodeModificationDialog(QDialog):
         return change_ids
 
     def apply_selected_changes(self) -> None:
-        """Apply the selected changes."""
+        """Apply the selected changes.
+
+        Applies all checked changes from the changes tree to their target files.
+        Creates backups before modification and displays results including
+        success status and any errors that occurred.
+        """
         change_ids = self.get_selected_change_ids()
         if not change_ids:
             QMessageBox.information(self, "Info", "Please select changes to apply.")
@@ -712,7 +799,11 @@ class CodeModificationDialog(QDialog):
             self.status_label.setText("Error applying changes")
 
     def reject_selected_changes(self) -> None:
-        """Reject the selected changes."""
+        """Reject the selected changes.
+
+        Marks all checked changes in the changes tree as rejected, preventing
+        their application and updating the modification history accordingly.
+        """
         change_ids = self.get_selected_change_ids()
         if not change_ids:
             QMessageBox.information(self, "Info", "Please select changes to reject.")
@@ -733,7 +824,12 @@ class CodeModificationDialog(QDialog):
             QMessageBox.critical(self, "Error", f"Error rejecting changes:\n{e}")
 
     def refresh_history(self) -> None:
-        """Refresh the modification history."""
+        """Refresh the modification history.
+
+        Reloads the modification history from the modifier, displaying change
+        records up to the limit specified in history_limit. Color codes items
+        by their status (applied, rejected, or failed).
+        """
         try:
             limit = self.history_limit.value()
             history = self.modifier.get_modification_history(limit)
@@ -771,7 +867,11 @@ class CodeModificationDialog(QDialog):
             QMessageBox.critical(self, "Error", f"Error refreshing history:\n{e}")
 
     def closeEvent(self, event: QCloseEvent | None) -> None:
-        """Handle dialog close."""
+        """Handle dialog close.
+
+        Args:
+            event: The close event.
+        """
         if event is None:
             return
 

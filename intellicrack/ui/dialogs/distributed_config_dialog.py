@@ -19,7 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import multiprocessing
-from typing import Any, cast
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,

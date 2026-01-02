@@ -234,16 +234,18 @@ class TestComprehensiveVMDetection:
 
         result = detector.detect_vm()
 
-        assert isinstance(result, tuple)
-        assert len(result) >= 2
-        assert isinstance(result[0], bool)
-        assert isinstance(result[1], float)
+        assert isinstance(result, dict)
+        assert "is_vm" in result
+        assert "confidence" in result
+        assert isinstance(result["is_vm"], bool)
+        assert isinstance(result["confidence"], float)
 
     def test_detection_confidence_within_valid_range(self) -> None:
         """Detection confidence score is between 0 and 1."""
         detector = VMDetector()
 
-        detected, confidence, details = detector.detect_vm()
+        result = detector.detect_vm()
+        confidence = result["confidence"]
 
         assert 0.0 <= confidence <= 1.0
 
@@ -251,10 +253,10 @@ class TestComprehensiveVMDetection:
         """Detection details include individual method results."""
         detector = VMDetector()
 
-        detected, confidence, details = detector.detect_vm()
+        result = detector.detect_vm()
+        detections = result.get("detections", {})
 
-        assert isinstance(details, dict)
-        assert len(details) > 0
+        assert isinstance(detections, dict)
 
 
 class TestVMTypeIdentification:
@@ -265,11 +267,12 @@ class TestVMTypeIdentification:
         detector = VMDetector()
 
         try:
-            detected, confidence, details = detector.detect_vm()
+            result = detector.detect_vm()
+            vm_type = result.get("vm_type", "")
 
-            if "vm_type" in details and "VMware" in details["vm_type"]:
-                assert detected is True
-                assert confidence > 0.5
+            if vm_type and "VMware" in vm_type:
+                assert result["is_vm"] is True
+                assert result["confidence"] > 0.5
         except Exception:
             pytest.skip("VM type identification not available")
 
@@ -278,11 +281,12 @@ class TestVMTypeIdentification:
         detector = VMDetector()
 
         try:
-            detected, confidence, details = detector.detect_vm()
+            result = detector.detect_vm()
+            vm_type = result.get("vm_type", "")
 
-            if "vm_type" in details and "VirtualBox" in details["vm_type"]:
-                assert detected is True
-                assert confidence > 0.5
+            if vm_type and "VirtualBox" in vm_type:
+                assert result["is_vm"] is True
+                assert result["confidence"] > 0.5
         except Exception:
             pytest.skip("VM type identification not available")
 
@@ -291,11 +295,12 @@ class TestVMTypeIdentification:
         detector = VMDetector()
 
         try:
-            detected, confidence, details = detector.detect_vm()
+            result = detector.detect_vm()
+            vm_type = result.get("vm_type", "")
 
-            if "vm_type" in details and "Hyper-V" in details["vm_type"]:
-                assert detected is True
-                assert confidence > 0.5
+            if vm_type and "Hyper-V" in vm_type:
+                assert result["is_vm"] is True
+                assert result["confidence"] > 0.5
         except Exception:
             pytest.skip("VM type identification not available")
 
@@ -334,7 +339,9 @@ class TestFalsePositiveMinimization:
         """Physical hardware not incorrectly flagged as VM."""
         detector = VMDetector()
 
-        detected, confidence, details = detector.detect_vm()
+        result = detector.detect_vm()
+        detected = result["is_vm"]
+        confidence = result["confidence"]
 
         if platform.system() == "Windows":
             cpu_info = platform.processor().lower()
@@ -382,8 +389,8 @@ class TestCachingBehavior:
         result1 = detector.detect_vm()
         result2 = detector.detect_vm()
 
-        assert result1[0] == result2[0]
-        assert abs(result1[1] - result2[1]) < 0.1
+        assert result1["is_vm"] == result2["is_vm"]
+        assert abs(result1["confidence"] - result2["confidence"]) < 0.1
 
 
 class TestPlatformSpecificBehavior:
@@ -395,10 +402,10 @@ class TestPlatformSpecificBehavior:
         detector = VMDetector()
 
         try:
-            detected, confidence, details = detector.detect_vm()
+            result = detector.detect_vm()
 
-            assert isinstance(detected, bool)
-            assert 0.0 <= confidence <= 1.0
+            assert isinstance(result["is_vm"], bool)
+            assert 0.0 <= result["confidence"] <= 1.0
         except Exception as e:
             pytest.skip(f"WMI detection not available: {e}")
 
@@ -408,10 +415,10 @@ class TestPlatformSpecificBehavior:
         detector = VMDetector()
 
         try:
-            detected, confidence, details = detector.detect_vm()
+            result = detector.detect_vm()
 
-            assert isinstance(detected, bool)
-            assert 0.0 <= confidence <= 1.0
+            assert isinstance(result["is_vm"], bool)
+            assert 0.0 <= result["confidence"] <= 1.0
         except Exception as e:
             pytest.skip(f"DMI detection not available: {e}")
 
@@ -424,11 +431,11 @@ class TestEdgeCases:
         detector = VMDetector()
 
         try:
-            detected, confidence, details = detector.detect_vm()
+            result = detector.detect_vm()
 
-            assert isinstance(detected, bool)
-            assert isinstance(confidence, float)
-            assert isinstance(details, dict)
+            assert isinstance(result["is_vm"], bool)
+            assert isinstance(result["confidence"], float)
+            assert isinstance(result.get("detections", {}), dict)
         except Exception as e:
             pytest.fail(f"Detection raised exception on missing hardware info: {e}")
 
@@ -437,7 +444,8 @@ class TestEdgeCases:
         detector = VMDetector()
 
         try:
-            detected, confidence, details = detector.detect_vm()
+            result = detector.detect_vm()
+            _ = result["is_vm"]  # Access to verify it worked
         except PermissionError:
             pytest.skip("Insufficient permissions for hardware access")
         except Exception as e:

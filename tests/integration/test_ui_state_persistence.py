@@ -7,14 +7,9 @@ central configuration system.
 """
 
 import json
-import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
-
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from PyQt6.QtCore import QPoint, QRect, QSize, Qt, QByteArray
 from PyQt6.QtWidgets import QApplication, QMainWindow, QSplitter, QToolBar
@@ -37,44 +32,55 @@ class TestUIStatePersistence(unittest.TestCase):
 
     def setUp(self):
         """Set up test environment with fresh config."""
-        # Create temporary config directory
+        import shutil
         self.temp_dir = tempfile.mkdtemp()
         self.config_path = Path(self.temp_dir) / "config.json"
-
-        # Mock the config path
-        self.config_patcher = patch('intellicrack.core.config_manager.CONFIG_FILE',
-                                   str(self.config_path))
-        self.config_patcher.start()
-
-        # Create fresh config instance
         self.config = IntellicrackConfig()
         self.config.config_file = str(self.config_path)
 
-        # Mock get_config to return our test config
-        self.get_config_patcher = patch('intellicrack.ui.main_app.get_config')
-        self.mock_get_config = self.get_config_patcher.start()
-        self.mock_get_config.return_value = self.config
+        import intellicrack.core.config_manager
+        import intellicrack.ui.main_app
+        import intellicrack.ui.theme_manager
 
-        # Also patch in theme_manager
-        self.theme_config_patcher = patch('intellicrack.ui.theme_manager.get_config')
-        self.mock_theme_config = self.theme_config_patcher.start()
-        self.mock_theme_config.return_value = self.config
+        self._original_config_file = getattr(intellicrack.core.config_manager, 'CONFIG_FILE', None)
+        self._original_get_config = getattr(intellicrack.ui.main_app, 'get_config', None)
+        self._original_theme_get_config = getattr(intellicrack.ui.theme_manager, 'get_config', None)
+
+        intellicrack.core.config_manager.CONFIG_FILE = str(self.config_path)
+
+        if hasattr(intellicrack.ui.main_app, 'get_config'):
+            intellicrack.ui.main_app.get_config = lambda: self.config
+
+        if hasattr(intellicrack.ui.theme_manager, 'get_config'):
+            intellicrack.ui.theme_manager.get_config = lambda: self.config
 
     def tearDown(self):
         """Clean up test environment."""
-        self.config_patcher.stop()
-        self.get_config_patcher.stop()
-        self.theme_config_patcher.stop()
-
-        # Clean up temp directory
         import shutil
+        import intellicrack.core.config_manager
+        import intellicrack.ui.main_app
+        import intellicrack.ui.theme_manager
+
+        if self._original_config_file is not None:
+            intellicrack.core.config_manager.CONFIG_FILE = self._original_config_file
+
+        if self._original_get_config is not None and hasattr(intellicrack.ui.main_app, 'get_config'):
+            intellicrack.ui.main_app.get_config = self._original_get_config
+
+        if self._original_theme_get_config is not None and hasattr(intellicrack.ui.theme_manager, 'get_config'):
+            intellicrack.ui.theme_manager.get_config = self._original_theme_get_config
+
         if Path(self.temp_dir).exists():
             shutil.rmtree(self.temp_dir)
 
     def test_window_geometry_persistence(self):
         """Test that window geometry is saved and restored correctly."""
-        # Create main window
-        with patch('intellicrack.ui.main_app.IntellicrackMainWindow.setup_ui'):
+        import intellicrack.ui.main_app
+
+        original_setup_ui = getattr(IntellicrackMainWindow, 'setup_ui', None)
+        IntellicrackMainWindow.setup_ui = lambda self: None
+
+        try:
             window = IntellicrackMainWindow()
 
             # Set custom geometry
@@ -105,9 +111,16 @@ class TestUIStatePersistence(unittest.TestCase):
             self.assertEqual(restored_geometry.width(), 1280)
             self.assertEqual(restored_geometry.height(), 720)
 
+        finally:
+            if original_setup_ui is not None:
+                IntellicrackMainWindow.setup_ui = original_setup_ui
+
     def test_window_state_persistence(self):
         """Test that window state (maximized/normal) is saved and restored."""
-        with patch('intellicrack.ui.main_app.IntellicrackMainWindow.setup_ui'):
+        original_setup_ui = getattr(IntellicrackMainWindow, 'setup_ui', None)
+        IntellicrackMainWindow.setup_ui = lambda self: None
+
+        try:
             window = IntellicrackMainWindow()
 
             # Test maximized state
@@ -133,9 +146,16 @@ class TestUIStatePersistence(unittest.TestCase):
             saved_state = self.config.get("ui_preferences.window_state")
             self.assertEqual(saved_state, "normal")
 
+        finally:
+            if original_setup_ui is not None:
+                IntellicrackMainWindow.setup_ui = original_setup_ui
+
     def test_splitter_state_persistence(self):
         """Test that splitter positions are saved and restored."""
-        with patch('intellicrack.ui.main_app.IntellicrackMainWindow.setup_ui'):
+        original_setup_ui = getattr(IntellicrackMainWindow, 'setup_ui', None)
+        IntellicrackMainWindow.setup_ui = lambda self: None
+
+        try:
             window = IntellicrackMainWindow()
 
             # Create test splitter
@@ -165,9 +185,16 @@ class TestUIStatePersistence(unittest.TestCase):
             restored_sizes = window2.main_splitter.sizes()
             self.assertEqual(restored_sizes, [800, 400])
 
+        finally:
+            if original_setup_ui is not None:
+                IntellicrackMainWindow.setup_ui = original_setup_ui
+
     def test_toolbar_visibility_persistence(self):
         """Test that toolbar visibility is saved and restored."""
-        with patch('intellicrack.ui.main_app.IntellicrackMainWindow.setup_ui'):
+        original_setup_ui = getattr(IntellicrackMainWindow, 'setup_ui', None)
+        IntellicrackMainWindow.setup_ui = lambda self: None
+
+        try:
             window = IntellicrackMainWindow()
 
             # Create test toolbar
@@ -185,13 +212,17 @@ class TestUIStatePersistence(unittest.TestCase):
             # Create new window
             window2 = IntellicrackMainWindow()
             window2.toolbar = QToolBar("Main Toolbar")
-            window2.toolbar.setVisible(True)  # Start visible
+            window2.toolbar.setVisible(True)
 
             # Restore state
             window2.restore_window_state()
 
             # Verify toolbar visibility was restored
             self.assertFalse(window2.toolbar.isVisible())
+
+        finally:
+            if original_setup_ui is not None:
+                IntellicrackMainWindow.setup_ui = original_setup_ui
 
     def test_theme_persistence(self):
         """Test that theme settings persist across restarts."""
@@ -222,113 +253,126 @@ class TestUIStatePersistence(unittest.TestCase):
 
     def test_complete_ui_state_round_trip(self):
         """Test complete UI state save and restore cycle."""
-        with patch('intellicrack.ui.main_app.IntellicrackMainWindow.setup_ui'):
-            # Create and configure first window
+        original_setup_ui = getattr(IntellicrackMainWindow, 'setup_ui', None)
+        IntellicrackMainWindow.setup_ui = lambda self: None
+
+        try:
             window1 = IntellicrackMainWindow()
 
-            # Set up all UI state
             window1.setGeometry(QRect(150, 150, 1366, 768))
             window1.showMaximized()
 
-            # Mock splitter
             window1.main_splitter = QSplitter(Qt.Orientation.Horizontal)
             window1.main_splitter.addWidget(QMainWindow())
             window1.main_splitter.addWidget(QMainWindow())
             window1.main_splitter.setSizes([900, 466])
 
-            # Mock toolbar
             window1.toolbar = QToolBar("Main Toolbar")
             window1.toolbar.setVisible(False)
 
-            # Save complete state
             window1.save_window_state()
 
-            # Also save theme
             theme_manager = ThemeManager()
             theme_manager.set_theme("dark")
 
-            # Save config to disk
             self.config.save()
 
-            # Load config from disk (simulating restart)
             config2 = IntellicrackConfig()
             config2.config_file = str(self.config_path)
             config2.load()
 
-            # Update mock to return new config
-            self.mock_get_config.return_value = config2
-            self.mock_theme_config.return_value = config2
+            import intellicrack.ui.main_app
+            import intellicrack.ui.theme_manager
 
-            # Create new window with loaded config
+            original_main_get_config = getattr(intellicrack.ui.main_app, 'get_config', None)
+            original_theme_get_config = getattr(intellicrack.ui.theme_manager, 'get_config', None)
+
+            if hasattr(intellicrack.ui.main_app, 'get_config'):
+                intellicrack.ui.main_app.get_config = lambda: config2
+
+            if hasattr(intellicrack.ui.theme_manager, 'get_config'):
+                intellicrack.ui.theme_manager.get_config = lambda: config2
+
             window2 = IntellicrackMainWindow()
 
-            # Mock UI elements
             window2.main_splitter = QSplitter(Qt.Orientation.Horizontal)
             window2.main_splitter.addWidget(QMainWindow())
             window2.main_splitter.addWidget(QMainWindow())
             window2.toolbar = QToolBar("Main Toolbar")
 
-            # Restore state
             window2.restore_window_state()
 
-            # Verify all state was restored
             self.assertEqual(window2.geometry().width(), 1366)
             self.assertEqual(window2.geometry().height(), 768)
             self.assertEqual(window2.main_splitter.sizes(), [900, 466])
             self.assertFalse(window2.toolbar.isVisible())
 
-            # Verify theme
             theme_manager2 = ThemeManager()
             self.assertEqual(theme_manager2.current_theme, "dark")
 
+            if original_main_get_config is not None and hasattr(intellicrack.ui.main_app, 'get_config'):
+                intellicrack.ui.main_app.get_config = original_main_get_config
+
+            if original_theme_get_config is not None and hasattr(intellicrack.ui.theme_manager, 'get_config'):
+                intellicrack.ui.theme_manager.get_config = original_theme_get_config
+
+        finally:
+            if original_setup_ui is not None:
+                IntellicrackMainWindow.setup_ui = original_setup_ui
+
     def test_ui_state_with_missing_config(self):
         """Test UI state handling when config doesn't exist."""
-        # Delete config file
         if self.config_path.exists():
             self.config_path.unlink()
 
-        with patch('intellicrack.ui.main_app.IntellicrackMainWindow.setup_ui'):
-            # Create window without existing config
+        original_setup_ui = getattr(IntellicrackMainWindow, 'setup_ui', None)
+        IntellicrackMainWindow.setup_ui = lambda self: None
+
+        try:
             window = IntellicrackMainWindow()
 
-            # Should use defaults
             window.restore_window_state()
 
-            # Verify defaults are applied
             default_geometry = self.config.get("ui_preferences.window_geometry")
             self.assertEqual(default_geometry["width"], 1200)
             self.assertEqual(default_geometry["height"], 800)
 
-            # Theme should default to light
             theme_manager = ThemeManager()
             self.assertEqual(theme_manager.current_theme, "light")
 
+        finally:
+            if original_setup_ui is not None:
+                IntellicrackMainWindow.setup_ui = original_setup_ui
+
     def test_ui_state_with_corrupted_values(self):
         """Test UI state handling with corrupted config values."""
-        # Set invalid values in config
         self.config.set("ui_preferences.window_geometry", {"width": -100, "height": "invalid"})
         self.config.set("ui_preferences.splitter_states.main_splitter", "not_a_list")
         self.config.save()
 
-        with patch('intellicrack.ui.main_app.IntellicrackMainWindow.setup_ui'):
+        original_setup_ui = getattr(IntellicrackMainWindow, 'setup_ui', None)
+        IntellicrackMainWindow.setup_ui = lambda self: None
+
+        try:
             window = IntellicrackMainWindow()
             window.main_splitter = QSplitter(Qt.Orientation.Horizontal)
             window.main_splitter.addWidget(QMainWindow())
             window.main_splitter.addWidget(QMainWindow())
 
-            # Should handle gracefully
             window.restore_window_state()
 
-            # Should fall back to defaults
             geometry = window.geometry()
             self.assertGreater(geometry.width(), 0)
             self.assertGreater(geometry.height(), 0)
 
-            # Splitter should have reasonable sizes
             sizes = window.main_splitter.sizes()
             self.assertEqual(len(sizes), 2)
             self.assertGreater(sizes[0], 0)
             self.assertGreater(sizes[1], 0)
+
+        finally:
+            if original_setup_ui is not None:
+                IntellicrackMainWindow.setup_ui = original_setup_ui
 
     def test_concurrent_ui_state_access(self):
         """Test UI state persistence with concurrent access."""
@@ -337,52 +381,53 @@ class TestUIStatePersistence(unittest.TestCase):
 
         results = []
 
+        original_setup_ui = getattr(IntellicrackMainWindow, 'setup_ui', None)
+        IntellicrackMainWindow.setup_ui = lambda self: None
+
         def save_state(window_id):
             """Save state from a thread."""
-            with patch('intellicrack.ui.main_app.IntellicrackMainWindow.setup_ui'):
-                window = IntellicrackMainWindow()
-                window.setGeometry(QRect(window_id * 10, window_id * 10, 1000 + window_id, 600 + window_id))
-                window.save_window_state()
-                results.append((window_id, "saved"))
+            window = IntellicrackMainWindow()
+            window.setGeometry(QRect(window_id * 10, window_id * 10, 1000 + window_id, 600 + window_id))
+            window.save_window_state()
+            results.append((window_id, "saved"))
 
         def load_state(window_id):
             """Load state from a thread."""
-            time.sleep(0.01)  # Small delay to ensure saves happen first
-            with patch('intellicrack.ui.main_app.IntellicrackMainWindow.setup_ui'):
-                window = IntellicrackMainWindow()
-                window.restore_window_state()
-                geometry = window.geometry()
-                results.append((window_id, "loaded", geometry.width(), geometry.height()))
+            time.sleep(0.01)
+            window = IntellicrackMainWindow()
+            window.restore_window_state()
+            geometry = window.geometry()
+            results.append((window_id, "loaded", geometry.width(), geometry.height()))
 
-        # Create threads for concurrent access
-        threads = []
-        for i in range(5):
-            t1 = threading.Thread(target=save_state, args=(i,))
-            t2 = threading.Thread(target=load_state, args=(i,))
-            threads.extend([t1, t2])
+        try:
+            threads = []
+            for i in range(5):
+                t1 = threading.Thread(target=save_state, args=(i,))
+                t2 = threading.Thread(target=load_state, args=(i,))
+                threads.extend([t1, t2])
 
-        # Start all threads
-        for t in threads:
-            t.start()
+            for t in threads:
+                t.start()
 
-        # Wait for completion
-        for t in threads:
-            t.join(timeout=5.0)
+            for t in threads:
+                t.join(timeout=5.0)
 
-        # Verify all operations completed
-        save_count = sum(bool(len(r) == 2 and r[1] == "saved")
-                     for r in results)
-        load_count = sum(bool(len(r) == 4 and r[1] == "loaded")
-                     for r in results)
+            save_count = sum(bool(len(r) == 2 and r[1] == "saved")
+                         for r in results)
+            load_count = sum(bool(len(r) == 4 and r[1] == "loaded")
+                         for r in results)
 
-        self.assertEqual(save_count, 5, "All save operations should complete")
-        self.assertEqual(load_count, 5, "All load operations should complete")
+            self.assertEqual(save_count, 5, "All save operations should complete")
+            self.assertEqual(load_count, 5, "All load operations should complete")
 
-        # Final state should be consistent
-        final_config = self.config.get("ui_preferences.window_geometry")
-        self.assertIsNotNone(final_config)
-        self.assertIn("width", final_config)
-        self.assertIn("height", final_config)
+            final_config = self.config.get("ui_preferences.window_geometry")
+            self.assertIsNotNone(final_config)
+            self.assertIn("width", final_config)
+            self.assertIn("height", final_config)
+
+        finally:
+            if original_setup_ui is not None:
+                IntellicrackMainWindow.setup_ui = original_setup_ui
 
 
 if __name__ == "__main__":

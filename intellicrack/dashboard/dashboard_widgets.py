@@ -22,7 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import math
 from collections import deque
-from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -115,6 +114,9 @@ class DashboardWidget:
         Args:
             data: New widget data
 
+        Returns:
+            None
+
         """
         self.data_history.append(data)
         self.last_update = datetime.now()
@@ -186,7 +188,12 @@ class LineChartWidget(DashboardWidget):
         return self._render_json()
 
     def _render_json(self) -> dict[str, object]:
-        """Render as JSON data."""
+        """Render as JSON data.
+
+        Returns:
+            JSON representation of line chart data with series information
+
+        """
         x_data: list[str] = []
         y_data: dict[str, list[object]] = {}
 

@@ -79,12 +79,16 @@ class R2SessionWrapper:
         """Initialize session wrapper.
 
         Args:
-            binary_path: Path to binary file
-            session_id: Unique session identifier
-            flags: Optional r2pipe flags
-            timeout: Command timeout in seconds
-            auto_analyze: Whether to run analysis on connect
-            analysis_level: radare2 analysis level (a, aa, aaa, aaaa)
+            binary_path: Path to binary file.
+            session_id: Unique session identifier.
+            flags: Optional r2pipe flags.
+            timeout: Command timeout in seconds.
+            auto_analyze: Whether to run analysis on connect.
+            analysis_level: radare2 analysis level (a, aa, aaa, aaaa).
+
+        Raises:
+            RuntimeError: If r2pipe is not available.
+            FileNotFoundError: If binary file does not exist.
 
         """
         self.binary_path = Path(binary_path)
@@ -156,15 +160,16 @@ class R2SessionWrapper:
         """Execute radare2 command with error handling.
 
         Args:
-            command: radare2 command to execute
-            expect_json: Whether to parse result as JSON
+            command: radare2 command to execute.
+            expect_json: Whether to parse result as JSON.
 
         Returns:
-            Command result as string, dict, list, or None depending on expect_json flag
+            Command result as string, dict, list, or None depending on expect_json
+            flag and command output.
 
         Raises:
-            RuntimeError: If session not connected
-            TimeoutError: If command times out
+            RuntimeError: If session not connected.
+            Exception: If radare2 command execution fails.
 
         """
         with self._lock:
@@ -468,7 +473,12 @@ class R2SessionPool:
                 logger.info("Cleaned up %d idle sessions", len(sessions_to_remove))
 
     def _cleanup_loop(self) -> None:
-        """Background cleanup thread."""
+        """Background cleanup thread.
+
+        This method runs in a separate thread and periodically checks for and
+        removes idle sessions from the pool.
+
+        """
         logger.info("Session pool cleanup thread started")
 
         while not self._stop_cleanup.is_set():
@@ -482,7 +492,12 @@ class R2SessionPool:
         logger.info("Session pool cleanup thread stopped")
 
     def _start_cleanup_thread(self) -> None:
-        """Start the cleanup thread."""
+        """Start the cleanup thread.
+
+        Creates and starts a daemon thread for periodic session cleanup if one
+        is not already running.
+
+        """
         if self._cleanup_thread is None or not self._cleanup_thread.is_alive():
             self._stop_cleanup.clear()
             self._cleanup_thread = threading.Thread(
@@ -493,7 +508,12 @@ class R2SessionPool:
             self._cleanup_thread.start()
 
     def close_all(self) -> None:
-        """Close all sessions in the pool."""
+        """Close all sessions in the pool.
+
+        Disconnects and removes all sessions currently in the pool and clears
+        the available sessions queues.
+
+        """
         with self._lock:
             logger.info("Closing all %d sessions in pool", len(self._sessions))
 
@@ -503,7 +523,12 @@ class R2SessionPool:
             self._available_sessions.clear()
 
     def shutdown(self) -> None:
-        """Shutdown the session pool."""
+        """Shutdown the session pool.
+
+        Gracefully shuts down the cleanup thread and closes all sessions in
+        the pool.
+
+        """
         logger.info("Shutting down session pool")
         self._stop_cleanup.set()
 
@@ -638,7 +663,12 @@ def r2_session_pooled(
 
 
 def shutdown_global_pool() -> None:
-    """Shutdown the global session pool."""
+    """Shutdown the global session pool.
+
+    Safely shuts down the global R2SessionPool instance if it exists, ensuring
+    all sessions are properly closed.
+
+    """
     global _global_pool
 
     with _pool_lock:

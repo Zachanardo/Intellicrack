@@ -64,7 +64,12 @@ class IntellicrackConfig:
     _lock = threading.Lock()
 
     def __new__(cls) -> "IntellicrackConfig":
-        """Singleton pattern for global config access."""
+        """Singleton pattern for global config access.
+
+        Returns:
+            The singleton IntellicrackConfig instance.
+
+        """
         if cls._instance is not None:
             return cls._instance
 
@@ -76,7 +81,12 @@ class IntellicrackConfig:
         return cls._instance
 
     def __init__(self) -> None:
-        """Initialize configuration manager."""
+        """Initialize configuration manager.
+
+        Sets up configuration directories, loads layered configuration (defaults, user config, runtime state),
+        and prepares the configuration manager for use.
+
+        """
         if hasattr(self, "_initialized"):
             logger.debug("IntellicrackConfig: Already initialized, skipping re-initialization.")
             return
@@ -146,6 +156,7 @@ class IntellicrackConfig:
         """Create necessary directories if they don't exist.
 
         Creates config, cache, logs, and output directories with proper error handling.
+        Logs successful creations and exceptions if directories cannot be created.
 
         """
         self.logger.debug("IntellicrackConfig: Ensuring all configuration directories exist.")
@@ -161,6 +172,7 @@ class IntellicrackConfig:
 
         Loads configuration in order: defaults, user overrides, runtime state.
         Performs version-aware upgrades and handles legacy configurations.
+        Creates emergency configuration if critical errors occur.
 
         """
         self.logger.info("IntellicrackConfig: Loading layered configuration.")
@@ -202,7 +214,8 @@ class IntellicrackConfig:
     def _load_or_create_config(self) -> None:
         """Legacy method maintained for compatibility.
 
-        Delegates to _load_layered_config() for actual loading.
+        Delegates to _load_layered_config() for actual loading. Kept for backward compatibility
+        with existing code that may call this method.
 
         """
         self.logger.debug("IntellicrackConfig: _load_or_create_config() called (legacy method). Delegating to _load_layered_config().")
@@ -211,7 +224,8 @@ class IntellicrackConfig:
     def _load_config(self) -> None:
         """Load configuration from file.
 
-        Reads JSON configuration from the config file. Creates default if load fails.
+        Reads JSON configuration from the config file with thread-safe locking.
+        Creates default configuration if file load fails due to parse errors or missing file.
 
         """
         self.logger.debug("IntellicrackConfig: Attempting to load configuration from %s", self.config_file)
@@ -245,7 +259,8 @@ class IntellicrackConfig:
     def _merge_user_config(self) -> None:
         """Merge user-specific configuration overrides.
 
-        Deep merges user configuration file with the loaded defaults.
+        Deep merges user configuration file with the loaded defaults. User configuration
+        values take precedence over defaults. Logs errors if merge fails but continues operation.
 
         """
         self.logger.debug("IntellicrackConfig: Merging user configuration from %s", self.user_config_file)
@@ -262,6 +277,8 @@ class IntellicrackConfig:
         """Merge runtime state into configuration.
 
         Deep merges runtime state file with loaded configuration if it exists.
+        Runtime state values take precedence during merge. Logs errors if merge fails
+        but continues operation.
 
         """
         self.logger.debug("IntellicrackConfig: Merging runtime state from %s", self.state_file)
@@ -277,9 +294,15 @@ class IntellicrackConfig:
     def _deep_merge(self, base: dict[str, object], override: dict[str, object]) -> None:
         """Deep merge override dict into base dict.
 
+        Recursively merges nested dictionaries, with override values taking precedence.
+        Non-dict values are simply overwritten. Logs merge operations for debugging.
+
         Args:
-            base: Base dictionary to merge into
-            override: Dictionary with override values
+            base: Base dictionary to merge into.
+            override: Dictionary with override values.
+
+        Returns:
+            None. Modifies the base dictionary in place.
 
         """
         self.logger.debug(
@@ -298,7 +321,8 @@ class IntellicrackConfig:
         """Create config.defaults.json from legacy config.json.
 
         Migrates legacy configuration format to new defaults file format,
-        removing runtime-specific fields.
+        removing runtime-specific fields like initialized, emergency_mode, and auto_discovered flags.
+        Cleans up transient fields that should not persist in defaults.
 
         """
         self.logger.info("IntellicrackConfig: Creating new defaults file from legacy config: %s", self.config_file)
@@ -332,7 +356,7 @@ class IntellicrackConfig:
         """Create or load unified configuration.
 
         Attempts to load unified config file. If not found, creates new default
-        configuration with auto-discovery enabled.
+        configuration with version 3.0 and saves to disk.
 
         """
         self.logger.info("IntellicrackConfig: Attempting to create or load unified configuration.")
@@ -398,13 +422,13 @@ class IntellicrackConfig:
     def set(self, key: str, value: object, save: bool | None = None) -> None:
         """Set configuration value with dot notation support.
 
-        Supports dot notation for nested keys. Creates intermediate dictionaries
-        as needed. Optionally saves the configuration to disk after setting.
+        Supports dot notation for nested keys (e.g., 'section.subsection.key'). Creates intermediate dictionaries
+        as needed. Optionally saves the configuration to disk after setting based on the save parameter or auto_save setting.
 
         Args:
-            key: Dot-separated configuration key path
-            value: Value to set for the key
-            save: Whether to save config to disk (None uses auto_save setting)
+            key: Dot-separated configuration key path.
+            value: Value to set for the key.
+            save: Whether to save config to disk (None uses auto_save setting).
 
         """
         self.logger.debug("IntellicrackConfig: Attempting to set config key: '%s' to value: '%s'.", key, value)
@@ -441,6 +465,7 @@ class IntellicrackConfig:
         """Save the current configuration to the config file.
 
         Uses atomic write pattern with temporary file to ensure data integrity.
+        Writes JSON with indentation and sorted keys. Logs success and exceptions.
 
         """
         self.logger.debug("IntellicrackConfig: Saving configuration to %s.", self.config_file)
@@ -476,7 +501,7 @@ class IntellicrackConfig:
         """Public method to trigger configuration upgrade if needed.
 
         Exposes config upgrade functionality for external callers like
-        font_manager that need to trigger migration.
+        font_manager that need to trigger migration. Performs version-aware upgrades.
 
         """
         self.logger.info("IntellicrackConfig: upgrade_config() called - checking for upgrades.")
@@ -486,7 +511,7 @@ class IntellicrackConfig:
         """Public method to save configuration to disk.
 
         Exposes save functionality for external callers that need to
-        explicitly persist configuration changes.
+        explicitly persist configuration changes. Calls _save_config() with thread safety.
 
         """
         self.logger.debug("IntellicrackConfig: save() called - persisting configuration.")
@@ -496,7 +521,7 @@ class IntellicrackConfig:
         """Public alias for _save_config for API compatibility.
 
         Provides a consistent interface matching the expected method name
-        in METHOD_IMPLEMENTATION_CHECKLIST.md and external callers.
+        in METHOD_IMPLEMENTATION_CHECKLIST.md and external callers. Delegates to _save_config().
 
         """
         self.logger.debug("IntellicrackConfig: save_config() called.")
@@ -545,7 +570,7 @@ class IntellicrackConfig:
         """Perform configuration upgrades based on version.
 
         Recursively upgrades configuration format when version changes.
-        Automatically saves upgraded configuration.
+        Supports upgrades from 1.0->2.0 and 2.0->3.0. Automatically saves upgraded configuration.
 
         """
         current_version = self._config.get("version", "1.0")
@@ -574,7 +599,8 @@ class IntellicrackConfig:
         """Create a minimal emergency configuration if critical errors occur.
 
         Creates minimal configuration with basic logging and safety defaults
-        to allow the application to start in degraded mode.
+        to allow the application to start in degraded mode. Attempts to save
+        emergency configuration even if primary config fails.
 
         """
         self.logger.critical("IntellicrackConfig: Creating emergency configuration due to critical error.")
@@ -708,10 +734,11 @@ class IntellicrackConfig:
 
         Runtime state is stored in-memory only and not persisted to configuration files.
         This is used for transient application state that should not survive process restarts.
+        Creates intermediate dictionaries as needed for nested keys.
 
         Args:
-            key: Dot-separated property path (e.g., 'analyzer.active_session_id')
-            value: Value to set
+            key: Dot-separated property path (e.g., 'analyzer.active_session_id').
+            value: Value to set.
 
         """
         with self._runtime_state_lock:

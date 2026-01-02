@@ -16,7 +16,6 @@ import tempfile
 import time
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -27,6 +26,129 @@ from intellicrack.models.repositories.base import (
     RateLimitConfig,
 )
 from intellicrack.models.repositories.interface import ModelInfo
+
+
+class FakeHTTPResponse:
+    """Fake HTTP response for testing."""
+
+    def __init__(
+        self,
+        status_code: int = 200,
+        json_data: dict[str, Any] | None = None,
+        text: str = "",
+        headers: dict[str, str] | None = None,
+        stream_content: list[bytes] | None = None,
+    ) -> None:
+        self.status_code = status_code
+        self._json_data = json_data or {}
+        self.text = text
+        self.headers = headers or {}
+        self._stream_content = stream_content or []
+        self._raise_for_status_called = False
+
+    def json(self) -> dict[str, Any]:
+        return self._json_data
+
+    def raise_for_status(self) -> None:
+        self._raise_for_status_called = True
+        if self.status_code >= 400:
+            raise Exception(f"HTTP {self.status_code}")
+
+    def iter_content(self, chunk_size: int = 8192) -> list[bytes]:
+        return self._stream_content
+
+    def __enter__(self) -> "FakeHTTPResponse":
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
+        return False
+
+
+class FakeSession:
+    """Fake HTTP session for testing."""
+
+    def __init__(self) -> None:
+        self.proxies: dict[str, str] = {}
+        self.request_log: list[dict[str, Any]] = []
+        self.get_log: list[dict[str, Any]] = []
+        self._request_response: FakeHTTPResponse | None = None
+        self._get_response: FakeHTTPResponse | None = None
+        self._request_exception: Exception | None = None
+
+    def set_request_response(self, response: FakeHTTPResponse) -> None:
+        self._request_response = response
+
+    def set_get_response(self, response: FakeHTTPResponse) -> None:
+        self._get_response = response
+
+    def set_request_exception(self, exception: Exception) -> None:
+        self._request_exception = exception
+
+    def request(
+        self,
+        method: str,
+        url: str,
+        params: dict[str, Any] | None = None,
+        json: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: int | None = None,
+    ) -> FakeHTTPResponse:
+        self.request_log.append(
+            {
+                "method": method,
+                "url": url,
+                "params": params,
+                "json": json,
+                "headers": headers,
+                "timeout": timeout,
+            }
+        )
+
+        if self._request_exception:
+            raise self._request_exception
+
+        if self._request_response:
+            return self._request_response
+
+        return FakeHTTPResponse()
+
+    def get(
+        self,
+        url: str,
+        stream: bool = False,
+        timeout: int | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> FakeHTTPResponse:
+        self.get_log.append(
+            {"url": url, "stream": stream, "timeout": timeout, "headers": headers}
+        )
+
+        if self._get_response:
+            return self._get_response
+
+        return FakeHTTPResponse()
+
+
+class FakeRepositoryForTesting(APIRepositoryBase):
+    """Fake repository implementation for testing base functionality."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fake_session = FakeSession()
+        self.session = self.fake_session
+        self._model_details: dict[str, ModelInfo] = {}
+
+    def set_model_details(self, model_id: str, model_info: ModelInfo) -> None:
+        self._model_details[model_id] = model_info
+
+    def get_available_models(self) -> list[ModelInfo]:
+        return list(self._model_details.values())
+
+    def get_model_details(self, model_id: str) -> ModelInfo | None:
+        return self._model_details.get(model_id)
+
+    def authenticate(self) -> tuple[bool, str]:
+        return True, "Authenticated"
 
 
 class TestCacheManager:
@@ -175,19 +297,6 @@ class TestRateLimiter:
         assert allowed_r2 is True
 
 
-class ConcreteRepository(APIRepositoryBase):
-    """Concrete implementation of APIRepositoryBase for testing."""
-
-    def get_available_models(self) -> list[ModelInfo]:
-        return []
-
-    def get_model_details(self, model_id: str) -> ModelInfo | None:
-        return None
-
-    def authenticate(self) -> tuple[bool, str]:
-        return True, "Authenticated"
-
-
 class TestAPIRepositoryBase:
     """Test base API repository functionality."""
 
@@ -196,7 +305,7 @@ class TestAPIRepositoryBase:
         download_dir = str(tmp_path / "downloads")
         cache_dir = str(tmp_path / "cache" / "test_repo")
 
-        repo = ConcreteRepository(
+        repo = FakeRepositoryForTesting(
             repository_name="test_repo",
             api_endpoint="https://api.example.com",
             download_dir=download_dir,
@@ -209,106 +318,96 @@ class TestAPIRepositoryBase:
     def test_make_request_uses_cache_for_get(self, tmp_path: Path) -> None:
         """Make request uses cache for GET requests."""
         cache_dir = str(tmp_path / "cache")
-        repo = ConcreteRepository(
+        repo = FakeRepositoryForTesting(
             repository_name="test",
             api_endpoint="https://api.example.com",
             cache_config={"cache_dir": cache_dir},
         )
 
         test_response = {"data": "cached"}
-        with patch.object(repo.session, "request") as mock_request:
-            mock_response = Mock()
-            mock_response.status_code = 200
-            mock_response.json.return_value = test_response
-            mock_request.return_value = mock_response
+        fake_response = FakeHTTPResponse(status_code=200, json_data=test_response)
+        repo.fake_session.set_request_response(fake_response)
 
-            success1, data1, _ = repo._make_request("test", method="GET")
-            success2, data2, _ = repo._make_request("test", method="GET")
+        success1, data1, _ = repo._make_request("test", method="GET")
+        success2, data2, _ = repo._make_request("test", method="GET")
 
-            assert success1 is True
-            assert success2 is True
-            assert data1 == test_response
-            assert data2 == test_response
-            assert mock_request.call_count == 1
+        assert success1 is True
+        assert success2 is True
+        assert data1 == test_response
+        assert data2 == test_response
+        assert len(repo.fake_session.request_log) == 1
 
     def test_make_request_respects_rate_limits(self, tmp_path: Path) -> None:
         """Make request respects rate limiting configuration."""
         rate_config = RateLimitConfig(requests_per_minute=1, requests_per_day=10)
-        repo = ConcreteRepository(
+        repo = FakeRepositoryForTesting(
             repository_name="test",
             api_endpoint="https://api.example.com",
             rate_limit_config=rate_config,
         )
 
-        with patch.object(repo.session, "request") as mock_request:
-            mock_response = Mock()
-            mock_response.status_code = 200
-            mock_response.json.return_value = {"data": "test"}
-            mock_request.return_value = mock_response
+        fake_response = FakeHTTPResponse(status_code=200, json_data={"data": "test"})
+        repo.fake_session.set_request_response(fake_response)
 
-            success1, _, _ = repo._make_request("test", method="GET", use_cache=False)
-            success2, _, msg2 = repo._make_request("test", method="GET", use_cache=False)
+        success1, _, _ = repo._make_request("test", method="GET", use_cache=False)
+        success2, _, msg2 = repo._make_request("test", method="GET", use_cache=False)
 
-            assert success1 is True
-            assert success2 is False
-            assert "Rate limit exceeded" in msg2
+        assert success1 is True
+        assert success2 is False
+        assert "Rate limit exceeded" in msg2
 
     def test_make_request_handles_http_errors(self) -> None:
         """Make request handles HTTP error responses correctly."""
-        repo = ConcreteRepository(
+        repo = FakeRepositoryForTesting(
             repository_name="test",
             api_endpoint="https://api.example.com",
         )
 
-        with patch.object(repo.session, "request") as mock_request:
-            mock_response = Mock()
-            mock_response.status_code = 404
-            mock_response.text = "Not Found"
-            mock_request.return_value = mock_response
+        fake_response = FakeHTTPResponse(status_code=404, text="Not Found")
+        repo.fake_session.set_request_response(fake_response)
 
-            success, data, error = repo._make_request("test", method="GET", use_cache=False)
+        success, data, error = repo._make_request("test", method="GET", use_cache=False)
 
-            assert success is False
-            assert data is None
-            assert "404" in error
+        assert success is False
+        assert data is None
+        assert "404" in error
 
     def test_make_request_handles_network_errors(self) -> None:
         """Make request handles network connectivity errors."""
-        repo = ConcreteRepository(
+        repo = FakeRepositoryForTesting(
             repository_name="test",
             api_endpoint="https://api.example.com",
         )
 
-        with patch.object(repo.session, "request", side_effect=Exception("Network error")):
-            success, data, error = repo._make_request("test", method="GET", use_cache=False)
+        repo.fake_session.set_request_exception(Exception("Network error"))
+        success, data, error = repo._make_request("test", method="GET", use_cache=False)
 
-            assert success is False
-            assert data is None
-            assert error == "Request error"
+        assert success is False
+        assert data is None
+        assert error == "Request error"
 
     def test_make_request_adds_api_key_header(self) -> None:
         """Make request adds API key to authorization header."""
-        repo = ConcreteRepository(
+        repo = FakeRepositoryForTesting(
             repository_name="test",
             api_endpoint="https://api.example.com",
             api_key="test_key_123",
         )
 
-        with patch.object(repo.session, "request") as mock_request:
-            mock_response = Mock()
-            mock_response.status_code = 200
-            mock_response.json.return_value = {}
-            mock_request.return_value = mock_response
+        fake_response = FakeHTTPResponse(status_code=200, json_data={})
+        repo.fake_session.set_request_response(fake_response)
 
-            repo._make_request("test", method="GET", use_cache=False)
+        repo._make_request("test", method="GET", use_cache=False)
 
-            call_kwargs = mock_request.call_args[1]
-            assert "Authorization" in call_kwargs["headers"]
-            assert call_kwargs["headers"]["Authorization"] == "Bearer test_key_123"
+        assert len(repo.fake_session.request_log) == 1
+        request_headers = repo.fake_session.request_log[0]["headers"]
+        assert request_headers is not None
+        assert "Authorization" in request_headers
+        assert request_headers["Authorization"] == "Bearer test_key_123"
 
     def test_make_request_uses_proxy_when_configured(self) -> None:
         """Make request uses proxy configuration."""
-        repo = ConcreteRepository(
+        repo = FakeRepositoryForTesting(
             repository_name="test",
             api_endpoint="https://api.example.com",
             proxy="http://proxy.example.com:8080",
@@ -325,7 +424,7 @@ class TestAPIRepositoryBase:
 
         expected_checksum = hashlib.sha256(test_content).hexdigest()
 
-        repo = ConcreteRepository(
+        repo = FakeRepositoryForTesting(
             repository_name="test",
             api_endpoint="https://api.example.com",
         )
@@ -340,7 +439,7 @@ class TestAPIRepositoryBase:
 
         wrong_checksum = hashlib.sha256(b"different content").hexdigest()
 
-        repo = ConcreteRepository(
+        repo = FakeRepositoryForTesting(
             repository_name="test",
             api_endpoint="https://api.example.com",
         )
@@ -350,7 +449,7 @@ class TestAPIRepositoryBase:
 
     def test_download_model_creates_destination_directory(self, tmp_path: Path) -> None:
         """Download model creates destination directory if it doesn't exist."""
-        repo = ConcreteRepository(
+        repo = FakeRepositoryForTesting(
             repository_name="test",
             api_endpoint="https://api.example.com",
         )
@@ -361,24 +460,24 @@ class TestAPIRepositoryBase:
             download_url="https://example.com/model.bin",
         )
 
-        with patch.object(repo, "get_model_details", return_value=model_info):
-            with patch.object(repo.session, "get") as mock_get:
-                mock_response = MagicMock()
-                mock_response.__enter__ = Mock(return_value=mock_response)
-                mock_response.__exit__ = Mock(return_value=False)
-                mock_response.raise_for_status = Mock()
-                mock_response.headers = {"content-length": "100"}
-                mock_response.iter_content = Mock(return_value=[b"test" * 25])
-                mock_get.return_value = mock_response
+        repo.set_model_details("test-model", model_info)
 
-                dest_path = str(tmp_path / "subdir" / "model.bin")
-                success, _ = repo.download_model("test-model", dest_path)
+        test_data = b"test" * 25
+        fake_response = FakeHTTPResponse(
+            status_code=200,
+            headers={"content-length": "100"},
+            stream_content=[test_data],
+        )
+        repo.fake_session.set_get_response(fake_response)
 
-                assert os.path.exists(os.path.dirname(dest_path))
+        dest_path = str(tmp_path / "subdir" / "model.bin")
+        success, _ = repo.download_model("test-model", dest_path)
+
+        assert os.path.exists(os.path.dirname(dest_path))
 
     def test_download_model_verifies_checksum_when_provided(self, tmp_path: Path) -> None:
         """Download model verifies checksum after download."""
-        repo = ConcreteRepository(
+        repo = FakeRepositoryForTesting(
             repository_name="test",
             api_endpoint="https://api.example.com",
         )
@@ -393,25 +492,24 @@ class TestAPIRepositoryBase:
             checksum=correct_checksum,
         )
 
-        with patch.object(repo, "get_model_details", return_value=model_info):
-            with patch.object(repo.session, "get") as mock_get:
-                mock_response = MagicMock()
-                mock_response.__enter__ = Mock(return_value=mock_response)
-                mock_response.__exit__ = Mock(return_value=False)
-                mock_response.raise_for_status = Mock()
-                mock_response.headers = {"content-length": str(len(test_data))}
-                mock_response.iter_content = Mock(return_value=[test_data])
-                mock_get.return_value = mock_response
+        repo.set_model_details("test-model", model_info)
 
-                dest_path = str(tmp_path / "model.bin")
-                success, message = repo.download_model("test-model", dest_path)
+        fake_response = FakeHTTPResponse(
+            status_code=200,
+            headers={"content-length": str(len(test_data))},
+            stream_content=[test_data],
+        )
+        repo.fake_session.set_get_response(fake_response)
 
-                assert success is True
-                assert "complete" in message.lower()
+        dest_path = str(tmp_path / "model.bin")
+        success, message = repo.download_model("test-model", dest_path)
+
+        assert success is True
+        assert "complete" in message.lower()
 
     def test_download_model_fails_on_checksum_mismatch(self, tmp_path: Path) -> None:
         """Download model fails when checksum doesn't match."""
-        repo = ConcreteRepository(
+        repo = FakeRepositoryForTesting(
             repository_name="test",
             api_endpoint="https://api.example.com",
         )
@@ -426,19 +524,18 @@ class TestAPIRepositoryBase:
             checksum=wrong_checksum,
         )
 
-        with patch.object(repo, "get_model_details", return_value=model_info):
-            with patch.object(repo.session, "get") as mock_get:
-                mock_response = MagicMock()
-                mock_response.__enter__ = Mock(return_value=mock_response)
-                mock_response.__exit__ = Mock(return_value=False)
-                mock_response.raise_for_status = Mock()
-                mock_response.headers = {"content-length": str(len(test_data))}
-                mock_response.iter_content = Mock(return_value=[test_data])
-                mock_get.return_value = mock_response
+        repo.set_model_details("test-model", model_info)
 
-                dest_path = str(tmp_path / "model.bin")
-                success, message = repo.download_model("test-model", dest_path)
+        fake_response = FakeHTTPResponse(
+            status_code=200,
+            headers={"content-length": str(len(test_data))},
+            stream_content=[test_data],
+        )
+        repo.fake_session.set_get_response(fake_response)
 
-                assert success is False
-                assert "Checksum verification failed" in message
-                assert not os.path.exists(dest_path)
+        dest_path = str(tmp_path / "model.bin")
+        success, message = repo.download_model("test-model", dest_path)
+
+        assert success is False
+        assert "Checksum verification failed" in message
+        assert not os.path.exists(dest_path)

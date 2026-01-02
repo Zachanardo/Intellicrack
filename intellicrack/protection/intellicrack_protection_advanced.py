@@ -159,7 +159,36 @@ class AdvancedProtectionAnalysis(ProtectionAnalysis):
         is_64bit: bool = False,
         endianess: str = "little",
     ) -> None:
-        """Initialize advanced protection analysis with comprehensive binary analysis data."""
+        """Initialize advanced protection analysis with comprehensive binary analysis data.
+
+        Args:
+            file_path: Path to the analyzed binary file.
+            file_type: Type of the binary file format (e.g., 'PE', 'ELF', 'Mach-O').
+            architecture: Architecture of the binary (e.g., 'x86', 'x86-64', 'ARM').
+            detections: List of protection detections found in the binary.
+            compiler: Compiler used to build the binary if detected.
+            linker: Linker used to build the binary if detected.
+            is_packed: Whether the binary appears to be packed.
+            is_protected: Whether the binary is protected with licensing or anti-analysis measures.
+            has_overlay: Whether the binary has an overlay section.
+            has_resources: Whether the binary contains resource sections.
+            entry_point: Entry point address of the binary in hexadecimal format.
+            sections: List of sections in the binary with metadata.
+            imports: List of imported functions/libraries.
+            strings: List of extracted strings from the binary.
+            metadata: Additional metadata about the binary.
+            entropy_info: List of entropy information for each section.
+            certificates: List of digital certificates found in the binary.
+            resources: List of resources extracted from the binary.
+            suspicious_strings: List of strings identified as suspicious or related to protection.
+            import_hash: Import hash information for similarity analysis.
+            heuristic_detections: List of heuristic-based detection results.
+            similarity_hash: Fuzzy hash string for similarity matching with other binaries.
+            file_format_details: Additional format-specific details about the binary.
+            is_64bit: Whether the binary is 64-bit architecture.
+            endianess: Endianness of the binary ('little' or 'big').
+
+        """
         super().__init__(
             file_path=file_path,
             file_type=file_type,
@@ -212,7 +241,12 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         self.result_cache: dict[str, tuple[AdvancedProtectionAnalysis, str]] | None = {} if enable_cache else None
 
     def _find_custom_db(self) -> str | None:
-        """Find custom database directory."""
+        """Find custom database directory.
+
+        Returns:
+            str | None: Path to custom database directory if found, None otherwise.
+
+        """
         if not self.engine_path:
             # No engine path, no custom db
             return None
@@ -245,7 +279,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             max_string_length: Maximum string length to extract
 
         Returns:
-            AdvancedProtectionAnalysis with comprehensive results
+            AdvancedProtectionAnalysis: Comprehensive protection analysis results.
 
         """
         # Check cache first
@@ -356,7 +390,16 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             )
 
     def _parse_advanced_json(self, file_path: str, json_output: str) -> AdvancedProtectionAnalysis:
-        """Parse advanced JSON output from protection engine."""
+        """Parse advanced JSON output from protection engine.
+
+        Args:
+            file_path: Path to the analyzed file.
+            json_output: JSON output string from protection engine.
+
+        Returns:
+            AdvancedProtectionAnalysis: Parsed analysis results with enhanced data.
+
+        """
         # Start with basic parsing
         basic_analysis = self._parse_json_output(file_path, json.loads(json_output))
 
@@ -438,7 +481,16 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         return analysis
 
     def _parse_advanced_xml(self, file_path: str, xml_output: str) -> AdvancedProtectionAnalysis:
-        """Parse advanced XML output from protection engine."""
+        """Parse advanced XML output from protection engine.
+
+        Args:
+            file_path: Path to the analyzed file.
+            xml_output: XML output string from protection engine.
+
+        Returns:
+            AdvancedProtectionAnalysis: Parsed analysis results with XML-extracted data.
+
+        """
         analysis = AdvancedProtectionAnalysis(
             file_path=file_path,
             file_type="Unknown",
@@ -480,7 +532,16 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         return analysis
 
     def _parse_advanced_text(self, file_path: str, text_output: str) -> AdvancedProtectionAnalysis:
-        """Parse advanced text output from protection engine."""
+        """Parse advanced text output from protection engine.
+
+        Args:
+            file_path: Path to the analyzed file.
+            text_output: Text output string from protection engine.
+
+        Returns:
+            AdvancedProtectionAnalysis: Parsed analysis results from text format.
+
+        """
         analysis = AdvancedProtectionAnalysis(
             file_path=file_path,
             file_type="Unknown",
@@ -535,7 +596,16 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         return analysis
 
     def _extract_suspicious_strings(self, file_path: str, max_length: int) -> list[StringInfo]:
-        """Extract suspicious strings from file."""
+        """Extract suspicious strings from file.
+
+        Args:
+            file_path: Path to the binary file to analyze.
+            max_length: Maximum length of strings to extract.
+
+        Returns:
+            list[StringInfo]: List of detected suspicious strings with metadata.
+
+        """
         suspicious_patterns = [
             "kernel32",
             "ntdll",
@@ -606,7 +676,15 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         return suspicious_strings
 
     def _calculate_import_hash(self, file_path: str) -> ImportHash | None:
-        """Calculate import hash for file using proper PE import table analysis."""
+        """Calculate import hash for file using proper PE import table analysis.
+
+        Args:
+            file_path: Path to the binary file.
+
+        Returns:
+            ImportHash | None: Import hash object with imphash and sorted hash, or None if calculation fails.
+
+        """
         try:
             import pefile
         except ImportError:
@@ -655,7 +733,15 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             return self._calculate_import_hash_manual(file_path)
 
     def _calculate_import_hash_manual(self, file_path: str) -> ImportHash | None:
-        """Manual PE import hash calculation without pefile library."""
+        """Manual PE import hash calculation without pefile library.
+
+        Args:
+            file_path: Path to the binary file.
+
+        Returns:
+            ImportHash | None: Import hash object calculated from PE structure, or None if parsing fails.
+
+        """
         try:
             with open(file_path, "rb") as f:
                 data = f.read()
@@ -830,7 +916,15 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             return None
 
     def _calculate_similarity_hash(self, file_path: str) -> str | None:
-        """Calculate similarity hash using ssdeep fuzzy hashing or TLSH."""
+        """Calculate similarity hash using ssdeep fuzzy hashing or TLSH.
+
+        Args:
+            file_path: Path to the binary file.
+
+        Returns:
+            str | None: Fuzzy hash string for similarity analysis, or None if calculation fails.
+
+        """
         # Try ssdeep first
         try:
             import ssdeep
@@ -867,7 +961,15 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             return None
 
     def _calculate_custom_fuzzy_hash(self, file_path: str) -> str:
-        """Calculate custom fuzzy hash using rolling hash and context triggering."""
+        """Calculate custom fuzzy hash using rolling hash and context triggering.
+
+        Args:
+            file_path: Path to the binary file.
+
+        Returns:
+            str: Fuzzy hash in format "blocksize:hash1:hash2" for similarity matching.
+
+        """
         try:
             with open(file_path, "rb") as f:
                 data = f.read()
@@ -988,7 +1090,15 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 return f"sha256:{hashlib.sha256(f.read()).hexdigest()}"
 
     def _calculate_file_hash(self, file_path: str) -> str:
-        """Calculate file hash for caching."""
+        """Calculate file hash for caching.
+
+        Args:
+            file_path: Path to the binary file.
+
+        Returns:
+            str: SHA256 hash of file contents, or empty string if file cannot be read.
+
+        """
         try:
             with open(file_path, "rb") as f:
                 return hashlib.sha256(f.read()).hexdigest()
@@ -1009,7 +1119,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             scan_mode: Scan mode to use
 
         Returns:
-            Dictionary mapping file paths to analysis results
+            dict[str, AdvancedProtectionAnalysis]: Dictionary mapping file paths to analysis results.
 
         """
         results = {}
@@ -1050,7 +1160,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             description: Signature description
 
         Returns:
-            True if signature created successfully
+            bool: True if signature created successfully, False otherwise.
 
         """
         if not self.custom_db_path:
@@ -1093,7 +1203,7 @@ function detect(bShowType, bShowVersion, bShowOptions)
             analysis: Analysis results to export
 
         Returns:
-            YARA rule string with detailed detection patterns
+            str: YARA rule string with detailed detection patterns.
 
         """
         # Generate main detection rule
@@ -1199,7 +1309,15 @@ rule {rule_name}_Specific {{
         return "\n".join(yara_rules)
 
     def _generate_detection_patterns(self, detection: DetectionResult) -> list[str]:
-        """Generate YARA patterns for specific detection."""
+        """Generate YARA patterns for specific detection.
+
+        Args:
+            detection: Detection result to generate patterns for.
+
+        Returns:
+            list[str]: List of YARA pattern strings for the detection.
+
+        """
         patterns = []
 
         # Common packer/protector patterns
@@ -1242,7 +1360,15 @@ rule {rule_name}_Specific {{
         return patterns
 
     def _generate_detection_condition(self, detection: DetectionResult) -> str:
-        """Generate YARA condition for specific detection."""
+        """Generate YARA condition for specific detection.
+
+        Args:
+            detection: Detection result to generate condition for.
+
+        Returns:
+            str: YARA condition expression for the detection.
+
+        """
         base_conditions = []
 
         # File type conditions
@@ -1264,7 +1390,15 @@ rule {rule_name}_Specific {{
         return " and ".join(base_conditions) if base_conditions else "any of them"
 
     def _generate_heuristic_yara_rule(self, heuristic_detections: list[DetectionResult]) -> str:
-        """Generate YARA rule for heuristic detections."""
+        """Generate YARA rule for heuristic detections.
+
+        Args:
+            heuristic_detections: List of heuristic detection results.
+
+        Returns:
+            str: YARA rule string for heuristic detections.
+
+        """
         return (
             """
 rule Heuristic_Protection_Detection {
@@ -1308,7 +1442,7 @@ rule Heuristic_Protection_Detection {
             file_path: Path to file
 
         Returns:
-            Dictionary of capability flags
+            dict[str, bool]: Dictionary of capability flags indicating supported protection detection features.
 
         """
         # Determine file type first
@@ -1331,7 +1465,17 @@ rule Heuristic_Protection_Detection {
 
 # Convenience function for advanced analysis
 def advanced_analyze(file_path: str, scan_mode: ScanMode = ScanMode.DEEP, enable_heuristic: bool = True) -> AdvancedProtectionAnalysis:
-    """Quick advanced analysis function."""
+    """Quick advanced analysis function.
+
+    Args:
+        file_path: Path to the binary file to analyze.
+        scan_mode: Scan mode to use for analysis.
+        enable_heuristic: Enable heuristic detection methods.
+
+    Returns:
+        AdvancedProtectionAnalysis: Comprehensive protection analysis results.
+
+    """
     analyzer = IntellicrackAdvancedProtection()
     return analyzer.detect_protections_advanced(
         file_path,

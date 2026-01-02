@@ -46,14 +46,6 @@ pytestmark = pytest.mark.skipif(not R2PIPE_AVAILABLE, reason="r2pipe not availab
 
 
 @pytest.fixture
-def temp_workspace() -> Path:
-    """Create temporary workspace for test binaries."""
-    temp_dir = tempfile.mkdtemp(prefix="r2_patch_test_")
-    yield Path(temp_dir)
-    shutil.rmtree(temp_dir, ignore_errors=True)
-
-
-@pytest.fixture
 def simple_pe_binary(temp_workspace: Path) -> Path:
     """Create a minimal PE binary for testing.
 

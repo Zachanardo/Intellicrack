@@ -6,11 +6,7 @@ from typing import Any
 
 import pytest
 
-from intellicrack.core.network.license_protocol_handler import (
-    FlexLMProtocolHandler,
-    HASPProtocolHandler,
-    LicenseProtocolHandler,
-)
+from intellicrack.core.network.license_protocol_handler import FlexLMProtocolHandler, HASPProtocolHandler, LicenseProtocolHandler
 
 
 class TestLicenseProtocolHandlerBase:

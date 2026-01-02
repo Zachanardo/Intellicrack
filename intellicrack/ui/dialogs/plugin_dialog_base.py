@@ -58,7 +58,10 @@ class PluginDialogBase(QDialog):
         self.init_dialog()
 
     def init_dialog(self) -> None:
-        """Initialize dialog with default layout. Can be overridden by subclasses."""
+        """Initialize the dialog with default layout and widgets.
+
+        Can be overridden by subclasses to customize the dialog appearance.
+        """
         # Provide default implementation for base functionality
         self.setWindowTitle("Plugin Dialog")
         self.setMinimumSize(600, 400)
@@ -117,7 +120,11 @@ class PluginDialogBase(QDialog):
         return plugin_layout
 
     def browse_plugin(self) -> None:
-        """Browse for a plugin file."""
+        """Open a file dialog to browse and select a plugin file.
+
+        Updates the plugin path and loads the selected plugin if a valid
+        file is chosen.
+        """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Plugin",
@@ -129,7 +136,18 @@ class PluginDialogBase(QDialog):
             self.load_plugin(file_path)
 
     def load_plugin(self, plugin_path: str) -> bool:
-        """Load a plugin file - to be overridden by subclasses."""
+        """Load a plugin file.
+
+        Validates the plugin file exists, updates the plugin path, and calls
+        on_plugin_loaded for subclass-specific handling. Can be overridden by
+        subclasses to customize loading logic.
+
+        Args:
+            plugin_path: Path to the plugin file to load.
+
+        Returns:
+            bool: True if the plugin was loaded successfully, False otherwise.
+        """
         if not os.path.exists(plugin_path):
             QMessageBox.warning(self, "Error", f"Plugin file not found: {plugin_path}")
             return False
@@ -143,7 +161,15 @@ class PluginDialogBase(QDialog):
         return True
 
     def on_plugin_loaded(self, plugin_path: str) -> None:
-        """Handle a plugin is loaded - to be overridden by subclasses."""
+        """Handle plugin loading completion.
+
+        Updates the plugin information cache, window title, enables plugin-
+        dependent widgets, and emits plugin loaded signal. Can be overridden by
+        subclasses to add custom handling.
+
+        Args:
+            plugin_path: Path to the plugin file that was loaded.
+        """
         self.logger.debug("Plugin loaded from: %s", plugin_path)
 
         plugin_name: str = os.path.basename(plugin_path)

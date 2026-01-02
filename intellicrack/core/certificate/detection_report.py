@@ -115,11 +115,24 @@ class ValidationFunction:
     references: list[int] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
+        """Convert validation function to dictionary.
+
+        Returns:
+            dict[str, Any]: Dictionary representation of validation function
+                containing address, api_name, library, confidence, context,
+                and references keys.
+
+        """
         return asdict(self)
 
     def __str__(self) -> str:
-        """Human-readable string representation."""
+        """Generate human-readable string representation.
+
+        Returns:
+            str: Formatted string containing API name, address in hex,
+                library name, and confidence score of the validation function.
+
+        """
         return f"ValidationFunction(api={self.api_name}, addr=0x{self.address:x}, lib={self.library}, confidence={self.confidence:.2f})"
 
 
@@ -138,7 +151,7 @@ class DetectionReport:
         """Export report as JSON.
 
         Returns:
-            JSON string representation
+            JSON string representation of detection report.
 
         """
         data = self.to_dict()
@@ -150,7 +163,7 @@ class DetectionReport:
         """Export report as dictionary.
 
         Returns:
-            Dictionary representation
+            Dictionary representation of detection report.
 
         """
         return {
@@ -166,7 +179,7 @@ class DetectionReport:
         """Generate human-readable text report.
 
         Returns:
-            Formatted text report
+            Formatted text report of detection results.
 
         """
         lines = [
@@ -219,10 +232,10 @@ class DetectionReport:
         """Create DetectionReport from dictionary.
 
         Args:
-            data: Dictionary containing report data
+            data: Dictionary containing report data.
 
         Returns:
-            DetectionReport instance
+            DetectionReport instance created from dictionary.
 
         """
         validation_functions = [ValidationFunction(**func_data) for func_data in data.get("validation_functions", [])]
@@ -252,10 +265,10 @@ class DetectionReport:
         """Create DetectionReport from JSON string.
 
         Args:
-            json_str: JSON string containing report data
+            json_str: JSON string containing report data.
 
         Returns:
-            DetectionReport instance
+            DetectionReport instance created from JSON.
 
         """
         data = json.loads(json_str)
@@ -265,10 +278,10 @@ class DetectionReport:
         """Get validation functions with confidence above threshold.
 
         Args:
-            threshold: Minimum confidence score (0.0 to 1.0)
+            threshold: Minimum confidence score (0.0 to 1.0).
 
         Returns:
-            List of high-confidence validation functions
+            List of high-confidence validation functions.
 
         """
         return [func for func in self.validation_functions if func.confidence >= threshold]
@@ -277,7 +290,7 @@ class DetectionReport:
         """Check if any certificate validation was detected.
 
         Returns:
-            True if validation functions were detected
+            True if validation functions were detected, False otherwise.
 
         """
         return len(self.validation_functions) > 0
@@ -286,7 +299,7 @@ class DetectionReport:
         """Get list of unique API names detected.
 
         Returns:
-            List of unique API names
+            List of unique API names.
 
         """
         return list({func.api_name for func in self.validation_functions})
@@ -295,7 +308,7 @@ class DetectionReport:
         """Get list of unique libraries containing validation functions.
 
         Returns:
-            List of unique library names
+            List of unique library names.
 
         """
         return list({func.library for func in self.validation_functions})

@@ -3,7 +3,9 @@
 Tests real hex viewing, editing, and binary manipulation.
 """
 
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -17,7 +19,7 @@ from intellicrack.ui.widgets.hex_viewer import HexViewerWidget
 
 
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Any:
     """Create QApplication instance."""
     app = QApplication.instance()
     if app is None:
@@ -35,7 +37,7 @@ def test_binary(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def hex_viewer(qapp: QApplication) -> HexViewerWidget:
+def hex_viewer(qapp: Any) -> Generator[HexViewerWidget, None, None]:
     """Create hex viewer widget."""
     widget = HexViewerWidget()
     yield widget

@@ -53,14 +53,38 @@ class R2ScriptingEngine:
     """
 
     def __init__(self, binary_path: str, radare2_path: str | None = None) -> None:
-        """Initialize scripting engine."""
+        """Initialize the R2ScriptingEngine for advanced radare2 scripting.
+
+        Args:
+            binary_path: Absolute path to the binary file to analyze.
+            radare2_path: Optional path to radare2 executable. If None, uses system radare2.
+
+        """
         self.binary_path = binary_path
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
         self.script_cache: dict[str, Any] = {}
 
     def execute_custom_analysis(self, script_commands: list[str]) -> dict[str, Any]:
-        """Execute custom analysis using r2 commands."""
+        """Execute custom analysis using radare2 commands.
+
+        Executes a sequence of radare2 commands against the binary and collects
+        results from each command, including both successful and failed executions.
+
+        Args:
+            script_commands: List of radare2 commands to execute sequentially.
+
+        Returns:
+            dict[str, Any]: Dictionary containing:
+                - binary_path: Path to analyzed binary
+                - commands_executed: List of commands that were executed
+                - command_results: List of results from each command
+                - analysis_summary: Summary statistics of execution
+                - execution_time: Total time in seconds for execution
+                - errors: List of error messages from failed commands
+                - error: Error message if overall execution failed
+
+        """
         command_results: list[dict[str, Any]] = []
         errors: list[str] = []
 
@@ -118,7 +142,16 @@ class R2ScriptingEngine:
         return result
 
     def generate_license_analysis_script(self) -> list[str]:
-        """Generate license analysis command sequence."""
+        """Generate a license analysis command sequence for radare2.
+
+        Constructs a comprehensive list of radare2 commands designed to identify
+        license validation mechanisms, including functions, strings, imports, and
+        cryptographic operations commonly used in licensing protection schemes.
+
+        Returns:
+            list[str]: List of radare2 commands for license analysis workflow.
+
+        """
         return [
             # Basic analysis
             "aaa",
@@ -159,7 +192,16 @@ class R2ScriptingEngine:
         ]
 
     def generate_vulnerability_analysis_script(self) -> list[str]:
-        """Generate vulnerability analysis command sequence."""
+        """Generate a vulnerability analysis command sequence for radare2.
+
+        Constructs a comprehensive list of radare2 commands designed to identify
+        common vulnerability patterns such as buffer overflows, format strings,
+        memory corruption, injection vectors, and privilege escalation mechanisms.
+
+        Returns:
+            list[str]: List of radare2 commands for vulnerability analysis workflow.
+
+        """
         return [
             # Comprehensive analysis
             "aaaa",
@@ -208,7 +250,26 @@ class R2ScriptingEngine:
         ]
 
     def execute_license_analysis_workflow(self) -> dict[str, Any]:
-        """Execute comprehensive license analysis workflow."""
+        """Execute comprehensive license analysis workflow on the binary.
+
+        Orchestrates a complete license analysis workflow including function
+        identification, string extraction, import analysis, cryptographic operation
+        detection, validation mechanism identification, and bypass opportunity analysis.
+
+        Returns:
+            dict[str, Any]: Dictionary containing:
+                - workflow_type: "license_analysis"
+                - binary_path: Path to analyzed binary
+                - license_functions: List of identified license-related functions
+                - license_strings: List of license-related strings found
+                - license_imports: List of license-related API imports
+                - crypto_usage: Cryptographic operations detected
+                - validation_mechanisms: Identified validation mechanisms
+                - bypass_opportunities: Potential bypass techniques
+                - analysis_confidence: Confidence score (0.0-1.0) for results
+                - error: Error message if workflow failed
+
+        """
         workflow_result = {
             "workflow_type": "license_analysis",
             "binary_path": self.binary_path,
@@ -261,7 +322,27 @@ class R2ScriptingEngine:
         return workflow_result
 
     def execute_vulnerability_analysis_workflow(self) -> dict[str, Any]:
-        """Execute comprehensive vulnerability analysis workflow."""
+        """Execute comprehensive vulnerability analysis workflow on the binary.
+
+        Orchestrates a complete vulnerability analysis workflow identifying buffer
+        overflow risks, format string vulnerabilities, memory corruption issues,
+        injection vectors, privilege escalation capabilities, and network security risks.
+
+        Returns:
+            dict[str, Any]: Dictionary containing:
+                - workflow_type: "vulnerability_analysis"
+                - binary_path: Path to analyzed binary
+                - buffer_overflow_risks: Identified buffer overflow vulnerabilities
+                - format_string_risks: Format string vulnerability patterns
+                - memory_corruption_risks: Memory management issues detected
+                - injection_risks: Code/process injection capabilities
+                - privilege_escalation_risks: Privilege elevation mechanisms
+                - network_security_risks: Network communication patterns
+                - overall_risk_score: Aggregated risk score (0.0-1.0)
+                - security_recommendations: List of mitigation recommendations
+                - error: Error message if workflow failed
+
+        """
         workflow_result = {
             "workflow_type": "vulnerability_analysis",
             "binary_path": self.binary_path,
@@ -307,7 +388,23 @@ class R2ScriptingEngine:
         return workflow_result
 
     def create_custom_r2_script(self, script_name: str, commands: list[str], description: str = "") -> str:
-        """Create custom r2 script file."""
+        """Create a custom radare2 script file for later execution.
+
+        Generates an executable radare2 script containing the provided commands,
+        writes it to a temporary file, and sets appropriate permissions on Unix systems.
+
+        Args:
+            script_name: Name for the script (used in filename and header).
+            commands: List of radare2 commands to include in the script.
+            description: Optional description for the script header (default: empty string).
+
+        Returns:
+            str: Absolute path to the created script file.
+
+        Raises:
+            Exception: If script file creation fails or file write operations fail.
+
+        """
         script_content = f"""#!/usr/bin/env r2
 # {script_name}
 # {description}
@@ -338,14 +435,23 @@ class R2ScriptingEngine:
             raise
 
     def execute_r2_script_file(self, script_path: str, use_terminal: bool = False) -> dict[str, Any]:
-        """Execute r2 script file.
+        """Execute a radare2 script file against the binary.
+
+        Executes a radare2 script file with optional terminal display. Can run
+        interactively in the terminal or capture output to a dictionary.
 
         Args:
-            script_path: Path to r2 script file
-            use_terminal: If True, display output in terminal (default: False)
+            script_path: Absolute path to the radare2 script file to execute.
+            use_terminal: If True, run in terminal with live output; if False, capture output (default: False).
 
         Returns:
-            Dictionary with execution results
+            dict[str, Any]: Dictionary containing:
+                - script_path: Path to the executed script
+                - output: Standard output from script execution
+                - errors: Standard error from script execution
+                - return_code: Process exit code (0 for success)
+                - execution_successful: Boolean indicating successful execution
+                - terminal_session: Session ID if executed in terminal (optional)
 
         """
         result = {
@@ -403,7 +509,18 @@ class R2ScriptingEngine:
         return result
 
     def generate_function_analysis_script(self, function_name: str) -> list[str]:
-        """Generate script for detailed function analysis."""
+        """Generate a command sequence for detailed function analysis.
+
+        Creates radare2 commands to analyze a specific function including disassembly,
+        decompilation, variable analysis, control flow graphs, and cross-references.
+
+        Args:
+            function_name: Name of the function to analyze.
+
+        Returns:
+            list[str]: List of radare2 commands for function-specific analysis.
+
+        """
         return [
             f"s {function_name}",  # Seek to function
             "pdf",  # Print disassembly of function
@@ -416,7 +533,28 @@ class R2ScriptingEngine:
         ]
 
     def analyze_specific_function(self, function_name: str) -> dict[str, Any]:
-        """Perform detailed analysis of specific function."""
+        """Perform detailed analysis of a specific function.
+
+        Executes comprehensive function analysis including disassembly, decompilation,
+        variables, control flow graphs, cross-references, and automated insights generation.
+
+        Args:
+            function_name: Name of the function to analyze.
+
+        Returns:
+            dict[str, Any]: Dictionary containing:
+                - function_name: Name of the analyzed function
+                - disassembly: Assembly language representation of the function
+                - decompiled_code: High-level code reconstruction
+                - function_info: Metadata about the function
+                - variables: List of variables and their types
+                - control_flow_graph: Graph representation of function control flow
+                - cross_references_to: Functions or data that reference this function
+                - cross_references_from: Functions or data this function references
+                - analysis_insights: Automated insights about function behavior
+                - error: Error message if analysis failed
+
+        """
         result = {
             "function_name": function_name,
             "disassembly": "",
@@ -470,7 +608,22 @@ class R2ScriptingEngine:
         return result
 
     def create_automated_patcher_script(self, patches: list[dict[str, Any]]) -> str:
-        """Create automated binary patcher script."""
+        """Create an automated binary patcher script for applying multiple patches.
+
+        Generates a radare2 script that applies a sequence of binary patches at
+        specified addresses. Each patch is applied individually and the modified
+        binary is saved.
+
+        Args:
+            patches: List of patch dictionaries, each containing:
+                - address: Hex address for the patch
+                - patch_bytes: Hex bytes to write at the address
+                - description: Human-readable description of the patch (optional)
+
+        Returns:
+            str: Absolute path to the created patcher script file.
+
+        """
         script_commands = [
             "# Automated Binary Patcher Script",
             "# Generated by Intellicrack",
@@ -505,7 +658,21 @@ class R2ScriptingEngine:
         return self.create_custom_r2_script("autopatcher", script_commands, "Automated binary patcher")
 
     def create_license_validator_script(self, validation_points: list[dict[str, Any]]) -> str:
-        """Create license validation analysis script."""
+        """Create a license validation analysis script for specific validation points.
+
+        Generates a radare2 script that performs detailed analysis of specified
+        license validation functions and addresses. Includes disassembly, decompilation,
+        function analysis, and targeted string searches.
+
+        Args:
+            validation_points: List of validation point dictionaries, each containing:
+                - function_name: Name of the validation function
+                - address: Address of the validation code (optional)
+
+        Returns:
+            str: Absolute path to the created license validation script.
+
+        """
         script_commands = [
             "# License Validation Analysis Script",
             "# Generated by Intellicrack",
@@ -568,7 +735,23 @@ class R2ScriptingEngine:
 
     # Helper methods for result processing
     def _generate_analysis_summary(self, command_results: list[dict[str, Any]]) -> dict[str, Any]:
-        """Generate summary of analysis results."""
+        """Generate a summary of command execution results.
+
+        Analyzes command execution results to produce summary statistics including
+        command counts, success rates, and results availability.
+
+        Args:
+            command_results: List of command execution result dictionaries.
+
+        Returns:
+            dict[str, Any]: Dictionary containing:
+                - total_commands: Total number of commands executed
+                - successful_commands: Count of successfully executed commands
+                - failed_commands: Count of failed commands
+                - success_rate: Ratio of successful to total commands
+                - commands_with_results: Count of commands that returned data
+
+        """
         successful_commands = [r for r in command_results if r.get("success", False)]
         failed_commands = [r for r in command_results if not r.get("success", False)]
 
@@ -581,7 +764,22 @@ class R2ScriptingEngine:
         }
 
     def _extract_license_functions(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Extract license-related functions from command results."""
+        """Extract license-related functions from radare2 command results.
+
+        Analyzes function list results to identify functions with names containing
+        license-related keywords and creates structured descriptions for analysis.
+
+        Args:
+            command_results: List of command execution result dictionaries.
+
+        Returns:
+            list[dict[str, Any]]: List of license function dictionaries containing:
+                - name: Function name
+                - address: Function address in hexadecimal format
+                - size: Function size in bytes
+                - type: Classification as "license_related"
+
+        """
         license_functions = []
 
         # Get function list
@@ -604,7 +802,21 @@ class R2ScriptingEngine:
         return license_functions
 
     def _extract_license_strings(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Extract license-related strings from command results."""
+        """Extract license-related strings from radare2 command results.
+
+        Searches command results for strings matching license-related keywords
+        and extracts their addresses and contextual information.
+
+        Args:
+            command_results: List of command execution result dictionaries.
+
+        Returns:
+            list[dict[str, Any]]: List of license string dictionaries containing:
+                - keyword: The license keyword that matched
+                - address: String address in hexadecimal format
+                - context: Annotation indicating the search type
+
+        """
         license_strings: list[dict[str, Any]] = []
 
         license_keywords = [
@@ -633,7 +845,21 @@ class R2ScriptingEngine:
         return license_strings
 
     def _extract_license_imports(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Extract license-related imports from command results."""
+        """Extract license-related API imports from radare2 command results.
+
+        Analyzes import results to identify imported APIs commonly used in licensing
+        mechanisms such as registry operations, cryptography, and hardware access.
+
+        Args:
+            command_results: List of command execution result dictionaries.
+
+        Returns:
+            list[dict[str, Any]]: List of license import dictionaries containing:
+                - name: API function name
+                - library: Library or DLL name providing the function
+                - type: Classification as "license_related_api"
+
+        """
         license_imports = []
 
         # Get imports
@@ -657,7 +883,21 @@ class R2ScriptingEngine:
         return license_imports
 
     def _extract_crypto_usage(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Extract cryptographic usage from command results."""
+        """Extract cryptographic operation usage from radare2 command results.
+
+        Identifies cryptographic functions called in the binary including encryption,
+        decryption, hashing, and other crypto-related operations.
+
+        Args:
+            command_results: List of command execution result dictionaries.
+
+        Returns:
+            list[dict[str, Any]]: List of crypto usage dictionaries containing:
+                - algorithm_type: Type of cryptographic operation detected
+                - occurrences: Count of times the algorithm type appears
+                - addresses: List of addresses where the algorithm is referenced (up to 5)
+
+        """
         crypto_usage = []
 
         crypto_keywords = ["crypt", "encrypt", "decrypt", "hash"]
@@ -678,7 +918,22 @@ class R2ScriptingEngine:
         return crypto_usage
 
     def _identify_validation_mechanisms(self, command_results: list[dict[str, Any]]) -> list[str]:
-        """Identify validation mechanisms from command results."""
+        """Identify license validation mechanisms from radare2 command results.
+
+        Detects the presence of different license validation techniques including
+        registry checks, time-based validation, hardware fingerprinting, and cryptographic validation.
+
+        Args:
+            command_results: List of command execution result dictionaries.
+
+        Returns:
+            list[str]: List of identified validation mechanism types including:
+                - "registry_validation"
+                - "time_based_validation"
+                - "hardware_fingerprinting"
+                - "cryptographic_validation"
+
+        """
         mechanisms = []
 
         # Check for registry operations
@@ -709,7 +964,25 @@ class R2ScriptingEngine:
         return mechanisms
 
     def _find_bypass_opportunities(self, workflow_result: dict[str, Any]) -> list[dict[str, Any]]:
-        """Find bypass opportunities based on analysis."""
+        """Find potential bypass opportunities based on license analysis results.
+
+        Generates a list of practical bypass techniques targeting identified license
+        validation mechanisms and functions, including difficulty estimates and
+        success probability assessments.
+
+        Args:
+            workflow_result: License analysis workflow result dictionary.
+
+        Returns:
+            list[dict[str, Any]]: List of bypass opportunity dictionaries containing:
+                - type: Category of bypass (e.g., "function_patch", "registry_bypass")
+                - target: Specific target of the bypass
+                - address: Memory address (if applicable)
+                - method: Technique for bypassing the target
+                - difficulty: Relative difficulty estimate ("easy", "medium", "hard")
+                - success_probability: Estimated success probability (0.0-1.0)
+
+        """
         license_functions = workflow_result.get("license_functions", [])
         validation_mechanisms = workflow_result.get("validation_mechanisms", [])
 
@@ -751,7 +1024,20 @@ class R2ScriptingEngine:
         return opportunities
 
     def _calculate_analysis_confidence(self, workflow_result: dict[str, Any]) -> float:
-        """Calculate confidence in analysis results."""
+        """Calculate confidence score for analysis results.
+
+        Computes a normalized confidence metric (0.0-1.0) based on the quantity and
+        diversity of indicators found during license analysis, including function
+        count, string count, and validation mechanism diversity.
+
+        Args:
+            workflow_result: License analysis workflow result dictionary.
+
+        Returns:
+            float: Confidence score between 0.0 and 1.0, where 1.0 indicates
+                high confidence in the analysis results.
+
+        """
         # Number of license functions found
         license_functions = len(workflow_result.get("license_functions", []))
         # Number of license strings found
@@ -768,7 +1054,22 @@ class R2ScriptingEngine:
         return sum(confidence_factors) / max(1, len(confidence_factors))
 
     def _analyze_buffer_overflow_risks(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Analyze buffer overflow risks from command results."""
+        """Analyze buffer overflow vulnerabilities from radare2 command results.
+
+        Identifies dangerous string manipulation and memory functions commonly
+        associated with buffer overflow vulnerabilities.
+
+        Args:
+            command_results: List of command execution result dictionaries.
+
+        Returns:
+            list[dict[str, Any]]: List of buffer overflow risk dictionaries containing:
+                - function: Name of the dangerous function
+                - risk_level: "high" indicating buffer overflow risk
+                - occurrences: Count of function uses
+                - addresses: List of addresses where function is called (up to 3)
+
+        """
         risks = []
 
         dangerous_functions = ["strcpy", "strcat", "sprintf", "gets", "scanf", "memcpy"]
@@ -790,7 +1091,22 @@ class R2ScriptingEngine:
         return risks
 
     def _analyze_format_string_risks(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Analyze format string risks from command results."""
+        """Analyze format string vulnerabilities from radare2 command results.
+
+        Identifies printf-family functions that may be vulnerable to format string
+        attacks if they use untrusted format strings.
+
+        Args:
+            command_results: List of command execution result dictionaries.
+
+        Returns:
+            list[dict[str, Any]]: List of format string risk dictionaries containing:
+                - function: Name of the formatting function
+                - risk_level: "medium" indicating format string risk
+                - occurrences: Count of function uses
+                - description: Vulnerability description
+
+        """
         risks = []
 
         format_functions = ["printf", "fprintf", "snprintf"]
@@ -812,7 +1128,22 @@ class R2ScriptingEngine:
         return risks
 
     def _analyze_memory_corruption_risks(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Analyze memory corruption risks from command results."""
+        """Analyze memory corruption vulnerabilities from radare2 command results.
+
+        Identifies memory management functions that may be subject to misuse,
+        causing memory leaks, use-after-free, or double-free vulnerabilities.
+
+        Args:
+            command_results: List of command execution result dictionaries.
+
+        Returns:
+            list[dict[str, Any]]: List of memory corruption risk dictionaries containing:
+                - function: Name of the memory management function
+                - risk_level: "medium" indicating memory corruption risk
+                - occurrences: Count of function uses
+                - description: Memory management issue description
+
+        """
         risks = []
 
         memory_functions = ["malloc", "free", "realloc", "calloc"]
@@ -834,7 +1165,22 @@ class R2ScriptingEngine:
         return risks
 
     def _analyze_injection_risks(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Analyze code injection risks from command results."""
+        """Analyze code injection capabilities from radare2 command results.
+
+        Identifies Windows API functions used for process injection and remote
+        code execution, which represent critical security capabilities.
+
+        Args:
+            command_results: List of command execution result dictionaries.
+
+        Returns:
+            list[dict[str, Any]]: List of injection risk dictionaries containing:
+                - function: Name of the injection API function
+                - risk_level: "critical" indicating code injection capability
+                - occurrences: Count of function uses
+                - description: Injection capability description
+
+        """
         risks = []
 
         injection_functions = ["VirtualAllocEx", "WriteProcessMemory", "CreateRemoteThread"]
@@ -856,7 +1202,22 @@ class R2ScriptingEngine:
         return risks
 
     def _analyze_privilege_escalation_risks(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Analyze privilege escalation risks from command results."""
+        """Analyze privilege escalation capabilities from radare2 command results.
+
+        Identifies Windows security functions used to elevate process privileges,
+        which enable higher-capability operations in the system.
+
+        Args:
+            command_results: List of command execution result dictionaries.
+
+        Returns:
+            list[dict[str, Any]]: List of privilege escalation risk dictionaries containing:
+                - function: Name of the privilege escalation API function
+                - risk_level: "high" indicating privilege escalation capability
+                - occurrences: Count of function uses
+                - description: Escalation capability description
+
+        """
         risks = []
 
         priv_functions = ["AdjustTokenPrivileges", "ImpersonateLoggedOnUser"]
@@ -878,7 +1239,22 @@ class R2ScriptingEngine:
         return risks
 
     def _analyze_network_security_risks(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Analyze network security risks from command results."""
+        """Analyze network communication capabilities from radare2 command results.
+
+        Identifies socket and network APIs used for establishing network connections,
+        which may indicate command-and-control or exfiltration capabilities.
+
+        Args:
+            command_results: List of command execution result dictionaries.
+
+        Returns:
+            list[dict[str, Any]]: List of network security risk dictionaries containing:
+                - function: Name of the network API function
+                - risk_level: "medium" indicating network communication capability
+                - occurrences: Count of function uses
+                - description: Network capability description
+
+        """
         risks = []
 
         network_functions = ["socket", "connect", "send", "recv"]
@@ -900,7 +1276,20 @@ class R2ScriptingEngine:
         return risks
 
     def _calculate_risk_score(self, workflow_result: dict[str, Any]) -> float:
-        """Calculate overall risk score."""
+        """Calculate overall risk score from vulnerability analysis results.
+
+        Computes a normalized risk score (0.0-1.0) by aggregating identified
+        vulnerabilities with risk-type-specific weights and normalizing to a
+        single metric for comparison and decision-making.
+
+        Args:
+            workflow_result: Vulnerability analysis workflow result dictionary.
+
+        Returns:
+            float: Overall risk score between 0.0 and 1.0, where 1.0 indicates
+                maximum risk from identified vulnerabilities.
+
+        """
         risk_weights = {
             "buffer_overflow_risks": 3.0,
             "format_string_risks": 2.5,
@@ -925,7 +1314,19 @@ class R2ScriptingEngine:
         return min(1.0, total_score / max_possible_score) if max_possible_score > 0 else 0.0
 
     def _generate_security_recommendations(self, workflow_result: dict[str, Any]) -> list[str]:
-        """Generate security recommendations based on analysis."""
+        """Generate security recommendations based on vulnerability analysis findings.
+
+        Creates a list of actionable security recommendations targeting identified
+        vulnerabilities and risks detected during the vulnerability analysis workflow.
+
+        Args:
+            workflow_result: Vulnerability analysis workflow result dictionary.
+
+        Returns:
+            list[str]: List of security recommendation strings addressing identified
+                vulnerabilities and providing mitigation guidance.
+
+        """
         recommendations: list[str] = []
 
         if workflow_result.get("buffer_overflow_risks"):
@@ -954,7 +1355,19 @@ class R2ScriptingEngine:
         return recommendations
 
     def _parse_function_info(self, function_info_output: str) -> dict[str, Any]:
-        """Parse function info output."""
+        """Parse radare2 function info command output.
+
+        Parses the text output from radare2's function info command into a
+        structured dictionary for programmatic access.
+
+        Args:
+            function_info_output: Text output from radare2 "afi" command.
+
+        Returns:
+            dict[str, Any]: Dictionary mapping information keys to their values
+                extracted from the command output.
+
+        """
         info = {}
 
         lines = function_info_output.split("\n")
@@ -966,7 +1379,22 @@ class R2ScriptingEngine:
         return info
 
     def _generate_function_insights(self, function_result: dict[str, Any]) -> dict[str, Any]:
-        """Generate insights for function analysis."""
+        """Generate automated insights from function analysis results.
+
+        Analyzes function analysis results to extract complexity metrics, identify
+        potential security issues, and highlight interesting code patterns relevant
+        to licensing protection and vulnerability detection.
+
+        Args:
+            function_result: Function analysis result dictionary from analyze_specific_function.
+
+        Returns:
+            dict[str, Any]: Dictionary containing:
+                - complexity: Categorized function complexity ("low", "medium", "high")
+                - potential_issues: List of identified security issues
+                - interesting_features: List of notable code patterns found
+
+        """
         potential_issues: list[str] = []
         interesting_features: list[str] = []
 
@@ -1002,12 +1430,16 @@ class R2ScriptingEngine:
 def execute_license_analysis_script(binary_path: str, radare2_path: str | None = None) -> dict[str, Any]:
     """Execute license analysis workflow on a binary.
 
+    Convenience function that creates an R2ScriptingEngine and immediately
+    executes the complete license analysis workflow on the specified binary.
+
     Args:
-        binary_path: Path to binary file
-        radare2_path: Optional path to radare2 executable
+        binary_path: Absolute path to the binary file to analyze.
+        radare2_path: Optional path to radare2 executable. If None, uses system radare2.
 
     Returns:
-        License analysis results
+        dict[str, Any]: License analysis workflow results containing identification
+            of license validation mechanisms, bypass opportunities, and analysis confidence.
 
     """
     engine = R2ScriptingEngine(binary_path, radare2_path)
@@ -1017,12 +1449,16 @@ def execute_license_analysis_script(binary_path: str, radare2_path: str | None =
 def execute_vulnerability_analysis_script(binary_path: str, radare2_path: str | None = None) -> dict[str, Any]:
     """Execute vulnerability analysis workflow on a binary.
 
+    Convenience function that creates an R2ScriptingEngine and immediately
+    executes the complete vulnerability analysis workflow on the specified binary.
+
     Args:
-        binary_path: Path to binary file
-        radare2_path: Optional path to radare2 executable
+        binary_path: Absolute path to the binary file to analyze.
+        radare2_path: Optional path to radare2 executable. If None, uses system radare2.
 
     Returns:
-        Vulnerability analysis results
+        dict[str, Any]: Vulnerability analysis workflow results containing identification
+            of buffer overflows, format strings, injection risks, and security recommendations.
 
     """
     engine = R2ScriptingEngine(binary_path, radare2_path)

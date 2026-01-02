@@ -5,12 +5,11 @@ on real protected binaries without mocks.
 """
 
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock
+from typing import Any, Generator, Optional, cast
 
 import pytest
 from PyQt6.QtCore import QProcess, QTimer
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QWidget
 
 from intellicrack.hexview.intellicrack_hex_protection_integration import (
     IntellicrackHexProtectionIntegration,
@@ -19,17 +18,44 @@ from intellicrack.hexview.intellicrack_hex_protection_integration import (
 )
 
 
+class RealHexWidget:
+    """Real test double for hex viewer widget."""
+
+    def __init__(self) -> None:
+        self.file_path: Optional[str] = None
+        self.selection_start: int = -1
+        self.selection_end: int = -1
+        self.goto_offset_calls: list[int] = []
+        self.bookmark_calls: list[tuple[int, str]] = []
+        self._parent: Optional[QWidget] = None
+
+    @property
+    def parent(self) -> Optional[QWidget]:
+        """Return parent widget."""
+        return self._parent
+
+    def goto_offset(self, offset: int) -> None:
+        """Navigate to offset in hex view."""
+        self.goto_offset_calls.append(offset)
+
+    def add_bookmark(self, offset: int, name: str) -> None:
+        """Add bookmark at offset."""
+        self.bookmark_calls.append((offset, name))
+
+
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Generator[QApplication, None, None]:
     """Create QApplication instance for Qt tests."""
-    app = QApplication.instance()
-    if app is None:
+    existing = QApplication.instance()
+    if existing is not None and isinstance(existing, QApplication):
+        yield existing
+    else:
         app = QApplication([])
-    yield app
+        yield app
 
 
 @pytest.fixture
-def integration(qapp: QApplication) -> IntellicrackHexProtectionIntegration:
+def integration(qapp: QApplication) -> Generator[IntellicrackHexProtectionIntegration, None, None]:
     """Create integration instance."""
     integration_instance = IntellicrackHexProtectionIntegration()
     yield integration_instance
@@ -41,11 +67,10 @@ def integration(qapp: QApplication) -> IntellicrackHexProtectionIntegration:
 
 
 @pytest.fixture
-def integration_with_widget(qapp: QApplication) -> IntellicrackHexProtectionIntegration:
-    """Create integration instance with mock hex widget."""
-    mock_widget = MagicMock()
-    mock_widget.goto_offset = MagicMock()
-    integration_instance = IntellicrackHexProtectionIntegration(hex_widget=mock_widget)
+def integration_with_widget(qapp: QApplication) -> Generator[IntellicrackHexProtectionIntegration, None, None]:
+    """Create integration instance with real hex widget."""
+    hex_widget = RealHexWidget()
+    integration_instance = IntellicrackHexProtectionIntegration(hex_widget=hex_widget)  # type: ignore[arg-type]
     yield integration_instance
     if integration_instance.sync_timer:
         integration_instance.sync_timer.stop()
@@ -158,8 +183,8 @@ class TestOffsetSynchronization:
         integration_with_widget.offset_requested.connect(on_offset_requested)
         integration_with_widget.sync_offset_from_protection_viewer(test_offset)
 
-        assert integration_with_widget.hex_widget.goto_offset.called
-        integration_with_widget.hex_widget.goto_offset.assert_called_with(test_offset)
+        hw = cast(RealHexWidget, integration_with_widget.hex_widget)
+        assert test_offset in hw.goto_offset_calls
         QApplication.processEvents()
         assert offset_signal_emitted
 
@@ -215,7 +240,8 @@ class TestOffsetSynchronization:
         integration_with_widget._monitor_protection_viewer_offset()
 
         assert integration_with_widget.last_synced_offset == test_offset
-        integration_with_widget.hex_widget.goto_offset.assert_called_with(test_offset)
+        hw = cast(RealHexWidget, integration_with_widget.hex_widget)
+        assert test_offset in hw.goto_offset_calls
         assert incoming_file.read_text() == ""
 
     def test_monitor_protection_viewer_offset_handles_hex_format(
@@ -237,7 +263,8 @@ class TestOffsetSynchronization:
         integration_with_widget._monitor_protection_viewer_offset()
 
         assert integration_with_widget.last_synced_offset == test_offset
-        integration_with_widget.hex_widget.goto_offset.assert_called_with(test_offset)
+        hw = cast(RealHexWidget, integration_with_widget.hex_widget)
+        assert test_offset in hw.goto_offset_calls
 
     def test_monitor_protection_viewer_offset_ignores_duplicate(
         self,
@@ -257,9 +284,12 @@ class TestOffsetSynchronization:
         integration_with_widget.last_synced_offset = test_offset
         incoming_file.write_text(str(test_offset))
 
+        hw = cast(RealHexWidget, integration_with_widget.hex_widget)
+        initial_call_count = len(hw.goto_offset_calls)
+
         integration_with_widget._monitor_protection_viewer_offset()
 
-        assert integration_with_widget.hex_widget.goto_offset.call_count == 0
+        assert len(hw.goto_offset_calls) == initial_call_count
 
     def test_monitor_protection_viewer_offset_missing_file(
         self, integration: IntellicrackHexProtectionIntegration, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -374,16 +404,16 @@ class TestProtectionIntegrationWidget:
 
     def test_widget_with_hex_widget(self, qapp: QApplication) -> None:
         """Widget initializes with hex widget reference."""
-        mock_widget = MagicMock()
-        widget = ProtectionIntegrationWidget(hex_widget=mock_widget)
-        assert widget.hex_widget is mock_widget
-        assert widget.integration.hex_widget is mock_widget
+        hex_widget = RealHexWidget()
+        widget = ProtectionIntegrationWidget(hex_widget=hex_widget)  # type: ignore[arg-type]
+        assert widget.hex_widget is hex_widget  # type: ignore[comparison-overlap]
+        assert widget.integration.hex_widget is hex_widget  # type: ignore[comparison-overlap]
 
     def test_open_in_protection_viewer_button_without_file(self, qapp: QApplication) -> None:
         """Button click without file shows appropriate message."""
-        mock_widget = MagicMock()
-        mock_widget.file_path = None
-        widget = ProtectionIntegrationWidget(hex_widget=mock_widget)
+        hex_widget = RealHexWidget()
+        hex_widget.file_path = None
+        widget = ProtectionIntegrationWidget(hex_widget=hex_widget)  # type: ignore[arg-type]
 
         widget._open_in_protection_viewer()
         assert "No file loaded" in widget.info_label.text()
@@ -392,17 +422,17 @@ class TestProtectionIntegrationWidget:
         self, qapp: QApplication, test_binary: Path
     ) -> None:
         """Button click with file attempts to open in protection viewer."""
-        mock_widget = MagicMock()
-        mock_widget.file_path = str(test_binary)
-        widget = ProtectionIntegrationWidget(hex_widget=mock_widget)
+        hex_widget = RealHexWidget()
+        hex_widget.file_path = str(test_binary)
+        widget = ProtectionIntegrationWidget(hex_widget=hex_widget)  # type: ignore[arg-type]
 
         widget._open_in_protection_viewer()
 
     def test_sync_sections_without_file(self, qapp: QApplication) -> None:
         """Sync sections without file shows appropriate message."""
-        mock_widget = MagicMock()
-        mock_widget.file_path = None
-        widget = ProtectionIntegrationWidget(hex_widget=mock_widget)
+        hex_widget = RealHexWidget()
+        hex_widget.file_path = None
+        widget = ProtectionIntegrationWidget(hex_widget=hex_widget)  # type: ignore[arg-type]
 
         widget.sync_sections_from_icp()
         assert "No file loaded" in widget.info_label.text()
@@ -411,10 +441,9 @@ class TestProtectionIntegrationWidget:
         self, qapp: QApplication, test_binary: Path
     ) -> None:
         """Sync sections with file adds bookmarks if available."""
-        mock_widget = MagicMock()
-        mock_widget.file_path = str(test_binary)
-        mock_widget.add_bookmark = MagicMock()
-        widget = ProtectionIntegrationWidget(hex_widget=mock_widget)
+        hex_widget = RealHexWidget()
+        hex_widget.file_path = str(test_binary)
+        widget = ProtectionIntegrationWidget(hex_widget=hex_widget)  # type: ignore[arg-type]
 
         widget.sync_sections_from_icp()
 
@@ -431,10 +460,10 @@ class TestFactoryFunction:
 
     def test_create_integration_with_widget(self) -> None:
         """Factory creates integration with widget."""
-        mock_widget = MagicMock()
-        integration_instance = create_intellicrack_hex_integration(hex_widget=mock_widget)
+        hex_widget = RealHexWidget()
+        integration_instance = create_intellicrack_hex_integration(hex_widget=hex_widget)  # type: ignore[arg-type]
         assert isinstance(integration_instance, IntellicrackHexProtectionIntegration)
-        assert integration_instance.hex_widget is mock_widget
+        assert integration_instance.hex_widget is hex_widget  # type: ignore[comparison-overlap]
         integration_instance.sync_timer.stop()
 
 
@@ -473,15 +502,27 @@ class TestEdgeCases:
         monkeypatch.setenv("HOME", str(tmp_path))
         monkeypatch.setenv("USERPROFILE", str(tmp_path))
 
-        mock_process = MagicMock()
-        mock_process.state.return_value = QProcess.ProcessState.Running
-        mock_process.write = MagicMock()
-        integration.engine_process = mock_process
+        class RealQProcess:
+            def __init__(self) -> None:
+                self.write_calls: list[bytes] = []
+                self.running = True
+
+            def state(self) -> QProcess.ProcessState:
+                if self.running:
+                    return QProcess.ProcessState.Running
+                return QProcess.ProcessState.NotRunning
+
+            def write(self, data: bytes) -> int:
+                self.write_calls.append(data)
+                return len(data)
+
+        mock_process = RealQProcess()
+        integration.engine_process = mock_process  # type: ignore[assignment]
 
         test_offset = 0xDEAD
         integration.sync_offset_to_protection_viewer(test_offset)
 
-        assert mock_process.write.called
+        assert len(mock_process.write_calls) > 0
 
     def test_monitor_protection_viewer_offset_invalid_data(
         self, integration: IntellicrackHexProtectionIntegration, tmp_path: Path, monkeypatch: pytest.MonkeyPatch

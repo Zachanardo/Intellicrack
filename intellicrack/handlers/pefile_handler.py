@@ -623,7 +623,12 @@ class _FallbackPE:
             self.sections.append(section)
 
     def _parse_imports(self) -> None:
-        """Parse import directory."""
+        """Parse import directory.
+
+        Returns:
+            None. Imports are populated into self.DIRECTORY_ENTRY_IMPORT list.
+
+        """
         if not self.OPTIONAL_HEADER or not self.OPTIONAL_HEADER.DATA_DIRECTORY:
             return
 
@@ -672,6 +677,9 @@ class _FallbackPE:
             import_desc: _ImportDescriptorImpl object to populate with import thunk data.
             offset: File offset where import thunks begin.
 
+        Returns:
+            None. Import thunks are populated into import_desc.imports list.
+
         """
         if self.OPTIONAL_HEADER is None:
             return
@@ -706,7 +714,12 @@ class _FallbackPE:
             offset += thunk_size
 
     def _parse_exports(self) -> None:
-        """Parse export directory."""
+        """Parse export directory.
+
+        Returns:
+            None. Exports are populated into self.DIRECTORY_ENTRY_EXPORT attribute.
+
+        """
         if not self.OPTIONAL_HEADER or not self.OPTIONAL_HEADER.DATA_DIRECTORY:
             return
 
@@ -1017,7 +1030,7 @@ class _FallbackPE:
         """Return string representation.
 
         Returns:
-            str: String representation of the PE object.
+            String representation of the PE object.
 
         """
         return f"PE({self.name})"

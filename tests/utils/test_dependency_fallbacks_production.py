@@ -11,8 +11,7 @@ Tests validate REAL dependency fallback capabilities:
 """
 
 import sys
-from typing import Any
-from unittest.mock import MagicMock, patch
+from typing import Any, Callable, Dict, Optional
 
 import pytest
 
@@ -35,6 +34,87 @@ from intellicrack.utils.dependency_fallbacks import (
     safe_import_pyelftools,
     safe_import_sklearn,
 )
+
+
+class FakeModule:
+    """Fake module implementation for testing module replacement."""
+
+    def __init__(self, name: str, version: str = "1.0.0") -> None:
+        self._name: str = name
+        self.__version__: str = version
+        self.call_log: list[str] = []
+
+    def __repr__(self) -> str:
+        return f"FakeModule({self._name})"
+
+
+class FakeNumpyModule:
+    """Fake numpy module with trackable behavior."""
+
+    def __init__(self, should_fail: bool = False) -> None:
+        self.__version__: str = "1.24.0"
+        self.should_fail: bool = should_fail
+        self.array_calls: list[Any] = []
+
+    def array(self, data: Any) -> Any:
+        """Track array() calls and optionally raise exception."""
+        self.array_calls.append(data)
+        if self.should_fail:
+            raise Exception("numpy broken")
+        return list(data) if hasattr(data, "__iter__") else [data]
+
+
+class FakePandasModule:
+    """Fake pandas module with trackable behavior."""
+
+    def __init__(self, should_fail: bool = False) -> None:
+        self.__version__: str = "2.0.0"
+        self.should_fail: bool = should_fail
+        self.dataframe_calls: list[Any] = []
+
+    class DataFrame:
+        """Fake DataFrame class."""
+
+        def __init__(self, data: Any = None) -> None:
+            if data is None:
+                self.data: Any = {}
+            else:
+                self.data = data
+
+        def __len__(self) -> int:
+            if isinstance(self.data, dict):
+                first_key: Optional[str] = next(iter(self.data), None)
+                if first_key and isinstance(self.data[first_key], list):
+                    return len(self.data[first_key])
+                return len(self.data)
+            return len(self.data) if hasattr(self.data, "__len__") else 0
+
+        def to_dict(self) -> Any:
+            return self.data
+
+
+class FakeSklearnModule:
+    """Fake sklearn module with trackable behavior."""
+
+    def __init__(self, should_fail: bool = False) -> None:
+        self.__version__: str = "1.3.0"
+        self.should_fail: bool = should_fail
+
+
+class FakeModuleReplacer:
+    """Fake module replacer for testing initialization."""
+
+    def __init__(self) -> None:
+        self.replace_calls: list[tuple[str, Any]] = []
+        self.restore_calls: list[str] = []
+
+    def replace_module(self, name: str, factory: Callable[[], Any]) -> None:
+        """Track replace_module calls."""
+        self.replace_calls.append((name, factory))
+
+    def restore_module(self, name: str) -> None:
+        """Track restore_module calls."""
+        self.restore_calls.append(name)
 
 
 class TestNumpyFallback:
@@ -294,21 +374,30 @@ class TestLiefFallback:
 class TestSafeImportFunctions:
     """Test safe import functions with fallback mechanisms."""
 
-    def test_safe_import_numpy_returns_module_when_available(self) -> None:
+    def test_safe_import_numpy_returns_module_when_available(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """safe_import_numpy returns real numpy when available."""
-        with patch("intellicrack.utils.dependency_fallbacks.HAS_NUMPY", True):
-            with patch("intellicrack.utils.dependency_fallbacks.np") as mock_numpy:
-                mock_numpy.__version__ = "1.24.0"
-                result = safe_import_numpy()
-                assert NUMPY_AVAILABLE or isinstance(result, type(create_numpy_fallback()))
+        fake_numpy = FakeNumpyModule(should_fail=False)
+        monkeypatch.setattr(
+            "intellicrack.utils.dependency_fallbacks.HAS_NUMPY", True
+        )
+        monkeypatch.setattr("intellicrack.utils.dependency_fallbacks.np", fake_numpy)
 
-    def test_safe_import_numpy_returns_fallback_on_import_error(self) -> None:
+        result = safe_import_numpy()
+        assert NUMPY_AVAILABLE or isinstance(result, type(create_numpy_fallback()))
+
+    def test_safe_import_numpy_returns_fallback_on_import_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """safe_import_numpy returns fallback when import fails."""
-        with patch("intellicrack.utils.dependency_fallbacks.HAS_NUMPY", False):
-            result = safe_import_numpy()
-            assert hasattr(result, "array")
-            assert hasattr(result, "zeros")
-            assert hasattr(result, "mean")
+        monkeypatch.setattr(
+            "intellicrack.utils.dependency_fallbacks.HAS_NUMPY", False
+        )
+        result = safe_import_numpy()
+        assert hasattr(result, "array")
+        assert hasattr(result, "zeros")
+        assert hasattr(result, "mean")
 
     def test_safe_import_pandas_returns_module_when_available(self) -> None:
         """safe_import_pandas returns real pandas when available."""
@@ -320,11 +409,23 @@ class TestSafeImportFunctions:
         except ImportError:
             pytest.skip("pandas not available")
 
-    def test_safe_import_pandas_returns_fallback_on_error(self) -> None:
+    def test_safe_import_pandas_returns_fallback_on_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """safe_import_pandas returns fallback when import fails."""
-        with patch("intellicrack.utils.dependency_fallbacks.pd", side_effect=ImportError("No pandas")):
-            result = safe_import_pandas()
-            assert hasattr(result, "DataFrame")
+
+        def raise_import_error(*args: Any, **kwargs: Any) -> None:
+            raise ImportError("No pandas")
+
+        fake_pandas = FakePandasModule(should_fail=True)
+        fake_pandas.DataFrame = type(
+            "DataFrame", (), {"__init__": raise_import_error}
+        )
+
+        monkeypatch.setattr("intellicrack.utils.dependency_fallbacks.pd", fake_pandas)
+
+        result = safe_import_pandas()
+        assert hasattr(result, "DataFrame")
 
     def test_safe_import_sklearn_returns_module_when_available(self) -> None:
         """safe_import_sklearn returns real sklearn when available."""
@@ -336,13 +437,25 @@ class TestSafeImportFunctions:
         except ImportError:
             pytest.skip("sklearn not available")
 
-    def test_safe_import_sklearn_returns_fallback_on_error(self) -> None:
+    def test_safe_import_sklearn_returns_fallback_on_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """safe_import_sklearn returns fallback when import fails."""
-        with patch("intellicrack.utils.dependency_fallbacks.sklearn", side_effect=ImportError("No sklearn")):
-            result = safe_import_sklearn()
-            assert hasattr(result, "ensemble")
-            assert hasattr(result, "cluster")
-            assert hasattr(result, "preprocessing")
+
+        class FailingSklearn:
+            """Fake sklearn that raises on attribute access."""
+
+            def __getattr__(self, name: str) -> Any:
+                raise ImportError("No sklearn")
+
+        monkeypatch.setattr(
+            "intellicrack.utils.dependency_fallbacks.sklearn", FailingSklearn()
+        )
+
+        result = safe_import_sklearn()
+        assert hasattr(result, "ensemble")
+        assert hasattr(result, "cluster")
+        assert hasattr(result, "preprocessing")
 
     def test_safe_import_lief_returns_module_when_available(self) -> None:
         """safe_import_lief returns real lief when available."""
@@ -352,12 +465,14 @@ class TestSafeImportFunctions:
         except ImportError:
             pass
 
-    def test_safe_import_lief_returns_fallback_on_error(self) -> None:
+    def test_safe_import_lief_returns_fallback_on_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """safe_import_lief returns fallback when import fails."""
-        with patch("intellicrack.utils.dependency_fallbacks.HAS_LIEF", False):
-            result = safe_import_lief()
-            assert hasattr(result, "parse")
-            assert hasattr(result, "ELF")
+        monkeypatch.setattr("intellicrack.utils.dependency_fallbacks.HAS_LIEF", False)
+        result = safe_import_lief()
+        assert hasattr(result, "parse")
+        assert hasattr(result, "ELF")
 
     def test_safe_import_pyelftools_returns_true_when_available(self) -> None:
         """safe_import_pyelftools returns True when available."""
@@ -368,11 +483,15 @@ class TestSafeImportFunctions:
         except ImportError:
             pass
 
-    def test_safe_import_pyelftools_returns_false_on_error(self) -> None:
+    def test_safe_import_pyelftools_returns_false_on_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """safe_import_pyelftools returns False when import fails."""
-        with patch("intellicrack.utils.dependency_fallbacks.HAS_PYELFTOOLS", False):
-            result = safe_import_pyelftools()
-            assert result is False
+        monkeypatch.setattr(
+            "intellicrack.utils.dependency_fallbacks.HAS_PYELFTOOLS", False
+        )
+        result = safe_import_pyelftools()
+        assert result is False
 
 
 class TestSafeModuleReplacer:
@@ -381,10 +500,12 @@ class TestSafeModuleReplacer:
     def test_module_replacer_replaces_module_in_sys_modules(self) -> None:
         """SafeModuleReplacer replaces module in sys.modules."""
         replacer = SafeModuleReplacer()
-        original_module = MagicMock()
+        original_module = FakeModule("test_module_replace", "1.0.0")
         sys.modules["test_module_replace"] = original_module
 
-        replacer.replace_module("test_module_replace", lambda: MagicMock())
+        replacer.replace_module(
+            "test_module_replace", lambda: FakeModule("test_module_replace", "2.0.0")
+        )
 
         assert sys.modules["test_module_replace"] != original_module
         assert "test_module_replace" in replacer.replaced_modules
@@ -392,10 +513,12 @@ class TestSafeModuleReplacer:
     def test_module_replacer_stores_original_module(self) -> None:
         """SafeModuleReplacer stores original module for restoration."""
         replacer = SafeModuleReplacer()
-        original_module = MagicMock()
+        original_module = FakeModule("test_module_store", "1.0.0")
         sys.modules["test_module_store"] = original_module
 
-        replacer.replace_module("test_module_store", lambda: MagicMock())
+        replacer.replace_module(
+            "test_module_store", lambda: FakeModule("test_module_store", "2.0.0")
+        )
 
         assert "test_module_store" in replacer.original_modules
         assert replacer.original_modules["test_module_store"] is original_module
@@ -403,10 +526,12 @@ class TestSafeModuleReplacer:
     def test_module_replacer_restores_original_module(self) -> None:
         """SafeModuleReplacer restores original module correctly."""
         replacer = SafeModuleReplacer()
-        original_module = MagicMock()
+        original_module = FakeModule("test_module_restore", "1.0.0")
         sys.modules["test_module_restore"] = original_module
 
-        replacer.replace_module("test_module_restore", lambda: MagicMock())
+        replacer.replace_module(
+            "test_module_restore", lambda: FakeModule("test_module_restore", "2.0.0")
+        )
         replaced_module = sys.modules["test_module_restore"]
 
         replacer.restore_module("test_module_restore")
@@ -422,7 +547,9 @@ class TestSafeModuleReplacer:
         if "nonexistent_test_module" in sys.modules:
             del sys.modules["nonexistent_test_module"]
 
-        replacer.replace_module("nonexistent_test_module", lambda: MagicMock())
+        replacer.replace_module(
+            "nonexistent_test_module", lambda: FakeModule("nonexistent_test_module")
+        )
 
         assert "nonexistent_test_module" in sys.modules
         assert "nonexistent_test_module" in replacer.replaced_modules
@@ -465,19 +592,33 @@ class TestDependencyStatusReporting:
 class TestInitializeSafeImports:
     """Test safe imports initialization."""
 
-    def test_initialize_safe_imports_tests_numpy(self) -> None:
+    def test_initialize_safe_imports_tests_numpy(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """initialize_safe_imports tests numpy availability."""
-        with patch("intellicrack.utils.dependency_fallbacks._module_replacer") as mock_replacer:
-            with patch("intellicrack.utils.dependency_fallbacks.np") as mock_numpy:
-                mock_numpy.array.side_effect = Exception("numpy broken")
-                initialize_safe_imports()
+        fake_replacer = FakeModuleReplacer()
+        monkeypatch.setattr(
+            "intellicrack.utils.dependency_fallbacks._module_replacer", fake_replacer
+        )
 
-    def test_initialize_safe_imports_tests_pandas(self) -> None:
+        fake_numpy = FakeNumpyModule(should_fail=True)
+        monkeypatch.setattr("intellicrack.utils.dependency_fallbacks.np", fake_numpy)
+
+        initialize_safe_imports()
+
+    def test_initialize_safe_imports_tests_pandas(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """initialize_safe_imports tests pandas availability."""
-        with patch("intellicrack.utils.dependency_fallbacks._module_replacer") as mock_replacer:
-            with patch("intellicrack.utils.dependency_fallbacks.pd") as mock_pandas:
-                mock_pandas.DataFrame.side_effect = Exception("pandas broken")
-                initialize_safe_imports()
+        fake_replacer = FakeModuleReplacer()
+        monkeypatch.setattr(
+            "intellicrack.utils.dependency_fallbacks._module_replacer", fake_replacer
+        )
+
+        fake_pandas = FakePandasModule(should_fail=True)
+        monkeypatch.setattr("intellicrack.utils.dependency_fallbacks.pd", fake_pandas)
+
+        initialize_safe_imports()
 
 
 class TestNumpyFallbackEdgeCases:

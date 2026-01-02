@@ -147,7 +147,27 @@ def find_processes_matching_names(target_names: list[str]) -> list[str]:
 
 
 def _get_system_path(path_type: str) -> str | None:
-    """Get system path dynamically."""
+    """Get system path dynamically.
+
+    Retrieves system paths for Windows directories based on the specified
+    path type. Falls back to environment variables or default paths if
+    path discovery module is unavailable.
+
+    Args:
+        path_type: Type of system path to retrieve. Valid values include
+            'windows_system' (Windows root directory), 'windows_system32'
+            (System32 directory), and 'windows_drivers' (drivers directory).
+
+    Returns:
+        System path string as str if path type is recognized and found,
+            None if path type is not recognized or path cannot be
+            determined.
+
+    Raises:
+        ImportError: May occur during import attempts but is caught and
+            logged, falling back to environment variables.
+
+    """
     try:
         from .core.path_discovery import get_system_path
 

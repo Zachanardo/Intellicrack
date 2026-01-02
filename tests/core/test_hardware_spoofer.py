@@ -1011,6 +1011,8 @@ class TestRealWorldScenarios:
         success = spoofer2.import_configuration(config)
 
         assert success is True
+        assert spoofer2.spoofed_hardware is not None
+        assert spoofer1.spoofed_hardware is not None
         assert spoofer2.spoofed_hardware.cpu_id == spoofer1.spoofed_hardware.cpu_id
         assert spoofer2.spoofed_hardware.machine_guid == spoofer1.spoofed_hardware.machine_guid
 

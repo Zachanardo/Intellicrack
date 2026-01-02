@@ -11,8 +11,9 @@ import os
 import platform
 import sys
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from typing import Any
 
 import pytest
 
@@ -22,7 +23,7 @@ from intellicrack.ui.widgets.memory_dumper import MemoryDumperWidget, MemoryDump
 
 
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Generator[Any, None, None]:
     """Create QApplication instance for widget tests."""
     app = QApplication.instance()
     if app is None:
@@ -40,7 +41,7 @@ def temp_output_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def memory_dumper_widget(qapp: QApplication) -> MemoryDumperWidget:
+def memory_dumper_widget(qapp: Any) -> Generator[MemoryDumperWidget, None, None]:
     """Create memory dumper widget for testing."""
     widget = MemoryDumperWidget()
     yield widget
@@ -130,8 +131,7 @@ class TestMemoryDumperWidget:
                 memory_dumper_widget.process_combo.setCurrentIndex(i)
                 break
 
-        with patch.object(memory_dumper_widget, "scan_memory_regions"):
-            memory_dumper_widget.attach_to_process()
+        memory_dumper_widget.attach_to_process()
 
         assert memory_dumper_widget.current_process == current_process_pid
         assert f"PID: {current_process_pid}" in memory_dumper_widget.process_info.text()
@@ -142,8 +142,7 @@ class TestMemoryDumperWidget:
         """Test attaching to process by entering PID in combo box."""
         memory_dumper_widget.process_combo.setCurrentText(f"Test Process (PID: {current_process_pid})")
 
-        with patch.object(memory_dumper_widget, "scan_memory_regions"):
-            memory_dumper_widget.attach_to_process()
+        memory_dumper_widget.attach_to_process()
 
         assert memory_dumper_widget.current_process == current_process_pid
 
@@ -197,10 +196,14 @@ class TestMemoryDumperWidget:
 
         assert memory_dumper_widget.regions_table.rowCount() > 0
 
-        address_text = memory_dumper_widget.regions_table.item(0, 0).text()
+        address_item = memory_dumper_widget.regions_table.item(0, 0)
+        assert address_item is not None
+        address_text = address_item.text()
         assert address_text.startswith("0x")
 
-        size_text = memory_dumper_widget.regions_table.item(0, 1).text()
+        size_item = memory_dumper_widget.regions_table.item(0, 1)
+        assert size_item is not None
+        size_text = size_item.text()
         assert "bytes" in size_text
 
     @pytest.mark.skipif(platform.system() == "Windows", reason="Linux-specific test")
@@ -214,7 +217,9 @@ class TestMemoryDumperWidget:
 
         assert memory_dumper_widget.regions_table.rowCount() > 0
 
-        address_text = memory_dumper_widget.regions_table.item(0, 0).text()
+        address_item = memory_dumper_widget.regions_table.item(0, 0)
+        assert address_item is not None
+        address_text = address_item.text()
         assert address_text.startswith("0x")
 
     def test_should_include_region_windows_filters(
@@ -272,12 +277,13 @@ class TestMemoryDumpThread:
         self, memory_dumper_widget: MemoryDumperWidget, temp_output_dir: Path
     ) -> None:
         """Verify dump thread initializes with correct parameters."""
-        from PyQt6.QtWidgets import QTableWidget
+        from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem
 
         table = QTableWidget()
         table.insertRow(0)
-        table.setItem(0, 0, memory_dumper_widget.regions_table.item(0, 0) if memory_dumper_widget.regions_table.rowCount() > 0 else MagicMock())
-        table.setItem(0, 1, memory_dumper_widget.regions_table.item(0, 1) if memory_dumper_widget.regions_table.rowCount() > 0 else MagicMock())
+
+        table.setItem(0, 0, QTableWidgetItem("0x0000000000000000"))
+        table.setItem(0, 1, QTableWidgetItem("4096 bytes"))
 
         thread = MemoryDumpThread(
             pid=os.getpid(),
@@ -402,13 +408,17 @@ class TestMemoryDumperIntegration:
                 size_item = widget.regions_table.item(0, 1)
 
                 if addr_item and size_item:
-                    mock_table = MagicMock()
-                    mock_table.item.side_effect = lambda row, col: addr_item if col == 0 else size_item
+                    from PyQt6.QtWidgets import QTableWidget
+
+                    test_table = QTableWidget()
+                    test_table.insertRow(0)
+                    test_table.setItem(0, 0, addr_item)
+                    test_table.setItem(0, 1, size_item)
 
                     thread = MemoryDumpThread(
                         pid=current_process_pid,
                         rows=[0],
-                        table=mock_table,
+                        table=test_table,
                         output_dir=str(temp_output_dir),
                         options={
                             "raw": True,

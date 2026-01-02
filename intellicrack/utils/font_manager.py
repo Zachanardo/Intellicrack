@@ -45,7 +45,13 @@ class FontManager:
         self.config: dict[str, Any] = self._load_config()
 
     def _load_config(self) -> dict[str, Any]:
-        """Load font configuration from central config system."""
+        """Load font configuration from central config system.
+
+        Returns:
+            dict[str, Any]: Font configuration dictionary with
+                monospace_fonts, ui_fonts, and font_sizes keys. Returns
+                default font configuration if central config is unavailable.
+        """
         try:
             # Get font configuration from central config
             font_config: Any = self.central_config.get("font_configuration", {})
@@ -79,7 +85,11 @@ class FontManager:
             }
 
     def load_application_fonts(self) -> None:
-        """Load custom fonts into Qt application."""
+        """Load custom fonts into Qt application.
+
+        Returns:
+            None.
+        """
         if not os.path.exists(self.fonts_dir):
             return
 
@@ -95,7 +105,16 @@ class FontManager:
                     logger.warning("Failed to load font %s: %s", font_file, e, exc_info=True)
 
     def get_monospace_font(self, size: int | None = None) -> QFont:
-        """Get the best available monospace font."""
+        """Get the best available monospace font.
+
+        Args:
+            size: Font size in points. If None, uses code_default from
+                configuration. Defaults to None.
+
+        Returns:
+            QFont: QFont object configured with the best available monospace
+                font. Returns system monospace font as ultimate fallback.
+        """
         if size is None:
             size = self.config.get("font_sizes", {}).get("code_default", 10)
 
@@ -119,7 +138,16 @@ class FontManager:
         return font
 
     def get_ui_font(self, size: int | None = None) -> QFont:
-        """Get the best available UI font."""
+        """Get the best available UI font.
+
+        Args:
+            size: Font size in points. If None, uses ui_default from
+                configuration. Defaults to None.
+
+        Returns:
+            QFont: QFont object configured with the best available UI font.
+                Returns system sans-serif font as ultimate fallback.
+        """
         if size is None:
             size = self.config.get("font_sizes", {}).get("ui_default", 10)
 
@@ -144,7 +172,12 @@ _font_manager: FontManager | None = None
 
 
 def get_font_manager() -> FontManager:
-    """Get or create the global font manager."""
+    """Get or create the global font manager.
+
+    Returns:
+        FontManager: Global singleton FontManager instance, loading
+            application fonts on first access.
+    """
     global _font_manager
     if _font_manager is None:
         _font_manager = FontManager()

@@ -22,7 +22,7 @@ import hashlib
 import logging
 import os
 import shutil
-import subprocess
+import subprocess  # noqa: S404
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -32,6 +32,7 @@ from typing import Any
 from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT,
     QCheckBox,
+    QCloseEvent,
     QComboBox,
     QFileDialog,
     QFormLayout,
@@ -39,7 +40,6 @@ from intellicrack.handlers.pyqt6_handler import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QListWidgetItem,
     QMessageBox,
     QProgressBar,
     QPushButton,
@@ -59,6 +59,13 @@ from .base_dialog import BaseDialog
 logger = logging.getLogger(__name__)
 
 
+class ReportManagerConstants:
+    """Constants for report manager dialog."""
+
+    KB_SIZE = 1024
+    PREVIEW_CHAR_LIMIT = 1000
+
+
 class ReportGenerationThread(QThread):
     """Thread for generating reports without blocking the UI."""
 
@@ -67,13 +74,27 @@ class ReportGenerationThread(QThread):
     generation_finished = pyqtSignal(bool, str, str)
 
     def __init__(self, report_config: dict[str, Any], output_path: str) -> None:
-        """Initialize the ReportGenerationThread with default values."""
+        """Initialize the ReportGenerationThread with default values.
+
+        Args:
+            report_config: Configuration dictionary containing report settings and binary analysis data.
+            output_path: File path where the generated report will be written.
+
+        Returns:
+            None
+
+        """
         super().__init__()
         self.report_config = report_config
         self.output_path = output_path
 
     def run(self) -> None:
-        """Generate report in background thread."""
+        """Generate report in background thread.
+
+        Emits progress and status updates throughout the generation process via signals.
+        Performs binary analysis, vulnerability analysis, and license mechanism analysis.
+
+        """
         try:
             self.status_updated.emit("Initializing report generation...")
             self.progress_updated.emit(10)
@@ -110,11 +131,11 @@ class ReportGenerationThread(QThread):
 
             self.progress_updated.emit(100)
             self.status_updated.emit("Report generation complete")
-            self.generation_finished.emit(True, "Report generated successfully", self.output_path)
+            self.generation_finished.emit(True, "Report generated successfully", self.output_path)  # noqa: FBT003
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.exception("Error in report_manager_dialog: %s", e)
-            self.generation_finished.emit(False, f"Report generation failed: {e!s}", "")
+            logger.exception("Error in report_manager_dialog")
+            self.generation_finished.emit(False, f"Report generation failed: {e!s}", "")  # noqa: FBT003
 
     def _analyze_binary(self, binary_path: str) -> dict[str, object]:
         """Analyze binary file and extract metadata.
@@ -145,8 +166,8 @@ class ReportGenerationThread(QThread):
                     data["architecture"] = "Mach-O (macOS)"
                 else:
                     data["architecture"] = "Unknown"
-        except (OSError, ValueError, RuntimeError):
-            pass
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.debug("Binary info extraction failed for %s: %s", binary_path, e)
 
         return data
 
@@ -188,8 +209,8 @@ class ReportGenerationThread(QThread):
                     if check in content.lower():
                         vulnerabilities += 1
 
-        except (OSError, ValueError, RuntimeError):
-            pass
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.debug("Vulnerability analysis failed for %s: %s", binary_path, e)
 
         data: dict[str, object] = {
             "vulnerabilities": vulnerabilities,
@@ -227,8 +248,8 @@ class ReportGenerationThread(QThread):
                     if indicator in content.lower():
                         license_checks += 1
 
-        except (OSError, ValueError, RuntimeError):
-            pass
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.debug("Could not analyze binary for license checks: %s", e)
 
         data: dict[str, object] = {"license_checks": license_checks}
         return data
@@ -322,7 +343,12 @@ class ReportManagerDialog(BaseDialog):
     """Dialog for managing Intellicrack reports."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the ReportManagerDialog with default values."""
+        """Initialize the ReportManagerDialog with default values.
+
+        Args:
+            parent: Parent widget for this dialog. Defaults to None.
+
+        """
         super().__init__(parent)
         self.reports_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "reports")
         self.reports: dict[str, dict[str, Any]] = {}
@@ -366,7 +392,15 @@ class ReportManagerDialog(BaseDialog):
     # Note: finalize_widget_layout is now available in shared_ui_layouts.UILayoutHelpers
 
     def setup_ui(self) -> None:
-        """Set up the user interface."""
+        """Set up the user interface.
+
+        Creates tabbed dialog with report management, generation, and template tabs.
+        Initializes all UI components and connects signals.
+
+        Returns:
+            None
+
+        """
         if not HAS_PYQT:
             logger.warning("PyQt6 not available, cannot create report manager dialog")
             return
@@ -406,7 +440,8 @@ class ReportManagerDialog(BaseDialog):
         """Create the reports list tab.
 
         Returns:
-            QWidget containing the reports list interface with search, filtering, and preview features.
+            QWidget: Widget containing the reports list interface with search, filtering,
+                and preview features.
 
         """
         widget = QWidget()
@@ -503,7 +538,8 @@ class ReportManagerDialog(BaseDialog):
         """Create the generate report tab.
 
         Returns:
-            QWidget containing report generation configuration and generation controls.
+            QWidget: Widget containing report generation configuration and generation
+                controls.
 
         """
         widget = QWidget()
@@ -597,7 +633,7 @@ class ReportManagerDialog(BaseDialog):
         """Create the templates tab.
 
         Returns:
-            QWidget containing template selection and management interface.
+            QWidget: Widget containing template selection and management interface.
 
         """
         templates = [
@@ -612,7 +648,12 @@ class ReportManagerDialog(BaseDialog):
         return widget
 
     def load_reports(self) -> None:
-        """Load existing reports from the reports directory."""
+        """Load existing reports from the reports directory.
+
+        Scans the reports directory and populates the reports dictionary with metadata
+        for each report file found.
+
+        """
         self.reports = {}
 
         if not os.path.exists(self.reports_dir):
@@ -646,12 +687,20 @@ class ReportManagerDialog(BaseDialog):
                 }
 
     def refresh_report_list(self) -> None:
-        """Refresh the reports list display."""
+        """Refresh the reports list display.
+
+        Reloads reports from disk and updates the table UI.
+
+        """
         self.load_reports()
         self.update_reports_table()
 
     def update_reports_table(self) -> None:
-        """Update the reports table."""
+        """Update the reports table.
+
+        Populates the reports table with all loaded reports and their metadata.
+
+        """
         if not HAS_PYQT:
             return
 
@@ -689,15 +738,28 @@ class ReportManagerDialog(BaseDialog):
             self.reports_table.setCellWidget(row, 5, actions_btn)
 
     def format_file_size(self, size_bytes: int) -> str:
-        """Format file size in human readable format."""
-        if size_bytes < 1024:
+        """Format file size in human readable format.
+
+        Args:
+            size_bytes: File size in bytes.
+
+        Returns:
+            Formatted file size string with appropriate unit (B, KB, or MB).
+
+        """
+        kb = ReportManagerConstants.KB_SIZE
+        if size_bytes < kb:
             return f"{size_bytes} B"
-        if size_bytes < 1024 * 1024:
-            return f"{size_bytes / 1024:.1f} KB"
-        return f"{size_bytes / (1024 * 1024):.1f} MB"
+        if size_bytes < kb * kb:
+            return f"{size_bytes / kb:.1f} KB"
+        return f"{size_bytes / (kb * kb):.1f} MB"
 
     def on_report_selected(self) -> None:
-        """Handle report selection."""
+        """Handle report selection.
+
+        Updates the current report selection and enables action buttons.
+
+        """
         if not HAS_PYQT:
             return
 
@@ -714,7 +776,14 @@ class ReportManagerDialog(BaseDialog):
                     self.delete_btn.setEnabled(True)
 
     def update_report_preview(self, report_id: str) -> None:
-        """Update the report preview."""
+        """Update the report preview.
+
+        Args:
+            report_id: Identifier of the report to preview.
+
+        Displays the first 1000 characters of the report in the preview widget.
+
+        """
         if report_id not in self.reports:
             return
 
@@ -725,21 +794,25 @@ class ReportManagerDialog(BaseDialog):
             with open(report_path, encoding="utf-8") as f:
                 content = f.read()
 
-            # Show first 1000 characters
-            preview = content[:1000]
-            if len(content) > 1000:
+            limit = ReportManagerConstants.PREVIEW_CHAR_LIMIT
+            preview = content[:limit]
+            if len(content) > limit:
                 preview += "\n\n... (truncated)"
 
             if self.report_preview is not None:
                 self.report_preview.setPlainText(preview)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.exception("Error in report_manager_dialog: %s", e)
+            self.logger.exception("Error in report_manager_dialog")
             if self.report_preview is not None:
                 self.report_preview.setPlainText(f"Error loading preview: {e!s}")
 
     def filter_reports(self) -> None:
-        """Filter reports based on search criteria."""
+        """Filter reports based on search criteria.
+
+        Filters and displays reports based on the current search text and type filter settings.
+
+        """
         if not HAS_PYQT:
             return
 
@@ -794,7 +867,11 @@ class ReportManagerDialog(BaseDialog):
             row += 1
 
     def view_report(self) -> None:
-        """View the selected report."""
+        """View the selected report.
+
+        Opens the selected report using the system default application.
+
+        """
         if not self.current_report:
             return
 
@@ -810,17 +887,73 @@ class ReportManagerDialog(BaseDialog):
             else:
                 subprocess.run(["xdg-open", report_path], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.exception("Error in report_manager_dialog: %s", e)
+            self.logger.exception("Error in report_manager_dialog")
             if HAS_PYQT:
                 QMessageBox.warning(self, "Warning", f"Could not open report: {e!s}")
 
     def edit_report(self) -> None:
-        """Edit the selected report."""
-        if HAS_PYQT:
-            QMessageBox.information(self, "Edit Report", "Report editing functionality would be implemented here")
+        """Edit the selected report.
+
+        Opens an edit dialog for modifying the selected report.
+
+        """
+        if not HAS_PYQT or not self.current_report:
+            return
+
+        report_info = self.reports.get(self.current_report)
+        if not report_info:
+            QMessageBox.warning(self, "Warning", "No report selected")
+            return
+
+        report_path = report_info.get("path", "")
+        if not os.path.exists(report_path):
+            QMessageBox.critical(self, "Error", f"Report file not found: {report_path}")
+            return
+
+        try:
+            with open(report_path, encoding="utf-8") as f:
+                content = f.read()
+        except OSError as e:
+            logger.exception("Failed to read report")
+            QMessageBox.critical(self, "Error", f"Failed to read report: {e}")
+            return
+
+        from intellicrack.handlers.pyqt6_handler import QDialog, QDialogButtonBox, QPlainTextEdit
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Edit Report: {self.current_report}")
+        dialog.resize(800, 600)
+
+        layout = QVBoxLayout(dialog)
+
+        editor = QPlainTextEdit()
+        editor.setPlainText(content)
+        layout.addWidget(editor)
+
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
+        )
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            new_content = editor.toPlainText()
+            try:
+                with open(report_path, "w", encoding="utf-8") as f:
+                    f.write(new_content)
+                self.refresh_report_list()
+                QMessageBox.information(self, "Success", "Report saved successfully")
+            except OSError as e:
+                logger.exception("Failed to save report")
+                QMessageBox.critical(self, "Error", f"Failed to save report: {e}")
 
     def duplicate_report(self) -> None:
-        """Duplicate the selected report."""
+        """Duplicate the selected report.
+
+        Creates a copy of the selected report with a new name.
+
+        """
         if not self.current_report:
             return
 
@@ -841,12 +974,16 @@ class ReportManagerDialog(BaseDialog):
                 QMessageBox.information(self, "Success", f"Report duplicated as: {new_name}")
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.exception("Error in report_manager_dialog: %s", e)
+            logger.exception("Error in report_manager_dialog")
             if HAS_PYQT:
                 QMessageBox.critical(self, "Error", f"Failed to duplicate report: {e!s}")
 
     def delete_report(self) -> None:
-        """Delete the selected report."""
+        """Delete the selected report.
+
+        Removes the selected report file after confirmation.
+
+        """
         if not HAS_PYQT or not self.current_report:
             return
 
@@ -874,11 +1011,15 @@ class ReportManagerDialog(BaseDialog):
                 QMessageBox.information(self, "Success", "Report deleted successfully")
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.exception("Error in report_manager_dialog: %s", e)
+                logger.exception("Error in report_manager_dialog")
                 QMessageBox.critical(self, "Error", f"Failed to delete report: {e!s}")
 
     def browse_binary(self) -> None:
-        """Browse for binary file."""
+        """Browse for binary file.
+
+        Opens file selection dialog to choose a binary file for analysis.
+
+        """
         if not HAS_PYQT:
             return
 
@@ -893,7 +1034,11 @@ class ReportManagerDialog(BaseDialog):
             self.binary_path_edit.setText(file_path)
 
     def browse_output(self) -> None:
-        """Browse for output directory."""
+        """Browse for output directory.
+
+        Opens directory selection dialog to choose where to save generated reports.
+
+        """
         if not HAS_PYQT:
             return
 
@@ -905,7 +1050,11 @@ class ReportManagerDialog(BaseDialog):
             self.output_path_edit.setText(dir_path)
 
     def generate_report(self) -> None:
-        """Generate a new report."""
+        """Generate a new report.
+
+        Validates inputs and spawns a background thread to generate the report.
+
+        """
         if not HAS_PYQT:
             return
 
@@ -948,8 +1097,15 @@ class ReportManagerDialog(BaseDialog):
 
         self.generation_thread.start()
 
-    def on_generation_finished(self, success: bool, message: str, output_path: str) -> None:
-        """Handle report generation completion."""
+    def on_generation_finished(self, success: bool, message: str, output_path: str) -> None:  # noqa: FBT001
+        """Handle report generation completion.
+
+        Args:
+            success: Whether the report generation succeeded.
+            message: Status message describing the result.
+            output_path: Path to the generated report file.
+
+        """
         if not HAS_PYQT:
             return
 
@@ -972,18 +1128,68 @@ class ReportManagerDialog(BaseDialog):
                         subprocess.run(["open", output_path], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     else:
                         subprocess.run(["xdg-open", output_path], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                except Exception as e:
-                    logger.exception("Exception in report_manager_dialog: %s", e)
+                except Exception:
+                    logger.exception("Exception in report_manager_dialog")
         else:
             QMessageBox.critical(self, "Error", message)
 
     def preview_report(self) -> None:
-        """Preview the report before generation."""
-        if HAS_PYQT:
-            QMessageBox.information(self, "Preview", "Report preview functionality would be implemented here")
+        """Preview the report before generation.
+
+        Shows a preview of what the generated report will look like.
+
+        """
+        if not HAS_PYQT:
+            return
+
+        from intellicrack.handlers.pyqt6_handler import QDialog, QDialogButtonBox
+
+        report_config: dict[str, Any] = {
+            "type": (getattr(self, "report_type_combo", None) and self.report_type_combo.currentText()) or "Analysis",
+            "binary_path": (getattr(self, "binary_path_edit", None) and self.binary_path_edit.text()) or "N/A",
+            "include_executive_summary": (getattr(self, "include_executive_summary", None) and self.include_executive_summary.isChecked()) or False,
+            "include_detailed_logs": (getattr(self, "include_detailed_logs", None) and self.include_detailed_logs.isChecked()) or False,
+            "include_recommendations": (getattr(self, "include_recommendations", None) and self.include_recommendations.isChecked()) or False,
+        }
+
+        binary_path = report_config.get("binary_path", "")
+        if binary_path and binary_path != "N/A" and os.path.exists(binary_path):
+            try:
+                stat = Path(binary_path).stat()
+                report_config["file_size"] = stat.st_size
+
+                with open(binary_path, "rb") as f:
+                    data = f.read()
+                    report_config["md5_hash"] = hashlib.md5(data).hexdigest()  # noqa: S324
+                    report_config["sha256_hash"] = hashlib.sha256(data).hexdigest()
+            except OSError as e:
+                logger.warning("Could not read binary for preview: %s", e)
+
+        thread = ReportGenerationThread(report_config, "")
+        preview_content = thread.generate_report_content()
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Report Preview")
+        dialog.resize(800, 600)
+
+        layout = QVBoxLayout(dialog)
+
+        preview_browser = QTextBrowser()
+        preview_browser.setMarkdown(preview_content)
+        layout.addWidget(preview_browser)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+
+        dialog.exec()
 
     def export_report(self) -> None:
-        """Export the selected report."""
+        """Export the selected report.
+
+        Saves a copy of the selected report to a user-chosen location.
+
+        """
         if not HAS_PYQT or not self.current_report:
             return
 
@@ -1002,11 +1208,18 @@ class ReportManagerDialog(BaseDialog):
                 QMessageBox.information(self, "Success", f"Report exported to: {file_path}")
 
             except (OSError, ValueError, RuntimeError) as e:
-                self.logger.exception("Error in report_manager_dialog: %s", e)
+                self.logger.exception("Error in report_manager_dialog")
                 QMessageBox.critical(self, "Error", f"Failed to export report: {e!s}")
 
     def on_template_selected(self) -> None:
-        """Handle template selection."""
+        """Handle template selection.
+
+        Updates the template details display when a template is selected.
+
+        Returns:
+            None
+
+        """
         if not HAS_PYQT:
             return
 
@@ -1032,7 +1245,15 @@ class ReportManagerDialog(BaseDialog):
                 self.edit_template_btn.setEnabled(True)
 
     def use_template(self) -> None:
-        """Use the selected template for report generation."""
+        """Use the selected template for report generation.
+
+        Switches to the generate tab and pre-populates fields based on the selected
+        template.
+
+        Returns:
+            None
+
+        """
         if current_item := self.template_list.currentItem():
             template_name = current_item.text()
 
@@ -1056,14 +1277,251 @@ class ReportManagerDialog(BaseDialog):
                 self.include_screenshots.setChecked(True)
 
     def edit_template(self) -> None:
-        """Edit the selected template."""
-        if HAS_PYQT:
-            QMessageBox.information(self, "Edit Template", "Template editing functionality would be implemented here")
+        """Edit the selected template.
+
+        Opens an editor for modifying the selected report template.
+
+        Returns:
+            None
+
+        """
+        if not HAS_PYQT:
+            return
+
+        if not hasattr(self, "template_list") or not self.template_list.currentItem():
+            QMessageBox.warning(self, "Warning", "No template selected")
+            return
+
+        template_name = self.template_list.currentItem().text()
+        templates_dir = os.path.join(os.path.dirname(__file__), "..", "..", "data", "templates", "report_manager")
+        os.makedirs(templates_dir, exist_ok=True)
+
+        template_path = os.path.join(templates_dir, f"{template_name.replace(' ', '_').lower()}.json")
+
+        template_data: dict[str, Any] = {
+            "name": template_name,
+            "description": f"Template for {template_name}",
+            "sections": ["executive_summary", "analysis_details", "recommendations", "conclusion"],
+            "include_executive_summary": True,
+            "include_detailed_logs": False,
+            "include_recommendations": True,
+            "include_screenshots": False,
+        }
+
+        if os.path.exists(template_path):
+            try:
+                import json
+                with open(template_path, encoding="utf-8") as f:
+                    template_data = json.load(f)
+            except (OSError, json.JSONDecodeError) as e:
+                logger.warning("Could not load template: %s", e)
+
+        from intellicrack.handlers.pyqt6_handler import QDialog, QDialogButtonBox
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Edit Template: {template_name}")
+        dialog.resize(600, 500)
+
+        layout = QVBoxLayout(dialog)
+
+        form_layout = QFormLayout()
+
+        name_edit = QLineEdit(template_data.get("name", template_name))
+        form_layout.addRow("Name:", name_edit)
+
+        desc_edit = QLineEdit(template_data.get("description", ""))
+        form_layout.addRow("Description:", desc_edit)
+
+        sections_edit = QLineEdit(",".join(template_data.get("sections", [])))
+        form_layout.addRow("Sections (comma-separated):", sections_edit)
+
+        include_summary = QCheckBox()
+        include_summary.setChecked(template_data.get("include_executive_summary", True))
+        form_layout.addRow("Include Executive Summary:", include_summary)
+
+        include_logs = QCheckBox()
+        include_logs.setChecked(template_data.get("include_detailed_logs", False))
+        form_layout.addRow("Include Detailed Logs:", include_logs)
+
+        include_recs = QCheckBox()
+        include_recs.setChecked(template_data.get("include_recommendations", True))
+        form_layout.addRow("Include Recommendations:", include_recs)
+
+        layout.addLayout(form_layout)
+
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
+        )
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            import json
+
+            updated_template: dict[str, Any] = {
+                "name": name_edit.text(),
+                "description": desc_edit.text(),
+                "sections": [s.strip() for s in sections_edit.text().split(",") if s.strip()],
+                "include_executive_summary": include_summary.isChecked(),
+                "include_detailed_logs": include_logs.isChecked(),
+                "include_recommendations": include_recs.isChecked(),
+                "include_screenshots": template_data.get("include_screenshots", False),
+            }
+
+            try:
+                with open(template_path, "w", encoding="utf-8") as f:
+                    json.dump(updated_template, f, indent=2)
+                QMessageBox.information(self, "Success", "Template saved successfully")
+            except OSError as e:
+                logger.exception("Failed to save template")
+                QMessageBox.critical(self, "Error", f"Failed to save template: {e}")
+
+    def _get_templates_dir(self) -> str:
+        """Get the templates directory path.
+
+        Creates the templates directory if it does not exist.
+
+        Returns:
+            Path to the report manager templates directory.
+
+        """
+        templates_dir = os.path.join(os.path.dirname(__file__), "..", "..", "data", "templates", "report_manager")
+        os.makedirs(templates_dir, exist_ok=True)
+        return templates_dir
+
+    def _build_template_form(self, layout: QVBoxLayout, template_name: str) -> dict[str, Any]:
+        """Build template creation/edit form and return widget references.
+
+        Creates a form with description, sections, and checkbox options for template customization.
+
+        Args:
+            layout: The vertical layout container to add the form to.
+            template_name: Name of the template being created or edited.
+
+        Returns:
+            Dictionary containing widget references indexed by field name.
+
+        """
+        form_layout = QFormLayout()
+
+        widgets: dict[str, Any] = {}
+        widgets["desc_edit"] = QLineEdit(f"Custom template for {template_name}")
+        form_layout.addRow("Description:", widgets["desc_edit"])
+
+        widgets["sections_edit"] = QLineEdit("executive_summary,analysis_details,recommendations,conclusion")
+        form_layout.addRow("Sections (comma-separated):", widgets["sections_edit"])
+
+        for key, label, default in [
+            ("include_summary", "Include Executive Summary:", True),
+            ("include_logs", "Include Detailed Logs:", False),
+            ("include_recs", "Include Recommendations:", True),
+            ("include_screenshots", "Include Screenshots:", False),
+        ]:
+            widgets[key] = QCheckBox()
+            widgets[key].setChecked(default)
+            form_layout.addRow(label, widgets[key])
+
+        layout.addLayout(form_layout)
+        return widgets
 
     def create_template(self) -> None:
-        """Create a new report template."""
-        if HAS_PYQT:
-            QMessageBox.information(self, "Create Template", "Template creation functionality would be implemented here")
+        """Create a new report template.
+
+        Opens a dialog to create a new custom report template.
+
+        Returns:
+            None
+
+        """
+        if not HAS_PYQT:
+            return
+
+        from intellicrack.handlers.pyqt6_handler import QDialog, QDialogButtonBox, QInputDialog
+
+        template_name, ok = QInputDialog.getText(self, "Create Template", "Enter template name:")
+        if not ok or not template_name.strip():
+            return
+
+        template_name = template_name.strip()
+        template_path = os.path.join(self._get_templates_dir(), f"{template_name.replace(' ', '_').lower()}.json")
+
+        if os.path.exists(template_path):
+            result = QMessageBox.question(
+                self, "Template Exists", f"Template '{template_name}' already exists. Overwrite?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if result != QMessageBox.StandardButton.Yes:
+                return
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Create Template: {template_name}")
+        dialog.resize(600, 500)
+
+        layout = QVBoxLayout(dialog)
+        widgets = self._build_template_form(layout, template_name)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self._save_new_template(template_name, template_path, widgets)
+
+    def _save_new_template(self, template_name: str, template_path: str, widgets: dict[str, Any]) -> None:
+        """Save a new template to disk.
+
+        Serializes template configuration to JSON file and updates the template list UI.
+
+        Args:
+            template_name: Name of the template to create.
+            template_path: Full file system path where the template JSON will be saved.
+            widgets: Dictionary of QWidget references containing form values.
+
+        """
+        import json
+
+        new_template: dict[str, Any] = {
+            "name": template_name,
+            "description": widgets["desc_edit"].text(),
+            "sections": [s.strip() for s in widgets["sections_edit"].text().split(",") if s.strip()],
+            "include_executive_summary": widgets["include_summary"].isChecked(),
+            "include_detailed_logs": widgets["include_logs"].isChecked(),
+            "include_recommendations": widgets["include_recs"].isChecked(),
+            "include_screenshots": widgets["include_screenshots"].isChecked(),
+        }
+
+        try:
+            with open(template_path, "w", encoding="utf-8") as f:
+                json.dump(new_template, f, indent=2)
+
+            if hasattr(self, "template_list"):
+                from intellicrack.handlers.pyqt6_handler import QListWidgetItem
+                self.template_list.addItem(QListWidgetItem(template_name))
+
+            QMessageBox.information(self, "Success", f"Template '{template_name}' created successfully")
+        except OSError as e:
+            logger.exception("Failed to create template")
+            QMessageBox.critical(self, "Error", f"Failed to create template: {e}")
+
+    def closeEvent(self, event: QCloseEvent | None) -> None:  # noqa: N802
+        """Handle dialog close with proper thread cleanup.
+
+        Ensures any running report generation thread is properly terminated
+        before closing the dialog to prevent resource leaks.
+
+        Args:
+            event: Close event from Qt framework.
+
+        """
+        if self.generation_thread is not None and self.generation_thread.isRunning():
+            self.generation_thread.quit()
+            if not self.generation_thread.wait(2000):
+                self.generation_thread.terminate()
+                self.generation_thread.wait()
+            self.generation_thread = None
+        super().closeEvent(event)
 
 
 # Export for external use

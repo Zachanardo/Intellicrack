@@ -51,7 +51,12 @@ class TerminalManager:
     _instance: "TerminalManager | None" = None
 
     def __new__(cls) -> "TerminalManager":
-        """Singleton pattern implementation."""
+        """Singleton pattern implementation.
+
+        Returns:
+            TerminalManager: The singleton instance of TerminalManager.
+
+        """
         if cls._instance is None:
             instance = super().__new__(cls)
             instance._initialized = False
@@ -60,7 +65,12 @@ class TerminalManager:
         return cls._instance
 
     def __init__(self) -> None:
-        """Initialize terminal manager."""
+        """Initialize terminal manager.
+
+        Returns:
+            None
+
+        """
         if getattr(self, "_initialized", False):
             return
 
@@ -77,10 +87,13 @@ class TerminalManager:
         """Register the main terminal widget from Terminal tab.
 
         Args:
-            widget: TerminalSessionWidget instance
+            widget: TerminalSessionWidget instance from Terminal tab.
+
+        Returns:
+            None
 
         Raises:
-            TypeError: If widget is not correct type
+            TypeError: If widget is not a TerminalSessionWidget instance.
 
         """
         self._terminal_widget = widget
@@ -91,6 +104,9 @@ class TerminalManager:
 
         Args:
             app: IntellicrackApp instance
+
+        Returns:
+            None
 
         Raises:
             ValueError: If app doesn't have required 'tabs' attribute
@@ -105,7 +121,12 @@ class TerminalManager:
         logger.info("Main app registered with TerminalManager")
 
     def _switch_to_terminal_tab(self) -> None:
-        """Switch main app to Terminal tab."""
+        """Switch main app to Terminal tab.
+
+        Returns:
+            None
+
+        """
         if not self._main_app:
             logger.warning("Cannot switch to terminal tab: main app not registered")
             return
@@ -170,17 +191,18 @@ class TerminalManager:
         """Execute script in terminal session.
 
         Args:
-            script_path: Path to script (relative to intellicrack/scripts/ or absolute)
-            interactive: Whether script requires user interaction
-            auto_switch: Whether to auto-switch to Terminal tab
-            cwd: Working directory (defaults to script's directory)
+            script_path: Path to script (relative to intellicrack/scripts/ or
+                absolute).
+            interactive: Whether script requires user interaction.
+            auto_switch: Whether to auto-switch to Terminal tab.
+            cwd: Working directory (defaults to script's directory).
 
         Returns:
-            Session ID (string)
+            str: Session ID identifying the terminal session.
 
         Raises:
-            RuntimeError: If terminal widget not registered
-            FileNotFoundError: If script doesn't exist
+            RuntimeError: If terminal widget not registered.
+            FileNotFoundError: If script does not exist at resolved path.
 
         """
         if not self._terminal_widget:
@@ -246,17 +268,23 @@ class TerminalManager:
         """Execute command, return output if capture_output=True.
 
         Args:
-            command: Command as list of strings
-            capture_output: If True, capture and return output instead of showing in terminal
-            auto_switch: If True, switch to Terminal tab (only when not capturing)
-            cwd: Working directory
+            command: Command as list of strings or single command string.
+            capture_output: If True, capture and return output instead of
+                showing in terminal.
+            auto_switch: If True, switch to Terminal tab (only when not
+                capturing).
+            cwd: Working directory for command execution.
 
         Returns:
-            If capture_output=True: tuple (returncode, stdout, stderr)
-            If capture_output=False: session_id (string)
+            str | tuple[int, str, str]: If capture_output=True, returns tuple
+                (returncode, stdout, stderr). If capture_output=False, returns
+                session_id as string.
 
         Raises:
-            RuntimeError: If terminal widget not registered (when not capturing)
+            RuntimeError: If terminal widget not registered when not capturing
+                output.
+            ValueError: If command contains unsafe values for injection
+                prevention.
 
         """
         if isinstance(command, str):
@@ -314,7 +342,7 @@ class TerminalManager:
         """Check if terminal widget is available for use.
 
         Returns:
-            bool: True if terminal widget is registered
+            True if terminal widget is registered
 
         """
         return self._terminal_widget is not None
@@ -323,7 +351,7 @@ class TerminalManager:
         """Get the registered terminal widget.
 
         Returns:
-            TerminalSessionWidget or None
+            The registered terminal widget instance or None if not registered
 
         """
         return self._terminal_widget
@@ -334,6 +362,9 @@ class TerminalManager:
         Args:
             message: Message to log
             level: Log level (INFO, WARNING, ERROR)
+
+        Returns:
+            None
 
         """
         if self._terminal_widget:
@@ -354,7 +385,7 @@ def get_terminal_manager() -> TerminalManager:
     """Get TerminalManager singleton instance.
 
     Returns:
-        TerminalManager: The singleton instance
+        The singleton instance
 
     """
     return TerminalManager()

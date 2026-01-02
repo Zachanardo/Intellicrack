@@ -15,11 +15,13 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU GPL v3
 """
 
+from __future__ import annotations
+
 import os
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -35,6 +37,12 @@ if PYQT6_AVAILABLE:
         HexViewerThread,
         HexViewerWidget,
     )
+
+
+def qwait(ms: int) -> None:
+    """Wait for ms milliseconds, processing Qt events."""
+    if PYQT6_AVAILABLE:
+        QTest.qWait(ms)  # type: ignore[arg-type, call-arg]
 
 pytestmark = pytest.mark.skipif(
     not PYQT6_AVAILABLE,
@@ -69,7 +77,7 @@ def sample_binary_large() -> bytes:
 
 
 @pytest.fixture
-def temp_binary_file_small(sample_binary_small: bytes) -> Path:
+def temp_binary_file_small(sample_binary_small: bytes) -> Generator[Path, None, None]:
     """Create temporary small binary file."""
     with tempfile.NamedTemporaryFile(
         mode="wb", suffix=".exe", delete=False
@@ -84,7 +92,7 @@ def temp_binary_file_small(sample_binary_small: bytes) -> Path:
 
 
 @pytest.fixture
-def temp_binary_file_large(sample_binary_large: bytes) -> Path:
+def temp_binary_file_large(sample_binary_large: bytes) -> Generator[Path, None, None]:
     """Create temporary large binary file."""
     with tempfile.NamedTemporaryFile(
         mode="wb", suffix=".bin", delete=False
@@ -99,7 +107,7 @@ def temp_binary_file_large(sample_binary_large: bytes) -> Path:
 
 
 @pytest.fixture
-def temp_output_dir() -> Path:
+def temp_output_dir() -> Generator[Path, None, None]:
     """Create temporary directory for output."""
     with tempfile.TemporaryDirectory(prefix="hex_viewer_") as tmpdir:
         yield Path(tmpdir)
@@ -237,7 +245,7 @@ class TestHexViewerWidget:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(500)
+            qwait(500)
 
             assert widget.file_path == str(temp_binary_file_small)
 
@@ -256,7 +264,7 @@ class TestHexViewerWidget:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(500)
+            qwait(500)
 
             if widget.hex_display:
                 hex_text = widget.hex_display.toPlainText()
@@ -277,7 +285,7 @@ class TestHexViewerWidget:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(500)
+            qwait(500)
 
         widget.close()
 
@@ -289,12 +297,12 @@ class TestHexViewerWidget:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(500)
+            qwait(500)
 
         if hasattr(widget, "goto_offset"):
             target_offset = 256
             widget.goto_offset(target_offset)
-            QTest.qWait(200)
+            qwait(200)
 
             assert widget.current_offset == target_offset or widget.current_offset >= 0
 
@@ -308,7 +316,7 @@ class TestHexViewerWidget:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(500)
+            qwait(500)
 
         if hasattr(widget, "search_pattern"):
             search_pattern = b"MZ"
@@ -326,7 +334,7 @@ class TestHexViewerWidget:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(500)
+            qwait(500)
 
         if hasattr(widget, "highlight_region"):
             from intellicrack.handlers.pyqt6_handler import QColor
@@ -347,7 +355,9 @@ class TestHexViewerWidget:
         """Widget clears all highlighted regions."""
         widget = HexViewerWidget()
 
-        widget.highlighted_regions.append((0, 16, Mock()))
+        from intellicrack.handlers.pyqt6_handler import QColor
+        test_color = QColor(255, 255, 0)
+        widget.highlighted_regions.append((0, 16, test_color))
 
         if hasattr(widget, "clear_highlights"):
             widget.clear_highlights()
@@ -366,7 +376,7 @@ class TestHexViewerWidget:
         if hasattr(widget, "load_file"):
             start_time = time.time()
             widget.load_file(str(temp_binary_file_large))
-            QTest.qWait(2000)
+            qwait(2000)
             elapsed = time.time() - start_time
 
             assert elapsed < 5.0
@@ -381,7 +391,7 @@ class TestHexViewerWidget:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(500)
+            qwait(500)
 
         if hasattr(widget, "structure_tree"):
             assert widget.structure_tree is not None
@@ -403,7 +413,7 @@ class TestHexViewerWidget:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(500)
+            qwait(500)
 
         widget.close()
 
@@ -415,7 +425,7 @@ class TestHexViewerWidget:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(500)
+            qwait(500)
 
             if widget.hex_display:
                 hex_text = widget.hex_display.toPlainText()
@@ -431,16 +441,13 @@ class TestHexViewerWidget:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(500)
+            qwait(500)
 
         export_file = temp_output_dir / "exported_bytes.bin"
 
         if hasattr(widget, "export_selection"):
-            with patch("intellicrack.handlers.pyqt6_handler.QFileDialog.getSaveFileName") as mock_dialog:
-                mock_dialog.return_value = (str(export_file), "Binary Files (*.bin)")
-
-                widget.export_selection(0, 100)
-                QTest.qWait(100)
+            widget.export_selection()
+            qwait(100)
 
         widget.close()
 
@@ -452,11 +459,11 @@ class TestHexViewerWidget:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(500)
+            qwait(500)
 
         if hasattr(widget, "refresh_display"):
             widget.refresh_display()
-            QTest.qWait(200)
+            qwait(200)
 
         widget.close()
 
@@ -473,7 +480,7 @@ class TestHexViewerEdgeCases:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(empty_file))
-            QTest.qWait(500)
+            qwait(500)
 
         widget.close()
 
@@ -488,7 +495,7 @@ class TestHexViewerEdgeCases:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(corrupted_file))
-            QTest.qWait(500)
+            qwait(500)
 
         widget.close()
 
@@ -500,14 +507,14 @@ class TestHexViewerEdgeCases:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(500)
+            qwait(500)
 
         if hasattr(widget, "goto_offset"):
             widget.goto_offset(-100)
-            QTest.qWait(100)
+            qwait(100)
 
             widget.goto_offset(99999999)
-            QTest.qWait(100)
+            qwait(100)
 
         widget.close()
 
@@ -519,7 +526,7 @@ class TestHexViewerEdgeCases:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(500)
+            qwait(500)
 
         if hasattr(widget, "search_pattern"):
             results = widget.search_pattern(b"\xFF\xFF\xFF\xFF\xFF")
@@ -535,7 +542,7 @@ class TestHexViewerEdgeCases:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(500)
+            qwait(500)
 
         if hasattr(widget, "highlight_region"):
             from intellicrack.handlers.pyqt6_handler import QColor
@@ -555,12 +562,12 @@ class TestHexViewerEdgeCases:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(500)
+            qwait(500)
 
         if hasattr(widget, "goto_offset"):
             for offset in [0, 100, 200, 50, 150, 25]:
                 widget.goto_offset(offset)
-                QTest.qWait(10)
+                qwait(10)
 
         widget.close()
 
@@ -572,7 +579,7 @@ class TestHexViewerEdgeCases:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_large))
-            QTest.qWait(2000)
+            qwait(2000)
 
             file_size = os.path.getsize(temp_binary_file_large)
             if widget.file_data:
@@ -589,12 +596,12 @@ class TestHexViewerEdgeCases:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(100)
+            qwait(100)
 
             widget.load_file(str(temp_binary_file_small))
-            QTest.qWait(100)
+            qwait(100)
 
-        QTest.qWait(500)
+        qwait(500)
         widget.close()
 
     def test_unicode_file_path(
@@ -608,7 +615,7 @@ class TestHexViewerEdgeCases:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(unicode_file))
-            QTest.qWait(500)
+            qwait(500)
 
         widget.close()
 
@@ -620,6 +627,6 @@ class TestHexViewerEdgeCases:
 
         if hasattr(widget, "load_file"):
             widget.load_file(str(temp_binary_file_large))
-            QTest.qWait(200)
+            qwait(200)
 
         widget.close()

@@ -28,11 +28,8 @@ from intellicrack.ai.gpu_integration import (
     GPUIntegration,
     get_ai_device,
     get_ai_gpu_info,
-    get_device,
-    get_gpu_info,
     gpu_integration,
     is_gpu_available,
-    optimize_for_gpu,
     prepare_ai_model,
     prepare_ai_tensor,
 )
@@ -42,8 +39,8 @@ class TestGPUDeviceDetectionProduction:
     """Production tests for GPU device detection with real hardware."""
 
     def test_get_gpu_info_returns_valid_device_info(self) -> None:
-        """get_gpu_info returns valid device information dict."""
-        info: dict[str, Any] = get_gpu_info()
+        """get_ai_gpu_info returns valid device information dict."""
+        info: dict[str, Any] = get_ai_gpu_info()
 
         assert isinstance(info, dict), "Must return dict of device info"
         assert "available" in info, "Must report availability"
@@ -62,8 +59,8 @@ class TestGPUDeviceDetectionProduction:
             assert info["type"] != "cpu", "Must report actual GPU type when available"
 
     def test_get_device_returns_valid_device(self) -> None:
-        """get_device returns valid compute device."""
-        device = get_device()
+        """get_ai_device returns valid compute device."""
+        device = get_ai_device()
 
         assert device is not None, "Must return a device"
 
@@ -174,8 +171,8 @@ class TestModelGPUPreparationProduction:
 class TestGPUOptimizationProduction:
     """Production tests for GPU-specific optimizations."""
 
-    def test_optimize_for_gpu_accepts_model_object(self) -> None:
-        """optimize_for_gpu optimizes model for GPU execution."""
+    def test_prepare_model_accepts_model_object(self) -> None:
+        """gpu_integration.prepare_model optimizes model for GPU execution."""
         try:
             from intellicrack.utils.torch_gil_safety import safe_torch_import
 
@@ -184,14 +181,14 @@ class TestGPUOptimizationProduction:
                 pytest.skip("PyTorch not available")
 
             model = torch.nn.Linear(10, 5)
-            optimized = optimize_for_gpu(model)
+            optimized = gpu_integration.prepare_model(model)
 
             assert optimized is not None, "Must return optimized model"
         except ImportError:
             pytest.skip("PyTorch not available")
 
-    def test_optimize_for_gpu_returns_same_type(self) -> None:
-        """optimize_for_gpu returns same model type."""
+    def test_prepare_model_returns_same_type(self) -> None:
+        """gpu_integration.prepare_model returns same model type."""
         try:
             from intellicrack.utils.torch_gil_safety import safe_torch_import
 
@@ -204,7 +201,7 @@ class TestGPUOptimizationProduction:
                 torch.nn.ReLU(),
                 torch.nn.Linear(20, 5),
             )
-            optimized = optimize_for_gpu(model)
+            optimized = gpu_integration.prepare_model(model)
 
             assert isinstance(optimized, torch.nn.Module), "Must return nn.Module"
         except ImportError:
@@ -230,7 +227,7 @@ class TestGPUIntegrationEndToEnd:
             prepared = prepare_ai_model(model)
             assert prepared is not None, "Step 2: Model preparation must succeed"
 
-            optimized = optimize_for_gpu(prepared)
+            optimized = gpu_integration.prepare_model(prepared)
             assert optimized is not None, "Step 3: Optimization must succeed"
 
             integration = GPUIntegration()
@@ -254,7 +251,7 @@ class TestGPUIntegrationEndToEnd:
     )
     def test_windows_gpu_detection(self) -> None:
         """On Windows, GPU detection properly identifies available devices."""
-        info: dict[str, Any] = get_gpu_info()
+        info: dict[str, Any] = get_ai_gpu_info()
 
         assert "type" in info, "Must report device type"
 

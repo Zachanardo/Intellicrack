@@ -56,7 +56,7 @@ class TestWin32API:
         """show_window accepts valid SW_* command constants."""
         notepad_exe = Path("C:/Windows/System32/notepad.exe")
         if not notepad_exe.exists():
-            pytest.skip("notepad.exe not available for testing")
+            pytest.skip("notepad.exe not found - test requires Windows with notepad.exe")
 
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False, mode="w") as tmp:
             tmp.write("test")
@@ -118,7 +118,7 @@ class TestAdobeInjectorProcess:
         """start launches real executable and manages process."""
         notepad_exe = Path("C:/Windows/System32/notepad.exe")
         if not notepad_exe.exists():
-            pytest.skip("notepad.exe not available for testing")
+            pytest.skip("notepad.exe not found - test requires Windows with notepad.exe")
 
         process = AdobeInjectorProcess(notepad_exe)
 
@@ -136,7 +136,7 @@ class TestAdobeInjectorProcess:
         """terminate kills process and clears all state variables."""
         notepad_exe = Path("C:/Windows/System32/notepad.exe")
         if not notepad_exe.exists():
-            pytest.skip("notepad.exe not available")
+            pytest.skip("notepad.exe not found - test requires Windows with notepad.exe")
 
         process = AdobeInjectorProcess(notepad_exe)
         process.start(silent=True)
@@ -148,6 +148,7 @@ class TestAdobeInjectorProcess:
         assert process.process is None
         assert process.hwnd is None
 
+    @pytest.mark.requires_pyqt6
     def test_embed_in_widget_requires_valid_hwnd(self) -> None:
         """embed_in_widget returns False when hwnd not set."""
         process = AdobeInjectorProcess(Path("D:/tools/AdobeInjector.exe"))
@@ -158,7 +159,7 @@ class TestAdobeInjectorProcess:
             result = process.embed_in_widget(mock_widget)
             assert result is False
         except ImportError:
-            pytest.skip("PyQt6 not available")
+            pytest.skip("PyQt6 not installed - test requires PyQt6 package")
 
     def test_resize_to_parent_ignores_when_not_embedded(self) -> None:
         """resize_to_parent does nothing when window not embedded."""
@@ -203,6 +204,7 @@ class TestIPCController:
         assert response == {}
 
 
+@pytest.mark.integration
 class TestAdobeInjectorIntegration:
     """Integration tests for complete Adobe Injector workflow."""
 
@@ -210,7 +212,7 @@ class TestAdobeInjectorIntegration:
         """Process lifecycle: creation -> configuration -> termination."""
         notepad_exe = Path("C:/Windows/System32/notepad.exe")
         if not notepad_exe.exists():
-            pytest.skip("notepad.exe not available")
+            pytest.skip("notepad.exe not found - test requires Windows with notepad.exe")
 
         process = AdobeInjectorProcess(notepad_exe)
 
@@ -230,7 +232,7 @@ class TestAdobeInjectorIntegration:
         """IPC controller initialization and configuration."""
         notepad_exe = Path("C:/Windows/System32/notepad.exe")
         if not notepad_exe.exists():
-            pytest.skip("notepad.exe not available")
+            pytest.skip("notepad.exe not found - test requires Windows with notepad.exe")
 
         process = AdobeInjectorProcess(notepad_exe)
         controller = IPCController(process)
@@ -243,7 +245,7 @@ class TestAdobeInjectorIntegration:
         """Multiple process instances operate independently."""
         notepad_exe = Path("C:/Windows/System32/notepad.exe")
         if not notepad_exe.exists():
-            pytest.skip("notepad.exe not available")
+            pytest.skip("notepad.exe not found - test requires Windows with notepad.exe")
 
         process1 = AdobeInjectorProcess(notepad_exe)
         process2 = AdobeInjectorProcess(notepad_exe)

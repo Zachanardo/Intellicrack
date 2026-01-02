@@ -16,7 +16,6 @@ import subprocess
 import time
 from pathlib import Path
 from types import TracebackType
-from typing import Any
 
 import frida
 import requests
@@ -178,6 +177,9 @@ class FridaServerManager:
         Args:
             input_path: Path to compressed file.
             output_path: Path for decompressed output.
+
+        Raises:
+            RuntimeError: If lzma module is not available.
 
         """
         try:

@@ -1229,7 +1229,6 @@ class LiveDebuggingSystem:
                     value = watch["last_value"]
 
                     # Only allow safe comparison operators
-                    from typing import cast
 
                     safe_operators: dict[str, Callable[[Any, Any], bool]] = {
                         "==": lambda x, y: x == y,

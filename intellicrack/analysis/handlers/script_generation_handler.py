@@ -1,7 +1,20 @@
 """Script Generation Handler.
 
-Manages the generation of bypass scripts (Frida/Ghidra) based on
-detected protections using the ProtectionAwareScriptGenerator.
+Manages the generation of bypass scripts (Frida/Ghidra) based on detected
+protections using the ProtectionAwareScriptGenerator. Provides threaded
+execution of script generation with UI dialogs for script display and
+export.
+
+This module implements the ScriptGenerationHandler class which coordinates
+with protection analysis results to generate specialized bypass scripts
+targeting identified licensing protection mechanisms. Worker threads ensure
+long-running script generation operations don't block the UI.
+
+Key Classes:
+    ScriptGenerationWorkerSignals: Qt signals for worker thread communication.
+    ScriptGenerationWorker: QRunnable worker thread for script generation.
+    ScriptDisplayDialog: Dialog for viewing and saving generated scripts.
+    ScriptGenerationHandler: Main handler coordinating script generation.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -29,31 +42,25 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from logging import Logger
 
-    from PyQt6.QtCore import (
-        QObject as QObjectType,
-        QRunnable as QRunnableType,
-        QThreadPool as QThreadPoolType,
-        QTimer as QTimerType,
-        pyqtSignal as pyqtSignalType,
-    )
-    from PyQt6.QtGui import (
-        QFont as QFontType,
-        QTextDocument as QTextDocumentType,
-    )
-    from PyQt6.QtWidgets import (
-        QDialog as QDialogType,
-        QFileDialog as QFileDialogType,
-        QHBoxLayout as QHBoxLayoutType,
-        QLabel as QLabelType,
-        QMessageBox as QMessageBoxType,
-        QPushButton as QPushButtonType,
-        QTextEdit as QTextEditType,
-        QVBoxLayout as QVBoxLayoutType,
-        QWidget as QWidgetType,
-    )
-
-    from ...ai.protection_aware_script_gen import ProtectionAwareScriptGenerator as ProtectionAwareScriptGeneratorType
-    from ...protection.unified_protection_engine import UnifiedProtectionResult as UnifiedProtectionResultType
+# Module-level type declarations for cross-branch assignment compatibility
+QObject: type[Any]
+QRunnable: type[Any]
+QThreadPool: type[Any]
+QTimer: type[Any]
+pyqtSignal: type[Any]
+QFont: type[Any]
+QTextDocument: type[Any]
+QDialog: type[Any]
+QFileDialog: type[Any]
+QHBoxLayout: type[Any]
+QLabel: type[Any]
+QMessageBox: type[Any]
+QPushButton: type[Any]
+QTextEdit: type[Any]
+QVBoxLayout: type[Any]
+QWidget: type[Any]
+ProtectionAwareScriptGenerator: type[Any] | None
+UnifiedProtectionResult: type[Any] | None
 
 try:
     from PyQt6.QtCore import QObject, QRunnable, QThreadPool, QTimer, pyqtSignal
@@ -63,90 +70,144 @@ try:
     PYQT6_AVAILABLE = True
 except ImportError:
 
-    class QObject:  # type: ignore[no-redef]
+    class QObject:
         """Fallback QObject class when PyQt6 is not available."""
 
         pass
 
-    class QRunnable:  # type: ignore[no-redef]
+    class QRunnable:
         """Fallback QRunnable class when PyQt6 is not available."""
 
         def run(self) -> None:
             """Execute the runnable task."""
 
-    class QThreadPool:  # type: ignore[no-redef]
+    class QThreadPool:
         """Fallback QThreadPool class when PyQt6 is not available."""
 
         @staticmethod
         def globalInstance() -> QThreadPool | None:
-            """Return the global thread pool instance."""
+            """Return the global thread pool instance.
+
+            Returns:
+                A thread pool instance or None.
+            """
             return QThreadPool()
 
         def start(self, runnable: QRunnable) -> None:
-            """Start a runnable."""
+            """Start a runnable.
 
-    class QTimer:  # type: ignore[no-redef]
+            Args:
+                runnable: The runnable to execute.
+            """
+
+    class QTimer:
         """Fallback QTimer class when PyQt6 is not available."""
 
         @staticmethod
         def singleShot(msec: int, func: Any) -> None:
-            """Single shot timer."""
+            """Single shot timer.
 
-    class pyqtSignal:  # type: ignore[no-redef]
+            Args:
+                msec: Time in milliseconds until the timer fires.
+                func: The function to call when the timer fires.
+            """
+
+    class pyqtSignal:
         """Fallback pyqtSignal class when PyQt6 is not available."""
 
         def __init__(self, *args: Any) -> None:
-            """Initialize signal."""
+            """Initialize signal.
+
+            Args:
+                *args: Signal argument types (unused in fallback).
+            """
             self._callbacks: list[Any] = []
 
         def emit(self, *args: Any) -> None:
-            """Emit signal."""
+            """Emit signal.
+
+            Args:
+                *args: Arguments to pass to connected callbacks.
+            """
             for callback in self._callbacks:
                 callback(*args)
 
         def connect(self, callback: Any) -> None:
-            """Connect signal."""
+            """Connect signal.
+
+            Args:
+                callback: The callback function to connect to this signal.
+            """
             self._callbacks.append(callback)
 
-    class QFont:  # type: ignore[no-redef]
+    class QFont:
         """Fallback QFont class when PyQt6 is not available."""
 
         class Weight:
-            """Font weight enumeration."""
+            """Font weight enumeration.
+
+            Attributes:
+                Bold: The bold font weight value.
+            """
 
             Bold: int = 75
 
-    class QTextDocument:  # type: ignore[no-redef]
+    class QTextDocument:
         """Fallback QTextDocument class when PyQt6 is not available."""
 
         class FindFlag:
-            """Find flags."""
+            """Find flags.
+
+            Attributes:
+                FindWholeWords: Flag value for finding whole words only.
+            """
 
             FindWholeWords: int = 2
 
-    class QDialog:  # type: ignore[no-redef]
+    class QDialog:
         """Fallback QDialog class when PyQt6 is not available."""
 
         def __init__(self, parent: Any = None) -> None:
-            """Initialize dialog."""
+            """Initialize dialog.
+
+            Args:
+                parent: Optional parent widget.
+            """
 
         def setWindowTitle(self, title: str) -> None:
-            """Set window title."""
+            """Set window title.
+
+            Args:
+                title: The title to set for the dialog window.
+            """
 
         def setMinimumSize(self, width: int, height: int) -> None:
-            """Set minimum size."""
+            """Set minimum size.
+
+            Args:
+                width: Minimum width in pixels.
+                height: Minimum height in pixels.
+            """
 
         def setLayout(self, layout: Any) -> None:
-            """Set layout."""
+            """Set layout.
+
+            Args:
+                layout: The layout to set for the dialog.
+            """
 
         def exec(self) -> int:
-            """Execute dialog."""
+            """Execute dialog.
+
+            Returns:
+                The dialog result code.
+            """
             return 0
 
         def accept(self) -> None:
             """Accept dialog."""
 
-    class QFileDialog:  # type: ignore[no-redef]
+    class QFileDialog:
         """Fallback QFileDialog class when PyQt6 is not available."""
 
         @staticmethod
@@ -156,85 +217,165 @@ except ImportError:
             directory: str = "",
             file_filter: str = "",
         ) -> tuple[str, str]:
-            """Get save file name."""
+            """Get save file name.
+
+            Args:
+                parent: Parent widget for the dialog.
+                caption: Dialog caption/title.
+                directory: Initial directory to browse.
+                file_filter: File type filter string.
+
+            Returns:
+                Tuple of (filename, selected_filter) or empty strings if cancelled.
+            """
             return ("", "")
 
-    class QHBoxLayout:  # type: ignore[no-redef]
+    class QHBoxLayout:
         """Fallback QHBoxLayout class when PyQt6 is not available."""
 
         def addWidget(self, widget: Any) -> None:
-            """Add widget."""
+            """Add widget.
+
+            Args:
+                widget: The widget to add to the layout.
+            """
 
         def addStretch(self) -> None:
             """Add stretch."""
 
-    class QLabel:  # type: ignore[no-redef]
+    class QLabel:
         """Fallback QLabel class when PyQt6 is not available."""
 
         def __init__(self, text: str = "") -> None:
-            """Initialize label."""
+            """Initialize label.
+
+            Args:
+                text: The initial text to display in the label.
+            """
 
         def setStyleSheet(self, style: str) -> None:
-            """Set style sheet."""
+            """Set style sheet.
+
+            Args:
+                style: CSS-style sheet string to apply to the label.
+            """
 
         def setWordWrap(self, wrap: bool) -> None:
-            """Set word wrap."""
+            """Set word wrap.
 
-    class QMessageBox:  # type: ignore[no-redef]
+            Args:
+                wrap: Whether to enable word wrapping.
+            """
+
+    class QMessageBox:
         """Fallback QMessageBox class when PyQt6 is not available."""
 
         @staticmethod
         def information(parent: Any, title: str, message: str) -> None:
-            """Show information message."""
+            """Show information message.
+
+            Args:
+                parent: Parent widget for the dialog.
+                title: Dialog title.
+                message: Message text to display.
+            """
 
         @staticmethod
         def critical(parent: Any, title: str, message: str) -> None:
-            """Show critical message."""
+            """Show critical message.
+
+            Args:
+                parent: Parent widget for the dialog.
+                title: Dialog title.
+                message: Message text to display.
+            """
 
         @staticmethod
         def warning(parent: Any, title: str, message: str) -> None:
-            """Show warning message."""
+            """Show warning message.
 
-    class QPushButton:  # type: ignore[no-redef]
+            Args:
+                parent: Parent widget for the dialog.
+                title: Dialog title.
+                message: Message text to display.
+            """
+
+    class QPushButton:
         """Fallback QPushButton class when PyQt6 is not available."""
 
         def __init__(self, text: str = "") -> None:
-            """Initialize button."""
+            """Initialize button.
+
+            Args:
+                text: Initial button text.
+            """
             self.clicked: pyqtSignal = pyqtSignal()
 
         def setText(self, text: str) -> None:
-            """Set button text."""
+            """Set button text.
 
-    class QTextEdit:  # type: ignore[no-redef]
+            Args:
+                text: The text to display on the button.
+            """
+
+    class QTextEdit:
         """Fallback QTextEdit class when PyQt6 is not available."""
 
         def setReadOnly(self, readonly: bool) -> None:
-            """Set read only."""
+            """Set read only.
+
+            Args:
+                readonly: Whether the text edit should be read-only.
+            """
 
         def setFont(self, font: Any) -> None:
-            """Set font."""
+            """Set font.
+
+            Args:
+                font: The font to apply to the text edit.
+            """
 
         def setPlainText(self, text: str) -> None:
-            """Set plain text."""
+            """Set plain text.
+
+            Args:
+                text: The plain text to set.
+            """
 
         def textCursor(self) -> Any:
-            """Get text cursor."""
+            """Get text cursor.
+
+            Returns:
+                The text cursor object or None.
+            """
             return None
 
         def document(self) -> Any:
-            """Get document."""
+            """Get document.
+
+            Returns:
+                The QTextDocument or None.
+            """
             return None
 
-    class QVBoxLayout:  # type: ignore[no-redef]
+    class QVBoxLayout:
         """Fallback QVBoxLayout class when PyQt6 is not available."""
 
         def addWidget(self, widget: Any) -> None:
-            """Add widget."""
+            """Add widget.
+
+            Args:
+                widget: The widget to add to the layout.
+            """
 
         def addLayout(self, layout: Any) -> None:
-            """Add layout."""
+            """Add layout.
 
-    class QWidget:  # type: ignore[no-redef]
+            Args:
+                layout: The layout to add to this layout.
+            """
+
+    class QWidget:
         """Fallback QWidget class when PyQt6 is not available."""
 
         pass
@@ -244,12 +385,12 @@ except ImportError:
 try:
     from ...ai.protection_aware_script_gen import ProtectionAwareScriptGenerator
 except ImportError:
-    ProtectionAwareScriptGenerator = None  # type: ignore[assignment,misc]
+    ProtectionAwareScriptGenerator = None
 
 try:
     from ...protection.unified_protection_engine import UnifiedProtectionResult
 except ImportError:
-    UnifiedProtectionResult = None  # type: ignore[assignment,misc]
+    UnifiedProtectionResult = None
 
 try:
     from ...utils.logger import get_logger as _get_logger
@@ -280,7 +421,6 @@ class ScriptGenerationWorker(QRunnable):
             file_path: Path to the file being analyzed.
             script_type: Type of script to generate (e.g., 'frida', 'ghidra').
             protections: List of detected protections to generate scripts for.
-
         """
         super().__init__()
         self.file_path: str = file_path
@@ -289,13 +429,18 @@ class ScriptGenerationWorker(QRunnable):
         self.signals: ScriptGenerationWorkerSignals = ScriptGenerationWorkerSignals()
 
     def run(self) -> None:
-        """Generate the bypass script with AI enhancement."""
+        """Generate the bypass script with AI enhancement.
+
+        Executes script generation for the configured file and protection types,
+        with optional AI enhancements if available. Emits progress, result, and
+        error signals during execution.
+        """
         try:
             self.signals.progress.emit(f"Generating {self.script_type} script...")
 
             result: dict[str, Any]
             if ProtectionAwareScriptGenerator is None:
-                result = {  # type: ignore[unreachable]
+                result = {
                     "success": False,
                     "error": "ProtectionAwareScriptGenerator not available",
                 }
@@ -352,7 +497,6 @@ class ScriptDisplayDialog(QDialog):
         Args:
             script_data: Dictionary containing the generated script data and metadata.
             parent: Optional parent widget for Qt integration.
-
         """
         super().__init__(parent)
         self.script_data: dict[str, Any] = script_data
@@ -363,7 +507,11 @@ class ScriptDisplayDialog(QDialog):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """Initialize the UI."""
+        """Initialize the UI.
+
+        Sets up the dialog layout with script information, display area, warnings,
+        and action buttons for copying and saving the generated script.
+        """
         self.setWindowTitle("Generated Bypass Script")
         self.setMinimumSize(800, 600)
 
@@ -441,7 +589,11 @@ class ScriptDisplayDialog(QDialog):
         self.setLayout(layout)
 
     def _apply_syntax_highlighting(self) -> None:
-        """Apply basic syntax highlighting based on script type."""
+        """Apply basic syntax highlighting based on script type.
+
+        Applies keyword highlighting for Frida (JavaScript) and Ghidra (Python)
+        scripts to improve readability in the display area.
+        """
         if not PYQT6_AVAILABLE:
             return
 
@@ -498,7 +650,7 @@ class ScriptDisplayDialog(QDialog):
 
         cursor = self.script_text.textCursor()
         if cursor is None:
-            return  # type: ignore[unreachable]
+            return
 
         keyword_format = QTextCharFormat()
         keyword_format.setForeground(QColor(0, 0, 255))
@@ -532,7 +684,11 @@ class ScriptDisplayDialog(QDialog):
         cursor.endEditBlock()
 
     def copy_script(self) -> None:
-        """Copy script to clipboard."""
+        """Copy script to clipboard.
+
+        Copies the generated script text to the system clipboard and temporarily
+        updates the button label to provide visual feedback.
+        """
         if not PYQT6_AVAILABLE:
             return
 
@@ -548,7 +704,13 @@ class ScriptDisplayDialog(QDialog):
         QTimer.singleShot(1500, lambda: self.copy_btn.setText("Copy to Clipboard"))
 
     def save_script(self) -> None:
-        """Save script to file."""
+        """Save script to file.
+
+        Displays a file save dialog and writes the generated script to the selected
+        file location. Provides user feedback on success or failure. All exceptions
+        are caught and displayed to the user.
+
+        """
         script_type_raw = self.script_data.get("type", "script")
         if not isinstance(script_type_raw, str):
             script_type_raw = "script"
@@ -611,7 +773,6 @@ class ScriptGenerationHandler(QObject):
 
         Args:
             parent: Optional parent widget for Qt integration.
-
         """
         super().__init__(parent)
         thread_pool_instance = QThreadPool.globalInstance()
@@ -624,9 +785,11 @@ class ScriptGenerationHandler(QObject):
     def on_analysis_complete(self, result: Any) -> None:
         """Handle slot when protection analysis completes.
 
-        Args:
-            result: The UnifiedProtectionResult from analysis.
+        Stores the analysis result for later script generation. Called when the
+        protection analysis workflow finishes.
 
+        Args:
+            result: The analysis result containing detected protections.
         """
         self.current_result = result
         if hasattr(result, "file_path"):
@@ -635,10 +798,12 @@ class ScriptGenerationHandler(QObject):
     def generate_script(self, script_type: str = "frida", parent_widget: QWidget | None = None) -> None:
         """Generate a bypass script of the specified type.
 
-        Args:
-            script_type: Type of script to generate ("frida" or "ghidra")
-            parent_widget: Parent widget for dialog (optional)
+        Spawns a worker thread to generate a Frida or Ghidra bypass script based
+        on the current analysis result and detected protections.
 
+        Args:
+            script_type: Type of script to generate ("frida" or "ghidra").
+            parent_widget: Optional parent widget for displaying dialogs.
         """
         if not self.current_result:
             self.script_error.emit("No analysis result available")
@@ -679,13 +844,19 @@ class ScriptGenerationHandler(QObject):
 
         self.thread_pool.start(worker)
 
-    def _on_script_ready(self, result: dict[str, Any], parent_widget: QWidget | None = None) -> None:
+    def _on_script_ready(
+        self,
+        result: dict[str, Any],
+        parent_widget: QWidget | None = None,
+    ) -> None:
         """Handle script generation completion.
+
+        Processes successful or failed script generation results and displays
+        the script in a dialog or shows an error message to the user.
 
         Args:
             result: The script generation result dictionary.
             parent_widget: Optional parent widget for dialogs.
-
         """
         if result.get("success"):
             self.script_ready.emit(result)
@@ -708,9 +879,11 @@ class ScriptGenerationHandler(QObject):
     def _on_worker_error(self, error_tuple: tuple[type[BaseException], BaseException, str]) -> None:
         """Handle worker thread errors.
 
+        Logs the full exception traceback and emits an error signal with a
+        human-readable error message.
+
         Args:
             error_tuple: Tuple containing exception type, value, and traceback.
-
         """
         _exc_type, exc_value, exc_traceback = error_tuple
         error_msg = f"Script generation failed: {exc_value}"

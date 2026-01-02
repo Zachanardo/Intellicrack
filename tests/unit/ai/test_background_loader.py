@@ -58,6 +58,30 @@ class FailingTestBackend:
         return False
 
 
+class FailingSimpleTestBackend:
+    """Test backend that simulates initialization failure."""
+
+    def __init__(self, config: LLMConfig) -> None:
+        """Initialize failing backend."""
+        self.config = config
+
+    def initialize(self) -> bool:
+        """Return failure during initialization."""
+        raise RuntimeError("Initialization failed")
+
+
+class ErrorSimpleTestBackend:
+    """Test backend that raises an exception during initialization."""
+
+    def __init__(self, config: LLMConfig) -> None:
+        """Initialize error backend."""
+        self.config = config
+
+    def initialize(self) -> bool:
+        """Raise exception during initialization."""
+        raise ValueError("Backend error during initialization")
+
+
 class ErrorTestBackend:
     """Test backend that raises errors during initialization."""
 

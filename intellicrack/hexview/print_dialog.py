@@ -70,7 +70,12 @@ class PrintOptionsDialog(QDialog):
         self.init_ui()
 
     def init_ui(self) -> None:
-        """Initialize UI components."""
+        """Initialize UI components for print dialog.
+
+        Sets up all form groups including print range, font settings, layout,
+        headers/footers, and color options. Connects signal handlers for
+        interactive controls.
+        """
         layout = QVBoxLayout()
 
         # Range selection
@@ -239,7 +244,12 @@ class PrintOptionsDialog(QDialog):
         self.setLayout(layout)
 
     def on_range_changed(self) -> None:
-        """Handle print range selection changes."""
+        """Handle print range selection changes.
+
+        Updates the enabled state of page range controls based on which
+        radio-button-like option is selected (all pages, selection, or
+        custom page range).
+        """
         sender = self.sender()
 
         if sender == self.all_pages_check and self.all_pages_check.isChecked():
@@ -512,7 +522,11 @@ class PrintOptionsDialog(QDialog):
         return max(1, total_pages)
 
     def show_preview(self) -> None:
-        """Show print preview dialog."""
+        """Show print preview dialog.
+
+        Creates and displays a print preview window that allows users to see
+        how the hex data will appear when printed before committing to printing.
+        """
         preview = QPrintPreviewDialog(self.printer, self)
         preview.paintRequested.connect(self.on_print_preview)
         preview.exec()
@@ -527,7 +541,11 @@ class PrintOptionsDialog(QDialog):
         self.render_to_printer(printer)
 
     def print_document(self) -> None:
-        """Print the document."""
+        """Print the document.
+
+        Shows the native print dialog and sends the hex data to the selected
+        printer. Closes the dialog upon successful printing.
+        """
         # Show native print dialog
         print_dialog = QPrintDialog(self.printer, self)
         if print_dialog.exec() == QDialog.DialogCode.Accepted:
@@ -536,6 +554,10 @@ class PrintOptionsDialog(QDialog):
 
     def render_to_printer(self, printer: QPrinter) -> None:
         """Render the hex data to a printer.
+
+        Retrieves the data to print based on current range settings, calculates
+        the total page count, and iterates through pages to render hex content
+        with headers/footers as configured.
 
         Args:
             printer: QPrinter instance to render hex data to.

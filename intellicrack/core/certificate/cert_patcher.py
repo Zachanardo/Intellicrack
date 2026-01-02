@@ -168,7 +168,12 @@ class CertificatePatcher:
         """Initialize certificate patcher.
 
         Args:
-            binary_path: Path to binary to patch
+            binary_path: Path to binary to patch.
+
+        Raises:
+            FileNotFoundError: If binary file does not exist.
+            RuntimeError: If LIEF library is unavailable or binary
+                parsing fails.
 
         """
         binary_path_obj = Path(binary_path)
@@ -189,7 +194,10 @@ class CertificatePatcher:
             raise RuntimeError("LIEF library not available for patching")
 
     def _detect_architecture(self) -> None:
-        """Detect binary architecture."""
+        """Detect binary architecture.
+
+        Sets self.architecture based on the loaded binary's format and machine type.
+        """
         if not self.binary:
             return
 
@@ -241,7 +249,7 @@ class CertificatePatcher:
             detection_report: Report containing detected validation functions
 
         Returns:
-            PatchResult with success/failure information
+            Result containing patched functions, failed patches, and backup data.
 
         """
         logger.info("Patching %d functions", len(detection_report.validation_functions))
@@ -358,7 +366,7 @@ class CertificatePatcher:
             func: Validation function to patch
 
         Returns:
-            PatchType to use
+            Patch type selected based on function confidence and name.
 
         """
         if func.confidence >= 0.8:
@@ -381,7 +389,7 @@ class CertificatePatcher:
             patch_type: Type of patch to generate
 
         Returns:
-            Patch bytes or None if generation failed
+            Generated patch bytes, or None if generation failed.
 
         """
         if not self.architecture:
@@ -414,7 +422,7 @@ class CertificatePatcher:
             size: Number of bytes to read
 
         Returns:
-            Original bytes
+            Original bytes from the address, or NOP sled if read fails.
 
         """
         if not self.binary:
@@ -446,7 +454,7 @@ class CertificatePatcher:
             size: Size of patch
 
         Returns:
-            True if safe to patch
+            True if the patch can be safely applied, False otherwise.
 
         """
         if not self.binary:
@@ -475,7 +483,7 @@ class CertificatePatcher:
             patch_bytes: Bytes to write
 
         Returns:
-            True if successful
+            True if patch was successfully applied, False otherwise.
 
         """
         if not self.binary:
@@ -515,7 +523,15 @@ class CertificatePatcher:
         return False
 
     def _save_patched_binary(self) -> None:
-        """Save patched binary to disk."""
+        """Save patched binary to disk.
+
+        Writes the patched binary to disk with .patched extension.
+
+        Raises:
+            RuntimeError: If binary type is unsupported or write
+                operation fails.
+
+        """
         if not self.binary:
             return
 
@@ -533,7 +549,7 @@ class CertificatePatcher:
             patch_result: Result containing patch information
 
         Returns:
-            True if rollback successful
+            True if rollback was successful, False otherwise.
 
         """
         logger.info("Rolling back patches")

@@ -45,6 +45,9 @@ def run_in_terminal(
     Returns:
         Session ID of terminal session
 
+    Raises:
+        Exception: If terminal execution fails
+
     """
     try:
         from ...core.terminal_manager import get_terminal_manager
@@ -85,6 +88,9 @@ def run_subprocess(
 
     Returns:
         Tuple of (returncode, stdout, stderr)
+
+    Raises:
+        Exception: If terminal execution fails when use_terminal is True
 
     """
     if use_terminal:
@@ -140,6 +146,10 @@ def run_subprocess_check(
     Returns:
         CompletedProcess object
 
+    Raises:
+        subprocess.CalledProcessError: If check=True and return code is non-zero
+        subprocess.TimeoutExpired: If command execution exceeds timeout
+
     """
     try:
         return subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
@@ -172,6 +182,10 @@ def create_popen_with_encoding(cmd: list[str], encoding: str = "utf-8", timeout:
 
     Returns:
         Tuple of (return_code, stdout, stderr)
+
+    Raises:
+        subprocess.TimeoutExpired: If process execution exceeds specified timeout
+        Exception: If process creation or execution fails
 
     """
     try:

@@ -6,62 +6,79 @@ are properly managed through the central configuration system.
 """
 
 import json
-import sys
+import shutil
 import tempfile
+import threading
+import time
 import unittest
-from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
 
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
+from intellicrack.ai.llm_config_manager import LLMConfig, LLMConfigManager
 from intellicrack.core.config_manager import IntellicrackConfig
-from intellicrack.ai.llm_config_manager import LLMConfigManager, LLMConfig
+
+
+class FakeLLMManager:
+    """Real test double for LLM manager used in auto-load testing."""
+
+    def __init__(self) -> None:
+        self.registered_models: list[Tuple[str, LLMConfig]] = []
+        self.registration_count: int = 0
+
+    def register_model(self, name: str, config: LLMConfig) -> None:
+        """Register a model configuration."""
+        self.registered_models.append((name, config))
+        self.registration_count += 1
+
+    @property
+    def call_count(self) -> int:
+        """Get number of times register_model was called."""
+        return self.registration_count
 
 
 class TestLLMConfiguration(unittest.TestCase):
     """Test LLM configuration management through central config."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test environment with fresh config."""
-        # Create temporary directories
-        self.temp_dir = tempfile.mkdtemp()
-        self.config_path = Path(self.temp_dir) / "config.json"
-        self.legacy_llm_dir = Path(self.temp_dir) / ".intellicrack" / "llm_configs"
+        self.temp_dir: str = tempfile.mkdtemp()
+        self.config_path: Path = Path(self.temp_dir) / "config.json"
+        self.legacy_llm_dir: Path = Path(self.temp_dir) / ".intellicrack" / "llm_configs"
         self.legacy_llm_dir.mkdir(parents=True, exist_ok=True)
 
-        # Mock the config path
-        self.config_patcher = patch('intellicrack.core.config_manager.CONFIG_FILE',
-                                   str(self.config_path))
-        self.config_patcher.start()
+        self.original_config_file: Optional[str] = None
+        self.original_get_config: Optional[Any] = None
 
-        # Create fresh config instance
-        self.config = IntellicrackConfig()
+        self.config: IntellicrackConfig = IntellicrackConfig()
         self.config.config_file = str(self.config_path)
 
-        # Mock get_config to return our test config
-        self.get_config_patcher = patch('intellicrack.ai.llm_config_manager.get_config')
-        self.mock_get_config = self.get_config_patcher.start()
-        self.mock_get_config.return_value = self.config
+        self.llm_manager: LLMConfigManager = LLMConfigManager()
 
-        # Create LLM config manager
-        self.llm_manager = LLMConfigManager()
-
-    def tearDown(self):
+    def tearDown(self) -> None:
         """Clean up test environment."""
-        self.config_patcher.stop()
-        self.get_config_patcher.stop()
-
-        # Clean up temp directory
-        import shutil
         if Path(self.temp_dir).exists():
             shutil.rmtree(self.temp_dir)
 
-    def test_save_model_config(self):
+    def _setup_config_monkeypatch(self, monkeypatch: Any) -> None:
+        """Set up monkeypatch for config manager."""
+        import intellicrack.core.config_manager
+        import intellicrack.ai.llm_config_manager
+
+        monkeypatch.setattr(
+            intellicrack.core.config_manager,
+            "CONFIG_FILE",
+            str(self.config_path)
+        )
+        monkeypatch.setattr(
+            intellicrack.ai.llm_config_manager,
+            "get_config",
+            lambda: self.config
+        )
+
+    def test_save_model_config(self) -> None:
         """Test saving a model configuration."""
-        # Create test model config
-        config = LLMConfig(
+        config: LLMConfig = LLMConfig(
             provider="openai",
             model_name="gpt-4",
             api_key="test-key-123",
@@ -73,18 +90,17 @@ class TestLLMConfiguration(unittest.TestCase):
             custom_params={"top_p": 0.9}
         )
 
-        metadata = {
+        metadata: Dict[str, Any] = {
             "description": "Test GPT-4 model",
             "tags": ["production", "main"],
             "auto_load": True
         }
 
-        # Save model config
         self.llm_manager.save_model_config("gpt4-test", config, metadata)
 
-        # Verify it was saved to central config
-        saved_config = self.config.get("llm_configuration.models.gpt4-test")
+        saved_config: Optional[Dict[str, Any]] = self.config.get("llm_configuration.models.gpt4-test")
         self.assertIsNotNone(saved_config)
+        assert saved_config is not None
         self.assertEqual(saved_config["provider"], "openai")
         self.assertEqual(saved_config["model_name"], "gpt-4")
         self.assertEqual(saved_config["api_key"], "test-key-123")
@@ -93,10 +109,9 @@ class TestLLMConfiguration(unittest.TestCase):
         self.assertEqual(saved_config["metadata"]["auto_load"], True)
         self.assertIn("created_at", saved_config)
 
-    def test_load_model_config(self):
+    def test_load_model_config(self) -> None:
         """Test loading a model configuration."""
-        # Pre-populate config with test model
-        test_config = {
+        test_config: Dict[str, Any] = {
             "provider": "anthropic",
             "model_name": "claude-3-opus",
             "api_key": "test-anthropic-key",
@@ -115,11 +130,10 @@ class TestLLMConfiguration(unittest.TestCase):
 
         self.config.set("llm_configuration.models.claude-test", test_config)
 
-        # Load model config
-        loaded_config = self.llm_manager.load_model_config("claude-test")
+        loaded_config: Optional[LLMConfig] = self.llm_manager.load_model_config("claude-test")
 
-        # Verify loaded correctly
         self.assertIsNotNone(loaded_config)
+        assert loaded_config is not None
         self.assertEqual(loaded_config.provider, "anthropic")
         self.assertEqual(loaded_config.model_name, "claude-3-opus")
         self.assertEqual(loaded_config.api_key, "test-anthropic-key")
@@ -127,10 +141,9 @@ class TestLLMConfiguration(unittest.TestCase):
         self.assertEqual(loaded_config.temperature, 0.5)
         self.assertEqual(loaded_config.custom_params["top_k"], 40)
 
-    def test_delete_model_config(self):
+    def test_delete_model_config(self) -> None:
         """Test deleting a model configuration."""
-        # Add a model to delete
-        test_config = {
+        test_config: Dict[str, Any] = {
             "provider": "local",
             "model_name": "llama-2",
             "model_path": "/models/llama-2.gguf",
@@ -139,28 +152,23 @@ class TestLLMConfiguration(unittest.TestCase):
         }
         self.config.set("llm_configuration.models.llama-test", test_config)
 
-        # Add some metrics for this model
         self.config.set("llm_configuration.metrics.llama-test", {
             "history": [{"tokens": 100, "time": 1.5}],
             "aggregate": {"total_tokens": 100}
         })
 
-        # Delete the model
-        result = self.llm_manager.delete_model_config("llama-test")
+        result: bool = self.llm_manager.delete_model_config("llama-test")
 
-        # Verify deletion
         self.assertTrue(result)
         self.assertIsNone(self.config.get("llm_configuration.models.llama-test"))
         self.assertIsNone(self.config.get("llm_configuration.metrics.llama-test"))
 
-        # Try deleting non-existent model
         result = self.llm_manager.delete_model_config("non-existent")
         self.assertFalse(result)
 
-    def test_profile_management(self):
+    def test_profile_management(self) -> None:
         """Test saving, loading, and listing profiles."""
-        # Create test profiles
-        profile1 = {
+        profile1: Dict[str, Any] = {
             "name": "Creative Writing",
             "description": "High creativity settings for writing",
             "settings": {
@@ -171,7 +179,7 @@ class TestLLMConfiguration(unittest.TestCase):
             }
         }
 
-        profile2 = {
+        profile2: Dict[str, Any] = {
             "name": "Code Analysis",
             "description": "Precise settings for code analysis",
             "settings": {
@@ -182,39 +190,35 @@ class TestLLMConfiguration(unittest.TestCase):
             }
         }
 
-        # Save profiles
         self.llm_manager.save_profile("creative", profile1)
         self.llm_manager.save_profile("code", profile2)
 
-        # Verify saved to central config
-        saved_creative = self.config.get("llm_configuration.profiles.creative")
+        saved_creative: Optional[Dict[str, Any]] = self.config.get("llm_configuration.profiles.creative")
         self.assertIsNotNone(saved_creative)
+        assert saved_creative is not None
         self.assertEqual(saved_creative["name"], "Creative Writing")
         self.assertEqual(saved_creative["settings"]["temperature"], 0.9)
 
-        # Load profile
-        loaded_profile = self.llm_manager.get_profile("code")
+        loaded_profile: Optional[Dict[str, Any]] = self.llm_manager.get_profile("code")
         self.assertIsNotNone(loaded_profile)
+        assert loaded_profile is not None
         self.assertEqual(loaded_profile["name"], "Code Analysis")
         self.assertEqual(loaded_profile["settings"]["temperature"], 0.2)
 
-        # List all profiles
-        all_profiles = self.llm_manager.list_profiles()
+        all_profiles: list[str] = self.llm_manager.list_profiles()
         self.assertEqual(len(all_profiles), 2)
         self.assertIn("creative", all_profiles)
         self.assertIn("code", all_profiles)
 
-    def test_apply_profile_to_config(self):
+    def test_apply_profile_to_config(self) -> None:
         """Test applying a profile to a model configuration."""
-        # Create base config
-        base_config = LLMConfig(
+        base_config: LLMConfig = LLMConfig(
             provider="openai",
             model_name="gpt-3.5-turbo",
             api_key="test-key"
         )
 
-        # Create and save profile
-        profile = {
+        profile: Dict[str, Any] = {
             "name": "Balanced",
             "settings": {
                 "temperature": 0.6,
@@ -225,19 +229,16 @@ class TestLLMConfiguration(unittest.TestCase):
         }
         self.llm_manager.save_profile("balanced", profile)
 
-        # Apply profile
-        modified_config = self.llm_manager.apply_profile(base_config, "balanced")
+        modified_config: LLMConfig = self.llm_manager.apply_profile(base_config, "balanced")
 
-        # Verify profile was applied
         self.assertEqual(modified_config.temperature, 0.6)
         self.assertEqual(modified_config.max_tokens, 1500)
         self.assertEqual(modified_config.custom_params.get("top_p"), 0.85)
         self.assertEqual(modified_config.custom_params.get("frequency_penalty"), 0.3)
 
-    def test_metrics_tracking(self):
+    def test_metrics_tracking(self) -> None:
         """Test saving and retrieving metrics."""
-        # Save initial metrics
-        metrics1 = {
+        metrics1: Dict[str, Any] = {
             "tokens_used": 150,
             "time_taken": 2.5,
             "memory_used": 256,
@@ -247,14 +248,13 @@ class TestLLMConfiguration(unittest.TestCase):
 
         self.llm_manager.save_metrics("model1", metrics1)
 
-        # Verify metrics saved
-        saved_metrics = self.config.get("llm_configuration.metrics.model1")
+        saved_metrics: Optional[Dict[str, Any]] = self.config.get("llm_configuration.metrics.model1")
         self.assertIsNotNone(saved_metrics)
+        assert saved_metrics is not None
         self.assertEqual(len(saved_metrics["history"]), 1)
         self.assertEqual(saved_metrics["history"][0]["tokens_used"], 150)
 
-        # Save more metrics
-        metrics2 = {
+        metrics2: Dict[str, Any] = {
             "tokens_used": 200,
             "time_taken": 3.0,
             "memory_used": 300,
@@ -263,39 +263,33 @@ class TestLLMConfiguration(unittest.TestCase):
 
         self.llm_manager.save_metrics("model1", metrics2)
 
-        # Verify history updated
-        updated_metrics = self.llm_manager.get_metrics("model1")
+        updated_metrics: Dict[str, Any] = self.llm_manager.get_metrics("model1")
         self.assertEqual(len(updated_metrics["history"]), 2)
 
-        # Check aggregate metrics
         self.assertEqual(updated_metrics["aggregate"]["total_tokens"], 350)
         self.assertEqual(updated_metrics["aggregate"]["total_time"], 5.5)
         self.assertEqual(updated_metrics["aggregate"]["average_tokens"], 175)
         self.assertAlmostEqual(updated_metrics["aggregate"]["average_time"], 2.75, places=2)
 
-    def test_metrics_history_limit(self):
+    def test_metrics_history_limit(self) -> None:
         """Test that metrics history is limited to 100 entries."""
-        # Add 105 metrics entries
         for i in range(105):
-            metrics = {
+            metrics: Dict[str, Any] = {
                 "tokens_used": 10 + i,
                 "time_taken": 0.1 * i,
                 "success": True
             }
             self.llm_manager.save_metrics("model2", metrics)
 
-        # Check that only 100 are kept
-        saved_metrics = self.llm_manager.get_metrics("model2")
+        saved_metrics: Dict[str, Any] = self.llm_manager.get_metrics("model2")
         self.assertEqual(len(saved_metrics["history"]), 100)
 
-        # Verify oldest entries were removed (first 5)
-        first_tokens = saved_metrics["history"][0]["tokens_used"]
-        self.assertEqual(first_tokens, 15)  # Should start from entry 5 (10 + 5)
+        first_tokens: int = saved_metrics["history"][0]["tokens_used"]
+        self.assertEqual(first_tokens, 15)
 
-    def test_auto_load_models(self):
+    def test_auto_load_models(self) -> None:
         """Test auto-loading of models with auto_load flag."""
-        # Create models with different auto_load settings
-        config1 = {
+        config1: Dict[str, Any] = {
             "provider": "openai",
             "model_name": "gpt-4",
             "api_key": "key1",
@@ -303,7 +297,7 @@ class TestLLMConfiguration(unittest.TestCase):
             "created_at": datetime.now().isoformat()
         }
 
-        config2 = {
+        config2: Dict[str, Any] = {
             "provider": "anthropic",
             "model_name": "claude-3",
             "api_key": "key2",
@@ -311,7 +305,7 @@ class TestLLMConfiguration(unittest.TestCase):
             "created_at": datetime.now().isoformat()
         }
 
-        config3 = {
+        config3: Dict[str, Any] = {
             "provider": "local",
             "model_path": "/models/llama.gguf",
             "metadata": {"auto_load": True},
@@ -322,23 +316,18 @@ class TestLLMConfiguration(unittest.TestCase):
         self.config.set("llm_configuration.models.model2", config2)
         self.config.set("llm_configuration.models.model3", config3)
 
-        # Mock LLM manager for registration
-        mock_llm_manager = MagicMock()
+        fake_llm_manager: FakeLLMManager = FakeLLMManager()
 
-        # Auto-load models
-        loaded, failed = self.llm_manager.auto_load_models(mock_llm_manager)
+        loaded, failed = self.llm_manager.auto_load_models(fake_llm_manager)
 
-        # Verify only auto_load=True models were loaded
-        self.assertEqual(loaded, 2)  # model1 and model3
+        self.assertEqual(loaded, 2)
         self.assertEqual(failed, 0)
 
-        # Check registration calls
-        self.assertEqual(mock_llm_manager.register_model.call_count, 2)
+        self.assertEqual(fake_llm_manager.call_count, 2)
 
-    def test_migration_from_legacy_files(self):
+    def test_migration_from_legacy_files(self) -> None:
         """Test migration from legacy LLM config files."""
-        # Create legacy config files
-        legacy_models = {
+        legacy_models: Dict[str, Any] = {
             "legacy-model": {
                 "provider": "openai",
                 "model_name": "gpt-3.5",
@@ -348,7 +337,7 @@ class TestLLMConfiguration(unittest.TestCase):
             }
         }
 
-        legacy_profiles = {
+        legacy_profiles: Dict[str, Any] = {
             "legacy-profile": {
                 "name": "Legacy Profile",
                 "settings": {
@@ -358,7 +347,7 @@ class TestLLMConfiguration(unittest.TestCase):
             }
         }
 
-        legacy_metrics = {
+        legacy_metrics: Dict[str, Any] = {
             "legacy-model": {
                 "history": [
                     {"tokens_used": 50, "time_taken": 1.0}
@@ -370,38 +359,47 @@ class TestLLMConfiguration(unittest.TestCase):
             }
         }
 
-        # Write legacy files
-        models_file = self.legacy_llm_dir / "models.json"
-        profiles_file = self.legacy_llm_dir / "profiles.json"
-        metrics_file = self.legacy_llm_dir / "metrics.json"
+        models_file: Path = self.legacy_llm_dir / "models.json"
+        profiles_file: Path = self.legacy_llm_dir / "profiles.json"
+        metrics_file: Path = self.legacy_llm_dir / "metrics.json"
 
         models_file.write_text(json.dumps(legacy_models, indent=2))
         profiles_file.write_text(json.dumps(legacy_profiles, indent=2))
         metrics_file.write_text(json.dumps(legacy_metrics, indent=2))
 
-        # Mock home directory for migration
-        with patch('pathlib.Path.home', return_value=Path(self.temp_dir)):
-            # Run migration
-            self.config._migrate_llm_configs()
+        class FakeHomePath:
+            """Real test double for Path.home()."""
+            @staticmethod
+            def home() -> Path:
+                return Path(self.temp_dir)
 
-        # Verify migration successful
-        migrated_model = self.config.get("llm_configuration.models.legacy-model")
+        original_home: Any = Path.home
+        Path.home = FakeHomePath.home
+
+        try:
+            self.config._migrate_llm_configs()
+        finally:
+            Path.home = original_home
+
+        migrated_model: Optional[Dict[str, Any]] = self.config.get("llm_configuration.models.legacy-model")
         self.assertIsNotNone(migrated_model)
+        assert migrated_model is not None
         self.assertEqual(migrated_model["provider"], "openai")
         self.assertEqual(migrated_model["api_key"], "legacy-key")
 
-        migrated_profile = self.config.get("llm_configuration.profiles.legacy-profile")
+        migrated_profile: Optional[Dict[str, Any]] = self.config.get("llm_configuration.profiles.legacy-profile")
         self.assertIsNotNone(migrated_profile)
+        assert migrated_profile is not None
         self.assertEqual(migrated_profile["name"], "Legacy Profile")
 
-        migrated_metrics = self.config.get("llm_configuration.metrics.legacy-model")
+        migrated_metrics: Optional[Dict[str, Any]] = self.config.get("llm_configuration.metrics.legacy-model")
         self.assertIsNotNone(migrated_metrics)
+        assert migrated_metrics is not None
         self.assertEqual(migrated_metrics["aggregate"]["total_tokens"], 50)
 
-    def test_export_import_config(self):
+    def test_export_import_config(self) -> None:
         """Test exporting and importing LLM configurations."""
-        # Set up test data
-        model_config = {
+        model_config: Dict[str, Any] = {
             "provider": "openai",
             "model_name": "gpt-4",
             "api_key": "secret-key",
@@ -409,12 +407,12 @@ class TestLLMConfiguration(unittest.TestCase):
             "created_at": datetime.now().isoformat()
         }
 
-        profile_config = {
+        profile_config: Dict[str, Any] = {
             "name": "Test Profile",
             "settings": {"temperature": 0.7}
         }
 
-        metrics_data = {
+        metrics_data: Dict[str, Any] = {
             "history": [{"tokens_used": 100}],
             "aggregate": {"total_tokens": 100}
         }
@@ -423,66 +421,54 @@ class TestLLMConfiguration(unittest.TestCase):
         self.config.set("llm_configuration.profiles.export-profile", profile_config)
         self.config.set("llm_configuration.metrics.export-model", metrics_data)
 
-        # Export without API keys
-        export_path = Path(self.temp_dir) / "export.json"
+        export_path: Path = Path(self.temp_dir) / "export.json"
         self.llm_manager.export_config(str(export_path), include_api_keys=False)
 
-        # Verify export file created
         self.assertTrue(export_path.exists())
 
-        # Load exported data
         with open(export_path) as f:
-            exported = json.load(f)
+            exported: Dict[str, Any] = json.load(f)
 
-        # Verify API key was redacted
         self.assertEqual(exported["configs"]["export-model"]["api_key"], "REDACTED")
         self.assertEqual(exported["profiles"]["export-profile"]["name"], "Test Profile")
         self.assertEqual(exported["metrics"]["export-model"]["aggregate"]["total_tokens"], 100)
 
-        # Clear current config
         self.config.set("llm_configuration.models", {})
         self.config.set("llm_configuration.profiles", {})
         self.config.set("llm_configuration.metrics", {})
 
-        # Import config (merge mode)
         self.llm_manager.import_config(str(export_path), merge=True)
 
-        # Verify import (API key should be skipped)
-        imported_model = self.config.get("llm_configuration.models.export-model")
-        self.assertIsNone(imported_model)  # Skipped due to redacted API key
+        imported_model: Optional[Dict[str, Any]] = self.config.get("llm_configuration.models.export-model")
+        self.assertIsNone(imported_model)
 
-        imported_profile = self.config.get("llm_configuration.profiles.export-profile")
+        imported_profile: Optional[Dict[str, Any]] = self.config.get("llm_configuration.profiles.export-profile")
         self.assertIsNotNone(imported_profile)
+        assert imported_profile is not None
         self.assertEqual(imported_profile["name"], "Test Profile")
 
-        # Export with API keys
-        export_path2 = Path(self.temp_dir) / "export_with_keys.json"
+        export_path2: Path = Path(self.temp_dir) / "export_with_keys.json"
 
-        # Re-add model for export
         self.config.set("llm_configuration.models.export-model", model_config)
         self.llm_manager.export_config(str(export_path2), include_api_keys=True)
 
-        # Clear and import with API keys
         self.config.set("llm_configuration.models", {})
         self.llm_manager.import_config(str(export_path2), merge=False)
 
-        # Verify API key was preserved
-        imported_with_key = self.config.get("llm_configuration.models.export-model")
+        imported_with_key: Optional[Dict[str, Any]] = self.config.get("llm_configuration.models.export-model")
         self.assertIsNotNone(imported_with_key)
+        assert imported_with_key is not None
         self.assertEqual(imported_with_key["api_key"], "secret-key")
 
-    def test_concurrent_llm_config_access(self):
+    def test_concurrent_llm_config_access(self) -> None:
         """Test concurrent access to LLM configurations."""
-        import threading
-        import time
+        results: list[Tuple[str, int, str]] = []
+        errors: list[Tuple[str, int, str]] = []
 
-        results = []
-        errors = []
-
-        def save_model(model_id):
+        def save_model(model_id: int) -> None:
             """Save a model from a thread."""
             try:
-                config = LLMConfig(
+                config: LLMConfig = LLMConfig(
                     provider="test",
                     model_name=f"model-{model_id}",
                     api_key=f"key-{model_id}"
@@ -492,11 +478,11 @@ class TestLLMConfiguration(unittest.TestCase):
             except Exception as e:
                 errors.append(("save", model_id, str(e)))
 
-        def load_model(model_id):
+        def load_model(model_id: int) -> None:
             """Load a model from a thread."""
             try:
-                time.sleep(0.01)  # Small delay to ensure saves happen first
-                config = self.llm_manager.load_model_config(f"concurrent-{model_id}")
+                time.sleep(0.01)
+                config: Optional[LLMConfig] = self.llm_manager.load_model_config(f"concurrent-{model_id}")
                 if config:
                     results.append(("load", model_id, config.model_name))
                 else:
@@ -504,10 +490,10 @@ class TestLLMConfiguration(unittest.TestCase):
             except Exception as e:
                 errors.append(("load", model_id, str(e)))
 
-        def save_metrics(model_id):
+        def save_metrics(model_id: int) -> None:
             """Save metrics from a thread."""
             try:
-                metrics = {
+                metrics: Dict[str, Any] = {
                     "tokens_used": model_id * 10,
                     "time_taken": model_id * 0.5
                 }
@@ -516,42 +502,36 @@ class TestLLMConfiguration(unittest.TestCase):
             except Exception as e:
                 errors.append(("metrics", model_id, str(e)))
 
-        # Create threads for concurrent operations
-        threads = []
+        threads: list[threading.Thread] = []
         for i in range(10):
-            t1 = threading.Thread(target=save_model, args=(i,))
-            t2 = threading.Thread(target=load_model, args=(i,))
-            t3 = threading.Thread(target=save_metrics, args=(i,))
+            t1: threading.Thread = threading.Thread(target=save_model, args=(i,))
+            t2: threading.Thread = threading.Thread(target=load_model, args=(i,))
+            t3: threading.Thread = threading.Thread(target=save_metrics, args=(i,))
             threads.extend([t1, t2, t3])
 
-        # Start all threads
         for t in threads:
             t.start()
 
-        # Wait for completion
         for t in threads:
             t.join(timeout=5.0)
 
-        # Check results
-        save_count = sum(bool(r[0] == "save" and r[2] == "success")
+        save_count: int = sum(bool(r[0] == "save" and r[2] == "success")
                      for r in results)
-        load_count = sum(bool(r[0] == "load")
+        load_count: int = sum(bool(r[0] == "load")
                      for r in results)
-        metrics_count = sum(bool(r[0] == "metrics" and r[2] == "success")
+        metrics_count: int = sum(bool(r[0] == "metrics" and r[2] == "success")
                         for r in results)
 
         self.assertEqual(save_count, 10, f"All saves should succeed. Errors: {errors}")
         self.assertEqual(load_count, 10, f"All loads should complete. Errors: {errors}")
         self.assertEqual(metrics_count, 10, f"All metrics saves should succeed. Errors: {errors}")
 
-        # Verify no errors
         self.assertEqual(len(errors), 0, f"No errors should occur: {errors}")
 
-        # Verify final state is consistent
         for i in range(10):
-            model = self.config.get(f"llm_configuration.models.concurrent-{i}")
+            model: Optional[Dict[str, Any]] = self.config.get(f"llm_configuration.models.concurrent-{i}")
             self.assertIsNotNone(model, f"Model concurrent-{i} should exist")
-            metrics = self.config.get(f"llm_configuration.metrics.concurrent-{i}")
+            metrics: Optional[Dict[str, Any]] = self.config.get(f"llm_configuration.metrics.concurrent-{i}")
             self.assertIsNotNone(metrics, f"Metrics for concurrent-{i} should exist")
 
 

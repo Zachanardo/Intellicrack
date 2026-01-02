@@ -8,10 +8,7 @@ Tests the enhanced algorithms for:
 """
 
 import sys
-import os
-
-# Add intellicrack to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "intellicrack"))
+from typing import Any
 
 try:
     from intellicrack.core.analysis.radare2_strings import R2StringAnalyzer
@@ -23,11 +20,11 @@ except ImportError as e:
 class TestStringAnalyzer:
     """Test class for enhanced string analysis methods."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize with dummy binary path for testing."""
         self.analyzer = R2StringAnalyzer("dummy.bin")
 
-    def test_license_key_detection(self):
+    def test_license_key_detection(self) -> bool:
         """Test enhanced license key format detection."""
         print("Testing Enhanced License Key Detection:")
         print("=" * 50)
@@ -76,7 +73,7 @@ class TestStringAnalyzer:
         print(f"\nLicense Key Detection: {passed} passed, {failed} failed")
         return failed == 0
 
-    def test_crypto_string_detection(self):
+    def test_crypto_string_detection(self) -> bool:
         """Test enhanced cryptographic string identification."""
         print("\nTesting Enhanced Cryptographic String Detection:")
         print("=" * 55)
@@ -126,7 +123,7 @@ class TestStringAnalyzer:
         print(f"\nCrypto String Detection: {passed} passed, {failed} failed")
         return failed == 0
 
-    def test_api_string_detection(self):
+    def test_api_string_detection(self) -> bool:
         """Test enhanced API call string analysis."""
         print("\nTesting Enhanced API String Analysis:")
         print("=" * 45)
@@ -182,7 +179,7 @@ class TestStringAnalyzer:
         return failed == 0
 
 
-def main():
+def main() -> int:
     """Main test function."""
     print("DAY 5.1 ENHANCED STRING ANALYSIS PATTERN DETECTION TESTING")
     print("=" * 65)

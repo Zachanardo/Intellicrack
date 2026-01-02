@@ -59,6 +59,9 @@ class MemoryOptimizedBinaryLoader:
                 - chunk_size: Size of data chunks in bytes (default: 1MB)
                 - max_memory: Maximum memory usage in bytes (default: 1GB)
 
+        Returns:
+            None: Initializes the loader instance.
+
         """
         self.config = config or {}
         self.logger = logging.getLogger(__name__)
@@ -107,7 +110,15 @@ class MemoryOptimizedBinaryLoader:
             return False
 
     def close(self) -> None:
-        """Close the current file and release resources."""
+        """Close the current file and release resources.
+
+        Cleans up memory mapped file, closes file handles, and clears the
+        section cache to free all associated resources.
+
+        Returns:
+            None: Closes file handles and clears resources.
+
+        """
         # Clear section cache
         self.section_cache.clear()
 
@@ -301,7 +312,12 @@ class MemoryOptimizedBinaryLoader:
         return format_bytes(size_bytes)
 
     def __enter__(self) -> "MemoryOptimizedBinaryLoader":
-        """Context manager entry."""
+        """Context manager entry.
+
+        Returns:
+            The memory loader instance for use in with block.
+
+        """
         return self
 
     def __exit__(
@@ -310,7 +326,20 @@ class MemoryOptimizedBinaryLoader:
         exc_val: BaseException | None,
         exc_tb: types.TracebackType | None,
     ) -> None:
-        """Context manager exit."""
+        """Context manager exit.
+
+        Handles cleanup on context manager exit, logging any exceptions and
+        closing file resources.
+
+        Args:
+            exc_type: Exception type if an exception occurred, None otherwise.
+            exc_val: Exception instance if an exception occurred, None otherwise.
+            exc_tb: Traceback object if an exception occurred, None otherwise.
+
+        Returns:
+            None: Performs cleanup and closes resources.
+
+        """
         if exc_type:
             self.logger.exception("Memory loader exiting due to %s: %s", exc_type.__name__, exc_val)
             if exc_tb:

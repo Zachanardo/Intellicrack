@@ -22,14 +22,14 @@ class MockAnalysisEvent(Enum):
 class ProductionStringAnalyzer:
     """Production-ready string analyzer for checkpoint validation."""
 
-    def __init__(self, binary_path):
+    def __init__(self, binary_path: str) -> None:
         self.binary_path = binary_path
 
-    def _calculate_shannon_entropy(self, text):
+    def _calculate_shannon_entropy(self, text: str) -> float:
         """Calculate Shannon entropy for randomness assessment."""
         if not text:
             return 0.0
-        char_counts = {}
+        char_counts: dict[str, int] = {}
         for char in text:
             char_counts[char] = char_counts.get(char, 0) + 1
         entropy = 0.0
@@ -40,22 +40,22 @@ class ProductionStringAnalyzer:
                 entropy -= probability * math.log2(probability)
         return entropy
 
-    def _is_repetitive_pattern(self, content):
+    def _is_repetitive_pattern(self, content: str) -> bool:
         """Check for repetitive patterns unlikely in real license keys."""
         if len(content) < 4:
             return False
 
         # Check character frequency
-        char_counts = {}
+        char_counts: dict[str, int] = {}
         for char in content:
             char_counts[char] = char_counts.get(char, 0) + 1
 
-        most_frequent_count = max(char_counts.values())
+        most_frequent_count: int = max(char_counts.values())
         repetition_ratio = most_frequent_count / len(content)
 
-        return repetition_ratio > 0.5  # >50% repetition indicates pattern
+        return bool(repetition_ratio > 0.5)  # >50% repetition indicates pattern
 
-    def _detect_license_key_formats(self, content):
+    def _detect_license_key_formats(self, content: str) -> bool:
         """Advanced license key format detection with production patterns."""
         if not content or len(content) < 8:
             return False
@@ -90,7 +90,7 @@ class ProductionStringAnalyzer:
         prefix_pattern = re.compile(r'^[A-Z]+[0-9]*:[A-Z0-9]+$', re.IGNORECASE)
         return bool(prefix_pattern.match(content) and len(content) >= 12)
 
-    def _detect_cryptographic_data(self, content):
+    def _detect_cryptographic_data(self, content: str) -> bool:
         """Production cryptographic pattern detection."""
         if not content:
             return False
@@ -123,7 +123,7 @@ class ProductionStringAnalyzer:
 
         return False
 
-    def _analyze_api_function_patterns(self, content):
+    def _analyze_api_function_patterns(self, content: str) -> bool:
         """Production API function pattern recognition."""
         if not content:
             return False
@@ -156,16 +156,16 @@ class ProductionStringAnalyzer:
 class ProductionRealtimeAnalyzer:
     """Production real-time analyzer for checkpoint validation."""
 
-    def __init__(self):
-        self.watched_binaries = {}
-        self.event_callbacks = {event: [] for event in MockAnalysisEvent}
+    def __init__(self) -> None:
+        self.watched_binaries: dict[str, object] = {}
+        self.event_callbacks: dict[MockAnalysisEvent, list[object]] = {event: [] for event in MockAnalysisEvent}
         self.running = False
 
-    def _determine_analysis_components(self, binary_path, trigger_event):
+    def _determine_analysis_components(self, binary_path: str, trigger_event: MockAnalysisEvent) -> list[str]:
         """Determine analysis components - enhanced_strings must be included."""
         return ["strings", "enhanced_strings", "imports", "functions"]
 
-    def _perform_enhanced_string_analysis(self, r2_session, binary_path):
+    def _perform_enhanced_string_analysis(self, r2_session: object, binary_path: str) -> dict[str, object]:
         """Production enhanced string analysis implementation."""
         try:
             # Real string analyzer instance
@@ -253,7 +253,7 @@ class ProductionRealtimeAnalyzer:
         except Exception as e:
             return {"error": str(e), "production_ready": False}
 
-    def _monitor_dynamic_string_patterns(self, r2_session, binary_path):
+    def _monitor_dynamic_string_patterns(self, r2_session: object, binary_path: str) -> dict[str, object]:
         """Monitor for dynamic string generation during execution."""
         try:
             return {
@@ -275,7 +275,7 @@ class ProductionRealtimeAnalyzer:
         except Exception as e:
             return {"error": str(e), "dynamic_monitoring": False}
 
-    def get_status(self):
+    def get_status(self) -> dict[str, object]:
         """Get analyzer status."""
         return {
             "running": self.running,
@@ -284,7 +284,7 @@ class ProductionRealtimeAnalyzer:
             "production_ready": True
         }
 
-    def register_callback(self, event_type, callback):
+    def register_callback(self, event_type: MockAnalysisEvent, callback: object) -> bool:
         """Register event callback."""
         if event_type in self.event_callbacks:
             self.event_callbacks[event_type].append(callback)
@@ -292,7 +292,7 @@ class ProductionRealtimeAnalyzer:
         return False
 
 
-def test_production_checkpoint_5():
+def test_production_checkpoint_5() -> int:
     """Execute comprehensive Day 5.3 Production Readiness Checkpoint."""
     print("DAY 5.3 PRODUCTION READINESS CHECKPOINT 5")
     print("=" * 50)
@@ -445,16 +445,16 @@ def test_production_checkpoint_5():
         print(f"  {'OK PASS' if dynamic_functional else 'FAIL FAIL'}: Dynamic pattern monitoring")
 
         # Test callback system
-        test_callbacks = []
-        def test_callback(data):
+        test_callbacks: list[object] = []
+        def test_callback(data: object) -> None:
             test_callbacks.append(data)
 
         callback_registered = rt_analyzer.register_callback(MockAnalysisEvent.STRING_ANALYSIS_UPDATED, test_callback)
         print(f"  {'OK PASS' if callback_registered else 'FAIL FAIL'}: Event callback registration")
 
         # Test status system
-        status = rt_analyzer.get_status()
-        status_functional = "production_ready" in status and status["production_ready"]
+        status_result = rt_analyzer.get_status()
+        status_functional = "production_ready" in status_result and bool(status_result["production_ready"])
         print(f"  {'OK PASS' if status_functional else 'FAIL FAIL'}: Production status reporting")
 
         realtime_test_passed = all([
@@ -497,7 +497,7 @@ def test_production_checkpoint_5():
         # Test real-time analyzer performance
         start_time = time.time()
         rt_analyzer = ProductionRealtimeAnalyzer()
-        status = rt_analyzer.get_status()
+        perf_status = rt_analyzer.get_status()
         status_time = time.time() - start_time
         status_acceptable = status_time < 0.1  # 100ms max for status
 

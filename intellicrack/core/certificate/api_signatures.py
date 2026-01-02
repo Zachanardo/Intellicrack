@@ -73,7 +73,15 @@ logger = logging.getLogger(__name__)
 
 
 class CallingConvention(Enum):
-    """Calling conventions for API functions across platforms."""
+    """Calling conventions for API functions across platforms.
+
+    Attributes:
+        STDCALL: Standard call convention for 32-bit Windows APIs.
+        CDECL: C declaration convention for C library functions.
+        FASTCALL: Fast call convention for optimized x86 functions.
+        X64_MS: Microsoft x64 calling convention for 64-bit Windows.
+        X64_SYSV: System V x64 calling convention for Unix/Linux systems.
+    """
 
     STDCALL = "stdcall"
     CDECL = "cdecl"
@@ -83,7 +91,16 @@ class CallingConvention(Enum):
 
 
 class Platform(Enum):
-    """Target platforms for certificate validation APIs."""
+    """Target platforms for certificate validation APIs.
+
+    Attributes:
+        WINDOWS: Windows operating system.
+        LINUX: Linux operating system.
+        MACOS: macOS operating system.
+        ANDROID: Android operating system.
+        IOS: iOS operating system.
+        ALL: All platforms (wildcard).
+    """
 
     WINDOWS = "windows"
     LINUX = "linux"
@@ -95,7 +112,16 @@ class Platform(Enum):
 
 @dataclass
 class APISignature:
-    """Signature information for a certificate validation API function."""
+    """Signature information for a certificate validation API function.
+
+    Attributes:
+        name: Function name in the library.
+        library: Library or DLL name containing the API function.
+        platforms: List of target platforms where this API is available.
+        calling_convention: Calling convention used by this API.
+        return_type: Return type of the API function.
+        description: Human-readable description of the API function's purpose.
+    """
 
     name: str
     library: str

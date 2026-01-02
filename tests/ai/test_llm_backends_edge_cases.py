@@ -7,10 +7,12 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-import pytest
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+import pytest
+
+from conftest import refresh_bool
 from intellicrack.ai.llm_backends import (
     LLMConfig,
     LLMMessage,
@@ -185,15 +187,15 @@ class TestRealErrorRecovery:
         assert backend.is_initialized
 
         backend.shutdown()
-        assert not backend.is_initialized
+        assert not refresh_bool(backend.is_initialized)
         assert backend.client is None
 
         assert backend.initialize()
-        assert backend.is_initialized
+        assert refresh_bool(backend.is_initialized)
 
     def test_backend_handles_empty_message_list(self, real_openai_backend: OpenAIBackend) -> None:
         """LLMBackend handles empty message list gracefully."""
-        messages = []
+        messages: list[LLMMessage] = []
 
         try:
             response = real_openai_backend.chat(messages)

@@ -1,5 +1,19 @@
 """Comprehensive radare2 Integration Utilities.
 
+This module provides production-grade interfaces for radare2 binary analysis,
+including session management, function analysis, vulnerability detection,
+and binary diffing capabilities. Supports ESIL emulation, signature matching,
+and license-string detection for software licensing protection analysis.
+
+Features:
+    - Advanced radare2 session management with pooling support.
+    - Function decompilation and control flow graph analysis.
+    - ESIL emulation and register state tracking.
+    - Vulnerability detection (buffer overflow, format strings, etc.).
+    - Binary diffing and comparison.
+    - License-related string detection and analysis.
+    - API call categorization and analysis.
+
 Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
@@ -55,7 +69,10 @@ error_handler = get_error_handler()
 
 
 class R2Exception(Exception):
-    """Customize exception for radare2 operations."""
+    """Customize exception for radare2 operations.
+
+    Raised when radare2 operations fail or encounter errors.
+    """
 
     pass
 
@@ -79,6 +96,8 @@ class R2Session:
             binary_path: Path to binary file
             radare2_path: Optional path to radare2 executable
 
+        Raises:
+            R2Exception: If r2pipe is not available.
         """
         self.binary_path = binary_path
         self.radare2_path = radare2_path
@@ -92,7 +111,13 @@ class R2Session:
             raise R2Exception("r2pipe not available - please install radare2-r2pipe")
 
     def __enter__(self) -> "R2Session":
-        """Context manager entry."""
+        """Context manager entry.
+
+        Establishes radare2 connection on entering the context.
+
+        Returns:
+            R2Session: The current session instance.
+        """
         self.connect()
         return self
 
@@ -102,7 +127,15 @@ class R2Session:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        """Context manager exit."""
+        """Context manager exit.
+
+        Disconnects from radare2 when exiting the context, logging any exceptions.
+
+        Args:
+            exc_type: Type of exception that occurred, if any.
+            exc_val: Exception instance that occurred, if any.
+            exc_tb: Traceback object associated with the exception, if any.
+        """
         if exc_type is not None:
             logger.error(f"Radare2 session exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb is not None:
@@ -110,7 +143,16 @@ class R2Session:
         self.disconnect()
 
     def connect(self) -> bool:
-        """Establish connection to radare2."""
+        """Establish connection to radare2.
+
+        Creates a connection to radare2 and performs initial analysis on the binary.
+
+        Returns:
+            bool: True if connection was successful, False otherwise.
+
+        Raises:
+            R2Exception: If binary file does not exist or connection fails.
+        """
         with r2_error_context("r2_connect", binary_path=self.binary_path):
             try:
                 if not os.path.exists(self.binary_path):
@@ -134,7 +176,10 @@ class R2Session:
                 raise R2Exception(f"Connection failed: {e}") from e
 
     def disconnect(self) -> None:
-        """Disconnect from radare2."""
+        """Disconnect from radare2.
+
+        Gracefully closes the radare2 connection and cleans up resources.
+        """
         if self.r2 is not None:
             try:
                 self.r2.quit()
@@ -148,12 +193,14 @@ class R2Session:
         """Execute radare2 command with error handling.
 
         Args:
-            cmd: radare2 command
-            expect_json: Whether to parse result as JSON
+            cmd: radare2 command to execute.
+            expect_json: Whether to parse result as JSON.
 
         Returns:
-            Command result
+            str | dict[str, Any] | list[Any]: Command result as string, parsed JSON dict, or JSON list.
 
+        Raises:
+            R2Exception: If not connected to radare2 or command execution fails.
         """
         if not self.is_connected or self.r2 is None:
             raise R2Exception("Not connected to radare2")
@@ -183,11 +230,10 @@ class R2Session:
         """Execute a radare2 command and return the result as a string.
 
         Args:
-            command: The radare2 command to execute
+            command: The radare2 command to execute.
 
         Returns:
-            Command output as string
-
+            Command output as a string.
         """
         result = self._execute_command(command, expect_json=False)
         return str(result) if result else ""
@@ -196,11 +242,10 @@ class R2Session:
         """Execute a radare2 command and return the result as parsed JSON.
 
         Args:
-            command: The radare2 command to execute (typically ending with 'j')
+            command: The radare2 command to execute (typically ending with 'j').
 
         Returns:
-            Parsed JSON result as dict or list
-
+            Parsed JSON result as dict or list.
         """
         result = self._execute_command(command, expect_json=True)
         return result if isinstance(result, (dict, list)) else {}
@@ -213,12 +258,11 @@ class R2Session:
         radare2-specific output quirks.
 
         Args:
-            json_data: JSON string or bytes to parse, or None
+            json_data: JSON string or bytes to parse, or None.
 
         Returns:
             Parsed JSON as dictionary or list. Returns empty dict for invalid
             or empty input.
-
         """
         if json_data is None:
             return {}
@@ -290,8 +334,10 @@ class R2Session:
         """Perform comprehensive analysis.
 
         Args:
-            level: Analysis level (a, aa, aaa, aaaa)
+            level: Analysis level (a, aa, aaa, aaaa).
 
+        Returns:
+            True if analysis succeeded, False otherwise.
         """
         try:
             self._execute_command(level)
@@ -301,17 +347,32 @@ class R2Session:
             return False
 
     def get_info(self) -> dict[str, Any]:
-        """Get binary information."""
+        """Get binary information.
+
+        Returns:
+            Dictionary containing binary information metadata.
+        """
         result = self._execute_command("ij", expect_json=True)
         return result if isinstance(result, dict) else {}
 
     def get_functions(self) -> list[dict[str, Any]]:
-        """Get list of all functions."""
+        """Get list of all functions.
+
+        Returns:
+            List of function dictionaries with metadata.
+        """
         result = self._execute_command("aflj", expect_json=True)
         return result if isinstance(result, list) else []
 
     def get_function_info(self, address: str | int) -> dict[str, Any]:
-        """Get detailed function information."""
+        """Get detailed function information.
+
+        Args:
+            address: Function address as string or integer.
+
+        Returns:
+            Function information dictionary.
+        """
         addr = hex(address) if isinstance(address, int) else address
         result = self._execute_command(f"afij @ {addr}", expect_json=True)
         return result if isinstance(result, dict) else {}
@@ -320,11 +381,10 @@ class R2Session:
         """Decompile function to pseudocode.
 
         Args:
-            address: Function address
+            address: Function address as string or integer.
 
         Returns:
-            Decompiled pseudocode
-
+            Decompiled pseudocode as a string.
         """
         addr = hex(address) if isinstance(address, int) else address
         result = self._execute_command(f"pdc @ {addr}")
@@ -334,18 +394,24 @@ class R2Session:
         """Get function control flow graph with decompilation.
 
         Args:
-            address: Function address
+            address: Function address as string or integer.
 
         Returns:
-            Graph data with decompilation info
-
+            Graph data with decompilation information.
         """
         addr = hex(address) if isinstance(address, int) else address
         result = self._execute_command(f"pdgj @ {addr}", expect_json=True)
         return result if isinstance(result, dict) else {}
 
     def get_function_signature(self, address: str | int) -> str:
-        """Get function signature."""
+        """Get function signature.
+
+        Args:
+            address: Function address as string or integer.
+
+        Returns:
+            Function signature as a string.
+        """
         addr = hex(address) if isinstance(address, int) else address
         result = self._execute_command(f"afv @ {addr}")
         return result if isinstance(result, str) else str(result)
@@ -354,17 +420,20 @@ class R2Session:
         """Get all strings from binary.
 
         Args:
-            min_length: Minimum string length
+            min_length: Minimum string length (default: 4).
 
         Returns:
-            List of string entries with metadata
-
+            List of string entries with metadata.
         """
         result = self._execute_command(f"izzj~{{length}}gte:{min_length}", expect_json=True)
         return result if isinstance(result, list) else []
 
     def get_strings_with_xrefs(self) -> list[dict[str, Any]]:
-        """Get strings with cross-references."""
+        """Get strings with cross-references.
+
+        Returns:
+            List of strings with cross-reference information.
+        """
         result = self._execute_command("izzj", expect_json=True)
         return result if isinstance(result, list) else []
 
@@ -372,17 +441,23 @@ class R2Session:
         """Search for strings matching pattern.
 
         Args:
-            pattern: Search pattern
+            pattern: Search pattern to match.
 
         Returns:
-            Matching strings with locations
-
+            Matching strings with their locations.
         """
         result = self._execute_command(f"/j {pattern}", expect_json=True)
         return result if isinstance(result, list) else []
 
     def get_license_strings(self) -> list[dict[str, Any]]:
-        """Find potential license-related strings."""
+        """Find potential license-related strings.
+
+        Searches for strings related to licensing such as license keys,
+        registration codes, and activation tokens.
+
+        Returns:
+            List of license-related strings with locations.
+        """
         license_patterns = [
             "license",
             "registration",
@@ -414,22 +489,38 @@ class R2Session:
         return all_strings
 
     def get_imports(self) -> list[dict[str, Any]]:
-        """Get imported functions."""
+        """Get imported functions.
+
+        Returns:
+            List of imported function dictionaries.
+        """
         result = self._execute_command("iij", expect_json=True)
         return result if isinstance(result, list) else []
 
     def get_exports(self) -> list[dict[str, Any]]:
-        """Get exported functions."""
+        """Get exported functions.
+
+        Returns:
+            List of exported function dictionaries.
+        """
         result = self._execute_command("iEj", expect_json=True)
         return result if isinstance(result, list) else []
 
     def get_symbols(self) -> list[dict[str, Any]]:
-        """Get all symbols."""
+        """Get all symbols.
+
+        Returns:
+            List of symbol dictionaries.
+        """
         result = self._execute_command("isj", expect_json=True)
         return result if isinstance(result, list) else []
 
     def get_relocations(self) -> list[dict[str, Any]]:
-        """Get relocations."""
+        """Get relocations.
+
+        Returns:
+            List of relocation dictionaries.
+        """
         result = self._execute_command("irj", expect_json=True)
         return result if isinstance(result, list) else []
 
@@ -437,8 +528,7 @@ class R2Session:
         """Analyze API calls and categorize them.
 
         Returns:
-            Dictionary of API categories and their functions
-
+            Dictionary mapping API categories to lists of functions.
         """
         imports = self.get_imports()
 
@@ -480,9 +570,12 @@ class R2Session:
 
         return api_categories
 
-    # ESIL Analysis Engine
     def initialize_esil(self) -> bool:
-        """Initialize ESIL emulation."""
+        """Initialize ESIL emulation.
+
+        Returns:
+            True if initialization succeeded, False otherwise.
+        """
         try:
             self._execute_command("aeim")
             return True
@@ -494,19 +587,22 @@ class R2Session:
         """Step through ESIL instructions.
 
         Args:
-            address: Starting address
-            steps: Number of steps to execute
+            address: Starting address as string or integer.
+            steps: Number of steps to execute (default: 1).
 
         Returns:
-            ESIL execution result
-
+            ESIL execution result as a string.
         """
         addr = hex(address) if isinstance(address, int) else address
         result = self._execute_command(f"{steps}aes @ {addr}")
         return result if isinstance(result, str) else str(result)
 
     def get_esil_registers(self) -> dict[str, Any]:
-        """Get ESIL register state."""
+        """Get ESIL register state.
+
+        Returns:
+            Dictionary of register names and values.
+        """
         result = self._execute_command("drj", expect_json=True)
         return result if isinstance(result, dict) else {}
 
@@ -514,11 +610,11 @@ class R2Session:
         """Emulate function execution using ESIL.
 
         Args:
-            address: Function address
+            address: Function address as string or integer.
 
         Returns:
-            Emulation results
-
+            Dictionary containing emulation results including initial/final
+            register states and execution trace.
         """
         addr = hex(address) if isinstance(address, int) else address
 
@@ -554,9 +650,12 @@ class R2Session:
 
         return results
 
-    # Signature Analysis
     def apply_signatures(self) -> bool:
-        """Apply FLIRT signatures."""
+        """Apply FLIRT signatures.
+
+        Returns:
+            True if signature application succeeded, False otherwise.
+        """
         try:
             self._execute_command("zf")
             return True
@@ -565,17 +664,19 @@ class R2Session:
             return False
 
     def get_identified_functions(self) -> list[dict[str, Any]]:
-        """Get functions identified by signatures."""
+        """Get functions identified by signatures.
+
+        Returns:
+            List of functions that were identified by FLIRT signatures.
+        """
         functions = self.get_functions()
         return [f for f in functions if f.get("name", "").startswith("sym.")]
 
-    # Vulnerability Detection
     def detect_vulnerabilities(self) -> dict[str, list[dict[str, Any]]]:
         """Detect potential vulnerabilities using radare2 analysis.
 
         Returns:
-            Dictionary of vulnerability types and findings
-
+            Dictionary mapping vulnerability types to lists of findings.
         """
         vulnerabilities: dict[str, list[dict[str, Any]]] = {
             "buffer_overflow": [],
@@ -607,7 +708,15 @@ class R2Session:
         return vulnerabilities
 
     def _analyze_function_vulnerabilities(self, address: str | int) -> dict[str, list[dict[str, Any]]]:
-        """Analyze single function for vulnerabilities."""
+        """Analyze single function for vulnerabilities.
+
+        Args:
+            address: Function address as string or integer.
+
+        Returns:
+            Dictionary mapping vulnerability types to lists of findings in the
+            function.
+        """
         addr = hex(address) if isinstance(address, int) else address
         vulns: dict[str, list[dict[str, Any]]] = {
             "buffer_overflow": [],
@@ -686,19 +795,17 @@ class R2Session:
         """Perform deeper analysis on a specific function.
 
         Args:
-            address: Function address
+            address: Function address as string or integer.
 
         Returns:
-            True if analysis succeeded, False otherwise
-
+            True if analysis succeeded, False otherwise.
         """
         addr = hex(address) if isinstance(address, int) else address
         try:
-            # Perform function-specific analysis
-            self._execute_command(f"af @ {addr}")  # Analyze function
-            self._execute_command(f"afr @ {addr}")  # Analyze function references
-            self._execute_command(f"afv @ {addr}")  # Analyze function variables
-            self._execute_command(f"aft @ {addr}")  # Analyze function types
+            self._execute_command(f"af @ {addr}")
+            self._execute_command(f"afr @ {addr}")
+            self._execute_command(f"afv @ {addr}")
+            self._execute_command(f"aft @ {addr}")
             return True
         except R2Exception as e:
             self.logger.error("R2Exception in radare2_utils: %s", e)
@@ -708,18 +815,16 @@ class R2Session:
         """Run optimization passes on a function for better decompilation.
 
         Args:
-            address: Function address
+            address: Function address as string or integer.
 
         Returns:
-            True if optimization succeeded, False otherwise
-
+            True if optimization succeeded, False otherwise.
         """
         addr = hex(address) if isinstance(address, int) else address
         try:
-            # Run radare2 optimization passes
-            self._execute_command(f"aaa @ {addr}")  # Deep analysis
-            self._execute_command(f"aac @ {addr}")  # Analyze function calls
-            self._execute_command(f"aar @ {addr}")  # Analyze references
+            self._execute_command(f"aaa @ {addr}")
+            self._execute_command(f"aac @ {addr}")
+            self._execute_command(f"aar @ {addr}")
             return True
         except R2Exception as e:
             self.logger.error("R2Exception in radare2_utils: %s", e)
@@ -732,14 +837,19 @@ def r2_session(
 ) -> Generator["R2Session | R2SessionPoolAdapter", None, None]:
     """Context manager for radare2 sessions.
 
+    Provides a convenient way to manage radare2 sessions with automatic
+    connection and cleanup. Supports session pooling for better resource
+    management when analyzing multiple binaries.
+
     Args:
-        binary_path: Path to binary file
-        radare2_path: Optional path to radare2 executable
-        use_pooling: Whether to use session pooling (default: True)
+        binary_path: Path to binary file to analyze.
+        radare2_path: Optional path to radare2 executable.
+        use_pooling: Whether to use session pooling for better resource
+            management (default: True).
 
     Yields:
-        R2Session instance or R2SessionWrapper instance
-
+        R2Session | R2SessionPoolAdapter: A session object for executing
+            radare2 commands on the binary.
     """
     if use_pooling and SESSION_MANAGER_AVAILABLE:
         flags: list[str] = []
@@ -760,12 +870,11 @@ def r2_session(
 class R2SessionPoolAdapter:
     """Adapter to make R2SessionWrapper compatible with R2Session interface."""
 
-    def __init__(self, session_wrapper: 'R2SessionWrapper'):
+    def __init__(self, session_wrapper: 'R2SessionWrapper') -> None:
         """Initialize adapter.
 
         Args:
-            session_wrapper: The underlying session wrapper
-
+            session_wrapper: The underlying R2SessionWrapper instance to adapt.
         """
         self.session_wrapper = session_wrapper
         self.binary_path = str(session_wrapper.binary_path)
@@ -776,12 +885,14 @@ class R2SessionPoolAdapter:
         """Execute radare2 command with error handling.
 
         Args:
-            cmd: radare2 command
-            expect_json: Whether to parse result as JSON
+            cmd: radare2 command to execute.
+            expect_json: Whether to parse result as JSON.
 
         Returns:
-            Command result
+            Command result as string, parsed JSON dict, or JSON list.
 
+        Raises:
+            R2Exception: If command execution fails due to radare2 errors.
         """
         try:
             result = self.session_wrapper.execute(cmd, expect_json)
@@ -805,11 +916,10 @@ class R2SessionPoolAdapter:
         """Execute a radare2 command and return the result as a string.
 
         Args:
-            command: The radare2 command to execute
+            command: The radare2 command to execute.
 
         Returns:
-            Command output as string
-
+            Command output as a string.
         """
         result = self._execute_command(command, expect_json=False)
         return str(result) if result else ""
@@ -818,11 +928,10 @@ class R2SessionPoolAdapter:
         """Execute a radare2 command and return the result as parsed JSON.
 
         Args:
-            command: The radare2 command to execute (typically ending with 'j')
+            command: The radare2 command to execute (typically ending with 'j').
 
         Returns:
-            Parsed JSON result as dict or list
-
+            Parsed JSON result as dict or list.
         """
         result = self._execute_command(command, expect_json=True)
         return result if isinstance(result, (dict, list)) else {}
@@ -835,12 +944,11 @@ class R2SessionPoolAdapter:
         radare2-specific output quirks.
 
         Args:
-            json_data: JSON string or bytes to parse, or None
+            json_data: JSON string or bytes to parse, or None.
 
         Returns:
             Parsed JSON as dictionary or list. Returns empty dict for invalid
             or empty input.
-
         """
         if json_data is None:
             return {}
@@ -912,8 +1020,10 @@ class R2SessionPoolAdapter:
         """Perform comprehensive analysis.
 
         Args:
-            level: Analysis level (a, aa, aaa, aaaa)
+            level: Analysis level (a, aa, aaa, aaaa).
 
+        Returns:
+            True if analysis succeeded, False otherwise.
         """
         try:
             self._execute_command(level)
@@ -923,17 +1033,32 @@ class R2SessionPoolAdapter:
             return False
 
     def get_info(self) -> dict[str, Any]:
-        """Get binary information."""
+        """Get binary information.
+
+        Returns:
+            Dictionary containing binary information metadata.
+        """
         result = self._execute_command("ij", expect_json=True)
         return result if isinstance(result, dict) else {}
 
     def get_functions(self) -> list[dict[str, Any]]:
-        """Get list of all functions."""
+        """Get list of all functions.
+
+        Returns:
+            List of function dictionaries with metadata.
+        """
         result = self._execute_command("aflj", expect_json=True)
         return result if isinstance(result, list) else []
 
     def get_function_info(self, address: str | int) -> dict[str, Any]:
-        """Get detailed function information."""
+        """Get detailed function information.
+
+        Args:
+            address: Function address as string or integer.
+
+        Returns:
+            Function information dictionary.
+        """
         addr = hex(address) if isinstance(address, int) else address
         result = self._execute_command(f"afij @ {addr}", expect_json=True)
         return result if isinstance(result, dict) else {}
@@ -942,11 +1067,10 @@ class R2SessionPoolAdapter:
         """Decompile function to pseudocode.
 
         Args:
-            address: Function address
+            address: Function address as string or integer.
 
         Returns:
-            Decompiled pseudocode
-
+            Decompiled pseudocode as a string.
         """
         addr = hex(address) if isinstance(address, int) else address
         result = self._execute_command(f"pdc @ {addr}")
@@ -956,18 +1080,24 @@ class R2SessionPoolAdapter:
         """Get function control flow graph with decompilation.
 
         Args:
-            address: Function address
+            address: Function address as string or integer.
 
         Returns:
-            Graph data with decompilation info
-
+            Graph data with decompilation information.
         """
         addr = hex(address) if isinstance(address, int) else address
         result = self._execute_command(f"pdgj @ {addr}", expect_json=True)
         return result if isinstance(result, dict) else {}
 
     def get_function_signature(self, address: str | int) -> str:
-        """Get function signature."""
+        """Get function signature.
+
+        Args:
+            address: Function address as string or integer.
+
+        Returns:
+            Function signature as a string.
+        """
         addr = hex(address) if isinstance(address, int) else address
         result = self._execute_command(f"afv @ {addr}")
         return result if isinstance(result, str) else str(result)
@@ -976,17 +1106,20 @@ class R2SessionPoolAdapter:
         """Get all strings from binary.
 
         Args:
-            min_length: Minimum string length
+            min_length: Minimum string length (default: 4).
 
         Returns:
-            List of string entries with metadata
-
+            List of string entries with metadata.
         """
         result = self._execute_command(f"izzj~{{length}}gte:{min_length}", expect_json=True)
         return result if isinstance(result, list) else []
 
     def get_strings_with_xrefs(self) -> list[dict[str, Any]]:
-        """Get strings with cross-references."""
+        """Get strings with cross-references.
+
+        Returns:
+            List of strings with cross-reference information.
+        """
         result = self._execute_command("izzj", expect_json=True)
         return result if isinstance(result, list) else []
 
@@ -994,17 +1127,23 @@ class R2SessionPoolAdapter:
         """Search for strings matching pattern.
 
         Args:
-            pattern: Search pattern
+            pattern: Search pattern to match.
 
         Returns:
-            Matching strings with locations
-
+            Matching strings with their locations.
         """
         result = self._execute_command(f"/j {pattern}", expect_json=True)
         return result if isinstance(result, list) else []
 
     def get_license_strings(self) -> list[dict[str, Any]]:
-        """Find potential license-related strings."""
+        """Find potential license-related strings.
+
+        Searches for strings related to licensing such as license keys,
+        registration codes, and activation tokens.
+
+        Returns:
+            List of license-related strings with locations.
+        """
         license_patterns = [
             "license",
             "registration",
@@ -1036,22 +1175,38 @@ class R2SessionPoolAdapter:
         return all_strings
 
     def get_imports(self) -> list[dict[str, Any]]:
-        """Get imported functions."""
+        """Get imported functions.
+
+        Returns:
+            List of imported function dictionaries.
+        """
         result = self._execute_command("iij", expect_json=True)
         return result if isinstance(result, list) else []
 
     def get_exports(self) -> list[dict[str, Any]]:
-        """Get exported functions."""
+        """Get exported functions.
+
+        Returns:
+            List of exported function dictionaries.
+        """
         result = self._execute_command("iEj", expect_json=True)
         return result if isinstance(result, list) else []
 
     def get_symbols(self) -> list[dict[str, Any]]:
-        """Get all symbols."""
+        """Get all symbols.
+
+        Returns:
+            List of symbol dictionaries.
+        """
         result = self._execute_command("isj", expect_json=True)
         return result if isinstance(result, list) else []
 
     def get_relocations(self) -> list[dict[str, Any]]:
-        """Get relocations."""
+        """Get relocations.
+
+        Returns:
+            List of relocation dictionaries.
+        """
         result = self._execute_command("irj", expect_json=True)
         return result if isinstance(result, list) else []
 
@@ -1059,8 +1214,7 @@ class R2SessionPoolAdapter:
         """Analyze API calls and categorize them.
 
         Returns:
-            Dictionary of API categories and their functions
-
+            Dictionary mapping API categories to lists of functions.
         """
         imports = self.get_imports()
 
@@ -1103,7 +1257,11 @@ class R2SessionPoolAdapter:
         return api_categories
 
     def initialize_esil(self) -> bool:
-        """Initialize ESIL emulation."""
+        """Initialize ESIL emulation.
+
+        Returns:
+            True if initialization succeeded, False otherwise.
+        """
         try:
             self._execute_command("aeim")
             return True
@@ -1115,19 +1273,22 @@ class R2SessionPoolAdapter:
         """Step through ESIL instructions.
 
         Args:
-            address: Starting address
-            steps: Number of steps to execute
+            address: Starting address as string or integer.
+            steps: Number of steps to execute (default: 1).
 
         Returns:
-            ESIL execution result
-
+            ESIL execution result as a string.
         """
         addr = hex(address) if isinstance(address, int) else address
         result = self._execute_command(f"{steps}aes @ {addr}")
         return result if isinstance(result, str) else str(result)
 
     def get_esil_registers(self) -> dict[str, Any]:
-        """Get ESIL register state."""
+        """Get ESIL register state.
+
+        Returns:
+            Dictionary of register names and values.
+        """
         result = self._execute_command("drj", expect_json=True)
         return result if isinstance(result, dict) else {}
 
@@ -1135,11 +1296,11 @@ class R2SessionPoolAdapter:
         """Emulate function execution using ESIL.
 
         Args:
-            address: Function address
+            address: Function address as string or integer.
 
         Returns:
-            Emulation results
-
+            Dictionary containing emulation results including initial/final
+            register states and execution trace.
         """
         addr = hex(address) if isinstance(address, int) else address
 
@@ -1172,7 +1333,11 @@ class R2SessionPoolAdapter:
         return results
 
     def apply_signatures(self) -> bool:
-        """Apply FLIRT signatures."""
+        """Apply FLIRT signatures.
+
+        Returns:
+            True if signature application succeeded, False otherwise.
+        """
         try:
             self._execute_command("zf")
             return True
@@ -1181,7 +1346,11 @@ class R2SessionPoolAdapter:
             return False
 
     def get_identified_functions(self) -> list[dict[str, Any]]:
-        """Get functions identified by signatures."""
+        """Get functions identified by signatures.
+
+        Returns:
+            List of functions that were identified by FLIRT signatures.
+        """
         functions = self.get_functions()
         return [f for f in functions if f.get("name", "").startswith("sym.")]
 
@@ -1189,8 +1358,7 @@ class R2SessionPoolAdapter:
         """Detect potential vulnerabilities using radare2 analysis.
 
         Returns:
-            Dictionary of vulnerability types and findings
-
+            Dictionary mapping vulnerability types to lists of findings.
         """
         vulnerabilities: dict[str, list[dict[str, Any]]] = {
             "buffer_overflow": [],
@@ -1220,7 +1388,15 @@ class R2SessionPoolAdapter:
         return vulnerabilities
 
     def _analyze_function_vulnerabilities(self, address: str | int) -> dict[str, list[dict[str, Any]]]:
-        """Analyze single function for vulnerabilities."""
+        """Analyze single function for vulnerabilities.
+
+        Args:
+            address: Function address as string or integer.
+
+        Returns:
+            Dictionary mapping vulnerability types to lists of findings in the
+            function.
+        """
         addr = hex(address) if isinstance(address, int) else address
         vulns: dict[str, list[dict[str, Any]]] = {
             "buffer_overflow": [],
@@ -1294,11 +1470,10 @@ class R2SessionPoolAdapter:
         """Perform deeper analysis on a specific function.
 
         Args:
-            address: Function address
+            address: Function address as string or integer.
 
         Returns:
-            True if analysis succeeded, False otherwise
-
+            True if analysis succeeded, False otherwise.
         """
         addr = hex(address) if isinstance(address, int) else address
         try:
@@ -1315,11 +1490,10 @@ class R2SessionPoolAdapter:
         """Run optimization passes on a function for better decompilation.
 
         Args:
-            address: Function address
+            address: Function address as string or integer.
 
         Returns:
-            True if optimization succeeded, False otherwise
-
+            True if optimization succeeded, False otherwise.
         """
         addr = hex(address) if isinstance(address, int) else address
         try:
@@ -1335,13 +1509,12 @@ class R2SessionPoolAdapter:
 class R2BinaryDiff:
     """Binary comparison and diffing using radare2."""
 
-    def __init__(self, binary1: str, binary2: str):
+    def __init__(self, binary1: str, binary2: str) -> None:
         """Initialize binary diff.
 
         Args:
-            binary1: Path to first binary
-            binary2: Path to second binary
-
+            binary1: Path to first binary file.
+            binary2: Path to second binary file.
         """
         self.binary1 = binary1
         self.binary2 = binary2
@@ -1351,8 +1524,8 @@ class R2BinaryDiff:
         """Compare functions between two binaries.
 
         Returns:
-            Comparison results
-
+            Dictionary with comparison results including common, unique, and
+            modified functions between the binaries.
         """
         results: dict[str, Any] = {
             "binary1": self.binary1,
@@ -1397,7 +1570,12 @@ class R2BinaryDiff:
         return results
 
     def compare_strings(self) -> dict[str, Any]:
-        """Compare strings between binaries."""
+        """Compare strings between binaries.
+
+        Returns:
+            Dictionary with string comparison results including common and unique
+            strings in each binary.
+        """
         results: dict[str, Any] = {
             "binary1": self.binary1,
             "binary2": self.binary2,
@@ -1433,13 +1611,17 @@ class R2BinaryDiff:
 def analyze_binary_comprehensive(binary_path: str, radare2_path: str | None = None) -> dict[str, Any]:
     """Perform comprehensive radare2 analysis on a binary.
 
+    Analyzes a binary file for functions, strings, imports, exports, API calls,
+    vulnerabilities, and license-related strings. Includes decompilation samples
+    and ESIL emulation results.
+
     Args:
-        binary_path: Path to binary file
-        radare2_path: Optional path to radare2 executable
+        binary_path: Path to binary file to analyze.
+        radare2_path: Optional path to radare2 executable.
 
     Returns:
-        Complete analysis results
-
+        Complete analysis results including binary info, functions, strings,
+        imports/exports, API analysis, vulnerabilities, and decompiled samples.
     """
     results: dict[str, Any] = {
         "binary_path": binary_path,

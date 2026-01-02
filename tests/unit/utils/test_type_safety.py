@@ -14,7 +14,7 @@ from intellicrack.utils.type_safety import (
 )
 
 
-def test_validate_type_success():
+def test_validate_type_success() -> None:
     """Test successful type validation."""
     assert validate_type(123, int) == 123
     assert validate_type("test", str) == "test"
@@ -22,7 +22,7 @@ def test_validate_type_success():
     assert validate_type([1, 2], list) == [1, 2]
 
 
-def test_validate_type_failure():
+def test_validate_type_failure() -> None:
     """Test type validation failure."""
     with pytest.raises(TypeError, match="Expected 'value' to be str, got int"):
         validate_type(123, str)
@@ -31,7 +31,7 @@ def test_validate_type_failure():
         validate_type("123", int, name="my_var")
 
 
-def test_get_typed_item_success():
+def test_get_typed_item_success() -> None:
     """Test successful typed item retrieval."""
     data = {"count": 10, "name": "analyzer", "active": True}
     
@@ -40,7 +40,7 @@ def test_get_typed_item_success():
     assert get_typed_item(data, "active", bool) is True
 
 
-def test_get_typed_item_default():
+def test_get_typed_item_default() -> None:
     """Test get_typed_item with default values."""
     data = {"count": 10}
     
@@ -48,7 +48,7 @@ def test_get_typed_item_default():
     assert get_typed_item(data, "missing", str, default="none") == "none"
 
 
-def test_get_typed_item_key_error():
+def test_get_typed_item_key_error() -> None:
     """Test get_typed_item missing key without default."""
     data = {"count": 10}
     
@@ -56,7 +56,7 @@ def test_get_typed_item_key_error():
         get_typed_item(data, "missing", int)
 
 
-def test_get_typed_item_type_error():
+def test_get_typed_item_type_error() -> None:
     """Test get_typed_item with wrong value type."""
     data = {"count": "10"}
 
@@ -67,21 +67,21 @@ def test_get_typed_item_type_error():
 class TestGetKwargTyped:
     """Tests for get_kwarg_typed function."""
 
-    def test_returns_value_when_correct_type(self):
+    def test_returns_value_when_correct_type(self) -> None:
         """Test that get_kwarg_typed returns value when type matches."""
         kwargs: dict[str, object] = {"device": "cuda", "batch_size": 32}
 
         assert get_kwarg_typed(kwargs, "device", str, "cpu") == "cuda"
         assert get_kwarg_typed(kwargs, "batch_size", int, 16) == 32
 
-    def test_returns_default_when_key_missing(self):
+    def test_returns_default_when_key_missing(self) -> None:
         """Test that get_kwarg_typed returns default for missing keys."""
         kwargs: dict[str, object] = {"device": "cuda"}
 
         assert get_kwarg_typed(kwargs, "batch_size", int, 16) == 16
         assert get_kwarg_typed(kwargs, "enabled", bool, True) is True
 
-    def test_raises_typeerror_when_wrong_type(self):
+    def test_raises_typeerror_when_wrong_type(self) -> None:
         """Test that get_kwarg_typed raises TypeError for wrong types."""
         kwargs: dict[str, object] = {"device": 123, "enabled": "yes"}
 
@@ -91,7 +91,7 @@ class TestGetKwargTyped:
         with pytest.raises(TypeError, match="Kwarg 'enabled' expected bool, got str"):
             get_kwarg_typed(kwargs, "enabled", bool, False)
 
-    def test_returns_default_when_value_is_default(self):
+    def test_returns_default_when_value_is_default(self) -> None:
         """Test identity check with default value."""
         kwargs: dict[str, object] = {"cpu": "cpu"}
         assert get_kwarg_typed(kwargs, "device", str, "cpu") == "cpu"
@@ -100,19 +100,19 @@ class TestGetKwargTyped:
 class TestEnsureDict:
     """Tests for ensure_dict function."""
 
-    def test_returns_dict_unchanged(self):
+    def test_returns_dict_unchanged(self) -> None:
         """Test that ensure_dict returns dict values unchanged."""
         data = {"key": "value", "count": 42}
         result = ensure_dict(data)
         assert result == data
         assert result is data
 
-    def test_works_with_empty_dict(self):
+    def test_works_with_empty_dict(self) -> None:
         """Test ensure_dict with empty dict."""
         result = ensure_dict({})
         assert result == {}
 
-    def test_raises_typeerror_for_non_dict(self):
+    def test_raises_typeerror_for_non_dict(self) -> None:
         """Test that ensure_dict raises TypeError for non-dict values."""
         with pytest.raises(TypeError, match="Expected 'value' to be dict, got list"):
             ensure_dict([1, 2, 3])
@@ -123,7 +123,7 @@ class TestEnsureDict:
         with pytest.raises(TypeError, match="Expected 'value' to be dict, got NoneType"):
             ensure_dict(None)
 
-    def test_custom_name_in_error_message(self):
+    def test_custom_name_in_error_message(self) -> None:
         """Test ensure_dict uses custom name in error message."""
         with pytest.raises(TypeError, match="Expected 'my_config' to be dict, got int"):
             ensure_dict(42, name="my_config")
@@ -132,19 +132,19 @@ class TestEnsureDict:
 class TestEnsureList:
     """Tests for ensure_list function."""
 
-    def test_returns_list_unchanged(self):
+    def test_returns_list_unchanged(self) -> None:
         """Test that ensure_list returns list values unchanged."""
         data = [1, 2, 3, "four"]
         result = ensure_list(data)
         assert result == data
         assert result is data
 
-    def test_works_with_empty_list(self):
+    def test_works_with_empty_list(self) -> None:
         """Test ensure_list with empty list."""
         result = ensure_list([])
         assert result == []
 
-    def test_raises_typeerror_for_non_list(self):
+    def test_raises_typeerror_for_non_list(self) -> None:
         """Test that ensure_list raises TypeError for non-list values."""
         with pytest.raises(TypeError, match="Expected 'value' to be list, got dict"):
             ensure_list({"a": 1})
@@ -155,7 +155,7 @@ class TestEnsureList:
         with pytest.raises(TypeError, match="Expected 'value' to be list, got str"):
             ensure_list("not a list")
 
-    def test_custom_name_in_error_message(self):
+    def test_custom_name_in_error_message(self) -> None:
         """Test ensure_list uses custom name in error message."""
         with pytest.raises(TypeError, match="Expected 'items' to be list, got set"):
             ensure_list({1, 2, 3}, name="items")

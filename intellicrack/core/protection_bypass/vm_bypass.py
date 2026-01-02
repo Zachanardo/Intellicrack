@@ -11,27 +11,24 @@ from typing import Any
 from ...utils.binary.binary_io import analyze_binary_for_strings
 from ...utils.core.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
 
-
-"""
-Virtualization Detection Bypass Module
-
-Copyright (C) 2025 Zachary Flint
-
-This file is part of Intellicrack.
-
-Intellicrack is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Intellicrack is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
-"""
+# Virtualization Detection Bypass Module
+#
+# Copyright (C) 2025 Zachary Flint
+#
+# This file is part of Intellicrack.
+#
+# Intellicrack is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Intellicrack is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 
 class VirtualizationDetectionBypass:
@@ -49,7 +46,6 @@ class VirtualizationDetectionBypass:
 
         Args:
             app: Application instance that contains the binary_path attribute
-
         """
         self.app = app
         self.logger = logging.getLogger("IntellicrackLogger.VMBypass")
@@ -60,8 +56,9 @@ class VirtualizationDetectionBypass:
         """Bypass virtualization detection using multiple strategies.
 
         Returns:
-            dict: Results of the bypass attempt with success status and applied methods
-
+            dict[str, Any]: Dictionary containing bypass results with keys including
+                'success' (bool), 'methods_applied' (list), 'errors' (list), and other
+                status information from the bypass attempt.
         """
         from ...utils.protection.protection_helpers import create_bypass_result
 
@@ -123,7 +120,15 @@ class VirtualizationDetectionBypass:
         return results
 
     def _get_driver_path(self, driver_name: str) -> str:
-        """Get Windows driver path dynamically."""
+        """Get Windows driver path dynamically.
+
+        Args:
+            driver_name: Name of the driver file to locate.
+
+        Returns:
+            str: Full path to the driver, or default path if not found.
+
+        """
         # Common driver paths on Windows
         driver_paths = [
             os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "System32", "drivers", driver_name),
@@ -136,7 +141,12 @@ class VirtualizationDetectionBypass:
         return os.path.join("C:\\Windows", "System32", "drivers", driver_name)
 
     def _hook_vm_detection_apis(self) -> None:
-        """Install hooks for Windows APIs commonly used for VM detection."""
+        """Install hooks for Windows APIs commonly used for VM detection.
+
+        Uses Frida to intercept and modify API calls used by applications to detect
+        virtualization. Hooks registry queries, WMI queries, CPUID instructions, and
+        hardware enumeration functions.
+        """
         if not FRIDA_AVAILABLE:
             self.logger.warning("Frida not available - skipping VM detection API hooking")
             return
@@ -241,7 +251,12 @@ class VirtualizationDetectionBypass:
         self.logger.info("VM detection API hooks installed")
 
     def _patch_vm_detection(self) -> None:
-        """Patch binary instructions that detect virtualization."""
+        """Patch binary instructions that detect virtualization.
+
+        Scans the application binary for common VM detection instruction patterns
+        including CPUID hypervisor checks, RDTSC timing checks, STR instructions,
+        and IN port I/O operations. Records patches for later application.
+        """
         if not self.app or not hasattr(self.app, "binary_path") or not self.app.binary_path:
             return
 
@@ -287,7 +302,12 @@ class VirtualizationDetectionBypass:
             self.logger.exception("Error patching VM detection: %s", e)
 
     def _hide_vm_registry_artifacts(self) -> None:
-        """Hide VM-related registry entries."""
+        """Hide VM-related registry entries.
+
+        Attempts to delete or modify Windows registry keys associated with various
+        VM platforms including VirtualBox, VMware, and generic VM indicators.
+        Handles platform compatibility checks for non-Windows systems.
+        """
         try:
             if platform.system() != "Windows":
                 self.logger.info("Not on Windows - skipping registry manipulation")
@@ -329,8 +349,8 @@ class VirtualizationDetectionBypass:
         """Hide VM-specific artifacts from detection.
 
         Returns:
-            Tuple of (success, renamed_files_count) where renamed_files_count
-            reports how many VM artifact files were successfully hidden.
+            tuple[bool, int]: Tuple of (success, renamed_files_count) where renamed_files_count
+                reports how many VM artifact files were successfully hidden.
 
         """
         self.logger.info("Hiding VM artifacts")
@@ -454,7 +474,12 @@ class VirtualizationDetectionBypass:
             return (False, 0)
 
     def _modify_system_info(self) -> bool:
-        """Modify system information to appear as physical machine."""
+        """Modify system information to appear as physical machine.
+
+        Returns:
+            bool: True if at least one modification was applied successfully.
+
+        """
         self.logger.info("Modifying system information")
 
         try:
@@ -574,7 +599,12 @@ class VirtualizationDetectionBypass:
             return False
 
     def _modify_dmi_info(self) -> bool:
-        """Modify DMI information on Linux/macOS systems."""
+        """Modify DMI information on Linux/macOS systems.
+
+        Returns:
+            bool: True if at least one DMI information modification was successful.
+
+        """
         try:
             # This requires root access
             dmi_modifications = {
@@ -604,7 +634,12 @@ class VirtualizationDetectionBypass:
             return False
 
     def _hook_timing_functions(self) -> None:
-        """Install hooks for timing functions to prevent timing-based VM detection."""
+        """Install hooks for timing functions to prevent timing-based VM detection.
+
+        Uses Frida to intercept and modify timing-related Windows API functions
+        including GetTickCount, QueryPerformanceCounter, and RDTSC instructions.
+        Returns consistent timing values to defeat VM detection based on timing anomalies.
+        """
         if not FRIDA_AVAILABLE:
             self.logger.warning("Frida not available - skipping timing function hooking")
             return
@@ -675,9 +710,11 @@ class VirtualizationDetectionBypass:
     def generate_bypass_script(self) -> str:
         """Generate a complete Frida script for VM detection bypass.
 
-        Returns:
-            str: Complete Frida script for VM bypass
+        Combines all installed hooks into a single executable Frida JavaScript
+        script that can be deployed to bypass VM detection.
 
+        Returns:
+            str: Complete Frida script for VM bypass containing all hook definitions.
         """
         script = "// VM Detection Bypass Script\n// Generated by Intellicrack\n\n"
 
@@ -693,9 +730,13 @@ class VirtualizationDetectionBypass:
     def get_hook_status(self) -> dict[str, Any]:
         """Get the current status of installed hooks.
 
-        Returns:
-            dict: Status information about hooks and patches
+        Returns information about the number of hooks installed, patches identified,
+        and availability of external tools required for bypass execution.
 
+        Returns:
+            dict[str, Any]: Dictionary with keys 'hooks_installed' (int),
+                'patches_identified' (int), 'frida_available' (bool), and
+                'winreg_available' (bool).
         """
         return {
             "hooks_installed": len(self.hooks),
@@ -705,7 +746,11 @@ class VirtualizationDetectionBypass:
         }
 
     def clear_hooks(self) -> None:
-        """Clear all installed hooks and patches."""
+        """Clear all installed hooks and patches.
+
+        Removes all previously installed Frida hooks and identified binary patches
+        from the internal tracking lists.
+        """
         self.hooks.clear()
         self.patches.clear()
         self.logger.info("Cleared all VM bypass hooks and patches")
@@ -714,12 +759,15 @@ class VirtualizationDetectionBypass:
 def bypass_vm_detection(app: object) -> dict[str, Any]:
     """Bypass VM detection on an application.
 
+    Convenience function that creates a VirtualizationDetectionBypass instance
+    and executes the full VM detection bypass workflow.
+
     Args:
-        app: Application instance with binary_path
+        app: Application instance with binary_path attribute.
 
     Returns:
-        dict: Results of the bypass attempt
-
+        dict[str, Any]: Dictionary containing bypass results with success status
+            and applied bypass methods.
     """
     bypass = VirtualizationDetectionBypass(app)
     return bypass.bypass_vm_detection()
@@ -729,12 +777,27 @@ class VMDetector:
     """Detect if running inside a virtual machine or container."""
 
     def __init__(self) -> None:
-        """Initialize VM detector."""
+        """Initialize VM detector.
+
+        Sets up the logger and initializes the indicators list for storing detected
+        virtualization artifacts and characteristics.
+        """
         self.logger = logging.getLogger("IntellicrackLogger.VMDetector")
         self.vm_indicators: list[str] = []
 
     def _get_vm_driver_path(self, driver_name: str) -> str:
-        """Get Windows VM driver path dynamically for detection."""
+        """Get Windows VM driver path dynamically for detection.
+
+        Searches multiple standard Windows driver directories to locate a VM driver
+        file. Returns the path if found, otherwise returns a default driver path.
+
+        Args:
+            driver_name: Name of the driver file to locate.
+
+        Returns:
+            str: Full path to the driver if found, otherwise default path
+                C:\\Windows\\System32\\drivers\\{driver_name}.
+        """
         # Common driver paths on Windows
         driver_paths = [
             os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "System32", "drivers", driver_name),
@@ -749,9 +812,13 @@ class VMDetector:
     def detect(self) -> dict[str, Any]:
         """Detect if running in a VM/container environment.
 
-        Returns:
-            dict: Detection results including VM type and confidence
+        Performs comprehensive detection checks including CPU information analysis,
+        VM driver detection, MAC address prefix matching, and system characteristics
+        analysis to identify virtualization artifacts.
 
+        Returns:
+            dict[str, Any]: Dictionary with keys 'vm_type' (str or None),
+                'indicators' (list), 'is_vm' (bool), and 'confidence' (float between 0-1).
         """
         # Check various VM indicators
         indicators = []
@@ -849,12 +916,19 @@ class VMDetector:
     def generate_bypass(self, vm_type: str) -> dict[str, Any]:
         """Generate VM detection bypass strategy.
 
+        Creates a comprehensive bypass strategy specific to the detected VM type,
+        including techniques, registry modifications, file operations, and generated
+        implementation script.
+
         Args:
-            vm_type: Type of VM to bypass (vmware, virtualbox, qemu, etc.)
+            vm_type: Type of VM to bypass (vmware, virtualbox, qemu, etc.).
 
         Returns:
-            Dict[str, Any]: Bypass strategy and implementation details
-
+            dict[str, Any]: Dictionary containing 'vm_type', 'bypass_method',
+                'success_probability', 'requirements', 'techniques', 'registry_modifications',
+                'file_operations', 'implementation_script', 'stealth_level', and other
+                strategy details. On error, returns dict with 'bypass_method' set to
+                'failed' and an 'error' key containing the exception message.
         """
         try:
             self.logger.info("Generating VM detection bypass for: %s", vm_type)
@@ -978,7 +1052,21 @@ class VMDetector:
             }
 
     def _generate_bypass_script(self, vm_type: str, techniques: list[str], registry_mods: list[str], file_ops: list[str]) -> str:
-        """Generate implementation script for VM detection bypass."""
+        """Generate implementation script for VM detection bypass.
+
+        Creates a complete Python script that implements the specified bypass
+        techniques, registry modifications, and file operations in executable form.
+
+        Args:
+            vm_type: Type of VM to generate bypass script for.
+            techniques: List of bypass techniques to implement.
+            registry_mods: List of registry modifications to apply.
+            file_ops: List of file operations to perform.
+
+        Returns:
+            str: Generated Python script for VM detection bypass implementation
+                with all techniques integrated.
+        """
         script_lines = [
             f"# VM Detection Bypass Script for {vm_type}",
             "# Generated by Intellicrack VMDetector",
@@ -1092,7 +1180,18 @@ class VMDetector:
         return "\n".join(script_lines)
 
     def _calculate_success_probability(self, vm_type: str, techniques: list[str]) -> float:
-        """Calculate estimated success probability for bypass."""
+        """Calculate estimated success probability for bypass.
+
+        Estimates the success probability based on the VM type and number of
+        bypass techniques to be applied. Returns a conservative estimate capped at 85%.
+
+        Args:
+            vm_type: Type of VM to calculate bypass probability for.
+            techniques: List of bypass techniques to use.
+
+        Returns:
+            float: Estimated success probability between 0.0 and 0.85.
+        """
         base_probability = 0.3  # Base 30% success rate
 
         # Boost for known VM types
@@ -1111,16 +1210,25 @@ class VirtualizationAnalyzer:
     """Analyzes virtualization usage in applications."""
 
     def __init__(self, binary_path: str | None = None) -> None:
-        """Initialize virtualization analyzer."""
+        """Initialize virtualization analyzer.
+
+        Args:
+            binary_path: Path to the binary to analyze, or None for no binary.
+        """
         self.binary_path = binary_path
         self.logger = logging.getLogger("IntellicrackLogger.VirtualizationAnalyzer")
 
     def analyze(self) -> dict[str, Any]:
         """Analyze binary for VM detection routines.
 
-        Returns:
-            dict: Analysis results
+        Scans the binary for VM detection strings and instructions including
+        CPUID, RDTSC, STR, and port I/O operations. Calculates confidence score
+        based on detected artifacts.
 
+        Returns:
+            dict[str, Any]: Dictionary with keys 'has_vm_detection' (bool),
+                'detection_methods' (list), 'vm_artifacts' (list), and 'confidence'
+                (float between 0.0 and 1.0).
         """
         results = {
             "has_vm_detection": False,
@@ -1190,9 +1298,11 @@ class VirtualizationAnalyzer:
 def detect_virtualization() -> bool:
     """Quick check if running in a virtualized environment.
 
-    Returns:
-        bool: True if virtualization detected
+    Convenience function that runs VM detection and returns a simple boolean result.
+    Creates a VMDetector instance and extracts the 'is_vm' boolean from results.
 
+    Returns:
+        bool: True if virtualization detected, False otherwise.
     """
     detector = VMDetector()
     result = detector.detect()
@@ -1205,12 +1315,15 @@ def detect_virtualization() -> bool:
 def analyze_vm_protection(binary_path: str) -> dict[str, Any]:
     """Analyze a binary for VM protection mechanisms.
 
+    Convenience function that creates a VirtualizationAnalyzer and performs
+    comprehensive binary analysis for VM detection routines and artifacts.
+
     Args:
-        binary_path: Path to the binary to analyze
+        binary_path: Path to the binary to analyze.
 
     Returns:
-        dict: Analysis results
-
+        dict[str, Any]: Analysis results with 'has_vm_detection', 'detection_methods',
+            'vm_artifacts', and 'confidence' keys.
     """
     analyzer = VirtualizationAnalyzer(binary_path)
     return analyzer.analyze()

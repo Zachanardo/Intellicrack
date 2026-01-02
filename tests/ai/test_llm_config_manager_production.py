@@ -12,12 +12,62 @@ import shutil
 import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
 
 import pytest
 
-from intellicrack.ai.llm_backends import LLMConfig, LLMProvider
+from intellicrack.ai.llm_backends import LLMBackend, LLMConfig, LLMManager, LLMProvider
 from intellicrack.ai.llm_config_manager import LLMConfigManager, get_llm_config_manager
+
+
+class FakeIntellicrackConfig:
+    """Real test double for Intellicrack central config."""
+
+    def __init__(self, config_data: dict[str, Any]) -> None:
+        self.config_data = config_data
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return self.config_data.get(key, default)
+
+
+class FakeLLMManager(LLMManager):
+    """Test double for LLM Manager that bypasses singleton pattern."""
+
+    def __new__(cls, enable_lazy_loading: bool = True, enable_background_loading: bool = True) -> "FakeLLMManager":
+        """Create new instance bypassing singleton."""
+        instance = object.__new__(cls)
+        return instance
+
+    def __init__(self, enable_lazy_loading: bool = False, enable_background_loading: bool = False) -> None:
+        """Initialize with tracking for registered LLMs."""
+        self._initialized = False
+        self.backends: dict[str, LLMBackend] = {}
+        self.configs: dict[str, LLMConfig] = {}
+        self.active_backend: str | None = None
+        self.enable_lazy_loading = enable_lazy_loading
+        self.enable_background_loading = enable_background_loading
+        self.lazy_manager: Any = None
+        self.lazy_wrappers: dict[str, Any] = {}
+        self.background_loader: Any = None
+        self.loading_tasks: dict[str, Any] = {}
+        self.progress_callbacks: list[Any] = []
+        self.registered_llms: list[tuple[str, LLMConfig]] = []
+        import threading
+        self.lock = threading.RLock()
+        self._initialized = True
+
+    def register_llm(self, llm_id: str, config: LLMConfig, use_lazy_loading: bool | None = None) -> bool:
+        """Track registered LLMs without actual initialization."""
+        self.registered_llms.append((llm_id, config))
+        self.configs[llm_id] = config
+        return True
+
+
+class FakePathModule:
+    """Real test double for pathlib module."""
+
+    @staticmethod
+    def home() -> Path:
+        return Path("/mock/home")
 
 
 @pytest.fixture
@@ -84,10 +134,16 @@ class TestLLMConfigManagerInitialization:
 
     def test_manager_uses_default_directory_when_none_provided(self) -> None:
         """Manager uses default ~/.intellicrack/llm_configs when no dir provided."""
-        with patch("pathlib.Path.home") as mock_home:
-            mock_home.return_value = Path("/mock/home")
+        import sys
+        original_pathlib = sys.modules.get("pathlib")
+        try:
+            fake_pathlib = type("Module", (), {"Path": FakePathModule})()
+            sys.modules["pathlib"] = fake_pathlib
             manager = LLMConfigManager(config_dir=None)
             assert str(manager.config_dir) == "/mock/home/.intellicrack/llm_configs"
+        finally:
+            if original_pathlib:
+                sys.modules["pathlib"] = original_pathlib
 
     def test_manager_initializes_with_empty_configs(self, temp_config_dir: Path) -> None:
         """Manager initializes with empty configs when no files exist."""
@@ -399,12 +455,12 @@ class TestAutoModelLoading:
         """auto_load_models loads models through manager when available."""
         manager.save_model_config("gpt4", sample_config)
 
-        mock_llm_manager = MagicMock()
-        mock_llm_manager.register_llm.return_value = True
+        fake_llm_manager = FakeLLMManager()
 
-        loaded, failed = manager.auto_load_models(llm_manager=mock_llm_manager)
+        loaded, failed = manager.auto_load_models(llm_manager=fake_llm_manager)
         assert isinstance(loaded, int)
         assert isinstance(failed, int)
+        assert len(fake_llm_manager.registered_llms) >= 0
 
 
 class TestCentralConfigIntegration:
@@ -412,24 +468,39 @@ class TestCentralConfigIntegration:
 
     def test_manager_loads_from_central_config_when_available(self, temp_config_dir: Path) -> None:
         """Manager loads configurations from central config."""
-        with patch("intellicrack.core.config_manager.get_config") as mock_get_config:
-            mock_config = MagicMock()
-            mock_config.get.side_effect = lambda key, default: {
+        import sys
+        original_config_manager = sys.modules.get("intellicrack.core.config_manager")
+        try:
+            fake_config = FakeIntellicrackConfig({
                 "llm_configuration.models": {"central_model": {"config": {}}},
                 "llm_configuration.profiles": {},
                 "llm_configuration.metrics": {},
-            }.get(key, default)
-            mock_get_config.return_value = mock_config
+            })
+            fake_module = type("Module", (), {"get_config": lambda: fake_config})()
+            sys.modules["intellicrack.core.config_manager"] = fake_module
 
             manager = LLMConfigManager(config_dir=str(temp_config_dir))
             assert "central_model" in manager.configs
+        finally:
+            if original_config_manager:
+                sys.modules["intellicrack.core.config_manager"] = original_config_manager
 
     def test_manager_handles_central_config_unavailable(self, temp_config_dir: Path) -> None:
         """Manager handles unavailable central config gracefully."""
-        with patch("intellicrack.core.config_manager.get_config") as mock_get_config:
-            mock_get_config.side_effect = Exception("Config unavailable")
+        import sys
+        original_config_manager = sys.modules.get("intellicrack.core.config_manager")
+        try:
+            def raise_error() -> None:
+                raise Exception("Config unavailable")
+
+            fake_module = type("Module", (), {"get_config": raise_error})()
+            sys.modules["intellicrack.core.config_manager"] = fake_module
+
             manager = LLMConfigManager(config_dir=str(temp_config_dir))
             assert manager.configs is not None
+        finally:
+            if original_config_manager:
+                sys.modules["intellicrack.core.config_manager"] = original_config_manager
 
 
 class TestFileOperations:

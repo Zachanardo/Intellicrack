@@ -27,6 +27,7 @@ import time
 import uuid
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 
@@ -205,23 +206,18 @@ class TestHardwareIndicators:
         """Hardware check returns properly structured results."""
         detector = SandboxDetector()
 
-        indicators = detector._check_hardware_indicators()
+        detected, confidence, details = detector._check_hardware_indicators()
 
-        assert isinstance(indicators, dict)
-        assert "detected" in indicators
-        assert "confidence" in indicators
-        assert "details" in indicators
-
-        assert isinstance(indicators["detected"], bool)
-        assert isinstance(indicators["confidence"], (int, float))
-        assert isinstance(indicators["details"], list)
-        assert 0 <= indicators["confidence"] <= 100
+        assert isinstance(detected, bool)
+        assert isinstance(confidence, (int, float))
+        assert isinstance(details, dict)
+        assert 0 <= confidence <= 100
 
     def test_check_hardware_indicators_detects_vm_mac_prefixes(self) -> None:
         """Hardware check can detect VM MAC address prefixes."""
         detector = SandboxDetector()
 
-        indicators = detector._check_hardware_indicators()
+        detected, confidence, details = detector._check_hardware_indicators()
 
         mac = uuid.getnode()
         mac_str = ":".join([f"{(mac >> i) & 0xFF:02x}" for i in range(0, 48, 8)])
@@ -241,20 +237,20 @@ class TestHardwareIndicators:
         is_vm_mac = any(mac_str.lower().startswith(prefix.lower()) for prefix in vm_mac_prefixes)
 
         if is_vm_mac:
-            assert indicators["detected"]
-            assert indicators["confidence"] > 0
-            assert any("MAC" in str(detail) for detail in indicators["details"])
+            assert detected
+            assert confidence > 0
+            details_list = details.get("indicators", [])
+            assert any("MAC" in str(detail) for detail in details_list)
 
     @pytest.mark.skipif(platform.system() != "Windows", reason="Windows-specific CPU check")
     def test_check_hardware_indicators_windows_cpu_detection(self) -> None:
         """Hardware check performs CPU detection on Windows."""
         detector = SandboxDetector()
 
-        indicators = detector._check_hardware_indicators()
+        detected, confidence, details = detector._check_hardware_indicators()
 
-        assert isinstance(indicators, dict)
-        assert "detected" in indicators
-        assert "confidence" in indicators
+        assert isinstance(detected, bool)
+        assert isinstance(confidence, (int, float))
 
 
 class TestRegistryIndicators:
@@ -265,40 +261,36 @@ class TestRegistryIndicators:
         """Registry check returns properly structured results on Windows."""
         detector = SandboxDetector()
 
-        indicators = detector._check_registry_indicators()
+        detected, confidence, details = detector._check_registry_indicators()
 
-        assert isinstance(indicators, dict)
-        assert "detected" in indicators
-        assert "confidence" in indicators
-        assert "details" in indicators
-
-        assert isinstance(indicators["detected"], bool)
-        assert isinstance(indicators["confidence"], (int, float))
-        assert isinstance(indicators["details"], list)
-        assert 0 <= indicators["confidence"] <= 100
+        assert isinstance(detected, bool)
+        assert isinstance(confidence, (int, float))
+        assert isinstance(details, dict)
+        assert 0 <= confidence <= 100
 
     @pytest.mark.skipif(platform.system() != "Windows", reason="Registry checks are Windows-only")
     def test_check_registry_indicators_checks_vm_keys(self) -> None:
         """Registry check searches for VM-specific registry keys."""
         detector = SandboxDetector()
 
-        indicators = detector._check_registry_indicators()
+        detected, confidence, details = detector._check_registry_indicators()
 
-        if indicators["detected"]:
-            assert indicators["confidence"] > 0
-            assert len(indicators["details"]) > 0
-            assert any("Registry key found" in str(detail) or "VM manufacturer" in str(detail) for detail in indicators["details"])
+        if detected:
+            assert confidence > 0
+            details_list = details.get("indicators", [])
+            assert len(details_list) > 0
+            assert any("Registry key found" in str(detail) or "VM manufacturer" in str(detail) for detail in details_list)
 
     def test_check_registry_indicators_non_windows_returns_empty(self) -> None:
         """Registry check returns empty results on non-Windows platforms."""
         if platform.system() != "Windows":
             detector = SandboxDetector()
 
-            indicators = detector._check_registry_indicators()
+            detected, confidence, details = detector._check_registry_indicators()
 
-            assert indicators["detected"] is False
-            assert indicators["confidence"] == 0
-            assert indicators["details"] == []
+            assert detected is False
+            assert confidence == 0
+            assert details == {} or details.get("indicators", []) == []
 
 
 class TestVirtualizationArtifacts:
@@ -308,39 +300,36 @@ class TestVirtualizationArtifacts:
         """Virtualization check returns properly structured results."""
         detector = SandboxDetector()
 
-        artifacts = detector._check_virtualization_artifacts()
+        detected, confidence, details = detector._check_virtualization_artifacts()
 
-        assert isinstance(artifacts, dict)
-        assert "detected" in artifacts
-        assert "confidence" in artifacts
-        assert "details" in artifacts
-
-        assert isinstance(artifacts["detected"], bool)
-        assert isinstance(artifacts["confidence"], (int, float))
-        assert isinstance(artifacts["details"], list)
-        assert 0 <= artifacts["confidence"] <= 100
+        assert isinstance(detected, bool)
+        assert isinstance(confidence, (int, float))
+        assert isinstance(details, dict)
+        assert 0 <= confidence <= 100
 
     @pytest.mark.skipif(platform.system() != "Windows", reason="Windows driver check")
     def test_check_virtualization_artifacts_windows_drivers(self) -> None:
         """Virtualization check examines Windows drivers for VM indicators."""
         detector = SandboxDetector()
 
-        artifacts = detector._check_virtualization_artifacts()
+        detected, confidence, details = detector._check_virtualization_artifacts()
 
-        if artifacts["detected"]:
-            assert artifacts["confidence"] > 0
-            assert any("driver" in str(detail).lower() for detail in artifacts["details"])
+        if detected:
+            assert confidence > 0
+            details_list = details.get("artifacts", [])
+            assert any("driver" in str(detail).lower() for detail in details_list)
 
     @pytest.mark.skipif(platform.system() != "Linux", reason="Linux kernel module check")
     def test_check_virtualization_artifacts_linux_modules(self) -> None:
         """Virtualization check examines Linux kernel modules for VM indicators."""
         detector = SandboxDetector()
 
-        artifacts = detector._check_virtualization_artifacts()
+        detected, confidence, details = detector._check_virtualization_artifacts()
 
-        if artifacts["detected"]:
-            assert artifacts["confidence"] > 0
-            assert any("module" in str(detail).lower() for detail in artifacts["details"])
+        if detected:
+            assert confidence > 0
+            details_list = details.get("artifacts", [])
+            assert any("module" in str(detail).lower() for detail in details_list)
 
 
 class TestBehavioralDetection:
@@ -1055,7 +1044,7 @@ class TestSandboxDetectorIntegration:
     They require running in specific environments (VM, bare metal, etc.)
     """
 
-    def test_cpuid_hypervisor_detection_real(self, integration_detector):
+    def test_cpuid_hypervisor_detection_real(self, integration_detector: SandboxDetector) -> None:
         """Test REAL CPUID hypervisor detection (no mocks)."""
         detected, confidence, details = integration_detector._check_cpuid_hypervisor()
 
@@ -1070,7 +1059,7 @@ class TestSandboxDetectorIntegration:
         else:
             assert details["hypervisor_present"] is False
 
-    def test_timing_acceleration_detection_real(self, integration_detector):
+    def test_timing_acceleration_detection_real(self, integration_detector: SandboxDetector) -> None:
         """Test REAL timing acceleration detection (no mocks)."""
         detected, confidence, details = integration_detector._check_time_acceleration()
 
@@ -1081,7 +1070,7 @@ class TestSandboxDetectorIntegration:
         if detected:
             assert confidence > 0.0
 
-    def test_full_sandbox_scan_integration(self, integration_detector):
+    def test_full_sandbox_scan_integration(self, integration_detector: SandboxDetector) -> None:
         """Test complete sandbox detection workflow without mocks."""
         results = integration_detector.detect_sandbox(aggressive=True)
 
@@ -1095,9 +1084,9 @@ class TestSandboxDetectorIntegration:
         assert isinstance(results["confidence"], float)
         assert 0.0 <= results["confidence"] <= 1.0
 
-    def test_mac_address_analysis_real(self, integration_detector):
+    def test_mac_address_analysis_real(self, integration_detector: SandboxDetector) -> None:
         """Test REAL MAC address analysis without mocks."""
-        detected, confidence, details = integration_detector._check_mac_addresses()
+        detected, confidence, details = integration_detector._check_mac_address_artifacts()
 
         assert isinstance(detected, bool)
         assert isinstance(confidence, float)
@@ -1106,7 +1095,7 @@ class TestSandboxDetectorIntegration:
         if detected:
             assert "suspicious_macs" in details or "vm_vendor" in details
 
-    def test_environment_variable_detection_real(self, integration_detector):
+    def test_environment_variable_detection_real(self, integration_detector: SandboxDetector) -> None:
         """Test REAL environment variable detection without mocks."""
         detected, confidence, details = integration_detector._check_environment()
 

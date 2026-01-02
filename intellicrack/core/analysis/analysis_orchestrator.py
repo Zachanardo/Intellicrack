@@ -40,6 +40,7 @@ from .multi_format_analyzer import MultiFormatBinaryAnalyzer as MultiFormatAnaly
 from .vulnerability_engine import AdvancedVulnerabilityEngine as VulnerabilityEngine
 from .yara_pattern_engine import YaraPatternEngine
 
+
 if TYPE_CHECKING:
     from ...ai.common_types import ExecutionResult
 
@@ -76,19 +77,31 @@ class OrchestrationResult:
         """Add result for a phase.
 
         Args:
-            phase: The analysis phase to add result for
-            result: Dictionary containing phase analysis results
+            phase: The analysis phase to add result for.
+            result: Dictionary containing phase analysis results.
 
         """
         self.phases_completed.append(phase)
         self.results[phase.value] = result
 
     def add_error(self, phase: AnalysisPhase, error: str) -> None:
-        """Add error for a phase."""
+        """Add error for a phase.
+
+        Args:
+            phase: The analysis phase that encountered an error.
+            error: Error message to record.
+
+        """
         self.errors.append(f"{phase.value}: {error}")
 
     def add_warning(self, phase: AnalysisPhase, warning: str) -> None:
-        """Add warning for a phase."""
+        """Add warning for a phase.
+
+        Args:
+            phase: The analysis phase that generated a warning.
+            warning: Warning message to record.
+
+        """
         self.warnings.append(f"{phase.value}: {warning}")
 
 
@@ -226,7 +239,15 @@ class AnalysisOrchestrator(QObject):
         return result
 
     def _prepare_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Prepare for analysis."""
+        """Prepare for analysis.
+
+        Args:
+            binary_path: Path to the binary file to prepare for analysis.
+
+        Returns:
+            Dictionary containing file metadata including size, path, name, and modification time.
+
+        """
         file_stat = Path(binary_path).stat()
         return {
             "file_size": file_stat.st_size,
@@ -236,7 +257,15 @@ class AnalysisOrchestrator(QObject):
         }
 
     def _analyze_basic_info(self, binary_path: str) -> dict[str, Any]:
-        """Get basic binary information."""
+        """Get basic binary information.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            Dictionary containing basic binary information or error details.
+
+        """
         try:
             # Use binary analyzer for basic info
             return self.binary_analyzer.analyze(binary_path)
@@ -244,7 +273,16 @@ class AnalysisOrchestrator(QObject):
             return {"error": str(e), "fallback": True}
 
     def _perform_static_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Perform static analysis using radare2."""
+        """Perform static analysis using radare2.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            Dictionary containing static analysis results including imports, exports,
+            sections, strings, functions, signatures, and ESIL analysis.
+
+        """
         try:
             result = {}
 
@@ -298,6 +336,14 @@ class AnalysisOrchestrator(QObject):
         2. Selecting appropriate Ghidra script based on binary characteristics
         3. Executing the script in a sandboxed environment
         4. Parsing and returning the results
+
+        Args:
+            binary_path: Path to the binary file to analyze with Ghidra.
+
+        Returns:
+            Dictionary containing Ghidra analysis results including license checks,
+            cryptographic routines, protection mechanisms, and keygen patterns.
+
         """
         try:
             result: dict[str, Any] = {
@@ -434,6 +480,14 @@ class AnalysisOrchestrator(QObject):
 
         Constructs the command line for running Ghidra in headless mode
         with the selected script and binary.
+
+        Args:
+            script_path: Path to the Ghidra script to execute.
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            Command string for running Ghidra in headless mode.
+
         """
         ghidra_home = "/opt/ghidra"  # Standard Ghidra installation path in VM
         project_location = f"{tempfile.gettempdir()}/ghidra_projects"
@@ -446,6 +500,14 @@ class AnalysisOrchestrator(QObject):
 
         Extracts meaningful information from Ghidra analysis output
         and structures it for integration into the analysis pipeline.
+
+        Args:
+            output: Raw output string from Ghidra analysis script.
+
+        Returns:
+            Dictionary containing parsed analysis data including license checks,
+            cryptographic routines, protection mechanisms, keygen patterns, and strings.
+
         """
         parsed: dict[str, Any] = {
             "raw_output": output,
@@ -525,7 +587,15 @@ class AnalysisOrchestrator(QObject):
         return parsed
 
     def _extract_address(self, line: str) -> str:
-        """Extract memory address from Ghidra output line."""
+        """Extract memory address from Ghidra output line.
+
+        Args:
+            line: String containing Ghidra output to extract address from.
+
+        Returns:
+            Extracted hexadecimal address string or "unknown" if not found.
+
+        """
         import re
 
         # Look for hex addresses like 0x401000 or 00401000h
@@ -534,7 +604,15 @@ class AnalysisOrchestrator(QObject):
         return match.group(1) if match else "unknown"
 
     def _identify_crypto_type(self, line: str) -> str:
-        """Identify the type of cryptographic routine from output."""
+        """Identify the type of cryptographic routine from output.
+
+        Args:
+            line: String containing cryptographic routine information.
+
+        Returns:
+            String identifying the cryptographic type (e.g., "AES", "RSA", "MD5").
+
+        """
         line_lower = line.lower()
         if "aes" in line_lower:
             return "AES"
@@ -549,7 +627,15 @@ class AnalysisOrchestrator(QObject):
         return "Generic Hash" if "hash" in line_lower else "Unknown Crypto"
 
     def _identify_protection_type(self, line: str) -> str:
-        """Identify the type of protection mechanism from output."""
+        """Identify the type of protection mechanism from output.
+
+        Args:
+            line: String containing protection mechanism information.
+
+        Returns:
+            String identifying the protection type (e.g., "Anti-Debugging", "Obfuscation").
+
+        """
         line_lower = line.lower()
         if "anti-debug" in line_lower:
             return "Anti-Debugging"
@@ -562,7 +648,15 @@ class AnalysisOrchestrator(QObject):
         return "Virtualization" if "virtualiz" in line_lower else "Generic Protection"
 
     def _is_interesting_string(self, string_val: str) -> bool:
-        """Determine if a string is interesting for license analysis."""
+        """Determine if a string is interesting for license analysis.
+
+        Args:
+            string_val: String value to evaluate for license-related keywords.
+
+        Returns:
+            True if the string contains interesting license-related keywords, False otherwise.
+
+        """
         interesting_keywords = [
             "license",
             "serial",
@@ -584,7 +678,15 @@ class AnalysisOrchestrator(QObject):
         return any(keyword in string_lower for keyword in interesting_keywords)
 
     def _perform_entropy_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Perform entropy analysis."""
+        """Perform entropy analysis.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            Dictionary containing overall entropy, analysis chunks, and suspicious high-entropy regions.
+
+        """
         try:
             with open(binary_path, "rb") as f:
                 data = f.read()
@@ -615,7 +717,15 @@ class AnalysisOrchestrator(QObject):
             return {"error": str(e)}
 
     def _analyze_structure(self, binary_path: str) -> dict[str, Any]:
-        """Analyze binary structure."""
+        """Analyze binary structure.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            Dictionary containing structural analysis results or error details.
+
+        """
         try:
             # Use multi-format analyzer
             return self.multi_format_analyzer.analyze(binary_path)
@@ -623,7 +733,15 @@ class AnalysisOrchestrator(QObject):
             return {"error": str(e)}
 
     def _scan_vulnerabilities(self, binary_path: str) -> dict[str, Any]:
-        """Scan for vulnerabilities."""
+        """Scan for vulnerabilities.
+
+        Args:
+            binary_path: Path to the binary file to scan.
+
+        Returns:
+            Dictionary containing vulnerability scan results or error details.
+
+        """
         try:
             vulnerabilities = self.vulnerability_engine.scan_binary(binary_path)
             return {"vulnerabilities": vulnerabilities}
@@ -631,7 +749,15 @@ class AnalysisOrchestrator(QObject):
             return {"error": str(e)}
 
     def _match_patterns(self, binary_path: str) -> dict[str, Any]:
-        """Match YARA patterns."""
+        """Match YARA patterns.
+
+        Args:
+            binary_path: Path to the binary file to scan.
+
+        Returns:
+            Dictionary containing YARA pattern matching results or error details.
+
+        """
         try:
             # Load rules if available
             rules_path = "data/yara_rules"
@@ -643,7 +769,15 @@ class AnalysisOrchestrator(QObject):
             return {"error": str(e)}
 
     def _perform_dynamic_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Perform dynamic analysis if possible."""
+        """Perform dynamic analysis if possible.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        Returns:
+            Dictionary containing dynamic analysis results or error/skip status details.
+
+        """
         try:
             # Initialize dynamic analyzer if not already done
             if self.dynamic_analyzer is None:
@@ -677,7 +811,16 @@ class AnalysisOrchestrator(QObject):
             return {"error": str(e)}
 
     def _finalize_analysis(self, result: OrchestrationResult) -> dict[str, Any]:
-        """Finalize and summarize analysis."""
+        """Finalize and summarize analysis.
+
+        Args:
+            result: The OrchestrationResult object containing all analysis phase results.
+
+        Returns:
+            Dictionary containing analysis summary with total phases, completed phases,
+            error count, warning count, and key findings identified during analysis.
+
+        """
         summary: dict[str, Any] = {
             "total_phases": len(self.enabled_phases),
             "completed_phases": len(result.phases_completed),

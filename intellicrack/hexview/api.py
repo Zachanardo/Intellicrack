@@ -41,11 +41,11 @@ def open_hex_file(file_path: str, read_only: bool = True) -> VirtualFileAccess |
     """Open a file for hex viewing/editing.
 
     Args:
-        file_path: Path to the file to open
-        read_only: Whether to open the file in read-only mode
+        file_path: Path to the file to open.
+        read_only: Whether to open the file in read-only mode.
 
     Returns:
-        VirtualFileAccess instance or None if the file couldn't be opened
+        VirtualFileAccess instance or None if the file couldn't be opened.
 
     """
     try:
@@ -65,12 +65,12 @@ def read_hex_region(file_path: str, offset: int, size: int) -> bytes | None:
     """Read a region of a file as binary data.
 
     Args:
-        file_path: Path to the file to read
-        offset: Starting offset
-        size: Number of bytes to read
+        file_path: Path to the file to read.
+        offset: Starting offset in bytes.
+        size: Number of bytes to read.
 
     Returns:
-        Binary data or None if the file couldn't be read
+        Binary data or None if the file couldn't be read.
 
     """
     try:
@@ -85,12 +85,12 @@ def write_hex_region(file_path: str, offset: int, data: bytes) -> bool:
     """Write binary data to a region of a file.
 
     Args:
-        file_path: Path to the file to write
-        offset: Starting offset
-        data: Binary data to write
+        file_path: Path to the file to write.
+        offset: Starting offset in bytes.
+        data: Binary data to write.
 
     Returns:
-        True if the write was successful, False otherwise
+        True if the write was successful, False otherwise.
 
     """
     try:
@@ -115,12 +115,12 @@ def analyze_binary_data(data: bytes, query: str | None = None, model_manager: ob
     """Analyze binary data using AI assistance.
 
     Args:
-        data: Binary data to analyze
-        query: User query to guide the analysis
-        model_manager: Model manager instance
+        data: Binary data to analyze.
+        query: User query to guide the analysis, or None.
+        model_manager: Model manager instance, or None.
 
     Returns:
-        Dictionary with analysis results
+        Dictionary with analysis results, or dict with error key on failure.
 
     """
     try:
@@ -135,12 +135,12 @@ def search_binary_pattern(data: bytes, pattern_desc: str, model_manager: object 
     """Search for a pattern in binary data using AI assistance.
 
     Args:
-        data: Binary data to search
-        pattern_desc: Description of the pattern to search for
-        model_manager: Model manager instance
+        data: Binary data to search.
+        pattern_desc: Description of the pattern to search for.
+        model_manager: Model manager instance, or None.
 
     Returns:
-        List of search results
+        List of search results, or empty list on failure.
 
     """
     try:
@@ -155,12 +155,12 @@ def suggest_binary_edits(data: bytes, edit_intent: str, model_manager: object | 
     """Suggest edits to binary data using AI assistance.
 
     Args:
-        data: Binary data to edit
-        edit_intent: Description of the desired edit
-        model_manager: Model manager instance
+        data: Binary data to edit.
+        edit_intent: Description of the desired edit.
+        model_manager: Model manager instance, or None.
 
     Returns:
-        Dictionary with edit suggestions
+        Dictionary with edit suggestions, or dict with error key on failure.
 
     """
     try:
@@ -178,10 +178,10 @@ def create_hex_viewer_widget(parent: QWidget | None = None) -> HexViewerWidget:
     """Create a new hex viewer widget.
 
     Args:
-        parent: Parent widget
+        parent: Parent widget, or None.
 
     Returns:
-        HexViewerWidget instance
+        HexViewerWidget instance.
 
     """
     return HexViewerWidget(parent)
@@ -191,12 +191,12 @@ def create_hex_viewer_dialog(parent: QWidget | None = None, file_path: str | Non
     """Create a new hex viewer dialog.
 
     Args:
-        parent: Parent widget
-        file_path: Path to the file to load
-        read_only: Whether to open the file in read-only mode
+        parent: Parent widget, or None.
+        file_path: Path to the file to load, or None.
+        read_only: Whether to open the file in read-only mode.
 
     Returns:
-        HexViewerDialog instance
+        HexViewerDialog instance.
 
     """
     return HexViewerDialog(parent, file_path, read_only)
@@ -206,11 +206,11 @@ def launch_hex_viewer(file_path: str, read_only: bool = True) -> QDialog:
     """Launch the hex viewer as a standalone application.
 
     Args:
-        file_path: Path to the file to open
-        read_only: Whether to open the file in read-only mode
+        file_path: Path to the file to open.
+        read_only: Whether to open the file in read-only mode.
 
     Returns:
-        QDialog instance
+        QDialog instance.
 
     """
     app = QApplication.instance() or QApplication([])
@@ -227,10 +227,10 @@ def integrate_with_intellicrack(app_instance: object) -> bool:
     """Integrate the enhanced hex viewer with Intellicrack.
 
     Args:
-        app_instance: Intellicrack application instance
+        app_instance: Intellicrack application instance.
 
     Returns:
-        True if integration was successful, False otherwise
+        True if integration was successful, False otherwise.
 
     """
     result = integrate_enhanced_hex_viewer(app_instance)
@@ -241,10 +241,10 @@ def add_hex_viewer_to_application(app_instance: object) -> bool:
     """Add the enhanced hex viewer to an application.
 
     Args:
-        app_instance: Application instance
+        app_instance: Application instance.
 
     Returns:
-        True if the hex viewer was added successfully, False otherwise
+        True if the hex viewer was added successfully, False otherwise.
 
     """
     try:
@@ -267,10 +267,10 @@ def register_ai_tools(app_instance: object) -> bool:
     """Register hex viewer AI tools with the application.
 
     Args:
-        app_instance: Application instance
+        app_instance: Application instance.
 
     Returns:
-        True if tools were registered successfully, False otherwise
+        True if tools were registered successfully, False otherwise.
 
     """
     try:
@@ -288,11 +288,11 @@ def bytes_to_hex_string(data: bytes, bytes_per_line: int = 16) -> str:
     """Convert binary data to a formatted hex string.
 
     Args:
-        data: Binary data to convert
-        bytes_per_line: Number of bytes per line
+        data: Binary data to convert.
+        bytes_per_line: Number of bytes per line.
 
     Returns:
-        Formatted hex string
+        Formatted hex string with offset and ASCII representation.
 
     """
     if not data:
@@ -314,10 +314,10 @@ def hex_string_to_bytes(hex_string: str) -> bytes:
     """Convert a hex string to binary data.
 
     Args:
-        hex_string: Hex string to convert
+        hex_string: Hex string to convert, may include formatting.
 
     Returns:
-        Binary data
+        Binary data.
 
     """
     # Remove formatting, spaces, line numbers, and ASCII parts
@@ -357,10 +357,10 @@ def create_binary_context(data: bytes) -> dict[str, Any]:
     """Create a context dictionary for binary data.
 
     Args:
-        data: Binary data
+        data: Binary data.
 
     Returns:
-        Context dictionary
+        Context dictionary with entropy, strings, and structure hints.
 
     """
     context_builder = BinaryContextBuilder()

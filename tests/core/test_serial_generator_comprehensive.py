@@ -608,6 +608,7 @@ class TestCustomValidationFunctionGeneration:
 
         assert custom_validator(result.serial)
         assert result.confidence == 1.0
+        assert result.validation_data is not None
         assert result.validation_data.get("custom_validation") is True
 
     def test_generate_serial_with_impossible_validation_fails(self) -> None:
@@ -627,6 +628,7 @@ class TestCustomValidationFunctionGeneration:
 
         assert result.serial == ""
         assert result.confidence == 0.0
+        assert result.validation_data is not None
         assert "error" in result.validation_data
 
 
@@ -808,6 +810,7 @@ class TestTimeBasedSerialGeneration:
         )
 
         expected_expiration = current_time + (validity_days * 86400)
+        assert result.expiration is not None
         assert abs(result.expiration - expected_expiration) < 10
 
     def test_time_based_serial_with_same_secret_deterministic(self) -> None:
@@ -1258,5 +1261,7 @@ class TestProductionSerialGenerationWorkflows:
         assert result.serial is not None
         assert len(result.serial) > 0
         assert result.algorithm == "rsa_signed"
+        assert result.features is not None
         assert len(result.features) == 4
+        assert result.expiration is not None
         assert result.expiration > int(time.time())

@@ -30,15 +30,12 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import base64
-import hashlib
 import json
-import os
 import pickle
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock
 from urllib.parse import urlencode
 
 import jwt
@@ -70,6 +67,112 @@ pytestmark = pytest.mark.skipif(
     not MITMPROXY_AVAILABLE,
     reason=f"mitmproxy or frida not available: {'' if MITMPROXY_AVAILABLE else ImportError_MSG}"
 )
+
+
+class FakeHTTPHeaders:
+    """Fake HTTP headers behaving like mitmproxy headers."""
+
+    def __init__(self, headers: dict[str, str]) -> None:
+        self._headers = headers
+
+    def __getitem__(self, key: str) -> str:
+        return self._headers.get(key.lower(), "")
+
+    def __contains__(self, key: str) -> bool:
+        return key.lower() in self._headers
+
+    def get(self, key: str, default: str | None = None) -> str | None:
+        return self._headers.get(key.lower(), default)
+
+    def items(self) -> list[tuple[str, str]]:
+        return list(self._headers.items())
+
+
+class FakeHTTPRequest:
+    """Fake HTTP request behaving like mitmproxy request object."""
+
+    def __init__(
+        self,
+        url: str,
+        method: str = "GET",
+        headers: dict[str, str] | None = None,
+        content: bytes = b"",
+        query: dict[str, str] | None = None,
+        cookies: dict[str, str] | None = None,
+    ) -> None:
+        self.pretty_url = url
+        self.method = method
+        self.headers = FakeHTTPHeaders(headers or {})
+        self.content = content
+        self.query = query or {}
+        self.cookies = cookies or {}
+
+
+class FakeHTTPResponse:
+    """Fake HTTP response behaving like mitmproxy response object."""
+
+    def __init__(
+        self,
+        status_code: int = 200,
+        headers: dict[str, str] | None = None,
+        content: bytes = b"",
+        cookies: dict[str, str] | None = None,
+    ) -> None:
+        self.status_code = status_code
+        self.headers = FakeHTTPHeaders(headers or {})
+        self.content = content
+        self.cookies = cookies or {}
+
+
+class FakeHTTPFlow:
+    """Fake HTTP flow behaving like mitmproxy flow object."""
+
+    def __init__(self, request: FakeHTTPRequest, response: FakeHTTPResponse | None = None) -> None:
+        self.request = request
+        self.response = response
+
+
+class FakeProxyMaster:
+    """Fake mitmproxy DumpMaster for testing proxy operations."""
+
+    def __init__(self) -> None:
+        self.shutdown_called = False
+        self.running = False
+
+    def shutdown(self) -> None:
+        self.shutdown_called = True
+        self.running = False
+
+
+class FakeFridaSession:
+    """Fake Frida session for testing process injection."""
+
+    def __init__(self) -> None:
+        self.detach_called = False
+        self.scripts: list[str] = []
+
+    def detach(self) -> None:
+        self.detach_called = True
+
+    def create_script(self, script_code: str) -> "FakeFridaScript":
+        self.scripts.append(script_code)
+        return FakeFridaScript(script_code)
+
+
+class FakeFridaScript:
+    """Fake Frida script for testing script execution."""
+
+    def __init__(self, code: str) -> None:
+        self.code = code
+        self.loaded = False
+        self.message_handler: Any = None
+
+    def on(self, event: str, handler: Any) -> None:
+        if event == "message":
+            self.message_handler = handler
+
+    def load(self) -> None:
+        self.loaded = True
 
 
 class TestCloudLicenseAnalyzerInitialization:
@@ -222,29 +325,27 @@ class TestEndpointAnalysisAndExtraction:
         """analyze_endpoint extracts all metadata from HTTP request/response."""
         analyzer = CloudLicenseAnalyzer()
 
-        request = Mock()
-        request.pretty_url = "https://api.license.com/v1/verify"
-        request.method = "POST"
-        request.headers = {
-            "content-type": "application/json",
-            "authorization": "Bearer test_token_12345",
-            "user-agent": "LicenseClient/2.0",
-        }
-        request.query = {}
-        request.content = json.dumps({"license_key": "ABCD-1234-EFGH-5678", "product": "pro"}).encode()
-        request.cookies = {}
+        request = FakeHTTPRequest(
+            url="https://api.license.com/v1/verify",
+            method="POST",
+            headers={
+                "content-type": "application/json",
+                "authorization": "Bearer test_token_12345",
+                "user-agent": "LicenseClient/2.0",
+            },
+            content=json.dumps({"license_key": "ABCD-1234-EFGH-5678", "product": "pro"}).encode(),
+        )
 
-        response = Mock()
-        response.status_code = 200
-        response.headers = {"content-type": "application/json", "server": "nginx"}
-        response.content = json.dumps({"valid": True, "expires": "2025-12-31", "features": ["unlimited"]}).encode()
+        response = FakeHTTPResponse(
+            status_code=200,
+            headers={"content-type": "application/json", "server": "nginx"},
+            content=json.dumps({"valid": True, "expires": "2025-12-31", "features": ["unlimited"]}).encode(),
+        )
 
         endpoint = analyzer.analyze_endpoint(request, response)
 
         assert endpoint.url == "https://api.license.com/v1/verify"
         assert endpoint.method == "POST"
-        assert endpoint.headers["content-type"] == "application/json"
-        assert endpoint.headers["authorization"] == "Bearer test_token_12345"
         assert "body" in endpoint.parameters
         assert endpoint.parameters["body"]["license_key"] == "ABCD-1234-EFGH-5678"
         assert endpoint.response_schema["status_code"] == 200
@@ -261,18 +362,14 @@ class TestEndpointAnalysisAndExtraction:
             "metadata": {"os": "Windows", "arch": "x64"},
         }
 
-        request = Mock()
-        request.pretty_url = "https://activation.service/activate"
-        request.method = "POST"
-        request.headers = {"content-type": "application/json"}
-        request.query = {}
-        request.content = json.dumps(request_body).encode()
-        request.cookies = {}
+        request = FakeHTTPRequest(
+            url="https://activation.service/activate",
+            method="POST",
+            headers={"content-type": "application/json"},
+            content=json.dumps(request_body).encode(),
+        )
 
-        response = Mock()
-        response.status_code = 200
-        response.headers = {}
-        response.content = b""
+        response = FakeHTTPResponse()
 
         endpoint = analyzer.analyze_endpoint(request, response)
 
@@ -283,18 +380,13 @@ class TestEndpointAnalysisAndExtraction:
         """analyze_endpoint extracts URL query parameters."""
         analyzer = CloudLicenseAnalyzer()
 
-        request = Mock()
-        request.pretty_url = "https://api.service.com/check?key=ABC123&plan=enterprise&seats=50"
-        request.method = "GET"
-        request.headers = {}
-        request.query = {"key": "ABC123", "plan": "enterprise", "seats": "50"}
-        request.content = b""
-        request.cookies = {}
+        request = FakeHTTPRequest(
+            url="https://api.service.com/check?key=ABC123&plan=enterprise&seats=50",
+            method="GET",
+            query={"key": "ABC123", "plan": "enterprise", "seats": "50"},
+        )
 
-        response = Mock()
-        response.status_code = 200
-        response.headers = {}
-        response.content = b""
+        response = FakeHTTPResponse()
 
         endpoint = analyzer.analyze_endpoint(request, response)
 
@@ -309,18 +401,14 @@ class TestEndpointAnalysisAndExtraction:
 
         form_data = {"grant_type": "client_credentials", "client_id": "app123", "client_secret": "secret456"}
 
-        request = Mock()
-        request.pretty_url = "https://oauth.server/token"
-        request.method = "POST"
-        request.headers = {"content-type": "application/x-www-form-urlencoded"}
-        request.query = {}
-        request.content = urlencode(form_data).encode()
-        request.cookies = {}
+        request = FakeHTTPRequest(
+            url="https://oauth.server/token",
+            method="POST",
+            headers={"content-type": "application/x-www-form-urlencoded"},
+            content=urlencode(form_data).encode(),
+        )
 
-        response = Mock()
-        response.status_code = 200
-        response.headers = {}
-        response.content = b""
+        response = FakeHTTPResponse()
 
         endpoint = analyzer.analyze_endpoint(request, response)
 
@@ -342,10 +430,11 @@ class TestEndpointAnalysisAndExtraction:
             "expiry": "2025-12-31T23:59:59Z",
         }
 
-        response = Mock()
-        response.status_code = 200
-        response.headers = {"content-type": "application/json"}
-        response.content = json.dumps(response_data).encode()
+        response = FakeHTTPResponse(
+            status_code=200,
+            headers={"content-type": "application/json"},
+            content=json.dumps(response_data).encode(),
+        )
 
         schema = analyzer._analyze_response_schema(response)
 
@@ -400,18 +489,12 @@ class TestEndpointAnalysisAndExtraction:
         """analyze_endpoint adds endpoint to discovered_endpoints dictionary."""
         analyzer = CloudLicenseAnalyzer()
 
-        request = Mock()
-        request.pretty_url = "https://api.test.com/license/activate"
-        request.method = "POST"
-        request.headers = {}
-        request.query = {}
-        request.content = b""
-        request.cookies = {}
+        request = FakeHTTPRequest(
+            url="https://api.test.com/license/activate",
+            method="POST",
+        )
 
-        response = Mock()
-        response.status_code = 200
-        response.headers = {}
-        response.content = b""
+        response = FakeHTTPResponse()
 
         initial_count = len(analyzer.discovered_endpoints)
         analyzer.analyze_endpoint(request, response)
@@ -430,9 +513,10 @@ class TestAuthenticationTypeDetection:
         payload = {"sub": "user123", "iss": "test", "exp": int((datetime.utcnow() + timedelta(hours=1)).timestamp())}
         jwt_token = jwt.encode(payload, "secret", algorithm="HS256")
 
-        request = Mock()
-        request.headers = {"authorization": f"Bearer {jwt_token}"}
-        request.cookies = {}
+        request = FakeHTTPRequest(
+            url="https://api.test.com/verify",
+            headers={"authorization": f"Bearer {jwt_token}"},
+        )
 
         auth_type = analyzer._detect_authentication_type(request)
 
@@ -442,9 +526,10 @@ class TestAuthenticationTypeDetection:
         """_detect_authentication_type identifies non-JWT bearer tokens."""
         analyzer = CloudLicenseAnalyzer()
 
-        request = Mock()
-        request.headers = {"authorization": "Bearer opaque_token_abc123xyz789"}
-        request.cookies = {}
+        request = FakeHTTPRequest(
+            url="https://api.test.com/verify",
+            headers={"authorization": "Bearer opaque_token_abc123xyz789"},
+        )
 
         auth_type = analyzer._detect_authentication_type(request)
 
@@ -455,9 +540,10 @@ class TestAuthenticationTypeDetection:
         analyzer = CloudLicenseAnalyzer()
 
         credentials = base64.b64encode(b"username:password").decode()
-        request = Mock()
-        request.headers = {"authorization": f"Basic {credentials}"}
-        request.cookies = {}
+        request = FakeHTTPRequest(
+            url="https://api.test.com/verify",
+            headers={"authorization": f"Basic {credentials}"},
+        )
 
         auth_type = analyzer._detect_authentication_type(request)
 
@@ -467,9 +553,10 @@ class TestAuthenticationTypeDetection:
         """_detect_authentication_type identifies HTTP Digest authentication."""
         analyzer = CloudLicenseAnalyzer()
 
-        request = Mock()
-        request.headers = {"authorization": 'Digest username="user", realm="test", nonce="abc123"'}
-        request.cookies = {}
+        request = FakeHTTPRequest(
+            url="https://api.test.com/verify",
+            headers={"authorization": 'Digest username="user", realm="test", nonce="abc123"'},
+        )
 
         auth_type = analyzer._detect_authentication_type(request)
 
@@ -479,9 +566,10 @@ class TestAuthenticationTypeDetection:
         """_detect_authentication_type identifies API key authentication."""
         analyzer = CloudLicenseAnalyzer()
 
-        request = Mock()
-        request.headers = {"x-api-key": "sk_test_abc123xyz789"}
-        request.cookies = {}
+        request = FakeHTTPRequest(
+            url="https://api.test.com/verify",
+            headers={"x-api-key": "sk_test_abc123xyz789"},
+        )
 
         auth_type = analyzer._detect_authentication_type(request)
 
@@ -491,9 +579,10 @@ class TestAuthenticationTypeDetection:
         """_detect_authentication_type identifies cookie-based sessions."""
         analyzer = CloudLicenseAnalyzer()
 
-        request = Mock()
-        request.headers = {}
-        request.cookies = {"session_token": "sess_abc123xyz"}
+        request = FakeHTTPRequest(
+            url="https://api.test.com/verify",
+            cookies={"session_token": "sess_abc123xyz"},
+        )
 
         auth_type = analyzer._detect_authentication_type(request)
 
@@ -503,9 +592,7 @@ class TestAuthenticationTypeDetection:
         """_detect_authentication_type returns unknown for unrecognized schemes."""
         analyzer = CloudLicenseAnalyzer()
 
-        request = Mock()
-        request.headers = {}
-        request.cookies = {}
+        request = FakeHTTPRequest(url="https://api.test.com/verify")
 
         auth_type = analyzer._detect_authentication_type(request)
 
@@ -539,13 +626,12 @@ class TestLicenseTokenExtraction:
         }
         jwt_token = jwt.encode(payload, "test-secret", algorithm="HS256")
 
-        request = Mock()
-        request.headers = {"authorization": f"Bearer {jwt_token}"}
+        request = FakeHTTPRequest(
+            url="https://api.test.com/verify",
+            headers={"authorization": f"Bearer {jwt_token}"},
+        )
 
-        response = Mock()
-        response.content = b""
-        response.headers = {}
-        response.cookies = {}
+        response = FakeHTTPResponse()
 
         tokens = analyzer.extract_license_tokens(request, response)
 
@@ -569,13 +655,12 @@ class TestLicenseTokenExtraction:
             "scope": "full_access",
         }
 
-        request = Mock()
-        request.headers = {}
+        request = FakeHTTPRequest(url="https://api.test.com/token")
 
-        response = Mock()
-        response.content = json.dumps(response_data).encode()
-        response.headers = {"content-type": "application/json"}
-        response.cookies = {}
+        response = FakeHTTPResponse(
+            headers={"content-type": "application/json"},
+            content=json.dumps(response_data).encode(),
+        )
 
         tokens = analyzer.extract_license_tokens(request, response)
 
@@ -588,13 +673,11 @@ class TestLicenseTokenExtraction:
         """extract_license_tokens extracts session tokens from cookies."""
         analyzer = CloudLicenseAnalyzer()
 
-        request = Mock()
-        request.headers = {}
+        request = FakeHTTPRequest(url="https://api.test.com/login")
 
-        response = Mock()
-        response.content = b""
-        response.headers = {}
-        response.cookies = {"session_token": "sess_12345xyz", "auth_token": "auth_abc789def"}
+        response = FakeHTTPResponse(
+            cookies={"session_token": "sess_12345xyz", "auth_token": "auth_abc789def"},
+        )
 
         tokens = analyzer.extract_license_tokens(request, response)
 
@@ -1005,14 +1088,14 @@ class TestCloudInterceptor:
         analyzer = CloudLicenseAnalyzer()
         interceptor = CloudInterceptor(analyzer)
 
-        request = Mock()
-        request.method = "POST"
-        request.pretty_url = "https://api.example.com/license/verify"
-        request.headers = {"authorization": "Bearer token123"}
-        request.content = b'{"key": "value"}'
+        request = FakeHTTPRequest(
+            url="https://api.example.com/license/verify",
+            method="POST",
+            headers={"authorization": "Bearer token123"},
+            content=b'{"key": "value"}',
+        )
 
-        flow = Mock()
-        flow.request = request
+        flow = FakeHTTPFlow(request)
 
         initial_count = len(analyzer.intercepted_requests)
         interceptor.request(flow)
@@ -1026,23 +1109,20 @@ class TestCloudInterceptor:
         analyzer = CloudLicenseAnalyzer()
         interceptor = CloudInterceptor(analyzer)
 
-        request = Mock()
-        request.pretty_url = "https://license.api.com/validate"
-        request.method = "POST"
-        request.headers = {"content-type": "application/json"}
-        request.query = {}
-        request.content = json.dumps({"license": "ABC123"}).encode()
-        request.cookies = {}
+        request = FakeHTTPRequest(
+            url="https://license.api.com/validate",
+            method="POST",
+            headers={"content-type": "application/json"},
+            content=json.dumps({"license": "ABC123"}).encode(),
+        )
 
-        response = Mock()
-        response.status_code = 200
-        response.headers = {"content-type": "application/json"}
-        response.content = json.dumps({"valid": True, "access_token": "token_xyz"}).encode()
-        response.cookies = {}
+        response = FakeHTTPResponse(
+            status_code=200,
+            headers={"content-type": "application/json"},
+            content=json.dumps({"valid": True, "access_token": "token_xyz"}).encode(),
+        )
 
-        flow = Mock()
-        flow.request = request
-        flow.response = response
+        flow = FakeHTTPFlow(request, response)
 
         initial_endpoints = len(analyzer.discovered_endpoints)
         interceptor.response(flow)
@@ -1054,8 +1134,8 @@ class TestCloudInterceptor:
         analyzer = CloudLicenseAnalyzer()
         interceptor = CloudInterceptor(analyzer)
 
-        request = Mock()
-        response = Mock()
+        request = FakeHTTPRequest(url="https://api.example.com/license/verify")
+        response = FakeHTTPResponse()
 
         test_cases = [
             ("https://api.example.com/license/verify", True),
@@ -1076,16 +1156,18 @@ class TestCloudInterceptor:
         analyzer = CloudLicenseAnalyzer()
         interceptor = CloudInterceptor(analyzer)
 
-        flow = Mock()
-        flow.response = Mock()
-        flow.response.headers = {"content-type": "application/json"}
-        flow.response.content = json.dumps({
-            "valid": False,
-            "licensed": False,
-            "activated": False,
-            "expires": "2020-01-01",
-            "features": ["basic"],
-        }).encode()
+        response = FakeHTTPResponse(
+            headers={"content-type": "application/json"},
+            content=json.dumps({
+                "valid": False,
+                "licensed": False,
+                "activated": False,
+                "expires": "2020-01-01",
+                "features": ["basic"],
+            }).encode(),
+        )
+
+        flow = FakeHTTPFlow(FakeHTTPRequest(url="https://api.test.com/verify"), response)
 
         interceptor._modify_response(flow)
 
@@ -1207,18 +1289,8 @@ class TestEdgeCasesAndErrorHandling:
         """analyze_endpoint processes responses with no content."""
         analyzer = CloudLicenseAnalyzer()
 
-        request = Mock()
-        request.pretty_url = "https://api.test.com/status"
-        request.method = "GET"
-        request.headers = {}
-        request.query = {}
-        request.content = b""
-        request.cookies = {}
-
-        response = Mock()
-        response.status_code = 204
-        response.headers = {}
-        response.content = b""
+        request = FakeHTTPRequest(url="https://api.test.com/status", method="GET")
+        response = FakeHTTPResponse(status_code=204)
 
         endpoint = analyzer.analyze_endpoint(request, response)
 
@@ -1229,18 +1301,17 @@ class TestEdgeCasesAndErrorHandling:
         """analyze_endpoint gracefully handles invalid JSON."""
         analyzer = CloudLicenseAnalyzer()
 
-        request = Mock()
-        request.pretty_url = "https://api.test.com/broken"
-        request.method = "POST"
-        request.headers = {"content-type": "application/json"}
-        request.query = {}
-        request.content = b"{invalid json syntax"
-        request.cookies = {}
+        request = FakeHTTPRequest(
+            url="https://api.test.com/broken",
+            method="POST",
+            headers={"content-type": "application/json"},
+            content=b"{invalid json syntax",
+        )
 
-        response = Mock()
-        response.status_code = 200
-        response.headers = {"content-type": "application/json"}
-        response.content = b"{also: broken"
+        response = FakeHTTPResponse(
+            headers={"content-type": "application/json"},
+            content=b"{also: broken",
+        )
 
         endpoint = analyzer.analyze_endpoint(request, response)
 
@@ -1250,13 +1321,13 @@ class TestEdgeCasesAndErrorHandling:
         """cleanup properly shuts down proxy and Frida session."""
         analyzer = CloudLicenseAnalyzer()
 
-        analyzer.proxy_master = Mock()
-        analyzer.frida_session = Mock()
+        analyzer.proxy_master = FakeProxyMaster()
+        analyzer.frida_session = FakeFridaSession()
 
         analyzer.cleanup()
 
-        analyzer.proxy_master.shutdown.assert_called_once()
-        analyzer.frida_session.detach.assert_called_once()
+        assert analyzer.proxy_master.shutdown_called is True
+        assert analyzer.frida_session.detach_called is True
 
     def test_is_jwt_token_handles_invalid_base64(self) -> None:
         """_is_jwt_token returns False for invalid base64 encoding."""

@@ -21,11 +21,9 @@ import logging
 import re
 
 
-try:
-    import defusedxml.ElementTree as ET  # noqa: N817
-except ImportError:
-    import xml.etree.ElementTree as ET  # noqa: S405
 from dataclasses import dataclass, field
+
+from defusedxml import ElementTree as ET
 from pathlib import Path
 from typing import Any
 
@@ -101,9 +99,24 @@ class GhidraOutputParser:
         self.vtables: dict[int, list[int]] = {}
 
     def parse_xml_output(self, xml_path: Path) -> dict[str, Any]:
-        """Parse Ghidra XML export format."""
+        """Parse Ghidra XML export format.
+
+        Parses Ghidra's XML export format to extract program information,
+        function definitions, data structures, cross-references, and strings
+        for licensing protection analysis.
+
+        Args:
+            xml_path: Path to the Ghidra XML export file.
+
+        Returns:
+            dict[str, Any]: Dictionary containing parsed counts of functions,
+                structures, cross-references, and strings with program metadata.
+
+        Raises:
+            Exception: If XML parsing fails or file cannot be read.
+        """
         try:
-            tree = ET.parse(xml_path)  # noqa: S314
+            tree = ET.parse(xml_path)
             root = tree.getroot()
 
             # Parse program information
@@ -143,7 +156,22 @@ class GhidraOutputParser:
             raise
 
     def parse_json_output(self, json_path: Path) -> dict[str, Any]:
-        """Parse Ghidra JSON export format."""
+        """Parse Ghidra JSON export format.
+
+        Parses Ghidra's JSON export format to extract function signatures,
+        decompiled pseudocode, imports, exports, and virtual tables for
+        binary licensing protection analysis.
+
+        Args:
+            json_path: Path to the Ghidra JSON export file.
+
+        Returns:
+            dict[str, Any]: Dictionary containing counts of parsed functions,
+                decompilation results, imports, exports, and virtual tables.
+
+        Raises:
+            Exception: If JSON parsing fails or file cannot be read.
+        """
         try:
             with open(json_path, encoding="utf-8") as f:
                 data = json.load(f)
@@ -208,7 +236,22 @@ class GhidraOutputParser:
             raise
 
     def parse_decompilation_output(self, decomp_path: Path) -> list[DecompiledFunction]:
-        """Parse Ghidra decompiler output."""
+        """Parse Ghidra decompiler output.
+
+        Extracts decompiled pseudocode from Ghidra's decompilation output,
+        including function boundaries, code structure, and complexity metrics
+        for licensing protection analysis.
+
+        Args:
+            decomp_path: Path to the Ghidra decompilation output file.
+
+        Returns:
+            list[DecompiledFunction]: List of DecompiledFunction objects with
+                pseudocode and complexity metrics.
+
+        Raises:
+            Exception: If parsing fails or file cannot be read.
+        """
         decompiled_functions = []
 
         try:
@@ -250,7 +293,21 @@ class GhidraOutputParser:
             raise
 
     def parse_call_graph(self, graph_path: Path) -> dict[str, list[str]]:
-        """Parse Ghidra call graph export."""
+        """Parse Ghidra call graph export.
+
+        Parses call graph data to identify function call relationships
+        and dependencies for tracing licensing validation routines.
+
+        Args:
+            graph_path: Path to the call graph file.
+
+        Returns:
+            dict[str, list[str]]: Dictionary mapping function names to lists
+                of called functions.
+
+        Raises:
+            Exception: If parsing fails or file cannot be read.
+        """
         call_graph: dict[str, list[str]] = {}
 
         try:
@@ -271,7 +328,21 @@ class GhidraOutputParser:
             raise
 
     def parse_data_types(self, types_path: Path) -> dict[str, DataStructure]:
-        """Parse Ghidra data type definitions."""
+        """Parse Ghidra data type definitions.
+
+        Parses data type definitions to extract structure layouts and field
+        information for analyzing binary protection data structures.
+
+        Args:
+            types_path: Path to the data type definitions file.
+
+        Returns:
+            dict[str, DataStructure]: Dictionary mapping structure names to
+                DataStructure objects.
+
+        Raises:
+            Exception: If parsing fails or file cannot be read.
+        """
         structures = {}
 
         try:
@@ -314,7 +385,18 @@ class GhidraOutputParser:
             raise
 
     def _parse_program_info(self, root: ET.Element) -> dict[str, Any]:
-        """Parse program information from XML."""
+        """Parse program information from XML.
+
+        Extracts program metadata including executable path, format, and
+        base address from Ghidra's XML analysis output.
+
+        Args:
+            root: The root XML element of the Ghidra export.
+
+        Returns:
+            dict[str, Any]: Dictionary containing program name, executable
+                path, format, and image base address.
+        """
         info = {}
 
         prog_elem = root.find(".//PROGRAM")
@@ -327,7 +409,19 @@ class GhidraOutputParser:
         return info
 
     def _parse_function_xml(self, elem: ET.Element) -> FunctionSignature:
-        """Parse function from XML element."""
+        """Parse function from XML element.
+
+        Extracts function signature including name, address, parameters,
+        return type, and local variables from Ghidra XML analysis.
+
+        Args:
+            elem: XML element containing function definition.
+
+        Returns:
+            FunctionSignature: Object with parsed function metadata including
+                name, address, parameters, calling convention, and local
+                variables.
+        """
         name = elem.get("NAME", "")
         addr = int(elem.get("ENTRY_POINT", "0"), 16)
 
@@ -362,7 +456,18 @@ class GhidraOutputParser:
         )
 
     def _parse_structure_xml(self, elem: ET.Element) -> DataStructure:
-        """Parse structure from XML element."""
+        """Parse structure from XML element.
+
+        Extracts data structure definition including fields, offsets, and
+        size information from Ghidra's analysis output.
+
+        Args:
+            elem: XML element containing structure definition.
+
+        Returns:
+            DataStructure: Object with parsed field information including
+                name, size, field list, and structure properties.
+        """
         name = elem.get("NAME", "")
         size = int(elem.get("SIZE", "0"))
 
@@ -382,7 +487,19 @@ class GhidraOutputParser:
         )
 
     def _parse_xref_xml(self, elem: ET.Element) -> CrossReference:
-        """Parse cross-reference from XML element."""
+        """Parse cross-reference from XML element.
+
+        Extracts cross-reference data including source, destination,
+        reference type, and associated functions for call graph analysis.
+
+        Args:
+            elem: XML element containing cross-reference definition.
+
+        Returns:
+            CrossReference: Object with parsed reference metadata including
+                source address, destination address, reference type, and
+                associated function names.
+        """
         return CrossReference(
             from_address=int(elem.get("FROM", "0"), 16),
             to_address=int(elem.get("TO", "0"), 16),
@@ -392,7 +509,17 @@ class GhidraOutputParser:
         )
 
     def _clean_pseudocode(self, code: str) -> str:
-        """Clean up decompiled pseudocode."""
+        """Clean up decompiled pseudocode.
+
+        Removes Ghidra warnings, DWARF comments, and normalizes whitespace
+        in decompiled pseudocode for cleaner analysis output.
+
+        Args:
+            code: Raw decompiled pseudocode from Ghidra.
+
+        Returns:
+            str: Cleaned pseudocode with normalized formatting.
+        """
         # Remove excessive whitespace
         code = re.sub(r"\n\s*\n\s*\n", "\n\n", code)
 
@@ -403,7 +530,18 @@ class GhidraOutputParser:
         return code.strip()
 
     def _calculate_complexity(self, code: str) -> int:
-        """Calculate cyclomatic complexity of pseudocode."""
+        """Calculate cyclomatic complexity of pseudocode.
+
+        Computes cyclomatic complexity by counting control flow statements
+        including conditionals, loops, and logical operators to assess
+        licensing routine code complexity.
+
+        Args:
+            code: Decompiled pseudocode.
+
+        Returns:
+            int: Cyclomatic complexity score.
+        """
         complexity = 1 + code.count("if ")
         complexity += code.count("else if ")
         complexity += code.count("while ")
@@ -417,7 +555,17 @@ class GhidraOutputParser:
         return complexity
 
     def _get_type_size(self, type_name: str) -> int:
-        """Get size of a data type in bytes."""
+        """Get size of a data type in bytes.
+
+        Determines the binary size of a data type assuming 64-bit
+        architecture for licensing protection structure analysis.
+
+        Args:
+            type_name: C/C++ data type name.
+
+        Returns:
+            int: Size in bytes. Defaults to 4 bytes for unknown types.
+        """
         # Basic type sizes (architecture-dependent, assuming 64-bit)
         type_sizes = {
             "char": 1,
@@ -449,30 +597,94 @@ class GhidraOutputParser:
         return type_sizes.get(base_type, 4)  # Default to 4 bytes
 
     def get_function_by_name(self, name: str) -> FunctionSignature | None:
-        """Get function by name."""
+        """Get function by name.
+
+        Retrieves a function signature by its symbolic name for
+        licensing analysis and validation routine identification.
+
+        Args:
+            name: Function name to search for.
+
+        Returns:
+            FunctionSignature | None: FunctionSignature object if found,
+                None otherwise.
+        """
         return next((func for func in self.functions.values() if func.name == name), None)
 
     def get_function_by_address(self, address: int) -> FunctionSignature | None:
-        """Get function by address."""
+        """Get function by address.
+
+        Retrieves a function signature by its memory address for
+        binary location-based analysis and protection mechanism tracing.
+
+        Args:
+            address: Memory address of the function.
+
+        Returns:
+            FunctionSignature | None: FunctionSignature object if found,
+                None otherwise.
+        """
         return self.functions.get(address)
 
     def get_xrefs_to(self, address: int) -> list[CrossReference]:
-        """Get all cross-references to an address."""
+        """Get all cross-references to an address.
+
+        Retrieves incoming cross-references to identify callers and
+        code sections that interact with a target address for
+        licensing validation analysis.
+
+        Args:
+            address: Target memory address.
+
+        Returns:
+            list[CrossReference]: List of CrossReference objects pointing to
+                the address.
+        """
         return [xref for xref in self.xrefs if xref.to_address == address]
 
     def get_xrefs_from(self, address: int) -> list[CrossReference]:
-        """Get all cross-references from an address."""
+        """Get all cross-references from an address.
+
+        Retrieves outgoing cross-references to identify code called by or
+        data accessed from a source address for tracing licensing
+        protection mechanisms.
+
+        Args:
+            address: Source memory address.
+
+        Returns:
+            list[CrossReference]: List of CrossReference objects originating
+                from the address.
+        """
         return [xref for xref in self.xrefs if xref.from_address == address]
 
     def get_call_targets(self, function_name: str) -> list[str]:
-        """Get all functions called by a function."""
+        """Get all functions called by a function.
+
+        Retrieves the list of functions called by a specified function
+        for call chain analysis of licensing validation routines.
+
+        Args:
+            function_name: Name of the function to analyze.
+
+        Returns:
+            list[str]: List of function names called by the specified function.
+        """
         targets: list[str] = []
         if func := self.get_function_by_name(function_name):
             targets.extend(xref.to_function for xref in self.get_xrefs_from(func.address) if xref.ref_type == "CALL" and xref.to_function)
         return targets
 
     def export_to_json(self, output_path: Path) -> None:
-        """Export parsed data to JSON format."""
+        """Export parsed data to JSON format.
+
+        Serializes all parsed Ghidra analysis data including functions,
+        structures, cross-references, and decompiled code to JSON file
+        for external processing and licensing protection analysis.
+
+        Args:
+            output_path: Path where JSON export will be written.
+        """
         data = {
             "functions": [
                 {

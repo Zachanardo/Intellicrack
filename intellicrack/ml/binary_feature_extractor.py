@@ -19,7 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import contextlib
 from pathlib import Path
 from types import ModuleType
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -81,7 +81,15 @@ class BinaryFeatureExtractor:
     """Advanced feature extraction from binaries for ML training."""
 
     def __init__(self, binary_path: str) -> None:
-        """Initialize feature extractor with binary file."""
+        """Initialize feature extractor with binary file.
+
+        Loads binary data and initializes disassemblers for feature extraction
+        from PE and ELF files, supporting both 32-bit and 64-bit x86
+        architectures.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+        """
         self.binary_path = Path(binary_path)
         self.logger = logger
         self.data: bytes | None = None
@@ -98,7 +106,11 @@ class BinaryFeatureExtractor:
         self._init_disassembler()
 
     def _load_binary(self) -> None:
-        """Load binary file and parse headers."""
+        """Load binary file and parse headers.
+
+        Attempts to parse the binary using pefile and LIEF libraries,
+        falling back to x86-64 if parsing fails.
+        """
         with open(self.binary_path, "rb") as f:
             self.data = f.read()
 
@@ -140,7 +152,11 @@ class BinaryFeatureExtractor:
             self.mode = CS_MODE_64
 
     def _init_disassembler(self) -> None:
-        """Initialize Capstone disassembler."""
+        """Initialize Capstone disassembler.
+
+        Sets up Capstone with architecture and mode detected during binary
+        loading, or falls back to None if Capstone is unavailable.
+        """
         if CAPSTONE_AVAILABLE and Cs is not None:
             self.disassembler = Cs(self.arch, self.mode)
             self.disassembler.detail = True
@@ -148,7 +164,20 @@ class BinaryFeatureExtractor:
             self.disassembler = None
 
     def extract_opcode_histogram(self, normalize: bool = True) -> NDArray[np.float32]:
-        """Extract histogram of x86/x64 opcodes using Capstone."""
+        """Extract histogram of x86/x64 opcodes using Capstone disassembly.
+
+        Disassembles executable sections of the binary and counts opcode
+        mnemonics to generate a feature vector. Falls back to byte frequency
+        histogram if Capstone is unavailable.
+
+        Args:
+            normalize: Whether to normalize the histogram by total instruction
+                or byte count.
+
+        Returns:
+            Feature vector with opcode frequencies as float32 array of length
+            48 (46 common opcodes + 1 other category + 1 padding).
+        """
         if not CAPSTONE_AVAILABLE or not self.disassembler or self.data is None:
             # Fallback to byte histogram
             histogram = np.zeros(256, dtype=np.float32)
@@ -241,7 +270,17 @@ class BinaryFeatureExtractor:
         return histogram
 
     def _get_executable_sections(self) -> list[tuple[bytes, int]]:
-        """Get executable sections from binary."""
+        """Get executable sections from binary.
+
+        Extracts sections marked as executable from PE or ELF binaries using
+        pefile or LIEF parsers. Falls back to treating entire binary as
+        executable if parsing fails.
+
+        Returns:
+            List of tuples where each tuple contains section data (bytes) and
+            virtual address (int). Returns empty list if no executable sections
+            are found.
+        """
         sections: list[tuple[bytes, int]] = []
 
         if self.pe is not None:
@@ -268,7 +307,19 @@ class BinaryFeatureExtractor:
         return sections
 
     def build_control_flow_graph(self) -> dict[str, Any]:
-        """Build control flow graph and extract graph features."""
+        """Build control flow graph and extract graph features.
+
+        Extracts basic blocks from executable code and constructs a directed
+        graph where nodes represent basic blocks and edges represent control
+        flow transfers (jumps, calls, falls-through). Computes metrics for
+        ML feature extraction.
+
+        Returns:
+            Dictionary with graph metrics containing keys: num_nodes (int),
+            num_edges (int), avg_degree (float), max_degree (int), density
+            (float), num_components (int), and largest_component (int).
+            Returns zero-valued metrics if NetworkX is unavailable.
+        """
         if not NETWORKX_AVAILABLE or nx_module is None:
             return {
                 "num_nodes": 0,
@@ -313,7 +364,20 @@ class BinaryFeatureExtractor:
         return features
 
     def _extract_basic_blocks(self) -> list[dict[str, Any]]:
-        """Extract basic blocks from binary."""
+        """Extract basic blocks from binary executable sections.
+
+        Performs linear sweep disassembly of executable sections to identify
+        basic blocks (maximal sequences of instructions without jumps or calls
+        in the middle). Classifies blocks by type (normal, return, call,
+        conditional) and extracts jump/call targets for CFG construction.
+
+        Returns:
+            List of basic block dictionaries, each containing: start (int,
+            virtual address), size (int, bytes), type (str, one of 'normal',
+            'return', 'call', 'conditional'), and targets (list[int], jump/call
+            destination addresses). Returns empty list if disassembler is
+            unavailable.
+        """
         blocks: list[dict[str, Any]] = []
 
         if not CAPSTONE_AVAILABLE or not self.disassembler or capstone_module is None:
@@ -381,7 +445,19 @@ class BinaryFeatureExtractor:
         return blocks
 
     def extract_api_sequences(self) -> NDArray[np.float32]:
-        """Extract API call sequences from import table."""
+        """Extract API call sequences from import table.
+
+        Analyzes imported functions to detect usage of licensing-related APIs
+        including registry operations, cryptography, network communication,
+        hardware identification, timing checks, process management, file I/O,
+        and memory allocation. Useful for identifying protection mechanisms.
+
+        Returns:
+            Feature vector with API category presence scores as float32 array
+            of length 256. Each category occupies one position with normalized
+            presence score (0.0 to 1.0) indicating proportion of category APIs
+            found in imports.
+        """
         api_features = np.zeros(256, dtype=np.float32)
 
         # License-related API categories
@@ -457,7 +533,16 @@ class BinaryFeatureExtractor:
         return api_features
 
     def _extract_imports(self) -> list[str]:
-        """Extract import table entries."""
+        """Extract import table entries from binary.
+
+        Parses PE import directory or ELF dynamic symbol table to enumerate
+        all imported functions. Used for API pattern analysis and licensing
+        protection detection.
+
+        Returns:
+            List of imported function names as strings. Returns empty list if
+            binary has no imports or parsing fails.
+        """
         imports: list[str] = []
 
         if self.pe is not None:
@@ -477,7 +562,18 @@ class BinaryFeatureExtractor:
         return imports
 
     def calculate_section_entropy(self) -> NDArray[np.float32]:
-        """Calculate entropy for each section."""
+        """Calculate entropy for each section.
+
+        Computes Shannon entropy for each PE section or ELF segment to detect
+        compression and encryption patterns common in licensed software
+        protection. Entropy is useful for identifying obfuscation techniques
+        and packed code.
+
+        Returns:
+            Float32 array of length 16 containing Shannon entropy values for
+            each section (padded with zeros if fewer than 16 sections exist).
+            Values range from 0.0 (low entropy) to ~8.0 (high entropy).
+        """
         entropies: list[float] = []
 
         if self.pe is not None:
@@ -505,7 +601,19 @@ class BinaryFeatureExtractor:
         return np.array(entropies[:16], dtype=np.float32)
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data."""
+        """Calculate Shannon entropy of data.
+
+        Computes Shannon entropy (information entropy) of binary data to
+        quantify disorder and randomness. Used to detect encrypted, compressed,
+        or obfuscated code sections.
+
+        Args:
+            data: Binary data to analyze.
+
+        Returns:
+            Shannon entropy value as a float, typically ranging 0.0 to 8.0
+            for byte data (higher values indicate more randomness/compression).
+        """
         if not data:
             return 0.0
 
@@ -526,7 +634,19 @@ class BinaryFeatureExtractor:
         return entropy
 
     def extract_string_features(self) -> NDArray[np.float32]:
-        """Extract license-related string features with encoding detection."""
+        """Extract license-related string features with encoding detection.
+
+        Scans binary for ASCII and UTF-16LE strings and matches them against
+        patterns indicative of licensing protection (license keywords, serial
+        validation, trial limits, registration, hardware IDs, network
+        validation, cryptography, and integrity checks). Produces feature
+        vector for protection classification.
+
+        Returns:
+            Feature vector as float32 array of length 128 containing normalized
+            scores for string pattern categories and statistical counts of
+            extracted strings.
+        """
         features = np.zeros(128, dtype=np.float32)
 
         # Extract strings with different encoding
@@ -576,7 +696,22 @@ class BinaryFeatureExtractor:
         return features
 
     def _extract_strings(self, data: bytes, min_length: int = 4, encoding: str = "ascii") -> list[str]:
-        """Extract strings from binary data."""
+        """Extract strings from binary data.
+
+        Performs linear scan of binary data to locate contiguous sequences of
+        printable characters. Supports ASCII (single-byte printable ASCII) and
+        UTF-16LE (Windows Unicode) encoding detection. Used for identifying
+        licensing-related metadata, error messages, and validation strings.
+
+        Args:
+            data: Binary data to scan.
+            min_length: Minimum string length to extract (characters).
+            encoding: String encoding to search for (ascii or utf-16le).
+
+        Returns:
+            List of extracted strings. Empty list if no strings meet minimum
+            length requirement or encoding is unsupported.
+        """
         strings = []
 
         if encoding == "ascii":
@@ -619,7 +754,19 @@ class BinaryFeatureExtractor:
         return strings
 
     def extract_all_features(self) -> dict[str, NDArray[np.float32]]:
-        """Extract all features from binary."""
+        """Extract all features from binary.
+
+        Orchestrates complete feature extraction pipeline including opcode
+        analysis, control flow graph metrics, API import patterns, section
+        entropy, and string features. Produces comprehensive feature set for
+        ML-based protection classification.
+
+        Returns:
+            Dictionary mapping feature names (str) to feature vectors
+            (NDArray[np.float32]) with keys: opcode_histogram, cfg_features,
+            api_sequences, section_entropy, string_features. All vectors are
+            flattened and normalized for neural network input.
+        """
         return {
             "opcode_histogram": self.extract_opcode_histogram(),
             "cfg_features": self._cfg_to_vector(self.build_control_flow_graph()),
@@ -629,7 +776,22 @@ class BinaryFeatureExtractor:
         }
 
     def _cfg_to_vector(self, cfg_dict: dict[str, Any]) -> NDArray[np.float32]:
-        """Convert CFG dictionary to feature vector."""
+        """Convert CFG dictionary to feature vector.
+
+        Transforms control flow graph metrics into normalized feature vector
+        suitable for neural network input. Applies dimension-specific
+        normalization to handle different metric scales.
+
+        Args:
+            cfg_dict: Control flow graph metrics dictionary containing keys:
+                num_nodes, num_edges, avg_degree, max_degree, density,
+                num_components, largest_component.
+
+        Returns:
+            Normalized feature vector as float32 array of length 16 with
+            normalized metrics in positions 0-6 and zeros in positions 7-15
+            for padding.
+        """
         vector = np.zeros(16, dtype=np.float32)
 
         vector[0] = cfg_dict.get("num_nodes", 0) / 10000.0  # Normalize
@@ -644,7 +806,22 @@ class BinaryFeatureExtractor:
 
 
 def extract_features_for_ml(binary_path: str) -> NDArray[np.float32]:
-    """Extract features from binary for ML training (convenience function)."""
+    """Extract features from binary for ML training (convenience function).
+
+    Creates a BinaryFeatureExtractor instance and extracts all available
+    features, concatenating them into a single flattened vector suitable for
+    neural network classification models. Useful for batch processing and
+    model training pipelines.
+
+    Args:
+        binary_path: Path to the binary file to analyze.
+
+    Returns:
+        Concatenated feature vector as float32 array containing all extracted
+        features (opcode histogram, CFG metrics, API sequences, section
+        entropy, and string features). Total vector length approximately 464
+        elements.
+    """
     extractor = BinaryFeatureExtractor(binary_path)
     features = extractor.extract_all_features()
 

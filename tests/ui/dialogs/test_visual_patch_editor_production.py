@@ -19,7 +19,6 @@ Licensed under GNU GPL v3
 import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -28,6 +27,7 @@ from intellicrack.handlers.pyqt6_handler import HAS_PYQT as PYQT6_AVAILABLE
 if PYQT6_AVAILABLE:
     from intellicrack.handlers.pyqt6_handler import (
         QApplication,
+        QMessageBox,
         QTest,
         Qt,
     )
@@ -40,6 +40,101 @@ pytestmark = pytest.mark.skipif(
     not PYQT6_AVAILABLE,
     reason="PyQt6 required for UI tests",
 )
+
+
+class FakeMessageBox:
+    """Real test double for QMessageBox that tracks calls and provides controlled responses."""
+
+    Yes: int = 16384
+    No: int = 65536
+
+    def __init__(self) -> None:
+        self.question_calls: list[dict[str, Any]] = []
+        self.warning_calls: list[dict[str, Any]] = []
+        self.information_calls: list[dict[str, Any]] = []
+        self.critical_calls: list[dict[str, Any]] = []
+        self.default_question_response: int = self.Yes
+        self.default_warning_response: int = self.Yes
+        self.default_information_response: int = self.Yes
+        self.default_critical_response: int = self.Yes
+
+    def question(
+        self, parent: Any, title: str, text: str, buttons: int = 0, default_button: int = 0
+    ) -> int:
+        """Track question dialog calls and return controlled response."""
+        self.question_calls.append(
+            {
+                "parent": parent,
+                "title": title,
+                "text": text,
+                "buttons": buttons,
+                "default_button": default_button,
+            }
+        )
+        return self.default_question_response
+
+    def warning(
+        self, parent: Any, title: str, text: str, buttons: int = 0, default_button: int = 0
+    ) -> int:
+        """Track warning dialog calls and return controlled response."""
+        self.warning_calls.append(
+            {
+                "parent": parent,
+                "title": title,
+                "text": text,
+                "buttons": buttons,
+                "default_button": default_button,
+            }
+        )
+        return self.default_warning_response
+
+    def information(
+        self, parent: Any, title: str, text: str, buttons: int = 0, default_button: int = 0
+    ) -> int:
+        """Track information dialog calls and return controlled response."""
+        self.information_calls.append(
+            {
+                "parent": parent,
+                "title": title,
+                "text": text,
+                "buttons": buttons,
+                "default_button": default_button,
+            }
+        )
+        return self.default_information_response
+
+    def critical(
+        self, parent: Any, title: str, text: str, buttons: int = 0, default_button: int = 0
+    ) -> int:
+        """Track critical dialog calls and return controlled response."""
+        self.critical_calls.append(
+            {
+                "parent": parent,
+                "title": title,
+                "text": text,
+                "buttons": buttons,
+                "default_button": default_button,
+            }
+        )
+        return self.default_critical_response
+
+    def reset(self) -> None:
+        """Reset all tracked calls."""
+        self.question_calls.clear()
+        self.warning_calls.clear()
+        self.information_calls.clear()
+        self.critical_calls.clear()
+
+
+class FakeTestResultsDialog:
+    """Real test double for tracking test results display calls."""
+
+    def __init__(self) -> None:
+        self.show_calls: list[list[str]] = []
+
+    def __call__(self, results: list[str]) -> None:
+        """Track show_test_results calls."""
+        self.show_calls.append(results.copy())
 
 
 @pytest.fixture(scope="module")
@@ -194,6 +289,18 @@ def sample_patches() -> list[dict[str, Any]]:
     ]
 
 
+@pytest.fixture
+def fake_messagebox() -> FakeMessageBox:
+    """Create fake QMessageBox for testing."""
+    return FakeMessageBox()
+
+
+@pytest.fixture
+def fake_test_results() -> FakeTestResultsDialog:
+    """Create fake test results dialog for testing."""
+    return FakeTestResultsDialog()
+
+
 class TestVisualPatchEditorDialog:
     """Test VisualPatchEditorDialog functionality."""
 
@@ -333,7 +440,12 @@ class TestVisualPatchEditorDialog:
         dialog.close()
 
     def test_update_patch_rejects_invalid_address(
-        self, qapp: Any, temp_pe_file: Path, sample_patches: list[dict[str, Any]]
+        self,
+        qapp: Any,
+        temp_pe_file: Path,
+        sample_patches: list[dict[str, Any]],
+        fake_messagebox: FakeMessageBox,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Update patch rejects invalid address format."""
         dialog = VisualPatchEditorDialog(str(temp_pe_file), sample_patches)
@@ -345,10 +457,15 @@ class TestVisualPatchEditorDialog:
 
         dialog.address_edit.setText("INVALID")
 
-        with patch.object(dialog, "QMessageBox") as mock_msgbox:
-            dialog.update_current_patch()
+        monkeypatch.setattr(
+            "intellicrack.ui.dialogs.visual_patch_editor.QMessageBox",
+            fake_messagebox
+        )
+
+        dialog.update_current_patch()
 
         assert dialog.patches[0]["address"] == original_address
+        assert len(fake_messagebox.warning_calls) > 0 or len(fake_messagebox.critical_calls) > 0
 
         dialog.close()
 
@@ -374,7 +491,12 @@ class TestVisualPatchEditorDialog:
         dialog.close()
 
     def test_update_patch_rejects_invalid_bytes(
-        self, qapp: Any, temp_pe_file: Path, sample_patches: list[dict[str, Any]]
+        self,
+        qapp: Any,
+        temp_pe_file: Path,
+        sample_patches: list[dict[str, Any]],
+        fake_messagebox: FakeMessageBox,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Update patch rejects invalid byte format."""
         dialog = VisualPatchEditorDialog(str(temp_pe_file), sample_patches)
@@ -386,15 +508,25 @@ class TestVisualPatchEditorDialog:
 
         dialog.bytes_edit.setText("GGGG")
 
-        with patch.object(dialog, "QMessageBox") as mock_msgbox:
-            dialog.update_current_patch()
+        monkeypatch.setattr(
+            "intellicrack.ui.dialogs.visual_patch_editor.QMessageBox",
+            fake_messagebox
+        )
+
+        dialog.update_current_patch()
 
         assert dialog.patches[0]["new_bytes"] == original_bytes
+        assert len(fake_messagebox.warning_calls) > 0 or len(fake_messagebox.critical_calls) > 0
 
         dialog.close()
 
     def test_remove_selected_patch(
-        self, qapp: Any, temp_pe_file: Path, sample_patches: list[dict[str, Any]]
+        self,
+        qapp: Any,
+        temp_pe_file: Path,
+        sample_patches: list[dict[str, Any]],
+        fake_messagebox: FakeMessageBox,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Remove patch deletes selected patch from list."""
         dialog = VisualPatchEditorDialog(str(temp_pe_file), sample_patches)
@@ -402,14 +534,20 @@ class TestVisualPatchEditorDialog:
         dialog.patch_list.setCurrentRow(1)
         qapp.processEvents()
 
-        with patch("intellicrack.ui.dialogs.visual_patch_editor.QMessageBox.question") as mock_question:
-            mock_question.return_value = 16384
-            dialog.remove_selected_patch()
+        fake_messagebox.default_question_response = FakeMessageBox.Yes
+
+        monkeypatch.setattr(
+            "intellicrack.ui.dialogs.visual_patch_editor.QMessageBox.question",
+            fake_messagebox.question
+        )
+
+        dialog.remove_selected_patch()
 
         assert len(dialog.patches) == 2
         assert dialog.patch_list.count() == 2
         assert dialog.patches[0]["address"] == 0x401000
         assert dialog.patches[1]["address"] == 0x401020
+        assert len(fake_messagebox.question_calls) == 1
 
         dialog.close()
 
@@ -437,26 +575,36 @@ class TestVisualPatchEditorDialog:
         dialog.close()
 
     def test_test_patches_validates_all_patches(
-        self, qapp: Any, temp_pe_file: Path, sample_patches: list[dict[str, Any]]
+        self,
+        qapp: Any,
+        temp_pe_file: Path,
+        sample_patches: list[dict[str, Any]],
+        fake_test_results: FakeTestResultsDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test patches validates all patches and shows results."""
         dialog = VisualPatchEditorDialog(str(temp_pe_file), sample_patches)
 
-        with patch.object(dialog, "show_test_results") as mock_show:
-            dialog.test_patches()
+        monkeypatch.setattr(dialog, "show_test_results", fake_test_results)
 
-            mock_show.assert_called_once()
-            results = mock_show.call_args[0][0]
+        dialog.test_patches()
 
-            assert len(results) == 3
-            assert "Valid" in results[0]
-            assert "0x401000" in results[0]
-            assert "2 bytes" in results[0]
+        assert len(fake_test_results.show_calls) == 1
+        results = fake_test_results.show_calls[0]
+
+        assert len(results) == 3
+        assert "Valid" in results[0]
+        assert "0x401000" in results[0]
+        assert "2 bytes" in results[0]
 
         dialog.close()
 
     def test_test_patches_detects_invalid_patches(
-        self, qapp: Any, temp_pe_file: Path
+        self,
+        qapp: Any,
+        temp_pe_file: Path,
+        fake_test_results: FakeTestResultsDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test patches detects invalid patches (zero address, empty bytes)."""
         invalid_patches = [
@@ -466,13 +614,15 @@ class TestVisualPatchEditorDialog:
 
         dialog = VisualPatchEditorDialog(str(temp_pe_file), invalid_patches)
 
-        with patch.object(dialog, "show_test_results") as mock_show:
-            dialog.test_patches()
+        monkeypatch.setattr(dialog, "show_test_results", fake_test_results)
 
-            results = mock_show.call_args[0][0]
+        dialog.test_patches()
 
-            assert "Invalid address" in results[0]
-            assert "No bytes to patch" in results[1]
+        assert len(fake_test_results.show_calls) == 1
+        results = fake_test_results.show_calls[0]
+
+        assert "Invalid address" in results[0]
+        assert "No bytes to patch" in results[1]
 
         dialog.close()
 
@@ -580,7 +730,11 @@ class TestVisualPatchEditorIntegration:
     """Integration tests for complete patch editing workflows."""
 
     def test_complete_patch_editing_workflow(
-        self, qapp: Any, temp_pe_file: Path
+        self,
+        qapp: Any,
+        temp_pe_file: Path,
+        fake_test_results: FakeTestResultsDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Complete workflow: create patches, modify, test, retrieve."""
         dialog = VisualPatchEditorDialog(str(temp_pe_file), [])
@@ -603,8 +757,11 @@ class TestVisualPatchEditorIntegration:
         assert dialog.patches[1]["address"] == 0x401010
         assert dialog.patches[1]["new_bytes"] == b"\xEB\x05"
 
-        with patch.object(dialog, "show_test_results"):
-            dialog.test_patches()
+        monkeypatch.setattr(dialog, "show_test_results", fake_test_results)
+
+        dialog.test_patches()
+
+        assert len(fake_test_results.show_calls) == 1
 
         patches = dialog.get_patches()
         assert len(patches) == 2
@@ -612,7 +769,12 @@ class TestVisualPatchEditorIntegration:
         dialog.close()
 
     def test_multi_patch_management_with_reordering(
-        self, qapp: Any, temp_pe_file: Path, sample_patches: list[dict[str, Any]]
+        self,
+        qapp: Any,
+        temp_pe_file: Path,
+        sample_patches: list[dict[str, Any]],
+        fake_messagebox: FakeMessageBox,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Manage multiple patches with reordering operations."""
         dialog = VisualPatchEditorDialog(str(temp_pe_file), sample_patches)
@@ -626,16 +788,26 @@ class TestVisualPatchEditorIntegration:
 
         dialog.patch_list.setCurrentRow(1)
 
-        with patch("intellicrack.ui.dialogs.visual_patch_editor.QMessageBox.question") as mock_q:
-            mock_q.return_value = 16384
-            dialog.remove_selected_patch()
+        fake_messagebox.default_question_response = FakeMessageBox.Yes
+
+        monkeypatch.setattr(
+            "intellicrack.ui.dialogs.visual_patch_editor.QMessageBox.question",
+            fake_messagebox.question
+        )
+
+        dialog.remove_selected_patch()
 
         assert dialog.patch_list.count() == 3
+        assert len(fake_messagebox.question_calls) == 1
 
         dialog.close()
 
     def test_large_patch_set_performance(
-        self, qapp: Any, temp_pe_file: Path
+        self,
+        qapp: Any,
+        temp_pe_file: Path,
+        fake_test_results: FakeTestResultsDialog,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Dialog handles large number of patches efficiently."""
         large_patch_set = [
@@ -656,8 +828,11 @@ class TestVisualPatchEditorIntegration:
 
         assert "0x401320" in dialog.address_edit.text()
 
-        with patch.object(dialog, "show_test_results"):
-            dialog.test_patches()
+        monkeypatch.setattr(dialog, "show_test_results", fake_test_results)
+
+        dialog.test_patches()
+
+        assert len(fake_test_results.show_calls) == 1
 
         dialog.close()
 

@@ -20,7 +20,6 @@ import tempfile
 import time
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -95,6 +94,24 @@ def temp_output_dir() -> Path:
     """Create temporary directory for output files."""
     with tempfile.TemporaryDirectory(prefix="keygen_test_") as tmpdir:
         yield Path(tmpdir)
+
+
+class FakeFileDialog:
+    """Real test double for QFileDialog."""
+
+    def __init__(self, return_path: str = "", file_filter: str = "") -> None:
+        self.return_path = return_path
+        self.file_filter = file_filter
+
+    def getSaveFileName(
+        self,
+        parent: Any = None,
+        caption: str = "",
+        directory: str = "",
+        filter_str: str = ""
+    ) -> tuple[str, str]:
+        """Return configured path and filter."""
+        return (self.return_path, self.file_filter)
 
 
 class TestKeygenWorker:
@@ -406,7 +423,7 @@ class TestKeygenDialog:
         dialog.close()
 
     def test_batch_export_to_json(
-        self, qapp: Any, temp_binary_file: Path, temp_output_dir: Path
+        self, qapp: Any, temp_binary_file: Path, temp_output_dir: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Dialog exports batch keys to JSON file."""
         dialog = KeygenDialog(binary_path=str(temp_binary_file))
@@ -419,12 +436,15 @@ class TestKeygenDialog:
 
         export_file = temp_output_dir / "exported_keys.json"
 
-        with patch("intellicrack.handlers.pyqt6_handler.QFileDialog.getSaveFileName") as mock_dialog:
-            mock_dialog.return_value = (str(export_file), "JSON Files (*.json)")
+        fake_dialog = FakeFileDialog(str(export_file), "JSON Files (*.json)")
+        monkeypatch.setattr(
+            "intellicrack.handlers.pyqt6_handler.QFileDialog.getSaveFileName",
+            fake_dialog.getSaveFileName
+        )
 
-            if dialog.batch_export_btn:
-                dialog.batch_export_btn.click()
-                QTest.qWait(100)
+        if dialog.batch_export_btn:
+            dialog.batch_export_btn.click()
+            QTest.qWait(100)
 
         if export_file.exists():
             with open(export_file, "r") as f:
@@ -436,7 +456,7 @@ class TestKeygenDialog:
         dialog.close()
 
     def test_batch_export_to_text(
-        self, qapp: Any, temp_binary_file: Path, temp_output_dir: Path
+        self, qapp: Any, temp_binary_file: Path, temp_output_dir: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Dialog exports batch keys to text file."""
         dialog = KeygenDialog(binary_path=str(temp_binary_file))
@@ -448,12 +468,15 @@ class TestKeygenDialog:
 
         export_file = temp_output_dir / "exported_keys.txt"
 
-        with patch("intellicrack.handlers.pyqt6_handler.QFileDialog.getSaveFileName") as mock_dialog:
-            mock_dialog.return_value = (str(export_file), "Text Files (*.txt)")
+        fake_dialog = FakeFileDialog(str(export_file), "Text Files (*.txt)")
+        monkeypatch.setattr(
+            "intellicrack.handlers.pyqt6_handler.QFileDialog.getSaveFileName",
+            fake_dialog.getSaveFileName
+        )
 
-            if dialog.batch_export_btn:
-                dialog.batch_export_btn.click()
-                QTest.qWait(100)
+        if dialog.batch_export_btn:
+            dialog.batch_export_btn.click()
+            QTest.qWait(100)
 
         if export_file.exists():
             content = export_file.read_text()
@@ -696,19 +719,22 @@ class TestKeygenDialogEdgeCases:
         dialog.close()
 
     def test_export_empty_batch(
-        self, qapp: Any, temp_binary_file: Path, temp_output_dir: Path
+        self, qapp: Any, temp_binary_file: Path, temp_output_dir: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Dialog handles export with no generated keys."""
         dialog = KeygenDialog(binary_path=str(temp_binary_file))
 
         export_file = temp_output_dir / "empty_export.json"
 
-        with patch("intellicrack.handlers.pyqt6_handler.QFileDialog.getSaveFileName") as mock_dialog:
-            mock_dialog.return_value = (str(export_file), "JSON Files (*.json)")
+        fake_dialog = FakeFileDialog(str(export_file), "JSON Files (*.json)")
+        monkeypatch.setattr(
+            "intellicrack.handlers.pyqt6_handler.QFileDialog.getSaveFileName",
+            fake_dialog.getSaveFileName
+        )
 
-            if dialog.batch_export_btn:
-                dialog.batch_export_btn.click()
-                QTest.qWait(100)
+        if dialog.batch_export_btn:
+            dialog.batch_export_btn.click()
+            QTest.qWait(100)
 
         dialog.close()
 

@@ -37,7 +37,7 @@ def get_project_root() -> Path:
     """Get the project root directory.
 
     Returns:
-        Path: Absolute path to the Intellicrack project root
+        Absolute path to the Intellicrack project root.
 
     """
     try:
@@ -56,7 +56,7 @@ def get_scripts_dir() -> Path:
     """Get the scripts directory.
 
     Returns:
-        Path: Absolute path to the scripts directory
+        Absolute path to the scripts directory.
 
     """
     return Path(get_resource_path("scripts"))
@@ -66,7 +66,7 @@ def get_frida_scripts_dir() -> Path:
     """Get the Frida scripts directory.
 
     Returns:
-        Path: Absolute path to the Frida scripts directory
+        Absolute path to the Frida scripts directory.
 
     """
     return Path(get_resource_path("scripts/frida"))
@@ -76,7 +76,7 @@ def get_ghidra_scripts_dir() -> Path:
     """Get the Ghidra scripts directory.
 
     Returns:
-        Path: Absolute path to the Ghidra scripts directory
+        Absolute path to the Ghidra scripts directory.
 
     """
     return Path(get_resource_path("scripts/ghidra"))
@@ -86,7 +86,7 @@ def get_plugin_modules_dir() -> Path:
     """Get the Python plugin modules directory.
 
     Returns:
-        Path: Absolute path to the custom plugin modules directory
+        Absolute path to the custom plugin modules directory.
 
     """
     return get_project_root() / "intellicrack" / "plugins" / "custom_modules"
@@ -96,7 +96,7 @@ def get_config_dir() -> Path:
     """Get the configuration directory.
 
     Returns:
-        Path: Absolute path to the configuration directory
+        Absolute path to the configuration directory.
 
     Note:
         This function provides a standalone path without importing config_manager
@@ -113,7 +113,7 @@ def get_main_config_file() -> Path:
     """Get the main configuration file path.
 
     Returns:
-        Path: Absolute path to main config file
+        Absolute path to main config file.
 
     Note:
         This function provides a standalone path without importing config_manager
@@ -127,7 +127,7 @@ def get_tests_dir() -> Path:
     """Get the tests directory.
 
     Returns:
-        Path: Absolute path to the tests directory
+        Absolute path to the tests directory.
 
     """
     return get_project_root() / "tests"
@@ -138,7 +138,7 @@ def get_data_dir() -> Path:
     """Get the main data directory.
 
     Returns:
-        Path: Absolute path to the data directory
+        Absolute path to the data directory.
 
     """
     project_root = get_project_root()
@@ -151,7 +151,7 @@ def get_logs_dir() -> Path:
     """Get the logs directory.
 
     Returns:
-        Path: Absolute path to the logs directory
+        Absolute path to the logs directory.
 
     """
     project_root = get_project_root()
@@ -164,7 +164,7 @@ def get_plugin_cache_dir() -> Path:
     """Get the plugin cache directory.
 
     Returns:
-        Path: Absolute path to the plugin cache directory
+        Absolute path to the plugin cache directory.
 
     """
     project_root = get_project_root()
@@ -177,7 +177,7 @@ def get_visualizations_dir() -> Path:
     """Get the visualizations directory.
 
     Returns:
-        Path: Absolute path to the visualizations directory
+        Absolute path to the visualizations directory.
 
     """
     project_root = get_project_root()
@@ -190,7 +190,7 @@ def get_reports_dir() -> Path:
     """Get the reports directory.
 
     Returns:
-        Path: Absolute path to the reports directory
+        Absolute path to the reports directory.
 
     """
     project_root = get_project_root()
@@ -203,7 +203,7 @@ def get_dev_dir() -> Path:
     """Get the development directory.
 
     Returns:
-        Path: Absolute path to the dev directory
+        Absolute path to the dev directory.
 
     """
     project_root = get_project_root()
@@ -216,7 +216,7 @@ def get_project_docs_dir() -> Path:
     """Get the project documentation directory.
 
     Returns:
-        Path: Absolute path to the project docs directory
+        Absolute path to the project docs directory.
 
     """
     project_root = get_project_root()
@@ -229,7 +229,7 @@ def get_dev_scripts_dir() -> Path:
     """Get the development scripts directory.
 
     Returns:
-        Path: Absolute path to the dev scripts directory
+        Absolute path to the dev scripts directory.
 
     """
     project_root = get_project_root()
@@ -242,7 +242,7 @@ def get_frida_logs_dir() -> Path:
     """Get the Frida operations logs directory.
 
     Returns:
-        Path: Absolute path to the Frida logs directory
+        Absolute path to the Frida logs directory.
 
     """
     return get_logs_dir() / "frida_operations"
@@ -252,7 +252,7 @@ def list_frida_scripts() -> list[Path]:
     """List all available Frida scripts.
 
     Returns:
-        List[Path]: List of paths to Frida .js files
+        List of paths to Frida .js files.
 
     """
     frida_dir = get_frida_scripts_dir()
@@ -263,7 +263,7 @@ def list_ghidra_scripts() -> list[Path]:
     """List all available Ghidra scripts.
 
     Returns:
-        List[Path]: List of paths to Ghidra .java and .py files
+        List of paths to Ghidra .java and .py files.
 
     """
     ghidra_dir = get_ghidra_scripts_dir()
@@ -278,7 +278,7 @@ def list_plugin_modules() -> list[Path]:
     """List all available Python plugin modules.
 
     Returns:
-        List[Path]: List of paths to Python plugin files
+        List of paths to Python plugin files.
 
     """
     plugins_dir = get_plugin_modules_dir()
@@ -291,11 +291,11 @@ def find_script_by_name(script_name: str, script_type: str = "auto") -> Path | N
     """Find a script by name across all script directories.
 
     Args:
-        script_name: Name of the script (with or without extension)
-        script_type: Type of script ("frida", "ghidra", or "auto")
+        script_name: Name of the script (with or without extension).
+        script_type: Type of script ("frida", "ghidra", or "auto").
 
     Returns:
-        Path: Path to the script if found, None otherwise
+        Path to the script if found, None otherwise.
 
     """
     # Remove extension if present
@@ -320,7 +320,7 @@ def get_path_info() -> dict[str, str]:
     """Get information about all configured paths.
 
     Returns:
-        Dict[str, str]: Dictionary mapping path names to their absolute paths
+        Dictionary mapping path names to their absolute paths.
 
     """
     return {
@@ -375,10 +375,10 @@ def get_frida_script_path(script_name: str) -> str | None:
     """Legacy function for getting Frida script paths.
 
     Args:
-        script_name: Name of the Frida script
+        script_name: Name of the Frida script.
 
     Returns:
-        str: Path to the script if found, None otherwise
+        Path to the script if found, None otherwise.
 
     """
     script_path = find_script_by_name(script_name, "frida")
@@ -389,10 +389,10 @@ def get_ghidra_script_path(script_name: str) -> str | None:
     """Legacy function for getting Ghidra script paths.
 
     Args:
-        script_name: Name of the Ghidra script
+        script_name: Name of the Ghidra script.
 
     Returns:
-        str: Path to the script if found, None otherwise
+        Path to the script if found, None otherwise.
 
     """
     script_path = find_script_by_name(script_name, "ghidra")

@@ -46,7 +46,16 @@ try:
 except ImportError:
 
     def get_logger(name: str | None = None) -> logging.Logger:
-        """Create a logger instance for the given name."""
+        """Create a logger instance for the given name.
+
+        Args:
+            name: Optional logger name (str or None). If None, uses the module
+                name.
+
+        Returns:
+            logging.Logger: A logger instance for the specified name.
+
+        """
         return logging.getLogger(name or __name__)
 
 
@@ -104,6 +113,11 @@ class AnalysisResultOrchestrator(QObject):
         """Connect slot to UnifiedProtectionWidget.protection_analyzed signal.
 
         Distribute the result to all registered handlers.
+
+        Args:
+            result: UnifiedProtectionResult containing analysis data to
+                distribute.
+
         """
         self._current_result = result
         logger.info("Orchestrator received analysis result for: %s", result.file_path)
@@ -127,7 +141,7 @@ class AnalysisResultOrchestrator(QObject):
         """Handle ICP analysis completion and distribute to relevant handlers.
 
         Args:
-            result: ICPScanResult object from ICP analysis
+            result: ICPScanResult object from ICP analysis.
 
         """
         logger.info("Orchestrator received ICP analysis result for: %s", result.file_path)
@@ -159,7 +173,13 @@ class AnalysisResultOrchestrator(QObject):
                 )
 
     def get_current_result(self) -> "UnifiedProtectionResult | None":
-        """Get the most recent analysis result."""
+        """Get the most recent analysis result.
+
+        Returns:
+            UnifiedProtectionResult | None: Most recent analysis result, or None
+                if no result is available.
+
+        """
         return self._current_result
 
     def validate_icp_result(self, result: "ICPScanResult") -> bool:
@@ -228,7 +248,17 @@ class AnalysisResultOrchestrator(QObject):
         icp_result: "ICPScanResult",
         unified_result: "UnifiedProtectionResult | None",
     ) -> "UnifiedProtectionResult | None":
-        """Create a new UnifiedProtectionResult if one is not provided."""
+        """Create a new UnifiedProtectionResult if one is not provided.
+
+        Args:
+            icp_result: ICPScanResult to use for creating new result.
+            unified_result: Existing UnifiedProtectionResult or None.
+
+        Returns:
+            UnifiedProtectionResult | None: UnifiedProtectionResult instance or
+                None if creation failed.
+
+        """
         if unified_result:
             return unified_result
         if _UnifiedProtectionResult is not None:
@@ -247,7 +277,14 @@ class AnalysisResultOrchestrator(QObject):
         return None
 
     def _merge_protections_from_icp(self, icp_result: "ICPScanResult", unified_result: "UnifiedProtectionResult") -> None:
-        """Merge protection data from ICP result into unified result."""
+        """Merge protection data from ICP result into unified result.
+
+        Args:
+            icp_result: ICPScanResult containing protection data to merge.
+            unified_result: UnifiedProtectionResult to merge protection data
+                into.
+
+        """
         if hasattr(icp_result, "protections") and hasattr(unified_result, "protections"):
             existing_types = {p.type for p in unified_result.protections if hasattr(p, "type")}
             for protection in icp_result.protections:
@@ -256,7 +293,14 @@ class AnalysisResultOrchestrator(QObject):
                     existing_types.add(protection.type)
 
     def _merge_confidence_from_icp(self, icp_result: "ICPScanResult", unified_result: "UnifiedProtectionResult") -> None:
-        """Merge confidence score from ICP result into unified result."""
+        """Merge confidence score from ICP result into unified result.
+
+        Args:
+            icp_result: ICPScanResult containing confidence data to merge.
+            unified_result: UnifiedProtectionResult to merge confidence data
+                into.
+
+        """
         if hasattr(icp_result, "overall_confidence") and hasattr(unified_result, "confidence"):
             if unified_result.confidence:
                 unified_result.confidence = (unified_result.confidence + icp_result.overall_confidence) / 2
@@ -286,7 +330,16 @@ class AnalysisResultOrchestrator(QObject):
         return recommendations
 
     def _get_bypass_recommendations_from_protections(self, result: "ICPScanResult") -> list[str]:
-        """Generate bypass recommendations based on detected protections."""
+        """Generate bypass recommendations based on detected protections.
+
+        Args:
+            result: ICPScanResult containing protection data to analyze.
+
+        Returns:
+            list[str]: List of bypass recommendation strings based on detected
+                protection types and bypass difficulty.
+
+        """
         recommendations: list[str] = []
         if hasattr(result, "protections"):
             for protection in result.protections:
@@ -300,7 +353,16 @@ class AnalysisResultOrchestrator(QObject):
         return recommendations
 
     def _get_tool_recommendations(self, result: "ICPScanResult") -> list[str]:
-        """Generate tool recommendations from the analysis result."""
+        """Generate tool recommendations from the analysis result.
+
+        Args:
+            result: ICPScanResult containing analysis data with suggested tools.
+
+        Returns:
+            list[str]: List of tool recommendation strings for analysis and
+                bypass.
+
+        """
         if hasattr(result, "suggested_tools"):
             return [f"Consider using {tool} for analysis" for tool in result.suggested_tools]
         return []

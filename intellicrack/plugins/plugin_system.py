@@ -28,22 +28,17 @@ import signal
 import sys
 import tempfile
 import traceback
-from collections.abc import Callable
-from types import ModuleType
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import Any, Protocol
 
-from PyQt6.QtWidgets import QInputDialog, QMessageBox, QWidget
+from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
 from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
 from intellicrack.utils.core.plugin_paths import get_frida_scripts_dir, get_ghidra_scripts_dir
-from intellicrack.utils.logger import log_all_methods, logger
+from intellicrack.utils.logger import log_all_methods, log_message, logger
 
 from ..config import CONFIG
 from ..utils.system.process_utils import get_target_process_pid
-
-
-if TYPE_CHECKING:
-    from PyQt6.QtCore import pyqtSignal
+from ..utils.url_validation import is_safe_url
 
 
 class AppProtocol(Protocol):
@@ -111,19 +106,7 @@ except ImportError as e:
             # Process limits are controlled through Job Objects API instead
             logger.debug("Resource limits not applicable on Windows (would use Job Objects API)")
 
-    resource = WindowsResourceCompat()  # type: ignore[assignment]
-
-
-def log_message(msg: str) -> str:
-    """Format log messages consistently.
-
-    Args:
-        msg: The message string to format.
-
-    Returns:
-        str: The formatted message with brackets.
-    """
-    return f"[{msg}]"
+    resource = WindowsResourceCompat()
 
 
 def load_plugins(
@@ -212,6 +195,33 @@ def load_plugins(
     return plugins
 
 
+def _save_hook_script(app: AppProtocol, plugin_name: str, script: str) -> None:
+    """Save generated hook script to file and optionally execute it.
+
+    Args:
+        app: Application instance with binary_path and update_output signal
+        plugin_name: Name of the plugin that generated the script
+        script: Generated Frida hook script content
+
+    """
+    if not app.binary_path:
+        return
+
+    safe_plugin_name = plugin_name.lower().replace(" ", "_").replace("-", "_")
+    binary_basename = os.path.splitext(os.path.basename(app.binary_path))[0]
+    script_dir = get_frida_scripts_dir()
+    os.makedirs(script_dir, exist_ok=True)
+
+    script_path = os.path.join(script_dir, f"{binary_basename}_{safe_plugin_name}_hook.js")
+
+    try:
+        with open(script_path, "w", encoding="utf-8") as f:
+            f.write(script)
+        app.update_output.emit(log_message(f"[Plugin] Saved hook script to: {script_path}"))
+    except OSError as e:
+        app.update_output.emit(log_message(f"[Plugin] Failed to save hook script: {e}"))
+
+
 def run_plugin(app: AppProtocol, plugin_name: str) -> None:
     """Run a built-in plugin.
 
@@ -244,35 +254,23 @@ def run_plugin(app: AppProtocol, plugin_name: str) -> None:
         app.update_output.emit(log_message("[Plugin] API hooking not available"))
         return
 
-    # Generate appropriate API hooking script based on plugin type
-    script: str | None = None
-    if plugin_name == "HWID Spoofer":
-        # Generate HWID spoofing script for license bypass
-        from ..core.patching.memory_patcher import generate_launcher_script
+    plugin_hook_mapping: dict[str, list[str]] = {
+        "HWID Spoofer": ["hardware_id"],
+        "Anti-Debugger": ["debugger"],
+        "Time Bomb Defuser": ["time"],
+        "Telemetry Blocker": ["network", "telemetry"],
+    }
 
-        script = generate_launcher_script(app.binary_path, ["hardware_id"])  # type: ignore[arg-type]
-    elif plugin_name == "Anti-Debugger":
-        # Generate anti-debugger bypass script for protection analysis
-        from ..core.patching.memory_patcher import generate_launcher_script
-
-        script = generate_launcher_script(app.binary_path, ["debugger"])  # type: ignore[arg-type]
-    elif plugin_name == "Time Bomb Defuser":
-        # Generate time bomb defuser script for trial reset
-        from ..core.patching.memory_patcher import generate_launcher_script
-
-        script = generate_launcher_script(app.binary_path, ["time"])  # type: ignore[arg-type]
-    elif plugin_name == "Telemetry Blocker":
-        # Generate telemetry blocking script for privacy
-        from ..core.patching.memory_patcher import generate_launcher_script
-
-        script = generate_launcher_script(app.binary_path, ["network"])  # type: ignore[arg-type]
-    else:
+    hook_types = plugin_hook_mapping.get(plugin_name)
+    if hook_types is None:
         app.update_output.emit(log_message(f"[Plugin] Unknown plugin: {plugin_name}"))
         return
 
-    # Inject script
+    script = inject_comprehensive_api_hooks(app, hook_types)
+
     if script:
-        inject_comprehensive_api_hooks(app, script)  # type: ignore[arg-type]
+        app.update_output.emit(log_message(f"[Plugin] Generated {plugin_name} hook script ({len(script)} bytes)"))
+        _save_hook_script(app, plugin_name, script)
 
 
 def run_custom_plugin(app: AppProtocol, plugin_info: dict[str, object]) -> None:
@@ -448,7 +446,7 @@ def run_frida_plugin_from_file(app: AppProtocol, plugin_path: str) -> None:
                 if data and len(data) > 0:
                     logger.debug("%s Error context data: %d bytes", prefix, len(data))
 
-        script.on("message", on_message)  # type: ignore[call-overload]
+        script.on("message", on_message)
         script.load()  # This can also raise exceptions
 
         app.update_output.emit(log_message(f"[Plugin] Frida script '{plugin_name}' loaded successfully"))
@@ -1167,9 +1165,9 @@ def _sandbox_worker(
         # Apply resource limits on Unix systems
         if RESOURCE_AVAILABLE and hasattr(resource, "setrlimit"):
             # Limit CPU time to 30 seconds
-            resource.setrlimit(resource.RLIMIT_CPU, (30, 30))  # type: ignore[attr-defined]
+            resource.setrlimit(resource.RLIMIT_CPU, (30, 30))
             # Limit memory to 500MB
-            resource.setrlimit(resource.RLIMIT_AS, (500 * 1024 * 1024, 500 * 1024 * 1024))  # type: ignore[attr-defined]
+            resource.setrlimit(resource.RLIMIT_AS, (500 * 1024 * 1024, 500 * 1024 * 1024))
 
         # Import and execute the plugin
         spec = importlib.util.spec_from_file_location("sandboxed_plugin", plugin_path)
@@ -1616,9 +1614,14 @@ class PluginSystem:
                 # Create directory if it doesn't exist
                 os.makedirs(dest_dir, exist_ok=True)
 
+                # Validate URL for SSRF protection
+                if not is_safe_url(plugin_name):
+                    self.logger.error("URL blocked by SSRF protection: %s", plugin_name)
+                    return False
+
                 # Download the plugin
                 dest_path = os.path.join(dest_dir, filename)
-                urllib.request.urlretrieve(plugin_name, dest_path)  # noqa: S310
+                urllib.request.urlretrieve(plugin_name, dest_path)
 
                 # Verify the downloaded file
                 if os.path.exists(dest_path) and os.path.getsize(dest_path) > 0:
@@ -1844,7 +1847,7 @@ class PluginSystem:
                         elif message["type"] == "error":
                             self.logger.exception("Frida error: %s", message.get("description", ""))
 
-                    script.on("message", on_message)  # type: ignore[call-overload]
+                    script.on("message", on_message)
                     script.load()
 
                     # Wait for script to initialize
@@ -1920,15 +1923,21 @@ class PluginSystem:
 
             # Download the plugin with security checks
             try:
+                # Validate URL for SSRF protection
+                if not is_safe_url(plugin_url):
+                    error_msg = f"URL blocked by SSRF protection: {plugin_url}"
+                    self.logger.error(error_msg)
+                    raise ValueError(error_msg)
+
                 # Set up request with timeout and size limit
-                req = urllib.request.Request(  # noqa: S310
+                req = urllib.request.Request(
                     plugin_url,
                     headers={
                         "User-Agent": "Intellicrack Plugin System/1.0",
                     },
                 )
 
-                with urllib.request.urlopen(req, timeout=30) as response:  # noqa: S310
+                with urllib.request.urlopen(req, timeout=30) as response:
                     # Check content size (limit to 10MB)
                     content_length = response.headers.get("Content-Length")
                     if content_length and int(content_length) > 10 * 1024 * 1024:
@@ -2225,12 +2234,12 @@ finally:
 try:
     from .plugin_config import PLUGIN_SYSTEM_EXPORTS
 
-    _plugin_system_exports = (
+    _plugin_system_exports: list[str] = (
         ([str(item) for item in PLUGIN_SYSTEM_EXPORTS] if isinstance(PLUGIN_SYSTEM_EXPORTS, (list, tuple)) else [])
         if PLUGIN_SYSTEM_EXPORTS is not None
         else []
     )
-    __all__ = ["PluginSystem", "create_plugin_template", *_plugin_system_exports]  # noqa: PLE0604
+    __all__: list[str] = ["PluginSystem", "create_plugin_template"] + _plugin_system_exports
 except ImportError as e:
     logger.exception("Import error in plugin_system, possibly due to missing plugin_config module: %s", e)
     # Fallback in case of circular import issues

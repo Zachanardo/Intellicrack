@@ -11,8 +11,10 @@ Licensed under GNU General Public License v3.0
 
 import tempfile
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, Mock, patch
+from typing import Any, Dict, List, Optional
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 import pytest
 
@@ -46,6 +48,28 @@ pytestmark = pytest.mark.skipif(
     not NETWORKX_AVAILABLE or not IMPORTS_AVAILABLE,
     reason="Required dependencies not available",
 )
+
+
+class FakeR2Session:
+    """Fake radare2 session for testing state variable identification."""
+
+    def __init__(self) -> None:
+        self.commands: List[str] = []
+        self.responses: Dict[str, Any] = {}
+
+    def cmd(self, command: str) -> str:
+        """Execute fake radare2 command and return predefined response."""
+        self.commands.append(command)
+        return self.responses.get(command, "")
+
+    def cmdj(self, command: str) -> Any:
+        """Execute fake radare2 JSON command and return predefined response."""
+        self.commands.append(command)
+        return self.responses.get(command, {})
+
+    def set_response(self, command: str, response: Any) -> None:
+        """Set predefined response for a command."""
+        self.responses[command] = response
 
 
 @pytest.fixture
@@ -196,6 +220,12 @@ def sample_cfg() -> nx.DiGraph:
     cfg.add_edge(0x401030, 0x401040, edge_type="fallthrough")
 
     return cfg
+
+
+@pytest.fixture
+def fake_r2_session() -> FakeR2Session:
+    """Create fake radare2 session for testing."""
+    return FakeR2Session()
 
 
 class TestBasicBlockDataclass:
@@ -464,28 +494,40 @@ class TestDispatcherDetection:
 class TestStateVariableIdentification:
     """Test state variable identification in dispatcher blocks."""
 
-    def test_identify_stack_state_variable(self, obfuscated_binary: Path) -> None:
+    def test_identify_stack_state_variable(
+        self,
+        obfuscated_binary: Path,
+        fake_r2_session: FakeR2Session,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """State variable identification detects stack-based variables."""
         deobfuscator = ControlFlowDeobfuscator(obfuscated_binary)
 
-        with patch("intellicrack.core.analysis.control_flow_deobfuscation.r2_session"):
-            block = BasicBlock(
-                address=0x402000,
-                size=20,
-                instructions=[
-                    {"offset": 0x402000, "disasm": "mov eax, [ebp-8]"},
-                    {"offset": 0x402003, "disasm": "cmp eax, 0"},
-                    {"offset": 0x402006, "disasm": "mov eax, [ebp-8]"},
-                ],
-                successors=[],
-                predecessors=[],
-                block_type="branch",
-            )
+        def fake_r2_session_context(*args: Any, **kwargs: Any) -> FakeR2Session:
+            return fake_r2_session
 
-            state_var = deobfuscator._identify_state_variable(Mock(), block, 0x402000)
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.control_flow_deobfuscation.r2_session",
+            fake_r2_session_context,
+        )
 
-            assert state_var["type"] == "stack"
-            assert "ebp" in state_var["access"]
+        block = BasicBlock(
+            address=0x402000,
+            size=20,
+            instructions=[
+                {"offset": 0x402000, "disasm": "mov eax, [ebp-8]"},
+                {"offset": 0x402003, "disasm": "cmp eax, 0"},
+                {"offset": 0x402006, "disasm": "mov eax, [ebp-8]"},
+            ],
+            successors=[],
+            predecessors=[],
+            block_type="branch",
+        )
+
+        state_var = deobfuscator._identify_state_variable(fake_r2_session, block, 0x402000)
+
+        assert state_var["type"] == "stack"
+        assert "ebp" in state_var["access"]
 
     def test_identify_global_state_variable(self, obfuscated_binary: Path) -> None:
         """State variable identification detects RIP-relative variables."""
@@ -503,7 +545,8 @@ class TestStateVariableIdentification:
             block_type="branch",
         )
 
-        state_var = deobfuscator._identify_state_variable(Mock(), block, 0x402000)
+        fake_session = FakeR2Session()
+        state_var = deobfuscator._identify_state_variable(fake_session, block, 0x402000)
 
         assert state_var["type"] == "global"
 
@@ -572,7 +615,13 @@ class TestDispatcherClassification:
 class TestOpaquePredicateDetection:
     """Test opaque predicate detection and analysis."""
 
-    def test_detect_self_comparison_opaque(self, obfuscated_binary: Path, sample_cfg: nx.DiGraph) -> None:
+    def test_detect_self_comparison_opaque(
+        self,
+        obfuscated_binary: Path,
+        sample_cfg: nx.DiGraph,
+        fake_r2_session: FakeR2Session,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Opaque predicate detection identifies self-comparisons."""
         deobfuscator = ControlFlowDeobfuscator(obfuscated_binary)
 
@@ -590,8 +639,15 @@ class TestOpaquePredicateDetection:
 
         sample_cfg.add_node(0x403000, data=block)
 
-        with patch("intellicrack.core.analysis.control_flow_deobfuscation.r2_session"):
-            opaques = deobfuscator._detect_opaque_predicates(Mock(), sample_cfg, 0x401000)
+        def fake_r2_session_context(*args: Any, **kwargs: Any) -> FakeR2Session:
+            return fake_r2_session
+
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.control_flow_deobfuscation.r2_session",
+            fake_r2_session_context,
+        )
+
+        opaques = deobfuscator._detect_opaque_predicates(fake_r2_session, sample_cfg, 0x401000)
 
         has_self_comparison = any(
             opaque.get("type") == "self_comparison"
@@ -600,7 +656,13 @@ class TestOpaquePredicateDetection:
 
         assert has_self_comparison
 
-    def test_detect_invariant_test_opaque(self, obfuscated_binary: Path, sample_cfg: nx.DiGraph) -> None:
+    def test_detect_invariant_test_opaque(
+        self,
+        obfuscated_binary: Path,
+        sample_cfg: nx.DiGraph,
+        fake_r2_session: FakeR2Session,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Opaque predicate detection identifies invariant tests."""
         deobfuscator = ControlFlowDeobfuscator(obfuscated_binary)
 
@@ -618,8 +680,15 @@ class TestOpaquePredicateDetection:
 
         sample_cfg.add_node(0x403000, data=block)
 
-        with patch("intellicrack.core.analysis.control_flow_deobfuscation.r2_session"):
-            opaques = deobfuscator._detect_opaque_predicates(Mock(), sample_cfg, 0x401000)
+        def fake_r2_session_context(*args: Any, **kwargs: Any) -> FakeR2Session:
+            return fake_r2_session
+
+        monkeypatch.setattr(
+            "intellicrack.core.analysis.control_flow_deobfuscation.r2_session",
+            fake_r2_session_context,
+        )
+
+        opaques = deobfuscator._detect_opaque_predicates(fake_r2_session, sample_cfg, 0x401000)
 
         assert len(opaques) >= 0
 
@@ -858,7 +927,7 @@ class TestRealBinaryDeobfuscation:
     @pytest.mark.real_data
     def test_deobfuscate_vmprotect_binary(self) -> None:
         """Deobfuscation processes VMProtect-protected binary."""
-        binary_path = Path("D:/Intellicrack/tests/fixtures/binaries/protected/vmprotect_protected.exe")
+        binary_path = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "vmprotect_protected.exe"
         if not binary_path.exists():
             pytest.skip("Test binary not available")
 
@@ -875,7 +944,7 @@ class TestRealBinaryDeobfuscation:
     @pytest.mark.real_data
     def test_deobfuscate_themida_binary(self) -> None:
         """Deobfuscation processes Themida-protected binary."""
-        binary_path = Path("D:/Intellicrack/tests/fixtures/binaries/protected/themida_protected.exe")
+        binary_path = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "themida_protected.exe"
         if not binary_path.exists():
             pytest.skip("Test binary not available")
 
@@ -892,7 +961,7 @@ class TestRealBinaryDeobfuscation:
     @pytest.mark.real_data
     def test_deobfuscation_reduces_complexity(self) -> None:
         """Deobfuscation demonstrably reduces CFG complexity."""
-        binary_path = Path("D:/Intellicrack/tests/fixtures/binaries/protected/enigma_packed.exe")
+        binary_path = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "enigma_packed.exe"
         if not binary_path.exists():
             pytest.skip("Test binary not available")
 
@@ -912,7 +981,7 @@ class TestIntegrationDeobfuscation:
     @pytest.mark.real_data
     def test_complete_deobfuscation_workflow(self, temp_workspace: Path) -> None:
         """Complete deobfuscation workflow from binary to patched output."""
-        binary_path = Path("D:/Intellicrack/tests/fixtures/binaries/protected/aspack_packed.exe")
+        binary_path = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "aspack_packed.exe"
         if not binary_path.exists():
             pytest.skip("Test binary not available")
 
@@ -935,7 +1004,7 @@ class TestIntegrationDeobfuscation:
     @pytest.mark.real_data
     def test_dispatcher_detection_and_removal(self) -> None:
         """Dispatcher detection and removal workflow on flattened code."""
-        binary_path = Path("D:/Intellicrack/tests/fixtures/binaries/protected/obsidium_packed.exe")
+        binary_path = PROJECT_ROOT / "tests" / "fixtures" / "binaries" / "protected" / "obsidium_packed.exe"
         if not binary_path.exists():
             pytest.skip("Test binary not available")
 

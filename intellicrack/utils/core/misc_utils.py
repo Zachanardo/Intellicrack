@@ -39,7 +39,7 @@ def log_message(msg: str) -> str:
         msg: The message text to be logged
 
     Returns:
-        str: Formatted log message with timestamp prefix
+        Formatted log message with timestamp prefix.
 
     """
     return f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}"
@@ -52,7 +52,7 @@ def get_timestamp(format_string: str = "%Y-%m-%d %H:%M:%S") -> str:
         format_string: strftime format string
 
     Returns:
-        str: Formatted timestamp
+        Current timestamp formatted according to the format string.
 
     """
     return datetime.datetime.now().strftime(format_string)
@@ -66,7 +66,7 @@ def format_bytes(size: float, precision: int = 2) -> str:
         precision: Number of decimal places
 
     Returns:
-        str: Formatted size string (e.g., "1.23 MB")
+        Formatted size string with appropriate unit suffix (e.g., "1.23 MB").
 
     """
     for unit in ["B", "KB", "MB", "GB", "TB"]:
@@ -84,7 +84,7 @@ def validate_path(path: str | Path, must_exist: bool = True) -> bool:
         must_exist: Whether the path must exist
 
     Returns:
-        bool: True if path is valid
+        True if path is valid, False otherwise.
 
     """
     try:
@@ -115,7 +115,7 @@ def sanitize_filename(filename: str, replacement: str = "_") -> str:
         replacement: Character to replace invalid chars with
 
     Returns:
-        str: Sanitized filename
+        Filename with invalid characters replaced, ensuring it is valid for filesystem use.
 
     """
     # Define invalid characters for filenames
@@ -139,7 +139,7 @@ def truncate_string(text: str, max_length: int = 100, suffix: str = "...") -> st
         suffix: Suffix to add when truncated
 
     Returns:
-        str: Truncated string
+        Text truncated to maximum length with suffix appended if needed.
 
     """
     if len(text) <= max_length:
@@ -156,7 +156,7 @@ def safe_str(obj: object, max_length: int = 100) -> str:
         max_length: Maximum string length
 
     Returns:
-        str: String representation
+        String representation with length capped, or "<str_conversion_failed>" if conversion fails.
 
     """
     try:
@@ -174,10 +174,10 @@ def parse_size_string(size_str: str) -> int:
         size_str: Size string (e.g., "10MB", "1.5GB")
 
     Returns:
-        int: Size in bytes
+        Size in bytes.
 
     Raises:
-        ValueError: If string cannot be parsed
+        ValueError: If size string format is invalid or unit is unrecognized.
 
     """
     units = {
@@ -218,7 +218,7 @@ def get_file_extension(file_path: str | Path, lower: bool = True) -> str:
         lower: Whether to convert to lowercase
 
     Returns:
-        str: File extension (including dot)
+        File extension including the leading dot (e.g., ".txt", ".exe").
 
     """
     path = Path(file_path)
@@ -233,7 +233,7 @@ def ensure_directory_exists(directory: str | Path) -> bool:
         directory: Directory path
 
     Returns:
-        bool: True if directory exists or was created
+        True if directory exists or was successfully created, False otherwise.
 
     """
     try:
@@ -252,7 +252,7 @@ def is_valid_ip_address(ip: str) -> bool:
         ip: IP address string
 
     Returns:
-        bool: True if valid IP
+        True if the string is a valid IPv4 or IPv6 address, False otherwise.
 
     """
     # IPv4 pattern
@@ -280,7 +280,7 @@ def is_valid_port(port: str | int) -> bool:
         port: Port number
 
     Returns:
-        bool: True if valid port
+        True if port is in valid range (1-65535), False otherwise.
 
     """
     try:

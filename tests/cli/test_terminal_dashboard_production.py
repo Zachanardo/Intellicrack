@@ -5,7 +5,6 @@ Tests real terminal UI metrics display and system monitoring.
 
 import time
 from datetime import datetime
-from unittest.mock import MagicMock, patch
 
 import pytest
 

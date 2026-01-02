@@ -14,6 +14,9 @@ import pytest
 
 from intellicrack.core.analysis.radare2_advanced_patcher import Architecture, PatchType, Radare2AdvancedPatcher
 
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+
 
 TEST_ADDRESS_BASE = 0x100
 TEST_NOP_BYTE = 0x90

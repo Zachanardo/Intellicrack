@@ -24,8 +24,7 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
+from typing import Any, Dict, List, Optional
 
 import pytest
 
@@ -54,6 +53,132 @@ pytestmark = pytest.mark.skipif(
     not UI_ENHANCEMENT_AVAILABLE,
     reason=f"UI enhancement module dependencies not available: {'' if UI_ENHANCEMENT_AVAILABLE else IMPORT_ERROR}"
 )
+
+
+class FakeUIController:
+    """Real test double for UI controller.
+
+    Implements actual controller interface for testing UI components.
+    Tracks all method calls and provides verifiable behavior.
+    """
+
+    def __init__(self) -> None:
+        self.analyzed_files: List[str] = []
+        self.generated_scripts: List[tuple[str, str]] = []
+        self.shown_file_properties: List[Path] = []
+        self.call_count_analyze_file: int = 0
+        self.call_count_generate_scripts: int = 0
+        self.call_count_show_file_properties: int = 0
+        self.should_fail_analysis: bool = False
+        self.analysis_delay: float = 0.0
+
+    def analyze_file(self, file_path: str) -> Optional[AnalysisResult]:
+        """Analyze file and return result."""
+        self.call_count_analyze_file += 1
+        self.analyzed_files.append(file_path)
+
+        if self.should_fail_analysis:
+            return None
+
+        if self.analysis_delay > 0:
+            time.sleep(self.analysis_delay)
+
+        return AnalysisResult(
+            target_file=file_path,
+            protection_type="VMProtect",
+            confidence=0.85,
+            bypass_methods=["Memory Dumping", "API Hooking"],
+            timestamp=datetime.now(),
+            details={"test": "data"},
+            generated_scripts=["script.js"]
+        )
+
+    def generate_scripts(self, target_file: str, script_type: str) -> str:
+        """Generate analysis script."""
+        self.call_count_generate_scripts += 1
+        self.generated_scripts.append((target_file, script_type))
+        return f"// Generated {script_type} script for {target_file}"
+
+    def show_file_properties(self, file_path: Path) -> Dict[str, Any]:
+        """Show file properties."""
+        self.call_count_show_file_properties += 1
+        self.shown_file_properties.append(file_path)
+        return {
+            "name": file_path.name,
+            "size": 1024,
+            "type": file_path.suffix,
+            "modified": datetime.now()
+        }
+
+    def reset_tracking(self) -> None:
+        """Reset tracking data for fresh test."""
+        self.analyzed_files.clear()
+        self.generated_scripts.clear()
+        self.shown_file_properties.clear()
+        self.call_count_analyze_file = 0
+        self.call_count_generate_scripts = 0
+        self.call_count_show_file_properties = 0
+        self.should_fail_analysis = False
+        self.analysis_delay = 0.0
+
+    def verify_analyze_file_called_with(self, expected_path: str) -> bool:
+        """Verify analyze_file was called with specific path."""
+        return expected_path in self.analyzed_files
+
+    def verify_analyze_file_call_count(self, expected_count: int) -> bool:
+        """Verify analyze_file was called expected number of times."""
+        return self.call_count_analyze_file == expected_count
+
+
+class FakeModuleLoader:
+    """Real test double for module loader.
+
+    Simulates module loading behavior for testing plugin lifecycle.
+    """
+
+    def __init__(self) -> None:
+        self.loaded_modules: List[str] = []
+        self.unloaded_modules: List[str] = []
+        self.initialized_modules: List[str] = []
+        self.configured_modules: List[tuple[str, Dict[str, Any]]] = []
+
+    def load_module(self, module_name: str) -> bool:
+        """Load a module."""
+        self.loaded_modules.append(module_name)
+        return True
+
+    def unload_module(self, module_name: str) -> bool:
+        """Unload a module."""
+        self.unloaded_modules.append(module_name)
+        return True
+
+    def initialize_module(self, module_name: str) -> bool:
+        """Initialize a module."""
+        self.initialized_modules.append(module_name)
+        return True
+
+    def configure_module(self, module_name: str, config: Dict[str, Any]) -> bool:
+        """Configure a module."""
+        self.configured_modules.append((module_name, config))
+        return True
+
+    def is_module_loaded(self, module_name: str) -> bool:
+        """Check if module is loaded."""
+        return module_name in self.loaded_modules and module_name not in self.unloaded_modules
+
+    def get_module_config(self, module_name: str) -> Optional[Dict[str, Any]]:
+        """Get module configuration."""
+        for name, config in self.configured_modules:
+            if name == module_name:
+                return config
+        return None
+
+    def reset_tracking(self) -> None:
+        """Reset tracking data."""
+        self.loaded_modules.clear()
+        self.unloaded_modules.clear()
+        self.initialized_modules.clear()
+        self.configured_modules.clear()
 
 
 @pytest.fixture
@@ -117,13 +242,19 @@ def temp_config_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def mock_ui_controller() -> MagicMock:
-    """Create mock UI controller."""
-    controller = MagicMock()
-    controller.analyze_file = MagicMock()
-    controller.generate_scripts = MagicMock()
-    controller.show_file_properties = MagicMock()
-    return controller
+def fake_ui_controller() -> FakeUIController:
+    """Create real test double for UI controller."""
+    controller = FakeUIController()
+    yield controller
+    controller.reset_tracking()
+
+
+@pytest.fixture
+def fake_module_loader() -> FakeModuleLoader:
+    """Create real test double for module loader."""
+    loader = FakeModuleLoader()
+    yield loader
+    loader.reset_tracking()
 
 
 class TestUITheme:
@@ -759,14 +890,14 @@ class TestProgressTracker:
 class TestFileExplorerPanel:
     """Test file explorer panel."""
 
-    def test_file_explorer_initialization(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock) -> None:
+    def test_file_explorer_initialization(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """File explorer panel initializes with components."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, mock_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
 
         assert explorer.parent == frame
         assert explorer.config == ui_config
-        assert explorer.ui_controller == mock_ui_controller
+        assert explorer.ui_controller == fake_ui_controller
         assert explorer.frame is not None
         assert explorer.toolbar is not None
         assert explorer.tree is not None
@@ -774,30 +905,30 @@ class TestFileExplorerPanel:
         assert explorer.context_menu is not None
         assert isinstance(explorer.current_path, Path)
 
-    def test_file_explorer_file_size_formatting(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock) -> None:
+    def test_file_explorer_file_size_formatting(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """File explorer formats file sizes correctly."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, mock_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
 
         assert explorer.format_file_size(500) == "500.0 B"
         assert explorer.format_file_size(2048) == "2.0 KB"
         assert explorer.format_file_size(1048576) == "1.0 MB"
         assert explorer.format_file_size(1073741824) == "1.0 GB"
 
-    def test_file_explorer_get_file_icons(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock) -> None:
+    def test_file_explorer_get_file_icons(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """File explorer returns appropriate icons for file types."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, mock_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
 
         assert explorer.get_file_icon(Path("test.exe")) != ""
         assert explorer.get_file_icon(Path("test.dll")) != ""
         assert explorer.get_file_icon(Path("test.py")) != ""
         assert explorer.get_file_icon(Path("test.txt")) != ""
 
-    def test_file_explorer_navigate_up(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock, tmp_path: Path) -> None:
+    def test_file_explorer_navigate_up(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, tmp_path: Path) -> None:
         """File explorer navigates to parent directory."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, mock_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
 
         test_dir = tmp_path / "subdir"
         test_dir.mkdir()
@@ -807,22 +938,23 @@ class TestFileExplorerPanel:
 
         assert explorer.current_path == tmp_path
 
-    def test_file_explorer_analyze_file_triggers_controller(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock, tmp_path: Path) -> None:
+    def test_file_explorer_analyze_file_triggers_controller(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, tmp_path: Path) -> None:
         """File explorer triggers analysis through controller."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, mock_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
 
         test_file = tmp_path / "test.exe"
         test_file.write_bytes(b"MZ\x90\x00")
 
         explorer.analyze_file(test_file)
 
-        mock_ui_controller.analyze_file.assert_called_once_with(str(test_file))
+        assert fake_ui_controller.verify_analyze_file_call_count(1)
+        assert fake_ui_controller.verify_analyze_file_called_with(str(test_file))
 
-    def test_file_explorer_refresh_tree_with_files(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock, tmp_path: Path) -> None:
+    def test_file_explorer_refresh_tree_with_files(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, tmp_path: Path) -> None:
         """File explorer refreshes tree with actual files."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, mock_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
 
         (tmp_path / "test1.exe").write_bytes(b"data")
         (tmp_path / "test2.dll").write_bytes(b"data")
@@ -834,26 +966,26 @@ class TestFileExplorerPanel:
         items = explorer.tree.get_children()
         assert len(items) == 3
 
-    def test_file_explorer_file_size_edge_cases(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock) -> None:
+    def test_file_explorer_file_size_edge_cases(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """File explorer handles edge case file sizes."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, mock_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
 
         assert "0.0 B" in explorer.format_file_size(0)
         assert "TB" in explorer.format_file_size(1099511627776)
 
-    def test_file_explorer_icon_for_unknown_type(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock) -> None:
+    def test_file_explorer_icon_for_unknown_type(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """File explorer returns default icon for unknown file type."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, mock_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
 
         icon = explorer.get_file_icon(Path("test.unknown"))
         assert icon != ""
 
-    def test_file_explorer_navigate_back(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock, tmp_path: Path) -> None:
+    def test_file_explorer_navigate_back(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, tmp_path: Path) -> None:
         """File explorer back navigation works."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, mock_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
 
         subdir = tmp_path / "subdir"
         subdir.mkdir()
@@ -867,24 +999,24 @@ class TestFileExplorerPanel:
 class TestAnalysisViewerPanel:
     """Test analysis viewer panel."""
 
-    def test_analysis_viewer_initialization(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock) -> None:
+    def test_analysis_viewer_initialization(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """Analysis viewer panel initializes with tabs."""
         frame = ttk.Frame(tk_root)
-        viewer = AnalysisViewerPanel(frame, ui_config, mock_ui_controller)
+        viewer = AnalysisViewerPanel(frame, ui_config, fake_ui_controller)
 
         assert viewer.parent == frame
         assert viewer.config == ui_config
-        assert viewer.ui_controller == mock_ui_controller
+        assert viewer.ui_controller == fake_ui_controller
         assert viewer.frame is not None
         assert viewer.notebook is not None
         assert viewer.overview_frame is not None
         assert viewer.details_frame is not None
         assert viewer.current_analysis is None
 
-    def test_analysis_viewer_update_with_result(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock, analysis_result: AnalysisResult) -> None:
+    def test_analysis_viewer_update_with_result(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, analysis_result: AnalysisResult) -> None:
         """Analysis viewer updates with analysis result."""
         frame = ttk.Frame(tk_root)
-        viewer = AnalysisViewerPanel(frame, ui_config, mock_ui_controller)
+        viewer = AnalysisViewerPanel(frame, ui_config, fake_ui_controller)
 
         viewer.update_analysis(analysis_result)
 
@@ -893,10 +1025,10 @@ class TestAnalysisViewerPanel:
         assert viewer.confidence_label.cget("text") == "87%"
         assert viewer.confidence_progress["value"] == 87.0
 
-    def test_analysis_viewer_bypass_methods_display(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock, analysis_result: AnalysisResult) -> None:
+    def test_analysis_viewer_bypass_methods_display(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, analysis_result: AnalysisResult) -> None:
         """Analysis viewer displays bypass methods."""
         frame = ttk.Frame(tk_root)
-        viewer = AnalysisViewerPanel(frame, ui_config, mock_ui_controller)
+        viewer = AnalysisViewerPanel(frame, ui_config, fake_ui_controller)
 
         viewer.update_analysis(analysis_result)
 
@@ -906,10 +1038,10 @@ class TestAnalysisViewerPanel:
         assert "API Hooking" in methods
         assert "Hardware Breakpoints" in methods
 
-    def test_analysis_viewer_low_confidence_display(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock) -> None:
+    def test_analysis_viewer_low_confidence_display(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """Analysis viewer handles low confidence results."""
         frame = ttk.Frame(tk_root)
-        viewer = AnalysisViewerPanel(frame, ui_config, mock_ui_controller)
+        viewer = AnalysisViewerPanel(frame, ui_config, fake_ui_controller)
 
         low_confidence_result = AnalysisResult(
             target_file="unknown.exe",
@@ -923,10 +1055,10 @@ class TestAnalysisViewerPanel:
 
         assert viewer.confidence_progress["value"] == 15.0
 
-    def test_analysis_viewer_multiple_updates(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock, analysis_result: AnalysisResult) -> None:
+    def test_analysis_viewer_multiple_updates(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, analysis_result: AnalysisResult) -> None:
         """Analysis viewer handles multiple sequential updates."""
         frame = ttk.Frame(tk_root)
-        viewer = AnalysisViewerPanel(frame, ui_config, mock_ui_controller)
+        viewer = AnalysisViewerPanel(frame, ui_config, fake_ui_controller)
 
         viewer.update_analysis(analysis_result)
 
@@ -947,21 +1079,21 @@ class TestAnalysisViewerPanel:
 class TestScriptGeneratorPanel:
     """Test script generator panel."""
 
-    def test_script_generator_initialization(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock) -> None:
+    def test_script_generator_initialization(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """Script generator panel initializes with tabs."""
         frame = ttk.Frame(tk_root)
-        generator = ScriptGeneratorPanel(frame, ui_config, mock_ui_controller)
+        generator = ScriptGeneratorPanel(frame, ui_config, fake_ui_controller)
 
         assert generator.parent == frame
         assert generator.config == ui_config
-        assert generator.ui_controller == mock_ui_controller
+        assert generator.ui_controller == fake_ui_controller
         assert generator.frame is not None
         assert generator.notebook is not None
 
-    def test_script_generator_has_required_tabs(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock) -> None:
+    def test_script_generator_has_required_tabs(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """Script generator has all required tabs."""
         frame = ttk.Frame(tk_root)
-        generator = ScriptGeneratorPanel(frame, ui_config, mock_ui_controller)
+        generator = ScriptGeneratorPanel(frame, ui_config, fake_ui_controller)
 
         tab_count = generator.notebook.index("end")
         assert tab_count >= 3
@@ -1000,22 +1132,21 @@ class TestUIEnhancementModule:
         module.config.theme = UITheme.CYBERPUNK
         module.config.font_size = 14
 
-        with patch.object(Path, 'cwd', return_value=tmp_path):
-            import os
-            old_cwd = os.getcwd()
-            os.chdir(str(tmp_path))
-            try:
-                module.save_config()
+        import os
+        old_cwd = os.getcwd()
+        os.chdir(str(tmp_path))
+        try:
+            module.save_config()
 
-                assert (tmp_path / "ui_config.json").exists()
+            assert (tmp_path / "ui_config.json").exists()
 
-                with open(tmp_path / "ui_config.json", "r", encoding="utf-8") as f:
-                    saved_data = json.load(f)
+            with open(tmp_path / "ui_config.json", "r", encoding="utf-8") as f:
+                saved_data = json.load(f)
 
-                assert saved_data["theme"] == "cyberpunk"
-                assert saved_data["font_size"] == 14
-            finally:
-                os.chdir(old_cwd)
+            assert saved_data["theme"] == "cyberpunk"
+            assert saved_data["font_size"] == 14
+        finally:
+            os.chdir(old_cwd)
 
         try:
             module.root.quit()
@@ -1257,10 +1388,10 @@ class TestEdgeCases:
 
         assert tracker.total_items == 0
 
-    def test_file_explorer_handles_nonexistent_path(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock) -> None:
+    def test_file_explorer_handles_nonexistent_path(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """File explorer handles nonexistent directory."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, mock_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
 
         explorer.current_path = Path("C:\\nonexistent\\directory\\path")
         explorer.refresh_tree()
@@ -1326,10 +1457,10 @@ class TestEdgeCases:
         assert len(log_viewer.log_entries) == 1
         assert len(log_viewer.log_entries[0]["message"]) == 10000
 
-    def test_file_explorer_empty_directory(self, tk_root: tk.Tk, ui_config: UIConfig, mock_ui_controller: MagicMock, tmp_path: Path) -> None:
+    def test_file_explorer_empty_directory(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, tmp_path: Path) -> None:
         """File explorer handles empty directory."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, mock_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
 
         empty_dir = tmp_path / "empty"
         empty_dir.mkdir()
@@ -1349,3 +1480,105 @@ class TestEdgeCases:
         chart.refresh()
 
         assert len(chart.data_points) == 1
+
+
+class TestFakeUIControllerBehavior:
+    """Test real test double behavior."""
+
+    def test_fake_controller_tracks_analyze_calls(self, fake_ui_controller: FakeUIController) -> None:
+        """Fake controller accurately tracks analyze_file calls."""
+        fake_ui_controller.analyze_file("test1.exe")
+        fake_ui_controller.analyze_file("test2.exe")
+        fake_ui_controller.analyze_file("test3.exe")
+
+        assert fake_ui_controller.call_count_analyze_file == 3
+        assert len(fake_ui_controller.analyzed_files) == 3
+        assert "test1.exe" in fake_ui_controller.analyzed_files
+        assert "test2.exe" in fake_ui_controller.analyzed_files
+        assert "test3.exe" in fake_ui_controller.analyzed_files
+
+    def test_fake_controller_tracks_script_generation(self, fake_ui_controller: FakeUIController) -> None:
+        """Fake controller tracks script generation calls."""
+        fake_ui_controller.generate_scripts("target.exe", "frida")
+        fake_ui_controller.generate_scripts("target.exe", "ghidra")
+
+        assert fake_ui_controller.call_count_generate_scripts == 2
+        assert len(fake_ui_controller.generated_scripts) == 2
+        assert ("target.exe", "frida") in fake_ui_controller.generated_scripts
+        assert ("target.exe", "ghidra") in fake_ui_controller.generated_scripts
+
+    def test_fake_controller_returns_valid_analysis_results(self, fake_ui_controller: FakeUIController) -> None:
+        """Fake controller returns valid analysis results."""
+        result = fake_ui_controller.analyze_file("test.exe")
+
+        assert result is not None
+        assert result.target_file == "test.exe"
+        assert result.protection_type == "VMProtect"
+        assert result.confidence == 0.85
+        assert len(result.bypass_methods) == 2
+
+    def test_fake_controller_can_simulate_failures(self, fake_ui_controller: FakeUIController) -> None:
+        """Fake controller can simulate analysis failures."""
+        fake_ui_controller.should_fail_analysis = True
+
+        result = fake_ui_controller.analyze_file("test.exe")
+
+        assert result is None
+
+    def test_fake_controller_reset_clears_tracking(self, fake_ui_controller: FakeUIController) -> None:
+        """Fake controller reset clears all tracking data."""
+        fake_ui_controller.analyze_file("test.exe")
+        fake_ui_controller.generate_scripts("test.exe", "frida")
+
+        assert fake_ui_controller.call_count_analyze_file > 0
+        assert fake_ui_controller.call_count_generate_scripts > 0
+
+        fake_ui_controller.reset_tracking()
+
+        assert fake_ui_controller.call_count_analyze_file == 0
+        assert fake_ui_controller.call_count_generate_scripts == 0
+        assert len(fake_ui_controller.analyzed_files) == 0
+        assert len(fake_ui_controller.generated_scripts) == 0
+
+
+class TestFakeModuleLoaderBehavior:
+    """Test module loader test double behavior."""
+
+    def test_fake_loader_tracks_loaded_modules(self, fake_module_loader: FakeModuleLoader) -> None:
+        """Fake loader tracks module loading."""
+        fake_module_loader.load_module("module1")
+        fake_module_loader.load_module("module2")
+
+        assert len(fake_module_loader.loaded_modules) == 2
+        assert "module1" in fake_module_loader.loaded_modules
+        assert "module2" in fake_module_loader.loaded_modules
+
+    def test_fake_loader_tracks_unloaded_modules(self, fake_module_loader: FakeModuleLoader) -> None:
+        """Fake loader tracks module unloading."""
+        fake_module_loader.load_module("module1")
+        fake_module_loader.unload_module("module1")
+
+        assert not fake_module_loader.is_module_loaded("module1")
+        assert "module1" in fake_module_loader.unloaded_modules
+
+    def test_fake_loader_stores_module_config(self, fake_module_loader: FakeModuleLoader) -> None:
+        """Fake loader stores module configuration."""
+        config = {"theme": "dark", "enabled": True}
+        fake_module_loader.configure_module("ui_module", config)
+
+        stored_config = fake_module_loader.get_module_config("ui_module")
+        assert stored_config is not None
+        assert stored_config["theme"] == "dark"
+        assert stored_config["enabled"] is True
+
+    def test_fake_loader_reset_clears_state(self, fake_module_loader: FakeModuleLoader) -> None:
+        """Fake loader reset clears all state."""
+        fake_module_loader.load_module("module1")
+        fake_module_loader.initialize_module("module1")
+        fake_module_loader.configure_module("module1", {"key": "value"})
+
+        fake_module_loader.reset_tracking()
+
+        assert len(fake_module_loader.loaded_modules) == 0
+        assert len(fake_module_loader.initialized_modules) == 0
+        assert len(fake_module_loader.configured_modules) == 0

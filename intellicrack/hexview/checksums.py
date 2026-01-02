@@ -10,7 +10,6 @@ Licensed under GNU General Public License v3.0
 import hashlib
 import zlib
 from collections.abc import Callable
-from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -118,10 +117,11 @@ def calculate_all_checksums(data: bytes) -> dict[str, str]:
     """Calculate all supported checksums and hashes.
 
     Args:
-        data: Binary data to process
+        data: Binary data to process.
 
     Returns:
-        Dictionary with checksum/hash names as keys and results as values
+        Dictionary with checksum/hash names as keys and results as values.
+        Empty dictionary values indicate calculation errors which are logged.
 
     """
     results = {}
@@ -147,16 +147,18 @@ def calculate_checksum_chunked(file_path: str, algorithm: str, chunk_size: int =
     """Calculate checksum for a file using chunked reading.
 
     Args:
-        file_path: Path to the file
-        algorithm: Algorithm name (CRC-16, CRC-32, MD5, SHA-1, SHA-256, SHA-512)
-        chunk_size: Size of chunks to read
+        file_path: Path to the file to read.
+        algorithm: Algorithm name (CRC-16, CRC-32, MD5, SHA-1, SHA-256, SHA-512).
+        chunk_size: Size of chunks to read in bytes (default: 8192).
 
     Returns:
-        Checksum/hash result as string
+        Checksum/hash result as hexadecimal string.
 
     Raises:
         ValueError: If the algorithm is not supported.
-        IOError: If the file cannot be read.
+        FileNotFoundError: If the file does not exist or cannot be opened.
+        IOError: If an error occurs while reading the file.
+        Exception: If any other unexpected error occurs during checksum calculation.
 
     """
     algorithm = algorithm.upper()
@@ -213,7 +215,11 @@ class ChecksumCalculator:
     progress_callback: Callable[[int, int], None] | None
 
     def __init__(self) -> None:
-        """Initialize checksum calculator."""
+        """Initialize checksum calculator with supported algorithms.
+
+        Initializes the calculator with a default set of checksum and hash
+        algorithms, and sets the progress callback to None.
+        """
         self.algorithms = {
             "CRC-16": calculate_crc16,
             "CRC-32": calculate_crc32,
@@ -229,7 +235,6 @@ class ChecksumCalculator:
 
         Args:
             callback: Function that takes (current, total) parameters
-
         """
         self.progress_callback = callback
 
@@ -245,7 +250,7 @@ class ChecksumCalculator:
 
         Raises:
             ValueError: If the algorithm is not supported.
-
+            Exception: For errors during checksum calculation.
         """
         algorithm = algorithm.upper()
 
@@ -274,11 +279,14 @@ class ChecksumCalculator:
         """Calculate multiple checksums for data.
 
         Args:
-            data: Binary data to process
-            algorithms: List of algorithms to use (None for all)
+            data: Binary data to process.
+            algorithms: List of algorithms to use. If None, uses all supported
+                algorithms.
 
         Returns:
-            Dictionary with results
+            Dictionary with results (algorithm names as keys, hash values or
+            error messages as values). Errors are caught and returned as
+            'Error: <message>' strings.
 
         """
         if algorithms is None:
@@ -405,7 +413,7 @@ def verify_checksum(data: bytes, expected: str, algorithm: str) -> bool:
         algorithm: Algorithm to use
 
     Returns:
-        True if checksum matches, False otherwise
+        True if checksum matches, False otherwise (returns False on error).
 
     """
     try:

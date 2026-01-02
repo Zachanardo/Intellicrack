@@ -56,7 +56,7 @@ def allocate_memory():
         data.append(bytes(1024))
     return data
 
-def test_function():
+def test_function() -> None:
     return 42
 
 if __name__ == "__main__":

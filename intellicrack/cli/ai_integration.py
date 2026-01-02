@@ -28,17 +28,35 @@ class AIModelAdapter(ABC):
     """Abstract base class for AI model adapters."""
 
     def __init__(self, intellicrack_interface: IntellicrackAIInterface) -> None:
-        """Initialize AI model adapter with Intellicrack interface and tool definitions."""
+        """Initialize AI model adapter with Intellicrack interface and tool definitions.
+
+        Args:
+            intellicrack_interface: Interface for interacting with Intellicrack functionality.
+        """
         self.interface = intellicrack_interface
         self.tools = self._create_tool_definitions()
 
     @abstractmethod
     def _create_tool_definitions(self) -> list[dict[str, Any]]:
-        """Create tool definitions in the model's expected format."""
+        """Create tool definitions in the model's expected format.
+
+        Returns:
+            list of tool definition dictionaries in the model's format.
+                Each dictionary contains model-specific tool specifications
+                including name, description, and parameter schema.
+        """
 
     @abstractmethod
     def handle_tool_call(self, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
-        """Handle a tool call from the AI model."""
+        """Handle a tool call from the AI model.
+
+        Args:
+            tool_name: Name of the tool to invoke.
+            parameters: Tool parameters as a dictionary.
+
+        Returns:
+            Tool execution result containing status, message, and any output data.
+        """
 
 
 class ClaudeAdapter(AIModelAdapter):
@@ -46,6 +64,13 @@ class ClaudeAdapter(AIModelAdapter):
 
     @staticmethod
     def _create_tool_definitions() -> list[dict[str, Any]]:
+        """Create tool definitions in Claude's format.
+
+        Returns:
+            List of tool definition dictionaries in Claude's format.
+                Includes analyze_binary, suggest_patches, apply_patch, and
+                execute_cli_command tools with complete input schemas.
+        """
         return [
             {
                 "name": "analyze_binary",
@@ -125,7 +150,25 @@ class ClaudeAdapter(AIModelAdapter):
         ]
 
     def handle_tool_call(self, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
-        """Handle a tool call from Claude."""
+        """Handle a tool call from Claude.
+
+        Processes Claude tool requests and routes them to the appropriate
+        Intellicrack interface methods. Handles four main tools: analyze_binary,
+        suggest_patches, apply_patch, and execute_cli_command.
+
+        Args:
+            tool_name: Name of the tool to invoke.
+            parameters: Tool parameters as a dictionary.
+
+        Returns:
+            Tool execution result with status, message, and optional output.
+                Returns error status and message if tool is unknown or execution
+                fails.
+
+        Raises:
+            No exceptions are raised; errors are caught and returned in the
+                response dictionary with status='error'.
+        """
         try:
             if tool_name == "analyze_binary":
                 return self.interface.analyze_binary(
@@ -167,7 +210,13 @@ class OpenAIAdapter(AIModelAdapter):
 
     @staticmethod
     def _create_tool_definitions() -> list[dict[str, Any]]:
-        """Create tool definitions in OpenAI's format."""
+        """Create tool definitions in OpenAI's format.
+
+        Returns:
+            List of tool definition dictionaries in OpenAI function calling format.
+                Includes analyze_binary, suggest_patches, and apply_patch tools
+                with complete function parameter specifications.
+        """
         return [
             {
                 "type": "function",
@@ -239,7 +288,26 @@ class OpenAIAdapter(AIModelAdapter):
         ]
 
     def handle_tool_call(self, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
-        """Handle a tool call from OpenAI."""
+        """Handle a tool call from OpenAI.
+
+        Processes OpenAI function calling requests and routes them to the
+        appropriate Intellicrack interface methods. Handles multiple tools
+        including binary analysis, patch suggestions, and script generation.
+
+        Args:
+            tool_name: Name of the tool to invoke.
+            parameters: Tool parameters as a dictionary.
+
+        Returns:
+            Tool execution result with status, message, and optional output.
+                On success, includes the tool's result data. On error, includes
+                available_tools list and received_parameters for debugging.
+
+        Raises:
+            KeyError exceptions are caught and returned with missing parameter
+                information. General exceptions are caught and returned with
+                error_type for debugging purposes.
+        """
         try:
             # Map tool names to interface methods
             if tool_name == "analyze_binary":
@@ -304,16 +372,24 @@ class LangChainIntegration:
     """Integration for LangChain-based AI applications."""
 
     def __init__(self, intellicrack_interface: IntellicrackAIInterface) -> None:
-        """Initialize LangChain integration with Intellicrack interface."""
+        """Initialize LangChain integration with Intellicrack interface.
+
+        Args:
+            intellicrack_interface: Interface for interacting with Intellicrack functionality.
+        """
         self.interface = intellicrack_interface
 
     def create_tools(self) -> list[Any]:
         """Create LangChain tool wrappers.
 
+        Constructs Tool objects compatible with LangChain framework for
+        integration with LangChain agents and chains. Falls back gracefully
+        if LangChain is not installed.
+
         Returns:
             List of LangChain Tool objects for binary analysis operations,
-            or an empty list if LangChain is not available.
-
+                patch suggestions, and CLI command execution. Returns an empty
+                list if LangChain is not available.
         """
         try:
             from langchain_core.tools import Tool
@@ -344,7 +420,20 @@ class LangChainIntegration:
             return []
 
     def _handle_analyze(self, input_str: str) -> str:
-        """Handle analyze tool call."""
+        """Handle analyze tool call.
+
+        Parses the input string for binary path and optional analysis types,
+        then invokes the Intellicrack binary analysis interface and returns
+        the result as JSON.
+
+        Args:
+            input_str: Input string containing binary path and optional analysis types.
+                Format: "path/to/binary [analysis_type1 analysis_type2 ...]"
+
+        Returns:
+            JSON-formatted analysis result containing analysis data or error
+                information.
+        """
         parts = input_str.strip().split()
         binary_path = parts[0]
         analyses = parts[1:] if len(parts) > 1 else ["comprehensive"]
@@ -353,13 +442,36 @@ class LangChainIntegration:
         return json.dumps(result, indent=2)
 
     def _handle_suggest_patches(self, input_str: str) -> str:
-        """Handle suggest patches tool call."""
+        """Handle suggest patches tool call.
+
+        Invokes the Intellicrack interface to generate patch suggestions for
+        the specified binary file and returns the suggestions as JSON.
+
+        Args:
+            input_str: Binary file path as a string.
+
+        Returns:
+            JSON-formatted patch suggestions containing identified bypass points
+                and patch definitions.
+        """
         binary_path = input_str.strip()
         result = self.interface.suggest_patches(binary_path)
         return json.dumps(result, indent=2)
 
     def _handle_cli_command(self, input_str: str) -> str:
-        """Handle CLI command tool call."""
+        """Handle CLI command tool call.
+
+        Parses the input string to extract description and CLI arguments,
+        then executes the command through the Intellicrack interface and
+        returns the result as JSON.
+
+        Args:
+            input_str: Input in format "description | command args".
+
+        Returns:
+            JSON-formatted command execution result containing status, output,
+                and any error information.
+        """
         # Format: "description | command args"
         EXPECTED_PARTS_COUNT = 2
         parts = input_str.split("|", 1)
@@ -377,7 +489,11 @@ class IntellicrackAIServer:
     """Server for AI model interactions."""
 
     def __init__(self, *, auto_approve_low_risk: bool = False) -> None:
-        """Initialize AI server with confirmation manager and multiple AI adapters."""
+        """Initialize AI server with confirmation manager and multiple AI adapters.
+
+        Args:
+            auto_approve_low_risk: Whether to automatically approve low-risk operations.
+        """
         self.confirmation_manager = ConfirmationManager(auto_approve_low_risk)
         self.interface = IntellicrackAIInterface(self.confirmation_manager)
         self.adapters = {
@@ -387,14 +503,41 @@ class IntellicrackAIServer:
         }
 
     def get_adapter(self, model_type: str) -> AIModelAdapter | None:
-        """Get adapter for specific model type."""
+        """Get adapter for specific model type.
+
+        Retrieves the appropriate AI model adapter instance from the server's
+        registered adapters collection.
+
+        Args:
+            model_type: Type of AI model (e.g., 'claude', 'openai').
+
+        Returns:
+            The adapter for the specified model type, or None if not found.
+                Validates that the adapter is an instance of AIModelAdapter
+                before returning.
+        """
         adapter = self.adapters.get(model_type)
         if adapter is not None and isinstance(adapter, AIModelAdapter):
             return adapter
         return None
 
     def handle_request(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle an AI model request."""
+        """Handle an AI model request.
+
+        Extracts model type, tool name, and parameters from the request,
+        retrieves the appropriate adapter, and invokes the tool handler.
+        Validates all input and returns consistent error responses for
+        invalid requests.
+
+        Args:
+            request: Request dictionary containing 'model_type', 'tool', and
+                'parameters'. model_type defaults to 'claude' if not specified.
+
+        Returns:
+            Response dictionary with status, message, and tool results.
+                On success, includes the tool handler's response. On error,
+                includes status='error' with descriptive message.
+        """
         model_type_value = request.get("model_type", "claude")
         model_type = str(model_type_value) if model_type_value is not None else "claude"
         tool_name = request.get("tool")
@@ -418,7 +561,17 @@ class IntellicrackAIServer:
 
 
 def create_ai_system_prompt() -> str:
-    """Create a comprehensive system prompt for AI models."""
+    """Create a comprehensive system prompt for AI models.
+
+    Generates a detailed system prompt that describes all available Intellicrack
+    tools, their usage, expected workflow, and important safety considerations
+    for AI model interactions.
+
+    Returns:
+        System prompt string containing tool descriptions, workflow guidelines,
+            example usage patterns, and important notes about user confirmation
+            and safety boundaries.
+    """
     return """You are an AI assistant integrated with Intellicrack, a powerful binary analysis and patching tool.
 
 ## Available Tools
@@ -474,7 +627,13 @@ You have access to all 78 Intellicrack features through these tools. Use them wi
 
 
 def main() -> None:
-    """Demonstrate AI integration usage."""
+    """Demonstrate AI integration usage.
+
+    Initializes an IntellicrackAIServer and demonstrates handling requests
+    for binary analysis, patch suggestions, and tool definitions. Creates
+    example requests for Claude adapter and retrieves tool definitions for
+    logging.
+    """
     # Initialize server
     server = IntellicrackAIServer(auto_approve_low_risk=False)
 

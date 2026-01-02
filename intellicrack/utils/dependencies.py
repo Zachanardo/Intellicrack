@@ -31,7 +31,7 @@ def check_weasyprint_dependencies() -> list[str]:
     """Check WeasyPrint dependencies with detailed logging.
 
     Returns:
-        List[str]: List of missing dependencies
+        List of missing dependencies.
 
     """
     missing_deps = []
@@ -102,7 +102,7 @@ def check_and_install_dependencies() -> bool:
     """Check for required dependencies and attempt to install missing ones.
 
     Returns:
-        bool: True if all dependencies are available, False otherwise
+        True if all dependencies are available, False otherwise.
 
     """
     missing_deps = []
@@ -153,10 +153,10 @@ def install_dependencies(deps: list[str]) -> bool:
     """Attempt to install missing dependencies using pip.
 
     Args:
-        deps: List of dependency names to install
+        deps: List of dependency names to install.
 
     Returns:
-        bool: True if installation succeeded, False otherwise
+        True if installation succeeded, False otherwise.
 
     """
     import subprocess
@@ -194,7 +194,7 @@ def setup_required_environment() -> dict[str, Any]:
     """Set up the required environment for Intellicrack operation.
 
     Returns:
-        Dict with environment setup status and available features
+        Dictionary with environment setup status and available features.
 
     """
     env_status: dict[str, Any] = {

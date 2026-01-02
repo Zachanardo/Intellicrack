@@ -112,7 +112,15 @@ class SecretsManager:
     ]
 
     def __init__(self, config_dir: Path | None = None) -> None:
-        """Initialize the secrets manager."""
+        """Initialize the secrets manager.
+
+        Args:
+            config_dir: Optional configuration directory path. If None, uses default.
+
+        Raises:
+            OSError: If unable to create config directory.
+            Exception: If environment file loading fails or encryption initialization fails.
+        """
         self._central_config: IntellicrackConfig | None = None
         self._config_dir_override = config_dir
         self._cipher: Any = None  # Will be Fernet or None
@@ -154,7 +162,15 @@ class SecretsManager:
         self._sync_metadata_to_central_config()
 
     def _get_central_config(self) -> IntellicrackConfig:
-        """Lazy load central config."""
+        """Lazy load central config.
+
+        Returns:
+            The central Intellicrack configuration instance.
+
+        Raises:
+            Exception: If retrieving the global configuration instance fails (exception
+                is raised to caller).
+        """
         if self._central_config is None:
             from intellicrack.core.config_manager import get_config
 
@@ -163,13 +179,28 @@ class SecretsManager:
 
     @property
     def central_config(self) -> IntellicrackConfig:
-        """Get central config instance (lazy-loaded)."""
+        """Get central config instance (lazy-loaded).
+
+        Returns:
+            The central Intellicrack configuration instance.
+
+        Raises:
+            Exception: If retrieving the global configuration instance fails (exception
+                is raised to caller).
+        """
         return self._get_central_config()
 
     def _get_default_config_dir(self) -> Path:
         r"""Get unified configuration directory.
 
         Uses relative path to Intellicrack root for all platforms to ensure consistency.
+
+        Returns:
+            Path to the default secrets configuration directory.
+
+        Raises:
+            Exception: If determining the Intellicrack root path fails (exception is
+                raised to caller).
         """
         import intellicrack
 
@@ -177,7 +208,14 @@ class SecretsManager:
         return root / "config" / "secrets"
 
     def _load_env_files(self) -> None:
-        """Load environment variables from .env files."""
+        """Load environment variables from .env files.
+
+        Loads from unified config directory first, then searches project directories
+        for .env files with fallback locations.
+
+        Raises:
+            OSError: If reading .env files fails (though errors are logged and not raised).
+        """
         if not HAS_DOTENV or load_dotenv is None:
             logger.warning("python-dotenv not available - .env files will not be loaded")
             return
@@ -216,12 +254,27 @@ class SecretsManager:
             current = current.parent
 
     def _set_encryption_status(self, enabled: bool, uses_keyring: bool) -> None:
-        """Set encryption status in central config."""
+        """Set encryption status in central config.
+
+        Args:
+            enabled: Whether encryption is enabled.
+            uses_keyring: Whether the keyring backend is being used.
+
+        Raises:
+            Exception: If setting configuration values fails (though errors are logged).
+        """
         self.central_config.set(ENCRYPTION_ENABLED_KEY, enabled)
         self.central_config.set(KEYRING_IN_USE_KEY, uses_keyring)
 
     def _load_encryption_key(self) -> None:
-        """Load encryption key from keychain or file."""
+        """Load encryption key from keychain or file.
+
+        Attempts to load from OS keychain first, then falls back to file storage.
+
+        Raises:
+            Exception: If decryption initialization fails (exception is caught and
+                logged; cipher is set to generated key as fallback).
+        """
         if not HAS_CRYPTOGRAPHY or Fernet is None:
             self._cipher = None
             return
@@ -246,12 +299,27 @@ class SecretsManager:
             self._set_encryption_status(True, False)
 
     def _disable_encryption(self) -> None:
-        """Disable encryption and set status."""
+        """Disable encryption and set status.
+
+        Clears the cipher and updates configuration to reflect disabled encryption.
+
+        Raises:
+            Exception: If setting configuration values fails (though errors are logged).
+        """
         self._set_encryption_status(False, False)
         self._cipher = None
 
     def _init_encryption(self) -> None:
-        """Initialize encryption for file-based secret storage."""
+        """Initialize encryption for file-based secret storage.
+
+        Generates encryption keys and configures encryption based on available
+        libraries and configuration settings. Attempts keyring storage first,
+        then falls back to file-based key storage.
+
+        Raises:
+            Exception: If keyring storage fails (exception is caught; falls back to
+                file storage) or if configuration updates fail (logged as warning).
+        """
         # Get encryption settings from central config
         use_encryption = self.central_config.get("secrets.use_encryption", True)
         keyring_backend = self.central_config.get("secrets.keyring_backend", "auto")
@@ -290,12 +358,27 @@ class SecretsManager:
         self._load_encryption_key()
 
     def _write_key_file(self, key: bytes) -> None:
-        """Write encryption key to file with restricted permissions."""
+        """Write encryption key to file with restricted permissions.
+
+        Args:
+            key: The encryption key bytes to write to file.
+
+        Raises:
+            OSError: If writing to or changing permissions on the key file fails.
+        """
         self.key_file.write_bytes(key)
         self.key_file.chmod(0o600)
 
     def _load_secrets(self) -> None:
-        """Load secrets from encrypted file."""
+        """Load secrets from encrypted file.
+
+        Decrypts the secrets file if encryption is enabled, or loads as plain text.
+        Errors during loading result in an empty cache.
+
+        Raises:
+            Exception: If decryption or JSON parsing fails (exception is caught; empty
+                cache is used as fallback).
+        """
         if not self.secrets_file.exists():
             self._cache = {}
             return
@@ -316,7 +399,17 @@ class SecretsManager:
             self._cache = {}
 
     def _save_secrets(self) -> None:
-        """Save secrets to encrypted file."""
+        """Save secrets to encrypted file.
+
+        Encrypts secrets before writing if encryption is enabled, otherwise saves
+        as plain text with a warning. Sets restricted file permissions.
+
+        Raises:
+            OSError: If writing to or changing permissions on the secrets file fails
+                (exception is caught and logged).
+            Exception: If encryption or JSON serialization fails (exception is caught
+                and logged).
+        """
         try:
             if self._cipher is None:
                 # No encryption available, save as plain text (with warning)
@@ -336,7 +429,17 @@ class SecretsManager:
             logger.exception("Failed to save secrets: %s", e, exc_info=True)
 
     def _get_from_keyring(self, key: str) -> str | None:
-        """Get secret from OS keychain with error handling."""
+        """Get secret from OS keychain with error handling.
+
+        Args:
+            key: The secret key to retrieve from keychain.
+
+        Returns:
+            The secret value if found, None otherwise.
+
+        Raises:
+            Exception: If keychain lookup fails (exception is caught; None is returned).
+        """
         if not HAS_KEYRING or keyring_module is None:
             return None
         try:
@@ -354,6 +457,16 @@ class SecretsManager:
         2. OS keychain
         3. Encrypted file cache
         4. Default value
+
+        Args:
+            key: The secret key to retrieve.
+            default: Default value if secret not found.
+
+        Returns:
+            The secret value or default if not found.
+
+        Raises:
+            Exception: If keychain lookup fails (exception is caught; search continues).
         """
         if value := os.getenv(key):
             return value
@@ -366,11 +479,18 @@ class SecretsManager:
     def set(self, key: str, value: str, use_keychain: bool = True) -> None:
         """Set a secret value.
 
-        Args:
-            key: Secret key
-            value: Secret value
-            use_keychain: Whether to try storing in OS keychain
+        Stores secret in cache, attempts keyring storage, and persists to
+        encrypted file. Updates configuration metadata.
 
+        Args:
+            key: Secret key.
+            value: Secret value.
+            use_keychain: Whether to try storing in OS keychain.
+
+        Raises:
+            Exception: If keyring storage fails (exception is caught; file storage
+                continues) or if file saving or metadata sync fails (exceptions are
+                caught and logged).
         """
         # Update cache
         self._cache[key] = value
@@ -390,7 +510,19 @@ class SecretsManager:
         self._sync_metadata_to_central_config()
 
     def delete(self, key: str) -> None:
-        """Delete a secret."""
+        """Delete a secret.
+
+        Removes secret from cache, keychain, and persists changes.
+        Updates configuration metadata.
+
+        Args:
+            key: The secret key to delete.
+
+        Raises:
+            Exception: If keychain deletion fails (exception is caught; file saving
+                continues) or if file saving or metadata sync fails (exceptions are
+                caught and logged).
+        """
         # Remove from cache
         self._cache.pop(key, None)
 
@@ -409,7 +541,15 @@ class SecretsManager:
         self._sync_metadata_to_central_config()
 
     def list_keys(self) -> list[str]:
-        """List all available secret keys."""
+        """List all available secret keys.
+
+        Returns:
+            Sorted list of all available secret key names from all backends.
+
+        Raises:
+            Exception: If retrieving environment variable values fails (exception is
+                caught; keyring fallback is used).
+        """
         keys = {key for key in self.KNOWN_SECRETS if os.getenv(key)} | set(self._cache)
         return sorted(keys)
 
@@ -417,11 +557,14 @@ class SecretsManager:
         """Export secrets configuration.
 
         Args:
-            include_values: Whether to include actual values (dangerous!)
+            include_values: Whether to include actual values (dangerous!).
 
         Returns:
-            Dictionary of secrets (values redacted by default)
+            Dictionary of secrets (values redacted by default).
 
+        Raises:
+            Exception: If retrieving secret values fails (exception is caught; None is
+                used as the value).
         """
         result = {}
 
@@ -436,7 +579,18 @@ class SecretsManager:
         return result
 
     def import_secrets(self, secrets: dict[str, str], use_keychain: bool = True) -> None:
-        """Import secrets from a dictionary."""
+        """Import secrets from a dictionary.
+
+        Skips importing redacted values (those ending with asterisks).
+
+        Args:
+            secrets: Dictionary of key-value pairs to import.
+            use_keychain: Whether to store imported secrets in OS keychain.
+
+        Raises:
+            Exception: If storing secrets fails (exception is caught and logged in the
+                set() method).
+        """
         for key, value in secrets.items():
             if value and not value.endswith("*" * 4):  # Skip redacted values
                 self.set(key, value, use_keychain)
@@ -445,6 +599,15 @@ class SecretsManager:
         """Get API key for a specific service.
 
         Common service names are mapped to their environment variables.
+
+        Args:
+            service: The service name (e.g., 'openai', 'anthropic', 'google').
+
+        Returns:
+            The API key for the service, or None if not found.
+
+        Raises:
+            Exception: If secret retrieval fails (exception is caught; search continues).
         """
         # Map common service names to env vars
         service_map = {
@@ -469,14 +632,33 @@ class SecretsManager:
         return self.get(f"{service_lower.upper()}_API_KEY") or self.get("API_KEY")
 
     def rotate_key(self, old_key: str, new_key: str) -> None:
-        """Rotate a secret key."""
+        """Rotate a secret key.
+
+        Copies secret value from old key to new key, then deletes the old key.
+
+        Args:
+            old_key: The current secret key name.
+            new_key: The new secret key name.
+
+        Raises:
+            Exception: If setting or deleting secrets fails (exceptions are caught and
+                logged).
+        """
         if value := self.get(old_key):
             self.set(new_key, value)
             self.delete(old_key)
             logger.info("Rotated secret from %s to %s", old_key, new_key)
 
     def clear_cache(self) -> None:
-        """Clear the in-memory secrets cache."""
+        """Clear the in-memory secrets cache.
+
+        Removes all secrets from the in-memory cache without affecting
+        persisted secrets in files or keychains.
+
+        Raises:
+            Exception: If logging the action fails (though logging exceptions are
+                typically suppressed).
+        """
         self._cache.clear()
         logger.info("Cleared secrets cache")
 
@@ -484,12 +666,16 @@ class SecretsManager:
         """Generate a key from password using PBKDF2HMAC and hashes.
 
         Args:
-            password: The password to derive key from
-            salt: Optional salt bytes (random salt generated if None)
+            password: The password to derive key from.
+            salt: Optional salt bytes (random salt generated if None).
 
         Returns:
-            Derived key bytes
+            Derived key bytes.
 
+        Raises:
+            Exception: If cryptography library is unavailable or key derivation fails
+                (empty bytes returned if unavailable; exception raised if derivation
+                fails).
         """
         if not HAS_CRYPTOGRAPHY or PBKDF2HMAC is None or hashes is None:
             logger.exception("Cryptography library not available for key generation")
@@ -510,8 +696,11 @@ class SecretsManager:
         """Find .env file location using find_dotenv.
 
         Returns:
-            Path to .env file or None if not found
+            Path to .env file or None if not found.
 
+        Raises:
+            Exception: If finding .env file fails (exception is caught and logged; None
+                is returned).
         """
         if not HAS_DOTENV or find_dotenv is None:
             logger.warning("python-dotenv not available for finding .env files")
@@ -532,13 +721,16 @@ class SecretsManager:
         """Verify password against stored hash using hashes.
 
         Args:
-            password: Password to verify
-            stored_hash: Stored hash bytes
-            salt: Salt used for hashing
+            password: Password to verify.
+            stored_hash: Stored hash bytes.
+            salt: Salt used for hashing.
 
         Returns:
-            True if password matches, False otherwise
+            True if password matches, False otherwise.
 
+        Raises:
+            Exception: If cryptography library is unavailable (False returned) or if
+                hash verification fails (exception is caught and logged; False returned).
         """
         if not HAS_CRYPTOGRAPHY or PBKDF2HMAC is None or hashes is None:
             logger.exception("Cryptography library not available for password verification")
@@ -559,7 +751,15 @@ class SecretsManager:
             return False
 
     def _sync_metadata_to_central_config(self) -> None:
-        """Sync encrypted keys metadata to central config."""
+        """Sync encrypted keys metadata to central config.
+
+        Updates central config with information about stored secrets including
+        key names, types (API keys, tokens), and keychain status.
+
+        Raises:
+            Exception: If setting configuration values or checking keychain fails
+                (exceptions are caught and logged as warnings).
+        """
         try:
             # Build metadata about encrypted keys
             encrypted_keys_list: list[dict[str, Any]] = []
@@ -598,7 +798,15 @@ _secrets_manager: SecretsManager | None = None
 
 
 def get_secrets_manager() -> SecretsManager:
-    """Get the singleton secrets manager instance."""
+    """Get the singleton secrets manager instance.
+
+    Returns:
+        The global SecretsManager singleton instance.
+
+    Raises:
+        Exception: If SecretsManager initialization fails (exception is raised to
+            caller).
+    """
     global _secrets_manager
     if _secrets_manager is None:
         _secrets_manager = SecretsManager()
@@ -607,15 +815,48 @@ def get_secrets_manager() -> SecretsManager:
 
 # Convenience functions
 def get_secret(key: str, default: str | None = None) -> str | None:
-    """Get a secret value."""
+    """Get a secret value.
+
+    Args:
+        key: The secret key to retrieve.
+        default: Default value if secret not found.
+
+    Returns:
+        The secret value or default if not found.
+
+    Raises:
+        Exception: If secrets manager initialization or retrieval fails (exception is
+            raised to caller).
+    """
     return get_secrets_manager().get(key, default)
 
 
 def set_secret(key: str, value: str, use_keychain: bool = True) -> None:
-    """Set a secret value."""
+    """Set a secret value.
+
+    Args:
+        key: The secret key.
+        value: The secret value.
+        use_keychain: Whether to store in OS keychain.
+
+    Raises:
+        Exception: If secrets manager initialization or storage fails (exception is
+            raised to caller).
+    """
     get_secrets_manager().set(key, value, use_keychain)
 
 
 def get_api_key(service: str) -> str | None:
-    """Get API key for a service."""
+    """Get API key for a service.
+
+    Args:
+        service: The service name (e.g., 'openai', 'anthropic').
+
+    Returns:
+        The API key for the service, or None if not found.
+
+    Raises:
+        Exception: If secrets manager initialization or retrieval fails (exception is
+            raised to caller).
+    """
     return get_secrets_manager().get_api_key(service)
