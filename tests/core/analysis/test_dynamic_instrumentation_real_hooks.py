@@ -12,16 +12,20 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import pytest
 
 
 try:
     import frida
+    from frida import Device, Session, Script
     FRIDA_AVAILABLE = True
 except ImportError:
     FRIDA_AVAILABLE = False
+    Device = Any  # type: ignore[assignment, misc]
+    Session = Any  # type: ignore[assignment, misc]
+    Script = Any  # type: ignore[assignment, misc]
 
 
 pytestmark = pytest.mark.skipif(
@@ -39,14 +43,14 @@ def test_real_createfilew_hook_on_notepad() -> None:
     if not Path(notepad_path).exists():
         pytest.skip("Notepad not found")
 
-    device = frida.get_local_device()
+    device: Device = frida.get_local_device()
 
     try:
-        pid = device.spawn([notepad_path])
+        pid: int = device.spawn([notepad_path])
 
-        session = device.attach(pid)
+        session: Session = device.attach(pid)
 
-        script_source = """
+        script_source: str = """
         var createFileW = Module.findExportByName('kernel32.dll', 'CreateFileW');
         var callCount = 0;
 
@@ -72,20 +76,20 @@ def test_real_createfilew_hook_on_notepad() -> None:
         };
         """
 
-        messages_received = []
+        messages_received: list[dict[str, Any]] = []
 
         def on_message(message: dict[str, Any], data: bytes | None) -> None:
             if message.get("type") == "send":
                 messages_received.append(message["payload"])
 
-        script = session.create_script(script_source)
+        script: Script = session.create_script(script_source)
         script.on("message", on_message)
         script.load()
 
         device.resume(pid)
         time.sleep(1.5)
 
-        call_count = script.exports_sync.get_call_count()
+        call_count: int = script.exports_sync.get_call_count()
 
         session.detach()
 
@@ -111,13 +115,13 @@ def test_real_registry_hook_on_regedit() -> None:
     if not Path(regedit_path).exists():
         pytest.skip("Regedit not found")
 
-    device = frida.get_local_device()
+    device: Device = frida.get_local_device()
 
     try:
-        pid = device.spawn([regedit_path])
-        session = device.attach(pid)
+        pid: int = device.spawn([regedit_path])
+        session: Session = device.attach(pid)
 
-        script_source = """
+        script_source: str = """
         var regOpenKeyExA = Module.findExportByName('advapi32.dll', 'RegOpenKeyExA');
         var regQueryValueExA = Module.findExportByName('advapi32.dll', 'RegQueryValueExA');
 
@@ -150,20 +154,20 @@ def test_real_registry_hook_on_regedit() -> None:
         };
         """
 
-        messages = []
+        messages: list[dict[str, Any]] = []
 
         def on_message(message: dict[str, Any], data: bytes | None) -> None:
             if message.get("type") == "send":
                 messages.append(message["payload"])
 
-        script = session.create_script(script_source)
+        script: Script = session.create_script(script_source)
         script.on("message", on_message)
         script.load()
 
         device.resume(pid)
         time.sleep(1)
 
-        ops = script.exports_sync.get_registry_ops()
+        ops: int = script.exports_sync.get_registry_ops()
 
         session.detach()
 
@@ -189,13 +193,13 @@ def test_real_module_enumeration() -> None:
     if not Path(cmd_path).exists():
         pytest.skip("cmd.exe not found")
 
-    device = frida.get_local_device()
+    device: Device = frida.get_local_device()
 
     try:
-        pid = device.spawn([cmd_path])
-        session = device.attach(pid)
+        pid: int = device.spawn([cmd_path])
+        session: Session = device.attach(pid)
 
-        script_source = """
+        script_source: str = """
         var modules = Process.enumerateModules();
         var moduleList = [];
 
@@ -228,21 +232,21 @@ def test_real_module_enumeration() -> None:
         };
         """
 
-        payload = None
+        payload: dict[str, Any] | None = None
 
         def on_message(message: dict[str, Any], data: bytes | None) -> None:
             nonlocal payload
             if message.get("type") == "send":
                 payload = message["payload"]
 
-        script = session.create_script(script_source)
+        script: Script = session.create_script(script_source)
         script.on("message", on_message)
         script.load()
 
         device.resume(pid)
         time.sleep(0.5)
 
-        kernel32 = script.exports_sync.find_module("kernel32.dll")
+        kernel32: dict[str, Any] | None = script.exports_sync.find_module("kernel32.dll")
 
         session.detach()
 
@@ -270,13 +274,13 @@ def test_real_export_enumeration() -> None:
     if sys.platform != "win32":
         pytest.skip("Test requires Windows platform")
 
-    device = frida.get_local_device()
+    device: Device = frida.get_local_device()
 
     try:
-        pid = device.spawn(["C:\\Windows\\System32\\cmd.exe"])
-        session = device.attach(pid)
+        pid: int = device.spawn(["C:\\Windows\\System32\\cmd.exe"])
+        session: Session = device.attach(pid)
 
-        script_source = """
+        script_source: str = """
         var kernel32 = Process.getModuleByName('kernel32.dll');
         var exports = kernel32.enumerateExports();
 
@@ -306,21 +310,21 @@ def test_real_export_enumeration() -> None:
         };
         """
 
-        payload = None
+        payload: dict[str, Any] | None = None
 
         def on_message(message: dict[str, Any], data: bytes | None) -> None:
             nonlocal payload
             if message.get("type") == "send":
                 payload = message["payload"]
 
-        script = session.create_script(script_source)
+        script: Script = session.create_script(script_source)
         script.on("message", on_message)
         script.load()
 
         device.resume(pid)
         time.sleep(0.5)
 
-        export_count = script.exports_sync.get_export_count()
+        export_count: int = script.exports_sync.get_export_count()
 
         session.detach()
 
@@ -346,13 +350,13 @@ def test_real_memory_read_write() -> None:
     if sys.platform != "win32":
         pytest.skip("Test requires Windows platform")
 
-    device = frida.get_local_device()
+    device: Device = frida.get_local_device()
 
     try:
-        pid = device.spawn(["C:\\Windows\\System32\\cmd.exe"])
-        session = device.attach(pid)
+        pid: int = device.spawn(["C:\\Windows\\System32\\cmd.exe"])
+        session: Session = device.attach(pid)
 
-        script_source = """
+        script_source: str = """
         var testData = Memory.allocUtf8String("LICENSE_KEY_TEST");
         var testAddress = testData;
 
@@ -375,14 +379,14 @@ def test_real_memory_read_write() -> None:
         };
         """
 
-        payload = None
+        payload: dict[str, Any] | None = None
 
         def on_message(message: dict[str, Any], data: bytes | None) -> None:
             nonlocal payload
             if message.get("type") == "send":
                 payload = message["payload"]
 
-        script = session.create_script(script_source)
+        script: Script = session.create_script(script_source)
         script.on("message", on_message)
         script.load()
 
@@ -410,13 +414,13 @@ def test_real_instruction_tracing() -> None:
     if sys.platform != "win32":
         pytest.skip("Test requires Windows platform")
 
-    device = frida.get_local_device()
+    device: Device = frida.get_local_device()
 
     try:
-        pid = device.spawn(["C:\\Windows\\System32\\cmd.exe"])
-        session = device.attach(pid)
+        pid: int = device.spawn(["C:\\Windows\\System32\\cmd.exe"])
+        session: Session = device.attach(pid)
 
-        script_source = """
+        script_source: str = """
         var instructionCount = 0;
         var createFileW = Module.findExportByName('kernel32.dll', 'CreateFileW');
 
@@ -443,14 +447,14 @@ def test_real_instruction_tracing() -> None:
         };
         """
 
-        payload = None
+        payload: dict[str, Any] | None = None
 
         def on_message(message: dict[str, Any], data: bytes | None) -> None:
             nonlocal payload
             if message.get("type") == "send":
                 payload = message["payload"]
 
-        script = session.create_script(script_source)
+        script: Script = session.create_script(script_source)
         script.on("message", on_message)
         script.load()
 
@@ -479,13 +483,13 @@ def test_real_api_parameter_capture() -> None:
     if sys.platform != "win32":
         pytest.skip("Test requires Windows platform")
 
-    device = frida.get_local_device()
+    device: Device = frida.get_local_device()
 
     try:
-        pid = device.spawn(["C:\\Windows\\System32\\notepad.exe"])
-        session = device.attach(pid)
+        pid: int = device.spawn(["C:\\Windows\\System32\\notepad.exe"])
+        session: Session = device.attach(pid)
 
-        script_source = """
+        script_source: str = """
         var createFileW = Module.findExportByName('kernel32.dll', 'CreateFileW');
         var parameters = [];
 
@@ -523,20 +527,20 @@ def test_real_api_parameter_capture() -> None:
         };
         """
 
-        messages = []
+        messages: list[dict[str, Any]] = []
 
         def on_message(message: dict[str, Any], data: bytes | None) -> None:
             if message.get("type") == "send":
                 messages.append(message["payload"])
 
-        script = session.create_script(script_source)
+        script: Script = session.create_script(script_source)
         script.on("message", on_message)
         script.load()
 
         device.resume(pid)
         time.sleep(1.5)
 
-        param_count = script.exports_sync.get_parameter_count()
+        param_count: int = script.exports_sync.get_parameter_count()
 
         session.detach()
 
@@ -562,13 +566,13 @@ def test_real_return_value_modification() -> None:
     if sys.platform != "win32":
         pytest.skip("Test requires Windows platform")
 
-    device = frida.get_local_device()
+    device: Device = frida.get_local_device()
 
     try:
-        pid = device.spawn(["C:\\Windows\\System32\\cmd.exe"])
-        session = device.attach(pid)
+        pid: int = device.spawn(["C:\\Windows\\System32\\cmd.exe"])
+        session: Session = device.attach(pid)
 
-        script_source = """
+        script_source: str = """
         var getTickCount = Module.findExportByName('kernel32.dll', 'GetTickCount');
         var callsModified = 0;
 
@@ -588,13 +592,13 @@ def test_real_return_value_modification() -> None:
         };
         """
 
-        script = session.create_script(script_source)
+        script: Script = session.create_script(script_source)
         script.load()
 
         device.resume(pid)
         time.sleep(0.5)
 
-        modified = script.exports_sync.get_modified_count()
+        modified: int = script.exports_sync.get_modified_count()
 
         session.detach()
 
@@ -615,13 +619,13 @@ def test_real_multi_api_hooking() -> None:
     if sys.platform != "win32":
         pytest.skip("Test requires Windows platform")
 
-    device = frida.get_local_device()
+    device: Device = frida.get_local_device()
 
     try:
-        pid = device.spawn(["C:\\Windows\\System32\\notepad.exe"])
-        session = device.attach(pid)
+        pid: int = device.spawn(["C:\\Windows\\System32\\notepad.exe"])
+        session: Session = device.attach(pid)
 
-        script_source = """
+        script_source: str = """
         var hooks = {
             createFileW: 0,
             closeHandle: 0,
@@ -658,13 +662,13 @@ def test_real_multi_api_hooking() -> None:
         };
         """
 
-        script = session.create_script(script_source)
+        script: Script = session.create_script(script_source)
         script.load()
 
         device.resume(pid)
         time.sleep(1.5)
 
-        stats = script.exports_sync.get_hook_stats()
+        stats: dict[str, Any] = script.exports_sync.get_hook_stats()
 
         session.detach()
 

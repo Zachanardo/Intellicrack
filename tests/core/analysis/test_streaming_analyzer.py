@@ -35,7 +35,7 @@ def analyzer() -> Any:
 
 
 @pytest.fixture
-def small_pe_binary(tmp_path) -> Any:
+def small_pe_binary(tmp_path: Path) -> Any:
     """Create a minimal PE binary for testing."""
     binary_path = tmp_path / "test.exe"
     dos_header = b"MZ" + b"\x00" * 58 + b"\x80\x00\x00\x00"
@@ -46,7 +46,7 @@ def small_pe_binary(tmp_path) -> Any:
 
 
 @pytest.fixture
-def large_test_file(tmp_path) -> Any:
+def large_test_file(tmp_path: Path) -> Any:
     """Create a large test file for streaming analysis."""
     file_path = tmp_path / "large_test.bin"
     chunk_size = 1024 * 1024
@@ -153,7 +153,7 @@ class TestHashCalculation:
 
         progress_updates = []
 
-        def callback(current, total):
+        def callback(current: int, total: int) -> None:
             progress_updates.append((current, total))
 
         analyzer._calculate_hashes_streaming(test_file, callback)
@@ -204,7 +204,7 @@ class TestProgressTracking:
         """Test analysis with progress callback."""
         progress_stages = []
 
-        def callback(stage, current, total):
+        def callback(stage: str, current: int, total: int) -> None:
             progress_stages.append(stage)
 
         results = analyzer.analyze_with_progress(small_pe_binary, callback)
@@ -217,7 +217,7 @@ class TestProgressTracking:
         """Test progress stages occur in correct order."""
         progress_stages = []
 
-        def callback(stage, current, total):
+        def callback(stage: str, current: int, total: int) -> None:
             progress_stages.append(stage)
 
         analyzer.analyze_with_progress(small_pe_binary, callback)

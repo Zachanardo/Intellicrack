@@ -7,10 +7,12 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
+import hashlib
 import json
 import shutil
 import sqlite3
 import tempfile
+import time
 import zipfile
 from datetime import datetime
 from pathlib import Path
@@ -27,7 +29,7 @@ from intellicrack.core.analysis.ghidra_project_manager import GhidraProject, Ghi
 @pytest.fixture
 def temp_projects_dir() -> Path:
     """Create temporary directory for projects."""
-    temp_dir = Path(tempfile.mkdtemp())
+    temp_dir: Path = Path(tempfile.mkdtemp())
     yield temp_dir
     shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -41,7 +43,7 @@ def project_manager(temp_projects_dir: Path) -> GhidraProjectManager:
 @pytest.fixture
 def sample_binary(tmp_path: Path) -> Path:
     """Create sample binary file."""
-    binary_path = tmp_path / "sample.exe"
+    binary_path: Path = tmp_path / "sample.exe"
     binary_path.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
     return binary_path
 
@@ -49,7 +51,7 @@ def sample_binary(tmp_path: Path) -> Path:
 @pytest.fixture
 def sample_analysis_result(sample_binary: Path) -> GhidraAnalysisResult:
     """Create sample analysis result."""
-    functions = {
+    functions: dict[int, GhidraFunction] = {
         0x401000: GhidraFunction(
             address=0x401000,
             name="main",
@@ -76,7 +78,7 @@ def sample_analysis_result(sample_binary: Path) -> GhidraAnalysisResult:
         ),
     }
 
-    data_types = {
+    data_types: dict[str, GhidraDataType] = {
         "LICENSE_INFO": GhidraDataType(
             name="LICENSE_INFO",
             size=64,
@@ -105,15 +107,16 @@ def sample_analysis_result(sample_binary: Path) -> GhidraAnalysisResult:
 
 def test_project_manager_initialization(temp_projects_dir: Path) -> None:
     """Project manager initializes with database and directory structure."""
-    manager = GhidraProjectManager(str(temp_projects_dir))
+    manager: GhidraProjectManager = GhidraProjectManager(str(temp_projects_dir))
 
     assert manager.projects_dir.exists()
     assert manager.db_path.exists()
 
-    conn = sqlite3.connect(manager.db_path)
-    cursor = conn.cursor()
+    conn: sqlite3.Connection = sqlite3.connect(manager.db_path)
+    cursor: sqlite3.Cursor = conn.cursor()
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    tables = {row[0] for row in cursor.fetchall()}
+    rows: list[Any] = cursor.fetchall()
+    tables: set[Any] = {row[0] for row in rows}
     conn.close()
 
     assert "projects" in tables
@@ -155,13 +158,13 @@ def test_create_project_with_analysis(project_manager: GhidraProjectManager, sam
 
 def test_compression_decompression_accuracy(project_manager: GhidraProjectManager, sample_analysis_result: GhidraAnalysisResult) -> None:
     """Compression and decompression preserves all analysis data accurately."""
-    compressed = project_manager._compress_analysis(sample_analysis_result)
+    compressed: bytes = project_manager._compress_analysis(sample_analysis_result)
 
     assert isinstance(compressed, bytes)
     assert len(compressed) > 0
     assert len(compressed) < len(str(sample_analysis_result))
 
-    decompressed = project_manager._decompress_analysis(compressed)
+    decompressed: GhidraAnalysisResult = project_manager._decompress_analysis(compressed)
 
     assert decompressed.binary_path == sample_analysis_result.binary_path
     assert decompressed.architecture == sample_analysis_result.architecture
@@ -288,7 +291,7 @@ def test_diff_versions_detects_removed_functions(project_manager: GhidraProjectM
     project = project_manager.create_project("Diff Project 2", str(sample_binary), initial_analysis=sample_analysis_result)
     v1 = project.current_version
 
-    modified_funcs = {k: v for k, v in sample_analysis_result.functions.items() if k != 0x401100}
+    modified_funcs: dict[int, GhidraFunction] = {k: v for k, v in sample_analysis_result.functions.items() if k != 0x401100}
     modified_analysis = GhidraAnalysisResult(
         binary_path=sample_analysis_result.binary_path,
         architecture=sample_analysis_result.architecture,
@@ -319,7 +322,7 @@ def test_diff_versions_detects_modified_functions(project_manager: GhidraProject
     project = project_manager.create_project("Diff Project 3", str(sample_binary), initial_analysis=sample_analysis_result)
     v1 = project.current_version
 
-    modified_funcs = dict(sample_analysis_result.functions)
+    modified_funcs: dict[int, GhidraFunction] = dict(sample_analysis_result.functions)
     modified_funcs[0x401100] = GhidraFunction(
         address=0x401100,
         name="CheckLicense",
@@ -371,7 +374,7 @@ def test_export_project_current_version_only(project_manager: GhidraProjectManag
 
     with zipfile.ZipFile(exported, "r") as zipf:
         assert "project.json" in zipf.namelist()
-        version_files = [f for f in zipf.namelist() if f.startswith("versions/") and f.endswith(".dat")]
+        version_files: list[str] = [f for f in zipf.namelist() if f.startswith("versions/") and f.endswith(".dat")]
         assert len(version_files) == 1
 
 
@@ -389,7 +392,7 @@ def test_export_import_project_roundtrip(project_manager: GhidraProjectManager, 
     assert imported_project.name == original_project.name
     assert len(imported_project.versions) == len(original_project.versions)
 
-    for orig_ver, imp_ver in zip(original_project.versions, imported_project.versions):
+    for orig_ver, imp_ver in zip(original_project.versions, imported_project.versions, strict=True):
         assert orig_ver.description == imp_ver.description
         assert orig_ver.tags == imp_ver.tags
 
@@ -408,15 +411,13 @@ def test_project_cache_performance(project_manager: GhidraProjectManager, sample
     """Cached projects load faster on subsequent accesses."""
     project = project_manager.create_project("Cached Project", str(sample_binary), initial_analysis=sample_analysis_result)
 
-    import time
+    start: float = time.perf_counter()
+    project_manager.load_project(project.project_id)
+    first_load: float = time.perf_counter() - start
 
     start = time.perf_counter()
     project_manager.load_project(project.project_id)
-    first_load = time.perf_counter() - start
-
-    start = time.perf_counter()
-    project_manager.load_project(project.project_id)
-    cached_load = time.perf_counter() - start
+    cached_load: float = time.perf_counter() - start
 
     assert cached_load < first_load
 
@@ -442,8 +443,7 @@ def test_binary_hash_calculation(project_manager: GhidraProjectManager, sample_b
     """Binary hash is calculated correctly and stored in versions."""
     project = project_manager.create_project("Hash Project", str(sample_binary))
 
-    import hashlib
-    expected_hash = hashlib.sha256(sample_binary.read_bytes()).hexdigest()
+    expected_hash: str = hashlib.sha256(sample_binary.read_bytes()).hexdigest()
 
     assert project.versions[0].binary_hash == expected_hash
 
@@ -468,20 +468,26 @@ def test_database_consistency_after_operations(project_manager: GhidraProjectMan
     cursor = conn.cursor()
 
     cursor.execute("SELECT COUNT(*) FROM projects WHERE project_id = ?", (project.project_id,))
-    assert cursor.fetchone()[0] == 1
+    projects_row = cursor.fetchone()
+    assert projects_row is not None
+    assert projects_row[0] == 1
 
     cursor.execute("SELECT COUNT(*) FROM versions WHERE project_id = ?", (project.project_id,))
-    assert cursor.fetchone()[0] == 2
+    versions_row = cursor.fetchone()
+    assert versions_row is not None
+    assert versions_row[0] == 2
 
     cursor.execute("SELECT COUNT(*) FROM collaborators WHERE project_id = ?", (project.project_id,))
-    assert cursor.fetchone()[0] == 1
+    collaborators_row = cursor.fetchone()
+    assert collaborators_row is not None
+    assert collaborators_row[0] == 1
 
     conn.close()
 
 
 def test_large_analysis_compression_efficiency(project_manager: GhidraProjectManager) -> None:
     """Large analysis results compress efficiently."""
-    large_functions = {}
+    large_functions: dict[int, GhidraFunction] = {}
     for i in range(1000):
         addr = 0x400000 + (i * 0x100)
         large_functions[addr] = GhidraFunction(
@@ -514,9 +520,10 @@ def test_large_analysis_compression_efficiency(project_manager: GhidraProjectMan
         metadata={},
     )
 
-    compressed = project_manager._compress_analysis(large_analysis)
-    decompressed = project_manager._decompress_analysis(compressed)
+    compressed: bytes = project_manager._compress_analysis(large_analysis)
+    decompressed: GhidraAnalysisResult = project_manager._decompress_analysis(compressed)
 
     assert len(decompressed.functions) == 1000
-    compression_ratio = len(compressed) / len(msgpack.packb(large_analysis.__dict__, use_bin_type=True))
+    packed_bytes: bytes = msgpack.packb(large_analysis.__dict__, use_bin_type=True)
+    compression_ratio: float = len(compressed) / len(packed_bytes)
     assert compression_ratio < 0.8

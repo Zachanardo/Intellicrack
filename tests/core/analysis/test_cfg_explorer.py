@@ -564,7 +564,7 @@ class TestFunctionSimilarity:
         explorer.load_binary(str(simple_pe_binary))
 
         if len(explorer.function_graphs) >= 2:
-            graphs: list = list(explorer.function_graphs.values())
+            graphs = list(explorer.function_graphs.values())
             graph1 = graphs[0]
             graph2 = graphs[1]
 
@@ -912,10 +912,12 @@ def simple_pe_binary(tmp_path: Path) -> Path:
 @pytest.fixture
 def licensed_binary(tmp_path: Path) -> Path:
     """Create binary with license check patterns for testing."""
-    return simple_pe_binary(tmp_path)
+    result: Path = simple_pe_binary(tmp_path)
+    return result
 
 
 @pytest.fixture
 def vulnerable_binary(tmp_path: Path) -> Path:
     """Create binary with vulnerability patterns for testing."""
-    return simple_pe_binary(tmp_path)
+    result: Path = simple_pe_binary(tmp_path)
+    return result

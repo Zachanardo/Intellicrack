@@ -7,34 +7,41 @@ Testing Agent Mission: Validate production-ready orchestration capabilities
 that demonstrate genuine binary analysis effectiveness for security research.
 """
 
+import logging
 import os
-import pytest
+import queue
+import stat
 import tempfile
+import threading
 import time
+import weakref
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Sequence
+
+import pytest
+
 try:
-    from PyQt6.QtCore import QObject
+    from PyQt6.QtCore import QObject as _QObject
+    QObject = _QObject
 except ImportError:
-    import weakref
-    from collections.abc import Callable
-
     class Signal:
-        """Production-ready signal implementation for Qt compatibility"""
-        def __init__(self) -> None:
-            self._connections: list[weakref.ref] = []
+        """Production-ready signal implementation for Qt compatibility."""
 
-        def connect(self, slot: Callable) -> None:
-            """Connect a slot to this signal"""
+        def __init__(self) -> None:
+            self._connections: list[weakref.ref[Callable[..., Any]]] = []
+
+        def connect(self, slot: Callable[..., Any]) -> None:
+            """Connect a slot to this signal."""
             self._connections.append(weakref.ref(slot))
 
-        def disconnect(self, slot: Callable) -> None:
-            """Disconnect a slot from this signal"""
+        def disconnect(self, slot: Callable[..., Any]) -> None:
+            """Disconnect a slot from this signal."""
             self._connections = [ref for ref in self._connections if ref() != slot]
 
-        def emit(self, *args, **kwargs) -> None:
-            """Emit the signal to all connected slots"""
-            dead_refs = []
+        def emit(self, *args: Any, **kwargs: Any) -> None:
+            """Emit the signal to all connected slots."""
+            dead_refs: list[weakref.ref[Callable[..., Any]]] = []
             for ref in self._connections:
                 slot = ref()
                 if slot is not None:
@@ -44,32 +51,33 @@ except ImportError:
             for ref in dead_refs:
                 self._connections.remove(ref)
 
-    class QObject:
-        """Production-ready QObject implementation with signal/slot mechanism"""
-        _instances: weakref.WeakSet = weakref.WeakSet()
+    class QObject:  # type: ignore[no-redef]
+        """Production-ready QObject implementation with signal/slot mechanism."""
 
-        def __init__(self, parent: Optional["QObject"] = None) -> None:
-            self._parent = None
-            self._children: list[weakref.ref] = []
+        _instances: weakref.WeakSet["QObject"] = weakref.WeakSet()
+
+        def __init__(self, parent: "QObject | None" = None) -> None:
+            self._parent: QObject | None = None
+            self._children: list[weakref.ref["QObject"]] = []
             self._properties: dict[str, Any] = {}
             self._signals: dict[str, Signal] = {}
             self._destroyed = False
 
-            QObject._instances.add(self)
+            QObject._instances.add(self)  # type: ignore[attr-defined]
 
             if parent is not None:
                 self.setParent(parent)
 
-        def setParent(self, parent: Optional["QObject"]) -> None:
-            """Set the parent object"""
+        def setParent(self, parent: "QObject | None") -> None:
+            """Set the parent object."""
             if self._parent is not None:
-                self._parent._removeChild(self)
+                self._parent._removeChild(self)  # type: ignore[attr-defined]
             self._parent = parent
             if parent is not None:
-                parent._addChild(self)
+                parent._addChild(self)  # type: ignore[attr-defined]
 
-        def parent(self) -> Optional["QObject"]:
-            """Get the parent object"""
+        def parent(self) -> "QObject | None":
+            """Get the parent object."""
             return self._parent
 
         def _addChild(self, child: "QObject") -> None:
@@ -103,10 +111,10 @@ except ImportError:
             return self._properties.get(name)
 
         def deleteLater(self) -> None:
-            """Mark object for deletion"""
+            """Mark object for deletion."""
             self._destroyed = True
             if self._parent is not None:
-                self._parent._removeChild(self)
+                self._parent._removeChild(self)  # type: ignore[attr-defined]
                 self._parent = None
             for child in self.children():
                 child.deleteLater()
@@ -130,12 +138,12 @@ from tests.base_test import IntellicrackTestBase
 
 
 class FakeVMInstance:
-    """Real test double for VM instance with complete implementation"""
+    """Real test double for VM instance with complete implementation."""
 
     def __init__(self, copy_success: bool = True) -> None:
         self.copy_success = copy_success
         self.copy_file_to_vm_called = False
-        self.copied_files: List[tuple[str, str]] = []
+        self.copied_files: list[tuple[str, str]] = []
 
     def copy_file_to_vm(self, source_path: str, dest_path: str) -> bool:
         """Simulate copying file to VM"""
@@ -148,13 +156,15 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
     """Test orchestrated binary analysis with REAL multi-engine coordination."""
 
     @pytest.fixture(autouse=True)
-    def setup(self, real_pe_binary, real_elf_binary, temp_workspace) -> Any:
+    def setup(
+        self, real_pe_binary: Path, real_elf_binary: Path, temp_workspace: Path
+    ) -> None:
         """Set up test with real binaries and orchestrator."""
-        self.orchestrator = AnalysisOrchestrator()
-        self.pe_binary = real_pe_binary
-        self.elf_binary = real_elf_binary
-        self.temp_dir = temp_workspace
-        self.signal_emissions = []
+        self.orchestrator: AnalysisOrchestrator = AnalysisOrchestrator()
+        self.pe_binary: Path = real_pe_binary
+        self.elf_binary: Path = real_elf_binary
+        self.temp_dir: Path = temp_workspace
+        self.signal_emissions: list[tuple[str, ...]] = []
 
         self.orchestrator.phase_started.connect(self._track_phase_started)
         self.orchestrator.phase_completed.connect(self._track_phase_completed)
@@ -162,25 +172,25 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
         self.orchestrator.progress_updated.connect(self._track_progress_updated)
         self.orchestrator.analysis_completed.connect(self._track_analysis_completed)
 
-    def _track_phase_started(self, phase_name):
+    def _track_phase_started(self, phase_name: str) -> None:
         """Track phase started signals."""
         self.signal_emissions.append(('phase_started', phase_name))
 
-    def _track_phase_completed(self, phase_name, result):
+    def _track_phase_completed(self, phase_name: str, result: Any) -> None:
         """Track phase completed signals."""
-        self.signal_emissions.append(('phase_completed', phase_name, result))
+        self.signal_emissions.append(('phase_completed', phase_name, str(result)))
 
-    def _track_phase_failed(self, phase_name, error):
+    def _track_phase_failed(self, phase_name: str, error: str) -> None:
         """Track phase failed signals."""
         self.signal_emissions.append(('phase_failed', phase_name, error))
 
-    def _track_progress_updated(self, current, total):
+    def _track_progress_updated(self, current: int, total: int) -> None:
         """Track progress updated signals."""
-        self.signal_emissions.append(('progress_updated', current, total))
+        self.signal_emissions.append(('progress_updated', str(current), str(total)))
 
-    def _track_analysis_completed(self, result):
+    def _track_analysis_completed(self, result: Any) -> None:
         """Track analysis completed signals."""
-        self.signal_emissions.append(('analysis_completed', result))
+        self.signal_emissions.append(('analysis_completed', str(result)))
 
     def test_orchestrator_initialization_real(self) -> None:
         """Test REAL orchestrator initialization with all analysis engines."""
@@ -463,46 +473,46 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
         """Test REAL signal emission during orchestrated analysis."""
         self.signal_emissions.clear()
 
-        phases = [AnalysisPhase.PREPARATION, AnalysisPhase.BASIC_INFO]
-        result = self.orchestrator.analyze_binary(self.pe_binary, phases=phases)
+        phases: list[AnalysisPhase] = [AnalysisPhase.PREPARATION, AnalysisPhase.BASIC_INFO]
+        result: OrchestrationResult = self.orchestrator.analyze_binary(self.pe_binary, phases=phases)
 
         assert len(self.signal_emissions) > 0
-        signal_types = [s[0] for s in self.signal_emissions]
+        signal_types: list[Any] = [s[0] for s in self.signal_emissions]
 
         assert 'progress_updated' in signal_types
 
         assert 'phase_started' in signal_types
-        phase_completed_signals = [s for s in self.signal_emissions if s[0] == 'phase_completed']
-        phase_failed_signals = [s for s in self.signal_emissions if s[0] == 'phase_failed']
+        phase_completed_signals: list[tuple[str, ...]] = [s for s in self.signal_emissions if s[0] == 'phase_completed']
+        phase_failed_signals: list[tuple[str, ...]] = [s for s in self.signal_emissions if s[0] == 'phase_failed']
 
         assert len(phase_completed_signals) + len(phase_failed_signals) >= len(phases)
 
-        completion_signals = [s for s in self.signal_emissions if s[0] == 'analysis_completed']
+        completion_signals: list[tuple[str, ...]] = [s for s in self.signal_emissions if s[0] == 'analysis_completed']
         assert len(completion_signals) == 1
         assert isinstance(completion_signals[0][1], OrchestrationResult)
 
     def test_nonexistent_file_error_handling_real(self) -> None:
         """Test REAL error handling for nonexistent files."""
-        nonexistent_path = str(self.temp_dir / "nonexistent_file.exe")
+        nonexistent_path: str = str(self.temp_dir / "nonexistent_file.exe")
 
-        result = self.orchestrator.analyze_binary(nonexistent_path)
+        result: OrchestrationResult = self.orchestrator.analyze_binary(nonexistent_path)
 
         assert isinstance(result, OrchestrationResult)
         assert result.success is False
         assert result.binary_path == nonexistent_path
         assert len(result.errors) > 0
 
-        prep_error = any('File not found' in error for error in result.errors)
+        prep_error: bool = any('File not found' in error for error in result.errors)
         assert prep_error
 
         assert len(result.phases_completed) == 0
 
     def test_phase_error_recovery_real(self) -> None:
         """Test REAL error recovery - continuing analysis despite phase failures."""
-        corrupted_path = self.temp_dir / "corrupted.exe"
+        corrupted_path: Path = self.temp_dir / "corrupted.exe"
         corrupted_path.write_bytes(b"corrupted_data_not_a_real_pe")
 
-        result = self.orchestrator.analyze_binary(str(corrupted_path))
+        result: OrchestrationResult = self.orchestrator.analyze_binary(str(corrupted_path))
 
         assert isinstance(result, OrchestrationResult)
         assert result.binary_path == str(corrupted_path)
@@ -515,58 +525,59 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_orchestration_result_methods_real(self) -> None:
         """Test REAL OrchestrationResult methods and functionality."""
-        result = OrchestrationResult(binary_path=self.pe_binary, success=True)
+        result: OrchestrationResult = OrchestrationResult(binary_path=self.pe_binary, success=True)
 
-        test_phase = AnalysisPhase.BASIC_INFO
-        test_data = {'file_type': 'PE', 'architecture': 'x64'}
+        test_phase: AnalysisPhase = AnalysisPhase.BASIC_INFO
+        test_data: dict[str, str] = {'file_type': 'PE', 'architecture': 'x64'}
         result.add_result(test_phase, test_data)
 
         assert test_phase in result.phases_completed
         assert result.results[test_phase.value] == test_data
 
-        error_phase = AnalysisPhase.STATIC_ANALYSIS
-        error_msg = "Radare2 initialization failed"
+        error_phase: AnalysisPhase = AnalysisPhase.STATIC_ANALYSIS
+        error_msg: str = "Radare2 initialization failed"
         result.add_error(error_phase, error_msg)
 
-        expected_error = f"{error_phase.value}: {error_msg}"
+        expected_error: str = f"{error_phase.value}: {error_msg}"
         assert expected_error in result.errors
 
-        warning_phase = AnalysisPhase.DYNAMIC_ANALYSIS
-        warning_msg = "Dynamic analysis skipped - no sandbox"
+        warning_phase: AnalysisPhase = AnalysisPhase.DYNAMIC_ANALYSIS
+        warning_msg: str = "Dynamic analysis skipped - no sandbox"
         result.add_warning(warning_phase, warning_msg)
 
-        expected_warning = f"{warning_phase.value}: {warning_msg}"
+        expected_warning: str = f"{warning_phase.value}: {warning_msg}"
         assert expected_warning in result.warnings
 
     def test_progress_tracking_accuracy_real(self) -> None:
         """Test REAL progress tracking accuracy during analysis."""
         self.signal_emissions.clear()
-        phases = [AnalysisPhase.PREPARATION, AnalysisPhase.BASIC_INFO, AnalysisPhase.ENTROPY_ANALYSIS]
+        phases: list[AnalysisPhase] = [AnalysisPhase.PREPARATION, AnalysisPhase.BASIC_INFO, AnalysisPhase.ENTROPY_ANALYSIS]
 
-        result = self.orchestrator.analyze_binary(self.pe_binary, phases=phases)
+        result: OrchestrationResult = self.orchestrator.analyze_binary(self.pe_binary, phases=phases)
 
-        progress_signals = [s for s in self.signal_emissions if s[0] == 'progress_updated']
+        progress_signals: list[tuple[str, ...]] = [s for s in self.signal_emissions if s[0] == 'progress_updated']
 
         assert len(progress_signals) >= len(phases)
 
-        total_phases = len(phases)
+        total_phases: int = len(phases)
         for signal in progress_signals:
-            current, total = signal[1], signal[2]
+            current: Any = signal[1]
+            total: Any = signal[2]
             assert total == total_phases
-            assert 0 <= current <= total_phases
+            assert 0 <= int(current) <= total_phases  # type: ignore[operator]
 
-        final_progress = progress_signals[-1]
+        final_progress: tuple[str, ...] = progress_signals[-1]
         assert final_progress[1] == total_phases
 
     def test_timeout_configuration_real(self) -> None:
         """Test REAL timeout configuration and handling."""
         assert self.orchestrator.timeout_per_phase == 300
 
-        new_timeout = 600
+        new_timeout: int = 600
         self.orchestrator.timeout_per_phase = new_timeout
         assert self.orchestrator.timeout_per_phase == new_timeout
 
-        result = self.orchestrator.analyze_binary(
+        result: OrchestrationResult = self.orchestrator.analyze_binary(
             self.pe_binary,
             phases=[AnalysisPhase.PREPARATION]
         )
@@ -574,15 +585,15 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_phase_configuration_real(self) -> None:
         """Test REAL analysis phase configuration and customization."""
-        default_phases = self.orchestrator.enabled_phases
+        default_phases: list[AnalysisPhase] = self.orchestrator.enabled_phases
         assert len(default_phases) == len(list(AnalysisPhase))
         assert all(phase in default_phases for phase in AnalysisPhase)
 
-        custom_phases = [AnalysisPhase.PREPARATION, AnalysisPhase.ENTROPY_ANALYSIS]
+        custom_phases: list[AnalysisPhase] = [AnalysisPhase.PREPARATION, AnalysisPhase.ENTROPY_ANALYSIS]
         self.orchestrator.enabled_phases = custom_phases
         assert self.orchestrator.enabled_phases == custom_phases
 
-        result = self.orchestrator.analyze_binary(self.pe_binary)
+        result: OrchestrationResult = self.orchestrator.analyze_binary(self.pe_binary)
         for phase in custom_phases:
             assert phase in result.phases_completed
 
@@ -592,57 +603,57 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
         assert self.orchestrator.radare2 is None
         assert self.orchestrator.qemu_manager is None
 
-        phases = [AnalysisPhase.STATIC_ANALYSIS]
-        result = self.orchestrator.analyze_binary(self.pe_binary, phases=phases)
+        phases: list[AnalysisPhase] = [AnalysisPhase.STATIC_ANALYSIS]
+        result: OrchestrationResult = self.orchestrator.analyze_binary(self.pe_binary, phases=phases)
 
-        static_result = result.results.get(AnalysisPhase.STATIC_ANALYSIS.value, {})
+        static_result: Any = result.results.get(AnalysisPhase.STATIC_ANALYSIS.value, {})
         if 'error' in static_result:
-            error_msg = static_result['error']
+            error_msg: Any = static_result['error']
             assert isinstance(error_msg, str)
             assert len(error_msg) > 0
 
     def test_large_binary_handling_real(self) -> None:
         """Test REAL handling of large binaries with performance considerations."""
-        large_binary_path = self.temp_dir / "large_test.exe"
+        large_binary_path: Path = self.temp_dir / "large_test.exe"
 
         with open(self.pe_binary, 'rb') as orig:
-            original_data = orig.read()
+            original_data: bytes = orig.read()
 
-        large_data = original_data * 5
+        large_data: bytes = original_data * 5
         large_binary_path.write_bytes(large_data)
 
-        start_time = time.time()
-        result = self.orchestrator.analyze_binary(
+        start_time: float = time.time()
+        result: OrchestrationResult = self.orchestrator.analyze_binary(
             str(large_binary_path),
             phases=[AnalysisPhase.PREPARATION, AnalysisPhase.ENTROPY_ANALYSIS]
         )
-        analysis_time = time.time() - start_time
+        analysis_time: float = time.time() - start_time
 
         assert result.success is True
         assert result.binary_path == str(large_binary_path)
 
-        prep_result = result.results[AnalysisPhase.PREPARATION.value]
+        prep_result: Any = result.results[AnalysisPhase.PREPARATION.value]
         assert prep_result['file_size'] == len(large_data)
 
         assert analysis_time < 30.0
 
-        entropy_result = result.results.get(AnalysisPhase.ENTROPY_ANALYSIS.value, {})
+        entropy_result: Any = result.results.get(AnalysisPhase.ENTROPY_ANALYSIS.value, {})
         if 'error' not in entropy_result:
             assert 'chunks' in entropy_result
             assert len(entropy_result['chunks']) > 0
 
     def test_empty_file_handling_real(self) -> None:
         """Test REAL handling of empty files."""
-        empty_file = self.temp_dir / "empty.exe"
+        empty_file: Path = self.temp_dir / "empty.exe"
         empty_file.write_bytes(b"")
 
-        result = self.orchestrator.analyze_binary(str(empty_file))
+        result: OrchestrationResult = self.orchestrator.analyze_binary(str(empty_file))
 
         assert isinstance(result, OrchestrationResult)
         assert result.binary_path == str(empty_file)
 
         assert AnalysisPhase.PREPARATION in result.phases_completed
-        prep_result = result.results[AnalysisPhase.PREPARATION.value]
+        prep_result: Any = result.results[AnalysisPhase.PREPARATION.value]
         assert prep_result['file_size'] == 0
 
         for phase_name, phase_result in result.results.items():
@@ -651,41 +662,39 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_binary_with_unusual_permissions_real(self) -> None:
         """Test REAL handling of binaries with unusual file permissions."""
-        restricted_binary = self.temp_dir / "restricted.exe"
+        restricted_binary: Path = self.temp_dir / "restricted.exe"
         with open(self.pe_binary, 'rb') as src:
             restricted_binary.write_bytes(src.read())
 
         try:
-            import stat
             os.chmod(str(restricted_binary), stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
         except OSError:
             pytest.skip("Cannot modify file permissions in test environment")
 
-        result = self.orchestrator.analyze_binary(str(restricted_binary))
+        result: OrchestrationResult = self.orchestrator.analyze_binary(str(restricted_binary))
 
         assert result.success is True or len(result.errors) > 0
         assert AnalysisPhase.PREPARATION in result.phases_completed
 
-        prep_result = result.results[AnalysisPhase.PREPARATION.value]
+        prep_result: Any = result.results[AnalysisPhase.PREPARATION.value]
         assert prep_result['file_size'] > 0
 
     def test_concurrent_analysis_safety_real(self) -> None:
         """Test REAL thread safety for concurrent orchestrator usage."""
-        import threading
-        import queue
+        results_queue: queue.Queue[tuple[str, OrchestrationResult]] = queue.Queue()
 
-        results_queue = queue.Queue()
-
-        def run_analysis(binary_path, result_queue):
+        def run_analysis(
+            binary_path: Path, result_queue: queue.Queue[tuple[str, OrchestrationResult]]
+        ) -> None:
             """Run analysis in thread and store result."""
-            orchestrator = AnalysisOrchestrator()
-            phases = [AnalysisPhase.PREPARATION, AnalysisPhase.BASIC_INFO]
-            result = orchestrator.analyze_binary(binary_path, phases=phases)
+            orchestrator: AnalysisOrchestrator = AnalysisOrchestrator()
+            phases: list[AnalysisPhase] = [AnalysisPhase.PREPARATION, AnalysisPhase.BASIC_INFO]
+            result: OrchestrationResult = orchestrator.analyze_binary(binary_path, phases=phases)
             result_queue.put((threading.current_thread().name, result))
 
-        threads = []
+        threads: list[threading.Thread] = []
         for i in range(3):
-            thread = threading.Thread(
+            thread: threading.Thread = threading.Thread(
                 target=run_analysis,
                 args=(self.pe_binary, results_queue),
                 name=f"AnalysisThread-{i}"
@@ -696,7 +705,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
         for thread in threads:
             thread.join(timeout=30)
 
-        thread_results = []
+        thread_results: list[tuple[str, OrchestrationResult]] = []
         while not results_queue.empty():
             thread_results.append(results_queue.get())
 
@@ -710,18 +719,17 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
     def test_memory_usage_during_analysis_real(self) -> None:
         """Test REAL memory usage monitoring during analysis."""
         import psutil
-        import os
 
-        process = psutil.Process(os.getpid())
-        initial_memory = process.memory_info().rss
+        process: psutil.Process = psutil.Process(os.getpid())
+        initial_memory: int = process.memory_info().rss
 
-        result = self.orchestrator.analyze_binary(
+        result: OrchestrationResult = self.orchestrator.analyze_binary(
             self.pe_binary,
             phases=[AnalysisPhase.PREPARATION, AnalysisPhase.ENTROPY_ANALYSIS]
         )
 
-        final_memory = process.memory_info().rss
-        memory_increase = final_memory - initial_memory
+        final_memory: int = process.memory_info().rss
+        memory_increase: int = final_memory - initial_memory
 
         assert result.success is True
 
@@ -729,15 +737,15 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_ghidra_script_selection_logic_real(self) -> None:
         """Test REAL Ghidra script selection logic for different binary types."""
-        pe_script = self.orchestrator._select_ghidra_script(self.pe_binary)
+        pe_script: Any = self.orchestrator._select_ghidra_script(self.pe_binary)
 
         if pe_script is not None:
             assert hasattr(pe_script, 'name')
             assert hasattr(pe_script, 'path')
-            script_name = pe_script.name.lower()
+            script_name: str = pe_script.name.lower()
             assert any(keyword in script_name for keyword in ['license', 'keygen', 'advanced', 'comprehensive'])
 
-        elf_script = self.orchestrator._select_ghidra_script(self.elf_binary)
+        elf_script: Any = self.orchestrator._select_ghidra_script(self.elf_binary)
 
         if elf_script is not None:
             assert hasattr(elf_script, 'name')
@@ -745,10 +753,10 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_ghidra_command_building_real(self) -> None:
         """Test REAL Ghidra command building functionality."""
-        script_path = "/path/to/test_script.java"
-        binary_path = "/path/to/test_binary.exe"
+        script_path: str = "/path/to/test_script.java"
+        binary_path: str = "/path/to/test_binary.exe"
 
-        command = self.orchestrator._build_ghidra_command(script_path, binary_path)
+        command: str = self.orchestrator._build_ghidra_command(script_path, binary_path)
 
         assert isinstance(command, str)
         assert "/opt/ghidra/support/analyzeHeadless" in command
@@ -760,7 +768,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_ghidra_output_parsing_real(self) -> None:
         """Test REAL Ghidra output parsing functionality."""
-        sample_output = """
+        sample_output: str = """
 INFO  Ghidra Analysis Started
 Function: CheckLicense at 0x401000 - LICENSE_CHECK detected
 Found crypto routine: AES encryption at 0x402000
@@ -771,7 +779,7 @@ Potential keygen algorithm detected in function GenerateKey
 Analysis complete - 15 functions analyzed
         """
 
-        parsed = self.orchestrator._parse_ghidra_output(sample_output)
+        parsed: Any = self.orchestrator._parse_ghidra_output(sample_output)
 
         self.assert_real_output(parsed)
         assert 'raw_output' in parsed
@@ -784,17 +792,17 @@ Analysis complete - 15 functions analyzed
         assert len(parsed['keygen_patterns']) > 0
         assert len(parsed['interesting_strings']) > 0
 
-        license_check = parsed['license_checks'][0]
+        license_check: Any = parsed['license_checks'][0]
         assert license_check['function'] == 'CheckLicense at 0x401000 - LICENSE_CHECK detected'
         assert license_check['confidence'] == 'high'
 
-        crypto_routine = parsed['crypto_routines'][0]
+        crypto_routine: Any = parsed['crypto_routines'][0]
         assert crypto_routine['type'] == 'AES'
         assert '0x402000' in crypto_routine['location']
 
     def test_address_extraction_utility_real(self) -> None:
         """Test REAL memory address extraction utility."""
-        test_cases = [
+        test_cases: list[tuple[str, str]] = [
             ("Function at 0x401000", "0x401000"),
             ("Located at 00401000h", "00401000h"),
             ("Address: 0x12345678", "0x12345678"),
@@ -803,12 +811,12 @@ Analysis complete - 15 functions analyzed
         ]
 
         for input_line, expected in test_cases:
-            result = self.orchestrator._extract_address(input_line)
+            result: str = self.orchestrator._extract_address(input_line)
             assert result == expected
 
     def test_crypto_type_identification_real(self) -> None:
         """Test REAL cryptographic routine type identification."""
-        test_cases = [
+        test_cases: list[tuple[str, str]] = [
             ("AES encryption detected", "AES"),
             ("RSA key generation", "RSA"),
             ("MD5 hash calculation", "MD5"),
@@ -819,12 +827,12 @@ Analysis complete - 15 functions analyzed
         ]
 
         for input_line, expected in test_cases:
-            result = self.orchestrator._identify_crypto_type(input_line)
+            result: str = self.orchestrator._identify_crypto_type(input_line)
             assert result == expected
 
     def test_protection_type_identification_real(self) -> None:
         """Test REAL protection mechanism type identification."""
-        test_cases = [
+        test_cases: list[tuple[str, str]] = [
             ("anti-debug technique detected", "Anti-Debugging"),
             ("code obfuscation found", "Obfuscation"),
             ("packed executable detected", "Packing"),
@@ -834,7 +842,7 @@ Analysis complete - 15 functions analyzed
         ]
 
         for input_line, expected in test_cases:
-            result = self.orchestrator._identify_protection_type(input_line)
+            result: str = self.orchestrator._identify_protection_type(input_line)
             assert result == expected
 
     def test_interesting_string_detection_real(self) -> None:
@@ -919,11 +927,13 @@ Analysis complete - 15 functions analyzed
             if 'vm' in str(self.orchestrator.__dict__.get('config', {})):
                 self.assertTrue('copy' in log_messages or 'vm' in log_messages)
 
-    def test_vm_binary_transfer_error_handling(self, monkeypatch: Any) -> None:
+    def test_vm_binary_transfer_error_handling(  # type: ignore[override]
+        self, monkeypatch: Any
+    ) -> None:
         """Test that VM binary transfer errors are handled properly."""
         fake_vm = FakeVMInstance(copy_success=False)
 
-        def get_fake_vm_instance():
+        def get_fake_vm_instance() -> FakeVMInstance:
             return fake_vm
 
         monkeypatch.setattr(self.orchestrator, '_get_vm_instance', get_fake_vm_instance)
@@ -933,13 +943,15 @@ Analysis complete - 15 functions analyzed
         self.assert_real_output(result)
         self.assertIsInstance(result, OrchestrationResult)
 
-    def test_vm_copy_operation_validates_success(self, monkeypatch: Any) -> None:
+    def test_vm_copy_operation_validates_success(  # type: ignore[override]
+        self, monkeypatch: Any
+    ) -> None:
         """Test that VM copy operations validate success before proceeding."""
         import logging
 
         fake_vm = FakeVMInstance(copy_success=True)
 
-        def get_fake_vm_instance():
+        def get_fake_vm_instance() -> FakeVMInstance:
             return fake_vm
 
         with self.assertLogs(level=logging.DEBUG) as log_context:

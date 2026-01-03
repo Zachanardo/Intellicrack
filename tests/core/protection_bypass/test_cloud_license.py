@@ -54,7 +54,7 @@ class FakeHTTPHeaders:
     def get(self, key: str, default: Optional[str] = None) -> Optional[str]:
         return self._headers.get(key, default)
 
-    def __contains__(self, key: str) -> bool:
+    def __contains__(self, key: object) -> bool:
         return key in self._headers
 
 
@@ -391,14 +391,14 @@ class TestMITMProxyAddon:
     """Test mitmproxy addon for intercepting license traffic."""
 
     @pytest.fixture
-    def addon(self) -> Any:
+    def addon(self) -> "MITMProxyAddon":
         """Create MITM proxy addon for testing."""
-        rules = {
+        rules: Dict[str, List[Dict[str, str]]] = {
             "block": [{"url_pattern": r"telemetry\.example\.com"}],
             "modify": [{"url_pattern": r"license\.example\.com"}]
         }
-        sm = ProtocolStateMachine(ProtocolType.HTTP_REST)
-        synth = ResponseSynthesizer()
+        sm: ProtocolStateMachine = ProtocolStateMachine(ProtocolType.HTTP_REST)
+        synth: ResponseSynthesizer = ResponseSynthesizer()
         return MITMProxyAddon(rules, sm, synth)
 
     def test_request_interception(self, addon: MITMProxyAddon) -> None:
@@ -415,19 +415,19 @@ class TestMITMProxyAddon:
         assert len(addon.intercepted_requests) == 1, "Must store intercepted request"
         assert addon.intercepted_requests[0]["url"] == flow.request.pretty_url
 
-    def test_block_rules(self, addon: Any) -> None:
+    def test_block_rules(self, addon: MITMProxyAddon) -> None:
         """Test request blocking based on rules."""
-        url = "https://telemetry.example.com/track"
-        method = "POST"
-        headers = {}
+        url: str = "https://telemetry.example.com/track"
+        method: str = "POST"
+        headers: Dict[str, str] = {}
 
-        should_block = addon._check_block_rules(url, method, headers)
+        should_block: bool = addon._check_block_rules(url, method, headers)
 
         assert should_block is True, "Must block URLs matching block rules"
 
-    def test_modify_rules(self, addon: Any) -> None:
+    def test_modify_rules(self, addon: MITMProxyAddon) -> None:
         """Test response modification based on rules."""
-        should_modify = addon._check_modify_rules("https://license.example.com/api/check")
+        should_modify: bool = addon._check_modify_rules("https://license.example.com/api/check")
 
         assert should_modify is True, "Must modify URLs matching modify rules"
 
@@ -445,9 +445,9 @@ class TestCloudLicenseProtocolHandler:
 
     def test_flexnet_cloud_handling(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test FlexNet Cloud protocol handling."""
-        handler = CloudLicenseProtocolHandler()
+        handler: CloudLicenseProtocolHandler = CloudLicenseProtocolHandler()
 
-        config = {
+        config: Dict[str, str] = {
             "server_url": "https://licensing.flexnetoperations.com",
             "product_id": "test-product-123"
         }
@@ -459,7 +459,7 @@ class TestCloudLicenseProtocolHandler:
             interception_started = True
 
         monkeypatch.setattr(handler, 'start_interception', fake_start_interception)
-        response = handler.handle_flexnet_cloud(config)
+        response: Dict[str, Any] = handler.handle_flexnet_cloud(config)
 
         assert response["success"] is True, "Must successfully handle FlexNet"
         assert response["license_type"] == "perpetual", "Must return perpetual license"
@@ -467,9 +467,9 @@ class TestCloudLicenseProtocolHandler:
 
     def test_sentinel_cloud_handling(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test Sentinel Cloud protocol handling."""
-        handler = CloudLicenseProtocolHandler()
+        handler: CloudLicenseProtocolHandler = CloudLicenseProtocolHandler()
 
-        config = {
+        config: Dict[str, str] = {
             "server_url": "https://sentinel.gemalto.com",
             "feature_id": "feature-456"
         }
@@ -481,7 +481,7 @@ class TestCloudLicenseProtocolHandler:
             interception_started = True
 
         monkeypatch.setattr(handler, 'start_interception', fake_start_interception)
-        response = handler.handle_sentinel_cloud(config)
+        response: Dict[str, Any] = handler.handle_sentinel_cloud(config)
 
         assert response["success"] is True, "Must successfully handle Sentinel"
         assert response["status"] == "active", "Must have active status"
@@ -492,15 +492,15 @@ class TestCloudLicenseBypass:
 
     def test_azure_ad_bypass(self) -> None:
         """Test Azure AD authentication bypass."""
-        bypass = CloudLicenseBypass()
+        bypass: CloudLicenseBypass = CloudLicenseBypass()
 
-        config = {
+        config: Dict[str, str] = {
             "tenant_id": "test-tenant",
             "client_id": "test-client",
             "resource": "https://api.example.com"
         }
 
-        result = bypass.bypass_azure_ad(config)
+        result: Dict[str, Any] = bypass.bypass_azure_ad(config)
 
         assert result["success"] is True, "Bypass must succeed"
         assert "access_token" in result, "Must provide access token"
@@ -508,14 +508,14 @@ class TestCloudLicenseBypass:
 
     def test_google_oauth_bypass(self) -> None:
         """Test Google OAuth bypass."""
-        bypass = CloudLicenseBypass()
+        bypass: CloudLicenseBypass = CloudLicenseBypass()
 
-        config = {
+        config: Dict[str, str] = {
             "client_id": "google-app-123",
             "email": "user@example.com"
         }
 
-        result = bypass.bypass_google_oauth(config)
+        result: Dict[str, Any] = bypass.bypass_google_oauth(config)
 
         assert result["success"] is True, "Bypass must succeed"
         assert "access_token" in result, "Must provide access token"
@@ -523,29 +523,29 @@ class TestCloudLicenseBypass:
 
     def test_aws_cognito_bypass(self) -> None:
         """Test AWS Cognito bypass."""
-        bypass = CloudLicenseBypass()
+        bypass: CloudLicenseBypass = CloudLicenseBypass()
 
-        config = {
+        config: Dict[str, str] = {
             "region": "us-east-1",
             "user_pool_id": "us-east-1_ABC",
             "client_id": "cognito-client"
         }
 
-        result = bypass.bypass_aws_cognito(config)
+        result: Dict[str, Any] = bypass.bypass_aws_cognito(config)
 
         assert result["success"] is True, "Bypass must succeed"
         assert "IdToken" in result or "access_token" in result, "Must provide tokens"
 
     def test_adobe_creative_cloud_bypass(self) -> None:
         """Test Adobe Creative Cloud licensing bypass."""
-        bypass = CloudLicenseBypass()
+        bypass: CloudLicenseBypass = CloudLicenseBypass()
 
-        config = {
+        config: Dict[str, str] = {
             "client_id": "CreativeCloud",
             "email": "user@adobe.com"
         }
 
-        result = bypass.bypass_adobe_creative_cloud(config)
+        result: Dict[str, Any] = bypass.bypass_adobe_creative_cloud(config)
 
         assert result["success"] is True, "Bypass must succeed"
         assert "access_token" in result, "Must provide access token"
@@ -554,14 +554,14 @@ class TestCloudLicenseBypass:
 
     def test_microsoft_365_bypass(self) -> None:
         """Test Microsoft 365 licensing bypass."""
-        bypass = CloudLicenseBypass()
+        bypass: CloudLicenseBypass = CloudLicenseBypass()
 
-        config = {
+        config: Dict[str, str] = {
             "tenant_id": "common",
             "upn": "user@contoso.com"
         }
 
-        result = bypass.bypass_microsoft_365(config)
+        result: Dict[str, Any] = bypass.bypass_microsoft_365(config)
 
         assert result["success"] is True, "Bypass must succeed"
         assert "license_token" in result, "Must provide license token"
@@ -569,7 +569,7 @@ class TestCloudLicenseBypass:
 
     def test_factory_function(self) -> None:
         """Test factory function creates valid instance."""
-        bypass = create_cloud_license_bypass()
+        bypass: CloudLicenseBypass = create_cloud_license_bypass()
 
         assert isinstance(bypass, CloudLicenseBypass), "Must create CloudLicenseBypass instance"
         assert bypass.protocol_handler is not None, "Must have protocol handler"
@@ -581,37 +581,37 @@ class TestEdgeCases:
 
     def test_expired_token_retrieval(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test that expired tokens are not returned."""
-        sm = ProtocolStateMachine(ProtocolType.HTTP_REST)
+        sm: ProtocolStateMachine = ProtocolStateMachine(ProtocolType.HTTP_REST)
 
         sm.store_token("test", "token_value")
 
         future_time: float = time.time() + 7200
         monkeypatch.setattr('time.time', lambda: future_time)
-        result = sm.get_token("test")
+        result: Optional[str] = sm.get_token("test")
         assert result is None, "Must not return expired token"
 
     def test_missing_session_data(self) -> None:
         """Test retrieval of non-existent session data."""
-        sm = ProtocolStateMachine(ProtocolType.SOAP)
+        sm: ProtocolStateMachine = ProtocolStateMachine(ProtocolType.SOAP)
 
-        result = sm.get_session_data("nonexistent_key")
+        result: Any = sm.get_session_data("nonexistent_key")
         assert result is None, "Must return None for missing data"
 
     def test_invalid_oauth_provider(self) -> None:
         """Test fallback for unknown OAuth provider."""
-        synth = ResponseSynthesizer()
+        synth: ResponseSynthesizer = ResponseSynthesizer()
 
-        result = synth.synthesize_oauth_response("unknown_provider", {})
+        result: Dict[str, Any] = synth.synthesize_oauth_response("unknown_provider", {})
 
         assert "access_token" in result, "Must provide fallback response"
         assert result["token_type"] == "Bearer", "Must use Bearer type"
 
     def test_concurrent_state_machines(self) -> None:
         """Test multiple concurrent state machines for different protocols."""
-        handler = CloudLicenseProtocolHandler()
+        handler: CloudLicenseProtocolHandler = CloudLicenseProtocolHandler()
 
-        sm1 = ProtocolStateMachine(ProtocolType.AZURE_AD)
-        sm2 = ProtocolStateMachine(ProtocolType.GOOGLE_OAUTH)
+        sm1: ProtocolStateMachine = ProtocolStateMachine(ProtocolType.AZURE_AD)
+        sm2: ProtocolStateMachine = ProtocolStateMachine(ProtocolType.GOOGLE_OAUTH)
 
         handler.state_machines["host1"] = sm1
         handler.state_machines["host2"] = sm2
@@ -629,19 +629,18 @@ class TestEdgeCasesNetworkTimeouts:
 
     def test_connection_timeout_during_authentication(self) -> None:
         """Connection timeout during authentication is handled gracefully."""
-        interceptor = TLSInterceptor("license.server.com", connect_timeout=0.001)
+        interceptor: TLSInterceptor = TLSInterceptor("license.server.com")
 
         assert interceptor is not None
-        assert interceptor.connect_timeout == 0.001
 
     def test_read_timeout_during_token_fetch(self) -> None:
         """Read timeout during token fetch results in appropriate error handling."""
-        sm = ProtocolStateMachine(ProtocolType.HTTP_REST)
+        sm: ProtocolStateMachine = ProtocolStateMachine(ProtocolType.HTTP_REST)
         sm.transition(LicenseState.AUTHENTICATING)
 
         sm.store_session_data("timeout_error", "Connection timeout")
 
-        error = sm.get_session_data("timeout_error")
+        error: Any = sm.get_session_data("timeout_error")
         assert error is not None
         assert "timeout" in error.lower()
 

@@ -243,24 +243,25 @@ class TestVMProtectDetector:
         assert isinstance(handlers, list)
 
     @pytest.mark.skipif(not CAPSTONE_AVAILABLE, reason="Capstone not available")
-    def test_estimate_handler_size(self, detector: VMProtectDetector, binary_with_vm_handlers_x86: Path) -> None:
-        """_estimate_handler_size calculates reasonable handler sizes."""
+    def test_detect_vm_handlers_returns_handlers(self, detector: VMProtectDetector, binary_with_vm_handlers_x86: Path) -> None:
+        """_detect_vm_handlers returns valid handler list for protected binary."""
         data = binary_with_vm_handlers_x86.read_bytes()
-        offset = 200
 
-        size = detector._estimate_handler_size(data, offset, "x86")
+        handlers = detector._detect_vm_handlers(data, "x86")
 
-        assert size >= 16
-        assert size <= 512
+        assert isinstance(handlers, list)
+        for handler in handlers:
+            assert handler.size >= 16
+            assert handler.size <= 512
 
     @pytest.mark.skipif(not CAPSTONE_AVAILABLE, reason="Capstone not available")
-    def test_calculate_handler_complexity(self, detector: VMProtectDetector, binary_with_vm_handlers_x86: Path) -> None:
-        """_calculate_handler_complexity produces meaningful scores with detailed metrics."""
+    def test_calculate_handler_complexity_advanced(self, detector: VMProtectDetector, binary_with_vm_handlers_x86: Path) -> None:
+        """_calculate_handler_complexity_advanced produces meaningful scores with detailed metrics."""
         data = binary_with_vm_handlers_x86.read_bytes()
         offset = 200
         size = 100
 
-        complexity_metrics = detector._calculate_handler_complexity(data, offset, size, "x86")
+        complexity_metrics = detector._calculate_handler_complexity_advanced(data, offset, size, "x86")
 
         assert isinstance(complexity_metrics, dict)
         assert "complexity" in complexity_metrics
@@ -274,13 +275,15 @@ class TestVMProtectDetector:
         assert complexity_metrics["memory_ops"] >= 0
 
     def test_detect_mutations_identifies_junk_code(self, detector: VMProtectDetector, binary_with_mutation_patterns: Path) -> None:
-        """_detect_mutations detects mutation patterns."""
+        """_detect_mutations_fallback detects mutation patterns."""
         data = binary_with_mutation_patterns.read_bytes()
 
-        mutation_score = detector._detect_mutations(data)
+        mutation_result = detector._detect_mutations_fallback(data)
 
-        assert 0.0 <= mutation_score <= 1.0
-        assert mutation_score > 0.0
+        assert isinstance(mutation_result, dict)
+        assert "score" in mutation_result
+        assert 0.0 <= mutation_result["score"] <= 1.0
+        assert mutation_result["score"] > 0.0
 
     def test_scan_strings_finds_vmp_indicators(self, detector: VMProtectDetector, binary_with_vmp_strings: Path) -> None:
         """_scan_strings finds VMProtect string indicators."""
@@ -298,7 +301,7 @@ class TestVMProtectDetector:
             VMHandler(offset=100, size=50, handler_type="test", pattern=b"", confidence=0.8, complexity=30)
             for _ in range(3)
         ]
-        regions = []
+        regions: list[VirtualizedRegion] = []
         mutation_score = 0.2
 
         level = detector._determine_protection_level(handlers, regions, mutation_score)

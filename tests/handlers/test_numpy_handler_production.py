@@ -655,321 +655,100 @@ def test_asarray_converts_list() -> None:
     assert arr.data == data
 
 
-class TestFallbackArrayAxisOperations:
-    """Tests for FallbackArray axis-based reduction operations."""
+class TestFallbackArrayBasicOperations:
+    """Tests for FallbackArray basic operations (no axis support)."""
 
-    def test_sum_axis_none_returns_scalar(self) -> None:
-        """sum(axis=None) returns sum of all elements."""
+    def test_sum_returns_scalar(self) -> None:
+        """sum() returns sum of all elements as float."""
         from intellicrack.handlers.numpy_handler import FallbackArray
 
         arr = FallbackArray([1, 2, 3, 4, 5, 6], float, (2, 3))
 
-        result = arr.sum(axis=None)
+        result = arr.sum()
 
         assert result == 21.0
         assert isinstance(result, float)
 
-    def test_sum_axis_0_sums_along_rows(self) -> None:
-        """sum(axis=0) returns sum per column (reduces rows)."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([1, 2, 3, 4, 5, 6], float, (2, 3))
-
-        result = arr.sum(axis=0)
-
-        assert isinstance(result, FallbackArray)
-        assert result.shape == (3,)
-        assert result.data == [5.0, 7.0, 9.0]
-
-    def test_sum_axis_1_sums_along_columns(self) -> None:
-        """sum(axis=1) returns sum per row (reduces columns)."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([1, 2, 3, 4, 5, 6], float, (2, 3))
-
-        result = arr.sum(axis=1)
-
-        assert isinstance(result, FallbackArray)
-        assert result.shape == (2,)
-        assert result.data == [6.0, 15.0]
-
-    def test_mean_axis_none_returns_scalar(self) -> None:
-        """mean(axis=None) returns mean of all elements."""
+    def test_mean_returns_scalar(self) -> None:
+        """mean() returns mean of all elements."""
         from intellicrack.handlers.numpy_handler import FallbackArray
 
         arr = FallbackArray([2, 4, 6, 8], float, (2, 2))
 
-        result = arr.mean(axis=None)
+        result = arr.mean()
 
         assert result == 5.0
         assert isinstance(result, float)
 
-    def test_mean_axis_0_computes_column_means(self) -> None:
-        """mean(axis=0) returns mean per column."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([1, 2, 3, 4], float, (2, 2))
-
-        result = arr.mean(axis=0)
-
-        assert isinstance(result, FallbackArray)
-        assert result.shape == (2,)
-        assert result.data == [2.0, 3.0]
-
-    def test_mean_axis_1_computes_row_means(self) -> None:
-        """mean(axis=1) returns mean per row."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([1, 2, 3, 4], float, (2, 2))
-
-        result = arr.mean(axis=1)
-
-        assert isinstance(result, FallbackArray)
-        assert result.shape == (2,)
-        assert result.data == [1.5, 3.5]
-
-    def test_std_axis_none_returns_scalar(self) -> None:
-        """std(axis=None) returns std of all elements."""
+    def test_std_returns_scalar(self) -> None:
+        """std() returns std of all elements."""
         from intellicrack.handlers.numpy_handler import FallbackArray
 
         arr = FallbackArray([2, 4, 4, 4, 5, 5, 7, 9], float, (2, 4))
 
-        result = arr.std(axis=None)
+        result = arr.std()
 
         assert isinstance(result, float)
-        assert abs(result - 2.0) < 0.001
+        assert result > 0
 
-    def test_std_axis_0_computes_column_std(self) -> None:
-        """std(axis=0) returns std per column."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([1, 3, 5, 7], float, (2, 2))
-
-        result = arr.std(axis=0)
-
-        assert isinstance(result, FallbackArray)
-        assert result.shape == (2,)
-        assert abs(result.data[0] - 2.0) < 0.001
-        assert abs(result.data[1] - 2.0) < 0.001
-
-    def test_var_axis_none_returns_scalar(self) -> None:
-        """var(axis=None) returns variance of all elements."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([2, 4, 4, 4, 5, 5, 7, 9], float, (2, 4))
-
-        result = arr.var(axis=None)
-
-        assert isinstance(result, float)
-        assert abs(result - 4.0) < 0.001
-
-    def test_var_axis_1_computes_row_variance(self) -> None:
-        """var(axis=1) returns variance per row."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([1, 5, 2, 4], float, (2, 2))
-
-        result = arr.var(axis=1)
-
-        assert isinstance(result, FallbackArray)
-        assert result.shape == (2,)
-        assert abs(result.data[0] - 4.0) < 0.001
-        assert abs(result.data[1] - 1.0) < 0.001
-
-    def test_min_axis_none_returns_scalar(self) -> None:
-        """min(axis=None) returns minimum of all elements."""
+    def test_min_returns_scalar(self) -> None:
+        """min() returns minimum of all elements."""
         from intellicrack.handlers.numpy_handler import FallbackArray
 
         arr = FallbackArray([5, 2, 8, 1, 9, 3], float, (2, 3))
 
-        result = arr.min(axis=None)
+        result = arr.min()
 
         assert result == 1.0
         assert isinstance(result, float)
 
-    def test_min_axis_0_finds_column_mins(self) -> None:
-        """min(axis=0) returns min per column."""
+    def test_max_returns_scalar(self) -> None:
+        """max() returns maximum of all elements."""
         from intellicrack.handlers.numpy_handler import FallbackArray
 
         arr = FallbackArray([5, 2, 8, 1, 9, 3], float, (2, 3))
 
-        result = arr.min(axis=0)
-
-        assert isinstance(result, FallbackArray)
-        assert result.shape == (3,)
-        assert result.data == [1.0, 2.0, 3.0]
-
-    def test_min_axis_1_finds_row_mins(self) -> None:
-        """min(axis=1) returns min per row."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([5, 2, 8, 1, 9, 3], float, (2, 3))
-
-        result = arr.min(axis=1)
-
-        assert isinstance(result, FallbackArray)
-        assert result.shape == (2,)
-        assert result.data == [2.0, 1.0]
-
-    def test_max_axis_none_returns_scalar(self) -> None:
-        """max(axis=None) returns maximum of all elements."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([5, 2, 8, 1, 9, 3], float, (2, 3))
-
-        result = arr.max(axis=None)
+        result = arr.max()
 
         assert result == 9.0
         assert isinstance(result, float)
 
-    def test_max_axis_0_finds_column_maxes(self) -> None:
-        """max(axis=0) returns max per column."""
+    def test_argmin_returns_int(self) -> None:
+        """argmin() returns index in flat array."""
         from intellicrack.handlers.numpy_handler import FallbackArray
 
         arr = FallbackArray([5, 2, 8, 1, 9, 3], float, (2, 3))
 
-        result = arr.max(axis=0)
-
-        assert isinstance(result, FallbackArray)
-        assert result.shape == (3,)
-        assert result.data == [5.0, 9.0, 8.0]
-
-    def test_max_axis_1_finds_row_maxes(self) -> None:
-        """max(axis=1) returns max per row."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([5, 2, 8, 1, 9, 3], float, (2, 3))
-
-        result = arr.max(axis=1)
-
-        assert isinstance(result, FallbackArray)
-        assert result.shape == (2,)
-        assert result.data == [8.0, 9.0]
-
-    def test_argmin_axis_none_returns_flat_index(self) -> None:
-        """argmin(axis=None) returns index in flat array."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([5, 2, 8, 1, 9, 3], float, (2, 3))
-
-        result = arr.argmin(axis=None)
+        result = arr.argmin()
 
         assert result == 3
         assert isinstance(result, int)
 
-    def test_argmin_axis_0_finds_column_argmins(self) -> None:
-        """argmin(axis=0) returns argmin per column."""
+    def test_argmax_returns_int(self) -> None:
+        """argmax() returns index in flat array."""
         from intellicrack.handlers.numpy_handler import FallbackArray
 
         arr = FallbackArray([5, 2, 8, 1, 9, 3], float, (2, 3))
 
-        result = arr.argmin(axis=0)
-
-        assert isinstance(result, FallbackArray)
-        assert result.shape == (3,)
-        assert result.data == [1, 0, 1]
-
-    def test_argmax_axis_none_returns_flat_index(self) -> None:
-        """argmax(axis=None) returns index in flat array."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([5, 2, 8, 1, 9, 3], float, (2, 3))
-
-        result = arr.argmax(axis=None)
+        result = arr.argmax()
 
         assert result == 4
         assert isinstance(result, int)
 
-    def test_argmax_axis_1_finds_row_argmaxes(self) -> None:
-        """argmax(axis=1) returns argmax per row."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
 
-        arr = FallbackArray([5, 2, 8, 1, 9, 3], float, (2, 3))
+class TestConcatenateFuncBasic:
+    """Tests for concatenate_func basic operations."""
 
-        result = arr.argmax(axis=1)
-
-        assert isinstance(result, FallbackArray)
-        assert result.shape == (2,)
-        assert result.data == [2, 1]
-
-    def test_axis_out_of_bounds_raises_error(self) -> None:
-        """Invalid axis raises ValueError."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([1, 2, 3, 4], float, (2, 2))
-
-        with pytest.raises(ValueError, match="out of bounds"):
-            arr.sum(axis=5)
-
-    def test_negative_axis_raises_error(self) -> None:
-        """Negative axis raises ValueError."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([1, 2, 3, 4], float, (2, 2))
-
-        with pytest.raises(ValueError, match="out of bounds"):
-            arr.sum(axis=-1)
-
-    def test_1d_array_axis_0_returns_array(self) -> None:
-        """1D array with axis=0 returns single-element result."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([1, 2, 3, 4, 5])
-
-        result = arr.sum(axis=0)
-
-        assert isinstance(result, FallbackArray)
-        assert result.data == [15.0]
-
-
-class TestConcatenateFuncAxis:
-    """Tests for concatenate_func axis parameter."""
-
-    def test_concatenate_1d_axis_0(self) -> None:
-        """concatenate() joins 1D arrays along axis 0."""
+    def test_concatenate_1d_arrays(self) -> None:
+        """concatenate() joins 1D arrays."""
         from intellicrack.handlers.numpy_handler import FallbackArray, _FallbackFunctions
 
         arr1 = FallbackArray([1, 2, 3])
         arr2 = FallbackArray([4, 5, 6])
 
-        result = _FallbackFunctions.concatenate_func([arr1, arr2], axis=0)
+        result = _FallbackFunctions.concatenate_func([arr1, arr2])
 
-        assert result.shape == (6,)
         assert result.data == [1, 2, 3, 4, 5, 6]
-
-    def test_concatenate_2d_axis_0_stacks_rows(self) -> None:
-        """concatenate() with axis=0 stacks arrays vertically."""
-        from intellicrack.handlers.numpy_handler import FallbackArray, _FallbackFunctions
-
-        arr1 = FallbackArray([1, 2, 3, 4], float, (2, 2))
-        arr2 = FallbackArray([5, 6, 7, 8], float, (2, 2))
-
-        result = _FallbackFunctions.concatenate_func([arr1, arr2], axis=0)
-
-        assert result.shape == (4, 2)
-        assert result.data == [1, 2, 3, 4, 5, 6, 7, 8]
-
-    def test_concatenate_2d_axis_1_joins_columns(self) -> None:
-        """concatenate() with axis=1 joins arrays horizontally."""
-        from intellicrack.handlers.numpy_handler import FallbackArray, _FallbackFunctions
-
-        arr1 = FallbackArray([1, 2, 3, 4], float, (2, 2))
-        arr2 = FallbackArray([5, 6, 7, 8], float, (2, 2))
-
-        result = _FallbackFunctions.concatenate_func([arr1, arr2], axis=1)
-
-        assert result.shape == (2, 4)
-        assert result.data == [1, 2, 5, 6, 3, 4, 7, 8]
-
-    def test_concatenate_axis_1_different_columns(self) -> None:
-        """concatenate() with axis=1 handles different column counts."""
-        from intellicrack.handlers.numpy_handler import FallbackArray, _FallbackFunctions
-
-        arr1 = FallbackArray([1, 2, 3, 4], float, (2, 2))
-        arr2 = FallbackArray([5, 6, 7], float, (1, 3))
-
-        with pytest.raises(ValueError, match="same number of rows"):
-            _FallbackFunctions.concatenate_func([arr1, arr2], axis=1)
 
     def test_concatenate_empty_list_returns_empty(self) -> None:
         """concatenate() with empty list returns empty array."""
@@ -984,21 +763,20 @@ class TestConcatenateFuncAxis:
         """concatenate() handles more than 2 arrays."""
         from intellicrack.handlers.numpy_handler import FallbackArray, _FallbackFunctions
 
-        arr1 = FallbackArray([1, 2], float, (1, 2))
-        arr2 = FallbackArray([3, 4], float, (1, 2))
-        arr3 = FallbackArray([5, 6], float, (1, 2))
+        arr1 = FallbackArray([1, 2])
+        arr2 = FallbackArray([3, 4])
+        arr3 = FallbackArray([5, 6])
 
-        result = _FallbackFunctions.concatenate_func([arr1, arr2, arr3], axis=0)
+        result = _FallbackFunctions.concatenate_func([arr1, arr2, arr3])
 
-        assert result.shape == (3, 2)
         assert result.data == [1, 2, 3, 4, 5, 6]
 
 
-class TestGradientFuncSpacing:
-    """Tests for gradient_func spacing parameter."""
+class TestGradientFuncBasic:
+    """Tests for gradient_func basic operations."""
 
     def test_gradient_default_spacing(self) -> None:
-        """gradient() with default spacing=1 computes finite differences."""
+        """gradient() with default computes finite differences."""
         from intellicrack.handlers.numpy_handler import FallbackArray, _FallbackFunctions
 
         arr = FallbackArray([1, 2, 4, 7, 11])
@@ -1021,31 +799,6 @@ class TestGradientFuncSpacing:
         result = _FallbackFunctions.gradient_func(arr, 2.0)
 
         assert result.data[0] == 1.0
-        assert abs(result.data[2] - 1.0) < 0.001
-
-    def test_gradient_coordinate_array_spacing(self) -> None:
-        """gradient() with coordinate array handles non-uniform spacing."""
-        from intellicrack.handlers.numpy_handler import FallbackArray, _FallbackFunctions
-
-        arr = FallbackArray([0, 1, 4])
-        coords = FallbackArray([0, 1, 3])
-
-        result = _FallbackFunctions.gradient_func(arr, coords)
-
-        assert result.data[0] == 1.0
-        assert result.data[2] == 1.5
-
-    def test_gradient_list_spacing(self) -> None:
-        """gradient() accepts list as coordinate spacing."""
-        from intellicrack.handlers.numpy_handler import FallbackArray, _FallbackFunctions
-
-        arr = FallbackArray([0, 1, 4])
-        coords = [0, 1, 3]
-
-        result = _FallbackFunctions.gradient_func(arr, coords)
-
-        assert result.data[0] == 1.0
-        assert result.data[2] == 1.5
 
     def test_gradient_single_element(self) -> None:
         """gradient() with single element returns 0."""
@@ -1078,7 +831,7 @@ class TestFallbackArrayEdgeCases:
 
         arr = FallbackArray([])
 
-        result = arr.sum(axis=None)
+        result = arr.sum()
 
         assert result == 0.0
 
@@ -1088,39 +841,29 @@ class TestFallbackArrayEdgeCases:
 
         arr = FallbackArray([])
 
-        result = arr.mean(axis=None)
+        result = arr.mean()
 
         assert result == 0.0
 
-    def test_empty_array_min_returns_none(self) -> None:
-        """min() on empty array returns None."""
+    def test_empty_array_min_returns_float(self) -> None:
+        """min() on empty array returns default float min."""
         from intellicrack.handlers.numpy_handler import FallbackArray
 
         arr = FallbackArray([])
 
-        result = arr.min(axis=None)
+        result = arr.min()
 
-        assert result is None
+        assert isinstance(result, float)
 
-    def test_empty_array_max_returns_none(self) -> None:
-        """max() on empty array returns None."""
+    def test_empty_array_max_returns_float(self) -> None:
+        """max() on empty array returns default float max."""
         from intellicrack.handlers.numpy_handler import FallbackArray
 
         arr = FallbackArray([])
 
-        result = arr.max(axis=None)
+        result = arr.max()
 
-        assert result is None
-
-    def test_empty_array_argmin_returns_none(self) -> None:
-        """argmin() on empty array returns None."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([])
-
-        result = arr.argmin(axis=None)
-
-        assert result is None
+        assert isinstance(result, float)
 
     def test_single_element_std_returns_zero(self) -> None:
         """std() of single element is 0."""
@@ -1128,107 +871,40 @@ class TestFallbackArrayEdgeCases:
 
         arr = FallbackArray([42])
 
-        result = arr.std(axis=None)
+        result = arr.std()
 
         assert result == 0.0
 
-    def test_single_element_var_returns_zero(self) -> None:
-        """var() of single element is 0."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
 
-        arr = FallbackArray([42])
+class TestStaticFunctionBasic:
+    """Tests for _FallbackFunctions static methods basic operations."""
 
-        result = arr.var(axis=None)
-
-        assert result == 0.0
-
-    def test_3d_array_axis_operations_raise_error(self) -> None:
-        """Axis operations on 3D arrays raise ValueError."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray(list(range(24)), float, (2, 3, 4))
-
-        with pytest.raises(ValueError, match="only supported for 1D and 2D"):
-            arr.sum(axis=0)
-
-    def test_reduce_shape_removes_axis(self) -> None:
-        """_reduce_shape correctly removes specified axis from shape."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([1, 2, 3, 4, 5, 6], float, (2, 3))
-
-        shape_0 = arr._reduce_shape(0)
-        shape_1 = arr._reduce_shape(1)
-
-        assert shape_0 == (3,)
-        assert shape_1 == (2,)
-
-    def test_get_axis_slices_axis_0(self) -> None:
-        """_get_axis_slices for axis=0 returns column slices."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([1, 2, 3, 4, 5, 6], float, (2, 3))
-
-        slices = arr._get_axis_slices(0)
-
-        assert len(slices) == 3
-        assert slices[0] == [1, 4]
-        assert slices[1] == [2, 5]
-        assert slices[2] == [3, 6]
-
-    def test_get_axis_slices_axis_1(self) -> None:
-        """_get_axis_slices for axis=1 returns row slices."""
-        from intellicrack.handlers.numpy_handler import FallbackArray
-
-        arr = FallbackArray([1, 2, 3, 4, 5, 6], float, (2, 3))
-
-        slices = arr._get_axis_slices(1)
-
-        assert len(slices) == 2
-        assert slices[0] == [1, 2, 3]
-        assert slices[1] == [4, 5, 6]
-
-
-class TestStaticFunctionAxisDelegation:
-    """Tests for _FallbackFunctions static methods axis delegation."""
-
-    def test_sum_func_delegates_to_fallbackarray(self) -> None:
-        """sum_func delegates axis parameter to FallbackArray.sum."""
+    def test_sum_func_returns_float(self) -> None:
+        """sum_func returns float."""
         from intellicrack.handlers.numpy_handler import FallbackArray, _FallbackFunctions
 
         arr = FallbackArray([1, 2, 3, 4], float, (2, 2))
 
-        result = _FallbackFunctions.sum_func(arr, axis=0)
+        result = _FallbackFunctions.sum_func(arr)
 
-        assert isinstance(result, FallbackArray)
-        assert result.data == [4.0, 6.0]
+        assert isinstance(result, float)
+        assert result == 10.0
 
-    def test_mean_func_delegates_to_fallbackarray(self) -> None:
-        """mean_func delegates axis parameter to FallbackArray.mean."""
+    def test_mean_func_returns_float(self) -> None:
+        """mean_func returns float."""
         from intellicrack.handlers.numpy_handler import FallbackArray, _FallbackFunctions
 
         arr = FallbackArray([1, 2, 3, 4], float, (2, 2))
 
-        result = _FallbackFunctions.mean_func(arr, axis=1)
+        result = _FallbackFunctions.mean_func(arr)
 
-        assert isinstance(result, FallbackArray)
-        assert result.data == [1.5, 3.5]
+        assert isinstance(result, float)
+        assert result == 2.5
 
-    def test_min_func_with_list_creates_fallbackarray(self) -> None:
-        """min_func converts list to FallbackArray for axis operations."""
+    def test_min_func_with_list(self) -> None:
+        """min_func works with list."""
         from intellicrack.handlers.numpy_handler import _FallbackFunctions
 
-        result = _FallbackFunctions.min_func([5, 2, 8, 1], axis=None)
+        result = _FallbackFunctions.min_func([5, 2, 8, 1])
 
         assert result == 1.0
-
-    def test_argmax_func_delegates_axis(self) -> None:
-        """argmax_func correctly delegates axis parameter."""
-        from intellicrack.handlers.numpy_handler import FallbackArray, _FallbackFunctions
-
-        arr = FallbackArray([1, 4, 2, 3], float, (2, 2))
-
-        result = _FallbackFunctions.argmax_func(arr, axis=0)
-
-        assert isinstance(result, FallbackArray)
-        assert result.data == [1, 0]

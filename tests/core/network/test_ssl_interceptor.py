@@ -26,6 +26,7 @@ import requests
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import ExtensionOID, NameOID
 
 from intellicrack.core.network.ssl_interceptor import SSLTLSInterceptor
 
@@ -66,9 +67,9 @@ class RealCryptographySimulator:
                 private_key.public_key()
             ).serial_number(
                 self.certificate_counter
-            ).not_valid_before_utc(
+            ).not_valid_before(
                 datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)
-            ).not_valid_after_utc(
+            ).not_valid_after(
                 datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=3650)
             ).add_extension(
                 x509.BasicConstraints(ca=True, path_length=None),
@@ -407,7 +408,7 @@ class RealSSLInterceptorSimulator:
 
     def simulate_executable_not_found(self) -> None:
         """Simulate executable not being found."""
-        self.process_sim.find_executable = lambda name: None
+        setattr(self.process_sim, "find_executable", lambda name: None)
 
     def simulate_cryptography_unavailable(self) -> None:
         """Simulate cryptography library being unavailable."""
@@ -417,7 +418,7 @@ class RealSSLInterceptorSimulator:
         """Simulate process startup error."""
         def error_simulate(*args: Any, **kwargs: Any) -> Any:
             raise Exception("Test error")
-        self.process_sim.simulate_process = error_simulate
+        setattr(self.process_sim, "simulate_process", error_simulate)
 
     def create_mitm_script_content(self, target_hosts: list[str]) -> str:
         """Create realistic mitmproxy script content."""
@@ -513,7 +514,9 @@ class TestSSLTLSInterceptor:
 
         assert interceptor.config["listen_ip"] == "127.0.0.1"
         assert interceptor.config["listen_port"] == 18443
-        assert any(h == "license.example.com" or h.endswith(".license.example.com") for h in interceptor.config["target_hosts"])
+        target_hosts_value = interceptor.config["target_hosts"]
+        target_hosts: list[str] = list(target_hosts_value) if isinstance(target_hosts_value, (list, tuple)) else []
+        assert any(h == "license.example.com" or h.endswith(".license.example.com") for h in target_hosts)
         assert interceptor.config["record_traffic"] is True
         assert interceptor.proxy_process is None
         assert isinstance(interceptor.traffic_log, list)
@@ -545,8 +548,10 @@ class TestSSLTLSInterceptor:
         assert cert.issuer == cert.subject
 
         # Validate certificate extensions for CA usage
-        ca_extension = cert.extensions.get_extension_for_oid(x509.ExtensionOID.BASIC_CONSTRAINTS)
-        assert ca_extension.value.ca is True
+        ca_extension = cert.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
+        basic_constraints = ca_extension.value
+        assert isinstance(basic_constraints, x509.BasicConstraints)
+        assert basic_constraints.ca is True
 
     def test_ca_certificate_generation_without_cryptography(self, interceptor_config: dict[str, Any], ssl_simulator: RealSSLInterceptorSimulator) -> None:
         """Test CA certificate generation gracefully handles missing cryptography."""
@@ -564,11 +569,13 @@ class TestSSLTLSInterceptor:
         cert_pem, key_pem = ssl_interceptor.generate_ca_certificate()
 
         # Create certificate directory
-        cert_path = ssl_interceptor.config["ca_cert_path"]
-        key_path = ssl_interceptor.config["ca_key_path"]
+        cert_path: str = str(ssl_interceptor.config["ca_cert_path"])
+        key_path: str = str(ssl_interceptor.config["ca_key_path"])
         os.makedirs(os.path.dirname(cert_path), exist_ok=True)
 
-        # Save certificates
+        # Save certificates (assert not None for type safety)
+        assert cert_pem is not None, "cert_pem should not be None"
+        assert key_pem is not None, "key_pem should not be None"
         with open(cert_path, "wb") as f:
             f.write(cert_pem)
         with open(key_path, "wb") as f:
@@ -665,8 +672,10 @@ class TestSSLTLSInterceptor:
 
         # Validate modifications
         assert modified_response["status"] == "SUCCESS"
-        assert modified_response["license"]["status"] == "ACTIVATED"
-        assert modified_response["license"]["type"] == "PERMANENT"
+        license_data = modified_response["license"]
+        assert isinstance(license_data, dict)
+        assert license_data["status"] == "ACTIVATED"
+        assert license_data["type"] == "PERMANENT"
         assert modified_response["isValid"] is True
         assert modified_response["valid"] is True
         assert modified_response["expired"] is False
@@ -756,13 +765,13 @@ class TestSSLTLSInterceptor:
         assert simulated_interceptor.config["record_traffic"] is False
 
         # Test invalid port configuration
-        invalid_config = {"listen_port": 99999}
-        result = simulated_interceptor.configure(invalid_config)
+        invalid_port_config: dict[str, Any] = {"listen_port": 99999}
+        result = simulated_interceptor.configure(invalid_port_config)
         assert result is False
 
         # Test invalid IP configuration
-        invalid_config = {"listen_ip": "invalid_ip"}
-        result = simulated_interceptor.configure(invalid_config)
+        invalid_ip_config: dict[str, Any] = {"listen_ip": "invalid_ip"}
+        result = simulated_interceptor.configure(invalid_ip_config)
         assert result is False
 
     def test_configuration_with_certificate_regeneration(self, interceptor_config: dict[str, Any], ssl_simulator: RealSSLInterceptorSimulator, temp_cert_dir: str) -> None:
@@ -816,24 +825,29 @@ class TestSSLTLSInterceptor:
         serialization.load_pem_private_key(root_key, password=None)
 
         # Validate certificate can be used for SSL interception
-        assert ca_cert.extensions.get_extension_for_oid(x509.ExtensionOID.BASIC_CONSTRAINTS).value.ca is True
+        basic_constraints_ext = ca_cert.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
+        basic_constraints = basic_constraints_ext.value
+        assert isinstance(basic_constraints, x509.BasicConstraints)
+        assert basic_constraints.ca is True
 
         # Validate key usage extensions for certificate signing
-        key_usage = ca_cert.extensions.get_extension_for_oid(x509.ExtensionOID.KEY_USAGE).value
+        key_usage_ext = ca_cert.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE)
+        key_usage = key_usage_ext.value
+        assert isinstance(key_usage, x509.KeyUsage)
         assert key_usage.key_cert_sign is True
         assert key_usage.crl_sign is True
 
     def test_real_ssl_connection_simulation(self, ssl_interceptor: SSLTLSInterceptor) -> None:
         """Test SSL connection handling with real socket operations."""
         # Create a simple SSL server for testing
-        def create_test_ssl_server():
+        def create_test_ssl_server() -> int:
             context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
 
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.bind(('localhost', 0))
-                port = sock.getsockname()[1]
+                port: int = int(sock.getsockname()[1])
                 sock.listen(1)
 
                 return port
@@ -945,13 +959,17 @@ class TestSSLTLSInterceptor:
         # Validate certificate can be used to sign server certificates
         # This enables certificate pinning bypass by presenting valid certificates
         # that appear to be from the legitimate server
-        basic_constraints = cert.extensions.get_extension_for_oid(x509.ExtensionOID.BASIC_CONSTRAINTS)
-        assert basic_constraints.value.ca is True
-        assert basic_constraints.value.path_length is None or basic_constraints.value.path_length >= 0
+        basic_constraints_ext = cert.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
+        basic_constraints_val = basic_constraints_ext.value
+        assert isinstance(basic_constraints_val, x509.BasicConstraints)
+        assert basic_constraints_val.ca is True
+        assert basic_constraints_val.path_length is None or basic_constraints_val.path_length >= 0
 
         # Validate key usage for certificate signing
-        key_usage = cert.extensions.get_extension_for_oid(x509.ExtensionOID.KEY_USAGE)
-        assert key_usage.value.key_cert_sign is True
+        key_usage_ext = cert.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE)
+        key_usage_val = key_usage_ext.value
+        assert isinstance(key_usage_val, x509.KeyUsage)
+        assert key_usage_val.key_cert_sign is True
 
     def test_error_handling_and_recovery(self, interceptor_config: dict[str, Any], ssl_simulator: RealSSLInterceptorSimulator) -> None:
         """Test error handling and recovery scenarios."""
@@ -1042,11 +1060,13 @@ class TestSSLInterceptionScenarios:
 
         # Validate certificate has properties needed for pinning bypass
         # Certificate should be able to sign server certificates that appear legitimate
-        assert cert.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)[0].value == "Intellicrack Root CA"
+        assert cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value == "Intellicrack Root CA"
 
         # Validate certificate can create trust chain
-        basic_constraints = cert.extensions.get_extension_for_oid(x509.ExtensionOID.BASIC_CONSTRAINTS)
-        assert basic_constraints.value.ca is True
+        basic_constraints_ext = cert.extensions.get_extension_for_oid(ExtensionOID.BASIC_CONSTRAINTS)
+        basic_constraints_val = basic_constraints_ext.value
+        assert isinstance(basic_constraints_val, x509.BasicConstraints)
+        assert basic_constraints_val.ca is True
 
     def test_license_server_mitm_attack(self) -> None:
         """Test complete MITM attack scenario against license servers."""

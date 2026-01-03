@@ -766,7 +766,7 @@ class TestStandaloneFunction(unittest.TestCase):
 
     def tearDown(self) -> None:
         """Restore original subprocess.run."""
-        subprocess.run = self.original_subprocess_run  # type: ignore[assignment]
+        subprocess.run = self.original_subprocess_run
 
     def test_analyze_binary_imports_exports_function(self) -> None:
         """Test standalone function provides comprehensive analysis."""

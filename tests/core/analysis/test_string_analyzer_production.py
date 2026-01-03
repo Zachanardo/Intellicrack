@@ -671,7 +671,7 @@ class TestLicenseStringDetection:
         result: dict[str, Any] = analyzer_license.analyze_all_strings(min_length=4)
 
         license_strings: list[dict[str, Any]] = result["license_strings"]
-        license_contents: list[str] = [s["content"].lower() for s in license_contents]
+        license_contents: list[str] = [s["content"].lower() for s in license_strings]
 
         assert any("expir" in content for content in license_contents)
 

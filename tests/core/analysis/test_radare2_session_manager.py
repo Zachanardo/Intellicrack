@@ -11,6 +11,7 @@ import concurrent.futures
 import tempfile
 import threading
 import time
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -40,7 +41,7 @@ def sample_binary(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def session_pool() -> R2SessionPool:
+def session_pool() -> Generator[R2SessionPool, None, None]:
     """Create isolated session pool for testing."""
     pool = R2SessionPool(max_sessions=5, max_idle_time=10.0, cleanup_interval=1.0)
     yield pool

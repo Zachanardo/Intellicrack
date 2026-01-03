@@ -21,6 +21,7 @@ import struct
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Any
 from unittest.mock import mock_open, patch
 
 import pytest
@@ -29,7 +30,7 @@ try:
     from intellicrack.core.analysis.entropy_analyzer import EntropyAnalyzer
     AVAILABLE = True
 except ImportError:
-    EntropyAnalyzer = None
+    EntropyAnalyzer = None  # type: ignore[assignment]
     AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not AVAILABLE, reason="Module not available")
@@ -37,6 +38,8 @@ pytestmark = pytest.mark.skipif(not AVAILABLE, reason="Module not available")
 
 class TestEntropyCalculation(unittest.TestCase):
     """Test Shannon entropy calculation accuracy and mathematical correctness."""
+
+    analyzer: Any
 
     def setUp(self) -> None:
         """Initialize test environment."""
@@ -164,6 +167,8 @@ class TestEntropyCalculation(unittest.TestCase):
 class TestEntropyClassification(unittest.TestCase):
     """Test entropy classification thresholds and logic."""
 
+    analyzer: Any
+
     def setUp(self) -> None:
         """Initialize test environment."""
         self.analyzer = EntropyAnalyzer()
@@ -208,6 +213,9 @@ class TestEntropyClassification(unittest.TestCase):
 
 class TestBinaryFileAnalysis(unittest.TestCase):
     """Test binary file analysis with real and synthetic samples."""
+
+    analyzer: Any
+    temp_dir: str
 
     def setUp(self) -> None:
         """Initialize test environment."""
@@ -363,6 +371,9 @@ class TestBinaryFileAnalysis(unittest.TestCase):
 class TestRealBinaryAnalysis(unittest.TestCase):
     """Test analysis of real binary samples from fixtures."""
 
+    analyzer: Any
+    fixture_base: Path
+
     def setUp(self) -> None:
         """Initialize test environment."""
         self.analyzer = EntropyAnalyzer()
@@ -467,6 +478,9 @@ class TestRealBinaryAnalysis(unittest.TestCase):
 class TestPerformanceAndScalability(unittest.TestCase):
     """Test performance and scalability of entropy analysis."""
 
+    analyzer: Any
+    temp_dir: str
+
     def setUp(self) -> None:
         """Initialize test environment."""
         self.analyzer = EntropyAnalyzer()
@@ -554,6 +568,8 @@ class TestPerformanceAndScalability(unittest.TestCase):
 
 class TestEdgeCasesAndErrorRecovery(unittest.TestCase):
     """Test edge cases and error recovery scenarios."""
+
+    analyzer: Any
 
     def setUp(self) -> None:
         """Initialize test environment."""
@@ -680,6 +696,8 @@ class TestEdgeCasesAndErrorRecovery(unittest.TestCase):
 class TestMathematicalAccuracy(unittest.TestCase):
     """Test mathematical accuracy and precision of entropy calculations."""
 
+    analyzer: Any
+
     def setUp(self) -> None:
         """Initialize test environment."""
         self.analyzer = EntropyAnalyzer()
@@ -695,12 +713,12 @@ class TestMathematicalAccuracy(unittest.TestCase):
             for byte in data:
                 byte_counts[byte] = byte_counts.get(byte, 0) + 1
 
-            entropy = 0.0
-            data_len = len(data)
+            entropy: float = 0.0
+            data_len: int = len(data)
 
             for count in byte_counts.values():
                 if count > 0:
-                    p = count / data_len
+                    p: float = float(count) / float(data_len)
                     entropy -= p * math.log2(p)
 
             return entropy
@@ -784,6 +802,9 @@ class TestMathematicalAccuracy(unittest.TestCase):
 
 class TestIntegrationScenarios(unittest.TestCase):
     """Test integration scenarios and real-world use cases."""
+
+    analyzer: Any
+    temp_dir: str
 
     def setUp(self) -> None:
         """Initialize test environment."""

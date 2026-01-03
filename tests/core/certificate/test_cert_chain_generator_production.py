@@ -7,12 +7,13 @@ All tests use REAL cryptographic operations - no mocks or stubs.
 Tests MUST FAIL if generated certificates are invalid or chains don't verify.
 """
 
+import base64
 import datetime
 import hashlib
 import socket
 import ssl
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable, Dict, List, Tuple
 
 import pytest
 from cryptography import x509
@@ -73,7 +74,7 @@ class TestRootCAGeneration:
         generator = CertificateChainGenerator()
         root_cert, _ = generator.generate_root_ca()
 
-        subject_attrs = {attr.oid: attr.value for attr in root_cert.subject}
+        subject_attrs: Dict[Any, Any] = {attr.oid: attr.value for attr in root_cert.subject}
 
         assert subject_attrs[NameOID.COMMON_NAME] == "Intellicrack Root CA"
         assert subject_attrs[NameOID.ORGANIZATION_NAME] == "Intellicrack"
@@ -153,9 +154,9 @@ class TestRootCAGeneration:
     def test_root_ca_not_valid_before_is_current_time(self) -> None:
         """Root CA not_valid_before is approximately current UTC time."""
         generator = CertificateChainGenerator()
-        before_generation = datetime.datetime.now(datetime.UTC)
+        before_generation: datetime.datetime = datetime.datetime.now(datetime.UTC)
         root_cert, _ = generator.generate_root_ca()
-        after_generation = datetime.datetime.now(datetime.UTC)
+        after_generation: datetime.datetime = datetime.datetime.now(datetime.UTC)
 
         assert before_generation <= root_cert.not_valid_before_utc <= after_generation
 
@@ -208,7 +209,7 @@ class TestIntermediateCAGeneration:
         root_cert, root_key = generator.generate_root_ca()
         intermediate_cert, _ = generator.generate_intermediate_ca(root_cert, root_key)
 
-        subject_attrs = {attr.oid: attr.value for attr in intermediate_cert.subject}
+        subject_attrs: Dict[Any, Any] = {attr.oid: attr.value for attr in intermediate_cert.subject}
 
         assert subject_attrs[NameOID.COMMON_NAME] == "Intellicrack Intermediate CA"
         assert subject_attrs[NameOID.ORGANIZATION_NAME] == "Intellicrack"
@@ -255,15 +256,16 @@ class TestIntermediateCAGeneration:
         root_cert, root_key = generator.generate_root_ca()
         intermediate_cert, _ = generator.generate_intermediate_ca(root_cert, root_key)
 
-        root_ski = root_cert.extensions.get_extension_for_oid(
+        root_ski_ext = root_cert.extensions.get_extension_for_oid(
             ExtensionOID.SUBJECT_KEY_IDENTIFIER
         ).value
+        assert isinstance(root_ski_ext, x509.SubjectKeyIdentifier)
         intermediate_aki = intermediate_cert.extensions.get_extension_for_oid(
             ExtensionOID.AUTHORITY_KEY_IDENTIFIER
         ).value
 
         assert isinstance(intermediate_aki, x509.AuthorityKeyIdentifier)
-        assert intermediate_aki.key_identifier == root_ski.digest
+        assert intermediate_aki.key_identifier == root_ski_ext.digest
 
     def test_intermediate_ca_has_subject_key_identifier(self) -> None:
         """Intermediate CA has subject key identifier extension."""
@@ -357,7 +359,7 @@ class TestLeafCertificateGeneration:
             domain, intermediate_cert, intermediate_key
         )
 
-        subject_attrs = {attr.oid: attr.value for attr in leaf_cert.subject}
+        subject_attrs: Dict[Any, Any] = {attr.oid: attr.value for attr in leaf_cert.subject}
         assert subject_attrs[NameOID.COMMON_NAME] == domain
 
     def test_leaf_cert_has_subject_alternative_name_with_domain(self) -> None:
@@ -376,7 +378,7 @@ class TestLeafCertificateGeneration:
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME
         ).value
         assert isinstance(san, x509.SubjectAlternativeName)
-        dns_names = list(san.get_values_for_type(x509.DNSName))
+        dns_names: List[Any] = list(san.get_values_for_type(x509.DNSName))
         assert domain in dns_names
 
     def test_leaf_cert_includes_wildcard_in_san_for_non_wildcard_domains(self) -> None:
@@ -394,7 +396,7 @@ class TestLeafCertificateGeneration:
         san = leaf_cert.extensions.get_extension_for_oid(
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME
         ).value
-        dns_names = list(san.get_values_for_type(x509.DNSName))
+        dns_names: List[Any] = list(san.get_values_for_type(x509.DNSName))
         assert "example.com" in dns_names
         assert "*.example.com" in dns_names
 
@@ -413,7 +415,7 @@ class TestLeafCertificateGeneration:
         san = leaf_cert.extensions.get_extension_for_oid(
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME
         ).value
-        dns_names = list(san.get_values_for_type(x509.DNSName))
+        dns_names: List[Any] = list(san.get_values_for_type(x509.DNSName))
         assert dns_names.count("*.example.com") == 1
 
     def test_leaf_cert_uses_2048_bit_rsa_key(self) -> None:
@@ -596,7 +598,7 @@ class TestFullChainGeneration:
         domain = "test.intellicrack.local"
         chain = generator.generate_full_chain(domain)
 
-        subject_attrs = {attr.oid: attr.value for attr in chain.leaf_cert.subject}
+        subject_attrs: Dict[Any, Any] = {attr.oid: attr.value for attr in chain.leaf_cert.subject}
         assert subject_attrs[NameOID.COMMON_NAME] == domain
 
     def test_full_chain_generates_unique_certificates(self) -> None:
@@ -617,13 +619,13 @@ class TestFullChainGeneration:
         generator = CertificateChainGenerator()
         chain = generator.generate_full_chain("*.example.com")
 
-        subject_attrs = {attr.oid: attr.value for attr in chain.leaf_cert.subject}
+        subject_attrs: Dict[Any, Any] = {attr.oid: attr.value for attr in chain.leaf_cert.subject}
         assert subject_attrs[NameOID.COMMON_NAME] == "*.example.com"
 
         san = chain.leaf_cert.extensions.get_extension_for_oid(
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME
         ).value
-        dns_names = list(san.get_values_for_type(x509.DNSName))
+        dns_names: List[Any] = list(san.get_values_for_type(x509.DNSName))
         assert "*.example.com" in dns_names
 
     def test_full_chain_validity_periods_are_nested(self) -> None:
@@ -687,7 +689,7 @@ class TestCertificateExport:
         pem_chain = generator.export_chain_pem(chain)
 
         cert_blocks = pem_chain.split("-----BEGIN CERTIFICATE-----")[1:]
-        loaded_certs = []
+        loaded_certs: List[x509.Certificate] = []
         for block in cert_blocks:
             cert_pem = f"-----BEGIN CERTIFICATE-----{block}"
             cert = x509.load_pem_x509_certificate(cert_pem.encode())
@@ -720,7 +722,7 @@ class TestCertificateExport:
         assert "-----BEGIN RSA PRIVATE KEY-----" in key_pem
         assert "-----END RSA PRIVATE KEY-----" in key_pem
 
-        loaded_key = load_pem_private_key(key_pem.encode(), password=None)
+        loaded_key: Any = load_pem_private_key(key_pem.encode(), password=None)
         assert isinstance(loaded_key, rsa.RSAPrivateKey)
         assert loaded_key.key_size == root_key.key_size
 
@@ -735,7 +737,7 @@ class TestCertificateExport:
         assert "-----BEGIN PUBLIC KEY-----" in pub_key_pem
         assert "-----END PUBLIC KEY-----" in pub_key_pem
 
-        loaded_public_key = load_pem_public_key(pub_key_pem.encode())
+        loaded_public_key: Any = load_pem_public_key(pub_key_pem.encode())
         assert isinstance(loaded_public_key, rsa.RSAPublicKey)
 
     def test_exported_private_key_can_decrypt_data_encrypted_with_public_key(
@@ -757,7 +759,7 @@ class TestCertificateExport:
         )
 
         key_pem = generator.export_private_key_pem(leaf_key)
-        loaded_key = load_pem_private_key(key_pem.encode(), password=None)
+        loaded_key: Any = load_pem_private_key(key_pem.encode(), password=None)
         assert isinstance(loaded_key, rsa.RSAPrivateKey)
 
         decrypted = loaded_key.decrypt(
@@ -981,7 +983,7 @@ class TestEdgeCasesAndVariations:
         domain = "deeply.nested.subdomain.example.com"
         chain = generator.generate_full_chain(domain)
 
-        subject_attrs = {attr.oid: attr.value for attr in chain.leaf_cert.subject}
+        subject_attrs: Dict[Any, Any] = {attr.oid: attr.value for attr in chain.leaf_cert.subject}
         assert subject_attrs[NameOID.COMMON_NAME] == domain
 
     def test_international_domain_name_support(self) -> None:
@@ -991,7 +993,7 @@ class TestEdgeCasesAndVariations:
         a_label_domain = unicode_domain.encode('idna').decode('ascii')
         chain = generator.generate_full_chain(a_label_domain)
 
-        subject_attrs = {attr.oid: attr.value for attr in chain.leaf_cert.subject}
+        subject_attrs: Dict[Any, Any] = {attr.oid: attr.value for attr in chain.leaf_cert.subject}
         cn = subject_attrs[NameOID.COMMON_NAME]
         assert cn == a_label_domain
 
@@ -1001,7 +1003,7 @@ class TestEdgeCasesAndVariations:
         domain = "x.com"
         chain = generator.generate_full_chain(domain)
 
-        subject_attrs = {attr.oid: attr.value for attr in chain.leaf_cert.subject}
+        subject_attrs: Dict[Any, Any] = {attr.oid: attr.value for attr in chain.leaf_cert.subject}
         assert subject_attrs[NameOID.COMMON_NAME] == domain
 
     def test_domain_with_hyphens(self) -> None:
@@ -1010,7 +1012,7 @@ class TestEdgeCasesAndVariations:
         domain = "my-test-domain.example.com"
         chain = generator.generate_full_chain(domain)
 
-        subject_attrs = {attr.oid: attr.value for attr in chain.leaf_cert.subject}
+        subject_attrs: Dict[Any, Any] = {attr.oid: attr.value for attr in chain.leaf_cert.subject}
         assert subject_attrs[NameOID.COMMON_NAME] == domain
 
     def test_numeric_subdomain(self) -> None:
@@ -1067,9 +1069,9 @@ class TestRealWorldUsageScenarios:
         generator = CertificateChainGenerator()
         chain = generator.generate_full_chain("target.example.com")
 
-        cert_file = tmp_path / "server.crt"
-        key_file = tmp_path / "server.key"
-        ca_file = tmp_path / "ca.crt"
+        cert_file: Path = tmp_path / "server.crt"
+        key_file: Path = tmp_path / "server.key"
+        ca_file: Path = tmp_path / "ca.crt"
 
         leaf_pem = chain.leaf_cert.public_bytes(serialization.Encoding.PEM).decode()
         key_pem = generator.export_private_key_pem(chain.leaf_key)
@@ -1084,7 +1086,7 @@ class TestRealWorldUsageScenarios:
         assert ca_file.exists()
 
         loaded_cert = x509.load_pem_x509_certificate(cert_file.read_bytes())
-        loaded_key = load_pem_private_key(key_file.read_bytes(), password=None)
+        loaded_key: Any = load_pem_private_key(key_file.read_bytes(), password=None)
         loaded_ca = x509.load_pem_x509_certificate(ca_file.read_bytes())
 
         assert loaded_cert.serial_number == chain.leaf_cert.serial_number
@@ -1103,7 +1105,7 @@ class TestRealWorldUsageScenarios:
             "admin.target.com",
         ]
 
-        generated_certs = {}
+        generated_certs: Dict[str, Tuple[x509.Certificate, rsa.RSAPrivateKey]] = {}
         for domain in target_domains:
             leaf_cert, leaf_key = generator.generate_leaf_cert(
                 domain, base_chain.intermediate_cert, base_chain.intermediate_key
@@ -1112,7 +1114,7 @@ class TestRealWorldUsageScenarios:
 
         assert len(generated_certs) == len(target_domains)
         for domain, (cert, key) in generated_certs.items():
-            subject_attrs = {attr.oid: attr.value for attr in cert.subject}
+            subject_attrs: Dict[Any, Any] = {attr.oid: attr.value for attr in cert.subject}
             assert subject_attrs[NameOID.COMMON_NAME] == domain
             assert cert.issuer == base_chain.intermediate_cert.subject
 
@@ -1165,11 +1167,11 @@ class TestRealWorldUsageScenarios:
         san = chain.leaf_cert.extensions.get_extension_for_oid(
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME
         ).value
-        dns_names = list(san.get_values_for_type(x509.DNSName))
+        dns_names: List[Any] = list(san.get_values_for_type(x509.DNSName))
 
         assert "*.example.com" in dns_names
 
-        subject_attrs = {attr.oid: attr.value for attr in chain.leaf_cert.subject}
+        subject_attrs: Dict[Any, Any] = {attr.oid: attr.value for attr in chain.leaf_cert.subject}
         assert subject_attrs[NameOID.COMMON_NAME] == "*.example.com"
 
     def test_certificate_renewal_workflow(self) -> None:
@@ -1186,10 +1188,10 @@ class TestRealWorldUsageScenarios:
         assert renewed_leaf.serial_number != original_chain.leaf_cert.serial_number
         assert renewed_leaf.issuer == original_chain.leaf_cert.issuer
 
-        subject_attrs_original = {
+        subject_attrs_original: Dict[Any, Any] = {
             attr.oid: attr.value for attr in original_chain.leaf_cert.subject
         }
-        subject_attrs_renewed = {attr.oid: attr.value for attr in renewed_leaf.subject}
+        subject_attrs_renewed: Dict[Any, Any] = {attr.oid: attr.value for attr in renewed_leaf.subject}
         assert (
             subject_attrs_original[NameOID.COMMON_NAME]
             == subject_attrs_renewed[NameOID.COMMON_NAME]

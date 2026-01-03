@@ -57,7 +57,7 @@ class TestYaraPatternEngineSpecification(unittest.TestCase):
         if os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)
 
-    def create_test_binaries(self):
+    def create_test_binaries(self) -> None:
         """Create realistic binary samples for sophisticated pattern matching tests."""
         # UPX packed binary signature
         self.upx_packed_sample = os.path.join(self.temp_dir, "upx_packed.exe")
@@ -200,7 +200,7 @@ class TestAdvancedPatternRecognition(TestYaraPatternEngineSpecification):
         result = self.engine.scan_file(self.upx_packed_sample)
 
         # Must detect UPX packing with high confidence
-        self.assertTrue(result.has_matches)
+        self.assertTrue(len(result.matches) > 0)
         self.assertGreater(len(result.matches), 0)
 
         # Should identify as packer category with specific UPX detection
@@ -220,7 +220,7 @@ class TestAdvancedPatternRecognition(TestYaraPatternEngineSpecification):
         result = self.engine.scan_file(self.vmprotect_sample)
 
         # VMProtect is sophisticated - should be detected by advanced engines
-        self.assertTrue(result.has_matches)
+        self.assertTrue(len(result.matches) > 0)
 
         protection_matches = [m for m in result.matches
                             if m.category in [PatternCategory.PROTECTION, PatternCategory.OBFUSCATION]]
@@ -236,7 +236,7 @@ class TestAdvancedPatternRecognition(TestYaraPatternEngineSpecification):
         result = self.engine.scan_file(self.antidebug_sample)
 
         # Must detect anti-debugging patterns
-        self.assertTrue(result.has_matches)
+        self.assertTrue(len(result.matches) > 0)
 
         antidebug_matches = [m for m in result.matches if m.category == PatternCategory.ANTI_DEBUG]
         self.assertGreater(len(antidebug_matches), 0)
@@ -259,7 +259,7 @@ class TestAdvancedPatternRecognition(TestYaraPatternEngineSpecification):
         result = self.engine.scan_file(self.flexlm_sample)
 
         # Must detect licensing system patterns
-        self.assertTrue(result.has_matches)
+        self.assertTrue(len(result.matches) > 0)
 
         license_matches = [m for m in result.matches if m.category == PatternCategory.LICENSING]
         self.assertGreater(len(license_matches), 0)
@@ -333,7 +333,7 @@ rule Performance_Optimized_Rule {
         result = self.engine.scan_file(self.vmprotect_sample)
 
         # Should extract detailed pattern information
-        if result.has_matches:
+        if result.matches:
             for match in result.matches:
                 # Should provide detailed match information
                 self.assertIsNotNone(match.rule_name)
@@ -380,7 +380,7 @@ class TestPerformanceOptimization(TestYaraPatternEngineSpecification):
         results = []
         threads = []
 
-        def scan_file_thread(file_path):
+        def scan_file_thread(file_path: str) -> None:
             result = self.engine.scan_file(file_path)
             results.append(result)
 
@@ -450,7 +450,7 @@ class TestSecurityResearchIntegration(TestYaraPatternEngineSpecification):
         self.assertIn('recommendations', supplemental_data)
 
         # Should include actionable intelligence
-        if result.has_matches:
+        if result.matches:
             self.assertIn('bypass_strategies', supplemental_data)
             self.assertIsInstance(supplemental_data['bypass_strategies'], list)
 
@@ -473,7 +473,7 @@ class TestSecurityResearchIntegration(TestYaraPatternEngineSpecification):
         """Should provide detailed match analysis for security research."""
         result = self.engine.scan_file(self.themida_sample)
 
-        if result.has_matches:
+        if result.matches:
             for match in result.matches:
                 # Should provide comprehensive match details
                 self.assertIsNotNone(match.rule_name)

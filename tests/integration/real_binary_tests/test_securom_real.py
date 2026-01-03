@@ -162,6 +162,7 @@ class TestSecuROMv7Real(RealBinaryTestBase):
                 if entry.get('has_activation'):
                     self.assertIsNotNone(activation,
                         f"FAILED: Analyzer did not extract activation mechanism from {entry['name']}")
+                    assert activation is not None
 
                     if entry.get('expected_activation_type'):
                         self.assertEqual(activation.activation_type, entry['expected_activation_type'])

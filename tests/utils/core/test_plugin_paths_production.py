@@ -19,6 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -270,7 +271,7 @@ class TestScriptListing:
     """Test script listing functions."""
 
     @pytest.fixture
-    def temp_frida_env(self) -> Path:
+    def temp_frida_env(self) -> Generator[Path, None, None]:
         """Create temporary Frida scripts environment."""
         with tempfile.TemporaryDirectory() as tmpdir:
             frida_dir = Path(tmpdir) / "scripts" / "frida"
@@ -329,7 +330,7 @@ class TestScriptFinding:
     """Test script finding by name."""
 
     @pytest.fixture
-    def temp_script_env(self) -> Path:
+    def temp_script_env(self) -> Generator[Path, None, None]:
         """Create temporary script environment."""
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_root = Path(tmpdir)

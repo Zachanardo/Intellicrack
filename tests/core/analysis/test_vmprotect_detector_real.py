@@ -377,9 +377,10 @@ class TestDetectionAccuracy:
                 result = vmprotect_detector.detect(str(sample))
                 samples_tested += 1
 
+                min_conf: float = float(manifest["min_confidence"])  # type: ignore[arg-type]
                 is_correct = (
                     result.detected is True
-                    and result.confidence >= manifest["min_confidence"]
+                    and result.confidence >= min_conf
                     and result.architecture == manifest["expected_arch"]
                 )
 

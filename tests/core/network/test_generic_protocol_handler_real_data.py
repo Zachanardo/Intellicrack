@@ -5,11 +5,12 @@ the GenericProtocolHandler's ability to work with real licensing protocols and
 network communications used by commercial software protection systems.
 """
 
+import math
 import os
 import struct
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 import pytest
 
@@ -28,7 +29,7 @@ class TestGenericProtocolHandlerRealNetworkCaptures:
     @pytest.fixture
     def protocol_handler(self) -> Any:
         """Create protocol handler for real data testing."""
-        config = {
+        config: Dict[str, Any] = {
             'real_world_mode': True,
             'adaptive_parsing': True,
             'pcap_analysis': True,
@@ -265,7 +266,7 @@ class TestGenericProtocolHandlerRealNetworkCaptures:
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy of data."""
         if not data:
-            return 0
+            return 0.0
 
         # Count byte frequencies
         frequencies = [0] * 256
@@ -273,12 +274,12 @@ class TestGenericProtocolHandlerRealNetworkCaptures:
             frequencies[byte] += 1
 
         # Calculate entropy
-        entropy = 0
+        entropy = 0.0
         data_len = len(data)
         for freq in frequencies:
             if freq > 0:
                 probability = freq / data_len
-                entropy -= probability * (probability.bit_length() - 1)
+                entropy -= probability * math.log2(probability)
 
         return entropy
 
@@ -295,7 +296,7 @@ class TestGenericProtocolHandlerRealBinaryAnalysis:
     @pytest.fixture
     def protocol_handler(self) -> Any:
         """Create protocol handler for binary analysis."""
-        config = {
+        config: Dict[str, Any] = {
             'binary_analysis_mode': True,
             'license_extraction': True,
             'network_simulation': True,
@@ -339,8 +340,10 @@ class TestGenericProtocolHandlerRealBinaryAnalysis:
 
         # Verify response quality
         for pattern in communication_patterns:
-            assert pattern['response_size'] > 0, "Must generate responses to license requests"
-            assert pattern['response_size'] >= pattern['request_size'] * 0.5, \
+            response_size = cast(int, pattern['response_size'])
+            request_size = cast(int, pattern['request_size'])
+            assert response_size > 0, "Must generate responses to license requests"
+            assert response_size >= request_size * 0.5, \
                        "Responses must be substantial relative to requests"
 
     def test_enterprise_license_server_simulation(self, protocol_handler: GenericProtocolHandler, protected_binaries_path: Path) -> None:

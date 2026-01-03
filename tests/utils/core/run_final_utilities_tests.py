@@ -10,6 +10,7 @@ import shutil
 import tempfile
 import time
 from pathlib import Path
+from typing import Any, cast
 
 
 def test_hash_calculation() -> None:
@@ -94,7 +95,7 @@ def test_cache_operations() -> None:
     temp_dir = Path(tempfile.mkdtemp(prefix="test_cache_"))
     try:
         cache_dir = str(temp_dir / "cache")
-        results = {"analysis": "test", "findings": ["item1", "item2"]}
+        results: dict[str, object] = {"analysis": "test", "findings": ["item1", "item2"]}
 
         success = cache_analysis_results("test_key", results, cache_dir)
         assert success is True
@@ -167,7 +168,7 @@ def test_dataset_operations() -> None:
     assert len(augmented) >= len(data)
     print("  ✓ augment_dataset")
 
-    dataset_list = []
+    dataset_list: list[dict[str, Any]] = []
     add_dataset_row(dataset_list, {"id": 1, "value": "test"})
     assert len(dataset_list) == 1
     print("  ✓ add_dataset_row")
@@ -182,17 +183,17 @@ def test_report_generation() -> None:
     temp_dir = Path(tempfile.mkdtemp(prefix="test_report_"))
     try:
         metrics_path = str(temp_dir / "metrics.json")
-        metrics = {"total_scans": 100, "vulnerabilities": 15}
+        metrics: dict[str, object] = {"total_scans": 100, "vulnerabilities": 15}
 
         success = export_metrics(metrics, metrics_path)
         assert success is True
         print("  ✓ export_metrics")
 
         saved_metrics = json.loads(Path(metrics_path).read_text())
-        assert saved_metrics == metrics
+        assert saved_metrics == {"total_scans": 100, "vulnerabilities": 15}
         print("  ✓ metrics saved correctly")
 
-        report_data = {"type": "analysis", "findings": ["test"]}
+        report_data: dict[str, object] = {"type": "analysis", "findings": ["test"]}
         result = submit_report(report_data)
         assert "report_id" in result
         print("  ✓ submit_report")
@@ -216,10 +217,11 @@ def test_model_operations() -> None:
     assert model["n_features"] == 3
     print("  ✓ create_full_feature_model")
 
-    binary_features = {"has_strcpy": True, "has_printf": False}
+    binary_features: dict[str, object] = {"has_strcpy": True, "has_printf": False}
     result = predict_vulnerabilities(binary_features)
     assert "predictions" in result
-    assert result["predictions"]["buffer_overflow"] > 0.3
+    predictions = cast(dict[str, float], result["predictions"])
+    assert predictions["buffer_overflow"] > 0.3
     print("  ✓ predict_vulnerabilities")
 
 

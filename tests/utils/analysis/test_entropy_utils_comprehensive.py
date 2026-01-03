@@ -9,7 +9,7 @@ Licensed under GNU General Public License v3.0
 
 import math
 import os
-from typing import Dict
+from typing import Any, cast
 
 import pytest
 
@@ -22,6 +22,36 @@ from intellicrack.utils.analysis.entropy_utils import (
     is_high_entropy,
     safe_entropy_calculation,
 )
+
+
+def get_sections(
+    result: dict[str, float | list[dict[str, int | float | bool]] | dict[str, float | int]]
+) -> list[dict[str, Any]]:
+    """Extract sections list from entropy analysis result."""
+    sections = result.get("sections", [])
+    if isinstance(sections, list):
+        return cast(list[dict[str, Any]], sections)
+    return []
+
+
+def get_statistics(
+    result: dict[str, float | list[dict[str, int | float | bool]] | dict[str, float | int]]
+) -> dict[str, Any]:
+    """Extract statistics dict from entropy analysis result."""
+    stats = result.get("statistics", {})
+    if isinstance(stats, dict):
+        return cast(dict[str, Any], stats)
+    return {}
+
+
+def get_overall_entropy(
+    result: dict[str, float | list[dict[str, int | float | bool]] | dict[str, float | int]]
+) -> float:
+    """Extract overall entropy value from analysis result."""
+    value = result.get("overall_entropy", 0.0)
+    if isinstance(value, (int, float)):
+        return float(value)
+    return 0.0
 
 
 class TestCalculateEntropy:
@@ -259,7 +289,8 @@ class TestAnalyzeEntropySections:
         assert "overall_entropy" in result
         assert "sections" in result
         assert "statistics" in result
-        assert len(result["sections"]) == 4
+        sections = get_sections(result)
+        assert len(sections) == 4
 
     def test_analyze_entropy_sections_calculates_overall_entropy(self) -> None:
         """analyze_entropy_sections calculates overall entropy."""
@@ -267,14 +298,15 @@ class TestAnalyzeEntropySections:
         result = analyze_entropy_sections(data, block_size=128)
 
         assert "overall_entropy" in result
-        assert result["overall_entropy"] > 0.0
+        overall = get_overall_entropy(result)
+        assert overall > 0.0
 
     def test_analyze_entropy_sections_includes_section_details(self) -> None:
         """analyze_entropy_sections includes detailed section information."""
         data = b"\x00" * 512 + os.urandom(512)
         result = analyze_entropy_sections(data, block_size=256)
 
-        sections = result["sections"]
+        sections = get_sections(result)
         assert len(sections) > 0
 
         section = sections[0]
@@ -291,7 +323,7 @@ class TestAnalyzeEntropySections:
 
         result = analyze_entropy_sections(data, block_size=512)
 
-        sections = result["sections"]
+        sections = get_sections(result)
         assert len(sections) == 2
 
         low_section = sections[0]
@@ -305,7 +337,8 @@ class TestAnalyzeEntropySections:
         data = os.urandom(2048)
         result = analyze_entropy_sections(data, block_size=256)
 
-        stats = result["statistics"]
+        stats = get_statistics(result)
+        sections = get_sections(result)
 
         assert "average_entropy" in stats
         assert "min_entropy" in stats
@@ -313,9 +346,15 @@ class TestAnalyzeEntropySections:
         assert "variance" in stats
         assert "section_count" in stats
 
-        assert stats["min_entropy"] <= stats["average_entropy"] <= stats["max_entropy"]
-        assert stats["variance"] >= 0.0
-        assert stats["section_count"] == len(result["sections"])
+        min_ent = float(stats.get("min_entropy", 0))
+        avg_ent = float(stats.get("average_entropy", 0))
+        max_ent = float(stats.get("max_entropy", 0))
+        variance = float(stats.get("variance", 0))
+        section_count = int(stats.get("section_count", 0))
+
+        assert min_ent <= avg_ent <= max_ent
+        assert variance >= 0.0
+        assert section_count == len(sections)
 
     def test_analyze_entropy_sections_handles_small_data(self) -> None:
         """analyze_entropy_sections handles data smaller than block size."""
@@ -323,7 +362,8 @@ class TestAnalyzeEntropySections:
         result = analyze_entropy_sections(data, block_size=256)
 
         assert "sections" in result
-        assert len(result["sections"]) == 1
+        sections = get_sections(result)
+        assert len(sections) == 1
 
     def test_analyze_entropy_sections_different_block_sizes(self) -> None:
         """analyze_entropy_sections works with different block sizes."""
@@ -332,14 +372,16 @@ class TestAnalyzeEntropySections:
         result_small = analyze_entropy_sections(data, block_size=128)
         result_large = analyze_entropy_sections(data, block_size=512)
 
-        assert len(result_small["sections"]) > len(result_large["sections"])
+        sections_small = get_sections(result_small)
+        sections_large = get_sections(result_large)
+        assert len(sections_small) > len(sections_large)
 
     def test_analyze_entropy_sections_section_offsets_correct(self) -> None:
         """analyze_entropy_sections sets correct section offsets."""
         data = os.urandom(768)
         result = analyze_entropy_sections(data, block_size=256)
 
-        sections = result["sections"]
+        sections = get_sections(result)
         assert sections[0]["offset"] == 0
         assert sections[1]["offset"] == 256
         assert sections[2]["offset"] == 512
@@ -349,8 +391,9 @@ class TestAnalyzeEntropySections:
         uniform_data = bytes(range(256)) * 4
         result = analyze_entropy_sections(uniform_data, block_size=256)
 
-        stats = result["statistics"]
-        assert stats["variance"] < 0.5
+        stats = get_statistics(result)
+        variance = float(stats.get("variance", 0))
+        assert variance < 0.5
 
     def test_analyze_entropy_sections_mixed_entropy_data(self) -> None:
         """analyze_entropy_sections handles mixed entropy data."""
@@ -361,8 +404,8 @@ class TestAnalyzeEntropySections:
         data = section1 + section2 + section3[:256]
         result = analyze_entropy_sections(data, block_size=256)
 
-        sections = result["sections"]
-        entropies = [s["entropy"] for s in sections]
+        sections = get_sections(result)
+        entropies = [float(s.get("entropy", 0)) for s in sections]
 
         assert min(entropies) < 2.0
         assert max(entropies) > 6.0

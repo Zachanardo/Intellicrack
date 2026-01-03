@@ -21,19 +21,17 @@ def test_end_to_end() -> None:
 
     try:
         result = generator.generate_frida_script(
-            binary_path="",
-            protection_types=[],
-            custom_hooks=["CreateFileW"]
+            binary_path_or_analysis="test_binary.exe",
+            protection_info={"type": "license_check", "hooks": ["CreateFileW"]},
         )
 
-        if isinstance(result, GeneratedScript):
+        if result is not None and isinstance(result, GeneratedScript):
             print("OK Generation successful!")
-            print(f"   Success: {result.success}")
-            print(f"   Script type: {result.script_type}")
+            print(f"   Script type: {result.metadata.script_type.value if result.metadata.script_type else 'N/A'}")
             if result.content:
                 print(f"   Content length: {len(result.content)}")
         else:
-            print(f"FAIL Unexpected result type: {type(result)}")
+            print(f"FAIL Generation returned None or unexpected type: {type(result)}")
 
     except Exception as e:
         print(f"FAIL Generation failed: {e}")

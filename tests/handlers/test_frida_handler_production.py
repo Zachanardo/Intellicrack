@@ -8,6 +8,7 @@ import os
 import subprocess
 import sys
 import time
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -119,7 +120,7 @@ class TestFridaProcessAttachment:
     """Test process attachment functionality."""
 
     @pytest.fixture
-    def test_process(self) -> subprocess.Popen:
+    def test_process(self) -> Generator[subprocess.Popen[bytes], None, None]:
         """Create a test process for attachment."""
         if sys.platform == "win32":
             process = subprocess.Popen(
@@ -143,14 +144,14 @@ class TestFridaProcessAttachment:
         except Exception:
             process.kill()
 
-    def test_attach_to_process_by_pid(self, test_process: subprocess.Popen) -> None:
+    def test_attach_to_process_by_pid(self, test_process: subprocess.Popen[bytes]) -> None:
         """Attach to process by PID."""
         device = get_local_device()
 
         try:
             session = device.attach(test_process.pid)
             assert session is not None
-            assert isinstance(session, Session) or hasattr(session, "create_script")
+            assert (Session is not None and isinstance(session, Session)) or hasattr(session, "create_script")
         except Exception as e:
             if "unable to access process" in str(e).lower() or "failed to attach" in str(e).lower():
                 pytest.skip(f"Cannot attach to process (may require admin/root): {e}")
@@ -179,7 +180,7 @@ class TestFridaScriptCreation:
     """Test Frida script creation and execution."""
 
     @pytest.fixture
-    def attached_session(self) -> Session:
+    def attached_session(self) -> Generator[Any, None, None]:
         """Create attached session for testing."""
         device = get_local_device()
         current_pid = os.getpid()
@@ -193,7 +194,7 @@ class TestFridaScriptCreation:
                 pytest.skip(f"Cannot attach to own process: {e}")
             raise
 
-    def test_create_script(self, attached_session: Session) -> None:
+    def test_create_script(self, attached_session: Any) -> None:
         """Create Frida script in attached session."""
         script_code = """
         console.log("Test script loaded");
@@ -205,7 +206,7 @@ class TestFridaScriptCreation:
         except Exception as e:
             pytest.skip(f"Script creation failed: {e}")
 
-    def test_load_script(self, attached_session: Session) -> None:
+    def test_load_script(self, attached_session: Any) -> None:
         """Load Frida script into process."""
         script_code = """
         console.log("Test script loaded");
@@ -224,7 +225,7 @@ class TestFridaScriptCommunication:
     """Test script communication and message passing."""
 
     @pytest.fixture
-    def attached_session(self) -> Session:
+    def attached_session(self) -> Generator[Any, None, None]:
         """Create attached session for testing."""
         device = get_local_device()
         current_pid = os.getpid()
@@ -238,11 +239,11 @@ class TestFridaScriptCommunication:
                 pytest.skip(f"Cannot attach to own process: {e}")
             raise
 
-    def test_script_message_handler(self, attached_session: Session) -> None:
+    def test_script_message_handler(self, attached_session: Any) -> None:
         """Test script message handling."""
         messages = []
 
-        def on_message(message: dict, data: Any) -> None:
+        def on_message(message: dict[str, Any], data: Any) -> None:
             messages.append(message)
 
         script_code = """
@@ -265,7 +266,7 @@ class TestFridaMemoryOperations:
     """Test memory read/write operations."""
 
     @pytest.fixture
-    def attached_session(self) -> Session:
+    def attached_session(self) -> Generator[Any, None, None]:
         """Create attached session for testing."""
         device = get_local_device()
         current_pid = os.getpid()
@@ -279,7 +280,7 @@ class TestFridaMemoryOperations:
                 pytest.skip(f"Cannot attach to own process: {e}")
             raise
 
-    def test_read_memory(self, attached_session: Session) -> None:
+    def test_read_memory(self, attached_session: Any) -> None:
         """Read process memory."""
         script_code = """
         var baseAddr = Module.getBaseAddress('python.exe') || Module.getBaseAddress('python3') || Module.getBaseAddress('python');
@@ -292,7 +293,7 @@ class TestFridaMemoryOperations:
         try:
             messages = []
 
-            def on_message(message: dict, data: Any) -> None:
+            def on_message(message: dict[str, Any], data: Any) -> None:
                 messages.append(message)
 
             script = attached_session.create_script(script_code)
@@ -350,8 +351,10 @@ class TestFridaEdgeCases:
 
     def test_attach_to_invalid_process_name(self) -> None:
         """Attempt to attach to invalid process name."""
+        if not HAS_FRIDA:
+            pytest.skip("Attach by name requires real Frida")
         device = get_local_device()
-        invalid_name = "nonexistent_process_12345"
+        invalid_name: Any = "nonexistent_process_12345"
 
         with pytest.raises(Exception):
             device.attach(invalid_name)
@@ -382,7 +385,7 @@ class TestFridaLicensingHooks:
     """Test Frida hooking for licensing functions."""
 
     @pytest.fixture
-    def attached_session(self) -> Session:
+    def attached_session(self) -> Generator[Any, None, None]:
         """Create attached session for testing."""
         device = get_local_device()
         current_pid = os.getpid()
@@ -396,7 +399,7 @@ class TestFridaLicensingHooks:
                 pytest.skip(f"Cannot attach to own process: {e}")
             raise
 
-    def test_hook_function_intercept(self, attached_session: Session) -> None:
+    def test_hook_function_intercept(self, attached_session: Any) -> None:
         """Test function interception hook."""
         script_code = """
         Interceptor.attach(Module.getExportByName(null, 'GetSystemTimeAsFileTime'), {
@@ -409,7 +412,7 @@ class TestFridaLicensingHooks:
         try:
             messages = []
 
-            def on_message(message: dict, data: Any) -> None:
+            def on_message(message: dict[str, Any], data: Any) -> None:
                 messages.append(message)
 
             script = attached_session.create_script(script_code)
@@ -420,7 +423,7 @@ class TestFridaLicensingHooks:
         except Exception as e:
             pytest.skip(f"Hook test failed: {e}")
 
-    def test_hook_return_value_modification(self, attached_session: Session) -> None:
+    def test_hook_return_value_modification(self, attached_session: Any) -> None:
         """Test return value modification hook."""
         script_code = """
         Interceptor.attach(Module.getExportByName(null, 'GetTickCount'), {
@@ -434,7 +437,7 @@ class TestFridaLicensingHooks:
         try:
             messages = []
 
-            def on_message(message: dict, data: Any) -> None:
+            def on_message(message: dict[str, Any], data: Any) -> None:
                 messages.append(message)
 
             script = attached_session.create_script(script_code)
@@ -492,7 +495,7 @@ class TestFridaErrorHandling:
         with pytest.raises(Exception):
             device.attach(-1)
 
-    def test_create_script_with_invalid_syntax(self, attached_session: Session) -> None:
+    def test_create_script_with_invalid_syntax(self, attached_session: Any) -> None:
         """Creating script with invalid JavaScript syntax raises error."""
         invalid_script = "this is not valid javascript {{{["
 
@@ -500,7 +503,7 @@ class TestFridaErrorHandling:
             script = attached_session.create_script(invalid_script)
             script.load()
 
-    def test_create_empty_script(self, attached_session: Session) -> None:
+    def test_create_empty_script(self, attached_session: Any) -> None:
         """Creating empty script succeeds but does nothing."""
         try:
             script = attached_session.create_script("")
@@ -509,7 +512,7 @@ class TestFridaErrorHandling:
         except Exception as e:
             pytest.skip(f"Empty script test failed: {e}")
 
-    def test_load_script_multiple_times(self, attached_session: Session) -> None:
+    def test_load_script_multiple_times(self, attached_session: Any) -> None:
         """Loading same script multiple times is handled gracefully."""
         script_code = "send('test');"
 
@@ -524,7 +527,7 @@ class TestFridaErrorHandling:
         except Exception as e:
             pytest.skip(f"Multiple load test failed: {e}")
 
-    def test_unload_already_unloaded_script(self, attached_session: Session) -> None:
+    def test_unload_already_unloaded_script(self, attached_session: Any) -> None:
         """Unloading already unloaded script is handled gracefully."""
         script_code = "send('test');"
 
@@ -538,7 +541,7 @@ class TestFridaErrorHandling:
         except Exception as e:
             pytest.skip(f"Multiple unload test failed: {e}")
 
-    def test_hook_nonexistent_function(self, attached_session: Session) -> None:
+    def test_hook_nonexistent_function(self, attached_session: Any) -> None:
         """Hooking nonexistent function raises appropriate error."""
         script_code = """
         try {
@@ -553,7 +556,7 @@ class TestFridaErrorHandling:
         try:
             messages = []
 
-            def on_message(message: dict, data: Any) -> None:
+            def on_message(message: dict[str, Any], data: Any) -> None:
                 messages.append(message)
 
             script = attached_session.create_script(script_code)
@@ -570,7 +573,7 @@ class TestFridaErrorHandling:
         except Exception as e:
             pytest.skip(f"Nonexistent function hook test failed: {e}")
 
-    def test_memory_read_invalid_address(self, attached_session: Session) -> None:
+    def test_memory_read_invalid_address(self, attached_session: Any) -> None:
         """Reading from invalid memory address raises error."""
         script_code = """
         try {
@@ -584,7 +587,7 @@ class TestFridaErrorHandling:
         try:
             messages = []
 
-            def on_message(message: dict, data: Any) -> None:
+            def on_message(message: dict[str, Any], data: Any) -> None:
                 messages.append(message)
 
             script = attached_session.create_script(script_code)
@@ -600,7 +603,7 @@ class TestFridaErrorHandling:
         except Exception as e:
             pytest.skip(f"Invalid memory read test failed: {e}")
 
-    def test_session_detach_idempotent(self, test_process: subprocess.Popen) -> None:
+    def test_session_detach_idempotent(self, test_process: subprocess.Popen[bytes]) -> None:
         """Detaching session multiple times is handled gracefully."""
         device = get_local_device()
 
@@ -614,8 +617,8 @@ class TestFridaErrorHandling:
             pytest.skip(f"Multiple detach test failed: {e}")
 
 
-class TestFridaEdgeCases:
-    """Test edge cases in Frida operations."""
+class TestFridaEdgeCasesAdvanced:
+    """Test advanced edge cases in Frida operations."""
 
     def test_enumerate_processes_consistency(self) -> None:
         """Process enumeration is consistent across calls."""
@@ -631,7 +634,7 @@ class TestFridaEdgeCases:
         overlap = len(pids1 & pids2) / len(pids1)
         assert overlap > 0.8
 
-    def test_script_with_large_payload(self, attached_session: Session) -> None:
+    def test_script_with_large_payload(self, attached_session: Any) -> None:
         """Script can send large payloads via send()."""
         script_code = """
         var largeData = new Array(10000).fill('x').join('');
@@ -641,7 +644,7 @@ class TestFridaEdgeCases:
         try:
             messages = []
 
-            def on_message(message: dict, data: Any) -> None:
+            def on_message(message: dict[str, Any], data: Any) -> None:
                 messages.append(message)
 
             script = attached_session.create_script(script_code)
@@ -658,7 +661,7 @@ class TestFridaEdgeCases:
         except Exception as e:
             pytest.skip(f"Large payload test failed: {e}")
 
-    def test_rapid_attach_detach(self, test_process: subprocess.Popen) -> None:
+    def test_rapid_attach_detach(self, test_process: subprocess.Popen[bytes]) -> None:
         """Rapid attach/detach cycles are handled correctly."""
         device = get_local_device()
 
@@ -671,7 +674,7 @@ class TestFridaEdgeCases:
         except Exception as e:
             pytest.skip(f"Rapid attach/detach test failed: {e}")
 
-    def test_multiple_scripts_same_session(self, attached_session: Session) -> None:
+    def test_multiple_scripts_same_session(self, attached_session: Any) -> None:
         """Multiple scripts can coexist in same session."""
         script1_code = "send({script: 1});"
         script2_code = "send({script: 2});"
@@ -680,10 +683,10 @@ class TestFridaEdgeCases:
             messages1 = []
             messages2 = []
 
-            def on_message1(message: dict, data: Any) -> None:
+            def on_message1(message: dict[str, Any], data: Any) -> None:
                 messages1.append(message)
 
-            def on_message2(message: dict, data: Any) -> None:
+            def on_message2(message: dict[str, Any], data: Any) -> None:
                 messages2.append(message)
 
             script1 = attached_session.create_script(script1_code)
@@ -703,7 +706,7 @@ class TestFridaEdgeCases:
         except Exception as e:
             pytest.skip(f"Multiple scripts test failed: {e}")
 
-    def test_script_with_console_log(self, attached_session: Session) -> None:
+    def test_script_with_console_log(self, attached_session: Any) -> None:
         """Script with console.log doesn't crash."""
         script_code = """
         console.log('Test message');
@@ -715,7 +718,7 @@ class TestFridaEdgeCases:
         try:
             messages = []
 
-            def on_message(message: dict, data: Any) -> None:
+            def on_message(message: dict[str, Any], data: Any) -> None:
                 messages.append(message)
 
             script = attached_session.create_script(script_code)

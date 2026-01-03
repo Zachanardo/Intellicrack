@@ -268,6 +268,84 @@ class SecuROMAnalyzer:
             details=details,
         )
 
+    def analyze_activation(self, target_path: Path) -> ActivationMechanism | None:
+        """Analyze activation mechanism in SecuROM protected executable.
+
+        Convenience method for analyzing just the activation mechanism.
+
+        Args:
+            target_path: Path to SecuROM protected executable
+
+        Returns:
+            ActivationMechanism if found, None otherwise
+
+        """
+        mechanisms = self._analyze_activation_mechanisms(target_path)
+        return mechanisms[0] if mechanisms else None
+
+    def analyze_driver(self, driver_path: Path) -> dict[str, Any]:
+        """Analyze SecuROM kernel driver file.
+
+        Analyzes driver files like secdrv.sys, SR7.sys, SR8.sys to extract
+        protection-relevant information.
+
+        Args:
+            driver_path: Path to SecuROM driver file (.sys)
+
+        Returns:
+            Dictionary with driver analysis results including version,
+            IOCTL handlers, and protection routines.
+
+        """
+        result: dict[str, Any] = {
+            "driver_path": str(driver_path),
+            "version": "unknown",
+            "is_securom_driver": False,
+            "ioctl_handlers": [],
+            "protection_routines": [],
+        }
+
+        if not driver_path.exists():
+            return result
+
+        try:
+            with open(driver_path, "rb") as f:
+                data = f.read()
+
+            if b"SecuROM" in data or b"secdrv" in data.lower():
+                result["is_securom_driver"] = True
+
+            if b"SR8" in data or b"SecuROM8" in data:
+                result["version"] = "8.x"
+            elif b"SR7" in data or b"SecuROM7" in data:
+                result["version"] = "7.x"
+            elif b"SecuROM" in data:
+                result["version"] = "legacy"
+
+            ioctl_patterns = [
+                (b"\x0f\x00\x22\x00", "IOCTL_SECUROM_VALIDATE"),
+                (b"\x04\x00\x22\x00", "IOCTL_SECUROM_INIT"),
+                (b"\x08\x00\x22\x00", "IOCTL_SECUROM_CHECK"),
+            ]
+            for pattern, name in ioctl_patterns:
+                if pattern in data:
+                    result["ioctl_handlers"].append(name)
+
+            routine_patterns = [
+                (b"DiscAuthentication", "disc_auth"),
+                (b"DriveValidation", "drive_validation"),
+                (b"SectorVerification", "sector_verify"),
+                (b"AntiDebug", "anti_debug"),
+            ]
+            for pattern, name in routine_patterns:
+                if pattern in data:
+                    result["protection_routines"].append(name)
+
+        except Exception as e:
+            self.logger.warning("Failed to analyze driver: %s", e)
+
+        return result
+
     def _detect_version(self, target_path: Path) -> str:
         """Detect SecuROM version.
 

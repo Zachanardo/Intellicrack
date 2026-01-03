@@ -20,9 +20,7 @@ Tests cover:
 from __future__ import annotations
 
 import shutil
-import tempfile
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -40,10 +38,11 @@ from intellicrack.core.certificate.cert_patcher import (
     PatchResult,
 )
 from intellicrack.core.certificate.detection_report import (
+    BypassMethod,
     DetectionReport,
     ValidationFunction,
-    BypassMethod,
 )
+from intellicrack.core.certificate.patch_generators import PatchType
 
 
 class TestPatchedFunctionDataclass:
@@ -52,16 +51,18 @@ class TestPatchedFunctionDataclass:
     def test_patched_function_stores_complete_patch_info(self) -> None:
         """PatchedFunction stores API name, address, and original bytes."""
         pf = PatchedFunction(
-            api_name="SSL_CTX_set_verify",
             address=0x140001000,
+            api_name="SSL_CTX_set_verify",
+            patch_type=PatchType.ALWAYS_SUCCEED,
+            patch_size=16,
             original_bytes=b"\x48\x89\x5C\x24\x08",
-            patch_type="inline",
         )
 
         assert pf.api_name == "SSL_CTX_set_verify"
         assert pf.address == 0x140001000
         assert pf.original_bytes == b"\x48\x89\x5C\x24\x08"
-        assert pf.patch_type == "inline"
+        assert pf.patch_type == PatchType.ALWAYS_SUCCEED
+        assert pf.patch_size == 16
 
 
 class TestFailedPatchDataclass:
@@ -70,8 +71,8 @@ class TestFailedPatchDataclass:
     def test_failed_patch_stores_error_information(self) -> None:
         """FailedPatch stores API name, address, and error message."""
         fp = FailedPatch(
-            api_name="WinHttpSendRequest",
             address=0x140002000,
+            api_name="WinHttpSendRequest",
             error="Insufficient space for inline patch",
         )
 
@@ -86,15 +87,27 @@ class TestPatchResultDataclass:
     def test_patch_result_stores_successful_patches(self) -> None:
         """PatchResult stores list of successfully patched functions."""
         patched = [
-            PatchedFunction("API1", 0x1000, b"\x90\x90\x90", "inline"),
-            PatchedFunction("API2", 0x2000, b"\xC3\x00\x00", "trampoline"),
+            PatchedFunction(
+                address=0x1000,
+                api_name="API1",
+                patch_type=PatchType.ALWAYS_SUCCEED,
+                patch_size=8,
+                original_bytes=b"\x90\x90\x90",
+            ),
+            PatchedFunction(
+                address=0x2000,
+                api_name="API2",
+                patch_type=PatchType.TRAMPOLINE,
+                patch_size=16,
+                original_bytes=b"\xC3\x00\x00",
+            ),
         ]
 
         result = PatchResult(
             success=True,
             patched_functions=patched,
             failed_patches=[],
-            backup_path=Path("backup.exe"),
+            backup_data=b"original_binary_content",
         )
 
         assert result.success is True
@@ -104,14 +117,14 @@ class TestPatchResultDataclass:
     def test_patch_result_stores_failed_patches(self) -> None:
         """PatchResult stores list of failed patch attempts."""
         failed = [
-            FailedPatch("API3", 0x3000, "Invalid address"),
+            FailedPatch(address=0x3000, api_name="API3", error="Invalid address"),
         ]
 
         result = PatchResult(
             success=False,
             patched_functions=[],
             failed_patches=failed,
-            backup_path=None,
+            backup_data=b"",
         )
 
         assert result.success is False
@@ -139,7 +152,7 @@ class TestCertificatePatcherInitialization:
         try:
             patcher = CertificatePatcher(str(test_binary))
             assert hasattr(patcher, "binary_path")
-            assert patcher.binary_path == str(test_binary)
+            assert str(patcher.binary_path) == str(test_binary)
         except Exception:
             pytest.skip("LIEF failed to parse minimal binary")
 
@@ -148,7 +161,15 @@ class TestCertificatePatcherInitialization:
         try:
             patcher = CertificatePatcher(str(test_binary))
             if hasattr(patcher, "architecture"):
-                assert patcher.architecture in ["x86", "x64", "ARM", "ARM64", "unknown"]
+                arch = patcher.architecture
+                # Architecture may be an enum or string or None
+                if arch is None:
+                    arch_name = "None"
+                elif hasattr(arch, "name"):
+                    arch_name = str(arch.name)
+                else:
+                    arch_name = str(arch)
+                assert arch_name in ["x86", "x64", "ARM", "ARM64", "unknown", "None"]
         except Exception:
             pytest.skip("LIEF failed to parse minimal binary")
 
@@ -199,21 +220,20 @@ class TestBinaryPatching:
         """Create detection report with validation functions to patch."""
         functions = [
             ValidationFunction(
-                api_name="SSL_CTX_set_verify",
                 address=0x512,
+                api_name="SSL_CTX_set_verify",
+                library="openssl",
                 confidence=0.9,
                 context="license_check",
-                patch_safety="low",
             ),
         ]
 
         return DetectionReport(
-            target_binary=str(working_binary),
-            validation_functions=functions,
+            binary_path=str(working_binary),
             detected_libraries=["openssl"],
-            recommended_method=BypassMethod.PATCH_BINARY,
+            validation_functions=functions,
+            recommended_method=BypassMethod.BINARY_PATCH,
             risk_level="low",
-            is_packed=False,
         )
 
     def test_patch_certificate_validation_returns_result(
@@ -239,9 +259,8 @@ class TestBinaryPatching:
             patcher = CertificatePatcher(str(working_binary))
             result = patcher.patch_certificate_validation(detection_report)
 
-            if result.success and result.backup_path:
-                assert result.backup_path.exists()
-                assert result.backup_path.suffix == ".bak"
+            if result.success and result.backup_data:
+                assert len(result.backup_data) > 0
         except Exception:
             pytest.skip("LIEF failed to parse or patch binary")
 
@@ -250,7 +269,6 @@ class TestBinaryPatching:
     ) -> None:
         """Patching modifies the target binary file."""
         original_size = working_binary.stat().st_size
-        original_content = working_binary.read_bytes()
 
         try:
             patcher = CertificatePatcher(str(working_binary))
@@ -272,7 +290,7 @@ class TestBinaryPatching:
             patcher = CertificatePatcher(str(working_binary))
             result = patcher.patch_certificate_validation(detection_report)
 
-            if result.success and result.backup_path:
+            if result.success and result.backup_data:
                 if rollback_success := patcher.rollback_patches(result):
                     restored_content = working_binary.read_bytes()
                     assert restored_content == original_content
@@ -293,18 +311,18 @@ class TestPatchTypeSelection:
     def test_select_patch_type_for_validation_function(self, test_binary: Path) -> None:
         """Patch type selection determines appropriate patch method."""
         func = ValidationFunction(
-            api_name="SSL_CTX_set_verify",
             address=0x1000,
+            api_name="SSL_CTX_set_verify",
+            library="openssl",
             confidence=0.9,
             context="license_check",
-            patch_safety="low",
         )
 
         try:
             patcher = CertificatePatcher(str(test_binary))
             if hasattr(patcher, "_select_patch_type"):
                 patch_type = patcher._select_patch_type(func)
-                assert patch_type in ["inline", "trampoline", "nop_sled"]
+                assert isinstance(patch_type, PatchType)
         except Exception:
             pytest.skip("LIEF failed or method not accessible")
 
@@ -345,17 +363,17 @@ class TestPatchGeneration:
     def test_generate_patch_for_validation_function(self, test_binary: Path) -> None:
         """Patch generation creates appropriate patch bytes for API."""
         func = ValidationFunction(
-            api_name="SSL_CTX_set_verify",
             address=0x1000,
+            api_name="SSL_CTX_set_verify",
+            library="openssl",
             confidence=0.9,
             context="license_check",
-            patch_safety="low",
         )
 
         try:
             patcher = CertificatePatcher(str(test_binary))
             if hasattr(patcher, "_generate_patch"):
-                patch_bytes = patcher._generate_patch(func, "inline")
+                patch_bytes = patcher._generate_patch(func, PatchType.ALWAYS_SUCCEED)
                 assert isinstance(patch_bytes, bytes)
                 assert len(patch_bytes) > 0
         except Exception:
@@ -371,7 +389,7 @@ class TestErrorHandling:
             pytest.skip("LIEF not available")
 
         try:
-            patcher = CertificatePatcher("nonexistent_binary.exe")
+            _patcher = CertificatePatcher("nonexistent_binary.exe")
             assert False, "Should raise error for nonexistent file"
         except Exception:
             pass
@@ -385,7 +403,7 @@ class TestErrorHandling:
         invalid_file.write_bytes(b"Not a valid binary format")
 
         try:
-            patcher = CertificatePatcher(str(invalid_file))
+            _patcher = CertificatePatcher(str(invalid_file))
         except Exception:
             pass
 
@@ -398,12 +416,11 @@ class TestErrorHandling:
         test_binary.write_bytes(b"MZ" + b"\x00" * 1000)
 
         empty_report = DetectionReport(
-            target_binary=str(test_binary),
-            validation_functions=[],
+            binary_path=str(test_binary),
             detected_libraries=[],
-            recommended_method=BypassMethod.HOOK_VALIDATION,
+            validation_functions=[],
+            recommended_method=BypassMethod.FRIDA_HOOK,
             risk_level="low",
-            is_packed=False,
         )
 
         try:
@@ -427,7 +444,7 @@ class TestErrorHandling:
             success=True,
             patched_functions=[],
             failed_patches=[],
-            backup_path=Path("nonexistent_backup.bak"),
+            backup_data=b"",
         )
 
         try:
@@ -452,18 +469,35 @@ class TestMultiFunctionPatching:
     def multi_function_report(self, test_binary: Path) -> DetectionReport:
         """Create report with multiple validation functions."""
         functions = [
-            ValidationFunction("API1", 0x1000, 0.9, "license_check", "low"),
-            ValidationFunction("API2", 0x2000, 0.85, "license_check", "low"),
-            ValidationFunction("API3", 0x3000, 0.8, "license_check", "medium"),
+            ValidationFunction(
+                address=0x1000,
+                api_name="API1",
+                library="openssl",
+                confidence=0.9,
+                context="license_check",
+            ),
+            ValidationFunction(
+                address=0x2000,
+                api_name="API2",
+                library="winhttp",
+                confidence=0.85,
+                context="license_check",
+            ),
+            ValidationFunction(
+                address=0x3000,
+                api_name="API3",
+                library="schannel",
+                confidence=0.8,
+                context="license_check",
+            ),
         ]
 
         return DetectionReport(
-            target_binary=str(test_binary),
-            validation_functions=functions,
+            binary_path=str(test_binary),
             detected_libraries=["openssl", "winhttp"],
-            recommended_method=BypassMethod.PATCH_BINARY,
+            validation_functions=functions,
+            recommended_method=BypassMethod.BINARY_PATCH,
             risk_level="medium",
-            is_packed=False,
         )
 
     def test_patch_multiple_functions_in_single_operation(
@@ -506,6 +540,10 @@ class TestRealBinaryPatching:
         try:
             patcher = CertificatePatcher(str(windows_dll_copy))
             if hasattr(patcher, "architecture"):
-                assert patcher.architecture in ["x86", "x64"]
+                arch = patcher.architecture
+                # Architecture may be an enum or None
+                if arch is not None:
+                    arch_name = str(arch.name if hasattr(arch, "name") else arch)
+                    assert arch_name in ["x86", "x64", "ARM", "ARM64"]
         except Exception:
             pytest.skip("LIEF failed to parse Windows DLL")

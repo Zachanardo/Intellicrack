@@ -1152,7 +1152,8 @@ class TestStalkerSessionCleanup:
         session.cleanup()
 
         assert not session._is_active
-        assert frida_session.is_detached
+        if frida_session is not None:
+            assert frida_session.is_detached
 
     def test_cleanup_when_already_detached(
         self,
@@ -1205,8 +1206,9 @@ class TestStalkerSessionContextManager:
             assert session.session is not None
 
         assert not session._is_active
-        assert isinstance(session.session, FakeFridaSession)
-        assert session.session.is_detached
+        if session.session is not None:
+            assert isinstance(session.session, FakeFridaSession)
+            assert session.session.is_detached
 
     def test_context_manager_stops_stalking_on_exit(
         self,

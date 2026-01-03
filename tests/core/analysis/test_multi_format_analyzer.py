@@ -18,7 +18,9 @@ import os
 import shutil
 import struct
 import tempfile
+import time
 import unittest
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -499,7 +501,6 @@ class TestMultiFormatBinaryAnalyzer(unittest.TestCase):
 
     def test_cross_format_analysis_apk_with_embedded_dex(self) -> None:
         """Test APK analysis with embedded DEX extraction and analysis."""
-        import zipfile
         apk_path = os.path.join(self.test_dir, "test.apk")
 
         with zipfile.ZipFile(apk_path, 'w') as apk:
@@ -525,7 +526,6 @@ class TestMultiFormatBinaryAnalyzer(unittest.TestCase):
 
     def test_java_jar_analysis_with_manifest_parsing(self) -> None:
         """Test JAR analysis with manifest and class file extraction."""
-        import zipfile
         jar_path = os.path.join(self.test_dir, "test.jar")
 
         with zipfile.ZipFile(jar_path, 'w') as jar:
@@ -611,7 +611,6 @@ class TestMultiFormatBinaryAnalyzer(unittest.TestCase):
             f.write(base_data)
             f.write(b'\x00' * 50000)
 
-        import time
         start_time = time.time()
         result = self.analyzer.analyze_pe(large_pe)
         analysis_time = time.time() - start_time

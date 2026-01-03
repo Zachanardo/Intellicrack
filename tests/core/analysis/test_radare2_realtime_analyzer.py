@@ -66,16 +66,11 @@ class TestR2RealtimeAnalyzerCore:
 
     def test_analyzer_configuration_validation(self) -> None:
         """Test analyzer accepts sophisticated configuration parameters."""
-        config = {
-            'update_mode': UpdateMode.HYBRID,
-            'update_interval': 0.5,
-            'max_concurrent_analyses': 8,
-            'performance_optimization': True,
-            'string_analysis_enabled': True,
-            'behavioral_detection': True
-        }
-
-        analyzer = R2RealtimeAnalyzer(**config)
+        analyzer = R2RealtimeAnalyzer(
+            update_mode=UpdateMode.HYBRID,
+            update_interval=0.5,
+            max_concurrent_analyses=8
+        )
 
         # Validate configuration is applied correctly
         assert analyzer.update_mode == UpdateMode.HYBRID
@@ -102,7 +97,7 @@ class TestBinaryFileWatcher:
     """Test binary file watching and change detection capabilities."""
 
     @pytest.fixture
-    def sample_binary(self, temp_workspace) -> Any:
+    def sample_binary(self, temp_workspace: Any) -> Any:
         """Provide sample binary for testing."""
         binary_path = temp_workspace / "test_binary.exe"
         binary_path.write_bytes(b"\x4d\x5a" + b"\x90" * 1000)  # PE header + padding
@@ -110,12 +105,12 @@ class TestBinaryFileWatcher:
 
     def test_file_watcher_initialization(self) -> None:
         """Test file watcher initializes with proper callback mechanism."""
-        callback_called = []
+        callback_called: list[tuple[str, AnalysisEvent]] = []
 
-        def test_callback(file_path, event_type) -> None:
+        def test_callback(file_path: str, event_type: AnalysisEvent) -> None:
             callback_called.append((file_path, event_type))
 
-        watcher = BinaryFileWatcher(callback=test_callback)
+        watcher = BinaryFileWatcher(callback=test_callback, watched_files=set())
 
         # Validate watcher initialization
         assert watcher.callback == test_callback
@@ -126,12 +121,12 @@ class TestBinaryFileWatcher:
 
     def test_file_modification_detection(self, sample_binary: Any, temp_workspace: Any) -> None:
         """Test file watcher detects modifications with debouncing."""
-        detected_changes = []
+        detected_changes: list[tuple[str, AnalysisEvent]] = []
 
-        def change_callback(file_path, event_type):
+        def change_callback(file_path: str, event_type: AnalysisEvent) -> None:
             detected_changes.append((file_path, event_type))
 
-        watcher = BinaryFileWatcher(callback=change_callback)
+        watcher = BinaryFileWatcher(callback=change_callback, watched_files=set())
 
         # Add file to watched list
         watcher.watched_files.add(sample_binary)
@@ -144,7 +139,7 @@ class TestBinaryFileWatcher:
 
         # Create event-like object and trigger callback
         class MockEvent:
-            def __init__(self, src_path) -> None:
+            def __init__(self, src_path: str) -> None:
                 self.src_path = src_path
 
         mock_event = MockEvent(sample_binary)
@@ -166,7 +161,7 @@ class TestAnalysisSessionManagement:
         return R2RealtimeAnalyzer()
 
     @pytest.fixture
-    def sample_binary(self, temp_workspace) -> Any:
+    def sample_binary(self, temp_workspace: Any) -> Any:
         """Provide sample binary for testing."""
         binary_path = temp_workspace / "test_binary.exe"
         binary_path.write_bytes(b"\x4d\x5a" + b"\x90" * 1000)  # PE header + padding
@@ -332,7 +327,7 @@ class TestAnalysisProcessingEngine:
         return R2RealtimeAnalyzer()
 
     @pytest.fixture
-    def sample_binary(self, temp_workspace) -> Any:
+    def sample_binary(self, temp_workspace: Any) -> Any:
         binary_path = temp_workspace / "analysis_test.exe"
         # Create binary with recognizable patterns
         pe_header = (

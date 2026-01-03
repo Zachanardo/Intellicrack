@@ -82,7 +82,8 @@ class RealPacketGenerator:
         if protocol not in self.protocol_builders:
             raise ValueError(f"Unknown protocol: {protocol}")
 
-        return self.protocol_builders[protocol](**kwargs)
+        result: bytes = self.protocol_builders[protocol](**kwargs)
+        return result
 
 
 class RealProtocolFingerprinterWrapper:
@@ -169,7 +170,7 @@ class RealTrafficCaptureSimulator:
     def __init__(self) -> None:
         """Initialize traffic capture with real capabilities."""
         self.captured_packets: list[dict[str, Any]] = []
-        self.is_capturing = False
+        self.is_capturing: bool = False
         self.protocol_counts: dict[str, int] = {}
 
     def start_capture(self, interface: str = "eth0", filter_ports: list[int] | None = None) -> bool:
@@ -267,7 +268,7 @@ class RealProtocolAnalyzerEngine:
         if packet_data is None:
             packet_data = self.packet_generator.generate_packet(protocol)
 
-        analysis_result = {
+        analysis_result: dict[str, Any] = {
             'protocol': protocol,
             'port': port,
             'packet_size': len(packet_data),
@@ -296,7 +297,7 @@ class RealProtocolAnalyzerEngine:
         Returns:
             dict[str, Any]: Batch analysis results
         """
-        batch_results = {
+        batch_results: dict[str, Any] = {
             'total_protocols': len(protocols),
             'successful_identifications': 0,
             'failed_identifications': 0,
@@ -513,12 +514,12 @@ class TestTrafficInterceptionProduction:
     def test_traffic_capture_lifecycle(self, traffic_capture: RealTrafficCaptureSimulator) -> None:
         """Validate traffic capture start/stop lifecycle."""
         assert traffic_capture.start_capture(interface="eth0")
-        assert traffic_capture.is_capturing is True
+        assert traffic_capture.is_capturing, "Capturing should be enabled after start"
 
         stats = traffic_capture.stop_capture()
 
-        assert traffic_capture.is_capturing is False
-        assert 'total_packets' in stats
+        assert not traffic_capture.is_capturing, "Capturing should be disabled after stop"
+        assert 'total_packets' in stats  # type: ignore[unreachable]
         assert 'protocol_counts' in stats
 
     def test_packet_capture_tracking(

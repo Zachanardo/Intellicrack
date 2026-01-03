@@ -16,6 +16,7 @@ genuine multi-layer validation detection accuracy.
 import tempfile
 from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -35,13 +36,13 @@ from intellicrack.core.certificate.layer_detector import (
 @pytest.fixture
 def sample_pe_with_crypto() -> Generator[Path, None, None]:
     """Create temporary PE binary importing crypto DLLs."""
-    pe = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+    pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
 
     pe.add_library("crypt32.dll")
     pe.add_library("sspicli.dll")
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as f:
-        temp_path = Path(f.name)
+        temp_path: Path = Path(f.name)
 
     pe.write(str(temp_path))
 
@@ -54,13 +55,13 @@ def sample_pe_with_crypto() -> Generator[Path, None, None]:
 @pytest.fixture
 def sample_pe_with_openssl() -> Generator[Path, None, None]:
     """Create temporary PE binary importing OpenSSL."""
-    pe = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+    pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
 
     pe.add_library("libssl.dll")
     pe.add_library("libcrypto.dll")
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as f:
-        temp_path = Path(f.name)
+        temp_path: Path = Path(f.name)
 
     pe.write(str(temp_path))
 
@@ -73,14 +74,14 @@ def sample_pe_with_openssl() -> Generator[Path, None, None]:
 @pytest.fixture
 def sample_pe_with_cert_pinning() -> Generator[Path, None, None]:
     """Create temporary PE binary with certificate pinning indicators."""
-    pe = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+    pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
 
-    section = lief.PE.Section(".rdata")
+    section: Any = lief.PE.Section(".rdata")
     section.content = list(b"certificate pin validation SHA-256 cert_verify")
     pe.add_section(section)
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as f:
-        temp_path = Path(f.name)
+        temp_path: Path = Path(f.name)
 
     pe.write(str(temp_path))
 
@@ -93,15 +94,15 @@ def sample_pe_with_cert_pinning() -> Generator[Path, None, None]:
 @pytest.fixture
 def sample_pe_with_embedded_cert() -> Generator[Path, None, None]:
     """Create temporary PE binary with embedded certificate."""
-    pe = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+    pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
 
-    cert_data = b"-----BEGIN CERTIFICATE-----\nMIIBkTCB+wIJAKHHCgVZU"
-    section = lief.PE.Section(".cert")
+    cert_data: bytes = b"-----BEGIN CERTIFICATE-----\nMIIBkTCB+wIJAKHHCgVZU"
+    section: Any = lief.PE.Section(".cert")
     section.content = list(cert_data)
     pe.add_section(section)
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as f:
-        temp_path = Path(f.name)
+        temp_path: Path = Path(f.name)
 
     pe.write(str(temp_path))
 
@@ -338,10 +339,11 @@ class TestOSLevelDetection:
         sample_pe_with_crypto: Path,
     ) -> None:
         """Detect OS level identifies CryptoAPI imports."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        if binary := lief.parse(str(sample_pe_with_crypto)):
-            layer_info = detector._detect_os_level(binary)
+        binary: Any = lief.parse(str(sample_pe_with_crypto))
+        if binary is not None:
+            layer_info: LayerInfo | None = detector._detect_os_level(binary)
 
             assert layer_info is not None
             assert layer_info.layer_type == ValidationLayer.OS_LEVEL
@@ -349,41 +351,42 @@ class TestOSLevelDetection:
 
     def test_detect_os_level_confidence_increases_with_imports(self) -> None:
         """Detect OS level confidence scales with number of crypto DLL imports."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        pe1 = lief.PE.Binary("test1", lief.PE.PE_TYPE.PE32)
+        pe1: Any = lief.PE.Binary("test1", lief.PE.PE_TYPE.PE32)
         pe1.add_library("crypt32.dll")
 
-        pe2 = lief.PE.Binary("test2", lief.PE.PE_TYPE.PE32)
+        pe2: Any = lief.PE.Binary("test2", lief.PE.PE_TYPE.PE32)
         pe2.add_library("crypt32.dll")
         pe2.add_library("sspicli.dll")
         pe2.add_library("schannel.dll")
 
-        layer1 = detector._detect_os_level(pe1)
-        layer2 = detector._detect_os_level(pe2)
+        layer1: LayerInfo | None = detector._detect_os_level(pe1)
+        layer2: LayerInfo | None = detector._detect_os_level(pe2)
 
-        if layer1 and layer2:
+        if layer1 is not None and layer2 is not None:
             assert layer2.confidence > layer1.confidence
 
     def test_detect_os_level_adds_evidence_for_dlls(self) -> None:
         """Detect OS level adds evidence entries for detected DLLs."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        pe = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+        pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
         pe.add_library("crypt32.dll")
 
-        if layer_info := detector._detect_os_level(pe):
+        layer_info: LayerInfo | None = detector._detect_os_level(pe)
+        if layer_info is not None:
             assert len(layer_info.evidence) > 0
             assert any("crypt32.dll" in e.lower() for e in layer_info.evidence)
 
     def test_detect_os_level_no_crypto_returns_none(self) -> None:
         """Detect OS level returns None without crypto DLL imports."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        pe = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+        pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
         pe.add_library("kernel32.dll")
 
-        layer_info = detector._detect_os_level(pe)
+        layer_info: LayerInfo | None = detector._detect_os_level(pe)
 
         assert layer_info is None
 
@@ -396,10 +399,11 @@ class TestLibraryLevelDetection:
         sample_pe_with_openssl: Path,
     ) -> None:
         """Detect library level identifies OpenSSL imports."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        if binary := lief.parse(str(sample_pe_with_openssl)):
-            layer_info = detector._detect_library_level(binary)
+        binary: Any = lief.parse(str(sample_pe_with_openssl))
+        if binary is not None:
+            layer_info: LayerInfo | None = detector._detect_library_level(binary)
 
             assert layer_info is not None
             assert layer_info.layer_type == ValidationLayer.LIBRARY_LEVEL
@@ -407,22 +411,23 @@ class TestLibraryLevelDetection:
 
     def test_detect_library_level_adds_evidence(self) -> None:
         """Detect library level adds evidence for TLS libraries."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        pe = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+        pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
         pe.add_library("libssl.dll")
 
-        if layer_info := detector._detect_library_level(pe):
+        layer_info: LayerInfo | None = detector._detect_library_level(pe)
+        if layer_info is not None:
             assert len(layer_info.evidence) > 0
 
     def test_detect_library_level_no_tls_libs_returns_none(self) -> None:
         """Detect library level returns None without TLS library imports."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        pe = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+        pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
         pe.add_library("kernel32.dll")
 
-        layer_info = detector._detect_library_level(pe)
+        layer_info: LayerInfo | None = detector._detect_library_level(pe)
 
         assert layer_info is None
 
@@ -435,10 +440,11 @@ class TestApplicationLevelDetection:
         sample_pe_with_cert_pinning: Path,
     ) -> None:
         """Detect application level identifies certificate pinning indicators."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        if binary := lief.parse(str(sample_pe_with_cert_pinning)):
-            layer_info = detector._detect_application_level(binary, sample_pe_with_cert_pinning)
+        binary: Any = lief.parse(str(sample_pe_with_cert_pinning))
+        if binary is not None:
+            layer_info: LayerInfo | None = detector._detect_application_level(binary, sample_pe_with_cert_pinning)
 
             assert layer_info is not None
             assert layer_info.layer_type == ValidationLayer.APPLICATION_LEVEL
@@ -448,60 +454,62 @@ class TestApplicationLevelDetection:
         sample_pe_with_embedded_cert: Path,
     ) -> None:
         """Detect application level identifies embedded certificates."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        if binary := lief.parse(str(sample_pe_with_embedded_cert)):
-            if layer_info := detector._detect_application_level(
+        binary: Any = lief.parse(str(sample_pe_with_embedded_cert))
+        if binary is not None:
+            layer_info: LayerInfo | None = detector._detect_application_level(
                 binary, sample_pe_with_embedded_cert
-            ):
+            )
+            if layer_info is not None:
                 assert layer_info.confidence > 0.0
 
     def test_contains_certificate_hashes_sha256(self) -> None:
         """Detect SHA-256 certificate hashes in strings."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        strings = {
+        strings: set[str] = {
             "test",
             "a" * 64,
         }
 
-        result = detector._contains_certificate_hashes(strings)
+        result: bool = detector._contains_certificate_hashes(strings)
 
         assert result is True
 
     def test_contains_certificate_hashes_sha1(self) -> None:
         """Detect SHA-1 certificate hashes in strings."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        strings = {
+        strings: set[str] = {
             "test",
             "b" * 40,
         }
 
-        result = detector._contains_certificate_hashes(strings)
+        result: bool = detector._contains_certificate_hashes(strings)
 
         assert result is True
 
     def test_contains_certificate_hashes_no_hashes(self) -> None:
         """Detect no certificate hashes returns False."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        strings = {"test", "hello world", "no hashes here"}
+        strings: set[str] = {"test", "hello world", "no hashes here"}
 
-        result = detector._contains_certificate_hashes(strings)
+        result: bool = detector._contains_certificate_hashes(strings)
 
         assert result is False
 
     def test_contains_embedded_certificates_with_pem_marker(self) -> None:
         """Detect embedded PEM certificate markers."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
         with tempfile.NamedTemporaryFile(delete=False) as f:
             f.write(b"some data\n-----BEGIN CERTIFICATE-----\nmore data")
-            temp_path = Path(f.name)
+            temp_path: Path = Path(f.name)
 
         try:
-            result = detector._contains_embedded_certificates(temp_path)
+            result: bool = detector._contains_embedded_certificates(temp_path)
             assert result is True
         finally:
             if temp_path.exists():
@@ -509,14 +517,14 @@ class TestApplicationLevelDetection:
 
     def test_contains_embedded_certificates_no_markers(self) -> None:
         """Detect no embedded certificates returns False."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
         with tempfile.NamedTemporaryFile(delete=False) as f:
             f.write(b"plain text data with no certificates")
-            temp_path = Path(f.name)
+            temp_path: Path = Path(f.name)
 
         try:
-            result = detector._contains_embedded_certificates(temp_path)
+            result: bool = detector._contains_embedded_certificates(temp_path)
             assert result is False
         finally:
             if temp_path.exists():
@@ -528,21 +536,23 @@ class TestServerLevelDetection:
 
     def test_detect_server_level_with_indicators(self) -> None:
         """Detect server level identifies activation/license server indicators."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        pe = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
-        section = lief.PE.Section(".rdata")
+        pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+        section: Any = lief.PE.Section(".rdata")
         section.content = list(b"license_server activation verify_license")
         pe.add_section(section)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as f:
-            temp_path = Path(f.name)
+            temp_path: Path = Path(f.name)
 
         pe.write(str(temp_path))
 
         try:
-            if binary := lief.parse(str(temp_path)):
-                if layer_info := detector._detect_server_level(binary, temp_path):
+            binary: Any = lief.parse(str(temp_path))
+            if binary is not None:
+                layer_info: LayerInfo | None = detector._detect_server_level(binary, temp_path)
+                if layer_info is not None:
                     assert layer_info.layer_type == ValidationLayer.SERVER_LEVEL
         finally:
             if temp_path.exists():
@@ -550,15 +560,15 @@ class TestServerLevelDetection:
 
     def test_contains_http_endpoints_with_urls(self) -> None:
         """Detect HTTP/HTTPS endpoint URLs in strings."""
-        detector = ValidationLayerDetector()
+        detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        strings = {
+        strings: set[str] = {
             "test",
             "https://api.example.com/validate",
             "config",
         }
 
-        result = detector._contains_http_endpoints(strings)
+        result: bool = detector._contains_http_endpoints(strings)
 
         assert result is True
 

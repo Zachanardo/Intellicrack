@@ -35,6 +35,7 @@ from intellicrack.core.patching.memory_patcher import (
     PTRACE_ATTACH,
     PTRACE_DETACH,
     PTRACE_POKEDATA,
+    SignalEmitter,
     _bypass_memory_protection_unix,  # noqa: PLC2701
     _bypass_memory_protection_windows,  # noqa: PLC2701
     _create_bool_type,  # noqa: PLC2701
@@ -96,14 +97,14 @@ class RealSignalEmitter:
 class RealApplicationStub:
     """Real application stub for testing memory patcher functionality."""
 
-    def __init__(self, binary_path: str | None = None) -> None:
+    def __init__(self, binary_path: str = "") -> None:
         """Initialize application stub with test configuration.
 
         Args:
             binary_path: Path to target binary file.
 
         """
-        self.binary_path: str | None = binary_path
+        self.binary_path: str = binary_path
         self.potential_patches: list[dict[str, object]] = [
             {
                 "address": 0x401000,
@@ -118,7 +119,13 @@ class RealApplicationStub:
                 "description": "NOP serial validation",
             },
         ]
-        self.update_output: RealSignalEmitter = RealSignalEmitter()
+        self._real_signal_emitter: RealSignalEmitter = RealSignalEmitter()
+        self.update_output: SignalEmitter = self._real_signal_emitter
+
+    @property
+    def messages(self) -> list[str]:
+        """Access captured messages from signal emitter."""
+        return self._real_signal_emitter.messages
 
 
 @pytest.fixture
@@ -640,13 +647,13 @@ class TestLauncherScriptGeneration:
 
     def test_generate_launcher_script_handles_no_binary(self) -> None:
         """Launcher generation fails gracefully without binary path."""
-        app = RealApplicationStub(binary_path=None)
+        app = RealApplicationStub()
 
         result: str | None = generate_launcher_script(app)
 
         assert result is None
-        assert len(app.update_output.messages) > 0
-        assert any("binary" in msg.lower() for msg in app.update_output.messages)
+        assert len(app.messages) > 0
+        assert any("binary" in msg.lower() for msg in app.messages)
 
     def test_generate_launcher_script_handles_no_patches(self, tmp_path: Path) -> None:
         """Launcher generation fails gracefully without patches."""
@@ -781,12 +788,12 @@ class TestSetupMemoryPatching:
 
     def test_setup_memory_patching_requires_binary(self) -> None:
         """Setup fails gracefully without binary path."""
-        app = RealApplicationStub(binary_path=None)
+        app = RealApplicationStub()
 
         setup_memory_patching(app)
 
-        assert len(app.update_output.messages) > 0
-        assert any("[Memory Patch]" in msg for msg in app.update_output.messages)
+        assert len(app.messages) > 0
+        assert any("[Memory Patch]" in msg for msg in app.messages)
 
     def test_setup_memory_patching_handles_missing_file(self, tmp_path: Path) -> None:
         """Setup handles missing binary file gracefully."""
@@ -794,7 +801,7 @@ class TestSetupMemoryPatching:
 
         setup_memory_patching(app)
 
-        assert len(app.update_output.messages) > 0
+        assert len(app.messages) > 0
 
     def test_setup_memory_patching_requires_patches(self, tmp_path: Path) -> None:
         """Setup detects when no patches available."""
@@ -804,9 +811,9 @@ class TestSetupMemoryPatching:
         app = RealApplicationStub(binary_path=str(binary_path))
         app.potential_patches = []
 
-        messages_before = len(app.update_output.messages)
+        messages_before = len(app.messages)
         setup_memory_patching(app)
-        messages_after = len(app.update_output.messages)
+        messages_after = len(app.messages)
 
         assert messages_after > messages_before
 
@@ -822,12 +829,12 @@ class TestSetupMemoryPatching:
 
         app = RealApplicationStub(binary_path=str(binary_path))
 
-        initial_messages = len(app.update_output.messages)
+        initial_messages = len(app.messages)
         setup_memory_patching(app)
-        final_messages = len(app.update_output.messages)
+        final_messages = len(app.messages)
 
         assert final_messages > initial_messages
-        assert any("[Memory Patch]" in msg for msg in app.update_output.messages)
+        assert any("[Memory Patch]" in msg for msg in app.messages)
 
     def test_setup_memory_patching_with_unprotected_binary(self, tmp_path: Path) -> None:
         """Setup handles unprotected binary correctly."""
@@ -836,9 +843,9 @@ class TestSetupMemoryPatching:
 
         app = RealApplicationStub(binary_path=str(binary_path))
 
-        initial_messages = len(app.update_output.messages)
+        initial_messages = len(app.messages)
         setup_memory_patching(app)
-        final_messages = len(app.update_output.messages)
+        final_messages = len(app.messages)
 
         assert final_messages > initial_messages
 
@@ -1070,7 +1077,7 @@ class TestMemoryPatchingIntegration:
             assert "Bypass license check" in content
             assert "NOP serial validation" in content
 
-            assert len(app.update_output.messages) > 0
+            assert len(app.messages) > 0
 
     def test_sequential_patch_operations_maintain_data_integrity(self, test_buffer: Any) -> None:
         """Sequential patches maintain data integrity throughout."""

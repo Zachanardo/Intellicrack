@@ -166,7 +166,8 @@ class TestFunctionEmulation:
         assert result["steps_executed"] > 0, "No steps executed"
         assert result["steps_executed"] <= 30, "Exceeded max steps"
 
-        if trace := result["execution_trace"]:
+        trace: Any = result.get("execution_trace")
+        if trace:
             assert all("step" in entry for entry in trace), "Missing step numbers"
             assert all("address" in entry for entry in trace), "Missing addresses"
 
@@ -313,7 +314,8 @@ class TestFunctionEmulation:
                 func["offset"], max_steps=100
             )
 
-            if trace := result.get("execution_trace", []):
+            trace: List[Dict[str, Any]] = result.get("execution_trace", [])
+            if trace:
                 last_instruction: str = trace[-1].get("instruction", "").lower()
                 if "ret" in last_instruction:
                     assert result["steps_executed"] < 100, "Should stop at return"

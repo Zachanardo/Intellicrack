@@ -40,7 +40,7 @@ class TestConnectionTimeoutHandling:
     def fingerprinter(self, tmp_path: Path) -> ProtocolFingerprinter:
         """Create fingerprinter for timeout tests."""
         sig_path = tmp_path / "timeout_sigs.json"
-        config = {"signature_db_path": str(sig_path), "timeout": 1}
+        config: dict[str, Any] = {"signature_db_path": str(sig_path), "timeout": 1}
         return ProtocolFingerprinter(config)
 
     def test_socket_connect_timeout_handled(
@@ -311,7 +311,7 @@ class TestConcurrentNetworkAccess:
     def concurrent_fingerprinter(self, tmp_path: Path) -> ProtocolFingerprinter:
         """Create fingerprinter for concurrent tests."""
         sig_path = tmp_path / "concurrent_sigs.json"
-        config = {"signature_db_path": str(sig_path), "learning_mode": True}
+        config: dict[str, Any] = {"signature_db_path": str(sig_path), "learning_mode": True}
         return ProtocolFingerprinter(config)
 
     def test_concurrent_packet_analysis(
@@ -455,9 +455,8 @@ class TestNetworkErrorRecovery:
         self, tmp_path: Path
     ) -> None:
         """System continues with reduced functionality on partial failure."""
-        fingerprinter = ProtocolFingerprinter(
-            {"signature_db_path": str(tmp_path / "sigs.json")}
-        )
+        config: dict[str, Any] = {"signature_db_path": str(tmp_path / "sigs.json")}
+        fingerprinter = ProtocolFingerprinter(config)
 
         packet1 = b"FEATURE AutoCAD\n"
         packet2 = b"INVALID_DATA\x00\x00"

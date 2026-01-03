@@ -1453,10 +1453,10 @@ class TestHASPCommandTypes:
 
     def test_critical_commands_defined(self) -> None:
         """Critical HASP commands are defined in enumeration."""
-        assert HASPCommandType.LOGIN == 0x01
-        assert HASPCommandType.LOGOUT == 0x02
-        assert HASPCommandType.ENCRYPT == 0x03
-        assert HASPCommandType.DECRYPT == 0x04
+        assert HASPCommandType.LOGIN.value == 0x01
+        assert HASPCommandType.LOGOUT.value == 0x02
+        assert HASPCommandType.ENCRYPT.value == 0x03
+        assert HASPCommandType.DECRYPT.value == 0x04
 
 
 class TestHASPStatusCodes:
@@ -1464,7 +1464,7 @@ class TestHASPStatusCodes:
 
     def test_status_ok_is_zero(self) -> None:
         """STATUS_OK has value 0x00000000."""
-        assert HASPStatusCode.STATUS_OK == 0x00000000
+        assert HASPStatusCode.STATUS_OK.value == 0x00000000
 
     def test_error_codes_are_nonzero(self) -> None:
         """All error status codes have non-zero values."""
@@ -1477,10 +1477,10 @@ class TestHASPEncryptionTypes:
 
     def test_encryption_types_defined(self) -> None:
         """All encryption types are defined."""
-        assert HASPEncryptionType.NONE == 0x00
-        assert HASPEncryptionType.AES128 == 0x01
-        assert HASPEncryptionType.AES256 == 0x02
-        assert HASPEncryptionType.HASP4 == 0x05
+        assert HASPEncryptionType.NONE.value == 0x00
+        assert HASPEncryptionType.AES128.value == 0x01
+        assert HASPEncryptionType.AES256.value == 0x02
+        assert HASPEncryptionType.HASP4.value == 0x05
 
 
 class TestHASPMemoryOperations:

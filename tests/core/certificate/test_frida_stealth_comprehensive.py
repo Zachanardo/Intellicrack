@@ -21,7 +21,7 @@ import tempfile
 import threading
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -760,7 +760,7 @@ class TestStealthThreadSafety:
     def test_concurrent_status_queries(self) -> None:
         """Concurrent status queries don't corrupt state."""
         stealth = FridaStealth()
-        statuses: list[dict] = []
+        statuses: list[dict[str, Any]] = []
 
         def status_worker() -> None:
             status = stealth.get_stealth_status()

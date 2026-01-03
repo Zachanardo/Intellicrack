@@ -5,34 +5,49 @@ Tests REAL binary analysis interface with actual analysis functionality.
 NO mocked components - validates actual analysis UI behavior.
 """
 
-import pytest
-import tempfile
 import os
-from typing import Tuple, Optional
+import tempfile
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any
+
+import pytest
+
+GUI_AVAILABLE = False
+QApplication: Any = None
+QWidget: Any = None
+QTextEdit: Any = None
+QProgressBar: Any = None
+QPushButton: Any = None
+QTabWidget: Any = None
+QCheckBox: Any = None
+QFileDialog: Any = None
+QGraphicsView: Any = None
+QTest: Any = None
+Qt: Any = None
+AnalysisOrchestrator: Any = None
+ProtectionDetector: Any = None
+AnalysisTab: Any = None
 
 try:
-    from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QProgressBar, QPushButton, QTabWidget, QCheckBox, QFileDialog
-    from intellicrack.ui.dialogs.common_imports import QGraphicsView, QTest, Qt
+    from PyQt6.QtWidgets import (
+        QApplication,
+        QCheckBox,
+        QFileDialog,
+        QProgressBar,
+        QPushButton,
+        QTabWidget,
+        QTextEdit,
+        QWidget,
+    )
+
     from intellicrack.core.analysis.analysis_orchestrator import AnalysisOrchestrator
     from intellicrack.protection.protection_detector import ProtectionDetector
+    from intellicrack.ui.dialogs.common_imports import QGraphicsView, Qt, QTest
     from intellicrack.ui.tabs.analysis_tab import AnalysisTab
+
     GUI_AVAILABLE = True
 except ImportError:
-    QApplication = None
-    QWidget = None
-    QTextEdit = None
-    QProgressBar = None
-    QPushButton = None
-    QTabWidget = None
-    QCheckBox = None
-    QFileDialog = None
-    QGraphicsView = None
-    QTest = None
-    Qt = None
-    AnalysisOrchestrator = None
-    ProtectionDetector = None
-    AnalysisTab = None
-    GUI_AVAILABLE = False
+    pass
 
 pytestmark = pytest.mark.skipif(not GUI_AVAILABLE, reason="GUI modules not available")
 
@@ -43,10 +58,10 @@ class RealFileDialogDouble:
     def __init__(self, file_path: str) -> None:
         self.file_path: str = file_path
         self.call_count: int = 0
-        self.last_args: Tuple = ()
-        self.last_kwargs: dict = {}
+        self.last_args: tuple[Any, ...] = ()
+        self.last_kwargs: dict[str, Any] = {}
 
-    def getSaveFileName(self, *args, **kwargs) -> Tuple[str, str]:
+    def getSaveFileName(self, *args: Any, **kwargs: Any) -> tuple[str, str]:
         """Real implementation that returns configured file path."""
         self.call_count += 1
         self.last_args = args
@@ -63,8 +78,10 @@ class RealFileDialogDouble:
 class TestAnalysisTab:
     """Test REAL analysis tab functionality with actual analysis operations."""
 
+    tab: Any
+
     @pytest.fixture(autouse=True)
-    def setup_tab(self, qtbot):
+    def setup_tab(self, qtbot: Any) -> Any:
         """Setup AnalysisTab with REAL Qt environment."""
         self.tab = AnalysisTab()
         qtbot.addWidget(self.tab)
@@ -72,7 +89,7 @@ class TestAnalysisTab:
         return self.tab
 
     @pytest.fixture
-    def sample_pe_file(self):
+    def sample_pe_file(self) -> Generator[str, None, None]:
         """Create REAL PE file for analysis testing."""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as temp_file:
             # Create minimal PE structure
@@ -109,7 +126,7 @@ class TestAnalysisTab:
         if os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
 
-    def test_tab_initialization_real_components(self, qtbot):
+    def test_tab_initialization_real_components(self, qtbot: Any) -> None:
         """Test that analysis tab initializes with REAL Qt components."""
         assert isinstance(self.tab, QWidget)
         assert self.tab.isVisible()
@@ -122,7 +139,7 @@ class TestAnalysisTab:
         # Should have UI elements for analysis
         assert len(text_edits) > 0 or len(buttons) > 0, "Should have analysis interface components"
 
-    def test_analysis_controls_real_interface(self, qtbot):
+    def test_analysis_controls_real_interface(self, qtbot: Any) -> None:
         """Test REAL analysis control interface."""
         # Find analysis start button
         start_buttons = []
@@ -140,7 +157,7 @@ class TestAnalysisTab:
             assert isinstance(original_text, str)
             assert len(original_text) > 0
 
-    def test_file_selection_real_binary_loading(self, qtbot, sample_pe_file):
+    def test_file_selection_real_binary_loading(self, qtbot: Any, sample_pe_file: str) -> None:
         """Test REAL binary file selection and loading."""
         # Test file loading capability
         if hasattr(self.tab, 'load_file'):
@@ -155,7 +172,7 @@ class TestAnalysisTab:
             self.tab.set_binary(sample_pe_file)
             qtbot.wait(300)
 
-    def test_analysis_execution_real_processing(self, qtbot, sample_pe_file):
+    def test_analysis_execution_real_processing(self, qtbot: Any, sample_pe_file: str) -> None:
         """Test REAL analysis execution and processing."""
         # Load file first
         if hasattr(self.tab, 'load_file'):
@@ -187,7 +204,7 @@ class TestAnalysisTab:
                     qtbot.mouseClick(analyze_button, Qt.MouseButton.LeftButton)
                     qtbot.wait(100)
 
-    def test_progress_tracking_real_updates(self, qtbot):
+    def test_progress_tracking_real_updates(self, qtbot: Any) -> None:
         """Test REAL progress tracking during analysis."""
         if progress_bars := self.tab.findChildren(QProgressBar):
             progress_bar = progress_bars[0]
@@ -203,7 +220,7 @@ class TestAnalysisTab:
                 qtbot.wait(50)
                 assert 0 <= progress_bar.value() <= 100
 
-    def test_results_display_real_analysis_output(self, qtbot):
+    def test_results_display_real_analysis_output(self, qtbot: Any) -> None:
         """Test REAL analysis results display."""
         if results_displays := self.tab.findChildren(QTextEdit):
             if hasattr(self.tab, 'display_results'):
@@ -224,7 +241,7 @@ class TestAnalysisTab:
                 displayed_text = results_display.toPlainText()
                 assert isinstance(displayed_text, str)
 
-    def test_analysis_options_real_configuration(self, qtbot):
+    def test_analysis_options_real_configuration(self, qtbot: Any) -> None:
         """Test REAL analysis options and configuration."""
         # Find configuration checkboxes
         checkboxes = self.tab.findChildren(QCheckBox)
@@ -246,7 +263,7 @@ class TestAnalysisTab:
             new_state = checkbox.isChecked()
             assert new_state != original_state
 
-    def test_protection_detection_real_analysis(self, qtbot, sample_pe_file):
+    def test_protection_detection_real_analysis(self, qtbot: Any, sample_pe_file: str) -> None:
         """Test REAL protection detection capabilities."""
         # Load file
         if hasattr(self.tab, 'load_file'):
@@ -268,7 +285,7 @@ class TestAnalysisTab:
                 # Continue with test even if detection fails
             qtbot.wait(100)
 
-    def test_export_functionality_real_data_output(self, qtbot, monkeypatch):
+    def test_export_functionality_real_data_output(self, qtbot: Any, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test REAL export functionality for analysis results."""
         export_buttons = []
         for button in self.tab.findChildren(QPushButton):
@@ -295,7 +312,7 @@ class TestAnalysisTab:
                 if os.path.exists(export_path):
                     os.unlink(export_path)
 
-    def test_visualization_widgets_real_display(self, qtbot):
+    def test_visualization_widgets_real_display(self, qtbot: Any) -> None:
         """Test REAL visualization widgets for analysis data."""
         # Check for visualization components
 
@@ -312,7 +329,7 @@ class TestAnalysisTab:
                 entropy_viz.update_data(test_entropy_data)
                 qtbot.wait(100)
 
-    def test_sub_tabs_real_analysis_categories(self, qtbot):
+    def test_sub_tabs_real_analysis_categories(self, qtbot: Any) -> None:
         """Test REAL sub-tabs for different analysis categories."""
         if tab_widgets := self.tab.findChildren(QTabWidget):
             analysis_tabs = tab_widgets[0]
@@ -332,7 +349,7 @@ class TestAnalysisTab:
                     assert isinstance(tab_title, str)
                     assert len(tab_title) > 0
 
-    def test_signal_emissions_real_communication(self, qtbot):
+    def test_signal_emissions_real_communication(self, qtbot: Any) -> None:
         """Test REAL signal emissions for tab communication."""
         # Test analysis signals
         if hasattr(self.tab, 'analysis_started'):
@@ -345,7 +362,7 @@ class TestAnalysisTab:
             assert len(signal_received) == 1
             assert signal_received[0] == "Test analysis started"
 
-    def test_error_handling_real_analysis_failures(self, qtbot):
+    def test_error_handling_real_analysis_failures(self, qtbot: Any) -> None:
         """Test REAL error handling during analysis failures."""
         if hasattr(self.tab, 'load_file'):
             # Test invalid file handling
@@ -363,7 +380,7 @@ class TestAnalysisTab:
             self.tab.handle_analysis_error(test_error)
             qtbot.wait(100)
 
-    def test_memory_management_real_large_files(self, qtbot):
+    def test_memory_management_real_large_files(self, qtbot: Any) -> None:
         """Test REAL memory management with large binary files."""
         # Create larger test file
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as temp_file:
@@ -385,7 +402,7 @@ class TestAnalysisTab:
             if os.path.exists(large_file_path):
                 os.unlink(large_file_path)
 
-    def test_real_data_validation_no_placeholder_content(self, qtbot):
+    def test_real_data_validation_no_placeholder_content(self, qtbot: Any) -> None:
         """Test that tab displays REAL analysis data, not placeholder content."""
         placeholder_indicators = [
             "TODO", "PLACEHOLDER", "XXX", "FIXME",
@@ -393,7 +410,7 @@ class TestAnalysisTab:
             "Sample analysis", "Dummy results"
         ]
 
-        def check_widget_content(widget):
+        def check_widget_content(widget: Any) -> None:
             """Check widget for placeholder content."""
             if hasattr(widget, 'text'):
                 text = widget.text()
@@ -414,7 +431,7 @@ class TestAnalysisTab:
         for child in self.tab.findChildren(object):
             check_widget_content(child)
 
-    def test_context_integration_real_shared_state(self, qtbot):
+    def test_context_integration_real_shared_state(self, qtbot: Any) -> None:
         """Test REAL context integration with shared application state."""
         if hasattr(self.tab, 'shared_context'):
             context = self.tab.shared_context
@@ -428,7 +445,7 @@ class TestAnalysisTab:
                     current_file = context.get_current_file()
                     assert current_file == test_file
 
-    def test_performance_real_analysis_speed(self, qtbot, sample_pe_file):
+    def test_performance_real_analysis_speed(self, qtbot: Any, sample_pe_file: str) -> None:
         """Test REAL performance of analysis operations."""
         import time
 

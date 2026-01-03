@@ -85,7 +85,8 @@ def hex_viewer(qapp: Any) -> Generator[Any, None, None]:
     from PyQt6.QtWidgets import QWidget
     viewer = HexViewerWidget()
     viewer.show()
-    QTest.qWaitForWindowExposed(cast("QWidget | None", viewer))
+    qtest_wait = getattr(QTest, 'qWaitForWindowExposed')
+    qtest_wait(viewer)
     yield viewer
     viewer.close()
 
@@ -625,7 +626,9 @@ class TestMouseInteraction:
         hex_viewer.resize(800, 600)
 
         click_pos: QPoint = QPoint(200, 100)
-        QTest.mouseClick(cast("QWidget | None", hex_viewer.viewport()), Qt.MouseButton.LeftButton, pos=click_pos)
+        viewport = hex_viewer.viewport()
+        qtest_click = getattr(QTest, 'mouseClick')
+        qtest_click(viewport, Qt.MouseButton.LeftButton, pos=click_pos)
 
     def test_get_offset_from_position(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
@@ -642,19 +645,22 @@ class TestKeyboardNavigation:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         hex_viewer.jump_to_offset(100)
 
-        QTest.keyClick(cast("QWidget | None", hex_viewer), Qt.Key.Key_Home)
+        qtest_key = getattr(QTest, 'keyClick')
+        qtest_key(hex_viewer, Qt.Key.Key_Home)
 
     def test_keyboard_navigation_end(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         hex_viewer.jump_to_offset(0)
 
-        QTest.keyClick(cast("QWidget | None", hex_viewer), Qt.Key.Key_End)
+        qtest_key = getattr(QTest, 'keyClick')
+        qtest_key(hex_viewer, Qt.Key.Key_End)
 
     def test_keyboard_navigation_page_up(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         hex_viewer.jump_to_offset(500)
 
-        QTest.keyClick(cast("QWidget | None", hex_viewer), Qt.Key.Key_PageUp)
+        qtest_key = getattr(QTest, 'keyClick')
+        qtest_key(hex_viewer, Qt.Key.Key_PageUp)
 
     def test_keyboard_navigation_page_down(
         self, hex_viewer: Any, temp_binary_file: Path
@@ -662,22 +668,24 @@ class TestKeyboardNavigation:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         hex_viewer.jump_to_offset(0)
 
-        QTest.keyClick(cast("QWidget | None", hex_viewer), Qt.Key.Key_PageDown)
+        qtest_key = getattr(QTest, 'keyClick')
+        qtest_key(hex_viewer, Qt.Key.Key_PageDown)
 
     def test_keyboard_navigation_arrows(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         hex_viewer.jump_to_offset(100)
 
-        widget: QWidget | None = cast("QWidget | None", hex_viewer)
-        QTest.keyClick(widget, Qt.Key.Key_Left)
-        QTest.keyClick(widget, Qt.Key.Key_Right)
-        QTest.keyClick(widget, Qt.Key.Key_Up)
-        QTest.keyClick(widget, Qt.Key.Key_Down)
+        qtest_key = getattr(QTest, 'keyClick')
+        qtest_key(hex_viewer, Qt.Key.Key_Left)
+        qtest_key(hex_viewer, Qt.Key.Key_Right)
+        qtest_key(hex_viewer, Qt.Key.Key_Up)
+        qtest_key(hex_viewer, Qt.Key.Key_Down)
 
     def test_keyboard_shortcut_jump(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
 
-        QTest.keyClick(cast("QWidget | None", hex_viewer), Qt.Key.Key_G, Qt.KeyboardModifier.ControlModifier)
+        qtest_key = getattr(QTest, 'keyClick')
+        qtest_key(hex_viewer, Qt.Key.Key_G, Qt.KeyboardModifier.ControlModifier)
 
 
 class TestCopyOperations:

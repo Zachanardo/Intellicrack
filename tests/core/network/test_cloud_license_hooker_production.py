@@ -12,6 +12,7 @@ import socket
 import struct
 import threading
 import time
+from collections.abc import Generator
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -28,7 +29,8 @@ class TestCloudLicenseHookerProduction:
         """Find an available port for testing."""
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.bind(("127.0.0.1", 0))
-            return sock.getsockname()[1]
+            port: int = sock.getsockname()[1]
+            return port
 
     @pytest.fixture
     def hooker(self, free_port: int) -> CloudLicenseResponseGenerator:
@@ -42,7 +44,7 @@ class TestCloudLicenseHookerProduction:
         return CloudLicenseResponseGenerator(config)
 
     @pytest.fixture
-    def active_hooker(self, hooker: CloudLicenseResponseGenerator) -> CloudLicenseResponseGenerator:
+    def active_hooker(self, hooker: CloudLicenseResponseGenerator) -> Generator[CloudLicenseResponseGenerator, None, None]:
         """Create and activate cloud license hooker."""
         hooker.enable_network_api_hooks()
         time.sleep(0.5)
@@ -85,7 +87,7 @@ class TestCloudLicenseHookerProduction:
 
         try:
             assert hooker.hooks_enabled, "Hooks must be enabled"
-            assert hooker.active, "Must be active after enabling"
+            assert hooker.active, "Must be active after enabling"  # type: ignore[unreachable]
             assert len(hooker.listener_threads) == len(hooker.target_ports), "Must create listener for each port"
         finally:
             hooker.disable_network_api_hooks()
@@ -444,7 +446,7 @@ class TestCloudLicenseHookerProduction:
         time.sleep(0.2)
 
         assert not hooker.active, "Must be inactive after disabling"
-        assert not hooker.hooks_enabled, "Hooks must be disabled"
+        assert not hooker.hooks_enabled, "Hooks must be disabled"  # type: ignore[unreachable]
 
     def test_run_cloud_license_hooker_initializes(self) -> None:
         """Run function creates and activates hooker instance."""

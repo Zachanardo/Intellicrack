@@ -2,65 +2,58 @@
 """Test dynamic AI script generation functionality."""
 
 import sys
+from typing import Any, cast
 
 
 def test_frida_generation() -> bool:
     """Test Frida script generation from natural language prompt."""
-    print("🧪 Testing dynamic Frida script generation...")
+    print("Testing dynamic Frida script generation...")
 
     try:
-        from intellicrack.ai.ai_script_generator import AIScriptGenerator, ScriptType
+        from intellicrack.ai.ai_script_generator import AIScriptGenerator
 
-        # Create generator instance
         generator = AIScriptGenerator()
 
-        # Test prompt for license bypass
-        prompt = "Create a Frida script that hooks CreateFileW API calls and logs all file access attempts. Focus on detecting license file reads."
-
-        # Generate script using actual method
         result = generator.generate_frida_script(
-            binary_path="",
-            protection_types=[],
-            custom_hooks=["CreateFileW"]
+            binary_path_or_analysis="test_binary.exe",
+            protection_info={"type": "license_check", "hooks": ["CreateFileW"]},
         )
 
-        if result.success:
+        if result is not None:
             print("OK Script generated successfully!")
-            print(f" Saved to: {result.file_path}")
-            print(f" Content preview:\n{result.content[:500]}...")
+            if result.content:
+                print(f" Content preview:\n{result.content[:500]}...")
             return True
         else:
-            print(f"FAIL Generation failed: {result.error}")
+            print("FAIL Generation returned None")
             return False
 
     except Exception as e:
         print(f"FAIL Exception during generation: {e}")
         return False
 
+
 def test_ghidra_generation() -> bool:
     """Test Ghidra script generation from natural language prompt."""
-    print("\n🧪 Testing dynamic Ghidra script generation...")
+    print("\nTesting dynamic Ghidra script generation...")
 
     try:
-        from intellicrack.ai.ai_script_generator import AIScriptGenerator, ScriptType
+        from intellicrack.ai.ai_script_generator import AIScriptGenerator
 
         generator = AIScriptGenerator()
 
-        prompt = "Generate a Ghidra script that scans for string patterns related to license validation. Look for keywords like 'license', 'serial', 'activation', and 'trial'."
-
         result = generator.generate_ghidra_script(
-            binary_path="",
-            analysis_goals=["License validation pattern detection"],
-            protection_types=[]
+            binary_path_or_analysis="test_binary.exe",
+            protection_info={"analysis_goals": ["License validation pattern detection"]},
         )
 
-        if result.success:
+        if result is not None:
             print("OK Ghidra script generated successfully!")
-            print(f" Saved to: {result.file_path}")
-            print(f" Content preview:\n{result.content[:500]}...")
+            if result.content:
+                print(f" Content preview:\n{result.content[:500]}...")
             return True
         else:
-            print(f"FAIL Generation failed: {result.error}")
+            print("FAIL Generation returned None")
             return False
 
     except Exception as e:
@@ -72,13 +65,19 @@ def main() -> bool:
     print(" Testing Dynamic AI Script Generation System")
     print("=" * 50)
 
-    # Test configuration
     try:
         from intellicrack.core.config_manager import get_config
         config = get_config()
-        ai_config = config.get("ai_script_generation", {})
-        print(f"📋 LLM Backend: {ai_config.get('default_backend', 'openai')}")
-        print(f"📋 Model: {ai_config.get('models', {}).get('openai', 'gpt-4')}")
+        ai_config_raw = config.get("ai_script_generation", {})
+        if isinstance(ai_config_raw, dict):
+            ai_config = cast(dict[str, Any], ai_config_raw)
+            default_backend = ai_config.get("default_backend", "openai")
+            models = ai_config.get("models", {})
+            model_name = models.get("openai", "gpt-4") if isinstance(models, dict) else "gpt-4"
+            print(f"LLM Backend: {default_backend}")
+            print(f"Model: {model_name}")
+        else:
+            print("Config: ai_script_generation not configured as dict")
     except Exception as e:
         print(f"WARNING Config warning: {e}")
 

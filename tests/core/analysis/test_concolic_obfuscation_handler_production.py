@@ -9,7 +9,7 @@ Licensed under GNU General Public License v3.0
 
 import struct
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -507,7 +507,7 @@ class TestWithRealDisassembly:
         code += b"\x74\x10"
         code += b"\xff\x24\xc5\x00\x10\x00\x00"
 
-        instructions = list(cs.disasm(code, 0x1000))
+        instructions: list[Any] = cast(list[Any], list(cs.disasm(code, 0x1000)))
 
         result = cff_handler.analyze_block(0x1000, instructions)
 

@@ -5,6 +5,7 @@ protection scheme fingerprinting, compiler detection, and library version identi
 """
 
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -91,7 +92,7 @@ def msvc_compiled_binary() -> bytes:
 
 
 @pytest.fixture
-def temp_binary_file(simple_pe_binary: bytes) -> Path:
+def temp_binary_file(simple_pe_binary: bytes) -> Generator[Path, None, None]:
     """Create temporary binary file for testing."""
     with tempfile.NamedTemporaryFile(mode="wb", suffix=".exe", delete=False) as f:
         f.write(simple_pe_binary)
@@ -109,8 +110,10 @@ def test_detector_initialization_calculates_hashes(temp_binary_file: Path) -> No
     assert "sha256" in detector.file_hash
     assert "sha512" in detector.file_hash
     assert "size" in detector.file_hash
-    assert len(detector.file_hash["sha256"]) == 64
-    assert len(detector.file_hash["sha512"]) == 128
+    sha256_hash = detector.file_hash["sha256"]
+    sha512_hash = detector.file_hash["sha512"]
+    assert isinstance(sha256_hash, str) and len(sha256_hash) == 64
+    assert isinstance(sha512_hash, str) and len(sha512_hash) == 128
     assert detector.file_hash["size"] == temp_binary_file.stat().st_size
 
 

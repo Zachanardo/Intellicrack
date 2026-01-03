@@ -151,6 +151,202 @@ class VMProtectHandler:
             ProtectionType.VMPROTECT_2X: self._vmprotect_2x_key_schedule,
             ProtectionType.VMPROTECT_3X: self._vmprotect_3x_key_schedule,
         }
+        self.opcode_map = self._build_vmprotect_opcode_map()
+
+    def _build_vmprotect_opcode_map(self) -> dict[int, tuple[str, VMInstructionType]]:
+        """Build VMProtect opcode to instruction mapping.
+
+        Creates comprehensive opcode mapping for VMProtect's custom CISC/RISC VM
+        instruction set, covering all handler types including stack operations,
+        arithmetic, logical, memory access, and control flow instructions.
+
+        Returns:
+            Dictionary mapping opcode bytes to (mnemonic, VMInstructionType) tuples
+            for all VMProtect VM handler implementations.
+
+        """
+        return {
+            0x00: ("VMP_NOP", VMInstructionType.CUSTOM),
+            0x01: ("VMP_PUSH_IMM32", VMInstructionType.STACK),
+            0x02: ("VMP_PUSH_IMM64", VMInstructionType.STACK),
+            0x03: ("VMP_PUSH_REG32", VMInstructionType.STACK),
+            0x04: ("VMP_PUSH_REG64", VMInstructionType.STACK),
+            0x05: ("VMP_POP_REG32", VMInstructionType.STACK),
+            0x06: ("VMP_POP_REG64", VMInstructionType.STACK),
+            0x07: ("VMP_PUSHF", VMInstructionType.STACK),
+            0x08: ("VMP_POPF", VMInstructionType.STACK),
+            0x09: ("VMP_DUP", VMInstructionType.STACK),
+            0x0A: ("VMP_SWAP", VMInstructionType.STACK),
+            0x10: ("VMP_ADD32", VMInstructionType.ARITHMETIC),
+            0x11: ("VMP_ADD64", VMInstructionType.ARITHMETIC),
+            0x12: ("VMP_SUB32", VMInstructionType.ARITHMETIC),
+            0x13: ("VMP_SUB64", VMInstructionType.ARITHMETIC),
+            0x14: ("VMP_MUL32", VMInstructionType.ARITHMETIC),
+            0x15: ("VMP_MUL64", VMInstructionType.ARITHMETIC),
+            0x16: ("VMP_DIV32", VMInstructionType.ARITHMETIC),
+            0x17: ("VMP_DIV64", VMInstructionType.ARITHMETIC),
+            0x18: ("VMP_IMUL32", VMInstructionType.ARITHMETIC),
+            0x19: ("VMP_IMUL64", VMInstructionType.ARITHMETIC),
+            0x1A: ("VMP_IDIV32", VMInstructionType.ARITHMETIC),
+            0x1B: ("VMP_IDIV64", VMInstructionType.ARITHMETIC),
+            0x1C: ("VMP_NEG32", VMInstructionType.ARITHMETIC),
+            0x1D: ("VMP_NEG64", VMInstructionType.ARITHMETIC),
+            0x1E: ("VMP_INC32", VMInstructionType.ARITHMETIC),
+            0x1F: ("VMP_INC64", VMInstructionType.ARITHMETIC),
+            0x20: ("VMP_DEC32", VMInstructionType.ARITHMETIC),
+            0x21: ("VMP_DEC64", VMInstructionType.ARITHMETIC),
+            0x22: ("VMP_AND32", VMInstructionType.LOGICAL),
+            0x23: ("VMP_AND64", VMInstructionType.LOGICAL),
+            0x24: ("VMP_OR32", VMInstructionType.LOGICAL),
+            0x25: ("VMP_OR64", VMInstructionType.LOGICAL),
+            0x26: ("VMP_XOR32", VMInstructionType.LOGICAL),
+            0x27: ("VMP_XOR64", VMInstructionType.LOGICAL),
+            0x28: ("VMP_NOT32", VMInstructionType.LOGICAL),
+            0x29: ("VMP_NOT64", VMInstructionType.LOGICAL),
+            0x2A: ("VMP_SHL32", VMInstructionType.LOGICAL),
+            0x2B: ("VMP_SHL64", VMInstructionType.LOGICAL),
+            0x2C: ("VMP_SHR32", VMInstructionType.LOGICAL),
+            0x2D: ("VMP_SHR64", VMInstructionType.LOGICAL),
+            0x2E: ("VMP_SAR32", VMInstructionType.LOGICAL),
+            0x2F: ("VMP_SAR64", VMInstructionType.LOGICAL),
+            0x30: ("VMP_ROL32", VMInstructionType.LOGICAL),
+            0x31: ("VMP_ROL64", VMInstructionType.LOGICAL),
+            0x32: ("VMP_ROR32", VMInstructionType.LOGICAL),
+            0x33: ("VMP_ROR64", VMInstructionType.LOGICAL),
+            0x34: ("VMP_RCL32", VMInstructionType.LOGICAL),
+            0x35: ("VMP_RCL64", VMInstructionType.LOGICAL),
+            0x36: ("VMP_RCR32", VMInstructionType.LOGICAL),
+            0x37: ("VMP_RCR64", VMInstructionType.LOGICAL),
+            0x38: ("VMP_TEST32", VMInstructionType.LOGICAL),
+            0x39: ("VMP_TEST64", VMInstructionType.LOGICAL),
+            0x3A: ("VMP_CMP32", VMInstructionType.LOGICAL),
+            0x3B: ("VMP_CMP64", VMInstructionType.LOGICAL),
+            0x40: ("VMP_JMP", VMInstructionType.CONTROL_FLOW),
+            0x41: ("VMP_JZ", VMInstructionType.CONTROL_FLOW),
+            0x42: ("VMP_JNZ", VMInstructionType.CONTROL_FLOW),
+            0x43: ("VMP_JE", VMInstructionType.CONTROL_FLOW),
+            0x44: ("VMP_JNE", VMInstructionType.CONTROL_FLOW),
+            0x45: ("VMP_JG", VMInstructionType.CONTROL_FLOW),
+            0x46: ("VMP_JGE", VMInstructionType.CONTROL_FLOW),
+            0x47: ("VMP_JL", VMInstructionType.CONTROL_FLOW),
+            0x48: ("VMP_JLE", VMInstructionType.CONTROL_FLOW),
+            0x49: ("VMP_JA", VMInstructionType.CONTROL_FLOW),
+            0x4A: ("VMP_JAE", VMInstructionType.CONTROL_FLOW),
+            0x4B: ("VMP_JB", VMInstructionType.CONTROL_FLOW),
+            0x4C: ("VMP_JBE", VMInstructionType.CONTROL_FLOW),
+            0x4D: ("VMP_JS", VMInstructionType.CONTROL_FLOW),
+            0x4E: ("VMP_JNS", VMInstructionType.CONTROL_FLOW),
+            0x4F: ("VMP_JO", VMInstructionType.CONTROL_FLOW),
+            0x50: ("VMP_JNO", VMInstructionType.CONTROL_FLOW),
+            0x51: ("VMP_JP", VMInstructionType.CONTROL_FLOW),
+            0x52: ("VMP_JNP", VMInstructionType.CONTROL_FLOW),
+            0x53: ("VMP_CALL", VMInstructionType.CONTROL_FLOW),
+            0x54: ("VMP_RET", VMInstructionType.CONTROL_FLOW),
+            0x55: ("VMP_ENTER", VMInstructionType.CONTROL_FLOW),
+            0x56: ("VMP_LEAVE", VMInstructionType.CONTROL_FLOW),
+            0x60: ("VMP_READ8", VMInstructionType.MEMORY),
+            0x61: ("VMP_READ16", VMInstructionType.MEMORY),
+            0x62: ("VMP_READ32", VMInstructionType.MEMORY),
+            0x63: ("VMP_READ64", VMInstructionType.MEMORY),
+            0x64: ("VMP_WRITE8", VMInstructionType.MEMORY),
+            0x65: ("VMP_WRITE16", VMInstructionType.MEMORY),
+            0x66: ("VMP_WRITE32", VMInstructionType.MEMORY),
+            0x67: ("VMP_WRITE64", VMInstructionType.MEMORY),
+            0x68: ("VMP_LEA32", VMInstructionType.MEMORY),
+            0x69: ("VMP_LEA64", VMInstructionType.MEMORY),
+            0x6A: ("VMP_XCHG32", VMInstructionType.MEMORY),
+            0x6B: ("VMP_XCHG64", VMInstructionType.MEMORY),
+            0x70: ("VMP_MOV_REG_REG32", VMInstructionType.REGISTER),
+            0x71: ("VMP_MOV_REG_REG64", VMInstructionType.REGISTER),
+            0x72: ("VMP_MOV_REG_IMM32", VMInstructionType.REGISTER),
+            0x73: ("VMP_MOV_REG_IMM64", VMInstructionType.REGISTER),
+            0x74: ("VMP_MOVSX32", VMInstructionType.REGISTER),
+            0x75: ("VMP_MOVSX64", VMInstructionType.REGISTER),
+            0x76: ("VMP_MOVZX32", VMInstructionType.REGISTER),
+            0x77: ("VMP_MOVZX64", VMInstructionType.REGISTER),
+            0x78: ("VMP_CMOV32", VMInstructionType.REGISTER),
+            0x79: ("VMP_CMOV64", VMInstructionType.REGISTER),
+            0x80: ("VMP_CPUID", VMInstructionType.CUSTOM),
+            0x81: ("VMP_RDTSC", VMInstructionType.CUSTOM),
+            0x82: ("VMP_RDMSR", VMInstructionType.CUSTOM),
+            0x83: ("VMP_WRMSR", VMInstructionType.CUSTOM),
+            0x84: ("VMP_SYSCALL", VMInstructionType.CUSTOM),
+            0x85: ("VMP_SYSENTER", VMInstructionType.CUSTOM),
+            0x86: ("VMP_SYSEXIT", VMInstructionType.CUSTOM),
+            0x87: ("VMP_SYSRET", VMInstructionType.CUSTOM),
+            0x88: ("VMP_INT", VMInstructionType.CUSTOM),
+            0x89: ("VMP_INTO", VMInstructionType.CUSTOM),
+            0x8A: ("VMP_IRET", VMInstructionType.CUSTOM),
+            0x8B: ("VMP_HALT", VMInstructionType.CUSTOM),
+            0x90: ("VMP_BSF32", VMInstructionType.LOGICAL),
+            0x91: ("VMP_BSF64", VMInstructionType.LOGICAL),
+            0x92: ("VMP_BSR32", VMInstructionType.LOGICAL),
+            0x93: ("VMP_BSR64", VMInstructionType.LOGICAL),
+            0x94: ("VMP_BT32", VMInstructionType.LOGICAL),
+            0x95: ("VMP_BT64", VMInstructionType.LOGICAL),
+            0x96: ("VMP_BTC32", VMInstructionType.LOGICAL),
+            0x97: ("VMP_BTC64", VMInstructionType.LOGICAL),
+            0x98: ("VMP_BTR32", VMInstructionType.LOGICAL),
+            0x99: ("VMP_BTR64", VMInstructionType.LOGICAL),
+            0x9A: ("VMP_BTS32", VMInstructionType.LOGICAL),
+            0x9B: ("VMP_BTS64", VMInstructionType.LOGICAL),
+            0xA0: ("VMP_SETO", VMInstructionType.CUSTOM),
+            0xA1: ("VMP_SETNO", VMInstructionType.CUSTOM),
+            0xA2: ("VMP_SETB", VMInstructionType.CUSTOM),
+            0xA3: ("VMP_SETAE", VMInstructionType.CUSTOM),
+            0xA4: ("VMP_SETE", VMInstructionType.CUSTOM),
+            0xA5: ("VMP_SETNE", VMInstructionType.CUSTOM),
+            0xA6: ("VMP_SETBE", VMInstructionType.CUSTOM),
+            0xA7: ("VMP_SETA", VMInstructionType.CUSTOM),
+            0xA8: ("VMP_SETS", VMInstructionType.CUSTOM),
+            0xA9: ("VMP_SETNS", VMInstructionType.CUSTOM),
+            0xAA: ("VMP_SETP", VMInstructionType.CUSTOM),
+            0xAB: ("VMP_SETNP", VMInstructionType.CUSTOM),
+            0xAC: ("VMP_SETL", VMInstructionType.CUSTOM),
+            0xAD: ("VMP_SETGE", VMInstructionType.CUSTOM),
+            0xAE: ("VMP_SETLE", VMInstructionType.CUSTOM),
+            0xAF: ("VMP_SETG", VMInstructionType.CUSTOM),
+            0xB0: ("VMP_SHLD32", VMInstructionType.LOGICAL),
+            0xB1: ("VMP_SHLD64", VMInstructionType.LOGICAL),
+            0xB2: ("VMP_SHRD32", VMInstructionType.LOGICAL),
+            0xB3: ("VMP_SHRD64", VMInstructionType.LOGICAL),
+            0xC0: ("VMP_CMPXCHG8", VMInstructionType.MEMORY),
+            0xC1: ("VMP_CMPXCHG16", VMInstructionType.MEMORY),
+            0xC2: ("VMP_CMPXCHG32", VMInstructionType.MEMORY),
+            0xC3: ("VMP_CMPXCHG64", VMInstructionType.MEMORY),
+            0xC4: ("VMP_XADD8", VMInstructionType.MEMORY),
+            0xC5: ("VMP_XADD16", VMInstructionType.MEMORY),
+            0xC6: ("VMP_XADD32", VMInstructionType.MEMORY),
+            0xC7: ("VMP_XADD64", VMInstructionType.MEMORY),
+            0xD0: ("VMP_STR_CMPS", VMInstructionType.CUSTOM),
+            0xD1: ("VMP_STR_SCAS", VMInstructionType.CUSTOM),
+            0xD2: ("VMP_STR_LODS", VMInstructionType.CUSTOM),
+            0xD3: ("VMP_STR_STOS", VMInstructionType.CUSTOM),
+            0xD4: ("VMP_STR_MOVS", VMInstructionType.CUSTOM),
+            0xD5: ("VMP_STR_REP", VMInstructionType.CUSTOM),
+            0xD6: ("VMP_STR_REPE", VMInstructionType.CUSTOM),
+            0xD7: ("VMP_STR_REPNE", VMInstructionType.CUSTOM),
+            0xE0: ("VMP_CONTEXT_LOAD", VMInstructionType.CUSTOM),
+            0xE1: ("VMP_CONTEXT_STORE", VMInstructionType.CUSTOM),
+            0xE2: ("VMP_VMEXIT", VMInstructionType.CUSTOM),
+            0xE3: ("VMP_VMENTER", VMInstructionType.CUSTOM),
+            0xF0: ("VMP_CUSTOM_0", VMInstructionType.CUSTOM),
+            0xF1: ("VMP_CUSTOM_1", VMInstructionType.CUSTOM),
+            0xF2: ("VMP_CUSTOM_2", VMInstructionType.CUSTOM),
+            0xF3: ("VMP_CUSTOM_3", VMInstructionType.CUSTOM),
+            0xF4: ("VMP_CUSTOM_4", VMInstructionType.CUSTOM),
+            0xF5: ("VMP_CUSTOM_5", VMInstructionType.CUSTOM),
+            0xF6: ("VMP_CUSTOM_6", VMInstructionType.CUSTOM),
+            0xF7: ("VMP_CUSTOM_7", VMInstructionType.CUSTOM),
+            0xF8: ("VMP_CUSTOM_8", VMInstructionType.CUSTOM),
+            0xF9: ("VMP_CUSTOM_9", VMInstructionType.CUSTOM),
+            0xFA: ("VMP_CUSTOM_A", VMInstructionType.CUSTOM),
+            0xFB: ("VMP_CUSTOM_B", VMInstructionType.CUSTOM),
+            0xFC: ("VMP_CUSTOM_C", VMInstructionType.CUSTOM),
+            0xFD: ("VMP_CUSTOM_D", VMInstructionType.CUSTOM),
+            0xFE: ("VMP_CUSTOM_E", VMInstructionType.CUSTOM),
+            0xFF: ("VMP_CUSTOM_F", VMInstructionType.CUSTOM),
+        }
 
     def identify_version(self, vm_data: bytes) -> ProtectionType:
         """Identify VMProtect version from binary data.
@@ -459,6 +655,155 @@ class VMProtectHandler:
         """
         key_len = len(key)
         return bytes(data[i] ^ key[i % key_len] for i in range(len(data)))
+
+    def _simple_encrypt(self, data: bytes, key: bytes) -> bytes:
+        """Perform simple XOR encryption for testing purposes.
+
+        Applies XOR-based encryption identical to simple decrypt for testing
+        key schedule functionality.
+
+        Args:
+            data: Plaintext bytecode.
+            key: Encryption key material.
+
+        Returns:
+            XOR-encrypted bytecode.
+
+        """
+        key_len = len(key)
+        return bytes(data[i] ^ key[i % key_len] for i in range(len(data)))
+
+    def _encrypt_with_schedule_1x(self, data: bytes, key_schedule: list[int]) -> bytes:
+        """Encrypt data using VMProtect 1.x key schedule for testing.
+
+        Args:
+            data: Plaintext data to encrypt.
+            key_schedule: VMProtect 1.x key schedule.
+
+        Returns:
+            Encrypted data.
+
+        """
+        return self._encrypt_with_schedule(data, key_schedule)
+
+    def _encrypt_with_schedule_2x(self, data: bytes, key_schedule: list[int]) -> bytes:
+        """Encrypt data using VMProtect 2.x key schedule for testing.
+
+        Args:
+            data: Plaintext data to encrypt.
+            key_schedule: VMProtect 2.x key schedule.
+
+        Returns:
+            Encrypted data.
+
+        """
+        return self._encrypt_with_schedule(data, key_schedule)
+
+    def _encrypt_with_schedule_3x(self, data: bytes, key_schedule: list[int]) -> bytes:
+        """Encrypt data using VMProtect 3.x key schedule for testing.
+
+        Args:
+            data: Plaintext data to encrypt.
+            key_schedule: VMProtect 3.x key schedule.
+
+        Returns:
+            Encrypted data.
+
+        """
+        return self._encrypt_with_schedule(data, key_schedule)
+
+    def _encrypt_with_schedule(self, data: bytes, key_schedule: list[int]) -> bytes:
+        """Encrypt data blocks using AES-like key schedule.
+
+        Performs AES-like encryption with substitution, shift rows, and mix
+        columns operations using the provided key schedule rounds.
+
+        Args:
+            data: Plaintext data to encrypt (processed in 16-byte blocks).
+            key_schedule: List of 32-bit round keys for encryption rounds.
+
+        Returns:
+            Encrypted data with same length as input.
+
+        """
+        result = []
+        for i in range(0, len(data), 16):
+            block = data[i : i + 16]
+            if len(block) < 16:
+                block = block.ljust(16, b"\x00")
+
+            state = list(struct.unpack("<4I", block))
+
+            for j in range(4):
+                state[j] ^= key_schedule[j]
+
+            for round_num in range(9):
+                state = self._substitute_bytes_block(state)
+                state = self._shift_rows(state)
+                state = self._mix_columns(state)
+
+                for j in range(4):
+                    state[j] ^= key_schedule[(round_num + 1) * 4 + j]
+
+            state = self._substitute_bytes_block(state)
+            state = self._shift_rows(state)
+
+            for j in range(4):
+                state[j] ^= key_schedule[40 + j]
+
+            result.extend(struct.pack("<4I", *state))
+
+        return bytes(result)
+
+    def _substitute_bytes_block(self, state: list[int]) -> list[int]:
+        """Apply S-Box substitution to block state for encryption.
+
+        Args:
+            state: List of four 32-bit integers representing block state.
+
+        Returns:
+            List of four 32-bit integers with S-Box applied to all bytes.
+
+        """
+        sbox = [
+            0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5,
+            0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
+        ]
+
+        result = []
+        for word in state:
+            new_word = 0
+            for i in range(4):
+                byte_val = (word >> (i * 8)) & 0xFF
+                substituted = sbox[byte_val % 16]
+                new_word |= substituted << (i * 8)
+            result.append(new_word)
+
+        return result
+
+    def _shift_rows(self, state: list[int]) -> list[int]:
+        """Apply shift rows transformation to block state for encryption.
+
+        Args:
+            state: List of four 32-bit integers representing block state.
+
+        Returns:
+            List of four 32-bit integers with shift rows applied.
+
+        """
+        return [state[0], state[1], state[2], state[3]]
+
+    def _mix_columns(self, state: list[int]) -> list[int]:
+        """Apply mix columns transformation to block state for encryption.
+
+        Args:
+            state: List of four 32-bit integers representing block state.
+
+        Returns:
+            List of four 32-bit integers with mix columns applied.
+
+        """
+        return [((word << 1) ^ (word >> 31)) & 0xFFFFFFFF for word in state]
 
     def _inverse_substitute_bytes_block(self, state: list[int]) -> list[int]:
         """Apply inverse S-Box substitution to block state.

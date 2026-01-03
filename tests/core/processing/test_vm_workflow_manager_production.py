@@ -10,7 +10,7 @@ Copyright (C) 2025 Zachary Flint
 
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Type
 
 import pytest
 
@@ -19,7 +19,7 @@ try:
     VM_WORKFLOW_AVAILABLE = True
 except ImportError:
     VM_WORKFLOW_AVAILABLE = False
-    VMWorkflowManager = None
+    VMWorkflowManager = None  # type: ignore[assignment]
 
 pytestmark = pytest.mark.skipif(
     not VM_WORKFLOW_AVAILABLE,
@@ -29,6 +29,9 @@ pytestmark = pytest.mark.skipif(
 
 class FakeVMProcess:
     """Test double for VM process."""
+
+    returncode: int
+    pid: int
 
     def __init__(self, returncode: int = 0) -> None:
         self.returncode = returncode
@@ -47,6 +50,12 @@ class FakeVMProcess:
 class FakeSnapshot:
     """Test double for QEMUSnapshot."""
 
+    snapshot_id: str
+    vm_name: str
+    ssh_host: str
+    ssh_port: int
+    vm_process: FakeVMProcess
+
     def __init__(
         self,
         snapshot_id: str,
@@ -63,6 +72,12 @@ class FakeSnapshot:
 
 class FakeExecutionResult:
     """Test double for ExecutionResult."""
+
+    success: bool
+    output: str
+    errors: str
+    exit_code: int
+    error: str
 
     def __init__(
         self,
@@ -82,6 +97,9 @@ class FakeExecutionResult:
 class FakeSSHClient:
     """Test double for SSH client."""
 
+    should_fail: bool
+    sftp: "FakeSFTPClient"
+
     def __init__(self, should_fail: bool = False) -> None:
         self.should_fail = should_fail
         self.sftp = FakeSFTPClient(should_fail)
@@ -93,10 +111,14 @@ class FakeSSHClient:
 class FakeSFTPClient:
     """Test double for SFTP client."""
 
+    should_fail: bool
+    uploaded_files: dict[str, str]
+    permissions: dict[str, int]
+
     def __init__(self, should_fail: bool = False) -> None:
         self.should_fail = should_fail
-        self.uploaded_files: dict[str, str] = {}
-        self.permissions: dict[str, int] = {}
+        self.uploaded_files = {}
+        self.permissions = {}
 
     def mkdir(self, path: str) -> None:
         if self.should_fail:
@@ -117,12 +139,24 @@ class FakeSFTPClient:
 class FakeQEMUManager:
     """Test double for QEMUManager."""
 
+    snapshots: dict[str, FakeSnapshot]
+    create_snapshot_calls: list[tuple[str, str]]
+    test_script_calls: list[tuple[str, str]]
+    download_calls: list[tuple[FakeSnapshot, str, str]]
+    cleanup_calls: list[str]
+    ssh_client: FakeSSHClient
+    should_fail_create_snapshot: bool
+    should_fail_test_script: bool
+    should_fail_download: bool
+    should_return_none_snapshot: bool
+    test_script_result: FakeExecutionResult
+
     def __init__(self) -> None:
-        self.snapshots: dict[str, FakeSnapshot] = {}
-        self.create_snapshot_calls: list[tuple[str, str]] = []
-        self.test_script_calls: list[tuple[str, str]] = []
-        self.download_calls: list[tuple[FakeSnapshot, str, str]] = []
-        self.cleanup_calls: list[str] = []
+        self.snapshots = {}
+        self.create_snapshot_calls = []
+        self.test_script_calls = []
+        self.download_calls = []
+        self.cleanup_calls = []
         self.ssh_client = FakeSSHClient()
 
         self.should_fail_create_snapshot = False
@@ -193,7 +227,7 @@ class FakeQApplication:
     @classmethod
     def instance(cls) -> "FakeQApplication":
         if cls._instance is None:
-            cls._instance = FakeQApplication()
+            cls._instance = cls()
         return cls._instance
 
 
@@ -208,7 +242,7 @@ class FakeQFileDialog:
         parent: Any,
         caption: str,
         directory: str,
-        filter: str,
+        filter: str,  # noqa: A002
     ) -> tuple[str, str]:
         if cls._saved_file_name is None:
             return ("", "")
@@ -218,10 +252,14 @@ class FakeQFileDialog:
 class FakeLogger:
     """Test double for logger."""
 
+    info_calls: list[tuple[Any, ...]]
+    error_calls: list[tuple[Any, ...]]
+    exception_calls: list[tuple[Any, ...]]
+
     def __init__(self) -> None:
-        self.info_calls: list[tuple[str, ...]] = []
-        self.error_calls: list[tuple[str, ...]] = []
-        self.exception_calls: list[tuple[str, ...]] = []
+        self.info_calls = []
+        self.error_calls = []
+        self.exception_calls = []
 
     def info(self, message: str, *args: Any) -> None:
         self.info_calls.append((message, *args))
@@ -250,7 +288,7 @@ def workflow_manager_with_fakes(
     fake_qemu_manager: FakeQEMUManager,
     fake_logger: FakeLogger,
     monkeypatch: pytest.MonkeyPatch,
-) -> VMWorkflowManager:
+) -> VMWorkflowManager:  # type: ignore[name-defined]
     """Provide VMWorkflowManager with injected test doubles."""
     FakeQApplication._instance = FakeQApplication()
     FakeQFileDialog._saved_file_name = None
@@ -264,9 +302,9 @@ def workflow_manager_with_fakes(
         FakeQFileDialog,
     )
 
-    manager = VMWorkflowManager()
-    manager.qemu_manager = fake_qemu_manager
-    manager.logger = fake_logger
+    manager: VMWorkflowManager = VMWorkflowManager()  # type: ignore[assignment]
+    manager.qemu_manager = fake_qemu_manager  # type: ignore[attr-defined]
+    manager.logger = fake_logger  # type: ignore[attr-defined]
     return manager
 
 
@@ -282,7 +320,7 @@ class TestVMWorkflowManagerInitialization:
             "intellicrack.core.processing.vm_workflow_manager.QEMUManager",
             FakeQEMUManager,
         )
-        manager = VMWorkflowManager()
+        manager: VMWorkflowManager = VMWorkflowManager()  # type: ignore[assignment]
 
         assert manager is not None
         assert hasattr(manager, "qemu_manager")
@@ -297,7 +335,7 @@ class TestVMWorkflowManagerInitialization:
             "intellicrack.core.processing.vm_workflow_manager.QEMUManager",
             FakeQEMUManager,
         )
-        manager = VMWorkflowManager()
+        manager: VMWorkflowManager = VMWorkflowManager()  # type: ignore[assignment]
 
         assert manager.qemu_manager is not None
         assert isinstance(manager.qemu_manager, FakeQEMUManager)

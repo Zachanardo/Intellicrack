@@ -11,7 +11,7 @@ effective software protection analysis and licensing crack development.
 import struct
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -20,14 +20,17 @@ try:
     PEFILE_AVAILABLE = True
 except ImportError:
     PEFILE_AVAILABLE = False
-    pefile = None
+    pefile = None  # type: ignore[assignment]
 
 try:
     import lief
     LIEF_AVAILABLE = True
 except ImportError:
     LIEF_AVAILABLE = False
-    lief = None
+    lief = None  # type: ignore[assignment]
+
+if TYPE_CHECKING:
+    import pefile as pefile_module
 
 from intellicrack.core.analysis.ghidra_advanced_analyzer import (
     DebugSymbolInfo,
@@ -145,7 +148,7 @@ def sample_pe_with_debug(temp_workspace: Path, sample_pe_binary: Path) -> Path:
     pe_path = temp_workspace / "test_with_debug.exe"
     shutil.copy(sample_pe_binary, pe_path)
 
-    pe = pefile.PE(str(pe_path))
+    pe: pefile_module.PE = pefile.PE(str(pe_path))  # type: ignore[attr-defined,union-attr]
 
     debug_data = bytearray(b"RSDS")
     debug_data.extend(b"\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10")

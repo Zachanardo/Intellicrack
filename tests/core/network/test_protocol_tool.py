@@ -4,19 +4,11 @@
 Production-ready testing of protocol manipulation and analysis capabilities.
 """
 
-from typing import Any
 from __future__ import annotations
 
 import contextlib
-import json
-import os
-import socket
-import ssl
-import struct
-import sys
-import threading
 import time
-from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -24,14 +16,16 @@ import pytest
 # Add project root to Python path
 
 try:
-    from PyQt6.QtCore import QTimer, pyqtSignal
-    from PyQt6.QtTest import QTest
     from PyQt6.QtWidgets import QApplication
     PYQT_AVAILABLE = True
 except ImportError:
     PYQT_AVAILABLE = False
 
 from tests.framework.real_world_testing_framework import RealWorldTestingFramework
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 # Vulnerability thresholds
@@ -74,19 +68,19 @@ class RealApplicationSimulator:
         self.security_assessor = RealSecurityAssessmentSimulator()
         self.network_interceptor = RealNetworkInterceptorSimulator()
 
-    def get_config(self, key: str, default=None):
+    def get_config(self, key: str, default: Any = None) -> Any:
         """Get configuration value with production-ready defaults."""
         return self.config.get(key, default)
 
-    def emit_signal(self, signal_name: str, *args):
+    def emit_signal(self, signal_name: str, *args: Any) -> bool:
         """Emit application-level signals for component coordination."""
         return self.signals_manager.emit_signal(signal_name, *args)
 
-    def get_protocol_analyzer(self):
+    def get_protocol_analyzer(self) -> RealProtocolAnalyzer:
         """Get protocol analyzer instance for testing."""
         return self.protocol_analyzer
 
-    def get_security_assessor(self):
+    def get_security_assessor(self) -> RealSecurityAssessmentSimulator:
         """Get security assessor for vulnerability testing."""
         return self.security_assessor
 
@@ -96,10 +90,10 @@ class RealSignalsManager:
 
     def __init__(self) -> None:
         """Initialize signals manager with real capabilities."""
-        self.signals = {}
-        self.handlers = {}
+        self.signals: dict[str, Any] = {}
+        self.handlers: dict[str, list[Callable[..., Any]]] = {}
 
-    def emit_signal(self, signal_name: str, *args):
+    def emit_signal(self, signal_name: str, *args: Any) -> bool:
         """Emit signal with proper handler coordination."""
         if signal_name in self.handlers:
             for handler in self.handlers[signal_name]:
@@ -107,7 +101,7 @@ class RealSignalsManager:
                     handler(*args)
         return True
 
-    def connect_handler(self, signal_name: str, handler):
+    def connect_handler(self, signal_name: str, handler: Callable[..., Any]) -> None:
         """Connect signal handler for testing."""
         if signal_name not in self.handlers:
             self.handlers[signal_name] = []
@@ -119,16 +113,16 @@ class RealProtocolAnalyzer:
 
     def __init__(self) -> None:
         """Initialize protocol analyzer with comprehensive capabilities."""
-        self.supported_protocols = [
+        self.supported_protocols: list[str] = [
             'HTTP', 'HTTPS', 'FTP', 'SSH', 'SMTP', 'DNS', 'DHCP', 'SNMP',
             'TCP', 'UDP', 'ICMP', 'TLS', 'SSL', 'IMAP', 'POP3'
         ]
         self.vulnerability_database = RealVulnerabilityDatabase()
         self.payload_generator = RealPayloadGenerator()
         self.traffic_interceptor = RealTrafficInterceptor()
-        self.analysis_results = {}
+        self.analysis_results: dict[str, Any] = {}
 
-    def analyze_protocol(self, protocol: str, target: str, options: dict | None = None) -> dict:
+    def analyze_protocol(self, protocol: str, target: str, options: dict[str, Any] | None = None) -> dict[str, Any]:
         """Perform comprehensive protocol analysis with real capabilities."""
         options = options or {}
 
@@ -240,9 +234,9 @@ VULNERABILITIES IDENTIFIED:
 
         return report
 
-    def batch_analyze_protocols(self, protocols: list, targets: list, concurrent: int = 5) -> dict:
+    def batch_analyze_protocols(self, protocols: list[str], targets: list[str], concurrent: int = 5) -> dict[str, Any]:
         """Perform batch analysis across multiple protocols and targets."""
-        batch_results = {
+        batch_results: dict[str, Any] = {
             'total_protocols': len(protocols),
             'total_targets': len(targets),
             'concurrent_threads': concurrent,
@@ -295,11 +289,11 @@ class RealVulnerabilityDatabase:
             ]
         }
 
-    def lookup_vulnerabilities(self, protocol: str) -> list:
+    def lookup_vulnerabilities(self, protocol: str) -> list[dict[str, Any]]:
         """Look up vulnerabilities for specific protocol."""
         return self.vulnerabilities.get(protocol.upper(), [])
 
-    def get_vulnerability_details(self, vuln_id: str) -> dict:
+    def get_vulnerability_details(self, vuln_id: str) -> dict[str, Any]:
         """Get detailed vulnerability information."""
         for protocol_vulns in self.vulnerabilities.values():
             for vuln in protocol_vulns:
@@ -335,7 +329,7 @@ class RealPayloadGenerator:
             ]
         }
 
-    def generate_payload(self, attack_type: str, target_protocol: str, customization: dict | None = None) -> dict:
+    def generate_payload(self, attack_type: str, target_protocol: str, customization: dict[str, Any] | None = None) -> dict[str, Any]:
         """Generate protocol-specific exploitation payload."""
         customization = customization or {}
 
@@ -380,12 +374,12 @@ class RealTrafficInterceptor:
 
     def __init__(self) -> None:
         """Initialize traffic interceptor with real capabilities."""
-        self.is_intercepting = False
-        self.captured_traffic = []
-        self.protocols_detected = set()
-        self.real_time_analysis = True
+        self.is_intercepting: bool = False
+        self.captured_traffic: list[dict[str, Any]] = []
+        self.protocols_detected: set[str] = set()
+        self.real_time_analysis: bool = True
 
-    def start_interception(self, interface: str = 'eth0', protocols: list | None = None) -> dict:
+    def start_interception(self, interface: str = 'eth0', protocols: list[str] | None = None) -> dict[str, Any]:
         """Start network traffic interception with real capabilities."""
         protocols = protocols or ['ALL']
 
@@ -428,7 +422,7 @@ class RealTrafficInterceptor:
 
         return intercepted_data
 
-    def stop_interception(self) -> dict:
+    def stop_interception(self) -> dict[str, Any]:
         """Stop traffic interception and return analysis summary."""
         self.is_intercepting = False
 
@@ -450,39 +444,42 @@ class RealSecurityAssessmentSimulator:
 
     def __init__(self) -> None:
         """Initialize security assessment simulator with comprehensive capabilities."""
-        self.assessment_types = [
+        self.assessment_types: list[str] = [
             'vulnerability_scanning', 'penetration_testing', 'protocol_analysis',
             'exploitation_verification', 'bypass_testing', 'fuzzing_analysis'
         ]
-        self.assessment_results = {}
+        self.assessment_results: dict[str, Any] = {}
 
-    def perform_security_assessment(self, targets: list, assessment_type: str, options: dict | None = None) -> dict:
+    def perform_security_assessment(self, targets: list[str], assessment_type: str, options: dict[str, Any] | None = None) -> dict[str, Any]:
         """Perform comprehensive security assessment."""
         options = options or {}
 
         assessment_id = f"assessment_{int(time.time())}"
 
-        assessment_result = {
+        findings: dict[str, list[str]] = {
+            'critical': [],
+            'high': [],
+            'medium': [],
+            'low': [],
+            'informational': []
+        }
+        exploitation_results: dict[str, dict[str, str]] = {}
+
+        assessment_result: dict[str, Any] = {
             'assessment_id': assessment_id,
             'assessment_type': assessment_type,
             'targets': targets,
             'options': options,
             'timestamp': time.time(),
-            'findings': {
-                'critical': [],
-                'high': [],
-                'medium': [],
-                'low': [],
-                'informational': []
-            },
-            'exploitation_results': {},
+            'findings': findings,
+            'exploitation_results': exploitation_results,
             'recommendations': []
         }
 
         # Simulate comprehensive security assessment
         for target in targets:
             if assessment_type == 'penetration_testing':
-                assessment_result['exploitation_results'][target] = {
+                exploitation_results[target] = {
                     'initial_access': 'Successful via web application vulnerability',
                     'privilege_escalation': 'Local admin privileges obtained',
                     'lateral_movement': 'Network reconnaissance completed',
@@ -490,17 +487,17 @@ class RealSecurityAssessmentSimulator:
                 }
 
             elif assessment_type == 'protocol_analysis':
-                assessment_result['findings']['medium'].extend([
+                findings['medium'].extend([
                     f'Weak SSL/TLS configuration on {target}',
                     f'Unencrypted protocol usage detected on {target}'
                 ])
 
             elif assessment_type == 'vulnerability_scanning':
-                assessment_result['findings']['critical'].extend([
+                findings['critical'].extend([
                     f'Remote code execution vulnerability on {target}',
                     f'SQL injection in authentication system on {target}'
                 ])
-                assessment_result['findings']['high'].extend([
+                findings['high'].extend([
                     f'Authentication bypass vulnerability on {target}',
                     f'Privilege escalation vector identified on {target}'
                 ])
@@ -567,46 +564,50 @@ class RealNetworkInterceptorSimulator:
 
     def __init__(self) -> None:
         """Initialize network interceptor with real capabilities."""
-        self.active_sessions = {}
-        self.intercepted_protocols = set()
-        self.bypass_techniques = [
+        self.active_sessions: dict[str, dict[str, Any]] = {}
+        self.intercepted_protocols: set[str] = set()
+        self.bypass_techniques: list[str] = [
             'IP fragmentation', 'Protocol tunneling', 'Encoding evasion',
             'Protocol hopping', 'Steganographic channels', 'Covert timing channels'
         ]
 
-    def start_protocol_bypass(self, target: str, techniques: list, *, protocol_hopping: bool = False) -> dict:
+    def start_protocol_bypass(self, target: str, techniques: list[str], *, protocol_hopping: bool = False) -> dict[str, Any]:
         """Start advanced protocol bypass operation."""
         session_id = f"bypass_{int(time.time())}"
 
-        bypass_result = {
+        bypass_success_rate: int = 0
+        detection_evasion_rate: int = 0
+        covert_channels_established: int = 0
+
+        # Simulate bypass technique effectiveness
+        for technique in techniques:
+            if technique in self.bypass_techniques:
+                bypass_success_rate += 15
+                detection_evasion_rate += 12
+
+        if protocol_hopping:
+            covert_channels_established = 3
+            detection_evasion_rate += 20
+
+        # Cap success rates at 100%
+        bypass_success_rate = min(100, bypass_success_rate)
+        detection_evasion_rate = min(100, detection_evasion_rate)
+
+        bypass_result: dict[str, Any] = {
             'session_id': session_id,
             'target': target,
             'techniques': techniques,
             'protocol_hopping': protocol_hopping,
             'status': 'Active',
-            'bypass_success_rate': 0,
-            'detection_evasion_rate': 0,
-            'covert_channels_established': 0
+            'bypass_success_rate': bypass_success_rate,
+            'detection_evasion_rate': detection_evasion_rate,
+            'covert_channels_established': covert_channels_established
         }
-
-        # Simulate bypass technique effectiveness
-        for technique in techniques:
-            if technique in self.bypass_techniques:
-                bypass_result['bypass_success_rate'] += 15
-                bypass_result['detection_evasion_rate'] += 12
-
-        if protocol_hopping:
-            bypass_result['covert_channels_established'] = 3
-            bypass_result['detection_evasion_rate'] += 20
-
-        # Cap success rates at 100%
-        bypass_result['bypass_success_rate'] = min(100, bypass_result['bypass_success_rate'])
-        bypass_result['detection_evasion_rate'] = min(100, bypass_result['detection_evasion_rate'])
 
         self.active_sessions[session_id] = bypass_result
         return bypass_result
 
-    def get_bypass_metrics(self, session_id: str) -> dict:
+    def get_bypass_metrics(self, session_id: str) -> dict[str, Any]:
         """Get detailed bypass operation metrics."""
         if session_id not in self.active_sessions:
             return {'error': 'Session not found'}
@@ -658,13 +659,13 @@ class TestProtocolToolSignals:
         # Track signal emissions
         signal_received = {'tool_launched': False, 'tool_closed': False, 'description_updated': False}
 
-        def on_tool_launched():
+        def on_tool_launched() -> None:
             signal_received['tool_launched'] = True
 
-        def on_tool_closed():
+        def on_tool_closed() -> None:
             signal_received['tool_closed'] = True
 
-        def on_description_updated(description):
+        def on_description_updated(description: str) -> None:
             signal_received['description_updated'] = True
             assert isinstance(description, str)
             assert len(description) > 0
@@ -693,7 +694,11 @@ class TestProtocolToolWindow:
 
     @pytest.fixture
     def protocol_tool_window(self) -> Any:
-        """Create ProtocolToolWindow instance for testing."""
+        """Create ProtocolToolWindow instance for testing.
+
+        Initializes a real ProtocolToolWindow with a RealApplicationSimulator
+        instance for comprehensive integration testing.
+        """
         if not PYQT_AVAILABLE:
             pytest.skip("PyQt6 not available")
 
@@ -996,10 +1001,7 @@ class TestProtocolToolFunctions:
 
         # Test description update
         new_description = "Advanced protocol exploitation framework - Version 2.0"
-        result = update_protocol_tool_description(new_description)
-
-        # Must successfully update description
-        assert result is True or result is None  # Function may return success status or None
+        update_protocol_tool_description(new_description)
 
 
 class TestProtocolToolIntegration:
@@ -1044,7 +1046,8 @@ username=admin' OR '1'='1&password=anything"""
 
     def test_multi_protocol_security_assessment(self) -> None:
         """Test comprehensive security assessment across multiple protocols."""
-        _framework = RealWorldTestingFramework()
+        framework = RealWorldTestingFramework()
+        assert framework is not None
 
         # Create test environment with multiple protocol services
         test_scenario = {

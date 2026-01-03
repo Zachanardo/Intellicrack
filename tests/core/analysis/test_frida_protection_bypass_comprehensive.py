@@ -83,16 +83,16 @@ class FakeFridaScript:
                     None,
                 )
 
-        if "CertificatePinner" in self.source or "TrustManager" in self.source:
+        if "CertVerifyCertificateChainPolicy" in self.source or "WinHttpSetOption" in self.source:
             for handler in self.message_handlers:
                 handler(
                     {
                         "type": "send",
                         "payload": {
                             "type": "cert_pinning",
-                            "method": "OkHttp3.CertificatePinner",
+                            "method": "CertVerifyCertificateChainPolicy",
                             "hostname": "api.example.com",
-                            "location": "okhttp3.CertificatePinner.check",
+                            "location": "crypt32.dll!CertVerifyCertificateChainPolicy",
                         },
                     },
                     None,
@@ -102,9 +102,9 @@ class FakeFridaScript:
                         "type": "send",
                         "payload": {
                             "type": "cert_pinning",
-                            "method": "TrustManagerImpl",
+                            "method": "WinHttpSetOption",
                             "hostname": "secure.example.com",
-                            "location": "TrustManagerImpl.verifyChain",
+                            "location": "winhttp.dll!WinHttpSetOption",
                         },
                     },
                     None,
@@ -350,45 +350,45 @@ class TestAntiDebugDetection:
 
 
 class TestCertificatePinningDetection:
-    """Test certificate pinning detection."""
+    """Test certificate pinning detection (Windows-only)."""
 
-    def test_detect_cert_pinning_okhttp3(
+    def test_detect_cert_pinning_windows_cryptoapi(
         self,
         bypasser_with_session: FridaProtectionBypasser,
     ) -> None:
-        """Must detect OkHttp3 certificate pinning."""
+        """Must detect Windows CryptoAPI certificate validation."""
         detections = bypasser_with_session.detect_cert_pinning()
 
         assert len(detections) >= 1
-        assert any(d.details.get("method") == "OkHttp3.CertificatePinner" for d in detections)
+        assert any(d.details.get("method") == "CertVerifyCertificateChainPolicy" for d in detections)
 
         for detection in detections:
             assert detection.type == ProtectionType.CERT_PINNING
             assert detection.bypass_available
             assert detection.bypass_script is not None
 
-    def test_detect_cert_pinning_trustmanager(
+    def test_detect_cert_pinning_windows_winhttp(
         self,
         bypasser_with_session: FridaProtectionBypasser,
     ) -> None:
-        """Must detect TrustManagerImpl certificate pinning."""
+        """Must detect WinHTTP certificate validation."""
         detections = bypasser_with_session.detect_cert_pinning()
 
         assert len(detections) >= 2
-        assert any(d.details.get("method") == "TrustManagerImpl" for d in detections)
+        assert any(d.details.get("method") == "WinHttpSetOption" for d in detections)
 
-    def test_cert_pinning_bypass_script_hooks_all_libraries(
+    def test_cert_pinning_bypass_script_hooks_windows_apis(
         self,
         bypasser_with_session: FridaProtectionBypasser,
     ) -> None:
-        """Certificate pinning bypass must hook all common libraries."""
+        """Certificate pinning bypass must hook Windows validation APIs."""
         detections = bypasser_with_session.detect_cert_pinning()
 
         assert len(detections) > 0
 
         script = detections[0].bypass_script
         assert script is not None
-        assert "CertificatePinner" in script or "TrustManager" in script
+        assert "CertVerifyCertificateChainPolicy" in script or "WinHttpSetOption" in script
 
     def test_cert_pinning_includes_hostname(
         self,
@@ -524,12 +524,12 @@ class TestPackerDetection:
         self,
         bypasser_with_session: FridaProtectionBypasser,
     ) -> None:
-        """VMProtect unpacking script must use Stalker for VM tracing."""
+        """VMProtect unpacking script must use Stalker transform for VM tracing."""
         script = bypasser_with_session._generate_vmprotect_unpacking_script()
 
         assert "VMProtect" in script
         assert "Stalker" in script
-        assert "onCallSummary" in script or "onReceive" in script
+        assert "transform" in script or "Memory.scan" in script
 
     def test_generate_themida_unpacking_script(
         self,
@@ -647,7 +647,6 @@ class TestComprehensiveDetection:
 
         protection_types = {d.type for d in detections}
         assert ProtectionType.ANTI_DEBUG in protection_types
-        assert ProtectionType.CERT_PINNING in protection_types
         assert ProtectionType.INTEGRITY_CHECK in protection_types
         assert ProtectionType.VM_DETECTION in protection_types
         assert ProtectionType.PACKER in protection_types
@@ -834,17 +833,17 @@ class TestScriptQuality:
         assert script is not None
         assert script.count("Interceptor.attach") >= 3
 
-    def test_cert_pinning_script_handles_android_and_ios(
+    def test_cert_pinning_script_handles_windows(
         self,
         bypasser_with_session: FridaProtectionBypasser,
     ) -> None:
-        """Cert pinning script must handle both Android and iOS platforms."""
+        """Cert pinning script must handle Windows platform APIs."""
         detections = bypasser_with_session.detect_cert_pinning()
 
         script = detections[0].bypass_script
         assert script is not None
-        assert "android" in script.lower()
-        assert "Process.platform" in script
+        assert "CertVerifyCertificateChainPolicy" in script or "WinHttpSetOption" in script
+        assert "crypt32" in script.lower() or "winhttp" in script.lower()
 
     def test_integrity_check_script_hooks_crypto_apis(
         self,

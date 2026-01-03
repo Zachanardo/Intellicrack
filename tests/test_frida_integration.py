@@ -40,12 +40,24 @@ from typing import Any, Optional
 
 import pytest
 
+import types
+from typing import TYPE_CHECKING
+
+frida_module: types.ModuleType | None = None
+Script: type | None = None
+ScriptPayloadMessage: type | None = None
+ScriptErrorMessage: type | None = None
+
 try:
-    import frida
+    import frida as frida_import
+    from frida.core import Script as ScriptType, ScriptPayloadMessage as PayloadType, ScriptErrorMessage as ErrorType
+    frida_module = frida_import
+    Script = ScriptType
+    ScriptPayloadMessage = PayloadType
+    ScriptErrorMessage = ErrorType
     FRIDA_AVAILABLE = True
 except ImportError:
     FRIDA_AVAILABLE = False
-    frida = None
 
 from intellicrack.core.frida_manager import FridaManager
 from intellicrack.core.analysis.frida_script_manager import FridaScriptManager, ScriptCategory
@@ -57,15 +69,16 @@ class TestFridaBasicFunctionality:
     @pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida library not installed")
     def test_frida_library_import(self) -> None:
         """Test that Frida library imports successfully."""
-        assert frida is not None
-        assert hasattr(frida, 'get_local_device')
-        assert hasattr(frida, 'attach')
-        assert hasattr(frida, 'spawn')
+        assert frida_module is not None
+        assert hasattr(frida_module, 'get_local_device')
+        assert hasattr(frida_module, 'attach')
+        assert hasattr(frida_module, 'spawn')
 
     @pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida library not installed")
     def test_get_local_device(self) -> None:
         """Test getting local Frida device."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         assert device is not None
         assert device.id == 'local'
         assert device.name is not None
@@ -74,7 +87,8 @@ class TestFridaBasicFunctionality:
     @pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida library not installed")
     def test_enumerate_processes(self) -> None:
         """Test enumerating processes on local device."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         processes = device.enumerate_processes()
 
         assert len(processes) > 0
@@ -88,7 +102,8 @@ class TestFridaBasicFunctionality:
     @pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida library not installed")
     def test_attach_to_own_process(self) -> None:
         """Test attaching Frida to the current Python process."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         current_pid = os.getpid()
 
         session = device.attach(current_pid)
@@ -102,7 +117,8 @@ class TestFridaBasicFunctionality:
     @pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida library not installed")
     def test_create_and_load_script(self) -> None:
         """Test creating and loading a simple Frida script."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         session = device.attach(os.getpid())
 
         script_code = """
@@ -136,7 +152,8 @@ class TestFridaProcessSpawning:
     @pytest.mark.skipif(sys.platform != 'win32', reason="Windows-specific test")
     def test_spawn_and_attach_notepad(self) -> None:
         """Test spawning and attaching to notepad.exe."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         notepad_path = r"C:\Windows\System32\notepad.exe"
 
         if not os.path.exists(notepad_path):
@@ -159,7 +176,8 @@ class TestFridaProcessSpawning:
     @pytest.mark.skipif(sys.platform != 'win32', reason="Windows-specific test")
     def test_enumerate_modules_in_spawned_process(self) -> None:
         """Test enumerating modules in a spawned process."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         notepad_path = r"C:\Windows\System32\notepad.exe"
 
         if not os.path.exists(notepad_path):
@@ -200,7 +218,8 @@ class TestFridaFunctionHooking:
     @pytest.mark.skipif(sys.platform != 'win32', reason="Windows-specific test")
     def test_hook_createfile_in_notepad(self) -> None:
         """Test hooking CreateFileW in notepad.exe."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         notepad_path = r"C:\Windows\System32\notepad.exe"
 
         if not os.path.exists(notepad_path):
@@ -245,7 +264,8 @@ class TestFridaFunctionHooking:
     @pytest.mark.skipif(sys.platform != 'win32', reason="Windows-specific test")
     def test_hook_getprocaddress(self) -> None:
         """Test hooking GetProcAddress to detect dynamic imports."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         notepad_path = r"C:\Windows\System32\notepad.exe"
 
         if not os.path.exists(notepad_path):
@@ -296,7 +316,8 @@ class TestFridaMemoryOperations:
     @pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida library not installed")
     def test_read_process_memory(self) -> None:
         """Test reading memory from current process."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         session = device.attach(os.getpid())
 
         script_code = """
@@ -328,7 +349,8 @@ class TestFridaMemoryOperations:
     @pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida library not installed")
     def test_search_memory_pattern(self) -> None:
         """Test searching for byte patterns in memory."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         session = device.attach(os.getpid())
 
         script_code = """
@@ -368,7 +390,8 @@ class TestFridaMemoryOperations:
     @pytest.mark.skipif(sys.platform != 'win32', reason="Windows-specific test")
     def test_memory_protection_change(self) -> None:
         """Test changing memory protection on a spawned process."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         notepad_path = r"C:\Windows\System32\notepad.exe"
 
         if not os.path.exists(notepad_path):
@@ -445,12 +468,13 @@ class TestIntellicrackFridaManager:
         current_pid = os.getpid()
 
         try:
-            session_id = manager.attach_to_process(current_pid)
-            assert session_id is not None
-            assert session_id in manager.sessions
+            attach_success = manager.attach_to_process(current_pid)
+            assert attach_success is True
 
-            session_data = manager.sessions[session_id]
-            assert 'session' in session_data or 'pid' in session_data
+            assert len(manager.sessions) > 0
+            session_id = list(manager.sessions.keys())[0]
+            session = manager.sessions[session_id]
+            assert session is not None
         except Exception as e:
             pytest.skip(f"Attachment failed: {e}")
         finally:
@@ -472,9 +496,11 @@ class TestIntellicrackFridaManager:
         current_pid = os.getpid()
 
         try:
-            session_id = manager.attach_to_process(current_pid)
+            attach_success = manager.attach_to_process(current_pid)
+            assert attach_success is True
             time.sleep(0.3)
 
+            session_id = list(manager.sessions.keys())[0]
             script_result = manager.load_script(session_id, str(memory_dumper))
 
             assert script_result is not None
@@ -489,47 +515,53 @@ class TestIntellicrackFridaManager:
 class TestIntellicrackFridaScriptManager:
     """Test Intellicrack's FridaScriptManager."""
 
+    @pytest.fixture
+    def scripts_dir(self) -> Path:
+        """Get the Frida scripts directory."""
+        return Path(__file__).parent.parent / "intellicrack" / "scripts" / "frida"
+
     @pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida library not installed")
-    def test_script_manager_initialization(self) -> None:
+    def test_script_manager_initialization(self, scripts_dir: Path) -> None:
         """Test FridaScriptManager initialization."""
-        script_manager = FridaScriptManager()
+        if not scripts_dir.exists():
+            pytest.skip("Scripts directory not found")
+
+        script_manager = FridaScriptManager(scripts_dir)
 
         assert script_manager is not None
-        assert hasattr(script_manager, 'list_scripts')
-        assert hasattr(script_manager, 'get_script')
+        assert hasattr(script_manager, 'get_script_categories')
+        assert hasattr(script_manager, 'get_scripts_by_category')
+        assert hasattr(script_manager, 'get_script_config')
 
     @pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida library not installed")
-    def test_script_manager_list_scripts(self) -> None:
-        """Test listing scripts through ScriptManager."""
-        script_manager = FridaScriptManager()
+    def test_script_manager_get_categories(self, scripts_dir: Path) -> None:
+        """Test getting script categories through ScriptManager."""
+        if not scripts_dir.exists():
+            pytest.skip("Scripts directory not found")
+
+        script_manager = FridaScriptManager(scripts_dir)
 
         try:
-            scripts = script_manager.list_scripts()
-            assert isinstance(scripts, (list, dict))
-
-            if isinstance(scripts, list):
-                assert len(scripts) > 0
-                assert any('bypass' in str(s).lower() or 'hook' in str(s).lower() for s in scripts)
+            categories = script_manager.get_script_categories()
+            assert isinstance(categories, list)
         except Exception as e:
-            pytest.skip(f"Script listing failed: {e}")
+            pytest.skip(f"Script category retrieval failed: {e}")
 
     @pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida library not installed")
-    def test_script_manager_get_script(self) -> None:
-        """Test getting a specific script."""
-        script_manager = FridaScriptManager()
+    def test_script_manager_get_script_config(self, scripts_dir: Path) -> None:
+        """Test getting a specific script config."""
+        if not scripts_dir.exists():
+            pytest.skip("Scripts directory not found")
+
+        script_manager = FridaScriptManager(scripts_dir)
 
         try:
-            scripts = script_manager.list_scripts()
-            if scripts and len(scripts) > 0:
-                first_script = scripts[0] if isinstance(scripts, list) else list(scripts.keys())[0]
-
-                script_content = script_manager.get_script(first_script)
-                assert script_content is not None
-
-                if isinstance(script_content, str):
-                    assert len(script_content) > 0
+            if script_manager.scripts:
+                first_script_name = list(script_manager.scripts.keys())[0]
+                script_config = script_manager.get_script_config(first_script_name)
+                assert script_config is not None
         except Exception as e:
-            pytest.skip(f"Script retrieval failed: {e}")
+            pytest.skip(f"Script config retrieval failed: {e}")
 
 
 class TestFridaLicensingBypass:
@@ -539,7 +571,8 @@ class TestFridaLicensingBypass:
     @pytest.mark.skipif(sys.platform != 'win32', reason="Windows-specific test")
     def test_registry_read_hook_for_license_detection(self) -> None:
         """Test hooking registry reads to detect license key storage."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         notepad_path = r"C:\Windows\System32\notepad.exe"
 
         if not os.path.exists(notepad_path):
@@ -589,7 +622,8 @@ class TestFridaLicensingBypass:
     @pytest.mark.skipif(sys.platform != 'win32', reason="Windows-specific test")
     def test_time_check_bypass_simulation(self) -> None:
         """Test simulating time check bypass by hooking GetSystemTime."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         session = device.attach(os.getpid())
 
         script_code = """
@@ -624,7 +658,8 @@ class TestFridaLicensingBypass:
     @pytest.mark.skipif(sys.platform != 'win32', reason="Windows-specific test")
     def test_network_license_validation_detection(self) -> None:
         """Test detecting network-based license validation by hooking WinHTTP."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         session = device.attach(os.getpid())
 
         script_code = """
@@ -690,7 +725,8 @@ class TestFridaRealWorldScripts:
         assert len(script_content) > 0
         assert 'Interceptor' in script_content or 'Process' in script_content
 
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         session = device.attach(os.getpid())
 
         try:
@@ -716,7 +752,8 @@ class TestFridaRealWorldScripts:
         script_content = registry_monitor_script.read_text(encoding='utf-8')
         assert len(script_content) > 0
 
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         session = device.attach(os.getpid())
 
         try:
@@ -742,7 +779,8 @@ class TestFridaRealWorldScripts:
         script_content = hwid_spoofer_script.read_text(encoding='utf-8')
         assert len(script_content) > 0
 
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         session = device.attach(os.getpid())
 
         try:
@@ -762,13 +800,14 @@ class TestFridaConcurrency:
     @pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida library not installed")
     def test_concurrent_process_attachment(self) -> None:
         """Test attaching to multiple processes concurrently."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         current_pid = os.getpid()
 
         sessions = []
         errors = []
 
-        def attach_process():
+        def attach_process() -> None:
             try:
                 session = device.attach(current_pid)
                 sessions.append(session)
@@ -791,7 +830,8 @@ class TestFridaConcurrency:
     @pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida library not installed")
     def test_multiple_script_loading(self) -> None:
         """Test loading multiple scripts on the same session."""
-        device = frida.get_local_device()
+        assert frida_module is not None
+        device = frida_module.get_local_device()
         session = device.attach(os.getpid())
 
         scripts = []

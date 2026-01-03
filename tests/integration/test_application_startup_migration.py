@@ -25,7 +25,7 @@ import unittest
 import time
 from pathlib import Path
 import shutil
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, cast
 
 from intellicrack.core.config_manager import IntellicrackConfig
 
@@ -111,9 +111,7 @@ class RealApplicationStartupSimulator:
         self.startup_errors = []
 
         try:
-            # Step 1: Initialize configuration
             self.initialization_order.append("ConfigManager")
-            config.load()
             config.upgrade_config()
             self.migration_performed = True
 
@@ -478,7 +476,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
 
         # Initialize central config using real simulator
         config_path = self.config_dir / "central_config.json"
-        config = IntellicrackConfig(config_path=str(config_path))
+        config = IntellicrackConfig()
 
         # Simulate full startup sequence with real functionality
         startup_successful, startup_errors = self.startup_sim.simulate_startup_sequence(config)
@@ -495,12 +493,12 @@ class TestApplicationStartupMigration(unittest.TestCase):
         # Verify migrated data with real checks
         assert config.get("application.name") == "Intellicrack"
 
-        # Check tools migration
-        tools = config.get("tools", {})
+        tools_raw = config.get("tools", {})
+        tools = cast(dict[str, Any], tools_raw) if isinstance(tools_raw, dict) else {}
         assert "ghidra" in tools or config.get("tools.ghidra")
 
-        # Check LLM migration
-        llm_models = config.get("llm_configuration.models", {})
+        llm_models_raw = config.get("llm_configuration.models", {})
+        llm_models = cast(dict[str, Any], llm_models_raw) if isinstance(llm_models_raw, dict) else {}
         assert "gpt-4" in llm_models or "claude-3" in llm_models
 
         # Check VM framework migration
@@ -514,7 +512,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
         assert config_path.exists()
 
         # Test reload with real validation - constructor already loads config
-        config2 = IntellicrackConfig(config_path=str(config_path))
+        config2 = IntellicrackConfig()
         assert config2.get("application.name") == "Intellicrack"
 
     def test_startup_with_partial_legacy_configs(self) -> None:
@@ -528,7 +526,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
 
         # Initialize central config with real functionality
         config_path = self.config_dir / "central_config.json"
-        config = IntellicrackConfig(config_path=str(config_path))
+        config = IntellicrackConfig()
 
         # Upgrade should handle missing configs gracefully with real processing
         config.upgrade_config()
@@ -556,7 +554,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
 
         # Initialize central config with real error handling
         config_path = self.config_dir / "central_config.json"
-        config = IntellicrackConfig(config_path=str(config_path))
+        config = IntellicrackConfig()
 
         # Should not crash, should use defaults with real processing
         config.upgrade_config()
@@ -577,7 +575,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
 
         # Initialize central config
         config_path = self.config_dir / "central_config.json"
-        config = IntellicrackConfig(config_path=str(config_path))
+        config = IntellicrackConfig()
 
         # Should create default configuration
         assert config.get("application.name") == "Intellicrack"
@@ -620,13 +618,13 @@ class TestApplicationStartupMigration(unittest.TestCase):
 
         # Initialize and migrate with real functionality
         config_path = self.config_dir / "central_config.json"
-        config = IntellicrackConfig(config_path=str(config_path))
+        config = IntellicrackConfig()
         config.upgrade_config()
 
-        # Verify user customizations were preserved with real validation
         assert config.get("qemu_testing.default_preference") == "never"
-        trusted = config.get("qemu_testing.trusted_binaries", [])
-        assert len(trusted) >= 1  # Should have at least one trusted binary
+        trusted_raw = config.get("qemu_testing.trusted_binaries", [])
+        trusted: list[Any] = trusted_raw if isinstance(trusted_raw, list) else []
+        assert len(trusted) >= 1
 
         assert config.get("ui_preferences.theme") in ["light", "dark"]  # Should have theme set
 
@@ -647,7 +645,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
 
         # Measure startup time with real performance tracking
         config_path = self.config_dir / "central_config.json"
-        config = IntellicrackConfig(config_path=str(config_path))
+        config = IntellicrackConfig()
 
         def startup_func() -> bool:
             config.upgrade_config()
@@ -676,21 +674,21 @@ class TestApplicationStartupMigration(unittest.TestCase):
         config_path = self.config_dir / "central_config.json"
 
         # First startup - migration happens with real processing
-        config1 = IntellicrackConfig(config_path=str(config_path))
+        config1 = IntellicrackConfig()
         config1.upgrade_config()
         config1.set("session1_key", "session1_value")
         config1.save()
         del config1
 
         # Second startup - no migration needed (config loads in constructor)
-        config2 = IntellicrackConfig(config_path=str(config_path))
+        config2 = IntellicrackConfig()
         assert config2.get("session1_key") == "session1_value"
         config2.set("session2_key", "session2_value")
         config2.save()
         del config2
 
         # Third startup - verify all data persisted (config loads in constructor)
-        config3 = IntellicrackConfig(config_path=str(config_path))
+        config3 = IntellicrackConfig()
         assert config3.get("session1_key") == "session1_value"
         assert config3.get("session2_key") == "session2_value"
 
@@ -712,7 +710,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
 
         # Initialize config
         config_path = self.config_dir / "central_config.json"
-        config = IntellicrackConfig(config_path=str(config_path))
+        config = IntellicrackConfig()
 
         # Test environment integration with real functionality
         env_vars = self.env_manager.read_env_file()
@@ -720,8 +718,8 @@ class TestApplicationStartupMigration(unittest.TestCase):
         # Simulate environment loading with real processing
         config.set("environment.variables", env_vars)
 
-        # Verify environment variables are accessible
-        config_env_vars = config.get("environment.variables", {})
+        config_env_vars_raw = config.get("environment.variables", {})
+        config_env_vars = cast(dict[str, Any], config_env_vars_raw) if isinstance(config_env_vars_raw, dict) else {}
         assert "ANTHROPIC_API_KEY" in config_env_vars or "OPENAI_API_KEY" in config_env_vars
 
         # Verify environment manager functionality
@@ -740,7 +738,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
 
         # Initialize central config
         config_path = self.config_dir / "central_config.json"
-        config = IntellicrackConfig(config_path=str(config_path))
+        config = IntellicrackConfig()
 
         # Create real component managers to test initialization
         font_mgr = RealComponentManagerSimulator(self.startup_sim, "FontManager")

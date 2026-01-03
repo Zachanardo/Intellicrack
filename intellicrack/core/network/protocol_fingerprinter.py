@@ -59,7 +59,7 @@ class ProtocolFingerprinter:
         logger.debug("Entering ProtocolFingerprinter.__init__ with config=%s", config is not None)
         self.logger = logging.getLogger(__name__)
 
-        self.config = {
+        self.config: dict[str, Any] = {
             "min_confidence": 0.7,
             "max_fingerprints": 100,
             "learning_mode": True,

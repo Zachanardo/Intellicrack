@@ -11,7 +11,7 @@ import hashlib
 import json
 import time
 import uuid
-from typing import Any
+from typing import Any, Sized, cast
 
 import pytest
 
@@ -1346,7 +1346,7 @@ class TestAutodeskProductDefinitions:
         """All product definitions include feature lists."""
         for product_key, product_data in parser.AUTODESK_PRODUCTS.items():
             assert "features" in product_data
-            assert len(product_data["features"]) > 0
+            assert len(cast(Sized, product_data["features"])) > 0
 
     def test_all_products_have_required_fields(self, parser: AutodeskLicensingParser) -> None:
         """All product definitions contain required metadata fields."""

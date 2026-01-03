@@ -10,7 +10,7 @@ import hashlib
 import struct
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -19,6 +19,7 @@ from intellicrack.core.analysis.firmware_analyzer import (
     AdvancedFirmwareAnalyzer,
     FirmwareSignature,
     FirmwareType,
+    SecurityFinding,
     SecurityFindingType,
 )
 
@@ -325,15 +326,19 @@ class TestSecurityAnalysis:
 
         assert result is not None
 
-        if credential_findings := [
-            f
-            for f in result.security_findings
-            if f.finding_type
-            in [
-                SecurityFindingType.HARDCODED_CREDENTIALS,
-                SecurityFindingType.DEFAULT_CREDENTIALS,
-            ]
-        ]:
+        credential_findings = cast(
+            list[SecurityFinding],
+            [
+                f
+                for f in result.security_findings
+                if f.finding_type
+                in [
+                    SecurityFindingType.HARDCODED_CREDENTIALS,
+                    SecurityFindingType.DEFAULT_CREDENTIALS,
+                ]
+            ],
+        )
+        if credential_findings:
             assert any(f.severity in ["critical", "high"] for f in credential_findings)
 
     def test_detect_private_keys(self, vulnerable_firmware: Path) -> None:
@@ -343,11 +348,15 @@ class TestSecurityAnalysis:
 
         assert result is not None
 
-        if key_findings := [
-            f
-            for f in result.security_findings
-            if f.finding_type == SecurityFindingType.PRIVATE_KEY
-        ]:
+        key_findings = cast(
+            list[SecurityFinding],
+            [
+                f
+                for f in result.security_findings
+                if f.finding_type == SecurityFindingType.PRIVATE_KEY
+            ],
+        )
+        if key_findings:
             assert any("PRIVATE KEY" in f.evidence for f in key_findings)
 
     def test_security_scan_on_basic_firmware(self, basic_firmware: Path) -> None:

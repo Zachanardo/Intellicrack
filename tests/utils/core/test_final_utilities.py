@@ -22,8 +22,9 @@ import sqlite3
 import subprocess
 import tempfile
 import time
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import pytest
 
@@ -69,7 +70,7 @@ from intellicrack.utils.core.final_utilities import (
 
 
 @pytest.fixture
-def temp_dir() -> Path:
+def temp_dir() -> Generator[Path, None, None]:
     """Create temporary directory for test operations."""
     temp_path = Path(tempfile.mkdtemp(prefix="test_final_utils_"))
     yield temp_path
@@ -356,7 +357,7 @@ class TestCacheOperations:
     def test_cache_analysis_results_creates_directory(self, temp_dir: Path) -> None:
         """Cache analysis results creates directory if missing."""
         cache_dir = str(temp_dir / "new_cache_dir")
-        results = {"test": "data"}
+        results: dict[str, object] = {"test": "data"}
 
         success = cache_analysis_results("key", results, cache_dir)
 
@@ -461,7 +462,8 @@ class TestProcessSandboxing:
         assert isinstance(result, dict)
         assert result["success"] is False
         if "error" in result:
-            assert "timed out" in result["error"].lower()
+            error_val = result["error"]
+            assert isinstance(error_val, str) and "timed out" in error_val.lower()
 
 
 class TestTextUtilities:
@@ -565,7 +567,7 @@ class TestReportGeneration:
     def test_export_metrics_success(self, temp_dir: Path) -> None:
         """Export metrics writes metrics to file."""
         output_path = str(temp_dir / "metrics.json")
-        metrics = {
+        metrics: dict[str, object] = {
             "total_scans": 100,
             "vulnerabilities_found": 15,
             "average_scan_time": 5.2,
@@ -581,7 +583,7 @@ class TestReportGeneration:
 
     def test_submit_report_local_storage(self, temp_dir: Path) -> None:
         """Report submission saves to local storage."""
-        report_data = {
+        report_data: dict[str, object] = {
             "type": "analysis_report",
             "findings": ["finding1", "finding2"],
             "severity": "high",
@@ -595,7 +597,7 @@ class TestReportGeneration:
 
     def test_submit_report_with_endpoint(self) -> None:
         """Report submission handles remote endpoint."""
-        report_data = {"test": "data"}
+        report_data: dict[str, object] = {"test": "data"}
 
         result = submit_report(report_data, endpoint="https://example.com/reports")
 
@@ -608,7 +610,7 @@ class TestDatasetOperations:
 
     def test_create_dataset_basic(self) -> None:
         """Dataset creation produces valid dataset."""
-        data = [
+        data: list[dict[str, object]] = [
             {"id": 1, "value": "test1"},
             {"id": 2, "value": "test2"},
         ]
@@ -623,7 +625,7 @@ class TestDatasetOperations:
 
     def test_create_dataset_with_format(self) -> None:
         """Dataset creation respects format parameter."""
-        data = [{"test": "data"}]
+        data: list[dict[str, object]] = [{"test": "data"}]
 
         dataset = create_dataset(data, format="csv")
 
@@ -631,8 +633,8 @@ class TestDatasetOperations:
 
     def test_augment_dataset_basic(self) -> None:
         """Dataset augmentation increases dataset size."""
-        data = [{"value": 100}, {"value": 200}]
-        config = {"add_noise": False, "duplicate": False}
+        data: list[dict[str, object]] = [{"value": 100}, {"value": 200}]
+        config: dict[str, object] = {"add_noise": False, "duplicate": False}
 
         result = augment_dataset(data, config)
 
@@ -640,8 +642,8 @@ class TestDatasetOperations:
 
     def test_augment_dataset_with_noise(self) -> None:
         """Dataset augmentation adds noisy samples."""
-        data = [{"value": 100}]
-        config = {"add_noise": True}
+        data: list[dict[str, object]] = [{"value": 100}]
+        config: dict[str, object] = {"add_noise": True}
 
         result = augment_dataset(data, config)
 
@@ -649,8 +651,8 @@ class TestDatasetOperations:
 
     def test_augment_dataset_with_duplication(self) -> None:
         """Dataset augmentation duplicates samples."""
-        data = [{"id": 1}, {"id": 2}]
-        config = {"duplicate": True}
+        data: list[dict[str, object]] = [{"id": 1}, {"id": 2}]
+        config: dict[str, object] = {"duplicate": True}
 
         result = augment_dataset(data, config)
 
@@ -705,7 +707,7 @@ class TestModelOperations:
 
     def test_predict_vulnerabilities_basic(self) -> None:
         """Vulnerability prediction returns predictions."""
-        features = {"has_strcpy": False, "has_printf": False}
+        features: dict[str, object] = {"has_strcpy": False, "has_printf": False}
 
         result = predict_vulnerabilities(features)
 
@@ -716,19 +718,23 @@ class TestModelOperations:
 
     def test_predict_vulnerabilities_with_strcpy(self) -> None:
         """Vulnerability prediction detects strcpy risk."""
-        features = {"has_strcpy": True, "has_printf": False}
+        features: dict[str, object] = {"has_strcpy": True, "has_printf": False}
 
         result = predict_vulnerabilities(features)
 
-        assert result["predictions"]["buffer_overflow"] > 0.3
+        predictions = result["predictions"]
+        assert isinstance(predictions, dict)
+        assert predictions["buffer_overflow"] > 0.3
 
     def test_predict_vulnerabilities_with_printf(self) -> None:
         """Vulnerability prediction detects printf risk."""
-        features = {"has_strcpy": False, "has_printf": True}
+        features: dict[str, object] = {"has_strcpy": False, "has_printf": True}
 
         result = predict_vulnerabilities(features)
 
-        assert result["predictions"]["format_string"] > 0.2
+        predictions = result["predictions"]
+        assert isinstance(predictions, dict)
+        assert predictions["format_string"] > 0.2
 
 
 class TestTrainingOperations:
@@ -877,7 +883,7 @@ class TestPatchValidationDisplay:
 
     def test_display_patch_validation_results_json(self, capsys: pytest.CaptureFixture[str]) -> None:
         """Patch validation display outputs valid JSON."""
-        results = {"success": True, "patches_total": 3}
+        results: dict[str, object] = {"success": True, "patches_total": 3}
 
         display_patch_validation_results(results, display_mode="json")
 
@@ -888,8 +894,8 @@ class TestPatchValidationDisplay:
 
     def test_display_patch_validation_results_empty(self) -> None:
         """Patch validation display handles empty results."""
-        display_patch_validation_results({}, display_mode="console")
-        display_patch_validation_results(None, display_mode="console")
+        empty_results: dict[str, object] = {}
+        display_patch_validation_results(empty_results, display_mode="console")
 
 
 class TestWindowsClipboard:
@@ -969,7 +975,7 @@ class TestRealWorldScenarios:
         assert resource_type == "binary"
 
         cache_dir = str(temp_dir / "cache")
-        results = {
+        results: dict[str, object] = {
             "hash": file_hash,
             "type": resource_type,
             "icon": icon,
@@ -1001,7 +1007,7 @@ class TestRealWorldScenarios:
         assert len(report["recommendations"]) == 2
 
         metrics_path = str(temp_dir / "metrics.json")
-        metrics = {
+        metrics: dict[str, object] = {
             "total_findings": len(findings),
             "high_severity": 1,
             "medium_severity": 1,
@@ -1043,10 +1049,13 @@ class TestPerformance:
 
     def test_dataset_augmentation_performance(self) -> None:
         """Dataset augmentation completes in reasonable time."""
-        dataset = [{"id": i, "value": i * 10} for i in range(1000)]
+        dataset: list[dict[str, object]] = [
+            {"id": i, "value": i * 10} for i in range(1000)
+        ]
+        config: dict[str, object] = {"add_noise": True}
 
         start_time = time.time()
-        augment_dataset(dataset, {"add_noise": True})
+        augment_dataset(dataset, config)
         elapsed = time.time() - start_time
 
         assert elapsed < 2.0

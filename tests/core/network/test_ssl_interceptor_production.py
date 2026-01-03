@@ -139,19 +139,18 @@ class TestSSLInterceptorProduction:
             pytest.skip("mitmproxy not available for testing")
 
         assert interceptor.proxy_process is not None, "Proxy process must be running"
-        initial_pid = interceptor.proxy_process.pid if interceptor.proxy_process else None
+        initial_pid = interceptor.proxy_process.pid
 
         result = interceptor.stop()
 
-        assert result is True, "Stop must succeed"
+        assert result, "Stop must succeed"
         assert interceptor.proxy_process is None, "Proxy process reference must be cleared"
 
-        if initial_pid:
-            try:
-                os.kill(initial_pid, 0)
-                pytest.fail("Process should be terminated")
-            except OSError:
-                pass
+        try:  # type: ignore[unreachable]
+            os.kill(initial_pid, 0)
+            pytest.fail("Process should be terminated")
+        except OSError:
+            pass
 
     def test_add_target_host_functionality(self, interceptor: SSLTLSInterceptor) -> None:
         """Add target host adds new host to interception list."""
@@ -205,7 +204,7 @@ class TestSSLInterceptorProduction:
 
     def test_configure_validates_port_range(self, interceptor: SSLTLSInterceptor) -> None:
         """Configure rejects invalid port numbers."""
-        invalid_configs = [
+        invalid_configs: list[dict[str, Any]] = [
             {"listen_port": 0},
             {"listen_port": -1},
             {"listen_port": 70000},

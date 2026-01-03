@@ -51,7 +51,7 @@ class TestTerminalTabInitialization:
     def terminal_tab(
         self,
         shared_context: dict[str, object],
-        qtbot: object,
+        qtbot: Any,
     ) -> TerminalTab:
         """Create TerminalTab instance."""
         tab = TerminalTab(shared_context)
@@ -92,6 +92,9 @@ class TestTerminalTabInitialization:
         terminal_tab: TerminalTab,
     ) -> None:
         """Terminal tab has correct initial status."""
+        assert terminal_tab.sessions_label is not None
+        assert terminal_tab.status_label is not None
+        assert terminal_tab.cwd_label is not None
         assert "Sessions: 0" in terminal_tab.sessions_label.text() or "Sessions:" in terminal_tab.sessions_label.text()
         assert "Status:" in terminal_tab.status_label.text()
         assert "CWD:" in terminal_tab.cwd_label.text()
@@ -111,7 +114,7 @@ class TestSessionManagement:
     """Test suite for terminal session management."""
 
     @pytest.fixture
-    def terminal_tab(self, qtbot: object) -> TerminalTab:
+    def terminal_tab(self, qtbot: Any) -> TerminalTab:
         """Create TerminalTab instance."""
         tab = TerminalTab()
         qtbot.addWidget(tab)
@@ -122,6 +125,7 @@ class TestSessionManagement:
         terminal_tab: TerminalTab,
     ) -> None:
         """Creating new session adds session to terminal widget."""
+        assert terminal_tab.terminal_widget is not None
         initial_sessions = terminal_tab.terminal_widget.get_all_sessions()
         initial_count = len(initial_sessions)
 
@@ -135,6 +139,7 @@ class TestSessionManagement:
         terminal_tab: TerminalTab,
     ) -> None:
         """Creating new session updates status display."""
+        assert terminal_tab.sessions_label is not None
         initial_text = terminal_tab.sessions_label.text()
 
         terminal_tab.create_new_session()
@@ -145,9 +150,11 @@ class TestSessionManagement:
     def test_session_created_signal_handled(
         self,
         terminal_tab: TerminalTab,
-        qtbot: object,
+        qtbot: Any,
     ) -> None:
         """Session created signal updates status."""
+        assert terminal_tab.sessions_label is not None
+        assert terminal_tab.terminal_widget is not None
         initial_status = terminal_tab.sessions_label.text()
         terminal_tab.terminal_widget.session_created.emit("test_session")
         updated_status = terminal_tab.sessions_label.text()
@@ -156,23 +163,29 @@ class TestSessionManagement:
     def test_session_closed_signal_handled(
         self,
         terminal_tab: TerminalTab,
-        qtbot: object,
+        qtbot: Any,
     ) -> None:
         """Session closed signal updates status."""
+        assert terminal_tab.terminal_widget is not None
+        assert terminal_tab.sessions_label is not None
         terminal_tab.create_new_session()
         initial_count = len(terminal_tab.terminal_widget.get_all_sessions())
 
-        if sessions := terminal_tab.terminal_widget.get_all_sessions():
-            terminal_tab.terminal_widget.session_closed.emit(sessions[0])
+        sessions = terminal_tab.terminal_widget.get_all_sessions()
+        if sessions:
+            session_id = list(sessions.keys())[0] if isinstance(sessions, dict) else sessions[0]
+            terminal_tab.terminal_widget.session_closed.emit(session_id)
             status_text = terminal_tab.sessions_label.text()
             assert "Sessions:" in status_text
 
     def test_active_session_changed_signal_handled(
         self,
         terminal_tab: TerminalTab,
-        qtbot: object,
+        qtbot: Any,
     ) -> None:
         """Active session changed signal updates status."""
+        assert terminal_tab.terminal_widget is not None
+        assert terminal_tab.status_label is not None
         terminal_tab.create_new_session()
 
         terminal_tab.terminal_widget.active_session_changed.emit("test_session")
@@ -184,7 +197,7 @@ class TestTerminalOperations:
     """Test suite for terminal operations."""
 
     @pytest.fixture
-    def terminal_tab(self, qtbot: object) -> TerminalTab:
+    def terminal_tab(self, qtbot: Any) -> TerminalTab:
         """Create TerminalTab instance."""
         tab = TerminalTab()
         qtbot.addWidget(tab)
@@ -196,6 +209,7 @@ class TestTerminalOperations:
         terminal_tab: TerminalTab,
     ) -> None:
         """Clearing terminal clears current session display."""
+        assert terminal_tab.terminal_widget is not None
         session_id, terminal = terminal_tab.terminal_widget.get_active_session()
 
         if terminal:
@@ -209,7 +223,7 @@ class TestTerminalOperations:
 
     def test_clear_terminal_without_session(
         self,
-        qtbot: object,
+        qtbot: Any,
     ) -> None:
         """Clearing terminal without active session does not crash."""
         tab = TerminalTab()
@@ -225,6 +239,8 @@ class TestTerminalOperations:
         terminal_tab: TerminalTab,
     ) -> None:
         """Kill process stops running process in active session."""
+        assert terminal_tab.terminal_widget is not None
+        assert terminal_tab.status_label is not None
         session_id, terminal = terminal_tab.terminal_widget.get_active_session()
 
         if terminal:
@@ -237,6 +253,8 @@ class TestTerminalOperations:
         terminal_tab: TerminalTab,
     ) -> None:
         """Kill process without running process updates status."""
+        assert terminal_tab.terminal_widget is not None
+        assert terminal_tab.status_label is not None
         session_id, terminal = terminal_tab.terminal_widget.get_active_session()
 
         if terminal:
@@ -249,6 +267,8 @@ class TestTerminalOperations:
         terminal_tab: TerminalTab,
     ) -> None:
         """Kill process updates status label."""
+        assert terminal_tab.terminal_widget is not None
+        assert terminal_tab.status_label is not None
         session_id, terminal = terminal_tab.terminal_widget.get_active_session()
 
         if terminal:
@@ -261,7 +281,7 @@ class TestTerminalExport:
     """Test suite for terminal log export functionality."""
 
     @pytest.fixture
-    def terminal_tab(self, qtbot: object) -> TerminalTab:
+    def terminal_tab(self, qtbot: Any) -> TerminalTab:
         """Create TerminalTab instance."""
         tab = TerminalTab()
         qtbot.addWidget(tab)
@@ -274,6 +294,7 @@ class TestTerminalExport:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Exporting terminal log creates file with session output."""
+        assert terminal_tab.terminal_widget is not None
         session_id, terminal = terminal_tab.terminal_widget.get_active_session()
 
         if terminal:
@@ -295,7 +316,7 @@ class TestTerminalExport:
 
     def test_export_without_session(
         self,
-        qtbot: object,
+        qtbot: Any,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Exporting without active session does not crash."""
@@ -314,6 +335,7 @@ class TestTerminalExport:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Export handles I/O errors gracefully."""
+        assert terminal_tab.status_label is not None
         monkeypatch.setattr("intellicrack.ui.tabs.terminal_tab.QFileDialog.getSaveFileName", lambda *args, **kwargs: ("/invalid/path/log.txt", ""))
 
         try:
@@ -329,6 +351,7 @@ class TestTerminalExport:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Export updates status label with filename."""
+        assert terminal_tab.status_label is not None
         export_file = tempfile.mktemp(suffix=".log")
 
         monkeypatch.setattr("intellicrack.ui.tabs.terminal_tab.QFileDialog.getSaveFileName", lambda *args, **kwargs: (export_file, ""))
@@ -344,7 +367,7 @@ class TestStatusUpdates:
     """Test suite for status update functionality."""
 
     @pytest.fixture
-    def terminal_tab(self, qtbot: object) -> TerminalTab:
+    def terminal_tab(self, qtbot: Any) -> TerminalTab:
         """Create TerminalTab instance."""
         tab = TerminalTab()
         qtbot.addWidget(tab)
@@ -355,6 +378,8 @@ class TestStatusUpdates:
         terminal_tab: TerminalTab,
     ) -> None:
         """Update status reflects current session count."""
+        assert terminal_tab.terminal_widget is not None
+        assert terminal_tab.sessions_label is not None
         terminal_tab.create_new_session()
         terminal_tab.create_new_session()
 
@@ -370,6 +395,7 @@ class TestStatusUpdates:
         terminal_tab: TerminalTab,
     ) -> None:
         """Update status shows idle when no process running."""
+        assert terminal_tab.status_label is not None
         terminal_tab.create_new_session()
         terminal_tab._update_status()
 
@@ -381,6 +407,8 @@ class TestStatusUpdates:
         terminal_tab: TerminalTab,
     ) -> None:
         """Update status shows running when process active."""
+        assert terminal_tab.terminal_widget is not None
+        assert terminal_tab.status_label is not None
         terminal_tab.create_new_session()
         session_id, terminal = terminal_tab.terminal_widget.get_active_session()
 
@@ -394,6 +422,8 @@ class TestStatusUpdates:
         terminal_tab: TerminalTab,
     ) -> None:
         """Update status handles case with no sessions."""
+        assert terminal_tab.status_label is not None
+        assert terminal_tab.sessions_label is not None
         terminal_tab._update_status()
 
         status_text = terminal_tab.status_label.text().lower()
@@ -404,7 +434,7 @@ class TestGetTerminalWidget:
     """Test suite for get_terminal_widget method."""
 
     @pytest.fixture
-    def terminal_tab(self, qtbot: object) -> TerminalTab:
+    def terminal_tab(self, qtbot: Any) -> TerminalTab:
         """Create TerminalTab instance."""
         tab = TerminalTab()
         qtbot.addWidget(tab)
@@ -436,7 +466,7 @@ class TestToolbarButtons:
     """Test suite for toolbar button functionality."""
 
     @pytest.fixture
-    def terminal_tab(self, qtbot: object) -> TerminalTab:
+    def terminal_tab(self, qtbot: Any) -> TerminalTab:
         """Create TerminalTab instance."""
         tab = TerminalTab()
         qtbot.addWidget(tab)
@@ -445,9 +475,10 @@ class TestToolbarButtons:
     def test_new_session_button_creates_session(
         self,
         terminal_tab: TerminalTab,
-        qtbot: object,
+        qtbot: Any,
     ) -> None:
         """New session button creates new terminal session."""
+        assert terminal_tab.terminal_widget is not None
         initial_count = len(terminal_tab.terminal_widget.get_all_sessions())
 
         qtbot.mouseClick(terminal_tab.new_session_btn, 1)
@@ -458,9 +489,10 @@ class TestToolbarButtons:
     def test_clear_button_clears_terminal(
         self,
         terminal_tab: TerminalTab,
-        qtbot: object,
+        qtbot: Any,
     ) -> None:
         """Clear button clears current terminal display."""
+        assert terminal_tab.terminal_widget is not None
         terminal_tab.create_new_session()
         session_id, terminal = terminal_tab.terminal_widget.get_active_session()
 
@@ -474,7 +506,7 @@ class TestToolbarButtons:
     def test_export_button_triggers_export(
         self,
         terminal_tab: TerminalTab,
-        qtbot: object,
+        qtbot: Any,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Export button triggers log export."""
@@ -492,9 +524,11 @@ class TestToolbarButtons:
     def test_kill_button_kills_process(
         self,
         terminal_tab: TerminalTab,
-        qtbot: object,
+        qtbot: Any,
     ) -> None:
         """Kill button kills current running process."""
+        assert terminal_tab.terminal_widget is not None
+        assert terminal_tab.status_label is not None
         terminal_tab.create_new_session()
         session_id, terminal = terminal_tab.terminal_widget.get_active_session()
 
@@ -508,7 +542,7 @@ class TestEdgeCases:
     """Test edge cases and error conditions."""
 
     @pytest.fixture
-    def terminal_tab(self, qtbot: object) -> TerminalTab:
+    def terminal_tab(self, qtbot: Any) -> TerminalTab:
         """Create TerminalTab instance."""
         tab = TerminalTab()
         qtbot.addWidget(tab)
@@ -516,7 +550,7 @@ class TestEdgeCases:
 
     def test_operations_without_terminal_widget(
         self,
-        qtbot: object,
+        qtbot: Any,
     ) -> None:
         """Operations handle missing terminal widget gracefully."""
         tab = TerminalTab()
@@ -536,6 +570,7 @@ class TestEdgeCases:
         terminal_tab: TerminalTab,
     ) -> None:
         """Multiple consecutive operations work correctly."""
+        assert terminal_tab.terminal_widget is not None
         terminal_tab.create_new_session()
         terminal_tab.create_new_session()
         terminal_tab.clear_current_terminal()
@@ -546,7 +581,7 @@ class TestEdgeCases:
 
     def test_status_update_during_initialization(
         self,
-        qtbot: object,
+        qtbot: Any,
     ) -> None:
         """Status update during initialization does not crash."""
         tab = TerminalTab()

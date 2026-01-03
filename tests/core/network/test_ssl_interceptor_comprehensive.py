@@ -862,15 +862,15 @@ class TestSSLInterceptorLicenseServerMITM:
     <type>TRIAL</type>
 </license>"""
 
-        modified_xml = original_xml.decode("utf-8")
-        modified_xml = modified_xml.replace("<status>ERROR</status>", "<status>SUCCESS</status>")
-        modified_xml = modified_xml.replace("<valid>false</valid>", "<valid>true</valid>")
-        modified_xml = modified_xml.replace("<expired>true</expired>", "<expired>false</expired>")
-        modified_xml = modified_xml.encode("utf-8")
+        modified_xml_str = original_xml.decode("utf-8")
+        modified_xml_str = modified_xml_str.replace("<status>ERROR</status>", "<status>SUCCESS</status>")
+        modified_xml_str = modified_xml_str.replace("<valid>false</valid>", "<valid>true</valid>")
+        modified_xml_str = modified_xml_str.replace("<expired>true</expired>", "<expired>false</expired>")
+        modified_xml_bytes = modified_xml_str.encode("utf-8")
 
-        assert b"<status>SUCCESS</status>" in modified_xml
-        assert b"<valid>true</valid>" in modified_xml
-        assert b"<expired>false</expired>" in modified_xml
+        assert b"<status>SUCCESS</status>" in modified_xml_bytes
+        assert b"<valid>true</valid>" in modified_xml_bytes
+        assert b"<expired>false</expired>" in modified_xml_bytes
 
 
 class TestSSLInterceptorSessionKeyExtraction:

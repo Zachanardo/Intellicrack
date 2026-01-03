@@ -19,6 +19,7 @@ Expected Module Capabilities:
 - Performance-optimized string search and indexing for large binaries
 """
 
+from collections.abc import Generator
 from typing import Any
 import os
 import shutil
@@ -40,7 +41,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def create_test_binary_with_strings(strings_dict: dict) -> bytes:
+def create_test_binary_with_strings(strings_dict: dict[str, list[str | bytes]]) -> bytes:
     """Create a minimal PE binary with embedded strings for testing."""
     pe_data = bytearray()
 
@@ -121,12 +122,12 @@ def create_test_binary_with_strings(strings_dict: dict) -> bytes:
 
 
 @pytest.fixture(scope="module")
-def test_binary_with_license_strings(tmp_path_factory) -> None:
+def test_binary_with_license_strings(tmp_path_factory: pytest.TempPathFactory) -> Generator[str, None, None]:
     """Create test binary with license-related strings."""
     tmp_dir = tmp_path_factory.mktemp("license_test")
     binary_path = tmp_dir / "license_test.exe"
 
-    strings_data = {
+    strings_data: dict[str, list[str | bytes]] = {
         "license": [
             "XXXX-YYYY-ZZZZ-AAAA",
             "License expired",
@@ -142,12 +143,12 @@ def test_binary_with_license_strings(tmp_path_factory) -> None:
 
 
 @pytest.fixture(scope="module")
-def test_binary_with_crypto_strings(tmp_path_factory) -> None:
+def test_binary_with_crypto_strings(tmp_path_factory: pytest.TempPathFactory) -> Generator[str, None, None]:
     """Create test binary with cryptographic strings."""
     tmp_dir = tmp_path_factory.mktemp("crypto_test")
     binary_path = tmp_dir / "crypto_test.exe"
 
-    strings_data = {
+    strings_data: dict[str, list[str | bytes]] = {
         "crypto": [
             "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t",
             "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A",
@@ -162,12 +163,12 @@ def test_binary_with_crypto_strings(tmp_path_factory) -> None:
 
 
 @pytest.fixture(scope="module")
-def test_binary_with_api_strings(tmp_path_factory) -> None:
+def test_binary_with_api_strings(tmp_path_factory: pytest.TempPathFactory) -> Generator[str, None, None]:
     """Create test binary with API function names."""
     tmp_dir = tmp_path_factory.mktemp("api_test")
     binary_path = tmp_dir / "api_test.exe"
 
-    strings_data = {
+    strings_data: dict[str, list[str | bytes]] = {
         "apis": [
             "CreateFileA",
             "WriteFile",
@@ -183,12 +184,12 @@ def test_binary_with_api_strings(tmp_path_factory) -> None:
 
 
 @pytest.fixture(scope="module")
-def test_binary_with_network_strings(tmp_path_factory) -> None:
+def test_binary_with_network_strings(tmp_path_factory: pytest.TempPathFactory) -> Generator[str, None, None]:
     """Create test binary with network/URL strings."""
     tmp_dir = tmp_path_factory.mktemp("network_test")
     binary_path = tmp_dir / "network_test.exe"
 
-    strings_data = {
+    strings_data: dict[str, list[str | bytes]] = {
         "network": [
             "http://malware.com/payload",
             "https://api.example.com/v1/data",
@@ -203,12 +204,12 @@ def test_binary_with_network_strings(tmp_path_factory) -> None:
 
 
 @pytest.fixture(scope="module")
-def test_binary_with_path_strings(tmp_path_factory) -> None:
+def test_binary_with_path_strings(tmp_path_factory: pytest.TempPathFactory) -> Generator[str, None, None]:
     """Create test binary with file path and registry strings."""
     tmp_dir = tmp_path_factory.mktemp("path_test")
     binary_path = tmp_dir / "path_test.exe"
 
-    strings_data = {
+    strings_data: dict[str, list[str | bytes]] = {
         "paths": [
             "C:\\Windows\\System32\\kernel32.dll",
             "/usr/bin/bash",
@@ -247,7 +248,7 @@ class TestR2StringAnalyzerCore:
         """Test analyzer validates binary path requirements."""
         # Test with None path - should handle gracefully or raise appropriate error
         with pytest.raises((ValueError, TypeError)):
-            R2StringAnalyzer(None)
+            R2StringAnalyzer(None)  # type: ignore[arg-type]
 
         # Test with empty string
         with pytest.raises((ValueError, TypeError)):
@@ -711,7 +712,7 @@ class TestPerformanceAndScalability:
     def test_concurrent_string_analysis_safety(self, analyzer: Any) -> None:
         """Test analyzer handles concurrent analysis requests safely."""
 
-        def analyze_strings():
+        def analyze_strings() -> Any:
             return analyzer.analyze_all_strings()
 
         # Mock string data

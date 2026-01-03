@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
 
 from intellicrack.core.analysis.entropy_analyzer import EntropyAnalyzer
 
@@ -571,7 +572,7 @@ class TestErrorHandlingAndEdgeCases:
         entropy = analyzer.calculate_entropy(all_bytes)
         assert abs(entropy - 8.0) < 0.0001, "All byte values MUST produce 8.0 entropy"
 
-    def test_permission_denied_error_handling(self, analyzer: EntropyAnalyzer, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_permission_denied_error_handling(self, analyzer: EntropyAnalyzer, monkeypatch: MonkeyPatch) -> None:
         """Permission errors must be caught and returned in result."""
 
         class PermissionDeniedFileOpener:

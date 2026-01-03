@@ -1690,6 +1690,75 @@ class HardwareDongleEmulator:
                         }});
                     }}
 
+                    var haspLogout = Module.findExportByName(haspModule.name, "hasp_logout");
+                    if (haspLogout) {{
+                        Interceptor.attach(haspLogout, {{
+                            onEnter: function(args) {{
+                                this.handle = args[0].toInt32();
+                                console.log("[HASP] hasp_logout called: handle=0x" + this.handle.toString(16));
+                            }},
+                            onLeave: function(retval) {{
+                                retval.replace(0);
+                                console.log("[HASP] hasp_logout returning HASP_STATUS_OK");
+                            }}
+                        }});
+                    }}
+
+                    var haspGetRtc = Module.findExportByName(haspModule.name, "hasp_get_rtc");
+                    if (haspGetRtc) {{
+                        Interceptor.attach(haspGetRtc, {{
+                            onEnter: function(args) {{
+                                this.handle = args[0].toInt32();
+                                this.rtcPtr = args[1];
+                                console.log("[HASP] hasp_get_rtc called: handle=0x" + this.handle.toString(16));
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.rtcPtr) {{
+                                    var currentTime = Math.floor(Date.now() / 1000);
+                                    this.rtcPtr.writeU32(currentTime);
+                                }}
+                                retval.replace(0);
+                                console.log("[HASP] hasp_get_rtc returning HASP_STATUS_OK");
+                            }}
+                        }});
+                    }}
+
+                    var haspLegacyEncrypt = Module.findExportByName(haspModule.name, "hasp_legacy_encrypt");
+                    if (haspLegacyEncrypt) {{
+                        Interceptor.attach(haspLegacyEncrypt, {{
+                            onEnter: function(args) {{
+                                this.handle = args[0].toInt32();
+                                console.log("[HASP] hasp_legacy_encrypt called: handle=0x" + this.handle.toString(16));
+                            }},
+                            onLeave: function(retval) {{
+                                retval.replace(0);
+                                console.log("[HASP] hasp_legacy_encrypt returning HASP_STATUS_OK");
+                            }}
+                        }});
+                    }}
+
+                    var haspGetInfo = Module.findExportByName(haspModule.name, "hasp_get_info");
+                    if (haspGetInfo) {{
+                        Interceptor.attach(haspGetInfo, {{
+                            onEnter: function(args) {{
+                                this.infoPtr = args[2];
+                                console.log("[HASP] hasp_get_info called");
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.infoPtr) {{
+                                    var infoXml = "<haspinfo><hasp id=\"12345678\"><feature id=\"1\"/></hasp></haspinfo>";
+                                    var infoBytes = new Uint8Array(infoXml.length);
+                                    for (var i = 0; i < infoXml.length; i++) {{
+                                        infoBytes[i] = infoXml.charCodeAt(i);
+                                    }}
+                                    this.infoPtr.writeByteArray(Array.from(infoBytes));
+                                }}
+                                retval.replace(0);
+                                console.log("[HASP] hasp_get_info returning HASP_STATUS_OK");
+                            }}
+                        }});
+                    }}
+
                     console.log("[HASP] Comprehensive HASP API hooks installed");
                 }} catch(e) {{
                     console.log("[HASP] Error installing hooks: " + e);
@@ -1773,6 +1842,76 @@ class HardwareDongleEmulator:
                         }});
                     }}
 
+                    var sentinelWrite = Module.findExportByName(sentinelModule.name, "RNBOsproWrite");
+                    if (sentinelWrite) {{
+                        Interceptor.attach(sentinelWrite, {{
+                            onEnter: function(args) {{
+                                this.address = args[1].toInt32();
+                                this.length = args[2].toInt32();
+                                console.log("[Sentinel] RNBOsproWrite: addr=" + this.address + " len=" + this.length);
+                            }},
+                            onLeave: function(retval) {{
+                                retval.replace(0);
+                                console.log("[Sentinel] RNBOsproWrite returning SP_SUCCESS");
+                            }}
+                        }});
+                    }}
+
+                    var sentinelFindNext = Module.findExportByName(sentinelModule.name, "RNBOsproFindNextUnit");
+                    if (sentinelFindNext) {{
+                        Interceptor.attach(sentinelFindNext, {{
+                            onEnter: function(args) {{
+                                this.devIdPtr = args[0];
+                                console.log("[Sentinel] RNBOsproFindNextUnit called");
+                            }},
+                            onLeave: function(retval) {{
+                                retval.replace(2);
+                                console.log("[Sentinel] RNBOsproFindNextUnit returning SP_UNIT_NOT_FOUND");
+                            }}
+                        }});
+                    }}
+
+                    var sentinelDecrement = Module.findExportByName(sentinelModule.name, "RNBOsproDecrement");
+                    if (sentinelDecrement) {{
+                        Interceptor.attach(sentinelDecrement, {{
+                            onEnter: function(args) {{
+                                this.address = args[1].toInt32();
+                                console.log("[Sentinel] RNBOsproDecrement: addr=" + this.address);
+                            }},
+                            onLeave: function(retval) {{
+                                retval.replace(0);
+                                console.log("[Sentinel] RNBOsproDecrement returning SP_SUCCESS");
+                            }}
+                        }});
+                    }}
+
+                    var sentinelGetStatus = Module.findExportByName(sentinelModule.name, "RNBOsproGetFullStatus");
+                    if (sentinelGetStatus) {{
+                        Interceptor.attach(sentinelGetStatus, {{
+                            onEnter: function(args) {{
+                                this.statusPtr = args[1];
+                                console.log("[Sentinel] RNBOsproGetFullStatus called");
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.statusPtr) {{
+                                    var status = new Uint8Array(128);
+                                    status[0] = 0x87; status[1] = 0x65; status[2] = 0x43; status[3] = 0x21;
+                                    status[4] = 0x08; status[5] = 0x00;
+                                    var serial = "SN123456789ABCDEF";
+                                    for (var i = 0; i < serial.length; i++) {{
+                                        status[8 + i] = serial.charCodeAt(i);
+                                    }}
+                                    for (var j = 32; j < 128; j++) {{
+                                        status[j] = ((j * 11 + 0x87) ^ (j >> 1)) & 0xFF;
+                                    }}
+                                    this.statusPtr.writeByteArray(Array.from(status));
+                                }}
+                                retval.replace(0);
+                                console.log("[Sentinel] RNBOsproGetFullStatus returning SP_SUCCESS");
+                            }}
+                        }});
+                    }}
+
                     console.log("[Sentinel] Comprehensive Sentinel API hooks installed");
                 }} catch(e) {{
                     console.log("[Sentinel] Error installing hooks: " + e);
@@ -1840,9 +1979,284 @@ class HardwareDongleEmulator:
                         }});
                     }}
 
+                    var cmRelease = Module.findExportByName(wibuModule.name, "CmRelease");
+                    if (cmRelease) {{
+                        Interceptor.attach(cmRelease, {{
+                            onEnter: function(args) {{
+                                this.handle = args[0].toInt32();
+                                console.log("[CodeMeter] CmRelease: handle=0x" + this.handle.toString(16));
+                            }},
+                            onLeave: function(retval) {{
+                                retval.replace(0);
+                                console.log("[CodeMeter] CmRelease returning success");
+                            }}
+                        }});
+                    }}
+
+                    var cmSetFeature = Module.findExportByName(wibuModule.name, "CmSetFeature");
+                    if (cmSetFeature) {{
+                        Interceptor.attach(cmSetFeature, {{
+                            onEnter: function(args) {{
+                                this.handle = args[0].toInt32();
+                                this.featureCode = args[1].toInt32();
+                                console.log("[CodeMeter] CmSetFeature: handle=0x" + this.handle.toString(16) + " feature=" + this.featureCode);
+                            }},
+                            onLeave: function(retval) {{
+                                retval.replace(0);
+                                console.log("[CodeMeter] CmSetFeature returning success");
+                            }}
+                        }});
+                    }}
+
+                    var cmBoxSequence = Module.findExportByName(wibuModule.name, "CmBoxSequence");
+                    if (cmBoxSequence) {{
+                        Interceptor.attach(cmBoxSequence, {{
+                            onEnter: function(args) {{
+                                this.handle = args[0].toInt32();
+                                this.seqPtr = args[1];
+                                console.log("[CodeMeter] CmBoxSequence: handle=0x" + this.handle.toString(16));
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.seqPtr) {{
+                                    this.seqPtr.writeU32(1000001);
+                                }}
+                                retval.replace(0);
+                                console.log("[CodeMeter] CmBoxSequence returning success");
+                            }}
+                        }});
+                    }}
+
+                    var cmCalculatePioCoreKey = Module.findExportByName(wibuModule.name, "CmCalculatePioCoreKey");
+                    if (cmCalculatePioCoreKey) {{
+                        Interceptor.attach(cmCalculatePioCoreKey, {{
+                            onEnter: function(args) {{
+                                this.handle = args[0].toInt32();
+                                this.keyPtr = args[1];
+                                console.log("[CodeMeter] CmCalculatePioCoreKey: handle=0x" + this.handle.toString(16));
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.keyPtr) {{
+                                    var keyData = new Uint8Array(32);
+                                    for (var i = 0; i < 32; i++) {{
+                                        keyData[i] = ((i * 23 + 0x42) ^ (i << 2)) & 0xFF;
+                                    }}
+                                    this.keyPtr.writeByteArray(Array.from(keyData));
+                                }}
+                                retval.replace(0);
+                                console.log("[CodeMeter] CmCalculatePioCoreKey returning success");
+                            }}
+                        }});
+                    }}
+
                     console.log("[CodeMeter] Comprehensive CodeMeter API hooks installed");
                 }} catch(e) {{
                     console.log("[CodeMeter] Error installing hooks: " + e);
+                }}
+            }}
+        }}
+
+        if ({dongle_types!s}.includes("WibuKey")) {{
+            var wkbModule = Process.findModuleByName("WibuKey64.dll");
+            if (!wkbModule) {{ wkbModule = Process.findModuleByName("wibucm.dll"); }}
+
+            if (wkbModule) {{
+                try {{
+                    var wkbOpen2 = Module.findExportByName(wkbModule.name, "WkbOpen2");
+                    if (wkbOpen2) {{
+                        Interceptor.attach(wkbOpen2, {{
+                            onEnter: function(args) {{
+                                this.handlePtr = args[0];
+                                console.log("[WibuKey] WkbOpen2 called");
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.handlePtr) {{
+                                    this.handlePtr.writeU32(0x12345678);
+                                }}
+                                retval.replace(0);
+                                console.log("[WibuKey] WkbOpen2 returning success");
+                            }}
+                        }});
+                    }}
+
+                    var wkbClose = Module.findExportByName(wkbModule.name, "WkbClose");
+                    if (wkbClose) {{
+                        Interceptor.attach(wkbClose, {{
+                            onEnter: function(args) {{
+                                this.handle = args[0].toInt32();
+                                console.log("[WibuKey] WkbClose: handle=0x" + this.handle.toString(16));
+                            }},
+                            onLeave: function(retval) {{
+                                retval.replace(0);
+                                console.log("[WibuKey] WkbClose returning success");
+                            }}
+                        }});
+                    }}
+
+                    var wkbCrypt = Module.findExportByName(wkbModule.name, "WkbCrypt");
+                    if (wkbCrypt) {{
+                        Interceptor.attach(wkbCrypt, {{
+                            onEnter: function(args) {{
+                                this.handle = args[0].toInt32();
+                                console.log("[WibuKey] WkbCrypt: handle=0x" + this.handle.toString(16));
+                            }},
+                            onLeave: function(retval) {{
+                                retval.replace(0);
+                                console.log("[WibuKey] WkbCrypt returning success");
+                            }}
+                        }});
+                    }}
+
+                    var wkbCrypt2 = Module.findExportByName(wkbModule.name, "WkbCrypt2");
+                    if (wkbCrypt2) {{
+                        Interceptor.attach(wkbCrypt2, {{
+                            onLeave: function(retval) {{
+                                retval.replace(0);
+                            }}
+                        }});
+                    }}
+
+                    var wkbGetEntry = Module.findExportByName(wkbModule.name, "WkbGetEntry");
+                    if (wkbGetEntry) {{
+                        Interceptor.attach(wkbGetEntry, {{
+                            onEnter: function(args) {{
+                                this.handle = args[0].toInt32();
+                                this.entryPtr = args[1];
+                                console.log("[WibuKey] WkbGetEntry: handle=0x" + this.handle.toString(16));
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.entryPtr) {{
+                                    var entry = new Uint8Array(64);
+                                    entry[0] = 0x65; entry[1] = 0x00;
+                                    entry[2] = 0xE8; entry[3] = 0x03;
+                                    entry[4] = 0x64; entry[5] = 0x00;
+                                    for (var i = 6; i < 64; i++) {{
+                                        entry[i] = ((i * 17 + 0x65) ^ (i >> 1)) & 0xFF;
+                                    }}
+                                    this.entryPtr.writeByteArray(Array.from(entry));
+                                }}
+                                retval.replace(0);
+                                console.log("[WibuKey] WkbGetEntry returning success");
+                            }}
+                        }});
+                    }}
+
+                    var wkbCheckEntry = Module.findExportByName(wkbModule.name, "WkbCheckEntry");
+                    if (wkbCheckEntry) {{
+                        Interceptor.attach(wkbCheckEntry, {{
+                            onLeave: function(retval) {{
+                                retval.replace(0);
+                            }}
+                        }});
+                    }}
+
+                    console.log("[WibuKey] Comprehensive WibuKey API hooks installed");
+                }} catch(e) {{
+                    console.log("[WibuKey] Error installing hooks: " + e);
+                }}
+            }}
+        }}
+
+        if ({dongle_types!s}.includes("SafeNet")) {{
+            var safenetModule = Process.findModuleByName("etoken.dll");
+            if (!safenetModule) {{ safenetModule = Process.findModuleByName("eTSignC.dll"); }}
+
+            if (safenetModule) {{
+                try {{
+                    var caOpenSession = Module.findExportByName(safenetModule.name, "CA_OpenSession");
+                    if (caOpenSession) {{
+                        Interceptor.attach(caOpenSession, {{
+                            onEnter: function(args) {{
+                                this.sessionPtr = args[1];
+                                console.log("[SafeNet] CA_OpenSession called");
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.sessionPtr) {{
+                                    this.sessionPtr.writeU32(0x12345678);
+                                }}
+                                retval.replace(0);
+                                console.log("[SafeNet] CA_OpenSession returning success");
+                            }}
+                        }});
+                    }}
+
+                    var caCloseSession = Module.findExportByName(safenetModule.name, "CA_CloseSession");
+                    if (caCloseSession) {{
+                        Interceptor.attach(caCloseSession, {{
+                            onEnter: function(args) {{
+                                this.session = args[0].toInt32();
+                                console.log("[SafeNet] CA_CloseSession: session=0x" + this.session.toString(16));
+                            }},
+                            onLeave: function(retval) {{
+                                retval.replace(0);
+                                console.log("[SafeNet] CA_CloseSession returning success");
+                            }}
+                        }});
+                    }}
+
+                    var caLogin = Module.findExportByName(safenetModule.name, "CA_Login");
+                    if (caLogin) {{
+                        Interceptor.attach(caLogin, {{
+                            onEnter: function(args) {{
+                                this.session = args[0].toInt32();
+                                console.log("[SafeNet] CA_Login: session=0x" + this.session.toString(16));
+                            }},
+                            onLeave: function(retval) {{
+                                retval.replace(0);
+                                console.log("[SafeNet] CA_Login returning success");
+                            }}
+                        }});
+                    }}
+
+                    var caLogout = Module.findExportByName(safenetModule.name, "CA_Logout");
+                    if (caLogout) {{
+                        Interceptor.attach(caLogout, {{
+                            onEnter: function(args) {{
+                                this.session = args[0].toInt32();
+                                console.log("[SafeNet] CA_Logout: session=0x" + this.session.toString(16));
+                            }},
+                            onLeave: function(retval) {{
+                                retval.replace(0);
+                                console.log("[SafeNet] CA_Logout returning success");
+                            }}
+                        }});
+                    }}
+
+                    var caCreateObject = Module.findExportByName(safenetModule.name, "CA_CreateObject");
+                    if (caCreateObject) {{
+                        Interceptor.attach(caCreateObject, {{
+                            onEnter: function(args) {{
+                                this.session = args[0].toInt32();
+                                this.objectPtr = args[2];
+                                console.log("[SafeNet] CA_CreateObject: session=0x" + this.session.toString(16));
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.objectPtr) {{
+                                    this.objectPtr.writeU32(0x1000);
+                                }}
+                                retval.replace(0);
+                                console.log("[SafeNet] CA_CreateObject returning success");
+                            }}
+                        }});
+                    }}
+
+                    var caDestroyObject = Module.findExportByName(safenetModule.name, "CA_DestroyObject");
+                    if (caDestroyObject) {{
+                        Interceptor.attach(caDestroyObject, {{
+                            onEnter: function(args) {{
+                                this.session = args[0].toInt32();
+                                this.object = args[1].toInt32();
+                                console.log("[SafeNet] CA_DestroyObject: session=0x" + this.session.toString(16) + " obj=0x" + this.object.toString(16));
+                            }},
+                            onLeave: function(retval) {{
+                                retval.replace(0);
+                                console.log("[SafeNet] CA_DestroyObject returning success");
+                            }}
+                        }});
+                    }}
+
+                    console.log("[SafeNet] Comprehensive SafeNet API hooks installed");
+                }} catch(e) {{
+                    console.log("[SafeNet] Error installing hooks: " + e);
                 }}
             }}
         }}

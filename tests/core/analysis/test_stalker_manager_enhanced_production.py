@@ -536,7 +536,7 @@ def test_stalker_licensing_api_pattern_detection() -> None:
         )
 
         for msg in session_data_samples:
-            session._on_message(msg, None)
+            session._on_message(msg, None)  # type: ignore[arg-type]
 
         assert len(session.api_calls) == 1
         assert session.api_calls[0].is_licensing_related is True
@@ -591,7 +591,7 @@ def test_stalker_trace_complete_coverage_parsing() -> None:
             }
         }
 
-        session._on_message(trace_complete_message, None)
+        session._on_message(trace_complete_message, None)  # type: ignore[arg-type]
 
         assert session.stats.total_instructions == 50000
         assert session.stats.unique_blocks == 2500

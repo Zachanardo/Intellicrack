@@ -20,9 +20,9 @@ try:
     from intellicrack.core.network.license_protocol_handler import FlexLMProtocolHandler, HASPProtocolHandler, LicenseProtocolHandler
     MODULE_AVAILABLE = True
 except ImportError:
-    FlexLMProtocolHandler = None
-    HASPProtocolHandler = None
-    LicenseProtocolHandler = None
+    FlexLMProtocolHandler = None  # type: ignore[assignment,misc]
+    HASPProtocolHandler = None  # type: ignore[assignment,misc]
+    LicenseProtocolHandler = None  # type: ignore[assignment,misc]
     MODULE_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not available")
@@ -860,7 +860,7 @@ class TestLicenseProtocolIntegration:
         results = []
         errors = []
 
-        def worker_thread(thread_id: int):
+        def worker_thread(thread_id: int) -> None:
             """Worker thread that makes multiple requests."""
             try:
                 for i in range(50):

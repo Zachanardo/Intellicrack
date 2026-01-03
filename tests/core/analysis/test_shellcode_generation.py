@@ -15,6 +15,16 @@ from intellicrack.core.analysis.automated_patch_agent import AutomatedPatchAgent
 from tests.base_test import IntellicrackTestBase
 
 
+class ValidationResult:
+    """Result of shellcode validation."""
+
+    def __init__(self) -> None:
+        """Initialize validation result."""
+        self.is_valid: bool = True
+        self.instruction_count: int = 0
+        self.decoded_instructions: list[str] = []
+
+
 class TestShellcodeGeneration(IntellicrackTestBase):
     """Test shellcode template generation with real executable payloads."""
 
@@ -304,15 +314,12 @@ class TestShellcodeGeneration(IntellicrackTestBase):
 
         return entropy
 
-    def _validate_shellcode_syntax(self, shellcode: bytes, architecture: str) -> 'ValidationResult':
+    def _validate_shellcode_syntax(self, shellcode: bytes, architecture: str) -> ValidationResult:
         """Validate shellcode has valid instruction syntax."""
-        class ValidationResult:
-            def __init__(self) -> None:
-                self.is_valid: bool = True
-                self.instruction_count: int = len(shellcode) // 2
-                self.decoded_instructions: list[str] = ['instruction'] * self.instruction_count
-
-        return ValidationResult()
+        result = ValidationResult()
+        result.instruction_count = len(shellcode) // 2
+        result.decoded_instructions = ['instruction'] * result.instruction_count
+        return result
 
 
 class TestShellcodeAdvanced(IntellicrackTestBase):

@@ -825,12 +825,16 @@ def test_generate_status_response(parser: FlexLMProtocolParser) -> None:
     checkout1 = create_flexlm_checkout_request(
         feature="AUTOCAD", hostname="PC1", username="user1", sequence=60000
     )
-    parser.generate_response(parser.parse_request(checkout1))
+    request = parser.parse_request(checkout1)
+    assert request is not None
+    parser.generate_response(request)
 
     checkout2 = create_flexlm_checkout_request(
         feature="MATLAB", hostname="PC2", username="user2", sequence=60001
     )
-    parser.generate_response(parser.parse_request(checkout2))
+    request = parser.parse_request(checkout2)
+    assert request is not None
+    parser.generate_response(request)
 
     status_data = create_flexlm_status_request(sequence=60002)
     status_req = parser.parse_request(status_data)
@@ -1525,6 +1529,7 @@ def test_checkout_key_generation_deterministic(
         sequence=100000,
     )
     request1 = parser.parse_request(request_data1)
+    assert request1 is not None
     response1 = parser.generate_response(request1)
 
     parser.clear_checkouts()
@@ -1538,6 +1543,7 @@ def test_checkout_key_generation_deterministic(
         sequence=100001,
     )
     request2 = parser.parse_request(request_data2)
+    assert request2 is not None
     response2 = parser.generate_response(request2)
 
     assert response1.license_key != response2.license_key
@@ -1565,7 +1571,9 @@ def test_concurrent_checkouts_different_users(parser: FlexLMProtocolParser) -> N
         username="USER_A",
         sequence=120000,
     )
-    parser.generate_response(parser.parse_request(checkout1))
+    request = parser.parse_request(checkout1)
+    assert request is not None
+    parser.generate_response(request)
 
     checkout2 = create_flexlm_checkout_request(
         feature="MATLAB",
@@ -1573,7 +1581,9 @@ def test_concurrent_checkouts_different_users(parser: FlexLMProtocolParser) -> N
         username="USER_B",
         sequence=120001,
     )
-    parser.generate_response(parser.parse_request(checkout2))
+    request = parser.parse_request(checkout2)
+    assert request is not None
+    parser.generate_response(request)
 
     assert len(parser.active_checkouts) == 2
     assert "HOST_A:USER_A:MATLAB" in parser.active_checkouts
@@ -1591,6 +1601,7 @@ def test_response_sequence_number_preservation(
             feature="AUTOCAD", sequence=seq
         )
         request = parser.parse_request(request_data)
+        assert request is not None
         response = parser.generate_response(request)
 
         assert response.sequence == seq
@@ -1603,6 +1614,7 @@ def test_encryption_seed_persistence(parser: FlexLMProtocolParser) -> None:
     for i in range(10):
         request_data = create_flexlm_encryption_seed_request(sequence=130000 + i)
         request = parser.parse_request(request_data)
+        assert request is not None
         response = parser.generate_response(request)
 
         assert parser.encryption_seed == initial_seed

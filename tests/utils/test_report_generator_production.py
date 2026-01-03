@@ -16,6 +16,7 @@ import shutil
 import tempfile
 import xml.etree.ElementTree as ET
 import zipfile
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -32,7 +33,7 @@ from intellicrack.utils.report_generator import (
 
 
 @pytest.fixture
-def temp_report_dir() -> Path:
+def temp_report_dir() -> Generator[Path, None, None]:
     """Create temporary directory for report output."""
     temp_dir = Path(tempfile.mkdtemp())
     yield temp_dir
@@ -370,8 +371,10 @@ class TestXMLReportGeneration:
         root = tree.getroot()
 
         assert root.tag == "BinaryAnalysisReport"
-        assert root.find(".//TargetFile").text == "protected_software.exe"
-        assert root.find(".//FileSize").text == "2048576"
+        target_file = root.find(".//TargetFile")
+        file_size = root.find(".//FileSize")
+        assert target_file is not None and target_file.text == "protected_software.exe"
+        assert file_size is not None and file_size.text == "2048576"
 
     def test_xml_report_contains_all_vulnerabilities(
         self, temp_report_dir: Path, sample_analysis_data: dict[str, Any]
@@ -386,8 +389,10 @@ class TestXMLReportGeneration:
 
         vulnerabilities = root.findall(".//Vulnerability")
         assert len(vulnerabilities) == 3
-        assert vulnerabilities[0].find("Type").text == "License Check Bypass"
-        assert vulnerabilities[0].find("Severity").text == "Critical"
+        vuln_type = vulnerabilities[0].find("Type")
+        vuln_severity = vulnerabilities[0].find("Severity")
+        assert vuln_type is not None and vuln_type.text == "License Check Bypass"
+        assert vuln_severity is not None and vuln_severity.text == "Critical"
 
     def test_xml_report_includes_protections(
         self, temp_report_dir: Path, sample_analysis_data: dict[str, Any]
@@ -403,8 +408,10 @@ class TestXMLReportGeneration:
         protections = root.findall(".//Protection")
         assert len(protections) == 3
         vmprotect = protections[0]
-        assert vmprotect.find("Type").text == "VMProtect"
-        assert vmprotect.find("Status").text == "Active"
+        prot_type = vmprotect.find("Type")
+        prot_status = vmprotect.find("Status")
+        assert prot_type is not None and prot_type.text == "VMProtect"
+        assert prot_status is not None and prot_status.text == "Active"
 
 
 class TestCSVReportGeneration:

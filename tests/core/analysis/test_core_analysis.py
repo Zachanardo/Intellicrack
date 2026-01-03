@@ -4,7 +4,7 @@ Tests production-ready PE analysis, license detection, and packing identificatio
 NO MOCKS - ALL TESTS USE REAL BINARIES AND VALIDATE SOPHISTICATED FUNCTIONALITY.
 """
 
-from typing import Any
+from typing import Any, cast
 import pytest
 import tempfile
 import struct
@@ -34,7 +34,7 @@ class TestCoreAnalysis(IntellicrackTestBase):
     """Test core analysis functions with real binaries and production-ready validation."""
 
     @pytest.fixture(autouse=True)
-    def setup(self) -> Any:
+    def setup(self) -> None:
         """Set up test environment with real test binaries."""
         self.test_fixtures_dir = Path("tests/fixtures/binaries")
 
@@ -251,7 +251,7 @@ class TestCoreAnalysis(IntellicrackTestBase):
             # Packed binaries should have higher confidence or more indicators
             assert len(results["indicators"]) >= 0
 
-    def _validate_packing_results(self, results) -> None:
+    def _validate_packing_results(self, results: dict[str, Any]) -> None:
         """Helper to validate packing detection results structure."""
         assert isinstance(results, dict)
 
@@ -433,7 +433,7 @@ class TestCoreAnalysis(IntellicrackTestBase):
         try:
             # Test by actually loading the created PE structure
             import pefile
-            pe = pefile.PE(test_pe_file)
+            pe = cast(object, pefile.PE(test_pe_file))
 
             # Test PE header analysis with real PE object
             header_results = _analyze_pe_header(pe)

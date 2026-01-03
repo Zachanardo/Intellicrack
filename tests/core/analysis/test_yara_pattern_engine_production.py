@@ -522,7 +522,7 @@ class TestScanningModes:
     def test_fast_scan_mode(self, protected_binary: Path) -> None:
         """Fast scan completes quickly."""
         engine = YaraPatternEngine()
-        result = engine.scan_file(str(protected_binary), fast_mode=True)
+        result = engine.scan_file(str(protected_binary))
 
         assert result is not None
         assert result.scan_time < 5.0

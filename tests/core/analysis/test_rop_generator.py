@@ -43,20 +43,20 @@ class RealApplication:
 
     def __init__(self, binary_path: str | None = None) -> None:
         """Initialize real application with production capabilities."""
-        self.binary_path = binary_path
-        self.output_messages = []
-        self.rop_chain_generator = None
-        self.analysis_results = {}
-        self.targets = []
-        self.config = {
+        self.binary_path: str | None = binary_path
+        self.output_messages: list[str] = []
+        self.rop_chain_generator: Any = None
+        self.analysis_results: dict[str, Any] = {}
+        self.targets: list[dict[str, Any]] = []
+        self.config: dict[str, Any] = {
             'max_chain_length': 50,
             'max_gadget_size': 15,
             'architecture': 'x86_64',
             'optimization_level': 'high'
         }
-        self.update_output = self
+        self.update_output: RealApplication = self
 
-    def emit(self, message: str):
+    def emit(self, message: str) -> None:
         """Emit output message to application log."""
         self.output_messages.append(message)
 
@@ -64,15 +64,15 @@ class RealApplication:
         """Get the last emitted message."""
         return self.output_messages[-1] if self.output_messages else ""
 
-    def clear_messages(self):
+    def clear_messages(self) -> None:
         """Clear all output messages."""
         self.output_messages.clear()
 
-    def set_generator(self, generator):
+    def set_generator(self, generator: Any) -> None:
         """Set the ROP chain generator."""
         self.rop_chain_generator = generator
 
-    def add_target(self, name: str, address: int):
+    def add_target(self, name: str, address: int) -> None:
         """Add a target function."""
         self.targets.append({'name': name, 'address': address})
 
@@ -82,14 +82,14 @@ class TestROPChainGeneratorCore:
 
     def setup_method(self) -> None:
         """Setup test environment for each test."""
-        self.test_binary_x86 = b'\x90' * 100 + b'\xc3'  # Simple x86 binary with RET
-        self.test_binary_x64 = b'\x48\x89\xe5' + b'\x90' * 100 + b'\xc3'  # x64 with prologue
-        self.temp_dir = tempfile.mkdtemp()
+        self.test_binary_x86: bytes = b'\x90' * 100 + b'\xc3'  # Simple x86 binary with RET
+        self.test_binary_x64: bytes = b'\x48\x89\xe5' + b'\x90' * 100 + b'\xc3'  # x64 with prologue
+        self.temp_dir: str = tempfile.mkdtemp()
 
     def teardown_method(self) -> None:
         """Cleanup test environment."""
         import shutil
-        if os.path.exists(self.temp_dir):
+        if isinstance(self.temp_dir, str) and os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)
 
     def test_rop_chain_generator_initialization(self) -> None:
@@ -124,18 +124,18 @@ class TestROPChainGeneratorCore:
         try:
             # Test gadget discovery with x86 binary
             generator.set_binary(temp_x86_file.name)
-            result_x86 = generator.find_gadgets()
+            result_x86: Any = generator.find_gadgets()
             assert result_x86, "Gadget discovery failed for x86 binary"
 
-            x86_gadgets = generator.gadgets
+            x86_gadgets: Any = generator.gadgets
             assert len(x86_gadgets) >= 0, "No gadgets storage after discovery"
 
             # Test with x64 binary
             generator.set_binary(temp_x64_file.name)
-            result_x64 = generator.find_gadgets()
+            result_x64: Any = generator.find_gadgets()
             assert result_x64, "Gadget discovery failed for x64 binary"
 
-            x64_gadgets = generator.gadgets
+            x64_gadgets: Any = generator.gadgets
 
             # Anti-placeholder validation: Different binaries should produce different results
             if len(x86_gadgets) > 0 and len(x64_gadgets) > 0:
@@ -143,7 +143,7 @@ class TestROPChainGeneratorCore:
 
             # Validate gadget structure if gadgets found
             if len(generator.gadgets) > 0:
-                sample_gadget = generator.gadgets[0]
+                sample_gadget: Any = generator.gadgets[0]
                 assert 'address' in sample_gadget, "Gadget missing address field"
                 assert 'instruction' in sample_gadget, "Gadget missing instruction field"
 
@@ -167,7 +167,7 @@ class TestROPChainGeneratorCore:
             generator.add_target_function('system', 0x401000)
 
             # Generate ROP chain for shell execution
-            rop_chain = generator.generate_chain(
+            rop_chain: Any = generator.generate_chain(
                 target='system',
                 chain_type='shell_execution',
                 max_length=50,
@@ -182,13 +182,13 @@ class TestROPChainGeneratorCore:
 
             # Validate chain structure for production use
             if len(rop_chain) > 0:
-                sample_gadget = rop_chain[0]
+                sample_gadget: Any = rop_chain[0]
                 assert 'address' in sample_gadget, "Gadget missing address field"
                 assert 'instruction' in sample_gadget, "Gadget missing instruction field"
                 assert 'type' in sample_gadget, "Gadget missing type field"
 
             # Test different target types
-            license_chain = generator.generate_chain(
+            license_chain: Any = generator.generate_chain(
                 target='license_bypass',
                 chain_type='license_bypass'
             )
@@ -214,13 +214,13 @@ class TestROPChainGeneratorCore:
         assert len(generator.target_functions) >= 3, "Target functions not stored properly"
 
         # Validate target function structure
-        target_names = [t['name'] for t in generator.target_functions]
+        target_names: list[Any] = [t['name'] for t in generator.target_functions]
         assert 'system' in target_names, "System target not found"
         assert 'execve' in target_names, "Execve target not found"
         assert 'license_check' in target_names, "License_check target not found"
 
         # Test target function with address
-        system_target = next((t for t in generator.target_functions if t['name'] == 'system'), None)
+        system_target: Any = next((t for t in generator.target_functions if t['name'] == 'system'), None)
         assert system_target is not None, "System target not found in list"
         assert system_target.get('address') == 0x401000, "System target address not set correctly"
 
@@ -238,31 +238,31 @@ class TestROPChainGeneratorCore:
             generator.add_target_function('system', 0x401000)
 
             # Generate a chain to have data for reports
-            chain = generator.generate_chain('system')
+            chain: Any = generator.generate_chain('system')
 
             # Test report generation
-            report = generator.generate_report()
+            report: str = generator.generate_report()
             assert isinstance(report, str), "Report should be string"
             assert len(report) > 0, "Report should not be empty"
 
             # Anti-placeholder validation: Report should contain meaningful content
-            report_lower = report.lower()
-            expected_terms = ['gadget', 'chain', 'rop', 'target']
-            found_terms = [term for term in expected_terms if term in report_lower]
+            report_lower: str = report.lower()
+            expected_terms: list[str] = ['gadget', 'chain', 'rop', 'target']
+            found_terms: list[str] = [term for term in expected_terms if term in report_lower]
             assert len(found_terms) >= 2, f"Report lacks technical content, only found: {found_terms}"
 
             # Test statistics
-            stats = generator.get_statistics()
+            stats: dict[str, Any] = generator.get_statistics()
             assert isinstance(stats, dict), "Statistics should be dictionary"
 
             # Test get_results method
-            results = generator.get_results()
+            results: dict[str, Any] = generator.get_results()
             assert isinstance(results, dict), "Results should be dictionary"
 
             # Test clear_analysis functionality
             generator.clear_analysis()
             # After clearing, gadgets and chains should be reset
-            cleared_results = generator.get_results()
+            cleared_results: dict[str, Any] = generator.get_results()
             assert isinstance(cleared_results, dict), "Cleared results should still be dictionary"
 
         finally:
@@ -281,7 +281,7 @@ class TestROPChainGeneratorCore:
             generator.set_binary(temp_binary.name)
 
             # Test different chain types that should be supported
-            chain_types = [
+            chain_types: list[tuple[str, dict[str, str]]] = [
                 ('system', {'chain_type': 'shell_execution'}),
                 ('license_bypass', {'chain_type': 'license_bypass'}),
                 ('memory_permission', {'chain_type': 'memory_permission'}),
@@ -292,20 +292,20 @@ class TestROPChainGeneratorCore:
                 generator.add_target_function(target, 0x401000 + len(target))
 
                 # Generate chain with specific type
-                chain = generator.generate_chain(target, **kwargs)
+                chain: Any = generator.generate_chain(target, **kwargs)
 
                 # Anti-placeholder validation: Different chain types should produce results
                 assert isinstance(chain, list), f"Chain for {target} should be list"
 
                 # If chain generated, validate structure
                 if len(chain) > 0:
-                    sample_gadget = chain[0]
-                    required_fields = ['address', 'instruction', 'type']
+                    sample_gadget: Any = chain[0]
+                    required_fields: list[str] = ['address', 'instruction', 'type']
                     for field in required_fields:
                         assert field in sample_gadget, f"Missing {field} in gadget for {target}"
 
             # Test with constraints
-            constrained_chain = generator.generate_chain(
+            constrained_chain: Any = generator.generate_chain(
                 'system',
                 max_length=10,
                 constraints={'avoid_null': True}
@@ -321,7 +321,7 @@ class TestROPChainGeneratorCore:
     def test_configuration_and_parameters(self) -> None:
         """Test generator configuration and parameter handling."""
         # Test with configuration parameters
-        config = {
+        config: dict[str, int | str] = {
             'max_chain_length': 25,
             'max_gadget_size': 12,
             'architecture': 'x86_64',
@@ -381,12 +381,12 @@ class TestROPGeneratorModuleFunctions:
 
     def setup_method(self) -> None:
         """Setup test environment."""
-        self.temp_binary = tempfile.NamedTemporaryFile(delete=False, suffix='.exe')
+        self.temp_binary: Any = tempfile.NamedTemporaryFile(delete=False, suffix='.exe')
         self.temp_binary.write(b'\x90' * 1000 + b'\xc3')
         self.temp_binary.close()
 
         # Create real app object
-        self.real_app = RealApplication(binary_path=self.temp_binary.name)
+        self.real_app: RealApplication = RealApplication(binary_path=self.temp_binary.name)
 
     def teardown_method(self) -> None:
         """Cleanup test environment."""
@@ -414,9 +414,9 @@ class TestROPGeneratorModuleFunctions:
     def test_run_rop_chain_generator_no_binary(self) -> None:
         """Test run_rop_chain_generator with no binary loaded."""
         # Test with no binary path
-        app_no_binary = RealApplication(binary_path=None)
+        app_no_binary: RealApplication = RealApplication(binary_path=None)
 
-        result = run_rop_chain_generator(app_no_binary)
+        result: None = run_rop_chain_generator(app_no_binary)
 
         # Should return early without errors
         assert result is None, "Function should return None for no binary"
@@ -426,7 +426,7 @@ class TestROPGeneratorModuleFunctions:
     def test_setup_rop_generator_configuration(self) -> None:
         """Test ROP generator setup and configuration."""
         # Test successful setup
-        generator = _setup_rop_generator(self.real_app)
+        generator: Any = _setup_rop_generator(self.real_app)
 
         # Anti-placeholder validation: Real setup must create functional generator
         assert generator is not None, "Generator setup failed"
@@ -438,20 +438,20 @@ class TestROPGeneratorModuleFunctions:
         assert generator.binary_path == self.temp_binary.name, "Binary path not set during setup"
 
         # Test setup failure case
-        app_bad_binary = RealApplication(binary_path="nonexistent_file.exe")
+        app_bad_binary: RealApplication = RealApplication(binary_path="nonexistent_file.exe")
 
-        failed_generator = _setup_rop_generator(app_bad_binary)
+        failed_generator: Any = _setup_rop_generator(app_bad_binary)
         # Should return None for failed setup
         assert failed_generator is None, "Setup should fail for nonexistent binary"
 
     def test_configure_architecture_and_targets(self) -> None:
         """Test architecture and target configuration function."""
         # Setup generator first
-        generator = _setup_rop_generator(self.real_app)
+        generator: Any = _setup_rop_generator(self.real_app)
         assert generator is not None, "Setup must succeed for configuration test"
 
         # Test the configure function - takes app and generator
-        result = _configure_architecture_and_targets(self.real_app, generator)
+        result: bool = _configure_architecture_and_targets(self.real_app, generator)
 
         # Anti-placeholder validation: Function should return boolean indicating success
         assert isinstance(result, bool), "Configure function should return boolean"
@@ -465,11 +465,11 @@ class TestROPGeneratorModuleFunctions:
     def test_execute_rop_generation_workflow(self) -> None:
         """Test ROP generation workflow execution function."""
         # Setup generator first
-        generator = _setup_rop_generator(self.real_app)
+        generator: Any = _setup_rop_generator(self.real_app)
         assert generator is not None, "Setup must succeed for workflow test"
 
         # Test the workflow execution function - takes app and generator
-        result = _execute_rop_generation_workflow(self.real_app, generator)
+        result: bool = _execute_rop_generation_workflow(self.real_app, generator)
 
         # Anti-placeholder validation: Function should return boolean indicating success
         assert isinstance(result, bool), "Workflow function should return boolean"
@@ -478,23 +478,23 @@ class TestROPGeneratorModuleFunctions:
         assert len(self.real_app.output_messages) > 0, "Should emit messages during workflow"
 
         # Test workflow with generator that has no gadgets
-        empty_generator = ROPChainGenerator()
+        empty_generator: ROPChainGenerator = ROPChainGenerator()
         empty_generator.set_binary(self.temp_binary.name)
 
         # Empty generator might still succeed or fail - test both cases
-        empty_result = _execute_rop_generation_workflow(self.real_app, empty_generator)
+        empty_result: bool = _execute_rop_generation_workflow(self.real_app, empty_generator)
         assert isinstance(empty_result, bool), "Workflow with empty generator should return boolean"
 
     def test_process_rop_results(self) -> None:
         """Test ROP results processing function."""
         # Setup generator with results first
-        generator = _setup_rop_generator(self.real_app)
+        generator: Any = _setup_rop_generator(self.real_app)
         assert generator is not None, "Setup must succeed for results processing test"
 
         # Add some target functions and generate chains to have results
         generator.add_target_function('system', 0x401000)
         generator.find_gadgets()  # Try to find gadgets
-        chain = generator.generate_chain('system')  # Try to generate a chain
+        chain: Any = generator.generate_chain('system')  # Try to generate a chain
 
         # Test the process results function - takes app and generator
         _process_rop_results(self.real_app, generator)
@@ -510,13 +510,13 @@ class TestROPGeneratorModuleFunctions:
     def test_handle_rop_report_generation(self) -> None:
         """Test ROP report generation function."""
         # Setup generator with results first
-        generator = _setup_rop_generator(self.real_app)
+        generator: Any = _setup_rop_generator(self.real_app)
         assert generator is not None, "Setup must succeed for report generation test"
 
         # Add target and try to generate some content for reporting
         generator.add_target_function('system', 0x401000)
         generator.find_gadgets()
-        chain = generator.generate_chain('system')
+        chain: Any = generator.generate_chain('system')
 
         # Test the report generation function - takes app and generator
         _handle_rop_report_generation(self.real_app, generator)
@@ -534,8 +534,8 @@ class TestROPGeneratorIntegrationValidation:
 
     def setup_method(self) -> None:
         """Setup test environment."""
-        self.temp_binary = self._create_realistic_test_binary()
-        self.real_app = RealApplication(binary_path=self.temp_binary)
+        self.temp_binary: Any = self._create_realistic_test_binary()
+        self.real_app: RealApplication = RealApplication(binary_path=self.temp_binary)
 
     def teardown_method(self) -> None:
         """Cleanup test environment."""
@@ -552,7 +552,7 @@ class TestROPGeneratorIntegrationValidation:
 
         # Check if generator was stored on app (indicates successful workflow)
         if hasattr(self.real_app, 'rop_chain_generator'):
-            generator = self.real_app.rop_chain_generator
+            generator: Any = self.real_app.rop_chain_generator
             assert isinstance(generator, ROPChainGenerator), "Stored generator should be ROPChainGenerator"
             assert generator.binary_path == self.temp_binary, "Generator should have correct binary path"
 
@@ -560,12 +560,12 @@ class TestROPGeneratorIntegrationValidation:
             generator.add_target_function('test_target', 0x401000)
             assert len(generator.target_functions) > 0, "Should be able to add targets after workflow"
 
-    def _create_realistic_test_binary(self) -> None:
+    def _create_realistic_test_binary(self) -> str:
         """Create a realistic test binary with various gadgets."""
-        binary_content = bytearray(4096)
+        binary_content: bytearray = bytearray(4096)
 
         # Add various x86_64 instruction patterns that create useful gadgets
-        gadget_patterns = [
+        gadget_patterns: list[bytes] = [
             b'\x58\xc3',  # pop rax; ret
             b'\x5b\xc3',  # pop rbx; ret
             b'\x59\xc3',  # pop rcx; ret
@@ -577,13 +577,13 @@ class TestROPGeneratorIntegrationValidation:
         ]
 
         # Distribute gadgets throughout binary
-        offset = 0x100
+        offset: int = 0x100
         for pattern in gadget_patterns:
             binary_content[offset:offset+len(pattern)] = pattern
             offset += 0x50
 
         # Write to temporary file
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.bin')
+        temp_file: Any = tempfile.NamedTemporaryFile(delete=False, suffix='.bin')
         temp_file.write(binary_content)
         temp_file.close()
 

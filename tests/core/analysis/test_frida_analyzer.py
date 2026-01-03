@@ -12,10 +12,10 @@ import sys
 import subprocess
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 import pytest
 
-frida_analyzer: Any | None
+frida_analyzer: Optional[Any]
 try:
     import intellicrack.core.analysis.frida_analyzer as frida_analyzer
     FRIDA_ANALYZER_AVAILABLE = True
@@ -868,7 +868,7 @@ class TestProductionReadinessValidation(TestFridaAnalyzerModule):
     def test_error_handling_robustness(self) -> None:
         """Test robust error handling for production scenarios."""
         assert frida_analyzer is not None, "frida_analyzer module not available"
-        error_scenarios: list[tuple[str | None, str]] = [
+        error_scenarios: list[tuple[Optional[str], str]] = [
             # Process doesn't exist
             ("non_existent_process.exe", self.test_script_path),
             # Script doesn't exist

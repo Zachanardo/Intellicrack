@@ -1019,14 +1019,15 @@ class TestGhidraResultsExport:
         assert func["xrefs_to"][0] == "0x401500"
 
 
+@pytest.fixture
+def real_binary(binary_fixture_dir: Path) -> str:
+    """Provide real binary for Ghidra analysis."""
+    return str(binary_fixture_dir / "minimal.exe")
+
+
 @SKIP_NO_GHIDRA
 class TestGhidraIntegration:
     """Integration tests requiring real Ghidra installation."""
-
-    @pytest.fixture
-    def real_binary(self, binary_fixture_dir: Path) -> str:
-        """Provide real binary for Ghidra analysis."""
-        return str(binary_fixture_dir / "minimal.exe")
 
     def test_ghidra_analyzes_real_binary(self, real_binary: str) -> None:
         """Ghidra successfully analyzes a real binary."""

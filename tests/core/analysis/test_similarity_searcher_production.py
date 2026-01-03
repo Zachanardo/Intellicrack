@@ -43,10 +43,10 @@ def searcher(database_path: Path) -> BinarySimilaritySearch:
 def create_pe_binary(
     path: Path,
     size: int = 2000,
-    sections: list[tuple[str, int]] = None,
-    imports: list[str] = None,
-    exports: list[str] = None,
-    strings: list[str] = None,
+    sections: list[tuple[str, int]] | None = None,
+    imports: list[str] | None = None,
+    exports: list[str] | None = None,
+    strings: list[str] | None = None,
 ) -> Path:
     """Create realistic PE binary with specified features.
 

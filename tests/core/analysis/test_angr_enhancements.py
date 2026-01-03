@@ -837,7 +837,7 @@ class TestWindowsLicensingSimProcedures:
         simprocedure = GetSystemTime()
         simprocedure.state = FakeState(0x401000)
 
-        result = simprocedure.run(0x1000)
+        result = simprocedure.run(0x1000)  # type: ignore[func-returns-value]
 
         assert result is None
 

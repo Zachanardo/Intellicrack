@@ -19,6 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
+import hmac
 import json
 import secrets
 import socket
@@ -36,6 +37,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 from intellicrack.utils.logger import get_logger
 
@@ -78,6 +80,13 @@ class HASPUSBProtocol:
     CMD_DECRYPT = 0x04
     CMD_GET_INFO = 0x05
     CMD_GET_RTC = 0x06
+    CMD_SET_RTC = 0x07
+    CMD_AUTHENTICATE = 0x08
+    CMD_GET_FEATURES = 0x09
+    CMD_CHALLENGE = 0x0A
+    CMD_RESPONSE = 0x0B
+    CMD_GET_SERIAL = 0x0C
+    CMD_GET_FIRMWARE = 0x0D
 
 
 class HASPCommandType(IntEnum):
@@ -166,6 +175,18 @@ class HASPFeatureType(IntEnum):
     CONCURRENT = 0x06
     TRIAL = 0x07
     GRACE = 0x08
+
+
+class HASPVariant(IntEnum):
+    """HASP protection variants."""
+
+    HASP4 = 0x01
+    HASP_HL = 0x02
+    HASP_SL = 0x03
+    SENTINEL_HASP = 0x04
+    SENTINEL_LDK = 0x05
+    HASP_HL_PRO = 0x06
+    HASP_HL_MAX = 0x07
 
 
 class HASPEncryptionType(IntEnum):
@@ -282,13 +303,51 @@ class HASPCrypto:
         self.hasp4_seeds: dict[int, int] = {}
         self._initialize_default_keys()
 
+    @staticmethod
+    def _pkcs7_unpad(data: bytes) -> bytes:
+        """Remove PKCS7 padding with constant-time validation.
+
+        Validates ALL padding bytes to prevent padding oracle attacks.
+        Uses constant-time comparison to avoid timing side-channels.
+
+        Args:
+            data: Padded data
+
+        Returns:
+            Unpadded data
+
+        Raises:
+            ValueError: If padding is invalid
+
+        """
+        if len(data) == 0:
+            return data
+
+        padding_length = data[-1]
+
+        if not (1 <= padding_length <= 16):
+            raise ValueError("Invalid padding length")
+
+        if len(data) < padding_length:
+            raise ValueError("Invalid padding: data too short")
+
+        padding = data[-padding_length:]
+
+        expected_padding = bytes([padding_length] * padding_length)
+
+        if not hmac.compare_digest(padding, expected_padding):
+            raise ValueError("Invalid padding bytes")
+
+        return data[:-padding_length]
+
     def _initialize_default_keys(self) -> None:
         """Initialize default cryptographic keys.
 
-        Sets up default AES-256 and RSA-2048 keys for emulation.
+        Sets up random default AES-256 and RSA-2048 keys for emulation.
+        Uses CSPRNG (secrets.token_bytes) for secure key generation.
 
         """
-        default_aes_key = hashlib.sha256(b"HASP_DEFAULT_AES256_KEY").digest()
+        default_aes_key = secrets.token_bytes(32)
         self.aes_keys[0] = default_aes_key
 
         private_key = rsa.generate_private_key(
@@ -300,7 +359,10 @@ class HASPCrypto:
         self.rsa_keys[0] = (private_key, public_key)
 
     def generate_session_key(self, session_id: int, vendor_code: int) -> bytes:
-        """Generate session-specific AES key.
+        """Generate session-specific AES key using HKDF.
+
+        Uses HKDF (HMAC-based Key Derivation Function) with cryptographically
+        secure random salt to prevent predictability attacks.
 
         Args:
             session_id: Session identifier
@@ -310,48 +372,90 @@ class HASPCrypto:
             Derived AES-256 session key.
 
         """
-        key_material = f"{session_id}:{vendor_code}:{time.time()}".encode()
-        session_key = hashlib.sha256(key_material).digest()
+        salt = secrets.token_bytes(32)
+        info = f"{session_id}:{vendor_code}".encode()
+
+        hkdf = HKDF(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            info=info,
+            backend=default_backend(),
+        )
+
+        key_material = secrets.token_bytes(32)
+        session_key = hkdf.derive(key_material)
         self.aes_keys[session_id] = session_key
         return session_key
 
-    def aes_encrypt(self, data: bytes, session_id: int = 0) -> bytes:
-        """Encrypt data using AES-256-CBC.
+    def aes_encrypt(
+        self,
+        data: bytes,
+        session_id: int = 0,
+        mode: str = "CBC",
+        key_size: int = 256,
+    ) -> bytes:
+        """Encrypt data using AES with configurable mode and key size.
 
         Args:
             data: Plaintext data to encrypt
             session_id: Session ID for key lookup
+            mode: Encryption mode (CBC, ECB)
+            key_size: Key size in bits (128, 256)
 
         Returns:
-            IV concatenated with ciphertext.
+            IV concatenated with ciphertext for CBC, or ciphertext for ECB.
 
         """
         if session_id not in self.aes_keys:
             session_id = 0
 
         key = self.aes_keys[session_id]
-        iv = secrets.token_bytes(16)
 
-        cipher = Cipher(
-            algorithms.AES(key),
-            modes.CBC(iv),
-            backend=default_backend(),
-        )
-        encryptor = cipher.encryptor()
+        if key_size == 128:
+            key = key[:16]
+        elif key_size == 256:
+            key = key[:32]
+        else:
+            key = key[:32]
 
         padding_length = 16 - (len(data) % 16)
         padded_data = data + bytes([padding_length] * padding_length)
 
-        ciphertext = encryptor.update(padded_data) + encryptor.finalize()
+        if mode.upper() == "ECB":
+            cipher = Cipher(
+                algorithms.AES(key),
+                modes.ECB(),
+                backend=default_backend(),
+            )
+            encryptor = cipher.encryptor()
+            ciphertext = encryptor.update(padded_data) + encryptor.finalize()
+            return ciphertext
+        else:
+            iv = secrets.token_bytes(16)
+            cipher = Cipher(
+                algorithms.AES(key),
+                modes.CBC(iv),
+                backend=default_backend(),
+            )
+            encryptor = cipher.encryptor()
+            ciphertext = encryptor.update(padded_data) + encryptor.finalize()
+            return iv + ciphertext
 
-        return iv + ciphertext
-
-    def aes_decrypt(self, data: bytes, session_id: int = 0) -> bytes:
-        """Decrypt data using AES-256-CBC.
+    def aes_decrypt(
+        self,
+        data: bytes,
+        session_id: int = 0,
+        mode: str = "CBC",
+        key_size: int = 256,
+    ) -> bytes:
+        """Decrypt data using AES with configurable mode and key size.
 
         Args:
-            data: Ciphertext with IV prepended
+            data: Ciphertext (with IV prepended for CBC, raw for ECB)
             session_id: Session ID for key lookup
+            mode: Decryption mode (CBC, ECB)
+            key_size: Key size in bits (128, 256)
 
         Returns:
             Decrypted plaintext.
@@ -364,24 +468,37 @@ class HASPCrypto:
             session_id = 0
 
         key = self.aes_keys[session_id]
-        iv = data[:16]
-        ciphertext = data[16:]
 
-        cipher = Cipher(
-            algorithms.AES(key),
-            modes.CBC(iv),
-            backend=default_backend(),
-        )
-        decryptor = cipher.decryptor()
+        if key_size == 128:
+            key = key[:16]
+        elif key_size == 256:
+            key = key[:32]
+        else:
+            key = key[:32]
 
-        padded_plaintext = decryptor.update(ciphertext) + decryptor.finalize()
+        if mode.upper() == "ECB":
+            cipher = Cipher(
+                algorithms.AES(key),
+                modes.ECB(),
+                backend=default_backend(),
+            )
+            decryptor = cipher.decryptor()
+            padded_plaintext = decryptor.update(data) + decryptor.finalize()
+        else:
+            iv = data[:16]
+            ciphertext = data[16:]
+            cipher = Cipher(
+                algorithms.AES(key),
+                modes.CBC(iv),
+                backend=default_backend(),
+            )
+            decryptor = cipher.decryptor()
+            padded_plaintext = decryptor.update(ciphertext) + decryptor.finalize()
 
-        if len(padded_plaintext) > 0:
-            padding_length = padded_plaintext[-1]
-            if 1 <= padding_length <= 16:
-                return padded_plaintext[:-padding_length]
-
-        return padded_plaintext
+        try:
+            return self._pkcs7_unpad(padded_plaintext)
+        except ValueError:
+            return padded_plaintext
 
     def rsa_sign(self, data: bytes, session_id: int = 0) -> bytes:
         """Sign data using RSA-PSS.
@@ -591,12 +708,10 @@ class HASPCrypto:
 
         padded_plaintext = decryptor.update(encrypted_data) + decryptor.finalize()
 
-        if len(padded_plaintext) > 0:
-            padding_length = padded_plaintext[-1]
-            if 1 <= padding_length <= 16:
-                return padded_plaintext[:-padding_length]
-
-        return padded_plaintext
+        try:
+            return self._pkcs7_unpad(padded_plaintext)
+        except ValueError:
+            return padded_plaintext
 
 
 class HASPSentinelParser:
@@ -619,12 +734,20 @@ class HASPSentinelParser:
         0xDDCCBBAA: "SOLIDWORKS",
     }
 
-    def __init__(self) -> None:
-        """Initialize HASP Sentinel parser with full protocol support."""
+    MAX_SESSIONS = 10000
+
+    def __init__(self, variant: HASPVariant = HASPVariant.HASP_HL_MAX) -> None:
+        """Initialize HASP Sentinel parser with full protocol support.
+
+        Args:
+            variant: HASP protection variant to emulate
+
+        """
         self.logger = get_logger(__name__)
         self.active_sessions: dict[int, HASPSession] = {}
         self.features: dict[int, HASPFeature] = {}
         self.crypto = HASPCrypto()
+        self.variant = variant
         self.hardware_fingerprint = self._generate_hardware_fingerprint()
         self.memory_storage: dict[int, bytearray] = {}
         self.sequence_numbers: dict[int, int] = {}
@@ -759,7 +882,7 @@ class HASPSentinelParser:
             memory[i] = (i * 13 + 37) & 0xFF
 
     def _generate_hardware_fingerprint(self) -> dict[str, Any]:
-        """Generate realistic HASP hardware fingerprint.
+        """Generate realistic HASP hardware fingerprint based on variant.
 
         Returns:
             Hardware information dictionary.
@@ -767,21 +890,103 @@ class HASPSentinelParser:
         """
         hasp_id = secrets.randbelow(900000) + 100000
 
+        variant_info = {
+            HASPVariant.HASP4: {
+                "type": "HASP4",
+                "memory": 112,
+                "firmware": "1.0",
+                "hardware_version": "HASP4",
+                "encryption_engines": ["HASP4"],
+            },
+            HASPVariant.HASP_HL: {
+                "type": "HASP HL",
+                "memory": 4096,
+                "firmware": "3.25",
+                "hardware_version": "HL",
+                "encryption_engines": ["AES-128", "HASP4"],
+            },
+            HASPVariant.HASP_SL: {
+                "type": "HASP SL",
+                "memory": 0,
+                "firmware": "7.0",
+                "hardware_version": "SL",
+                "encryption_engines": ["AES-256"],
+            },
+            HASPVariant.SENTINEL_HASP: {
+                "type": "Sentinel HASP",
+                "memory": 65536,
+                "firmware": "7.50",
+                "hardware_version": "Sentinel",
+                "encryption_engines": ["AES-256", "RSA-2048"],
+            },
+            HASPVariant.SENTINEL_LDK: {
+                "type": "Sentinel LDK",
+                "memory": 65536,
+                "firmware": "8.0",
+                "hardware_version": "LDK",
+                "encryption_engines": ["AES-256", "RSA-2048", "ECC"],
+            },
+            HASPVariant.HASP_HL_PRO: {
+                "type": "HASP HL Pro",
+                "memory": 32768,
+                "firmware": "4.0",
+                "hardware_version": "HL Pro",
+                "encryption_engines": ["AES-256", "RSA-2048", "HASP4"],
+            },
+            HASPVariant.HASP_HL_MAX: {
+                "type": "HASP HL Max",
+                "memory": 65536,
+                "firmware": "4.05",
+                "hardware_version": "HL Max Pro",
+                "encryption_engines": ["AES-256", "RSA-2048", "HASP4"],
+            },
+        }
+
+        info = variant_info.get(self.variant, variant_info[HASPVariant.HASP_HL_MAX])
+
         return {
             "hasp_id": hasp_id,
-            "type": "HASP HL Max",
-            "memory": 65536,
-            "battery": True,
-            "rtc": True,
+            "type": info["type"],
+            "variant": self.variant.name,
+            "memory": info["memory"],
+            "battery": self.variant in [HASPVariant.HASP_HL, HASPVariant.HASP_HL_PRO, HASPVariant.HASP_HL_MAX],
+            "rtc": self.variant not in [HASPVariant.HASP_SL],
             "serial": f"H{secrets.randbelow(90000000) + 10000000}",
-            "firmware": "4.05",
-            "hardware_version": "HL Max Pro",
-            "interface": "USB 2.0",
-            "encryption_engines": ["AES-256", "RSA-2048", "HASP4"],
+            "firmware": info["firmware"],
+            "hardware_version": info["hardware_version"],
+            "interface": "USB 2.0" if self.variant != HASPVariant.HASP_SL else "Software",
+            "encryption_engines": info["encryption_engines"],
             "features_supported": len(self.features),
-            "network_capable": True,
-            "detachable_capable": True,
+            "network_capable": self.variant != HASPVariant.HASP4,
+            "detachable_capable": self.variant in [HASPVariant.SENTINEL_HASP, HASPVariant.SENTINEL_LDK],
         }
+
+    def _evict_lru_session(self) -> None:
+        """Evict least-recently-used session when max sessions limit is reached.
+
+        Uses last_heartbeat timestamp to determine LRU session.
+        Removes associated sequence numbers and memory storage.
+
+        """
+        if len(self.active_sessions) >= self.MAX_SESSIONS:
+            lru_session_id = min(
+                self.active_sessions.keys(),
+                key=lambda sid: self.active_sessions[sid].last_heartbeat,
+            )
+
+            self.logger.info(
+                "Evicting LRU session %d (last heartbeat: %f)",
+                lru_session_id,
+                self.active_sessions[lru_session_id].last_heartbeat,
+            )
+
+            del self.active_sessions[lru_session_id]
+
+            if lru_session_id in self.sequence_numbers:
+                del self.sequence_numbers[lru_session_id]
+
+            if lru_session_id in self.memory_storage:
+                del self.memory_storage[lru_session_id]
 
     def parse_request(self, data: bytes) -> HASPRequest | None:
         """Parse incoming HASP/Sentinel request with full protocol support.
@@ -1039,6 +1244,8 @@ class HASPSentinelParser:
                 HASPStatusCode.INVALID_VENDOR_CODE,
             )
 
+        self._evict_lru_session()
+
         session_id = secrets.randbelow(900000) + 100000
 
         encryption_key = self.crypto.generate_session_key(session_id, request.vendor_code)
@@ -1154,7 +1361,12 @@ class HASPSentinelParser:
         )
 
     def _handle_encrypt(self, request: HASPRequest) -> HASPResponse:
-        """Handle encryption request with multiple cipher support.
+        """Handle encryption request with multiple cipher support based on variant.
+
+        Note: ECB mode is intentionally used for HASP HL variant to maintain
+        compatibility with the legacy HASP HL protocol specification. This is
+        required for accurate dongle emulation despite ECB's cryptographic
+        weaknesses.
 
         Args:
             request: Encryption request with data and cipher type
@@ -1166,10 +1378,12 @@ class HASPSentinelParser:
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
-        encryption_type = request.encryption_type if request.encryption_type != HASPEncryptionType.NONE else HASPEncryptionType.AES256
+        encryption_type = request.encryption_type if request.encryption_type != HASPEncryptionType.NONE else self._get_default_encryption_type()
 
         if encryption_type in (HASPEncryptionType.AES128, HASPEncryptionType.AES256):
-            encrypted_data = self.crypto.aes_encrypt(request.encryption_data, request.session_id)
+            key_size = 128 if encryption_type == HASPEncryptionType.AES128 else 256
+            mode = "ECB" if self.variant == HASPVariant.HASP_HL else "CBC"
+            encrypted_data = self.crypto.aes_encrypt(request.encryption_data, request.session_id, mode, key_size)
         elif encryption_type == HASPEncryptionType.HASP4:
             seed = hash(request.session_id) & 0xFFFFFFFF
             encrypted_data = self.crypto.hasp4_encrypt(request.encryption_data, seed)
@@ -1182,14 +1396,23 @@ class HASPSentinelParser:
             status=HASPStatusCode.STATUS_OK,
             session_id=request.session_id,
             feature_id=request.feature_id,
-            license_data={"encrypted_bytes": len(encrypted_data)},
+            license_data={
+                "encrypted_bytes": len(encrypted_data),
+                "encryption_type": encryption_type,
+                "variant": self.variant.name,
+            },
             encryption_response=encrypted_data,
             expiry_info={},
             hardware_info={},
         )
 
     def _handle_decrypt(self, request: HASPRequest) -> HASPResponse:
-        """Handle decryption request with multiple cipher support.
+        """Handle decryption request with multiple cipher support based on variant.
+
+        Note: ECB mode is intentionally used for HASP HL variant to maintain
+        compatibility with the legacy HASP HL protocol specification. This is
+        required for accurate dongle emulation despite ECB's cryptographic
+        weaknesses.
 
         Args:
             request: Decryption request with ciphertext and cipher type
@@ -1201,10 +1424,12 @@ class HASPSentinelParser:
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
-        encryption_type = request.encryption_type if request.encryption_type != HASPEncryptionType.NONE else HASPEncryptionType.AES256
+        encryption_type = request.encryption_type if request.encryption_type != HASPEncryptionType.NONE else self._get_default_encryption_type()
 
         if encryption_type in (HASPEncryptionType.AES128, HASPEncryptionType.AES256):
-            decrypted_data = self.crypto.aes_decrypt(request.encryption_data, request.session_id)
+            key_size = 128 if encryption_type == HASPEncryptionType.AES128 else 256
+            mode = "ECB" if self.variant == HASPVariant.HASP_HL else "CBC"
+            decrypted_data = self.crypto.aes_decrypt(request.encryption_data, request.session_id, mode, key_size)
         elif encryption_type == HASPEncryptionType.HASP4:
             seed = hash(request.session_id) & 0xFFFFFFFF
             decrypted_data = self.crypto.hasp4_decrypt(request.encryption_data, seed)
@@ -1217,11 +1442,34 @@ class HASPSentinelParser:
             status=HASPStatusCode.STATUS_OK,
             session_id=request.session_id,
             feature_id=request.feature_id,
-            license_data={"decrypted_bytes": len(decrypted_data)},
+            license_data={
+                "decrypted_bytes": len(decrypted_data),
+                "encryption_type": encryption_type,
+                "variant": self.variant.name,
+            },
             encryption_response=decrypted_data,
             expiry_info={},
             hardware_info={},
         )
+
+    def _get_default_encryption_type(self) -> int:
+        """Get default encryption type based on HASP variant.
+
+        Returns:
+            Default encryption type for the variant.
+
+        """
+        variant_encryption = {
+            HASPVariant.HASP4: HASPEncryptionType.HASP4,
+            HASPVariant.HASP_HL: HASPEncryptionType.AES128,
+            HASPVariant.HASP_SL: HASPEncryptionType.AES256,
+            HASPVariant.SENTINEL_HASP: HASPEncryptionType.AES256,
+            HASPVariant.SENTINEL_LDK: HASPEncryptionType.AES256,
+            HASPVariant.HASP_HL_PRO: HASPEncryptionType.AES256,
+            HASPVariant.HASP_HL_MAX: HASPEncryptionType.AES256,
+        }
+
+        return variant_encryption.get(self.variant, HASPEncryptionType.AES256)
 
     def _handle_legacy_encrypt(self, request: HASPRequest) -> HASPResponse:
         """Handle HASP4 legacy encryption.
@@ -1850,6 +2098,68 @@ class HASPSentinelParser:
             for _session_id, session in self.active_sessions.items()
         ]
 
+    def detect_hasp_variant(self, packet_data: bytes) -> HASPVariant:
+        """Detect HASP variant from network packet characteristics.
+
+        Args:
+            packet_data: Raw HASP packet data
+
+        Returns:
+            Detected HASP variant.
+
+        """
+        if len(packet_data) < 24:
+            return HASPVariant.HASP_HL_MAX
+
+        try:
+            magic = struct.unpack("<I", packet_data[:4])[0]
+
+            if magic == 0x48535350:
+                return HASPVariant.HASP4
+
+            if magic == 0x484C4D58:
+                return HASPVariant.HASP_HL_MAX
+
+            if magic == 0x53454E54:
+                return HASPVariant.SENTINEL_HASP
+
+            encryption_type_offset = 28
+            if len(packet_data) > encryption_type_offset:
+                encryption_type = struct.unpack("<B", packet_data[encryption_type_offset : encryption_type_offset + 1])[0]
+
+                if encryption_type == HASPEncryptionType.HASP4:
+                    return HASPVariant.HASP4
+                elif encryption_type == HASPEncryptionType.AES128:
+                    return HASPVariant.HASP_HL
+                elif encryption_type == HASPEncryptionType.AES256:
+                    return HASPVariant.SENTINEL_HASP
+                elif encryption_type == HASPEncryptionType.RSA2048:
+                    return HASPVariant.SENTINEL_LDK
+
+            scope_length_offset = 33
+            if len(packet_data) > scope_length_offset + 2:
+                scope_length = struct.unpack("<H", packet_data[scope_length_offset : scope_length_offset + 2])[0]
+
+                if scope_length > 0 and len(packet_data) > scope_length_offset + 2 + scope_length:
+                    scope = packet_data[scope_length_offset + 2 : scope_length_offset + 2 + scope_length].decode("utf-8", errors="ignore")
+
+                    if "HASP4" in scope.upper():
+                        return HASPVariant.HASP4
+                    elif "HASP HL" in scope.upper():
+                        return HASPVariant.HASP_HL
+                    elif "HASP SL" in scope.upper():
+                        return HASPVariant.HASP_SL
+                    elif "SENTINEL" in scope.upper():
+                        if "LDK" in scope.upper():
+                            return HASPVariant.SENTINEL_LDK
+                        else:
+                            return HASPVariant.SENTINEL_HASP
+
+        except Exception as e:
+            self.logger.debug("Error detecting HASP variant: %s", e)
+
+        return HASPVariant.HASP_HL_MAX
+
     def export_license_data(self, output_path: Path) -> None:
         """Export license data to XML format (v2c format).
 
@@ -2224,10 +2534,14 @@ class HASPUSBEmulator:
             "manufacturer": "Aladdin Knowledge Systems",
             "product": "HASP HL 3.25",
             "serial_number": f"HL{secrets.randbelow(90000000) + 10000000}",
+            "firmware_version": "4.05",
+            "hardware_version": "HL Max Pro",
             "max_packet_size": 64,
             "configurations": 1,
             "interfaces": 1,
             "endpoints": 2,
+            "challenge_seed": secrets.randbelow(0xFFFFFFFF),
+            "auth_key": secrets.token_bytes(32),
         }
 
     def handle_control_transfer(
@@ -2268,6 +2582,27 @@ class HASPUSBEmulator:
 
         if request == HASPUSBProtocol.CMD_GET_RTC:
             return self._handle_usb_get_rtc()
+
+        if request == HASPUSBProtocol.CMD_SET_RTC:
+            return self._handle_usb_set_rtc(data)
+
+        if request == HASPUSBProtocol.CMD_AUTHENTICATE:
+            return self._handle_usb_authenticate(data)
+
+        if request == HASPUSBProtocol.CMD_GET_FEATURES:
+            return self._handle_usb_get_features()
+
+        if request == HASPUSBProtocol.CMD_CHALLENGE:
+            return self._handle_usb_challenge()
+
+        if request == HASPUSBProtocol.CMD_RESPONSE:
+            return self._handle_usb_response(data)
+
+        if request == HASPUSBProtocol.CMD_GET_SERIAL:
+            return self._handle_usb_get_serial()
+
+        if request == HASPUSBProtocol.CMD_GET_FIRMWARE:
+            return self._handle_usb_get_firmware()
 
         self.logger.warning("Unknown USB request: 0x%02X", request)
         return b"\x00" * 64
@@ -2364,6 +2699,142 @@ class HASPUSBEmulator:
         """
         current_time = int(time.time())
         return struct.pack("<I", current_time)
+
+    def _handle_usb_set_rtc(self, data: bytes) -> bytes:
+        """Handle USB RTC write.
+
+        Args:
+            data: Time data to set
+
+        Returns:
+            Status code.
+
+        """
+        return struct.pack("<I", 0x00000000)
+
+    def _handle_usb_authenticate(self, data: bytes) -> bytes:
+        """Handle USB authentication request with challenge-response.
+
+        Uses HMAC-SHA256 for secure authentication instead of XOR.
+
+        Args:
+            data: Authentication challenge data
+
+        Returns:
+            HMAC-authenticated response.
+
+        """
+        auth_key = self.device_info["auth_key"]
+
+        if len(data) >= 16:
+            challenge = data[:16]
+
+            response_hmac = hmac.new(
+                auth_key,
+                challenge,
+                hashlib.sha256,
+            ).digest()
+
+            encrypted_response = self.parser.crypto.aes_encrypt(
+                response_hmac[:16],
+                0,
+                "ECB",
+                256,
+            )
+
+            return encrypted_response[:64] if len(encrypted_response) > 64 else encrypted_response
+
+        return b"\x00" * 16
+
+    def _handle_usb_get_features(self) -> bytes:
+        """Handle USB get available features request.
+
+        Returns:
+            Packed feature list.
+
+        """
+        feature_count = len(self.parser.features)
+        feature_data = struct.pack("<I", feature_count)
+
+        for feature_id in list(self.parser.features.keys())[:15]:
+            feature_data += struct.pack("<I", feature_id)
+
+        return feature_data[:64] if len(feature_data) > 64 else feature_data
+
+    def _handle_usb_challenge(self) -> bytes:
+        """Handle USB challenge generation for authentication.
+
+        Uses cryptographically secure random number generation
+        to prevent challenge prediction attacks. Stores challenge
+        for subsequent verification.
+
+        Returns:
+            Cryptographically secure random challenge data.
+
+        """
+        challenge = secrets.token_bytes(16)
+        self.device_info["last_challenge"] = challenge
+        return challenge
+
+    def _handle_usb_response(self, data: bytes) -> bytes:
+        """Handle USB challenge response verification.
+
+        Uses HMAC-based verification with constant-time comparison
+        to prevent timing side-channel attacks.
+
+        Args:
+            data: Response to verify
+
+        Returns:
+            Verification status.
+
+        """
+        if len(data) >= 16:
+            last_challenge = self.device_info.get("last_challenge")
+            if not last_challenge:
+                return struct.pack("<I", 0x00000002)
+
+            auth_key = self.device_info["auth_key"]
+
+            expected_response = hmac.new(
+                auth_key,
+                last_challenge,
+                hashlib.sha256,
+            ).digest()[:16]
+
+            if hmac.compare_digest(data[:16], expected_response):
+                return struct.pack("<I", 0x00000000)
+            else:
+                return struct.pack("<I", 0x00000001)
+
+        return struct.pack("<I", 0x00000002)
+
+    def _handle_usb_get_serial(self) -> bytes:
+        """Handle USB serial number request.
+
+        Returns:
+            Device serial number.
+
+        """
+        serial = self.device_info["serial_number"].encode("utf-8")
+        return serial[:64] if len(serial) > 64 else serial
+
+    def _handle_usb_get_firmware(self) -> bytes:
+        """Handle USB firmware version request.
+
+        Returns:
+            Firmware version info.
+
+        """
+        firmware = self.device_info["firmware_version"].encode("utf-8")
+        hardware = self.device_info["hardware_version"].encode("utf-8")
+
+        firmware_data = struct.pack("<H", len(firmware))
+        firmware_data += firmware
+        firmware_data += struct.pack("<H", len(hardware))
+        firmware_data += hardware
+
+        return firmware_data[:64] if len(firmware_data) > 64 else firmware_data
 
     def emulate_usb_device(self) -> dict[str, Any]:
         """Get USB device descriptor for emulation.

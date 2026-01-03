@@ -5,11 +5,13 @@ All tests validate genuine bypass effectiveness across validation layers.
 """
 
 import logging
-from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
+from intellicrack.core.certificate.cert_patcher import CertificatePatcher
+from intellicrack.core.certificate.detection_report import BypassMethod
+from intellicrack.core.certificate.frida_cert_hooks import FridaCertificateHooks
 from intellicrack.core.certificate.layer_detector import (
     DependencyGraph,
     LayerInfo,
@@ -20,6 +22,7 @@ from intellicrack.core.certificate.multilayer_bypass import (
     MultiLayerResult,
     StageResult,
 )
+from intellicrack.core.certificate.validation_detector import CertificateValidationDetector
 
 
 logger = logging.getLogger(__name__)
@@ -28,15 +31,27 @@ logger = logging.getLogger(__name__)
 class RealCertificatePatcher:
     """Real certificate patcher test double for testing."""
 
-    def patch_certificate_validation(self, target: str, functions: list[str]) -> Any:
+    def patch_certificate_validation(self, detection_report: Any) -> Any:
         """Simulate certificate validation patching."""
-        from intellicrack.core.certificate.cert_patcher import PatchResult
+        from intellicrack.core.certificate.cert_patcher import (
+            PatchedFunction,
+            PatchResult,
+        )
+        from intellicrack.core.certificate.patch_generators import PatchType
 
         return PatchResult(
             success=True,
-            patched_functions=functions,
+            patched_functions=[
+                PatchedFunction(
+                    address=0x140001000,
+                    api_name="SSL_CTX_set_verify",
+                    patch_type=PatchType.NOP_SLED,
+                    patch_size=6,
+                    original_bytes=b"\x55\x48\x89\xe5\x48\x83",
+                )
+            ],
             failed_patches=[],
-            backup_path=Path("/backup/target.exe.bak"),
+            backup_data=b"original_backup_data",
         )
 
 
@@ -97,7 +112,7 @@ class RealValidationDetector:
                     context="certificate validation",
                 ),
             ],
-            recommended_method=None,
+            recommended_method=BypassMethod.NONE,
             risk_level="medium",
         )
 
@@ -108,15 +123,15 @@ def simple_layer_info() -> list[LayerInfo]:
     return [
         LayerInfo(
             layer_type=ValidationLayer.OS_LEVEL,
-            validation_functions=["CertVerifyCertificateChainPolicy"],
-            library_dependencies=["crypt32.dll"],
-            estimated_complexity=2,
+            confidence=0.9,
+            evidence=["CertVerifyCertificateChainPolicy in crypt32.dll"],
+            dependencies=[],
         ),
         LayerInfo(
             layer_type=ValidationLayer.LIBRARY_LEVEL,
-            validation_functions=["SSL_CTX_set_verify", "SSL_connect"],
-            library_dependencies=["libssl.dll"],
-            estimated_complexity=3,
+            confidence=0.85,
+            evidence=["SSL_CTX_set_verify in libssl.dll", "SSL_connect in libssl.dll"],
+            dependencies=[ValidationLayer.OS_LEVEL],
         ),
     ]
 
@@ -127,27 +142,27 @@ def complex_layer_info() -> list[LayerInfo]:
     return [
         LayerInfo(
             layer_type=ValidationLayer.OS_LEVEL,
-            validation_functions=["CertVerifyCertificateChainPolicy"],
-            library_dependencies=["crypt32.dll"],
-            estimated_complexity=2,
+            confidence=0.9,
+            evidence=["CertVerifyCertificateChainPolicy in crypt32.dll"],
+            dependencies=[],
         ),
         LayerInfo(
             layer_type=ValidationLayer.LIBRARY_LEVEL,
-            validation_functions=["SSL_CTX_set_verify", "SSL_CTX_new"],
-            library_dependencies=["libssl.dll"],
-            estimated_complexity=3,
+            confidence=0.85,
+            evidence=["SSL_CTX_set_verify in libssl.dll", "SSL_CTX_new in libssl.dll"],
+            dependencies=[ValidationLayer.OS_LEVEL],
         ),
         LayerInfo(
             layer_type=ValidationLayer.APPLICATION_LEVEL,
-            validation_functions=["custom_cert_check", "validate_pinning"],
-            library_dependencies=["app.exe"],
-            estimated_complexity=4,
+            confidence=0.75,
+            evidence=["custom_cert_check in app.exe", "validate_pinning in app.exe"],
+            dependencies=[ValidationLayer.LIBRARY_LEVEL],
         ),
         LayerInfo(
             layer_type=ValidationLayer.SERVER_LEVEL,
-            validation_functions=["WinHttpSendRequest"],
-            library_dependencies=["winhttp.dll"],
-            estimated_complexity=3,
+            confidence=0.8,
+            evidence=["WinHttpSendRequest in winhttp.dll"],
+            dependencies=[ValidationLayer.APPLICATION_LEVEL],
         ),
     ]
 
@@ -241,8 +256,8 @@ class TestOSLevelBypass:
     def test_bypass_os_level_patches_cryptoapi(self) -> None:
         """OS-level bypass must patch CryptoAPI functions."""
         bypasser = MultiLayerBypass()
-        bypasser._patcher = RealCertificatePatcher()
-        bypasser._detector = RealValidationDetector()
+        bypasser._patcher = cast(CertificatePatcher, RealCertificatePatcher())
+        bypasser._detector = cast(CertificateValidationDetector, RealValidationDetector())
 
         result = bypasser._bypass_os_level(
             stage_number=1,
@@ -258,19 +273,24 @@ class TestOSLevelBypass:
         bypasser = MultiLayerBypass()
 
         class FailingPatcher:
-            def patch_certificate_validation(self, target: str, functions: list[str]) -> Any:
-                from intellicrack.core.certificate.cert_patcher import PatchResult
+            def patch_certificate_validation(self, detection_report: Any) -> Any:
+                from intellicrack.core.certificate.cert_patcher import (
+                    FailedPatch,
+                    PatchResult,
+                )
 
                 return PatchResult(
                     success=False,
                     patched_functions=[],
-                    failed_patches=functions,
-                    backup_path=None,
+                    failed_patches=[
+                        FailedPatch(address=0x140001000, api_name="SSL_CTX_set_verify", error="Patch failed")
+                    ],
+                    backup_data=b"",
                 )
 
-        bypasser._patcher = FailingPatcher()
-        bypasser._detector = RealValidationDetector()
-        bypasser._frida_hooks = RealFridaHooks()
+        bypasser._patcher = cast(CertificatePatcher, FailingPatcher())
+        bypasser._detector = cast(CertificateValidationDetector, RealValidationDetector())
+        bypasser._frida_hooks = cast(FridaCertificateHooks, RealFridaHooks())
 
         result = bypasser._bypass_os_level(
             stage_number=1,
@@ -287,8 +307,8 @@ class TestLibraryLevelBypass:
     def test_bypass_library_level_injects_frida_hooks(self) -> None:
         """Library-level bypass must inject Frida hooks for TLS libraries."""
         bypasser = MultiLayerBypass()
-        bypasser._frida_hooks = RealFridaHooks()
-        bypasser._detector = RealValidationDetector()
+        bypasser._frida_hooks = cast(FridaCertificateHooks, RealFridaHooks())
+        bypasser._detector = cast(CertificateValidationDetector, RealValidationDetector())
 
         result = bypasser._bypass_library_level(
             stage_number=2,
@@ -306,8 +326,8 @@ class TestApplicationLevelBypass:
     def test_bypass_application_level_universal_hook(self) -> None:
         """Application-level bypass must use universal Frida bypass."""
         bypasser = MultiLayerBypass()
-        bypasser._frida_hooks = RealFridaHooks()
-        bypasser._detector = RealValidationDetector()
+        bypasser._frida_hooks = cast(FridaCertificateHooks, RealFridaHooks())
+        bypasser._detector = cast(CertificateValidationDetector, RealValidationDetector())
 
         result = bypasser._bypass_application_level(
             stage_number=3,
@@ -325,7 +345,7 @@ class TestServerLevelBypass:
     def test_bypass_server_level_hooks_winhttp(self) -> None:
         """Server-level bypass must hook WinHTTP if detected."""
         bypasser = MultiLayerBypass()
-        bypasser._frida_hooks = RealFridaHooks()
+        bypasser._frida_hooks = cast(FridaCertificateHooks, RealFridaHooks())
 
         result = bypasser._bypass_server_level(
             stage_number=4,
@@ -347,9 +367,9 @@ class TestCompleteMultiLayerWorkflow:
     ) -> None:
         """Simple two-layer bypass must execute both stages."""
         bypasser = MultiLayerBypass()
-        bypasser._patcher = RealCertificatePatcher()
-        bypasser._frida_hooks = RealFridaHooks()
-        bypasser._detector = RealValidationDetector()
+        bypasser._patcher = cast(CertificatePatcher, RealCertificatePatcher())
+        bypasser._frida_hooks = cast(FridaCertificateHooks, RealFridaHooks())
+        bypasser._detector = cast(CertificateValidationDetector, RealValidationDetector())
 
         result = bypasser.bypass_all_layers(
             target="target.exe",
@@ -366,9 +386,9 @@ class TestCompleteMultiLayerWorkflow:
     ) -> None:
         """Complex four-layer bypass must execute all stages in order."""
         bypasser = MultiLayerBypass()
-        bypasser._patcher = RealCertificatePatcher()
-        bypasser._frida_hooks = RealFridaHooks()
-        bypasser._detector = RealValidationDetector()
+        bypasser._patcher = cast(CertificatePatcher, RealCertificatePatcher())
+        bypasser._frida_hooks = cast(FridaCertificateHooks, RealFridaHooks())
+        bypasser._detector = cast(CertificateValidationDetector, RealValidationDetector())
 
         result = bypasser.bypass_all_layers(
             target="target.exe",
@@ -426,35 +446,50 @@ class TestDependencyHandling:
         bypasser = MultiLayerBypass()
 
         class FailingPatcher:
-            def patch_certificate_validation(self, target: str, functions: list[str]) -> Any:
-                from intellicrack.core.certificate.cert_patcher import PatchResult
+            def patch_certificate_validation(self, detection_report: Any) -> Any:
+                from intellicrack.core.certificate.cert_patcher import (
+                    FailedPatch,
+                    PatchResult,
+                )
 
                 return PatchResult(
                     success=False,
                     patched_functions=[],
-                    failed_patches=functions,
-                    backup_path=None,
+                    failed_patches=[
+                        FailedPatch(address=0x140001000, api_name="SSL_CTX_set_verify", error="Patch failed")
+                    ],
+                    backup_data=b"",
                 )
 
         class FailingHooks:
             def attach(self, target: str) -> bool:
                 return False
 
-            def inject_specific_bypass(self, target: str, functions: list[str]) -> bool:
+            def inject_specific_bypass(self, target: str) -> bool:
                 return False
 
-            def inject_universal_bypass(self, target: str) -> bool:
+            def inject_universal_bypass(self) -> bool:
                 return False
 
-            def get_bypass_status(self) -> dict[str, Any]:
-                return {"success": False}
+            def get_bypass_status(self) -> Any:
+                from intellicrack.core.certificate.frida_cert_hooks import BypassStatus
+                return BypassStatus(
+                    active=False,
+                    library=None,
+                    platform=None,
+                    hooks_installed=[],
+                    detected_libraries=[],
+                    message_count=0,
+                    errors=[],
+                    intercepted_data={},
+                )
 
             def detach(self) -> None:
                 pass
 
-        bypasser._patcher = FailingPatcher()
-        bypasser._frida_hooks = FailingHooks()
-        bypasser._detector = RealValidationDetector()
+        bypasser._patcher = cast(CertificatePatcher, FailingPatcher())
+        bypasser._frida_hooks = cast(FridaCertificateHooks, FailingHooks())
+        bypasser._detector = cast(CertificateValidationDetector, RealValidationDetector())
 
         result = bypasser.bypass_all_layers(
             target="target.exe",
@@ -480,7 +515,7 @@ class TestVerificationMethods:
             def detach(self) -> None:
                 pass
 
-        bypasser._frida_hooks = StatusHooks()
+        bypasser._frida_hooks = cast(FridaCertificateHooks, StatusHooks())
 
         verified = bypasser._verify_os_level_bypass("target.exe")
 
@@ -500,7 +535,7 @@ class TestVerificationMethods:
             def detach(self) -> None:
                 pass
 
-        bypasser._frida_hooks = LibraryStatusHooks()
+        bypasser._frida_hooks = cast(FridaCertificateHooks, LibraryStatusHooks())
 
         verified = bypasser._verify_library_level_bypass("target.exe")
 
@@ -517,7 +552,7 @@ class TestVerificationMethods:
             def detach(self) -> None:
                 pass
 
-        bypasser._frida_hooks = AppStatusHooks()
+        bypasser._frida_hooks = cast(FridaCertificateHooks, AppStatusHooks())
 
         verified = bypasser._verify_application_level_bypass("target.exe")
 
@@ -534,7 +569,7 @@ class TestVerificationMethods:
             def detach(self) -> None:
                 pass
 
-        bypasser._frida_hooks = ServerStatusHooks()
+        bypasser._frida_hooks = cast(FridaCertificateHooks, ServerStatusHooks())
 
         verified = bypasser._verify_server_level_bypass("target.exe")
 
@@ -554,7 +589,7 @@ class TestRollbackFunctionality:
             def detach(self) -> None:
                 detach_called.append(True)
 
-        bypasser._frida_hooks = TrackingHooks()
+        bypasser._frida_hooks = cast(FridaCertificateHooks, TrackingHooks())
 
         result = MultiLayerResult(overall_success=False)
 
@@ -572,7 +607,7 @@ class TestRollbackFunctionality:
             def detach(self) -> None:
                 cleanup_called.append(True)
 
-        bypasser._frida_hooks = CleanupHooks()
+        bypasser._frida_hooks = cast(FridaCertificateHooks, CleanupHooks())
 
         bypasser.cleanup()
 
@@ -587,11 +622,11 @@ class TestErrorHandling:
         bypasser = MultiLayerBypass()
 
         class ExceptionPatcher:
-            def patch_certificate_validation(self, target: str, functions: list[str]) -> Any:
-                raise Exception("Patch error")
+            def patch_certificate_validation(self, detection_report: Any) -> Any:
+                raise RuntimeError("Patch error")
 
-        bypasser._patcher = ExceptionPatcher()
-        bypasser._detector = RealValidationDetector()
+        bypasser._patcher = cast(CertificatePatcher, ExceptionPatcher())
+        bypasser._detector = cast(CertificateValidationDetector, RealValidationDetector())
 
         result = bypasser._bypass_os_level(
             stage_number=1,
@@ -605,7 +640,8 @@ class TestErrorHandling:
     def test_verification_handles_exceptions(self) -> None:
         """Verification must handle exceptions gracefully."""
         bypasser = MultiLayerBypass()
-        bypasser._frida_hooks = None
+        # Use cast to simulate None-like hooks that will fail gracefully
+        bypasser._frida_hooks = cast(FridaCertificateHooks, None)
 
         try:
             verified = bypasser._verify_os_level_bypass("target.exe")
@@ -624,9 +660,9 @@ class TestStageOrdering:
     ) -> None:
         """Stages must execute in topological dependency order."""
         bypasser = MultiLayerBypass()
-        bypasser._patcher = RealCertificatePatcher()
-        bypasser._frida_hooks = RealFridaHooks()
-        bypasser._detector = RealValidationDetector()
+        bypasser._patcher = cast(CertificatePatcher, RealCertificatePatcher())
+        bypasser._frida_hooks = cast(FridaCertificateHooks, RealFridaHooks())
+        bypasser._detector = cast(CertificateValidationDetector, RealValidationDetector())
 
         result = bypasser.bypass_all_layers(
             target="target.exe",

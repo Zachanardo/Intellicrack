@@ -25,7 +25,7 @@ import subprocess
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import pytest
 
@@ -528,7 +528,7 @@ class TestActivateWindows:
 
     def test_activate_windows_checks_prerequisites(self, activator: WindowsActivator) -> None:
         """activate_windows verifies prerequisites before activation."""
-        original_check = activator.check_prerequisites
+        original_check: Callable[[], tuple[bool, list[str]]] = activator.check_prerequisites
 
         def fake_check() -> tuple[bool, list[str]]:
             return (False, ["Missing script"])
@@ -549,7 +549,7 @@ class TestActivateWindows:
         fake_subprocess.set_response(0, "Success", "")
         monkeypatch.setattr("subprocess.run", fake_subprocess.run)
 
-        original_get_status = activator_with_mock_script.get_activation_status
+        original_get_status: Callable[[], dict[str, Any]] = activator_with_mock_script.get_activation_status
         activator_with_mock_script.get_activation_status = lambda: {"status": "activated"}  # type: ignore[method-assign]
 
         result = activator_with_mock_script.activate_windows(ActivationMethod.HWID)
@@ -567,7 +567,7 @@ class TestActivateWindows:
         fake_subprocess.set_response(0, "Success", "")
         monkeypatch.setattr("subprocess.run", fake_subprocess.run)
 
-        original_get_status = activator_with_mock_script.get_activation_status
+        original_get_status: Callable[[], dict[str, Any]] = activator_with_mock_script.get_activation_status
         activator_with_mock_script.get_activation_status = lambda: {"status": "activated"}  # type: ignore[method-assign]
 
         result = activator_with_mock_script.activate_windows(ActivationMethod.KMS38)
@@ -585,7 +585,7 @@ class TestActivateWindows:
         fake_subprocess.set_response(0, "Success", "")
         monkeypatch.setattr("subprocess.run", fake_subprocess.run)
 
-        original_get_status = activator_with_mock_script.get_activation_status
+        original_get_status: Callable[[], dict[str, Any]] = activator_with_mock_script.get_activation_status
         activator_with_mock_script.get_activation_status = lambda: {"status": "activated"}  # type: ignore[method-assign]
 
         result = activator_with_mock_script.activate_windows(ActivationMethod.ONLINE_KMS)
@@ -603,7 +603,7 @@ class TestActivateWindows:
         fake_subprocess.set_response(0, "Activated", "")
         monkeypatch.setattr("subprocess.run", fake_subprocess.run)
 
-        original_get_status = activator_with_mock_script.get_activation_status
+        original_get_status: Callable[[], dict[str, Any]] = activator_with_mock_script.get_activation_status
         activator_with_mock_script.get_activation_status = lambda: {"status": "activated"}  # type: ignore[method-assign]
 
         result = activator_with_mock_script.activate_windows(ActivationMethod.HWID)
@@ -648,7 +648,7 @@ class TestActivateAliasMethods:
 
     def test_activate_method_hwid_string(self, activator: WindowsActivator) -> None:
         """activate method converts 'hwid' string to enum."""
-        original_activate = activator.activate_windows
+        original_activate: Callable[[ActivationMethod], dict[str, Any]] = activator.activate_windows
         called_with: list[ActivationMethod] = []
 
         def fake_activate(method: ActivationMethod) -> dict[str, Any]:
@@ -664,7 +664,7 @@ class TestActivateAliasMethods:
 
     def test_activate_method_kms38_string(self, activator: WindowsActivator) -> None:
         """activate method converts 'kms38' string to enum."""
-        original_activate = activator.activate_windows
+        original_activate: Callable[[ActivationMethod], dict[str, Any]] = activator.activate_windows
         called_with: list[ActivationMethod] = []
 
         def fake_activate(method: ActivationMethod) -> dict[str, Any]:
@@ -680,7 +680,7 @@ class TestActivateAliasMethods:
 
     def test_activate_method_ohook_string(self, activator: WindowsActivator) -> None:
         """activate method converts 'ohook' string to enum."""
-        original_activate = activator.activate_windows
+        original_activate: Callable[[ActivationMethod], dict[str, Any]] = activator.activate_windows
         called_with: list[ActivationMethod] = []
 
         def fake_activate(method: ActivationMethod) -> dict[str, Any]:
@@ -696,7 +696,7 @@ class TestActivateAliasMethods:
 
     def test_activate_method_case_insensitive(self, activator: WindowsActivator) -> None:
         """activate method handles uppercase method names."""
-        original_activate = activator.activate_windows
+        original_activate: Callable[[ActivationMethod], dict[str, Any]] = activator.activate_windows
         called_with: list[ActivationMethod] = []
 
         def fake_activate(method: ActivationMethod) -> dict[str, Any]:
@@ -712,7 +712,7 @@ class TestActivateAliasMethods:
 
     def test_activate_windows_kms_method(self, activator: WindowsActivator) -> None:
         """activate_windows_kms calls activate_windows with KMS38."""
-        original_activate = activator.activate_windows
+        original_activate: Callable[[ActivationMethod], dict[str, Any]] = activator.activate_windows
         called_with: list[ActivationMethod] = []
 
         def fake_activate(method: ActivationMethod) -> dict[str, Any]:
@@ -728,7 +728,7 @@ class TestActivateAliasMethods:
 
     def test_activate_windows_digital_method(self, activator: WindowsActivator) -> None:
         """activate_windows_digital calls activate_windows with HWID."""
-        original_activate = activator.activate_windows
+        original_activate: Callable[[ActivationMethod], dict[str, Any]] = activator.activate_windows
         called_with: list[ActivationMethod] = []
 
         def fake_activate(method: ActivationMethod) -> dict[str, Any]:
@@ -748,8 +748,8 @@ class TestCheckActivationStatus:
 
     def test_check_activation_status_calls_get_activation_status(self, activator: WindowsActivator) -> None:
         """check_activation_status calls underlying get_activation_status."""
-        original_get = activator.get_activation_status
-        call_count = [0]
+        original_get: Callable[[], dict[str, Any]] = activator.get_activation_status
+        call_count: list[int] = [0]
 
         def fake_get() -> dict[str, Any]:
             call_count[0] += 1
@@ -763,7 +763,7 @@ class TestCheckActivationStatus:
 
     def test_check_activation_status_adds_activated_key(self, activator: WindowsActivator) -> None:
         """check_activation_status adds 'activated' boolean key."""
-        original_get = activator.get_activation_status
+        original_get: Callable[[], dict[str, Any]] = activator.get_activation_status
         activator.get_activation_status = lambda: {"status": "activated"}  # type: ignore[method-assign]
 
         result = activator.check_activation_status()
@@ -775,7 +775,7 @@ class TestCheckActivationStatus:
 
     def test_check_activation_status_activated_false_for_not_activated(self, activator: WindowsActivator) -> None:
         """check_activation_status sets activated=False for non-activated status."""
-        original_get = activator.get_activation_status
+        original_get: Callable[[], dict[str, Any]] = activator.get_activation_status
         activator.get_activation_status = lambda: {"status": "not_activated"}  # type: ignore[method-assign]
 
         result = activator.check_activation_status()
@@ -891,9 +891,9 @@ class TestOfficeActivation:
         monkeypatch.setattr("intellicrack.core.patching.windows_activator.is_admin", fake_admin.is_admin)
         monkeypatch.setattr("os.name", "nt")
 
-        original_detect = activator_with_mock_script._detect_office_version
-        original_c2r = activator_with_mock_script._activate_office_c2r
-        original_status = activator_with_mock_script._get_office_status
+        original_detect: Callable[[], str] = activator_with_mock_script._detect_office_version
+        original_c2r: Callable[[str], dict[str, Any]] = activator_with_mock_script._activate_office_c2r
+        original_status: Callable[[], dict[str, Any]] = activator_with_mock_script._get_office_status
 
         activator_with_mock_script._detect_office_version = lambda: "2016"  # type: ignore[method-assign]
         activator_with_mock_script._activate_office_c2r = lambda version: {"success": True}  # type: ignore[method-assign]
@@ -913,7 +913,7 @@ class TestOfficeActivation:
         monkeypatch.setattr("intellicrack.core.patching.windows_activator.is_admin", fake_admin.is_admin)
         monkeypatch.setattr("os.name", "nt")
 
-        original_detect = activator_with_mock_script._detect_office_version
+        original_detect: Callable[[], str] = activator_with_mock_script._detect_office_version
         activator_with_mock_script._detect_office_version = lambda: ""  # type: ignore[method-assign]
 
         result = activator_with_mock_script.activate_office("auto")

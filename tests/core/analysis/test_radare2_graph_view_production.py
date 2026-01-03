@@ -315,7 +315,7 @@ class TestXRefGraphGeneration:
         """Xref graph has central address node."""
         graph = graph_generator.generate_xref_graph(0x1000)
         if graph.nodes:
-            central = next((n for n in graph.nodes if n.type == "address"), None)
+            central: GraphNode | None = next((n for n in graph.nodes if n.type == "address"), None)
             assert central is not None
             assert central.address == 0x1000
 
@@ -360,7 +360,7 @@ class TestImportDependencyGraph:
         """Import graph has main binary node."""
         graph = graph_generator.generate_import_dependency_graph()
         if graph.nodes:
-            main_node = next((n for n in graph.nodes if n.type == "binary"), None)
+            main_node: GraphNode | None = next((n for n in graph.nodes if n.type == "binary"), None)
             assert main_node is not None
             assert main_node.id == "main_binary"
 

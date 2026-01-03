@@ -434,7 +434,7 @@ class TestActualModules(unittest.TestCase):
             print(f"  FAIL Error testing protection detection: {e}")
             self.results["errors"].append(f"Protection detection test failed: {e}")
 
-    def test_09_hooking_capabilities(self):
+    def test_09_hooking_capabilities(self) -> None:
         """Verify API hooking capabilities."""
         if not PROCESS_MANIPULATION_AVAILABLE:
             self.skipTest("Hooking test requires LicenseAnalyzer")
@@ -468,7 +468,7 @@ class TestActualModules(unittest.TestCase):
             print(f"  FAIL Error testing hooking capabilities: {e}")
             self.results["errors"].append(f"Hooking test failed: {e}")
 
-    def test_10_registry_manipulation(self):
+    def test_10_registry_manipulation(self) -> None:
         """Verify registry manipulation capabilities."""
         if not PROCESS_MANIPULATION_AVAILABLE:
             self.skipTest("Registry test requires LicenseAnalyzer")
@@ -502,7 +502,7 @@ class TestActualModules(unittest.TestCase):
             print(f"  FAIL Error testing registry manipulation: {e}")
             self.results["errors"].append(f"Registry test failed: {e}")
 
-    def test_99_summary_report(self):
+    def test_99_summary_report(self) -> None:
         """Generate summary report of all tests."""
         print("\n" + "=" * 70)
         print("PRODUCTION STANDARDS TEST SUMMARY")

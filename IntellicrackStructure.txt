@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Thu, Jan 01, 2026 06:15:17 PM
+Generated: Fri, Jan 02, 2026 08:45:12 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -531,6 +531,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── advanced_debugger_bypass.py
 │   │   ├── api_obfuscation.py
 │   │   ├── base_detector.py
+│   │   ├── com_debug_detector.py
 │   │   ├── debugger_bypass.py
 │   │   ├── debugger_detector.py
 │   │   ├── sandbox_detector.py
@@ -1211,6 +1212,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── __init__.py
 │   ├── versions/
 │   ├── Windows_Patch/
+│   │   └── WindowsActivator.cmd
 │   ├── __init__.py
 │   ├── README.md
 │   └── run_analysis_cli.py

@@ -488,8 +488,8 @@ class TestProtocolFingerprinterProduction:
         )
 
         assert response_ok != response_heartbeat, "Different response types must differ"
-        assert len(response_ok) > 0, "license_ok response must not be empty"
-        assert len(response_heartbeat) > 0, "heartbeat response must not be empty"
+        assert response_ok is not None and len(response_ok) > 0, "license_ok response must not be empty"
+        assert response_heartbeat is not None and len(response_heartbeat) > 0, "heartbeat response must not be empty"
 
     def test_network_string_extraction_from_binary(
         self,

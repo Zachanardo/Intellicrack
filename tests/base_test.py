@@ -7,13 +7,14 @@ for validating that features actually work, not just return mock data.
 
 import hashlib
 import time
+import unittest
 from pathlib import Path
 from typing import Any, Callable
 
 import pytest
 
 
-class IntellicrackTestBase:
+class IntellicrackTestBase(unittest.TestCase):
     """
     Base class for all Intellicrack tests.
 

@@ -13,6 +13,7 @@ import struct
 import json
 import numpy as np
 from pathlib import Path
+from typing import Any
 
 # Add the project root to the Python path
 
@@ -169,7 +170,7 @@ class TestR2AIEngineAnalysis(unittest.TestCase):
         # Override internal radare2 command executor if needed
         original_execute = getattr(engine, "_execute_r2_command", None)
 
-        def test_r2_execute(cmd) -> None:
+        def test_r2_execute(cmd: str) -> str:
             """Return realistic radare2 output for testing."""
             if "ij" in cmd or "info" in cmd:
                 return json.dumps({
@@ -236,7 +237,7 @@ class TestR2AIEngineAnalysis(unittest.TestCase):
         engine = R2AIEngine(vuln_binary, "r2")
 
         # Override radare2 executor for vulnerability patterns
-        def vuln_r2_execute(cmd):
+        def vuln_r2_execute(cmd: str) -> str:
             """Return vulnerability-indicating radare2 output."""
             if "ij" in cmd or "aflj" in cmd or "functions" in cmd:
                 return json.dumps({
@@ -364,18 +365,19 @@ class TestR2AIEngineMLModels(unittest.TestCase):
 
     def test_vulnerability_feature_extraction_realistic(self) -> None:
         """Test vulnerability feature extraction captures real security indicators."""
-        vuln_features = self.engine._extract_vulnerability_features()
+        # This method requires vuln_type and patterns arguments
+        vuln_type = "buffer_overflow"
+        patterns = {
+            "typical_severity": "high",
+            "exploitation_complexity": "medium"
+        }
+        vuln_features = self.engine._extract_vulnerability_features(vuln_type, patterns)
 
         self.assertIsInstance(vuln_features, (dict, np.ndarray, list))
 
-        # Should extract meaningful security-relevant features
-        if isinstance(vuln_features, dict):
-            # Should include categories that indicate real vulnerability analysis
-            security_categories = ["buffer_overflow_indicators", "format_string_risks", "crypto_weaknesses", "input_validation_gaps"]
-
-            relevant_features = sum(bool(any(category in key.lower() for key in vuln_features))
-                                for category in security_categories)
-            self.assertGreater(relevant_features, 0, "No security-relevant features detected")
+        # Should extract meaningful security-relevant features - the method returns list[list[float]]
+        if isinstance(vuln_features, list):
+            self.assertGreater(len(vuln_features), 0, "No vulnerability features generated")
 
 
 class TestR2AIEngineAdvancedAnalysis(unittest.TestCase):
@@ -431,7 +433,8 @@ class TestR2AIEngineAdvancedAnalysis(unittest.TestCase):
 
     def test_function_clustering_analysis_intelligent(self) -> None:
         """Test function clustering produces intelligent groupings of related functions."""
-        clustering_result = self.engine._function_clustering_analysis()
+        features = self.engine._extract_comprehensive_features()
+        clustering_result = self.engine._function_clustering_analysis(features)
 
         self.assertIsInstance(clustering_result, dict)
 
@@ -447,7 +450,8 @@ class TestR2AIEngineAdvancedAnalysis(unittest.TestCase):
 
     def test_anomaly_detection_sophisticated_patterns(self) -> None:
         """Test anomaly detection identifies sophisticated attack patterns and obfuscation."""
-        anomaly_result = self.engine._anomaly_detection_analysis()
+        features = self.engine._extract_comprehensive_features()
+        anomaly_result = self.engine._anomaly_detection_analysis(features)
 
         self.assertIsInstance(anomaly_result, dict)
 
@@ -464,7 +468,8 @@ class TestR2AIEngineAdvancedAnalysis(unittest.TestCase):
 
     def test_ai_bypass_suggestions_intelligent_strategies(self) -> None:
         """Test AI bypass suggestion generation provides intelligent attack strategies."""
-        bypass_suggestions = self.engine._generate_ai_bypass_suggestions()
+        features = self.engine._extract_comprehensive_features()
+        bypass_suggestions = self.engine._generate_ai_bypass_suggestions(features)
 
         self.assertIsInstance(bypass_suggestions, dict)
 
@@ -485,7 +490,8 @@ class TestR2AIEngineAdvancedAnalysis(unittest.TestCase):
 
     def test_code_similarity_analysis_robust(self) -> None:
         """Test code similarity analysis provides robust similarity detection."""
-        similarity_result = self.engine._code_similarity_analysis()
+        features = self.engine._extract_comprehensive_features()
+        similarity_result = self.engine._code_similarity_analysis(features)
 
         self.assertIsInstance(similarity_result, dict)
 
@@ -545,20 +551,20 @@ class TestR2AIEngineIntegration(unittest.TestCase):
 
         original_run = subprocess.run
 
-        def test_subprocess_run(cmd, *args, **kwargs) -> None:
+        class TestResult:
+            """Mock subprocess result object."""
+            def __init__(self) -> None:
+                self.returncode: int = 0
+                self.stdout: str = '{"info": {"format": "pe"}}'
+                self.stderr: str = ""
+
+        def test_subprocess_run(cmd: list[str] | str, *args: object, **kwargs: object) -> TestResult:
             """Return controlled radare2 output for testing."""
-
-            class TestResult:
-                def __init__(self) -> None:
-                    self.returncode = 0
-                    self.stdout = '{"info": {"format": "pe"}}'
-                    self.stderr = ""
-
             return TestResult()
 
         # Only override if absolutely necessary for the module
         try:
-            subprocess.run = test_subprocess_run
+            subprocess.run = test_subprocess_run  # type: ignore[assignment]
             result = analyze_binary_with_ai(api_test_binary)
         finally:
             subprocess.run = original_run
@@ -596,7 +602,7 @@ class TestR2AIEngineIntegration(unittest.TestCase):
         engine = R2AIEngine(workflow_binary, "r2")
 
         # Override radare2 executor for workflow testing
-        def workflow_r2_execute(cmd):
+        def workflow_r2_execute(cmd: str) -> str:
             """Return workflow test radare2 output."""
             if "ij" in cmd or "aflj" in cmd:
                 return json.dumps({
@@ -641,8 +647,15 @@ class TestR2AIEngineIntegration(unittest.TestCase):
         """Test confidence metrics provide meaningful performance indicators."""
         engine = R2AIEngine(self.integration_binary_path, "r2")
 
+        # Create a mock result dict for confidence calculation
+        mock_results = {
+            "license_analysis": {"confidence": 0.8},
+            "vulnerability_prediction": {"confidence": 0.7},
+            "anomaly_detection": {"anomaly_score": 0.5}
+        }
+
         # Should provide confidence scoring mechanisms
-        confidence_scores = engine._calculate_confidence_scores()
+        confidence_scores = engine._calculate_confidence_scores(mock_results)
         self.assertIsInstance(confidence_scores, dict)
 
         # Performance metrics for production monitoring
@@ -707,7 +720,7 @@ class TestR2AIEngineErrorHandlingAndRobustness(unittest.TestCase):
         engine = R2AIEngine(self.malformed_binary_path, "r2")
 
         # Override radare2 executor to simulate failure
-        def failing_r2_execute(cmd):
+        def failing_r2_execute(cmd: str) -> str:
             """Simulate radare2 command failure."""
             raise RuntimeError("radare2: command failed")
 

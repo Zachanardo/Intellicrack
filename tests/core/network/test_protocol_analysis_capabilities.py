@@ -12,6 +12,7 @@ import struct
 import sys
 import time
 from pathlib import Path
+from typing import Any, Dict, List, Sequence
 
 import pytest
 
@@ -27,7 +28,7 @@ try:
     from intellicrack.core.network.protocol_tool import ProtocolToolWindow
     MODULE_AVAILABLE = True
 except ImportError:
-    ProtocolToolWindow = None
+    ProtocolToolWindow = None  # type: ignore[assignment,misc]
     MODULE_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE or not FRAMEWORK_AVAILABLE, reason="Module or framework not available")
@@ -116,7 +117,7 @@ class TestAdvancedProtocolAnalysis:
             assert len(analysis_result['exploitation_vectors']) > 0
             assert 'mitigation_strategy' in analysis_result
 
-    def _perform_ssl_analysis(self, scenario: str, data: dict) -> dict:
+    def _perform_ssl_analysis(self, scenario: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Simulate SSL/TLS analysis that protocol tool must perform."""
         # Expected sophisticated analysis results
         return {
@@ -163,7 +164,7 @@ class TestAdvancedProtocolAnalysis:
             assert test_data['expected_vuln'].lower() in result['description'].lower()
             assert len(result['exploitation_methods']) > 0
 
-    def _analyze_ftp_security(self, ftp_command: str) -> dict:
+    def _analyze_ftp_security(self, ftp_command: str) -> Dict[str, Any]:
         """Expected FTP security analysis functionality."""
         vulnerabilities = {
             'USER anonymous': 'anonymous access enabled',
@@ -222,12 +223,12 @@ class TestAdvancedProtocolAnalysis:
         }
 
         for attack_data in smtp_attack_vectors.values():
-            analysis = self._perform_smtp_analysis(attack_data['commands'])
+            analysis = self._perform_smtp_analysis(list(attack_data['commands']))
             assert analysis['threat_detected']
             assert attack_data['expected_detection'] in analysis['threat_description'].lower()
             assert 'countermeasures' in analysis
 
-    def _perform_smtp_analysis(self, smtp_commands: list) -> dict:
+    def _perform_smtp_analysis(self, smtp_commands: Sequence[str]) -> Dict[str, Any]:
         """Expected SMTP security analysis functionality."""
         threat_patterns = {
             'VRFY': 'user enumeration possible',
@@ -278,7 +279,7 @@ class TestAdvancedProtocolAnalysis:
         ]
 
         for test in dns_security_tests:
-            analysis = self._analyze_dns_security(test['query'], test['query_type'])
+            analysis = self._analyze_dns_security(test['query'], test['query_type'])  # type: ignore[arg-type]
             assert analysis['security_risk_identified']
             assert test['expected_vuln'] in analysis['risk_description'].lower()
 
@@ -308,7 +309,7 @@ class TestAdvancedProtocolAnalysis:
 
         return header + question
 
-    def _analyze_dns_security(self, dns_query: bytes, query_type: str) -> dict:
+    def _analyze_dns_security(self, dns_query: bytes, query_type: str) -> Dict[str, Any]:
         """Expected DNS security analysis functionality."""
         security_risks = {
             'dns_amplification': {
@@ -386,7 +387,7 @@ Connection: keep-alive\r
         assert 'csrf_protection_bypass' in security_analysis
         assert 'ip_spoofing_headers' in security_analysis
 
-    def _parse_http_headers(self, http_request: str) -> dict:
+    def _parse_http_headers(self, http_request: str) -> Dict[str, str]:
         """Expected HTTP header parsing functionality."""
         lines = http_request.strip().split('\r\n')
 
@@ -408,7 +409,7 @@ Connection: keep-alive\r
 
         return headers
 
-    def _analyze_parsed_headers(self, headers: dict) -> list:
+    def _analyze_parsed_headers(self, headers: Dict[str, str]) -> List[str]:
         """Expected security analysis of parsed headers."""
         security_findings = []
 
@@ -505,7 +506,7 @@ Connection: keep-alive\r
 
         return header + question + answer
 
-    def _parse_binary_protocol(self, packet_data: bytes, protocol_type: str) -> dict:
+    def _parse_binary_protocol(self, packet_data: bytes, protocol_type: str) -> Dict[str, Any]:
         """Expected binary protocol parsing functionality."""
         parsing_results = {
             'tcp_packet': {

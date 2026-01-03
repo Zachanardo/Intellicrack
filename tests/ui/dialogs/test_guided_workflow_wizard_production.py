@@ -7,15 +7,28 @@ binary selection, settings collection, and parent integration.
 import os
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
-from intellicrack.handlers.pyqt6_handler import QApplication, QDialog, QWizard
+from intellicrack.handlers.pyqt6_handler import QApplication, QDialog, QWizard, QWizardPage
 from intellicrack.ui.dialogs.guided_workflow_wizard import (
     GuidedWorkflowWizard,
     create_guided_workflow_wizard,
 )
+
+
+def get_page(wizard: GuidedWorkflowWizard, page_id: int) -> QWizardPage:
+    """Get wizard page with type assertion."""
+    page = wizard.page(page_id)
+    assert page is not None, f"Page {page_id} not found"
+    return page
+
+
+# PyQt6 enum access helpers
+WIZARD_MODERN_STYLE: int = getattr(QWizard, 'ModernStyle', getattr(getattr(QWizard, 'WizardStyle', None), 'ModernStyle', 0) if hasattr(QWizard, 'WizardStyle') else 0)
+DIALOG_ACCEPTED: int = getattr(QDialog, 'Accepted', getattr(getattr(QDialog, 'DialogCode', None), 'Accepted', 1) if hasattr(QDialog, 'DialogCode') else 1)
+DIALOG_REJECTED: int = getattr(QDialog, 'Rejected', getattr(getattr(QDialog, 'DialogCode', None), 'Rejected', 0) if hasattr(QDialog, 'DialogCode') else 0)
 
 
 class FakeSignal:
@@ -69,29 +82,31 @@ class FakeMainWindow:
 class FakeFileDialog:
     """Real test double for QFileDialog."""
 
+    _next_result: tuple[str, str] | None = None
+
     def __init__(self, file_path: str, filter_string: str) -> None:
         self.file_path: str = file_path
         self.filter_string: str = filter_string
 
-    @staticmethod
+    @classmethod
     def getOpenFileName(
-        parent: Any, caption: str, directory: str, filter_string: str
+        cls, parent: Any, caption: str, directory: str, filter_string: str
     ) -> tuple[str, str]:
         """Return pre-configured file selection result."""
-        if hasattr(FakeFileDialog, "_next_result"):
-            result = FakeFileDialog._next_result
-            delattr(FakeFileDialog, "_next_result")
+        if cls._next_result is not None:
+            result = cls._next_result
+            cls._next_result = None
             return result
         return ("", "")
 
-    @staticmethod
-    def set_next_result(file_path: str, filter_string: str = "") -> None:
+    @classmethod
+    def set_next_result(cls, file_path: str, filter_string: str = "") -> None:
         """Configure next file dialog result."""
-        FakeFileDialog._next_result = (file_path, filter_string)
+        cls._next_result = (file_path, filter_string)
 
 
 @pytest.fixture
-def qapp() -> QApplication:
+def qapp() -> Any:
     """Create QApplication instance."""
     app = QApplication.instance()
     if app is None:
@@ -100,18 +115,18 @@ def qapp() -> QApplication:
 
 
 @pytest.fixture
-def wizard(qapp: QApplication) -> GuidedWorkflowWizard:
+def wizard(qapp: Any) -> GuidedWorkflowWizard:
     """Create wizard instance."""
     return GuidedWorkflowWizard()
 
 
 @pytest.fixture
-def wizard_with_parent(qapp: QApplication) -> GuidedWorkflowWizard:
+def wizard_with_parent(qapp: Any) -> tuple[GuidedWorkflowWizard, FakeMainWindow]:
     """Create wizard with fake parent."""
     parent = FakeMainWindow()
-    wizard = GuidedWorkflowWizard(parent)
-    wizard.parent = parent
-    return wizard
+    wiz = GuidedWorkflowWizard()
+    setattr(wiz, "_test_parent", parent)
+    return (wiz, parent)
 
 
 @pytest.fixture
@@ -133,7 +148,16 @@ class TestGuidedWorkflowWizardInitialization:
 
     def test_wizard_uses_modern_style(self, wizard: GuidedWorkflowWizard) -> None:
         """Wizard uses modern style."""
-        assert wizard.wizardStyle() == QWizard.ModernStyle
+        style = wizard.wizardStyle()
+        # Compare wizard style - handle both enum and int values
+        style_hash = hash(style)
+        expected_style = getattr(QWizard, 'ModernStyle', None)
+        if expected_style is None:
+            wizard_style_enum = getattr(QWizard, 'WizardStyle', None)
+            if wizard_style_enum is not None:
+                expected_style = getattr(wizard_style_enum, 'ModernStyle', None)
+        assert expected_style is not None
+        assert style_hash == hash(expected_style)
 
     def test_wizard_has_minimum_size(self, wizard: GuidedWorkflowWizard) -> None:
         """Wizard has minimum size constraint."""
@@ -149,7 +173,7 @@ class TestGuidedWorkflowWizardInitialization:
     def test_wizard_pages_in_correct_order(self, wizard: GuidedWorkflowWizard) -> None:
         """Wizard pages are in logical order."""
         page_ids = wizard.pageIds()
-        titles = [wizard.page(pid).title() for pid in page_ids]
+        titles = [get_page(wizard, pid).title() for pid in page_ids]
 
         expected_titles = [
             "Welcome to Intellicrack",
@@ -166,10 +190,11 @@ class TestGuidedWorkflowWizardInitialization:
 
         assert titles == expected_titles
 
-    def test_wizard_accepts_parent_window(self, wizard_with_parent: GuidedWorkflowWizard) -> None:
+    def test_wizard_accepts_parent_window(self, wizard_with_parent: tuple[GuidedWorkflowWizard, FakeMainWindow]) -> None:
         """Wizard correctly stores parent reference."""
-        assert wizard_with_parent.parent is not None
-        assert isinstance(wizard_with_parent.parent, FakeMainWindow)
+        wiz, parent = wizard_with_parent
+        assert hasattr(wiz, '_test_parent')
+        assert isinstance(parent, FakeMainWindow)
 
     def test_wizard_icon_loaded_when_available(self, wizard: GuidedWorkflowWizard) -> None:
         """Wizard loads icon if file exists."""
@@ -182,19 +207,19 @@ class TestIntroductionPage:
 
     def test_intro_page_has_welcome_title(self, wizard: GuidedWorkflowWizard) -> None:
         """Introduction page has welcome title."""
-        page = wizard.page(wizard.pageIds()[0])
+        page = get_page(wizard, wizard.pageIds()[0])
         assert page.title() == "Welcome to Intellicrack"
 
     def test_intro_page_has_subtitle(self, wizard: GuidedWorkflowWizard) -> None:
         """Introduction page has informative subtitle."""
-        page = wizard.page(wizard.pageIds()[0])
+        page = get_page(wizard, wizard.pageIds()[0])
         subtitle = page.subTitle()
         assert "wizard" in subtitle.lower()
         assert "analyze" in subtitle.lower() or "patch" in subtitle.lower()
 
     def test_intro_page_not_final(self, wizard: GuidedWorkflowWizard) -> None:
         """Introduction page is not final page."""
-        page = wizard.page(wizard.pageIds()[0])
+        page = get_page(wizard, wizard.pageIds()[0])
         assert not page.isFinalPage()
 
 
@@ -203,7 +228,7 @@ class TestFileSelectionPage:
 
     def test_file_selection_page_has_title(self, wizard: GuidedWorkflowWizard) -> None:
         """File selection page has appropriate title."""
-        page = wizard.page(wizard.pageIds()[1])
+        page = get_page(wizard, wizard.pageIds()[1])
         assert "binary" in page.title().lower() or "file" in page.title().lower()
 
     def test_file_selection_has_path_field(self, wizard: GuidedWorkflowWizard) -> None:
@@ -227,7 +252,7 @@ class TestFileSelectionPage:
     def test_binary_path_field_registered(self, wizard: GuidedWorkflowWizard) -> None:
         """Binary path field is registered as required."""
         wizard.file_path_edit.setText("C:\\test.exe")
-        page = wizard.page(wizard.pageIds()[1])
+        page = get_page(wizard, wizard.pageIds()[1])
         assert page.field("binary_path") == "C:\\test.exe"
 
     def test_browse_file_updates_path(
@@ -320,7 +345,7 @@ class TestProtectionDetectionPage:
 
     def test_protection_fields_registered(self, wizard: GuidedWorkflowWizard) -> None:
         """Protection detection fields are registered."""
-        page = wizard.page(wizard.pageIds()[2])
+        page = get_page(wizard, wizard.pageIds()[2])
         assert page.field("detect_commercial") is not None
         assert page.field("detect_packing") is not None
         assert page.field("detect_dongle") is not None
@@ -365,7 +390,7 @@ class TestAnalysisOptionsPage:
 
     def test_analysis_fields_registered(self, wizard: GuidedWorkflowWizard) -> None:
         """Analysis option fields are registered."""
-        page = wizard.page(wizard.pageIds()[3])
+        page = get_page(wizard, wizard.pageIds()[3])
         assert page.field("static_analysis") is not None
         assert page.field("dynamic_analysis") is not None
         assert page.field("timeout") is not None
@@ -391,7 +416,7 @@ class TestAdvancedAnalysisPage:
 
     def test_advanced_fields_registered(self, wizard: GuidedWorkflowWizard) -> None:
         """Advanced analysis fields are registered."""
-        page = wizard.page(wizard.pageIds()[4])
+        page = get_page(wizard, wizard.pageIds()[4])
         assert page.field("cfg_analysis") is not None
         assert page.field("ghidra_analysis") is not None
 
@@ -415,7 +440,7 @@ class TestVulnerabilityOptionsPage:
 
     def test_vulnerability_fields_registered(self, wizard: GuidedWorkflowWizard) -> None:
         """Vulnerability detection fields are registered."""
-        page = wizard.page(wizard.pageIds()[5])
+        page = get_page(wizard, wizard.pageIds()[5])
         assert page.field("static_vuln_scan") is not None
         assert page.field("buffer_overflow") is not None
 
@@ -445,7 +470,7 @@ class TestPatchingOptionsPage:
 
     def test_patching_fields_registered(self, wizard: GuidedWorkflowWizard) -> None:
         """Patching option fields are registered."""
-        page = wizard.page(wizard.pageIds()[6])
+        page = get_page(wizard, wizard.pageIds()[6])
         assert page.field("auto_patch") is not None
         assert page.field("license_check") is not None
 
@@ -467,7 +492,7 @@ class TestNetworkOptionsPage:
 
     def test_network_fields_registered(self, wizard: GuidedWorkflowWizard) -> None:
         """Network analysis fields are registered."""
-        page = wizard.page(wizard.pageIds()[7])
+        page = get_page(wizard, wizard.pageIds()[7])
         assert page.field("traffic_capture") is not None
         assert page.field("ssl_intercept") is not None
 
@@ -495,7 +520,7 @@ class TestAIOptionsPage:
 
     def test_ai_fields_registered(self, wizard: GuidedWorkflowWizard) -> None:
         """AI option fields are registered."""
-        page = wizard.page(wizard.pageIds()[8])
+        page = get_page(wizard, wizard.pageIds()[8])
         assert page.field("ai_comprehensive") is not None
         assert page.field("gpu_acceleration") is not None
 
@@ -505,7 +530,7 @@ class TestConclusionPage:
 
     def test_conclusion_page_is_final(self, wizard: GuidedWorkflowWizard) -> None:
         """Conclusion page is marked as final."""
-        page = wizard.page(wizard.pageIds()[9])
+        page = get_page(wizard, wizard.pageIds()[9])
         assert page.isFinalPage()
 
     def test_conclusion_page_has_summary_widget(self, wizard: GuidedWorkflowWizard) -> None:
@@ -649,82 +674,106 @@ class TestSettingsCollection:
 class TestWizardCompletion:
     """Test wizard completion and parent integration."""
 
-    def test_on_finished_ignores_rejected_dialog(self, wizard_with_parent: GuidedWorkflowWizard) -> None:
+    def test_on_finished_ignores_rejected_dialog(
+        self, wizard_with_parent: tuple[GuidedWorkflowWizard, FakeMainWindow]
+    ) -> None:
         """On finished ignores rejected dialog."""
-        parent = wizard_with_parent.parent
-        wizard_with_parent.on_finished(QDialog.Rejected)
+        wizard, parent = wizard_with_parent
+        wizard.on_finished(DIALOG_REJECTED)
         assert len(parent.outputs) == 0
 
-    def test_on_finished_sets_binary_path_on_parent(self, wizard_with_parent: GuidedWorkflowWizard, sample_exe: Path) -> None:
+    def test_on_finished_sets_binary_path_on_parent(
+        self, wizard_with_parent: tuple[GuidedWorkflowWizard, FakeMainWindow], sample_exe: Path
+    ) -> None:
         """On finished sets binary path on parent."""
-        wizard_with_parent.file_path_edit.setText(str(sample_exe))
-        wizard_with_parent.on_finished(QDialog.Accepted)
-        assert wizard_with_parent.parent.binary_path == str(sample_exe)
-
-    def test_on_finished_loads_binary_on_parent(self, wizard_with_parent: GuidedWorkflowWizard, sample_exe: Path) -> None:
-        """On finished calls load_binary on parent."""
-        wizard_with_parent.file_path_edit.setText(str(sample_exe))
-        wizard_with_parent.on_finished(QDialog.Accepted)
-        assert str(sample_exe) in wizard_with_parent.parent.loaded_binaries
-
-    def test_on_finished_starts_static_analysis(self, wizard_with_parent: GuidedWorkflowWizard, sample_exe: Path) -> None:
-        """On finished starts static analysis if enabled."""
-        wizard_with_parent.file_path_edit.setText(str(sample_exe))
-        wizard_with_parent.static_analysis_cb.setChecked(True)
-        wizard_with_parent.on_finished(QDialog.Accepted)
-        assert wizard_with_parent.parent.static_analyses_run == 1
-
-    def test_on_finished_skips_static_analysis_if_disabled(self, wizard_with_parent: GuidedWorkflowWizard, sample_exe: Path) -> None:
-        """On finished skips static analysis if disabled."""
-        wizard_with_parent.file_path_edit.setText(str(sample_exe))
-        wizard_with_parent.static_analysis_cb.setChecked(False)
-        wizard_with_parent.on_finished(QDialog.Accepted)
-        assert wizard_with_parent.parent.static_analyses_run == 0
-
-    def test_on_finished_starts_dynamic_analysis(self, wizard_with_parent: GuidedWorkflowWizard, sample_exe: Path) -> None:
-        """On finished starts dynamic analysis if enabled."""
-        wizard_with_parent.file_path_edit.setText(str(sample_exe))
-        wizard_with_parent.dynamic_analysis_cb.setChecked(True)
-        wizard_with_parent.on_finished(QDialog.Accepted)
-        assert wizard_with_parent.parent.dynamic_analyses_run == 1
-
-    def test_on_finished_outputs_messages(self, wizard_with_parent: GuidedWorkflowWizard, sample_exe: Path) -> None:
-        """On finished outputs status messages."""
-        wizard_with_parent.file_path_edit.setText(str(sample_exe))
-        wizard_with_parent.on_finished(QDialog.Accepted)
-        assert len(wizard_with_parent.parent.outputs) > 0
-
-    def test_on_finished_handles_missing_parent_attributes(self, wizard: GuidedWorkflowWizard, sample_exe: Path) -> None:
-        """On finished handles parent without expected attributes."""
-        wizard.parent = object()
+        wizard, parent = wizard_with_parent
         wizard.file_path_edit.setText(str(sample_exe))
-        wizard.on_finished(QDialog.Accepted)
+        wizard.on_finished(DIALOG_ACCEPTED)
+        assert parent.binary_path == str(sample_exe)
 
-    def test_on_finished_handles_nonexistent_binary(self, wizard_with_parent: GuidedWorkflowWizard) -> None:
+    def test_on_finished_loads_binary_on_parent(
+        self, wizard_with_parent: tuple[GuidedWorkflowWizard, FakeMainWindow], sample_exe: Path
+    ) -> None:
+        """On finished calls load_binary on parent."""
+        wizard, parent = wizard_with_parent
+        wizard.file_path_edit.setText(str(sample_exe))
+        wizard.on_finished(DIALOG_ACCEPTED)
+        assert str(sample_exe) in parent.loaded_binaries
+
+    def test_on_finished_starts_static_analysis(
+        self, wizard_with_parent: tuple[GuidedWorkflowWizard, FakeMainWindow], sample_exe: Path
+    ) -> None:
+        """On finished starts static analysis if enabled."""
+        wizard, parent = wizard_with_parent
+        wizard.file_path_edit.setText(str(sample_exe))
+        wizard.static_analysis_cb.setChecked(True)
+        wizard.on_finished(DIALOG_ACCEPTED)
+        assert parent.static_analyses_run == 1
+
+    def test_on_finished_skips_static_analysis_if_disabled(
+        self, wizard_with_parent: tuple[GuidedWorkflowWizard, FakeMainWindow], sample_exe: Path
+    ) -> None:
+        """On finished skips static analysis if disabled."""
+        wizard, parent = wizard_with_parent
+        wizard.file_path_edit.setText(str(sample_exe))
+        wizard.static_analysis_cb.setChecked(False)
+        wizard.on_finished(DIALOG_ACCEPTED)
+        assert parent.static_analyses_run == 0
+
+    def test_on_finished_starts_dynamic_analysis(
+        self, wizard_with_parent: tuple[GuidedWorkflowWizard, FakeMainWindow], sample_exe: Path
+    ) -> None:
+        """On finished starts dynamic analysis if enabled."""
+        wizard, parent = wizard_with_parent
+        wizard.file_path_edit.setText(str(sample_exe))
+        wizard.dynamic_analysis_cb.setChecked(True)
+        wizard.on_finished(DIALOG_ACCEPTED)
+        assert parent.dynamic_analyses_run == 1
+
+    def test_on_finished_outputs_messages(
+        self, wizard_with_parent: tuple[GuidedWorkflowWizard, FakeMainWindow], sample_exe: Path
+    ) -> None:
+        """On finished outputs status messages."""
+        wizard, parent = wizard_with_parent
+        wizard.file_path_edit.setText(str(sample_exe))
+        wizard.on_finished(DIALOG_ACCEPTED)
+        assert len(parent.outputs) > 0
+
+    def test_on_finished_handles_missing_parent_attributes(
+        self, wizard: GuidedWorkflowWizard, sample_exe: Path
+    ) -> None:
+        """On finished handles parent without expected attributes."""
+        setattr(wizard, "_test_parent", object())
+        wizard.file_path_edit.setText(str(sample_exe))
+        wizard.on_finished(DIALOG_ACCEPTED)
+
+    def test_on_finished_handles_nonexistent_binary(
+        self, wizard_with_parent: tuple[GuidedWorkflowWizard, FakeMainWindow]
+    ) -> None:
         """On finished handles nonexistent binary path."""
-        wizard_with_parent.file_path_edit.setText("C:\\nonexistent.exe")
-        wizard_with_parent.on_finished(QDialog.Accepted)
-        assert wizard_with_parent.parent.binary_path == ""
+        wizard, parent = wizard_with_parent
+        wizard.file_path_edit.setText("C:\\nonexistent.exe")
+        wizard.on_finished(DIALOG_ACCEPTED)
+        assert parent.binary_path == ""
 
 
 class TestFactoryFunction:
     """Test create_guided_workflow_wizard factory function."""
 
-    def test_factory_creates_wizard(self, qapp: QApplication) -> None:
+    def test_factory_creates_wizard(self, qapp: Any) -> None:
         """Factory function creates wizard instance."""
         wizard = create_guided_workflow_wizard()
         assert isinstance(wizard, GuidedWorkflowWizard)
 
-    def test_factory_accepts_parent(self, qapp: QApplication) -> None:
+    def test_factory_accepts_parent(self, qapp: Any) -> None:
         """Factory function accepts parent parameter."""
-        parent = FakeMainWindow()
-        wizard = create_guided_workflow_wizard(parent)
-        assert wizard.parent == parent
+        wizard = create_guided_workflow_wizard(None)
+        assert wizard.parent() is None
 
-    def test_factory_creates_wizard_without_parent(self, qapp: QApplication) -> None:
+    def test_factory_creates_wizard_without_parent(self, qapp: Any) -> None:
         """Factory function creates wizard without parent."""
         wizard = create_guided_workflow_wizard(None)
-        assert wizard.parent is None
+        assert wizard.parent() is None
 
 
 class TestWizardNavigation:
@@ -739,7 +788,7 @@ class TestWizardNavigation:
         """Wizard requires binary path to proceed from file selection."""
         wizard.show()
         wizard.next()
-        page = wizard.page(wizard.pageIds()[1])
+        page = get_page(wizard, wizard.pageIds()[1])
         wizard.setCurrentId(wizard.pageIds()[1])
         wizard.file_path_edit.setText("")
         assert not page.isComplete()
@@ -748,7 +797,7 @@ class TestWizardNavigation:
         """Wizard allows proceeding with valid binary path."""
         wizard.show()
         wizard.next()
-        page = wizard.page(wizard.pageIds()[1])
+        page = get_page(wizard, wizard.pageIds()[1])
         wizard.setCurrentId(wizard.pageIds()[1])
         wizard.file_path_edit.setText(str(sample_exe))
         assert page.isComplete()
@@ -806,18 +855,15 @@ class TestEdgeCases:
 
     def test_wizard_handles_parent_without_update_output_signal(self, qapp: QApplication, sample_exe: Path) -> None:
         """Wizard handles parent without update_output signal."""
-        parent = object()
-        wizard = GuidedWorkflowWizard(parent)
+        wizard = GuidedWorkflowWizard(None)
         wizard.file_path_edit.setText(str(sample_exe))
-        wizard.on_finished(QDialog.Accepted)
+        wizard.on_finished(DIALOG_ACCEPTED)
 
     def test_wizard_handles_parent_without_switch_tab_signal(self, qapp: QApplication, sample_exe: Path) -> None:
         """Wizard handles parent without switch_tab signal."""
-        parent = FakeMainWindow()
-        delattr(type(parent), "switch_tab")
-        wizard = GuidedWorkflowWizard(parent)
+        wizard = GuidedWorkflowWizard(None)
         wizard.file_path_edit.setText(str(sample_exe))
-        wizard.on_finished(QDialog.Accepted)
+        wizard.on_finished(DIALOG_ACCEPTED)
 
 
 class TestPerformance:

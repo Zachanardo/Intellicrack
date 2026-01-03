@@ -2,11 +2,20 @@ import socket
 import struct
 import threading
 import time
-from typing import Any
+from collections.abc import Generator
+from typing import Any, Protocol
 
 import pytest
 
 from intellicrack.core.network.license_protocol_handler import FlexLMProtocolHandler, HASPProtocolHandler, LicenseProtocolHandler
+
+
+class SocketLike(Protocol):
+    """Protocol for socket-like objects used in testing."""
+
+    def send(self, data: bytes) -> int:
+        """Send data through the socket."""
+        ...
 
 
 class TestLicenseProtocolHandlerBase:
@@ -63,17 +72,22 @@ class TestLicenseProtocolHandlerBase:
 
     def test_clear_data_with_attributes(self) -> None:
         handler = LicenseProtocolHandler()
-        handler.captured_requests = [b"request1", b"request2"]
-        handler.captured_responses = [b"response1"]
-        handler.session_data = {"key": "value"}
-        handler.client_connections = {"client1": "data"}
+        captured_requests: list[bytes] = [b"request1", b"request2"]
+        captured_responses: list[bytes] = [b"response1"]
+        session_data: dict[str, str] = {"key": "value"}
+        client_connections: dict[str, str] = {"client1": "data"}
+
+        setattr(handler, "captured_requests", captured_requests)
+        setattr(handler, "captured_responses", captured_responses)
+        setattr(handler, "session_data", session_data)
+        setattr(handler, "client_connections", client_connections)
 
         handler.clear_data()
 
-        assert not handler.captured_requests
-        assert not handler.captured_responses
-        assert not handler.session_data
-        assert not handler.client_connections
+        assert not getattr(handler, "captured_requests", None)
+        assert not getattr(handler, "captured_responses", None)
+        assert not getattr(handler, "session_data", None)
+        assert not getattr(handler, "client_connections", None)
 
     def test_clear_data_without_attributes(self) -> None:
         handler = LicenseProtocolHandler()
@@ -122,7 +136,7 @@ class TestLicenseProtocolHandlerProxyLifecycle:
 
     def test_shutdown_cleans_all_resources(self) -> None:
         handler = LicenseProtocolHandler()
-        handler.captured_requests = [b"data"]
+        setattr(handler, "captured_requests", [b"data"])
         handler.start_proxy(port=0)
         time.sleep(0.1)
 
@@ -130,12 +144,13 @@ class TestLicenseProtocolHandlerProxyLifecycle:
 
         assert handler.running is False
         assert handler.proxy_thread is None
-        assert not handler.captured_requests
+        assert not getattr(handler, "captured_requests", [])
 
     def test_proxy_thread_is_daemon(self) -> None:
         handler = LicenseProtocolHandler()
         handler.start_proxy(port=0)
 
+        assert handler.proxy_thread is not None
         assert handler.proxy_thread.daemon is True
 
         handler.stop_proxy()
@@ -144,6 +159,7 @@ class TestLicenseProtocolHandlerProxyLifecycle:
         handler = LicenseProtocolHandler()
         handler.start_proxy(port=0)
 
+        assert handler.proxy_thread is not None
         assert "LicenseProtocolHandlerProxy" in handler.proxy_thread.name
 
         handler.stop_proxy()
@@ -151,7 +167,7 @@ class TestLicenseProtocolHandlerProxyLifecycle:
 
 class TestLicenseProtocolHandlerNetworkOperations:
     @pytest.fixture
-    def handler_with_proxy(self) -> LicenseProtocolHandler:
+    def handler_with_proxy(self) -> Generator[LicenseProtocolHandler, None, None]:
         handler = LicenseProtocolHandler(config={"bind_host": "127.0.0.1"})
         handler.start_proxy(port=0)
         time.sleep(0.2)
@@ -162,18 +178,16 @@ class TestLicenseProtocolHandlerNetworkOperations:
         self, handler_with_proxy: LicenseProtocolHandler
     ) -> None:
         test_request = b"TEST_REQUEST_DATA"
-        received_response = []
-
-        def mock_socket_send(data: bytes) -> None:
-            received_response.append(data)
+        received_response: list[bytes] = []
 
         class MockSocket:
-            def send(self, data: bytes) -> None:
+            def send(self, data: bytes) -> int:
                 received_response.append(data)
+                return len(data)
 
         mock_sock = MockSocket()
 
-        handler_with_proxy.handle_connection(mock_sock, test_request)
+        handler_with_proxy.handle_connection(mock_sock, test_request)  # type: ignore[arg-type]
 
         assert len(received_response) == 1
         assert received_response[0] == b"OK\n"
@@ -208,12 +222,12 @@ class TestLicenseProtocolHandlerNetworkOperations:
         handler = LicenseProtocolHandler()
 
         class FailingSocket:
-            def send(self, data: bytes) -> None:
+            def send(self, data: bytes) -> int:
                 raise OSError("Network error")
 
         failing_sock = FailingSocket()
 
-        handler.handle_connection(failing_sock, b"request")
+        handler.handle_connection(failing_sock, b"request")  # type: ignore[arg-type]
 
 
 class TestFlexLMProtocolHandler:
@@ -255,8 +269,8 @@ class TestFlexLMProtocolHandler:
 
     def test_clear_data_clears_flexlm_data(self) -> None:
         handler = FlexLMProtocolHandler()
-        handler.captured_requests.append({"data": b"test"})
-        handler.captured_responses.append(b"response")
+        handler.captured_requests.append({"data": b"test", "timestamp": 0.0, "hex": ""})
+        handler.captured_responses.append({"data": b"response", "timestamp": 0.0, "hex": ""})
         handler.session_data["key"] = "value"
 
         handler.clear_data()
@@ -379,7 +393,7 @@ class TestFlexLMProtocolHandlerProtocol:
 
 class TestFlexLMProtocolHandlerNetworkOperations:
     @pytest.fixture
-    def flexlm_server(self) -> FlexLMProtocolHandler:
+    def flexlm_server(self) -> Generator[FlexLMProtocolHandler, None, None]:
         handler = FlexLMProtocolHandler(config={"bind_host": "127.0.0.1", "port": 0})
         handler.start_proxy(port=0)
         time.sleep(0.2)
@@ -447,7 +461,7 @@ class TestHASPProtocolHandler:
 
     def test_clear_data_clears_hasp_data(self) -> None:
         handler = HASPProtocolHandler()
-        handler.captured_requests.append({"data": b"test"})
+        handler.captured_requests.append({"data": b"test", "timestamp": 0.0, "hex": ""})
         handler.session_data["key"] = "value"
 
         handler.clear_data()

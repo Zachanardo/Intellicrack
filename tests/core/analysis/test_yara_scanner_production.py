@@ -28,6 +28,7 @@ import subprocess
 import tempfile
 import threading
 import time
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -325,7 +326,7 @@ def scanner() -> YaraScanner:
 
 
 @pytest.fixture
-def temp_binary_dir() -> Path:
+def temp_binary_dir() -> Generator[Path, None, None]:
     """Create temporary directory for test binaries."""
     with tempfile.TemporaryDirectory() as tmpdir:
         yield Path(tmpdir)

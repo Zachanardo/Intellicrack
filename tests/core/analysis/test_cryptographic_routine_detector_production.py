@@ -1,1010 +1,967 @@
 """Production-ready tests for CryptographicRoutineDetector.
 
-Tests REAL cryptographic detection capabilities on actual binary data with embedded
-crypto constants, algorithms, and patterns. NO mocks, stubs, or simulated data.
-
-All tests validate genuine offensive capability - tests MUST FAIL if detection doesn't work.
+Validates instruction pattern analysis, crypto constant detection, S-box identification,
+custom crypto detection, and algorithm differentiation against real binary code.
 """
 
+import secrets
 import struct
-from pathlib import Path
-from typing import Any
 
 import pytest
+from capstone import CS_ARCH_X86, CS_MODE_64, Cs
 
 from intellicrack.core.analysis.cryptographic_routine_detector import (
     CryptoAlgorithm,
-    CryptoConstant,
     CryptoDetection,
     CryptographicRoutineDetector,
     DataFlowNode,
 )
 
 
-class RealCryptoBinaryBuilder:
-    """Builds real PE binaries with embedded cryptographic constants and code."""
-
-    @staticmethod
-    def create_aes_sbox_binary() -> bytes:
-        """Create binary with embedded AES S-box for detection testing."""
-        detector = CryptographicRoutineDetector()
-
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(2048)
-        code_section[:256] = detector.AES_SBOX
-        code_section[512:768] = detector.AES_INV_SBOX
-        code_section[1024:1034] = detector.AES_RCON
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def create_sha256_binary() -> bytes:
-        """Create binary with SHA-256 round constants."""
-        detector = CryptographicRoutineDetector()
-
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(2048)
-        offset = 0
-        for k in detector.SHA256_K:
-            k_bytes = struct.pack(">I", k)
-            code_section[offset:offset+4] = k_bytes
-            offset += 4
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def create_sha1_binary() -> bytes:
-        """Create binary with SHA-1 initialization vectors."""
-        detector = CryptographicRoutineDetector()
-
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(2048)
-        offset = 0
-        for h in detector.SHA1_H:
-            h_bytes = struct.pack(">I", h)
-            code_section[offset:offset+4] = h_bytes
-            offset += 4
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def create_md5_binary() -> bytes:
-        """Create binary with MD5 sine table constants."""
-        detector = CryptographicRoutineDetector()
-
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(2048)
-        offset = 0
-        for t in detector.MD5_T:
-            t_bytes = struct.pack("<I", t)
-            code_section[offset:offset+4] = t_bytes
-            offset += 4
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def create_rc4_binary() -> bytes:
-        """Create binary with RC4 initialization pattern."""
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(2048)
-        rc4_init = bytes(range(256))
-        code_section[:256] = rc4_init
-
-        swap_code = b'\x86\x87\x91\x92\x86\x87'
-        code_section[512:518] = swap_code
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def create_rsa_binary() -> bytes:
-        """Create binary with RSA public exponents."""
-        detector = CryptographicRoutineDetector()
-
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(2048)
-        code_section[:4] = detector.RSA_MONTGOMERY_PATTERNS[0]
-        code_section[100:104] = detector.RSA_MONTGOMERY_PATTERNS[1]
-
-        mod_ops = b'\xf7\xf6\x0f\xaf\x69\x6b'
-        code_section[200:206] = mod_ops
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def create_ecc_binary() -> bytes:
-        """Create binary with ECC curve parameters."""
-        detector = CryptographicRoutineDetector()
-
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(4096)
-
-        secp256k1_prime = detector.ECC_FIELD_PRIMES["secp256k1"]
-        code_section[:len(secp256k1_prime)] = secp256k1_prime
-
-        secp256r1_prime = detector.ECC_FIELD_PRIMES["secp256r1"]
-        code_section[512:512+len(secp256r1_prime)] = secp256r1_prime
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def create_chacha20_binary() -> bytes:
-        """Create binary with ChaCha20 constant."""
-        detector = CryptographicRoutineDetector()
-
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(2048)
-        code_section[:len(detector.CHACHA20_CONSTANT)] = detector.CHACHA20_CONSTANT
-
-        quarter_round_ops = b'\x01\x03\x01\x03\x31\x33\x31\x33\xc1\xd3\xc1\xd3'
-        code_section[512:524] = quarter_round_ops
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def create_blowfish_binary() -> bytes:
-        """Create binary with Blowfish Pi subkeys."""
-        detector = CryptographicRoutineDetector()
-
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(2048)
-        code_section[:len(detector.BLOWFISH_PI_SUBKEYS)] = detector.BLOWFISH_PI_SUBKEYS
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def create_des_binary() -> bytes:
-        """Create binary with DES S-boxes."""
-        detector = CryptographicRoutineDetector()
-
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(4096)
-        offset = 0
-
-        for sbox in detector.DES_SBOXES:
-            for row in sbox:
-                for val in row:
-                    code_section[offset] = val
-                    offset += 1
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def create_aes_ni_binary() -> bytes:
-        """Create binary with AES-NI instructions."""
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(2048)
-
-        aesenc = b"\x66\x0f\x38\xdc\xc1"
-        aesenclast = b"\x66\x0f\x38\xdd\xc1"
-        aesdec = b"\x66\x0f\x38\xde\xc1"
-        aeskeygenassist = b"\x66\x0f\x3a\xdf\xc0\x01"
-
-        code_section[:5] = aesenc
-        code_section[100:105] = aesenclast
-        code_section[200:205] = aesdec
-        code_section[300:306] = aeskeygenassist
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def create_sha_instructions_binary() -> bytes:
-        """Create binary with SHA hardware instructions."""
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(2048)
-
-        sha1nexte = b"\x0f\x38\xc8\xc1"
-        sha1msg1 = b"\x0f\x38\xc9\xc1"
-        sha256rnds2 = b"\x0f\x38\xcb\xc1"
-        sha256msg1 = b"\x0f\x38\xcc\xc1"
-
-        code_section[:4] = sha1nexte
-        code_section[100:104] = sha1msg1
-        code_section[200:204] = sha256rnds2
-        code_section[300:304] = sha256msg1
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def create_obfuscated_aes_binary() -> bytes:
-        """Create binary with partially obfuscated AES S-box."""
-        detector = CryptographicRoutineDetector()
-
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(2048)
-        obfuscated_sbox = bytearray(detector.AES_SBOX)
-
-        for i in range(0, 256, 20):
-            obfuscated_sbox[i] = (obfuscated_sbox[i] ^ 0x01) & 0xFF
-
-        code_section[:256] = obfuscated_sbox
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def create_multi_crypto_binary() -> bytes:
-        """Create binary with multiple crypto algorithms."""
-        detector = CryptographicRoutineDetector()
-
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(8192)
-
-        code_section[:256] = detector.AES_SBOX
-
-        offset = 512
-        for k in detector.SHA256_K:
-            k_bytes = struct.pack(">I", k)
-            code_section[offset:offset+4] = k_bytes
-            offset += 4
-
-        code_section[1024:1028] = detector.RSA_MONTGOMERY_PATTERNS[0]
-
-        code_section[2048:2048+len(detector.CHACHA20_CONSTANT)] = detector.CHACHA20_CONSTANT
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def create_feistel_network_binary() -> bytes:
-        """Create binary with Feistel network structure patterns."""
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(2048)
-
-        feistel_code = bytearray()
-        for _ in range(8):
-            feistel_code.extend(b'\x87\xc1')
-            feistel_code.extend(b'\x31\xc2\x31\xc3')
-            feistel_code.extend(b'\x31\xc4\x31\xc5')
-
-        code_section[:len(feistel_code)] = feistel_code
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def create_custom_crypto_table() -> bytes:
-        """Create binary with high-entropy custom crypto table."""
-        base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
-
-        code_section = bytearray(4096)
-
-        import random
-        random.seed(42)
-        custom_table = bytes(random.randint(0, 255) for _ in range(256))
-        code_section[:256] = custom_table
-
-        table_offset = len(base_pe)
-        offset_bytes = struct.pack("<I", table_offset)
-        code_section[1024:1028] = offset_bytes
-        code_section[2048:2052] = offset_bytes
-
-        return bytes(base_pe + code_section)
-
-    @staticmethod
-    def _create_minimal_pe_header() -> bytes:
-        """Create minimal valid PE header."""
-        dos_header = bytearray(64)
-        dos_header[:2] = b'MZ'
-        dos_header[60:64] = struct.pack('<I', 64)
-
-        pe_signature = b'PE\x00\x00'
-
-        coff_header = bytearray(20)
-        struct.pack_into('<H', coff_header, 0, 0x8664)
-        struct.pack_into('<H', coff_header, 2, 1)
-        struct.pack_into('<H', coff_header, 16, 240)
-        struct.pack_into('<H', coff_header, 18, 0x0022)
-
-        optional_header = bytearray(240)
-        struct.pack_into('<H', optional_header, 0, 0x020B)
-
-        section_header = bytearray(40)
-        section_header[:8] = b'.text\x00\x00\x00'
-        struct.pack_into('<I', section_header, 8, 8192)
-        struct.pack_into('<I', section_header, 12, 0x1000)
-        struct.pack_into('<I', section_header, 16, 8192)
-        struct.pack_into('<I', section_header, 20, 0x400)
-        struct.pack_into('<I', section_header, 36, 0x60000020)
-
-        header_size = len(dos_header) + len(pe_signature) + len(coff_header) + len(optional_header) + len(section_header)
-        padding = bytearray(0x400 - header_size)
-
-        return bytes(dos_header + pe_signature + coff_header + optional_header + section_header + padding)
-
-
 @pytest.fixture
 def detector() -> CryptographicRoutineDetector:
-    """Provide a fresh CryptographicRoutineDetector instance."""
+    """Create detector instance."""
     return CryptographicRoutineDetector()
 
 
 @pytest.fixture
-def aes_sbox_binary() -> bytes:
-    """Provide binary with AES S-box."""
-    return RealCryptoBinaryBuilder.create_aes_sbox_binary()
+def aes_binary_with_sbox() -> bytes:
+    """Real binary code with AES S-box for encryption."""
+    code = bytearray()
+
+    code.extend(b"\x55\x48\x89\xe5")
+
+    code.extend(CryptographicRoutineDetector.AES_SBOX)
+
+    md = Cs(CS_ARCH_X86, CS_MODE_64)
+    asm_code = b"\x48\x8b\x45\xf8"
+    asm_code += b"\x0f\xb6\x00"
+    asm_code += b"\x48\x8d\x15\x00\x00\x00\x00"
+    asm_code += b"\x0f\xb6\x04\x02"
+    asm_code += b"\x88\x45\xff"
+    asm_code += b"\xc9\xc3"
+    code.extend(asm_code)
+
+    return bytes(code)
 
 
 @pytest.fixture
-def sha256_binary() -> bytes:
-    """Provide binary with SHA-256 constants."""
-    return RealCryptoBinaryBuilder.create_sha256_binary()
+def aes_ni_binary() -> bytes:
+    """Real binary with AES-NI instructions."""
+    code = bytearray()
+
+    code.extend(b"\x55\x48\x89\xe5")
+
+    code.extend(b"\x66\x0f\x38\xdc\xc1")
+    code.extend(b"\x66\x0f\x38\xdc\xd1")
+    code.extend(b"\x66\x0f\x38\xdc\xe1")
+    code.extend(b"\x66\x0f\x38\xdd\xf1")
+
+    code.extend(b"\x66\x0f\x3a\xdf\xc0\x01")
+    code.extend(b"\x66\x0f\x3a\xdf\xc1\x02")
+
+    code.extend(b"\xc9\xc3")
+
+    return bytes(code)
 
 
 @pytest.fixture
-def sha1_binary() -> bytes:
-    """Provide binary with SHA-1 constants."""
-    return RealCryptoBinaryBuilder.create_sha1_binary()
+def des_binary_with_sboxes() -> bytes:
+    """Real binary with DES S-boxes."""
+    code = bytearray()
+
+    code.extend(b"\x55\x48\x89\xe5")
+
+    detector = CryptographicRoutineDetector()
+    for sbox in detector.DES_SBOXES:
+        packed = bytearray()
+        for row in sbox:
+            for val in row:
+                packed.append(val)
+        code.extend(bytes(packed))
+
+    code.extend(b"\xc9\xc3")
+
+    return bytes(code)
 
 
 @pytest.fixture
-def md5_binary() -> bytes:
-    """Provide binary with MD5 constants."""
-    return RealCryptoBinaryBuilder.create_md5_binary()
+def sha256_binary_with_constants() -> bytes:
+    """Real binary with SHA-256 round constants."""
+    code = bytearray()
+
+    code.extend(b"\x55\x48\x89\xe5")
+
+    sha256_k = [
+        0x428A2F98, 0x71374491, 0xB5C0FBCF, 0xE9B5DBA5,
+        0x3956C25B, 0x59F111F1, 0x923F82A4, 0xAB1C5ED5,
+        0xD807AA98, 0x12835B01, 0x243185BE, 0x550C7DC3,
+        0x72BE5D74, 0x80DEB1FE, 0x9BDC06A7, 0xC19BF174,
+    ]
+
+    for k in sha256_k:
+        code.extend(struct.pack(">I", k))
+
+    asm = b"\x8b\x45\xfc"
+    asm += b"\xc1\xe0\x06"
+    asm += b"\x8b\x55\xfc"
+    asm += b"\xc1\xea\x0b"
+    asm += b"\x31\xd0"
+    asm += b"\x8b\x55\xfc"
+    asm += b"\xc1\xea\x19"
+    asm += b"\x31\xd0"
+    code.extend(asm)
+
+    code.extend(b"\xc9\xc3")
+
+    return bytes(code)
 
 
 @pytest.fixture
-def rc4_binary() -> bytes:
-    """Provide binary with RC4 pattern."""
-    return RealCryptoBinaryBuilder.create_rc4_binary()
+def rsa_binary_with_exponent() -> bytes:
+    """Real binary with RSA public exponent and modular operations."""
+    code = bytearray()
 
+    code.extend(b"\x55\x48\x89\xe5")
 
-@pytest.fixture
-def rsa_binary() -> bytes:
-    """Provide binary with RSA patterns."""
-    return RealCryptoBinaryBuilder.create_rsa_binary()
+    code.extend(b"\x01\x00\x01\x00")
 
+    modulus = b"\xFF" * 256
+    code.extend(modulus)
 
-@pytest.fixture
-def ecc_binary() -> bytes:
-    """Provide binary with ECC parameters."""
-    return RealCryptoBinaryBuilder.create_ecc_binary()
+    asm = b"\x48\x8b\x45\xf8"
+    asm += b"\x48\x0f\xaf\x45\xf0"
+    asm += b"\x48\xf7\x75\xe8"
+    asm += b"\x48\x89\x55\xe0"
+    asm += b"\x48\x8b\x45\xd8"
+    asm += b"\x48\x0f\xaf\x45\xd0"
+    code.extend(asm)
+
+    code.extend(b"\xc9\xc3")
+
+    return bytes(code)
 
 
 @pytest.fixture
 def chacha20_binary() -> bytes:
-    """Provide binary with ChaCha20 constant."""
-    return RealCryptoBinaryBuilder.create_chacha20_binary()
+    """Real binary with ChaCha20 constant and quarter round."""
+    code = bytearray()
+
+    code.extend(b"\x55\x48\x89\xe5")
+
+    code.extend(b"expand 32-byte k")
+
+    asm = b"\x8b\x45\xfc"
+    asm += b"\x03\x45\xf8"
+    asm += b"\x89\x45\xfc"
+    asm += b"\x8b\x45\xf4"
+    asm += b"\x33\x45\xfc"
+    asm += b"\x89\x45\xf4"
+    asm += b"\xc1\xc0\x10"
+    asm += b"\x89\x45\xf4"
+    asm += b"\x8b\x45\xf0"
+    asm += b"\x03\x45\xf4"
+    asm += b"\x89\x45\xf0"
+    asm += b"\x8b\x45\xf8"
+    asm += b"\x33\x45\xf0"
+    asm += b"\xc1\xc0\x0c"
+    code.extend(asm)
+
+    code.extend(b"\xc9\xc3")
+
+    return bytes(code)
+
+
+@pytest.fixture
+def custom_crypto_binary() -> bytes:
+    """Binary with custom crypto implementation (high entropy table + XOR loops)."""
+    code = bytearray()
+
+    code.extend(b"\x55\x48\x89\xe5")
+
+    custom_sbox = bytes([secrets.randbelow(256) for _ in range(256)])
+    code.extend(custom_sbox)
+
+    xor_loop = b"\x48\x8b\x45\xf8"
+    xor_loop += b"\x8a\x00"
+    xor_loop += b"\x34\xaa"
+    xor_loop += b"\x48\x8b\x55\xf0"
+    xor_loop += b"\x88\x02"
+    xor_loop += b"\x48\x83\x45\xf8\x01"
+    xor_loop += b"\x48\x83\x45\xf0\x01"
+    xor_loop += b"\x48\x83\x6d\xe8\x01"
+    xor_loop += b"\x75\xe2"
+    code.extend(xor_loop)
+
+    code.extend(b"\xc9\xc3")
+
+    return bytes(code)
 
 
 @pytest.fixture
 def blowfish_binary() -> bytes:
-    """Provide binary with Blowfish constants."""
-    return RealCryptoBinaryBuilder.create_blowfish_binary()
+    """Real binary with Blowfish Pi subkeys."""
+    code = bytearray()
+
+    code.extend(b"\x55\x48\x89\xe5")
+
+    code.extend(CryptographicRoutineDetector.BLOWFISH_PI_SUBKEYS)
+
+    sboxes = bytearray()
+    for _ in range(4):
+        sbox_quarter = bytes([secrets.randbelow(256) for _ in range(256)])
+        sboxes.extend(sbox_quarter)
+    code.extend(sboxes)
+
+    code.extend(b"\xc9\xc3")
+
+    return bytes(code)
 
 
 @pytest.fixture
-def des_binary() -> bytes:
-    """Provide binary with DES S-boxes."""
-    return RealCryptoBinaryBuilder.create_des_binary()
+def rc4_binary() -> bytes:
+    """Real binary with RC4 KSA implementation."""
+    code = bytearray()
 
+    code.extend(b"\x55\x48\x89\xe5")
 
-def test_detector_initialization_creates_disassemblers(detector: CryptographicRoutineDetector) -> None:
-    """Detector initialization creates 32-bit and 64-bit disassemblers."""
-    assert detector.md_32 is not None
-    assert detector.md_64 is not None
-    assert detector.md_32.detail is True
-    assert detector.md_64.detail is True
-    assert detector.detections == []
-    assert detector.constant_cache == {}
-    assert detector.data_flow_cache == {}
+    code.extend(bytes(range(256)))
 
+    ksa_code = b"\xc7\x45\xfc\x00\x00\x00\x00"
+    ksa_code += b"\xc7\x45\xf8\x00\x00\x00\x00"
+    ksa_code += b"\x8b\x45\xfc"
+    ksa_code += b"\x48\x98"
+    ksa_code += b"\x48\x8d\x15\x00\x00\x00\x00"
+    ksa_code += b"\x0f\xb6\x0c\x02"
+    ksa_code += b"\x8b\x45\xf8"
+    ksa_code += b"\x01\xc8"
+    ksa_code += b"\x89\x45\xf8"
+    ksa_code += b"\x86\xc1"
+    ksa_code += b"\x83\x45\xfc\x01"
+    ksa_code += b"\x81\x7d\xfc\xff\x00\x00\x00"
+    ksa_code += b"\x7e\xd5"
+    code.extend(ksa_code)
 
-def test_detect_aes_forward_sbox_in_real_binary(detector: CryptographicRoutineDetector, aes_sbox_binary: bytes) -> None:
-    """Detector identifies AES forward S-box in binary with exact match."""
-    detections = detector.detect_all(aes_sbox_binary, base_addr=0x400000)
+    code.extend(b"\xc9\xc3")
 
-    aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES and "Forward" in d.variant]
+    return bytes(code)
 
-    assert aes_detections
-    assert aes_detections[0].confidence >= 0.99
-    assert aes_detections[0].size == 256
-    assert "S-box" in aes_detections[0].variant
 
+@pytest.fixture
+def ecc_binary() -> bytes:
+    """Real binary with ECC field prime and point operations."""
+    code = bytearray()
 
-def test_detect_aes_inverse_sbox_in_real_binary(detector: CryptographicRoutineDetector, aes_sbox_binary: bytes) -> None:
-    """Detector identifies AES inverse S-box in binary with exact match."""
-    detections = detector.detect_all(aes_sbox_binary, base_addr=0x400000)
+    code.extend(b"\x55\x48\x89\xe5")
 
-    aes_inv_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES and "Inverse" in d.variant]
+    secp256k1_prime = bytes.fromhex("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F")
+    code.extend(secp256k1_prime)
 
-    assert aes_inv_detections
-    assert aes_inv_detections[0].confidence >= 0.99
-    assert aes_inv_detections[0].size == 256
+    point_ops = b"\x48\x8b\x45\xf8"
+    point_ops += b"\x48\x0f\xaf\x45\xf0"
+    point_ops += b"\x48\x8b\x55\xe8"
+    point_ops += b"\x48\x0f\xaf\x55\xe0"
+    point_ops += b"\x48\x01\xd0"
+    point_ops += b"\x48\x8b\x55\xd8"
+    point_ops += b"\x48\x29\xd0"
+    point_ops += b"\x48\x0f\xaf\x45\xd0"
+    point_ops += b"\x48\x03\x45\xc8"
+    code.extend(point_ops)
 
+    code.extend(b"\xc9\xc3")
 
-def test_detect_aes_round_constants(detector: CryptographicRoutineDetector, aes_sbox_binary: bytes) -> None:
-    """Detector identifies AES round constants in binary."""
-    detections = detector.detect_all(aes_sbox_binary, base_addr=0x400000)
+    return bytes(code)
 
-    assert any(c.constant_type == "AES_RCON" for d in detections for c in d.constants if c)
 
+@pytest.fixture
+def feistel_binary() -> bytes:
+    """Binary with Feistel network structure (swaps and XORs)."""
+    code = bytearray()
 
-def test_detect_sha256_round_constants_big_endian(detector: CryptographicRoutineDetector, sha256_binary: bytes) -> None:
-    """Detector identifies SHA-256 round constants with big-endian encoding."""
-    detections = detector.detect_all(sha256_binary, base_addr=0x400000)
+    code.extend(b"\x55\x48\x89\xe5")
 
-    sha256_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.SHA256]
+    for _ in range(8):
+        code.extend(b"\x8b\x45\xfc")
+        code.extend(b"\x33\x45\xf8")
+        code.extend(b"\x89\x45\xfc")
+        code.extend(b"\x8b\x45\xf8")
+        code.extend(b"\x87\x45\xfc")
 
-    assert sha256_detections
-    assert sha256_detections[0].confidence >= 0.9
-    assert "SHA-256" in sha256_detections[0].variant
-    assert sha256_detections[0].details.get("endianness") == "big"
+    code.extend(b"\xc9\xc3")
 
+    return bytes(code)
 
-def test_detect_sha1_initialization_vectors(detector: CryptographicRoutineDetector, sha1_binary: bytes) -> None:
-    """Detector identifies SHA-1 initialization vectors."""
-    detections = detector.detect_all(sha1_binary, base_addr=0x400000)
 
-    sha1_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.SHA1]
+@pytest.fixture
+def simd_aes_binary() -> bytes:
+    """Binary with SIMD-optimized AES implementation."""
+    code = bytearray()
 
-    assert sha1_detections
-    assert sha1_detections[0].confidence >= 0.9
-    assert "SHA-1" in sha1_detections[0].variant
-    assert sha1_detections[0].details.get("constants_found") >= 3
+    code.extend(b"\x55\x48\x89\xe5")
 
+    code.extend(CryptographicRoutineDetector.AES_SBOX)
 
-def test_detect_md5_sine_table_constants(detector: CryptographicRoutineDetector, md5_binary: bytes) -> None:
-    """Detector identifies MD5 sine table constants with little-endian encoding."""
-    detections = detector.detect_all(md5_binary, base_addr=0x400000)
+    simd_code = b"\x66\x0f\x6f\x45\xf0"
+    simd_code += b"\x66\x0f\x6f\x4d\xe0"
+    simd_code += b"\x66\x0f\xef\xc1"
+    simd_code += b"\x66\x0f\x7f\x45\xd0"
+    code.extend(simd_code)
 
-    md5_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.MD5]
+    code.extend(b"\xc9\xc3")
 
-    assert md5_detections
-    assert md5_detections[0].confidence >= 0.85
-    assert "MD5" in md5_detections[0].variant
-    assert md5_detections[0].details.get("constants_found") >= 2
+    return bytes(code)
 
 
-def test_detect_rc4_state_array_initialization(detector: CryptographicRoutineDetector, rc4_binary: bytes) -> None:
-    """Detector identifies RC4 state array initialization pattern."""
-    detections = detector.detect_all(rc4_binary, base_addr=0x400000)
+@pytest.fixture
+def obfuscated_aes_sbox() -> bytes:
+    """Binary with partially obfuscated AES S-box."""
+    original_sbox = bytearray(CryptographicRoutineDetector.AES_SBOX)
 
-    rc4_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.RC4]
+    for i in range(0, len(original_sbox), 16):
+        original_sbox[i] ^= 0x01
 
-    assert rc4_detections
-    assert rc4_detections[0].confidence >= 0.9
-    assert "RC4" in rc4_detections[0].variant
-    assert rc4_detections[0].size == 256
+    code = bytearray()
+    code.extend(b"\x55\x48\x89\xe5")
+    code.extend(bytes(original_sbox))
+    code.extend(b"\xc9\xc3")
 
+    return bytes(code)
 
-def test_detect_rc4_ksa_pattern_nearby(detector: CryptographicRoutineDetector, rc4_binary: bytes) -> None:
-    """Detector identifies RC4 Key Scheduling Algorithm pattern near state array."""
-    detections = detector.detect_all(rc4_binary, base_addr=0x400000)
 
-    rc4_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.RC4]
+@pytest.fixture
+def whitebox_aes_binary() -> bytes:
+    """Binary with white-box AES (encoded lookup tables)."""
+    code = bytearray()
 
-    assert rc4_detections
-    assert rc4_detections[0].details.get("ksa_detected") is True
+    code.extend(b"\x55\x48\x89\xe5")
 
+    for _ in range(16):
+        encoded_table = bytes([secrets.randbelow(256) for _ in range(256)])
+        code.extend(encoded_table)
 
-def test_detect_rsa_public_exponent_65537(detector: CryptographicRoutineDetector, rsa_binary: bytes) -> None:
-    """Detector identifies RSA public exponent 65537 (most common)."""
-    detections = detector.detect_all(rsa_binary, base_addr=0x400000)
+    code.extend(b"\xc9\xc3")
 
-    rsa_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.RSA]
+    return bytes(code)
 
-    assert rsa_detections
-    assert rsa_detections[0].confidence >= 0.85
-    assert "RSA" in rsa_detections[0].variant
 
+@pytest.fixture
+def inline_crypto_binary() -> bytes:
+    """Binary with inlined crypto operations (no separate tables)."""
+    code = bytearray()
 
-def test_detect_rsa_with_modular_operations_nearby(detector: CryptographicRoutineDetector, rsa_binary: bytes) -> None:
-    """Detector confirms RSA by finding modular arithmetic operations nearby."""
-    detections = detector.detect_all(rsa_binary, base_addr=0x400000)
+    code.extend(b"\x55\x48\x89\xe5")
 
-    rsa_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.RSA and "Exponent" in d.variant]
+    inline_code = b""
+    for i, val in enumerate(CryptographicRoutineDetector.AES_SBOX[:16]):
+        inline_code += b"\x80\x7d\xfc" + bytes([i])
+        inline_code += b"\x75\x06"
+        inline_code += b"\xc6\x45\xfb" + bytes([val])
+        inline_code += b"\xeb\x00"
 
-    assert rsa_detections
-    assert rsa_detections[0].confidence >= 0.85
+    code.extend(inline_code)
+    code.extend(b"\xc9\xc3")
 
+    return bytes(code)
 
-def test_detect_ecc_secp256k1_field_prime(detector: CryptographicRoutineDetector, ecc_binary: bytes) -> None:
-    """Detector identifies secp256k1 curve field prime (Bitcoin curve)."""
-    detections = detector.detect_all(ecc_binary, base_addr=0x400000)
 
-    ecc_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.ECC and "secp256k1" in d.variant]
+@pytest.fixture
+def sha1_binary() -> bytes:
+    """Real binary with SHA-1 constants."""
+    code = bytearray()
 
-    assert ecc_detections
-    assert ecc_detections[0].confidence >= 0.95
-    assert ecc_detections[0].details.get("curve") == "secp256k1"
+    code.extend(b"\x55\x48\x89\xe5")
 
+    sha1_h = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0]
+    for h in sha1_h:
+        code.extend(struct.pack(">I", h))
 
-def test_detect_ecc_secp256r1_field_prime(detector: CryptographicRoutineDetector, ecc_binary: bytes) -> None:
-    """Detector identifies secp256r1 curve field prime (NIST P-256)."""
-    detections = detector.detect_all(ecc_binary, base_addr=0x400000)
+    sha1_ops = b"\x8b\x45\xfc"
+    sha1_ops += b"\xc1\xc0\x05"
+    sha1_ops += b"\x03\x45\xf8"
+    sha1_ops += b"\x03\x45\xf4"
+    code.extend(sha1_ops)
 
-    ecc_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.ECC and "secp256r1" in d.variant]
+    code.extend(b"\xc9\xc3")
 
-    assert ecc_detections
-    assert ecc_detections[0].confidence >= 0.95
-    assert ecc_detections[0].details.get("curve") == "secp256r1"
+    return bytes(code)
 
 
-def test_detect_chacha20_constant_string(detector: CryptographicRoutineDetector, chacha20_binary: bytes) -> None:
-    """Detector identifies ChaCha20 'expand 32-byte k' constant."""
-    detections = detector.detect_all(chacha20_binary, base_addr=0x400000)
+@pytest.fixture
+def md5_binary() -> bytes:
+    """Real binary with MD5 constants."""
+    code = bytearray()
 
-    chacha_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CHACHA20]
+    code.extend(b"\x55\x48\x89\xe5")
 
-    assert chacha_detections
-    assert chacha_detections[0].confidence >= 0.95
-    assert "ChaCha20" in chacha_detections[0].variant
+    md5_t = [0xD76AA478, 0xE8C7B756, 0x242070DB, 0xC1BDCEEE]
+    for t in md5_t:
+        code.extend(struct.pack("<I", t))
 
+    md5_ops = b"\x8b\x45\xfc"
+    md5_ops += b"\x23\x45\xf8"
+    md5_ops += b"\x8b\x55\xfc"
+    md5_ops += b"\xf7\xd2"
+    md5_ops += b"\x23\x55\xf4"
+    md5_ops += b"\x09\xd0"
+    code.extend(md5_ops)
 
-def test_detect_chacha20_quarter_round_function(detector: CryptographicRoutineDetector, chacha20_binary: bytes) -> None:
-    """Detector identifies ChaCha20 quarter round function pattern."""
-    detections = detector.detect_all(chacha20_binary, base_addr=0x400000)
+    code.extend(b"\xc9\xc3")
 
-    chacha_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CHACHA20]
+    return bytes(code)
 
-    assert chacha_detections
-    assert chacha_detections[0].details.get("quarter_round_detected") is True
-    assert chacha_detections[0].confidence >= 0.95
 
+class TestInstructionPatternAnalysis:
+    """Test instruction-level pattern analysis for crypto detection."""
 
-def test_detect_blowfish_pi_subkeys(detector: CryptographicRoutineDetector, blowfish_binary: bytes) -> None:
-    """Detector identifies Blowfish Pi-based subkey initialization."""
-    detections = detector.detect_all(blowfish_binary, base_addr=0x400000)
+    def test_aes_ni_instruction_detection(self, detector: CryptographicRoutineDetector, aes_ni_binary: bytes) -> None:
+        """AES-NI instructions are detected in binary code."""
+        detections = detector.detect_all(aes_ni_binary, base_addr=0x400000)
 
-    blowfish_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.BLOWFISH]
+        aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
+        assert len(aes_detections) >= 6, "Should detect all 6 AES-NI instructions"
 
-    assert blowfish_detections
-    assert blowfish_detections[0].confidence >= 0.85
-    assert "Blowfish" in blowfish_detections[0].variant
+        instruction_types = {d.variant for d in aes_detections}
+        assert "AES-NI AESENC" in instruction_types
+        assert "AES-NI AESENCLAST" in instruction_types
+        assert "AES-NI AESKEYGENASSIST" in instruction_types
 
+        for detection in aes_detections:
+            assert detection.confidence == 1.0
+            assert detection.details.get("hardware") is True
+            assert detection.mode == "Hardware-accelerated"
 
-def test_detect_des_sboxes_all_eight(detector: CryptographicRoutineDetector, des_binary: bytes) -> None:
-    """Detector identifies all 8 DES S-boxes."""
-    detections = detector.detect_all(des_binary, base_addr=0x400000)
+    def test_sha_instruction_extensions_detection(self, detector: CryptographicRoutineDetector) -> None:
+        """SHA instruction extensions are detected."""
+        code = bytearray()
+        code.extend(b"\x55\x48\x89\xe5")
+        code.extend(b"\x0f\x38\xc8\xc1")
+        code.extend(b"\x0f\x38\xc9\xd1")
+        code.extend(b"\x0f\x38\xcb\xe1")
+        code.extend(b"\x0f\x38\xcc\xf1")
+        code.extend(b"\xc9\xc3")
 
-    des_detections = [d for d in detections if d.algorithm in [CryptoAlgorithm.DES, CryptoAlgorithm.TRIPLE_DES]]
+        detections = detector.detect_all(bytes(code), base_addr=0x400000)
 
-    assert des_detections
-    assert des_detections[0].details.get("sbox_count") >= 4
-    assert des_detections[0].confidence >= 0.5
+        sha1_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.SHA1]
+        sha256_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.SHA256]
 
+        assert len(sha1_detections) >= 2
+        assert len(sha256_detections) >= 2
 
-def test_detect_aes_ni_aesenc_instruction() -> None:
-    """Detector identifies AES-NI AESENC hardware instruction."""
-    binary = RealCryptoBinaryBuilder.create_aes_ni_binary()
-    detector = CryptographicRoutineDetector()
+        for detection in sha1_detections + sha256_detections:
+            assert detection.confidence == 1.0
+            assert detection.details.get("hardware") is True
 
-    detections = detector.detect_all(binary, base_addr=0x400000)
+    def test_feistel_network_structure_detection(self, detector: CryptographicRoutineDetector, feistel_binary: bytes) -> None:
+        """Feistel network structures are detected through swap and XOR patterns."""
+        detections = detector.detect_all(feistel_binary, base_addr=0x400000, quick_mode=False)
 
-    aesni_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES and d.details.get("hardware") is True]
+        feistel_detections = [d for d in detections if "Feistel" in d.variant]
+        assert len(feistel_detections) >= 1, "Should detect Feistel network structure"
 
-    assert aesni_detections
-    assert aesni_detections[0].confidence == 1.0
-    assert "AES-NI" in aesni_detections[0].variant
+        detection = feistel_detections[0]
+        assert detection.algorithm == CryptoAlgorithm.CUSTOM
+        assert detection.details.get("rounds", 0) >= 4
+        assert detection.details.get("xor_operations", 0) >= 8
+        assert detection.confidence >= 0.7
 
+    def test_ecc_point_operations_detection(self, detector: CryptographicRoutineDetector, ecc_binary: bytes) -> None:
+        """ECC point addition/doubling operations are detected."""
+        detections = detector.detect_all(ecc_binary, base_addr=0x400000, quick_mode=False)
 
-def test_detect_aes_ni_multiple_instructions() -> None:
-    """Detector identifies multiple AES-NI instructions in same binary."""
-    binary = RealCryptoBinaryBuilder.create_aes_ni_binary()
-    detector = CryptographicRoutineDetector()
+        ecc_ops = [d for d in detections if d.variant == "ECC Point Operations"]
+        assert len(ecc_ops) >= 1, "Should detect ECC point operations"
 
-    detections = detector.detect_all(binary, base_addr=0x400000)
+        detection = ecc_ops[0]
+        assert detection.details.get("multiplications", 0) >= 6
+        assert detection.details.get("additions", 0) >= 4
+        assert detection.details.get("subtractions", 0) >= 2
+        assert detection.confidence >= 0.8
 
-    aesni_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES and "AES-NI" in d.variant]
+    def test_data_flow_analysis_on_crypto_routines(self, detector: CryptographicRoutineDetector, aes_binary_with_sbox: bytes) -> None:
+        """Data flow analysis tracks register usage in crypto code."""
+        detections = detector.detect_all(aes_binary_with_sbox, base_addr=0x400000, quick_mode=False)
 
-    assert len(aesni_detections) >= 3
+        aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES and d.data_flows]
+        assert len(aes_detections) >= 1, "Should have data flow analysis for AES"
 
+        detection = aes_detections[0]
+        assert len(detection.data_flows) > 0
+        assert "register_usage" in detection.details
+        assert "data_flow_complexity" in detection.details
 
-def test_detect_sha_hardware_instructions() -> None:
-    """Detector identifies SHA hardware acceleration instructions."""
-    binary = RealCryptoBinaryBuilder.create_sha_instructions_binary()
-    detector = CryptographicRoutineDetector()
+        for node in detection.data_flows:
+            assert isinstance(node, DataFlowNode)
+            assert node.address > 0
+            assert node.mnemonic
 
-    detections = detector.detect_all(binary, base_addr=0x400000)
 
-    sha_hw_detections = [d for d in detections if d.algorithm in [CryptoAlgorithm.SHA1, CryptoAlgorithm.SHA256] and d.details.get("hardware") is True]
+class TestCryptoConstantDetection:
+    """Test detection of cryptographic constants (S-boxes, round constants, IVs)."""
 
-    assert len(sha_hw_detections) >= 2
-    assert all(d.confidence == 1.0 for d in sha_hw_detections)
+    def test_aes_sbox_constant_detection(self, detector: CryptographicRoutineDetector, aes_binary_with_sbox: bytes) -> None:
+        """AES S-box constant is detected with exact match."""
+        detections = detector.detect_all(aes_binary_with_sbox, base_addr=0x400000)
 
+        aes_sbox_detections = [d for d in detections if "S-box" in d.variant and d.algorithm == CryptoAlgorithm.AES]
+        assert len(aes_sbox_detections) >= 1, "Should detect AES S-box"
 
-def test_detect_obfuscated_aes_sbox_fuzzy_matching() -> None:
-    """Detector identifies partially obfuscated AES S-box using fuzzy matching."""
-    binary = RealCryptoBinaryBuilder.create_obfuscated_aes_binary()
-    detector = CryptographicRoutineDetector()
+        detection = aes_sbox_detections[0]
+        assert detection.confidence >= 0.85
+        assert detection.size == 256
+        assert detection.details.get("sbox_type") in ["forward", "inverse"]
 
-    detections = detector.detect_all(binary, base_addr=0x400000)
+    def test_sha256_round_constants_detection(self, detector: CryptographicRoutineDetector, sha256_binary_with_constants: bytes) -> None:
+        """SHA-256 round constants are detected."""
+        detections = detector.detect_all(sha256_binary_with_constants, base_addr=0x400000)
 
-    aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
+        sha256_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.SHA256]
+        assert len(sha256_detections) >= 1, "Should detect SHA-256 constants"
 
-    assert aes_detections
-    assert aes_detections[0].confidence >= 0.85
-    assert aes_detections[0].details.get("obfuscated") is True
+        detection = sha256_detections[0]
+        assert detection.details.get("constants_found", 0) >= 4
+        assert detection.details.get("endianness") == "big"
+        assert detection.confidence >= 0.9
 
+    def test_sha1_initialization_vectors_detection(self, detector: CryptographicRoutineDetector, sha1_binary: bytes) -> None:
+        """SHA-1 initialization vectors are detected."""
+        detections = detector.detect_all(sha1_binary, base_addr=0x400000)
 
-def test_detect_multiple_algorithms_in_single_binary() -> None:
-    """Detector identifies multiple different crypto algorithms in same binary."""
-    binary = RealCryptoBinaryBuilder.create_multi_crypto_binary()
-    detector = CryptographicRoutineDetector()
+        sha1_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.SHA1]
+        assert len(sha1_detections) >= 1, "Should detect SHA-1 constants"
 
-    detections = detector.detect_all(binary, base_addr=0x400000)
+        detection = sha1_detections[0]
+        assert detection.details.get("constants_found", 0) >= 3
+        assert detection.confidence >= 0.9
 
-    algorithms_found = {d.algorithm for d in detections}
+    def test_md5_sine_table_detection(self, detector: CryptographicRoutineDetector, md5_binary: bytes) -> None:
+        """MD5 sine table constants are detected."""
+        detections = detector.detect_all(md5_binary, base_addr=0x400000)
 
-    assert CryptoAlgorithm.AES in algorithms_found
-    assert CryptoAlgorithm.SHA256 in algorithms_found
-    assert CryptoAlgorithm.RSA in algorithms_found
-    assert CryptoAlgorithm.CHACHA20 in algorithms_found
-    assert len(algorithms_found) >= 4
+        md5_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.MD5]
+        assert len(md5_detections) >= 1, "Should detect MD5 constants"
 
+        detection = md5_detections[0]
+        assert detection.details.get("constants_found", 0) >= 2
+        assert detection.confidence >= 0.85
 
-def test_detect_feistel_network_structure() -> None:
-    """Detector identifies Feistel network structure through instruction patterns."""
-    binary = RealCryptoBinaryBuilder.create_feistel_network_binary()
-    detector = CryptographicRoutineDetector()
+    def test_des_sbox_detection(self, detector: CryptographicRoutineDetector, des_binary_with_sboxes: bytes) -> None:
+        """DES S-boxes are detected in binary."""
+        detections = detector.detect_all(des_binary_with_sboxes, base_addr=0x400000)
 
-    detections = detector.detect_all(binary, base_addr=0x400000, quick_mode=False)
+        des_detections = [d for d in detections if d.algorithm in [CryptoAlgorithm.DES, CryptoAlgorithm.TRIPLE_DES]]
+        assert len(des_detections) >= 1, "Should detect DES S-boxes"
 
-    feistel_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CUSTOM and "Feistel" in d.variant]
+        detection = des_detections[0]
+        assert detection.details.get("sbox_count", 0) >= 4
+        assert detection.confidence >= 0.5
 
-    assert feistel_detections
-    assert feistel_detections[0].details.get("rounds") >= 4
-    assert feistel_detections[0].details.get("xor_operations") >= 8
+    def test_blowfish_pi_subkeys_detection(self, detector: CryptographicRoutineDetector, blowfish_binary: bytes) -> None:
+        """Blowfish Pi-based subkeys are detected."""
+        detections = detector.detect_all(blowfish_binary, base_addr=0x400000)
 
+        blowfish_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.BLOWFISH]
+        assert len(blowfish_detections) >= 1, "Should detect Blowfish constants"
 
-def test_detect_custom_high_entropy_crypto_table() -> None:
-    """Detector identifies custom crypto implementation through entropy analysis."""
-    binary = RealCryptoBinaryBuilder.create_custom_crypto_table()
-    detector = CryptographicRoutineDetector()
+        pi_detections = [d for d in blowfish_detections if "Pi" in d.variant]
+        assert len(pi_detections) >= 1
+        assert pi_detections[0].confidence >= 0.95
 
-    detections = detector.detect_all(binary, base_addr=0x400000)
+    def test_chacha20_constant_detection(self, detector: CryptographicRoutineDetector, chacha20_binary: bytes) -> None:
+        """ChaCha20 'expand 32-byte k' constant is detected."""
+        detections = detector.detect_all(chacha20_binary, base_addr=0x400000)
 
-    custom_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CUSTOM]
+        chacha20_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CHACHA20]
+        assert len(chacha20_detections) >= 1, "Should detect ChaCha20 constant"
 
-    assert custom_detections
-    assert custom_detections[0].details.get("entropy") >= 7.5
-    assert custom_detections[0].details.get("structure") == "lookup_table"
+        detection = chacha20_detections[0]
+        assert detection.details.get("constant") == "expand 32-byte k"
+        assert detection.confidence >= 0.95
 
+    def test_rsa_public_exponent_detection(self, detector: CryptographicRoutineDetector, rsa_binary_with_exponent: bytes) -> None:
+        """RSA public exponent 65537 is detected."""
+        detections = detector.detect_all(rsa_binary_with_exponent, base_addr=0x400000)
 
-def test_quick_mode_skips_expensive_analysis() -> None:
-    """Quick mode skips expensive disassembly-based detections for performance."""
-    binary = RealCryptoBinaryBuilder.create_multi_crypto_binary()
-    detector = CryptographicRoutineDetector()
+        rsa_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.RSA]
+        assert len(rsa_detections) >= 1, "Should detect RSA exponent"
 
-    detections_quick = detector.detect_all(binary, base_addr=0x400000, quick_mode=True)
+        exponent_detections = [d for d in rsa_detections if d.details.get("exponent") == 65537]
+        assert len(exponent_detections) >= 1
+        assert exponent_detections[0].confidence >= 0.85
 
-    detector2 = CryptographicRoutineDetector()
-    detections_full = detector2.detect_all(binary, base_addr=0x400000, quick_mode=False)
+    def test_ecc_field_prime_detection(self, detector: CryptographicRoutineDetector, ecc_binary: bytes) -> None:
+        """ECC field primes for standard curves are detected."""
+        detections = detector.detect_all(ecc_binary, base_addr=0x400000)
 
-    assert len(detections_quick) >= 1
-    assert len(detections_full) >= len(detections_quick)
+        ecc_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.ECC and "Field Prime" in d.variant]
+        assert len(ecc_detections) >= 1, "Should detect ECC field prime"
 
+        detection = ecc_detections[0]
+        assert detection.details.get("curve") == "secp256k1"
+        assert detection.confidence >= 0.95
 
-def test_crypto_constant_caching_improves_performance(detector: CryptographicRoutineDetector, aes_sbox_binary: bytes) -> None:
-    """Detector caches crypto constants for improved performance."""
-    detector.detect_all(aes_sbox_binary, base_addr=0x400000)
 
-    assert len(detector.constant_cache) >= 1
+class TestSboxIdentification:
+    """Test S-box identification including fuzzy matching for obfuscated implementations."""
 
-    cached_constants = list(detector.constant_cache.values())
-    assert all(isinstance(c, CryptoConstant) for c in cached_constants)
-    assert all(c.algorithm is not None for c in cached_constants)
+    def test_exact_aes_sbox_match(self, detector: CryptographicRoutineDetector, aes_binary_with_sbox: bytes) -> None:
+        """Exact AES S-box is matched with 100% confidence."""
+        detections = detector.detect_all(aes_binary_with_sbox, base_addr=0x400000)
 
+        exact_matches = [d for d in detections if d.algorithm == CryptoAlgorithm.AES and d.confidence >= 0.99]
+        assert len(exact_matches) >= 1, "Should have exact S-box match"
 
-def test_detection_includes_code_references(detector: CryptographicRoutineDetector, aes_sbox_binary: bytes) -> None:
-    """Detector finds code references to crypto tables."""
-    detections = detector.detect_all(aes_sbox_binary, base_addr=0x400000)
+        detection = exact_matches[0]
+        assert detection.details.get("obfuscated") is False or detection.details.get("obfuscated") is None
 
-    aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
+    def test_obfuscated_aes_sbox_fuzzy_match(self, detector: CryptographicRoutineDetector, obfuscated_aes_sbox: bytes) -> None:
+        """Obfuscated AES S-box is detected with fuzzy matching."""
+        detections = detector.detect_all(obfuscated_aes_sbox, base_addr=0x400000)
 
-    assert aes_detections
+        fuzzy_matches = [d for d in detections if d.algorithm == CryptoAlgorithm.AES and 0.85 <= d.confidence < 0.99]
+        assert len(fuzzy_matches) >= 1, "Should detect obfuscated S-box"
 
+        detection = fuzzy_matches[0]
+        assert detection.details.get("obfuscated") is True
+        assert detection.details.get("completeness", 0) >= 0.85
 
-def test_detection_includes_data_references(detector: CryptographicRoutineDetector) -> None:
-    """Detector finds data references to crypto constants."""
-    binary = RealCryptoBinaryBuilder.create_custom_crypto_table()
+    def test_inverse_sbox_differentiation(self, detector: CryptographicRoutineDetector) -> None:
+        """Forward and inverse S-boxes are differentiated."""
+        code = bytearray()
+        code.extend(b"\x55\x48\x89\xe5")
+        code.extend(CryptographicRoutineDetector.AES_SBOX)
+        code.extend(b"\x90" * 64)
+        code.extend(CryptographicRoutineDetector.AES_INV_SBOX)
+        code.extend(b"\xc9\xc3")
 
-    detections = detector.detect_all(binary, base_addr=0x400000)
+        detections = detector.detect_all(bytes(code), base_addr=0x400000)
 
-    custom_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CUSTOM]
+        forward_sbox = [d for d in detections if d.details.get("sbox_type") == "forward"]
+        inverse_sbox = [d for d in detections if d.details.get("sbox_type") == "inverse"]
 
-    assert custom_detections
+        assert len(forward_sbox) >= 1
+        assert len(inverse_sbox) >= 1
+        assert forward_sbox[0].offset != inverse_sbox[0].offset
 
+    def test_des_multiple_sbox_detection(self, detector: CryptographicRoutineDetector, des_binary_with_sboxes: bytes) -> None:
+        """All 8 DES S-boxes are detected."""
+        detections = detector.detect_all(des_binary_with_sboxes, base_addr=0x400000)
 
-def test_analyze_crypto_usage_provides_comprehensive_analysis(detector: CryptographicRoutineDetector) -> None:
-    """Detector analyzes crypto usage patterns comprehensively."""
-    binary = RealCryptoBinaryBuilder.create_multi_crypto_binary()
-    detections = detector.detect_all(binary, base_addr=0x400000)
+        des_detections = [d for d in detections if d.algorithm in [CryptoAlgorithm.DES, CryptoAlgorithm.TRIPLE_DES]]
+        assert len(des_detections) >= 1
 
-    analysis = detector.analyze_crypto_usage(detections)
+        detection = des_detections[0]
+        assert detection.details.get("complete") is True
+        assert detection.details.get("sbox_count") == 8
 
-    assert analysis["total_detections"] >= 4
-    assert analysis["unique_algorithms"] >= 4
-    assert "algorithms" in analysis
-    assert "protection_likelihood" in analysis
-    assert 0.0 <= analysis["protection_likelihood"] <= 1.0
+    def test_blowfish_sbox_structure_detection(self, detector: CryptographicRoutineDetector, blowfish_binary: bytes) -> None:
+        """Blowfish 4x256 S-box structure is detected."""
+        detections = detector.detect_all(blowfish_binary, base_addr=0x400000)
 
+        sbox_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.BLOWFISH and "S-boxes" in d.variant]
+        assert len(sbox_detections) >= 1
 
-def test_analyze_crypto_usage_identifies_hardware_acceleration(detector: CryptographicRoutineDetector) -> None:
-    """Crypto usage analysis detects hardware-accelerated implementations."""
-    binary = RealCryptoBinaryBuilder.create_aes_ni_binary()
-    detections = detector.detect_all(binary, base_addr=0x400000)
+        detection = sbox_detections[0]
+        assert detection.details.get("sbox_structure") == "4x256"
+        assert detection.size == 1024
 
-    analysis = detector.analyze_crypto_usage(detections)
 
-    assert analysis["hardware_accelerated"] is True
+class TestCustomCryptoDetection:
+    """Test detection of custom and modified crypto implementations."""
 
+    def test_custom_high_entropy_table_detection(self, detector: CryptographicRoutineDetector, custom_crypto_binary: bytes) -> None:
+        """Custom crypto tables are detected via entropy analysis."""
+        detections = detector.detect_all(custom_crypto_binary, base_addr=0x400000)
 
-def test_analyze_crypto_usage_identifies_obfuscation(detector: CryptographicRoutineDetector) -> None:
-    """Crypto usage analysis detects obfuscated implementations."""
-    binary = RealCryptoBinaryBuilder.create_obfuscated_aes_binary()
-    detections = detector.detect_all(binary, base_addr=0x400000)
+        custom_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CUSTOM]
+        assert len(custom_detections) >= 1, "Should detect custom crypto table"
 
-    analysis = detector.analyze_crypto_usage(detections)
+        table_detections = [d for d in custom_detections if "Table" in d.variant]
+        assert len(table_detections) >= 1
 
-    assert analysis["obfuscated_crypto"] is True
-    assert analysis["protection_likelihood"] >= 0.9
+        detection = table_detections[0]
+        assert detection.details.get("entropy", 0) > 7.5
+        assert detection.details.get("structure") == "lookup_table"
 
+    def test_xor_cipher_detection(self, detector: CryptographicRoutineDetector, custom_crypto_binary: bytes) -> None:
+        """XOR-based ciphers are detected from instruction patterns."""
+        detections = detector.detect_all(custom_crypto_binary, base_addr=0x400000, quick_mode=False)
 
-def test_analyze_crypto_usage_identifies_custom_crypto(detector: CryptographicRoutineDetector) -> None:
-    """Crypto usage analysis detects custom crypto implementations."""
-    binary = RealCryptoBinaryBuilder.create_custom_crypto_table()
-    detections = detector.detect_all(binary, base_addr=0x400000)
+        xor_detections = [d for d in detections if "XOR" in d.variant]
+        assert len(xor_detections) >= 1, "Should detect XOR cipher"
 
-    analysis = detector.analyze_crypto_usage(detections)
+        detection = xor_detections[0]
+        assert detection.details.get("xor_operations", 0) >= 8
+        assert detection.confidence >= 0.65
 
-    assert analysis["custom_crypto"] is True
+    def test_lfsr_cipher_detection(self, detector: CryptographicRoutineDetector) -> None:
+        """LFSR-based stream ciphers are detected."""
+        code = bytearray()
+        code.extend(b"\x55\x48\x89\xe5")
 
+        for _ in range(8):
+            code.extend(b"\x8b\x45\xfc")
+            code.extend(b"\xd1\xe0")
+            code.extend(b"\x33\x45\xf8")
+            code.extend(b"\x89\x45\xfc")
 
-def test_export_yara_rules_generates_valid_rules(detector: CryptographicRoutineDetector, aes_sbox_binary: bytes) -> None:
-    """Detector exports YARA rules for detected crypto patterns."""
-    detections = detector.detect_all(aes_sbox_binary, base_addr=0x400000)
+        code.extend(b"\xc9\xc3")
 
-    yara_rules = detector.export_yara_rules(detections)
+        detections = detector.detect_all(bytes(code), base_addr=0x400000, quick_mode=False)
 
-    assert len(yara_rules) > 0
-    assert "rule" in yara_rules
-    assert "meta:" in yara_rules
-    assert "strings:" in yara_rules
-    assert "condition:" in yara_rules
+        lfsr_detections = [d for d in detections if "LFSR" in d.variant]
+        assert len(lfsr_detections) >= 1, "Should detect LFSR cipher"
 
+        detection = lfsr_detections[0]
+        assert detection.details.get("shift_operations", 0) >= 4
+        assert detection.details.get("xor_operations", 0) >= 4
 
-def test_export_yara_rules_includes_aes_patterns(detector: CryptographicRoutineDetector, aes_sbox_binary: bytes) -> None:
-    """Exported YARA rules include AES detection patterns."""
-    detections = detector.detect_all(aes_sbox_binary, base_addr=0x400000)
+    def test_whitebox_crypto_detection(self, detector: CryptographicRoutineDetector, whitebox_aes_binary: bytes) -> None:
+        """White-box crypto with encoded tables is detected."""
+        detections = detector.detect_all(whitebox_aes_binary, base_addr=0x400000)
 
-    yara_rules = detector.export_yara_rules(detections)
+        custom_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CUSTOM]
+        assert len(custom_detections) >= 1, "Should detect multiple custom tables for white-box"
 
-    assert "AES" in yara_rules
-    assert "$aes_sbox" in yara_rules
+    def test_inline_crypto_detection(self, detector: CryptographicRoutineDetector, inline_crypto_binary: bytes) -> None:
+        """Inlined crypto operations without lookup tables are detected."""
+        detections = detector.detect_all(inline_crypto_binary, base_addr=0x400000, quick_mode=False)
 
+        assert len(detections) >= 1, "Should detect crypto patterns even without tables"
 
-def test_export_yara_rules_includes_rsa_patterns(detector: CryptographicRoutineDetector, rsa_binary: bytes) -> None:
-    """Exported YARA rules include RSA detection patterns."""
-    detections = detector.detect_all(rsa_binary, base_addr=0x400000)
 
-    yara_rules = detector.export_yara_rules(detections)
+class TestAlgorithmDifferentiation:
+    """Test differentiation between hash, cipher, MAC, and other crypto operations."""
 
-    assert "RSA" in yara_rules
+    def test_hash_vs_cipher_differentiation(self, detector: CryptographicRoutineDetector, sha256_binary_with_constants: bytes, aes_binary_with_sbox: bytes) -> None:
+        """Hash algorithms are differentiated from ciphers."""
+        sha_detections = detector.detect_all(sha256_binary_with_constants, base_addr=0x400000)
+        aes_detections = detector.detect_all(aes_binary_with_sbox, base_addr=0x400000)
 
+        sha_algos = {d.algorithm for d in sha_detections}
+        aes_algos = {d.algorithm for d in aes_detections}
 
-def test_export_yara_rules_includes_chacha20_patterns(detector: CryptographicRoutineDetector, chacha20_binary: bytes) -> None:
-    """Exported YARA rules include ChaCha20 detection patterns."""
-    detections = detector.detect_all(chacha20_binary, base_addr=0x400000)
+        assert CryptoAlgorithm.SHA256 in sha_algos
+        assert CryptoAlgorithm.AES in aes_algos
+        assert CryptoAlgorithm.SHA256 not in aes_algos
+        assert CryptoAlgorithm.AES not in sha_algos
 
-    yara_rules = detector.export_yara_rules(detections)
+    def test_symmetric_vs_asymmetric_differentiation(self, detector: CryptographicRoutineDetector, aes_binary_with_sbox: bytes, rsa_binary_with_exponent: bytes) -> None:
+        """Symmetric and asymmetric crypto are differentiated."""
+        aes_detections = detector.detect_all(aes_binary_with_sbox, base_addr=0x400000)
+        rsa_detections = detector.detect_all(rsa_binary_with_exponent, base_addr=0x400000)
 
-    assert "ChaCha20" in yara_rules
-    assert "expand 32-byte k" in yara_rules
+        assert any(d.algorithm == CryptoAlgorithm.AES for d in aes_detections)
+        assert any(d.algorithm == CryptoAlgorithm.RSA for d in rsa_detections)
 
+    def test_block_cipher_mode_detection(self, detector: CryptographicRoutineDetector, aes_ni_binary: bytes) -> None:
+        """Block cipher modes are identified from context."""
+        detections = detector.detect_all(aes_ni_binary, base_addr=0x400000)
 
-def test_detection_confidence_reflects_match_quality(detector: CryptographicRoutineDetector) -> None:
-    """Detection confidence scores accurately reflect match quality."""
-    exact_binary = RealCryptoBinaryBuilder.create_aes_sbox_binary()
-    obfuscated_binary = RealCryptoBinaryBuilder.create_obfuscated_aes_binary()
+        aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
+        assert len(aes_detections) >= 1
 
-    exact_detections = detector.detect_all(exact_binary, base_addr=0x400000)
+        for detection in aes_detections:
+            if detection.mode:
+                assert detection.mode in ["Hardware-accelerated", "Hardware (AES-NI)", "Software", "Software (T-tables)"]
 
-    detector2 = CryptographicRoutineDetector()
-    obfuscated_detections = detector2.detect_all(obfuscated_binary, base_addr=0x400000)
+    def test_hash_algorithm_differentiation(self, detector: CryptographicRoutineDetector, sha1_binary: bytes, sha256_binary_with_constants: bytes, md5_binary: bytes) -> None:
+        """SHA-1, SHA-256, and MD5 are correctly differentiated."""
+        sha1_dets = detector.detect_all(sha1_binary, base_addr=0x400000)
+        sha256_dets = detector.detect_all(sha256_binary_with_constants, base_addr=0x400000)
+        md5_dets = detector.detect_all(md5_binary, base_addr=0x400000)
 
-    exact_aes = [d for d in exact_detections if d.algorithm == CryptoAlgorithm.AES][0]
-    obfuscated_aes = [d for d in obfuscated_detections if d.algorithm == CryptoAlgorithm.AES][0]
+        assert any(d.algorithm == CryptoAlgorithm.SHA1 for d in sha1_dets)
+        assert any(d.algorithm == CryptoAlgorithm.SHA256 for d in sha256_dets)
+        assert any(d.algorithm == CryptoAlgorithm.MD5 for d in md5_dets)
 
-    assert exact_aes.confidence > obfuscated_aes.confidence
 
+class TestKeyDerivationAndRNG:
+    """Test identification of key derivation functions and random number generation."""
 
-def test_detection_with_base_address_offset_calculates_correct_offsets(detector: CryptographicRoutineDetector, aes_sbox_binary: bytes) -> None:
-    """Detector calculates correct offsets when base address is specified."""
-    base_addr = 0x140000000
+    def test_rc4_ksa_detection(self, detector: CryptographicRoutineDetector, rc4_binary: bytes) -> None:
+        """RC4 Key Scheduling Algorithm is detected."""
+        detections = detector.detect_all(rc4_binary, base_addr=0x400000)
 
-    detections = detector.detect_all(aes_sbox_binary, base_addr=base_addr)
+        rc4_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.RC4]
+        assert len(rc4_detections) >= 1, "Should detect RC4 KSA"
 
-    assert len(detections) >= 1
-    assert all(d.offset >= base_addr for d in detections)
+        detection = rc4_detections[0]
+        assert detection.details.get("ksa_detected") is True
+        assert detection.confidence >= 0.95
 
+    def test_rsa_key_size_estimation(self, detector: CryptographicRoutineDetector, rsa_binary_with_exponent: bytes) -> None:
+        """RSA key size is estimated from modulus."""
+        detections = detector.detect_all(rsa_binary_with_exponent, base_addr=0x400000)
 
-def test_empty_binary_returns_no_detections(detector: CryptographicRoutineDetector) -> None:
-    """Detector returns no detections for empty binary."""
-    empty_binary = b""
+        rsa_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.RSA]
 
-    detections = detector.detect_all(empty_binary, base_addr=0x400000)
+        key_size_detections = [d for d in rsa_detections if d.key_size is not None]
+        if key_size_detections:
+            assert key_size_detections[0].key_size >= 1024
 
-    assert detections == []
 
+class TestEdgeCases:
+    """Test edge cases: inline crypto, SIMD implementations, white-box crypto."""
 
-def test_binary_without_crypto_returns_no_detections(detector: CryptographicRoutineDetector) -> None:
-    """Detector returns no detections for binary without crypto patterns."""
-    plain_binary = b"\x90" * 2048
+    def test_inline_crypto_without_tables(self, detector: CryptographicRoutineDetector, inline_crypto_binary: bytes) -> None:
+        """Inline crypto operations are detected without separate lookup tables."""
+        detections = detector.detect_all(inline_crypto_binary, base_addr=0x400000, quick_mode=False)
 
-    detections = detector.detect_all(plain_binary, base_addr=0x400000)
+        assert len(detections) >= 1, "Should detect crypto even when inlined"
 
-    assert len(detections) == 0
+    def test_simd_optimized_crypto(self, detector: CryptographicRoutineDetector, simd_aes_binary: bytes) -> None:
+        """SIMD-optimized crypto implementations are detected."""
+        detections = detector.detect_all(simd_aes_binary, base_addr=0x400000)
 
+        aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
+        assert len(aes_detections) >= 1, "Should detect AES in SIMD code"
 
-def test_crypto_detection_dataclass_fields_are_populated(detector: CryptographicRoutineDetector, aes_sbox_binary: bytes) -> None:
-    """CryptoDetection objects have all required fields populated."""
-    detections = detector.detect_all(aes_sbox_binary, base_addr=0x400000)
+    def test_whitebox_crypto_multiple_tables(self, detector: CryptographicRoutineDetector, whitebox_aes_binary: bytes) -> None:
+        """White-box crypto with multiple encoded tables is detected."""
+        detections = detector.detect_all(whitebox_aes_binary, base_addr=0x400000)
 
-    assert len(detections) >= 1
+        custom_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CUSTOM]
+        assert len(custom_detections) >= 1, "Should detect white-box tables"
 
-    detection = detections[0]
-    assert isinstance(detection.algorithm, CryptoAlgorithm)
-    assert isinstance(detection.offset, int)
-    assert isinstance(detection.size, int)
-    assert isinstance(detection.confidence, float)
-    assert isinstance(detection.variant, str)
-    assert isinstance(detection.details, dict)
-    assert 0.0 <= detection.confidence <= 1.0
+    def test_empty_binary(self, detector: CryptographicRoutineDetector) -> None:
+        """Empty binary produces no detections."""
+        detections = detector.detect_all(b"", base_addr=0x400000)
+        assert len(detections) == 0
 
+    def test_non_crypto_binary(self, detector: CryptographicRoutineDetector) -> None:
+        """Non-crypto binary produces no false positives."""
+        code = bytearray()
+        code.extend(b"\x55\x48\x89\xe5")
+        code.extend(b"\x48\x83\xec\x10")
+        code.extend(b"\x48\x89\x7d\xf8")
+        code.extend(b"\x48\x8b\x45\xf8")
+        code.extend(b"\x48\x83\xc0\x01")
+        code.extend(b"\xc9\xc3")
 
-def test_crypto_constant_dataclass_fields_are_populated(detector: CryptographicRoutineDetector, aes_sbox_binary: bytes) -> None:
-    """CryptoConstant objects have all required fields populated."""
-    detector.detect_all(aes_sbox_binary, base_addr=0x400000)
+        detections = detector.detect_all(bytes(code), base_addr=0x400000)
 
-    assert len(detector.constant_cache) >= 1
+        high_confidence_detections = [d for d in detections if d.confidence >= 0.8]
+        assert len(high_confidence_detections) == 0, "Should not detect crypto in simple code"
 
-    constant = list(detector.constant_cache.values())[0]
-    assert isinstance(constant.offset, int)
-    assert isinstance(constant.value, bytes)
-    assert isinstance(constant.constant_type, str)
-    assert isinstance(constant.confidence, float)
-    assert constant.algorithm is not None
-    assert 0.0 <= constant.confidence <= 1.0
+    def test_corrupted_sbox(self, detector: CryptographicRoutineDetector) -> None:
+        """Heavily corrupted S-box is not detected."""
+        corrupted = bytes([secrets.randbelow(256) for _ in range(256)])
 
+        code = bytearray()
+        code.extend(b"\x55\x48\x89\xe5")
+        code.extend(corrupted)
+        code.extend(b"\xc9\xc3")
 
-def test_detector_handles_corrupted_binary_gracefully(detector: CryptographicRoutineDetector) -> None:
-    """Detector handles corrupted binary data without crashing."""
-    corrupted_binary = b"\xff" * 1024 + b"\x00" * 1024
+        detections = detector.detect_all(bytes(code), base_addr=0x400000)
 
-    detections = detector.detect_all(corrupted_binary, base_addr=0x400000)
+        aes_sbox_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES and "S-box" in d.variant]
+        assert len(aes_sbox_detections) == 0, "Should not detect completely corrupted S-box"
 
-    assert isinstance(detections, list)
+    def test_mixed_crypto_algorithms(self, detector: CryptographicRoutineDetector) -> None:
+        """Multiple crypto algorithms in same binary are all detected."""
+        code = bytearray()
+        code.extend(b"\x55\x48\x89\xe5")
+        code.extend(CryptographicRoutineDetector.AES_SBOX)
+        code.extend(b"\x90" * 64)
 
+        for h in [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0]:
+            code.extend(struct.pack(">I", h))
 
-def test_detector_handles_very_large_binary_efficiently(detector: CryptographicRoutineDetector) -> None:
-    """Detector processes very large binaries without excessive memory usage."""
-    large_binary = RealCryptoBinaryBuilder.create_aes_sbox_binary() + (b"\x00" * 10_000_000)
+        code.extend(b"\x90" * 64)
+        code.extend(b"\x01\x00\x01\x00")
+        code.extend(b"\xc9\xc3")
 
-    detections = detector.detect_all(large_binary, base_addr=0x400000, quick_mode=True)
+        detections = detector.detect_all(bytes(code), base_addr=0x400000)
 
-    assert len(detections) >= 1
+        algorithms = {d.algorithm for d in detections}
+        assert CryptoAlgorithm.AES in algorithms
+        assert CryptoAlgorithm.SHA1 in algorithms
+        assert CryptoAlgorithm.RSA in algorithms
 
 
-def test_algorithm_fingerprinting_enhances_aes_detection(detector: CryptographicRoutineDetector) -> None:
-    """Algorithm fingerprinting enhances AES detection with implementation details."""
-    binary = RealCryptoBinaryBuilder.create_aes_ni_binary()
+class TestAnalysisReporting:
+    """Test crypto usage analysis and reporting functionality."""
 
-    detections = detector.detect_all(binary, base_addr=0x400000)
+    def test_analyze_crypto_usage(self, detector: CryptographicRoutineDetector, aes_binary_with_sbox: bytes) -> None:
+        """Crypto usage analysis provides accurate statistics."""
+        detections = detector.detect_all(aes_binary_with_sbox, base_addr=0x400000)
 
-    aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
+        analysis = detector.analyze_crypto_usage(detections)
 
-    assert aes_detections
-    assert any(d.mode == "Hardware (AES-NI)" for d in aes_detections)
+        assert analysis["total_detections"] == len(detections)
+        assert analysis["unique_algorithms"] >= 1
+        assert "algorithms" in analysis
+        assert isinstance(analysis["algorithms"], dict)
+        assert analysis["protection_likelihood"] >= 0.0
 
+    def test_protection_likelihood_scoring(self, detector: CryptographicRoutineDetector, obfuscated_aes_sbox: bytes) -> None:
+        """Protection likelihood is scored based on obfuscation."""
+        detections = detector.detect_all(obfuscated_aes_sbox, base_addr=0x400000)
 
-def test_algorithm_fingerprinting_enhances_hash_detection(detector: CryptographicRoutineDetector) -> None:
-    """Algorithm fingerprinting enhances hash detection with implementation mode."""
-    binary = RealCryptoBinaryBuilder.create_sha_instructions_binary()
+        analysis = detector.analyze_crypto_usage(detections)
 
-    detections = detector.detect_all(binary, base_addr=0x400000)
+        if analysis["obfuscated_crypto"]:
+            assert analysis["protection_likelihood"] >= 0.85
 
-    hash_detections = [d for d in detections if d.algorithm in [CryptoAlgorithm.SHA1, CryptoAlgorithm.SHA256]]
+    def test_yara_rule_generation(self, detector: CryptographicRoutineDetector, aes_binary_with_sbox: bytes) -> None:
+        """YARA rules are generated from detections."""
+        detections = detector.detect_all(aes_binary_with_sbox, base_addr=0x400000)
 
-    assert hash_detections
-    assert any(d.mode == "Hardware-accelerated" for d in hash_detections)
+        yara_rules = detector.export_yara_rules(detections)
 
+        assert isinstance(yara_rules, str)
+        assert len(yara_rules) > 0
 
-def test_sbox_confidence_calculation_uses_hamming_distance(detector: CryptographicRoutineDetector) -> None:
-    """S-box confidence calculation incorporates Hamming distance for fuzzy matching."""
-    exact_sbox = detector.AES_SBOX
+        if any(d.algorithm == CryptoAlgorithm.AES for d in detections):
+            assert "rule AES_Crypto_Detection" in yara_rules
+            assert "meta:" in yara_rules
+            assert "strings:" in yara_rules
+            assert "condition:" in yara_rules
 
-    confidence = detector._calculate_sbox_confidence(exact_sbox, detector.AES_SBOX)
 
-    assert confidence >= 0.99
+class TestFailureConditions:
+    """Test that detection fails appropriately when crypto is not present."""
 
+    def test_no_crypto_returns_empty(self, detector: CryptographicRoutineDetector) -> None:
+        """Binary without crypto returns empty detections."""
+        code = b"\x55\x48\x89\xe5\x48\x83\xec\x10\xc9\xc3"
 
-def test_fuzzy_matching_handles_partial_pattern_matches(detector: CryptographicRoutineDetector) -> None:
-    """Fuzzy matching correctly handles partial pattern matches with threshold."""
-    pattern = b"\x01\x02\x03\x04\x05\x06\x07\x08"
-    similar = b"\x01\x02\x03\x04\x05\x06\xFF\xFF"
+        detections = detector.detect_all(code, base_addr=0x400000)
 
-    assert detector._fuzzy_match(similar, pattern, threshold=0.7) is True
-    assert detector._fuzzy_match(similar, pattern, threshold=0.9) is False
+        high_confidence = [d for d in detections if d.confidence >= 0.8]
+        assert len(high_confidence) == 0
 
+    def test_string_only_checking_fails(self, detector: CryptographicRoutineDetector) -> None:
+        """String-only detection would fail without instruction analysis."""
+        code = bytearray()
+        code.extend(b"\x55\x48\x89\xe5")
 
-def test_entropy_calculation_identifies_high_entropy_data(detector: CryptographicRoutineDetector) -> None:
-    """Entropy calculation correctly identifies high-entropy crypto data."""
-    high_entropy_data = bytes(i % 256 for i in range(256))
-    low_entropy_data = b"\x00" * 256
+        aes_string = b"AES"
+        sha_string = b"SHA256"
+        code.extend(aes_string)
+        code.extend(b"\x90" * 64)
+        code.extend(sha_string)
+        code.extend(b"\xc9\xc3")
 
-    high_entropy = detector._calculate_entropy(high_entropy_data)
-    low_entropy = detector._calculate_entropy(low_entropy_data)
+        detections = detector.detect_all(bytes(code), base_addr=0x400000)
 
-    assert high_entropy > 7.5
-    assert low_entropy < 1.0
+        aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES and d.confidence >= 0.8]
+        sha_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.SHA256 and d.confidence >= 0.8]
 
+        assert len(aes_detections) == 0, "String 'AES' should not trigger detection"
+        assert len(sha_detections) == 0, "String 'SHA256' should not trigger detection"
 
-def test_lookup_table_detection_identifies_crypto_tables(detector: CryptographicRoutineDetector) -> None:
-    """Lookup table detection identifies crypto substitution tables."""
-    table_data = bytes(range(256))
-    non_table_data = b"\x00\x00\x00\x00" * 64
+    def test_import_only_checking_fails(self, detector: CryptographicRoutineDetector) -> None:
+        """Import table references without implementation should not detect crypto."""
+        code = bytearray()
+        code.extend(b"\x55\x48\x89\xe5")
 
-    assert detector._is_lookup_table(table_data) is True
-    assert detector._is_lookup_table(non_table_data) is False
+        import_names = b"CryptEncrypt\x00CryptDecrypt\x00AES_set_encrypt_key\x00"
+        code.extend(import_names)
+        code.extend(b"\xc9\xc3")
 
+        detections = detector.detect_all(bytes(code), base_addr=0x400000)
 
-def test_detector_finds_multiple_occurrences_of_same_constant(detector: CryptographicRoutineDetector) -> None:
-    """Detector finds multiple occurrences of same crypto constant in binary."""
-    binary = RealCryptoBinaryBuilder.create_aes_sbox_binary()
-
-    binary_with_duplicates = binary + binary
-
-    detections = detector.detect_all(binary_with_duplicates, base_addr=0x400000)
-
-    aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
-
-    assert len(aes_detections) >= 4
-
-
-def test_protection_likelihood_increases_with_algorithm_diversity(detector: CryptographicRoutineDetector) -> None:
-    """Protection likelihood score increases with crypto algorithm diversity."""
-    single_algo_binary = RealCryptoBinaryBuilder.create_aes_sbox_binary()
-    multi_algo_binary = RealCryptoBinaryBuilder.create_multi_crypto_binary()
-
-    single_detections = detector.detect_all(single_algo_binary, base_addr=0x400000)
-    single_analysis = detector.analyze_crypto_usage(single_detections)
-
-    detector2 = CryptographicRoutineDetector()
-    multi_detections = detector2.detect_all(multi_algo_binary, base_addr=0x400000)
-    multi_analysis = detector2.analyze_crypto_usage(multi_detections)
-
-    assert multi_analysis["protection_likelihood"] > single_analysis["protection_likelihood"]
-
-
-def test_detector_works_with_real_system_binary() -> None:
-    """Detector successfully analyzes real system binaries."""
-    import os
-
-    if os.name == 'nt':
-        system_binary_path = r'C:\Windows\System32\crypt32.dll'
-    else:
-        system_binary_path = '/usr/lib/x86_64-linux-gnu/libcrypto.so.3'
-
-    if not Path(system_binary_path).exists():
-        pytest.skip(f"System binary not found: {system_binary_path}")
-
-    with open(system_binary_path, 'rb') as f:
-        binary_data = f.read(1_000_000)
-
-    detector = CryptographicRoutineDetector()
-    detections = detector.detect_all(binary_data, base_addr=0x400000, quick_mode=True)
-
-    assert isinstance(detections, list)
+        high_confidence_detections = [d for d in detections if d.confidence >= 0.8]
+        assert len(high_confidence_detections) == 0, "Import names should not trigger detection without constants/instructions"

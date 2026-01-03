@@ -31,7 +31,8 @@ class TestTrafficInterceptionEngineProduction:
         """Find available port for testing."""
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.bind(("127.0.0.1", 0))
-            return sock.getsockname()[1]
+            port: int = sock.getsockname()[1]
+            return port
 
     @pytest.fixture
     def flexlm_packet_data(self) -> bytes:

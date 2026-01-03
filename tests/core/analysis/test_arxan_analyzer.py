@@ -32,7 +32,7 @@ class TestArxanAnalyzer(unittest.TestCase):
         import shutil
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
-    def _create_pe_binary(self, section_data: bytes = None) -> Path:
+    def _create_pe_binary(self, section_data: bytes | None = None) -> Path:
         """Create minimal PE binary for testing."""
         dos_header = b"MZ" + b"\x90" * 58 + struct.pack("<I", 0x80)
         pe_signature = b"PE\x00\x00"
@@ -55,12 +55,13 @@ class TestArxanAnalyzer(unittest.TestCase):
             struct.pack("<IIIIHHI", 0x1000, 0x1000, 0x600, 0x600, 0, 0, 0x60000020)
         )
 
+        actual_section_data: bytes
         if section_data is None:
-            section_data = b"\x90" * 0x600
+            actual_section_data = b"\x90" * 0x600
         else:
-            section_data = section_data.ljust(0x600, b"\x00")
+            actual_section_data = section_data.ljust(0x600, b"\x00")
 
-        binary = dos_header + pe_signature + coff_header + optional_header + section_header + section_data
+        binary = dos_header + pe_signature + coff_header + optional_header + section_header + actual_section_data
 
         test_file = Path(self.test_dir) / "test.exe"
         with open(test_file, 'wb') as f:
@@ -229,6 +230,9 @@ class TestArxanAnalyzer(unittest.TestCase):
 
 class TestArxanAnalyzerWithRealBinaries(unittest.TestCase):
     """Test ArxanAnalyzer with real protected binaries."""
+
+    fixtures_dir: Path
+    protected_binaries: list[Path]
 
     @classmethod
     def setUpClass(cls) -> None:

@@ -618,9 +618,9 @@ class TestCaptureControl:
         result = analyzer.start_capture()
 
         assert result is True
-        assert analyzer.capturing is True
+        assert analyzer.capturing
 
-        analyzer.stop_capture()
+        analyzer.stop_capture()  # type: ignore[unreachable]
 
     def test_stop_capture_clears_capturing_flag(
         self, analyzer: NetworkTrafficAnalyzer

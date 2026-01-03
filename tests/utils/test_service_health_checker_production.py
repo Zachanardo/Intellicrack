@@ -12,6 +12,7 @@ import http.server
 import socket
 import threading
 import time
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -166,7 +167,7 @@ class FakeServiceHealthChecker(ServiceHealthChecker):
 
 
 @pytest.fixture(scope="module")
-def http_test_server() -> int:
+def http_test_server() -> Generator[int, None, None]:
     """Start HTTP test server and return port."""
     port = 18766
     server = SimpleHTTPServer(port)

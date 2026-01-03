@@ -25,7 +25,7 @@ import os
 import struct
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import pytest
 

@@ -21,7 +21,7 @@ from hypothesis import (
     given,
     strategies as st,
 )
-from scapy.all import IP, TCP, Ether, Raw
+from scapy.all import IP, TCP, Ether, Raw  # type: ignore[attr-defined]
 
 from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
 

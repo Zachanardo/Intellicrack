@@ -1,24 +1,28 @@
-"""
-Binary fixtures for testing with REAL binaries.
+"""Binary fixtures for testing with REAL binaries.
+
 Provides actual PE/ELF files and protected samples for testing.
 NO FAKE DATA - ALL FIXTURES PROVIDE REAL BINARIES.
 """
+from __future__ import annotations
 
 import os
 import shutil
 import struct
 import subprocess
 from pathlib import Path
-import tempfile
+from typing import TYPE_CHECKING
 
 import pytest
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 class BinaryFixtureManager:
     """Manages real binary fixtures for testing."""
 
     @staticmethod
-    def create_minimal_pe():
+    def create_minimal_pe() -> bytes:
         """Create a minimal valid PE executable for testing."""
         # DOS Header
         dos_header = bytearray(64)
@@ -126,7 +130,7 @@ class BinaryFixtureManager:
         return bytes(pe_file)
 
     @staticmethod
-    def create_minimal_elf():
+    def create_minimal_elf() -> bytes:
         """Create a minimal valid ELF executable for testing."""
         # ELF Header
         elf_header = bytearray(64)
@@ -197,7 +201,7 @@ class BinaryFixtureManager:
         return bytes(elf_file)
 
     @staticmethod
-    def get_system_binary():
+    def get_system_binary() -> str | None:
         """Get a real system binary for testing."""
         # Try to find a common system binary
         if os.name == 'nt':  # Windows
@@ -221,7 +225,7 @@ class BinaryFixtureManager:
 
 
 @pytest.fixture(scope='session')
-def binary_fixture_dir(tmp_path_factory):
+def binary_fixture_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """Create a temporary directory with test binaries."""
     fixture_dir = tmp_path_factory.mktemp('binary_fixtures')
 
@@ -243,7 +247,7 @@ def binary_fixture_dir(tmp_path_factory):
 
 
 @pytest.fixture
-def real_pe_binary(binary_fixture_dir):
+def real_pe_binary(binary_fixture_dir: Path) -> str:
     """Provide a real PE binary for testing."""
     return next(
         (
@@ -256,7 +260,7 @@ def real_pe_binary(binary_fixture_dir):
 
 
 @pytest.fixture
-def real_elf_binary(binary_fixture_dir):
+def real_elf_binary(binary_fixture_dir: Path) -> str:
     """Provide a real ELF binary for testing."""
     # First try system binary
     for file in binary_fixture_dir.iterdir():
@@ -270,7 +274,7 @@ def real_elf_binary(binary_fixture_dir):
 
 
 @pytest.fixture
-def real_protected_binary(binary_fixture_dir):
+def real_protected_binary(binary_fixture_dir: Path) -> str:
     """Provide a real protected binary for testing."""
     # For testing, we'll apply simple protections to our minimal binary
     protected_path = binary_fixture_dir / 'protected.exe'
@@ -293,7 +297,7 @@ def real_protected_binary(binary_fixture_dir):
 
 
 @pytest.fixture
-def real_packed_binary(binary_fixture_dir):
+def real_packed_binary(binary_fixture_dir: Path) -> str:
     """Provide a real packed binary for testing."""
     packed_path = binary_fixture_dir / 'packed.exe'
 
@@ -303,7 +307,7 @@ def real_packed_binary(binary_fixture_dir):
             source = binary_fixture_dir / 'minimal.exe'
             shutil.copy2(source, packed_path)
             subprocess.run(['upx', '-9', str(packed_path)],
-                         capture_output=True, timeout=10)
+                         capture_output=True, timeout=10, check=False)
         except Exception:
             # If UPX not available, simulate packed binary
             pe_data = bytearray((binary_fixture_dir / 'minimal.exe').read_bytes())

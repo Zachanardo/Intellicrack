@@ -650,7 +650,7 @@ class TestNetworkForensicsEngine:
         ('.pcapng', 'PCAPNG'),
         ('.cap', 'PCAP'),
     ])
-    def test_supported_capture_formats(self, engine: Any, file_extension: Any, expected_format: Any) -> None:
+    def test_supported_capture_formats(self, engine: Any, file_extension: str, expected_format: str) -> None:
         """Test support for various network capture file formats."""
         # Create minimal valid file for each format
         if file_extension == '.pcapng':

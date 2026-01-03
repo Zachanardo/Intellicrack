@@ -19,6 +19,7 @@ Test Coverage:
 
 import logging
 import time
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -56,7 +57,7 @@ def alternative_binary_path() -> str:
 
 
 @pytest.fixture(autouse=True)
-def cleanup_sessions() -> None:
+def cleanup_sessions() -> Generator[None, None, None]:
     """Cleanup sessions after each test."""
     yield
     if SESSION_MANAGER_AVAILABLE:
@@ -81,7 +82,7 @@ class TestDirectR2Session:
         session: DirectR2Session = DirectR2Session(test_binary_path)
         session.connect()
 
-        result: str = session.execute("i")
+        result: dict[str, Any] | str = session.execute("i")
 
         assert isinstance(result, str)
         assert result != ""
@@ -93,7 +94,7 @@ class TestDirectR2Session:
         session: DirectR2Session = DirectR2Session(test_binary_path)
         session.connect()
 
-        result: dict[str, Any] = session.execute("ij", expect_json=True)
+        result: dict[str, Any] | str = session.execute("ij", expect_json=True)
 
         assert isinstance(result, dict)
         assert "bin" in result or "core" in result
@@ -143,7 +144,7 @@ class TestSessionContextManager:
         """Context manager provides direct session when pooling disabled."""
         with get_r2_session(test_binary_path, use_pooling=False, auto_analyze=False) as session:
             assert isinstance(session, DirectR2Session)
-            result: str = session.execute("i")
+            result: dict[str, Any] | str = session.execute("i")
 
             assert isinstance(result, str)
             assert result != ""
@@ -151,7 +152,7 @@ class TestSessionContextManager:
     def test_context_manager_auto_analyzes_binary(self, test_binary_path: str) -> None:
         """Context manager auto-analyzes binary when enabled."""
         with get_r2_session(test_binary_path, use_pooling=False, auto_analyze=True) as session:
-            functions: dict[str, Any] = session.execute("aflj", expect_json=True)
+            functions: dict[str, Any] | str | list[Any] = session.execute("aflj", expect_json=True)
 
             assert isinstance(functions, list)
 
@@ -179,14 +180,14 @@ class TestExecuteR2Command:
 
     def test_execute_single_command_returns_string(self, test_binary_path: str) -> None:
         """execute_r2_command executes single command and returns string result."""
-        result: str = execute_r2_command(test_binary_path, "i", use_pooling=False)
+        result: dict[str, Any] | str = execute_r2_command(test_binary_path, "i", use_pooling=False)
 
         assert isinstance(result, str)
         assert result != ""
 
     def test_execute_json_command_returns_dict(self, test_binary_path: str) -> None:
         """execute_r2_command executes JSON command and returns parsed dict."""
-        result: dict[str, Any] = execute_r2_command(
+        result: dict[str, Any] | str = execute_r2_command(
             test_binary_path, "ij", expect_json=True, use_pooling=False
         )
 
@@ -198,7 +199,7 @@ class TestExecuteR2Command:
         if not SESSION_MANAGER_AVAILABLE:
             pytest.skip("Session manager not available")
 
-        result: str = execute_r2_command(test_binary_path, "i", use_pooling=True)
+        result: dict[str, Any] | str = execute_r2_command(test_binary_path, "i", use_pooling=True)
 
         assert isinstance(result, str)
         assert result != ""
@@ -207,7 +208,7 @@ class TestExecuteR2Command:
         """execute_r2_command accepts custom radare2 flags."""
         custom_flags: list[str] = ["-2"]
 
-        result: str = execute_r2_command(
+        result: dict[str, Any] | str = execute_r2_command(
             test_binary_path, "i", flags=custom_flags, use_pooling=False
         )
 

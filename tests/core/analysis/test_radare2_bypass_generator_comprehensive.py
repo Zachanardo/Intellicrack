@@ -32,7 +32,9 @@ class FakeR2Session:
     def __enter__(self) -> "FakeR2Session":
         return self
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any
+    ) -> None:
         pass
 
     def get_functions(self) -> list[dict[str, Any]]:
@@ -44,7 +46,7 @@ class FakeR2Session:
     def get_imports(self) -> list[dict[str, str]]:
         return self._imports
 
-    def get_info(self) -> dict[str, Any]:
+    def get_info(self) -> dict[str, dict[str, Any]]:
         return {
             "bin": {
                 "size": 65536,
@@ -60,7 +62,7 @@ class FakeR2Session:
     def cmd(self, command: str) -> str:
         return self._command_responses.get(command, "")
 
-    def cmdj(self, command: str) -> list[Any]:
+    def cmdj(self, command: str) -> Any:
         return self._json_responses.get(command, [])
 
     def _execute_command(self, command: str, expect_json: bool = False) -> Any:
@@ -173,10 +175,10 @@ class TestLicenseMechanismAnalysis:
             {"name": "ValidateSerial", "offset": 0x401100},
         ])
 
-        analysis = generator._analyze_license_mechanisms(fake_r2_serial)
+        analysis: dict[str, Any] = generator._analyze_license_mechanisms(fake_r2_serial)
 
-        assert len(analysis["validation_functions"]) > 0
-        assert any("serial" in str(v).lower() for v in analysis["validation_functions"])
+        assert len(analysis.get("validation_functions", [])) > 0
+        assert any("serial" in str(v).lower() for v in analysis.get("validation_functions", []))
 
     def test_detect_cryptographic_validation(self, pe_with_rsa_validation: Path) -> None:
         """Analyzer identifies cryptographic license validation."""
@@ -197,11 +199,12 @@ class TestLicenseMechanismAnalysis:
         )
         generator.decompiler = fake_decompiler
 
-        analysis = generator._analyze_license_mechanisms(fake_r2)
+        analysis: dict[str, Any] = generator._analyze_license_mechanisms(fake_r2)
 
         assert analysis is not None
-        if validation_funcs := analysis.get("validation_functions", []):
-            assert any(v.get("crypto_usage", False) for v in validation_funcs)
+        validation_funcs: list[Any] = analysis.get("validation_functions", [])
+        if validation_funcs:
+            assert any(isinstance(v, dict) and v.get("crypto_usage", False) for v in validation_funcs)
 
     def test_detect_network_validation(self, pe_with_online_check: Path) -> None:
         """Analyzer detects online license validation."""
@@ -222,10 +225,14 @@ class TestLicenseMechanismAnalysis:
         )
         generator.decompiler = fake_decompiler
 
-        analysis = generator._analyze_license_mechanisms(fake_r2)
+        analysis: dict[str, Any] = generator._analyze_license_mechanisms(fake_r2)
 
-        if validation_funcs := analysis.get("validation_functions", []):
-            assert any(v.get("network_validation", False) for v in validation_funcs)
+        validation_funcs: list[Any] = analysis.get("validation_functions", [])
+        if validation_funcs:
+            assert any(
+                isinstance(v, dict) and v.get("network_validation", False)
+                for v in validation_funcs
+            )
 
     def test_detect_time_based_trial(self, pe_with_trial_check: Path) -> None:
         """Analyzer identifies trial expiration checks."""
@@ -246,10 +253,14 @@ class TestLicenseMechanismAnalysis:
         )
         generator.decompiler = fake_decompiler
 
-        analysis = generator._analyze_license_mechanisms(fake_r2)
+        analysis: dict[str, Any] = generator._analyze_license_mechanisms(fake_r2)
 
-        if validation_funcs := analysis.get("validation_functions", []):
-            assert any(v.get("time_based", False) for v in validation_funcs)
+        validation_funcs: list[Any] = analysis.get("validation_functions", [])
+        if validation_funcs:
+            assert any(
+                isinstance(v, dict) and v.get("time_based", False)
+                for v in validation_funcs
+            )
 
 
 class TestBypassStrategyGeneration:
@@ -259,7 +270,7 @@ class TestBypassStrategyGeneration:
         """Generator creates NOP patch for simple validation."""
         generator = R2BypassGenerator(str(pe_with_simple_check))
 
-        license_analysis = {
+        license_analysis: dict[str, Any] = {
             "validation_functions": [
                 {
                     "function": {"name": "SimpleCheck", "offset": 0x401000},
@@ -272,16 +283,19 @@ class TestBypassStrategyGeneration:
             ],
         }
 
-        strategies = generator._generate_bypass_strategies(license_analysis)
+        strategies: list[Any] = generator._generate_bypass_strategies(license_analysis)
 
         assert len(strategies) > 0
-        assert any("patch" in s.get("strategy", "").lower() for s in strategies)
+        assert any(
+            isinstance(s, dict) and "patch" in s.get("strategy", "").lower()
+            for s in strategies
+        )
 
     def test_generate_crypto_bypass_for_encrypted_license(self, pe_with_aes_license: Path) -> None:
         """Generator creates crypto bypass for AES-protected license."""
         generator = R2BypassGenerator(str(pe_with_aes_license))
 
-        license_analysis = {
+        license_analysis: dict[str, Any] = {
             "validation_functions": [
                 {
                     "function": {"name": "AESValidate", "offset": 0x401000},
@@ -292,17 +306,20 @@ class TestBypassStrategyGeneration:
             ],
         }
 
-        strategies = generator._generate_bypass_strategies(license_analysis)
+        strategies: list[Any] = generator._generate_bypass_strategies(license_analysis)
 
         assert len(strategies) > 0
-        crypto_strategies = [s for s in strategies if "crypto" in s.get("strategy", "").lower()]
+        crypto_strategies: list[Any] = [
+            s for s in strategies
+            if isinstance(s, dict) and "crypto" in s.get("strategy", "").lower()
+        ]
         assert crypto_strategies
 
     def test_generate_network_interception_for_online_check(self, pe_with_online_check: Path) -> None:
         """Generator creates network interception for online validation."""
         generator = R2BypassGenerator(str(pe_with_online_check))
 
-        license_analysis = {
+        license_analysis: dict[str, Any] = {
             "validation_functions": [
                 {
                     "function": {"name": "OnlineValidate", "offset": 0x401000},
@@ -312,17 +329,20 @@ class TestBypassStrategyGeneration:
             ],
         }
 
-        strategies = generator._generate_bypass_strategies(license_analysis)
+        strategies: list[Any] = generator._generate_bypass_strategies(license_analysis)
 
         assert len(strategies) > 0
-        network_strategies = [s for s in strategies if "network" in s.get("strategy", "").lower()]
+        network_strategies: list[Any] = [
+            s for s in strategies
+            if isinstance(s, dict) and "network" in s.get("strategy", "").lower()
+        ]
         assert network_strategies
 
     def test_registry_modification_strategy_for_registry_license(self, pe_with_registry_check: Path) -> None:
         """Generator creates registry modification strategy."""
         generator = R2BypassGenerator(str(pe_with_registry_check))
 
-        license_analysis = {
+        license_analysis: dict[str, Any] = {
             "registry_operations": [
                 {
                     "api": {"name": "RegQueryValueEx"},
@@ -332,10 +352,13 @@ class TestBypassStrategyGeneration:
             ],
         }
 
-        strategies = generator._generate_bypass_strategies(license_analysis)
+        strategies: list[Any] = generator._generate_bypass_strategies(license_analysis)
 
         assert len(strategies) > 0
-        reg_strategies = [s for s in strategies if "registry" in s.get("strategy", "").lower()]
+        reg_strategies: list[Any] = [
+            s for s in strategies
+            if isinstance(s, dict) and "registry" in s.get("strategy", "").lower()
+        ]
         assert reg_strategies
 
 
@@ -350,7 +373,7 @@ class TestAutomatedPatchGeneration:
         fake_r2.set_command_response("pd 1 @ 0x401000", "test eax, eax")
         fake_r2.set_json_response("pdfj @ 0x401000", [])
 
-        license_analysis = {
+        license_analysis: dict[str, Any] = {
             "validation_functions": [
                 {
                     "function": {"name": "CheckValid", "offset": 0x401000},
@@ -365,7 +388,7 @@ class TestAutomatedPatchGeneration:
             ],
         }
 
-        patches = generator._generate_automated_patches(fake_r2, license_analysis)
+        patches: list[Any] = generator._generate_automated_patches(fake_r2, license_analysis)
 
         assert isinstance(patches, list)
 
@@ -377,7 +400,7 @@ class TestAutomatedPatchGeneration:
         fake_r2.set_command_response("pd 1 @ 0x401000", "return eax")
         fake_r2.set_json_response("pdfj @ 0x401000", [])
 
-        license_analysis = {
+        license_analysis: dict[str, Any] = {
             "validation_functions": [
                 {
                     "function": {"name": "IsLicensed", "offset": 0x401000},
@@ -392,7 +415,7 @@ class TestAutomatedPatchGeneration:
             ],
         }
 
-        patches = generator._generate_automated_patches(fake_r2, license_analysis)
+        patches: list[Any] = generator._generate_automated_patches(fake_r2, license_analysis)
 
         assert isinstance(patches, list)
 

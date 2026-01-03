@@ -1113,7 +1113,7 @@ class TestEdgeCases:
 
     def test_analyze_with_none_path(self) -> None:
         """Handles None binary path gracefully."""
-        analyzer = CommercialLicenseAnalyzer(None)
+        analyzer = CommercialLicenseAnalyzer()
         results = analyzer.analyze_binary()
 
         assert isinstance(results, dict)

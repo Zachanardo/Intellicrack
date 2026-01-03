@@ -13,7 +13,7 @@ import struct
 import tempfile
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -470,7 +470,9 @@ class TestDynamicSignatureExtractor:
         cursor = conn.cursor()
 
         cursor.execute("SELECT COUNT(*) FROM signatures")
-        count = cursor.fetchone()[0]
+        count_result = cursor.fetchone()
+        assert count_result is not None
+        count: int = count_result[0]
 
         assert count > 0
 
@@ -478,8 +480,9 @@ class TestDynamicSignatureExtractor:
         row = cursor.fetchone()
 
         assert row is not None
-        assert row[0] in [cat.value for cat in ProtectionCategory]
-        assert 0.0 <= row[1] <= 1.0
+        row_data: tuple[Any, ...] = cast(tuple[Any, ...], row)
+        assert row_data[0] in [cat.value for cat in ProtectionCategory]
+        assert 0.0 <= row_data[1] <= 1.0
 
         conn.close()
 
@@ -689,7 +692,7 @@ class TestEnhancedProtectionScanner:
 
     def test_scan_vmprotect_binary(self, scanner: EnhancedProtectionScanner, vmprotect_binary: Path) -> None:
         """Scanner detects VMProtect protection."""
-        results = scanner.scan(str(vmprotect_binary), deep_scan=True)
+        results: dict[str, Any] = cast(dict[str, Any], scanner.scan(str(vmprotect_binary), deep_scan=True))
 
         assert results is not None
         assert "file_path" in results
@@ -699,29 +702,30 @@ class TestEnhancedProtectionScanner:
         assert results["file_path"] == str(vmprotect_binary)
 
         if results.get("confidence_scores"):
-            protector_confidence = results["confidence_scores"].get("protector", 0.0)
-            assert protector_confidence > 0.0
+            protector_confidence_val: float = float(results["confidence_scores"].get("protector", 0.0))
+            assert protector_confidence_val > 0.0
 
     def test_scan_themida_binary(self, scanner: EnhancedProtectionScanner, themida_binary: Path) -> None:
         """Scanner detects Themida protection."""
-        results = scanner.scan(str(themida_binary), deep_scan=True)
+        results: dict[str, Any] = cast(dict[str, Any], scanner.scan(str(themida_binary), deep_scan=True))
 
         assert results is not None
         assert "confidence_scores" in results
 
-        protector_confidence = results["confidence_scores"].get("protector", 0.0)
-        encryption_confidence = results["confidence_scores"].get("encryption", 0.0)
+        protector_confidence: float = float(results["confidence_scores"].get("protector", 0.0))
+        encryption_confidence: float = float(results["confidence_scores"].get("encryption", 0.0))
 
         assert protector_confidence > 0.0 or encryption_confidence > 0.0
 
     def test_scan_multi_protection_binary(self, scanner: EnhancedProtectionScanner, multi_protection_binary: Path) -> None:
         """Scanner detects multiple protection layers."""
-        results = scanner.scan(str(multi_protection_binary), deep_scan=True)
+        results: dict[str, Any] = cast(dict[str, Any], scanner.scan(str(multi_protection_binary), deep_scan=True))
 
         assert results is not None
         assert "confidence_scores" in results
 
-        detected_categories = [cat for cat, score in results["confidence_scores"].items() if score > 0.0]
+        confidence_scores: dict[str, Any] = cast(dict[str, Any], results["confidence_scores"])
+        detected_categories: list[str] = [cat for cat, score in confidence_scores.items() if isinstance(score, (int, float)) and score > 0.0]
 
         assert len(detected_categories) >= 2
 
@@ -732,14 +736,16 @@ class TestEnhancedProtectionScanner:
         assert "bypass_recommendations" in results
 
         if results.get("confidence_scores", {}).get("protector", 0.0) > 0.7:
-            assert len(results["bypass_recommendations"]) > 0
+            bypass_rec: list[Any] = cast(list[Any], results["bypass_recommendations"])
+            assert len(bypass_rec) > 0
 
-            for recommendation in results["bypass_recommendations"]:
-                assert "category" in recommendation
-                assert "method" in recommendation
-                assert "tools" in recommendation
-                assert "difficulty" in recommendation
-                assert "success_rate" in recommendation
+            for recommendation in bypass_rec:
+                rec_dict: dict[str, Any] = cast(dict[str, Any], recommendation)
+                assert "category" in rec_dict
+                assert "method" in rec_dict
+                assert "tools" in rec_dict
+                assert "difficulty" in rec_dict
+                assert "success_rate" in rec_dict
 
     def test_confidence_scoring_accuracy(self, scanner: EnhancedProtectionScanner, tmp_path: Path) -> None:
         """Confidence scores reflect detection certainty correctly."""
@@ -765,7 +771,8 @@ class TestEnhancedProtectionScanner:
 
         assert results is not None
 
-        total_confidence = sum(results.get("confidence_scores", {}).values())
+        confidence_dict: dict[str, Any] = cast(dict[str, Any], results.get("confidence_scores", {}))
+        total_confidence: float = sum(float(v) if isinstance(v, (int, float)) else 0.0 for v in confidence_dict.values())
 
         assert total_confidence < 2.0
 
@@ -796,13 +803,15 @@ class TestEnhancedProtectionScanner:
 
         assert "technical_details" in results
 
-        if results["technical_details"]:
-            for category, details in results["technical_details"].items():
+        tech_details: dict[str, Any] = cast(dict[str, Any], results["technical_details"])
+        if tech_details:
+            for category, details in tech_details.items():
                 assert isinstance(details, list)
 
                 for detail in details:
-                    assert "name" in detail or "pattern" in detail
-                    assert "confidence" in detail
+                    detail_dict: dict[str, Any] = cast(dict[str, Any], detail)
+                    assert "name" in detail_dict or "pattern" in detail_dict
+                    assert "confidence" in detail_dict
 
     def test_deep_scan_vs_quick_scan(self, scanner: EnhancedProtectionScanner, vmprotect_binary: Path) -> None:
         """Deep scan provides more detailed results than quick scan."""
@@ -900,8 +909,8 @@ class TestRealWorldProtectionDetection:
 
         assert results is not None
 
-        packer_detected = results["confidence_scores"].get("packer", 0.0) > 0.0
-        protector_detected = results["confidence_scores"].get("protector", 0.0) > 0.0
+        packer_detected: bool = float(results["confidence_scores"].get("packer", 0.0)) > 0.0
+        protector_detected: bool = float(results["confidence_scores"].get("protector", 0.0)) > 0.0
 
         assert packer_detected or protector_detected
 
@@ -941,7 +950,7 @@ class TestRealWorldProtectionDetection:
 
         assert results is not None
 
-        licensing_detected = results["confidence_scores"].get("licensing", 0.0) > 0.0 or any(
+        licensing_detected: bool = results["confidence_scores"].get("licensing", 0.0) > 0.0 or any(
             "license" in str(item).lower() for category in results.values() if isinstance(category, list) for item in category
         )
 

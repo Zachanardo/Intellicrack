@@ -14,10 +14,10 @@ from intellicrack.core.task_manager import BaseTask, CallableTask, TaskManager, 
 
 
 @pytest.fixture
-def task_manager(qtbot) -> TaskManager:  # noqa: ARG001
+def task_manager(qtbot: Any) -> TaskManager:  # noqa: ARG001
     """Create fresh TaskManager instance."""
-    max_threads = 4
-    manager = TaskManager(max_thread_count=max_threads)
+    max_threads: int = 4
+    manager: TaskManager = TaskManager(max_thread_count=max_threads)
     yield manager
     manager.cancel_all_tasks()
     manager.wait_for_all(timeout_ms=2000)
@@ -78,7 +78,7 @@ class FailingTask(BaseTask):
 
 def test_task_manager_initialization(task_manager: TaskManager) -> None:
     """TaskManager initializes with correct thread pool configuration."""
-    expected_threads = 4
+    expected_threads: int = 4
     assert task_manager.thread_pool is not None
     assert task_manager.get_thread_count() == expected_threads
     assert len(task_manager.get_active_tasks()) == 0
@@ -87,8 +87,8 @@ def test_task_manager_initialization(task_manager: TaskManager) -> None:
 
 def test_task_manager_set_thread_count(task_manager: TaskManager) -> None:
     """TaskManager adjusts thread pool size."""
-    new_count_1 = 8
-    new_count_2 = 2
+    new_count_1: int = 8
+    new_count_2: int = 2
     task_manager.set_thread_count(new_count_1)
     assert task_manager.get_thread_count() == new_count_1
 
@@ -96,32 +96,32 @@ def test_task_manager_set_thread_count(task_manager: TaskManager) -> None:
     assert task_manager.get_thread_count() == new_count_2
 
 
-def test_simple_task_execution(task_manager: TaskManager, qtbot) -> None:
+def test_simple_task_execution(task_manager: TaskManager, qtbot: Any) -> None:
     """Simple task executes and returns correct result."""
-    task = SimpleTask(value=5)
-    task_id = task_manager.submit_task(task)
+    task: SimpleTask = SimpleTask(value=5)
+    task_id: str = task_manager.submit_task(task)
 
     assert task_id == task.task_id
 
     with qtbot.waitSignal(task_manager.all_tasks_completed, timeout=5000):
         pass
 
-    result = task_manager.get_task_result(task_id)
-    expected_result = 25
+    result: int | None = task_manager.get_task_result(task_id)
+    expected_result: int = 25
     assert result == expected_result
 
     assert task_id not in task_manager.get_active_tasks()
     assert len(task_manager.get_task_history()) == 1
 
 
-def test_multiple_concurrent_tasks(task_manager: TaskManager, qtbot) -> None:
+def test_multiple_concurrent_tasks(task_manager: TaskManager, qtbot: Any) -> None:
     """Multiple tasks execute concurrently and all complete successfully."""
-    values = [3, 7, 11, 13]
-    task_ids = []
+    values: list[int] = [3, 7, 11, 13]
+    task_ids: list[str] = []
 
     for value in values:
-        task = SimpleTask(value=value, delay=0.1)
-        task_id = task_manager.submit_task(task)
+        task: SimpleTask = SimpleTask(value=value, delay=0.1)
+        task_id: str = task_manager.submit_task(task)
         task_ids.append(task_id)
 
     assert len(task_manager.get_active_tasks()) <= len(values)
@@ -130,22 +130,22 @@ def test_multiple_concurrent_tasks(task_manager: TaskManager, qtbot) -> None:
         pass
 
     for task_id, value in zip(task_ids, values, strict=True):
-        result = task_manager.get_task_result(task_id)
+        result: int | None = task_manager.get_task_result(task_id)
         assert result == value ** 2
 
     assert len(task_manager.get_active_tasks()) == 0
     assert len(task_manager.get_task_history()) == len(values)
 
 
-def test_callable_task_execution(task_manager: TaskManager, qtbot) -> None:
+def test_callable_task_execution(task_manager: TaskManager, qtbot: Any) -> None:
     """Callable functions execute correctly as tasks."""
     def compute_factorial(n: int) -> int:
-        result = 1
+        result: int = 1
         for i in range(1, n + 1):
             result *= i
         return result
 
-    task_id = task_manager.submit_callable(
+    task_id: str = task_manager.submit_callable(
         func=compute_factorial,
         args=(5,),
         description="Factorial computation"
@@ -154,17 +154,17 @@ def test_callable_task_execution(task_manager: TaskManager, qtbot) -> None:
     with qtbot.waitSignal(task_manager.all_tasks_completed, timeout=5000):
         pass
 
-    result = task_manager.get_task_result(task_id)
-    expected_factorial = 120
+    result: int | None = task_manager.get_task_result(task_id)
+    expected_factorial: int = 120
     assert result == expected_factorial
 
 
-def test_callable_task_with_kwargs(task_manager: TaskManager, qtbot) -> None:
+def test_callable_task_with_kwargs(task_manager: TaskManager, qtbot: Any) -> None:
     """Callable tasks handle keyword arguments correctly."""
     def compute_power(base: int, exponent: int) -> int:
         return base ** exponent
 
-    task_id = task_manager.submit_callable(
+    task_id: str = task_manager.submit_callable(
         func=compute_power,
         kwargs={"base": 2, "exponent": 10},
         description="Power computation"
@@ -173,19 +173,19 @@ def test_callable_task_with_kwargs(task_manager: TaskManager, qtbot) -> None:
     with qtbot.waitSignal(task_manager.all_tasks_completed, timeout=5000):
         pass
 
-    result = task_manager.get_task_result(task_id)
-    expected_power = 1024
+    result: int | None = task_manager.get_task_result(task_id)
+    expected_power: int = 1024
     assert result == expected_power
 
 
-def test_task_progress_emission(task_manager: TaskManager, qtbot) -> None:
+def test_task_progress_emission(task_manager: TaskManager, qtbot: Any) -> None:
     """Tasks emit progress signals during execution."""
-    progress_updates = []
+    progress_updates: list[tuple[str, int, str]] = []
 
     def on_progress(task_id: str, percentage: int, message: str) -> None:
         progress_updates.append((task_id, percentage, message))
 
-    task = ProgressTask(steps=5, step_delay=0.05)
+    task: ProgressTask = ProgressTask(steps=5, step_delay=0.05)
     task.signals.progress.connect(on_progress)
 
     task_manager.submit_task(task)
@@ -193,36 +193,36 @@ def test_task_progress_emission(task_manager: TaskManager, qtbot) -> None:
     with qtbot.waitSignal(task_manager.all_tasks_completed, timeout=5000):
         pass
 
-    expected_updates = 5
+    expected_updates: int = 5
     assert len(progress_updates) == expected_updates
     assert progress_updates[-1][1] == 100  # noqa: PLR2004
 
 
-def test_task_cancellation(task_manager: TaskManager, qtbot) -> None:
+def test_task_cancellation(task_manager: TaskManager, qtbot: Any) -> None:
     """Tasks can be cancelled during execution."""
-    task = ProgressTask(steps=30, step_delay=0.2)
-    task_id = task_manager.submit_task(task)
+    task: ProgressTask = ProgressTask(steps=30, step_delay=0.2)
+    task_id: str = task_manager.submit_task(task)
 
     qtbot.wait(500)
 
-    cancelled = task_manager.cancel_task(task_id)
+    cancelled: bool = task_manager.cancel_task(task_id)
     assert cancelled
 
     with qtbot.waitSignal(task_manager.all_tasks_completed, timeout=10000):
         pass
 
 
-def test_cancel_all_tasks(task_manager: TaskManager, qtbot) -> None:
+def test_cancel_all_tasks(task_manager: TaskManager, qtbot: Any) -> None:
     """All active tasks can be cancelled simultaneously."""
-    task_ids = []
+    task_ids: list[str] = []
     for _ in range(5):
-        task = ProgressTask(steps=30, step_delay=0.2)
-        task_id = task_manager.submit_task(task)
+        task: ProgressTask = ProgressTask(steps=30, step_delay=0.2)
+        task_id: str = task_manager.submit_task(task)
         task_ids.append(task_id)
 
     qtbot.wait(500)
 
-    active_count_before = len(task_manager.get_active_tasks())
+    active_count_before: int = len(task_manager.get_active_tasks())
     task_manager.cancel_all_tasks()
 
     with qtbot.waitSignal(task_manager.all_tasks_completed, timeout=10000):
@@ -231,14 +231,14 @@ def test_cancel_all_tasks(task_manager: TaskManager, qtbot) -> None:
     assert active_count_before > 0
 
 
-def test_task_error_handling(task_manager: TaskManager, qtbot) -> None:
+def test_task_error_handling(task_manager: TaskManager, qtbot: Any) -> None:
     """Tasks that raise exceptions are handled correctly."""
-    error_events = []
+    error_events: list[tuple[str, str, str]] = []
 
     def on_error(task_id: str, error_type: str, error_message: str) -> None:
         error_events.append((task_id, error_type, error_message))
 
-    task = FailingTask(error_message="Intentional test failure")
+    task: FailingTask = FailingTask(error_message="Intentional test failure")
     task.signals.error.connect(on_error)
 
     task_manager.submit_task(task)

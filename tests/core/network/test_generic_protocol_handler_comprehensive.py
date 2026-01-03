@@ -5,10 +5,7 @@ connection management, protocol detection, and response generation for license
 verification systems without mocks or stubs.
 """
 
-import secrets
 import socket
-import struct
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
@@ -264,8 +261,9 @@ class TestGenericProtocolHandlerTCPProxy:
         started = handler.start_proxy(port)
         assert started is True
         assert handler.running is True
-        assert handler.proxy_thread is not None
-        assert handler.proxy_thread.is_alive()
+        proxy_thread = handler.proxy_thread
+        assert proxy_thread is not None
+        assert proxy_thread.is_alive()
 
         time.sleep(0.2)
 
@@ -485,10 +483,10 @@ class TestGenericProtocolHandlerTCPProxy:
         assert handler.running is True
 
         stopped = handler.stop_proxy()
-        assert stopped is True
+        assert stopped
         assert handler.running is False
 
-        time.sleep(0.5)
+        time.sleep(0.5)  # type: ignore[unreachable]
         connection_refused = False
         try:
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -548,7 +546,7 @@ class TestGenericProtocolHandlerTCPProxy:
         """Get a free port for testing."""
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(("127.0.0.1", 0))
-        port = sock.getsockname()[1]
+        port: int = sock.getsockname()[1]
         sock.close()
         return port
 
@@ -564,8 +562,9 @@ class TestGenericProtocolHandlerUDPProxy:
         started = handler.start_proxy(port)
         assert started is True
         assert handler.running is True
-        assert handler.proxy_thread is not None
-        assert handler.proxy_thread.is_alive()
+        proxy_thread = handler.proxy_thread
+        assert proxy_thread is not None
+        assert proxy_thread.is_alive()
 
         time.sleep(0.2)
 
@@ -710,17 +709,17 @@ class TestGenericProtocolHandlerUDPProxy:
         assert handler.running is True
 
         stopped = handler.stop_proxy()
-        assert stopped is True
+        assert stopped
         assert handler.running is False
 
-        time.sleep(0.5)
+        time.sleep(0.5)  # type: ignore[unreachable]
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         client.settimeout(1.0)
         no_response = False
         try:
             client.sendto(b"ping", ("127.0.0.1", port))
             client.recvfrom(1024)
-        except (TimeoutError, OSError):
+        except (socket.timeout, OSError):
             no_response = True
         finally:
             client.close()
@@ -732,7 +731,7 @@ class TestGenericProtocolHandlerUDPProxy:
         """Get a free port for testing."""
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind(("127.0.0.1", 0))
-        port = sock.getsockname()[1]
+        port: int = sock.getsockname()[1]
         sock.close()
         return port
 
@@ -894,7 +893,7 @@ class TestGenericProtocolHandlerDataManagement:
         """Get a free port for testing."""
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(("127.0.0.1", 0))
-        port = sock.getsockname()[1]
+        port: int = sock.getsockname()[1]
         sock.close()
         return port
 
@@ -913,7 +912,7 @@ class TestGenericProtocolHandlerConnectionHandling:
         mock_socket = MockSocket()
         request = b"ping"
 
-        handler.handle_connection(mock_socket, request)
+        handler.handle_connection(mock_socket, request)  # type: ignore[arg-type]
 
         assert len(handler.captured_requests) == 1
         assert handler.captured_requests[0]["data"] == request
@@ -933,7 +932,7 @@ class TestGenericProtocolHandlerConnectionHandling:
         mock_socket = MockSocket()
         request = b"CHECK_LICENSE\x00"
 
-        handler.handle_connection(mock_socket, request)
+        handler.handle_connection(mock_socket, request)  # type: ignore[arg-type]
 
         assert len(handler.captured_requests) == 1
         assert handler.captured_requests[0]["data"] == request
@@ -958,7 +957,7 @@ class TestGenericProtocolHandlerConnectionHandling:
         mock_socket = MockUDPSocket()
         request = b"status"
 
-        handler.handle_connection(mock_socket, request)
+        handler.handle_connection(mock_socket, request)  # type: ignore[arg-type]
 
         assert mock_socket.sent_data == b"OK\x00SERVER_ACTIVE\x00"
         assert len(handler.captured_responses) == 1
@@ -977,7 +976,7 @@ class TestGenericProtocolHandlerConnectionHandling:
         mock_socket = FailingSocket()
         request = b"ping"
 
-        handler.handle_connection(mock_socket, request)
+        handler.handle_connection(mock_socket, request)  # type: ignore[arg-type]
 
         assert len(handler.captured_requests) == 1
         assert len(handler.captured_responses) == 0
@@ -1076,7 +1075,7 @@ class TestGenericProtocolHandlerConnectionHandling:
         """Get a free port for testing."""
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(("127.0.0.1", 0))
-        port = sock.getsockname()[1]
+        port: int = sock.getsockname()[1]
         sock.close()
         return port
 
@@ -1199,6 +1198,6 @@ class TestGenericProtocolHandlerEdgeCases:
         """Get a free port for testing."""
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(("127.0.0.1", 0))
-        port = sock.getsockname()[1]
+        port: int = sock.getsockname()[1]
         sock.close()
         return port

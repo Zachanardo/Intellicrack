@@ -8,7 +8,7 @@ import json
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -370,11 +370,11 @@ class TestProductionScriptExecution:
         assert result.success
         assert len(result.messages) > 0
 
-        ready_msg = next((m for m in result.messages if m.get("type") == "ready"), None)
+        ready_msg = cast(dict[str, Any] | None, next((m for m in result.messages if m.get("type") == "ready"), None))
         assert ready_msg is not None
         assert ready_msg.get("script") == "memory_dumper"
 
-        module_msg = next((m for m in result.messages if m.get("type") == "module_info"), None)
+        module_msg = cast(dict[str, Any] | None, next((m for m in result.messages if m.get("type") == "module_info"), None))
         if module_msg:
             assert "name" in module_msg
             assert "base" in module_msg
@@ -418,10 +418,10 @@ class TestProductionScriptExecution:
         assert result.success
         assert len(result.messages) > 0
 
-        ready_msg = next((m for m in result.messages if m.get("type") == "ready"), None)
+        ready_msg = cast(dict[str, Any] | None, next((m for m in result.messages if m.get("type") == "ready"), None))
         assert ready_msg is not None
 
-        bypass_msg = next((m for m in result.messages if m.get("type") == "bypass_result"), None)
+        bypass_msg = cast(dict[str, Any] | None, next((m for m in result.messages if m.get("type") == "bypass_result"), None))
         assert bypass_msg is not None
         assert bypass_msg.get("platform") == "windows"
         assert bypass_msg.get("bypasses_installed", 0) >= 0
@@ -443,7 +443,7 @@ class TestProductionScriptExecution:
         assert result.success
         assert len(result.messages) > 0
 
-        ready_msg = next((m for m in result.messages if m.get("type") == "ready"), None)
+        ready_msg = cast(dict[str, Any] | None, next((m for m in result.messages if m.get("type") == "ready"), None))
         assert ready_msg is not None
         assert ready_msg.get("script") == "anti_debugger"
 

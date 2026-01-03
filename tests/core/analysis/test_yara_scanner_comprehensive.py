@@ -34,6 +34,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from collections.abc import Generator
 from typing import Any
 
 import pytest
@@ -890,7 +891,7 @@ class TestPatternExtractionAndGeneration:
         binary_path = temp_binary_dir / "string_extraction_test.exe"
         binary_path.write_bytes(test_binary)
 
-        strings = scanner.extract_strings_automatic(binary_path, min_length=10)
+        strings = scanner.extract_strings_automatic(test_binary, min_length=10)
 
         assert isinstance(strings, list)
         assert len(strings) > 0, "No strings extracted from binary"
@@ -923,8 +924,7 @@ class TestPatternExtractionAndGeneration:
         generated_rule = scanner.generate_rule_from_sample(
             binary_path,
             rule_name="Generated_Test_Rule",
-            min_string_length=4,
-            include_hex_patterns=True,
+            advanced_analysis=True,
         )
 
         assert isinstance(generated_rule, str)
@@ -947,11 +947,11 @@ class TestPatternExtractionAndGeneration:
 
         for pattern in test_patterns:
             yara_pattern = scanner.convert_pattern_to_yara(
-                pattern, pattern_name="test_pattern"
+                pattern, name="test_pattern"
             )
 
             assert isinstance(yara_pattern, str)
-            assert "$test_pattern" in yara_pattern
+            assert "test_pattern" in yara_pattern
 
 
 class TestRuleOptimization:
@@ -1137,7 +1137,7 @@ class TestErrorHandling:
         """Rule compilation respects timeout parameter."""
         scanner = YaraScanner()
 
-        result = scanner.compile_rules(incremental=False, timeout=0.001)
+        result = scanner.compile_rules(incremental=False, timeout=1)
 
         assert isinstance(result, bool)
 
@@ -1210,7 +1210,7 @@ rule String_Offset_Test {
 
 
 @pytest.fixture
-def temp_binary_dir() -> Path:
+def temp_binary_dir() -> Generator[Path, None, None]:
     """Provide temporary directory for test binaries."""
     with tempfile.TemporaryDirectory() as tmpdir:
         yield Path(tmpdir)

@@ -43,9 +43,9 @@ def temp_dir(tmp_path: Path) -> Path:
 
 def create_pe_binary(
     path: Path,
-    strings: list[bytes] = None,
+    strings: list[bytes] | None = None,
     with_pe_header: bool = True,
-    imports: list[bytes] = None
+    imports: list[bytes] | None = None
 ) -> Path:
     """Create realistic PE binary with embedded strings and imports.
 

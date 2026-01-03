@@ -16,6 +16,7 @@ Copyright (C) 2025 Zachary Flint
 import tempfile
 import threading
 import time
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -71,7 +72,7 @@ def simple_binary(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def session_pool() -> R2SessionPool:
+def session_pool() -> Generator[R2SessionPool, None, None]:
     """Create a fresh session pool."""
     pool = R2SessionPool(
         max_sessions=5,

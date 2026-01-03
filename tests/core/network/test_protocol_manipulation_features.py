@@ -11,6 +11,7 @@ import struct
 import sys
 import time
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Sequence, Tuple, Union, cast
 
 import pytest
 
@@ -60,23 +61,26 @@ Content-Type: application/json\r
         }
 
         for scenario_data in manipulation_scenarios.values():
+            modifications = cast(List[Tuple[str, str]], scenario_data['modifications'])
+            expected_outcome = cast(str, scenario_data['expected_outcome'])
+
             manipulated_request = self._manipulate_http_request(
                 original_request,
-                scenario_data['modifications']
+                modifications
             )
 
             # Validate manipulation was successful
             assert self._verify_manipulation_success(
                 manipulated_request,
-                scenario_data['modifications'],
-                scenario_data['expected_outcome']
+                modifications,
+                expected_outcome
             )
 
-    def _manipulate_http_request(self, original_request: str, modifications: list) -> str:
+    def _manipulate_http_request(self, original_request: str, modifications: List[Tuple[str, str]]) -> str:
         """Expected HTTP request manipulation functionality."""
         lines = original_request.split('\r\n')
         request_line = lines[0]
-        headers = {}
+        headers: Dict[str, str] = {}
 
         # Parse existing headers
         for line in lines[1:]:
@@ -96,23 +100,25 @@ Content-Type: application/json\r
                 headers[header_name] = new_value
 
         # Reconstruct request
-        manipulated_lines = [request_line]
+        manipulated_lines: List[str] = [request_line]
         for header, value in headers.items():
             manipulated_lines.append(f'{header}: {value}')
         manipulated_lines.append('')  # Empty line before body
 
         return '\r\n'.join(manipulated_lines)
 
-    def _verify_manipulation_success(self, manipulated_request: str, modifications: list, expected_outcome: str) -> bool:
+    def _verify_manipulation_success(self, manipulated_request: str, modifications: List[Tuple[str, str]], expected_outcome: str) -> bool:
         """Verify manipulation produced expected security exploitation vectors."""
-        verification_checks = {
+        verification_checks: Dict[str, Callable[[str], bool]] = {
             'elevated_privileges': lambda req: 'role=admin' in req and 'admin_token' in req,
             'authentication_bypassed': lambda req: 'X-Forwarded-For: 127.0.0.1' in req and 'Authorization:' not in req,
             'injection_vectors_inserted': lambda req: 'UNION SELECT' in req and 'DROP TABLE' in req
         }
 
         check_function = verification_checks.get(expected_outcome)
-        return check_function(manipulated_request) if check_function else False
+        if check_function is None:
+            return False
+        return check_function(manipulated_request)
 
     def test_payload_generation_for_protocol_exploitation(self) -> None:
         """Validate sophisticated payload generation for protocol exploitation."""
@@ -133,8 +139,8 @@ Content-Type: application/json\r
                 'vulnerability_type': 'BUFFER_OVERFLOW',
                 'buffer_size': 256,
                 'expected_payloads': [
-                    'A' * 300 + struct.pack('<I', 0x41414141),  # EIP overwrite
-                    'A' * 256 + b'\x90' * 100 + b'\xCC\xCC\xCC\xCC',  # NOP sled + shellcode
+                    b'A' * 300 + struct.pack('<I', 0x41414141),  # EIP overwrite
+                    b'A' * 256 + b'\x90' * 100 + b'\xCC\xCC\xCC\xCC',  # NOP sled + shellcode
                 ]
             },
             'protocol_smuggling_payloads': {
@@ -148,10 +154,14 @@ Content-Type: application/json\r
         }
 
         for scenario_data in payload_generation_scenarios.values():
+            scenario = cast(Dict[str, Any], scenario_data)
+            target_protocol = cast(str, scenario['target_protocol'])
+            vulnerability_type = cast(str, scenario['vulnerability_type'])
+
             generated_payloads = self._generate_protocol_payloads(
-                scenario_data['target_protocol'],
-                scenario_data['vulnerability_type'],
-                scenario_data
+                target_protocol,
+                vulnerability_type,
+                scenario
             )
 
             # Must generate multiple effective payloads
@@ -161,12 +171,13 @@ Content-Type: application/json\r
             for payload in generated_payloads:
                 assert self._validate_payload_effectiveness(
                     payload,
-                    scenario_data['vulnerability_type']
+                    vulnerability_type
                 )
 
-    def _generate_protocol_payloads(self, protocol: str, vuln_type: str, scenario_data: dict) -> list:
+    def _generate_protocol_payloads(self, protocol: str, vuln_type: str, scenario_data: Dict[str, Any]) -> List[Union[str, bytes]]:
         """Expected payload generation functionality."""
-        payload_templates = {
+        buffer_size = cast(int, scenario_data.get('buffer_size', 100))
+        payload_templates: Dict[str, List[Union[str, bytes]]] = {
             'SQL_INJECTION': [
                 "' UNION SELECT {columns} FROM {table}--",
                 "'; {malicious_sql};--",
@@ -176,8 +187,8 @@ Content-Type: application/json\r
                 "' ORDER BY {column_count}--"
             ],
             'BUFFER_OVERFLOW': [
-                'A' * (scenario_data.get('buffer_size', 100) + 50),
-                'A' * scenario_data.get('buffer_size', 100) + struct.pack('<I', 0x41414141),
+                'A' * (buffer_size + 50),
+                b'A' * buffer_size + struct.pack('<I', 0x41414141),
                 b'\x90' * 100 + b'\xCC' * 4,  # NOP sled + breakpoint
             ],
             'REQUEST_SMUGGLING': [
@@ -190,7 +201,7 @@ Content-Type: application/json\r
         templates = payload_templates.get(vuln_type, ["generic_payload"])
 
         # Customize templates based on scenario
-        customized_payloads = []
+        customized_payloads: List[Union[str, bytes]] = []
         for template in templates:
             if isinstance(template, str):
                 customized = template.format(
@@ -205,9 +216,9 @@ Content-Type: application/json\r
 
         return customized_payloads
 
-    def _validate_payload_effectiveness(self, payload, vuln_type: str) -> bool:
+    def _validate_payload_effectiveness(self, payload: Union[str, bytes], vuln_type: str) -> bool:
         """Validate payload contains sophisticated exploitation vectors."""
-        effectiveness_criteria = {
+        effectiveness_criteria: Dict[str, List[Callable[[Union[str, bytes]], bool]]] = {
             'SQL_INJECTION': [
                 lambda p: any(keyword in str(p).upper() for keyword in ['UNION', 'SELECT', 'DROP', 'INSERT']),
                 lambda p: '--' in str(p) or '/*' in str(p),  # SQL comments
@@ -215,8 +226,8 @@ Content-Type: application/json\r
             ],
             'BUFFER_OVERFLOW': [
                 lambda p: len(p) > 100,  # Sufficient length
-                lambda p: b'\x41\x41\x41\x41' in p or b'AAAA' in p,  # Overflow pattern
-                lambda p: b'\x90' in p or b'\xCC' in p  # Shellcode indicators
+                lambda p: b'\x41\x41\x41\x41' in (p if isinstance(p, bytes) else p.encode()) or b'AAAA' in (p if isinstance(p, bytes) else p.encode()),  # Overflow pattern
+                lambda p: b'\x90' in (p if isinstance(p, bytes) else p.encode()) or b'\xCC' in (p if isinstance(p, bytes) else p.encode())  # Shellcode indicators
             ],
             'REQUEST_SMUGGLING': [
                 lambda p: 'Content-Length:' in str(p),
@@ -254,27 +265,29 @@ Content-Type: application/json\r
         }
 
         for scenario_data in packet_crafting_scenarios.values():
-            crafted_packets = self._craft_protocol_packets(scenario_data)
+            scenario = cast(Dict[str, Any], scenario_data)
+            crafted_packets = self._craft_protocol_packets(scenario)
 
             # Must generate multiple packets for attack volume
             assert len(crafted_packets) >= 10
 
             # Validate packet structure and attack capabilities
             for packet in crafted_packets[:3]:  # Test first 3 packets
-                assert self._validate_crafted_packet(packet, scenario_data)
+                assert self._validate_crafted_packet(packet, scenario)
 
-    def _craft_protocol_packets(self, scenario: dict) -> list:
+    def _craft_protocol_packets(self, scenario: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Expected protocol packet crafting functionality."""
-        crafted_packets = []
-        protocol = scenario['protocol']
-        attack_type = scenario['attack_type']
+        crafted_packets: List[Dict[str, Any]] = []
+        protocol = cast(str, scenario.get('protocol', ''))
+        attack_type = cast(str, scenario.get('attack_type', ''))
 
         if protocol == 'TCP' and attack_type == 'SYN_FLOOD':
             # Craft TCP SYN packets
+            target_port = cast(int, scenario.get('target_port', 80))
             for i in range(20):  # Generate 20 sample packets
                 packet = self._craft_tcp_syn_packet(
                     src_port=1024 + i,
-                    dst_port=scenario['target_port'],
+                    dst_port=target_port,
                     src_ip=f"192.168.1.{100 + i % 50}"
                 )
                 crafted_packets.append(packet)
@@ -291,7 +304,7 @@ Content-Type: application/json\r
 
         elif protocol == 'ICMP' and attack_type == 'COVERT_TUNNEL':
             # Craft ICMP tunnel packets
-            payload_data = scenario.get('payload_data', b'covert_data')
+            payload_data = cast(bytes, scenario.get('payload_data', b'covert_data'))
             for i, chunk in enumerate(self._split_data_chunks(payload_data, 56)):
                 packet = self._craft_icmp_packet(
                     icmp_type=8,  # Echo Request
@@ -302,7 +315,7 @@ Content-Type: application/json\r
 
         return crafted_packets
 
-    def _craft_tcp_syn_packet(self, src_port: int, dst_port: int, src_ip: str) -> dict:
+    def _craft_tcp_syn_packet(self, src_port: int, dst_port: int, src_ip: str) -> Dict[str, Any]:
         """Craft TCP SYN packet with attack characteristics."""
         return {
             'protocol': 'TCP',
@@ -315,7 +328,7 @@ Content-Type: application/json\r
             'attack_characteristics': ['source_randomization', 'high_volume', 'resource_exhaustion']
         }
 
-    def _craft_udp_dns_query(self, query_type: str, domain: str, spoofed_src: str) -> dict:
+    def _craft_udp_dns_query(self, query_type: str, domain: str, spoofed_src: str) -> Dict[str, Any]:
         """Craft UDP DNS amplification query."""
         return {
             'protocol': 'UDP',
@@ -330,7 +343,7 @@ Content-Type: application/json\r
             'attack_characteristics': ['ip_spoofing', 'amplification', 'bandwidth_exhaustion']
         }
 
-    def _craft_icmp_packet(self, icmp_type: int, payload: bytes, sequence: int) -> dict:
+    def _craft_icmp_packet(self, icmp_type: int, payload: bytes, sequence: int) -> Dict[str, Any]:
         """Craft ICMP covert channel packet."""
         return {
             'protocol': 'ICMP',
@@ -342,31 +355,35 @@ Content-Type: application/json\r
             'attack_characteristics': ['data_exfiltration', 'steganography', 'firewall_evasion']
         }
 
-    def _split_data_chunks(self, data: bytes, chunk_size: int) -> list:
+    def _split_data_chunks(self, data: bytes, chunk_size: int) -> List[bytes]:
         """Split data into chunks for covert transmission."""
         return [data[i:i + chunk_size] for i in range(0, len(data), chunk_size)]
 
-    def _validate_crafted_packet(self, packet: dict, scenario: dict) -> bool:
+    def _validate_crafted_packet(self, packet: Dict[str, Any], scenario: Dict[str, Any]) -> bool:
         """Validate crafted packet meets attack scenario requirements."""
-        expected_features = scenario['expected_features']
-        attack_chars = packet.get('attack_characteristics', [])
+        expected_features = cast(List[str], scenario['expected_features'])
 
-        validation_mapping = {
-            'randomized_source_ports': lambda p: p.get('src_port', 0) != 80,
-            'spoofed_source_ips': lambda p: 'src_ip' in p and p['src_ip'] != '127.0.0.1',
+        def get_attack_chars(p: Dict[str, Any]) -> List[Any]:
+            return cast(List[Any], p.get('attack_characteristics', []))
+
+        validation_mapping: Dict[str, Callable[[Dict[str, Any]], bool]] = {
+            'randomized_source_ports': lambda p: cast(int, p.get('src_port', 0)) != 80,
+            'spoofed_source_ips': lambda p: 'src_ip' in p and cast(str, p.get('src_ip', '')) != '127.0.0.1',
             'high_volume': lambda p: True,  # Validated by packet count
-            'small_request': lambda p: p.get('protocol') == 'UDP',
-            'large_response': lambda p: 'amplification' in attack_chars,
-            'ip_spoofing': lambda p: 'ip_spoofing' in attack_chars,
-            'data_encapsulation': lambda p: 'payload' in p and len(p.get('payload', b'')) > 0,
-            'steganography': lambda p: 'steganography' in attack_chars,
-            'evasion': lambda p: 'evasion' in attack_chars or 'firewall_evasion' in attack_chars
+            'small_request': lambda p: cast(str, p.get('protocol', '')) == 'UDP',
+            'large_response': lambda p: 'amplification' in get_attack_chars(p),
+            'ip_spoofing': lambda p: 'ip_spoofing' in get_attack_chars(p),
+            'data_encapsulation': lambda p: 'payload' in p and len(cast(bytes, p.get('payload', b''))) > 0,
+            'steganography': lambda p: 'steganography' in get_attack_chars(p),
+            'evasion': lambda p: 'evasion' in get_attack_chars(p) or 'firewall_evasion' in get_attack_chars(p)
         }
 
-        return all(
-            validation_mapping.get(feature, lambda p: True)(packet)
-            for feature in expected_features
-        )
+        default_checker: Callable[[Dict[str, Any]], bool] = lambda p: True
+        for feature in expected_features:
+            checker = validation_mapping.get(feature, default_checker)
+            if not checker(packet):
+                return False
+        return True
 
     def test_protocol_encoding_and_obfuscation(self) -> None:
         """Validate protocol encoding and obfuscation capabilities for evasion."""
@@ -394,32 +411,38 @@ Content-Type: application/json\r
         }
 
         for scenario_data in encoding_scenarios.values():
+            scenario = cast(Dict[str, Any], scenario_data)
+            original_payload = scenario['original_payload']
+            encoding_type = scenario['encoding_type']
+
             encoded_payload = self._apply_protocol_encoding(
-                scenario_data['original_payload'],
-                scenario_data['encoding_type']
+                original_payload,
+                encoding_type
             )
 
             # Validate encoding was applied correctly
-            assert encoded_payload != scenario_data['original_payload']
+            assert encoded_payload != original_payload
             assert len(encoded_payload) > 0
 
             # Validate encoding maintains payload effectiveness
             decoded_payload = self._decode_protocol_payload(
                 encoded_payload,
-                scenario_data['encoding_type']
+                encoding_type
             )
-            assert decoded_payload == scenario_data['original_payload']
+            assert decoded_payload == original_payload
 
     def _apply_protocol_encoding(self, payload: str, encoding_type: str) -> str:
         """Expected protocol encoding functionality."""
-        encoding_functions = {
+        encoding_functions: Dict[str, Callable[[str], str]] = {
             'URL_ENCODE': lambda p: ''.join(c if c.isalnum() else f'%{ord(c):02X}' for c in p),
             'BASE64': lambda p: base64.b64encode(p.encode()).decode(),
             'HEX_ENCODE': lambda p: p.encode().hex(),
             'UNICODE': lambda p: p.encode('unicode_escape').decode()
         }
 
-        encode_func = encoding_functions.get(encoding_type, lambda p: p)
+        encode_func = encoding_functions.get(encoding_type)
+        if encode_func is None:
+            return payload
         return encode_func(payload)
 
     def _decode_protocol_payload(self, encoded_payload: str, encoding_type: str) -> str:
@@ -475,24 +498,30 @@ class TestAdvancedProtocolManipulation:
         }
 
         for chain_data in attack_chain_scenarios.values():
-            execution_result = self._execute_protocol_chain(chain_data['stages'])
+            stages = cast(List[Dict[str, Any]], chain_data['stages'])
+            expected_outcome = cast(str, chain_data['expected_outcome'])
+
+            execution_result = self._execute_protocol_chain(stages)
 
             # Must successfully execute all stages
             assert execution_result['chain_completed']
-            assert len(execution_result['stage_results']) == len(chain_data['stages'])
+            assert len(execution_result['stage_results']) == len(stages)
 
             # Must achieve expected attack outcome
-            assert execution_result['final_outcome'] == chain_data['expected_outcome']
+            assert execution_result['final_outcome'] == expected_outcome
 
-    def _execute_protocol_chain(self, attack_stages: list) -> dict:
+    def _execute_protocol_chain(self, attack_stages: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Expected protocol chaining execution functionality."""
-        stage_results = []
+        stage_results: List[Dict[str, Any]] = []
 
         for i, stage in enumerate(attack_stages):
-            stage_result = {
+            protocol = cast(str, stage.get('protocol', ''))
+            action = cast(str, stage.get('action', ''))
+
+            stage_result: Dict[str, Any] = {
                 'stage_number': i + 1,
-                'protocol': stage['protocol'],
-                'action': stage['action'],
+                'protocol': protocol,
+                'action': action,
                 'success': True,
                 'data_gathered': self._simulate_stage_data(stage),
                 'next_stage_input': self._prepare_next_stage_input(stage)
@@ -500,12 +529,12 @@ class TestAdvancedProtocolManipulation:
             stage_results.append(stage_result)
 
         # Determine final outcome based on successful chain completion
-        final_outcomes = {
+        final_outcomes: Dict[str, str] = {
             'DNS->HTTP->HTTP': 'remote_code_execution',
             'SMTP->SMB->SMB': 'domain_compromise'
         }
 
-        protocol_chain = '->'.join(stage['protocol'] for stage in attack_stages)
+        protocol_chain = '->'.join(cast(str, stage.get('protocol', '')) for stage in attack_stages)
         final_outcome = final_outcomes.get(protocol_chain, 'chain_completed')
 
         return {
@@ -516,9 +545,9 @@ class TestAdvancedProtocolManipulation:
             'attack_effectiveness': 'HIGH'
         }
 
-    def _simulate_stage_data(self, stage: dict) -> dict:
+    def _simulate_stage_data(self, stage: Dict[str, Any]) -> Dict[str, Any]:
         """Simulate data gathered from attack stage."""
-        data_templates = {
+        data_templates: Dict[Tuple[str, str], Dict[str, Any]] = {
             ('DNS', 'subdomain_enumeration'): {'subdomains': ['admin.target.com', 'api.target.com', 'dev.target.com']},
             ('HTTP', 'vulnerability_scan'): {'vulnerabilities': ['SQL_INJECTION', 'XSS', 'UPLOAD_BYPASS']},
             ('HTTP', 'exploit_deployment'): {'shell_uploaded': True, 'shell_url': '/uploads/shell.php'},
@@ -527,19 +556,23 @@ class TestAdvancedProtocolManipulation:
             ('SMB', 'lateral_movement'): {'compromised_hosts': ['192.168.1.10', '192.168.1.15']}
         }
 
-        key = (stage['protocol'], stage['action'])
+        protocol = cast(str, stage.get('protocol', ''))
+        action = cast(str, stage.get('action', ''))
+        key = (protocol, action)
         return data_templates.get(key, {'generic_data': 'stage_completed'})
 
-    def _prepare_next_stage_input(self, current_stage: dict) -> dict:
+    def _prepare_next_stage_input(self, current_stage: Dict[str, Any]) -> Dict[str, Any]:
         """Prepare input for next stage based on current stage results."""
-        next_stage_inputs = {
+        next_stage_inputs: Dict[Tuple[str, str], Dict[str, Any]] = {
             ('DNS', 'subdomain_enumeration'): {'targets': ['admin.target.com', 'api.target.com']},
             ('HTTP', 'vulnerability_scan'): {'exploit_target': 'most_vulnerable_endpoint'},
             ('SMTP', 'user_enumeration'): {'usernames': ['admin', 'user1', 'service']},
             ('SMB', 'credential_stuffing'): {'authenticated_session': 'admin_session'}
         }
 
-        key = (current_stage['protocol'], current_stage['action'])
+        protocol = cast(str, current_stage.get('protocol', ''))
+        action = cast(str, current_stage.get('action', ''))
+        key = (protocol, action)
         return next_stage_inputs.get(key, {'next_stage': 'prepared'})
 
 

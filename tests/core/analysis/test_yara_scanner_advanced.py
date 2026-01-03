@@ -23,6 +23,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from collections.abc import Callable, Generator
 from typing import Any
 
 import pytest
@@ -46,10 +47,10 @@ class FakeLicenseAnalyzer:
     def __init__(
         self,
         process_handle: int | None = None,
-        license_region_predicate: callable[[object, dict[str, Any]], bool] | None = None
+        license_region_predicate: Callable[[object, dict[str, Any]], bool] | None = None
     ) -> None:
         self.process_handle: int | None = process_handle
-        self._license_region_predicate: callable[[object, dict[str, Any]], bool] | None = license_region_predicate
+        self._license_region_predicate: Callable[[object, dict[str, Any]], bool] | None = license_region_predicate
         self.memory_regions: list[dict[str, Any]] = []
         self.modules: list[dict[str, Any]] = []
 
@@ -149,7 +150,8 @@ class TestProcessScanningWithAnalyzer:
     ) -> None:
         """License analyzer filters license-specific memory regions."""
         def license_region_filter(scanner: object, region: dict[str, Any]) -> bool:
-            return region.get("base_address", 0) % 2 == 0
+            base_addr: int = region.get("base_address", 0)
+            return base_addr % 2 == 0
 
         fake_analyzer = FakeLicenseAnalyzer(
             process_handle=None,
@@ -305,7 +307,7 @@ rule Test_Incremental {
 
     def test_compile_rules_timeout_handling(self, yara_scanner: YaraScanner) -> None:
         """Rule compilation respects timeout."""
-        very_short_timeout = 0.001
+        very_short_timeout = 1
 
         result = yara_scanner.compile_rules(incremental=False, timeout=very_short_timeout)
 
@@ -689,7 +691,7 @@ class TestDebuggerIntegrationAdvanced:
 
         if len(matches) > 0:
             breakpoints = yara_scanner.set_breakpoints_from_matches(
-                matches, enable_conditions=True
+                matches, conditional=True
             )
 
             assert isinstance(breakpoints, list)
@@ -742,7 +744,7 @@ def yara_scanner() -> YaraScanner:
 
 
 @pytest.fixture
-def temp_binary_dir() -> Path:
+def temp_binary_dir() -> Generator[Path, None, None]:
     """Provide temporary directory for binary files."""
     with tempfile.TemporaryDirectory() as tmpdir:
         yield Path(tmpdir)

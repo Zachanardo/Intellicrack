@@ -10,7 +10,7 @@ Copyright (C) 2025 Zachary Flint
 import struct
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -249,7 +249,7 @@ class TestGhidraBinaryIntegrationInitialization:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -269,7 +269,7 @@ class TestGhidraBinaryIntegrationInitialization:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -293,7 +293,7 @@ class TestLicenseValidationAnalysis:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -325,7 +325,7 @@ class TestLicenseValidationAnalysis:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -356,7 +356,7 @@ class TestLicenseValidationAnalysis:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -386,7 +386,7 @@ class TestProtectionDetection:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -417,7 +417,7 @@ class TestProtectionDetection:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -450,7 +450,7 @@ class TestProtectionDetection:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -484,7 +484,7 @@ class TestCryptoAnalysis:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -514,7 +514,7 @@ class TestCryptoAnalysis:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -543,7 +543,7 @@ class TestKeygenTemplateGeneration:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -578,7 +578,7 @@ class TestDeobfuscationFeatures:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -607,7 +607,7 @@ class TestDeobfuscationFeatures:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -639,7 +639,7 @@ class TestAntiAnalysisDetection:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -670,7 +670,7 @@ class TestAntiAnalysisDetection:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -704,7 +704,7 @@ class TestComprehensiveAnalysis:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -738,7 +738,7 @@ class TestLicensingCrackWorkflow:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -779,7 +779,7 @@ class TestLicensingCrackWorkflow:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -818,7 +818,7 @@ class TestScriptManagement:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
@@ -845,7 +845,7 @@ class TestScriptManagement:
 
         monkeypatch.setattr(
             "intellicrack.core.analysis.ghidra_binary_integration.GhidraScriptRunner",
-            fake_runner_init
+            cast(Any, fake_runner_init)
         )
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)

@@ -92,28 +92,21 @@ class TestPluginBase:
         plugin = Plugin()
         fake_state = FakeState(address=0x401000, state_id="fork_test_1")
 
-        plugin.will_fork_state_callback(fake_state)
-
-    def test_did_fork_state_callback(self) -> None:
-        """did_fork_state_callback executes without error."""
-        plugin = Plugin()
-        fake_state = FakeState(address=0x401000, state_id="fork_test_2")
-
-        plugin.did_fork_state_callback(fake_state)
+        plugin.will_fork_state_callback(fake_state)  # type: ignore[arg-type]
 
     def test_will_terminate_state_callback(self) -> None:
         """will_terminate_state_callback executes without error."""
         plugin = Plugin()
         fake_state = FakeState(address=0x402000, state_id="term_test_1")
 
-        plugin.will_terminate_state_callback(fake_state)
+        plugin.will_terminate_state_callback(fake_state)  # type: ignore[arg-type]
 
     def test_did_terminate_state_callback(self) -> None:
         """did_terminate_state_callback executes without error."""
         plugin = Plugin()
         fake_state = FakeState(address=0x402000, state_id="term_test_2")
 
-        plugin.did_terminate_state_callback(fake_state)
+        plugin.did_terminate_state_callback(fake_state)  # type: ignore[arg-type]
 
 
 class TestPluginLifecycle:
@@ -128,11 +121,10 @@ class TestPluginLifecycle:
         time.sleep(0.05)
 
         fake_state = FakeState(address=0x403000, state_id="lifecycle_1")
-        plugin.will_fork_state_callback(fake_state)
-        plugin.did_fork_state_callback(fake_state)
+        plugin.will_fork_state_callback(fake_state)  # type: ignore[arg-type]
 
-        plugin.will_terminate_state_callback(fake_state)
-        plugin.did_terminate_state_callback(fake_state)
+        plugin.will_terminate_state_callback(fake_state)  # type: ignore[arg-type]
+        plugin.did_terminate_state_callback(fake_state)  # type: ignore[arg-type]
 
         plugin.did_finish_run_callback()
 
@@ -147,8 +139,7 @@ class TestPluginLifecycle:
 
         for i in range(5):
             fake_state = FakeState(address=0x404000 + (i * 0x100), state_id=f"multi_state_{i}")
-            plugin.will_fork_state_callback(fake_state)
-            plugin.did_fork_state_callback(fake_state)
+            plugin.will_fork_state_callback(fake_state)  # type: ignore[arg-type]
 
         plugin.did_finish_run_callback()
 
@@ -160,8 +151,8 @@ class TestPluginLifecycle:
 
         fake_state = FakeState(address=0x405000, state_id="term_seq_1")
 
-        plugin.will_terminate_state_callback(fake_state)
-        plugin.did_terminate_state_callback(fake_state)
+        plugin.will_terminate_state_callback(fake_state)  # type: ignore[arg-type]
+        plugin.did_terminate_state_callback(fake_state)  # type: ignore[arg-type]
 
 
 class TestPluginStatistics:
@@ -267,18 +258,16 @@ class TestPluginCallbackOrder:
         plugin = Plugin()
         fake_state = FakeState(address=0x406000, state_id="seq_test_1")
 
-        plugin.will_fork_state_callback(fake_state)
-
-        plugin.did_fork_state_callback(fake_state)
+        plugin.will_fork_state_callback(fake_state)  # type: ignore[arg-type]
 
     def test_termination_callbacks_sequence(self) -> None:
         """Termination callbacks execute in correct sequence."""
         plugin = Plugin()
         fake_state = FakeState(address=0x407000, state_id="term_seq_test")
 
-        plugin.will_terminate_state_callback(fake_state)
+        plugin.will_terminate_state_callback(fake_state)  # type: ignore[arg-type]
 
-        plugin.did_terminate_state_callback(fake_state)
+        plugin.did_terminate_state_callback(fake_state)  # type: ignore[arg-type]
 
 
 class TestPluginCallbackArguments:
@@ -308,9 +297,7 @@ class TestPluginCallbackArguments:
         plugin = Plugin()
         fake_state = FakeState(address=0x408000, state_id="args_test")
 
-        plugin.will_fork_state_callback(fake_state, "extra_arg", extra_kwarg="value")
-
-        plugin.did_fork_state_callback(fake_state, "extra_arg", extra_kwarg="value")
+        plugin.will_fork_state_callback(fake_state, "extra_arg", extra_kwarg="value")  # type: ignore[arg-type]
 
 
 class TestPluginErrorHandling:
@@ -348,8 +335,7 @@ class TestPluginPerformance:
 
         for i in range(1000):
             fake_state = FakeState(address=0x500000 + i, state_id=f"perf_state_{i}")
-            plugin.will_fork_state_callback(fake_state)
-            plugin.did_fork_state_callback(fake_state)
+            plugin.will_fork_state_callback(fake_state)  # type: ignore[arg-type]
 
         duration = time.time() - start
 

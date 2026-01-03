@@ -1,6 +1,9 @@
 """Production-Grade Tests for Integrity Check Defeat System.
 
 Validates REAL integrity check detection, bypass, and patching against actual protected binaries.
+Tests validate HMAC-SHA256, RSA signatures, multiple hash algorithms, section hashing,
+code signing bypass, Authenticode, and catalog file handling.
+
 NO MOCKS - tests prove system defeats real protection mechanisms.
 
 Copyright (C) 2025 Zachary Flint
@@ -8,10 +11,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import hashlib
+import hmac
+import os
 import struct
 import tempfile
 import zlib
 from pathlib import Path
+from typing import Any
 
 import pefile
 import pytest
@@ -31,6 +37,7 @@ from intellicrack.core.protection_bypass.integrity_check_defeat import (
 
 PROTECTED_BINARIES_DIR = Path(__file__).parent.parent.parent / "fixtures" / "binaries" / "pe" / "protected"
 LEGITIMATE_BINARIES_DIR = Path(__file__).parent.parent.parent / "fixtures" / "binaries" / "pe" / "legitimate"
+SYSTEM_BINARIES_DIR = Path("C:/Windows/System32")
 
 
 @pytest.fixture(scope="module")
@@ -57,6 +64,33 @@ def legitimate_binary() -> Path:
     if binary.exists() and binary.stat().st_size > 1024:
         return binary
     pytest.skip("No legitimate binary available for testing")
+
+
+@pytest.fixture(scope="module")
+def signed_system_binary() -> Path:
+    """Locate signed system binary for Authenticode testing."""
+    candidates = [
+        SYSTEM_BINARIES_DIR / "notepad.exe",
+        SYSTEM_BINARIES_DIR / "calc.exe",
+        SYSTEM_BINARIES_DIR / "mspaint.exe",
+        SYSTEM_BINARIES_DIR / "cmd.exe",
+    ]
+    for binary in candidates:
+        if binary.exists() and binary.stat().st_size > 1024:
+            try:
+                pe = pefile.PE(str(binary))
+                has_cert = hasattr(pe, "DIRECTORY_ENTRY_SECURITY") and len(pe.DIRECTORY_ENTRY_SECURITY) > 0
+                pe.close()
+                if has_cert:
+                    return binary
+            except Exception:
+                continue
+
+    pytest.skip(
+        "No signed system binary available for Authenticode testing. "
+        f"Searched in {SYSTEM_BINARIES_DIR}. "
+        "To fix: Ensure C:/Windows/System32 contains signed executables."
+    )
 
 
 @pytest.fixture
@@ -136,21 +170,86 @@ class TestChecksumRecalculatorProduction:
         assert calc_sha512 == reference_sha512
         assert len(calc_sha512) == 128
 
-    def test_hmac_calculation_with_sha256(self) -> None:
-        """HMAC calculation with SHA-256 produces valid signatures."""
+    def test_hmac_sha256_calculation_matches_reference(self) -> None:
+        """HMAC-SHA256 calculation produces identical results to hmac reference.
+
+        CRITICAL TEST: Validates HMAC-SHA256 implementation against Python's hmac module.
+        This proves the implementation can correctly compute HMAC signatures for bypassing
+        integrity checks that use HMAC-SHA256 for authentication.
+        """
         calc = ChecksumRecalculator()
-        key = b"SECRET_HMAC_KEY_FOR_LICENSE_VALIDATION_256"
-        data = b"LICENSE_DATA_TO_SIGN_WITH_HMAC_SHA256"
+        key = b"SECRET_HMAC_KEY_FOR_LICENSE_VALIDATION_256_BITS"
+        data = b"LICENSE_DATA_TO_SIGN_WITH_HMAC_SHA256_AUTHENTICATION"
 
-        hmac_sig = calc.calculate_hmac(data, key, "sha256")
+        calc_hmac = calc.calculate_hmac(data, key, "sha256")
+        reference_hmac = hmac.new(key, data, hashlib.sha256).hexdigest()
 
-        assert len(hmac_sig) == 64
-        assert hmac_sig != data.hex()
+        assert calc_hmac == reference_hmac, (
+            f"FAILED: HMAC-SHA256 calculation does not match reference. "
+            f"Got {calc_hmac}, expected {reference_hmac}. "
+            f"This means HMAC-SHA256 bypass will not work on real binaries."
+        )
+        assert len(calc_hmac) == 64
 
-    def test_all_hashes_calculation(self) -> None:
-        """All hashes calculation produces complete hash set."""
+    def test_hmac_sha1_calculation_for_legacy_protection(self) -> None:
+        """HMAC-SHA1 calculation validates against reference implementation.
+
+        Tests HMAC-SHA1 which is used by legacy protection schemes.
+        Must produce correct signatures to bypass older integrity checks.
+        """
         calc = ChecksumRecalculator()
-        test_data = b"COMPLETE_HASH_SET_VALIDATION_DATA" * 50
+        key = b"LEGACY_HMAC_SHA1_KEY_FOR_OLD_PROTECTION"
+        data = b"LEGACY_LICENSE_DATA_WITH_SHA1_HMAC"
+
+        calc_hmac = calc.calculate_hmac(data, key, "sha1")
+        reference_hmac = hmac.new(key, data, hashlib.sha1).hexdigest()
+
+        assert calc_hmac == reference_hmac, (
+            f"FAILED: HMAC-SHA1 calculation incorrect. Cannot bypass legacy protection."
+        )
+        assert len(calc_hmac) == 40
+
+    def test_hmac_md5_calculation_for_weak_protection(self) -> None:
+        """HMAC-MD5 calculation handles weak protection schemes.
+
+        Tests HMAC-MD5 used in older or weaker protection implementations.
+        Required for comprehensive bypass capability.
+        """
+        calc = ChecksumRecalculator()
+        key = b"WEAK_HMAC_MD5_KEY"
+        data = b"DATA_PROTECTED_WITH_WEAK_MD5_HMAC"
+
+        calc_hmac = calc.calculate_hmac(data, key, "md5")
+        reference_hmac = hmac.new(key, data, hashlib.md5).hexdigest()
+
+        assert calc_hmac == reference_hmac, "FAILED: HMAC-MD5 calculation incorrect"
+        assert len(calc_hmac) == 32
+
+    def test_hmac_sha512_calculation_for_strong_protection(self) -> None:
+        """HMAC-SHA512 calculation handles strongest protection implementations.
+
+        Tests HMAC-SHA512 used by modern high-security protection schemes.
+        Required to defeat enterprise-level integrity verification.
+        """
+        calc = ChecksumRecalculator()
+        key = b"STRONG_ENTERPRISE_HMAC_SHA512_KEY_WITH_512_BITS_OF_SECURITY"
+        data = b"ENTERPRISE_DATA_WITH_SHA512_HMAC_PROTECTION"
+
+        calc_hmac = calc.calculate_hmac(data, key, "sha512")
+        reference_hmac = hmac.new(key, data, hashlib.sha512).hexdigest()
+
+        assert calc_hmac == reference_hmac, "FAILED: HMAC-SHA512 calculation incorrect"
+        assert len(calc_hmac) == 128
+
+    def test_all_hashes_calculation_includes_all_algorithms(self) -> None:
+        """All hashes calculation produces complete hash set including all SHA variants.
+
+        CRITICAL TEST: Validates that all hash algorithms (MD5, SHA1, SHA256, SHA512,
+        CRC32, CRC64) are computed correctly. Required to handle binaries that use
+        multiple hash algorithms for layered protection.
+        """
+        calc = ChecksumRecalculator()
+        test_data = b"COMPLETE_HASH_SET_VALIDATION_DATA_FOR_ALL_ALGORITHMS" * 50
 
         hashes = calc.calculate_all_hashes(test_data)
 
@@ -163,7 +262,17 @@ class TestChecksumRecalculatorProduction:
 
         assert hashes["crc32"].startswith("0x")
         assert len(hashes["md5"]) == 32
+        assert len(hashes["sha1"]) == 40
         assert len(hashes["sha256"]) == 64
+        assert len(hashes["sha512"]) == 128
+
+        reference_md5 = hashlib.md5(test_data).hexdigest()  # noqa: S324
+        reference_sha256 = hashlib.sha256(test_data).hexdigest()
+        reference_sha512 = hashlib.sha512(test_data).hexdigest()
+
+        assert hashes["md5"] == reference_md5
+        assert hashes["sha256"] == reference_sha256
+        assert hashes["sha512"] == reference_sha512
 
     def test_pe_checksum_calculation_on_real_binary(self, legitimate_binary: Path) -> None:
         """PE checksum calculation produces valid checksum for real binary."""
@@ -175,23 +284,45 @@ class TestChecksumRecalculatorProduction:
         assert pe_checksum > 0
 
     def test_section_hashes_calculation_on_real_binary(self, legitimate_binary: Path) -> None:
-        """Section hash calculation produces hashes for all PE sections."""
+        """Section hash calculation produces hashes for all PE sections with all algorithms.
+
+        CRITICAL TEST: Validates section-by-section hashing required to bypass
+        protections that hash individual PE sections (code, data, resources).
+        Must include MD5, SHA1, SHA256, SHA512, CRC32, CRC64.
+        """
         calc = ChecksumRecalculator()
 
         section_hashes = calc.recalculate_section_hashes(str(legitimate_binary))
 
-        assert len(section_hashes) > 0
+        assert len(section_hashes) > 0, "FAILED: No sections detected in legitimate binary"
 
         for section_name, hashes in section_hashes.items():
-            assert "md5" in hashes
-            assert "sha1" in hashes
-            assert "sha256" in hashes
-            assert "crc32" in hashes
+            assert "md5" in hashes, f"FAILED: Section {section_name} missing MD5 hash"
+            assert "sha1" in hashes, f"FAILED: Section {section_name} missing SHA1 hash"
+            assert "sha256" in hashes, f"FAILED: Section {section_name} missing SHA256 hash"
+            assert "sha512" in hashes, f"FAILED: Section {section_name} missing SHA512 hash"
+            assert "crc32" in hashes, f"FAILED: Section {section_name} missing CRC32 checksum"
+            assert "crc64" in hashes, f"FAILED: Section {section_name} missing CRC64 checksum"
+
             assert len(hashes["md5"]) == 32
+            assert len(hashes["sha1"]) == 40
             assert len(hashes["sha256"]) == 64
+            assert len(hashes["sha512"]) == 128
+
+            pe = pefile.PE(str(legitimate_binary))
+            section = next((s for s in pe.sections if s.Name.decode().rstrip("\x00") == section_name), None)
+            if section:
+                section_data = section.get_data()
+                assert hashes["md5"] == hashlib.md5(section_data).hexdigest()  # noqa: S324
+                assert hashes["sha256"] == hashlib.sha256(section_data).hexdigest()
+            pe.close()
 
     def test_hmac_key_extraction_from_binary(self, legitimate_binary: Path) -> None:
-        """HMAC key extraction identifies potential keys in binary."""
+        """HMAC key extraction identifies potential keys in binary.
+
+        CRITICAL TEST: Validates entropy-based HMAC key extraction from binaries.
+        Required to find embedded HMAC keys used for integrity verification.
+        """
         calc = ChecksumRecalculator()
 
         hmac_keys = calc.extract_hmac_keys(str(legitimate_binary))
@@ -205,7 +336,9 @@ class TestChecksumRecalculatorProduction:
                 assert "key_hex" in key_info
                 assert "entropy" in key_info
                 assert "confidence" in key_info
-                assert key_info["size"] in [16, 20, 24, 32, 48, 64]
+                assert key_info["size"] in [16, 20, 24, 32, 48, 64], (
+                    f"FAILED: Extracted key size {key_info['size']} not a standard HMAC key size"
+                )
 
     def test_checksum_location_identification(self, legitimate_binary: Path) -> None:
         """Checksum location finder identifies embedded checksums in binary."""
@@ -273,6 +406,93 @@ class TestIntegrityCheckDetectorProduction:
                 f"FAILED: Protected binary {protected_binary.name} imports integrity check "
                 f"functions but detector found 0 checks. Detector is NOT identifying real "
                 f"integrity verification patterns."
+            )
+
+    def test_hmac_signature_detection(self, legitimate_binary: Path) -> None:
+        """HMAC signature detection identifies HMAC-based integrity checks.
+
+        CRITICAL TEST: Validates detection of HMAC-based integrity verification.
+        Must identify CryptHashData, CryptCreateHash calls that compute HMACs.
+        """
+        detector = IntegrityCheckDetector()
+        pe = pefile.PE(str(legitimate_binary))
+
+        checks = detector.detect_checks(str(legitimate_binary))
+
+        hmac_checks = [c for c in checks if c.check_type == IntegrityCheckType.HMAC_SIGNATURE]
+
+        has_hmac_imports = False
+        if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
+            for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                for imp in entry.imports:
+                    if imp.name and b"CryptCreateHash" in imp.name:
+                        has_hmac_imports = True
+                        break
+        pe.close()
+
+        if has_hmac_imports:
+            assert len(hmac_checks) > 0, (
+                "FAILED: Binary imports CryptCreateHash (HMAC functions) but detector "
+                "found no HMAC_SIGNATURE checks. HMAC detection is broken."
+            )
+
+    def test_authenticode_signature_detection(self, signed_system_binary: Path) -> None:
+        """Authenticode signature detection identifies code signing verification.
+
+        CRITICAL TEST: Validates detection of Authenticode/WinVerifyTrust checks.
+        Must identify binaries that verify digital signatures at runtime.
+        """
+        detector = IntegrityCheckDetector()
+
+        checks = detector.detect_checks(str(signed_system_binary))
+
+        authenticode_checks = [
+            c for c in checks
+            if c.check_type in (IntegrityCheckType.AUTHENTICODE, IntegrityCheckType.CODE_SIGNING)
+        ]
+
+        pe = pefile.PE(str(signed_system_binary))
+        has_wintrust = False
+        if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
+            for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                for imp in entry.imports:
+                    if imp.name and b"WinVerifyTrust" in imp.name:
+                        has_wintrust = True
+                        break
+        pe.close()
+
+        if has_wintrust:
+            assert len(authenticode_checks) > 0, (
+                f"FAILED: Signed binary {signed_system_binary.name} imports WinVerifyTrust "
+                f"but detector found no AUTHENTICODE checks. Code signing detection is broken."
+            )
+
+    def test_rsa_signature_detection(self, legitimate_binary: Path) -> None:
+        """RSA signature verification detection identifies cryptographic signatures.
+
+        CRITICAL TEST: Validates detection of RSA-based signature verification.
+        Must identify CryptVerifySignature calls and RSA public key operations.
+        """
+        detector = IntegrityCheckDetector()
+        pe = pefile.PE(str(legitimate_binary))
+
+        checks = detector.detect_checks(str(legitimate_binary))
+
+        signature_checks = [c for c in checks if c.check_type == IntegrityCheckType.SIGNATURE]
+
+        has_rsa_imports = False
+        if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
+            for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                for imp in entry.imports:
+                    if imp.name and b"CryptVerifySignature" in imp.name:
+                        has_rsa_imports = True
+                        break
+        pe.close()
+
+        if has_rsa_imports:
+            assert len(signature_checks) > 0, (
+                "FAILED: Binary imports CryptVerifySignature but detector found no "
+                "SIGNATURE checks. RSA signature detection is broken."
             )
 
     def test_api_import_detection(self, legitimate_binary: Path) -> None:
@@ -353,6 +573,75 @@ class TestIntegrityBypassEngineProduction:
             assert len(strategy.frida_script) > 0
             assert 0.0 <= strategy.success_rate <= 1.0
             assert strategy.priority >= 0
+
+    def test_hmac_bypass_strategy_exists(self) -> None:
+        """HMAC bypass strategy is loaded and configured.
+
+        CRITICAL TEST: Validates HMAC-SHA256 bypass strategy exists.
+        Required to defeat HMAC-based integrity verification at runtime.
+        """
+        engine = IntegrityBypassEngine()
+
+        hmac_strategies = [
+            s for s in engine.bypass_strategies
+            if IntegrityCheckType.HMAC_SIGNATURE in s.check_types
+        ]
+
+        assert len(hmac_strategies) > 0, (
+            "FAILED: No HMAC bypass strategy loaded. Cannot bypass HMAC-SHA256 integrity checks."
+        )
+
+        for strategy in hmac_strategies:
+            assert "CryptCreateHash" in strategy.frida_script or "HMAC" in strategy.frida_script, (
+                f"FAILED: HMAC strategy '{strategy.name}' lacks CryptCreateHash hooks. "
+                f"Cannot intercept HMAC operations."
+            )
+
+    def test_authenticode_bypass_strategy_exists(self) -> None:
+        """Authenticode bypass strategy is loaded and configured.
+
+        CRITICAL TEST: Validates Authenticode bypass strategy exists.
+        Required to defeat code signing verification at runtime.
+        """
+        engine = IntegrityBypassEngine()
+
+        authenticode_strategies = [
+            s for s in engine.bypass_strategies
+            if IntegrityCheckType.AUTHENTICODE in s.check_types or
+               IntegrityCheckType.CODE_SIGNING in s.check_types
+        ]
+
+        assert len(authenticode_strategies) > 0, (
+            "FAILED: No Authenticode bypass strategy loaded. Cannot bypass code signing checks."
+        )
+
+        for strategy in authenticode_strategies:
+            assert "WinVerifyTrust" in strategy.frida_script, (
+                f"FAILED: Authenticode strategy '{strategy.name}' lacks WinVerifyTrust hooks. "
+                f"Cannot intercept signature verification."
+            )
+
+    def test_rsa_signature_bypass_strategy_exists(self) -> None:
+        """RSA signature bypass strategy is loaded and configured.
+
+        CRITICAL TEST: Validates RSA signature bypass strategy exists.
+        Required to defeat RSA-based license signature verification.
+        """
+        engine = IntegrityBypassEngine()
+
+        signature_strategies = [
+            s for s in engine.bypass_strategies
+            if IntegrityCheckType.SIGNATURE in s.check_types
+        ]
+
+        assert len(signature_strategies) > 0, (
+            "FAILED: No RSA signature bypass strategy loaded. Cannot bypass RSA verification."
+        )
+
+        for strategy in signature_strategies:
+            assert "CryptVerifySignature" in strategy.frida_script or "signature" in strategy.name.lower(), (
+                f"FAILED: Signature strategy '{strategy.name}' lacks signature verification hooks."
+            )
 
     def test_bypass_script_generation(self, protected_binary: Path) -> None:
         """Bypass script generation produces valid Frida JavaScript.
@@ -762,3 +1051,142 @@ class TestEdgeCases:
 
         assert crc32 != 0
         assert duration < 5.0
+
+
+class TestAuthenticodeAndCatalogFiles:
+    """Production tests for Authenticode and catalog file handling."""
+
+    def test_authenticode_detection_on_signed_binary(self, signed_system_binary: Path) -> None:
+        """Authenticode detection identifies signed executables.
+
+        CRITICAL TEST: Validates detection of Authenticode signatures in PE binaries.
+        Required to identify code-signed binaries that verify their signatures at runtime.
+        """
+        detector = IntegrityCheckDetector()
+
+        checks = detector.detect_checks(str(signed_system_binary))
+
+        pe = pefile.PE(str(signed_system_binary))
+        has_signature = hasattr(pe, "DIRECTORY_ENTRY_SECURITY") and len(pe.DIRECTORY_ENTRY_SECURITY) > 0
+        pe.close()
+
+        if has_signature:
+            authenticode_checks = [
+                c for c in checks
+                if c.check_type in (IntegrityCheckType.AUTHENTICODE, IntegrityCheckType.CODE_SIGNING)
+            ]
+            assert len(authenticode_checks) > 0, (
+                f"FAILED: Binary {signed_system_binary.name} has Authenticode signature "
+                f"but detector found no AUTHENTICODE checks. Cannot detect signed binaries."
+            )
+
+    def test_certificate_extraction_from_signed_binary(self, signed_system_binary: Path) -> None:
+        """Certificate extraction from signed PE binary.
+
+        CRITICAL TEST: Validates ability to extract certificate data from
+        Authenticode-signed binaries. Required to analyze and bypass signature verification.
+        """
+        pe = pefile.PE(str(signed_system_binary))
+
+        has_certificate = hasattr(pe, "DIRECTORY_ENTRY_SECURITY") and len(pe.DIRECTORY_ENTRY_SECURITY) > 0
+
+        if has_certificate:
+            cert_data = pe.DIRECTORY_ENTRY_SECURITY[0].get_data()
+            assert len(cert_data) > 0, "FAILED: Certificate data is empty"
+            assert cert_data[:4] != b"\x00\x00\x00\x00", "FAILED: Certificate data appears invalid"
+
+        pe.close()
+
+    def test_catalog_file_hash_detection(self, signed_system_binary: Path) -> None:
+        """Catalog file hash detection for system binaries.
+
+        EDGE CASE TEST: Validates detection of catalog-based integrity verification
+        where hash is stored in external .cat files instead of embedded signatures.
+        """
+        detector = IntegrityCheckDetector()
+
+        checks = detector.detect_checks(str(signed_system_binary))
+
+        catalog_file = signed_system_binary.with_suffix(".cat")
+        if catalog_file.exists():
+            cert_checks = [c for c in checks if c.check_type == IntegrityCheckType.CERTIFICATE]
+            assert len(cert_checks) > 0 or len(checks) > 0, (
+                f"FAILED: Binary {signed_system_binary.name} has catalog file {catalog_file.name} "
+                f"but no integrity checks detected. Catalog-based verification not detected."
+            )
+
+
+class TestMultipleHashAlgorithms:
+    """Production tests for multiple hash algorithm support."""
+
+    def test_md5_sha1_sha256_sha512_consistency(self) -> None:
+        """All hash algorithms produce consistent results.
+
+        CRITICAL TEST: Validates all SHA family algorithms (MD5, SHA1, SHA256, SHA512)
+        produce correct and consistent results. Required to bypass multi-layered
+        protection using different hash algorithms.
+        """
+        calc = ChecksumRecalculator()
+        test_data = b"MULTI_ALGORITHM_PROTECTION_TEST_DATA_FOR_LAYERED_INTEGRITY" * 100
+
+        md5 = calc.calculate_md5(test_data)
+        sha1 = calc.calculate_sha1(test_data)
+        sha256 = calc.calculate_sha256(test_data)
+        sha512 = calc.calculate_sha512(test_data)
+
+        assert md5 == hashlib.md5(test_data).hexdigest()  # noqa: S324
+        assert sha1 == hashlib.sha1(test_data).hexdigest()  # noqa: S324
+        assert sha256 == hashlib.sha256(test_data).hexdigest()
+        assert sha512 == hashlib.sha512(test_data).hexdigest()
+
+        assert md5 != sha1 != sha256 != sha512
+
+    def test_section_hashing_with_multiple_algorithms(self, legitimate_binary: Path) -> None:
+        """Section hashing uses all algorithms for comprehensive protection bypass.
+
+        CRITICAL TEST: Validates section-by-section hashing with MD5, SHA1, SHA256,
+        SHA512, CRC32, CRC64. Required to bypass protections that hash individual
+        PE sections with different algorithms.
+        """
+        calc = ChecksumRecalculator()
+
+        section_hashes = calc.recalculate_section_hashes(str(legitimate_binary))
+
+        assert len(section_hashes) > 0
+
+        required_algorithms = ["md5", "sha1", "sha256", "sha512", "crc32", "crc64"]
+
+        for section_name, hashes in section_hashes.items():
+            for algo in required_algorithms:
+                assert algo in hashes, (
+                    f"FAILED: Section {section_name} missing {algo.upper()} hash. "
+                    f"Cannot bypass multi-algorithm section protection."
+                )
+
+    def test_embedded_checksum_detection_all_algorithms(self, legitimate_binary: Path) -> None:
+        """Embedded checksum detection finds all algorithm types.
+
+        CRITICAL TEST: Validates checksum location finder identifies CRC32, CRC64,
+        MD5, SHA1, SHA256, SHA512 embedded in binary. Required to patch all
+        embedded checksums after binary modification.
+        """
+        calc = ChecksumRecalculator()
+
+        locations = calc.find_checksum_locations(str(legitimate_binary))
+
+        algorithm_types_found = set()
+        for location in locations:
+            algorithm_types_found.add(location.algorithm)
+
+        expected_types = {
+            IntegrityCheckType.CRC32,
+            IntegrityCheckType.MD5_HASH,
+            IntegrityCheckType.SHA256_HASH,
+        }
+
+        if len(locations) > 5:
+            overlap = algorithm_types_found & expected_types
+            assert len(overlap) > 0, (
+                f"FAILED: Found {len(locations)} checksum locations but none are "
+                f"common algorithms (CRC32, MD5, SHA256). Detection may be broken."
+            )

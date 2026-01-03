@@ -16,25 +16,28 @@ Test Coverage Areas:
 - Anti-placeholder validation ensuring production-ready implementations
 """
 
-import pytest
-import asyncio
-import time
-import threading
+import sys
 import tempfile
-import os
-import psutil
-import json
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
+import threading
+import time
+from typing import Any
+
+import pytest
 
 
 class RealR2Session:
     """Real radare2 session simulator for production-ready testing."""
 
+    commands_executed: list[str]
+    binary_path: str
+    analysis_state: dict[str, bool]
+    functions_cache: list[dict[str, Any]]
+    strings_cache: list[str]
+    xrefs_cache: list[dict[str, Any]]
+
     def __init__(self) -> None:
         self.commands_executed = []
-        self.binary_path = None
+        self.binary_path = ""
         self.analysis_state = {}
         self.functions_cache = []
         self.strings_cache = []
@@ -73,7 +76,7 @@ class RealR2Pipe:
     @staticmethod
     def open(binary_path: str) -> RealR2Session:
         """Open a radare2 session for binary analysis."""
-        if not binary_path or 'nonexistent' in binary_path:
+        if not binary_path or "nonexistent" in binary_path:
             raise FileNotFoundError(f"Binary not found: {binary_path}")
 
         session = RealR2Session()
@@ -81,92 +84,108 @@ class RealR2Pipe:
         return session
 
 
-# Import the module under test with real r2pipe replacement
-import sys
-sys.modules['r2pipe'] = RealR2Pipe()
+# Register in sys.modules for testing purposes
+_r2pipe_mock = RealR2Pipe()
+sys.modules["r2pipe"] = _r2pipe_mock  # type: ignore[assignment]
 
 
 # Define real optimization classes
 class OptimizationStrategy:
     """Real optimization strategy implementation."""
 
-    AGGRESSIVE = 'aggressive'
-    CONSERVATIVE = 'conservative'
-    BALANCED = 'balanced'
+    AGGRESSIVE: str = "aggressive"
+    CONSERVATIVE: str = "conservative"
+    BALANCED: str = "balanced"
 
-    def __init__(self, strategy_type='balanced') -> None:
+    value: str
+    cache_size: int
+    thread_count: int
+    memory_limit: int
+
+    def __init__(self, strategy_type: str = "balanced") -> None:
         self.value = strategy_type
         self.cache_size = 100
         self.thread_count = 4
         self.memory_limit = 1024  # MB
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"OptimizationStrategy({self.value})"
 
     @classmethod
-    def __members__(cls):
+    def __members__(cls) -> dict[str, str]:
         """Provide enum-like interface."""
         return {
-            'AGGRESSIVE': cls.AGGRESSIVE,
-            'CONSERVATIVE': cls.CONSERVATIVE,
-            'BALANCED': cls.BALANCED
+            "AGGRESSIVE": cls.AGGRESSIVE,
+            "CONSERVATIVE": cls.CONSERVATIVE,
+            "BALANCED": cls.BALANCED,
         }
 
 
 class AnalysisLevel:
     """Real analysis level implementation."""
 
-    BASIC = 'basic'
-    FULL = 'full'
-    DEEP = 'deep'
+    BASIC: str = "basic"
+    FULL: str = "full"
+    DEEP: str = "deep"
 
-    def __init__(self, level='basic') -> None:
+    value: str
+    depth: int
+
+    def __init__(self, level: str = "basic") -> None:
         self.value = level
-        self.depth = {'basic': 1, 'full': 5, 'deep': 10}.get(level, 1)
+        self.depth = {"basic": 1, "full": 5, "deep": 10}.get(level, 1)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"AnalysisLevel({self.value})"
 
     @classmethod
-    def __members__(cls):
+    def __members__(cls) -> dict[str, str]:
         """Provide enum-like interface."""
         return {
-            'BASIC': cls.BASIC,
-            'FULL': cls.FULL,
-            'DEEP': cls.DEEP
+            "BASIC": cls.BASIC,
+            "FULL": cls.FULL,
+            "DEEP": cls.DEEP,
         }
 
 
 class PerformanceProfile:
     """Real performance profile implementation."""
 
+    metrics: dict[str, float | int]
+
     def __init__(self) -> None:
         self.metrics = {
-            'execution_time': 0.0,
-            'memory_usage': 0.0,
-            'cache_hits': 0,
-            'cache_misses': 0,
-            'commands_executed': 0
+            "execution_time": 0.0,
+            "memory_usage": 0.0,
+            "cache_hits": 0,
+            "cache_misses": 0,
+            "commands_executed": 0,
         }
 
-    def add_metric(self, name: str, value: float):
+    def add_metric(self, name: str, value: float) -> None:
         """Add performance metric."""
         self.metrics[name] = value
 
-    def track_performance(self, metrics: dict[str, float]):
+    def track_performance(self, metrics: dict[str, float]) -> None:
         """Track multiple performance metrics."""
         self.metrics.update(metrics)
 
-    def update(self, **kwargs):
+    def update(self, **kwargs: float | int) -> None:
         """Update metrics with keyword arguments."""
         self.metrics.update(kwargs)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"PerformanceProfile(metrics={self.metrics})"
 
 
 class R2PerformanceOptimizer:
     """Real radare2 performance optimizer implementation."""
+
+    optimization_strategy: OptimizationStrategy
+    analysis_level: AnalysisLevel
+    performance_profile: PerformanceProfile
+    cache: dict[str, str]
+    session: RealR2Session | None
 
     def __init__(self) -> None:
         self.optimization_strategy = OptimizationStrategy()
@@ -175,23 +194,23 @@ class R2PerformanceOptimizer:
         self.cache = {}
         self.session = None
 
-    def set_optimization_strategy(self, strategy):
+    def set_optimization_strategy(self, strategy: OptimizationStrategy) -> None:
         """Set optimization strategy."""
         self.optimization_strategy = strategy
 
-    def get_optimization_strategy(self):
+    def get_optimization_strategy(self) -> OptimizationStrategy:
         """Get current optimization strategy."""
         return self.optimization_strategy
 
-    def set_analysis_level(self, level):
+    def set_analysis_level(self, level: AnalysisLevel) -> None:
         """Set analysis level."""
         self.analysis_level = level
 
-    def get_analysis_level(self):
+    def get_analysis_level(self) -> AnalysisLevel:
         """Get current analysis level."""
         return self.analysis_level
 
-    def get_performance_profile(self):
+    def get_performance_profile(self) -> PerformanceProfile:
         """Get performance profile with metrics."""
         return self.performance_profile
 
@@ -203,59 +222,69 @@ class R2PerformanceOptimizer:
             # Open radare2 session
             self.session = RealR2Pipe.open(binary_path)
 
-            results = []
+            results: list[str] = []
             for cmd in commands:
                 # Check cache first for optimization
                 cache_key = f"{binary_path}:{cmd}"
                 if cache_key in self.cache:
-                    self.performance_profile.metrics['cache_hits'] += 1
+                    cache_hits = self.performance_profile.metrics.get("cache_hits", 0)
+                    if isinstance(cache_hits, int):
+                        self.performance_profile.metrics["cache_hits"] = cache_hits + 1
                     results.append(self.cache[cache_key])
                 else:
-                    self.performance_profile.metrics['cache_misses'] += 1
+                    cache_misses = self.performance_profile.metrics.get("cache_misses", 0)
+                    if isinstance(cache_misses, int):
+                        self.performance_profile.metrics["cache_misses"] = cache_misses + 1
                     result = self.session.cmd(cmd)
                     self.cache[cache_key] = result
                     results.append(result)
 
-                self.performance_profile.metrics['commands_executed'] += 1
+                commands_executed = self.performance_profile.metrics.get(
+                    "commands_executed", 0
+                )
+                if isinstance(commands_executed, int):
+                    self.performance_profile.metrics["commands_executed"] = (
+                        commands_executed + 1
+                    )
 
             # Update performance metrics
             elapsed = time.time() - start_time
-            self.performance_profile.add_metric('execution_time', elapsed)
+            self.performance_profile.add_metric("execution_time", elapsed)
 
             # Return optimization results
             return {
-                'binary': binary_path,
-                'commands': commands,
-                'results': results,
-                'optimization_applied': True,
-                'strategy': str(self.optimization_strategy),
-                'level': str(self.analysis_level)
+                "binary": binary_path,
+                "commands": commands,
+                "results": results,
+                "optimization_applied": True,
+                "strategy": str(self.optimization_strategy),
+                "level": str(self.analysis_level),
             }
 
         except FileNotFoundError as e:
-            return {'error': str(e)}
+            return {"error": str(e)}
         except Exception as e:
-            if 'Invalid command' in str(e):
-                return {'error': f"Invalid command: {commands}"}
+            if "Invalid command" in str(e):
+                return {"error": f"Invalid command: {commands}"}
             raise
 
 
-def create_performance_optimizer(**kwargs) -> R2PerformanceOptimizer:
+def create_performance_optimizer(**kwargs: Any) -> R2PerformanceOptimizer:
     """Factory function to create performance optimizer."""
     optimizer = R2PerformanceOptimizer()
 
     # Apply configuration
-    if 'optimization_level' in kwargs:
-        if kwargs['optimization_level'] == 'aggressive':
-            optimizer.set_optimization_strategy(OptimizationStrategy('aggressive'))
-        elif kwargs['optimization_level'] == 'comprehensive':
-            optimizer.set_optimization_strategy(OptimizationStrategy('balanced'))
-            optimizer.set_analysis_level(AnalysisLevel('deep'))
+    if "optimization_level" in kwargs:
+        if kwargs["optimization_level"] == "aggressive":
+            optimizer.set_optimization_strategy(OptimizationStrategy("aggressive"))
+        elif kwargs["optimization_level"] == "comprehensive":
+            optimizer.set_optimization_strategy(OptimizationStrategy("balanced"))
+            optimizer.set_analysis_level(AnalysisLevel("deep"))
 
-    if kwargs.get('cache_enabled'):
+    if kwargs.get("cache_enabled"):
         optimizer.cache = {}
 
-    if kwargs.get('profiling_enabled'):
+    if kwargs.get("profiling_enabled"):
         optimizer.performance_profile = PerformanceProfile()
 
     return optimizer
@@ -342,7 +371,8 @@ class TestR2PerformanceOptimizer:
         assert isinstance(profile, (PerformanceProfile, dict, object))
 
         # Verify the optimizer actually processed the commands
-        assert profile.metrics['commands_executed'] > 0
+        assert isinstance(profile, PerformanceProfile)
+        assert profile.metrics["commands_executed"] > 0
 
     def test_anti_placeholder_validation(self, optimizer: Any) -> None:
         """Anti-placeholder test that fails on non-functional implementations"""
@@ -388,11 +418,15 @@ class TestOptimizationStrategy:
 
         try:
             # Test if it's an enum-like class with strategy types
-            strategies = []
-            if hasattr(OptimizationStrategy, '__members__'):  # Enum-style
-                strategies = list(OptimizationStrategy.__members__.values())
-            elif hasattr(OptimizationStrategy, 'AGGRESSIVE'):  # Constants-style
-                strategies = [OptimizationStrategy.AGGRESSIVE, OptimizationStrategy.CONSERVATIVE]
+            strategies: list[str | OptimizationStrategy] = []
+            if hasattr(OptimizationStrategy, "__members__"):  # Enum-style
+                members = OptimizationStrategy.__members__()
+                strategies = list(members.values())
+            elif hasattr(OptimizationStrategy, "AGGRESSIVE"):  # Constants-style
+                strategies = [
+                    OptimizationStrategy.AGGRESSIVE,
+                    OptimizationStrategy.CONSERVATIVE,
+                ]
             else:  # Instance-based
                 strategies = [OptimizationStrategy(), OptimizationStrategy()]
 
@@ -401,7 +435,7 @@ class TestOptimizationStrategy:
         except AttributeError:
             # If it's a different implementation pattern, ensure it's not a stub
             strategy = OptimizationStrategy()
-            assert str(strategy) != "<OptimizationStrategy object at"  # Must have meaningful repr
+            assert str(strategy) != "<OptimizationStrategy object at"
             assert strategy is not None
 
 
@@ -423,10 +457,11 @@ class TestAnalysisLevel:
 
         try:
             # Test if it's an enum-like class with level types
-            levels = []
-            if hasattr(AnalysisLevel, '__members__'):  # Enum-style
-                levels = list(AnalysisLevel.__members__.values())
-            elif hasattr(AnalysisLevel, 'BASIC'):  # Constants-style
+            levels: list[str | AnalysisLevel] = []
+            if hasattr(AnalysisLevel, "__members__"):  # Enum-style
+                members = AnalysisLevel.__members__()
+                levels = list(members.values())
+            elif hasattr(AnalysisLevel, "BASIC"):  # Constants-style
                 levels = [AnalysisLevel.BASIC, AnalysisLevel.FULL, AnalysisLevel.DEEP]
             else:  # Instance-based
                 levels = [AnalysisLevel(), AnalysisLevel()]
@@ -436,7 +471,7 @@ class TestAnalysisLevel:
         except AttributeError:
             # If it's a different implementation pattern, ensure it's not a stub
             level = AnalysisLevel()
-            assert str(level) != "<AnalysisLevel object at"  # Must have meaningful repr
+            assert str(level) != "<AnalysisLevel object at"
             assert level is not None
 
 
@@ -512,7 +547,7 @@ class TestFactoryFunctions:
 
         assert result is not None
         assert result != {}  # Must return meaningful result
-        assert result != []  # Must not be empty
+        assert bool(result)  # Must not be empty
         assert str(result) != "None"  # Must not be placeholder
 
     def test_optimize_for_large_binary_performance_scaling(self) -> None:
@@ -729,25 +764,25 @@ class TestErrorHandlingAndEdgeCases:
 
         result = optimizer.optimize(large_binary_path, memory_intensive_commands)
 
-        # Should complete without crashing
-        assert result is not None or result is None  # Either result or graceful failure
+        # Should complete without crashing - result can be any dict
+        assert isinstance(result, dict)  # Either success or error result
 
         # Performance profile should still be available
         profile = optimizer.get_performance_profile()
         assert profile is not None
 
     def test_concurrent_access_safety(self) -> None:
-        """Test thread safety and concurrent access handling"""
+        """Test thread safety and concurrent access handling."""
         optimizer = R2PerformanceOptimizer()
 
-        results = []
+        results: list[dict[str, Any]] = []
 
-        def run_optimization(binary_id):
-            result = optimizer.optimize(f'binary_{binary_id}.exe', ['aaa', 'afll'])
+        def run_optimization(binary_id: int) -> None:
+            result = optimizer.optimize(f"binary_{binary_id}.exe", ["aaa", "afll"])
             results.append(result)
 
         # Create multiple threads for concurrent access
-        threads = []
+        threads: list[threading.Thread] = []
         for i in range(5):
             thread = threading.Thread(target=run_optimization, args=(i,))
             threads.append(thread)
@@ -759,47 +794,49 @@ class TestErrorHandlingAndEdgeCases:
 
         # Verify concurrent access didn't cause issues
         assert len(results) == 5
-        # All results should be either valid or None (graceful failure)
-        assert all(r is not None or r is None for r in results)
+        # All results should be valid dicts
+        assert all(isinstance(r, dict) for r in results)
 
 
 class TestPerformanceBenchmarking:
     """Test suite for performance benchmarking and validation"""
 
     def test_optimization_performance_benchmarks(self) -> None:
-        """Test performance benchmarks for optimization effectiveness"""
+        """Test performance benchmarks for optimization effectiveness."""
         optimizer = create_performance_optimizer()
 
-        benchmarks = []
-        commands = ['aaa', 'afll', 'pdf', 'iz', 'axj']
+        benchmarks: list[dict[str, Any]] = []
+        commands = ["aaa", "afll", "pdf", "iz", "axj"]
 
         for cmd in commands:
             start_time = time.time()
-            result = optimizer.optimize('benchmark_binary.exe', [cmd])
+            result = optimizer.optimize("benchmark_binary.exe", [cmd])
             elapsed_time = time.time() - start_time
 
             benchmarks.append({
-                'command': cmd,
-                'result': result,
-                'elapsed_time': elapsed_time
+                "command": cmd,
+                "result": result,
+                "elapsed_time": elapsed_time,
             })
 
         # Verify benchmarking data
         assert len(benchmarks) == len(commands)
-        assert all(b['result'] is not None for b in benchmarks)
-        assert all(b['elapsed_time'] >= 0 for b in benchmarks)
+        assert all(b["result"] is not None for b in benchmarks)
+        for benchmark in benchmarks:
+            elapsed = benchmark["elapsed_time"]
+            assert isinstance(elapsed, float) and elapsed >= 0
 
         # Test performance profile aggregation
         profile = optimizer.get_performance_profile()
         assert profile is not None
 
     def test_scalability_benchmarks(self) -> None:
-        """Test optimizer scalability with varying workloads"""
-        scalability_tests = [
-            {'binaries': 1, 'commands': 2},
-            {'binaries': 5, 'commands': 5},
-            {'binaries': 10, 'commands': 3},
-            {'binaries': 3, 'commands': 10}
+        """Test optimizer scalability with varying workloads."""
+        scalability_tests: list[dict[str, int]] = [
+            {"binaries": 1, "commands": 2},
+            {"binaries": 5, "commands": 5},
+            {"binaries": 10, "commands": 3},
+            {"binaries": 3, "commands": 10},
         ]
 
         for test_case in scalability_tests:
@@ -808,16 +845,18 @@ class TestPerformanceBenchmarking:
             start_time = time.time()
 
             # Execute scalability test
-            for binary_idx in range(test_case['binaries']):
-                commands = ['aaa'] * test_case['commands']
-                result = optimizer.optimize(f'scale_binary_{binary_idx}.exe', commands)
-                assert result is not None or result is None  # Accept graceful failures
+            for binary_idx in range(test_case["binaries"]):
+                commands = ["aaa"] * test_case["commands"]
+                result = optimizer.optimize(f"scale_binary_{binary_idx}.exe", commands)
+                assert isinstance(result, dict)  # Accept any dict result
 
             elapsed_time = time.time() - start_time
 
             # Verify scalability (should complete in reasonable time)
-            expected_max_time = (test_case['binaries'] * test_case['commands']) * 0.1
-            assert elapsed_time < max(expected_max_time, 5.0)  # Max 5 seconds for any test
+            expected_max_time = (
+                test_case["binaries"] * test_case["commands"]
+            ) * 0.1
+            assert elapsed_time < max(expected_max_time, 5.0)
 
 
 if __name__ == '__main__':

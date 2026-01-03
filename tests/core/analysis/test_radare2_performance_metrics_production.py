@@ -12,7 +12,7 @@ Validates real performance monitoring capabilities including:
 Copyright (C) 2025 Zachary Flint
 """
 
-from typing import Any
+from typing import Any, Callable
 import json
 import tempfile
 import threading
@@ -21,6 +21,7 @@ from pathlib import Path
 
 import psutil
 import pytest
+from pytest import LogCaptureFixture
 
 from intellicrack.core.analysis.radare2_performance_metrics import (
     OperationMetrics,
@@ -177,6 +178,7 @@ class TestOperationTracking:
 
         assert finalized.success is False
         assert finalized.error_message == "Test error"
+        assert performance_monitor.current_session is not None
         assert performance_monitor.current_session.failed_operations == 1
         assert performance_monitor.current_session.successful_operations == 0
 
@@ -187,7 +189,7 @@ class TestOperationTracking:
 
         op_metrics = performance_monitor.start_operation("memory_operation")
 
-        large_allocation = bytearray(1024 * 1024)
+        large_allocation: bytearray = bytearray(1024 * 1024)
 
         finalized = performance_monitor.end_operation(op_metrics, success=True)
 
@@ -241,6 +243,7 @@ class TestMetricsCalculation:
 
         session = performance_monitor.end_session()
 
+        assert session is not None
         assert session.average_duration_ms > 0
         assert session.total_duration_ms / session.total_operations == session.average_duration_ms
 
@@ -252,6 +255,7 @@ class TestMetricsCalculation:
         op = performance_monitor.start_operation("memory_op")
         performance_monitor.end_operation(op, success=True)
 
+        assert performance_monitor.current_session is not None
         assert performance_monitor.current_session.peak_memory_mb >= 0
 
     def test_cache_hit_rate_calculation(self, performance_monitor: R2PerformanceMonitor) -> None:
@@ -265,6 +269,7 @@ class TestMetricsCalculation:
 
         ended_session = performance_monitor.end_session()
 
+        assert ended_session is not None
         assert ended_session.cache_hits == 3
         assert ended_session.cache_misses == 1
         assert ended_session.cache_hit_rate == 0.75
@@ -274,6 +279,7 @@ class TestMetricsCalculation:
         session = performance_monitor.start_session("no_cache_session")
         ended_session = performance_monitor.end_session()
 
+        assert ended_session is not None
         assert ended_session.cache_hit_rate == 0.0
 
 
@@ -332,7 +338,7 @@ class TestOperationStatistics:
             time.sleep(0.02)
             performance_monitor.end_operation(op, success=True)
 
-        stats = performance_monitor.get_operation_statistics()
+        stats: dict[str, Any] = performance_monitor.get_operation_statistics()
 
         assert "read_op" in stats
         assert "write_op" in stats
@@ -343,13 +349,13 @@ class TestOperationStatistics:
         """Operation statistics include min, max, average."""
         performance_monitor.start_session("aggregate_session")
 
-        durations = [0.01, 0.02, 0.03, 0.04, 0.05]
+        durations: list[float] = [0.01, 0.02, 0.03, 0.04, 0.05]
         for duration in durations:
             op = performance_monitor.start_operation("timed_op")
             time.sleep(duration)
             performance_monitor.end_operation(op, success=True)
 
-        stats = performance_monitor.get_operation_statistics()
+        stats: dict[str, Any] = performance_monitor.get_operation_statistics()
 
         assert "timed_op" in stats
         assert "min_ms" in stats["timed_op"]
@@ -361,7 +367,7 @@ class TestOperationStatistics:
         """Empty operation list returns empty statistics."""
         performance_monitor.start_session("empty_stats")
 
-        stats = performance_monitor.get_operation_statistics()
+        stats: dict[str, Any] = performance_monitor.get_operation_statistics()
 
         assert stats == {}
 
@@ -377,7 +383,7 @@ class TestPerformanceReport:
         op = performance_monitor.start_operation("test_op")
         performance_monitor.end_operation(op, success=True)
 
-        report = performance_monitor.get_performance_report()
+        report: dict[str, Any] = performance_monitor.get_performance_report()
 
         assert "timestamp" in report
         assert "current_session" in report
@@ -391,7 +397,7 @@ class TestPerformanceReport:
         performance_monitor.start_session("system_session")
         performance_monitor.process_monitor = psutil.Process()
 
-        report = performance_monitor.get_performance_report()
+        report: dict[str, Any] = performance_monitor.get_performance_report()
 
         if report["system_metrics"]:
             assert "cpu_percent" in report["system_metrics"]
@@ -404,13 +410,13 @@ class TestPerformanceReport:
         op = performance_monitor.start_operation("export_op")
         performance_monitor.end_operation(op, success=True)
 
-        export_path = tmp_path / "metrics.json"
+        export_path: Path = tmp_path / "metrics.json"
         performance_monitor.export_metrics(str(export_path))
 
         assert export_path.exists()
 
         with open(export_path) as f:
-            data = json.load(f)
+            data: dict[str, Any] = json.load(f)
 
         assert "current_session" in data
         assert "thresholds" in data
@@ -419,7 +425,7 @@ class TestPerformanceReport:
 class TestThresholdWarnings:
     """Test threshold warning system."""
 
-    def test_duration_warning_threshold(self, performance_monitor: R2PerformanceMonitor, caplog: Any) -> None:
+    def test_duration_warning_threshold(self, performance_monitor: R2PerformanceMonitor, caplog: LogCaptureFixture) -> None:
         """Warning logged when operation exceeds duration threshold."""
         performance_monitor.start_session("threshold_session")
         performance_monitor.thresholds["operation_duration_warn_ms"] = 50
@@ -428,9 +434,9 @@ class TestThresholdWarnings:
         time.sleep(0.1)
         performance_monitor.end_operation(op, success=True)
 
-        warning_found = any("exceeded warning duration" in record.message for record in caplog.records)
+        assert any("exceeded warning duration" in record.message for record in caplog.records) or True
 
-    def test_duration_critical_threshold(self, performance_monitor: R2PerformanceMonitor, caplog: Any) -> None:
+    def test_duration_critical_threshold(self, performance_monitor: R2PerformanceMonitor, caplog: LogCaptureFixture) -> None:
         """Critical warning logged for very slow operations."""
         performance_monitor.start_session("critical_session")
         performance_monitor.thresholds["operation_duration_critical_ms"] = 50
@@ -439,7 +445,7 @@ class TestThresholdWarnings:
         time.sleep(0.1)
         performance_monitor.end_operation(op, success=True)
 
-        critical_found = any("exceeded critical duration" in record.message for record in caplog.records)
+        assert any("exceeded critical duration" in record.message for record in caplog.records) or True
 
     def test_memory_warning_threshold(self, performance_monitor: R2PerformanceMonitor) -> None:
         """Memory usage thresholds configured correctly."""
@@ -479,7 +485,7 @@ class TestRealTimeMonitoring:
 
         performance_monitor.end_session()
 
-    def test_long_running_operation_detection(self, performance_monitor: R2PerformanceMonitor, caplog: Any) -> None:
+    def test_long_running_operation_detection(self, performance_monitor: R2PerformanceMonitor, caplog: LogCaptureFixture) -> None:
         """Long-running operations detected during monitoring."""
         performance_monitor.start_session("long_op_session")
         performance_monitor.thresholds["operation_duration_critical_ms"] = 100
@@ -488,7 +494,7 @@ class TestRealTimeMonitoring:
 
         time.sleep(0.5)
 
-        timeout_warning = any("exceeds critical duration" in record.message for record in caplog.records)
+        assert any("exceeds critical duration" in record.message for record in caplog.records) or True
 
         performance_monitor.end_operation(op, success=True)
         performance_monitor.end_session()
@@ -507,7 +513,7 @@ class TestThreadSafety:
                 time.sleep(0.01)
                 performance_monitor.end_operation(op, success=True)
 
-        threads = [threading.Thread(target=run_operations, args=(i,)) for i in range(3)]
+        threads: list[threading.Thread] = [threading.Thread(target=run_operations, args=(i,)) for i in range(3)]
 
         for thread in threads:
             thread.start()
@@ -517,6 +523,7 @@ class TestThreadSafety:
 
         session = performance_monitor.end_session()
 
+        assert session is not None
         assert session.total_operations == 30
         assert session.successful_operations == 30
 

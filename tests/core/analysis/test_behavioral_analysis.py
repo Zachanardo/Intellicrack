@@ -20,7 +20,7 @@ from typing import Any
 import pytest
 
 AntiAnalysisDetector: type[Any] | None
-APIHookingFramework: type[Any] | None
+FridaAPIHookingFramework: type[Any] | None
 BehavioralAnalyzer: type[Any] | None
 HookPoint: type[Any] | None
 MonitorEvent: type[Any] | None
@@ -32,8 +32,8 @@ run_behavioral_analysis: Any
 try:
     from intellicrack.core.analysis.behavioral_analysis import (
         AntiAnalysisDetector,
-        APIHookingFramework,
         BehavioralAnalyzer,
+        FridaAPIHookingFramework,
         HookPoint,
         MonitorEvent,
         QEMUConfig,
@@ -44,7 +44,7 @@ try:
     AVAILABLE = True
 except ImportError:
     AntiAnalysisDetector = None
-    APIHookingFramework = None
+    FridaAPIHookingFramework = None
     BehavioralAnalyzer = None
     HookPoint = None
     MonitorEvent = None
@@ -143,8 +143,8 @@ class TestAPIHookingFramework:
 
     def test_framework_initialization(self) -> None:
         """Test API hooking framework initializes."""
-        assert APIHookingFramework is not None
-        framework = APIHookingFramework()
+        assert FridaAPIHookingFramework is not None
+        framework = FridaAPIHookingFramework()
         assert framework is not None
         assert hasattr(framework, "add_hook")
         assert hasattr(framework, "remove_hook")
@@ -168,9 +168,9 @@ class TestAPIHookingFramework:
         if sys.platform != "win32":
             pytest.skip("Windows-specific test")
 
-        assert APIHookingFramework is not None
+        assert FridaAPIHookingFramework is not None
         assert HookPoint is not None
-        framework = APIHookingFramework()
+        framework = FridaAPIHookingFramework()
 
         import subprocess
         process = subprocess.Popen([notepad_path])

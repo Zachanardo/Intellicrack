@@ -20,7 +20,7 @@ Coverage:
 import os
 import struct
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import pefile
 import pytest
@@ -777,8 +777,8 @@ class TestSymbolCachingAndLookup:
 
         start_time: float = time.perf_counter()
         for symbol in test_symbols * 100:
-            rva: int = symbol_cache.get(symbol, 0)
-            assert rva > 0
+            cached_rva: int = symbol_cache.get(symbol, 0)
+            assert cached_rva > 0
         end_time: float = time.perf_counter()
 
         elapsed: float = end_time - start_time
@@ -1020,7 +1020,7 @@ class TestSymbolResolutionIntegration:
         pe: pefile.PE = pefile.PE(str(kernel32_path), fast_load=True)
         pe.parse_data_directories()
 
-        symbol_table: Dict[str, Dict[str, int]] = {
+        symbol_table: Dict[str, Dict[str, Dict[str, Any]]] = {
             "exports": {},
             "forwards": {},
         }
@@ -1029,11 +1029,11 @@ class TestSymbolResolutionIntegration:
             name: str = export.name.decode("utf-8") if export.name else f"ord_{export.ordinal}"
 
             if export.forwarder:
-                forwarder: str = export.forwarder.decode("utf-8")
-                symbol_table["forwards"][name] = {"forwarder": forwarder}
+                forwarder_str: str = export.forwarder.decode("utf-8")
+                symbol_table["forwards"][name] = {"forwarder": forwarder_str}
             else:
-                rva: int = export.address
-                symbol_table["exports"][name] = {"rva": rva, "ordinal": export.ordinal}
+                export_rva: int = export.address
+                symbol_table["exports"][name] = {"rva": export_rva, "ordinal": export.ordinal}
 
         assert len(symbol_table["exports"]) > 500
         assert len(symbol_table["forwards"]) > 0

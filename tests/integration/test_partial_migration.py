@@ -11,7 +11,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
-from typing import Any
+from typing import Any, Collection, cast
 
 from intellicrack.core.config_manager import IntellicrackConfig
 
@@ -373,26 +373,24 @@ class TestPartialMigration(unittest.TestCase):
         # Set up directories through simulator
         self.migration_sim.create_directory_structure()
 
-        # Set environment
         os.environ['INTELLICRACK_CONFIG_DIR'] = str(self.migration_sim.config_dir)
+        os.environ['INTELLICRACK_CONFIG_PATH'] = str(self.migration_sim.config_dir / "config.json")
 
-        # Quick access to paths
         self.config_dir = self.migration_sim.config_dir
         self.llm_config_dir = self.migration_sim.llm_config_dir
         self.legacy_config_dir = self.migration_sim.legacy_config_dir
 
-        # Initialize config manager with temporary directory
-        self.config = IntellicrackConfig(config_path=str(self.config_dir / "config.json"))
+        self.config = IntellicrackConfig()
 
     def tearDown(self) -> None:
         """Clean up test environment."""
-        # Remove temporary directory
         if Path(self.temp_dir).exists():
             shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-        # Clean up environment
         if 'INTELLICRACK_CONFIG_DIR' in os.environ:
             del os.environ['INTELLICRACK_CONFIG_DIR']
+        if 'INTELLICRACK_CONFIG_PATH' in os.environ:
+            del os.environ['INTELLICRACK_CONFIG_PATH']
 
     def test_18_1_3_partial_migration_detection(self) -> None:
         """Test that system correctly detects partial migration state using real simulators."""
@@ -402,7 +400,7 @@ class TestPartialMigration(unittest.TestCase):
         legacy_cli = self.legacy_data_gen.create_legacy_cli_config()
 
         # Reload config to pick up saved state
-        self.config = IntellicrackConfig(config_path=str(self.config_dir / "config.json"))
+        self.config = IntellicrackConfig()
 
         # Verify migration detection with real validation
         self.assertIsNotNone(self.config.get("ui_preferences.window_geometry"))
@@ -430,32 +428,34 @@ class TestPartialMigration(unittest.TestCase):
         profiles_data, metrics_data, models_data = self.legacy_data_gen.create_legacy_llm_configs()
 
         # Reload config
-        self.config = IntellicrackConfig(config_path=str(self.config_dir / "config.json"))
+        self.config = IntellicrackConfig()
 
         # Run migration with real functionality
         self.config._migrate_llm_configs()  # type: ignore[attr-defined]
 
-        # Verify merged models with real validation (should have both migrated and legacy)
-        gpt4_config = self.config.get("llm_configuration.models.gpt-4")
-        self.assertIsNotNone(gpt4_config)
-        self.assertEqual(gpt4_config["api_key"], "sk-migrated-key-123")  # Keep migrated
+        gpt4_config_raw = self.config.get("llm_configuration.models.gpt-4")
+        self.assertIsNotNone(gpt4_config_raw)
+        gpt4_config = cast(dict[str, Any], gpt4_config_raw)
+        self.assertEqual(gpt4_config["api_key"], "sk-migrated-key-123")
 
-        claude2_config = self.config.get("llm_configuration.models.claude-2")
-        self.assertIsNotNone(claude2_config)
-        self.assertEqual(claude2_config["api_key"], "sk-ant-legacy-key-456")  # Add legacy
+        claude2_config_raw = self.config.get("llm_configuration.models.claude-2")
+        self.assertIsNotNone(claude2_config_raw)
+        claude2_config = cast(dict[str, Any], claude2_config_raw)
+        self.assertEqual(claude2_config["api_key"], "sk-ant-legacy-key-456")
 
-        llama_config = self.config.get("llm_configuration.models.local-llama")
-        self.assertIsNotNone(llama_config)
+        llama_config_raw = self.config.get("llm_configuration.models.local-llama")
+        self.assertIsNotNone(llama_config_raw)
+        llama_config = cast(dict[str, Any], llama_config_raw)
         self.assertEqual(llama_config["model_path"], "/models/llama-2-7b.gguf")
 
-        # Verify profiles migrated
-        fast_profile = self.config.get("llm_configuration.profiles.fast")
-        self.assertIsNotNone(fast_profile)
+        fast_profile_raw = self.config.get("llm_configuration.profiles.fast")
+        self.assertIsNotNone(fast_profile_raw)
+        fast_profile = cast(dict[str, Any], fast_profile_raw)
         self.assertEqual(fast_profile["settings"]["temperature"], 0.9)
 
-        # Verify metrics migrated
-        metrics = self.config.get("llm_configuration.metrics")
-        self.assertIsNotNone(metrics)
+        metrics_raw = self.config.get("llm_configuration.metrics")
+        self.assertIsNotNone(metrics_raw)
+        metrics = cast(dict[str, Any], metrics_raw)
         self.assertIn("gpt-4", metrics)
         self.assertIn("claude-2", metrics)
 
@@ -469,7 +469,7 @@ class TestPartialMigration(unittest.TestCase):
         self.legacy_data_gen.create_partial_central_config()
 
         # Reload config
-        self.config = IntellicrackConfig(config_path=str(self.config_dir / "config.json"))
+        self.config = IntellicrackConfig()
 
         # Simulate QSettings migration with real functionality
         qsettings_keys = self.migration_sim.get_all_qsettings_keys()
@@ -512,25 +512,25 @@ class TestPartialMigration(unittest.TestCase):
         cli_config = self.legacy_data_gen.create_legacy_cli_config()
 
         # Reload config
-        self.config = IntellicrackConfig(config_path=str(self.config_dir / "config.json"))
+        self.config = IntellicrackConfig()
 
         # Run migration with real functionality
         self.config._migrate_cli_config()  # type: ignore[attr-defined]
 
-        # Verify CLI config migrated with real validation
-        cli_prefs = self.config.get("cli_configuration.preferences")
-        self.assertIsNotNone(cli_prefs)
+        cli_prefs_raw = self.config.get("cli_configuration.preferences")
+        self.assertIsNotNone(cli_prefs_raw)
+        cli_prefs = cast(dict[str, Any], cli_prefs_raw)
         self.assertTrue(cli_prefs["color_output"])
         self.assertFalse(cli_prefs["verbose_mode"])
 
-        # Verify profiles migrated
-        default_profile = self.config.get("cli_configuration.profiles.default")
-        self.assertIsNotNone(default_profile)
+        default_profile_raw = self.config.get("cli_configuration.profiles.default")
+        self.assertIsNotNone(default_profile_raw)
+        default_profile = cast(dict[str, Any], default_profile_raw)
         self.assertEqual(default_profile["output_format"], "json")
 
-        # Verify aliases migrated
-        aliases = self.config.get("cli_configuration.aliases")
-        self.assertIsNotNone(aliases)
+        aliases_raw = self.config.get("cli_configuration.aliases")
+        self.assertIsNotNone(aliases_raw)
+        aliases = cast(dict[str, Any], aliases_raw)
         self.assertEqual(aliases["ll"], "list --long")
 
         # Track migration
@@ -542,14 +542,14 @@ class TestPartialMigration(unittest.TestCase):
         central_config, models_data = self.legacy_data_gen.create_conflicted_configs()
 
         # Reload and migrate with real functionality
-        self.config = IntellicrackConfig(config_path=str(self.config_dir / "config.json"))
+        self.config = IntellicrackConfig()
         self.config._migrate_llm_configs()  # type: ignore[attr-defined]
 
-        # Verify central config values preserved with real validation
-        gpt4_config = self.config.get("llm_configuration.models.gpt-4")
-        self.assertEqual(gpt4_config["model_name"], "gpt-4-turbo")  # Keep newer
-        self.assertEqual(gpt4_config["api_key"], "sk-new-key-789")  # Keep newer
-        self.assertEqual(gpt4_config["temperature"], 0.8)  # Keep newer
+        gpt4_config_raw = self.config.get("llm_configuration.models.gpt-4")
+        gpt4_config = cast(dict[str, Any], gpt4_config_raw)
+        self.assertEqual(gpt4_config["model_name"], "gpt-4-turbo")
+        self.assertEqual(gpt4_config["api_key"], "sk-new-key-789")
+        self.assertEqual(gpt4_config["temperature"], 0.8)
 
         # Verify conflicts were detected and resolved
         self.assertGreater(len(self.migration_sim.conflicts_detected), 0)
@@ -567,7 +567,7 @@ class TestPartialMigration(unittest.TestCase):
         self.migration_sim.set_qsettings_data("general/auto_save", True)
 
         # Reload and run full migration with real functionality
-        self.config = IntellicrackConfig(config_path=str(self.config_dir / "config.json"))
+        self.config = IntellicrackConfig()
 
         # Run all migrations
         self.config._run_migrations()  # type: ignore[attr-defined]
@@ -582,9 +582,10 @@ class TestPartialMigration(unittest.TestCase):
         self.assertIsNotNone(self.config.get("qemu_testing"))
         self.assertIsNotNone(self.config.get("general_preferences"))
 
-        # Verify no data lost
-        self.assertEqual(len(self.config.get("llm_configuration.models", {})), 3)  # gpt-4, claude-2, local-llama
-        self.assertEqual(len(self.config.get("llm_configuration.profiles", {})), 2)  # fast, balanced
+        models_raw = self.config.get("llm_configuration.models", {})
+        profiles_raw = self.config.get("llm_configuration.profiles", {})
+        self.assertEqual(len(cast(dict[str, Any], models_raw)), 3)
+        self.assertEqual(len(cast(dict[str, Any], profiles_raw)), 2)
         self.assertTrue(self.config.get("general_preferences.auto_save"))
 
         # Verify migration completion tracking
@@ -598,7 +599,7 @@ class TestPartialMigration(unittest.TestCase):
         self.legacy_data_gen.create_legacy_llm_configs()
 
         # Reload config
-        self.config = IntellicrackConfig(config_path=str(self.config_dir / "config.json"))
+        self.config = IntellicrackConfig()
 
         # Run migration twice with real tracking
         self.migration_sim.track_migration_run()
@@ -617,11 +618,10 @@ class TestPartialMigration(unittest.TestCase):
         # Check for duplicates after second run
         second_check = self.migration_sim.check_for_duplicates("models", second_models)
 
-        # Verify no duplication with real validation
         self.assertEqual(first_models, second_models)
         self.assertEqual(first_profiles, second_profiles)
-        self.assertEqual(len(second_models), 3)  # Still just 3 models
-        self.assertEqual(len(second_profiles), 2)  # Still just 2 profiles
+        self.assertEqual(len(cast(dict[str, Any], second_models) if second_models else {}), 3)
+        self.assertEqual(len(cast(dict[str, Any], second_profiles) if second_profiles else {}), 2)
 
         # Verify idempotency tracking
         self.assertEqual(self.migration_sim.migration_runs, 2)
@@ -636,7 +636,7 @@ class TestPartialMigration(unittest.TestCase):
         self.legacy_data_gen.create_legacy_llm_configs()
 
         # Reload and migrate with real functionality
-        self.config = IntellicrackConfig(config_path=str(self.config_dir / "config.json"))
+        self.config = IntellicrackConfig()
         self.config._run_migrations()  # type: ignore[attr-defined]
 
         # Verify custom settings preserved with real validation

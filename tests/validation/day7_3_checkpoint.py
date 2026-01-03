@@ -4,28 +4,29 @@ Day 7.3: PRODUCTION READINESS CHECKPOINT 7
 Enterprise License System Analysis Validation
 """
 
-import os
-import sys
-import json
-import time
 import struct
-import importlib
-from pathlib import Path
+import sys
+import tempfile
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Optional
+from pathlib import Path
+from typing import Any
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-class ProductionReadinessCheckpoint7:
-    """Validates enterprise license system analysis and testing framework"""
 
-    def __init__(self):
-        self.checkpoint_results = {
+class ProductionReadinessCheckpoint7:
+    """Validates enterprise license system analysis and testing framework."""
+
+    checkpoint_results: dict[str, Any]
+
+    def __init__(self) -> None:
+        self.checkpoint_results: dict[str, Any] = {
             "timestamp": datetime.now().isoformat(),
             "tests": {},
             "overall_pass": False,
-            "critical_failures": []
+            "critical_failures": [],
         }
 
     def test_commercial_license_analyzer(self) -> bool:
@@ -447,8 +448,8 @@ class ProductionReadinessCheckpoint7:
 
         return all_passed
 
-    def _generate_report(self, passed: bool):
-        """Generate checkpoint report"""
+    def _generate_report(self, passed: bool) -> None:
+        """Generate checkpoint report."""
         report = f"""
 # PRODUCTION READINESS CHECKPOINT 7 - VALIDATION REPORT
 Generated: {self.checkpoint_results['timestamp']}
@@ -533,8 +534,8 @@ Pass Rate: {sum(bool(v)
             f.write(report)
 
 
-def main():
-    """Main checkpoint validation"""
+def main() -> int:
+    """Main checkpoint validation."""
     checkpoint = ProductionReadinessCheckpoint7()
     if passed := checkpoint.run_all_tests():
         print("\n" + "=" * 60)

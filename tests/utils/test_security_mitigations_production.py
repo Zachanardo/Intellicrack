@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import builtins
 import sys
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -125,7 +126,7 @@ class TestScanMaliciousTestFiles:
     """Test scanning for malicious test.py files."""
 
     @pytest.fixture
-    def temp_test_env(self) -> Path:
+    def temp_test_env(self) -> Generator[Path, None, None]:
         """Create temporary environment with test files."""
         with tempfile.TemporaryDirectory() as tmpdir:
             yield Path(tmpdir)
@@ -244,7 +245,7 @@ class TestIsSafeToRemove:
     """Test safety checks for test.py file removal."""
 
     @pytest.fixture
-    def temp_file_env(self) -> Path:
+    def temp_file_env(self) -> Generator[Path, None, None]:
         """Create temporary environment for file safety tests."""
         with tempfile.TemporaryDirectory() as tmpdir:
             yield Path(tmpdir)
@@ -319,7 +320,7 @@ class TestRemoveMaliciousTestFiles:
     """Test removal of malicious test.py files."""
 
     @pytest.fixture
-    def temp_removal_env(self) -> Path:
+    def temp_removal_env(self) -> Generator[Path, None, None]:
         """Create temporary environment for removal tests."""
         with tempfile.TemporaryDirectory() as tmpdir:
             yield Path(tmpdir)
@@ -457,7 +458,7 @@ class TestSecurityMitigationsIntegration:
     """Integration tests for security mitigations."""
 
     @pytest.fixture
-    def malicious_test_env(self) -> Path:
+    def malicious_test_env(self) -> Generator[Path, None, None]:
         """Create environment with malicious test files."""
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_path = Path(tmpdir)

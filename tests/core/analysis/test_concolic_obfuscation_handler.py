@@ -25,7 +25,7 @@ Tests MUST FAIL if obfuscation handling capabilities are broken.
 import struct
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 import pytest
 
@@ -95,7 +95,8 @@ class RealControlFlowSimplifier:
         """Detect if code uses control flow flattening."""
         dispatcher_pattern: bool = False
 
-        if "dispatcher" in [c for c in state.constraints if "dispatcher" in c]:
+        dispatcher_constraints: List[str] = [c for c in state.constraints if "dispatcher" in c]
+        if dispatcher_constraints:
             dispatcher_pattern = True
 
         return dispatcher_pattern
@@ -176,7 +177,7 @@ class RealSymbolicSimplifier:
 
     def eliminate_redundant_constraints(self, constraints: List[str]) -> List[str]:
         """Remove redundant constraints."""
-        seen: set[str] = set()
+        seen: Set[str] = set()
         unique: List[str] = []
 
         for c in constraints:

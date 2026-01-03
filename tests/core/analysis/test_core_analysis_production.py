@@ -7,6 +7,7 @@ section analysis, import/export detection, and license-related pattern identific
 Copyright (C) 2025 Zachary Flint
 """
 
+import random
 import struct
 import tempfile
 from pathlib import Path
@@ -140,7 +141,6 @@ def simple_pe_binary(tmp_path: Path) -> Path:
 def packed_pe_binary(tmp_path: Path) -> Path:
     """Create a packed-looking PE binary (high entropy section)."""
     binary_path = tmp_path / "packed.exe"
-    import random
     random.seed(12345)
     high_entropy_data = bytes(random.randint(0, 255) for _ in range(512))
 

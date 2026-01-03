@@ -574,8 +574,10 @@ class TestResultsMerging:
 
         analyzer.total_bytes = 2000
         for result in chunk_results:
-            for byte_val, count in result["byte_counts"].items():
-                analyzer.global_byte_counts[byte_val] += count
+            byte_counts = result.get("byte_counts", {})
+            if isinstance(byte_counts, dict):
+                for byte_val, count in byte_counts.items():
+                    analyzer.global_byte_counts[byte_val] += count
 
         merged = analyzer.merge_results(chunk_results)
 
@@ -742,7 +744,7 @@ class TestAnalysisFinalization:
             "high_entropy_regions": [{"offset": i * 1000, "size": 1000} for i in range(5)],
         }
 
-        analyzer.global_byte_counts = {i: 50 for i in range(200)}
+        analyzer.global_byte_counts.update({i: 50 for i in range(200)})
         analyzer.total_bytes = 10000
 
         finalized = analyzer.finalize_analysis(merged_results)
@@ -758,7 +760,7 @@ class TestAnalysisFinalization:
             "high_entropy_regions": [{"offset": i * 1000, "size": 1000} for i in range(20)],
         }
 
-        analyzer.global_byte_counts = {i: 40 for i in range(256)}
+        analyzer.global_byte_counts.update({i: 40 for i in range(256)})
         analyzer.total_bytes = 10240
 
         finalized = analyzer.finalize_analysis(merged_results)
@@ -774,7 +776,7 @@ class TestAnalysisFinalization:
             "high_entropy_regions": [{"offset": i * 1000, "size": 1000} for i in range(15)],
         }
 
-        analyzer.global_byte_counts = {i: 100 for i in range(100)}
+        analyzer.global_byte_counts.update({i: 100 for i in range(100)})
         analyzer.total_bytes = 10000
 
         finalized = analyzer.finalize_analysis(merged_results)
@@ -789,7 +791,7 @@ class TestAnalysisFinalization:
             "high_entropy_regions": [],
         }
 
-        analyzer.global_byte_counts = {i: 10 for i in range(128)}
+        analyzer.global_byte_counts.update({i: 10 for i in range(128)})
         analyzer.total_bytes = 1280
 
         finalized = analyzer.finalize_analysis(merged_results)
@@ -804,7 +806,7 @@ class TestAnalysisFinalization:
             "high_entropy_regions": [],
         }
 
-        analyzer.global_byte_counts = {i: 1 for i in range(256)}
+        analyzer.global_byte_counts.update({i: 1 for i in range(256)})
         analyzer.total_bytes = 256
 
         finalized = analyzer.finalize_analysis(merged_results)
@@ -821,7 +823,7 @@ class TestAnalysisFinalization:
             "high_entropy_regions": [{"offset": i * 1000} for i in range(15)],
         }
 
-        analyzer.global_byte_counts = {i: 1 for i in range(256)}
+        analyzer.global_byte_counts.update({i: 1 for i in range(256)})
         analyzer.total_bytes = 256
 
         finalized = analyzer.finalize_analysis(merged_results)
@@ -840,7 +842,7 @@ class TestAnalysisFinalization:
             "high_entropy_regions": [{"offset": i * 1000} for i in range(5)],
         }
 
-        analyzer.global_byte_counts = {i: 1 for i in range(256)}
+        analyzer.global_byte_counts.update({i: 1 for i in range(256)})
         analyzer.total_bytes = 256
 
         finalized = analyzer.finalize_analysis(merged_results)
@@ -859,7 +861,7 @@ class TestAnalysisFinalization:
             "high_entropy_regions": [{"offset": i * 1000} for i in range(8)],
         }
 
-        analyzer.global_byte_counts = {i: 50 for i in range(200)}
+        analyzer.global_byte_counts.update({i: 50 for i in range(200)})
         analyzer.total_bytes = 10000
 
         finalized = analyzer.finalize_analysis(merged_results)

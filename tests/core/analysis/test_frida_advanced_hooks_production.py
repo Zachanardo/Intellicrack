@@ -7,12 +7,10 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-import os
 import subprocess
 import sys
 import time
-from pathlib import Path
-from typing import Generator
+from typing import Generator, Any, Optional, Dict, List
 
 import frida
 import pytest
@@ -146,14 +144,14 @@ class TestFridaStalkerEngine:
         threads = frida_session.enumerate_threads()
         assert len(threads) > 0, "No threads found in target process"
 
-        main_thread_id = threads[0].id
+        main_thread_id: int = threads[0].id
 
         time.sleep(1)
 
         stalker.script.exports.get_trace_data()
         time.sleep(0.5)
 
-        trace = stalker.get_trace(main_thread_id)
+        trace: Optional[StalkerTrace] = stalker.get_trace(main_thread_id)
 
         if trace is not None:
             assert isinstance(trace, StalkerTrace)
@@ -165,7 +163,7 @@ class TestFridaStalkerEngine:
             assert trace.coverage >= 0.0
 
             if len(trace.instructions) > 0:
-                first_instruction = trace.instructions[0]
+                first_instruction: Any = trace.instructions[0]
                 assert "address" in first_instruction
                 assert "mnemonic" in first_instruction
 
@@ -180,13 +178,13 @@ class TestFridaStalkerEngine:
         threads = frida_session.enumerate_threads()
         assert len(threads) > 0
 
-        thread_id = threads[0].id
+        thread_id: int = threads[0].id
 
-        success = stalker.stop_trace(thread_id)
+        success: bool = stalker.stop_trace(thread_id)
         assert isinstance(success, bool)
 
         if len(threads) > 1:
-            second_thread_id = threads[1].id
+            second_thread_id: int = threads[1].id
             success = stalker.start_trace(second_thread_id)
             assert isinstance(success, bool)
 
@@ -206,7 +204,7 @@ class TestFridaStalkerEngine:
         stalker.script.exports.get_trace_data()
         time.sleep(0.5)
 
-        has_trace_data = False
+        has_trace_data: bool = False
         for trace in stalker.traces.values():
             if len(trace.call_graph) > 0:
                 has_trace_data = True
@@ -258,7 +256,8 @@ class TestFridaHeapTracker:
             assert allocation.timestamp > 0
             assert allocation.thread_id > 0
             assert isinstance(allocation.call_stack, list)
-            assert isinstance(allocation.freed, bool)
+            freed_value: bool = allocation.freed
+            assert freed_value is not None
 
     def test_heap_tracker_tracks_frees(
         self,
@@ -273,12 +272,13 @@ class TestFridaHeapTracker:
 
         time.sleep(3)
 
-        freed_found = False
+        freed_found: bool = False
         for allocation in tracker.allocations.values():
             if allocation.freed:
                 freed_found = True
-                assert allocation.freed_timestamp is not None
-                assert allocation.freed_timestamp > allocation.timestamp
+                freed_timestamp: Optional[float] = allocation.freed_timestamp
+                assert freed_timestamp is not None
+                assert freed_timestamp > allocation.timestamp
                 break
 
         assert freed_found or len(tracker.allocations) == 0, "No freed allocations detected"
@@ -292,19 +292,23 @@ class TestFridaHeapTracker:
 
         time.sleep(2)
 
-        stats = tracker.get_stats()
+        stats: Dict[str, Any] = tracker.get_stats()
 
         assert isinstance(stats, dict)
         assert "totalAllocations" in stats
         assert "totalFrees" in stats
         assert "currentAllocated" in stats
 
-        assert stats["totalAllocations"] >= 0
-        assert stats["totalFrees"] >= 0
-        assert stats["currentAllocated"] >= 0
+        total_allocs: Any = stats["totalAllocations"]
+        total_frees: Any = stats["totalFrees"]
+        current_alloc: Any = stats["currentAllocated"]
 
-        if stats["totalAllocations"] > 0:
-            assert stats["totalAllocations"] >= stats["totalFrees"]
+        assert total_allocs >= 0
+        assert total_frees >= 0
+        assert current_alloc >= 0
+
+        if total_allocs > 0:
+            assert total_allocs >= total_frees
 
     def test_heap_tracker_find_leaks(self, frida_session: frida.core.Session) -> None:
         """Heap tracker identifies potential memory leaks.
@@ -315,7 +319,7 @@ class TestFridaHeapTracker:
 
         time.sleep(2)
 
-        leaks = tracker.find_leaks()
+        leaks: List[Optional[HeapAllocation]] = tracker.find_leaks()
 
         assert isinstance(leaks, list)
 
@@ -353,7 +357,7 @@ class TestFridaThreadMonitor:
 
         time.sleep(3)
 
-        threads = monitor.get_threads()
+        threads: List[ThreadInfo] = monitor.get_threads()
 
         assert isinstance(threads, list)
 
@@ -373,7 +377,7 @@ class TestFridaThreadMonitor:
         """
         monitor = FridaThreadMonitor(frida_session)
 
-        current_threads = monitor.get_current_threads()
+        current_threads: List[Dict[str, Any]] = monitor.get_current_threads()
 
         assert isinstance(current_threads, list)
         assert len(current_threads) > 0, "No current threads found"
@@ -394,13 +398,14 @@ class TestFridaThreadMonitor:
 
         time.sleep(4)
 
-        threads = monitor.get_threads()
+        threads: List[ThreadInfo] = monitor.get_threads()
 
-        terminated_found = False
+        terminated_found: bool = False
         for thread in threads:
-            if thread.termination_time is not None:
+            termination_time: Optional[float] = thread.termination_time
+            if termination_time is not None:
                 terminated_found = True
-                assert thread.termination_time > thread.creation_time
+                assert termination_time > thread.creation_time
                 break
 
         assert terminated_found or len(threads) == 0, "No thread terminations detected"
@@ -437,7 +442,7 @@ class TestFridaExceptionHooker:
 
         assert len(hooker.exceptions) == 0
 
-        remote_exceptions = hooker.script.exports.get_exceptions()
+        remote_exceptions: List[Any] = hooker.script.exports.get_exceptions()
         assert len(remote_exceptions) == 0
 
     def test_exception_hooker_get_exceptions(
@@ -452,7 +457,7 @@ class TestFridaExceptionHooker:
 
         time.sleep(1)
 
-        exceptions = hooker.get_exceptions()
+        exceptions: List[Any] = hooker.get_exceptions()
 
         assert isinstance(exceptions, list)
 
@@ -492,11 +497,11 @@ class TestFridaNativeReplacer:
         if len(exports) == 0:
             pytest.skip("No exports found in main module")
 
-        test_export = next((exp for exp in exports if exp.type == "function"), None)
+        test_export: Optional[Any] = next((exp for exp in exports if exp.type == "function"), None)
         if test_export is None:
             pytest.skip("No function exports found")
 
-        success = replacer.replace_function(
+        success: bool = replacer.replace_function(
             int(test_export.address),
             "alwaysValid",
             "int",
@@ -525,13 +530,13 @@ class TestFridaNativeReplacer:
         main_module = modules[0]
         exports = main_module.enumerate_exports()
 
-        test_export = next((exp for exp in exports if exp.type == "function"), None)
+        test_export: Optional[Any] = next((exp for exp in exports if exp.type == "function"), None)
         if test_export is None:
             pytest.skip("No function exports found")
 
-        test_address = int(test_export.address)
+        test_address: int = int(test_export.address)
 
-        replace_success = replacer.replace_function(
+        replace_success: bool = replacer.replace_function(
             test_address,
             "alwaysValid",
             "int",
@@ -543,7 +548,7 @@ class TestFridaNativeReplacer:
 
         time.sleep(0.5)
 
-        restore_success = replacer.restore_function(test_address)
+        restore_success: bool = replacer.restore_function(test_address)
 
         assert isinstance(restore_success, bool)
 
@@ -573,9 +578,9 @@ class TestFridaRPCInterface:
         assert len(modules) > 0
 
         main_module = modules[0]
-        test_address = int(main_module.base_address)
+        test_address: int = int(main_module.base_address)
 
-        data = rpc.memory_read(test_address, 16)
+        data: bytes = rpc.memory_read(test_address, 16)
 
         assert isinstance(data, bytes)
         assert len(data) == 16
@@ -587,18 +592,18 @@ class TestFridaRPCInterface:
         """
         rpc = FridaRPCInterface(frida_session)
 
-        test_data = b"\x90" * 16
+        test_data: bytes = b"\x90" * 16
 
         try:
-            alloc_address = rpc.script.exports.memory.allocate(16)
+            alloc_address: int = rpc.script.exports.memory.allocate(16)
             assert isinstance(alloc_address, int)
             assert alloc_address > 0
 
-            success = rpc.memory_write(alloc_address, test_data)
+            success: bool = rpc.memory_write(alloc_address, test_data)
             assert isinstance(success, bool)
 
             if success:
-                read_back = rpc.memory_read(alloc_address, 16)
+                read_back: bytes = rpc.memory_read(alloc_address, 16)
                 assert read_back == test_data
         except Exception as e:
             pytest.skip(f"Memory allocation/write not supported: {e}")
@@ -610,7 +615,7 @@ class TestFridaRPCInterface:
         """
         rpc = FridaRPCInterface(frida_session)
 
-        results = rpc.memory_scan("00 00 00 00", limit=5)
+        results: List[Dict[str, Any]] = rpc.memory_scan("00 00 00 00", limit=5)
 
         assert isinstance(results, list)
         assert len(results) <= 5
@@ -619,8 +624,9 @@ class TestFridaRPCInterface:
             assert isinstance(result, dict)
             assert "address" in result
             assert "size" in result
-            assert isinstance(result["address"], int)
-            assert result["address"] > 0
+            address_val: Any = result["address"]
+            assert isinstance(address_val, int)
+            assert address_val > 0
 
     def test_rpc_module_find_export(self, frida_session: frida.core.Session) -> None:
         """RPC interface finds module exports in target process.

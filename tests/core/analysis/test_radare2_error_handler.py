@@ -150,12 +150,12 @@ class TestErrorEvent:
 class RealTestRecoveryAction:
     """Real test recovery action for production-ready testing."""
 
-    def __init__(self, name="test_action") -> None:
-        self.name = name
-        self.call_count = 0
-        self.last_error_event = None
+    def __init__(self, name: str = "test_action") -> None:
+        self.name: str = name
+        self.call_count: int = 0
+        self.last_error_event: Any = None
 
-    def __call__(self, error_event=None):
+    def __call__(self, error_event: Any = None) -> bool:
         """Execute recovery action."""
         self.call_count += 1
         self.last_error_event = error_event
@@ -267,7 +267,7 @@ class TestR2ErrorHandlerErrorClassification:
 
     def setup_method(self) -> None:
         """Set up test handler for each test."""
-        self.handler = R2ErrorHandler()
+        self.handler: R2ErrorHandler = R2ErrorHandler()
 
     def test_critical_error_classification(self) -> None:
         """Validate critical errors are properly classified for immediate attention."""
@@ -313,7 +313,7 @@ class TestR2ErrorHandlerRecoveryStrategy:
 
     def setup_method(self) -> None:
         """Set up test handler for each test."""
-        self.handler = R2ErrorHandler()
+        self.handler: R2ErrorHandler = R2ErrorHandler()
 
     def test_recovery_strategy_determination(self) -> None:
         """Validate intelligent recovery strategy selection based on error characteristics."""
@@ -363,11 +363,11 @@ class TestR2ErrorHandlerRecoveryStrategy:
         class RealTestErrorEvent:
             """Real test error event for recovery testing."""
             def __init__(self) -> None:
-                self.recovery_strategy = RecoveryStrategy.RETRY
-                self.recovery_attempts = 0
-                self.error_type = "TestError"
-                self.message = "Test error message"
-                self.context = {}
+                self.recovery_strategy: RecoveryStrategy = RecoveryStrategy.RETRY
+                self.recovery_attempts: int = 0
+                self.error_type: str = "TestError"
+                self.message: str = "Test error message"
+                self.context: dict[str, Any] = {}
 
         error_event = RealTestErrorEvent()
 
@@ -392,7 +392,7 @@ class TestR2ErrorHandlerCircuitBreaker:
 
     def setup_method(self) -> None:
         """Set up test handler for each test."""
-        self.handler = R2ErrorHandler()
+        self.handler: R2ErrorHandler = R2ErrorHandler()
 
     def test_circuit_breaker_activation(self) -> None:
         """Validate circuit breaker activates after repeated failures to prevent cascading issues."""
@@ -448,13 +448,13 @@ class TestR2ErrorHandlerPerformanceMonitoring:
 
     def setup_method(self) -> None:
         """Set up test handler for each test."""
-        self.handler = R2ErrorHandler()
+        self.handler: R2ErrorHandler = R2ErrorHandler()
 
     def test_performance_recording(self) -> None:
         """Validate handler records operation performance metrics."""
-        operation_name = "cfg_analysis"
-        duration = 2.5
-        success = True
+        operation_name: str = "cfg_analysis"
+        duration: float = 2.5
+        success: bool = True
 
         self.handler._record_performance(operation_name, duration, success)
 
@@ -466,8 +466,8 @@ class TestR2ErrorHandlerPerformanceMonitoring:
     def test_error_statistics_generation(self) -> None:
         """Validate comprehensive error statistics for production monitoring."""
         # Simulate various errors
-        error_types = ["ConnectionError", "TimeoutError", "MemoryError", "ParseError"]
-        severities = [ErrorSeverity.LOW, ErrorSeverity.MEDIUM, ErrorSeverity.HIGH, ErrorSeverity.CRITICAL]
+        error_types: list[str] = ["ConnectionError", "TimeoutError", "MemoryError", "ParseError"]
+        severities: list[ErrorSeverity] = [ErrorSeverity.LOW, ErrorSeverity.MEDIUM, ErrorSeverity.HIGH, ErrorSeverity.CRITICAL]
 
         for error_type in error_types:
             for severity in severities:
@@ -517,11 +517,11 @@ class TestR2ErrorHandlerRealWorldScenarios:
 
     def setup_method(self) -> None:
         """Set up test handler for each test."""
-        self.handler = R2ErrorHandler()
+        self.handler: R2ErrorHandler = R2ErrorHandler()
 
     def test_packed_binary_analysis_errors(self) -> None:
         """Validate handling of errors from analyzing packed/protected binaries."""
-        packed_binary_context = {
+        packed_binary_context: dict[str, Any] = {
             "binary_path": "C:\\malware\\packed_sample.exe",
             "protection": "UPX+VMProtect",
             "analysis_stage": "unpacking",
@@ -549,7 +549,7 @@ class TestR2ErrorHandlerRealWorldScenarios:
 
     def test_memory_exhaustion_during_analysis(self) -> None:
         """Validate handling of memory exhaustion during complex binary analysis."""
-        large_binary_context = {
+        large_binary_context: dict[str, Any] = {
             "binary_size": "500MB",
             "analysis_depth": "full_recursive",
             "memory_available": "insufficient",
@@ -564,7 +564,7 @@ class TestR2ErrorHandlerRealWorldScenarios:
 
     def test_radare2_session_corruption(self) -> None:
         """Validate handling of radare2 session corruption scenarios."""
-        session_corruption_context = {
+        session_corruption_context: dict[str, Any] = {
             "session_duration": "45_minutes",
             "operations_performed": 1247,
             "last_operation": "function_analysis",
@@ -593,14 +593,14 @@ class TestR2ErrorHandlerRealWorldScenarios:
 
     def test_concurrent_error_handling(self) -> None:
         """Validate thread-safe error handling during concurrent radare2 operations."""
-        def simulate_concurrent_error(error_id):
+        def simulate_concurrent_error(error_id: int) -> bool:
             error = RuntimeError(f"Concurrent operation error {error_id}")
-            context = {"thread_id": error_id, "operation": "parallel_analysis"}
+            context: dict[str, Any] = {"thread_id": error_id, "operation": "parallel_analysis"}
             return self.handler.handle_error(error, "concurrent_operation", context)
 
         # Simulate concurrent errors
-        threads = []
-        results = []
+        threads: list[threading.Thread] = []
+        results: list[Any] = []
 
         for i in range(5):
             thread = threading.Thread(target=lambda i=i: results.append(simulate_concurrent_error(i)))
@@ -635,12 +635,12 @@ class TestR2ErrorHandlerGlobalFunctions:
         original_handle_error = handler.handle_error
 
         # Track if handle_error was called
-        called = []
-        def tracking_handle_error(error, operation, context):
-            called.append((error, operation, context))
+        called: list[tuple[Exception, str, dict[str, Any]]] = []
+        def tracking_handle_error(error: Exception, operation: str, context: dict[str, Any] | None) -> bool:
+            called.append((error, operation, context or {}))
             return original_handle_error(error, operation, context)
 
-        handler.handle_error = tracking_handle_error
+        handler.handle_error = tracking_handle_error  # type: ignore[assignment]
 
         result = handle_r2_error(test_error, "test_operation", {"test": "context"})
 
@@ -651,13 +651,13 @@ class TestR2ErrorHandlerGlobalFunctions:
         assert isinstance(result, bool)
 
         # Restore original method
-        handler.handle_error = original_handle_error
+        handler.handle_error = original_handle_error  # type: ignore[assignment]
 
     def test_r2_error_context_manager(self) -> None:
         """Validate context manager for automatic error handling."""
         handler = get_error_handler()
 
-        test_context = {"operation": "context_managed_analysis"}
+        test_context: dict[str, Any] = {"operation": "context_managed_analysis"}
 
         # Test successful operation
         with r2_error_context("test_operation", test_context):
@@ -667,14 +667,14 @@ class TestR2ErrorHandlerGlobalFunctions:
         test_error = RuntimeError("Context managed error")
 
         # Track if error was handled
-        handled_errors = []
+        handled_errors: list[tuple[Exception, str, dict[str, Any]]] = []
         original_handle = handler.handle_error
 
-        def tracking_handle(error, operation, context):
-            handled_errors.append((error, operation, context))
+        def tracking_handle(error: Exception, operation: str, context: dict[str, Any] | None) -> bool:
+            handled_errors.append((error, operation, context or {}))
             return True
 
-        handler.handle_error = tracking_handle
+        handler.handle_error = tracking_handle  # type: ignore[assignment]
 
         with r2_error_context("test_operation_with_error", test_context):
             raise test_error
@@ -686,7 +686,7 @@ class TestR2ErrorHandlerGlobalFunctions:
         assert handled_errors[0][2] == test_context
 
         # Restore original method
-        handler.handle_error = original_handle
+        handler.handle_error = original_handle  # type: ignore[assignment]
 
 
 class TestR2ErrorHandlerAdvancedFeatures:
@@ -694,7 +694,7 @@ class TestR2ErrorHandlerAdvancedFeatures:
 
     def setup_method(self) -> None:
         """Set up test handler for each test."""
-        self.handler = R2ErrorHandler()
+        self.handler: R2ErrorHandler = R2ErrorHandler()
 
     def test_custom_recovery_action_registration(self) -> None:
         """Validate ability to register custom recovery actions for specific use cases."""
@@ -813,7 +813,7 @@ class TestR2ErrorHandlerIntegration:
         # Simulate complete error scenario
         binary_analysis_error = FileNotFoundError(f"Binary not found: {temp_binary_file}")
 
-        context = {
+        context: dict[str, Any] = {
             "binary_path": temp_binary_file,
             "analysis_type": "comprehensive",
             "expected_architecture": "x64",

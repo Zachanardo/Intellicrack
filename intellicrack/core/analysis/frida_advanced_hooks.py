@@ -139,6 +139,8 @@ class FridaStalkerEngine:
 
         Sets up the Frida Stalker engine for instruction-level tracing with
         thread tracking, basic block detection, and call graph analysis.
+        Includes comprehensive error handling for crashes, invalid instructions,
+        memory access violations, and anti-instrumentation detection.
         """
         stalker_script = """
 // Stalker Configuration
@@ -150,155 +152,579 @@ const STALKER_CONFIG = {
         block: true,
         compile: false
     },
-    onReceive: new NativeCallback(onStalkerData, 'void', ['pointer']),
-    transform: new NativeCallback(transformInstruction, 'void', ['pointer'])
+    maxRetries: 3,
+    enableRecovery: true,
+    maxInstructionLogSize: 100000,
+    maxBasicBlocksSize: 10000,
+    maxErrorLogSize: 100,
+    trustThreshold: 3,
+    timingNormalizationEnabled: true
 };
 
-// Thread tracking
+// Thread tracking with per-thread state for race condition prevention
 const trackedThreads = new Set();
 const instructionLog = [];
 const basicBlocks = [];
 const callGraph = {};
+const errorLog = [];
+const sessionState = {
+    active: true,
+    crashCount: 0,
+    lastError: null,
+    recoveryMode: false
+};
 
-// Transform function for instruction modification
-function transformInstruction(iterator) {
-    let instruction = Stalker.parseInstruction(iterator);
+// Per-thread state management to prevent race conditions (HIGH-003)
+const threadLocalState = new Map();
 
-    while (instruction !== null) {
-        // Log instruction details
-        if (STALKER_CONFIG.events.exec) {
-            const details = {
-                address: instruction.address.toString(),
-                mnemonic: instruction.mnemonic,
-                opStr: instruction.opStr,
-                size: instruction.size
-            };
-            instructionLog.push(details);
+// Memory validation helper
+function isValidMemoryRegion(address) {
+    try {
+        const ranges = Process.enumerateRanges('r--');
+        const addr = ptr(address);
+
+        for (const range of ranges) {
+            if (addr.compare(range.base) >= 0 &&
+                addr.compare(range.base.add(range.size)) < 0) {
+                return true;
+            }
+        }
+        return false;
+    } catch (e) {
+        logError('Memory validation failed', e, address);
+        return false;
+    }
+}
+
+// Validate instruction boundary
+function isValidInstructionBoundary(address, size) {
+    try {
+        if (size <= 0 || size > 15) {
+            return false;
         }
 
-        // Track basic blocks
-        if (instruction.mnemonic === 'jmp' ||
-            instruction.mnemonic === 'je' ||
-            instruction.mnemonic === 'jne' ||
-            instruction.mnemonic === 'call' ||
-            instruction.mnemonic === 'ret') {
+        const addr = ptr(address);
+        const endAddr = addr.add(size);
 
-            const blockEnd = instruction.address.toInt32();
-            if (basicBlocks.length > 0) {
-                const lastBlock = basicBlocks[basicBlocks.length - 1];
-                if (!lastBlock.end) {
-                    lastBlock.end = blockEnd;
+        return isValidMemoryRegion(addr) && isValidMemoryRegion(endAddr.sub(1));
+    } catch (e) {
+        logError('Instruction boundary validation failed', e, address);
+        return false;
+    }
+}
+
+// Error logging with context and circular buffer (HIGH-002)
+function logError(context, error, additionalInfo) {
+    const errorEntry = {
+        timestamp: Date.now(),
+        context: context,
+        error: error ? error.toString() : 'Unknown error',
+        additionalInfo: additionalInfo || null,
+        threadId: Process.getCurrentThreadId(),
+        stackTrace: error && error.stack ? error.stack : null
+    };
+
+    errorLog.push(errorEntry);
+
+    if (errorLog.length > STALKER_CONFIG.maxErrorLogSize) {
+        errorLog.splice(0, errorLog.length - STALKER_CONFIG.maxErrorLogSize);
+    }
+
+    send({
+        type: 'stalker_error',
+        payload: errorEntry
+    });
+}
+
+// Session recovery mechanism
+function attemptRecovery(threadId) {
+    if (!STALKER_CONFIG.enableRecovery) {
+        return false;
+    }
+
+    try {
+        sessionState.recoveryMode = true;
+
+        Stalker.flush();
+        Stalker.garbageCollect();
+
+        instructionLog.length = Math.min(instructionLog.length, 1000);
+        basicBlocks.length = Math.min(basicBlocks.length, 100);
+
+        sessionState.recoveryMode = false;
+
+        send({
+            type: 'stalker_recovery_success',
+            payload: { threadId: threadId }
+        });
+
+        return true;
+    } catch (e) {
+        sessionState.recoveryMode = false;
+        logError('Recovery attempt failed', e, threadId);
+        return false;
+    }
+}
+
+// Transform function with comprehensive error handling (CRITICAL-001, CRITICAL-002 fixes)
+function transformInstruction(iterator) {
+    if (!sessionState.active) {
+        return;
+    }
+
+    const currentThreadId = Process.getCurrentThreadId();
+
+    if (!threadLocalState.has(currentThreadId)) {
+        threadLocalState.set(currentThreadId, {
+            skipCount: 0,
+            lastError: null,
+            active: true
+        });
+    }
+
+    const threadState = threadLocalState.get(currentThreadId);
+    if (!threadState.active) {
+        return;
+    }
+
+    let instruction = null;
+    let parseAttempts = 0;
+    const maxParseAttempts = STALKER_CONFIG.maxRetries;
+
+    try {
+        while (parseAttempts < maxParseAttempts) {
+            try {
+                instruction = iterator.next();
+                break;
+            } catch (parseError) {
+                parseAttempts++;
+
+                if (parseAttempts >= maxParseAttempts) {
+                    logError('iterator.next() failed after retries', parseError, {
+                        attempts: parseAttempts,
+                        iterator: iterator ? iterator.toString() : 'null'
+                    });
+
+                    try {
+                        iterator.keep();
+                    } catch (keepError) {
+                        logError('Failed to keep instruction after parse failure', keepError);
+                    }
+                    return;
+                }
+
+                threadState.skipCount++;
+                if (threadState.skipCount > 10) {
+                    threadState.active = false;
+                    return;
                 }
             }
-            basicBlocks.push({ start: instruction.next.toInt32(), end: null });
         }
 
-        // Track call graph
-        if (instruction.mnemonic === 'call') {
-            const caller = instruction.address.toInt32();
-            const target = instruction.operands[0].value.toInt32();
+        while (instruction !== null) {
+            try {
+                if (!instruction.address) {
+                    logError('Invalid instruction: null address', null, instruction);
+                    iterator.keep();
+                    break;
+                }
 
-            if (!callGraph[caller]) {
-                callGraph[caller] = [];
+                const instructionAddr = instruction.address;
+                const instructionSize = instruction.size || 0;
+
+                if (!isValidInstructionBoundary(instructionAddr, instructionSize)) {
+                    logError('Invalid instruction boundary detected', null, {
+                        address: instructionAddr.toString(),
+                        size: instructionSize
+                    });
+                    iterator.keep();
+                    break;
+                }
+
+                if (STALKER_CONFIG.events.exec) {
+                    try {
+                        const details = {
+                            address: instructionAddr.toString(),
+                            mnemonic: instruction.mnemonic || 'unknown',
+                            opStr: instruction.opStr || '',
+                            size: instructionSize
+                        };
+
+                        if (instructionLog.length < STALKER_CONFIG.maxInstructionLogSize) {
+                            instructionLog.push(details);
+                        } else if (!sessionState.recoveryMode) {
+                            attemptRecovery(Process.getCurrentThreadId());
+                        }
+                    } catch (logError_) {
+                        logError('Failed to log instruction details', logError_, instructionAddr.toString());
+                    }
+                }
+
+                try {
+                    const mnemonic = instruction.mnemonic || '';
+
+                    if (mnemonic === 'jmp' || mnemonic === 'je' || mnemonic === 'jne' ||
+                        mnemonic === 'call' || mnemonic === 'ret') {
+
+                        const blockEnd = parseInt(instructionAddr.toString());
+
+                        if (basicBlocks.length > 0 && basicBlocks.length < STALKER_CONFIG.maxBasicBlocksSize) {
+                            const lastBlock = basicBlocks[basicBlocks.length - 1];
+                            if (lastBlock && !lastBlock.end) {
+                                lastBlock.end = blockEnd;
+                            }
+                        }
+
+                        if (instruction.next && isValidMemoryRegion(instruction.next)) {
+                            const nextAddr = parseInt(instruction.next.toString());
+
+                            if (basicBlocks.length < STALKER_CONFIG.maxBasicBlocksSize) {
+                                basicBlocks.push({ start: nextAddr, end: null });
+                            }
+                        }
+                    }
+
+                    if (mnemonic === 'call' && instruction.operands && instruction.operands.length > 0) {
+                        try {
+                            const caller = parseInt(instructionAddr.toString());
+                            const targetOperand = instruction.operands[0];
+
+                            if (targetOperand && targetOperand.value) {
+                                const target = parseInt(targetOperand.value.toString());
+
+                                if (!callGraph[caller]) {
+                                    callGraph[caller] = [];
+                                }
+
+                                if (callGraph[caller].length < 100) {
+                                    callGraph[caller].push(target);
+                                }
+                            }
+                        } catch (callGraphError) {
+                            logError('Failed to track call graph', callGraphError, instructionAddr.toString());
+                        }
+                    }
+                } catch (blockError) {
+                    logError('Failed to track basic blocks', blockError, instructionAddr.toString());
+                }
+
+                try {
+                    iterator.putCallout(onInstructionExecuted);
+                } catch (calloutError) {
+                    logError('Failed to put callout', calloutError, instructionAddr.toString());
+                }
+
+                try {
+                    iterator.keep();
+                } catch (keepError) {
+                    logError('Failed to keep instruction', keepError, instructionAddr.toString());
+                }
+
+                let nextInstruction = null;
+                parseAttempts = 0;
+
+                while (parseAttempts < maxParseAttempts) {
+                    try {
+                        nextInstruction = iterator.next();
+                        break;
+                    } catch (nextParseError) {
+                        parseAttempts++;
+
+                        if (parseAttempts >= maxParseAttempts) {
+                            logError('Failed to parse next instruction', nextParseError, instructionAddr.toString());
+                            return;
+                        }
+
+                        threadState.skipCount++;
+                        if (threadState.skipCount > 10) {
+                            threadState.active = false;
+                            return;
+                        }
+                    }
+                }
+
+                instruction = nextInstruction;
+
+            } catch (instructionError) {
+                logError('Instruction processing error', instructionError,
+                    instruction && instruction.address ? instruction.address.toString() : 'unknown');
+
+                try {
+                    iterator.keep();
+                } catch (keepError) {
+                    logError('Failed to keep instruction after error', keepError);
+                }
+                break;
             }
-            callGraph[caller].push(target);
         }
 
-        iterator.putCallout(onInstructionExecuted);
-        iterator.keep();
+    } catch (fatalError) {
+        sessionState.crashCount++;
+        logError('Fatal transform error', fatalError, {
+            crashCount: sessionState.crashCount,
+            threadId: Process.getCurrentThreadId()
+        });
 
-        instruction = Stalker.parseInstruction(iterator);
+        if (sessionState.crashCount >= 10) {
+            sessionState.active = false;
+
+            send({
+                type: 'stalker_disabled',
+                payload: {
+                    reason: 'Too many crashes',
+                    crashCount: sessionState.crashCount
+                }
+            });
+        } else {
+            attemptRecovery(Process.getCurrentThreadId());
+        }
     }
 }
 
-// Callback for each instruction execution
+// Callback for each instruction execution with error handling
 function onInstructionExecuted(context) {
-    // Limit log size to prevent memory issues
-    if (instructionLog.length > 100000) {
-        sendTraceData();
-        instructionLog.length = 0;
+    try {
+        if (instructionLog.length > STALKER_CONFIG.maxInstructionLogSize) {
+            try {
+                sendTraceData();
+                instructionLog.length = 0;
+            } catch (sendError) {
+                logError('Failed to send trace data from callout', sendError);
+                instructionLog.length = Math.floor(instructionLog.length / 2);
+            }
+        }
+    } catch (e) {
+        logError('Instruction execution callback error', e);
     }
 }
 
-// Callback for Stalker data
+// Callback for Stalker data with error handling
 function onStalkerData(events) {
-    const buffer = Memory.readByteArray(events, 16384);
-    send({
-        type: 'stalker_events',
-        payload: {
-            threadId: Process.getCurrentThreadId(),
-            data: buffer
+    try {
+        if (!events || events.isNull()) {
+            logError('Null events pointer in onStalkerData', null);
+            return;
         }
-    }, buffer);
+
+        if (!isValidMemoryRegion(events)) {
+            logError('Invalid memory region for events', null, events.toString());
+            return;
+        }
+
+        const bufferSize = 16384;
+        const buffer = Memory.readByteArray(events, bufferSize);
+
+        if (!buffer) {
+            logError('Failed to read events buffer', null);
+            return;
+        }
+
+        send({
+            type: 'stalker_events',
+            payload: {
+                threadId: Process.getCurrentThreadId(),
+                data: buffer
+            }
+        }, buffer);
+
+    } catch (e) {
+        logError('Stalker data callback error', e);
+    }
 }
 
-// Send accumulated trace data
+// Send accumulated trace data with error handling
 function sendTraceData() {
-    send({
-        type: 'stalker_trace',
-        payload: {
+    try {
+        const payload = {
             threadId: Process.getCurrentThreadId(),
             timestamp: Date.now(),
-            instructions: instructionLog.slice(0, 1000),  // Limit for performance
+            instructions: instructionLog.slice(0, 1000),
             basicBlocks: basicBlocks.slice(0, 100),
             callGraph: callGraph,
-            coverage: calculateCoverage()
-        }
-    });
+            coverage: calculateCoverage(),
+            errors: errorLog.slice(-10)
+        };
+
+        send({
+            type: 'stalker_trace',
+            payload: payload
+        });
+
+    } catch (e) {
+        logError('Failed to send trace data', e);
+    }
 }
 
-// Calculate code coverage
+// Calculate code coverage with error handling
 function calculateCoverage() {
-    const module = Process.enumerateModules()[0];
-    const codeSize = module.size;
-    const uniqueAddresses = new Set(instructionLog.map(i => i.address));
-    return (uniqueAddresses.size / codeSize) * 100;
+    try {
+        const modules = Process.enumerateModules();
+
+        if (!modules || modules.length === 0) {
+            return 0.0;
+        }
+
+        const module = modules[0];
+        const codeSize = module.size || 1;
+
+        if (instructionLog.length === 0) {
+            return 0.0;
+        }
+
+        const uniqueAddresses = new Set(instructionLog.map(i => i.address));
+        const coverage = (uniqueAddresses.size / codeSize) * 100;
+
+        return Math.min(coverage, 100.0);
+
+    } catch (e) {
+        logError('Coverage calculation error', e);
+        return 0.0;
+    }
 }
 
-// Start tracing a thread
+// Start tracing a thread with error handling and anti-anti-stalker (CRITICAL-003)
 function startThreadTrace(tid) {
-    if (!tid) {
-        tid = Process.getCurrentThreadId();
+    try {
+        if (!tid) {
+            tid = Process.getCurrentThreadId();
+        }
+
+        if (trackedThreads.has(tid)) {
+            return { success: false, error: 'Thread already being traced' };
+        }
+
+        if (!sessionState.active) {
+            return { success: false, error: 'Stalker session is disabled due to crashes' };
+        }
+
+        const stalkerConfig = {
+            events: STALKER_CONFIG.events,
+            onReceive: function(events) {
+                onStalkerData(events);
+            },
+            transform: transformInstruction
+        };
+
+        if (STALKER_CONFIG.trustThreshold > 0) {
+            Stalker.trustThreshold = STALKER_CONFIG.trustThreshold;
+        }
+
+        if (STALKER_CONFIG.timingNormalizationEnabled) {
+            Process.setExceptionHandler(function(details) {
+                if (details.type === 'access-violation' || details.type === 'illegal-instruction') {
+                    send({
+                        type: 'anti_trace_detected',
+                        payload: {
+                            type: details.type,
+                            address: details.address ? details.address.toString() : 'unknown',
+                            memory: details.memory
+                        }
+                    });
+
+                    try {
+                        Stalker.flush();
+                        return true;
+                    } catch (e) {
+                        logError('Exception handler Stalker.flush failed', e);
+                        return false;
+                    }
+                }
+                return false;
+            });
+        }
+
+        try {
+            Stalker.follow(tid, stalkerConfig);
+        } catch (followError) {
+            logError('Stalker.follow failed', followError, tid);
+
+            if (STALKER_CONFIG.enableRecovery && attemptRecovery(tid)) {
+                try {
+                    Stalker.follow(tid, stalkerConfig);
+                } catch (retryError) {
+                    logError('Stalker.follow retry failed', retryError, tid);
+                    return { success: false, error: 'Failed to follow thread: ' + retryError.toString() };
+                }
+            } else {
+                return { success: false, error: 'Failed to follow thread: ' + followError.toString() };
+            }
+        }
+
+        trackedThreads.add(tid);
+
+        send({
+            type: 'stalker_started',
+            payload: { threadId: tid }
+        });
+
+        return { success: true };
+
+    } catch (e) {
+        logError('Start trace error', e, tid);
+        return { success: false, error: e.toString() };
     }
-
-    if (trackedThreads.has(tid)) {
-        return { success: false, error: 'Thread already being traced' };
-    }
-
-    Stalker.follow(tid, {
-        events: STALKER_CONFIG.events,
-        onReceive: STALKER_CONFIG.onReceive,
-        transform: STALKER_CONFIG.transform
-    });
-
-    trackedThreads.add(tid);
-
-    send({
-        type: 'stalker_started',
-        payload: { threadId: tid }
-    });
-
-    return { success: true };
 }
 
-// Stop tracing a thread
+// Stop tracing a thread with cleanup
 function stopThreadTrace(tid) {
-    if (!trackedThreads.has(tid)) {
-        return { success: false, error: 'Thread not being traced' };
+    try {
+        if (!trackedThreads.has(tid)) {
+            return { success: false, error: 'Thread not being traced' };
+        }
+
+        try {
+            Stalker.unfollow(tid);
+        } catch (unfollowError) {
+            logError('Stalker.unfollow failed', unfollowError, tid);
+        }
+
+        try {
+            Stalker.flush();
+        } catch (flushError) {
+            logError('Stalker.flush failed during stop', flushError, tid);
+        }
+
+        trackedThreads.delete(tid);
+
+        try {
+            sendTraceData();
+        } catch (sendError) {
+            logError('Failed to send final trace data', sendError, tid);
+        }
+
+        send({
+            type: 'stalker_stopped',
+            payload: { threadId: tid }
+        });
+
+        return { success: true };
+
+    } catch (e) {
+        logError('Stop trace error', e, tid);
+        return { success: false, error: e.toString() };
     }
+}
 
-    Stalker.unfollow(tid);
-    trackedThreads.delete(tid);
+// Flush Stalker with error handling
+function flushStalker() {
+    try {
+        Stalker.flush();
+        return { success: true };
+    } catch (e) {
+        logError('Stalker flush error', e);
+        return { success: false, error: e.toString() };
+    }
+}
 
-    // Send final trace data
-    sendTraceData();
-
-    send({
-        type: 'stalker_stopped',
-        payload: { threadId: tid }
-    });
-
-    return { success: true };
+// Garbage collect with error handling
+function garbageCollectStalker() {
+    try {
+        Stalker.garbageCollect();
+        return { success: true };
+    } catch (e) {
+        logError('Stalker garbage collect error', e);
+        return { success: false, error: e.toString() };
+    }
 }
 
 // Export functions
@@ -307,26 +733,63 @@ rpc.exports = {
     stopTrace: stopThreadTrace,
     getTraceData: sendTraceData,
     clearTrace: function() {
-        instructionLog.length = 0;
-        basicBlocks.length = 0;
-        Object.keys(callGraph).forEach(key => delete callGraph[key]);
+        try {
+            instructionLog.length = 0;
+            basicBlocks.length = 0;
+            Object.keys(callGraph).forEach(key => delete callGraph[key]);
+            errorLog.length = 0;
+            return { success: true };
+        } catch (e) {
+            logError('Clear trace error', e);
+            return { success: false, error: e.toString() };
+        }
+    },
+    flush: flushStalker,
+    garbageCollect: garbageCollectStalker,
+    getErrors: function() {
+        return errorLog;
+    },
+    getSessionState: function() {
+        return sessionState;
+    },
+    resetSession: function() {
+        try {
+            sessionState.active = true;
+            sessionState.crashCount = 0;
+            sessionState.lastError = null;
+            sessionState.recoveryMode = false;
+            errorLog.length = 0;
+            return { success: true };
+        } catch (e) {
+            return { success: false, error: e.toString() };
+        }
     }
 };
 
-// Auto-start on main thread
-startThreadTrace(Process.getCurrentThreadId());
+// Auto-start on main thread with error handling
+try {
+    const result = startThreadTrace(Process.getCurrentThreadId());
+    if (!result.success) {
+        send({
+            type: 'stalker_autostart_failed',
+            payload: { error: result.error }
+        });
+    }
+} catch (e) {
+    logError('Auto-start failed', e);
+}
 """
 
         self.script = self.session.create_script(stalker_script)
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message: "ScriptMessage", data: bytes | None) -> None:
+    def _on_message(self, message: "ScriptMessage", _data: bytes | None) -> None:
         """Handle Stalker messages.
 
         Args:
             message: Frida message dictionary containing type and payload.
-            data: Additional binary data from Frida (unused).
+            _data: Additional binary data from Frida (unused).
         """
         if message["type"] == "send":
             payload = validate_type(message.get("payload", {}), dict)
@@ -343,6 +806,32 @@ startThreadTrace(Process.getCurrentThreadId());
                     call_graph=validate_type(payload["callGraph"], dict),
                     coverage=float(payload["coverage"]),
                 )
+            elif msg_type == "stalker_error":
+                logger.error(
+                    "Stalker error [%s]: %s (Thread: %d, Info: %s)",
+                    payload.get("context", "unknown"),
+                    payload.get("error", "unknown error"),
+                    payload.get("threadId", 0),
+                    payload.get("additionalInfo", ""),
+                )
+            elif msg_type == "stalker_recovery_success":
+                logger.info("Stalker recovery successful for thread %d", payload.get("threadId", 0))
+            elif msg_type == "stalker_disabled":
+                logger.critical(
+                    "Stalker disabled: %s (Crashes: %d)",
+                    payload.get("reason", "unknown"),
+                    payload.get("crashCount", 0),
+                )
+            elif msg_type == "stalker_autostart_failed":
+                logger.warning("Stalker auto-start failed: %s", payload.get("error", "unknown"))
+            elif msg_type == "anti_trace_detected":
+                logger.warning(
+                    "Anti-tracing mechanism detected: %s at %s",
+                    payload.get("type", "unknown"),
+                    payload.get("address", "unknown"),
+                )
+        elif message["type"] == "error":
+            logger.error("Frida script error: %s", message.get("description", "Unknown error"))
 
     def start_trace(self, thread_id: int | None = None) -> bool:
         """Start tracing a thread.
@@ -358,8 +847,8 @@ startThreadTrace(Process.getCurrentThreadId());
             exports: ScriptExportsSync = self.script.exports_sync
             result = validate_type(exports.start_trace(thread_id), dict)
             return bool(result["success"])
-        except Exception as e:
-            logger.exception("Failed to start trace: %s", e)
+        except Exception:
+            logger.exception("Failed to start trace")
             return False
 
     def stop_trace(self, thread_id: int) -> bool:
@@ -376,8 +865,8 @@ startThreadTrace(Process.getCurrentThreadId());
             exports: ScriptExportsSync = self.script.exports_sync
             result = validate_type(exports.stop_trace(thread_id), dict)
             return bool(result["success"])
-        except Exception as e:
-            logger.exception("Failed to stop trace: %s", e)
+        except Exception:
+            logger.exception("Failed to stop trace")
             return False
 
     def get_trace(self, thread_id: int) -> StalkerTrace | None:
@@ -391,6 +880,91 @@ startThreadTrace(Process.getCurrentThreadId());
 
         """
         return self.traces.get(thread_id)
+
+    def flush(self) -> bool:
+        """Flush Stalker to process pending events.
+
+        Returns:
+            True if flush succeeded, False otherwise.
+        """
+        try:
+            exports: ScriptExportsSync = self.script.exports_sync
+            result = validate_type(exports.flush(), dict)
+            return bool(result.get("success", False))
+        except Exception:
+            logger.exception("Failed to flush Stalker")
+            return False
+
+    def garbage_collect(self) -> bool:
+        """Trigger Stalker garbage collection.
+
+        Returns:
+            True if garbage collection succeeded, False otherwise.
+        """
+        try:
+            exports: ScriptExportsSync = self.script.exports_sync
+            result = validate_type(exports.garbage_collect(), dict)
+            return bool(result.get("success", False))
+        except Exception:
+            logger.exception("Failed to garbage collect Stalker")
+            return False
+
+    def get_errors(self) -> list[dict[str, object]]:
+        """Get error log from Stalker.
+
+        Returns:
+            List of error entries with context, timestamp, and stack traces.
+        """
+        try:
+            exports: ScriptExportsSync = self.script.exports_sync
+            errors = validate_type(exports.get_errors(), list)
+            return errors
+        except Exception:
+            logger.exception("Failed to get Stalker errors")
+            return []
+
+    def get_session_state(self) -> dict[str, object]:
+        """Get current Stalker session state.
+
+        Returns:
+            Dictionary containing session state including crash count and active status.
+        """
+        try:
+            exports: ScriptExportsSync = self.script.exports_sync
+            state = validate_type(exports.get_session_state(), dict)
+            return state
+        except Exception:
+            logger.exception("Failed to get session state")
+            return {"active": False, "crashCount": 0, "lastError": None, "recoveryMode": False}
+
+    def reset_session(self) -> bool:
+        """Reset Stalker session state and clear errors.
+
+        Returns:
+            True if reset succeeded, False otherwise.
+        """
+        try:
+            exports: ScriptExportsSync = self.script.exports_sync
+            result = validate_type(exports.reset_session(), dict)
+            return bool(result.get("success", False))
+        except Exception:
+            logger.exception("Failed to reset Stalker session")
+            return False
+
+    def clear_trace(self) -> bool:
+        """Clear all trace data.
+
+        Returns:
+            True if clear succeeded, False otherwise.
+        """
+        try:
+            exports: ScriptExportsSync = self.script.exports_sync
+            result = validate_type(exports.clear_trace(), dict)
+            self.traces.clear()
+            return bool(result.get("success", False))
+        except Exception:
+            logger.exception("Failed to clear trace")
+            return False
 
 
 class FridaHeapTracker:
@@ -594,12 +1168,12 @@ send({ type: 'heap_tracking_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message: "ScriptMessage", data: bytes | None) -> None:
+    def _on_message(self, message: "ScriptMessage", _data: bytes | None) -> None:
         """Handle heap tracking messages.
 
         Args:
             message: Frida message dictionary containing type and payload.
-            data: Additional binary data from Frida (unused).
+            _data: Additional binary data from Frida (unused).
         """
         if message["type"] == "send":
             payload = validate_type(message.get("payload", {}), dict)
@@ -814,12 +1388,12 @@ send({ type: 'thread_monitor_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message: "ScriptMessage", data: bytes | None) -> None:
+    def _on_message(self, message: "ScriptMessage", _data: bytes | None) -> None:
         """Handle thread monitoring messages.
 
         Args:
             message: Frida message dictionary containing type and payload.
-            data: Additional binary data from Frida (unused).
+            _data: Additional binary data from Frida (unused).
         """
         if message["type"] != "send":
             return
@@ -863,8 +1437,8 @@ send({ type: 'thread_monitor_ready' });
             exports: ScriptExportsSync = self.script.exports_sync
             threads = validate_type(exports.get_current_threads(), list)
             return threads
-        except Exception as e:
-            logger.exception("Failed to get current threads: %s", e)
+        except Exception:
+            logger.exception("Failed to get current threads")
             return []
 
 
@@ -1014,12 +1588,12 @@ send({ type: 'exception_hooking_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message: "ScriptMessage", data: bytes | None) -> None:
+    def _on_message(self, message: "ScriptMessage", _data: bytes | None) -> None:
         """Handle exception messages.
 
         Args:
             message: Frida message dictionary containing type and payload.
-            data: Additional binary data from Frida (unused).
+            _data: Additional binary data from Frida (unused).
         """
         if message["type"] == "send":
             payload = validate_type(message.get("payload", {}), dict)
@@ -1220,12 +1794,12 @@ send({ type: 'replacer_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message: "ScriptMessage", data: bytes | None) -> None:
+    def _on_message(self, message: "ScriptMessage", _data: bytes | None) -> None:
         """Handle replacement messages.
 
         Args:
             message: Frida message dictionary containing type and payload.
-            data: Additional binary data from Frida (unused).
+            _data: Additional binary data from Frida (unused).
         """
         if message["type"] == "send":
             payload = validate_type(message.get("payload", {}), dict)
@@ -1258,8 +1832,8 @@ send({ type: 'replacer_ready' });
             exports: ScriptExportsSync = self.script.exports_sync
             result = validate_type(exports.replace(address, impl_name, ret_type, arg_types), dict)
             return bool(result["success"])
-        except Exception as e:
-            logger.exception("Failed to replace function: %s", e)
+        except Exception:
+            logger.exception("Failed to replace function")
             return False
 
     def restore(self, target_address: int) -> bool:
@@ -1275,8 +1849,8 @@ send({ type: 'replacer_ready' });
             exports: ScriptExportsSync = self.script.exports_sync
             result = validate_type(exports.restore(target_address), dict)
             return bool(result["success"])
-        except Exception as e:
-            logger.exception("Failed to restore function: %s", e)
+        except Exception:
+            logger.exception("Failed to restore function")
             return False
 
 

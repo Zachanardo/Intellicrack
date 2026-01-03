@@ -14,7 +14,8 @@ Test Coverage:
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import Any
 
 import pytest
 
@@ -423,7 +424,7 @@ class TestDetectionReport:
 
     def test_detection_report_invalid_bypass_method_defaults_to_none(self) -> None:
         """DetectionReport handles invalid bypass method gracefully."""
-        data = {
+        data: dict[str, Any] = {
             "binary_path": "/app",
             "detected_libraries": [],
             "validation_functions": [],
@@ -488,7 +489,7 @@ class TestDetectionReport:
 
     def test_detection_report_missing_timestamp_uses_current_time(self) -> None:
         """DetectionReport without timestamp uses current time."""
-        data = {
+        data: dict[str, Any] = {
             "binary_path": "/app",
             "detected_libraries": [],
             "validation_functions": [],
@@ -499,7 +500,8 @@ class TestDetectionReport:
         report = DetectionReport.from_dict(data)
 
         assert isinstance(report.timestamp, datetime)
-        assert (datetime.now() - report.timestamp).total_seconds() < 5
+        time_diff: timedelta = datetime.now() - report.timestamp
+        assert time_diff.total_seconds() < 5
 
 
 class TestEdgeCases:

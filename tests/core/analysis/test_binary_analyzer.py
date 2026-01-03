@@ -4,23 +4,28 @@ Tests actual implementation methods with real binary samples.
 NO MOCKS - ALL TESTS USE REAL BINARIES AND VALIDATE PRODUCTION FUNCTIONALITY.
 """
 
-from typing import Any
-import pytest
-import tempfile
 import struct
+import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
+import pytest
+
+if TYPE_CHECKING:
+    from intellicrack.core.analysis.binary_analyzer import BinaryAnalyzer
+    from tests.base_test import IntellicrackTestBase
 
 try:
     from intellicrack.core.analysis.binary_analyzer import BinaryAnalyzer
     AVAILABLE = True
 except ImportError:
-    BinaryAnalyzer = None
+    BinaryAnalyzer = None  # type: ignore[assignment,misc]
     AVAILABLE = False
 
 try:
     from tests.base_test import IntellicrackTestBase
 except ImportError:
-    IntellicrackTestBase = object
+    IntellicrackTestBase = object  # type: ignore[assignment,misc]
 
 pytestmark = pytest.mark.skipif(not AVAILABLE, reason="Module not available")
 
@@ -448,11 +453,11 @@ class TestBinaryAnalyzer(IntellicrackTestBase):
         # Should handle gracefully (empty files have format="Unknown")
 
         # Test with small text file
-        with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp:
-            tmp.write("Hello World")
-            tmp.flush()
+        with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp_text:
+            tmp_text.write("Hello World")
+            tmp_text.flush()
 
-        result = self.analyzer.analyze(Path(tmp.name))
+        result = self.analyzer.analyze(Path(tmp_text.name))
         assert isinstance(result, dict)
         assert result.get('format') == 'Unknown'  # Small text file
 

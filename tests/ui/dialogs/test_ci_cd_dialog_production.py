@@ -7,8 +7,9 @@ workflow generation for plugin CI/CD automation.
 import json
 import os
 import tempfile
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -26,10 +27,10 @@ from intellicrack.ui.dialogs.ci_cd_dialog import CICDDialog, PipelineThread
 @pytest.fixture(scope="module")
 def qapp() -> QApplication:
     """Create QApplication instance for tests."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    return app
+    existing_app = QApplication.instance()
+    if existing_app is not None and isinstance(existing_app, QApplication):
+        return existing_app
+    return QApplication([])
 
 
 @pytest.fixture
@@ -131,15 +132,16 @@ def test_configuration_loading_with_existing_config(
     ci_dialog.load_configuration()
 
     root = ci_dialog.config_tree.invisibleRootItem()
+    assert root is not None
     assert root.childCount() > 0
 
     found_coverage = False
     for i in range(root.childCount()):
         item = root.child(i)
-        if item.text(0) == "test":
+        if item is not None and item.text(0) == "test":
             for j in range(item.childCount()):
                 child = item.child(j)
-                if child.text(0) == "coverage_threshold":
+                if child is not None and child.text(0) == "coverage_threshold":
                     assert child.text(1) == "90"
                     found_coverage = True
                     break
@@ -157,12 +159,13 @@ def test_configuration_loading_without_config_uses_defaults(
     dialog.load_configuration()
 
     root = dialog.config_tree.invisibleRootItem()
+    assert root is not None
     assert root.childCount() > 0
 
     found_version = False
     for i in range(root.childCount()):
         item = root.child(i)
-        if item.text(0) == "version":
+        if item is not None and item.text(0) == "version":
             assert item.text(1) == "1.0"
             found_version = True
             break
@@ -196,20 +199,26 @@ def test_configuration_tree_building_from_nested_dict(
     """Build config from tree handles nested structures correctly."""
     ci_dialog.config_tree.clear()
 
-    test_config = {
+    test_config: dict[str, object] = {
         "version": "1.0",
         "test": {"enabled": True, "coverage": 85},
         "security": {"enabled": False},
     }
 
-    ci_dialog.populate_config_tree(test_config, ci_dialog.config_tree.invisibleRootItem())
+    root_item = ci_dialog.config_tree.invisibleRootItem()
+    assert root_item is not None
+    ci_dialog.populate_config_tree(test_config, root_item)
 
     built_config = ci_dialog.build_config_from_tree()
 
     assert built_config["version"] == "1.0"
-    assert built_config["test"]["enabled"] is True
-    assert built_config["test"]["coverage"] == 85
-    assert built_config["security"]["enabled"] is False
+    test_section = built_config["test"]
+    assert isinstance(test_section, dict)
+    assert test_section["enabled"] is True
+    assert test_section["coverage"] == 85
+    security_section = built_config["security"]
+    assert isinstance(security_section, dict)
+    assert security_section["enabled"] is False
 
 
 def test_stage_widget_creation_has_correct_components(ci_dialog: CICDDialog) -> None:
@@ -219,9 +228,12 @@ def test_stage_widget_creation_has_correct_components(ci_dialog: CICDDialog) -> 
         assert hasattr(widget, "progress")
         assert hasattr(widget, "result_label")
 
-        assert widget.status_label.text() == "⏸️"
-        assert not widget.progress.isVisible()
-        assert widget.result_label.text() == ""
+        status_label = getattr(widget, "status_label")
+        progress_bar = getattr(widget, "progress")
+        result_label = getattr(widget, "result_label")
+        assert status_label.text() == "⏸️"
+        assert not progress_bar.isVisible()
+        assert result_label.text() == ""
 
 
 def test_pipeline_execution_state_management(
@@ -239,32 +251,37 @@ def test_stage_started_handler_updates_ui(ci_dialog: CICDDialog) -> None:
     ci_dialog.on_stage_started(stage)
 
     widget = ci_dialog.stage_widgets[stage]
-    assert widget.status_label.text() == "⏳"
-    assert widget.progress.isVisible()
-    assert widget.progress.maximum() == 0
+    status_label = getattr(widget, "status_label")
+    progress_bar = getattr(widget, "progress")
+    assert status_label.text() == "⏳"
+    assert progress_bar.isVisible()
+    assert progress_bar.maximum() == 0
 
 
 def test_stage_completed_handler_shows_success(ci_dialog: CICDDialog) -> None:
     """Stage completed handler shows success status."""
     stage = "validate"
-    result = {"success": True}
+    result: dict[str, object] = {"success": True}
 
     ci_dialog.on_stage_completed(stage, result)
 
     widget = ci_dialog.stage_widgets[stage]
-    assert widget.status_label.text() == "OK"
-    assert not widget.progress.isVisible()
+    status_label = getattr(widget, "status_label")
+    progress_bar = getattr(widget, "progress")
+    assert status_label.text() == "OK"
+    assert not progress_bar.isVisible()
 
 
 def test_stage_completed_handler_shows_failure(ci_dialog: CICDDialog) -> None:
     """Stage completed handler shows error status."""
     stage = "test"
-    result = {"success": False, "errors": ["Test failed", "Coverage too low"]}
+    result: dict[str, object] = {"success": False, "errors": ["Test failed", "Coverage too low"]}
 
     ci_dialog.on_stage_completed(stage, result)
 
     widget = ci_dialog.stage_widgets[stage]
-    assert widget.status_label.text() == "ERROR"
+    status_label = getattr(widget, "status_label")
+    assert status_label.text() == "ERROR"
 
     console_text = ci_dialog.console_output.toPlainText()
     assert "Errors in test" in console_text
@@ -274,27 +291,29 @@ def test_stage_completed_handler_shows_failure(ci_dialog: CICDDialog) -> None:
 
 def test_stage_completed_shows_coverage_metric(ci_dialog: CICDDialog) -> None:
     """Stage completed shows test coverage metric."""
-    result = {"success": True, "coverage": 87.5}
+    result: dict[str, object] = {"success": True, "coverage": 87.5}
 
     ci_dialog.on_stage_completed("test", result)
 
     widget = ci_dialog.stage_widgets["test"]
-    assert "87.5" in widget.result_label.text()
+    result_label = getattr(widget, "result_label")
+    assert "87.5" in result_label.text()
 
 
 def test_stage_completed_shows_complexity_metric(ci_dialog: CICDDialog) -> None:
     """Stage completed shows code complexity metric."""
-    result = {"success": True, "metrics": {"complexity": 12}}
+    result: dict[str, object] = {"success": True, "metrics": {"complexity": 12}}
 
     ci_dialog.on_stage_completed("quality", result)
 
     widget = ci_dialog.stage_widgets["quality"]
-    assert "12" in widget.result_label.text()
+    result_label = getattr(widget, "result_label")
+    assert "12" in result_label.text()
 
 
 def test_stage_completed_shows_vulnerability_count(ci_dialog: CICDDialog) -> None:
     """Stage completed shows vulnerability count."""
-    result = {
+    result: dict[str, object] = {
         "success": True,
         "vulnerabilities": [
             {"severity": "high", "description": "SQL injection"},
@@ -305,7 +324,8 @@ def test_stage_completed_shows_vulnerability_count(ci_dialog: CICDDialog) -> Non
     ci_dialog.on_stage_completed("security", result)
 
     widget = ci_dialog.stage_widgets["security"]
-    assert "2" in widget.result_label.text()
+    result_label = getattr(widget, "result_label")
+    assert "2" in result_label.text()
 
 
 def test_pipeline_finished_handler_enables_controls(ci_dialog: CICDDialog) -> None:
@@ -363,7 +383,7 @@ def test_report_loading_finds_existing_reports(
     found_report = False
     for i in range(ci_dialog.report_list.count()):
         item = ci_dialog.report_list.item(i)
-        if "20250101_120000" in item.text():
+        if item is not None and "20250101_120000" in item.text():
             found_report = True
             assert "OK" in item.text()
             break
@@ -391,7 +411,7 @@ def test_report_loading_shows_error_status_for_failed_runs(
     found_error = False
     for i in range(ci_dialog.report_list.count()):
         item = ci_dialog.report_list.item(i)
-        if "20250101_130000" in item.text():
+        if item is not None and "20250101_130000" in item.text():
             assert "ERROR" in item.text()
             found_error = True
             break
@@ -415,7 +435,7 @@ def test_show_report_displays_text_format(
 
     for i in range(ci_dialog.report_list.count()):
         item = ci_dialog.report_list.item(i)
-        if "20250101_140000" in item.text():
+        if item is not None and "20250101_140000" in item.text():
             ci_dialog.show_report(item)
             break
 
@@ -439,7 +459,7 @@ def test_show_report_falls_back_to_json(
 
     for i in range(ci_dialog.report_list.count()):
         item = ci_dialog.report_list.item(i)
-        if "20250101_150000" in item.text():
+        if item is not None and "20250101_150000" in item.text():
             ci_dialog.show_report(item)
             break
 
@@ -556,10 +576,13 @@ def test_multiple_stage_completions_track_correctly(ci_dialog: CICDDialog) -> No
     stages = ["validate", "test", "quality"]
 
     for idx, stage in enumerate(stages, 1):
-        ci_dialog.on_stage_completed(stage, {"success": True})
+        result: dict[str, object] = {"success": True}
+        ci_dialog.on_stage_completed(stage, result)
 
-        completed_count = sum(bool(w.status_label.text() in ["OK", "ERROR"])
-                          for w in ci_dialog.stage_widgets.values())
+        completed_count = sum(
+            bool(getattr(w, "status_label").text() in ["OK", "ERROR"])
+            for w in ci_dialog.stage_widgets.values()
+        )
         assert completed_count == idx
 
 
@@ -593,10 +616,13 @@ def test_config_value_parsing(
     from intellicrack.handlers.pyqt6_handler import QTreeWidgetItem
 
     root = ci_dialog.config_tree.invisibleRootItem()
+    assert root is not None
     item = QTreeWidgetItem(root, ["test_key", value])
 
     ci_dialog.config_tree.clear()
-    ci_dialog.config_tree.invisibleRootItem().addChild(item)
+    new_root = ci_dialog.config_tree.invisibleRootItem()
+    assert new_root is not None
+    new_root.addChild(item)
 
     config = ci_dialog.build_config_from_tree()
 
@@ -627,8 +653,10 @@ def test_console_output_clears_on_pipeline_run(ci_dialog: CICDDialog) -> None:
 def test_stage_widgets_reset_on_pipeline_start(ci_dialog: CICDDialog) -> None:
     """Stage widgets reset when starting new pipeline run."""
     for widget in ci_dialog.stage_widgets.values():
-        widget.status_label.setText("OK")
-        widget.result_label.setText("Previous result")
+        status_label = getattr(widget, "status_label")
+        result_label = getattr(widget, "result_label")
+        status_label.setText("OK")
+        result_label.setText("Previous result")
 
 
 def test_tab_widget_has_correct_tabs(ci_dialog: CICDDialog) -> None:
@@ -648,8 +676,10 @@ def test_config_tree_editing_marks_dialog_modified(ci_dialog: CICDDialog) -> Non
     ci_dialog.setWindowTitle(original_title)
 
     root = ci_dialog.config_tree.invisibleRootItem()
+    assert root is not None
     if root.childCount() > 0:
         item = root.child(0)
-        ci_dialog.on_config_changed(item, 1)
+        if item is not None:
+            ci_dialog.on_config_changed(item, 1)
 
-        assert "*" in ci_dialog.windowTitle()
+            assert "*" in ci_dialog.windowTitle()

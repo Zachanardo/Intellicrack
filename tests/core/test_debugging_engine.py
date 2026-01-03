@@ -11,7 +11,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import Any
 
@@ -115,7 +115,7 @@ class TestProcessAttachment:
     """Test debugger attachment to running processes."""
 
     @pytest.fixture
-    def target_process(self) -> subprocess.Popen:
+    def target_process(self) -> Generator[subprocess.Popen[bytes], None, None]:
         """Create a simple target process for debugging."""
         test_program = """
 import time
@@ -148,7 +148,7 @@ except KeyboardInterrupt:
         os.unlink(temp_file.name)
 
     def test_attach_to_running_process_succeeds(
-        self, target_process: subprocess.Popen
+        self, target_process: subprocess.Popen[bytes]
     ) -> None:
         """Debugger successfully attaches to running process."""
         debugger = LicenseDebugger()
@@ -183,7 +183,7 @@ except KeyboardInterrupt:
         assert debugger.process_handle is None
 
     def test_attach_sets_process_handle_with_all_access(
-        self, target_process: subprocess.Popen
+        self, target_process: subprocess.Popen[bytes]
     ) -> None:
         """Attached process handle has PROCESS_ALL_ACCESS rights."""
         debugger = LicenseDebugger()
@@ -215,7 +215,9 @@ class TestSoftwareBreakpoints:
     """Test software breakpoint setting and management."""
 
     @pytest.fixture
-    def debugged_process(self, target_process: subprocess.Popen) -> LicenseDebugger:
+    def debugged_process(
+        self, target_process: subprocess.Popen[bytes]
+    ) -> Generator[LicenseDebugger, None, None]:
         """Debugger attached to target process."""
         debugger = LicenseDebugger()
 
@@ -353,7 +355,9 @@ class TestHardwareBreakpoints:
     """Test hardware breakpoint functionality using debug registers."""
 
     @pytest.fixture
-    def debugged_process(self, target_process: subprocess.Popen) -> LicenseDebugger:
+    def debugged_process(
+        self, target_process: subprocess.Popen[bytes]
+    ) -> Generator[LicenseDebugger, None, None]:
         """Debugger attached to target process."""
         debugger = LicenseDebugger()
 
@@ -516,7 +520,9 @@ class TestAntiDebuggingBypass:
     """Test anti-debugging detection bypass capabilities."""
 
     @pytest.fixture
-    def debugged_process(self, target_process: subprocess.Popen) -> LicenseDebugger:
+    def debugged_process(
+        self, target_process: subprocess.Popen[bytes]
+    ) -> Generator[LicenseDebugger, None, None]:
         """Debugger attached to target process."""
         debugger = LicenseDebugger()
 
@@ -554,9 +560,9 @@ class TestAntiDebuggingBypass:
         )
 
         if status == 0:
-            peb_address = struct.unpack(
-                "P", pbi[ctypes.sizeof(ctypes.c_void_p) : ctypes.sizeof(ctypes.c_void_p) * 2]
-            )[0]
+            pbi_raw = pbi.raw
+            ptr_size = ctypes.sizeof(ctypes.c_void_p)
+            peb_address = struct.unpack("P", pbi_raw[ptr_size : ptr_size * 2])[0]
 
             if being_debugged_byte := debugger._read_memory(peb_address + 2, 1):
                 assert being_debugged_byte == b"\x00"
@@ -611,9 +617,9 @@ class TestAntiDebuggingBypass:
         )
 
         if status == 0:
-            peb_address = struct.unpack(
-                "P", pbi[ctypes.sizeof(ctypes.c_void_p) : ctypes.sizeof(ctypes.c_void_p) * 2]
-            )[0]
+            pbi_raw = pbi.raw
+            ptr_size = ctypes.sizeof(ctypes.c_void_p)
+            peb_address = struct.unpack("P", pbi_raw[ptr_size : ptr_size * 2])[0]
 
             offset = 0xBC if ctypes.sizeof(ctypes.c_void_p) == 8 else 0x68
             if ntglobalflag_bytes := debugger._read_memory(
@@ -653,7 +659,9 @@ class TestTimingAttackMitigation:
     """Test timing attack mitigation capabilities."""
 
     @pytest.fixture
-    def debugged_process(self, target_process: subprocess.Popen) -> LicenseDebugger:
+    def debugged_process(
+        self, target_process: subprocess.Popen[bytes]
+    ) -> Generator[LicenseDebugger, None, None]:
         """Debugger attached to target process."""
         debugger = LicenseDebugger()
 
@@ -675,7 +683,7 @@ class TestTimingAttackMitigation:
         """Timing attack mitigation initializes emulation state."""
         debugger = debugged_process
 
-        debugger.enumerate_memory_regions = lambda: []
+        object.__setattr__(debugger, '_enumerate_memory_regions', lambda: [])
 
         result = debugger.mitigate_timing_attacks()
 
@@ -717,7 +725,9 @@ class TestMemoryOperations:
     """Test memory read/write operations."""
 
     @pytest.fixture
-    def debugged_process(self, target_process: subprocess.Popen) -> LicenseDebugger:
+    def debugged_process(
+        self, target_process: subprocess.Popen[bytes]
+    ) -> Generator[LicenseDebugger, None, None]:
         """Debugger attached to target process."""
         debugger = LicenseDebugger()
 
@@ -820,7 +830,9 @@ class TestThreadContextManipulation:
     """Test thread context manipulation and register access."""
 
     @pytest.fixture
-    def debugged_process(self, target_process: subprocess.Popen) -> LicenseDebugger:
+    def debugged_process(
+        self, target_process: subprocess.Popen[bytes]
+    ) -> Generator[LicenseDebugger, None, None]:
         """Debugger attached to target process."""
         debugger = LicenseDebugger()
 
@@ -898,7 +910,9 @@ class TestVectoredExceptionHandler:
     """Test Vectored Exception Handler (VEH) functionality."""
 
     @pytest.fixture
-    def debugged_process(self, target_process: subprocess.Popen) -> LicenseDebugger:
+    def debugged_process(
+        self, target_process: subprocess.Popen[bytes]
+    ) -> Generator[LicenseDebugger, None, None]:
         """Debugger attached to target process."""
         debugger = LicenseDebugger()
 
@@ -945,8 +959,10 @@ class TestVectoredExceptionHandler:
         """Exception filter registration stores filter function."""
         debugger = debugged_process
 
-        def test_filter(exc_record: ExceptionRecord) -> bool:
-            return exc_record.ExceptionCode == ExceptionCode.EXCEPTION_BREAKPOINT
+        def test_filter(dbg: Any, exc_record: Any) -> int | None:
+            if hasattr(exc_record, 'ExceptionCode'):
+                return 1 if exc_record.ExceptionCode == ExceptionCode.EXCEPTION_BREAKPOINT else 0
+            return None
 
         exception_code = ExceptionCode.EXCEPTION_BREAKPOINT
 
@@ -961,8 +977,8 @@ class TestVectoredExceptionHandler:
         """Exception callback registration stores callback function."""
         debugger = debugged_process
 
-        def test_callback(debugger: LicenseDebugger, exc_record: ExceptionRecord) -> None:
-            pass
+        def test_callback(dbg: Any, exc_record: Any) -> int:
+            return 0
 
         exception_code = ExceptionCode.EXCEPTION_SINGLE_STEP
 
@@ -1101,7 +1117,7 @@ class TestDetachment:
     """Test debugger detachment from processes."""
 
     def test_detach_releases_debugging_session(
-        self, target_process: subprocess.Popen
+        self, target_process: subprocess.Popen[bytes]
     ) -> None:
         """Detach releases debugging session cleanly."""
         debugger = LicenseDebugger()
@@ -1179,7 +1195,7 @@ int main() {
 
 
 @pytest.fixture(scope="module")
-def target_process() -> subprocess.Popen:
+def target_process() -> Generator[subprocess.Popen[bytes], None, None]:
     """Module-scoped target process for debugging tests."""
     test_program = """
 import time
@@ -1226,27 +1242,20 @@ class TestPEParsingAndImportAnalysis:
         debugger = LicenseDebugger()
 
         test_dll_name = "LicenseValidator.dll"
-        analysis = {
-            "is_license_related": False,
-            "suspicious_score": 0.0,
-            "license_functions": [],
-            "license_imports": {},
-            "license_exports": [],
-            "license_strings": [],
-            "protection_signatures": [],
-        }
+        is_license_related = False
+        suspicious_score = 0.0
 
         dll_name_lower = test_dll_name.lower()
         license_dll_patterns = ["license", "activation", "serial", "trial"]
 
         for pattern in license_dll_patterns:
             if pattern in dll_name_lower:
-                analysis["is_license_related"] = True
-                analysis["suspicious_score"] += 0.3
+                is_license_related = True
+                suspicious_score += 0.3
                 break
 
-        assert analysis["is_license_related"] is True
-        assert analysis["suspicious_score"] > 0.0
+        assert is_license_related is True
+        assert suspicious_score > 0.0
 
     def test_analyze_imports_identifies_registry_apis(self) -> None:
         """Import analysis identifies registry-related APIs."""
@@ -1355,7 +1364,9 @@ class TestThreadLocalStorageAnalysis:
     """Test TLS callback analysis and manipulation."""
 
     @pytest.fixture
-    def debugged_process(self, target_process: subprocess.Popen) -> LicenseDebugger:
+    def debugged_process(
+        self, target_process: subprocess.Popen[bytes]
+    ) -> Generator[LicenseDebugger, None, None]:
         """Debugger attached to target process."""
         debugger = LicenseDebugger()
 
@@ -1410,7 +1421,9 @@ class TestDelayedImportHooking:
     """Test delayed import hooking for license API interception."""
 
     @pytest.fixture
-    def debugged_process(self, target_process: subprocess.Popen) -> LicenseDebugger:
+    def debugged_process(
+        self, target_process: subprocess.Popen[bytes]
+    ) -> Generator[LicenseDebugger, None, None]:
         """Debugger attached to target process."""
         debugger = LicenseDebugger()
 
@@ -1497,7 +1510,7 @@ class TestShellcodeGeneration:
         """Position-independent code generation creates relocatable code."""
         debugger = LicenseDebugger()
 
-        operations = [
+        operations: list[dict[str, Any]] = [
             {"type": "nop"},
             {"type": "return", "value": 1},
         ]
@@ -1574,7 +1587,7 @@ class TestInstructionEncoding:
         """Instruction encoding creates valid NOP."""
         debugger = LicenseDebugger()
 
-        encoded = debugger.encode_instruction("nop", is_64bit=True)
+        encoded = debugger.encode_instruction(opcode=b"\x90")
 
         assert encoded == b"\x90"
 
@@ -1582,7 +1595,7 @@ class TestInstructionEncoding:
         """Instruction encoding creates valid RET."""
         debugger = LicenseDebugger()
 
-        encoded = debugger.encode_instruction("ret", is_64bit=True)
+        encoded = debugger.encode_instruction(opcode=b"\xc3")
 
         assert encoded == b"\xc3"
 
@@ -1590,7 +1603,7 @@ class TestInstructionEncoding:
         """Instruction encoding creates valid INT3."""
         debugger = LicenseDebugger()
 
-        encoded = debugger.encode_instruction("int3", is_64bit=True)
+        encoded = debugger.encode_instruction(opcode=b"\xcc")
 
         assert encoded == b"\xcc"
 
@@ -1598,7 +1611,7 @@ class TestInstructionEncoding:
         """Instruction encoding creates valid XOR EAX, EAX."""
         debugger = LicenseDebugger()
 
-        encoded = debugger.encode_instruction("xor", operands="eax, eax", is_64bit=False)
+        encoded = debugger.encode_instruction(opcode=b"\x31", modrm=0xC0)
 
         assert encoded == b"\x31\xc0"
 
@@ -1733,7 +1746,9 @@ class TestExecutionTracing:
     """Test execution tracing and instruction logging."""
 
     @pytest.fixture
-    def debugged_process(self, target_process: subprocess.Popen) -> LicenseDebugger:
+    def debugged_process(
+        self, target_process: subprocess.Popen[bytes]
+    ) -> Generator[LicenseDebugger, None, None]:
         """Debugger attached to target process."""
         debugger = LicenseDebugger()
 
@@ -1781,7 +1796,9 @@ class TestMemoryBreakpoints:
     """Test memory breakpoints using guard pages."""
 
     @pytest.fixture
-    def debugged_process(self, target_process: subprocess.Popen) -> LicenseDebugger:
+    def debugged_process(
+        self, target_process: subprocess.Popen[bytes]
+    ) -> Generator[LicenseDebugger, None, None]:
         """Debugger attached to target process."""
         debugger = LicenseDebugger()
 
@@ -1825,7 +1842,9 @@ class TestThreadEnumerationBypass:
     """Test thread enumeration bypass."""
 
     @pytest.fixture
-    def debugged_process(self, target_process: subprocess.Popen) -> LicenseDebugger:
+    def debugged_process(
+        self, target_process: subprocess.Popen[bytes]
+    ) -> Generator[LicenseDebugger, None, None]:
         """Debugger attached to target process."""
         debugger = LicenseDebugger()
 
@@ -1868,7 +1887,9 @@ class TestAPIHooking:
     """Test API hooking for license validation interception."""
 
     @pytest.fixture
-    def debugged_process(self, target_process: subprocess.Popen) -> LicenseDebugger:
+    def debugged_process(
+        self, target_process: subprocess.Popen[bytes]
+    ) -> Generator[LicenseDebugger, None, None]:
         """Debugger attached to target process."""
         debugger = LicenseDebugger()
 
@@ -1905,7 +1926,9 @@ class TestStringOperations:
     """Test string reading from process memory."""
 
     @pytest.fixture
-    def debugged_process(self, target_process: subprocess.Popen) -> LicenseDebugger:
+    def debugged_process(
+        self, target_process: subprocess.Popen[bytes]
+    ) -> Generator[LicenseDebugger, None, None]:
         """Debugger attached to target process."""
         debugger = LicenseDebugger()
 

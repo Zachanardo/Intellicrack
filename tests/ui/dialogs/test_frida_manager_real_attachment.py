@@ -16,35 +16,47 @@ import os
 import subprocess
 import sys
 import time
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 import pytest
 
+frida: Any = None
+FRIDA_AVAILABLE = False
 try:
-    import frida
-
+    import frida as _frida
+    frida = _frida
     FRIDA_AVAILABLE = True
 except ImportError:
-    FRIDA_AVAILABLE = False
-    frida = None
+    pass
 
+Qt: Any = None
+QTimer: Any = None
+QApplication: Any = None
+PYQT6_AVAILABLE = False
 try:
-    from PyQt6.QtCore import Qt, QTimer
-    from PyQt6.QtWidgets import QApplication
-
+    from PyQt6.QtCore import Qt as _Qt
+    from PyQt6.QtCore import QTimer as _QTimer
+    from PyQt6.QtWidgets import QApplication as _QApplication
+    Qt = _Qt
+    QTimer = _QTimer
+    QApplication = _QApplication
     PYQT6_AVAILABLE = True
 except ImportError:
-    PYQT6_AVAILABLE = False
-    Qt = None
-    QTimer = None
-    QApplication = None
+    pass
 
+FridaManagerDialog: Any = None
+FridaWorker: Any = None
 if PYQT6_AVAILABLE and FRIDA_AVAILABLE:
     from intellicrack.ui.dialogs.frida_manager_dialog import (
-        FridaManagerDialog,
-        FridaWorker,
+        FridaManagerDialog as _FridaManagerDialog,
     )
+    from intellicrack.ui.dialogs.frida_manager_dialog import (
+        FridaWorker as _FridaWorker,
+    )
+    FridaManagerDialog = _FridaManagerDialog
+    FridaWorker = _FridaWorker
 
 from intellicrack.utils.logger import get_logger
 
@@ -57,7 +69,7 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Any:
     """Create QApplication instance for Qt tests."""
     app = QApplication.instance()
     if app is None:
@@ -66,7 +78,7 @@ def qapp() -> QApplication:
 
 
 @pytest.fixture
-def test_process() -> subprocess.Popen:
+def test_process() -> Generator[subprocess.Popen[bytes], None, None]:
     """Start a simple test process for Frida attachment."""
     test_script = """
 import time
@@ -159,7 +171,7 @@ class TestRealProcessEnumeration:
 class TestRealProcessAttachment:
     """Test real Frida attachment to running processes."""
 
-    def test_attach_to_test_process(self, test_process: subprocess.Popen) -> None:
+    def test_attach_to_test_process(self, test_process: subprocess.Popen[bytes]) -> None:
         """Frida successfully attaches to spawned test process."""
         assert test_process.poll() is None, "Test process not running"
 
@@ -172,7 +184,7 @@ class TestRealProcessAttachment:
         session.detach()
 
     def test_attach_and_enumerate_modules(
-        self, test_process: subprocess.Popen
+        self, test_process: subprocess.Popen[bytes],
     ) -> None:
         """Attached session can enumerate loaded modules."""
         pid = test_process.pid
@@ -195,7 +207,7 @@ class TestRealProcessAttachment:
         finally:
             session.detach()
 
-    def test_attach_detach_cycle(self, test_process: subprocess.Popen) -> None:
+    def test_attach_detach_cycle(self, test_process: subprocess.Popen[bytes]) -> None:
         """Multiple attach/detach cycles work correctly."""
         pid = test_process.pid
 
@@ -211,7 +223,7 @@ class TestRealProcessAttachment:
 class TestRealScriptInjection:
     """Test real Frida script injection and execution."""
 
-    def test_inject_simple_script(self, test_process: subprocess.Popen) -> None:
+    def test_inject_simple_script(self, test_process: subprocess.Popen[bytes]) -> None:
         """Simple Frida script injects and executes successfully."""
         pid = test_process.pid
         session = frida.attach(pid)
@@ -246,7 +258,7 @@ rpc.exports = {
         finally:
             session.detach()
 
-    def test_script_rpc_communication(self, test_process: subprocess.Popen) -> None:
+    def test_script_rpc_communication(self, test_process: subprocess.Popen[bytes]) -> None:
         """RPC calls between Python and injected script work."""
         pid = test_process.pid
         session = frida.attach(pid)
@@ -279,7 +291,7 @@ rpc.exports = {
         finally:
             session.detach()
 
-    def test_script_memory_reading(self, test_process: subprocess.Popen) -> None:
+    def test_script_memory_reading(self, test_process: subprocess.Popen[bytes]) -> None:
         """Injected script can read process memory."""
         pid = test_process.pid
         session = frida.attach(pid)
@@ -331,7 +343,7 @@ rpc.exports = {
 class TestRealFunctionHooking:
     """Test real function hooking on Windows APIs."""
 
-    def test_hook_windows_api_function(self, test_process: subprocess.Popen) -> None:
+    def test_hook_windows_api_function(self, test_process: subprocess.Popen[bytes]) -> None:
         """Hook Windows API function and intercept calls."""
         pid = test_process.pid
         session = frida.attach(pid)
@@ -390,7 +402,7 @@ rpc.exports = {
             session.detach()
 
     def test_modify_function_return_value(
-        self, test_process: subprocess.Popen
+        self, test_process: subprocess.Popen[bytes],
     ) -> None:
         """Hook function and modify its return value."""
         pid = test_process.pid
@@ -434,7 +446,7 @@ class TestFridaWorkerIntegration:
     """Test FridaWorker Qt integration with real processes."""
 
     def test_worker_attaches_to_process(
-        self, qapp: QApplication, test_process: subprocess.Popen
+        self, qapp: QApplication, test_process: subprocess.Popen[bytes],
     ) -> None:
         """FridaWorker successfully attaches to real process."""
         pid = test_process.pid
@@ -458,7 +470,7 @@ class TestFridaWorkerIntegration:
         worker.detach()
 
     def test_worker_injects_and_executes_script(
-        self, qapp: QApplication, test_process: subprocess.Popen
+        self, qapp: QApplication, test_process: subprocess.Popen[bytes],
     ) -> None:
         """FridaWorker injects script and receives output."""
         pid = test_process.pid
@@ -530,7 +542,7 @@ class TestFridaManagerDialog:
                     assert "python" in name_item.text().lower()
 
     def test_dialog_attach_to_selected_process(
-        self, qapp: QApplication, test_process: subprocess.Popen
+        self, qapp: QApplication, test_process: subprocess.Popen[bytes],
     ) -> None:
         """Dialog attaches to user-selected process."""
         dialog = FridaManagerDialog()
@@ -555,7 +567,7 @@ class TestLicenseBypassScenarios:
     """Test real-world license bypass scenarios with Frida."""
 
     def test_hook_license_check_function(
-        self, test_process: subprocess.Popen
+        self, test_process: subprocess.Popen[bytes],
     ) -> None:
         """Hook hypothetical license check function and force success."""
         pid = test_process.pid
@@ -603,7 +615,7 @@ rpc.exports = {
             session.detach()
 
     def test_patch_trial_expiration_check(
-        self, test_process: subprocess.Popen
+        self, test_process: subprocess.Popen[bytes],
     ) -> None:
         """Patch trial expiration check to always return valid."""
         pid = test_process.pid
@@ -664,7 +676,7 @@ class TestErrorHandling:
             frida.attach(invalid_pid)
 
     def test_inject_invalid_script_syntax_fails(
-        self, test_process: subprocess.Popen
+        self, test_process: subprocess.Popen[bytes],
     ) -> None:
         """Injecting script with syntax errors fails gracefully."""
         pid = test_process.pid
@@ -684,7 +696,7 @@ class TestErrorHandling:
             session.detach()
 
     def test_detached_session_operations_fail(
-        self, test_process: subprocess.Popen
+        self, test_process: subprocess.Popen[bytes],
     ) -> None:
         """Operations on detached session raise appropriate errors."""
         pid = test_process.pid
@@ -700,7 +712,7 @@ class TestErrorHandling:
 class TestPerformance:
     """Test performance of Frida operations."""
 
-    def test_attach_detach_performance(self, test_process: subprocess.Popen) -> None:
+    def test_attach_detach_performance(self, test_process: subprocess.Popen[bytes]) -> None:
         """Attach/detach operations complete quickly."""
         pid = test_process.pid
 
@@ -715,7 +727,7 @@ class TestPerformance:
         assert duration < 10.0, f"10 attach/detach cycles took {duration}s"
 
     def test_script_injection_performance(
-        self, test_process: subprocess.Popen
+        self, test_process: subprocess.Popen[bytes],
     ) -> None:
         """Script injection and loading completes quickly."""
         pid = test_process.pid

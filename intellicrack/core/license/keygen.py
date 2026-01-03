@@ -3,6 +3,11 @@
 import hashlib
 import logging
 import struct
+import subprocess
+import sys
+import tempfile
+import threading
+import time
 import zlib
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -14,6 +19,8 @@ import capstone
 import z3
 
 from intellicrack.core.serial_generator import GeneratedSerial, SerialConstraints, SerialFormat, SerialNumberGenerator
+
+CREATE_SUSPENDED = 0x00000004 if sys.platform == "win32" else 0
 
 
 @dataclass
@@ -1204,8 +1211,8 @@ class KeySynthesizer:
         constraints = self._build_serial_constraints(algorithm)
 
         if target_data:
-            base_seed = hashlib.sha256(str(target_data).encode()).hexdigest()[:16]
-            seed_value = int(base_seed, 16)
+            hash_digest = hashlib.sha256(str(target_data).encode()).digest()
+            seed_value = int.from_bytes(hash_digest[:16], byteorder="big")
         else:
             seed_value = 0
 
@@ -1247,8 +1254,8 @@ class KeySynthesizer:
 
         seed_value: int | None = None
         if target_data:
-            seed_str = hashlib.sha256(str(target_data).encode()).hexdigest()[:16]
-            seed_value = int(seed_str, 16)
+            hash_digest = hashlib.sha256(str(target_data).encode()).digest()
+            seed_value = int.from_bytes(hash_digest[:16], byteorder="big")
 
         return self.generator.generate_serial(constraints, seed=seed_value)
 
@@ -1413,6 +1420,685 @@ class KeySynthesizer:
         return None
 
 
+@dataclass
+class ValidationResult:
+    """Result from testing a generated key against a target binary."""
+
+    key: str
+    is_valid: bool
+    validation_method: str
+    execution_time: float
+    error_message: str | None = None
+    stdout_output: str | None = None
+    stderr_output: str | None = None
+    return_code: int | None = None
+    frida_logs: list[str] = field(default_factory=list)
+    memory_snapshots: dict[str, bytes] = field(default_factory=dict)
+    register_states: dict[str, int] = field(default_factory=dict)
+
+
+@dataclass
+class ValidationConfig:
+    """Configuration for key validation testing."""
+
+    timeout_seconds: int = 30
+    use_frida: bool = True
+    use_debugger: bool = False
+    use_patching: bool = False
+    capture_stdout: bool = True
+    capture_stderr: bool = True
+    save_memory_dumps: bool = False
+    architecture: str = "x64"
+    validation_functions: list[str] = field(default_factory=list)
+    success_indicators: list[str] = field(default_factory=list)
+    failure_indicators: list[str] = field(default_factory=list)
+
+
+class KeyValidator:
+    """Validates generated license keys against real protected binaries."""
+
+    def __init__(self, binary_path: Path, config: ValidationConfig | None = None) -> None:
+        """Initialize the key validator.
+
+        Args:
+            binary_path: Path to the binary to test keys against
+            config: Optional validation configuration
+
+        """
+        self.binary_path = Path(binary_path)
+        self.config = config or ValidationConfig()
+        self.logger = logging.getLogger(__name__)
+        self._frida_session: Any = None
+        self._debugger: Any = None
+        self._lock = threading.Lock()
+
+    def _safe_terminate_process(self, process: subprocess.Popen[bytes]) -> None:
+        """Safely terminate a subprocess, handling errors gracefully.
+
+        Args:
+            process: The subprocess to terminate
+
+        """
+        try:
+            process.terminate()
+            try:
+                process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=1)
+        except Exception as e:
+            self.logger.debug("Process termination error (may already be terminated): %s", e)
+
+    def validate_key(self, key: str) -> ValidationResult:
+        """Validate a license key against the target binary.
+
+        Tests whether a generated key is accepted by the protected binary
+        using dynamic analysis, debugging, or patching techniques.
+
+        Args:
+            key: The license key to validate
+
+        Returns:
+            ValidationResult containing validation outcome and details.
+
+        """
+        start_time = time.time()
+
+        if self.config.use_frida:
+            result = self._validate_with_frida(key)
+        elif self.config.use_debugger:
+            result = self._validate_with_debugger(key)
+        else:
+            result = self._validate_with_execution(key)
+
+        result.execution_time = time.time() - start_time
+        return result
+
+    def _validate_with_frida(self, key: str) -> ValidationResult:
+        """Validate key using Frida dynamic instrumentation.
+
+        Attaches to the target process with Frida and intercepts license
+        validation functions to determine if the key is accepted.
+
+        Args:
+            key: The license key to validate
+
+        Returns:
+            ValidationResult with Frida-based validation outcome.
+
+        """
+        try:
+            import frida
+        except ImportError:
+            self.logger.error("Frida not available, falling back to execution testing")
+            return self._validate_with_execution(key)
+
+        frida_script = self._generate_validation_script(key)
+        logs: list[str] = []
+        validation_passed = False
+        error_msg = None
+        completion_event = threading.Event()
+        process: subprocess.Popen[bytes] | None = None
+
+        try:
+            process = subprocess.Popen(
+                [str(self.binary_path), key],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+            session = frida.attach(process.pid)
+
+            script = session.create_script(frida_script)
+
+            def on_message(message: dict[str, Any], data: Any) -> None:
+                nonlocal validation_passed, logs
+                if message.get("type") == "send":
+                    payload = message.get("payload", {})
+                    log_entry = str(payload)
+                    logs.append(log_entry)
+
+                    if payload.get("validation") == "success":
+                        validation_passed = True
+                        if payload.get("final"):
+                            completion_event.set()
+                    elif payload.get("validation") == "failure":
+                        validation_passed = False
+                        if payload.get("final"):
+                            completion_event.set()
+
+            script.on("message", on_message)
+            script.load()
+
+            completion_event.wait(timeout=self.config.timeout_seconds)
+
+            session.detach()
+            self._safe_terminate_process(process)
+
+        except frida.ProcessNotFoundError:
+            error_msg = "Process terminated before Frida could attach"
+            if process:
+                self._safe_terminate_process(process)
+        except Exception as e:
+            error_msg = f"Frida validation error: {e!s}"
+            self.logger.exception("Frida validation failed")
+            if process:
+                self._safe_terminate_process(process)
+
+        return ValidationResult(
+            key=key,
+            is_valid=validation_passed,
+            validation_method="frida",
+            execution_time=0.0,
+            error_message=error_msg,
+            frida_logs=logs,
+        )
+
+    def _validate_with_debugger(self, key: str) -> ValidationResult:
+        """Validate key using debugger-based analysis.
+
+        Attaches a debugger to monitor the license validation routine
+        and capture register/memory states to determine key acceptance.
+
+        Args:
+            key: The license key to validate
+
+        Returns:
+            ValidationResult with debugger-based validation outcome.
+
+        """
+        try:
+            from intellicrack.core.debugging_engine import LicenseDebugger
+        except ImportError:
+            self.logger.error("Debugger not available, falling back to execution testing")
+            return self._validate_with_execution(key)
+
+        validation_passed = False
+        error_msg = None
+        register_states: dict[str, int] = {}
+        memory_snapshots: dict[str, bytes] = {}
+        completion_event = threading.Event()
+        process: subprocess.Popen[bytes] | None = None
+
+        try:
+            debugger = LicenseDebugger()
+
+            process = subprocess.Popen(
+                [str(self.binary_path), key],
+                creationflags=CREATE_SUSPENDED,
+            )
+
+            debugger.attach_to_process(process.pid)
+
+            validation_functions = self._find_validation_functions()
+
+            for func_addr in validation_functions:
+                debugger.set_breakpoint(func_addr)
+
+            debugger.continue_execution()
+
+            completion_event.wait(timeout=self.config.timeout_seconds)
+
+            registers = debugger.get_registers()
+            register_states = {
+                "rax": registers.get("rax", 0),
+                "rbx": registers.get("rbx", 0),
+                "rcx": registers.get("rcx", 0),
+                "rdx": registers.get("rdx", 0),
+            }
+
+            if register_states.get("rax", 0) == 1:
+                validation_passed = True
+
+            debugger.detach()
+            self._safe_terminate_process(process)
+
+        except Exception as e:
+            error_msg = f"Debugger validation error: {e!s}"
+            self.logger.exception("Debugger validation failed")
+            if process:
+                self._safe_terminate_process(process)
+
+        return ValidationResult(
+            key=key,
+            is_valid=validation_passed,
+            validation_method="debugger",
+            execution_time=0.0,
+            error_message=error_msg,
+            register_states=register_states,
+            memory_snapshots=memory_snapshots,
+        )
+
+    def _validate_with_execution(self, key: str) -> ValidationResult:
+        """Validate key by executing the binary and analyzing output.
+
+        Runs the target binary with the key and analyzes return code,
+        stdout, and stderr to determine if the key was accepted.
+
+        Args:
+            key: The license key to validate
+
+        Returns:
+            ValidationResult with execution-based validation outcome.
+
+        """
+        validation_passed = False
+        stdout_output = ""
+        stderr_output = ""
+        return_code = -1
+        error_msg = None
+
+        try:
+            result = subprocess.run(
+                [str(self.binary_path), key],
+                capture_output=True,
+                text=True,
+                timeout=self.config.timeout_seconds,
+                check=False,
+            )
+
+            stdout_output = result.stdout
+            stderr_output = result.stderr
+            return_code = result.returncode
+
+            indicator_checked = False
+
+            for success_indicator in self.config.success_indicators:
+                indicator_checked = True
+                if success_indicator in stdout_output or success_indicator in stderr_output:
+                    validation_passed = True
+                    break
+
+            for failure_indicator in self.config.failure_indicators:
+                indicator_checked = True
+                if failure_indicator in stdout_output or failure_indicator in stderr_output:
+                    validation_passed = False
+                    break
+
+            if not indicator_checked:
+                if return_code == 0:
+                    validation_passed = True
+                self.logger.warning(
+                    "Using return code for validation (not reliable). "
+                    "Configure success_indicators and failure_indicators for accurate results."
+                )
+
+        except subprocess.TimeoutExpired:
+            error_msg = f"Validation timed out after {self.config.timeout_seconds} seconds"
+        except FileNotFoundError:
+            error_msg = f"Binary not found: {self.binary_path}"
+        except Exception as e:
+            error_msg = f"Execution validation error: {e!s}"
+            self.logger.exception("Execution validation failed")
+
+        return ValidationResult(
+            key=key,
+            is_valid=validation_passed,
+            validation_method="execution",
+            execution_time=0.0,
+            error_message=error_msg,
+            stdout_output=stdout_output,
+            stderr_output=stderr_output,
+            return_code=return_code,
+        )
+
+    def _generate_validation_script(self, key: str) -> str:
+        """Generate Frida script for license validation interception.
+
+        Creates a JavaScript/Frida script that hooks into license validation
+        functions and reports whether the provided key is accepted.
+
+        Args:
+            key: The license key being tested
+
+        Returns:
+            Frida JavaScript code for validation monitoring.
+
+        """
+        timeout_ms = self.config.timeout_seconds * 1000
+        script_template = f"""
+        var validationPassed = false;
+        var completionSent = false;
+
+        function sendCompletion(status) {{
+            if (!completionSent) {{
+                completionSent = true;
+                send({{validation: status, final: true}});
+            }}
+        }}
+
+        // Dynamically discover and hook validation-related functions from all modules
+        var validationKeywords = [
+            "license", "valid", "check", "serial", "register", "activate",
+            "verify", "auth", "key", "trial", "product", "crack"
+        ];
+
+        Process.enumerateModules().forEach(function(module) {{
+            // Hook exported functions
+            module.enumerateExports().forEach(function(exp) {{
+                if (exp.type === "function") {{
+                    var name = exp.name.toLowerCase();
+                    var isValidationFunc = validationKeywords.some(function(keyword) {{
+                        return name.includes(keyword);
+                    }});
+
+                    if (isValidationFunc) {{
+                        try {{
+                            Interceptor.attach(exp.address, {{
+                                onEnter: function(args) {{
+                                    send({{type: "hook", function: exp.name, event: "enter", module: module.name}});
+                                }},
+                                onLeave: function(retval) {{
+                                    var result = retval.toInt32();
+                                    send({{type: "hook", function: exp.name, event: "leave", return: result, module: module.name}});
+
+                                    if (result === 1) {{
+                                        validationPassed = true;
+                                        sendCompletion("success");
+                                    }} else if (result === 0) {{
+                                        sendCompletion("failure");
+                                    }}
+                                }}
+                            }});
+                        }} catch (e) {{
+                            send({{error: e.message, function: exp.name}});
+                        }}
+                    }}
+                }}
+            }});
+
+            // Hook symbols (includes non-exported functions)
+            module.enumerateSymbols().forEach(function(symbol) {{
+                if (symbol.type === "function") {{
+                    var name = symbol.name.toLowerCase();
+                    var isValidationFunc = validationKeywords.some(function(keyword) {{
+                        return name.includes(keyword);
+                    }});
+
+                    if (isValidationFunc) {{
+                        try {{
+                            Interceptor.attach(symbol.address, {{
+                                onLeave: function(retval) {{
+                                    try {{
+                                        var ret = retval.toInt32();
+                                        if (ret === 1) {{
+                                            send({{validation: "success", symbol: symbol.name, return: ret}});
+                                            validationPassed = true;
+                                            sendCompletion("success");
+                                        }} else if (ret === 0 && validationPassed === false) {{
+                                            sendCompletion("failure");
+                                        }}
+                                    }} catch (e) {{
+                                        // Ignore type conversion errors
+                                    }}
+                                }}
+                            }});
+                        }} catch (e) {{
+                            // Symbol may not be hookable
+                        }}
+                    }}
+                }}
+            }});
+        }});
+
+        // Hook string comparison functions
+        var stringCompFunctions = ["strcmp", "wcscmp", "lstrcmp", "lstrcmpi", "memcmp"];
+        stringCompFunctions.forEach(function(funcName) {{
+            var funcPtr = Module.findExportByName(null, funcName);
+            if (funcPtr) {{
+                Interceptor.attach(funcPtr, {{
+                    onEnter: function(args) {{
+                        try {{
+                            var str1 = Memory.readUtf8String(args[0]);
+                            var str2 = Memory.readUtf8String(args[1]);
+
+                            var keywords = ["key", "license", "serial", "code", "product"];
+                            var isRelevant = keywords.some(function(kw) {{
+                                return (str1 && str1.toLowerCase().includes(kw)) ||
+                                       (str2 && str2.toLowerCase().includes(kw));
+                            }});
+
+                            if (isRelevant) {{
+                                send({{type: "strcmp", function: funcName, str1: str1, str2: str2}});
+                            }}
+                        }} catch (e) {{
+                            // Ignore string read errors
+                        }}
+                    }},
+                    onLeave: function(retval) {{
+                        if (retval.toInt32() === 0) {{
+                            send({{validation: "success", method: funcName}});
+                            validationPassed = true;
+                            sendCompletion("success");
+                        }}
+                    }}
+                }});
+            }}
+        }});
+
+        // Report final result after timeout
+        setTimeout(function() {{
+            sendCompletion(validationPassed ? "success" : "failure");
+        }}, {timeout_ms});
+        """
+
+        return script_template
+
+    def _find_validation_functions(self) -> list[int]:
+        """Find addresses of license validation functions in the binary.
+
+        Scans the binary for function addresses that are likely involved
+        in license validation based on patterns and signatures.
+
+        Returns:
+            List of function addresses to monitor during debugging.
+
+        """
+        validation_addrs: list[int] = []
+
+        if self.config.validation_functions:
+            for func_name in self.config.validation_functions:
+                try:
+                    addr = int(func_name, 16) if func_name.startswith("0x") else int(func_name)
+                    validation_addrs.append(addr)
+                except ValueError:
+                    self.logger.warning("Invalid address format: %s", func_name)
+
+        if not validation_addrs:
+            validation_addrs = self._discover_validation_functions_from_binary()
+
+        return validation_addrs
+
+    def _discover_validation_functions_from_binary(self) -> list[int]:
+        """Discover validation function addresses by analyzing the binary.
+
+        Uses binary analysis to find functions that likely perform license
+        validation based on string references, API imports, and code patterns.
+
+        Returns:
+            List of discovered function addresses.
+
+        """
+        discovered_addrs: list[int] = []
+
+        try:
+            import lief
+        except ImportError:
+            self.logger.warning("LIEF not available for binary analysis, using basic pattern matching")
+            return self._discover_validation_functions_basic()
+
+        try:
+            binary = lief.parse(str(self.binary_path))
+            if binary is None:
+                self.logger.warning("Failed to parse binary with LIEF")
+                return []
+
+            validation_keywords = [
+                "license", "valid", "check", "serial", "register", "activate",
+                "verify", "auth", "key", "trial", "product"
+            ]
+
+            if hasattr(binary, "symbols"):
+                for symbol in binary.symbols:
+                    if hasattr(symbol, "name") and hasattr(symbol, "value"):
+                        name_lower = symbol.name.lower()
+                        if any(keyword in name_lower for keyword in validation_keywords):
+                            discovered_addrs.append(symbol.value)
+
+            if hasattr(binary, "exported_functions"):
+                for func in binary.exported_functions:
+                    if hasattr(func, "name") and hasattr(func, "address"):
+                        name_lower = func.name.lower()
+                        if any(keyword in name_lower for keyword in validation_keywords):
+                            discovered_addrs.append(func.address)
+
+            self.logger.info("Discovered %d validation function candidates", len(discovered_addrs))
+
+        except Exception as e:
+            self.logger.warning("Binary analysis failed: %s", e)
+            return self._discover_validation_functions_basic()
+
+        return discovered_addrs[:20]
+
+    def _discover_validation_functions_basic(self) -> list[int]:
+        """Fallback method to discover validation functions using basic pattern matching.
+
+        Scans binary for validation-related string references and returns
+        addresses near those strings as function candidates.
+
+        Returns:
+            List of candidate function addresses.
+
+        """
+        discovered_addrs: list[int] = []
+
+        try:
+            with open(self.binary_path, "rb") as f:
+                binary_data = f.read()
+
+            validation_strings = [
+                b"license", b"LICENSE", b"License",
+                b"serial", b"SERIAL", b"Serial",
+                b"key", b"KEY", b"Key",
+                b"valid", b"VALID", b"Valid",
+                b"register", b"REGISTER", b"Register",
+            ]
+
+            for search_str in validation_strings:
+                offset = 0
+                while True:
+                    pos = binary_data.find(search_str, offset)
+                    if pos == -1:
+                        break
+
+                    func_candidate = (pos // 0x1000) * 0x1000
+                    if func_candidate not in discovered_addrs and func_candidate > 0:
+                        discovered_addrs.append(func_candidate)
+
+                    offset = pos + 1
+
+            self.logger.info("Basic scan discovered %d validation function candidates", len(discovered_addrs))
+
+        except Exception as e:
+            self.logger.warning("Basic function discovery failed: %s", e)
+
+        return discovered_addrs[:10]
+
+    def validate_batch(self, keys: list[str], parallel: bool = False) -> list[ValidationResult]:
+        """Validate multiple keys against the target binary.
+
+        Tests a batch of generated keys to find valid ones, optionally
+        using parallel execution for faster validation.
+
+        Args:
+            keys: List of license keys to validate
+            parallel: Whether to validate keys in parallel
+
+        Returns:
+            List of ValidationResult objects for each key.
+
+        """
+        results: list[ValidationResult] = []
+
+        if parallel:
+            import concurrent.futures
+
+            def validate_with_new_instance(key: str) -> ValidationResult:
+                """Validate a key with a thread-local validator instance.
+
+                Args:
+                    key: The license key to validate
+
+                Returns:
+                    ValidationResult for the key.
+
+                """
+                thread_validator = KeyValidator(self.binary_path, self.config)
+                return thread_validator.validate_key(key)
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+                future_to_key = {executor.submit(validate_with_new_instance, key): key for key in keys}
+
+                for future in concurrent.futures.as_completed(future_to_key):
+                    try:
+                        result = future.result()
+                        results.append(result)
+                    except Exception as e:
+                        key = future_to_key[future]
+                        self.logger.exception("Validation failed for key %s: %s", key, e)
+                        results.append(
+                            ValidationResult(
+                                key=key,
+                                is_valid=False,
+                                validation_method="error",
+                                execution_time=0.0,
+                                error_message=str(e),
+                            )
+                        )
+        else:
+            for key in keys:
+                result = self.validate_key(key)
+                results.append(result)
+
+        return results
+
+    def find_valid_key(
+        self,
+        algorithm: "ExtractedAlgorithm",
+        synthesizer: "KeySynthesizer",
+        max_attempts: int = 1000,
+    ) -> ValidationResult | None:
+        """Generate and test keys until a valid one is found.
+
+        Iteratively generates keys using the algorithm and tests them
+        against the binary until a valid key is discovered or max attempts reached.
+
+        Args:
+            algorithm: The algorithm to use for key generation
+            synthesizer: KeySynthesizer instance for generating candidates
+            max_attempts: Maximum number of keys to try
+
+        Returns:
+            ValidationResult for the first valid key, or None if none found.
+
+        """
+        for attempt in range(max_attempts):
+            target_data = {"attempt": attempt}
+            candidate_key = synthesizer.synthesize_key(algorithm, target_data)
+
+            result = self.validate_key(candidate_key.serial)
+
+            if result.is_valid:
+                self.logger.info("Found valid key after %d attempts: %s", attempt + 1, candidate_key.serial)
+                return result
+
+            if attempt % 100 == 0:
+                self.logger.info("Tested %d keys, no valid key yet...", attempt)
+
+        self.logger.warning("No valid key found after %d attempts", max_attempts)
+        return None
+
+
 class LicenseKeygen:
     """Main license key generation engine."""
 
@@ -1423,11 +2109,13 @@ class LicenseKeygen:
             binary_path: Optional path to binary file for analysis
 
         """
+        self.logger = logging.getLogger(__name__)
         self.binary_path = Path(binary_path) if binary_path else None
         self.extractor = ConstraintExtractor(self.binary_path) if self.binary_path else None
         self.analyzer = ConstraintExtractor(self.binary_path) if self.binary_path else None
         self.synthesizer = KeySynthesizer()
         self.generator = SerialNumberGenerator()
+        self.validator = KeyValidator(self.binary_path) if self.binary_path else None
 
     def crack_license_from_binary(self, count: int = 1) -> list[GeneratedSerial]:
         """Crack license keys from binary analysis.
@@ -1700,3 +2388,327 @@ class LicenseKeygen:
             valid_keys,
             invalid_keys,
         )
+
+    def crack_with_validation(
+        self,
+        max_attempts: int = 1000,
+        validation_config: ValidationConfig | None = None,
+    ) -> list[GeneratedSerial]:
+        """Crack license keys with real-time validation against the binary.
+
+        Generates candidate keys and validates them against the actual binary
+        until valid keys are found, providing a complete cracking solution.
+
+        Args:
+            max_attempts: Maximum number of keys to generate and test.
+            validation_config: Optional configuration for validation behavior.
+
+        Returns:
+            list[GeneratedSerial]: List of validated working license keys.
+
+        Raises:
+            ValueError: If binary path is not provided or no algorithms detected.
+
+        """
+        if not self.binary_path:
+            raise ValueError("Binary path required for validation-based cracking")
+
+        if not self.analyzer:
+            raise ValueError("Analyzer not initialized")
+
+        algorithms = self.analyzer.analyze_validation_algorithms()
+
+        if not algorithms:
+            raise ValueError("No validation algorithms detected in binary")
+
+        best_algorithm = max(algorithms, key=lambda a: a.confidence)
+
+        if validation_config:
+            validator = KeyValidator(self.binary_path, validation_config)
+        else:
+            validator = self.validator
+
+        if not validator:
+            raise ValueError("Validator not initialized")
+
+        valid_keys: list[GeneratedSerial] = []
+
+        for attempt in range(max_attempts):
+            target_data = {"attempt": attempt, "timestamp": time.time()}
+            candidate = self.synthesizer.synthesize_key(best_algorithm, target_data)
+
+            result = validator.validate_key(candidate.serial)
+
+            if result.is_valid:
+                candidate.confidence = 1.0
+                candidate.metadata = {
+                    "validated": True,
+                    "validation_method": result.validation_method,
+                    "validation_time": result.execution_time,
+                }
+                valid_keys.append(candidate)
+                self.logger.info("Found valid key #%d: %s", len(valid_keys), candidate.serial)
+
+                if len(valid_keys) >= 10:
+                    break
+
+            if attempt % 100 == 0 and attempt > 0:
+                self.logger.info("Progress: Tested %d keys, found %d valid", attempt, len(valid_keys))
+
+        if not valid_keys:
+            self.logger.warning("No valid keys found after %d attempts", max_attempts)
+
+        return valid_keys
+
+    def validate_generated_key(
+        self,
+        key: str | GeneratedSerial,
+        validation_config: ValidationConfig | None = None,
+    ) -> ValidationResult:
+        """Validate a previously generated key against the binary.
+
+        Tests a specific generated key to verify it actually works with
+        the protected binary using dynamic analysis.
+
+        Args:
+            key: The license key to validate (string or GeneratedSerial).
+            validation_config: Optional configuration for validation behavior.
+
+        Returns:
+            ValidationResult containing validation outcome and details.
+
+        Raises:
+            ValueError: If binary path or validator not available.
+
+        """
+        if not self.binary_path:
+            raise ValueError("Binary path required for key validation")
+
+        key_str = key.serial if isinstance(key, GeneratedSerial) else key
+
+        if validation_config:
+            validator = KeyValidator(self.binary_path, validation_config)
+        else:
+            validator = self.validator
+
+        if not validator:
+            raise ValueError("Validator not initialized")
+
+        return validator.validate_key(key_str)
+
+    def validate_batch_keys(
+        self,
+        keys: list[str] | list[GeneratedSerial],
+        validation_config: ValidationConfig | None = None,
+        parallel: bool = False,
+    ) -> list[ValidationResult]:
+        """Validate multiple generated keys against the binary.
+
+        Tests a batch of generated keys to determine which ones actually
+        work with the protected binary.
+
+        Args:
+            keys: List of license keys to validate.
+            validation_config: Optional configuration for validation behavior.
+            parallel: Whether to validate keys in parallel for speed.
+
+        Returns:
+            list[ValidationResult]: Validation results for each key.
+
+        Raises:
+            ValueError: If binary path or validator not available.
+
+        """
+        if not self.binary_path:
+            raise ValueError("Binary path required for key validation")
+
+        key_strings = [
+            k.serial if isinstance(k, GeneratedSerial) else k
+            for k in keys
+        ]
+
+        if validation_config:
+            validator = KeyValidator(self.binary_path, validation_config)
+        else:
+            validator = self.validator
+
+        if not validator:
+            raise ValueError("Validator not initialized")
+
+        return validator.validate_batch(key_strings, parallel=parallel)
+
+    def crack_with_feedback_loop(
+        self,
+        initial_attempts: int = 100,
+        max_iterations: int = 10,
+        validation_config: ValidationConfig | None = None,
+    ) -> list[GeneratedSerial]:
+        """Advanced cracking with iterative algorithm refinement.
+
+        Uses a feedback loop approach: generate keys, validate them, analyze
+        patterns in successful keys, refine the algorithm, and repeat until
+        optimal key generation is achieved.
+
+        Args:
+            initial_attempts: Number of keys to try per iteration.
+            max_iterations: Maximum refinement iterations.
+            validation_config: Optional configuration for validation behavior.
+
+        Returns:
+            list[GeneratedSerial]: All validated working license keys discovered.
+
+        Raises:
+            ValueError: If binary path is not provided or no algorithms detected.
+
+        """
+        if not self.binary_path:
+            raise ValueError("Binary path required for feedback-loop cracking")
+
+        if not self.analyzer:
+            raise ValueError("Analyzer not initialized")
+
+        algorithms = self.analyzer.analyze_validation_algorithms()
+
+        if not algorithms:
+            raise ValueError("No validation algorithms detected in binary")
+
+        current_algorithm = max(algorithms, key=lambda a: a.confidence)
+
+        if validation_config:
+            validator = KeyValidator(self.binary_path, validation_config)
+        else:
+            validator = self.validator
+
+        if not validator:
+            raise ValueError("Validator not initialized")
+
+        all_valid_keys: list[GeneratedSerial] = []
+        valid_key_strings: list[str] = []
+
+        for iteration in range(max_iterations):
+            self.logger.info("Feedback iteration %d/%d", iteration + 1, max_iterations)
+
+            candidates = self.synthesizer.synthesize_batch(
+                current_algorithm,
+                initial_attempts,
+                unique=True,
+            )
+
+            candidate_strings = [c.serial for c in candidates]
+            results = validator.validate_batch(candidate_strings, parallel=True)
+
+            new_valid_count = 0
+            for idx, result in enumerate(results):
+                if result.is_valid:
+                    candidate = candidates[idx]
+                    candidate.confidence = 1.0
+                    candidate.metadata = {
+                        "validated": True,
+                        "iteration": iteration,
+                        "validation_method": result.validation_method,
+                    }
+                    all_valid_keys.append(candidate)
+                    valid_key_strings.append(result.key)
+                    new_valid_count += 1
+
+            self.logger.info(
+                "Iteration %d: Found %d new valid keys (total: %d)",
+                iteration + 1,
+                new_valid_count,
+                len(all_valid_keys),
+            )
+
+            if new_valid_count == 0:
+                self.logger.info("No new valid keys found, attempting algorithm refinement")
+
+                if len(valid_key_strings) >= 2:
+                    pattern_analysis = self.generator.reverse_engineer_algorithm(
+                        valid_key_strings,
+                        candidate_strings[:20],
+                    )
+
+                    if "common_patterns" in pattern_analysis:
+                        current_algorithm.confidence = min(
+                            current_algorithm.confidence + 0.1,
+                            0.99,
+                        )
+
+                        new_constraints = self._extract_constraints_from_valid_keys(valid_key_strings)
+                        for constraint in new_constraints:
+                            if constraint not in current_algorithm.constraints:
+                                current_algorithm.constraints.append(constraint)
+
+                        self.logger.info("Refined algorithm based on valid key patterns with %d new constraints", len(new_constraints))
+                else:
+                    self.logger.warning("Insufficient valid keys for pattern analysis")
+
+            if len(all_valid_keys) >= 50:
+                self.logger.info("Reached target of 50 valid keys, stopping")
+                break
+
+        return all_valid_keys
+
+    def _extract_constraints_from_valid_keys(self, valid_keys: list[str]) -> list[KeyConstraint]:
+        """Extract common constraints from a list of valid keys.
+
+        Analyzes valid keys to identify patterns and constraints that can
+        be used to improve key generation accuracy.
+
+        Args:
+            valid_keys: List of known valid license keys
+
+        Returns:
+            List of extracted constraints from the valid keys.
+
+        """
+        constraints: list[KeyConstraint] = []
+
+        if not valid_keys:
+            return constraints
+
+        common_length = len(valid_keys[0])
+        if all(len(key) == common_length for key in valid_keys):
+            constraints.append(
+                KeyConstraint(
+                    constraint_type="length",
+                    description=f"All valid keys have length {common_length}",
+                    value=common_length,
+                    confidence=0.95,
+                )
+            )
+
+        separator_chars = {"-", "_", ":", "."}
+        for sep in separator_chars:
+            if all(sep in key for key in valid_keys):
+                constraints.append(
+                    KeyConstraint(
+                        constraint_type="separator",
+                        description=f"All valid keys contain separator '{sep}'",
+                        value=sep,
+                        confidence=0.9,
+                    )
+                )
+
+        all_uppercase = all(c.isupper() for key in valid_keys for c in key if c.isalpha())
+        all_numeric = all(c.isdigit() for key in valid_keys for c in key if c.isalnum())
+
+        if all_uppercase and not all_numeric:
+            constraints.append(
+                KeyConstraint(
+                    constraint_type="charset",
+                    description="All alphabetic characters are uppercase",
+                    value="uppercase",
+                    confidence=0.85,
+                )
+            )
+        elif all_numeric:
+            constraints.append(
+                KeyConstraint(
+                    constraint_type="charset",
+                    description="All keys are purely numeric",
+                    value="numeric",
+                    confidence=0.9,
+                )
+            )
+
+        return constraints

@@ -376,7 +376,8 @@ class TestCryptographicAPIDetection:
         analyzer = R2ImportExportAnalyzer(notepad_path)
         result: dict[str, Any] = analyzer.analyze_imports_exports()
 
-        if crypto_apis := result.get("crypto_apis", []):
+        crypto_apis: list[dict[str, Any]] = result.get("crypto_apis", [])
+        if crypto_apis:
             for api in crypto_apis:
                 assert api["security_strength"] in ["weak", "medium", "strong"]
                 assert api["algorithm_type"] in ["AES", "DES", "RSA", "Hash", "Unknown"]
@@ -411,7 +412,8 @@ class TestNetworkAPIDetection:
         analyzer = R2ImportExportAnalyzer(notepad_path)
         result: dict[str, Any] = analyzer.analyze_imports_exports()
 
-        if network_apis := result.get("network_apis", []):
+        network_apis: list[dict[str, Any]] = result.get("network_apis", [])
+        if network_apis:
             for api in network_apis:
                 assert api["protocol"] in ["TCP", "UDP", "HTTP", "Unknown"]
 
@@ -478,7 +480,8 @@ class TestAPICategorization:
 
         assert "suspicious_apis" in result
 
-        if suspicious := result["suspicious_apis"]:
+        suspicious: Any = result["suspicious_apis"]
+        if suspicious:
             for api in suspicious:
                 assert "api" in api
                 assert "category" in api

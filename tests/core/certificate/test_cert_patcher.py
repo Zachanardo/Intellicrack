@@ -4,11 +4,9 @@ Tests validate actual binary patching capabilities on real PE/ELF binaries
 with certificate validation functions. No mocks - genuine offensive capability testing.
 """
 
-import os
 import struct
 import tempfile
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -25,7 +23,11 @@ from intellicrack.core.certificate.cert_patcher import (
     PatchResult,
     PatchedFunction,
 )
-from intellicrack.core.certificate.detection_report import DetectionReport, ValidationFunction
+from intellicrack.core.certificate.detection_report import (
+    BypassMethod,
+    DetectionReport,
+    ValidationFunction,
+)
 from intellicrack.core.certificate.patch_generators import Architecture, PatchType
 
 
@@ -193,17 +195,18 @@ def detection_report_x86() -> DetectionReport:
     """Create detection report for x86 binary."""
     return DetectionReport(
         binary_path="test.exe",
-        architecture="x86",
+        detected_libraries=["crypt32.dll"],
         validation_functions=[
             ValidationFunction(
                 address=0x401000,
                 api_name="CertVerifyCertificateChainPolicy",
+                library="crypt32.dll",
                 confidence=0.9,
-                call_sites=[0x401050],
+                references=[0x401050],
             )
         ],
-        validation_data_structures=[],
-        protection_mechanisms=[],
+        recommended_method=BypassMethod.BINARY_PATCH,
+        risk_level="medium",
     )
 
 
@@ -212,17 +215,18 @@ def detection_report_x64() -> DetectionReport:
     """Create detection report for x64 binary."""
     return DetectionReport(
         binary_path="test.exe",
-        architecture="x64",
+        detected_libraries=["crypt32.dll"],
         validation_functions=[
             ValidationFunction(
                 address=0x140001000,
                 api_name="CertVerifyCertificateChainPolicy",
+                library="crypt32.dll",
                 confidence=0.9,
-                call_sites=[0x140001050],
+                references=[0x140001050],
             )
         ],
-        validation_data_structures=[],
-        protection_mechanisms=[],
+        recommended_method=BypassMethod.BINARY_PATCH,
+        risk_level="medium",
     )
 
 
@@ -275,10 +279,10 @@ class TestCertificatePatching:
         patcher = CertificatePatcher(str(temp_pe_x86))
         empty_report = DetectionReport(
             binary_path=str(temp_pe_x86),
-            architecture="x86",
+            detected_libraries=[],
             validation_functions=[],
-            validation_data_structures=[],
-            protection_mechanisms=[],
+            recommended_method=BypassMethod.BINARY_PATCH,
+            risk_level="low",
         )
 
         result = patcher.patch_certificate_validation(empty_report)
@@ -423,8 +427,9 @@ class TestPatchTypeSelection:
         func = ValidationFunction(
             address=0x401000,
             api_name="CertVerifyCertificateChainPolicy",
+            library="crypt32.dll",
             confidence=0.95,
-            call_sites=[],
+            references=[],
         )
 
         patch_type = patcher._select_patch_type(func)
@@ -437,8 +442,9 @@ class TestPatchTypeSelection:
         func = ValidationFunction(
             address=0x401000,
             api_name="VerifyCertificate",
+            library="crypt32.dll",
             confidence=0.5,
-            call_sites=[],
+            references=[],
         )
 
         patch_type = patcher._select_patch_type(func)
@@ -451,8 +457,9 @@ class TestPatchTypeSelection:
         func = ValidationFunction(
             address=0x401000,
             api_name="UnknownFunction",
+            library="unknown.dll",
             confidence=0.3,
-            call_sites=[],
+            references=[],
         )
 
         patch_type = patcher._select_patch_type(func)
@@ -469,8 +476,9 @@ class TestPatchGeneration:
         func = ValidationFunction(
             address=0x401000,
             api_name="CertVerifyCertificateChainPolicy",
+            library="crypt32.dll",
             confidence=0.9,
-            call_sites=[],
+            references=[],
         )
 
         patch_bytes = patcher._generate_patch(func, PatchType.ALWAYS_SUCCEED)
@@ -485,8 +493,9 @@ class TestPatchGeneration:
         func = ValidationFunction(
             address=0x140001000,
             api_name="CertVerifyCertificateChainPolicy",
+            library="crypt32.dll",
             confidence=0.9,
-            call_sites=[],
+            references=[],
         )
 
         patch_bytes = patcher._generate_patch(func, PatchType.ALWAYS_SUCCEED)
@@ -501,8 +510,9 @@ class TestPatchGeneration:
         func = ValidationFunction(
             address=0x401000,
             api_name="UnknownFunction",
+            library="unknown.dll",
             confidence=0.3,
-            call_sites=[],
+            references=[],
         )
 
         patch_bytes = patcher._generate_patch(func, PatchType.NOP_SLED)
@@ -521,23 +531,25 @@ class TestMultipleFunctionPatching:
         patcher = CertificatePatcher(str(temp_pe_x86))
         report = DetectionReport(
             binary_path=str(temp_pe_x86),
-            architecture="x86",
+            detected_libraries=["crypt32.dll"],
             validation_functions=[
                 ValidationFunction(
                     address=0x401000,
                     api_name="CertVerifyCertificateChainPolicy",
+                    library="crypt32.dll",
                     confidence=0.9,
-                    call_sites=[],
+                    references=[],
                 ),
                 ValidationFunction(
                     address=0x401010,
                     api_name="CertGetCertificateChain",
+                    library="crypt32.dll",
                     confidence=0.85,
-                    call_sites=[],
+                    references=[],
                 ),
             ],
-            validation_data_structures=[],
-            protection_mechanisms=[],
+            recommended_method=BypassMethod.BINARY_PATCH,
+            risk_level="medium",
         )
 
         result = patcher.patch_certificate_validation(report)
@@ -550,23 +562,25 @@ class TestMultipleFunctionPatching:
         patcher = CertificatePatcher(str(temp_pe_x86))
         report = DetectionReport(
             binary_path=str(temp_pe_x86),
-            architecture="x86",
+            detected_libraries=["crypt32.dll"],
             validation_functions=[
                 ValidationFunction(
                     address=0x401000,
                     api_name="CertVerifyCertificateChainPolicy",
+                    library="crypt32.dll",
                     confidence=0.9,
-                    call_sites=[],
+                    references=[],
                 ),
                 ValidationFunction(
                     address=0xFFFFFFFF,
                     api_name="InvalidFunction",
+                    library="unknown.dll",
                     confidence=0.9,
-                    call_sites=[],
+                    references=[],
                 ),
             ],
-            validation_data_structures=[],
-            protection_mechanisms=[],
+            recommended_method=BypassMethod.BINARY_PATCH,
+            risk_level="medium",
         )
 
         result = patcher.patch_certificate_validation(report)
@@ -582,17 +596,18 @@ class TestEdgeCases:
         patcher = CertificatePatcher(str(temp_pe_x86))
         report = DetectionReport(
             binary_path=str(temp_pe_x86),
-            architecture="x86",
+            detected_libraries=["unknown.dll"],
             validation_functions=[
                 ValidationFunction(
                     address=0x0,
                     api_name="",
+                    library="unknown.dll",
                     confidence=0.0,
-                    call_sites=[],
+                    references=[],
                 )
             ],
-            validation_data_structures=[],
-            protection_mechanisms=[],
+            recommended_method=BypassMethod.BINARY_PATCH,
+            risk_level="low",
         )
 
         result = patcher.patch_certificate_validation(report)
@@ -605,17 +620,18 @@ class TestEdgeCases:
         patcher = CertificatePatcher(str(temp_pe_x86))
         report = DetectionReport(
             binary_path=str(temp_pe_x86),
-            architecture="x86",
+            detected_libraries=["unknown.dll"],
             validation_functions=[
                 ValidationFunction(
                     address=0x500000,
                     api_name="OutOfBoundsFunction",
+                    library="unknown.dll",
                     confidence=0.9,
-                    call_sites=[],
+                    references=[],
                 )
             ],
-            validation_data_structures=[],
-            protection_mechanisms=[],
+            recommended_method=BypassMethod.BINARY_PATCH,
+            risk_level="medium",
         )
 
         result = patcher.patch_certificate_validation(report)

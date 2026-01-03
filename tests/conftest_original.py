@@ -5,12 +5,18 @@ CRITICAL: All fixtures must provide REAL data, not mocked or simulated data.
 Every test using these fixtures will validate ACTUAL functionality.
 """
 
-import pytest
-import tempfile
-import shutil
-from pathlib import Path
-import sys
 import os
+import shutil
+import sys
+import tempfile
+from collections.abc import Generator
+from pathlib import Path
+from typing import Any, NoReturn
+
+import pytest
+from _pytest.config import Config
+from _pytest.monkeypatch import MonkeyPatch
+from _pytest.nodes import Item
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -24,15 +30,15 @@ NETWORK_DIR = FIXTURES_DIR / "network_captures"
 
 
 @pytest.fixture(scope="session")
-def test_data_dir():
+def test_data_dir() -> Path:
     """Provide path to test data directory with REAL test files."""
     return FIXTURES_DIR
 
 
 @pytest.fixture(scope="session")
-def real_pe_binary():
-    """
-    Provide path to a REAL PE binary for testing.
+def real_pe_binary() -> Path:
+    """Provide path to a REAL PE binary for testing.
+
     This must be an actual executable, not a mock file.
     """
     pe_path = BINARIES_DIR / "pe" / "simple_hello_world.exe"
@@ -42,9 +48,9 @@ def real_pe_binary():
 
 
 @pytest.fixture(scope="session")
-def real_elf_binary():
-    """
-    Provide path to a REAL ELF binary for testing.
+def real_elf_binary() -> Path:
+    """Provide path to a REAL ELF binary for testing.
+
     This must be an actual Linux executable, not a mock file.
     """
     elf_path = BINARIES_DIR / "elf" / "simple_x64"
@@ -54,9 +60,9 @@ def real_elf_binary():
 
 
 @pytest.fixture(scope="session")
-def real_protected_binary():
-    """
-    Provide path to a REAL protected binary (VMProtect, Themida, etc).
+def real_protected_binary() -> Path:
+    """Provide path to a REAL protected binary (VMProtect, Themida, etc).
+
     This must be an actual protected executable for testing protection detection.
     """
     protected_path = BINARIES_DIR / "protected" / "vmprotect_demo.exe"
@@ -66,9 +72,9 @@ def real_protected_binary():
 
 
 @pytest.fixture
-def temp_workspace():
-    """
-    Provide a temporary directory for test operations.
+def temp_workspace() -> Generator[Path, None, None]:
+    """Provide a temporary directory for test operations.
+
     Cleaned up automatically after test.
     """
     temp_dir = tempfile.mkdtemp(prefix="intellicrack_test_")
@@ -77,9 +83,9 @@ def temp_workspace():
 
 
 @pytest.fixture(scope="session")
-def real_vulnerable_binary():
-    """
-    Provide path to a REAL vulnerable binary for exploit testing.
+def real_vulnerable_binary() -> Path:
+    """Provide path to a REAL vulnerable binary for exploit testing.
+
     This must be an actual exploitable program, not a simulation.
     """
     vuln_path = VULNERABLE_DIR / "buffer_overflow_x86.exe"
@@ -89,9 +95,9 @@ def real_vulnerable_binary():
 
 
 @pytest.fixture(scope="session")
-def real_network_capture():
-    """
-    Provide path to a REAL network capture file.
+def real_network_capture() -> Path:
+    """Provide path to a REAL network capture file.
+
     This must be an actual PCAP with real protocol data.
     """
     pcap_path = NETWORK_DIR / "flexlm_handshake.pcap"
@@ -101,10 +107,8 @@ def real_network_capture():
 
 
 @pytest.fixture
-def isolated_test_env():
-    """
-    Provide an isolated environment for testing dangerous operations using Windows Sandbox.
-    """
+def isolated_test_env() -> Generator[dict[str, Any], None, None]:
+    """Provide an isolated environment for testing dangerous operations using Windows Sandbox."""
     temp_dir = tempfile.mkdtemp(prefix="intellicrack_isolated_")
 
     restricted_env = os.environ.copy()
@@ -113,7 +117,6 @@ def isolated_test_env():
 
     if sys.platform == "win32":
         try:
-            import win32api
             import win32con
             import win32security
 
@@ -146,30 +149,27 @@ def isolated_test_env():
 
 
 @pytest.fixture(autouse=True)
-def verify_no_mocks(monkeypatch):
-    """
-    Automatically verify that tests are not using mock data.
+def verify_no_mocks(monkeypatch: MonkeyPatch) -> None:
+    """Automatically verify that tests are not using mock data.
+
     This fixture runs for every test to ensure REAL data usage.
     """
-    # Prevent common mocking libraries from being used
-    def mock_error(*args, **kwargs):
+    def mock_error(*args: Any, **kwargs: Any) -> NoReturn:
         raise RuntimeError(
             "MOCKING DETECTED! All tests must use REAL data. "
             "No mock objects, fake responses, or simulated data allowed."
         )
 
-    # Block unittest.mock
     monkeypatch.setattr("unittest.mock.Mock", mock_error)
     monkeypatch.setattr("unittest.mock.MagicMock", mock_error)
     monkeypatch.setattr("unittest.mock.patch", mock_error)
 
-    # Block pytest-mock
     if "pytest_mock" in sys.modules:
         monkeypatch.setattr("pytest_mock.MockFixture", mock_error)
 
 
 @pytest.fixture
-def require_radare2():
+def require_radare2() -> None:
     """Ensure radare2 is available for tests that need it."""
     try:
         import r2pipe
@@ -180,7 +180,7 @@ def require_radare2():
 
 
 @pytest.fixture
-def require_frida():
+def require_frida() -> None:
     """Ensure Frida is available for tests that need it."""
     try:
         from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
@@ -192,16 +192,14 @@ def require_frida():
 
 
 @pytest.fixture
-def require_ai_model():
+def require_ai_model() -> None:
     """Ensure AI model is available for tests that need it."""
-    # Check if real AI models are accessible
     model_path = PROJECT_ROOT / "models"
     if not model_path.exists() or not any(model_path.iterdir()):
         pytest.skip("Real AI models required for this test")
 
 
-# Markers for test categorization
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     """Register custom markers."""
     config.addinivalue_line(
         "markers", "real_binary: test requires real binary files"
@@ -217,14 +215,11 @@ def pytest_configure(config):
     )
 
 
-# Ensure all tests validate real functionality
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config: Config, items: list[Item]) -> None:
     """Add markers to ensure tests use real data."""
     for item in items:
-        # Add a marker to track real data usage
         item.add_marker(pytest.mark.real_data)
 
-        # Warn if test name suggests mocking
         if any(word in item.name.lower() for word in ["mock", "fake", "stub", "dummy"]):
             raise ValueError(
                 f"Test '{item.name}' appears to use mock data. "

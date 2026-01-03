@@ -13,6 +13,7 @@ import pytest
 import os
 import tempfile
 import hashlib
+from collections.abc import Generator
 from pathlib import Path
 import json
 import re
@@ -1069,7 +1070,7 @@ class TestRegistryModificationGeneration:
     """Test generation of registry modification bypasses"""
 
     @pytest.fixture
-    def registry_generator(self) -> "R2BypassGenerator":
+    def registry_generator(self) -> Generator[R2BypassGenerator, None, None]:
         """Create generator for registry-based protection testing"""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
             registry_binary_data = (
@@ -1159,7 +1160,7 @@ class TestFileModificationGeneration:
     """Test generation of file modification bypasses"""
 
     @pytest.fixture
-    def file_generator(self) -> "R2BypassGenerator":
+    def file_generator(self) -> Generator[R2BypassGenerator, None, None]:
         """Create generator for file-based protection testing"""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
             file_binary_data = (
@@ -1236,7 +1237,7 @@ class TestValidationBypassGeneration:
     """Test generation of validation bypass strategies"""
 
     @pytest.fixture
-    def validation_generator(self) -> "R2BypassGenerator":
+    def validation_generator(self) -> Generator[R2BypassGenerator, None, None]:
         """Create generator for validation bypass testing"""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
             validation_binary_data = (
@@ -1298,7 +1299,7 @@ class TestPatchByteGeneration:
     """Test generation of binary patch bytes"""
 
     @pytest.fixture
-    def patch_generator(self) -> "R2BypassGenerator":
+    def patch_generator(self) -> Generator[R2BypassGenerator, None, None]:
         """Create generator for patch generation testing"""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
             patch_binary_data = (
@@ -1344,7 +1345,7 @@ class TestArchitectureSpecificPatches:
     """Test architecture-specific patch generation"""
 
     @pytest.fixture
-    def arch_generator(self) -> "R2BypassGenerator":
+    def arch_generator(self) -> Generator[R2BypassGenerator, None, None]:
         """Create generator for architecture-specific testing"""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
             tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
@@ -1406,7 +1407,7 @@ class TestControlFlowGraphAnalysis:
     """Test control flow graph analysis capabilities"""
 
     @pytest.fixture
-    def cfg_generator(self) -> "R2BypassGenerator":
+    def cfg_generator(self) -> Generator[R2BypassGenerator, None, None]:
         """Create generator for CFG analysis testing"""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
             cfg_binary_data = (
@@ -1480,7 +1481,7 @@ class TestSuccessProbabilityCalculation:
     """Test success probability calculation for bypass strategies"""
 
     @pytest.fixture
-    def prob_generator(self) -> "R2BypassGenerator":
+    def prob_generator(self) -> Generator[R2BypassGenerator, None, None]:
         """Create generator for probability calculation testing"""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
             tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
@@ -1526,7 +1527,7 @@ class TestRiskAssessment:
     """Test risk assessment for bypass operations"""
 
     @pytest.fixture
-    def risk_generator(self) -> "R2BypassGenerator":
+    def risk_generator(self) -> Generator[R2BypassGenerator, None, None]:
         """Create generator for risk assessment testing"""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
             tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
@@ -1586,7 +1587,7 @@ class TestImplementationGuideGeneration:
     """Test implementation guide generation"""
 
     @pytest.fixture
-    def guide_generator(self) -> "R2BypassGenerator":
+    def guide_generator(self) -> Generator[R2BypassGenerator, None, None]:
         """Create generator for implementation guide testing"""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
             tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
@@ -1662,7 +1663,7 @@ class TestAdvancedPatchStrategies:
     """Test advanced patching strategies"""
 
     @pytest.fixture
-    def advanced_generator(self) -> "R2BypassGenerator":
+    def advanced_generator(self) -> Generator[R2BypassGenerator, None, None]:
         """Create generator for advanced patching testing"""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
             advanced_binary_data = (
@@ -1743,7 +1744,7 @@ class TestCryptoAlgorithmIdentification:
     """Test cryptographic algorithm identification"""
 
     @pytest.fixture
-    def crypto_id_generator(self) -> "R2BypassGenerator":
+    def crypto_id_generator(self) -> Generator[R2BypassGenerator, None, None]:
         """Create generator for crypto identification testing"""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
             tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
@@ -1798,7 +1799,7 @@ class TestBypassDifficultyAssessment:
     """Test bypass difficulty assessment"""
 
     @pytest.fixture
-    def difficulty_generator(self) -> "R2BypassGenerator":
+    def difficulty_generator(self) -> Generator[R2BypassGenerator, None, None]:
         """Create generator for difficulty assessment testing"""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
             tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
@@ -1839,7 +1840,7 @@ class TestDecisionPointAnalysis:
     """Test decision point analysis in control flow"""
 
     @pytest.fixture
-    def decision_generator(self) -> "R2BypassGenerator":
+    def decision_generator(self) -> Generator[R2BypassGenerator, None, None]:
         """Create generator for decision point testing"""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp_binary:
             tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)

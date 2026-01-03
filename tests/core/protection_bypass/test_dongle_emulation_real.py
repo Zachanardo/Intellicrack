@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import hashlib
 import hmac
 import struct
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import pytest
 
@@ -37,18 +38,18 @@ try:
         USBEmulator,
         WibuKeyDongle,
     )
-    MODULE_AVAILABLE = True
+    MODULE_AVAILABLE: bool = True
 except ImportError:
-    CryptoEngine = None
-    DongleMemory = None
-    HardwareDongleEmulator = None
-    HASPDongle = None
-    HASPStatus = None
-    SentinelDongle = None
-    SentinelStatus = None
-    USBDescriptor = None
-    USBEmulator = None
-    WibuKeyDongle = None
+    CryptoEngine = None  # type: ignore[assignment]
+    DongleMemory = None  # type: ignore[assignment]
+    HardwareDongleEmulator = None  # type: ignore[assignment]
+    HASPDongle = None  # type: ignore[assignment]
+    HASPStatus = None  # type: ignore[assignment]
+    SentinelDongle = None  # type: ignore[assignment]
+    SentinelStatus = None  # type: ignore[assignment]
+    USBDescriptor = None  # type: ignore[assignment]
+    USBEmulator = None  # type: ignore[assignment]
+    WibuKeyDongle = None  # type: ignore[assignment]
     MODULE_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not available")
@@ -59,7 +60,7 @@ class TestHardwareDongleEmulator:
 
     def test_emulator_initialization(self) -> None:
         """Test that HardwareDongleEmulator initializes correctly."""
-        emulator = HardwareDongleEmulator()
+        emulator: Any = HardwareDongleEmulator()
 
         assert emulator is not None
         assert hasattr(emulator, 'activate_dongle_emulation')
@@ -67,13 +68,13 @@ class TestHardwareDongleEmulator:
         assert hasattr(emulator, 'read_dongle_memory')
         assert hasattr(emulator, 'write_dongle_memory')
         assert hasattr(emulator, 'crypto_engine')
-        assert isinstance(emulator.crypto_engine, CryptoEngine)
+        assert isinstance(emulator.crypto_engine, type(CryptoEngine))
 
     def test_activate_dongle_emulation_hasp(self) -> None:
         """Test HASP dongle emulation activation with real validation."""
-        emulator = HardwareDongleEmulator()
+        emulator: Any = HardwareDongleEmulator()
 
-        result = emulator.activate_dongle_emulation(['HASP'])
+        result: Any = emulator.activate_dongle_emulation(['HASP'])
 
         assert result is not None
         assert isinstance(result, dict)
@@ -88,37 +89,37 @@ class TestHardwareDongleEmulator:
 
     def test_activate_dongle_emulation_sentinel(self) -> None:
         """Test Sentinel dongle emulation activation."""
-        emulator = HardwareDongleEmulator()
+        emulator: Any = HardwareDongleEmulator()
 
-        result = emulator.activate_dongle_emulation(['Sentinel'])
+        result: Any = emulator.activate_dongle_emulation(['Sentinel'])
 
         assert result['success'] is True
         assert any('Sentinel_' in d for d in result['emulated_dongles'])
         assert 1 in emulator.sentinel_dongles
-        sentinel = emulator.sentinel_dongles[1]
+        sentinel: Any = emulator.sentinel_dongles[1]
         assert sentinel.device_id == 0x87654322
         assert sentinel.serial_number == "SN123456789ABCDEF"
         assert sentinel.firmware_version == "8.0.0"
 
     def test_activate_dongle_emulation_codemeter(self) -> None:
         """Test CodeMeter/WibuKey dongle emulation activation."""
-        emulator = HardwareDongleEmulator()
+        emulator: Any = HardwareDongleEmulator()
 
-        result = emulator.activate_dongle_emulation(['CodeMeter'])
+        result: Any = emulator.activate_dongle_emulation(['CodeMeter'])
 
         assert result['success'] is True
         assert any('WibuKey_' in d for d in result['emulated_dongles'])
         assert 1 in emulator.wibukey_dongles
-        wibu = emulator.wibukey_dongles[1]
+        wibu: Any = emulator.wibukey_dongles[1]
         assert wibu.firm_code == 101
         assert wibu.product_code == 1000
         assert wibu.serial_number == 1000001
 
     def test_activate_all_dongles(self) -> None:
         """Test activating multiple dongle types simultaneously."""
-        emulator = HardwareDongleEmulator()
+        emulator: Any = HardwareDongleEmulator()
 
-        result = emulator.activate_dongle_emulation(['HASP', 'Sentinel', 'CodeMeter'])
+        result: Any = emulator.activate_dongle_emulation(['HASP', 'Sentinel', 'CodeMeter'])
 
         assert result['success'] is True
         assert len(result['emulated_dongles']) >= 3
@@ -128,55 +129,55 @@ class TestHardwareDongleEmulator:
 
     def test_crypto_engine_hasp_aes_encryption(self) -> None:
         """Test HASP AES encryption produces valid ciphertext."""
-        crypto = CryptoEngine()
-        plaintext = b'TestData12345678'
-        key = b'0123456789ABCDEF0123456789ABCDEF'
+        crypto: Any = CryptoEngine()
+        plaintext: bytes = b'TestData12345678'
+        key: bytes = b'0123456789ABCDEF0123456789ABCDEF'
 
-        ciphertext = crypto.hasp_encrypt(plaintext, key, 'AES')
+        ciphertext: Any = crypto.hasp_encrypt(plaintext, key, 'AES')
 
         assert ciphertext is not None
         assert len(ciphertext) >= len(plaintext)
         assert ciphertext != plaintext
 
-        decrypted = crypto.hasp_decrypt(ciphertext, key, 'AES')
+        decrypted: Any = crypto.hasp_decrypt(ciphertext, key, 'AES')
         assert decrypted == plaintext
 
     def test_crypto_engine_hasp_des_encryption(self) -> None:
         """Test HASP DES encryption for legacy dongle support."""
-        crypto = CryptoEngine()
-        plaintext = b'TestData'
-        key = b'01234567'
+        crypto: Any = CryptoEngine()
+        plaintext: bytes = b'TestData'
+        key: bytes = b'01234567'
 
-        ciphertext = crypto.hasp_encrypt(plaintext, key, 'DES')
+        ciphertext: Any = crypto.hasp_encrypt(plaintext, key, 'DES')
 
         assert ciphertext is not None
         assert ciphertext != plaintext
 
-        decrypted = crypto.hasp_decrypt(ciphertext, key, 'DES')
+        decrypted: Any = crypto.hasp_decrypt(ciphertext, key, 'DES')
         assert decrypted == plaintext
 
     def test_crypto_engine_sentinel_challenge_response(self) -> None:
         """Test Sentinel HMAC-based challenge-response."""
-        crypto = CryptoEngine()
-        challenge = b'CHALLENGE_DATA_123'
-        key = b'SECRET_KEY_123456789012345678901234'
+        crypto: Any = CryptoEngine()
+        challenge: bytes = b'CHALLENGE_DATA_123'
+        key: bytes = b'SECRET_KEY_123456789012345678901234'
 
-        response = crypto.sentinel_challenge_response(challenge, key)
+        response: Any = crypto.sentinel_challenge_response(challenge, key)
 
         assert response is not None
         assert len(response) == 16
         assert response != challenge
 
-        expected_hmac = hmac.new(key, challenge, hashlib.sha256).digest()[:16]
+        expected_hmac: bytes = hmac.new(key, challenge, hashlib.sha256).digest()[:16]
         assert response == expected_hmac
 
     def test_crypto_engine_wibukey_challenge_response(self) -> None:
         """Test WibuKey custom challenge-response algorithm."""
-        crypto = CryptoEngine()
-        challenge = b'1234567890ABCDEF'
-        key = b'WIBU_KEY_SECRET_'
+        crypto: Any = CryptoEngine()
+        challenge: bytes = b'1234567890ABCDEF'
+        key: bytes = b'WIBU_KEY_SECRET_'
 
-        response = crypto.wibukey_challenge_response(challenge, key)
+        response: Any = crypto.wibukey_challenge_response(challenge, key)
 
         assert response is not None
         assert len(response) == 16
@@ -184,17 +185,17 @@ class TestHardwareDongleEmulator:
 
     def test_dongle_memory_read_write(self) -> None:
         """Test dongle memory operations with bounds checking."""
-        memory = DongleMemory()
+        memory: Any = DongleMemory()
 
-        test_data = b'MEMORY_TEST_DATA'
+        test_data: bytes = b'MEMORY_TEST_DATA'
         memory.write('ram', 0x100, test_data)
 
-        read_data = memory.read('ram', 0x100, len(test_data))
+        read_data: Any = memory.read('ram', 0x100, len(test_data))
         assert read_data == test_data
 
     def test_dongle_memory_bounds_checking(self) -> None:
         """Test that memory operations enforce bounds."""
-        memory = DongleMemory()
+        memory: Any = DongleMemory()
 
         with pytest.raises(ValueError, match="beyond memory bounds"):
             memory.read('ram', 5000, 100)
@@ -204,7 +205,7 @@ class TestHardwareDongleEmulator:
 
     def test_dongle_memory_read_only_protection(self) -> None:
         """Test read-only memory area protection."""
-        memory = DongleMemory()
+        memory: Any = DongleMemory()
         memory.read_only_areas = [(0, 512)]
 
         with pytest.raises(PermissionError, match="Cannot write to read-only"):
@@ -212,7 +213,7 @@ class TestHardwareDongleEmulator:
 
     def test_hasp_dongle_creation(self) -> None:
         """Test HASP dongle data structure initialization."""
-        dongle = HASPDongle()
+        dongle: Any = HASPDongle()
 
         assert dongle.hasp_id == 0x12345678
         assert dongle.vendor_code == 0x1234
@@ -225,7 +226,7 @@ class TestHardwareDongleEmulator:
 
     def test_sentinel_dongle_creation(self) -> None:
         """Test Sentinel dongle data structure initialization."""
-        dongle = SentinelDongle()
+        dongle: Any = SentinelDongle()
 
         assert dongle.device_id == 0x87654321
         assert dongle.serial_number == "SN123456789ABCDEF"
@@ -236,7 +237,7 @@ class TestHardwareDongleEmulator:
 
     def test_wibukey_dongle_creation(self) -> None:
         """Test WibuKey dongle data structure initialization."""
-        dongle = WibuKeyDongle()
+        dongle: Any = WibuKeyDongle()
 
         assert dongle.firm_code == 101
         assert dongle.product_code == 1000
@@ -249,26 +250,26 @@ class TestHardwareDongleEmulator:
 
     def test_usb_descriptor_serialization(self) -> None:
         """Test USB descriptor binary serialization."""
-        descriptor = USBDescriptor(
+        descriptor: Any = USBDescriptor(
             idVendor=0x0529,
             idProduct=0x0001
         )
 
-        binary = descriptor.to_bytes()
+        binary: Any = descriptor.to_bytes()
 
         assert len(binary) == 18
         assert isinstance(binary, bytes)
 
-        unpacked = struct.unpack('<BBHBBBBHHHBBBB', binary)
+        unpacked: Tuple[int, ...] = struct.unpack('<BBHBBBBHHHBBBB', binary)
         assert unpacked[7] == 0x0529
         assert unpacked[8] == 0x0001
 
     def test_usb_emulator_control_transfer(self) -> None:
         """Test USB control transfer handling."""
-        descriptor = USBDescriptor()
-        usb = USBEmulator(descriptor)
+        descriptor: Any = USBDescriptor()
+        usb: Any = USBEmulator(descriptor)
 
-        response = usb.control_transfer(0x80, 0x06, 0x0100, 0, b'')
+        response: Any = usb.control_transfer(0x80, 0x06, 0x0100, 0, b'')
 
         assert response is not None
         assert len(response) == 18
@@ -276,28 +277,28 @@ class TestHardwareDongleEmulator:
 
     def test_usb_emulator_string_descriptor(self) -> None:
         """Test USB string descriptor generation."""
-        descriptor = USBDescriptor()
-        usb = USBEmulator(descriptor)
+        descriptor: Any = USBDescriptor()
+        usb: Any = USBEmulator(descriptor)
 
-        manufacturer = usb.get_string_descriptor(1)
+        manufacturer: Any = usb.get_string_descriptor(1)
         assert manufacturer is not None
         assert b'SafeNet Inc.' in manufacturer
 
     def test_hasp_login_logout_protocol(self) -> None:
         """Test HASP login/logout protocol implementation."""
-        emulator = HardwareDongleEmulator()
+        emulator: Any = HardwareDongleEmulator()
         emulator.activate_dongle_emulation(['HASP'])
 
-        login_data = struct.pack('<HH', 0x1234, 1)
-        login_response = emulator._hasp_login(login_data)
+        login_data: bytes = struct.pack('<HH', 0x1234, 1)
+        login_response: Any = emulator._hasp_login(login_data)
 
         assert len(login_response) == 8
         status, handle = struct.unpack('<II', login_response)
         assert status == HASPStatus.HASP_STATUS_OK
         assert handle != 0
 
-        logout_data = struct.pack('<I', handle)
-        logout_response = emulator._hasp_logout(logout_data)
+        logout_data: bytes = struct.pack('<I', handle)
+        logout_response: Any = emulator._hasp_logout(logout_data)
 
         assert len(logout_response) == 4
         status = struct.unpack('<I', logout_response)[0]
@@ -305,41 +306,41 @@ class TestHardwareDongleEmulator:
 
     def test_hasp_encrypt_decrypt_protocol(self) -> None:
         """Test HASP encryption/decryption protocol."""
-        emulator = HardwareDongleEmulator()
+        emulator: Any = HardwareDongleEmulator()
         emulator.activate_dongle_emulation(['HASP'])
 
-        dongle = list(emulator.hasp_dongles.values())[0]
+        dongle: Any = list(emulator.hasp_dongles.values())[0]
         dongle.logged_in = True
         dongle.session_handle = 0x12345678
 
-        plaintext = b'TestEncryptData!'
-        encrypt_data = struct.pack('<II', dongle.session_handle, len(plaintext)) + plaintext
-        encrypt_response = emulator._hasp_encrypt_command(encrypt_data)
+        plaintext: bytes = b'TestEncryptData!'
+        encrypt_data: bytes = struct.pack('<II', dongle.session_handle, len(plaintext)) + plaintext
+        encrypt_response: Any = emulator._hasp_encrypt_command(encrypt_data)
 
         status, length = struct.unpack('<II', encrypt_response[:8])
         assert status == HASPStatus.HASP_STATUS_OK
         assert length > 0
-        ciphertext = encrypt_response[8:]
+        ciphertext: bytes = encrypt_response[8:]
         assert ciphertext != plaintext
 
     def test_hasp_memory_read_write_protocol(self) -> None:
         """Test HASP memory read/write protocol."""
-        emulator = HardwareDongleEmulator()
+        emulator: Any = HardwareDongleEmulator()
         emulator.activate_dongle_emulation(['HASP'])
 
-        dongle = list(emulator.hasp_dongles.values())[0]
+        dongle: Any = list(emulator.hasp_dongles.values())[0]
         dongle.logged_in = True
         dongle.session_handle = 0x12345678
 
-        write_data = b'TEST_MEM_DATA'
-        write_cmd = struct.pack('<III', dongle.session_handle, 0x10, len(write_data)) + write_data
-        write_response = emulator._hasp_write_memory(write_cmd)
+        write_data: bytes = b'TEST_MEM_DATA'
+        write_cmd: bytes = struct.pack('<III', dongle.session_handle, 0x10, len(write_data)) + write_data
+        write_response: Any = emulator._hasp_write_memory(write_cmd)
 
         status = struct.unpack('<I', write_response)[0]
         assert status == HASPStatus.HASP_STATUS_OK
 
-        read_cmd = struct.pack('<III', dongle.session_handle, 0x10, len(write_data))
-        read_response = emulator._hasp_read_memory(read_cmd)
+        read_cmd: bytes = struct.pack('<III', dongle.session_handle, 0x10, len(write_data))
+        read_response: Any = emulator._hasp_read_memory(read_cmd)
 
         status, length = struct.unpack('<II', read_response[:8])
         assert status == HASPStatus.HASP_STATUS_OK

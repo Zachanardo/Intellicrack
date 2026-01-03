@@ -26,13 +26,16 @@ import tempfile
 import threading
 import time
 from pathlib import Path
+from collections.abc import Generator
 from typing import Any, Callable, Optional
+
+import numpy.typing as npt
 
 import numpy as np
 import pytest
 
 from intellicrack.models.model_manager import ModelManager, ProgressHandler
-from intellicrack.models.repositories.interface import DownloadProgressCallback, ModelInfo
+from intellicrack.models.repositories.interface import DownloadProgressCallback, ModelInfo, ModelRepositoryInterface
 from intellicrack.models.repositories.local_repository import LocalFileRepository
 
 
@@ -157,13 +160,13 @@ class TestModelManagerRepositoryOperations:
     """Tests for repository management operations."""
 
     @pytest.fixture
-    def temp_models_dir(self) -> str:
+    def temp_models_dir(self) -> Generator[str, None, None]:
         """Create temporary models directory."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield temp_dir
 
     @pytest.fixture
-    def manager_with_local_repo(self, temp_models_dir: str) -> ModelManager:
+    def manager_with_local_repo(self, temp_models_dir: str) -> Generator[ModelManager, None, None]:
         """Create ModelManager with local repository."""
         config: dict[str, Any] = {
             "model_repositories": {
@@ -269,13 +272,13 @@ class TestModelManagerLocalImport:
     """Tests for importing models from local files."""
 
     @pytest.fixture
-    def temp_models_dir(self) -> str:
+    def temp_models_dir(self) -> Generator[str, None, None]:
         """Create temporary models directory."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield temp_dir
 
     @pytest.fixture
-    def manager_with_local_repo(self, temp_models_dir: str) -> ModelManager:
+    def manager_with_local_repo(self, temp_models_dir: str) -> Generator[ModelManager, None, None]:
         """Create ModelManager with local repository."""
         config: dict[str, Any] = {
             "model_repositories": {
@@ -415,13 +418,13 @@ class TestModelManagerPaths:
     """Tests for model path resolution."""
 
     @pytest.fixture
-    def temp_models_dir(self) -> str:
+    def temp_models_dir(self) -> Generator[str, None, None]:
         """Create temporary models directory."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield temp_dir
 
     @pytest.fixture
-    def manager_with_local_repo(self, temp_models_dir: str) -> ModelManager:
+    def manager_with_local_repo(self, temp_models_dir: str) -> Generator[ModelManager, None, None]:
         """Create ModelManager with local repository."""
         config: dict[str, Any] = {
             "model_repositories": {
@@ -479,13 +482,13 @@ class TestModelManagerRemoval:
     """Tests for model removal operations."""
 
     @pytest.fixture
-    def temp_models_dir(self) -> str:
+    def temp_models_dir(self) -> Generator[str, None, None]:
         """Create temporary models directory."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield temp_dir
 
     @pytest.fixture
-    def manager_with_local_repo(self, temp_models_dir: str) -> ModelManager:
+    def manager_with_local_repo(self, temp_models_dir: str) -> Generator[ModelManager, None, None]:
         """Create ModelManager with local repository."""
         config: dict[str, Any] = {
             "model_repositories": {
@@ -667,7 +670,7 @@ class TestModelManagerTraining:
         X, y = make_classification(n_samples=50, n_features=8, random_state=42)
 
         class TrainingData:
-            def __init__(self, features: np.ndarray, labels: np.ndarray) -> None:
+            def __init__(self, features: npt.NDArray[np.floating[Any]], labels: npt.NDArray[np.floating[Any]]) -> None:
                 self.features = features
                 self.labels = labels
 
@@ -729,7 +732,8 @@ class TestModelManagerSaving:
                     self.linear = nn.Linear(10, 2)
 
                 def forward(self, x: torch.Tensor) -> torch.Tensor:
-                    return self.linear(x)
+                    result: torch.Tensor = self.linear(x)
+                    return result
 
             model = SimpleModel()
 
@@ -817,7 +821,7 @@ class TestModelManagerSaving:
             assert success is False
 
 
-class RealTestRepository:
+class RealTestRepository(ModelRepositoryInterface):
     """Real test repository that provides API-like functionality without mocks.
 
     This implements the repository interface using real file operations to test
@@ -830,6 +834,10 @@ class RealTestRepository:
         os.makedirs(models_dir, exist_ok=True)
         self._models: dict[str, ModelInfo] = {}
         self._setup_test_models()
+
+    def authenticate(self) -> tuple[bool, str]:
+        """Authenticate with the repository (always succeeds for test repo)."""
+        return True, "Test repository authenticated"
 
     def _setup_test_models(self) -> None:
         """Create real test model files in the repository."""
@@ -858,8 +866,8 @@ class RealTestRepository:
     def download_model(
         self,
         model_id: str,
-        destination: str,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
+        destination_path: str,
+        progress_callback: DownloadProgressCallback | None = None,
     ) -> tuple[bool, str]:
         """Download (copy) model to destination with real file operations."""
         model_info = self._models.get(model_id)
@@ -867,11 +875,11 @@ class RealTestRepository:
             return False, f"Model {model_id} not found"
 
         try:
-            os.makedirs(os.path.dirname(destination), exist_ok=True)
+            os.makedirs(os.path.dirname(destination_path), exist_ok=True)
             source_size = os.path.getsize(model_info.local_path)
 
             with open(model_info.local_path, "rb") as src:
-                with open(destination, "wb") as dst:
+                with open(destination_path, "wb") as dst:
                     chunk_size = 256
                     bytes_written = 0
                     while True:
@@ -881,7 +889,7 @@ class RealTestRepository:
                         dst.write(chunk)
                         bytes_written += len(chunk)
                         if progress_callback:
-                            progress_callback(bytes_written, source_size)
+                            progress_callback.on_progress(bytes_written, source_size)
 
             return True, "Download successful"
         except (OSError, IOError) as e:
@@ -892,7 +900,7 @@ class TestModelManagerAPIImport:
     """Tests for importing models from API repositories using real file operations."""
 
     @pytest.fixture
-    def temp_dir(self) -> str:
+    def temp_dir(self) -> Generator[str, None, None]:
         """Create temporary directory."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield temp_dir

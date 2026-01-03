@@ -20,7 +20,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import psutil
 import pytest
@@ -43,7 +43,7 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture(scope="module")
-def test_process() -> subprocess.Popen:
+def test_process() -> subprocess.Popen[bytes]:
     """Create a real test process for Frida operations.
 
     Spawns a simple Python process that sleeps, providing a real
@@ -282,7 +282,7 @@ class TestProtectionDetector:
 
     def test_adaptation_callback_registration(self, detector: ProtectionDetector) -> None:
         """Adaptation callbacks can be registered and triggered."""
-        callback_triggered = []
+        callback_triggered: list[tuple[ProtectionType, dict[str, Any]]] = []
 
         def test_callback(prot_type: ProtectionType, details: dict[str, Any]) -> None:
             callback_triggered.append((prot_type, details))
@@ -492,7 +492,7 @@ class TestFridaManagerAttachment:
     """Test Frida process attachment functionality."""
 
     def test_attach_to_process_by_pid(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Manager attaches to process by PID successfully."""
         success = frida_manager.attach_to_process(test_process.pid)
@@ -510,7 +510,7 @@ class TestFridaManagerAttachment:
         assert success is False
 
     def test_session_detachment_handling(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Session detachment is handled correctly."""
         frida_manager.attach_to_process(test_process.pid)
@@ -549,7 +549,7 @@ class TestFridaManagerScriptLoading:
         assert any(s["name"] == "list_test" for s in scripts)
 
     def test_load_script_into_session(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Scripts are loaded into Frida sessions successfully."""
         frida_manager.attach_to_process(test_process.pid)
@@ -566,7 +566,7 @@ class TestFridaManagerScriptLoading:
         assert f"{session_id}:session_test" in frida_manager.scripts
 
     def test_load_nonexistent_script(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Loading nonexistent script fails gracefully."""
         frida_manager.attach_to_process(test_process.pid)
@@ -577,7 +577,7 @@ class TestFridaManagerScriptLoading:
         assert success is False
 
     def test_load_dynamic_script(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Dynamic scripts are generated and loaded correctly."""
         frida_manager.attach_to_process(test_process.pid)
@@ -596,7 +596,7 @@ class TestFridaManagerHooking:
     """Test real API hooking functionality."""
 
     def test_hook_kernel32_functions(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Windows kernel32 functions are hooked successfully."""
         frida_manager.attach_to_process(test_process.pid)
@@ -626,7 +626,7 @@ class TestFridaManagerHooking:
         time.sleep(0.5)
 
     def test_hook_anti_debug_apis(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Anti-debug APIs are hooked and bypassed."""
         frida_manager.attach_to_process(test_process.pid)
@@ -645,7 +645,7 @@ class TestFridaManagerMemoryOperations:
     """Test memory read/write operations."""
 
     def test_memory_scanning(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Memory can be scanned for patterns."""
         frida_manager.attach_to_process(test_process.pid)
@@ -676,7 +676,7 @@ class TestFridaManagerProtectionAdaptation:
     """Test automatic protection detection and adaptation."""
 
     def test_anti_debug_adaptation(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Anti-debug protection triggers adaptation."""
         frida_manager.attach_to_process(test_process.pid)
@@ -690,7 +690,7 @@ class TestFridaManagerProtectionAdaptation:
         time.sleep(0.5)
 
     def test_license_verification_adaptation(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """License verification triggers bypass loading."""
         frida_manager.attach_to_process(test_process.pid)
@@ -708,7 +708,7 @@ class TestFridaManagerStatisticsAndExport:
     """Test statistics collection and export functionality."""
 
     def test_get_statistics(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Comprehensive statistics are collected correctly."""
         frida_manager.attach_to_process(test_process.pid)
@@ -723,7 +723,7 @@ class TestFridaManagerStatisticsAndExport:
         assert stats["sessions"] >= 1
 
     def test_export_analysis(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen, temp_workspace: Path
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes], temp_workspace: Path
     ) -> None:
         """Complete analysis export creates all required files."""
         frida_manager.attach_to_process(test_process.pid)
@@ -749,7 +749,7 @@ class TestFridaManagerPerformance:
     """Test performance characteristics and optimization."""
 
     def test_multiple_session_management(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Multiple sessions are managed efficiently."""
         frida_manager.attach_to_process(test_process.pid)
@@ -768,7 +768,7 @@ class TestFridaManagerPerformance:
         assert len(scripts) >= 2
 
     def test_cleanup_releases_resources(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Cleanup properly releases all Frida resources."""
         frida_manager.attach_to_process(test_process.pid)
@@ -784,7 +784,7 @@ class TestFridaManagerRealWorldScenarios:
     """Test complete real-world attack scenarios."""
 
     def test_full_anti_debug_bypass_workflow(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Complete workflow: attach -> detect -> adapt -> bypass."""
         success = frida_manager.attach_to_process(test_process.pid)
@@ -805,7 +805,7 @@ class TestFridaManagerRealWorldScenarios:
         assert stats["logger"]["total_operations"] > 0
 
     def test_license_bypass_scenario(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """License verification bypass with multiple techniques."""
         frida_manager.attach_to_process(test_process.pid)
@@ -908,7 +908,7 @@ class TestFridaManagerEdgeCases:
             script = f"console.log('script_{i}');"
             frida_manager.add_custom_script(script, f"concurrent_{i}")
 
-        results = []
+        results: list[bool] = []
         for i in range(3):
             success = frida_manager.load_script(session_id, f"concurrent_{i}")
             results.append(success)

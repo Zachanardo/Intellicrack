@@ -17,6 +17,9 @@ if TYPE_CHECKING:
     from _pytest.python import Function
     from _pytest.unittest import TestCaseFunction
 
+# Import fixtures from binary_fixtures module
+pytest_plugins = ["tests.fixtures.binary_fixtures"]
+
 
 def refresh_bool(value: bool) -> bool:
     """Return boolean value, defeating mypy type narrowing.

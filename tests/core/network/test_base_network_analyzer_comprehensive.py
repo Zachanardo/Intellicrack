@@ -57,7 +57,7 @@ class TestBaseNetworkAnalyzer:
 
     def test_create_packet_handler_returns_callable(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """create_packet_handler returns a callable function."""
-        def is_running():
+        def is_running() -> bool:
             return True
         processed_packets: list[dict[str, Any]] = []
 
@@ -75,14 +75,14 @@ class TestBaseNetworkAnalyzer:
 
     def test_packet_handler_processes_valid_tcp_packet(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Packet handler processes valid TCP/IP packets and extracts data."""
-        def is_running():
+        def is_running() -> bool:
             return True
         processed_packets: list[dict[str, Any]] = []
 
         def process_packet(packet: object, ip_layer: object, tcp_layer: object) -> None:
             if hasattr(packet, "haslayer") and packet.haslayer(ip_layer) and packet.haslayer(tcp_layer):
-                ip = packet[ip_layer]
-                tcp = packet[tcp_layer]
+                ip = packet[ip_layer]  # type: ignore[index]
+                tcp = packet[tcp_layer]  # type: ignore[index]
                 processed_packets.append({
                     "src": ip.src,
                     "dst": ip.dst,
@@ -108,7 +108,7 @@ class TestBaseNetworkAnalyzer:
 
     def test_packet_handler_stops_when_not_running(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Packet handler stops processing when is_running returns False."""
-        def is_running():
+        def is_running() -> bool:
             return False
         processed_packets: list[dict[str, Any]] = []
 
@@ -129,7 +129,7 @@ class TestBaseNetworkAnalyzer:
 
     def test_packet_handler_with_missing_ip_layer(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Packet handler handles packets without IP layer gracefully."""
-        def is_running():
+        def is_running() -> bool:
             return True
         processed_packets: list[dict[str, Any]] = []
 
@@ -148,7 +148,7 @@ class TestBaseNetworkAnalyzer:
 
     def test_packet_handler_with_missing_tcp_layer(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Packet handler handles packets without TCP layer gracefully."""
-        def is_running():
+        def is_running() -> bool:
             return True
         processed_packets: list[dict[str, Any]] = []
 
@@ -168,7 +168,7 @@ class TestBaseNetworkAnalyzer:
 
     def test_packet_handler_with_processing_exception(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Packet handler handles exceptions in process_packet gracefully."""
-        def is_running():
+        def is_running() -> bool:
             return True
 
         def process_packet(packet: object, ip_layer: object, tcp_layer: object) -> None:
@@ -186,14 +186,14 @@ class TestBaseNetworkAnalyzer:
 
     def test_packet_handler_with_multiple_packets(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Packet handler processes multiple packets correctly and extracts all data."""
-        def is_running():
+        def is_running() -> bool:
             return True
         processed_packets: list[dict[str, Any]] = []
 
         def process_packet(packet: object, ip_layer: object, tcp_layer: object) -> None:
             if hasattr(packet, "haslayer") and packet.haslayer(ip_layer) and packet.haslayer(tcp_layer):
-                ip = packet[ip_layer]
-                tcp = packet[tcp_layer]
+                ip = packet[ip_layer]  # type: ignore[index]
+                tcp = packet[tcp_layer]  # type: ignore[index]
                 processed_packets.append({
                     "src": ip.src,
                     "dst": ip.dst,
@@ -225,7 +225,7 @@ class TestBaseNetworkAnalyzer:
 
     def test_packet_handler_state_changes_during_processing(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Packet handler respects is_running state changes."""
-        running_state = {"value": True}
+        running_state: dict[str, bool] = {"value": True}
 
         def is_running() -> bool:
             return running_state["value"]
@@ -254,7 +254,7 @@ class TestBaseNetworkAnalyzer:
 
     def test_create_multiple_handlers_with_different_callbacks(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Creating multiple handlers with different callbacks works correctly."""
-        def is_running():
+        def is_running() -> bool:
             return True
         processed_packets_1: list[dict[str, Any]] = []
         processed_packets_2: list[dict[str, Any]] = []
@@ -289,7 +289,7 @@ class TestBaseNetworkAnalyzer:
 
     def test_packet_handler_with_callable_state_check(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Packet handler works with various callable is_running checks."""
-        call_count = {"value": 0}
+        call_count: dict[str, int] = {"value": 0}
 
         def is_running() -> bool:
             call_count["value"] += 1
@@ -315,7 +315,7 @@ class TestBaseNetworkAnalyzer:
 
     def test_logger_debug_messages_on_errors(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any, caplog: pytest.LogCaptureFixture) -> None:
         """Packet handler logs debug messages on processing errors."""
-        def is_running():
+        def is_running() -> bool:
             return True
 
         def process_packet(packet: object, ip_layer: object, tcp_layer: object) -> None:
@@ -337,7 +337,7 @@ class TestBaseNetworkAnalyzerEdgeCases:
 
     def test_handler_with_none_packet(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Packet handler handles None packet gracefully."""
-        def is_running():
+        def is_running() -> bool:
             return True
         processed_packets: list[dict[str, Any]] = []
 
@@ -379,7 +379,7 @@ class TestBaseNetworkAnalyzerEdgeCases:
 
     def test_rapid_packet_processing(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Packet handler processes packets rapidly without issues."""
-        def is_running():
+        def is_running() -> bool:
             return True
         processed_packets: list[dict[str, Any]] = []
 
@@ -402,7 +402,7 @@ class TestBaseNetworkAnalyzerEdgeCases:
 
     def test_handler_with_malformed_packet_structure(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Packet handler handles malformed packet structures."""
-        def is_running():
+        def is_running() -> bool:
             return True
         processed_packets: list[dict[str, Any]] = []
 
@@ -427,7 +427,7 @@ class TestBaseNetworkAnalyzerEdgeCases:
 
     def test_process_packet_callback_receives_correct_arguments(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Process packet callback receives correct packet and layer arguments."""
-        def is_running():
+        def is_running() -> bool:
             return True
         received_args: list[tuple[object, object, object]] = []
 
@@ -452,9 +452,9 @@ class TestBaseNetworkAnalyzerEdgeCases:
         """Multiple handlers can execute concurrently."""
         import threading
 
-        def is_running():
+        def is_running() -> bool:
             return True
-        process_count = {"value": 0}
+        process_count: dict[str, int] = {"value": 0}
         lock = threading.Lock()
 
         def process_packet(packet: object, ip_layer: object, tcp_layer: object) -> None:
@@ -483,13 +483,13 @@ class TestBaseNetworkAnalyzerEdgeCases:
 
     def test_packet_handler_extracts_tcp_flags(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Packet handler correctly extracts TCP flags from real packets."""
-        def is_running():
+        def is_running() -> bool:
             return True
         processed_packets: list[dict[str, Any]] = []
 
         def process_packet(packet: object, ip_layer: object, tcp_layer: object) -> None:
             if hasattr(packet, "haslayer") and packet.haslayer(tcp_layer):
-                tcp = packet[tcp_layer]
+                tcp = packet[tcp_layer]  # type: ignore[index]
                 processed_packets.append({
                     "flags": tcp.flags,
                     "seq": tcp.seq,
@@ -512,13 +512,13 @@ class TestBaseNetworkAnalyzerEdgeCases:
 
     def test_packet_handler_identifies_license_server_ports(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Packet handler identifies license server traffic by port."""
-        def is_running():
+        def is_running() -> bool:
             return True
         license_traffic: list[dict[str, Any]] = []
 
         def process_packet(packet: object, ip_layer: object, tcp_layer: object) -> None:
             if hasattr(packet, "haslayer") and packet.haslayer(tcp_layer):
-                tcp = packet[tcp_layer]
+                tcp = packet[tcp_layer]  # type: ignore[index]
                 license_ports = [1947, 27000, 27001, 5053, 6200]
                 if tcp.dport in license_ports or tcp.sport in license_ports:
                     license_traffic.append({
@@ -547,13 +547,13 @@ class TestBaseNetworkAnalyzerEdgeCases:
 
     def test_packet_handler_with_http_payload(self, base_analyzer: BaseNetworkAnalyzer, scapy_module: Any) -> None:
         """Packet handler extracts HTTP payload from real packets."""
-        def is_running():
+        def is_running() -> bool:
             return True
         http_packets: list[dict[str, Any]] = []
 
         def process_packet(packet: object, ip_layer: object, tcp_layer: object) -> None:
             if hasattr(packet, "haslayer") and packet.haslayer(scapy_module.Raw):
-                raw = packet[scapy_module.Raw]
+                raw = packet[scapy_module.Raw]  # type: ignore[index]
                 payload = bytes(raw.load)
                 if b"HTTP" in payload or b"GET" in payload or b"POST" in payload:
                     http_packets.append({

@@ -94,6 +94,10 @@
                 "hooks": [
                     {
                         "type": "command",
+                        "command": "node D:/Intellicrack/.claude/hooks/block-ignore-comments.cjs"
+                    },
+                    {
+                        "type": "command",
                         "command": "node D:/Intellicrack/.claude/hooks/post-tool-use.cjs"
                     }
                 ]
@@ -115,6 +119,26 @@
                     {
                         "type": "command",
                         "command": "node D:/Intellicrack/.claude/hooks/principles.js"
+                    }
+                ]
+            }
+        ],
+        "Stop": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "node D:/Intellicrack/.claude/hooks/stop-ignore-check.cjs"
+                    }
+                ]
+            }
+        ],
+        "SubagentStop": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "node D:/Intellicrack/.claude/hooks/stop-ignore-check.cjs"
                     }
                 ]
             }
