@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sun, Jan 04, 2026 02:16:40 PM
+Generated: Sun, Jan 04, 2026 02:22:14 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -109,6 +109,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── script_editor.py
 │   ├── script_generation_agent.py
 │   ├── script_generation_prompts.py
+│   ├── script_tester.py
 │   ├── semantic_code_analyzer.py
 │   ├── visualization_analytics.py
 │   ├── vulnerability_research_integration.py
