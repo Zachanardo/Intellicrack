@@ -315,10 +315,15 @@ impl ProcessManager {
             monitor_thread: None,
         };
 
-        // Insert process
+        debug!(
+            managed_id = managed_process.id,
+            pid = managed_process.info.pid,
+            "Registering managed process"
+        );
+
         {
             let mut processes = self.processes.lock().unwrap();
-            processes.insert(process_id, managed_process);
+            processes.insert(managed_process.id, managed_process);
         }
 
         // Assign worker and update status

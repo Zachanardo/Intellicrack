@@ -4,11 +4,15 @@ use std::sync::Arc;
 use tracing::{info, warn};
 
 pub fn register_signal_handlers(shutdown_flag: Arc<AtomicBool>) -> Result<()> {
-    // Ctrl+C handler
     let flag_clone = shutdown_flag.clone();
     ctrlc::set_handler(move || {
-        info!("Received Ctrl+C signal");
-        flag_clone.store(true, Ordering::SeqCst);
+        let was_shutdown = flag_clone.swap(true, Ordering::SeqCst);
+        if was_shutdown {
+            warn!("Received repeated Ctrl+C signal - forcing immediate shutdown");
+            std::process::exit(1);
+        } else {
+            info!("Received Ctrl+C signal - initiating graceful shutdown");
+        }
     })?;
 
     Ok(())
