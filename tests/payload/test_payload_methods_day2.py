@@ -9,7 +9,7 @@ Zero tolerance for methods returning instructional text instead of functional co
 import os
 import sys
 
-def test_bof_payload_generation():
+def test_bof_payload_generation() -> bool:
     """Test BOF payload method generates actual shellcode bytes."""
     print("Testing _generate_bof_payload() method...")
 
@@ -38,7 +38,7 @@ def test_bof_payload_generation():
 
         # Critical validation: Must contain ACTUAL shellcode bytes
         if not isinstance(result, dict):
-            print("ERROR: Payload method returned invalid type")
+            print("ERROR: Payload method returned invalid type")  # type: ignore[unreachable]
             return False
 
         # Check for shellcode presence
@@ -63,7 +63,7 @@ def test_bof_payload_generation():
 
         for indicator in template_indicators:
             if indicator in shellcode:
-                print(f"ERROR: Template text found in shellcode: {indicator}")
+                print(f"ERROR: Template text found in shellcode: {indicator!r}")
                 return False
 
         # CRITICAL: Must have actual shellcode content
@@ -98,7 +98,7 @@ def test_bof_payload_generation():
         print(f"ERROR: BOF payload generation failed - {e}")
         return False
 
-def test_format_string_payload_generation():
+def test_format_string_payload_generation() -> bool:
     """Test format string payload method generates actual exploitation code."""
     print("\nTesting _generate_format_string_payload() method...")
 
@@ -123,7 +123,7 @@ def test_format_string_payload_generation():
 
         # Critical validation
         if not isinstance(result, dict):
-            print("ERROR: Format string method returned invalid type")
+            print("ERROR: Format string method returned invalid type")  # type: ignore[unreachable]
             return False
 
         # Check for payload presence
@@ -147,7 +147,7 @@ def test_format_string_payload_generation():
 
         for indicator in template_indicators:
             if indicator in payload:
-                print(f"ERROR: Template text found in payload: {indicator}")
+                print(f"ERROR: Template text found in payload: {indicator!r}")
                 return False
 
         # CRITICAL: Must contain actual format string exploitation patterns
@@ -163,7 +163,7 @@ def test_format_string_payload_generation():
         print(f"OK Format string payload contains {len(payload)} bytes")
         print(f"OK Payload type: {type(payload)}")
         print(f"OK Payload (hex): {payload.hex()}")
-        print(f"OK Payload (ascii): {payload}")
+        print(f"OK Payload (ascii): {payload!r}")
 
         # Check for shellcode
         if "shellcode" in result:
@@ -179,7 +179,7 @@ def test_format_string_payload_generation():
         print(f"ERROR: Format string payload generation failed - {e}")
         return False
 
-def main():
+def main() -> bool:
     """Run comprehensive payload method tests for Day 2.1."""
     print("Day 2.1 Test: Replace Template Payload Methods")
     print("=" * 60)

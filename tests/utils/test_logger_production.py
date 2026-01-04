@@ -599,7 +599,7 @@ class TestEdgeCases:
         fake_logger = FakeLogger()
         monkeypatch.setattr("intellicrack.utils.logger.logger", fake_logger)
 
-        result = list(generator_function())
+        result = list(generator_function())  # type: ignore[call-overload]
 
         assert result == [1, 2, 3]
 

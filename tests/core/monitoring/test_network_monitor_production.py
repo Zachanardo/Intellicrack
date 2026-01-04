@@ -41,7 +41,7 @@ def network_monitor(process_info: ProcessInfo) -> Any:
     monitor = NetworkMonitor(process_info=process_info, target_ports=[80, 443, 8080])
     yield monitor
 
-    if monitor.is_monitoring:
+    if monitor.is_monitoring:  # type: ignore[attr-defined]
         monitor.stop()
 
 
@@ -110,7 +110,7 @@ def test_network_monitor_processes_tcp_packets(network_monitor: Any) -> None:
         pytest.skip("Scapy not available")
 
     try:
-        from scapy.all import IP, TCP, Raw
+        from scapy.all import IP, TCP, Raw  # type: ignore[attr-defined]
         from scapy.packet import Packet
     except ImportError:
         pytest.skip("Scapy imports failed")
@@ -140,7 +140,7 @@ def test_network_monitor_detects_license_keywords(network_monitor: Any) -> None:
         pytest.skip("Scapy not available")
 
     try:
-        from scapy.all import IP, TCP, Raw
+        from scapy.all import IP, TCP, Raw  # type: ignore[attr-defined]
     except ImportError:
         pytest.skip("Scapy imports failed")
 
@@ -173,7 +173,7 @@ def test_network_monitor_processes_udp_packets(network_monitor: Any) -> None:
         pytest.skip("Scapy not available")
 
     try:
-        from scapy.all import IP, UDP, Raw
+        from scapy.all import IP, UDP, Raw  # type: ignore[attr-defined]
     except ImportError:
         pytest.skip("Scapy imports failed")
 
@@ -202,7 +202,7 @@ def test_network_monitor_ignores_non_ip_packets(network_monitor: Any) -> None:
         pytest.skip("Scapy not available")
 
     try:
-        from scapy.all import Ether, Raw
+        from scapy.all import Ether, Raw  # type: ignore[attr-defined]
     except ImportError:
         pytest.skip("Scapy imports failed")
 
@@ -228,7 +228,7 @@ def test_network_monitor_extracts_packet_payload_size(network_monitor: Any) -> N
         pytest.skip("Scapy not available")
 
     try:
-        from scapy.all import IP, TCP, Raw
+        from scapy.all import IP, TCP, Raw  # type: ignore[attr-defined]
     except ImportError:
         pytest.skip("Scapy imports failed")
 
@@ -257,7 +257,7 @@ def test_network_monitor_thread_safety(network_monitor: Any) -> None:
         pytest.skip("Scapy not available")
 
     try:
-        from scapy.all import IP, TCP, Raw
+        from scapy.all import IP, TCP, Raw  # type: ignore[attr-defined]
     except ImportError:
         pytest.skip("Scapy imports failed")
 
@@ -294,7 +294,7 @@ def test_network_monitor_event_severity_classification(network_monitor: Any) -> 
         pytest.skip("Scapy not available")
 
     try:
-        from scapy.all import IP, TCP, Raw
+        from scapy.all import IP, TCP, Raw  # type: ignore[attr-defined]
     except ImportError:
         pytest.skip("Scapy imports failed")
 

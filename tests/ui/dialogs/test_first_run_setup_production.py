@@ -115,6 +115,9 @@ def qapp() -> QApplication:
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
+        app.setApplicationName("IntellicrackSetupTest")
+        return app
+    assert isinstance(app, QApplication), "Expected QApplication instance"
     app.setApplicationName("IntellicrackSetupTest")
     return app
 

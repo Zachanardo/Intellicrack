@@ -29,13 +29,13 @@ from typing import Any
 import pytest
 
 from intellicrack.core.analysis.dynamic_analyzer import (
-    FRIDA_AVAILABLE,
-    PSUTIL_AVAILABLE,
     AdvancedDynamicAnalyzer,
     create_dynamic_analyzer,
     deep_runtime_monitoring,
     run_quick_analysis,
 )
+from intellicrack.core.analysis.dynamic_analyzer import FRIDA_AVAILABLE  # type: ignore[attr-defined]
+from intellicrack.core.analysis.dynamic_analyzer import PSUTIL_AVAILABLE  # type: ignore[attr-defined]
 
 
 @pytest.fixture
@@ -357,7 +357,7 @@ class TestFridaRuntimeInstrumentation:
                     "license" in str(ref).lower() or
                     "activation" in str(ref).lower() or
                     "serial" in str(ref).lower()
-                    for ref in string_refs  # type: ignore[union-attr]
+                    for ref in string_refs
                 )
                 assert license_found, "Should detect license-related strings in binary"
 
@@ -544,8 +544,8 @@ class TestMemoryScanning:
         matches: Any = result["matches"]
         if matches:
             found = any(
-                "validatelicense" in match["keyword"].lower()  # type: ignore[index]
-                for match in matches  # type: ignore[union-attr]
+                "validatelicense" in match["keyword"].lower()
+                for match in matches
             )
             assert found
 
@@ -738,7 +738,7 @@ class TestAnalyzerStateManagement:
         analyzer1 = AdvancedDynamicAnalyzer(real_pe_binary)
         analyzer2 = AdvancedDynamicAnalyzer(real_pe_binary)
 
-        analyzer1.api_calls.append("test_call_1")
+        analyzer1.api_calls.append({"name": "test_call_1"})
 
         assert len(analyzer1.api_calls) == 1
         assert len(analyzer2.api_calls) == 0

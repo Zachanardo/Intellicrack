@@ -12,27 +12,32 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
+from __future__ import annotations
+
 import struct
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
+MODULE_AVAILABLE = False
 try:
     from intellicrack.core.certificate.pinning_detector import (
         PinningDetector,
-        PinningInfo,
         PinningLocation,
         PinningReport,
     )
     MODULE_AVAILABLE = True
 except ImportError:
-    PinningDetector = None
-    PinningInfo = None
-    PinningLocation = None
-    PinningReport = None
-    MODULE_AVAILABLE = False
+    pass
+
+if TYPE_CHECKING:
+    from intellicrack.core.certificate.pinning_detector import (
+        PinningDetector as PinningDetectorType,
+        PinningLocation as PinningLocationType,
+        PinningReport as PinningReportType,
+    )
 
 pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not available")
 

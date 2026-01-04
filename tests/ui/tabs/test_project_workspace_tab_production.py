@@ -10,13 +10,14 @@ This file is part of Intellicrack and follows GPL v3 licensing.
 import json
 import os
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from intellicrack.handlers.pyqt6_handler import QMessageBox
-from intellicrack.ui.tabs.project_workspace_tab import DashboardTab
+from intellicrack.ui.tabs.project_workspace_tab import DashboardTab  # type: ignore[attr-defined]
 
 
 class FakeMainWindow:
@@ -169,7 +170,7 @@ class TestProjectWorkspaceTabInitialization:
     ) -> DashboardTab:
         """Create DashboardTab instance."""
         tab = DashboardTab(shared_context)
-        qtbot.addWidget(tab)
+        qtbot.addWidget(tab)  # type: ignore[attr-defined]
         return tab
 
     def test_dashboard_tab_initialization(
@@ -215,11 +216,11 @@ class TestProjectManagement:
     def dashboard_tab(self, qtbot: object) -> DashboardTab:
         """Create DashboardTab instance."""
         tab = DashboardTab()
-        qtbot.addWidget(tab)
+        qtbot.addWidget(tab)  # type: ignore[attr-defined]
         return tab
 
     @pytest.fixture
-    def temp_project_dir(self) -> str:
+    def temp_project_dir(self) -> Generator[str, None, None]:
         """Create temporary project directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             yield tmpdir
@@ -375,11 +376,11 @@ class TestBinaryManagement:
     def dashboard_tab(self, qtbot: object) -> DashboardTab:
         """Create DashboardTab instance."""
         tab = DashboardTab()
-        qtbot.addWidget(tab)
+        qtbot.addWidget(tab)  # type: ignore[attr-defined]
         return tab
 
     @pytest.fixture
-    def temp_binary(self) -> str:
+    def temp_binary(self) -> Generator[str, None, None]:
         """Create temporary binary file."""
         with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as f:
             f.write(b"MZ\x90\x00" + b"\x00" * 60 + b"PE\x00\x00")
@@ -410,7 +411,7 @@ class TestBinaryManagement:
         qtbot: object,
     ) -> None:
         """Loading binary emits binary_selected signal."""
-        with qtbot.waitSignal(dashboard_tab.binary_selected, timeout=1000) as blocker:
+        with qtbot.waitSignal(dashboard_tab.binary_selected, timeout=1000) as blocker:  # type: ignore[attr-defined]
             dashboard_tab.load_binary(temp_binary)
 
         assert blocker.args[0] == temp_binary
@@ -493,11 +494,11 @@ class TestAnalysisOperations:
     def dashboard_tab(self, qtbot: object) -> DashboardTab:
         """Create DashboardTab instance."""
         tab = DashboardTab()
-        qtbot.addWidget(tab)
+        qtbot.addWidget(tab)  # type: ignore[attr-defined]
         return tab
 
     @pytest.fixture
-    def temp_binary(self) -> str:
+    def temp_binary(self) -> Generator[str, None, None]:
         """Create temporary binary file."""
         with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as f:
             f.write(b"MZ" + b"\x00" * 62 + b"PE\x00\x00")
@@ -539,7 +540,7 @@ class TestAnalysisOperations:
             fake_dialog,
         )
 
-        with qtbot.waitSignal(dashboard_tab.analysis_saved, timeout=1000) as blocker:
+        with qtbot.waitSignal(dashboard_tab.analysis_saved, timeout=1000) as blocker:  # type: ignore[attr-defined]
             dashboard_tab.save_analysis_results()
 
         assert blocker.args[0] == results_file
@@ -705,7 +706,7 @@ class TestActivityLogging:
     def dashboard_tab(self, qtbot: object) -> DashboardTab:
         """Create DashboardTab instance."""
         tab = DashboardTab()
-        qtbot.addWidget(tab)
+        qtbot.addWidget(tab)  # type: ignore[attr-defined]
         return tab
 
     def test_log_activity_adds_message(
@@ -752,7 +753,7 @@ class TestFileFormatting:
     def dashboard_tab(self, qtbot: object) -> DashboardTab:
         """Create DashboardTab instance."""
         tab = DashboardTab()
-        qtbot.addWidget(tab)
+        qtbot.addWidget(tab)  # type: ignore[attr-defined]
         return tab
 
     def test_format_file_size_bytes(

@@ -104,7 +104,7 @@ class FakeMonitor(BaseMonitor):
         event = MonitorEvent(
             timestamp=time.time(),
             source=EventSource.API,
-            event_type=EventType.CALL,
+            event_type=EventType.CALL,  # type: ignore[attr-defined]
             severity=EventSeverity.INFO,
             details=details or {},
             process_info=self.process_info,
@@ -587,7 +587,7 @@ class TestEventHandling:
         event = MonitorEvent(
             timestamp=time.time(),
             source=EventSource.API,
-            event_type=EventType.CALL,
+            event_type=EventType.CALL,  # type: ignore[attr-defined]
             severity=EventSeverity.INFO,
             details={"function": "RegSetValueEx"},
             process_info=session.process_info,
@@ -673,7 +673,7 @@ class TestHistoryManagement:
         event = MonitorEvent(
             timestamp=time.time(),
             source=EventSource.API,
-            event_type=EventType.CALL,
+            event_type=EventType.CALL,  # type: ignore[attr-defined]
             severity=EventSeverity.INFO,
             details={},
             process_info=session.process_info,
@@ -700,7 +700,7 @@ class TestHistoryManagement:
             event = MonitorEvent(
                 timestamp=time.time(),
                 source=EventSource.API,
-                event_type=EventType.CALL,
+                event_type=EventType.CALL,  # type: ignore[attr-defined]
                 severity=EventSeverity.INFO,
                 details={"index": i},
                 process_info=session.process_info,
@@ -726,7 +726,7 @@ class TestHistoryManagement:
             event = MonitorEvent(
                 timestamp=time.time() + i,
                 source=EventSource.API,
-                event_type=EventType.CALL,
+                event_type=EventType.CALL,  # type: ignore[attr-defined]
                 severity=EventSeverity.INFO,
                 details={"index": i},
                 process_info=session.process_info,
@@ -793,7 +793,7 @@ class TestStatistics:
         def failing_get_stats() -> dict[str, Any]:
             raise Exception("Stats error")
 
-        fake_monitor.get_stats = failing_get_stats
+        fake_monitor.get_stats = failing_get_stats  # type: ignore[method-assign]
 
         stats = session.get_stats()
 
@@ -801,7 +801,7 @@ class TestStatistics:
         assert "api" in stats["monitors"]
         assert "error" in stats["monitors"]["api"]
 
-        fake_monitor.get_stats = original_get_stats
+        fake_monitor.get_stats = original_get_stats  # type: ignore[method-assign]
 
     def test_session_statistics_include_aggregator_data(
         self, test_process_path: str, fake_frida_server: FakeFridaServerManager
@@ -814,7 +814,7 @@ class TestStatistics:
             event = MonitorEvent(
                 timestamp=time.time(),
                 source=EventSource.API,
-                event_type=EventType.CALL,
+                event_type=EventType.CALL,  # type: ignore[attr-defined]
                 severity=EventSeverity.INFO,
                 details={"index": i},
                 process_info=session.process_info,
@@ -896,13 +896,13 @@ class TestEdgeCases:
         def failing_stop() -> None:
             raise Exception("Stop error")
 
-        fake_monitor._stop_monitoring = failing_stop
+        fake_monitor._stop_monitoring = failing_stop  # type: ignore[method-assign]
 
         session.stop()
 
         assert session.is_running() is False
 
-        fake_monitor._stop_monitoring = original_stop
+        fake_monitor._stop_monitoring = original_stop  # type: ignore[method-assign]
 
     def test_session_handles_empty_process_path(self, fake_frida_server: FakeFridaServerManager) -> None:
         """Session handles empty process path without crashing."""

@@ -364,7 +364,7 @@ int main(int argc, char** argv) {
 
             def message_handler(message: dict[str, Any], data: Any) -> None:
                 nonlocal corruption_detected, freed_addresses
-                original_on_message(message, data)
+                original_on_message(message, data)  # type: ignore[arg-type]
 
                 if message.get("type") == "send":
                     payload = message.get("payload", {})
@@ -376,7 +376,7 @@ int main(int argc, char** argv) {
                             corruption_detected = True
                         freed_addresses.add(addr)
 
-            tracker.script.on("message", message_handler)
+            tracker.script.on("message", message_handler)  # type: ignore[call-overload]
 
             time.sleep(1.5)
 
@@ -417,7 +417,7 @@ int main(int argc, char** argv) {
             time.sleep(1.8)
 
             stats = tracker.get_stats()
-            assert stats["totalAllocations"] >= 3, (
+            assert stats["totalAllocations"] >= 3, (  # type: ignore[operator]
                 "Must track all three allocations"
             )
 
@@ -469,12 +469,12 @@ int main(int argc, char** argv) {
             time.sleep(2.0)
 
             stats = tracker.get_stats()
-            assert stats["totalAllocations"] >= 1, (
+            assert stats["totalAllocations"] >= 1, (  # type: ignore[operator]
                 "Large allocation must be tracked"
             )
 
             large_alloc_size = 100 * 1024 * 1024
-            assert stats.get("peakAllocated", 0) >= large_alloc_size * 0.9, (
+            assert stats.get("peakAllocated", 0) >= large_alloc_size * 0.9, (  # type: ignore[operator]
                 "Peak allocated must reflect large allocation size"
             )
 
@@ -516,7 +516,7 @@ int main(int argc, char** argv) {
             time.sleep(1.5)
 
             stats = tracker.get_stats()
-            assert stats["totalAllocations"] >= 1, (
+            assert stats["totalAllocations"] >= 1, (  # type: ignore[operator]
                 "Heap allocation in thread-local test must be tracked"
             )
 
@@ -563,10 +563,10 @@ int main(int argc, char** argv) {
             time.sleep(1.5)
 
             stats = tracker.get_stats()
-            assert stats["totalAllocations"] >= 1, (
+            assert stats["totalAllocations"] >= 1, (  # type: ignore[operator]
                 "Allocation before use-after-free must be tracked"
             )
-            assert stats["totalFrees"] >= 1, (
+            assert stats["totalFrees"] >= 1, (  # type: ignore[operator]
                 "Free before use-after-free must be tracked"
             )
 
@@ -601,7 +601,7 @@ int main(int argc, char** argv) {
             time.sleep(1.5)
 
             stats = tracker.get_stats()
-            assert stats["totalAllocations"] >= 1, (
+            assert stats["totalAllocations"] >= 1, (  # type: ignore[operator]
                 "Allocation before buffer overflow must be tracked"
             )
 

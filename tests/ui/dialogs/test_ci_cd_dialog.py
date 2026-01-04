@@ -8,7 +8,7 @@ import json
 import pytest
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt
@@ -22,11 +22,11 @@ def qapp() -> QApplication:
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
-    return app
+    return app  # type: ignore[return-value]
 
 
 @pytest.fixture
-def temp_plugin_file() -> Path:
+def temp_plugin_file() -> Generator[Path, None, None]:
     """Create temporary plugin file for testing."""
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
         f.write("""
@@ -186,13 +186,13 @@ class TestCICDDialogConfigurationTab:
             def auto_confirm(*args: Any, **kwargs: Any) -> QMessageBox.StandardButton:
                 return QMessageBox.StandardButton.Yes
 
-            QMessageBox.question = auto_confirm
+            QMessageBox.question = auto_confirm  # type: ignore[method-assign]
 
             try:
                 ci_cd_dialog.reset_configuration()
                 assert not config_path.exists()
             finally:
-                QMessageBox.question = original_question
+                QMessageBox.question = original_question  # type: ignore[method-assign]
 
         finally:
             if config_path.exists():
@@ -278,8 +278,8 @@ class TestCICDDialogReportsTab:
             def mock_info(*args: Any, **kwargs: Any) -> None:
                 pass
 
-            QFileDialog.getSaveFileName = mock_get_save
-            QMessageBox.information = mock_info
+            QFileDialog.getSaveFileName = mock_get_save  # type: ignore[method-assign]
+            QMessageBox.information = mock_info  # type: ignore[method-assign, assignment]
 
             try:
                 ci_cd_dialog.export_report()
@@ -289,8 +289,8 @@ class TestCICDDialogReportsTab:
                     assert "Test report content" in content
 
             finally:
-                QFileDialog.getSaveFileName = original_get_save
-                QMessageBox.information = original_info
+                QFileDialog.getSaveFileName = original_get_save  # type: ignore[method-assign]
+                QMessageBox.information = original_info  # type: ignore[method-assign]
 
         finally:
             if export_path.exists():
@@ -326,13 +326,13 @@ class TestCICDDialogGitHubTab:
                 def mock_info(*args: Any, **kwargs: Any) -> None:
                     pass
 
-                QMessageBox.information = mock_info
+                QMessageBox.information = mock_info  # type: ignore[method-assign, assignment]
 
                 ci_cd_dialog.generate_workflow()
 
             finally:
-                if original_info:
-                    QMessageBox.information = original_info
+                if original_info is not None:
+                    QMessageBox.information = original_info  # type: ignore[method-assign]
 
             assert workflows_dir.exists()
             workflow_files = list(workflows_dir.glob("*.yml"))
@@ -364,7 +364,7 @@ class TestCICDDialogPipelineExecution:
         """CICDDialog handles successful stage completion."""
         result = {"success": True, "coverage": 85}
 
-        ci_cd_dialog.on_stage_completed("test", result)
+        ci_cd_dialog.on_stage_completed("test", result)  # type: ignore[arg-type]
 
         stage_widget = ci_cd_dialog.stage_widgets["test"]
         status_label = getattr(stage_widget, 'status_label', None)
@@ -388,7 +388,7 @@ class TestCICDDialogPipelineExecution:
         """CICDDialog handles successful pipeline completion."""
         results = {"overall_status": "success"}
 
-        ci_cd_dialog.on_pipeline_finished(results)
+        ci_cd_dialog.on_pipeline_finished(results)  # type: ignore[arg-type]
 
         assert ci_cd_dialog.run_btn.isEnabled()
         assert not ci_cd_dialog.stop_btn.isEnabled()
@@ -398,7 +398,7 @@ class TestCICDDialogPipelineExecution:
         """CICDDialog handles failed pipeline completion."""
         results = {"overall_status": "failure"}
 
-        ci_cd_dialog.on_pipeline_finished(results)
+        ci_cd_dialog.on_pipeline_finished(results)  # type: ignore[arg-type]
 
         console_text = ci_cd_dialog.console_output.toPlainText()
         assert "failed" in console_text.lower() or "failure" in console_text.lower()
@@ -459,7 +459,7 @@ class TestCICDDialogEdgeCases:
         ci_cd_dialog.stage_widgets["broken"] = broken_widget
 
         result = {"success": True}
-        ci_cd_dialog.on_stage_completed("broken", result)
+        ci_cd_dialog.on_stage_completed("broken", result)  # type: ignore[arg-type]
 
     def test_stage_completed_with_malformed_result(self, ci_cd_dialog: CICDDialog) -> None:
         """CICDDialog handles malformed stage result data."""
@@ -489,7 +489,7 @@ class TestCICDDialogEdgeCases:
 
         for i, stage in enumerate(ci_cd_dialog.stage_widgets.keys(), 1):
             result = {"success": True}
-            ci_cd_dialog.on_stage_completed(stage, result)
+            ci_cd_dialog.on_stage_completed(stage, result)  # type: ignore[arg-type]
 
             if i == total_stages:
                 assert ci_cd_dialog.progress_bar.value() <= total_stages

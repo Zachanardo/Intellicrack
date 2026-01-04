@@ -225,9 +225,9 @@ class TestRepositoryCreation:
         repository = RepositoryFactory.create_repository(config)
 
         assert repository is not None
-        assert repository.timeout == 60
-        assert repository.api_key == ""
-        assert repository.proxy == ""
+        assert repository.timeout == 60  # type: ignore[attr-defined]
+        assert repository.api_key == ""  # type: ignore[attr-defined]
+        assert repository.proxy == ""  # type: ignore[attr-defined]
 
 
 class TestRepositoryCreationErrors:
@@ -290,7 +290,7 @@ class TestRealWorldRepositoryConfigurations:
         repository = RepositoryFactory.create_repository(config)
 
         assert repository is not None
-        assert repository.repository_name == "HuggingFace"
+        assert repository.repository_name == "HuggingFace"  # type: ignore[attr-defined]
 
     def test_openai_style_config(self, tmp_path: Path) -> None:
         """Create repository with OpenAI-style configuration."""
@@ -309,7 +309,7 @@ class TestRealWorldRepositoryConfigurations:
         repository = RepositoryFactory.create_repository(config)
 
         assert repository is not None
-        assert repository.api_key == "sk-xxxxxxxxxxxxx"
+        assert repository.api_key == "sk-xxxxxxxxxxxxx"  # type: ignore[attr-defined]
 
     def test_anthropic_style_config(self, tmp_path: Path) -> None:
         """Create repository with Anthropic-style configuration."""
@@ -385,8 +385,8 @@ class TestRepositoryFactoryIntegration:
 
         assert repo1 is not None
         assert repo2 is not None
-        assert repo1.repository_name != repo2.repository_name
-        assert repo1.api_endpoint != repo2.api_endpoint
+        assert repo1.repository_name != repo2.repository_name  # type: ignore[attr-defined]
+        assert repo1.api_endpoint != repo2.api_endpoint  # type: ignore[attr-defined]
 
     def test_repository_type_persistence(self) -> None:
         """Registered types persist across factory method calls."""
@@ -448,9 +448,9 @@ class TestRepositoryConfigValidation:
         repository = RepositoryFactory.create_repository(config)
 
         assert repository is not None
-        assert repository.timeout == 60
-        assert repository.rate_limiter.config.requests_per_minute == 60
-        assert repository.rate_limiter.config.requests_per_day == 1000
+        assert repository.timeout == 60  # type: ignore[attr-defined]
+        assert repository.rate_limiter.config.requests_per_minute == 60  # type: ignore[attr-defined]
+        assert repository.rate_limiter.config.requests_per_day == 1000  # type: ignore[attr-defined]
 
 
 class TestEdgeCases:
@@ -459,14 +459,14 @@ class TestEdgeCases:
     def test_register_none_as_repository_class(self) -> None:
         """Handle None as repository class."""
         try:
-            RepositoryFactory.register_repository_type("none_class", None)
+            RepositoryFactory.register_repository_type("none_class", None)  # type: ignore[arg-type]
         except (TypeError, AttributeError):
             pass
 
     def test_create_repository_none_config(self) -> None:
         """Handle None as configuration."""
         try:
-            repository = RepositoryFactory.create_repository(None)
+            repository = RepositoryFactory.create_repository(None)  # type: ignore[arg-type]
             assert repository is None
         except (TypeError, AttributeError):
             pass
@@ -511,7 +511,7 @@ class TestRepositoryDownloadDirectories:
         repository = RepositoryFactory.create_repository(config)
 
         assert repository is not None
-        assert os.path.exists(repository.download_dir)
+        assert os.path.exists(repository.download_dir)  # type: ignore[attr-defined]
 
     def test_repository_default_download_directory(self) -> None:
         """Repository uses default download directory when not specified."""
@@ -541,4 +541,4 @@ class TestRepositoryDownloadDirectories:
         repository = RepositoryFactory.create_repository(config)
 
         assert repository is not None
-        assert "SubdirRepo" in repository.download_dir
+        assert "SubdirRepo" in repository.download_dir  # type: ignore[attr-defined]

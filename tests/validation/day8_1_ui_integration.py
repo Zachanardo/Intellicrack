@@ -8,7 +8,7 @@ import sys
 import tempfile
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -17,8 +17,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 class UIIntegrationTester:
     """Tests UI integration for new Radare2 functionality."""
 
-    def __init__(self):
-        self.test_results = {
+    def __init__(self) -> None:
+        self.test_results: Dict[str, Any] = {
             "tests_run": 0,
             "tests_passed": 0,
             "tests_failed": 0,
@@ -59,14 +59,14 @@ class UIIntegrationTester:
         # Print summary
         self._print_summary()
 
-        return self.test_results["tests_failed"] == 0
+        return bool(self.test_results["tests_failed"] == 0)
 
     def test_commercial_analyzer_ui_integration(self) -> bool:
         """Test that commercial license analyzer integrates with UI."""
         print("\n[*] Testing commercial analyzer UI integration...")
 
         try:
-            from intellicrack.ui.main_app import IntellicrackMainApp
+            from intellicrack.ui.main_app import IntellicrackMainApp  # type: ignore[attr-defined]
             from PyQt6.QtWidgets import QApplication
 
             # Create app instance (headless for testing)
@@ -176,7 +176,7 @@ class UIIntegrationTester:
 
             # Should handle gracefully
             if result2 is None:
-                print("    Error: Should return empty dict, not None")
+                print("    Error: Should return empty dict, not None")  # type: ignore[unreachable]
                 return False
 
             print("    OK Error handling verified")
@@ -199,11 +199,11 @@ class UIIntegrationTester:
             test_key = "ui_test_key"
             test_value = "test_value_12345"
 
-            config.set_value(test_key, test_value)
+            config.set_value(test_key, test_value)  # type: ignore[attr-defined]
 
             # Create new instance to test persistence
             config2 = IntellicrackConfig()
-            retrieved = config2.get_value(test_key)
+            retrieved = config2.get_value(test_key)  # type: ignore[attr-defined]
 
             if retrieved != test_value:
                 print(f"    Configuration not persisted: expected '{test_value}', got '{retrieved}'")
@@ -278,7 +278,7 @@ class UIIntegrationTester:
             print(f"    Error testing vulnerability display: {e}")
             return False
 
-    def _print_summary(self):
+    def _print_summary(self) -> None:
         """Print test summary."""
         print("\n" + "=" * 60)
         print("UI INTEGRATION TEST SUMMARY")
@@ -306,9 +306,9 @@ class UIIntegrationTester:
         print("=" * 60)
 
 
-def main():
+def main() -> int:
     """Run UI integration tests."""
-    tester = UIIntegrationTester()
+    tester: UIIntegrationTester = UIIntegrationTester()
     success = tester.run_tests()
 
     if success:

@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 
-from intellicrack.core.analysis.incremental_manager import (
+from intellicrack.core.analysis.incremental_manager import (  # type: ignore[attr-defined]
     IncrementalAnalysisManager,
     secure_pickle_dump,
     secure_pickle_load,
@@ -144,7 +144,7 @@ class TestCacheManagement:
         """Cache metadata persists across manager instances."""
         test_hash = hashlib.sha256(test_binary.read_bytes()).hexdigest()
         manager.file_hashes[str(test_binary)] = test_hash
-        manager._save_cache_metadata()
+        manager._save_cache_metadata()  # type: ignore[attr-defined]
 
         new_manager = IncrementalAnalysisManager({"cache_dir": str(manager.cache_dir)})
 
@@ -184,7 +184,7 @@ class TestAnalysisCaching:
         analysis_type = "license_check"
         analysis_result = {"functions": ["CheckLicense", "ValidateKey"], "status": "success"}
 
-        cache_key = manager._get_cache_key(str(test_binary), analysis_type)
+        cache_key = manager._get_cache_key(str(test_binary), analysis_type)  # type: ignore[attr-defined]
         manager.analysis_cache[cache_key] = analysis_result
 
         assert cache_key in manager.analysis_cache
@@ -195,7 +195,7 @@ class TestAnalysisCaching:
         analysis_type = "crypto_scan"
         expected_result = {"algorithms": ["AES", "RSA"], "weak_crypto": False}
 
-        cache_key = manager._get_cache_key(str(test_binary), analysis_type)
+        cache_key = manager._get_cache_key(str(test_binary), analysis_type)  # type: ignore[attr-defined]
         manager.analysis_cache[cache_key] = expected_result
 
         retrieved_result = manager.analysis_cache.get(cache_key)
@@ -271,15 +271,15 @@ class TestCacheKeyGeneration:
         binary_path = "/path/to/binary.exe"
         analysis_type = "license_analysis"
 
-        key1 = manager._get_cache_key(binary_path, analysis_type)
-        key2 = manager._get_cache_key(binary_path, analysis_type)
+        key1 = manager._get_cache_key(binary_path, analysis_type)  # type: ignore[attr-defined]
+        key2 = manager._get_cache_key(binary_path, analysis_type)  # type: ignore[attr-defined]
 
         assert key1 == key2
 
     def test_different_paths_different_keys(self, manager: IncrementalAnalysisManager) -> None:
         """Different binaries produce different cache keys."""
-        key1 = manager._get_cache_key("/path/to/binary1.exe", "analysis")
-        key2 = manager._get_cache_key("/path/to/binary2.exe", "analysis")
+        key1 = manager._get_cache_key("/path/to/binary1.exe", "analysis")  # type: ignore[attr-defined]
+        key2 = manager._get_cache_key("/path/to/binary2.exe", "analysis")  # type: ignore[attr-defined]
 
         assert key1 != key2
 
@@ -287,8 +287,8 @@ class TestCacheKeyGeneration:
         """Different analysis types produce different cache keys."""
         binary_path = "/path/to/binary.exe"
 
-        key1 = manager._get_cache_key(binary_path, "license_check")
-        key2 = manager._get_cache_key(binary_path, "crypto_scan")
+        key1 = manager._get_cache_key(binary_path, "license_check")  # type: ignore[attr-defined]
+        key2 = manager._get_cache_key(binary_path, "crypto_scan")  # type: ignore[attr-defined]
 
         assert key1 != key2
 
@@ -302,7 +302,7 @@ class TestCachePersistence:
         manager.cache_hits = 5
         manager.cache_misses = 2
 
-        manager._save_cache_metadata()
+        manager._save_cache_metadata()  # type: ignore[attr-defined]
 
         new_manager = IncrementalAnalysisManager({"cache_dir": str(manager.cache_dir)})
 
@@ -318,7 +318,7 @@ class TestCachePersistence:
             "result": "success",
         }
 
-        manager._save_cache_metadata()
+        manager._save_cache_metadata()  # type: ignore[attr-defined]
 
         new_manager = IncrementalAnalysisManager({"cache_dir": str(manager.cache_dir)})
 
@@ -378,7 +378,7 @@ class TestPerformanceMetrics:
         manager.cache_hits = 10
         manager.cache_misses = 3
 
-        manager._save_cache_metadata()
+        manager._save_cache_metadata()  # type: ignore[attr-defined]
 
         new_manager = IncrementalAnalysisManager({"cache_dir": str(manager.cache_dir)})
 

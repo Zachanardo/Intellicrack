@@ -40,17 +40,17 @@ try:
         CS_MODE_32,
         CS_MODE_64,
     )
-    from intellicrack.handlers.lief_handler import (
+    from intellicrack.handlers.lief_handler import (  # type: ignore[attr-defined, no-redef, assignment]
         HAS_LIEF,
         LIEF_AVAILABLE,
         parse as lief_parse,
     )
-    from intellicrack.handlers.pefile_handler import (
+    from intellicrack.handlers.pefile_handler import (  # type: ignore[assignment]
         HAS_PEFILE,
         PEFILE_AVAILABLE,
         PE,
     )
-    from intellicrack.handlers.keystone_handler import (
+    from intellicrack.handlers.keystone_handler import (  # type: ignore[attr-defined, no-redef, assignment]
         HAS_KEYSTONE,
         KEYSTONE_AVAILABLE,
         Ks,
@@ -58,7 +58,7 @@ try:
         KS_MODE_32,
         KS_MODE_64,
     )
-    from intellicrack.handlers.cryptography_handler import (
+    from intellicrack.handlers.cryptography_handler import (  # type: ignore[attr-defined, no-redef]
         HAS_CRYPTOGRAPHY,
         CRYPTOGRAPHY_AVAILABLE,
     )
@@ -97,7 +97,7 @@ class TestCapstoneHandlerEffectiveness:
         KNOWN_BYTES = b"\x55"  # push ebp
         KNOWN_MNEMONIC = "push"
 
-        md = Cs(CS_ARCH_X86, CS_MODE_32)
+        md = Cs(CS_ARCH_X86, CS_MODE_32)  # type: ignore[misc]
         instructions = list(md.disasm(KNOWN_BYTES, 0x1000))
 
         assert (
@@ -115,7 +115,7 @@ class TestCapstoneHandlerEffectiveness:
         KNOWN_BYTES = b"\x48\x89\xe5"  # mov rbp, rsp
         KNOWN_MNEMONIC = "mov"
 
-        md = Cs(CS_ARCH_X86, CS_MODE_64)
+        md = Cs(CS_ARCH_X86, CS_MODE_64)  # type: ignore[misc]
         instructions = list(md.disasm(KNOWN_BYTES, 0x400000))
 
         assert (
@@ -131,7 +131,7 @@ class TestCapstoneHandlerEffectiveness:
         KNOWN_BYTES = b"\x55\x89\xe5\x83\xec\x10"  # push ebp; mov ebp, esp; sub esp, 0x10
         EXPECTED_COUNT = 3
 
-        md = Cs(CS_ARCH_X86, CS_MODE_32)
+        md = Cs(CS_ARCH_X86, CS_MODE_32)  # type: ignore[misc]
         instructions = list(md.disasm(KNOWN_BYTES, 0x1000))
 
         assert len(instructions) == EXPECTED_COUNT, \
@@ -173,7 +173,7 @@ class TestLIEFHandlerEffectiveness:
         binary_data = dos_header + pe_header
         pe_path.write_bytes(binary_data)
 
-        binary = lief_parse(str(pe_path))
+        binary = lief_parse(str(pe_path))  # type: ignore[misc]
 
         assert binary is not None, \
             "FAILED: LIEF failed to parse valid PE binary"
@@ -186,7 +186,7 @@ class TestLIEFHandlerEffectiveness:
         invalid_path = temp_dir / "invalid.exe"
         invalid_path.write_bytes(b"INVALID_BINARY_DATA_NOT_PE")
 
-        binary = lief_parse(str(invalid_path))
+        binary = lief_parse(str(invalid_path))  # type: ignore[misc]
 
         assert binary is None, \
             "FAILED: LIEF should return None for invalid binary, but returned an object"
@@ -241,7 +241,7 @@ class TestPEfileHandlerEffectiveness:
 
         pe_path.write_bytes(binary_data)
 
-        pe = PE(str(pe_path))
+        pe = PE(str(pe_path))  # type: ignore[misc]
 
         assert pe is not None, \
             "FAILED: PEfile failed to parse valid PE binary"
@@ -274,7 +274,7 @@ class TestKeystoneHandlerEffectiveness:
         KNOWN_ASM = "push ebp"
         EXPECTED_BYTES = b"\x55"
 
-        ks = Ks(KS_ARCH_X86, KS_MODE_32)
+        ks = Ks(KS_ARCH_X86, KS_MODE_32)  # type: ignore[misc]
 
         encoding, count = ks.asm(KNOWN_ASM)
 
@@ -292,7 +292,7 @@ class TestKeystoneHandlerEffectiveness:
         KNOWN_ASM = "mov rax, rbx"
         EXPECTED_BYTES = b"\x48\x89\xd8"
 
-        ks = Ks(KS_ARCH_X86, KS_MODE_64)
+        ks = Ks(KS_ARCH_X86, KS_MODE_64)  # type: ignore[misc]
 
         encoding, count = ks.asm(KNOWN_ASM)
 
@@ -310,7 +310,7 @@ class TestKeystoneHandlerEffectiveness:
         KNOWN_ASM = "push ebp; mov ebp, esp"
         EXPECTED_INSTRUCTION_COUNT = 2
 
-        ks = Ks(KS_ARCH_X86, KS_MODE_32)
+        ks = Ks(KS_ARCH_X86, KS_MODE_32)  # type: ignore[misc]
 
         encoding, count = ks.asm(KNOWN_ASM)
 
@@ -398,7 +398,7 @@ class TestCryptographyHandlerEffectiveness:
 
     @pytest.mark.skipif(not HAS_CRYPTOGRAPHY, reason="Cryptography not available")
     def test_sha256_hashing(self) -> None:
-        from intellicrack.handlers.cryptography_handler import hashes, Hash
+        from intellicrack.handlers.cryptography_handler import hashes, Hash  # type: ignore[attr-defined]
 
         KNOWN_DATA = b"Intellicrack license validation test data"
         EXPECTED_HASH_LENGTH = 32  # SHA256 produces 32 bytes
@@ -427,7 +427,7 @@ class TestHandlerIntegrationEffectiveness:
     def test_assemble_then_disassemble(self) -> None:
         KNOWN_ASM = "push ebp; mov ebp, esp; sub esp, 0x10"
 
-        ks = Ks(KS_ARCH_X86, KS_MODE_32)
+        ks = Ks(KS_ARCH_X86, KS_MODE_32)  # type: ignore[misc]
         encoding, count = ks.asm(KNOWN_ASM)
 
         assert encoding is not None, \
@@ -435,7 +435,7 @@ class TestHandlerIntegrationEffectiveness:
 
         assembled_bytes = bytes(encoding)
 
-        md = Cs(CS_ARCH_X86, CS_MODE_32)
+        md = Cs(CS_ARCH_X86, CS_MODE_32)  # type: ignore[misc]
         instructions = list(md.disasm(assembled_bytes, 0x1000))
 
         assert len(instructions) == count, \
@@ -465,12 +465,12 @@ class TestHandlerIntegrationEffectiveness:
         binary_data = dos_stub + pe_signature + coff_header
         pe_path.write_bytes(binary_data)
 
-        lief_binary = lief_parse(str(pe_path))
+        lief_binary = lief_parse(str(pe_path))  # type: ignore[misc]
 
         assert lief_binary is not None, \
             "FAILED: Integration test - LIEF failed to parse binary"
 
-        pe_binary = PE(str(pe_path))
+        pe_binary = PE(str(pe_path))  # type: ignore[misc]
 
         assert pe_binary is not None, \
             "FAILED: Integration test - PEfile failed to parse binary"

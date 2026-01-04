@@ -59,7 +59,10 @@ class BaseTab(QWidget):
 
         Creates a centered loading label displayed while tab content is being initialized.
         """
+        logger.debug("%s: setup_loading_ui() creating layout", self.__class__.__name__)
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
         loading_label = QLabel("Loading...")
         loading_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -68,6 +71,7 @@ class BaseTab(QWidget):
         loading_label.setFont(font)
 
         layout.addWidget(loading_label)
+        logger.debug("%s: setup_loading_ui() complete, layout set on widget", self.__class__.__name__)
 
     def lazy_load_content(self) -> None:
         """Override this method in subclasses to implement lazy loading.
@@ -81,9 +85,12 @@ class BaseTab(QWidget):
 
         """
         if not self.is_loaded:
+            logger.debug("%s: lazy_load_content() starting", self.__class__.__name__)
             self.clear_layout()
+            logger.debug("%s: lazy_load_content() cleared layout, calling setup_content()", self.__class__.__name__)
             self.setup_content()
             self.is_loaded = True
+            logger.debug("%s: lazy_load_content() complete, is_loaded=%s", self.__class__.__name__, self.is_loaded)
 
     def setup_content(self) -> None:
         """Override this method to setup the actual tab content.
@@ -99,12 +106,18 @@ class BaseTab(QWidget):
         Used to reset the tab UI before loading new content.
         """
         if layout := self.layout():
+            widgets_removed = 0
             while layout.count():
                 child = layout.takeAt(0)
                 if child is not None:
                     widget = child.widget()
                     if widget is not None:
                         widget.deleteLater()
+                        widgets_removed += 1
+            logger.debug("%s: clear_layout() removed %d widgets, layout still exists: %s",
+                        self.__class__.__name__, widgets_removed, self.layout() is not None)
+        else:
+            logger.warning("%s: clear_layout() called but no layout found!", self.__class__.__name__)
 
     def log_activity(self, message: str) -> None:
         """Log activity to shared context if available.

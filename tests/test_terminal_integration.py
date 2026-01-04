@@ -8,6 +8,7 @@ Licensed under GNU General Public License v3.0
 
 import sys
 from pathlib import Path
+from typing import Any, Generator
 
 import pytest
 from PyQt6.QtWidgets import QApplication
@@ -17,16 +18,16 @@ from intellicrack.ui.widgets.terminal_session_widget import TerminalSessionWidge
 
 
 @pytest.fixture(scope="module")
-def qapp():
+def qapp() -> Generator[QApplication, None, None]:
     """Create QApplication instance for tests."""
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)
-    yield app
+    yield app  # type: ignore[misc]
 
 
 @pytest.fixture
-def terminal_manager(qapp):
+def terminal_manager(qapp: QApplication) -> Generator[TerminalManager, None, None]:
     """Create fresh terminal manager instance."""
     # Reset singleton for testing
     TerminalManager._instance = None
@@ -39,7 +40,7 @@ def terminal_manager(qapp):
 
 
 @pytest.fixture
-def session_widget(qapp, qtbot):
+def session_widget(qapp: QApplication, qtbot: Any) -> Generator[TerminalSessionWidget, None, None]:
     """Create terminal session widget."""
     widget = TerminalSessionWidget()
     qtbot.addWidget(widget)
@@ -52,7 +53,7 @@ def session_widget(qapp, qtbot):
 class TestTerminalManagerSingleton:
     """Test terminal manager singleton pattern."""
 
-    def test_singleton_instance(self, qapp):
+    def test_singleton_instance(self, qapp: QApplication) -> None:
         """Test that terminal manager is a singleton."""
         TerminalManager._instance = None
 
@@ -62,9 +63,9 @@ class TestTerminalManagerSingleton:
         assert manager1 is manager2
         assert TerminalManager._instance is not None
 
-        TerminalManager._instance = None
+        TerminalManager._instance = None  # type: ignore[unreachable]
 
-    def test_multiple_get_calls(self, qapp):
+    def test_multiple_get_calls(self, qapp: QApplication) -> None:
         """Test multiple get_terminal_manager calls return same instance."""
         TerminalManager._instance = None
 
@@ -78,7 +79,7 @@ class TestTerminalManagerSingleton:
 class TestScriptExecution:
     """Test script execution through terminal manager."""
 
-    def test_execute_script(self, terminal_manager, qtbot):
+    def test_execute_script(self, terminal_manager: TerminalManager, qtbot: Any) -> None:
         """Test executing a script through terminal manager."""
         import tempfile
 
@@ -100,7 +101,7 @@ class TestScriptExecution:
         finally:
             Path(script_path).unlink(missing_ok=True)
 
-    def test_execute_command(self, terminal_manager, qtbot):
+    def test_execute_command(self, terminal_manager: TerminalManager, qtbot: Any) -> None:
         """Test executing a command through terminal manager."""
         if sys.platform == 'win32':
             command = ['cmd', '/c', 'echo', 'COMMAND_OUTPUT']
@@ -116,7 +117,7 @@ class TestScriptExecution:
         assert session_id is not None
         qtbot.wait(500)
 
-    def test_execute_with_cwd(self, terminal_manager, qtbot):
+    def test_execute_with_cwd(self, terminal_manager: TerminalManager, qtbot: Any) -> None:
         """Test executing command with custom working directory."""
         import tempfile
 
@@ -135,7 +136,7 @@ class TestScriptExecution:
 class TestAutoSwitch:
     """Test auto-switch to Terminal tab functionality."""
 
-    def test_auto_switch_enabled(self, terminal_manager, qtbot):
+    def test_auto_switch_enabled(self, terminal_manager: TerminalManager, qtbot: Any) -> None:
         """Test auto-switch functionality when enabled."""
         if sys.platform == 'win32':
             command = ['cmd', '/c', 'echo', 'AUTO_SWITCH_TEST']
@@ -150,7 +151,7 @@ class TestAutoSwitch:
         assert session_id is not None
         qtbot.wait(500)
 
-    def test_auto_switch_disabled(self, terminal_manager, qtbot):
+    def test_auto_switch_disabled(self, terminal_manager: TerminalManager, qtbot: Any) -> None:
         """Test execution without auto-switch."""
         if sys.platform == 'win32':
             command = ['cmd', '/c', 'echo', 'NO_SWITCH_TEST']
@@ -169,7 +170,7 @@ class TestAutoSwitch:
 class TestMultipleSessions:
     """Test multiple terminal sessions."""
 
-    def test_create_multiple_sessions(self, session_widget, qtbot):
+    def test_create_multiple_sessions(self, session_widget: TerminalSessionWidget, qtbot: Any) -> None:
         """Test creating multiple terminal sessions."""
         session_ids = []
 
@@ -181,7 +182,7 @@ class TestMultipleSessions:
         assert len(session_ids) == 3
         assert len(set(session_ids)) == 3
 
-    def test_switch_between_sessions(self, session_widget, qtbot):
+    def test_switch_between_sessions(self, session_widget: TerminalSessionWidget, qtbot: Any) -> None:
         """Test switching between terminal sessions."""
         session1 = session_widget.create_new_session(name="First")
         qtbot.wait(200)
@@ -201,7 +202,7 @@ class TestMultipleSessions:
         active2 = session_widget.get_active_session()
         assert active2 is not None
 
-    def test_close_session(self, session_widget, qtbot):
+    def test_close_session(self, session_widget: TerminalSessionWidget, qtbot: Any) -> None:
         """Test closing a terminal session."""
         session_id = session_widget.create_new_session(name="ToClose")
         qtbot.wait(200)
@@ -216,12 +217,12 @@ class TestMultipleSessions:
 class TestWindowsActivatorIntegration:
     """Test Windows Activator integration with terminal."""
 
-    def test_windows_activator_script_exists(self):
+    def test_windows_activator_script_exists(self) -> None:
         """Test that WindowsActivator.cmd exists."""
         script_path = Path("intellicrack/scripts/Windows_Patch/WindowsActivator.cmd")
         assert script_path.exists(), "WindowsActivator.cmd should exist"
 
-    def test_execute_windows_activator(self, terminal_manager, qtbot):
+    def test_execute_windows_activator(self, terminal_manager: TerminalManager, qtbot: Any) -> None:
         """Test executing Windows Activator through terminal (if on Windows)."""
         if sys.platform != 'win32':
             pytest.skip("Windows Activator only works on Windows")
@@ -244,14 +245,14 @@ class TestWindowsActivatorIntegration:
         # Stop the process to prevent hanging
         if terminal_manager._terminal_widget:
             active_session = terminal_manager._terminal_widget.get_active_session()
-            if active_session and active_session.is_running():
-                active_session.stop_process()
+            if active_session and active_session.is_running():  # type: ignore[attr-defined]
+                active_session.stop_process()  # type: ignore[attr-defined]
 
 
 class TestSessionManagement:
     """Test session management functionality."""
 
-    def test_get_all_sessions(self, session_widget, qtbot):
+    def test_get_all_sessions(self, session_widget: TerminalSessionWidget, qtbot: Any) -> None:
         """Test retrieving all sessions."""
         session_widget.create_new_session(name="Test1")
         qtbot.wait(100)
@@ -262,7 +263,7 @@ class TestSessionManagement:
         all_sessions = session_widget.get_all_sessions()
         assert len(all_sessions) >= 2
 
-    def test_rename_session(self, session_widget, qtbot):
+    def test_rename_session(self, session_widget: TerminalSessionWidget, qtbot: Any) -> None:
         """Test renaming a terminal session."""
         session_id = session_widget.create_new_session(name="OldName")
         qtbot.wait(200)
@@ -273,7 +274,7 @@ class TestSessionManagement:
         # Verification would require checking tab text
         # which depends on internal implementation
 
-    def test_active_session_tracking(self, session_widget, qtbot):
+    def test_active_session_tracking(self, session_widget: TerminalSessionWidget, qtbot: Any) -> None:
         """Test active session tracking."""
         session1 = session_widget.create_new_session()
         qtbot.wait(100)
@@ -291,7 +292,7 @@ class TestSessionManagement:
 class TestErrorHandling:
     """Test error handling in terminal integration."""
 
-    def test_invalid_script_path(self, terminal_manager):
+    def test_invalid_script_path(self, terminal_manager: TerminalManager) -> None:
         """Test handling of invalid script path."""
         with pytest.raises((FileNotFoundError, OSError)):
             terminal_manager.execute_script(
@@ -299,7 +300,7 @@ class TestErrorHandling:
                 interactive=False
             )
 
-    def test_invalid_command(self, terminal_manager, qtbot):
+    def test_invalid_command(self, terminal_manager: TerminalManager, qtbot: Any) -> None:
         """Test handling of invalid command."""
         session_id = terminal_manager.execute_command(
             command=['nonexistent_command_xyz123'],
@@ -310,7 +311,7 @@ class TestErrorHandling:
         assert session_id is not None
         qtbot.wait(500)
 
-    def test_close_nonexistent_session(self, session_widget):
+    def test_close_nonexistent_session(self, session_widget: TerminalSessionWidget) -> None:
         """Test closing a non-existent session."""
         # Should handle gracefully without error
         session_widget.close_session("nonexistent_session_id")
@@ -319,7 +320,7 @@ class TestErrorHandling:
 class TestOutputCapture:
     """Test output capture modes."""
 
-    def test_capture_output_enabled(self, terminal_manager, qtbot):
+    def test_capture_output_enabled(self, terminal_manager: TerminalManager, qtbot: Any) -> None:
         """Test command execution with output capture."""
         if sys.platform == 'win32':
             command = ['cmd', '/c', 'echo', 'CAPTURED_OUTPUT']
@@ -334,7 +335,7 @@ class TestOutputCapture:
         assert session_id is not None
         qtbot.wait(500)
 
-    def test_capture_output_disabled(self, terminal_manager, qtbot):
+    def test_capture_output_disabled(self, terminal_manager: TerminalManager, qtbot: Any) -> None:
         """Test command execution without output capture."""
         if sys.platform == 'win32':
             command = ['cmd', '/c', 'echo', 'UNCAPTURED_OUTPUT']

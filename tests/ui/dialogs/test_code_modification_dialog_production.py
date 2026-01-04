@@ -19,7 +19,7 @@ Licensed under GNU GPL v3
 import difflib
 import tempfile
 from pathlib import Path
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, Generator, Optional, Tuple
 
 import pytest
 
@@ -163,7 +163,7 @@ def temp_source_file(temp_output_dir: Path, sample_python_code_original: str) ->
 
 
 @pytest.fixture
-def temp_output_dir() -> Path:
+def temp_output_dir() -> Generator[Path, None, None]:
     """Create temporary directory for test files."""
     with tempfile.TemporaryDirectory(prefix="code_mod_test_") as tmpdir:
         yield Path(tmpdir)
@@ -262,7 +262,7 @@ class TestCodeModificationDialog:
 
         if hasattr(dialog, "load_original_file"):
             dialog.load_original_file(str(temp_source_file))
-            QTest.qWait(200)
+            QTest.qWait(200)  # type: ignore[call-arg, arg-type]
 
             if hasattr(dialog, "original_text"):
                 loaded_text = dialog.original_text.toPlainText()
@@ -336,7 +336,7 @@ class TestCodeModificationDialog:
 
         if hasattr(dialog, "original_text"):
             dialog.original_text.setPlainText(sample_python_code_original)
-            QTest.qWait(100)
+            QTest.qWait(100)  # type: ignore[call-arg, arg-type]
 
         dialog.close()
 
@@ -348,7 +348,7 @@ class TestCodeModificationDialog:
 
         if hasattr(dialog, "original_text"):
             dialog.original_text.setPlainText(sample_cpp_code)
-            QTest.qWait(100)
+            QTest.qWait(100)  # type: ignore[call-arg, arg-type]
 
         dialog.close()
 
@@ -404,7 +404,7 @@ class TestCodeModificationDialog:
             )
 
             dialog.save_modified_file()
-            QTest.qWait(200)
+            QTest.qWait(200)  # type: ignore[call-arg, arg-type]
 
         if output_file.exists():
             saved_content = output_file.read_text()
@@ -430,7 +430,7 @@ class TestCodeModificationDialog:
 
         if hasattr(dialog, "apply_btn"):
             dialog.apply_btn.click()
-            QTest.qWait(200)
+            QTest.qWait(200)  # type: ignore[call-arg, arg-type]
 
         dialog.close()
 
@@ -448,7 +448,7 @@ class TestCodeModificationDialog:
 
         if hasattr(dialog, "revert_btn"):
             dialog.revert_btn.click()
-            QTest.qWait(200)
+            QTest.qWait(200)  # type: ignore[call-arg, arg-type]
 
             if hasattr(dialog, "modified_text"):
                 reverted = dialog.modified_text.toPlainText()
@@ -551,7 +551,7 @@ class TestCodeModificationEdgeCases:
 
         if hasattr(dialog, "load_original_file"):
             dialog.load_original_file("nonexistent_file.py")
-            QTest.qWait(200)
+            QTest.qWait(200)  # type: ignore[call-arg, arg-type]
 
         dialog.close()
 
@@ -590,7 +590,7 @@ class TestCodeModificationEdgeCases:
 
         if hasattr(dialog, "load_original_file"):
             dialog.load_original_file(str(binary_file))
-            QTest.qWait(200)
+            QTest.qWait(200)  # type: ignore[call-arg, arg-type]
 
         dialog.close()
 
@@ -612,7 +612,7 @@ class TestCodeModificationEdgeCases:
                     dialog.generate_diff(
                         sample_python_code_original, sample_python_code_modified
                     )
-                QTest.qWait(10)
+                QTest.qWait(10)  # type: ignore[call-arg, arg-type]
 
         dialog.close()
 
@@ -665,7 +665,7 @@ class TestCodeModificationEdgeCases:
             diff_text = "--- original\n+++ modified\n@@ -1 +1 @@\n-old\n+new"
 
             dialog.copy_diff_to_clipboard(diff_text)
-            QTest.qWait(100)
+            QTest.qWait(100)  # type: ignore[call-arg, arg-type]
 
             clipboard = qapp.clipboard()
             clipboard_text = clipboard.text()

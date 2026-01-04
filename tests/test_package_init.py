@@ -104,7 +104,7 @@ class RealGPUInfoValidator:
     def is_valid_device_string(self, device: str) -> bool:
         """Check if device string follows expected format."""
         if not isinstance(device, str):
-            return False
+            return False  # type: ignore[unreachable]
         return any(device.startswith(prefix) for prefix in self.valid_device_prefixes)
 
     def validate_gpu_initialization_result(self, device: str) -> bool:
@@ -161,7 +161,7 @@ class TestGPUInitialization:
 
         intellicrack._gpu_initialized = False
 
-        device = intellicrack._initialize_gpu_with_timeout(timeout_seconds=0.001)
+        device = intellicrack._initialize_gpu_with_timeout(timeout_seconds=0.001)  # type: ignore[arg-type]
 
         assert device == "cpu"
 

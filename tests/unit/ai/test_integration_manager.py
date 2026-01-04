@@ -7,13 +7,13 @@ import pytest
 from intellicrack.ai.integration_manager import IntegrationManager, get_integration_manager
 
 
-def test_singleton_get_integration_manager_returns_same_instance():
+def test_singleton_get_integration_manager_returns_same_instance() -> None:
     a = get_integration_manager()
     b = get_integration_manager()
     assert a is b
 
 
-def test_manager_start_stop_idempotent():
+def test_manager_start_stop_idempotent() -> None:
     mgr = IntegrationManager()
     mgr.start()
     # double start should be no-op
@@ -25,7 +25,7 @@ def test_manager_start_stop_idempotent():
     assert mgr.running is False
 
 
-def test_create_and_complete_simple_task_generate_script():
+def test_create_and_complete_simple_task_generate_script() -> None:
     mgr = IntegrationManager()
     try:
         mgr.start()
@@ -45,7 +45,7 @@ def test_create_and_complete_simple_task_generate_script():
         mgr.stop()
 
 
-def test_validate_script_uses_fallback_qemu_manager(tmp_path: Path):
+def test_validate_script_uses_fallback_qemu_manager(tmp_path: Path) -> None:
     mgr = IntegrationManager()
     try:
         mgr.start()
@@ -71,7 +71,7 @@ def test_validate_script_uses_fallback_qemu_manager(tmp_path: Path):
         mgr.stop()
 
 
-def test_workflow_end_to_end_minimal(tmp_path: Path):
+def test_workflow_end_to_end_minimal(tmp_path: Path) -> None:
     # Use create_bypass_workflow which wires multiple tasks together
     target = tmp_path / "bin.exe"
     target.write_bytes(b"MZ")

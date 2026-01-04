@@ -230,7 +230,7 @@ def fake_generator() -> FakeSerialNumberGenerator:
 
 
 @pytest.fixture
-def temp_serial_dir() -> Path:
+def temp_serial_dir() -> Path:  # type: ignore[misc]
     """Create temporary directory for serial files."""
     with tempfile.TemporaryDirectory(prefix="serials_") as tmpdir:
         serial_path = Path(tmpdir)
@@ -482,7 +482,7 @@ class TestBatchGeneration:
         )
 
         worker = SerialGeneratorWorker(
-            generator=fake_generator,
+            generator=fake_generator,  # type: ignore[arg-type]
             operation="generate_batch",
             params={"constraints": constraints, "count": 5}
         )
@@ -587,7 +587,7 @@ class TestSerialAnalysis:
         ]
 
         worker = SerialGeneratorWorker(
-            generator=fake_generator,
+            generator=fake_generator,  # type: ignore[arg-type]
             operation="analyze",
             params={"serials": sample_serials}
         )
@@ -620,7 +620,7 @@ class TestSerialAnalysis:
         ]
 
         worker = SerialGeneratorWorker(
-            generator=fake_generator,
+            generator=fake_generator,  # type: ignore[arg-type]
             operation="analyze",
             params={"serials": sample_serials}
         )
@@ -686,7 +686,7 @@ class TestSerialValidation:
         )
 
         worker = SerialGeneratorWorker(
-            generator=fake_generator,
+            generator=fake_generator,  # type: ignore[arg-type]
             operation="validate",
             params={
                 "serial": "ABCD-1234-EFGH-5678-9012",
@@ -718,7 +718,7 @@ class TestSerialValidation:
         )
 
         worker = SerialGeneratorWorker(
-            generator=fake_generator,
+            generator=fake_generator,  # type: ignore[arg-type]
             operation="validate",
             params={
                 "serial": "1234-5678-9012-3456",
@@ -750,7 +750,7 @@ class TestSerialValidation:
         )
 
         worker = SerialGeneratorWorker(
-            generator=fake_generator,
+            generator=fake_generator,  # type: ignore[arg-type]
             operation="validate",
             params={
                 "serial": "ABCD-1234-EFGH-5678-9012",
@@ -781,7 +781,7 @@ class TestSerialValidation:
         )
 
         worker = SerialGeneratorWorker(
-            generator=fake_generator,
+            generator=fake_generator,  # type: ignore[arg-type]
             operation="validate",
             params={
                 "serial": "ABCD-1234-EFGH-5678-9012",
@@ -816,7 +816,7 @@ class TestPatternCracking:
         ]
 
         worker = SerialGeneratorWorker(
-            generator=fake_generator,
+            generator=fake_generator,  # type: ignore[arg-type]
             operation="crack_pattern",
             params={"samples": sample_serials}
         )
@@ -847,7 +847,7 @@ class TestPatternCracking:
         ]
 
         worker = SerialGeneratorWorker(
-            generator=fake_generator,
+            generator=fake_generator,  # type: ignore[arg-type]
             operation="crack_pattern",
             params={"samples": sample_serials}
         )
@@ -957,7 +957,7 @@ class TestErrorHandling:
         fake_generator = FakeSerialNumberGenerator(should_raise_analysis_error=True)
 
         worker = SerialGeneratorWorker(
-            generator=fake_generator,
+            generator=fake_generator,  # type: ignore[arg-type]
             operation="analyze",
             params={"serials": []}
         )
@@ -980,7 +980,7 @@ class TestErrorHandling:
         constraints = SerialConstraints(length=-1, format=SerialFormat.NUMERIC)
 
         worker = SerialGeneratorWorker(
-            generator=fake_generator,
+            generator=fake_generator,  # type: ignore[arg-type]
             operation="generate_single",
             params={"constraints": constraints}
         )
@@ -1011,7 +1011,7 @@ class TestPerformanceAndStability:
         )
 
         worker = SerialGeneratorWorker(
-            generator=fake_generator,
+            generator=fake_generator,  # type: ignore[arg-type]
             operation="generate_batch",
             params={"constraints": constraints, "count": 100}
         )
@@ -1032,7 +1032,7 @@ class TestPerformanceAndStability:
         sample_serials = [f"ABCD-{i:04d}-EFGH-{i+1000:04d}-{i+2000:04d}" for i in range(100)]
 
         worker = SerialGeneratorWorker(
-            generator=fake_generator,
+            generator=fake_generator,  # type: ignore[arg-type]
             operation="analyze",
             params={"serials": sample_serials}
         )
@@ -1050,7 +1050,7 @@ class TestPerformanceAndStability:
     ) -> None:
         """Worker thread properly cleans up after operations."""
         worker = SerialGeneratorWorker(
-            generator=fake_generator,
+            generator=fake_generator,  # type: ignore[arg-type]
             operation="generate_single",
             params={"constraints": SerialConstraints(length=20, format=SerialFormat.NUMERIC)}
         )

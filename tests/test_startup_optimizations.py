@@ -95,7 +95,7 @@ class FakeTensor:
         self.data = data
         if isinstance(data, list):
             if data and isinstance(data[0], list):
-                self.shape = (len(data), len(data[0]))
+                self.shape: tuple[int, ...] = (len(data), len(data[0]))
             else:
                 self.shape = (len(data),)
         else:
@@ -244,7 +244,7 @@ class TestLazyTensorFlowLoading:
         monkeypatch.setattr(os, "environ", env_vars)
 
         sys_modules = sys.modules.copy()
-        sys_modules["tensorflow"] = FakeTensorFlowModule()
+        sys_modules["tensorflow"] = FakeTensorFlowModule()  # type: ignore[assignment]
         monkeypatch.setattr(sys, "modules", sys_modules)
 
         from intellicrack.handlers import tensorflow_handler
@@ -296,11 +296,11 @@ class TestLazyTensorFlowLoading:
         tensorflow_handler.ensure_tensorflow_loaded()
 
         assert tensorflow_handler.tf is not None
-        assert tensorflow_handler.tensorflow is not None
-        assert tensorflow_handler.keras is not None
-        assert tensorflow_handler.layers is not None
-        assert tensorflow_handler.models is not None
-        assert tensorflow_handler.optimizers is not None
+        assert tensorflow_handler.tensorflow is not None  # type: ignore[attr-defined]
+        assert tensorflow_handler.keras is not None  # type: ignore[attr-defined]
+        assert tensorflow_handler.layers is not None  # type: ignore[attr-defined]
+        assert tensorflow_handler.models is not None  # type: ignore[attr-defined]
+        assert tensorflow_handler.optimizers is not None  # type: ignore[attr-defined]
 
         assert hasattr(tensorflow_handler.tf, "__version__")
         assert tensorflow_handler.tf.__version__ == "0.0.0-fallback"
@@ -316,9 +316,9 @@ class TestLazyTensorFlowLoading:
 
         from intellicrack.handlers import tensorflow_handler
 
-        tensor = tensorflow_handler.tf.constant([[1.0, 2.0], [3.0, 4.0]])
+        tensor = tensorflow_handler.tf.constant([[1.0, 2.0], [3.0, 4.0]])  # type: ignore[attr-defined]
 
-        result = tensorflow_handler.tf.reduce_sum(tensor)
+        result = tensorflow_handler.tf.reduce_sum(tensor)  # type: ignore[attr-defined]
 
         assert hasattr(result, "numpy")
         result_value = result.numpy()
@@ -344,7 +344,7 @@ class TestLazyTensorFlowLoading:
 
         tensorflow_handler.ensure_tensorflow_loaded()
 
-        assert tensorflow_handler.tensorflow is not None
+        assert tensorflow_handler.tensorflow is not None  # type: ignore[attr-defined]
         assert tensorflow_handler.HAS_TENSORFLOW is True
         assert tensorflow_handler.TENSORFLOW_VERSION == "2.15.0"
 
@@ -391,9 +391,9 @@ class TestFallbackFunctionality:
 
         from intellicrack.handlers import tensorflow_handler
 
-        layer = tensorflow_handler.layers.Dense(units=10, activation="relu")
+        layer = tensorflow_handler.layers.Dense(units=10, activation="relu")  # type: ignore[attr-defined]
 
-        input_tensor = tensorflow_handler.tf.constant([[1.0, 2.0, 3.0, 4.0, 5.0]])
+        input_tensor = tensorflow_handler.tf.constant([[1.0, 2.0, 3.0, 4.0, 5.0]])  # type: ignore[attr-defined]
 
         layer.build((5,))
         output = layer.call(input_tensor)
@@ -416,16 +416,16 @@ class TestFallbackFunctionality:
 
         from intellicrack.handlers import tensorflow_handler
 
-        model = tensorflow_handler.models.Sequential(
+        model = tensorflow_handler.models.Sequential(  # type: ignore[attr-defined]
             [
-                tensorflow_handler.layers.Dense(64, activation="relu"),
-                tensorflow_handler.layers.Dense(10, activation="sigmoid"),
+                tensorflow_handler.layers.Dense(64, activation="relu"),  # type: ignore[attr-defined]
+                tensorflow_handler.layers.Dense(10, activation="sigmoid"),  # type: ignore[attr-defined]
             ]
         )
 
         model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
 
-        test_input = tensorflow_handler.tf.constant([[1.0] * 10])
+        test_input = tensorflow_handler.tf.constant([[1.0] * 10])  # type: ignore[attr-defined]
 
         output = model.predict(test_input, verbose=0)
 
@@ -445,8 +445,8 @@ class TestFallbackFunctionality:
 
         from intellicrack.handlers import tensorflow_handler
 
-        tensor1 = tensorflow_handler.tf.constant([1.0, 2.0, 3.0])
-        tensor2 = tensorflow_handler.tf.constant([4.0, 5.0, 6.0])
+        tensor1 = tensorflow_handler.tf.constant([1.0, 2.0, 3.0])  # type: ignore[attr-defined]
+        tensor2 = tensorflow_handler.tf.constant([4.0, 5.0, 6.0])  # type: ignore[attr-defined]
 
         result_add = tensor1 + tensor2
         expected_add = [5.0, 7.0, 9.0]

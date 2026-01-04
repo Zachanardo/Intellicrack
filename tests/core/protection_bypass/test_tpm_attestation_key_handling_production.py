@@ -508,8 +508,8 @@ class TestPlatformSpecificAttestation:
         assert "hypervisor" in config
 
 
-class TestWindowsHelloCredentialGuardBypass:
-    """Test Windows Hello and Credential Guard bypass capabilities."""
+class TestRemoteAttestationAndPlatformDetection:
+    """Test remote attestation bypass and platform detection capabilities."""
 
     def test_bypass_remote_attestation_generates_complete_response(self, bypass_system: Any, attestation_challenge: bytes) -> None:
         """Remote attestation bypass generates complete response with all components."""

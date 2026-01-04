@@ -14,6 +14,7 @@ Expected Behavior (from testingtodo.md):
 
 import ctypes
 import hashlib
+import hmac
 import os
 import platform
 import re
@@ -23,7 +24,7 @@ import tempfile
 import time
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 
@@ -35,10 +36,9 @@ from intellicrack.core.offline_activation_emulator import (
     OfflineActivationEmulator,
 )
 
+winreg: Any = None
 if platform.system() == "Windows":
     import winreg
-else:
-    winreg = None
 
 
 SKIP_REASON_NOT_WINDOWS = "Registry tests require Windows platform"
@@ -61,7 +61,8 @@ def is_admin() -> bool:
     if platform.system() != "Windows":
         return False
     try:
-        return ctypes.windll.shell32.IsUserAnAdmin() != 0
+        result: bool = bool(ctypes.windll.shell32.IsUserAnAdmin() != 0)
+        return result
     except Exception:
         return False
 
@@ -171,11 +172,14 @@ def sample_activation_response(
 
 
 @pytest.fixture(autouse=True)
-def cleanup_registry(test_product_id: str) -> None:
+def cleanup_registry(test_product_id: str) -> Generator[None, None, None]:
     """Cleanup test registry keys before and after tests.
 
     Args:
         test_product_id: Test product identifier for cleanup.
+
+    Yields:
+        None after cleanup.
 
     """
     if platform.system() != "Windows":
@@ -293,7 +297,8 @@ class TestRegistryLicenseKeyWriting:
         self,
         emulator: OfflineActivationEmulator,
         test_product_id: str,
-        sample_activation_response: ActivationResponse
+        sample_activation_request: ActivationRequest,
+        sample_activation_response: ActivationResponse,
     ) -> None:
         """Write complete activation data to registry including timestamps and features.
 
@@ -316,7 +321,7 @@ class TestRegistryLicenseKeyWriting:
             winreg.SetValueEx(key, "ProductID", 0, winreg.REG_SZ, test_product_id)
             winreg.SetValueEx(key, "ActivationDate", 0, winreg.REG_SZ, activation_date.isoformat())
             winreg.SetValueEx(key, "ExpiryDate", 0, winreg.REG_SZ, expiry_date.isoformat())
-            winreg.SetValueEx(key, "HardwareID", 0, winreg.REG_SZ, sample_activation_response.hardware_id)
+            winreg.SetValueEx(key, "HardwareID", 0, winreg.REG_SZ, sample_activation_request.hardware_id)
             winreg.SetValueEx(key, "Features", 0, winreg.REG_SZ, "Premium;Enterprise;Unlimited")
             winreg.SetValueEx(key, "Activated", 0, winreg.REG_DWORD, 1)
 
@@ -338,7 +343,7 @@ class TestRegistryLicenseKeyWriting:
         assert stored_product == test_product_id
         assert stored_activation == activation_date.isoformat()
         assert stored_expiry == expiry_date.isoformat()
-        assert stored_hardware == sample_activation_response.hardware_id
+        assert stored_hardware == sample_activation_request.hardware_id
         assert stored_features == "Premium;Enterprise;Unlimited"
         assert stored_activated == 1
 
@@ -544,19 +549,18 @@ class TestActivationTokenGeneration:
         self,
         emulator: OfflineActivationEmulator,
         test_product_id: str,
-        sample_activation_response: ActivationResponse
+        sample_activation_request: ActivationRequest,
+        sample_activation_response: ActivationResponse,
     ) -> None:
         """Generate HMAC-based activation token and store in registry.
 
         Validates that activation tokens are cryptographically signed using HMAC
         to prevent tampering.
         """
-        import hmac
-
         registry_path = f"{TEST_REGISTRY_BASE}\\{test_product_id}"
 
         secret_key = os.urandom(32)
-        token_data = f"{test_product_id}:{sample_activation_response.hardware_id}:{sample_activation_response.activation_code}"
+        token_data = f"{test_product_id}:{sample_activation_request.hardware_id}:{sample_activation_response.activation_code}"
 
         activation_token = hmac.new(
             secret_key,
@@ -598,7 +602,8 @@ class TestActivationTokenGeneration:
         self,
         emulator: OfflineActivationEmulator,
         test_product_id: str,
-        sample_activation_response: ActivationResponse
+        sample_activation_request: ActivationRequest,
+        sample_activation_response: ActivationResponse,
     ) -> None:
         """Generate JWT-style activation token and store in registry.
 
@@ -613,7 +618,7 @@ class TestActivationTokenGeneration:
         header = {"alg": "HS256", "typ": "JWT"}
         payload = {
             "product_id": test_product_id,
-            "hardware_id": sample_activation_response.hardware_id,
+            "hardware_id": sample_activation_request.hardware_id,
             "activation_code": sample_activation_response.activation_code,
             "timestamp": int(time.time())
         }

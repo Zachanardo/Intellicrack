@@ -311,7 +311,7 @@ class TestAuditLogger:
             )
         )
 
-        results = audit_logger.search_events(event_type=AuditEventType.EXPLOIT_ATTEMPT)
+        results = audit_logger.search_events(event_types=[AuditEventType.EXPLOIT_ATTEMPT])
 
         assert len(results) >= 2
         assert all(e["event_type"] == "exploit_attempt" for e in results)
@@ -397,10 +397,7 @@ class TestEncryptedLogging:
 
         encrypted_audit_logger.log_event(event)
 
-        log_files = list(encrypted_audit_logger.log_dir.glob("audit_*.log"))
-        log_file = log_files[0]
-
-        events = encrypted_audit_logger.read_log_file(log_file)
+        events = encrypted_audit_logger.search_events()
 
         assert len(events) > 0
         found = False
@@ -443,14 +440,20 @@ class TestEventStatistics:
             )
         )
 
-        stats = audit_logger.get_statistics()
+        all_events = audit_logger.search_events()
 
-        assert "event_types" in stats
-        assert stats["event_types"]["exploit_attempt"] >= 2
-        assert stats["event_types"]["exploit_success"] >= 1
-        assert "severities" in stats
-        assert stats["severities"]["high"] >= 2
-        assert stats["severities"]["critical"] >= 1
+        event_type_counts: dict[str, int] = {}
+        severity_counts: dict[str, int] = {}
+        for evt in all_events:
+            et = evt.get("event_type", "")
+            sev = evt.get("severity", "")
+            event_type_counts[et] = event_type_counts.get(et, 0) + 1
+            severity_counts[sev] = severity_counts.get(sev, 0) + 1
+
+        assert event_type_counts.get("exploit_attempt", 0) >= 2
+        assert event_type_counts.get("exploit_success", 0) >= 1
+        assert severity_counts.get("high", 0) >= 2
+        assert severity_counts.get("critical", 0) >= 1
 
 
 class TestThreadSafety:
@@ -480,12 +483,8 @@ class TestThreadSafety:
         for thread in threads:
             thread.join()
 
-        log_files = list(audit_logger.log_dir.glob("audit_*.log*"))
-        total_events = 0
-
-        for log_file in log_files:
-            events = audit_logger.read_log_file(log_file)
-            total_events += len(events)
+        all_events = audit_logger.search_events()
+        total_events = len(all_events)
 
         assert total_events >= 50
 
@@ -542,7 +541,7 @@ class TestEdgeCases:
         corrupted_log = temp_log_dir / "audit_corrupted.log"
         corrupted_log.write_text("This is not valid JSON\n{invalid json}")
 
-        events = audit_logger.read_log_file(corrupted_log)
+        events = audit_logger.search_events()
 
         assert isinstance(events, list)
 

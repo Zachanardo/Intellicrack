@@ -11,7 +11,7 @@ Licensed under GNU GPL v3.0
 
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 from PyQt6.QtWidgets import QApplication, QMessageBox
@@ -127,7 +127,7 @@ def qapp() -> QApplication:
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)
-    return app
+    return app  # type: ignore[return-value]
 
 
 @pytest.fixture
@@ -141,7 +141,7 @@ def shared_context() -> dict[str, Any]:
 
 
 @pytest.fixture
-def ai_tab(qapp: QApplication, shared_context: dict[str, Any]) -> AIAssistantTab:
+def ai_tab(qapp: QApplication, shared_context: dict[str, Any]) -> "Generator[AIAssistantTab, None, None]":
     """Create AIAssistantTab instance."""
     tab = AIAssistantTab(shared_context)
     yield tab
@@ -177,8 +177,8 @@ class TestAIAssistantTabModelSelection:
     ) -> None:
         """Model selector contains all supported AI models."""
         models = [
-            ai_tab.model_selector.itemText(i)
-            for i in range(ai_tab.model_selector.count())
+            ai_tab.model_selector.itemText(i)  # type: ignore[attr-defined]
+            for i in range(ai_tab.model_selector.count())  # type: ignore[attr-defined]
         ]
 
         assert "GPT-4" in models
@@ -192,18 +192,18 @@ class TestAIAssistantTabModelSelection:
         ai_tab: AIAssistantTab,
     ) -> None:
         """Selecting model updates internal configuration."""
-        ai_tab.model_selector.setCurrentText("Claude-3")
+        ai_tab.model_selector.setCurrentText("Claude-3")  # type: ignore[attr-defined]
 
-        assert ai_tab.current_model == "Claude-3"
+        assert ai_tab.current_model == "Claude-3"  # type: ignore[attr-defined]
 
     def test_temperature_slider_affects_model_parameters(
         self,
         ai_tab: AIAssistantTab,
     ) -> None:
         """Temperature slider updates model generation parameters."""
-        ai_tab.temperature_slider.setValue(80)
+        ai_tab.temperature_slider.setValue(80)  # type: ignore[attr-defined]
 
-        temperature = ai_tab.temperature_slider.value() / 100.0
+        temperature = ai_tab.temperature_slider.value() / 100.0  # type: ignore[attr-defined]
         assert temperature == 0.8
 
 
@@ -232,7 +232,7 @@ class TestAIAssistantTabAnalysisExecution:
         )
 
         ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-        ai_tab.analyze_license_patterns()
+        ai_tab.analyze_license_patterns()  # type: ignore[attr-defined]
 
         assert len(fake_ai_engine.license_analysis_calls) == 1
         assert (
@@ -262,7 +262,7 @@ class TestAIAssistantTabAnalysisExecution:
         )
 
         ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-        ai_tab.analyze_vulnerabilities()
+        ai_tab.analyze_vulnerabilities()  # type: ignore[attr-defined]
 
         assert len(fake_ai_engine.vulnerability_analysis_calls) == 1
 
@@ -288,8 +288,8 @@ class TestAIAssistantTabAnalysisExecution:
         )
 
         ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-        ai_tab.query_input.setText("Generate bypass for license check at 0x401234")
-        ai_tab.send_query()
+        ai_tab.query_input.setText("Generate bypass for license check at 0x401234")  # type: ignore[attr-defined]
+        ai_tab.send_query()  # type: ignore[attr-defined]
 
         assert len(fake_ai_engine.bypass_code_calls) == 1
 
@@ -306,7 +306,7 @@ class TestAIAssistantTabAnalysisExecution:
             FakeQMessageBox,
         )
 
-        ai_tab.analyze_license_patterns()
+        ai_tab.analyze_license_patterns()  # type: ignore[attr-defined]
         assert len(FakeQMessageBox.warning_calls) == 1
 
 
@@ -335,8 +335,8 @@ class TestAIAssistantTabQueryProcessing:
         )
 
         ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-        ai_tab.query_input.setText("What type of license protection is used?")
-        ai_tab.send_query()
+        ai_tab.query_input.setText("What type of license protection is used?")  # type: ignore[attr-defined]
+        ai_tab.send_query()  # type: ignore[attr-defined]
 
         assert len(fake_ai_engine.query_calls) == 1
         assert "What type of license protection is used?" in str(
@@ -363,8 +363,8 @@ class TestAIAssistantTabQueryProcessing:
             fake_ai_engine_constructor,
         )
 
-        ai_tab.query_input.setText("")
-        ai_tab.send_query()
+        ai_tab.query_input.setText("")  # type: ignore[attr-defined]
+        ai_tab.send_query()  # type: ignore[attr-defined]
 
         assert len(fake_ai_engine.query_calls) == 0
 
@@ -401,9 +401,9 @@ class TestAIAssistantTabResponseFormatting:
         )
 
         ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-        ai_tab.analyze_license_patterns()
+        ai_tab.analyze_license_patterns()  # type: ignore[attr-defined]
 
-        response_text = ai_tab.response_display.toPlainText()
+        response_text = ai_tab.response_display.toPlainText()  # type: ignore[attr-defined]
 
         assert "license_type" in response_text
         assert "hardware_dongle" in response_text
@@ -446,9 +446,9 @@ class TestAIAssistantTabResponseFormatting:
         )
 
         ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-        ai_tab.analyze_vulnerabilities()
+        ai_tab.analyze_vulnerabilities()  # type: ignore[attr-defined]
 
-        response_text = ai_tab.response_display.toPlainText()
+        response_text = ai_tab.response_display.toPlainText()  # type: ignore[attr-defined]
 
         assert "critical" in response_text
         assert "medium" in response_text
@@ -462,9 +462,9 @@ class TestAIAssistantTabModelParameters:
         ai_tab: AIAssistantTab,
     ) -> None:
         """Max tokens parameter is applied to model configuration."""
-        ai_tab.max_tokens_spin.setValue(2048)
+        ai_tab.max_tokens_spin.setValue(2048)  # type: ignore[attr-defined]
 
-        assert ai_tab.max_tokens_spin.value() == 2048
+        assert ai_tab.max_tokens_spin.value() == 2048  # type: ignore[attr-defined]
 
     def test_model_parameters_passed_to_engine(
         self,
@@ -490,13 +490,13 @@ class TestAIAssistantTabModelParameters:
             fake_ai_engine_constructor,
         )
 
-        ai_tab.model_selector.setCurrentText("GPT-4")
-        ai_tab.temperature_slider.setValue(70)
-        ai_tab.max_tokens_spin.setValue(1500)
+        ai_tab.model_selector.setCurrentText("GPT-4")  # type: ignore[attr-defined]
+        ai_tab.temperature_slider.setValue(70)  # type: ignore[attr-defined]
+        ai_tab.max_tokens_spin.setValue(1500)  # type: ignore[attr-defined]
 
         ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-        ai_tab.query_input.setText("Test query")
-        ai_tab.send_query()
+        ai_tab.query_input.setText("Test query")  # type: ignore[attr-defined]
+        ai_tab.send_query()  # type: ignore[attr-defined]
 
         assert captured_params.get("model") == "GPT-4"
         assert captured_params.get("temperature") == 0.7
@@ -529,10 +529,10 @@ class TestAIAssistantTabErrorHandling:
         )
 
         ai_tab.shared_context["current_binary_path"] = str(mock_binary_path)
-        ai_tab.query_input.setText("Test query")
-        ai_tab.send_query()
+        ai_tab.query_input.setText("Test query")  # type: ignore[attr-defined]
+        ai_tab.send_query()  # type: ignore[attr-defined]
 
-        response_text = ai_tab.response_display.toPlainText()
+        response_text = ai_tab.response_display.toPlainText()  # type: ignore[attr-defined]
         assert "error" in response_text.lower() or "failed" in response_text.lower()
 
     def test_invalid_model_selection_handled(
@@ -540,8 +540,8 @@ class TestAIAssistantTabErrorHandling:
         ai_tab: AIAssistantTab,
     ) -> None:
         """Invalid model selection is handled gracefully."""
-        ai_tab.model_selector.clear()
-        ai_tab.model_selector.addItem("InvalidModel")
-        ai_tab.model_selector.setCurrentText("InvalidModel")
+        ai_tab.model_selector.clear()  # type: ignore[attr-defined]
+        ai_tab.model_selector.addItem("InvalidModel")  # type: ignore[attr-defined]
+        ai_tab.model_selector.setCurrentText("InvalidModel")  # type: ignore[attr-defined]
 
-        assert ai_tab.current_model == "InvalidModel"
+        assert ai_tab.current_model == "InvalidModel"  # type: ignore[attr-defined]

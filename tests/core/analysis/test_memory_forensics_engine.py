@@ -72,17 +72,17 @@ try:
 
     MEMORY_FORENSICS_ENGINE_AVAILABLE = True
 except ImportError:
-    _MemoryForensicsEngine = None
-    _MemoryAnalysisResult = None
-    _MemoryArtifactType = None
-    _AnalysisProfile = None
-    _MemoryProcess = None
-    _MemoryModule = None
-    _NetworkConnection = None
-    _MemoryString = None
-    get_memory_forensics_engine = None
-    is_volatility3_available = None
-    analyze_memory_dump_file = None
+    _MemoryForensicsEngine = None  # type: ignore[assignment, misc]
+    _MemoryAnalysisResult = None  # type: ignore[assignment, misc]
+    _MemoryArtifactType = None  # type: ignore[assignment, misc]
+    _AnalysisProfile = None  # type: ignore[assignment, misc]
+    _MemoryProcess = None  # type: ignore[assignment, misc]
+    _MemoryModule = None  # type: ignore[assignment, misc]
+    _NetworkConnection = None  # type: ignore[assignment, misc]
+    _MemoryString = None  # type: ignore[assignment, misc]
+    get_memory_forensics_engine = None  # type: ignore[assignment]
+    is_volatility3_available = None  # type: ignore[assignment]
+    analyze_memory_dump_file = None  # type: ignore[assignment]
     MEMORY_FORENSICS_ENGINE_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(

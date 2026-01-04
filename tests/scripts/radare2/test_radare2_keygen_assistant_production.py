@@ -13,7 +13,7 @@ import json
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 
@@ -59,7 +59,7 @@ def protected_binary() -> Path:
 
 
 @pytest.fixture
-def keygen_assistant(sample_binary: Path) -> R2KeygenAssistant:
+def keygen_assistant(sample_binary: Path) -> Generator[R2KeygenAssistant, None, None]:
     """Initialize R2KeygenAssistant with sample binary."""
     r2 = r2pipe.open(str(sample_binary))
     yield R2KeygenAssistant(r2=r2)

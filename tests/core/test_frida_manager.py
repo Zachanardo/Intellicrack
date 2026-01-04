@@ -20,7 +20,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Generator, cast
 
 import psutil
 import pytest
@@ -43,13 +43,13 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture(scope="module")
-def test_process() -> subprocess.Popen[bytes]:
+def test_process() -> Generator[subprocess.Popen[bytes], None, None]:
     """Create a real test process for Frida operations.
 
     Spawns a simple Python process that sleeps, providing a real
     target for Frida attachment and instrumentation testing.
 
-    Returns:
+    Yields:
         Running subprocess that can be attached by Frida
     """
     test_script = """
@@ -81,13 +81,13 @@ while True:
 
 
 @pytest.fixture
-def frida_manager(temp_workspace: Path) -> FridaManager:
+def frida_manager(temp_workspace: Path) -> Generator[FridaManager, None, None]:
     """Create FridaManager instance with temporary directories.
 
     Args:
         temp_workspace: Temporary directory for logs and scripts
 
-    Returns:
+    Yields:
         Configured FridaManager ready for testing
     """
     log_dir = temp_workspace / "logs"
@@ -282,9 +282,9 @@ class TestProtectionDetector:
 
     def test_adaptation_callback_registration(self, detector: ProtectionDetector) -> None:
         """Adaptation callbacks can be registered and triggered."""
-        callback_triggered: list[tuple[ProtectionType, dict[str, Any]]] = []
+        callback_triggered: list[tuple[ProtectionType, dict[str, Any] | set[str]]] = []
 
-        def test_callback(prot_type: ProtectionType, details: dict[str, Any]) -> None:
+        def test_callback(prot_type: ProtectionType, details: dict[str, Any] | set[str]) -> None:
             callback_triggered.append((prot_type, details))
 
         detector.register_adaptation_callback(test_callback)
@@ -294,14 +294,15 @@ class TestProtectionDetector:
 
         assert len(callback_triggered) == 1
         assert callback_triggered[0][0] == ProtectionType.ANTI_DEBUG
-        assert callback_triggered[0][1]["evidence"] == "test"
+        details = cast(dict[str, Any], callback_triggered[0][1])
+        assert details["evidence"] == "test"
 
 
 class TestHookBatcher:
     """Test hook batching for performance optimization."""
 
     @pytest.fixture
-    def batcher(self) -> HookBatcher:
+    def batcher(self) -> Generator[HookBatcher, None, None]:
         """Create HookBatcher instance."""
         batcher = HookBatcher(max_batch_size=10, batch_timeout_ms=50)
         batcher.start_batching()
@@ -501,7 +502,7 @@ class TestFridaManagerAttachment:
         assert len(frida_manager.sessions) > 0
 
         session_ids = list(frida_manager.sessions.keys())
-        assert test_process.pid in str(session_ids[0])
+        assert str(test_process.pid) in str(session_ids[0])
 
     def test_attach_to_nonexistent_process(self, frida_manager: FridaManager) -> None:
         """Attachment to nonexistent process fails gracefully."""
@@ -832,7 +833,7 @@ class TestFridaManagerRealWorldScenarios:
         time.sleep(0.5)
 
     def test_multi_layer_protection_bypass(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Multiple protection layers are bypassed simultaneously."""
         frida_manager.attach_to_process(test_process.pid)
@@ -869,7 +870,7 @@ class TestFridaManagerEdgeCases:
             FridaManager(log_dir=str(temp_workspace / "logs"))
 
     def test_load_corrupted_script(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Corrupted scripts fail gracefully without crashing."""
         frida_manager.attach_to_process(test_process.pid)
@@ -886,7 +887,7 @@ class TestFridaManagerEdgeCases:
         assert success is False or success is True
 
     def test_session_cleanup_on_process_crash(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Sessions are cleaned up when target process crashes."""
         frida_manager.attach_to_process(test_process.pid)
@@ -898,7 +899,7 @@ class TestFridaManagerEdgeCases:
         time.sleep(1)
 
     def test_concurrent_script_loading(
-        self, frida_manager: FridaManager, test_process: subprocess.Popen
+        self, frida_manager: FridaManager, test_process: subprocess.Popen[bytes]
     ) -> None:
         """Multiple scripts can be loaded concurrently."""
         frida_manager.attach_to_process(test_process.pid)

@@ -23,10 +23,12 @@ from intellicrack.handlers.pyqt6_handler import QApplication
 @pytest.fixture(scope="module")
 def qapp() -> Generator[QApplication, None, None]:
     """Create QApplication instance for testing."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication(sys.argv)
-    yield app
+    existing_app = QApplication.instance()
+    if existing_app is None:
+        yield QApplication(sys.argv)
+    else:
+        assert isinstance(existing_app, QApplication), "Expected QApplication instance"
+        yield existing_app
 
 
 class TestAnimationFunctionality:

@@ -25,10 +25,11 @@ from intellicrack.ui.dialogs.debugger_dialog import (
 @pytest.fixture(scope="module")
 def qapp() -> QApplication:
     """Create QApplication instance for tests."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    return app
+    existing_app = QApplication.instance()
+    if existing_app is None:
+        return QApplication([])
+    assert isinstance(existing_app, QApplication), "Expected QApplication instance"
+    return existing_app
 
 
 @pytest.fixture
@@ -450,6 +451,7 @@ def test_variables_display_shows_local_and_global_sections(
     debugger_dialog.update_variables_display(0)
 
     root = debugger_dialog.variables_tree.invisibleRootItem()
+    assert root is not None, "Root item should exist"
     assert root.childCount() >= 2
 
     found_local = False
@@ -457,6 +459,7 @@ def test_variables_display_shows_local_and_global_sections(
 
     for i in range(root.childCount()):
         item = root.child(i)
+        assert item is not None, f"Child {i} should exist"
         text = item.text(0)
         if "Local" in text:
             found_local = True
@@ -762,8 +765,10 @@ def test_variables_display_expands_nested_structures(
     debugger_dialog.update_variables_display(0)
 
     root = debugger_dialog.variables_tree.invisibleRootItem()
+    assert root is not None, "Root item should exist"
     for i in range(root.childCount()):
         item = root.child(i)
+        assert item is not None, f"Child {i} should exist"
         if "Local" in item.text(0):
             assert item.isExpanded()
             break

@@ -14,7 +14,7 @@ import logging
 import os
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator, cast
 
 import pytest
 from intellicrack.handlers.pyqt6_handler import QApplication, QMessageBox
@@ -22,16 +22,19 @@ from intellicrack.ui.dialogs.plugin_dialog_base import PluginDialogBase
 
 
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Generator[QApplication, None, None]:
     """Create QApplication instance for tests."""
-    app = QApplication.instance()
-    if app is None:
+    existing = QApplication.instance()
+    app: QApplication
+    if existing is None:
         app = QApplication([])
-    return app
+    else:
+        app = cast(QApplication, existing)
+    yield app
 
 
 @pytest.fixture
-def temp_plugin_file() -> Path:
+def temp_plugin_file() -> Generator[Path, None, None]:
     """Create temporary plugin file for testing."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write("# Test plugin\ndef test_function():\n    pass\n")
@@ -44,7 +47,7 @@ def temp_plugin_file() -> Path:
 
 
 @pytest.fixture
-def dialog(qapp: QApplication) -> PluginDialogBase:
+def dialog(qapp: QApplication) -> Generator[PluginDialogBase, None, None]:
     """Create plugin dialog base for testing."""
     dlg = PluginDialogBase()
     dlg.logger = logging.getLogger(__name__)
@@ -142,7 +145,9 @@ def test_dialog_initialization_with_plugin(qapp: QApplication, temp_plugin_file:
     dlg.logger = logging.getLogger(__name__)
 
     assert dlg.plugin_path == str(temp_plugin_file)
-    assert dlg.plugin_label.text() == temp_plugin_file.name
+    plugin_label = dlg.plugin_label
+    assert plugin_label is not None
+    assert plugin_label.text() == temp_plugin_file.name
 
     dlg.deleteLater()
 
@@ -164,12 +169,16 @@ def test_dialog_ui_components_exist(dialog: PluginDialogBase) -> None:
 
 def test_plugin_label_default_text(dialog: PluginDialogBase) -> None:
     """Plugin label shows default text when no plugin selected."""
-    assert dialog.plugin_label.text() == "No plugin selected"
+    plugin_label = dialog.plugin_label
+    assert plugin_label is not None
+    assert plugin_label.text() == "No plugin selected"
 
 
 def test_plugin_label_bold_style(dialog: PluginDialogBase) -> None:
     """Plugin label has bold font style."""
-    style = dialog.plugin_label.styleSheet()
+    plugin_label = dialog.plugin_label
+    assert plugin_label is not None
+    style = plugin_label.styleSheet()
     assert "font-weight: bold" in style.lower()
 
 
@@ -177,7 +186,9 @@ def test_ok_button_accepts_dialog(dialog: PluginDialogBase, monkeypatch: pytest.
     """OK button click accepts dialog."""
     fake_accept = FakeDialogMethod()
     monkeypatch.setattr(dialog, "accept", fake_accept)
-    dialog.ok_button.click()
+    ok_button = dialog.ok_button
+    assert ok_button is not None
+    ok_button.click()
     assert fake_accept.called
     assert fake_accept.call_count == 1
 
@@ -186,7 +197,9 @@ def test_cancel_button_rejects_dialog(dialog: PluginDialogBase, monkeypatch: pyt
     """Cancel button click rejects dialog."""
     fake_reject = FakeDialogMethod()
     monkeypatch.setattr(dialog, "reject", fake_reject)
-    dialog.cancel_button.click()
+    cancel_button = dialog.cancel_button
+    assert cancel_button is not None
+    cancel_button.click()
     assert fake_reject.called
     assert fake_reject.call_count == 1
 
@@ -201,7 +214,9 @@ def test_browse_plugin_opens_file_dialog(dialog: PluginDialogBase, temp_plugin_f
     dialog.browse_plugin()
 
     assert dialog.plugin_path == str(temp_plugin_file)
-    assert dialog.plugin_label.text() == temp_plugin_file.name
+    plugin_label = dialog.plugin_label
+    assert plugin_label is not None
+    assert plugin_label.text() == temp_plugin_file.name
 
 
 def test_browse_plugin_cancelled_does_nothing(dialog: PluginDialogBase, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -224,7 +239,9 @@ def test_load_plugin_success(dialog: PluginDialogBase, temp_plugin_file: Path) -
 
     assert result is True
     assert dialog.plugin_path == str(temp_plugin_file)
-    assert dialog.plugin_label.text() == temp_plugin_file.name
+    plugin_label = dialog.plugin_label
+    assert plugin_label is not None
+    assert plugin_label.text() == temp_plugin_file.name
 
 
 def test_load_plugin_nonexistent_file_shows_warning(dialog: PluginDialogBase, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -244,8 +261,10 @@ def test_load_plugin_updates_plugin_label(dialog: PluginDialogBase, temp_plugin_
     """Loading plugin updates plugin label with basename."""
     dialog.load_plugin(str(temp_plugin_file))
 
-    assert dialog.plugin_label.text() == temp_plugin_file.name
-    assert temp_plugin_file.parent.name not in dialog.plugin_label.text()
+    plugin_label = dialog.plugin_label
+    assert plugin_label is not None
+    assert plugin_label.text() == temp_plugin_file.name
+    assert temp_plugin_file.parent.name not in plugin_label.text()
 
 
 def test_load_plugin_calls_on_plugin_loaded(dialog: PluginDialogBase, temp_plugin_file: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -321,7 +340,7 @@ def test_on_plugin_loaded_enables_dependent_widgets(
     widget1.setEnabled(False)
     widget2.setEnabled(False)
 
-    dialog.plugin_dependent_widgets = [widget1, widget2]
+    dialog.plugin_dependent_widgets = [widget1, widget2]  # type: ignore[attr-defined]
 
     dialog.on_plugin_loaded(str(temp_plugin_file))
 
@@ -442,7 +461,7 @@ def test_plugin_metadata_includes_loaded_timestamp(
     after_time = QDateTime.currentDateTime()
 
     metadata = dialog._loaded_plugins[str(temp_plugin_file)]
-    loaded_time = metadata["loaded_at"]
+    loaded_time: Any = metadata["loaded_at"]
 
     assert before_time <= loaded_time <= after_time
 
@@ -461,7 +480,10 @@ def test_browse_button_connected_to_browse_plugin(dialog: PluginDialogBase) -> N
 
     browse_button = None
     for i in range(layout.count()):
-        widget = layout.itemAt(i).widget()
+        item = layout.itemAt(i)
+        if item is None:
+            continue
+        widget = item.widget()
         if widget and hasattr(widget, "text") and callable(widget.text) and "Browse" in widget.text():
             browse_button = widget
             break
@@ -477,7 +499,9 @@ def test_dialog_minimum_size_enforced(dialog: PluginDialogBase) -> None:
 
 def test_content_area_has_layout(dialog: PluginDialogBase) -> None:
     """Content area has layout for subclass customization."""
-    assert dialog.content_area.layout() is not None
+    content_area = dialog.content_area
+    assert content_area is not None
+    assert content_area.layout() is not None
     assert dialog.content_layout is not None
 
 
@@ -570,4 +594,4 @@ def test_plugin_name_extracted_from_basename(
 
     metadata = dialog._loaded_plugins[str(temp_plugin_file)]
     assert metadata["name"] == temp_plugin_file.name
-    assert os.sep not in metadata["name"]
+    assert os.sep not in str(metadata["name"])

@@ -1,10 +1,14 @@
 import os
 import sys
 import subprocess
+from collections.abc import Generator
+from typing import Any
+
 import pytest
 
+
 @pytest.fixture
-def setup_test_environment():
+def setup_test_environment() -> Generator[None, None, None]:
     # Read the original content of intellicrack/main.py
     main_py_path = os.path.join(os.path.dirname(__file__), '..', 'intellicrack', 'main.py')
     with open(main_py_path) as f:
@@ -83,7 +87,7 @@ if __name__ == "__main__":
     if os.path.exists("rust_launch_test_output.txt"):
         os.remove("rust_launch_test_output.txt")
 
-def test_full_rust_launch(setup_test_environment):
+def test_full_rust_launch(setup_test_environment: None) -> None:
     # 1. Check for the absence of launch_intellicrack.py
     launch_script_path = os.path.join(os.path.dirname(__file__), '..', 'launch_intellicrack.py')
     assert not os.path.exists(launch_script_path), "launch_intellicrack.py should not exist in a full Rust launch implementation."
@@ -98,7 +102,7 @@ def test_full_rust_launch(setup_test_environment):
     try:
         result = subprocess.run([launcher_path], env=env, capture_output=True, text=True, timeout=60)
     except subprocess.TimeoutExpired as e:
-        pytest.fail(f"Launcher process timed out after 60 seconds. stdout:\n{e.stdout}\nstderr:\n{e.stderr}")
+        pytest.fail(f"Launcher process timed out after 60 seconds. stdout:\n{e.stdout!r}\nstderr:\n{e.stderr!r}")
     
     print("[PyTest] Launcher process finished.")
     print(f"[PyTest] stdout:\n{result.stdout}")

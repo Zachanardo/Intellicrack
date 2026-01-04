@@ -6,20 +6,22 @@ NO mocked components - validates actual dialog behavior.
 """
 
 import pytest
-from typing import Any
+from typing import Any, cast
 
 try:
+    from PyQt6.QtCore import QObject
     from PyQt6.QtWidgets import QApplication, QDialog
     from intellicrack.ui.dialogs.common_imports import QTest, QThread, Qt
     from intellicrack.ui.dialogs.base_dialog import BaseDialog
     GUI_AVAILABLE = True
 except ImportError:
-    QApplication = None
-    QDialog = None
-    QTest = None
-    QThread = None
-    Qt = None
-    BaseDialog = None
+    QObject = None  # type: ignore[assignment, misc]
+    QApplication = None  # type: ignore[assignment, misc]
+    QDialog = None  # type: ignore[assignment, misc]
+    QTest = None  # type: ignore[assignment, misc]
+    QThread = None  # type: ignore[assignment, misc]
+    Qt = None  # type: ignore[assignment, misc]
+    BaseDialog = None  # type: ignore[assignment, misc]
     GUI_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not GUI_AVAILABLE, reason="GUI modules not available")
@@ -99,7 +101,11 @@ class TestBaseDialog:
                 item = layout.itemAt(i)
                 if item and item.widget():
                     widget = item.widget()
-                    assert widget.parent() == self.dialog or widget.parent().parent() == self.dialog
+                    if widget is not None:
+                        parent = widget.parent()
+                        if parent is not None:
+                            grandparent = parent.parent()
+                            assert parent == self.dialog or grandparent == self.dialog
 
     def test_dialog_size_constraints_real_geometry(self, qtbot: Any) -> None:
         """Test REAL dialog size constraints and geometry."""
@@ -131,10 +137,10 @@ class TestBaseDialog:
 
     def test_dialog_parent_child_real_relationships(self, qtbot: Any) -> None:
         """Test REAL parent-child relationships in dialog."""
-        children = self.dialog.findChildren(object)
+        children = self.dialog.findChildren(QObject)
         for child in children:
             # Verify child belongs to dialog hierarchy
-            current = child
+            current: Any = child
             found_parent = False
             for _ in range(10):  # Prevent infinite loop
                 if current == self.dialog:
@@ -249,7 +255,7 @@ class TestBaseDialog:
                     assert indicator not in title, f"Placeholder found in title: {title}"
 
         check_widget_text(self.dialog)
-        for child in self.dialog.findChildren(object):
+        for child in self.dialog.findChildren(QObject):
             check_widget_text(child)
 
     def _is_widget_in_dialog(self, widget: Any) -> bool:
@@ -285,7 +291,7 @@ class TestBaseDialog:
         assert weak_ref() is not None  # Still referenced by test
 
         # Test that widgets are properly managed
-        children_count = len(self.dialog.findChildren(object))
+        children_count = len(self.dialog.findChildren(QObject))
         assert children_count >= 0
 
     def test_dialog_thread_safety_real_gui_thread(self, qtbot: Any) -> None:
@@ -293,7 +299,9 @@ class TestBaseDialog:
 
 
         # Ensure dialog operations happen in GUI thread
-        assert QThread.currentThread() == QApplication.instance().thread()
+        app = QApplication.instance()
+        if app is not None:
+            assert QThread.currentThread() == app.thread()
 
         # Test that dialog can be manipulated safely
         self.dialog.setWindowTitle("Thread Test")

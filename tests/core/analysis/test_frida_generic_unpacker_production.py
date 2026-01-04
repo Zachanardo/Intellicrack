@@ -315,6 +315,7 @@ class TestGenericUnpackerHeuristicDetection:
                         if isinstance(payload, dict):
                             memory_events.append(payload)
 
+                assert bypasser.session is not None, "Frida session must be established"
                 script = bypasser.session.create_script(unpacker_script)
                 script.on("message", on_message)
                 script.load()
@@ -400,6 +401,7 @@ class TestGenericUnpackerHeuristicDetection:
                             elif payload.get("type") == "tail_jump_detected":
                                 oep_detections.append(payload)
 
+                assert bypasser.session is not None, "Frida session must be established"
                 script = bypasser.session.create_script(unpacker_script)
                 script.on("message", on_message)
                 script.load()
@@ -487,6 +489,7 @@ class TestGenericUnpackerHeuristicDetection:
                             if payload.get("type") == "unpacker_pattern":
                                 pattern_events.append(payload)
 
+                assert bypasser.session is not None, "Frida session must be established"
                 script = bypasser.session.create_script(unpacker_script)
                 script.on("message", on_message)
                 script.load()
@@ -564,6 +567,7 @@ class TestGenericUnpackerMemoryMonitoring:
                 assert "WriteProcessMemory" in unpacker_script
                 assert "writtenRegions" in unpacker_script
 
+                assert bypasser.session is not None, "Frida session must be established"
                 script = bypasser.session.create_script(unpacker_script)
 
                 memory_writes: list[dict[str, Any]] = []
@@ -635,6 +639,7 @@ class TestGenericUnpackerMemoryMonitoring:
                             if payload.get("type") == "memory_executable":
                                 protection_changes.append(payload)
 
+                assert bypasser.session is not None, "Frida session must be established"
                 script = bypasser.session.create_script(unpacker_script)
                 script.on("message", on_message)
                 script.load()
@@ -719,6 +724,7 @@ class TestGenericUnpackerUnknownPackers:
                         if isinstance(payload, dict):
                             detected_behavior.append(payload)
 
+                assert bypasser.session is not None, "Frida session must be established"
                 script = bypasser.session.create_script(unpacker_script)
                 script.on("message", on_message)
                 script.load()
@@ -792,6 +798,7 @@ class TestGenericUnpackerUnknownPackers:
                             if payload.get("type") == "memory_dump":
                                 memory_dumps.append(payload)
 
+                assert bypasser.session is not None, "Frida session must be established"
                 script = bypasser.session.create_script(unpacker_script)
                 script.on("message", on_message)
                 script.load()
@@ -876,6 +883,7 @@ class TestGenericUnpackerMultiLayerPacking:
                             if payload.get("type") in ["memory_allocated", "memory_executable", "unpacked_oep"]:
                                 unpack_stages.append(payload)
 
+                assert bypasser.session is not None, "Frida session must be established"
                 script = bypasser.session.create_script(unpacker_script)
                 script.on("message", on_message)
                 script.load()
@@ -950,6 +958,7 @@ class TestGenericUnpackerMultiLayerPacking:
                             if payload.get("type") in ["unpacked_oep", "tail_jump_detected"]:
                                 oep_transitions.append(payload)
 
+                assert bypasser.session is not None, "Frida session must be established"
                 script = bypasser.session.create_script(unpacker_script)
                 script.on("message", on_message)
                 script.load()

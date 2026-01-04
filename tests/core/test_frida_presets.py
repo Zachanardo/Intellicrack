@@ -72,22 +72,22 @@ class TestFridaPresetsConstants:
         assert "cloud_licensing_bypass" in preset["scripts"]
         assert "LICENSE" in preset["protections"]
         assert "CLOUD" in preset["protections"]
-        assert preset["options"]["stealth_mode"] is True
+        assert preset["options"]["stealth_mode"] is True  # type: ignore[index]
         assert any("SLGetLicensingStatusInformation" in hook for hook in preset["hooks"])
 
     def test_autodesk_preset_includes_hardware_spoofing(self) -> None:
         """Autodesk preset includes hardware spoofing options."""
         preset = FRIDA_PRESETS["Autodesk Products"]
 
-        assert preset["options"]["spoof_all_hardware"] is True
+        assert preset["options"]["spoof_all_hardware"] is True  # type: ignore[index]
         assert "HARDWARE" in preset["protections"]
 
     def test_denuvo_preset_has_aggressive_options(self) -> None:
         """Denuvo preset has aggressive anti-tamper bypass options."""
         preset = FRIDA_PRESETS["Denuvo Protected Games"]
 
-        assert preset["options"]["aggressive"] is True
-        assert preset["options"]["deep_hooks"] is True
+        assert preset["options"]["aggressive"] is True  # type: ignore[index]
+        assert preset["options"]["deep_hooks"] is True  # type: ignore[index]
         assert "ANTI_DEBUG" in preset["protections"]
         assert "ANTI_VM" in preset["protections"]
 
@@ -97,7 +97,7 @@ class TestFridaPresetsConstants:
 
         assert "time_bomb_defuser" in preset["scripts"]
         assert "TIME" in preset["protections"]
-        assert preset["options"]["freeze_time"] is True
+        assert preset["options"]["freeze_time"] is True  # type: ignore[index]
 
     def test_maximum_protection_bypass_includes_all_scripts(self) -> None:
         """Maximum Protection Bypass preset loads all available bypasses."""
@@ -105,7 +105,7 @@ class TestFridaPresetsConstants:
 
         assert len(preset["scripts"]) >= 9
         assert preset["protections"] == ["ALL"]
-        assert preset["options"]["all_bypasses"] is True
+        assert preset["options"]["all_bypasses"] is True  # type: ignore[index]
 
 
 class TestWizardConfigs:
@@ -129,9 +129,9 @@ class TestWizardConfigs:
         """Safe mode limits number of scripts for safety."""
         safe_config = WIZARD_CONFIGS["safe"]
 
-        assert safe_config["max_scripts"] <= 3
-        assert safe_config["options"]["safe_mode"] is True
-        assert "KERNEL" in safe_config["exclude"]
+        assert safe_config["max_scripts"] <= 3  # type: ignore[operator]
+        assert safe_config["options"]["safe_mode"] is True  # type: ignore[index]
+        assert "KERNEL" in safe_config["exclude"]  # type: ignore[operator]
 
     def test_aggressive_mode_has_no_exclusions(self) -> None:
         """Aggressive mode has no protection exclusions."""
@@ -139,22 +139,22 @@ class TestWizardConfigs:
 
         assert aggressive_config["exclude"] == []
         assert aggressive_config["priority"] == ["ALL"]
-        assert aggressive_config["options"]["aggressive"] is True
+        assert aggressive_config["options"]["aggressive"] is True  # type: ignore[index]
 
     def test_stealth_mode_avoids_detection(self) -> None:
         """Stealth mode excludes anti-debug to avoid detection."""
         stealth_config = WIZARD_CONFIGS["stealth"]
 
-        assert "ANTI_DEBUG" in stealth_config["exclude"]
-        assert stealth_config["options"]["stealth_mode"] is True
+        assert "ANTI_DEBUG" in stealth_config["exclude"]  # type: ignore[operator]
+        assert stealth_config["options"]["stealth_mode"] is True  # type: ignore[index]
 
     def test_analysis_mode_is_read_only(self) -> None:
         """Analysis mode doesn't apply bypasses, only detects."""
         analysis_config = WIZARD_CONFIGS["analysis"]
 
-        assert analysis_config["options"]["log_only"] is True
-        assert analysis_config["options"]["no_patches"] is True
-        assert analysis_config["options"]["monitor_mode"] is True
+        assert analysis_config["options"]["log_only"] is True  # type: ignore[index]
+        assert analysis_config["options"]["no_patches"] is True  # type: ignore[index]
+        assert analysis_config["options"]["monitor_mode"] is True  # type: ignore[index]
 
 
 class TestQuickTemplates:
@@ -478,21 +478,21 @@ class TestRealWorldUseCases:
         preset = FRIDA_PRESETS["Enterprise Software"]
 
         assert "enterprise_mode" in preset["options"]
-        assert preset["options"]["enterprise_mode"] is True
+        assert preset["options"]["enterprise_mode"] is True  # type: ignore[index]
         assert any("winhttp.dll" in hook for hook in preset["hooks"])
 
     def test_flexlm_licensed_software_bypass(self) -> None:
         """FlexLM preset emulates license server."""
         preset = FRIDA_PRESETS["FlexLM/FlexNet Licensed"]
 
-        assert preset["options"]["emulate_license_server"] is True
+        assert preset["options"]["emulate_license_server"] is True  # type: ignore[index]
         assert any("lmgr" in hook or "flexnet" in hook for hook in preset["hooks"])
 
     def test_hasp_dongle_emulation(self) -> None:
         """HASP/Sentinel preset emulates hardware dongle."""
         preset = FRIDA_PRESETS["HASP/Sentinel Protected"]
 
-        assert preset["options"]["dongle_emulation"] is True
+        assert preset["options"]["dongle_emulation"] is True  # type: ignore[index]
         assert "HARDWARE" in preset["protections"]
 
     def test_development_tools_licensing(self) -> None:
@@ -500,11 +500,11 @@ class TestRealWorldUseCases:
         preset = FRIDA_PRESETS["Development Tools"]
 
         assert "JetBrains" in preset["target"]
-        assert preset["options"]["unlock_features"] is True
+        assert preset["options"]["unlock_features"] is True  # type: ignore[index]
 
     def test_media_production_software_bypass(self) -> None:
         """Media Production preset handles DAW/NLE licensing."""
         preset = FRIDA_PRESETS["Media Production Software"]
 
-        assert preset["options"]["auth_bypass"] is True
+        assert preset["options"]["auth_bypass"] is True  # type: ignore[index]
         assert "plugin_mode" in preset["options"]

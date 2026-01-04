@@ -130,7 +130,7 @@ class TestArgumentValidation:
 
     def test_validate_argument_converts_non_strings(self) -> None:
         """validate_argument converts non-string arguments to strings."""
-        validated = SecureSubprocess.validate_argument(123)
+        validated = SecureSubprocess.validate_argument(123)  # type: ignore[arg-type]
         assert validated == "123"
         assert isinstance(validated, str)
 
@@ -396,8 +396,9 @@ class TestRealWorldScenarios:
 
         if sys.platform == "win32":
             pytest.skip("file command not standard on Windows")
+            return  # type: ignore[unreachable]
 
-        if shutil.which("file"):
+        if shutil.which("file"):  # type: ignore[unreachable]
             command = ["file", str(test_file)]
             result = SecureSubprocess.run(command, capture_output=True, text=True)
             assert result.returncode == 0

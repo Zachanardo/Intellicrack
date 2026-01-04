@@ -279,8 +279,8 @@ class TestHASPDongle:
         dongle = HASPDongle()
 
         assert dongle.rsa_key is not None
-        assert dongle.rsa_key.has_private()
-        assert dongle.rsa_key.size_in_bits() == 2048
+        assert dongle.rsa_key.has_private()  # type: ignore[attr-defined]
+        assert dongle.rsa_key.size_in_bits() == 2048  # type: ignore[attr-defined]
 
     def test_hasp_dongle_custom_initialization_values(self) -> None:
         """HASP dongle accepts custom initialization values."""
@@ -335,8 +335,8 @@ class TestSentinelDongle:
         dongle = SentinelDongle()
 
         assert dongle.rsa_key is not None
-        assert dongle.rsa_key.has_private()
-        assert dongle.rsa_key.size_in_bits() == 2048
+        assert dongle.rsa_key.has_private()  # type: ignore[attr-defined]
+        assert dongle.rsa_key.size_in_bits() == 2048  # type: ignore[attr-defined]
 
     def test_sentinel_dongle_custom_initialization_values(self) -> None:
         """Sentinel dongle accepts custom initialization values."""
@@ -1223,7 +1223,7 @@ class TestActivateHardwareDongleEmulation:
         result = activate_hardware_dongle_emulation(MockApp(), ["HASP"])
 
         assert result["success"] is True
-        assert len(result["emulated_dongles"]) > 0
+        assert len(result["emulated_dongles"]) > 0  # type: ignore[arg-type]
 
     def test_activate_hardware_dongle_emulation_with_multiple_types(self) -> None:
         """Activation function creates multiple dongle types."""
@@ -1237,7 +1237,7 @@ class TestActivateHardwareDongleEmulation:
         )
 
         assert result["success"] is True
-        assert len(result["emulated_dongles"]) >= 3
+        assert len(result["emulated_dongles"]) >= 3  # type: ignore[arg-type]
 
 
 class TestDongleTypeEnum:
@@ -1245,13 +1245,13 @@ class TestDongleTypeEnum:
 
     def test_dongle_type_enum_values(self) -> None:
         """DongleType enum has all expected values."""
-        assert DongleType.HASP == 1
-        assert DongleType.SENTINEL == 2
-        assert DongleType.WIBUKEY == 3
-        assert DongleType.SAFENET == 4
-        assert DongleType.SUPERPRO == 5
-        assert DongleType.ROCKEY == 6
-        assert DongleType.DINKEY == 7
+        assert DongleType.HASP.value == 1
+        assert DongleType.SENTINEL.value == 2
+        assert DongleType.WIBUKEY.value == 3
+        assert DongleType.SAFENET.value == 4
+        assert DongleType.SUPERPRO.value == 5
+        assert DongleType.ROCKEY.value == 6
+        assert DongleType.DINKEY.value == 7
 
 
 class TestHASPStatusEnum:
@@ -1259,11 +1259,11 @@ class TestHASPStatusEnum:
 
     def test_hasp_status_enum_values(self) -> None:
         """HASPStatus enum has all expected status codes."""
-        assert HASPStatus.HASP_STATUS_OK == 0
-        assert HASPStatus.HASP_MEM_RANGE == 1
-        assert HASPStatus.HASP_TOO_SHORT == 2
-        assert HASPStatus.HASP_INV_HND == 3
-        assert HASPStatus.HASP_KEYNOTFOUND == 7
+        assert HASPStatus.HASP_STATUS_OK.value == 0
+        assert HASPStatus.HASP_MEM_RANGE.value == 1
+        assert HASPStatus.HASP_TOO_SHORT.value == 2
+        assert HASPStatus.HASP_INV_HND.value == 3
+        assert HASPStatus.HASP_KEYNOTFOUND.value == 7
 
 
 class TestSentinelStatusEnum:
@@ -1271,7 +1271,7 @@ class TestSentinelStatusEnum:
 
     def test_sentinel_status_enum_values(self) -> None:
         """SentinelStatus enum has all expected status codes."""
-        assert SentinelStatus.SP_SUCCESS == 0
-        assert SentinelStatus.SP_INVALID_FUNCTION_CODE == 1
-        assert SentinelStatus.SP_UNIT_NOT_FOUND == 2
-        assert SentinelStatus.SP_ACCESS_DENIED == 3
+        assert SentinelStatus.SP_SUCCESS.value == 0
+        assert SentinelStatus.SP_INVALID_FUNCTION_CODE.value == 1
+        assert SentinelStatus.SP_UNIT_NOT_FOUND.value == 2
+        assert SentinelStatus.SP_ACCESS_DENIED.value == 3

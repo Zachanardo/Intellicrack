@@ -11,6 +11,7 @@ import tempfile
 import threading
 import time
 from pathlib import Path
+from collections.abc import Generator
 from typing import Any
 
 import pytest
@@ -19,12 +20,12 @@ from intellicrack.protection.analysis_cache import (
     AnalysisCache,
     CacheEntry,
     CacheStats,
-    RestrictedUnpickler,
     clear_analysis_cache,
     get_analysis_cache,
-    secure_pickle_dump,
-    secure_pickle_load,
 )
+from intellicrack.protection.analysis_cache import RestrictedUnpickler  # type: ignore[attr-defined]
+from intellicrack.protection.analysis_cache import secure_pickle_dump  # type: ignore[attr-defined]
+from intellicrack.protection.analysis_cache import secure_pickle_load  # type: ignore[attr-defined]
 
 
 @pytest.fixture
@@ -42,7 +43,7 @@ def test_binary_path(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def analysis_cache(temp_cache_dir: Path) -> AnalysisCache:
+def analysis_cache(temp_cache_dir: Path) -> Generator[AnalysisCache, None, None]:
     os.environ["DISABLE_BACKGROUND_THREADS"] = "1"
     cache = AnalysisCache(
         cache_dir=str(temp_cache_dir),
@@ -103,7 +104,7 @@ class TestSecurePickle:
     def test_restricted_unpickler_blocks_unsafe_classes(self, tmp_path: Path) -> None:
         class UnsafeClass:
             def __reduce__(self) -> tuple[type, tuple[str]]:
-                return (os.system, ("echo hacked",))
+                return (os.system, ("echo hacked",))  # type: ignore[return-value]
 
         unsafe_obj = UnsafeClass()
         pickled = pickle.dumps(unsafe_obj)
@@ -127,8 +128,8 @@ class TestSecurePickle:
         secure_pickle_dump(safe_data, str(file_path))
 
         loaded = secure_pickle_load(str(file_path))
-        assert isinstance(loaded["timestamp"], datetime.datetime)
-        assert loaded["data"] == [1, 2, 3]
+        assert isinstance(loaded["timestamp"], datetime.datetime)  # type: ignore[index]
+        assert loaded["data"] == [1, 2, 3]  # type: ignore[index]
 
 
 class TestCacheEntry:
@@ -260,8 +261,8 @@ class TestAnalysisCache:
 
         assert result is not None
         assert result == sample_analysis_result
-        assert result["protections"] == ["VMProtect", "Themida"]
-        assert result["confidence"] == 95.0
+        assert result["protections"] == ["VMProtect", "Themida"]  # type: ignore[index]
+        assert result["confidence"] == 95.0  # type: ignore[index]
 
     def test_cache_miss_returns_none(self, analysis_cache: AnalysisCache) -> None:
         result = analysis_cache.get("/nonexistent/file.exe")
@@ -404,7 +405,7 @@ class TestAnalysisCache:
 
         result = cache2.get(str(test_binary_path))
         assert result is not None
-        assert result["persisted"] == "data"
+        assert result["persisted"] == "data"  # type: ignore[index]
 
     def test_cache_get_cache_info_returns_detailed_information(
         self,
@@ -422,7 +423,7 @@ class TestAnalysisCache:
         assert "cache_directory" in info
         assert "max_entries" in info
         assert "top_entries" in info
-        assert len(info["top_entries"]) > 0
+        assert len(info["top_entries"]) > 0  # type: ignore[arg-type]
 
     def test_cache_thread_safety(
         self,

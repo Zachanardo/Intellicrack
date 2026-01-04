@@ -7,17 +7,14 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
+import contextlib
 import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from xml.etree.ElementTree import Element, ElementTree, SubElement
 
 from PyQt6.QtWidgets import QLayout, QWidget
-
-
-from defusedxml.ElementTree import Element, ElementTree, SubElement
-
-import contextlib
 
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,

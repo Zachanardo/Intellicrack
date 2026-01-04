@@ -212,11 +212,11 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_full_orchestrated_analysis_pe_real(self) -> None:
         """Test REAL full orchestrated analysis on PE binary."""
-        result = self.orchestrator.analyze_binary(self.pe_binary)
+        result = self.orchestrator.analyze_binary(str(self.pe_binary))
 
         self.assert_real_output(result)
         assert isinstance(result, OrchestrationResult)
-        assert result.binary_path == self.pe_binary
+        assert result.binary_path == str(self.pe_binary)
         assert result.success is True
 
         assert len(result.phases_completed) >= 5
@@ -258,7 +258,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
             AnalysisPhase.ENTROPY_ANALYSIS
         ]
 
-        result = self.orchestrator.analyze_binary(self.pe_binary, phases=selected_phases)
+        result = self.orchestrator.analyze_binary(str(self.pe_binary), phases=selected_phases)
 
         self.assert_real_output(result)
         assert len(result.phases_completed) == len(selected_phases)
@@ -276,11 +276,11 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_elf_binary_analysis_real(self) -> None:
         """Test REAL orchestrated analysis on ELF binary."""
-        result = self.orchestrator.analyze_binary(self.elf_binary)
+        result = self.orchestrator.analyze_binary(str(self.elf_binary))
 
         self.assert_real_output(result)
         assert result.success is True
-        assert result.binary_path == self.elf_binary
+        assert result.binary_path == str(self.elf_binary)
 
         assert len(result.phases_completed) >= 3
         assert AnalysisPhase.PREPARATION in result.phases_completed
@@ -291,7 +291,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_preparation_phase_real(self) -> None:
         """Test REAL preparation phase functionality."""
-        prep_result = self.orchestrator._prepare_analysis(self.pe_binary)
+        prep_result = self.orchestrator._prepare_analysis(str(self.pe_binary))
 
         self.assert_real_output(prep_result)
         assert prep_result['file_size'] > 0
@@ -305,7 +305,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_basic_info_phase_real(self) -> None:
         """Test REAL basic info analysis phase."""
-        basic_result = self.orchestrator._analyze_basic_info(self.pe_binary)
+        basic_result = self.orchestrator._analyze_basic_info(str(self.pe_binary))
 
         self.assert_real_output(basic_result)
 
@@ -317,7 +317,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_static_analysis_phase_real(self) -> None:
         """Test REAL static analysis phase with radare2."""
-        static_result = self.orchestrator._perform_static_analysis(self.pe_binary)
+        static_result = self.orchestrator._perform_static_analysis(str(self.pe_binary))
 
         self.assert_real_output(static_result)
 
@@ -338,7 +338,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_entropy_analysis_phase_real(self) -> None:
         """Test REAL entropy analysis phase."""
-        entropy_result = self.orchestrator._perform_entropy_analysis(self.pe_binary)
+        entropy_result = self.orchestrator._perform_entropy_analysis(str(self.pe_binary))
 
         self.assert_real_output(entropy_result)
 
@@ -367,7 +367,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_structure_analysis_phase_real(self) -> None:
         """Test REAL structure analysis phase."""
-        struct_result = self.orchestrator._analyze_structure(self.pe_binary)
+        struct_result = self.orchestrator._analyze_structure(str(self.pe_binary))
 
         self.assert_real_output(struct_result)
 
@@ -377,7 +377,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_vulnerability_scan_phase_real(self) -> None:
         """Test REAL vulnerability scanning phase."""
-        vuln_result = self.orchestrator._scan_vulnerabilities(self.pe_binary)
+        vuln_result = self.orchestrator._scan_vulnerabilities(str(self.pe_binary))
 
         self.assert_real_output(vuln_result)
 
@@ -394,7 +394,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_pattern_matching_phase_real(self) -> None:
         """Test REAL YARA pattern matching phase."""
-        pattern_result = self.orchestrator._match_patterns(self.pe_binary)
+        pattern_result = self.orchestrator._match_patterns(str(self.pe_binary))
 
         self.assert_real_output(pattern_result)
 
@@ -404,7 +404,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_dynamic_analysis_phase_real(self) -> None:
         """Test REAL dynamic analysis phase initialization."""
-        dynamic_result = self.orchestrator._perform_dynamic_analysis(self.pe_binary)
+        dynamic_result = self.orchestrator._perform_dynamic_analysis(str(self.pe_binary))
 
         self.assert_real_output(dynamic_result)
 
@@ -419,7 +419,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
     def test_finalization_phase_real(self) -> None:
         """Test REAL analysis finalization phase."""
         phases = [AnalysisPhase.PREPARATION, AnalysisPhase.ENTROPY_ANALYSIS, AnalysisPhase.VULNERABILITY_SCAN]
-        real_result = self.orchestrator.analyze_binary(self.pe_binary, phases=phases)
+        real_result = self.orchestrator.analyze_binary(str(self.pe_binary), phases=phases)
 
         final_result = self.orchestrator._finalize_analysis(real_result)
 
@@ -447,7 +447,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_ghidra_analysis_phase_real(self) -> None:
         """Test REAL Ghidra analysis phase integration."""
-        ghidra_result = self.orchestrator._perform_ghidra_analysis(self.pe_binary)
+        ghidra_result = self.orchestrator._perform_ghidra_analysis(str(self.pe_binary))
 
         self.assert_real_output(ghidra_result)
 
@@ -474,7 +474,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
         self.signal_emissions.clear()
 
         phases: list[AnalysisPhase] = [AnalysisPhase.PREPARATION, AnalysisPhase.BASIC_INFO]
-        result: OrchestrationResult = self.orchestrator.analyze_binary(self.pe_binary, phases=phases)
+        result: OrchestrationResult = self.orchestrator.analyze_binary(str(self.pe_binary), phases=phases)
 
         assert len(self.signal_emissions) > 0
         signal_types: list[Any] = [s[0] for s in self.signal_emissions]
@@ -525,7 +525,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_orchestration_result_methods_real(self) -> None:
         """Test REAL OrchestrationResult methods and functionality."""
-        result: OrchestrationResult = OrchestrationResult(binary_path=self.pe_binary, success=True)
+        result: OrchestrationResult = OrchestrationResult(binary_path=str(self.pe_binary), success=True)
 
         test_phase: AnalysisPhase = AnalysisPhase.BASIC_INFO
         test_data: dict[str, str] = {'file_type': 'PE', 'architecture': 'x64'}
@@ -553,7 +553,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
         self.signal_emissions.clear()
         phases: list[AnalysisPhase] = [AnalysisPhase.PREPARATION, AnalysisPhase.BASIC_INFO, AnalysisPhase.ENTROPY_ANALYSIS]
 
-        result: OrchestrationResult = self.orchestrator.analyze_binary(self.pe_binary, phases=phases)
+        result: OrchestrationResult = self.orchestrator.analyze_binary(str(self.pe_binary), phases=phases)
 
         progress_signals: list[tuple[str, ...]] = [s for s in self.signal_emissions if s[0] == 'progress_updated']
 
@@ -563,11 +563,11 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
         for signal in progress_signals:
             current: Any = signal[1]
             total: Any = signal[2]
-            assert total == total_phases
-            assert 0 <= int(current) <= total_phases  # type: ignore[operator]
+            assert int(str(total)) == total_phases
+            assert 0 <= int(str(current)) <= total_phases
 
         final_progress: tuple[str, ...] = progress_signals[-1]
-        assert final_progress[1] == total_phases
+        assert int(str(final_progress[1])) == total_phases
 
     def test_timeout_configuration_real(self) -> None:
         """Test REAL timeout configuration and handling."""
@@ -578,7 +578,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
         assert self.orchestrator.timeout_per_phase == new_timeout
 
         result: OrchestrationResult = self.orchestrator.analyze_binary(
-            self.pe_binary,
+            str(self.pe_binary),
             phases=[AnalysisPhase.PREPARATION]
         )
         assert result.success is True
@@ -593,7 +593,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
         self.orchestrator.enabled_phases = custom_phases
         assert self.orchestrator.enabled_phases == custom_phases
 
-        result: OrchestrationResult = self.orchestrator.analyze_binary(self.pe_binary)
+        result: OrchestrationResult = self.orchestrator.analyze_binary(str(self.pe_binary))
         for phase in custom_phases:
             assert phase in result.phases_completed
 
@@ -604,7 +604,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
         assert self.orchestrator.qemu_manager is None
 
         phases: list[AnalysisPhase] = [AnalysisPhase.STATIC_ANALYSIS]
-        result: OrchestrationResult = self.orchestrator.analyze_binary(self.pe_binary, phases=phases)
+        result: OrchestrationResult = self.orchestrator.analyze_binary(str(self.pe_binary), phases=phases)
 
         static_result: Any = result.results.get(AnalysisPhase.STATIC_ANALYSIS.value, {})
         if 'error' in static_result:
@@ -689,7 +689,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
             """Run analysis in thread and store result."""
             orchestrator: AnalysisOrchestrator = AnalysisOrchestrator()
             phases: list[AnalysisPhase] = [AnalysisPhase.PREPARATION, AnalysisPhase.BASIC_INFO]
-            result: OrchestrationResult = orchestrator.analyze_binary(binary_path, phases=phases)
+            result: OrchestrationResult = orchestrator.analyze_binary(str(binary_path), phases=phases)
             result_queue.put((threading.current_thread().name, result))
 
         threads: list[threading.Thread] = []
@@ -714,7 +714,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
         for thread_name, result in thread_results:
             assert isinstance(result, OrchestrationResult)
             assert result.success is True or len(result.errors) > 0
-            assert result.binary_path == self.pe_binary
+            assert result.binary_path == str(self.pe_binary)
 
     def test_memory_usage_during_analysis_real(self) -> None:
         """Test REAL memory usage monitoring during analysis."""
@@ -724,7 +724,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
         initial_memory: int = process.memory_info().rss
 
         result: OrchestrationResult = self.orchestrator.analyze_binary(
-            self.pe_binary,
+            str(self.pe_binary),
             phases=[AnalysisPhase.PREPARATION, AnalysisPhase.ENTROPY_ANALYSIS]
         )
 
@@ -737,7 +737,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
     def test_ghidra_script_selection_logic_real(self) -> None:
         """Test REAL Ghidra script selection logic for different binary types."""
-        pe_script: Any = self.orchestrator._select_ghidra_script(self.pe_binary)
+        pe_script: Any = self.orchestrator._select_ghidra_script(str(self.pe_binary))
 
         if pe_script is not None:
             assert hasattr(pe_script, 'name')
@@ -745,7 +745,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
             script_name: str = pe_script.name.lower()
             assert any(keyword in script_name for keyword in ['license', 'keygen', 'advanced', 'comprehensive'])
 
-        elf_script: Any = self.orchestrator._select_ghidra_script(self.elf_binary)
+        elf_script: Any = self.orchestrator._select_ghidra_script(str(self.elf_binary))
 
         if elf_script is not None:
             assert hasattr(elf_script, 'name')
@@ -886,7 +886,7 @@ Analysis complete - 15 functions analyzed
         from intellicrack.core.analysis.analysis_orchestrator import run_selected_analysis
 
         analysis_types = ['static', 'entropy']
-        result = run_selected_analysis(self.pe_binary, analysis_types)
+        result = run_selected_analysis(str(self.pe_binary), analysis_types)
 
         self.assert_real_output(result)
         assert isinstance(result, dict)
@@ -927,7 +927,7 @@ Analysis complete - 15 functions analyzed
             if 'vm' in str(self.orchestrator.__dict__.get('config', {})):
                 self.assertTrue('copy' in log_messages or 'vm' in log_messages)
 
-    def test_vm_binary_transfer_error_handling(  # type: ignore[override]
+    def test_vm_binary_transfer_error_handling(
         self, monkeypatch: Any
     ) -> None:
         """Test that VM binary transfer errors are handled properly."""
@@ -943,7 +943,7 @@ Analysis complete - 15 functions analyzed
         self.assert_real_output(result)
         self.assertIsInstance(result, OrchestrationResult)
 
-    def test_vm_copy_operation_validates_success(  # type: ignore[override]
+    def test_vm_copy_operation_validates_success(
         self, monkeypatch: Any
     ) -> None:
         """Test that VM copy operations validate success before proceeding."""

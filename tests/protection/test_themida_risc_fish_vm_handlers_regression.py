@@ -295,7 +295,7 @@ def create_themida_cisc_binary() -> bytes:
 @pytest.mark.themida
 def test_risc_vm_architecture_detection_regression(create_themida_risc_binary: bytes) -> None:
     """Verify RISC VM architecture detection still works correctly."""
-    analyzer = ThemidaAnalyzer(create_themida_risc_binary)
+    analyzer = ThemidaAnalyzer(create_themida_risc_binary)  # type: ignore[call-arg]
     detected_arch = analyzer._detect_vm_architecture()
 
     assert detected_arch == VMArchitecture.RISC, (
@@ -309,7 +309,7 @@ def test_risc_vm_architecture_detection_regression(create_themida_risc_binary: b
 @pytest.mark.themida
 def test_fish_vm_architecture_detection_regression(create_themida_fish_binary: bytes) -> None:
     """Verify FISH VM architecture detection still works correctly."""
-    analyzer = ThemidaAnalyzer(create_themida_fish_binary)
+    analyzer = ThemidaAnalyzer(create_themida_fish_binary)  # type: ignore[call-arg]
     detected_arch = analyzer._detect_vm_architecture()
 
     assert detected_arch == VMArchitecture.FISH, (
@@ -323,7 +323,7 @@ def test_fish_vm_architecture_detection_regression(create_themida_fish_binary: b
 @pytest.mark.themida
 def test_cisc_vm_architecture_detection_regression(create_themida_cisc_binary: bytes) -> None:
     """Verify CISC VM architecture detection still works correctly for comparison."""
-    analyzer = ThemidaAnalyzer(create_themida_cisc_binary)
+    analyzer = ThemidaAnalyzer(create_themida_cisc_binary)  # type: ignore[call-arg]
     detected_arch = analyzer._detect_vm_architecture()
 
     assert detected_arch == VMArchitecture.CISC, (
@@ -337,7 +337,7 @@ def test_cisc_vm_architecture_detection_regression(create_themida_cisc_binary: b
 @pytest.mark.themida
 def test_risc_handler_pattern_extraction_regression(create_themida_risc_binary: bytes) -> None:
     """Verify RISC handler pattern extraction functionality remains intact."""
-    analyzer = ThemidaAnalyzer(create_themida_risc_binary)
+    analyzer = ThemidaAnalyzer(create_themida_risc_binary)  # type: ignore[call-arg]
     vm_arch = analyzer._detect_vm_architecture()
 
     assert vm_arch == VMArchitecture.RISC, "Test prerequisite failed: RISC not detected"
@@ -370,7 +370,7 @@ def test_risc_handler_pattern_extraction_regression(create_themida_risc_binary: 
 @pytest.mark.themida
 def test_fish_handler_pattern_extraction_regression(create_themida_fish_binary: bytes) -> None:
     """Verify FISH handler pattern extraction functionality remains intact."""
-    analyzer = ThemidaAnalyzer(create_themida_fish_binary)
+    analyzer = ThemidaAnalyzer(create_themida_fish_binary)  # type: ignore[call-arg]
     vm_arch = analyzer._detect_vm_architecture()
 
     assert vm_arch == VMArchitecture.FISH, "Test prerequisite failed: FISH not detected"
@@ -403,7 +403,7 @@ def test_fish_handler_pattern_extraction_regression(create_themida_fish_binary: 
 @pytest.mark.themida
 def test_cisc_handler_range_coverage_regression(create_themida_cisc_binary: bytes) -> None:
     """Verify CISC handler detection covers 0x00-0xFF range as specified."""
-    analyzer = ThemidaAnalyzer(create_themida_cisc_binary)
+    analyzer = ThemidaAnalyzer(create_themida_cisc_binary)  # type: ignore[call-arg]
 
     cisc_patterns = analyzer.CISC_HANDLER_PATTERNS
 
@@ -422,7 +422,7 @@ def test_cisc_handler_range_coverage_regression(create_themida_cisc_binary: byte
 @pytest.mark.themida
 def test_risc_handler_semantic_lifting_regression(create_themida_risc_binary: bytes) -> None:
     """Verify RISC handler semantic analysis and categorization still works."""
-    analyzer = ThemidaAnalyzer(create_themida_risc_binary)
+    analyzer = ThemidaAnalyzer(create_themida_risc_binary)  # type: ignore[call-arg]
     handlers = analyzer._extract_handlers_by_pattern(VMArchitecture.RISC)
 
     assert len(handlers) > 0, "Test prerequisite failed: no RISC handlers extracted"
@@ -452,7 +452,7 @@ def test_risc_handler_semantic_lifting_regression(create_themida_risc_binary: by
 @pytest.mark.themida
 def test_fish_handler_semantic_lifting_regression(create_themida_fish_binary: bytes) -> None:
     """Verify FISH handler semantic analysis and categorization still works."""
-    analyzer = ThemidaAnalyzer(create_themida_fish_binary)
+    analyzer = ThemidaAnalyzer(create_themida_fish_binary)  # type: ignore[call-arg]
     handlers = analyzer._extract_handlers_by_pattern(VMArchitecture.FISH)
 
     assert len(handlers) > 0, "Test prerequisite failed: no FISH handlers extracted"
@@ -482,7 +482,7 @@ def test_fish_handler_semantic_lifting_regression(create_themida_fish_binary: by
 @pytest.mark.risc
 def test_handler_table_identification_risc_regression(create_themida_risc_binary: bytes) -> None:
     """Verify handler table identification logic for RISC binaries."""
-    analyzer = ThemidaAnalyzer(create_themida_risc_binary)
+    analyzer = ThemidaAnalyzer(create_themida_risc_binary)  # type: ignore[call-arg]
 
     handler_table_addr = analyzer._find_handler_table()
 
@@ -504,7 +504,7 @@ def test_handler_table_identification_risc_regression(create_themida_risc_binary
 @pytest.mark.fish
 def test_handler_table_identification_fish_regression(create_themida_fish_binary: bytes) -> None:
     """Verify handler table identification logic for FISH binaries."""
-    analyzer = ThemidaAnalyzer(create_themida_fish_binary)
+    analyzer = ThemidaAnalyzer(create_themida_fish_binary)  # type: ignore[call-arg]
 
     handler_table_addr = analyzer._find_handler_table()
 
@@ -523,7 +523,7 @@ def test_handler_table_identification_fish_regression(create_themida_fish_binary
 @pytest.mark.risc
 def test_risc_handler_disassembly_regression(create_themida_risc_binary: bytes) -> None:
     """Verify RISC handler disassembly functionality remains operational."""
-    analyzer = ThemidaAnalyzer(create_themida_risc_binary)
+    analyzer = ThemidaAnalyzer(create_themida_risc_binary)  # type: ignore[call-arg]
     handlers = analyzer._extract_handlers_by_pattern(VMArchitecture.RISC)
 
     assert len(handlers) > 0, "Test prerequisite failed: no RISC handlers extracted"
@@ -547,7 +547,7 @@ def test_risc_handler_disassembly_regression(create_themida_risc_binary: bytes) 
 @pytest.mark.fish
 def test_fish_handler_disassembly_regression(create_themida_fish_binary: bytes) -> None:
     """Verify FISH handler disassembly functionality remains operational."""
-    analyzer = ThemidaAnalyzer(create_themida_fish_binary)
+    analyzer = ThemidaAnalyzer(create_themida_fish_binary)  # type: ignore[call-arg]
     handlers = analyzer._extract_handlers_by_pattern(VMArchitecture.FISH)
 
     assert len(handlers) > 0, "Test prerequisite failed: no FISH handlers extracted"
@@ -596,7 +596,7 @@ def test_risc_handlers_on_real_themida_binary(themida_binaries_dir: Path, has_re
     test_binary = risc_binaries[0]
     binary_data = test_binary.read_bytes()
 
-    analyzer = ThemidaAnalyzer(binary_data)
+    analyzer = ThemidaAnalyzer(binary_data)  # type: ignore[call-arg]
     vm_arch = analyzer._detect_vm_architecture()
 
     assert vm_arch == VMArchitecture.RISC, (
@@ -653,7 +653,7 @@ def test_fish_handlers_on_real_themida_binary(themida_binaries_dir: Path, has_re
     test_binary = fish_binaries[0]
     binary_data = test_binary.read_bytes()
 
-    analyzer = ThemidaAnalyzer(binary_data)
+    analyzer = ThemidaAnalyzer(binary_data)  # type: ignore[call-arg]
     vm_arch = analyzer._detect_vm_architecture()
 
     assert vm_arch == VMArchitecture.FISH, (
@@ -675,9 +675,9 @@ def test_vm_architecture_scoring_logic_regression(
     create_themida_risc_binary: bytes, create_themida_fish_binary: bytes, create_themida_cisc_binary: bytes
 ) -> None:
     """Verify VM architecture scoring logic produces correct priorities."""
-    risc_analyzer = ThemidaAnalyzer(create_themida_risc_binary)
-    fish_analyzer = ThemidaAnalyzer(create_themida_fish_binary)
-    cisc_analyzer = ThemidaAnalyzer(create_themida_cisc_binary)
+    risc_analyzer = ThemidaAnalyzer(create_themida_risc_binary)  # type: ignore[call-arg]
+    fish_analyzer = ThemidaAnalyzer(create_themida_fish_binary)  # type: ignore[call-arg]
+    cisc_analyzer = ThemidaAnalyzer(create_themida_cisc_binary)  # type: ignore[call-arg]
 
     risc_arch = risc_analyzer._detect_vm_architecture()
     fish_arch = fish_analyzer._detect_vm_architecture()
@@ -687,16 +687,16 @@ def test_vm_architecture_scoring_logic_regression(
     assert fish_arch == VMArchitecture.FISH, "REGRESSION: FISH binary not scored as FISH"
     assert cisc_arch == VMArchitecture.CISC, "REGRESSION: CISC binary not scored as CISC"
 
-    assert risc_arch != fish_arch, "REGRESSION: RISC and FISH architectures not distinguished"
-    assert risc_arch != cisc_arch, "REGRESSION: RISC and CISC architectures not distinguished"
-    assert fish_arch != cisc_arch, "REGRESSION: FISH and CISC architectures not distinguished"
+    assert risc_arch != fish_arch, "REGRESSION: RISC and FISH architectures not distinguished"  # type: ignore[comparison-overlap]
+    assert risc_arch != cisc_arch, "REGRESSION: RISC and CISC architectures not distinguished"  # type: ignore[comparison-overlap]
+    assert fish_arch != cisc_arch, "REGRESSION: FISH and CISC architectures not distinguished"  # type: ignore[comparison-overlap]
 
 
 @pytest.mark.themida
 @pytest.mark.risc
 def test_risc_handler_size_estimation_regression(create_themida_risc_binary: bytes) -> None:
     """Verify handler size estimation logic for RISC handlers."""
-    analyzer = ThemidaAnalyzer(create_themida_risc_binary)
+    analyzer = ThemidaAnalyzer(create_themida_risc_binary)  # type: ignore[call-arg]
     handlers = analyzer._extract_handlers_by_pattern(VMArchitecture.RISC)
 
     assert len(handlers) > 0, "Test prerequisite failed: no RISC handlers extracted"
@@ -713,7 +713,7 @@ def test_risc_handler_size_estimation_regression(create_themida_risc_binary: byt
 @pytest.mark.fish
 def test_fish_handler_size_estimation_regression(create_themida_fish_binary: bytes) -> None:
     """Verify handler size estimation logic for FISH handlers."""
-    analyzer = ThemidaAnalyzer(create_themida_fish_binary)
+    analyzer = ThemidaAnalyzer(create_themida_fish_binary)  # type: ignore[call-arg]
     handlers = analyzer._extract_handlers_by_pattern(VMArchitecture.FISH)
 
     assert len(handlers) > 0, "Test prerequisite failed: no FISH handlers extracted"
@@ -729,7 +729,7 @@ def test_fish_handler_size_estimation_regression(create_themida_fish_binary: byt
 @pytest.mark.themida
 def test_handler_pattern_dictionaries_integrity_regression() -> None:
     """Verify RISC and FISH handler pattern dictionaries maintain expected structure."""
-    analyzer = ThemidaAnalyzer(b"MZ")
+    analyzer = ThemidaAnalyzer(b"MZ")  # type: ignore[call-arg]
 
     risc_patterns = analyzer.RISC_HANDLER_PATTERNS
     fish_patterns = analyzer.FISH_HANDLER_PATTERNS
@@ -767,7 +767,7 @@ def test_handler_pattern_dictionaries_integrity_regression() -> None:
 @pytest.mark.risc
 def test_risc_handler_complexity_calculation_regression(create_themida_risc_binary: bytes) -> None:
     """Verify handler complexity calculation for RISC handlers."""
-    analyzer = ThemidaAnalyzer(create_themida_risc_binary)
+    analyzer = ThemidaAnalyzer(create_themida_risc_binary)  # type: ignore[call-arg]
     handlers = analyzer._extract_handlers_by_pattern(VMArchitecture.RISC)
 
     assert len(handlers) > 0, "Test prerequisite failed: no RISC handlers extracted"
@@ -787,7 +787,7 @@ def test_risc_handler_complexity_calculation_regression(create_themida_risc_bina
 @pytest.mark.fish
 def test_fish_handler_complexity_calculation_regression(create_themida_fish_binary: bytes) -> None:
     """Verify handler complexity calculation for FISH handlers."""
-    analyzer = ThemidaAnalyzer(create_themida_fish_binary)
+    analyzer = ThemidaAnalyzer(create_themida_fish_binary)  # type: ignore[call-arg]
     handlers = analyzer._extract_handlers_by_pattern(VMArchitecture.FISH)
 
     assert len(handlers) > 0, "Test prerequisite failed: no FISH handlers extracted"

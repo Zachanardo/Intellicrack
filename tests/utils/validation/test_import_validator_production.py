@@ -131,7 +131,7 @@ import json
             assert "missing" in result
             assert "success" in result
             assert result["success"] is True
-            assert len(result["missing"]) == 0
+            assert len(result["missing"]) == 0  # type: ignore[arg-type]
         finally:
             Path(filepath).unlink(missing_ok=True)
 
@@ -147,8 +147,8 @@ import nonexistent_test_module
         try:
             result = ImportValidator.validate_imports_from_file(filepath)
 
-            assert len(result["missing"]) > 0
-            assert "nonexistent_test_module" in result["missing"]
+            assert len(result["missing"]) > 0  # type: ignore[arg-type]
+            assert "nonexistent_test_module" in result["missing"]  # type: ignore[operator]
         finally:
             Path(filepath).unlink(missing_ok=True)
 
@@ -198,7 +198,7 @@ from pathlib import Path
         imports = ImportValidator.get_import_nodes(code)
 
         assert all("line" in imp for imp in imports)
-        assert all(imp["line"] > 0 for imp in imports)
+        assert all(imp["line"] > 0 for imp in imports)  # type: ignore[operator]
 
     def test_extracts_import_aliases(self) -> None:
         """Extracts import aliases."""
@@ -221,8 +221,8 @@ from typing import List, Dict, Optional
 
         typing_import = next((imp for imp in imports if imp.get("module") == "typing"), None)
         assert typing_import is not None
-        assert "List" in typing_import["names"]
-        assert "Dict" in typing_import["names"]
+        assert "List" in typing_import["names"]  # type: ignore[operator]
+        assert "Dict" in typing_import["names"]  # type: ignore[operator]
 
 
 class TestModuleAvailabilityCheck:
@@ -372,7 +372,7 @@ def other_method():
             result = PluginStructureValidator.validate_structure_from_file(filepath)
 
             assert result["valid"] is False
-            assert len(result["errors"]) > 0
+            assert len(result["errors"]) > 0  # type: ignore[arg-type]
         finally:
             Path(filepath).unlink(missing_ok=True)
 
@@ -406,8 +406,8 @@ def analyze(binary_path, options):
 
         analyze_func = next((f for f in functions if f["name"] == "analyze"), None)
         assert analyze_func is not None
-        assert "binary_path" in analyze_func["args"]
-        assert "options" in analyze_func["args"]
+        assert "binary_path" in analyze_func["args"]  # type: ignore[operator]
+        assert "options" in analyze_func["args"]  # type: ignore[operator]
 
     def test_extracts_class_methods(self) -> None:
         """Extracts methods from classes."""
@@ -472,7 +472,7 @@ def other_function():
         result = PluginStructureValidator.validate_combined(code)
 
         assert result["import_success"] is True
-        assert len(result["import_warnings"]) > 0
+        assert len(result["import_warnings"]) > 0  # type: ignore[arg-type]
         assert result["structure_success"] is False
         assert result["valid"] is False
 

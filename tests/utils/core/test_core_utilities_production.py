@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import tempfile
 from pathlib import Path
+from collections.abc import Generator
 from typing import Any, Callable
 
 import pytest
@@ -572,7 +573,7 @@ class TestRunCLIMode:
     """Test CLI mode execution."""
 
     @pytest.fixture
-    def temp_binary(self) -> Path:
+    def temp_binary(self) -> Generator[Path, None, None]:
         """Create temporary binary file."""
         with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as f:
             f.write(b"MZ\x90\x00")
@@ -584,7 +585,7 @@ class TestRunCLIMode:
         """Test CLI mode fails without binary."""
         args = FakeArgs(binary=None)
 
-        result = run_cli_mode(args)
+        result = run_cli_mode(args)  # type: ignore[arg-type]
 
         assert result == 1
 
@@ -601,7 +602,7 @@ class TestRunCLIMode:
             output=None,
         )
 
-        result = run_cli_mode(args)
+        result = run_cli_mode(args)  # type: ignore[arg-type]
 
         assert result == 0
 
@@ -618,7 +619,7 @@ class TestRunCLIMode:
             output=None,
         )
 
-        result = run_cli_mode(args)
+        result = run_cli_mode(args)  # type: ignore[arg-type]
 
         assert result == 0
 
@@ -636,7 +637,7 @@ class TestRunCLIMode:
                 output=tmpdir,
             )
 
-            result = run_cli_mode(args)
+            result = run_cli_mode(args)  # type: ignore[arg-type]
 
             output_file = Path(tmpdir) / "intellicrack_results.json"
             assert output_file.exists()
@@ -658,7 +659,7 @@ class TestRunCLIMode:
             output=None,
         )
 
-        result = run_cli_mode(args)
+        result = run_cli_mode(args)  # type: ignore[arg-type]
 
         assert result == 1
 
@@ -673,7 +674,7 @@ class TestRunGUIMode:
         monkeypatch.setattr("intellicrack.utils.core.core_utilities.QApplication", fake_qapp_class)
 
         args = FakeArgs()
-        result = run_gui_mode(args)
+        result = run_gui_mode(args)  # type: ignore[arg-type]
 
         assert result == 1
 
@@ -686,7 +687,7 @@ class TestRunGUIMode:
         monkeypatch.setattr("intellicrack.utils.core.core_utilities.launch", fake_launcher)
 
         args = FakeArgs()
-        result = run_gui_mode(args)
+        result = run_gui_mode(args)  # type: ignore[arg-type]
 
         assert result == 1
 
@@ -696,7 +697,7 @@ class TestMain:
 
     def test_main_default_gui_mode(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test main defaults to GUI mode."""
-        fake_gui = FakeAnalysisRunner(return_value=0)
+        fake_gui = FakeAnalysisRunner(return_value=0)  # type: ignore[arg-type]
 
         monkeypatch.setattr("intellicrack.utils.core.core_utilities.run_gui_mode", fake_gui)
 
@@ -707,7 +708,7 @@ class TestMain:
 
     def test_main_cli_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test main respects --cli flag."""
-        fake_cli = FakeAnalysisRunner(return_value=0)
+        fake_cli = FakeAnalysisRunner(return_value=0)  # type: ignore[arg-type]
 
         monkeypatch.setattr("intellicrack.utils.core.core_utilities.run_cli_mode", fake_cli)
 
@@ -727,7 +728,7 @@ class TestMain:
 
     def test_main_verbose_logging(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test main configures verbose logging."""
-        fake_gui = FakeAnalysisRunner(return_value=0)
+        fake_gui = FakeAnalysisRunner(return_value=0)  # type: ignore[arg-type]
 
         monkeypatch.setattr("intellicrack.utils.core.core_utilities.run_gui_mode", fake_gui)
 
@@ -737,7 +738,7 @@ class TestMain:
 
     def test_main_binary_argument(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test main accepts binary argument."""
-        fake_cli = FakeAnalysisRunner(return_value=0)
+        fake_cli = FakeAnalysisRunner(return_value=0)  # type: ignore[arg-type]
 
         monkeypatch.setattr("intellicrack.utils.core.core_utilities.run_cli_mode", fake_cli)
 

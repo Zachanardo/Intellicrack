@@ -230,7 +230,7 @@ def test_describe_e_type_returns_description() -> None:
     """describe_e_type() returns human-readable description."""
     et_exec = pyelftools_handler.ENUM_E_TYPE.ET_EXEC
 
-    description = pyelftools_handler.describe_e_type(et_exec)
+    description = pyelftools_handler.describe_e_type(et_exec)  # type: ignore[no-untyped-call]
 
     assert isinstance(description, str)
     assert "EXEC" in description or "Executable" in description
@@ -238,7 +238,7 @@ def test_describe_e_type_returns_description() -> None:
 
 def test_describe_p_type_returns_description() -> None:
     """describe_p_type() returns human-readable description."""
-    description = pyelftools_handler.describe_p_type(1)
+    description = pyelftools_handler.describe_p_type(1)  # type: ignore[no-untyped-call]
 
     assert isinstance(description, str)
     assert "LOAD" in description or "PT_LOAD" in description
@@ -248,7 +248,7 @@ def test_describe_sh_type_returns_description() -> None:
     """describe_sh_type() returns human-readable description."""
     sht_strtab = pyelftools_handler.ENUM_SH_TYPE.SHT_STRTAB
 
-    description = pyelftools_handler.describe_sh_type(sht_strtab)
+    description = pyelftools_handler.describe_sh_type(sht_strtab)  # type: ignore[no-untyped-call]
 
     assert isinstance(description, str)
     assert "STRTAB" in description
@@ -259,7 +259,7 @@ def test_elffile_parses_minimal_elf() -> None:
     elf_data = create_minimal_elf64_binary()
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
     assert elf is not None
     assert elf.header is not None
@@ -270,7 +270,7 @@ def test_elffile_detects_64bit_class() -> None:
     elf_data = create_minimal_elf64_binary()
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
     assert elf.elfclass == 64
 
@@ -280,7 +280,7 @@ def test_elffile_detects_little_endian() -> None:
     elf_data = create_minimal_elf64_binary()
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
     assert elf.little_endian is True
 
@@ -291,7 +291,7 @@ def test_elffile_rejects_invalid_magic() -> None:
     stream = io.BytesIO(invalid_data)
 
     with pytest.raises(pyelftools_handler.ELFParseError):
-        pyelftools_handler.ELFFile(stream)
+        pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
 
 def test_elffile_rejects_truncated_header() -> None:
@@ -300,7 +300,7 @@ def test_elffile_rejects_truncated_header() -> None:
     stream = io.BytesIO(truncated_data)
 
     with pytest.raises(pyelftools_handler.ELFParseError):
-        pyelftools_handler.ELFFile(stream)
+        pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
 
 def test_elffile_header_contains_expected_fields() -> None:
@@ -308,7 +308,7 @@ def test_elffile_header_contains_expected_fields() -> None:
     elf_data = create_minimal_elf64_binary()
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
     assert hasattr(elf.header, "e_type")
     assert hasattr(elf.header, "e_machine")
@@ -321,9 +321,9 @@ def test_elffile_num_sections() -> None:
     elf_data = create_elf64_with_sections()
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
-    section_count = elf.num_sections()
+    section_count = elf.num_sections()  # type: ignore[no-untyped-call]
     assert isinstance(section_count, int)
     assert section_count >= 0
 
@@ -333,9 +333,9 @@ def test_elffile_iter_sections() -> None:
     elf_data = create_elf64_with_sections()
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
-    sections = list(elf.iter_sections())
+    sections = list(elf.iter_sections())  # type: ignore[no-untyped-call]
     assert isinstance(sections, list)
 
 
@@ -344,10 +344,10 @@ def test_elffile_get_section_by_index() -> None:
     elf_data = create_elf64_with_sections()
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
-    if elf.num_sections() > 0:
-        section = elf.get_section(0)
+    if elf.num_sections() > 0:  # type: ignore[no-untyped-call]
+        section = elf.get_section(0)  # type: ignore[no-untyped-call]
         assert section is not None
 
 
@@ -356,9 +356,9 @@ def test_elffile_get_section_invalid_index() -> None:
     elf_data = create_minimal_elf64_binary()
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
-    section = elf.get_section(999)
+    section = elf.get_section(999)  # type: ignore[no-untyped-call]
     assert section is None
 
 
@@ -367,9 +367,9 @@ def test_elffile_get_machine_arch() -> None:
     elf_data = create_minimal_elf64_binary()
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
-    arch = elf.get_machine_arch()
+    arch = elf.get_machine_arch()  # type: ignore[no-untyped-call]
     assert isinstance(arch, str)
 
 
@@ -378,9 +378,9 @@ def test_elffile_has_dwarf_info() -> None:
     elf_data = create_minimal_elf64_binary()
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
-    has_dwarf = elf.has_dwarf_info()
+    has_dwarf = elf.has_dwarf_info()  # type: ignore[no-untyped-call]
     assert isinstance(has_dwarf, bool)
 
 
@@ -389,9 +389,9 @@ def test_section_data_method() -> None:
     elf_data = create_elf64_with_sections()
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
-    for section in elf.iter_sections():
+    for section in elf.iter_sections():  # type: ignore[no-untyped-call]
         data = section.data()
         assert isinstance(data, bytes)
 
@@ -401,9 +401,9 @@ def test_section_has_name_attribute() -> None:
     elf_data = create_elf64_with_sections()
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
-    for section in elf.iter_sections():
+    for section in elf.iter_sections():  # type: ignore[no-untyped-call]
         assert hasattr(section, "name")
         assert isinstance(section.name, str)
 
@@ -413,10 +413,10 @@ def test_section_is_null_method() -> None:
     elf_data = create_elf64_with_sections()
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
-    if elf.num_sections() > 0:
-        section = elf.get_section(0)
+    if elf.num_sections() > 0:  # type: ignore[no-untyped-call]
+        section = elf.get_section(0)  # type: ignore[no-untyped-call]
         is_null = section.is_null()
         assert isinstance(is_null, bool)
 
@@ -426,9 +426,9 @@ def test_section_data_size_property() -> None:
     elf_data = create_elf64_with_sections()
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
-    for section in elf.iter_sections():
+    for section in elf.iter_sections():  # type: ignore[no-untyped-call]
         assert hasattr(section, "data_size")
         assert isinstance(section.data_size, int)
 
@@ -509,7 +509,7 @@ def test_elffile_parses_32bit_elf() -> None:
     elf_data = elf_header + bytes(500)
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
     assert elf.elfclass == 32
 
@@ -541,7 +541,7 @@ def test_elffile_parses_big_endian() -> None:
     elf_data = elf_header + bytes(500)
     stream = io.BytesIO(elf_data)
 
-    elf = pyelftools_handler.ELFFile(stream)
+    elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
     assert elf.little_endian is False
 
@@ -552,7 +552,7 @@ def test_fallback_implementation_when_pyelftools_unavailable() -> None:
         elf_data = create_minimal_elf64_binary()
         stream = io.BytesIO(elf_data)
 
-        elf = pyelftools_handler.ELFFile(stream)
+        elf = pyelftools_handler.ELFFile(stream)  # type: ignore[no-untyped-call]
 
         assert elf is not None
         assert hasattr(elf, "header")

@@ -308,7 +308,7 @@ class TestTerminalDashboardEffectiveness:
 
         dashboard.system_metrics = KNOWN_METRICS
 
-        retrieved_metrics = dashboard.get_system_metrics()
+        retrieved_metrics = dashboard.get_system_metrics()  # type: ignore[attr-defined]
 
         assert retrieved_metrics is not None, "FAILED: Dashboard didn't return system metrics"
         assert retrieved_metrics.cpu_percent == 55.0, \
@@ -325,7 +325,7 @@ class TestTerminalDashboardEffectiveness:
             vulnerabilities=12
         )
 
-        stats = dashboard.get_analysis_stats()
+        stats = dashboard.get_analysis_stats()  # type: ignore[attr-defined]
 
         assert stats is not None, "FAILED: Dashboard didn't return analysis stats"
         assert stats.total_binaries == 50, "FAILED: Dashboard didn't update total binaries"
@@ -342,7 +342,7 @@ class TestProgressManagerEffectiveness:
         KNOWN_TOTAL = 100
         KNOWN_TASK_NAME = "Analyzing license keys"
 
-        task_id = manager.add_task(
+        task_id = manager.add_task(  # type: ignore[attr-defined]
             name=KNOWN_TASK_NAME,
             total=KNOWN_TOTAL
         )
@@ -350,9 +350,9 @@ class TestProgressManagerEffectiveness:
         assert task_id is not None, "FAILED: Progress manager didn't return task ID"
 
         for _ in range(50):
-            manager.update_task(task_id, advance=1)
+            manager.update_task(task_id, advance=1)  # type: ignore[attr-defined]
 
-        progress = manager.get_task_progress(task_id)
+        progress = manager.get_task_progress(task_id)  # type: ignore[attr-defined]
 
         assert progress is not None, "FAILED: Progress manager didn't return task progress"
         assert progress.get("completed", 0) == 50, \
@@ -375,19 +375,19 @@ class TestProgressManagerEffectiveness:
 
         task_ids = []
         for task_config in TASKS:
-            task_id = manager.add_task(
+            task_id = manager.add_task(  # type: ignore[attr-defined]
                 name=task_config["name"],
                 total=task_config["total"]
             )
             task_ids.append(task_id)
 
-        manager.update_task(task_ids[0], completed=10)
-        manager.update_task(task_ids[1], completed=15)
-        manager.update_task(task_ids[2], completed=5)
+        manager.update_task(task_ids[0], completed=10)  # type: ignore[attr-defined]
+        manager.update_task(task_ids[1], completed=15)  # type: ignore[attr-defined]
+        manager.update_task(task_ids[2], completed=5)  # type: ignore[attr-defined]
 
-        task0_progress = manager.get_task_progress(task_ids[0])
-        task1_progress = manager.get_task_progress(task_ids[1])
-        task2_progress = manager.get_task_progress(task_ids[2])
+        task0_progress = manager.get_task_progress(task_ids[0])  # type: ignore[attr-defined]
+        task1_progress = manager.get_task_progress(task_ids[1])  # type: ignore[attr-defined]
+        task2_progress = manager.get_task_progress(task_ids[2])  # type: ignore[attr-defined]
 
         assert task0_progress.get("completed") == 10, \
             "FAILED: Task 0 progress not tracked correctly"
@@ -537,7 +537,7 @@ class TestBatchProcessingEffectiveness:
         assert success_count == KNOWN_TASK_COUNT, \
             f"FAILED: Not all concurrent tasks succeeded (got {success_count}/{KNOWN_TASK_COUNT})"
 
-        total_keys = sum(r["keys_extracted"] for r in results)
+        total_keys = sum(r["keys_extracted"] for r in results)  # type: ignore[misc]
         assert total_keys > 0, \
             "FAILED: Concurrent processing didn't extract any keys"
 
@@ -551,8 +551,8 @@ class TestBatchProcessingEffectiveness:
 
         aggregated = {
             "total_binaries": len(INDIVIDUAL_RESULTS),
-            "total_keys_extracted": sum(r["keys"] for r in INDIVIDUAL_RESULTS),
-            "total_protections_detected": sum(r["protections"] for r in INDIVIDUAL_RESULTS),
+            "total_keys_extracted": sum(r["keys"] for r in INDIVIDUAL_RESULTS),  # type: ignore[misc]
+            "total_protections_detected": sum(r["protections"] for r in INDIVIDUAL_RESULTS),  # type: ignore[misc]
             "success_count": sum(bool(r["success"])
                              for r in INDIVIDUAL_RESULTS),
         }

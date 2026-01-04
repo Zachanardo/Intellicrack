@@ -28,7 +28,7 @@ from intellicrack.core.security_enforcement import (
 
 
 @pytest.fixture
-def reset_security() -> None:
+def reset_security() -> None:  # type: ignore[misc]
     """Reset security enforcement state between tests."""
     import intellicrack.core.security_enforcement as se
     se._security = None
@@ -272,7 +272,7 @@ class TestSubprocessProtection:
         initialize_security()
         import intellicrack.core.security_enforcement as se
 
-        se._security.enable_bypass()
+        se._security.enable_bypass()  # type: ignore[union-attr]
 
         result = subprocess.run(
             "echo test",
@@ -315,7 +315,7 @@ class TestPickleProtection:
 
         test_data = {"key": "value"}
         buffer = BytesIO()
-        json.dump(test_data, buffer)
+        json.dump(test_data, buffer)  # type: ignore[arg-type]
         buffer.seek(0)
 
         result = pickle.load(buffer)
@@ -335,7 +335,7 @@ class TestPickleProtection:
         """Pickle falls back to pickle for non-JSON-serializable objects."""
         initialize_security()
         import intellicrack.core.security_enforcement as se
-        se._security.enable_bypass()
+        se._security.enable_bypass()  # type: ignore[union-attr]
 
         class CustomClass:
             def __init__(self, value: int) -> None:
@@ -506,7 +506,7 @@ class TestFileValidation:
         initialize_security()
         import intellicrack.core.security_enforcement as se
 
-        se._security.enable_bypass()
+        se._security.enable_bypass()  # type: ignore[union-attr]
 
         malicious_path = tmp_path / ".." / "etc" / "passwd"
         result = validate_file_input(malicious_path, "read")
@@ -608,7 +608,7 @@ class TestSecurityStatus:
         initialize_security()
         import intellicrack.core.security_enforcement as se
 
-        se._security.enable_bypass()
+        se._security.enable_bypass()  # type: ignore[union-attr]
         status = get_security_status()
 
         assert status["bypass_enabled"] is True
@@ -640,7 +640,7 @@ class TestIntegrationScenarios:
         initialize_security()
         import intellicrack.core.security_enforcement as se
 
-        se._security.enable_bypass()
+        se._security.enable_bypass()  # type: ignore[union-attr]
 
         result = subprocess.run("echo test", shell=True, capture_output=True)
         assert result.returncode == 0
@@ -648,7 +648,7 @@ class TestIntegrationScenarios:
         md5_hash = hashlib.md5(b"data")
         assert md5_hash.name == "md5"
 
-        se._security.disable_bypass()
+        se._security.disable_bypass()  # type: ignore[union-attr]
 
         with pytest.raises(SecurityError):
             subprocess.run("echo test", shell=True)

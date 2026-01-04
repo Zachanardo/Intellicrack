@@ -19,7 +19,7 @@ try:
     VM_WORKFLOW_AVAILABLE = True
 except ImportError:
     VM_WORKFLOW_AVAILABLE = False
-    VMWorkflowManager = None  # type: ignore[assignment]
+    VMWorkflowManager = None  # type: ignore[misc, assignment]
 
 pytestmark = pytest.mark.skipif(
     not VM_WORKFLOW_AVAILABLE,
@@ -288,7 +288,7 @@ def workflow_manager_with_fakes(
     fake_qemu_manager: FakeQEMUManager,
     fake_logger: FakeLogger,
     monkeypatch: pytest.MonkeyPatch,
-) -> VMWorkflowManager:  # type: ignore[name-defined]
+) -> "VMWorkflowManager":
     """Provide VMWorkflowManager with injected test doubles."""
     FakeQApplication._instance = FakeQApplication()
     FakeQFileDialog._saved_file_name = None
@@ -302,9 +302,9 @@ def workflow_manager_with_fakes(
         FakeQFileDialog,
     )
 
-    manager: VMWorkflowManager = VMWorkflowManager()  # type: ignore[assignment]
-    manager.qemu_manager = fake_qemu_manager  # type: ignore[attr-defined]
-    manager.logger = fake_logger  # type: ignore[attr-defined]
+    manager = VMWorkflowManager()
+    manager.qemu_manager = fake_qemu_manager  # type: ignore[assignment]
+    manager.logger = fake_logger  # type: ignore[assignment]
     return manager
 
 
@@ -320,7 +320,7 @@ class TestVMWorkflowManagerInitialization:
             "intellicrack.core.processing.vm_workflow_manager.QEMUManager",
             FakeQEMUManager,
         )
-        manager: VMWorkflowManager = VMWorkflowManager()  # type: ignore[assignment]
+        manager: VMWorkflowManager = VMWorkflowManager()
 
         assert manager is not None
         assert hasattr(manager, "qemu_manager")
@@ -335,10 +335,10 @@ class TestVMWorkflowManagerInitialization:
             "intellicrack.core.processing.vm_workflow_manager.QEMUManager",
             FakeQEMUManager,
         )
-        manager: VMWorkflowManager = VMWorkflowManager()  # type: ignore[assignment]
+        manager: VMWorkflowManager = VMWorkflowManager()
 
         assert manager.qemu_manager is not None
-        assert isinstance(manager.qemu_manager, FakeQEMUManager)
+        assert isinstance(manager.qemu_manager, FakeQEMUManager)  # type: ignore[unreachable]
 
     def test_workflow_manager_logger_configured(
         self,
@@ -371,7 +371,7 @@ class TestFileHandling:
             test_binary = Path(temp_dir) / "test.exe"
             test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 100)
 
-            manager.qemu_manager.should_return_none_snapshot = True
+            manager.qemu_manager.should_return_none_snapshot = True  # type: ignore[attr-defined]
 
             result = manager.run_full_analysis_roundtrip(
                 binary_path=str(test_binary),
@@ -395,7 +395,7 @@ class TestFileHandling:
             test_binary = Path(temp_dir) / "valid_binary.exe"
             test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 200)
 
-            manager.qemu_manager.should_return_none_snapshot = True
+            manager.qemu_manager.should_return_none_snapshot = True  # type: ignore[attr-defined]
 
             result = manager.run_full_analysis_roundtrip(
                 binary_path=str(test_binary),
@@ -419,7 +419,7 @@ class TestFileHandling:
             test_binary.parent.mkdir(parents=True, exist_ok=True)
             test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 100)
 
-            manager.qemu_manager.should_return_none_snapshot = True
+            manager.qemu_manager.should_return_none_snapshot = True  # type: ignore[attr-defined]
 
             result = manager.run_full_analysis_roundtrip(
                 binary_path=str(test_binary),
@@ -444,7 +444,7 @@ class TestWorkflowStages:
             test_binary = Path(temp_dir) / "test.exe"
             test_binary.write_bytes(b"MZ" + b"\x00" * 100)
 
-            manager.qemu_manager.should_return_none_snapshot = True
+            manager.qemu_manager.should_return_none_snapshot = True  # type: ignore[attr-defined]
 
             result = manager.run_full_analysis_roundtrip(
                 binary_path=str(test_binary),
@@ -468,7 +468,7 @@ class TestWorkflowStages:
             test_binary = Path(temp_dir) / "test.exe"
             test_binary.write_bytes(b"MZ" + b"\x00" * 100)
 
-            manager.qemu_manager.should_return_none_snapshot = True
+            manager.qemu_manager.should_return_none_snapshot = True  # type: ignore[attr-defined]
 
             result = manager.run_full_analysis_roundtrip(
                 binary_path=str(test_binary),
@@ -531,7 +531,7 @@ class TestPlatformSupport:
             test_binary = Path(temp_dir) / "test.exe"
             test_binary.write_bytes(b"MZ" + b"\x00" * 100)
 
-            manager.qemu_manager.should_return_none_snapshot = True
+            manager.qemu_manager.should_return_none_snapshot = True  # type: ignore[attr-defined]
 
             result = manager.run_full_analysis_roundtrip(
                 binary_path=str(test_binary),
@@ -541,8 +541,8 @@ class TestPlatformSupport:
             )
 
             assert isinstance(result, dict)
-            assert len(manager.qemu_manager.create_snapshot_calls) == 1
-            call_args = manager.qemu_manager.create_snapshot_calls[0]
+            assert len(manager.qemu_manager.create_snapshot_calls) == 1  # type: ignore[attr-defined]
+            call_args = manager.qemu_manager.create_snapshot_calls[0]  # type: ignore[attr-defined]
             assert call_args[1] == "windows"
 
     def test_workflow_supports_linux_platform(
@@ -556,7 +556,7 @@ class TestPlatformSupport:
             test_binary = Path(temp_dir) / "test"
             test_binary.write_bytes(b"\x7fELF" + b"\x00" * 100)
 
-            manager.qemu_manager.should_return_none_snapshot = True
+            manager.qemu_manager.should_return_none_snapshot = True  # type: ignore[attr-defined]
 
             result = manager.run_full_analysis_roundtrip(
                 binary_path=str(test_binary),
@@ -566,8 +566,8 @@ class TestPlatformSupport:
             )
 
             assert isinstance(result, dict)
-            assert len(manager.qemu_manager.create_snapshot_calls) == 1
-            call_args = manager.qemu_manager.create_snapshot_calls[0]
+            assert len(manager.qemu_manager.create_snapshot_calls) == 1  # type: ignore[attr-defined]
+            call_args = manager.qemu_manager.create_snapshot_calls[0]  # type: ignore[attr-defined]
             assert call_args[1] == "linux"
 
 
@@ -587,7 +587,7 @@ class TestScriptHandling:
 
             modification_script = "#!/bin/bash\necho 'Modifying binary'\ncp input.exe output.exe\n"
 
-            manager.qemu_manager.should_return_none_snapshot = True
+            manager.qemu_manager.should_return_none_snapshot = True  # type: ignore[attr-defined]
 
             result = manager.run_full_analysis_roundtrip(
                 binary_path=str(test_binary),
@@ -610,7 +610,7 @@ class TestScriptHandling:
 
             test_script = "#!/bin/bash\necho 'Testing binary'\n./output.exe --test\n"
 
-            manager.qemu_manager.should_return_none_snapshot = True
+            manager.qemu_manager.should_return_none_snapshot = True  # type: ignore[attr-defined]
 
             result = manager.run_full_analysis_roundtrip(
                 binary_path=str(test_binary),
@@ -644,7 +644,7 @@ else
 fi
 """
 
-            manager.qemu_manager.should_return_none_snapshot = True
+            manager.qemu_manager.should_return_none_snapshot = True  # type: ignore[attr-defined]
 
             result = manager.run_full_analysis_roundtrip(
                 binary_path=str(test_binary),
@@ -665,7 +665,7 @@ class TestErrorHandling:
         """Workflow handles nonexistent binary path gracefully."""
         manager = workflow_manager_with_fakes
 
-        manager.qemu_manager.should_return_none_snapshot = True
+        manager.qemu_manager.should_return_none_snapshot = True  # type: ignore[attr-defined]
 
         result = manager.run_full_analysis_roundtrip(
             binary_path="/nonexistent/path/binary.exe",
@@ -686,7 +686,7 @@ class TestErrorHandling:
             test_binary = Path(temp_dir) / "test.exe"
             test_binary.write_bytes(b"MZ" + b"\x00" * 100)
 
-            manager.qemu_manager.should_fail_create_snapshot = True
+            manager.qemu_manager.should_fail_create_snapshot = True  # type: ignore[attr-defined]
 
             result = manager.run_full_analysis_roundtrip(
                 binary_path=str(test_binary),
@@ -710,7 +710,7 @@ class TestErrorHandling:
             test_binary = Path(temp_dir) / "test.exe"
             test_binary.write_bytes(b"MZ" + b"\x00" * 100)
 
-            manager.qemu_manager.should_return_none_snapshot = True
+            manager.qemu_manager.should_return_none_snapshot = True  # type: ignore[attr-defined]
 
             result = manager.run_full_analysis_roundtrip(
                 binary_path=str(test_binary),
@@ -736,7 +736,7 @@ class TestLogging:
             test_binary = Path(temp_dir) / "test.exe"
             test_binary.write_bytes(b"MZ" + b"\x00" * 100)
 
-            manager.qemu_manager.should_return_none_snapshot = True
+            manager.qemu_manager.should_return_none_snapshot = True  # type: ignore[attr-defined]
 
             manager.run_full_analysis_roundtrip(
                 binary_path=str(test_binary),
@@ -744,10 +744,10 @@ class TestLogging:
                 test_script_content="echo test",
             )
 
-            assert len(manager.logger.info_calls) > 0
+            assert len(manager.logger.info_calls) > 0  # type: ignore[attr-defined]
             assert any(
                 "roundtrip" in str(call).lower()
-                for call in manager.logger.info_calls
+                for call in manager.logger.info_calls  # type: ignore[attr-defined]
             )
 
     def test_workflow_logs_errors(
@@ -761,7 +761,7 @@ class TestLogging:
             test_binary = Path(temp_dir) / "test.exe"
             test_binary.write_bytes(b"MZ" + b"\x00" * 100)
 
-            manager.qemu_manager.should_fail_create_snapshot = True
+            manager.qemu_manager.should_fail_create_snapshot = True  # type: ignore[attr-defined]
 
             manager.run_full_analysis_roundtrip(
                 binary_path=str(test_binary),
@@ -769,7 +769,7 @@ class TestLogging:
                 test_script_content="echo test",
             )
 
-            assert len(manager.logger.exception_calls) > 0
+            assert len(manager.logger.exception_calls) > 0  # type: ignore[attr-defined]
 
 
 class TestCleanup:
@@ -805,8 +805,8 @@ class TestCleanup:
                 test_script_content="echo test",
             )
 
-            assert len(manager.qemu_manager.cleanup_calls) == 1
-            assert manager.qemu_manager.cleanup_calls[0] == "snapshot_1"
+            assert len(manager.qemu_manager.cleanup_calls) == 1  # type: ignore[attr-defined]
+            assert manager.qemu_manager.cleanup_calls[0] == "snapshot_1"  # type: ignore[attr-defined]
 
 
 class TestIntegrationWorkflow:

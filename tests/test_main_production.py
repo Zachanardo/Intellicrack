@@ -14,6 +14,7 @@ import logging
 import os
 import sys
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -108,7 +109,7 @@ class FakeComprehensiveLogging:
 
 
 @pytest.fixture
-def isolated_environment() -> dict[str, Any]:
+def isolated_environment() -> Generator[dict[str, Any], None, None]:
     """Create isolated test environment with temporary directories and clean state."""
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
@@ -660,7 +661,8 @@ class TestConfigurationLoading:
         def track_config_load() -> dict[str, Any]:
             nonlocal config_loaded
             config_loaded = True
-            return original_get_config()
+            result: dict[str, Any] = original_get_config()
+            return result
 
         monkeypatch.setattr("intellicrack.ui.main_app.launch", fake_launcher)
         monkeypatch.setattr("intellicrack.core.startup_checks.perform_startup_checks", fake_startup)

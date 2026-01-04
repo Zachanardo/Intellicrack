@@ -6,7 +6,7 @@ Tests validate real test coverage analysis functionality without mocks.
 import subprocess
 import sys
 from pathlib import Path
-from typing import List
+from typing import Any, List
 
 import pytest
 
@@ -148,28 +148,28 @@ class TestGetModuleName:
         """Extract module name from simple file path."""
         from scripts.analyze_test_coverage import get_module_name
 
-        result = get_module_name("intellicrack/module.py")
+        result = get_module_name("intellicrack/module.py")  # type: ignore[no-untyped-call]
         assert result == "module"
 
     def test_extract_module_name_from_nested_path(self) -> None:
         """Extract module name from nested file path."""
         from scripts.analyze_test_coverage import get_module_name
 
-        result = get_module_name("intellicrack/core/analysis/analyzer.py")
+        result = get_module_name("intellicrack/core/analysis/analyzer.py")  # type: ignore[no-untyped-call]
         assert result == "analyzer"
 
     def test_extract_module_name_from_test_file(self) -> None:
         """Extract module name from test file path."""
         from scripts.analyze_test_coverage import get_module_name
 
-        result = get_module_name("tests/core/test_analyzer.py")
+        result = get_module_name("tests/core/test_analyzer.py")  # type: ignore[no-untyped-call]
         assert result == "test_analyzer"
 
     def test_extract_module_name_removes_py_extension(self) -> None:
         """Module name extraction removes .py extension."""
         from scripts.analyze_test_coverage import get_module_name
 
-        result = get_module_name("path/to/my_module.py")
+        result = get_module_name("path/to/my_module.py")  # type: ignore[no-untyped-call]
         assert not result.endswith(".py")
         assert result == "my_module"
 
@@ -179,7 +179,7 @@ class TestSourceFileDiscovery:
 
     def test_discovers_source_files_in_intellicrack_directory(
         self,
-        monkeypatch,
+        monkeypatch: Any,
         temp_project_structure: Path,
     ) -> None:
         """Discover all Python source files in intellicrack directory."""
@@ -202,7 +202,7 @@ class TestSourceFileDiscovery:
 
     def test_excludes_init_files_from_source_discovery(
         self,
-        monkeypatch,
+        monkeypatch: Any,
         temp_project_structure: Path,
     ) -> None:
         """Exclude __init__.py files from source file discovery."""
@@ -221,7 +221,7 @@ class TestSourceFileDiscovery:
 
     def test_excludes_pycache_from_source_discovery(
         self,
-        monkeypatch,
+        monkeypatch: Any,
         temp_project_structure: Path,
     ) -> None:
         """Exclude __pycache__ directories from source discovery."""
@@ -248,7 +248,7 @@ class TestTestFileDiscovery:
 
     def test_discovers_test_files_in_tests_directory(
         self,
-        monkeypatch,
+        monkeypatch: Any,
         temp_project_structure: Path,
     ) -> None:
         """Discover all test files in tests directory."""
@@ -269,7 +269,7 @@ class TestTestFileDiscovery:
 
     def test_excludes_conftest_from_test_discovery(
         self,
-        monkeypatch,
+        monkeypatch: Any,
         temp_project_structure: Path,
     ) -> None:
         """Exclude conftest.py files from test discovery."""
@@ -288,7 +288,7 @@ class TestTestFileDiscovery:
 
     def test_excludes_init_files_from_test_discovery(
         self,
-        monkeypatch,
+        monkeypatch: Any,
         temp_project_structure: Path,
     ) -> None:
         """Exclude __init__.py files from test discovery."""
@@ -311,7 +311,7 @@ class TestCoverageMapping:
 
     def test_maps_source_files_to_matching_tests(
         self,
-        monkeypatch,
+        monkeypatch: Any,
         temp_project_structure: Path,
     ) -> None:
         """Map source files to their corresponding test files."""
@@ -332,10 +332,10 @@ class TestCoverageMapping:
 
         test_coverage = {}
         for src in source_files:
-            module = get_module_name(src)
+            module = get_module_name(src)  # type: ignore[no-untyped-call]
             matching_tests = []
             for t in test_files:
-                t_module = get_module_name(t)
+                t_module = get_module_name(t)  # type: ignore[no-untyped-call]
                 if t_module.startswith('test_') and module in t_module:
                     matching_tests.append(t)
             test_coverage[src] = matching_tests
@@ -350,7 +350,7 @@ class TestCoverageMapping:
 
     def test_identifies_files_without_test_coverage(
         self,
-        monkeypatch,
+        monkeypatch: Any,
         temp_project_structure: Path,
     ) -> None:
         """Identify source files without corresponding test files."""
@@ -374,10 +374,10 @@ class TestCoverageMapping:
 
         test_coverage = {}
         for src in source_files:
-            module = get_module_name(src)
+            module = get_module_name(src)  # type: ignore[no-untyped-call]
             matching_tests = []
             for t in test_files:
-                t_module = get_module_name(t)
+                t_module = get_module_name(t)  # type: ignore[no-untyped-call]
                 if t_module.startswith('test_') and module in t_module:
                     matching_tests.append(t)
             test_coverage[src] = matching_tests
@@ -390,7 +390,7 @@ class TestCoverageMapping:
 
     def test_coverage_mapping_with_nested_modules(
         self,
-        monkeypatch,
+        monkeypatch: Any,
         temp_project_structure: Path,
     ) -> None:
         """Coverage mapping works with nested module structures."""
@@ -408,10 +408,10 @@ class TestCoverageMapping:
 
         test_coverage = {}
         for src in source_files:
-            module = get_module_name(src)
+            module = get_module_name(src)  # type: ignore[no-untyped-call]
             matching_tests = []
             for t in test_files:
-                t_module = get_module_name(t)
+                t_module = get_module_name(t)  # type: ignore[no-untyped-call]
                 if t_module.startswith('test_') and module in t_module:
                     matching_tests.append(t)
             test_coverage[src] = matching_tests
@@ -453,7 +453,7 @@ class TestEdgeCases:
     def test_handles_empty_source_directory(
         self,
         tmp_path: Path,
-        monkeypatch,
+        monkeypatch: Any,
     ) -> None:
         """Handle empty source directory gracefully."""
         monkeypatch.chdir(tmp_path)
@@ -478,7 +478,7 @@ class TestEdgeCases:
     def test_handles_empty_tests_directory(
         self,
         tmp_path: Path,
-        monkeypatch,
+        monkeypatch: Any,
     ) -> None:
         """Handle empty tests directory gracefully."""
         monkeypatch.chdir(tmp_path)
@@ -503,7 +503,7 @@ class TestEdgeCases:
 
     def test_handles_multiple_tests_for_single_module(
         self,
-        monkeypatch,
+        monkeypatch: Any,
         tmp_path: Path,
     ) -> None:
         """Handle multiple test files for a single module."""
@@ -530,10 +530,10 @@ class TestEdgeCases:
 
         test_coverage = {}
         for src in source_files:
-            module = get_module_name(src)
+            module = get_module_name(src)  # type: ignore[no-untyped-call]
             matching_tests = []
             for t in test_files:
-                t_module = get_module_name(t)
+                t_module = get_module_name(t)  # type: ignore[no-untyped-call]
                 if t_module.startswith('test_') and module in t_module:
                     matching_tests.append(t)
             test_coverage[src] = matching_tests

@@ -214,7 +214,7 @@ class TestIntegrateWithMainApp:
             test_module = types.ModuleType(test_module_name)
             test_app = RealTestApp()
             test_app.__class__.__name__ = "IntellicrackApp"
-            test_module.app = test_app
+            setattr(test_module, "app", test_app)
 
             sys.modules[test_module_name] = test_module
 

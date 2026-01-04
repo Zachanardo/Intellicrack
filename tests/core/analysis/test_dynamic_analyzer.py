@@ -30,12 +30,12 @@ try:
     )
     AVAILABLE = True
 except ImportError:
-    AdvancedDynamicAnalyzer = None
-    DynamicAnalyzer = None
-    create_dynamic_analyzer = None
-    deep_runtime_monitoring = None
-    run_dynamic_analysis = None
-    run_quick_analysis = None
+    AdvancedDynamicAnalyzer = None  # type: ignore[misc, assignment]
+    DynamicAnalyzer = None  # type: ignore[misc, assignment]
+    create_dynamic_analyzer = None  # type: ignore[assignment]
+    deep_runtime_monitoring = None  # type: ignore[assignment]
+    run_dynamic_analysis = None  # type: ignore[assignment]
+    run_quick_analysis = None  # type: ignore[assignment]
     AVAILABLE = False
 
 try:
@@ -333,7 +333,7 @@ class TestAdvancedDynamicAnalyzer:
         import intellicrack.core.analysis.dynamic_analyzer as da_module
 
         fake_spawn = FakeFridaSpawn("Test error")
-        monkeypatch.setattr(da_module.frida, "spawn", fake_spawn)
+        monkeypatch.setattr(da_module.frida, "spawn", fake_spawn)  # type: ignore[attr-defined]
 
         result = analyzer._frida_runtime_analysis(None)
 
@@ -488,7 +488,7 @@ class TestAdvancedDynamicAnalyzer:
         import intellicrack.core.analysis.dynamic_analyzer as da_module
 
         fake_device = FakeFridaDevice("Device error")
-        monkeypatch.setattr(da_module.frida, "get_local_device", fake_device)
+        monkeypatch.setattr(da_module.frida, "get_local_device", fake_device)  # type: ignore[attr-defined]
 
         result = analyzer._frida_memory_scan(["test"], None)
 

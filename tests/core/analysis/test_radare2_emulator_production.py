@@ -28,7 +28,7 @@ import logging
 import struct
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 import r2pipe
@@ -52,7 +52,7 @@ REAL_BINARY_CALC: Path = Path(r"C:\Windows\System32\calc.exe")
 
 
 @pytest.fixture
-def emulator_notepad() -> Radare2Emulator:
+def emulator_notepad() -> Generator[Radare2Emulator, None, None]:
     """Emulator instance for notepad.exe."""
     assert REAL_BINARY_NOTEPAD.exists(), "notepad.exe must exist"
     emu: Radare2Emulator = Radare2Emulator(str(REAL_BINARY_NOTEPAD))
@@ -62,7 +62,7 @@ def emulator_notepad() -> Radare2Emulator:
 
 
 @pytest.fixture
-def emulator_kernel32() -> Radare2Emulator:
+def emulator_kernel32() -> Generator[Radare2Emulator, None, None]:
     """Emulator instance for kernel32.dll."""
     assert REAL_BINARY_KERNEL32.exists(), "kernel32.dll must exist"
     emu: Radare2Emulator = Radare2Emulator(str(REAL_BINARY_KERNEL32))
@@ -72,7 +72,7 @@ def emulator_kernel32() -> Radare2Emulator:
 
 
 @pytest.fixture
-def emulator_ntdll() -> Radare2Emulator:
+def emulator_ntdll() -> Generator[Radare2Emulator, None, None]:
     """Emulator instance for ntdll.dll."""
     assert REAL_BINARY_NTDLL.exists(), "ntdll.dll must exist"
     emu: Radare2Emulator = Radare2Emulator(str(REAL_BINARY_NTDLL))
@@ -82,7 +82,7 @@ def emulator_ntdll() -> Radare2Emulator:
 
 
 @pytest.fixture
-def emulator_calc() -> Radare2Emulator:
+def emulator_calc() -> Generator[Radare2Emulator, None, None]:
     """Emulator instance for calc.exe."""
     assert REAL_BINARY_CALC.exists(), "calc.exe must exist"
     emu: Radare2Emulator = Radare2Emulator(str(REAL_BINARY_CALC))
@@ -158,12 +158,13 @@ class TestRegisterStateManagement:
         emu.r2.cmd("aeim")
 
         test_value: int = 0x1337
+        result: str
         if emu.bits == 64:
             emu.r2.cmd(f"aer rax = {test_value}")
-            result: str = emu.r2.cmd("aer rax")
+            result = emu.r2.cmd("aer rax")
         else:
             emu.r2.cmd(f"aer eax = {test_value}")
-            result: str = emu.r2.cmd("aer eax")
+            result = emu.r2.cmd("aer eax")
 
         actual_value: int = int(result.strip(), 16) if result.strip().startswith("0x") else int(result.strip())
         assert actual_value == test_value
@@ -211,10 +212,11 @@ class TestMemoryReadWriteEmulation:
         emu.r2.cmd("aei")
         emu.r2.cmd("aeim")
 
+        stack_pointer: str
         if emu.bits == 64:
-            stack_pointer: str = emu.r2.cmd("aer rsp")
+            stack_pointer = emu.r2.cmd("aer rsp")
         else:
-            stack_pointer: str = emu.r2.cmd("aer esp")
+            stack_pointer = emu.r2.cmd("aer esp")
 
         assert stack_pointer.strip() != "0x0"
         assert stack_pointer.strip() != ""
@@ -466,10 +468,11 @@ class TestStackOperationsEmulation:
         emu.r2.cmd("aei")
         emu.r2.cmd("aeim")
 
+        initial_sp: str
         if emu.bits == 64:
-            initial_sp: str = emu.r2.cmd("aer rsp")
+            initial_sp = emu.r2.cmd("aer rsp")
         else:
-            initial_sp: str = emu.r2.cmd("aer esp")
+            initial_sp = emu.r2.cmd("aer esp")
 
         initial_value: int = int(initial_sp.strip(), 16)
         assert initial_value > 0
@@ -592,7 +595,8 @@ class TestUnicornEngineIntegration:
 
         assert success
         assert emu.uc is not None
-        assert isinstance(emu.uc, unicorn.Uc)
+        uc_class = getattr(unicorn, "Uc", None)
+        assert uc_class is not None and isinstance(emu.uc, uc_class)
 
     def test_unicorn_maps_binary_sections(self, emulator_notepad: Radare2Emulator) -> None:
         """Unicorn engine maps binary sections to memory."""
@@ -1011,7 +1015,7 @@ class TestEdgeCasesErrorHandling:
             functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
 
             if not functions:
-                entry_info: dict[str, Any] = emu.r2.cmdj("iej")
+                entry_info: list[dict[str, Any]] = emu.r2.cmdj("iej") or []
                 if entry_info:
                     if start_addr := entry_info[0].get("vaddr", 0):
                         result: EmulationResult = emu.emulate_esil(start_addr, num_instructions=10)

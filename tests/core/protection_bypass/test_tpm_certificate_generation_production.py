@@ -41,6 +41,7 @@ try:
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
     from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
+    from cryptography.x509.extensions import KeyUsage
     from cryptography.x509.oid import ExtensionOID, NameOID
 
     CRYPTO_AVAILABLE = True
@@ -235,17 +236,18 @@ class TestTPMCertificateGeneration:
         cert = x509.load_der_x509_certificate(cert_der, default_backend())
 
         try:
-            key_usage = cert.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE).value
+            key_usage_ext = cert.extensions.get_extension_for_oid(ExtensionOID.KEY_USAGE).value
         except x509.ExtensionNotFound:
             pytest.fail("Certificate missing KEY_USAGE extension")
 
-        assert key_usage.digital_signature, "EK certificate must allow digital_signature"
-        assert key_usage.key_encipherment, "EK certificate must allow key_encipherment"
-        assert key_usage.key_agreement, "EK certificate must allow key_agreement"
-        assert not key_usage.content_commitment, "EK certificate should not allow content_commitment"
-        assert not key_usage.data_encipherment, "EK certificate should not allow data_encipherment"
-        assert not key_usage.key_cert_sign, "EK certificate should not allow key_cert_sign"
-        assert not key_usage.crl_sign, "EK certificate should not allow crl_sign"
+        assert isinstance(key_usage_ext, KeyUsage), "KEY_USAGE extension value must be KeyUsage"
+        assert key_usage_ext.digital_signature, "EK certificate must allow digital_signature"
+        assert key_usage_ext.key_encipherment, "EK certificate must allow key_encipherment"
+        assert key_usage_ext.key_agreement, "EK certificate must allow key_agreement"
+        assert not key_usage_ext.content_commitment, "EK certificate should not allow content_commitment"
+        assert not key_usage_ext.data_encipherment, "EK certificate should not allow data_encipherment"
+        assert not key_usage_ext.key_cert_sign, "EK certificate should not allow key_cert_sign"
+        assert not key_usage_ext.crl_sign, "EK certificate should not allow crl_sign"
 
     def test_tpm_certificate_validity_period(
         self, bypass_system: Any, intel_platform_info: dict[str, Any], cleanup_certificate_keys: Any
@@ -303,12 +305,14 @@ class TestTPMCertificateGeneration:
         signature = cert.signature
         tbs_certificate = cert.tbs_certificate_bytes
 
+        hash_algorithm = cert.signature_hash_algorithm
+        assert hash_algorithm is not None, "Certificate must have signature hash algorithm"
         try:
             public_key.verify(
                 signature,
                 tbs_certificate,
                 padding.PKCS1v15(),
-                cert.signature_hash_algorithm,
+                hash_algorithm,
             )
         except Exception as e:
             pytest.fail(f"Certificate signature verification failed: {e}")
@@ -645,12 +649,14 @@ class TestSGXCertificateGeneration:
 
         signature = cert.signature
         tbs_certificate = cert.tbs_certificate_bytes
+        ec_hash_algorithm = cert.signature_hash_algorithm
+        assert ec_hash_algorithm is not None, "Certificate must have signature hash algorithm"
 
         try:
             public_key.verify(
                 signature,
                 tbs_certificate,
-                ec.ECDSA(cert.signature_hash_algorithm),
+                ec.ECDSA(ec_hash_algorithm),
             )
         except Exception as e:
             pytest.fail(f"Certificate signature verification failed: {e}")

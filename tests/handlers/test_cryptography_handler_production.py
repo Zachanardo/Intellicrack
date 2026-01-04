@@ -45,6 +45,7 @@ class TestAESGCMEncryption:
 
     def test_aes_gcm_encrypt_decrypt(self) -> None:
         """Test AES-GCM encryption and decryption."""
+        assert AESGCM is not None, "AESGCM not available"
         key = AESGCM.generate_key(bit_length=256)
         aesgcm = AESGCM(key)
 
@@ -58,6 +59,7 @@ class TestAESGCMEncryption:
 
     def test_aes_gcm_unique_keys(self) -> None:
         """Verify generated keys are unique."""
+        assert AESGCM is not None, "AESGCM not available"
         key1 = AESGCM.generate_key(bit_length=256)
         key2 = AESGCM.generate_key(bit_length=256)
 
@@ -65,6 +67,7 @@ class TestAESGCMEncryption:
 
     def test_aes_gcm_different_ciphertext(self) -> None:
         """Verify different keys produce different ciphertext."""
+        assert AESGCM is not None, "AESGCM not available"
         plaintext = b"Test data"
         nonce = os.urandom(12)
 
@@ -218,6 +221,7 @@ class TestLicenseKeyProtection:
 
     def test_encrypt_license_key(self) -> None:
         """Encrypt license key for storage."""
+        assert AESGCM is not None, "AESGCM not available"
         license_key = b"ABCD-EFGH-IJKL-MNOP-QRST"
         key = AESGCM.generate_key(bit_length=256)
         aesgcm = AESGCM(key)
@@ -230,6 +234,7 @@ class TestLicenseKeyProtection:
 
     def test_decrypt_stored_license_key(self) -> None:
         """Decrypt stored license key."""
+        assert AESGCM is not None, "AESGCM not available"
         license_key = b"ABCD-EFGH-IJKL-MNOP-QRST"
         key = AESGCM.generate_key(bit_length=256)
         aesgcm = AESGCM(key)
@@ -246,6 +251,7 @@ class TestEdgeCases:
 
     def test_aes_gcm_wrong_key_fails(self) -> None:
         """Decryption with wrong key fails."""
+        assert AESGCM is not None, "AESGCM not available"
         plaintext = b"Test data"
         nonce = os.urandom(12)
 
@@ -265,6 +271,7 @@ class TestPerformance:
 
     def test_aes_gcm_encryption_performance(self, benchmark: Any) -> None:
         """Benchmark AES-GCM encryption."""
+        assert AESGCM is not None, "AESGCM not available"
         key = AESGCM.generate_key(bit_length=256)
         aesgcm = AESGCM(key)
         plaintext = b"A" * 1000

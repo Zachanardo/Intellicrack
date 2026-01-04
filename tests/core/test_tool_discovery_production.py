@@ -142,8 +142,8 @@ class TestGhidraValidation:
             assert any("not found" in issue.lower() for issue in result["issues"])
 
 
-class TestFridaValidation:
-    """Test Frida installation validation."""
+class TestFridaPythonPackage:
+    """Test Frida Python package validation."""
 
     def test_frida_validation_checks_python_package(self) -> None:
         """Frida validation checks Python package availability."""
@@ -159,24 +159,24 @@ class TestFridaValidation:
             assert result["valid"] is True
 
 
-class TestNodeJSValidation:
-    """Test Node.js installation validation."""
+class TestFridaValidation:
+    """Test Frida CLI installation validation."""
 
-    def test_nodejs_validation_detects_installation(self) -> None:
-        """Node.js validation detects installation if available."""
-        node_path = shutil.which("node")
+    def test_frida_validation_detects_installation(self) -> None:
+        """Frida validation detects installation if available."""
+        frida_path = shutil.which("frida")
 
-        if node_path:
-            result = ToolValidator.validate_nodejs(node_path)
+        if frida_path:
+            result = ToolValidator.validate_frida(frida_path)
 
             assert result is not None
             assert "valid" in result
 
-    def test_nodejs_validation_handles_missing_installation(self) -> None:
-        """Node.js validation handles missing installation."""
-        invalid_path = "/nonexistent/node"
+    def test_frida_validation_handles_missing_installation(self) -> None:
+        """Frida validation handles missing installation."""
+        invalid_path = "/nonexistent/frida"
 
-        result = ToolValidator.validate_nodejs(invalid_path)
+        result = ToolValidator.validate_frida(invalid_path)
 
         assert result["valid"] is False
         assert len(result["issues"]) > 0
@@ -193,7 +193,7 @@ class TestValidationResultStructure:
             (ToolValidator.validate_python, sys.executable),
             (ToolValidator.validate_radare2, "/nonexistent/r2"),
             (ToolValidator.validate_ghidra, "/nonexistent/ghidra"),
-            (ToolValidator.validate_nodejs, "/nonexistent/node"),
+            (ToolValidator.validate_frida, "/nonexistent/frida"),
         ]
 
         for validator, path in validators_and_paths:
@@ -215,7 +215,7 @@ class TestToolDiscoveryWorkflow:
         tools_to_check = {
             "python": sys.executable,
             "r2": shutil.which("r2"),
-            "node": shutil.which("node"),
+            "frida": shutil.which("frida"),
         }
 
         available_tools = []
@@ -228,8 +228,8 @@ class TestToolDiscoveryWorkflow:
                 result = ToolValidator.validate_python(tool_path)
             elif tool_name == "r2":
                 result = ToolValidator.validate_radare2(tool_path)
-            elif tool_name == "node":
-                result = ToolValidator.validate_nodejs(tool_path)
+            elif tool_name == "frida":
+                result = ToolValidator.validate_frida(tool_path)
             else:
                 continue
 

@@ -50,14 +50,14 @@ try:
 
     MODULE_AVAILABLE = True
 except ImportError:
-    APISignature = None
-    CallingConvention = None
-    Platform = None
-    ContextInfo = None
-    BypassMethod = None
-    DetectionReport = None
-    ValidationFunction = None
-    CertificateValidationDetector = None
+    APISignature = None  # type: ignore[assignment, misc]
+    CallingConvention = None  # type: ignore[assignment, misc]
+    Platform = None  # type: ignore[assignment, misc]
+    ContextInfo = None  # type: ignore[assignment, misc]
+    BypassMethod = None  # type: ignore[assignment, misc]
+    DetectionReport = None  # type: ignore[assignment, misc]
+    ValidationFunction = None  # type: ignore[assignment, misc]
+    CertificateValidationDetector = None  # type: ignore[assignment, misc]
     MODULE_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(
@@ -163,9 +163,9 @@ class MinimalPEGenerator:
 
             for dll_name in import_dlls:
                 if isinstance(binary, lief.PE.Binary):
-                    binary.add_library(dll_name)
+                    binary.add_library(dll_name)  # type: ignore[attr-defined]
 
-            binary.write(tmp_path)
+            binary.write(tmp_path)  # type: ignore[union-attr]
 
             with open(tmp_path, "rb") as f:
                 result = f.read()

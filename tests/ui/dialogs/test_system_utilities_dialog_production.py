@@ -15,10 +15,11 @@ from PyQt6.QtWidgets import QApplication
 @pytest.fixture(scope="module")
 def qapp() -> QApplication:
     """Create QApplication instance."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    return app
+    existing_app = QApplication.instance()
+    if existing_app is None:
+        return QApplication([])
+    assert isinstance(existing_app, QApplication), "Expected QApplication instance"
+    return existing_app
 
 
 class TestDialogInitialization:

@@ -8,7 +8,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import pytest
 
@@ -133,7 +133,7 @@ class TestCheckPathPriority:
 
     def test_check_path_priority_with_modified_environment(
         self,
-        monkeypatch,
+        monkeypatch: Any,
     ) -> None:
         """PATH analysis works with custom environment."""
         from scripts.dll_diagnostics import check_path_priority
@@ -161,7 +161,7 @@ class TestDiagnoseMklLoading:
 
     def test_diagnose_mkl_loading_executes_without_errors(
         self,
-        capsys,
+        capsys: Any,
     ) -> None:
         """diagnose_mkl_loading function executes without exceptions."""
         from scripts.dll_diagnostics import diagnose_mkl_loading
@@ -173,7 +173,7 @@ class TestDiagnoseMklLoading:
 
     def test_diagnose_mkl_loading_checks_pixi_environment(
         self,
-        capsys,
+        capsys: Any,
     ) -> None:
         """Diagnostic checks pixi environment directory."""
         from scripts.dll_diagnostics import diagnose_mkl_loading
@@ -187,7 +187,7 @@ class TestDiagnoseMklLoading:
 
     def test_diagnose_mkl_loading_analyzes_path_variable(
         self,
-        capsys,
+        capsys: Any,
     ) -> None:
         """Diagnostic analyzes PATH environment variable."""
         from scripts.dll_diagnostics import diagnose_mkl_loading
@@ -200,7 +200,7 @@ class TestDiagnoseMklLoading:
 
     def test_diagnose_mkl_loading_verifies_critical_dlls(
         self,
-        capsys,
+        capsys: Any,
     ) -> None:
         """Diagnostic verifies critical MKL DLL loading."""
         from scripts.dll_diagnostics import diagnose_mkl_loading
@@ -221,7 +221,7 @@ class TestDiagnoseMklLoading:
 
     def test_diagnose_mkl_loading_provides_recommendations(
         self,
-        capsys,
+        capsys: Any,
     ) -> None:
         """Diagnostic provides recommendations."""
         from scripts.dll_diagnostics import diagnose_mkl_loading
@@ -249,6 +249,7 @@ class TestScriptExecution:
             text=True,
         )
 
+        assert proc.stdin is not None
         proc.stdin.write("\n")
         proc.stdin.flush()
 
@@ -269,6 +270,7 @@ class TestScriptExecution:
             text=True,
         )
 
+        assert proc.stdin is not None
         proc.stdin.write("\n")
         proc.stdin.flush()
 
@@ -292,6 +294,7 @@ class TestScriptExecution:
             text=True,
         )
 
+        assert proc.stdin is not None
         proc.stdin.write("\n")
         proc.stdin.flush()
 
@@ -306,7 +309,7 @@ class TestPixiEnvironmentDetection:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific paths")
     def test_detects_pixi_library_directory(
         self,
-        capsys,
+        capsys: Any,
     ) -> None:
         """Detect pixi library directory location."""
         from scripts.dll_diagnostics import diagnose_mkl_loading
@@ -393,8 +396,8 @@ class TestPathPriorityWarnings:
 
     def test_warns_about_intel_paths_in_environment(
         self,
-        monkeypatch,
-        capsys,
+        monkeypatch: Any,
+        capsys: Any,
     ) -> None:
         """Warn when Intel paths detected in PATH."""
         from scripts.dll_diagnostics import diagnose_mkl_loading
@@ -416,8 +419,8 @@ class TestPathPriorityWarnings:
 
     def test_no_warning_when_no_intel_paths(
         self,
-        monkeypatch,
-        capsys,
+        monkeypatch: Any,
+        capsys: Any,
     ) -> None:
         """No warning when no Intel paths in PATH."""
         from scripts.dll_diagnostics import diagnose_mkl_loading
@@ -443,7 +446,7 @@ class TestCriticalDllVerification:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific functionality")
     def test_verifies_all_critical_dlls(
         self,
-        capsys,
+        capsys: Any,
     ) -> None:
         """Verify all critical MKL DLLs are checked."""
         from scripts.dll_diagnostics import diagnose_mkl_loading
@@ -471,7 +474,7 @@ class TestOutputFormatting:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific functionality")
     def test_output_has_header_and_footer(
         self,
-        capsys,
+        capsys: Any,
     ) -> None:
         """Output includes formatted header and footer."""
         from scripts.dll_diagnostics import diagnose_mkl_loading
@@ -486,7 +489,7 @@ class TestOutputFormatting:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific functionality")
     def test_output_has_numbered_sections(
         self,
-        capsys,
+        capsys: Any,
     ) -> None:
         """Output includes numbered diagnostic sections."""
         from scripts.dll_diagnostics import diagnose_mkl_loading
@@ -503,7 +506,7 @@ class TestOutputFormatting:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific functionality")
     def test_dll_status_formatting(
         self,
-        capsys,
+        capsys: Any,
     ) -> None:
         """DLL status is formatted consistently."""
         from scripts.dll_diagnostics import diagnose_mkl_loading
@@ -527,7 +530,7 @@ class TestEdgeCases:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific functionality")
     def test_handles_empty_path_variable(
         self,
-        monkeypatch,
+        monkeypatch: Any,
     ) -> None:
         """Handle empty PATH environment variable."""
         from scripts.dll_diagnostics import check_path_priority
@@ -543,8 +546,8 @@ class TestEdgeCases:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific functionality")
     def test_handles_nonexistent_pixi_directory(
         self,
-        capsys,
-        monkeypatch,
+        capsys: Any,
+        monkeypatch: Any,
     ) -> None:
         """Handle nonexistent pixi directory gracefully."""
         from scripts.dll_diagnostics import diagnose_mkl_loading
@@ -558,7 +561,7 @@ class TestEdgeCases:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific functionality")
     def test_handles_long_path_lists(
         self,
-        monkeypatch,
+        monkeypatch: Any,
     ) -> None:
         """Handle very long PATH variable with many directories."""
         from scripts.dll_diagnostics import check_path_priority
@@ -578,7 +581,7 @@ class TestRealWorldIntegration:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific functionality")
     def test_detects_actual_system_configuration(
         self,
-        capsys,
+        capsys: Any,
     ) -> None:
         """Detect actual system DLL configuration."""
         from scripts.dll_diagnostics import diagnose_mkl_loading
@@ -593,7 +596,7 @@ class TestRealWorldIntegration:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific functionality")
     def test_provides_actionable_recommendations(
         self,
-        capsys,
+        capsys: Any,
     ) -> None:
         """Provide actionable recommendations based on findings."""
         from scripts.dll_diagnostics import diagnose_mkl_loading

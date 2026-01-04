@@ -100,7 +100,7 @@ class TestCertificateGeneration:
         assert san_ext is not None
         san_value = san_ext.value
 
-        dns_names = san_value.get_values_for_type(x509.DNSName)
+        dns_names = san_value.get_values_for_type(x509.DNSName)  # type: ignore[attr-defined]
         assert "san-test.example.com" in dns_names
         assert "localhost" in dns_names
         assert "127.0.0.1" in dns_names
@@ -119,8 +119,8 @@ class TestCertificateGeneration:
         assert basic_constraints_ext.critical is True
 
         bc_value = basic_constraints_ext.value
-        assert bc_value.ca is True
-        assert bc_value.path_length == 0
+        assert bc_value.ca is True  # type: ignore[attr-defined]
+        assert bc_value.path_length == 0  # type: ignore[attr-defined]
 
     def test_certificate_key_usage_includes_digital_signature(self) -> None:
         """Certificate KeyUsage extension includes digital_signature and key_encipherment."""
@@ -136,10 +136,10 @@ class TestCertificateGeneration:
         assert key_usage_ext.critical is True
 
         ku_value = key_usage_ext.value
-        assert ku_value.digital_signature is True
-        assert ku_value.key_encipherment is True
-        assert ku_value.key_cert_sign is True
-        assert ku_value.crl_sign is True
+        assert ku_value.digital_signature is True  # type: ignore[attr-defined]
+        assert ku_value.key_encipherment is True  # type: ignore[attr-defined]
+        assert ku_value.key_cert_sign is True  # type: ignore[attr-defined]
+        assert ku_value.crl_sign is True  # type: ignore[attr-defined]
 
     def test_private_key_matches_certificate_public_key(self) -> None:
         """Private key corresponds to public key in certificate."""
@@ -154,11 +154,11 @@ class TestCertificateGeneration:
         cert_public_key = cert.public_key()
         private_public_key = private_key.public_key()
 
-        cert_public_numbers = cert_public_key.public_numbers()
-        private_public_numbers = private_public_key.public_numbers()
+        cert_public_numbers = cert_public_key.public_numbers()  # type: ignore[union-attr]
+        private_public_numbers = private_public_key.public_numbers()  # type: ignore[union-attr]
 
-        assert cert_public_numbers.n == private_public_numbers.n
-        assert cert_public_numbers.e == private_public_numbers.e
+        assert cert_public_numbers.n == private_public_numbers.n  # type: ignore[union-attr]
+        assert cert_public_numbers.e == private_public_numbers.e  # type: ignore[union-attr]
 
     def test_certificate_uses_rsa_2048_key(self) -> None:
         """Certificate uses RSA 2048-bit key for security."""

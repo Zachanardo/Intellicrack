@@ -175,13 +175,13 @@ def analyze_test_coverage_manually() -> bool:
     test_file = project_root / "tests/unit/core/execution/test_script_execution_manager.py"
     if not test_file.exists():
         print("FAIL Test file not found!")
-        return
+        return False
 
     # Read the source file
     source_file = project_root / "intellicrack/core/execution/script_execution_manager.py"
     if not source_file.exists():
         print("FAIL Source file not found!")
-        return
+        return False
 
     try:
         test_content = Path(test_file).read_text()

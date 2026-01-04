@@ -35,7 +35,7 @@ def qapp() -> QApplication:
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
-    return app
+    return app  # type: ignore[return-value]
 
 
 @pytest.fixture
@@ -79,12 +79,12 @@ class TestPluginInfoPage:
         info_page.name_edit.clear()
         info_page.author_edit.clear()
 
-        assert not wizard.button(QWizard.WizardButton.NextButton).isEnabled()
+        assert not wizard.button(QWizard.WizardButton.NextButton).isEnabled()  # type: ignore[union-attr]
 
         info_page.name_edit.setText("Test Plugin")
         info_page.author_edit.setText("Test Author")
 
-        assert wizard.button(QWizard.WizardButton.NextButton).isEnabled()
+        assert wizard.button(QWizard.WizardButton.NextButton).isEnabled()  # type: ignore[union-attr]
 
     def test_get_plugin_info_returns_complete_data(self, wizard: PluginCreationWizard) -> None:
         """get_plugin_info returns all required fields with correct values."""
@@ -117,7 +117,7 @@ class TestTemplateSelectionPage:
         templates = []
         for i in range(template_page.template_list.count()):
             item = template_page.template_list.item(i)
-            templates.append(item.text())
+            templates.append(item.text())  # type: ignore[union-attr]
 
         assert "Binary Analysis" in templates or "Pattern Scanner" in templates
 
@@ -130,7 +130,7 @@ class TestTemplateSelectionPage:
         templates = []
         for i in range(template_page.template_list.count()):
             item = template_page.template_list.item(i)
-            template_data = item.data(Qt.ItemDataRole.UserRole)
+            template_data = item.data(Qt.ItemDataRole.UserRole)  # type: ignore[union-attr]
             templates.append(template_data["name"])
 
         assert any("Hook" in t or "License" in t for t in templates)
@@ -143,7 +143,7 @@ class TestTemplateSelectionPage:
 
         for i in range(template_page.template_list.count()):
             item = template_page.template_list.item(i)
-            template_data = item.data(Qt.ItemDataRole.UserRole)
+            template_data = item.data(Qt.ItemDataRole.UserRole)  # type: ignore[union-attr]
             assert "name" in template_data
             assert "description" in template_data
             assert "features" in template_data
@@ -154,14 +154,14 @@ class TestTemplateSelectionPage:
 
         template_page.template_list.setCurrentRow(0)
         first_item = template_page.template_list.item(0)
-        first_template = first_item.data(Qt.ItemDataRole.UserRole)
+        first_template = first_item.data(Qt.ItemDataRole.UserRole)  # type: ignore[union-attr]
 
         assert template_page.description_label.text() == first_template["description"]
 
         if template_page.template_list.count() > 1:
             template_page.template_list.setCurrentRow(1)
             second_item = template_page.template_list.item(1)
-            second_template = second_item.data(Qt.ItemDataRole.UserRole)
+            second_template = second_item.data(Qt.ItemDataRole.UserRole)  # type: ignore[union-attr]
 
             assert template_page.description_label.text() == second_template["description"]
 
@@ -245,7 +245,7 @@ class TestCodeGenerationPage:
         code_page.copy_btn.click()
 
         clipboard = qapp.clipboard()
-        assert clipboard.text() == test_code
+        assert clipboard.text() == test_code  # type: ignore[union-attr]
 
     def test_validate_python_code_syntax_valid(self, wizard: PluginCreationWizard) -> None:
         """Validation accepts syntactically correct Python code."""
@@ -470,7 +470,7 @@ class TestWizardWorkflow:
         wizard.info_page.author_edit.setText("Developer")
         wizard.features_page.feature_checks["binary_analysis"].setChecked(True)
 
-        wizard.setCurrentPage(wizard.code_page)
+        wizard.setCurrentPage(wizard.code_page)  # type: ignore[attr-defined]
 
         code = wizard.code_page.get_code()
         assert len(code) > 0
@@ -483,7 +483,7 @@ class TestWizardWorkflow:
         wizard.info_page.author_edit.setText("Summary Author")
         wizard.info_page.description_edit.setPlainText("Test summary")
 
-        wizard.setCurrentPage(wizard.summary_page)
+        wizard.setCurrentPage(wizard.summary_page)  # type: ignore[attr-defined]
 
         summary_html = wizard.summary_page.summary_text.toHtml()
         assert "Summary Test" in summary_html
@@ -514,7 +514,7 @@ class TestPluginSaving:
                 "code": wizard.code_page.get_code(),
             }
 
-            plugin_path.write_text(plugin_data["code"], encoding="utf-8")
+            plugin_path.write_text(plugin_data["code"], encoding="utf-8")  # type: ignore[arg-type]
             metadata_path = plugin_path.with_name(f"{plugin_path.stem}_metadata.json")
             metadata_path.write_text(json.dumps(plugin_data["info"], indent=2), encoding="utf-8")
 
@@ -546,7 +546,7 @@ class TestPluginSaving:
                 "code": frida_wizard.code_page.get_code(),
             }
 
-            plugin_path.write_text(plugin_data["code"], encoding="utf-8")
+            plugin_path.write_text(plugin_data["code"], encoding="utf-8")  # type: ignore[arg-type]
 
             assert plugin_path.suffix == ".js"
             saved_code = plugin_path.read_text(encoding="utf-8")
@@ -598,7 +598,7 @@ class TestEdgeCases:
         wizard.info_page.name_edit.clear()
         wizard.info_page.author_edit.setText("Author")
 
-        assert not wizard.button(QWizard.WizardButton.NextButton).isEnabled()
+        assert not wizard.button(QWizard.WizardButton.NextButton).isEnabled()  # type: ignore[union-attr]
 
     def test_special_characters_in_plugin_name(self, wizard: PluginCreationWizard) -> None:
         """Plugin name with special characters generates valid class name."""

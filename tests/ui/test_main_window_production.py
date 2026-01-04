@@ -84,9 +84,9 @@ class TestMainWindowRealInitialization:
         ]
 
         for component in required_components:
-            assert component in window.component_status
-            assert "enabled" in window.component_status[component]
-            assert "error" in window.component_status[component]
+            assert component in window.component_status  # type: ignore[attr-defined]
+            assert "enabled" in window.component_status[component]  # type: ignore[attr-defined]
+            assert "error" in window.component_status[component]  # type: ignore[attr-defined]
 
         window.close()
         window.deleteLater()
@@ -98,8 +98,8 @@ class TestMainWindowRealInitialization:
 
         window = IntellicrackMainWindow()
 
-        for component_name in window.component_status:
-            status = window.component_status[component_name]
+        for component_name in window.component_status:  # type: ignore[attr-defined]
+            status = window.component_status[component_name]  # type: ignore[attr-defined]
             if status["enabled"]:
                 assert status["error"] is None
             else:
@@ -159,7 +159,7 @@ class TestMainWindowSignals:
             window.update_output.emit("test output")
             window.update_status.emit("test status")
             window.update_progress.emit(50)
-            window.clear_output.emit()
+            window.clear_output.emit()  # type: ignore[attr-defined]
             qapp.processEvents()
         except Exception as e:
             pytest.fail(f"Signal emission failed: {e}")
@@ -274,7 +274,7 @@ class TestMainWindowAnalysisOperations:
         window.binary_path = None
 
         try:
-            window._run_analysis()
+            window._run_analysis()  # type: ignore[attr-defined]
         except Exception:
             pass
 
@@ -292,17 +292,17 @@ class TestMainWindowComponentIntegration:
 
         window = IntellicrackMainWindow()
 
-        if window.analysis_orchestrator is not None:
-            assert window.analysis_orchestrator is not None
+        if window.analysis_orchestrator is not None:  # type: ignore[attr-defined]
+            assert window.analysis_orchestrator is not None  # type: ignore[attr-defined]
 
-            if window.llm_handler is not None:
-                assert window.llm_handler is not None
+            if window.llm_handler is not None:  # type: ignore[attr-defined]
+                assert window.llm_handler is not None  # type: ignore[attr-defined]
 
-            if window.script_handler is not None:
-                assert window.script_handler is not None
+            if window.script_handler is not None:  # type: ignore[attr-defined]
+                assert window.script_handler is not None  # type: ignore[attr-defined]
 
-            if window.report_handler is not None:
-                assert window.report_handler is not None
+            if window.report_handler is not None:  # type: ignore[attr-defined]
+                assert window.report_handler is not None  # type: ignore[attr-defined]
 
         window.close()
         window.deleteLater()
@@ -314,7 +314,7 @@ class TestMainWindowComponentIntegration:
 
         window = IntellicrackMainWindow()
 
-        for component_name, status in window.component_status.items():
+        for component_name, status in window.component_status.items():  # type: ignore[attr-defined]
             if not status["enabled"]:
                 assert status["error"] is not None or status["enabled"] is False
             else:
@@ -380,7 +380,7 @@ class TestMainWindowErrorHandling:
         assert window is not None
 
         at_least_one_component_works = any(
-            status["enabled"] for status in window.component_status.values()
+            status["enabled"] for status in window.component_status.values()  # type: ignore[attr-defined]
         )
 
         window.close()

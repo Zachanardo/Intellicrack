@@ -227,7 +227,7 @@ class TestStalkerIntegration:
         """Test starting Stalker session successfully."""
         from intellicrack.core.analysis.frida_analyzer import start_stalker_session
 
-        fake_main_app.set_binary(temp_binary)
+        fake_main_app.set_binary(temp_binary)  # type: ignore[attr-defined]
         result = start_stalker_session(fake_main_app)
 
         assert result is True
@@ -242,10 +242,10 @@ class TestStalkerIntegration:
         result = start_stalker_session(fake_main_app)
 
         assert result is False
-        assert fake_main_app.update_output.call_count > 0
+        assert fake_main_app.update_output.call_count > 0  # type: ignore[attr-defined]
         assert any(
             "No binary loaded" in str(call)
-            for call in fake_main_app.update_output.call_args_list
+            for call in fake_main_app.update_output.call_args_list  # type: ignore[attr-defined]
         )
 
     def test_start_stalker_session_module_not_available(
@@ -259,13 +259,13 @@ class TestStalkerIntegration:
         )
         from intellicrack.core.analysis.frida_analyzer import start_stalker_session
 
-        fake_main_app.set_binary(temp_binary)
+        fake_main_app.set_binary(temp_binary)  # type: ignore[attr-defined]
         result = start_stalker_session(fake_main_app)
 
         assert result is False
         assert any(
             "not available" in str(call)
-            for call in fake_main_app.update_output.call_args_list
+            for call in fake_main_app.update_output.call_args_list  # type: ignore[attr-defined]
         )
 
     def test_start_stalker_session_with_custom_output_dir(
@@ -274,7 +274,7 @@ class TestStalkerIntegration:
         """Test starting Stalker session with custom output directory."""
         from intellicrack.core.analysis.frida_analyzer import start_stalker_session
 
-        fake_main_app.set_binary(temp_binary)
+        fake_main_app.set_binary(temp_binary)  # type: ignore[attr-defined]
         custom_dir = "/custom/output"
         result = start_stalker_session(fake_main_app, output_dir=custom_dir)
 
@@ -298,7 +298,7 @@ class TestStalkerIntegration:
 
         from intellicrack.core.analysis.frida_analyzer import start_stalker_session
 
-        fake_main_app.set_binary(temp_binary)
+        fake_main_app.set_binary(temp_binary)  # type: ignore[attr-defined]
         result = start_stalker_session(fake_main_app)
 
         assert result is False
@@ -312,7 +312,7 @@ class TestStalkerIntegration:
             stop_stalker_session,
         )
 
-        fake_main_app.set_binary(temp_binary)
+        fake_main_app.set_binary(temp_binary)  # type: ignore[attr-defined]
         start_result = start_stalker_session(fake_main_app)
         assert start_result is True
 
@@ -331,7 +331,7 @@ class TestStalkerIntegration:
         assert result is False
         assert any(
             "No binary loaded" in str(call)
-            for call in fake_main_app.update_output.call_args_list
+            for call in fake_main_app.update_output.call_args_list  # type: ignore[attr-defined]
         )
 
     def test_stop_stalker_session_no_active_session(
@@ -340,12 +340,12 @@ class TestStalkerIntegration:
         """Test stopping Stalker session when no active session."""
         from intellicrack.core.analysis.frida_analyzer import stop_stalker_session
 
-        fake_main_app.set_binary(temp_binary)
+        fake_main_app.set_binary(temp_binary)  # type: ignore[attr-defined]
         result = stop_stalker_session(fake_main_app)
 
         assert result is False
         calls_str = " ".join(
-            str(call) for call in fake_main_app.update_output.call_args_list
+            str(call) for call in fake_main_app.update_output.call_args_list  # type: ignore[attr-defined]
         )
         assert "No active" in calls_str or "not found" in calls_str
 
@@ -358,7 +358,7 @@ class TestStalkerIntegration:
             trace_function_stalker,
         )
 
-        fake_main_app.set_binary(temp_binary)
+        fake_main_app.set_binary(temp_binary)  # type: ignore[attr-defined]
         start_stalker_session(fake_main_app)
         result = trace_function_stalker(fake_main_app, "app.exe", "ValidateLicense")
 
@@ -375,7 +375,7 @@ class TestStalkerIntegration:
         assert result is False
         assert any(
             "No binary loaded" in str(call)
-            for call in fake_main_app.update_output.call_args_list
+            for call in fake_main_app.update_output.call_args_list  # type: ignore[attr-defined]
         )
 
     def test_trace_function_stalker_no_active_session(
@@ -384,7 +384,7 @@ class TestStalkerIntegration:
         """Test tracing function when no active session."""
         from intellicrack.core.analysis.frida_analyzer import trace_function_stalker
 
-        fake_main_app.set_binary(temp_binary)
+        fake_main_app.set_binary(temp_binary)  # type: ignore[attr-defined]
         result = trace_function_stalker(fake_main_app, "app.exe", "ValidateLicense")
 
         assert result is False
@@ -398,7 +398,7 @@ class TestStalkerIntegration:
             start_stalker_session,
         )
 
-        fake_main_app.set_binary(temp_binary)
+        fake_main_app.set_binary(temp_binary)  # type: ignore[attr-defined]
         start_stalker_session(fake_main_app)
         result = collect_module_coverage_stalker(fake_main_app, "license.dll")
 
@@ -427,7 +427,7 @@ class TestStalkerIntegration:
             start_stalker_session,
         )
 
-        fake_main_app.set_binary(temp_binary)
+        fake_main_app.set_binary(temp_binary)  # type: ignore[attr-defined]
         start_stalker_session(fake_main_app)
         stats = get_stalker_stats(fake_main_app)
 
@@ -452,7 +452,7 @@ class TestStalkerIntegration:
         """Test getting Stalker stats when no active session."""
         from intellicrack.core.analysis.frida_analyzer import get_stalker_stats
 
-        fake_main_app.set_binary(temp_binary)
+        fake_main_app.set_binary(temp_binary)  # type: ignore[attr-defined]
         stats = get_stalker_stats(fake_main_app)
 
         assert stats is None
@@ -466,7 +466,7 @@ class TestStalkerIntegration:
             start_stalker_session,
         )
 
-        fake_main_app.set_binary(temp_binary)
+        fake_main_app.set_binary(temp_binary)  # type: ignore[attr-defined]
         start_stalker_session(fake_main_app)
         routines = get_licensing_routines_stalker(fake_main_app)
 
@@ -495,7 +495,7 @@ class TestStalkerIntegration:
             get_licensing_routines_stalker,
         )
 
-        fake_main_app.set_binary(temp_binary)
+        fake_main_app.set_binary(temp_binary)  # type: ignore[attr-defined]
         routines = get_licensing_routines_stalker(fake_main_app)
 
         assert routines is None
@@ -513,7 +513,7 @@ class TestStalkerIntegration:
             trace_function_stalker,
         )
 
-        fake_main_app.set_binary(temp_binary)
+        fake_main_app.set_binary(temp_binary)  # type: ignore[attr-defined]
 
         result = start_stalker_session(fake_main_app)
         assert result is True

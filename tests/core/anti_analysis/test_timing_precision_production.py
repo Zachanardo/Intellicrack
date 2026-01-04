@@ -98,6 +98,7 @@ class TestTimingDriftPrecision10To50ms:
         time.sleep(0.1)
 
         tick2 = defense._get_tick_count()
+        assert tick2 is not None, "GetTickCount64 must return a value"
         elapsed_ms = tick2 - tick1
 
         assert 50 <= elapsed_ms <= 150, (
@@ -149,7 +150,7 @@ class TestTimingDriftPrecision10To50ms:
                 drift_detected = True
             original_logger_warning(msg, *args)
 
-        defense.logger.warning = capture_warning
+        setattr(defense.logger, "warning", capture_warning)
 
         start_time = time.time()
         start_perf = time.perf_counter()
@@ -167,7 +168,7 @@ class TestTimingDriftPrecision10To50ms:
                 f"Current 100ms threshold is too coarse."
             )
 
-        defense.logger.warning = original_logger_warning
+        setattr(defense.logger, "warning", original_logger_warning)
 
 
 class TestMultipleTimingSourceSpoofing:
@@ -403,6 +404,7 @@ class TestTimingCorrelationBetweenSources:
 
         end_tick = defense._get_tick_count()
         end_perf = time.perf_counter()
+        assert end_tick is not None, "GetTickCount64 must return a value"
 
         elapsed_tick_s = (end_tick - start_tick) / 1000.0
         elapsed_perf = end_perf - start_perf
@@ -902,9 +904,9 @@ class TestRealWorldScenarios:
             start = time.perf_counter()
 
             while time.perf_counter() - start < 0.2:
+                time.sleep(0.01)
                 if action_executed[0]:
                     break
-                time.sleep(0.01)
 
     def test_execution_delay_with_continuous_environment_checking(self) -> None:
         """execution_delay MUST continuously check environment during delay.

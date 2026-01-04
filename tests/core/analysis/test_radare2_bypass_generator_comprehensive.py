@@ -168,14 +168,14 @@ class TestLicenseMechanismAnalysis:
                 ],
             },
         )
-        generator.decompiler = fake_decompiler
+        generator.decompiler = fake_decompiler  # type: ignore[assignment]
 
         fake_r2_serial.set_functions([
             {"name": "CheckLicense", "offset": 0x401000},
             {"name": "ValidateSerial", "offset": 0x401100},
         ])
 
-        analysis: dict[str, Any] = generator._analyze_license_mechanisms(fake_r2_serial)
+        analysis: dict[str, Any] = generator._analyze_license_mechanisms(fake_r2_serial)  # type: ignore[arg-type]
 
         assert len(analysis.get("validation_functions", [])) > 0
         assert any("serial" in str(v).lower() for v in analysis.get("validation_functions", []))
@@ -197,9 +197,9 @@ class TestLicenseMechanismAnalysis:
                 ],
             },
         )
-        generator.decompiler = fake_decompiler
+        generator.decompiler = fake_decompiler  # type: ignore[assignment]
 
-        analysis: dict[str, Any] = generator._analyze_license_mechanisms(fake_r2)
+        analysis: dict[str, Any] = generator._analyze_license_mechanisms(fake_r2)  # type: ignore[arg-type]
 
         assert analysis is not None
         validation_funcs: list[Any] = analysis.get("validation_functions", [])
@@ -223,9 +223,9 @@ class TestLicenseMechanismAnalysis:
                 ],
             },
         )
-        generator.decompiler = fake_decompiler
+        generator.decompiler = fake_decompiler  # type: ignore[assignment]
 
-        analysis: dict[str, Any] = generator._analyze_license_mechanisms(fake_r2)
+        analysis: dict[str, Any] = generator._analyze_license_mechanisms(fake_r2)  # type: ignore[arg-type]
 
         validation_funcs: list[Any] = analysis.get("validation_functions", [])
         if validation_funcs:
@@ -251,9 +251,9 @@ class TestLicenseMechanismAnalysis:
                 ],
             },
         )
-        generator.decompiler = fake_decompiler
+        generator.decompiler = fake_decompiler  # type: ignore[assignment]
 
-        analysis: dict[str, Any] = generator._analyze_license_mechanisms(fake_r2)
+        analysis: dict[str, Any] = generator._analyze_license_mechanisms(fake_r2)  # type: ignore[arg-type]
 
         validation_funcs: list[Any] = analysis.get("validation_functions", [])
         if validation_funcs:
@@ -388,7 +388,7 @@ class TestAutomatedPatchGeneration:
             ],
         }
 
-        patches: list[Any] = generator._generate_automated_patches(fake_r2, license_analysis)
+        patches: list[Any] = generator._generate_automated_patches(fake_r2, license_analysis)  # type: ignore[arg-type]
 
         assert isinstance(patches, list)
 
@@ -415,7 +415,7 @@ class TestAutomatedPatchGeneration:
             ],
         }
 
-        patches: list[Any] = generator._generate_automated_patches(fake_r2, license_analysis)
+        patches: list[Any] = generator._generate_automated_patches(fake_r2, license_analysis)  # type: ignore[arg-type]
 
         assert isinstance(patches, list)
 
@@ -437,7 +437,7 @@ class TestAutomatedPatchGeneration:
             "bypass_method": "nop_conditional",
         }
 
-        patch = generator._create_binary_patch(fake_r2, func_info, bypass_point)
+        patch = generator._create_binary_patch(fake_r2, func_info, bypass_point)  # type: ignore[arg-type]
 
         if patch:
             assert "original_bytes" in patch or patch is None
@@ -644,7 +644,7 @@ class TestCryptoAnalysis:
         fake_r2 = FakeR2Session(str(pe_with_aes_license))
         fake_r2.set_command_response("pd 10 @ 0x401000", "key expansion routine found")
 
-        key_expansion = generator._find_key_expansion(fake_r2, 0x401000)
+        key_expansion = generator._find_key_expansion(fake_r2, 0x401000)  # type: ignore[arg-type]
 
         if key_expansion:
             assert "found" in key_expansion
@@ -656,7 +656,7 @@ class TestCryptoAnalysis:
         fake_r2 = FakeR2Session(str(pe_with_aes_cbc))
         fake_r2.set_command_response("p8 16 @ 0x401000", "0123456789abcdef0123456789abcdef")
 
-        ivs = generator._find_ivs(fake_r2, 0x401000)
+        ivs = generator._find_ivs(fake_r2, 0x401000)  # type: ignore[arg-type]
 
         assert isinstance(ivs, list)
 
@@ -667,7 +667,7 @@ class TestCryptoAnalysis:
         fake_r2 = FakeR2Session(str(pe_with_salted_hash))
         fake_r2.set_json_response("izj", [{"string": "LICENSE_SALT_2024"}])
 
-        salts = generator._find_salts(fake_r2, 0x401000)
+        salts = generator._find_salts(fake_r2, 0x401000)  # type: ignore[arg-type]
 
         assert isinstance(salts, list)
 
@@ -812,7 +812,7 @@ class TestMemoryPatches:
             ],
         }
 
-        patches = generator._generate_memory_patches(fake_r2, license_analysis)
+        patches = generator._generate_memory_patches(fake_r2, license_analysis)  # type: ignore[arg-type]
 
         assert len(patches) > 0
         patch = patches[0]
@@ -866,7 +866,7 @@ class TestControlFlowAnalysis:
             ],
         )
 
-        cfg = generator._analyze_control_flow_graph(fake_r2, 0x401000)
+        cfg = generator._analyze_control_flow_graph(fake_r2, 0x401000)  # type: ignore[arg-type]
 
         assert "blocks" in cfg or "nodes" in cfg or cfg == {}
 
@@ -891,7 +891,7 @@ class TestControlFlowAnalysis:
             ],
         )
 
-        decision_points = generator._identify_decision_points(fake_r2, 0x401000, cfg)
+        decision_points = generator._identify_decision_points(fake_r2, 0x401000, cfg)  # type: ignore[arg-type]
 
         assert isinstance(decision_points, list)
 
@@ -912,7 +912,7 @@ class TestControlFlowAnalysis:
 
         fake_r2.set_command_response("pd 1 @ 0x401000", "test eax, eax")
 
-        strategy = generator._determine_patch_strategy(fake_r2, decision_point, cfg)
+        strategy = generator._determine_patch_strategy(fake_r2, decision_point, cfg)  # type: ignore[arg-type]
 
         assert "type" in strategy
 
@@ -937,7 +937,7 @@ class TestSophisticatedPatches:
 
         fake_r2.set_command_response("p8 2 @ 0x401000", "31c0")
 
-        patch = generator._generate_register_patch(fake_r2, decision_point, strategy)
+        patch = generator._generate_register_patch(fake_r2, decision_point, strategy)  # type: ignore[arg-type]
 
         assert patch is not None
         assert "patch_bytes" in patch or "instructions" in patch
@@ -959,7 +959,7 @@ class TestSophisticatedPatches:
 
         fake_r2.set_command_response("p8 8 @ 0x401000", "c744241000000000")
 
-        patch = generator._generate_stack_patch(fake_r2, decision_point, strategy)
+        patch = generator._generate_stack_patch(fake_r2, decision_point, strategy)  # type: ignore[arg-type]
 
         assert patch is not None
 
@@ -979,7 +979,7 @@ class TestSophisticatedPatches:
 
         fake_r2.set_command_response("p8 5 @ 0x401000", "e94b000000")
 
-        patch = generator._generate_flow_redirect_patch(fake_r2, decision_point, strategy)
+        patch = generator._generate_flow_redirect_patch(fake_r2, decision_point, strategy)  # type: ignore[arg-type]
 
         assert patch is not None
 
@@ -1004,7 +1004,7 @@ class TestComprehensiveBypass:
                 "license_patterns": [],
             },
         )
-        generator.decompiler = fake_decompiler
+        generator.decompiler = fake_decompiler  # type: ignore[assignment]
 
         result = generator.generate_comprehensive_bypass()
 

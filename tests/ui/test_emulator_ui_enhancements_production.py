@@ -7,6 +7,7 @@ Copyright (C) 2025 Zachary Flint
 """
 
 import pytest
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any, Callable
 
@@ -147,11 +148,11 @@ def qapp() -> QApplication:
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
-    return app
+    return app  # type: ignore[return-value]
 
 
 @pytest.fixture
-def emulator_status_widget(qapp: QApplication) -> EmulatorStatusWidget:
+def emulator_status_widget(qapp: QApplication) -> Generator[EmulatorStatusWidget, None, None]:
     """Create EmulatorStatusWidget instance for testing."""
     widget = EmulatorStatusWidget()
     yield widget
@@ -189,7 +190,7 @@ class TestEmulatorStatusWidget:
         """Updating QEMU status to running changes label text and color."""
         test_message = "QEMU started successfully on port 1234"
 
-        emulator_status_widget.update_emulator_status("QEMU", True, test_message)
+        emulator_status_widget.update_emulator_status("QEMU", True, test_message)  # type: ignore[misc]
 
         assert emulator_status_widget.emulator_status["QEMU"]["running"] is True
         assert emulator_status_widget.emulator_status["QEMU"]["message"] == test_message
@@ -207,9 +208,9 @@ class TestEmulatorStatusWidget:
         self, emulator_status_widget: EmulatorStatusWidget
     ) -> None:
         """Updating QEMU status to stopped shows red visual indicator."""
-        emulator_status_widget.update_emulator_status("QEMU", True, "Running")
+        emulator_status_widget.update_emulator_status("QEMU", True, "Running")  # type: ignore[misc]
 
-        emulator_status_widget.update_emulator_status(
+        emulator_status_widget.update_emulator_status(  # type: ignore[misc]
             "QEMU", False, "QEMU stopped by user"
         )
 
@@ -227,7 +228,7 @@ class TestEmulatorStatusWidget:
         """Updating Qiling status to ready changes label text and color."""
         test_message = "Qiling framework initialized successfully"
 
-        emulator_status_widget.update_emulator_status("Qiling", True, test_message)
+        emulator_status_widget.update_emulator_status("Qiling", True, test_message)  # type: ignore[misc]
 
         assert emulator_status_widget.emulator_status["Qiling"]["running"] is True
         assert (
@@ -244,9 +245,9 @@ class TestEmulatorStatusWidget:
         self, emulator_status_widget: EmulatorStatusWidget
     ) -> None:
         """Updating Qiling status to not ready shows red visual indicator."""
-        emulator_status_widget.update_emulator_status("Qiling", True, "Ready")
+        emulator_status_widget.update_emulator_status("Qiling", True, "Ready")  # type: ignore[misc]
 
-        emulator_status_widget.update_emulator_status(
+        emulator_status_widget.update_emulator_status(  # type: ignore[misc]
             "Qiling", False, "Qiling not installed"
         )
 
@@ -262,10 +263,10 @@ class TestEmulatorStatusWidget:
         self, emulator_status_widget: EmulatorStatusWidget
     ) -> None:
         """Multiple status updates for different emulators maintain independent states."""
-        emulator_status_widget.update_emulator_status(
+        emulator_status_widget.update_emulator_status(  # type: ignore[misc]
             "QEMU", True, "QEMU running on port 5555"
         )
-        emulator_status_widget.update_emulator_status(
+        emulator_status_widget.update_emulator_status(  # type: ignore[misc]
             "Qiling", False, "Qiling not available"
         )
 

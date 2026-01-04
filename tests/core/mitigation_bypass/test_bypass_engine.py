@@ -24,13 +24,14 @@ import tempfile
 import struct
 import ctypes
 from pathlib import Path
+from typing import Any
 
 
 try:
     from intellicrack.core.exploitation.bypass_engine import BypassEngine
     MODULE_AVAILABLE = True
 except ImportError:
-    BypassEngine = None
+    BypassEngine = None  # type: ignore[misc, assignment]
     MODULE_AVAILABLE = False
 
 try:
@@ -60,7 +61,7 @@ class TestBypassEngineInitialization(unittest.TestCase):
         if isinstance(available_bypasses, list):
             self.assertGreater(len(available_bypasses), 0,
                              "Production engine must know bypass techniques")
-        elif isinstance(available_bypasses, dict):
+        elif isinstance(available_bypasses, dict):  # type: ignore[unreachable]
             self.assertGreater(len(available_bypasses.keys()), 0,
                              "Production engine must have bypass registry")
 
@@ -205,7 +206,7 @@ class TestBypassRegistry(unittest.TestCase):
             self.assertGreater(found_standard, 0,
                              "Should include standard bypass techniques")
 
-        elif isinstance(bypasses, dict):
+        elif isinstance(bypasses, dict):  # type: ignore[unreachable]
             # Dictionary should have bypass categories or techniques
             self.assertGreater(len(bypasses), 0,
                              "Bypass registry must not be empty")
@@ -286,7 +287,7 @@ class TestBypassRecommendations(unittest.TestCase):
                 # Each recommendation should have structure
                 self.assertTrue(rec, "Recommendation must not be empty")
 
-        elif isinstance(recommendations, dict):
+        elif isinstance(recommendations, dict):  # type: ignore[unreachable]
             # Dictionary format should have bypass strategies
             self.assertGreater(len(recommendations), 0,
                              "Should provide bypass strategy information")
@@ -309,9 +310,9 @@ class TestBypassRecommendations(unittest.TestCase):
         if isinstance(recommendations, list):
             # All recommendations should be high quality
             for rec in recommendations:
-                if isinstance(rec, dict) and 'reliability' in rec:
-                    self.assertGreaterEqual(rec['reliability'], 8,
-                                          "Should respect reliability threshold")
+                if isinstance(rec, dict) and 'reliability' in rec:  # type: ignore[unreachable]
+                    self.assertGreaterEqual(  # type: ignore[unreachable]
+                        rec['reliability'], 8, "Should respect reliability threshold")
 
     def test_recommend_for_multi_protection(self) -> None:
         """Test recommendations for multiple layered protections."""
@@ -622,7 +623,7 @@ class TestErrorHandling(unittest.TestCase):
 
     def test_malformed_target_info(self) -> None:
         """Test handling of malformed target information."""
-        malformed_inputs = [
+        malformed_inputs: list[dict[str, int] | dict[str, str] | dict[str, None] | str | list[Any] | None] = [
             None,
             [],
             "not a dict",
@@ -635,7 +636,7 @@ class TestErrorHandling(unittest.TestCase):
         for bad_input in malformed_inputs:
             # Should not crash on bad input
             try:
-                result = self.engine.analyze_bypass_capabilities(bad_input)
+                result = self.engine.analyze_bypass_capabilities(bad_input)  # type: ignore[arg-type]
                 # Should handle gracefully
                 self.assertTrue(result is None or isinstance(result, (dict, list, str)),
                               f"Should handle malformed input: {bad_input}")
@@ -818,12 +819,12 @@ class TestBypassEngineIntegration(unittest.TestCase):
         if isinstance(recommendations, list) and len(recommendations) > 0:
             # Get details on first recommended bypass
             first_rec = recommendations[0]
-            if isinstance(first_rec, dict) and 'type' in first_rec:
-                bypass_info = self.engine.get_bypass_info(first_rec['type'])
+            if isinstance(first_rec, dict) and 'type' in first_rec:  # type: ignore[unreachable]
+                bypass_info = self.engine.get_bypass_info(first_rec['type'])  # type: ignore[unreachable]
             elif isinstance(first_rec, str):
                 bypass_info = self.engine.get_bypass_info(first_rec)
             else:
-                bypass_info = self.engine.get_bypass_info('ROP')  # fallback
+                bypass_info = self.engine.get_bypass_info('ROP')  # type: ignore[unreachable]
 
             self.assertIsNotNone(bypass_info, "Must provide bypass implementation details")
 

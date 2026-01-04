@@ -7,7 +7,7 @@ Copyright (C) 2025 Zachary Flint
 """
 
 import pytest
-from typing import cast
+from typing import Generator, cast
 
 from intellicrack.handlers.pyqt6_handler import QApplication, QMainWindow, QMenu, QMenuBar
 from intellicrack.ui.menu_utils import find_or_create_menu
@@ -16,14 +16,15 @@ from intellicrack.ui.menu_utils import find_or_create_menu
 @pytest.fixture
 def qapp() -> QApplication:
     """Provide QApplication instance for Qt menu testing."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    return app
+    existing_app = QApplication.instance()
+    if existing_app is None:
+        return QApplication([])
+    assert isinstance(existing_app, QApplication), "Expected QApplication instance"
+    return existing_app
 
 
 @pytest.fixture
-def main_window(qapp: QApplication) -> QMainWindow:
+def main_window(qapp: QApplication) -> Generator[QMainWindow, None, None]:
     """Create QMainWindow with menu bar for testing."""
     window = QMainWindow()
     menu_bar = window.menuBar()

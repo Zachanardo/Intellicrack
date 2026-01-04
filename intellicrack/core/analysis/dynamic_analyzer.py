@@ -172,7 +172,7 @@ class AdvancedDynamicAnalyzer:
             pid = frida.spawn(str(self.binary_path))
             session = frida.attach(pid)
 
-            # Create comprehensive interceptor script
+            # Create comprehensive interceptor script with license-specific hooks
             frida_script = """
             console.log("[Frida] Runtime analysis started");
 
@@ -184,6 +184,7 @@ class AdvancedDynamicAnalyzer:
             var registryActivity = [];
             var cryptoActivity = [];
             var timingChecks = [];
+            var hardwareIdActivity = [];
 
             // Helper function to read string from memory
             function readString(address) {
@@ -194,9 +195,9 @@ class AdvancedDynamicAnalyzer:
                 }
             }
 
-            // Hook common Windows API functions
+            // Hook common Windows API functions for license validation
 
-            // File operations
+            // File operations - License file access
             const CreateFileW = Module.findExportByName('kernel32.dll', 'CreateFileW');
             if (CreateFileW) {
                 Interceptor.attach(CreateFileW, {
@@ -230,7 +231,32 @@ class AdvancedDynamicAnalyzer:
                 });
             }
 
-            // Registry operations
+            const ReadFile = Module.findExportByName('kernel32.dll', 'ReadFile');
+            if (ReadFile) {
+                Interceptor.attach(ReadFile, {
+                    onEnter: function(args) {
+                        this.buffer = args[1];
+                        this.bytesToRead = args[2].toInt32();
+                    },
+                    onLeave: function(retval) {
+                        if (retval.toInt32() !== 0 && this.bytesToRead > 0) {
+                            try {
+                                const data = this.buffer.readByteArray(Math.min(this.bytesToRead, 256));
+                                send({
+                                    type: 'file_read',
+                                    data: {
+                                        function: 'ReadFile',
+                                        bytesRead: this.bytesToRead,
+                                        preview: Array.from(new Uint8Array(data)).slice(0, 64)
+                                    }
+                                });
+                            } catch (e) {}
+                        }
+                    }
+                });
+            }
+
+            // Registry operations - License key storage
             const RegOpenKeyExW = Module.findExportByName('advapi32.dll', 'RegOpenKeyExW');
             if (RegOpenKeyExW) {
                 Interceptor.attach(RegOpenKeyExW, {
@@ -256,7 +282,38 @@ class AdvancedDynamicAnalyzer:
                 });
             }
 
-            // Network operations
+            const RegQueryValueExW = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
+            if (RegQueryValueExW) {
+                Interceptor.attach(RegQueryValueExW, {
+                    onEnter: function(args) {
+                        const valueName = args[1].isNull() ? "<default>" : args[1].readUtf16String();
+                        this.valueName = valueName;
+                        this.dataBuffer = args[4];
+                        this.dataSize = args[5];
+                    },
+                    onLeave: function(retval) {
+                        if (retval.toInt32() === 0 && !this.dataBuffer.isNull() && !this.dataSize.isNull()) {
+                            try {
+                                const size = this.dataSize.readU32();
+                                if (size > 0 && size < 1024) {
+                                    const data = this.dataBuffer.readByteArray(size);
+                                    send({
+                                        type: 'registry_read',
+                                        data: {
+                                            function: 'RegQueryValueExW',
+                                            valueName: this.valueName,
+                                            dataSize: size,
+                                            preview: Array.from(new Uint8Array(data)).slice(0, 64)
+                                        }
+                                    });
+                                }
+                            } catch (e) {}
+                        }
+                    }
+                });
+            }
+
+            // Network operations - Online activation
             const connect = Module.findExportByName('ws2_32.dll', 'connect');
             if (connect) {
                 Interceptor.attach(connect, {
@@ -291,7 +348,56 @@ class AdvancedDynamicAnalyzer:
                 });
             }
 
-            // Cryptographic operations
+            const send_func = Module.findExportByName('ws2_32.dll', 'send');
+            if (send_func) {
+                Interceptor.attach(send_func, {
+                    onEnter: function(args) {
+                        const buffer = args[1];
+                        const length = args[2].toInt32();
+                        if (length > 0 && length < 4096) {
+                            try {
+                                const data = buffer.readByteArray(length);
+                                send({
+                                    type: 'network_send',
+                                    data: {
+                                        function: 'send',
+                                        length: length,
+                                        preview: Array.from(new Uint8Array(data)).slice(0, 128)
+                                    }
+                                });
+                            } catch (e) {}
+                        }
+                    }
+                });
+            }
+
+            const recv = Module.findExportByName('ws2_32.dll', 'recv');
+            if (recv) {
+                Interceptor.attach(recv, {
+                    onEnter: function(args) {
+                        this.buffer = args[1];
+                        this.maxLength = args[2].toInt32();
+                    },
+                    onLeave: function(retval) {
+                        const received = retval.toInt32();
+                        if (received > 0 && received < 4096) {
+                            try {
+                                const data = this.buffer.readByteArray(received);
+                                send({
+                                    type: 'network_recv',
+                                    data: {
+                                        function: 'recv',
+                                        length: received,
+                                        preview: Array.from(new Uint8Array(data)).slice(0, 128)
+                                    }
+                                });
+                            } catch (e) {}
+                        }
+                    }
+                });
+            }
+
+            // Cryptographic operations - License signature validation
             const CryptAcquireContextW = Module.findExportByName('advapi32.dll', 'CryptAcquireContextW');
             if (CryptAcquireContextW) {
                 Interceptor.attach(CryptAcquireContextW, {
@@ -312,6 +418,117 @@ class AdvancedDynamicAnalyzer:
                                 function: 'CryptAcquireContextW',
                                 container: containerName,
                                 provider: providerName
+                            }
+                        });
+                    }
+                });
+            }
+
+            const CryptVerifySignatureW = Module.findExportByName('advapi32.dll', 'CryptVerifySignatureW');
+            if (CryptVerifySignatureW) {
+                Interceptor.attach(CryptVerifySignatureW, {
+                    onEnter: function(args) {
+                        const hashSize = args[1].toInt32();
+                        send({
+                            type: 'crypto_verify',
+                            data: {
+                                function: 'CryptVerifySignatureW',
+                                hashSize: hashSize
+                            }
+                        });
+                    },
+                    onLeave: function(retval) {
+                        const result = retval.toInt32();
+                        send({
+                            type: 'crypto_verify_result',
+                            data: {
+                                function: 'CryptVerifySignatureW',
+                                success: result !== 0,
+                                returnValue: result
+                            }
+                        });
+                    }
+                });
+            }
+
+            const CryptDecrypt = Module.findExportByName('advapi32.dll', 'CryptDecrypt');
+            if (CryptDecrypt) {
+                Interceptor.attach(CryptDecrypt, {
+                    onEnter: function(args) {
+                        this.dataLen = args[4];
+                    },
+                    onLeave: function(retval) {
+                        if (retval.toInt32() !== 0 && !this.dataLen.isNull()) {
+                            const decryptedLen = this.dataLen.readU32();
+                            send({
+                                type: 'crypto_decrypt',
+                                data: {
+                                    function: 'CryptDecrypt',
+                                    decryptedLength: decryptedLen,
+                                    success: true
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+
+            const CryptImportKey = Module.findExportByName('advapi32.dll', 'CryptImportKey');
+            if (CryptImportKey) {
+                Interceptor.attach(CryptImportKey, {
+                    onEnter: function(args) {
+                        const keySize = args[2].toInt32();
+                        send({
+                            type: 'crypto_import',
+                            data: {
+                                function: 'CryptImportKey',
+                                keySize: keySize
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Hardware ID - Machine fingerprinting
+            const GetVolumeInformationW = Module.findExportByName('kernel32.dll', 'GetVolumeInformationW');
+            if (GetVolumeInformationW) {
+                Interceptor.attach(GetVolumeInformationW, {
+                    onEnter: function(args) {
+                        const rootPath = args[0].isNull() ? null : args[0].readUtf16String();
+                        this.serialNumber = args[4];
+                        this.rootPath = rootPath;
+                    },
+                    onLeave: function(retval) {
+                        if (retval.toInt32() !== 0 && !this.serialNumber.isNull()) {
+                            const serial = this.serialNumber.readU32();
+                            hardwareIdActivity.push({
+                                function: 'GetVolumeInformationW',
+                                rootPath: this.rootPath,
+                                serialNumber: serial.toString(16),
+                                timestamp: Date.now()
+                            });
+                            send({
+                                type: 'hardware_id',
+                                data: {
+                                    function: 'GetVolumeInformationW',
+                                    rootPath: this.rootPath,
+                                    serialNumber: serial.toString(16)
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+
+            const GetAdaptersAddresses = Module.findExportByName('iphlpapi.dll', 'GetAdaptersAddresses');
+            if (GetAdaptersAddresses) {
+                Interceptor.attach(GetAdaptersAddresses, {
+                    onEnter: function(args) {
+                        send({
+                            type: 'hardware_id',
+                            data: {
+                                function: 'GetAdaptersAddresses',
+                                message: 'Reading network adapter information'
                             }
                         });
                     }
@@ -476,6 +693,7 @@ class AdvancedDynamicAnalyzer:
                         fileActivity: fileActivity,
                         registryActivity: registryActivity,
                         cryptoActivity: cryptoActivity,
+                        hardwareIdActivity: hardwareIdActivity,
                         timingChecks: timingChecks
                     }
                 });
@@ -510,9 +728,22 @@ class AdvancedDynamicAnalyzer:
                         analysis_data.update(payload_data.get("data", {}))
                     elif msg_type in [
                         "file_access",
+                        "file_read",
                         "registry_access",
+                        "registry_read",
                         "network_activity",
+                        "network_send",
+                        "network_recv",
+                        "crypto_activity",
+                        "crypto_verify",
+                        "crypto_verify_result",
+                        "crypto_decrypt",
+                        "crypto_import",
+                        "hardware_id",
+                        "timing_check",
                         "license_function",
+                        "license_function_return",
+                        "string_reference",
                     ]:
                         if msg_type not in analysis_data:
                             analysis_data[msg_type] = []

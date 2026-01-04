@@ -470,11 +470,12 @@ impl ProcessManager {
 
                                     let runtime = managed_process.start_time.elapsed();
                                     info!(
-                                        "Process {} (id: {}) finished after {:?} with exit code: {:?}",
-                                        process_id,
-                                        managed_process.id,
-                                        runtime,
-                                        exit_status.code()
+                                        process_id = process_id,
+                                        pid = managed_process.info.pid,
+                                        exit_code = ?exit_status.code(),
+                                        duration_ms = runtime.as_millis(),
+                                        status = ?managed_process.info.status,
+                                        "Process finished"
                                     );
                                     (false, true)
                                 }

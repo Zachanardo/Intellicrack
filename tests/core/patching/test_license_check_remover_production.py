@@ -244,7 +244,7 @@ class TestPatternMatcher:
         matcher: PatternMatcher = PatternMatcher()
 
         assert "serial_cmp" in matcher.patterns
-        pattern_data: dict = matcher.patterns["serial_cmp"]
+        pattern_data: dict[str, Any] = matcher.patterns["serial_cmp"]
         assert pattern_data["type"] == CheckType.SERIAL_VALIDATION
         assert pattern_data["confidence"] > 0.8
 
@@ -274,10 +274,10 @@ class TestPatternMatcher:
             (0x40100C, "jnz", "0x401020"),
         ]
 
-        matches: list[dict] = matcher.find_patterns(instructions)
+        matches: list[dict[str, Any]] = matcher.find_patterns(instructions)
         assert matches
 
-        serial_matches: list[dict] = [
+        serial_matches: list[dict[str, Any]] = [
             m for m in matches if m["type"] == CheckType.SERIAL_VALIDATION
         ]
         assert serial_matches
@@ -295,8 +295,8 @@ class TestPatternMatcher:
             (0x402013, "jne", "0x402030"),
         ]
 
-        matches: list[dict] = matcher.find_patterns(instructions)
-        serial_matches: list[dict] = [
+        matches: list[dict[str, Any]] = matcher.find_patterns(instructions)
+        serial_matches: list[dict[str, Any]] = [
             m for m in matches if m["type"] == CheckType.SERIAL_VALIDATION
         ]
         assert serial_matches
@@ -312,7 +312,7 @@ class TestPatternMatcher:
             (0x403010, "jg", "0x403030"),
         ]
 
-        matches: list[dict] = matcher.find_patterns(instructions)
+        matches: list[dict[str, Any]] = matcher.find_patterns(instructions)
 
     def test_pattern_matching_online_validation(self) -> None:
         """PatternMatcher detects cloud license validation."""
@@ -326,8 +326,8 @@ class TestPatternMatcher:
             (0x40400E, "jz", "0x404030"),
         ]
 
-        matches: list[dict] = matcher.find_patterns(instructions)
-        online_matches: list[dict] = [
+        matches: list[dict[str, Any]] = matcher.find_patterns(instructions)
+        online_matches: list[dict[str, Any]] = [
             m for m in matches if m["type"] == CheckType.ONLINE_VALIDATION
         ]
         assert online_matches
@@ -342,8 +342,8 @@ class TestPatternMatcher:
             (0x405007, "jz", "0x405020"),
         ]
 
-        matches: list[dict] = matcher.find_patterns(instructions)
-        sig_matches: list[dict] = [m for m in matches if m["type"] == CheckType.SIGNATURE_CHECK]
+        matches: list[dict[str, Any]] = matcher.find_patterns(instructions)
+        sig_matches: list[dict[str, Any]] = [m for m in matches if m["type"] == CheckType.SIGNATURE_CHECK]
         assert sig_matches
 
     def test_pattern_matching_hardware_check(self) -> None:
@@ -357,8 +357,8 @@ class TestPatternMatcher:
             (0x406009, "jnz", "0x406020"),
         ]
 
-        matches: list[dict] = matcher.find_patterns(instructions)
-        hw_matches: list[dict] = [m for m in matches if m["type"] == CheckType.HARDWARE_CHECK]
+        matches: list[dict[str, Any]] = matcher.find_patterns(instructions)
+        hw_matches: list[dict[str, Any]] = [m for m in matches if m["type"] == CheckType.HARDWARE_CHECK]
         assert hw_matches
 
     def test_pattern_matching_integrity_check(self) -> None:
@@ -371,8 +371,8 @@ class TestPatternMatcher:
             (0x40700B, "jne", "0x407030"),
         ]
 
-        matches: list[dict] = matcher.find_patterns(instructions)
-        integrity_matches: list[dict] = [
+        matches: list[dict[str, Any]] = matcher.find_patterns(instructions)
+        integrity_matches: list[dict[str, Any]] = [
             m for m in matches if m["type"] == CheckType.INTEGRITY_CHECK
         ]
         assert integrity_matches
@@ -656,7 +656,7 @@ class TestPatchPointSelection:
         df_analyzer: DataFlowAnalyzer = DataFlowAnalyzer(cfg_analyzer)
         side_effect_analyzer: SideEffectAnalyzer = SideEffectAnalyzer(cfg_analyzer, df_analyzer)
 
-        selector: PatchPointSelector = PatchPointSelector(
+        selector: PatchPointSelector = PatchPointSelector(  # type: ignore[call-arg]
             cfg_analyzer, cs, side_effect_analyzer, df_analyzer
         )
 
@@ -693,7 +693,7 @@ class TestPatchPointSelection:
             patched_bytes=b"\x90" * 32,
         )
 
-        selector: PatchPointSelector = PatchPointSelector(
+        selector: PatchPointSelector = PatchPointSelector(  # type: ignore[call-arg]
             cfg_analyzer, cs, side_effect_analyzer, df_analyzer
         )
         patch_points: list[PatchPoint] = selector.select_optimal_patch_points(
@@ -716,7 +716,7 @@ class TestPatchPointSelection:
         ]
 
         cfg_analyzer.build_cfg(instructions)
-        selector: PatchPointSelector = PatchPointSelector(
+        selector: PatchPointSelector = PatchPointSelector(  # type: ignore[call-arg]
             cfg_analyzer, cs, side_effect_analyzer, df_analyzer
         )
 
@@ -944,7 +944,7 @@ class TestSideEffectAnalysis:
             can_modify_return=False,
         )
 
-        side_effects: dict = analyzer.analyze_side_effects(patch_point, block.instructions)
+        side_effects: dict[str, Any] = analyzer.analyze_side_effects(patch_point, block.instructions)
 
         assert "stack_modified" in side_effects
 
@@ -977,7 +977,7 @@ class TestSideEffectAnalysis:
             can_modify_return=False,
         )
 
-        side_effects: dict = analyzer.analyze_side_effects(patch_point, block.instructions)
+        side_effects: dict[str, Any] = analyzer.analyze_side_effects(patch_point, block.instructions)
 
         assert "registers_affected" in side_effects
 

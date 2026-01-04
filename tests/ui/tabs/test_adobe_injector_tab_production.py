@@ -13,7 +13,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 from PyQt6.QtWidgets import QApplication
@@ -97,32 +97,15 @@ class FakeTerminalManager:
         self.last_command = command
         return self.session_id_to_return
 
-    @property
-    def execute_command(self) -> Any:
-        """Return callable with tracking."""
-        manager = self
-
-        class ExecuteCommand:
-            def __init__(self) -> None:
-                self.called = False
-
-            def __call__(self, command: str | list[str]) -> str:
-                self.called = True
-                manager.execute_command_called = True
-                manager.execute_call_count += 1
-                manager.last_command = command
-                return manager.session_id_to_return
-
-        return ExecuteCommand()
-
 
 @pytest.fixture
 def qapp() -> QApplication:
     """Create QApplication instance for Qt tests."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication(sys.argv)
-    return app
+    existing_app = QApplication.instance()
+    if existing_app is None:
+        return QApplication(sys.argv)
+    assert isinstance(existing_app, QApplication), "Expected QApplication instance"
+    return existing_app
 
 
 @pytest.fixture
@@ -136,7 +119,9 @@ def shared_context() -> dict[str, Any]:
 
 
 @pytest.fixture
-def adobe_tab(qapp: QApplication, shared_context: dict[str, Any]) -> AdobeInjectorTab:
+def adobe_tab(
+    qapp: QApplication, shared_context: dict[str, Any]
+) -> Generator[AdobeInjectorTab, None, None]:
     """Create AdobeInjectorTab instance."""
     tab = AdobeInjectorTab(shared_context)
     yield tab
@@ -221,6 +206,7 @@ class TestAdobeInjectorTabSubprocessExecution:
         )
         monkeypatch.setattr("subprocess.Popen", fake_popen)
 
+        assert adobe_tab.cmd_args is not None, "cmd_args should be initialized"
         adobe_tab.cmd_args.setText("/silent /path:C:\\Test")
         adobe_tab.launch_subprocess(hidden=True)
 
@@ -393,6 +379,8 @@ class TestAdobeInjectorTabIntegrationMethods:
         adobe_tab: AdobeInjectorTab,
     ) -> None:
         """Method selector correctly switches between integration tabs."""
+        assert adobe_tab.method_tabs is not None, "method_tabs should be initialized"
+
         adobe_tab.on_method_changed("Subprocess Control")
         assert adobe_tab.method_tabs.currentIndex() == 1
 
@@ -411,7 +399,7 @@ class TestAdobeInjectorTabProcessMonitoring:
         adobe_tab: AdobeInjectorTab,
     ) -> None:
         """Subprocess monitor reads and displays output lines."""
-        fake_process = FakeProcess(output_lines=[
+        fake_process: Any = FakeProcess(output_lines=[
             b"Line 1\n",
             b"Line 2\n",
             b"",
@@ -420,6 +408,7 @@ class TestAdobeInjectorTabProcessMonitoring:
 
         adobe_tab.monitor_subprocess()
 
+        assert adobe_tab.subprocess_output is not None, "subprocess_output should be initialized"
         output_text = adobe_tab.subprocess_output.toPlainText()
         assert "Line 1" in output_text
         assert "Line 2" in output_text

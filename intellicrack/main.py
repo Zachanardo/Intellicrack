@@ -111,6 +111,12 @@ else:
 # The comprehensive logging system interferes with Qt's window display mechanisms
 
 
+def exception_hook(exctype, value, traceback_obj):
+    """Global exception hook to log unhandled exceptions."""
+    logger.critical("Unhandled exception:", exc_info=(exctype, value, traceback_obj))
+    sys.__excepthook__(exctype, value, traceback_obj)
+
+
 @intellicrack.utils.logger.log_function_call
 def main() -> int:
     """Run the main entry point for the Intellicrack application.
@@ -139,6 +145,8 @@ def main() -> int:
             sys.exit(main())
 
     """
+    sys.excepthook = exception_hook
+
     try:
         # Configure logging using the central configuration
         import os
@@ -152,8 +160,9 @@ def main() -> int:
         logging_config_obj: Any = config_data.get("logging", {})
         log_config: dict[str, Any] = logging_config_obj if isinstance(logging_config_obj, dict) else {}
 
-        level_obj: Any = log_config.get("level", "INFO")
-        log_level: str = level_obj if isinstance(level_obj, str) else "INFO"
+        # Force DEBUG level for troubleshooting
+        level_obj: Any = log_config.get("level", "DEBUG")
+        log_level: str = level_obj if isinstance(level_obj, str) else "DEBUG"
 
         log_file: str | None = None
         file_logging_obj: Any = log_config.get("enable_file_logging", True)

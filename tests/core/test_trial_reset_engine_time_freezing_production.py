@@ -664,7 +664,7 @@ class TestTimeFreezeEdgeCases:
             engine = TrialResetEngine()
             frozen_time = datetime.datetime(2024, 1, 1, 0, 0, 0, tzinfo=datetime.UTC)
 
-            success = engine.freeze_time_for_app("notepad.exe", frozen_time)
+            success = engine.freeze_time_for_app("notepad.exe", frozen_time)  # type: ignore[attr-defined]
             assert success, "Time freeze must succeed initially"
 
             psutil_proc = psutil.Process(process.pid)
@@ -697,10 +697,10 @@ class TestTimeFreezeEdgeCases:
         for proc in psutil.process_iter(['pid', 'name']):
             proc_name = proc.info.get('name', '')
             if proc_name and 'svchost' in proc_name.lower():
-                success = engine.freeze_time_for_app(proc_name, frozen_time)
+                success = engine.freeze_time_for_app(proc_name, frozen_time)  # type: ignore[attr-defined]
 
                 if not success:
-                    assert proc_name not in engine.frozen_apps or not engine.frozen_apps[proc_name]["active"], (
+                    assert proc_name not in engine.frozen_apps or not engine.frozen_apps[proc_name]["active"], (  # type: ignore[attr-defined]
                         "Failed freeze must not mark process as active"
                     )
                 break
@@ -720,7 +720,7 @@ class TestTimeFreezeEdgeCases:
             engine = TrialResetEngine()
             frozen_time = datetime.datetime(2024, 1, 1, 0, 0, 0, tzinfo=datetime.UTC)
 
-            success = engine.freeze_time_for_app("notepad.exe", frozen_time)
+            success = engine.freeze_time_for_app("notepad.exe", frozen_time)  # type: ignore[attr-defined]
 
             assert success or not success, "Function must return boolean without crashing"
 
@@ -826,13 +826,13 @@ class TestTimeFreezeProcessRestartPersistence:
             engine = TrialResetEngine()
             frozen_time = datetime.datetime(2024, 1, 1, 0, 0, 0, tzinfo=datetime.UTC)
 
-            success = engine.freeze_time_for_app("notepad.exe", frozen_time)
+            success = engine.freeze_time_for_app("notepad.exe", frozen_time)  # type: ignore[attr-defined]
             assert success, "Time freeze must succeed"
 
-            assert "notepad.exe" in engine.frozen_apps, "Process must be tracked"
-            assert "time" in engine.frozen_apps["notepad.exe"], "Frozen time must be stored"
-            assert "pids" in engine.frozen_apps["notepad.exe"], "PIDs must be tracked"
-            assert "active" in engine.frozen_apps["notepad.exe"], "Active state must be tracked"
+            assert "notepad.exe" in engine.frozen_apps, "Process must be tracked"  # type: ignore[attr-defined]
+            assert "time" in engine.frozen_apps["notepad.exe"], "Frozen time must be stored"  # type: ignore[attr-defined]
+            assert "pids" in engine.frozen_apps["notepad.exe"], "PIDs must be tracked"  # type: ignore[attr-defined]
+            assert "active" in engine.frozen_apps["notepad.exe"], "Active state must be tracked"  # type: ignore[attr-defined]
 
         finally:
             if process:
@@ -854,18 +854,18 @@ class TestTimeFreezeProcessRestartPersistence:
             engine = TrialResetEngine()
             frozen_time1 = datetime.datetime(2024, 1, 1, 0, 0, 0, tzinfo=datetime.UTC)
 
-            success1 = engine.freeze_time_for_app("notepad.exe", frozen_time1)
+            success1 = engine.freeze_time_for_app("notepad.exe", frozen_time1)  # type: ignore[attr-defined]
             assert success1, "First freeze must succeed"
 
             process2 = subprocess.Popen(["calc.exe"], creationflags=subprocess.CREATE_NEW_CONSOLE)
             time.sleep(1)
 
             frozen_time2 = datetime.datetime(2025, 12, 31, 23, 59, 59, tzinfo=datetime.UTC)
-            success2 = engine.freeze_time_for_app("calc.exe", frozen_time2)
+            success2 = engine.freeze_time_for_app("calc.exe", frozen_time2)  # type: ignore[attr-defined]
 
             if success2:
-                assert "notepad.exe" in engine.frozen_apps, "First process must still be tracked"
-                assert "calc.exe" in engine.frozen_apps, "Second process must be tracked"
+                assert "notepad.exe" in engine.frozen_apps, "First process must still be tracked"  # type: ignore[attr-defined]
+                assert "calc.exe" in engine.frozen_apps, "Second process must be tracked"  # type: ignore[attr-defined]
 
         finally:
             if process1:
@@ -895,7 +895,7 @@ class TestTimeFreezeMemoryInjectionDetails:
             engine = TrialResetEngine()
             frozen_time = datetime.datetime(2024, 1, 1, 0, 0, 0, tzinfo=datetime.UTC)
 
-            success = engine.freeze_time_for_app("notepad.exe", frozen_time)
+            success = engine.freeze_time_for_app("notepad.exe", frozen_time)  # type: ignore[attr-defined]
             assert success, "Time freeze must succeed"
 
         finally:
@@ -918,7 +918,7 @@ class TestTimeFreezeMemoryInjectionDetails:
             engine = TrialResetEngine()
             frozen_time = datetime.datetime(2024, 1, 1, 0, 0, 0, tzinfo=datetime.UTC)
 
-            success = engine.freeze_time_for_app("notepad.exe", frozen_time)
+            success = engine.freeze_time_for_app("notepad.exe", frozen_time)  # type: ignore[attr-defined]
             assert success, "Time freeze must succeed"
 
             assert PAGE_EXECUTE_READWRITE == 0x40, "PAGE_EXECUTE_READWRITE constant must be correct"
@@ -941,7 +941,7 @@ class TestTimeFreezeMemoryInjectionDetails:
             engine = TrialResetEngine()
             frozen_time = datetime.datetime(2024, 1, 1, 0, 0, 0, tzinfo=datetime.UTC)
 
-            success = engine.freeze_time_for_app("notepad.exe", frozen_time)
+            success = engine.freeze_time_for_app("notepad.exe", frozen_time)  # type: ignore[attr-defined]
             assert success, "Time freeze must succeed (WriteProcessMemory must work)"
 
         finally:
@@ -965,7 +965,7 @@ class TestTimeFreezeComprehensiveFunctional:
 
             engine = TrialResetEngine()
 
-            modules = engine._enumerate_process_modules(process.pid)
+            modules = engine._enumerate_process_modules(process.pid)  # type: ignore[attr-defined]
             assert "kernel32.dll" in modules, "Step 1: Module enumeration must find kernel32"
 
             kernel32_base, _ = modules["kernel32.dll"]
@@ -975,7 +975,7 @@ class TestTimeFreezeComprehensiveFunctional:
             hProcess = kernel32.OpenProcess(0x1F0FFF, False, process.pid)
             try:
                 functions = [b"GetSystemTime", b"GetLocalTime"]
-                resolved = engine._resolve_target_process_functions(
+                resolved = engine._resolve_target_process_functions(  # type: ignore[attr-defined]
                     hProcess, process.pid, kernel32_base, functions
                 )
                 assert all(addr is not None for addr in resolved), "Step 3: Function resolution must succeed"
@@ -984,7 +984,7 @@ class TestTimeFreezeComprehensiveFunctional:
                 kernel32.CloseHandle(hProcess)
 
             frozen_time = datetime.datetime(2024, 1, 1, 0, 0, 0, tzinfo=datetime.UTC)
-            success = engine.freeze_time_for_app("notepad.exe", frozen_time)
+            success = engine.freeze_time_for_app("notepad.exe", frozen_time)  # type: ignore[attr-defined]
             assert success, "Step 4: Hook injection must succeed"
 
         finally:
@@ -1005,7 +1005,7 @@ class TestTimeFreezeComprehensiveFunctional:
             engine = TrialResetEngine()
             frozen_time = datetime.datetime(2024, 1, 1, 0, 0, 0, tzinfo=datetime.UTC)
 
-            success1 = engine.freeze_time_for_app("notepad.exe", frozen_time)
+            success1 = engine.freeze_time_for_app("notepad.exe", frozen_time)  # type: ignore[attr-defined]
             assert success1, "First injection must succeed"
 
         finally:
@@ -1028,7 +1028,7 @@ class TestTimeFreezeComprehensiveFunctional:
             engine = TrialResetEngine()
             frozen_time = datetime.datetime(2024, 1, 1, 0, 0, 0, tzinfo=datetime.UTC)
 
-            success = engine.freeze_time_for_app("notepad.exe", frozen_time)
+            success = engine.freeze_time_for_app("notepad.exe", frozen_time)  # type: ignore[attr-defined]
 
             time.sleep(1)
 

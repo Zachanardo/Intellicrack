@@ -13,7 +13,7 @@ import queue
 import threading
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 
@@ -137,7 +137,7 @@ def test_llm_manager() -> TestLLMManager:
 
 
 @pytest.fixture
-def background_loader() -> BackgroundModelLoader:
+def background_loader() -> Generator[BackgroundModelLoader, None, None]:
     """Create background model loader for testing."""
     os.environ["DISABLE_BACKGROUND_THREADS"] = "1"
     loader = BackgroundModelLoader(max_concurrent_loads=2)
@@ -147,7 +147,7 @@ def background_loader() -> BackgroundModelLoader:
 
 
 @pytest.fixture
-def threaded_loader() -> BackgroundModelLoader:
+def threaded_loader() -> Generator[BackgroundModelLoader, None, None]:
     """Create background loader with actual threads for integration testing."""
     os.environ.pop("DISABLE_BACKGROUND_THREADS", None)
     loader = BackgroundModelLoader(max_concurrent_loads=2)
@@ -316,7 +316,7 @@ class TestLoadingTask:
     def test_update_progress_notifies_callback(self, test_llm_config: LLMConfig) -> None:
         """Progress updates trigger callback notifications."""
         callback = TestProgressCallback()
-        task = LoadingTask("test_model", SimpleTestBackend, test_llm_config, callback=callback)
+        task = LoadingTask("test_model", SimpleTestBackend, test_llm_config, callback=callback)  # type: ignore[arg-type]
 
         task.update_progress(0.5, "Loading")
 
@@ -327,14 +327,14 @@ class TestLoadingTask:
     def test_mark_completed_success(self, test_llm_config: LLMConfig) -> None:
         """Successful completion marks task correctly."""
         callback = TestProgressCallback()
-        task = LoadingTask("test_model", SimpleTestBackend, test_llm_config, callback=callback)
+        task = LoadingTask("test_model", SimpleTestBackend, test_llm_config, callback=callback)  # type: ignore[arg-type]
         backend = SimpleTestBackend(test_llm_config)
 
-        task.mark_completed(success=True, result=backend)
+        task.mark_completed(success=True, result=backend)  # type: ignore[arg-type]
 
         assert task.state == LoadingState.COMPLETED
         assert task.progress == 1.0
-        assert task.result == backend
+        assert task.result == backend  # type: ignore[comparison-overlap]
         assert task.error is None
         assert len(callback.completion_calls) == 1
         assert callback.completion_calls[0] == ("test_model", True, None)
@@ -342,7 +342,7 @@ class TestLoadingTask:
     def test_mark_completed_failure(self, test_llm_config: LLMConfig) -> None:
         """Failed completion marks task with error."""
         callback = TestProgressCallback()
-        task = LoadingTask("test_model", SimpleTestBackend, test_llm_config, callback=callback)
+        task = LoadingTask("test_model", SimpleTestBackend, test_llm_config, callback=callback)  # type: ignore[arg-type]
 
         task.mark_completed(success=False, error="Load failed")
 
@@ -356,7 +356,7 @@ class TestLoadingTask:
     def test_cancel_task(self, test_llm_config: LLMConfig) -> None:
         """Task cancellation updates state and notifies callback."""
         callback = TestProgressCallback()
-        task = LoadingTask("test_model", SimpleTestBackend, test_llm_config, callback=callback)
+        task = LoadingTask("test_model", SimpleTestBackend, test_llm_config, callback=callback)  # type: ignore[arg-type]
 
         task.cancel()
 
@@ -553,40 +553,40 @@ class TestIntegratedBackgroundLoader:
 
     def test_initialization(self, test_llm_manager: TestLLMManager) -> None:
         """Integrated loader initializes correctly."""
-        loader = IntegratedBackgroundLoader(test_llm_manager, max_concurrent_loads=2)
+        loader = IntegratedBackgroundLoader(test_llm_manager, max_concurrent_loads=2)  # type: ignore[arg-type]
 
-        assert loader.llm_manager == test_llm_manager
+        assert loader.llm_manager == test_llm_manager  # type: ignore[comparison-overlap]
         assert loader.background_loader is not None
         assert len(loader.progress_callbacks) == 0
 
     def test_add_progress_callback(self, test_llm_manager: TestLLMManager) -> None:
         """Can add progress callbacks to integrated loader."""
-        loader = IntegratedBackgroundLoader(test_llm_manager)
+        loader = IntegratedBackgroundLoader(test_llm_manager)  # type: ignore[arg-type]
         callback = TestProgressCallback()
 
-        loader.add_progress_callback(callback)
+        loader.add_progress_callback(callback)  # type: ignore[arg-type]
 
-        assert callback in loader.progress_callbacks
+        assert callback in loader.progress_callbacks  # type: ignore[comparison-overlap]
 
     def test_remove_progress_callback(self, test_llm_manager: TestLLMManager) -> None:
         """Can remove progress callbacks from integrated loader."""
-        loader = IntegratedBackgroundLoader(test_llm_manager)
+        loader = IntegratedBackgroundLoader(test_llm_manager)  # type: ignore[arg-type]
         callback = TestProgressCallback()
 
-        loader.add_progress_callback(callback)
-        loader.remove_progress_callback(callback)
+        loader.add_progress_callback(callback)  # type: ignore[arg-type]
+        loader.remove_progress_callback(callback)  # type: ignore[arg-type]
 
-        assert callback not in loader.progress_callbacks
+        assert callback not in loader.progress_callbacks  # type: ignore[comparison-overlap]
 
     def test_load_model_notifies_all_callbacks(self, test_llm_manager: TestLLMManager, test_llm_config: LLMConfig) -> None:
         """Loading model notifies all registered callbacks."""
         os.environ["DISABLE_BACKGROUND_THREADS"] = "1"
-        loader = IntegratedBackgroundLoader(test_llm_manager)
+        loader = IntegratedBackgroundLoader(test_llm_manager)  # type: ignore[arg-type]
 
         callback1 = TestProgressCallback()
         callback2 = TestProgressCallback()
-        loader.add_progress_callback(callback1)
-        loader.add_progress_callback(callback2)
+        loader.add_progress_callback(callback1)  # type: ignore[arg-type]
+        loader.add_progress_callback(callback2)  # type: ignore[arg-type]
 
         task = loader.load_model_in_background("test_model", SimpleTestBackend, test_llm_config)
 
@@ -597,7 +597,7 @@ class TestIntegratedBackgroundLoader:
     def test_get_loading_progress(self, test_llm_manager: TestLLMManager, test_llm_config: LLMConfig) -> None:
         """Can retrieve loading progress for model."""
         os.environ["DISABLE_BACKGROUND_THREADS"] = "1"
-        loader = IntegratedBackgroundLoader(test_llm_manager)
+        loader = IntegratedBackgroundLoader(test_llm_manager)  # type: ignore[arg-type]
 
         task = loader.load_model_in_background("test_model", SimpleTestBackend, test_llm_config)
         progress = loader.get_loading_progress("test_model")
@@ -609,7 +609,7 @@ class TestIntegratedBackgroundLoader:
     def test_cancel_loading(self, test_llm_manager: TestLLMManager, test_llm_config: LLMConfig) -> None:
         """Can cancel loading through integrated loader."""
         os.environ["DISABLE_BACKGROUND_THREADS"] = "1"
-        loader = IntegratedBackgroundLoader(test_llm_manager)
+        loader = IntegratedBackgroundLoader(test_llm_manager)  # type: ignore[arg-type]
 
         loader.load_model_in_background("test_model", SimpleTestBackend, test_llm_config)
         result = loader.cancel_loading("test_model")
@@ -621,7 +621,7 @@ class TestIntegratedBackgroundLoader:
     def test_get_statistics(self, test_llm_manager: TestLLMManager, test_llm_config: LLMConfig) -> None:
         """Can retrieve loading statistics."""
         os.environ["DISABLE_BACKGROUND_THREADS"] = "1"
-        loader = IntegratedBackgroundLoader(test_llm_manager)
+        loader = IntegratedBackgroundLoader(test_llm_manager)  # type: ignore[arg-type]
 
         loader.load_model_in_background("test_model", SimpleTestBackend, test_llm_config)
         stats = loader.get_statistics()
@@ -634,7 +634,7 @@ class TestIntegratedBackgroundLoader:
 
     def test_shutdown(self, test_llm_manager: TestLLMManager) -> None:
         """Shutdown delegates to background loader."""
-        loader = IntegratedBackgroundLoader(test_llm_manager)
+        loader = IntegratedBackgroundLoader(test_llm_manager)  # type: ignore[arg-type]
         original_shutdown = loader.background_loader.shutdown
 
         loader.shutdown()
@@ -681,7 +681,7 @@ class TestProgressCallbackErrorHandling:
 
         callback = ErrorCallback()
 
-        task = threaded_loader.submit_loading_task("test_model", SimpleTestBackend, test_llm_config, callback=callback)
+        task = threaded_loader.submit_loading_task("test_model", SimpleTestBackend, test_llm_config, callback=callback)  # type: ignore[arg-type]
 
         time.sleep(0.5)
 

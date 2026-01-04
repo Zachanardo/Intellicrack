@@ -78,7 +78,7 @@ class TestDenuvoVersionDetection:
         test_binary = binaries[0]
 
         try:
-            version = analyzer._detect_version(test_binary)
+            version = analyzer._detect_version(test_binary)  # type: ignore[call-arg, arg-type]
 
             assert version is not None
             assert isinstance(version, (DenuvoVersion, str, type(None)))
@@ -95,8 +95,8 @@ class TestDenuvoVersionDetection:
         test_binary = binaries[0]
 
         try:
-            version1 = analyzer._detect_version(test_binary)
-            version2 = analyzer._detect_version(test_binary)
+            version1 = analyzer._detect_version(test_binary)  # type: ignore[call-arg, arg-type]
+            version2 = analyzer._detect_version(test_binary)  # type: ignore[call-arg, arg-type]
 
             if version1 is not None and version2 is not None:
                 assert version1 == version2, "Version detection should be deterministic"
@@ -120,7 +120,7 @@ class TestDenuvoVMRegionDetection:
         test_binary = binaries[0]
 
         try:
-            vm_regions = analyzer._detect_vm_regions(test_binary)
+            vm_regions = analyzer._detect_vm_regions(test_binary)  # type: ignore[arg-type]
 
             assert vm_regions is not None
             assert isinstance(vm_regions, (list, tuple, dict))
@@ -135,7 +135,7 @@ class TestDenuvoVMRegionDetection:
             temp_path = f.name
 
         try:
-            vm_regions = analyzer._detect_vm_regions(temp_path)
+            vm_regions = analyzer._detect_vm_regions(temp_path)  # type: ignore[arg-type]
 
             assert vm_regions is not None
         except Exception:
@@ -163,7 +163,7 @@ class TestDenuvoIntegrityCheckDetection:
         test_binary = binaries[0]
 
         try:
-            integrity_checks = analyzer._detect_integrity_checks(test_binary)
+            integrity_checks = analyzer._detect_integrity_checks(test_binary)  # type: ignore[arg-type]
 
             assert integrity_checks is not None
             assert isinstance(integrity_checks, (list, tuple, dict))
@@ -180,8 +180,8 @@ class TestDenuvoIntegrityCheckDetection:
         test_binary = binaries[0]
 
         try:
-            checks1 = analyzer._detect_integrity_checks(test_binary)
-            checks2 = analyzer._detect_integrity_checks(test_binary)
+            checks1 = analyzer._detect_integrity_checks(test_binary)  # type: ignore[arg-type]
+            checks2 = analyzer._detect_integrity_checks(test_binary)  # type: ignore[arg-type]
 
             if checks1 is not None and checks2 is not None and (isinstance(checks1, (list, tuple)) and isinstance(checks2, (list, tuple))):
                 assert len(checks1) == len(checks2), "Detection should be consistent"
@@ -205,7 +205,7 @@ class TestDenuvoTimingCheckDetection:
         test_binary = binaries[0]
 
         try:
-            timing_checks = analyzer._detect_timing_checks(test_binary)
+            timing_checks = analyzer._detect_timing_checks(test_binary)  # type: ignore[arg-type]
 
             assert timing_checks is not None
             assert isinstance(timing_checks, (list, tuple, dict))

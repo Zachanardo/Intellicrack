@@ -347,42 +347,45 @@ class TestGenerateExploitPayloadCommon:
         """Test generating license bypass payload for security research."""
         result = generate_exploit_payload_common("License Bypass")
 
-        assert result["method"] == "patch"
-        assert "payload_bytes" in result
-        assert result["patch_type"] == "license_bypass"
-        assert "instructions" in result
-        assert len(result["instructions"]) > 0
+        assert result.method == "patch"
+        assert hasattr(result, "payload_bytes")
+        assert result.patch_type == "license_bypass"
+        assert hasattr(result, "instructions")
+        assert len(result.instructions) > 0
 
-        payload_bytes = bytes.fromhex(result["payload_bytes"])
+        payload_bytes = bytes.fromhex(result.payload_bytes)
         assert len(payload_bytes) > 0
 
     def test_generates_function_hijack_payload(self) -> None:
         """Test generating function hijacking payload."""
         result = generate_exploit_payload_common("Function Hijack")
 
-        assert result["method"] == "function_hijacking"
-        assert "payload_bytes" in result
-        assert result["patch_type"] == "function_hijack"
+        assert result.method == "function_hijacking"
+        assert hasattr(result, "payload_bytes")
+        assert result.patch_type == "function_hijack"
 
-        assert "JMP" in result["description"] or "hijack" in result["description"].lower()
+        assert result.description is not None
+        assert "JMP" in result.description or "hijack" in result.description.lower()
 
     def test_generates_nop_slide_payload(self) -> None:
         """Test generating NOP slide payload."""
         result = generate_exploit_payload_common("NOP Slide")
 
-        assert result["method"] == "nop_slide"
-        assert "payload_bytes" in result
-        assert result["patch_type"] == "nop_bypass"
+        assert result.method == "nop_slide"
+        assert hasattr(result, "payload_bytes")
+        assert result.patch_type == "nop_bypass"
 
-        payload_bytes = bytes.fromhex(result["payload_bytes"])
+        assert result.payload_bytes is not None
+        payload_bytes = bytes.fromhex(result.payload_bytes)
         assert all(b == 0x90 for b in payload_bytes)
 
     def test_handles_unknown_payload_type(self) -> None:
         """Test error handling for unknown payload types."""
         result = generate_exploit_payload_common("Unknown Type")
 
-        assert "error" in result
-        assert "Unknown payload type" in result["error"]
+        assert hasattr(result, "error")
+        assert result.error is not None
+        assert "Unknown payload type" in result.error
 
     def test_includes_target_information_when_exists(self, tmp_path: Path) -> None:
         """Test payload includes target file information when it exists."""
@@ -391,15 +394,15 @@ class TestGenerateExploitPayloadCommon:
 
         result = generate_exploit_payload_common("License Bypass", str(target_file))
 
-        assert result["target"] == str(target_file)
-        assert result["target_exists"] is True
+        assert result.target == str(target_file)
+        assert result.target_exists is True
 
     def test_marks_nonexistent_target(self) -> None:
         """Test payload marks nonexistent targets correctly."""
         result = generate_exploit_payload_common("License Bypass", "/nonexistent/path.exe")
 
-        assert result["target"] == "/nonexistent/path.exe"
-        assert result["target_exists"] is False
+        assert result.target == "/nonexistent/path.exe"
+        assert result.target_exists is False
 
     def test_payload_bytes_are_valid_hex(self) -> None:
         """Test all generated payloads have valid hex format."""
@@ -408,9 +411,9 @@ class TestGenerateExploitPayloadCommon:
         for payload_type in payload_types:
             result = generate_exploit_payload_common(payload_type)
 
-            if "payload_bytes" in result:
+            if hasattr(result, "payload_bytes") and result.payload_bytes is not None:
                 try:
-                    bytes.fromhex(result["payload_bytes"])
+                    bytes.fromhex(result.payload_bytes)
                 except ValueError:
                     pytest.fail(f"Invalid hex in {payload_type} payload")
 
@@ -427,7 +430,7 @@ class TestGenerateExploitStrategyCommon:
 
         result = generate_exploit_strategy_common(str(binary_path), "buffer_overflow")
 
-        assert result["strategy"] == "test_strategy"
+        assert result.strategy == "test_strategy"
 
     def test_handles_exploitation_errors(self, inject_fake_exploitation: None) -> None:
         """Test error handling for exploitation failures."""
@@ -436,8 +439,9 @@ class TestGenerateExploitStrategyCommon:
 
         result = generate_exploit_strategy_common("/test/binary", "buffer_overflow")
 
-        assert "error" in result
-        assert "Test error" in result["error"]
+        assert hasattr(result, "error")
+        assert result.error is not None
+        assert "Test error" in result.error
 
     def test_supports_different_vulnerability_types(self, tmp_path: Path, inject_fake_exploitation: None) -> None:
         """Test strategy generation for different vulnerability types."""
@@ -448,7 +452,7 @@ class TestGenerateExploitStrategyCommon:
 
         result = generate_exploit_strategy_common(str(binary_path), "format_string")
 
-        assert "strategy" in result
+        assert hasattr(result, "strategy")
 
 
 @pytest.mark.integration
@@ -469,14 +473,14 @@ class TestUIHelpersIntegration:
         target_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 100)
 
         bypass_payload = generate_exploit_payload_common("License Bypass", str(target_binary))
-        assert bypass_payload["target_exists"] is True
-        assert "payload_bytes" in bypass_payload
+        assert bypass_payload.target_exists is True
+        assert hasattr(bypass_payload, "payload_bytes")
 
         hijack_payload = generate_exploit_payload_common("Function Hijack", str(target_binary))
-        assert hijack_payload["target_exists"] is True
-        assert "payload_bytes" in hijack_payload
+        assert hijack_payload.target_exists is True
+        assert hasattr(hijack_payload, "payload_bytes")
 
-        assert bypass_payload["payload_bytes"] != hijack_payload["payload_bytes"]
+        assert bypass_payload.payload_bytes != hijack_payload.payload_bytes
 
     def test_file_dialog_with_real_interaction(self, inject_fake_file_dialog: None) -> None:
         """Test file dialog with simulated user interaction."""
@@ -513,6 +517,6 @@ class TestUIHelpersIntegration:
         for path in targets.values():
             payload = generate_exploit_payload_common("License Bypass", str(path))
 
-            assert payload["target"] == str(path)
-            assert payload["target_exists"] is True
-            assert "payload_bytes" in payload
+            assert payload.target == str(path)
+            assert payload.target_exists is True
+            assert hasattr(payload, "payload_bytes")

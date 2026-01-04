@@ -11,7 +11,7 @@ These tests validate real license validation detection:
 import json
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 
@@ -65,7 +65,7 @@ def protected_binary() -> Path:
 
 
 @pytest.fixture
-def license_analyzer(sample_binary: Path) -> R2LicenseAnalyzer:
+def license_analyzer(sample_binary: Path) -> Generator[R2LicenseAnalyzer, None, None]:
     """Initialize R2LicenseAnalyzer with sample binary."""
     r2 = r2pipe.open(str(sample_binary))
     yield R2LicenseAnalyzer(r2=r2)

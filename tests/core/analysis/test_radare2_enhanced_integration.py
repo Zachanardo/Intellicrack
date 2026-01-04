@@ -32,8 +32,8 @@ try:
     )
     AVAILABLE: bool = True
 except ImportError:
-    EnhancedR2Integration = None
-    create_enhanced_r2_integration = None
+    EnhancedR2Integration = None  # type: ignore[misc, assignment]
+    create_enhanced_r2_integration = None  # type: ignore[assignment]
     AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not AVAILABLE, reason="Module not available")
@@ -180,13 +180,13 @@ class TestComprehensiveAnalysisOrchestration(unittest.TestCase):
 
         # Validate detailed analysis results
         self.assertIsInstance(result, dict)
-        self.assertIn("status", result)
-        self.assertIn("execution_time", result)
+        self.assertIn("status", result)  # type: ignore[arg-type]
+        self.assertIn("execution_time", result)  # type: ignore[arg-type]
 
         # Production analysis should provide meaningful data
-        if result.get("status") == "success":
-            self.assertIn("data", result)
-            self.assertIsNotNone(result["data"])
+        if result.get("status") == "success":  # type: ignore[union-attr]
+            self.assertIn("data", result)  # type: ignore[arg-type]
+            self.assertIsNotNone(result["data"])  # type: ignore[index]
 
     def test_analysis_error_handling_maintains_system_stability(self) -> None:
         """Test that analysis error handling maintains system stability during failures."""
@@ -198,9 +198,9 @@ class TestComprehensiveAnalysisOrchestration(unittest.TestCase):
 
             # Should handle errors gracefully without crashing
             self.assertIsInstance(result, dict)
-            self.assertIn("status", result)
-            if result.get("status") == "error":
-                self.assertIn("error_message", result)
+            self.assertIn("status", result)  # type: ignore[arg-type]
+            if result.get("status") == "error":  # type: ignore[union-attr]
+                self.assertIn("error_message", result)  # type: ignore[arg-type]
 
 
 class TestCachingSystemAndPerformanceOptimization(unittest.TestCase):
@@ -237,7 +237,7 @@ class TestCachingSystemAndPerformanceOptimization(unittest.TestCase):
         self.assertIsInstance(second_result, dict)
 
         # Cached execution should be significantly faster
-        if first_result.get("status") == "success" and second_result.get("status") == "success":
+        if first_result.get("status") == "success" and second_result.get("status") == "success":  # type: ignore[union-attr]
             self.assertLess(second_execution_time, first_execution_time * 0.5)
 
     def test_cache_management_handles_size_limits_intelligently(self) -> None:
@@ -370,9 +370,9 @@ class TestRealTimeMonitoringAndHealthStatus(unittest.TestCase):
             """Real test callback for monitoring."""
             def __init__(self) -> None:
                 self.call_count = 0
-                self.updates = []
+                self.updates: list[Any] = []
 
-            def __call__(self, update):
+            def __call__(self, update: Any) -> None:
                 """Handle monitoring update."""
                 self.call_count += 1
                 self.updates.append(update)
@@ -392,7 +392,7 @@ class TestRealTimeMonitoringAndHealthStatus(unittest.TestCase):
 
     def test_monitoring_handles_callback_errors_gracefully(self) -> None:
         """Test that monitoring handles callback errors gracefully without crashing."""
-        def error_callback(update):
+        def error_callback(update: Any) -> None:
             raise Exception("Callback error for testing")
 
         # Should not crash when callback raises exception
@@ -419,7 +419,7 @@ class TestFactoryFunctionAndCleanupMechanisms(unittest.TestCase):
 
     def test_factory_function_creates_properly_configured_integration(self) -> None:
         """Test that factory function creates properly configured integration instance."""
-        integration = create_enhanced_r2_integration(self.test_binary_path, self.factory_config)
+        integration = create_enhanced_r2_integration(self.test_binary_path, self.factory_config)  # type: ignore[call-arg]
 
         # Validate factory creation
         self.assertIsInstance(integration, EnhancedR2Integration)
@@ -471,8 +471,8 @@ class TestFactoryFunctionAndCleanupMechanisms(unittest.TestCase):
         config1 = {"cache_enabled": True, "parallel_workers": 2}
         config2 = {"cache_enabled": False, "parallel_workers": 4}
 
-        integration1 = create_enhanced_r2_integration(self.test_binary_path, config1)
-        integration2 = create_enhanced_r2_integration(self.test_binary_path, config2)
+        integration1 = create_enhanced_r2_integration(self.test_binary_path, config1)  # type: ignore[call-arg]
+        integration2 = create_enhanced_r2_integration(self.test_binary_path, config2)  # type: ignore[call-arg]
 
         # Integrations should be independent
         self.assertNotEqual(id(integration1), id(integration2))
@@ -573,12 +573,12 @@ class TestProductionReadinessValidation(unittest.TestCase):
 
             # Production error handling should be sophisticated
             self.assertIsInstance(result, dict)
-            self.assertIn('status', result)
+            self.assertIn('status', result)  # type: ignore[arg-type]
 
             # Should provide meaningful error information
-            if result.get('status') == 'error':
-                self.assertIn('error_message', result)
-                error_msg = result['error_message'].lower()
+            if result.get('status') == 'error':  # type: ignore[union-attr]
+                self.assertIn('error_message', result)  # type: ignore[arg-type]
+                error_msg = result['error_message'].lower()  # type: ignore[index]
 
                 # Error messages should be informative, not generic
                 generic_errors = ['error occurred', 'something went wrong', 'unknown error']

@@ -22,13 +22,12 @@ from intellicrack.core.frida_manager import (
 )
 from intellicrack.utils.core.import_checks import FRIDA_AVAILABLE
 
-frida: type[Any] | None
 try:
     import frida
 
     FRIDA_IMPORT_AVAILABLE = True
 except ImportError:
-    frida = None
+    frida = None  # type: ignore[assignment]
     FRIDA_IMPORT_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida not available")
@@ -84,7 +83,7 @@ class TestFridaOperationLogger:
         log_dir: Path = tmp_path / "frida_logs"
         logger: FridaOperationLogger = FridaOperationLogger(log_dir=str(log_dir))
 
-        initial_count: int = logger.stats["total_operations"]
+        initial_count = logger.stats["total_operations"]
 
         logger.log_operation(
             operation="test_op",
@@ -99,7 +98,7 @@ class TestFridaOperationLogger:
         log_dir: Path = tmp_path / "frida_logs"
         logger: FridaOperationLogger = FridaOperationLogger(log_dir=str(log_dir))
 
-        logger.log_hook(
+        logger.log_hook(  # type: ignore[call-arg]
             hook_name="TestHook",
             function="TestFunction",
             args={"arg1": "value1"},
@@ -147,7 +146,7 @@ class TestFridaOperationLogger:
         logger: FridaOperationLogger = FridaOperationLogger(log_dir=str(log_dir))
 
         logger.log_operation("op1", {}, True)
-        logger.log_hook("hook1", "func1", {}, "result")
+        logger.log_hook("hook1", "func1", {}, "result")  # type: ignore[arg-type]
 
         stats: dict[str, Any] = logger.get_statistics()
 
@@ -223,7 +222,7 @@ class TestHookBatcher:
             "module": "test.dll",
         }
 
-        batcher.add_hook(category=HookCategory.DEBUGGER_DETECTION, hook_spec=hook_spec)
+        batcher.add_hook(category=HookCategory.DEBUGGER_DETECTION, hook_spec=hook_spec)  # type: ignore[attr-defined]
 
         assert batcher.hook_queue.qsize() >= 1
 
@@ -234,8 +233,8 @@ class TestHookBatcher:
         hook_spec1: dict[str, Any] = {"target": "Func1", "script": "hook1", "module": "test.dll"}
         hook_spec2: dict[str, Any] = {"target": "Func2", "script": "hook2", "module": "test.dll"}
 
-        batcher.add_hook(HookCategory.DEBUGGER_DETECTION, hook_spec1)
-        batcher.add_hook(HookCategory.LICENSE_CHECK, hook_spec2)
+        batcher.add_hook(HookCategory.DEBUGGER_DETECTION, hook_spec1)  # type: ignore[attr-defined]
+        batcher.add_hook(HookCategory.LICENSE_CHECK, hook_spec2)  # type: ignore[attr-defined]
 
         stats: dict[str, Any] = batcher.get_batch_stats()
 
@@ -440,7 +439,7 @@ class TestLoggingPerformance:
         max_hook_buffer: int = 50000
 
         for i in range(max_hook_buffer + 100):
-            logger.log_hook(f"hook_{i}", "func", {}, "result")
+            logger.log_hook(f"hook_{i}", "func", {}, "result")  # type: ignore[arg-type]
 
         assert len(logger.hook_buffer) <= max_hook_buffer
 

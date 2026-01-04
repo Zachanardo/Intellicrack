@@ -37,7 +37,7 @@ class FakeParentWidget:
 class FakeInputFunction:
     """Real test double for builtins.input function."""
 
-    def __init__(self, responses: list[str | Exception]) -> None:
+    def __init__(self, responses: list[str | BaseException]) -> None:
         self.responses = responses
         self.call_index = 0
         self.prompts: list[str] = []
@@ -50,7 +50,7 @@ class FakeInputFunction:
         response = self.responses[self.call_index]
         self.call_index += 1
 
-        if isinstance(response, Exception):
+        if isinstance(response, BaseException):
             raise response
         return response
 
@@ -242,6 +242,7 @@ class TestGetUserInput:
         monkeypatch.setattr("builtins.input", fake_input)
 
         result = get_user_input("Enter value")
+        assert result is not None
 
         assert "\n" not in result
         assert "\r" not in result
@@ -485,7 +486,7 @@ class TestFormatTableData:
             ["Very long content that exceeds width", "More long content here"],
         ]
 
-        result = format_table_data(headers, rows, max_width=50)
+        result = format_table_data(headers, rows, max_width=50)  # type: ignore[arg-type]
 
         lines = result.split("\n")
         for line in lines:
@@ -499,7 +500,7 @@ class TestFormatTableData:
             ["X", "Y", "Z"],
         ]
 
-        result = format_table_data(headers, rows)
+        result = format_table_data(headers, rows)  # type: ignore[arg-type]
 
         lines = result.split("\n")
         assert len(lines) >= 4
@@ -619,7 +620,7 @@ class TestUIUtilsIntegration:
             ["software.exe", "Enigma 6.7", "Detected"],
         ]
 
-        result = format_table_data(headers, rows)
+        result = format_table_data(headers, rows)  # type: ignore[arg-type]
 
         assert "notepad.exe" in result
         assert "VMProtect" in result

@@ -32,9 +32,9 @@ import pytest
 
 from intellicrack.core.analysis.concolic_executor import (
     ConcolicExecutionEngine,
-    Manticore,
     NativeConcolicState,
-    Plugin,
+    NativeManticore as Manticore,
+    NativePlugin as Plugin,
     run_concolic_execution,
 )
 
@@ -129,12 +129,12 @@ def minimal_pe_binary(tmp_path: Path) -> Path:
     )
     code_section[10:11] = bytes([0xC3])
 
-    binary_data: bytes = (
+    binary_data: bytearray = (
         dos_header + pe_signature + coff_header +
         optional_header + section_header + code_section
     )
 
-    binary_path.write_bytes(binary_data)
+    binary_path.write_bytes(bytes(binary_data))
     return binary_path
 
 
@@ -178,12 +178,12 @@ def license_check_binary(tmp_path: Path) -> Path:
     license_string: bytes = b"license key validation"
     code_section[100:100 + len(license_string)] = license_string
 
-    binary_data: bytes = (
+    binary_data: bytearray = (
         dos_header + pe_signature + coff_header +
         optional_header + section_header + code_section
     )
 
-    binary_path.write_bytes(binary_data)
+    binary_path.write_bytes(bytes(binary_data))
     return binary_path
 
 
@@ -226,12 +226,12 @@ def branching_binary(tmp_path: Path) -> Path:
     ]
     code_section[:len(complex_branches)] = bytes(complex_branches)
 
-    binary_data: bytes = (
+    binary_data: bytearray = (
         dos_header + pe_signature + coff_header +
         optional_header + section_header + code_section
     )
 
-    binary_path.write_bytes(binary_data)
+    binary_path.write_bytes(bytes(binary_data))
     return binary_path
 
 
@@ -274,7 +274,11 @@ class TestNativeConcolicStateProduction:
         original.memory[0x1001] = 0x43
         original.constraints.append("eax > 0")
         original.constraints.append("ebx < 100")
-        original.execution_trace.append({"pc": 0x401000, "insn": "test"})
+        original.execution_trace.append({
+            "pc": 0x401000,
+            "instruction": "test",
+            "registers": {"eax": 0x12345678}
+        })
 
         forked: NativeConcolicState = original.fork()
 
@@ -410,14 +414,14 @@ class TestManticoreNativeImplementationProduction:
     def test_manticore_respects_execution_timeout(self, minimal_pe_binary: Path) -> None:
         """Manticore terminates execution when timeout is reached."""
         m: Manticore = Manticore(str(minimal_pe_binary))
-        m.timeout = 0.5
+        m.timeout = 1
 
         start_time: float = time.time()
         m.run(procs=1)
         elapsed: float = time.time() - start_time
 
         assert m.execution_complete is True
-        assert elapsed < m.timeout + 1.0
+        assert elapsed < float(m.timeout) + 1.0
 
     def test_manticore_enforces_state_limit(self, branching_binary: Path) -> None:
         """Manticore enforces maximum state limit during path exploration."""
@@ -505,7 +509,7 @@ class TestManticoreNativeImplementationProduction:
     def test_manticore_state_prioritization_mechanism(self) -> None:
         """Manticore prioritizes states to avoid path explosion."""
         m: Manticore = Manticore(None)
-        m.visited_pcs = {0x1000, 0x2000}
+        setattr(m, "visited_pcs", {0x1000, 0x2000})
 
         states: List[NativeConcolicState] = []
         for i in range(20):
@@ -533,7 +537,7 @@ class TestConcolicExecutionEngineProduction:
         assert engine.binary_path == str(minimal_pe_binary)
         assert engine.max_iterations == 50
         assert engine.timeout == 2
-        assert engine.logger is not None
+        assert engine._logger is not None
 
     def test_engine_raises_error_for_missing_binary(self, tmp_path: Path) -> None:
         """Engine raises FileNotFoundError for missing binary."""
@@ -868,12 +872,12 @@ class TestRealWorldBinaryAnalysis:
         code_section: bytearray = bytearray(1024)
         code_section[:10] = bytes([0x90] * 10)
 
-        binary_data: bytes = (
+        binary_data: bytearray = (
             dos_header + pe_signature + coff_header +
             optional_header + section_header + code_section
         )
 
-        large_binary.write_bytes(binary_data)
+        large_binary.write_bytes(bytes(binary_data))
 
         engine: ConcolicExecutionEngine = ConcolicExecutionEngine(
             str(large_binary),

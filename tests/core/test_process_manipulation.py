@@ -261,7 +261,7 @@ class TestPatternScanning:
         regions_backup = analyzer._get_memory_regions
         def mock_regions() -> list[dict[str, Any]]:
             return [{"base_address": address, "size": 205, "protection": 0x10}]
-        analyzer._get_memory_regions = mock_regions
+        analyzer._get_memory_regions = mock_regions  # type: ignore[method-assign]
 
         matches = analyzer.scan_pattern(test_pattern)
 
@@ -269,7 +269,7 @@ class TestPatternScanning:
         assert len(matches) > 0
         assert (address + 100) in matches
 
-        analyzer._get_memory_regions = regions_backup
+        analyzer._get_memory_regions = regions_backup  # type: ignore[method-assign]
         analyzer.detach()
 
     def test_scan_pattern_with_mask_finds_wildcard_matches(self) -> None:
@@ -286,14 +286,14 @@ class TestPatternScanning:
         regions_backup = analyzer._get_memory_regions
         def mock_regions() -> list[dict[str, Any]]:
             return [{"base_address": address, "size": len(test_data), "protection": 0x10}]
-        analyzer._get_memory_regions = mock_regions
+        analyzer._get_memory_regions = mock_regions  # type: ignore[method-assign]
 
         matches = analyzer.scan_pattern(pattern, mask)
 
         assert isinstance(matches, list)
         assert len(matches) > 0
 
-        analyzer._get_memory_regions = regions_backup
+        analyzer._get_memory_regions = regions_backup  # type: ignore[method-assign]
         analyzer.detach()
 
     def test_scan_pattern_cached_improves_performance(self) -> None:
@@ -308,7 +308,7 @@ class TestPatternScanning:
         regions_backup = analyzer._get_memory_regions
         def mock_regions() -> list[dict[str, Any]]:
             return [{"base_address": address, "size": 103, "protection": 0x10}]
-        analyzer._get_memory_regions = mock_regions
+        analyzer._get_memory_regions = mock_regions  # type: ignore[method-assign]
 
         first_scan = analyzer.scan_pattern_cached(pattern)
         second_scan = analyzer.scan_pattern_cached(pattern)
@@ -317,7 +317,7 @@ class TestPatternScanning:
         stats = analyzer.get_cache_stats()
         assert stats["hits"] >= 1
 
-        analyzer._get_memory_regions = regions_backup
+        analyzer._get_memory_regions = regions_backup  # type: ignore[method-assign]
         analyzer.detach()
 
     def test_scan_patterns_concurrent_scans_multiple_patterns(self) -> None:
@@ -337,7 +337,7 @@ class TestPatternScanning:
         assert len(results) == 3
         for pattern in patterns:
             assert pattern["name"] in results
-            assert isinstance(results[pattern["name"]], list)
+            assert isinstance(results[pattern["name"]], list)  # type: ignore[index]
         analyzer.detach()
 
     def test_batch_scan_with_cache_uses_cached_results(self) -> None:
@@ -374,13 +374,13 @@ class TestLicenseCheckDetection:
         regions_backup = analyzer._get_memory_regions
         def mock_regions() -> list[dict[str, Any]]:
             return [{"base_address": address, "size": len(test_data), "protection": 0x10}]
-        analyzer._get_memory_regions = mock_regions
+        analyzer._get_memory_regions = mock_regions  # type: ignore[method-assign]
 
         license_checks = analyzer.find_license_checks()
 
         assert isinstance(license_checks, list)
 
-        analyzer._get_memory_regions = regions_backup
+        analyzer._get_memory_regions = regions_backup  # type: ignore[method-assign]
         analyzer.detach()
 
     def test_analyze_license_check_context_detects_conditional_jumps(self) -> None:
@@ -936,18 +936,18 @@ class TestWindowsStructures:
 
     def test_process_access_enum_defines_access_rights(self) -> None:
         """ProcessAccess enum defines valid process access rights."""
-        assert ProcessAccess.PROCESS_VM_READ == 0x0010
-        assert ProcessAccess.PROCESS_VM_WRITE == 0x0020
-        assert ProcessAccess.PROCESS_VM_OPERATION == 0x0008
-        assert ProcessAccess.PROCESS_CREATE_THREAD == 0x0002
-        assert ProcessAccess.PROCESS_ALL_ACCESS == 0x1F0FFF
+        assert ProcessAccess.PROCESS_VM_READ.value == 0x0010
+        assert ProcessAccess.PROCESS_VM_WRITE.value == 0x0020
+        assert ProcessAccess.PROCESS_VM_OPERATION.value == 0x0008
+        assert ProcessAccess.PROCESS_CREATE_THREAD.value == 0x0002
+        assert ProcessAccess.PROCESS_ALL_ACCESS.value == 0x1F0FFF
 
     def test_process_information_class_enum_defines_classes(self) -> None:
         """ProcessInformationClass enum defines query information classes."""
-        assert ProcessInformationClass.ProcessBasicInformation == 0
-        assert ProcessInformationClass.ProcessDebugPort == 7
-        assert ProcessInformationClass.ProcessWow64Information == 26
-        assert ProcessInformationClass.ProcessDebugFlags == 31
+        assert ProcessInformationClass.ProcessBasicInformation.value == 0
+        assert ProcessInformationClass.ProcessDebugPort.value == 7
+        assert ProcessInformationClass.ProcessWow64Information.value == 26
+        assert ProcessInformationClass.ProcessDebugFlags.value == 31
 
     def test_memory_basic_information_structure_is_valid(self) -> None:
         """MemoryBasicInformation structure has valid field definitions."""
@@ -985,10 +985,10 @@ class TestErrorHandling:
         result = analyzer.read_memory(0, 16)
         assert result is None or isinstance(result, bytes)
 
-        result = analyzer.write_memory(0, b"test")
+        result = analyzer.write_memory(0, b"test")  # type: ignore[assignment]
         assert isinstance(result, bool)
 
-        analyzer.detach()
+        analyzer.detach()  # type: ignore[unreachable]
 
     def test_zero_length_operations_handled_correctly(self) -> None:
         """Zero-length operations are handled correctly."""

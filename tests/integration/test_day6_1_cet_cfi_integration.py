@@ -18,7 +18,7 @@ except ImportError as e:
     IMPORT_SUCCESS = False
 
 
-def create_test_binary_with_modern_protections():
+def create_test_binary_with_modern_protections() -> str:
     """Create a test binary to simulate modern protection analysis."""
     # Create a simple C program that might have modern protections
     test_program = '''
@@ -54,10 +54,10 @@ int main(int argc, char *argv[]) {
 class TestCETCFIIntegration:
     """Test CET/CFI bypass integration with radare2 vulnerability detection."""
 
-    def __init__(self):
-        self.test_results = []
+    def __init__(self) -> None:
+        self.test_results: list[bool] = []
 
-    def test_cet_bypass_module_integration(self):
+    def test_cet_bypass_module_integration(self) -> bool:
         """Test CET bypass module is properly integrated."""
         print("Testing CET Bypass Module Integration:")
         print("=" * 40)
@@ -100,7 +100,7 @@ class TestCETCFIIntegration:
             self.test_results.append(False)
             return False
 
-    def test_cfi_bypass_module_integration(self):
+    def test_cfi_bypass_module_integration(self) -> bool:
         """Test CFI bypass module is properly integrated."""
         print("\nTesting CFI Bypass Module Integration:")
         print("=" * 40)
@@ -146,7 +146,7 @@ class TestCETCFIIntegration:
             self.test_results.append(False)
             return False
 
-    def test_modern_protection_analysis_methods(self):
+    def test_modern_protection_analysis_methods(self) -> bool:
         """Test modern protection analysis methods are available."""
         print("\nTesting Modern Protection Analysis Methods:")
         print("=" * 45)
@@ -183,7 +183,7 @@ class TestCETCFIIntegration:
             self.test_results.append(False)
             return False
 
-    def test_vulnerability_analysis_includes_modern_protections(self):
+    def test_vulnerability_analysis_includes_modern_protections(self) -> bool:
         """Test vulnerability analysis includes modern protection fields."""
         print("\nTesting Vulnerability Analysis Includes Modern Protections:")
         print("=" * 58)
@@ -232,7 +232,7 @@ class TestCETCFIIntegration:
             self.test_results.append(False)
             return False
 
-    def test_bypass_integration_workflow(self):
+    def test_bypass_integration_workflow(self) -> bool:
         """Test the complete bypass integration workflow."""
         print("\nTesting Complete Bypass Integration Workflow:")
         print("=" * 48)
@@ -274,7 +274,7 @@ class TestCETCFIIntegration:
             return False
 
 
-def main():
+def main() -> int:
     """Execute Day 6.1 CET/CFI bypass integration testing."""
     print("DAY 6.1 CET/CFI BYPASS INTEGRATION TESTING")
     print("=" * 50)

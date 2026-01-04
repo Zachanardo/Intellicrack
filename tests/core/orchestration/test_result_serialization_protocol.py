@@ -635,7 +635,7 @@ class TestRealToolOutputConversion:
         assert license_func.size == 1024
         assert len(license_func.parameters) == 3
         assert license_func.return_type == "int"
-        assert "ComputeKeyHash" in license_func.decompiled_code
+        assert "ComputeKeyHash" in license_func.decompiled_code  # type: ignore[operator]
 
         trial_func = next(f for f in function_results if f.name == "GenerateTrialKey")
         assert trial_func.address == 0x401400
@@ -850,28 +850,28 @@ class TestRealToolOutputConversion:
             ]
         }
 
-        protection_results = []
+        protection_results: list[ProtectionResult | LicenseCheckResult] = []
         for match in real_yara_matches["matches"]:
             if "packer" in match.get("tags", []):
-                result = ProtectionResult(
-                    id=hashlib.sha256(match["rule"].encode()).hexdigest(),
+                result: ProtectionResult | LicenseCheckResult = ProtectionResult(
+                    id=hashlib.sha256(match["rule"].encode()).hexdigest(),  # type: ignore[attr-defined]
                     type=ResultType.PROTECTION,
                     source_tool="yara",
                     timestamp=datetime.now().timestamp(),
-                    protection_type=match["rule"].split("_")[0].lower(),
-                    name=match["rule"],
-                    version=match.get("meta", {}).get("version"),
-                    detection_signatures=[s["identifier"] for s in match.get("strings", [])],
+                    protection_type=match["rule"].split("_")[0].lower(),  # type: ignore[attr-defined]
+                    name=match["rule"],  # type: ignore[arg-type]
+                    version=match.get("meta", {}).get("version"),  # type: ignore[attr-defined]
+                    detection_signatures=[s["identifier"] for s in match.get("strings", [])],  # type: ignore[index]
                 )
                 protection_results.append(result)
             elif "license" in match.get("tags", []):
                 result = LicenseCheckResult(
-                    id=hashlib.sha256(match["rule"].encode()).hexdigest(),
+                    id=hashlib.sha256(match["rule"].encode()).hexdigest(),  # type: ignore[attr-defined]
                     type=ResultType.LICENSE,
                     source_tool="yara",
                     timestamp=datetime.now().timestamp(),
-                    check_type=match.get("meta", {}).get("license_type", "unknown"),
-                    address=match["strings"][0]["offset"] if match.get("strings") else 0,
+                    check_type=match.get("meta", {}).get("license_type", "unknown"),  # type: ignore[attr-defined]
+                    address=match["strings"][0]["offset"] if match.get("strings") else 0,  # type: ignore[index]
                 )
                 protection_results.append(result)
 
@@ -927,7 +927,7 @@ class TestRealToolOutputConversion:
         validate_func = function_results[0]
         hwid_api = api_results[0]
 
-        assert "CheckHWID" in validate_func.decompiled_code
+        assert "CheckHWID" in validate_func.decompiled_code  # type: ignore[operator]
         assert "VolumeSerial" in hwid_api.metadata.get("function", "")
 
 

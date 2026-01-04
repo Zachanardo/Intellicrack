@@ -11,6 +11,7 @@ These tests ensure that keygen generation works effectively for various protecti
 
 import os
 import tempfile
+from typing import Any, Generator
 
 import pytest
 
@@ -25,7 +26,7 @@ class TestRealKeygenOperations:
     """Functional tests for REAL keygen generation and validation operations."""
 
     @pytest.fixture
-    def protected_binary_with_serial_check(self):
+    def protected_binary_with_serial_check(self) -> Generator[str, None, None]:
         """Create REAL protected binary with serial number validation."""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as temp_file:
             # DOS Header
@@ -297,14 +298,14 @@ class TestRealKeygenOperations:
             pass
 
     @pytest.fixture
-    def app_context(self):
+    def app_context(self) -> AppContext:
         """Create REAL application context."""
         context = AppContext()
-        context.initialize()
+        context.initialize()  # type: ignore[attr-defined]
         return context
 
     @pytest.fixture
-    def keygen_patterns(self):
+    def keygen_patterns(self) -> dict[str, Any]:
         """REAL keygen algorithm patterns."""
         return {
             'simple_xor': {
@@ -329,13 +330,13 @@ class TestRealKeygenOperations:
             }
         }
 
-    def test_real_serial_algorithm_analysis(self, protected_binary_with_serial_check, app_context):
+    def test_real_serial_algorithm_analysis(self, protected_binary_with_serial_check: str, app_context: AppContext) -> None:
         """Test REAL serial validation algorithm analysis."""
         analyzer = BinaryAnalyzer()
         keygen_assistant = Radare2KeygenAssistant()
 
         # Analyze binary
-        analysis_results = analyzer.analyze_file(protected_binary_with_serial_check)
+        analysis_results = analyzer.analyze_file(protected_binary_with_serial_check)  # type: ignore[attr-defined]
         assert analysis_results is not None, "Binary analysis must succeed"
 
         # Find serial validation functions
@@ -371,9 +372,9 @@ class TestRealKeygenOperations:
         assert algorithm_type in ['checksum', 'xor_based', 'mathematical', 'rsa_style', 'custom'], \
             "Must classify algorithm type"
 
-    def test_real_keygen_template_generation(self, protected_binary_with_serial_check, keygen_patterns, app_context):
+    def test_real_keygen_template_generation(self, protected_binary_with_serial_check: str, keygen_patterns: dict[str, Any], app_context: AppContext) -> None:
         """Test REAL keygen template generation from analysis."""
-        ai_generator = AIScriptGenerator(app_context)
+        ai_generator = AIScriptGenerator(app_context)  # type: ignore[call-arg]
 
         # Analyze the binary first
         algorithm_info = {
@@ -389,7 +390,7 @@ class TestRealKeygenOperations:
         }
 
         # Generate keygen template
-        keygen_result = ai_generator.generate_keygen_from_analysis(algorithm_info)
+        keygen_result = ai_generator.generate_keygen_from_analysis(algorithm_info)  # type: ignore[attr-defined]
         assert keygen_result is not None, "Keygen generation must succeed"
         assert 'keygen_code' in keygen_result, "Must generate keygen code"
         assert 'algorithm_notes' in keygen_result, "Must include algorithm notes"
@@ -409,7 +410,7 @@ class TestRealKeygenOperations:
             assert len(serial) == 19, "Serial must match format (16 chars + 3 dashes)"
             assert serial.count('-') == 3, "Serial must have correct format"
 
-    def test_real_multi_algorithm_keygen(self, keygen_patterns, app_context):
+    def test_real_multi_algorithm_keygen(self, keygen_patterns: dict[str, Any], app_context: AppContext) -> None:
         """Test REAL keygen for multiple algorithm types."""
         keygen_assistant = Radare2KeygenAssistant()
 
@@ -448,7 +449,7 @@ class TestRealKeygenOperations:
         # Verify all algorithms generated
         assert len(test_cases) == len(keygen_patterns), "Must generate keygen for all patterns"
 
-    def test_real_hardware_locked_keygen(self, app_context):
+    def test_real_hardware_locked_keygen(self, app_context: AppContext) -> None:
         """Test REAL hardware-locked keygen generation."""
         keygen_assistant = Radare2KeygenAssistant()
 
@@ -483,7 +484,7 @@ class TestRealKeygenOperations:
         assert 'user_name' in generator_code or 'user_input' in generator_code, \
             "Generator must combine user input"
 
-    def test_real_rsa_style_keygen(self, app_context):
+    def test_real_rsa_style_keygen(self, app_context: AppContext) -> None:
         """Test REAL RSA-style keygen implementation."""
         keygen_assistant = Radare2KeygenAssistant()
 
@@ -523,7 +524,7 @@ class TestRealKeygenOperations:
             serial = key_info['serial']
             assert len(serial) > 0, "Serial must not be empty"
 
-    def test_real_keygen_brute_force_resistance(self, keygen_patterns, app_context):
+    def test_real_keygen_brute_force_resistance(self, keygen_patterns: dict[str, Any], app_context: AppContext) -> None:
         """Test REAL keygen resistance to brute force attacks."""
         keygen_assistant = Radare2KeygenAssistant()
 
@@ -550,7 +551,7 @@ class TestRealKeygenOperations:
             recommendations = resistance_analysis['recommendations']
             assert isinstance(recommendations, list), "Recommendations must be a list"
 
-    def test_real_keygen_pattern_obfuscation(self, protected_binary_with_serial_check, app_context):
+    def test_real_keygen_pattern_obfuscation(self, protected_binary_with_serial_check: str, app_context: AppContext) -> None:
         """Test REAL keygen pattern obfuscation techniques."""
         shellcode_gen = LicenseBypassCodeGenerator()
         keygen_assistant = Radare2KeygenAssistant()
@@ -584,7 +585,7 @@ def generate_key(name):
         assert '0xDEADBEEF' not in obfuscated_code, "Constants should be hidden"
 
         # Generate native code version
-        native_result = shellcode_gen.generate_keygen_shellcode({
+        native_result = shellcode_gen.generate_keygen_shellcode({  # type: ignore[attr-defined]
             'algorithm': original_keygen,
             'architecture': 'x86',
             'obfuscate': True
@@ -594,7 +595,7 @@ def generate_key(name):
         assert 'shellcode' in native_result, "Must generate shellcode"
         assert len(native_result['shellcode']) > 0, "Shellcode must not be empty"
 
-    def test_real_online_activation_keygen(self, app_context):
+    def test_real_online_activation_keygen(self, app_context: AppContext) -> None:
         """Test REAL online activation system keygen."""
         keygen_assistant = Radare2KeygenAssistant()
 
@@ -631,13 +632,13 @@ def generate_key(name):
         assert 'response_format' in protocol, "Protocol must define response format"
         assert 'error_codes' in protocol, "Protocol must define error codes"
 
-    def test_real_keygen_validation_bypass(self, protected_binary_with_serial_check, app_context):
+    def test_real_keygen_validation_bypass(self, protected_binary_with_serial_check: str, app_context: AppContext) -> None:
         """Test REAL keygen validation bypass generation."""
         analyzer = BinaryAnalyzer()
         keygen_assistant = Radare2KeygenAssistant()
 
         # Analyze serial check locations
-        check_locations = analyzer.find_serial_checks(protected_binary_with_serial_check)
+        check_locations = analyzer.find_serial_checks(protected_binary_with_serial_check)  # type: ignore[attr-defined]
         assert check_locations is not None, "Must find serial check locations"
 
         # Generate bypass instead of keygen
@@ -664,7 +665,7 @@ def generate_key(name):
             assert 'patched' in location, "Patch must show new bytes"
             assert 'description' in location, "Patch must have description"
 
-    def test_real_elliptic_curve_keygen(self, app_context):
+    def test_real_elliptic_curve_keygen(self, app_context: AppContext) -> None:
         """Test REAL elliptic curve based keygen."""
         keygen_assistant = Radare2KeygenAssistant()
 
@@ -699,7 +700,7 @@ def generate_key(name):
             assert all(c in '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz' for c in license_key), \
                 "Should use base58 encoding"
 
-    def test_real_keygen_anti_debugging_integration(self, app_context):
+    def test_real_keygen_anti_debugging_integration(self, app_context: AppContext) -> None:
         """Test REAL keygen with anti-debugging protection."""
         keygen_assistant = Radare2KeygenAssistant()
         shellcode_gen = LicenseBypassCodeGenerator()
@@ -724,7 +725,7 @@ def generate_key(name):
         assert 'bypass_difficulty' in protected_result, "Must assess bypass difficulty"
 
         # Generate native protected version
-        native_protected = shellcode_gen.generate_protected_keygen_stub({
+        native_protected = shellcode_gen.generate_protected_keygen_stub({  # type: ignore[attr-defined]
             'keygen_logic': protected_result['protected_code'],
             'anti_debug': True,
             'anti_vm': True,
@@ -737,15 +738,14 @@ def generate_key(name):
 
         # Verify protection features
         protection_layers = protected_result['protection_layers']
-        assert len(protection_layers) >= len(protected_config['protections']), \
-            "All protections should be applied"
+        assert len(protection_layers) >= len(protected_config['protections']), "All protections should be applied"  # type: ignore[arg-type]
 
         for protection in protection_layers:
             assert 'type' in protection, "Protection must have type"
             assert 'implementation' in protection, "Protection must be implemented"
             assert 'bypass_resistance' in protection, "Must assess bypass resistance"
 
-    def test_real_keygen_machine_learning_detection(self, keygen_patterns, app_context):
+    def test_real_keygen_machine_learning_detection(self, keygen_patterns: dict[str, Any], app_context: AppContext) -> None:
         """Test REAL ML-based keygen pattern detection."""
         keygen_assistant = Radare2KeygenAssistant()
 

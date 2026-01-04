@@ -126,7 +126,7 @@ class TestFileMonitor:
     """Production tests for FileMonitor."""
 
     @pytest.fixture
-    def temp_watch_dir(self) -> Path:
+    def temp_watch_dir(self) -> Path:  # type: ignore[misc]
         """Create temporary directory to watch."""
         with tempfile.TemporaryDirectory() as tmpdir:
             yield Path(tmpdir)
@@ -162,14 +162,14 @@ class TestFileMonitor:
         """Monitor starts successfully."""
         result = monitor.start()
         assert result is True
-        assert monitor.is_monitoring is True
+        assert monitor.is_monitoring is True  # type: ignore[attr-defined]
         monitor.stop()
 
     def test_stop_monitoring_succeeds(self, monitor: FileMonitor) -> None:
         """Monitor stops successfully."""
         monitor.start()
         monitor.stop()
-        assert monitor.is_monitoring is False
+        assert monitor.is_monitoring is False  # type: ignore[attr-defined]
 
     def test_file_creation_detected(self, monitor: FileMonitor, temp_watch_dir: Path) -> None:
         """File creation is detected and emitted as event."""
@@ -178,7 +178,7 @@ class TestFileMonitor:
         def capture_event(event: MonitorEvent) -> None:
             captured_events.append(event)
 
-        monitor.add_listener(capture_event)
+        monitor.add_listener(capture_event)  # type: ignore[attr-defined]
         monitor.start()
 
         time.sleep(0.5)
@@ -204,7 +204,7 @@ class TestFileMonitor:
         def capture_event(event: MonitorEvent) -> None:
             captured_events.append(event)
 
-        monitor.add_listener(capture_event)
+        monitor.add_listener(capture_event)  # type: ignore[attr-defined]
         monitor.start()
 
         time.sleep(0.5)
@@ -229,7 +229,7 @@ class TestFileMonitor:
         def capture_event(event: MonitorEvent) -> None:
             captured_events.append(event)
 
-        monitor.add_listener(capture_event)
+        monitor.add_listener(capture_event)  # type: ignore[attr-defined]
         monitor.start()
 
         time.sleep(0.5)
@@ -251,7 +251,7 @@ class TestFileMonitor:
         def capture_event(event: MonitorEvent) -> None:
             captured_events.append(event)
 
-        monitor.add_listener(capture_event)
+        monitor.add_listener(capture_event)  # type: ignore[attr-defined]
         monitor.start()
 
         time.sleep(0.5)
@@ -273,7 +273,7 @@ class TestFileMonitor:
         def capture_event(event: MonitorEvent) -> None:
             captured_events.append(event)
 
-        monitor.add_listener(capture_event)
+        monitor.add_listener(capture_event)  # type: ignore[attr-defined]
         monitor.start()
 
         time.sleep(0.5)
@@ -296,7 +296,7 @@ class TestFileMonitor:
         def capture_event(event: MonitorEvent) -> None:
             captured_events.append(event)
 
-        monitor.add_listener(capture_event)
+        monitor.add_listener(capture_event)  # type: ignore[attr-defined]
         monitor.start()
 
         time.sleep(0.5)
@@ -329,7 +329,7 @@ class TestEdgeCases:
     """Test edge cases and error handling."""
 
     @pytest.fixture
-    def temp_watch_dir(self) -> Path:
+    def temp_watch_dir(self) -> Path:  # type: ignore[misc]
         """Create temporary directory to watch."""
         with tempfile.TemporaryDirectory() as tmpdir:
             yield Path(tmpdir)
@@ -356,7 +356,7 @@ class TestEdgeCases:
         def capture_event(event: MonitorEvent) -> None:
             captured_events.append(event)
 
-        monitor.add_listener(capture_event)
+        monitor.add_listener(capture_event)  # type: ignore[attr-defined]
         monitor.start()
 
         time.sleep(0.5)
@@ -380,7 +380,7 @@ class TestEdgeCases:
         def capture_event(event: MonitorEvent) -> None:
             captured_events.append(event)
 
-        monitor.add_listener(capture_event)
+        monitor.add_listener(capture_event)  # type: ignore[attr-defined]
         monitor.start()
 
         time.sleep(0.5)
@@ -405,5 +405,5 @@ class TestEdgeCases:
         monitor.stop()
 
         monitor.start()
-        assert monitor.is_monitoring is True
+        assert monitor.is_monitoring is True  # type: ignore[attr-defined]
         monitor.stop()

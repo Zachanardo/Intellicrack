@@ -285,7 +285,7 @@ class TestConfigManagerDotNotation:
 
             config.set("new.nested.structure.key", "nested_value")
 
-            assert config._config["new"]["nested"]["structure"]["key"] == "nested_value"
+            assert config._config["new"]["nested"]["structure"]["key"] == "nested_value"  # type: ignore[index]
 
     def test_get_returns_default_for_missing_keys(self, tmp_path: Path) -> None:  # noqa: PLR6301
         """get() returns default value for missing configuration keys."""
@@ -416,12 +416,12 @@ class TestConfigManagerLayeredConfiguration:
                 }
             }
 
-            config._deep_merge(base, override)
+            config._deep_merge(base, override)  # type: ignore[arg-type]
 
             assert base["section"]["key1"] == "value1"
             assert base["section"]["key2"] == "new_value2"
-            assert base["section"]["nested"]["nested_key1"] == "nested_value1"
-            assert base["section"]["nested"]["nested_key2"] == "nested_value2"
+            assert base["section"]["nested"]["nested_key1"] == "nested_value1"  # type: ignore[index]
+            assert base["section"]["nested"]["nested_key2"] == "nested_value2"  # type: ignore[index]
 
 
 class TestConfigManagerEmergencyMode:
@@ -492,15 +492,15 @@ class TestConfigManagerGlobalInstance:
             assert config1 is config2
 
 
-def _isolated_config_env(tmp_path: Path):
+def _isolated_config_env(tmp_path: Path) -> Any:
     """Context manager for isolated config environment."""
     class _ConfigContext:
-        def __enter__(self) -> None:
+        def __enter__(self) -> Any:
             os.environ["INTELLICRACK_ROOT"] = str(tmp_path)
             _reset_config_singleton()
             return self
 
-        def __exit__(self, *args):
+        def __exit__(self, *args: object) -> None:
             os.environ.pop("INTELLICRACK_ROOT", None)
             os.environ.pop("INTELLICRACK_CONFIG_PATH", None)
             _reset_config_singleton()

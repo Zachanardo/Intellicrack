@@ -21,7 +21,7 @@ from typing import Any
 import pytest
 
 from intellicrack.core.protection_bypass.dongle_emulator import (
-    DongleEmulator,
+    HardwareDongleEmulator as DongleEmulator,
     DongleMemory,
     DongleType,
 )
@@ -110,8 +110,8 @@ def dongle_emulator() -> DongleEmulator:
     memory.eeprom[0:16] = b"LICENSE_KEY_0001"
 
     emulator = DongleEmulator()
-    emulator.memory = memory
-    emulator.active_sessions = {
+    emulator.memory = memory  # type: ignore[attr-defined]
+    emulator.active_sessions = {  # type: ignore[attr-defined]
         0x12345678: {
             "vendor_code": 0x0F0F0F0F,
             "feature_id": 42,
@@ -127,7 +127,7 @@ def test_hasp_hooks_script_syntax_valid(dongle_emulator: DongleEmulator) -> None
     Validates generated script has no syntax errors and can be compiled
     by Frida without throwing exceptions.
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
 
     assert len(dongle_emulator.hooks) > 0, "No hooks generated"
 
@@ -156,7 +156,7 @@ def test_hasp_hooks_no_undefined_functions(dongle_emulator: DongleEmulator) -> N
     Verifies script only calls defined Frida APIs and does not reference
     custom helper functions that are not implemented in the script.
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
 
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
@@ -178,7 +178,7 @@ def test_hasp_get_info_implementation_exists(dongle_emulator: DongleEmulator) ->
     Expected behavior: Must handle hasp_get_info with proper memory layout responses.
     Validates the hook provides structured data matching HASP API expectations.
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
 
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
@@ -191,7 +191,7 @@ def test_hasp_get_info_implementation_exists(dongle_emulator: DongleEmulator) ->
 
 def test_sentinel_hooks_script_syntax_valid(dongle_emulator: DongleEmulator) -> None:
     """Frida script for Sentinel hooks contains valid JavaScript syntax."""
-    dongle_emulator._install_dongle_hooks(["Sentinel"])
+    dongle_emulator._install_dongle_hooks(["Sentinel"])  # type: ignore[attr-defined]
 
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     assert len(frida_hooks) > 0
@@ -207,7 +207,7 @@ def test_sentinel_hooks_script_syntax_valid(dongle_emulator: DongleEmulator) -> 
 
 def test_sentinel_hooks_no_undefined_functions(dongle_emulator: DongleEmulator) -> None:
     """Sentinel Frida script does NOT reference undefined helper functions."""
-    dongle_emulator._install_dongle_hooks(["Sentinel"])
+    dongle_emulator._install_dongle_hooks(["Sentinel"])  # type: ignore[attr-defined]
 
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
@@ -224,7 +224,7 @@ def test_sentinel_hooks_no_undefined_functions(dongle_emulator: DongleEmulator) 
 
 def test_codemeter_hooks_script_syntax_valid(dongle_emulator: DongleEmulator) -> None:
     """Frida script for CodeMeter hooks contains valid JavaScript syntax."""
-    dongle_emulator._install_dongle_hooks(["CodeMeter"])
+    dongle_emulator._install_dongle_hooks(["CodeMeter"])  # type: ignore[attr-defined]
 
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     assert len(frida_hooks) > 0
@@ -239,7 +239,7 @@ def test_codemeter_hooks_script_syntax_valid(dongle_emulator: DongleEmulator) ->
 
 def test_codemeter_hooks_no_undefined_functions(dongle_emulator: DongleEmulator) -> None:
     """CodeMeter Frida script does NOT reference undefined helper functions."""
-    dongle_emulator._install_dongle_hooks(["CodeMeter"])
+    dongle_emulator._install_dongle_hooks(["CodeMeter"])  # type: ignore[attr-defined]
 
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
@@ -259,7 +259,7 @@ def test_codemeter_hooks_no_undefined_functions(dongle_emulator: DongleEmulator)
     reason="Dongle emulation requires Windows platform",
 )
 def test_hasp_script_loads_in_frida_process(
-    test_process: subprocess.Popen, dongle_emulator: DongleEmulator
+    test_process: subprocess.Popen[str], dongle_emulator: DongleEmulator
 ) -> None:
     """HASP Frida script loads successfully into real process without errors.
 
@@ -269,7 +269,7 @@ def test_hasp_script_loads_in_frida_process(
     if not FRIDA_AVAILABLE:
         pytest.skip("Frida not available")
 
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -288,7 +288,7 @@ def test_hasp_script_loads_in_frida_process(
                 if "comprehensive dongle API hooking" in str(payload).lower():
                     load_success = True
 
-        script.on("message", on_message)
+        script.on("message", on_message)  # type: ignore[call-overload]
         script.load()
 
         time.sleep(1.0)
@@ -307,13 +307,13 @@ def test_hasp_script_loads_in_frida_process(
     reason="Dongle emulation requires Windows platform",
 )
 def test_sentinel_script_loads_in_frida_process(
-    test_process: subprocess.Popen, dongle_emulator: DongleEmulator
+    test_process: subprocess.Popen[str], dongle_emulator: DongleEmulator
 ) -> None:
     """Sentinel Frida script loads successfully into real process."""
     if not FRIDA_AVAILABLE:
         pytest.skip("Frida not available")
 
-    dongle_emulator._install_dongle_hooks(["Sentinel"])
+    dongle_emulator._install_dongle_hooks(["Sentinel"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -338,13 +338,13 @@ def test_sentinel_script_loads_in_frida_process(
     reason="Dongle emulation requires Windows platform",
 )
 def test_codemeter_script_loads_in_frida_process(
-    test_process: subprocess.Popen, dongle_emulator: DongleEmulator
+    test_process: subprocess.Popen[str], dongle_emulator: DongleEmulator
 ) -> None:
     """CodeMeter Frida script loads successfully into real process."""
     if not FRIDA_AVAILABLE:
         pytest.skip("Frida not available")
 
-    dongle_emulator._install_dongle_hooks(["CodeMeter"])
+    dongle_emulator._install_dongle_hooks(["CodeMeter"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -370,7 +370,7 @@ def test_hasp_login_implementation_complete(dongle_emulator: DongleEmulator) -> 
     Expected behavior: Must implement complete hasp_login emulation with
     proper vendor code extraction and session handle generation.
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -395,7 +395,7 @@ def test_hasp_encrypt_implementation_complete(dongle_emulator: DongleEmulator) -
 
     Expected behavior: Must implement complete hasp_encrypt emulation.
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -416,7 +416,7 @@ def test_hasp_decrypt_implementation_complete(dongle_emulator: DongleEmulator) -
 
     Expected behavior: Must implement complete hasp_decrypt emulation.
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -430,7 +430,7 @@ def test_hasp_read_memory_operation_complete(dongle_emulator: DongleEmulator) ->
     Expected behavior: Must support hasp_read memory operations with
     correct offset and length handling.
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -453,7 +453,7 @@ def test_hasp_write_memory_operation_complete(dongle_emulator: DongleEmulator) -
 
     Expected behavior: Must support hasp_write memory operations.
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -466,7 +466,7 @@ def test_hasp_get_size_implementation_complete(dongle_emulator: DongleEmulator) 
 
     Expected behavior: Must return proper memory size (e.g., 4096 bytes).
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -483,7 +483,7 @@ def test_sentinel_find_first_unit_implementation(dongle_emulator: DongleEmulator
 
     Expected behavior: Must return realistic device ID for Sentinel dongle.
     """
-    dongle_emulator._install_dongle_hooks(["Sentinel"])
+    dongle_emulator._install_dongle_hooks(["Sentinel"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -499,7 +499,7 @@ def test_sentinel_query_implementation_complete(dongle_emulator: DongleEmulator)
 
     Expected behavior: Must provide structured response with device serial.
     """
-    dongle_emulator._install_dongle_hooks(["Sentinel"])
+    dongle_emulator._install_dongle_hooks(["Sentinel"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -518,7 +518,7 @@ def test_sentinel_read_implementation_with_prng(dongle_emulator: DongleEmulator)
     Expected behavior: Must generate realistic memory content based on
     address and seed value.
     """
-    dongle_emulator._install_dongle_hooks(["Sentinel"])
+    dongle_emulator._install_dongle_hooks(["Sentinel"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -540,7 +540,7 @@ def test_codemeter_access_implementation_complete(dongle_emulator: DongleEmulato
     Expected behavior: Must extract firm code and product code,
     return valid session handle.
     """
-    dongle_emulator._install_dongle_hooks(["CodeMeter"])
+    dongle_emulator._install_dongle_hooks(["CodeMeter"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -557,7 +557,7 @@ def test_codemeter_get_info_implementation_complete(dongle_emulator: DongleEmula
 
     Expected behavior: Must return structured container info with version.
     """
-    dongle_emulator._install_dongle_hooks(["CodeMeter"])
+    dongle_emulator._install_dongle_hooks(["CodeMeter"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -577,7 +577,7 @@ def test_deviceiocontrol_hook_handles_dongle_ioctls(
     Expected behavior: Must detect dongle-specific IOCTL codes and
     return valid response buffers.
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -600,7 +600,7 @@ def test_multiple_dongle_types_hooks_combined(dongle_emulator: DongleEmulator) -
 
     Edge case: Must handle multiple concurrent dongle types (HASP + Sentinel).
     """
-    dongle_emulator._install_dongle_hooks(["HASP", "Sentinel", "CodeMeter"])
+    dongle_emulator._install_dongle_hooks(["HASP", "Sentinel", "CodeMeter"])  # type: ignore[attr-defined]
 
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     assert len(frida_hooks) > 0
@@ -618,7 +618,7 @@ def test_session_management_across_calls(dongle_emulator: DongleEmulator) -> Non
     Expected behavior: Must implement session management with handle tracking.
     Validates handles written by login are consistent across encrypt/decrypt calls.
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -640,7 +640,7 @@ def test_feature_specific_encryption_keys_edge_case(
     Edge case: Different features may use different encryption keys.
     Validates handle is used to derive encryption context.
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -655,13 +655,13 @@ def test_concurrent_sessions_edge_case(dongle_emulator: DongleEmulator) -> None:
 
     Edge case: Multiple concurrent sessions with different feature IDs.
     """
-    dongle_emulator.active_sessions = {
+    dongle_emulator.active_sessions = {  # type: ignore[attr-defined]
         0x12345678: {"vendor_code": 0x0F0F0F0F, "feature_id": 42},
         0x87654321: {"vendor_code": 0x0F0F0F0F, "feature_id": 100},
         0xABCDEF00: {"vendor_code": 0x1A1A1A1A, "feature_id": 7},
     }
 
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -676,7 +676,7 @@ def test_concurrent_sessions_edge_case(dongle_emulator: DongleEmulator) -> None:
     reason="Dongle emulation requires Windows platform",
 )
 def test_hasp_hooks_execute_without_crash_in_process(
-    test_process: subprocess.Popen, dongle_emulator: DongleEmulator
+    test_process: subprocess.Popen[str], dongle_emulator: DongleEmulator
 ) -> None:
     """HASP hooks execute in real process without crashing or throwing errors.
 
@@ -685,7 +685,7 @@ def test_hasp_hooks_execute_without_crash_in_process(
     if not FRIDA_AVAILABLE:
         pytest.skip("Frida not available")
 
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -701,7 +701,7 @@ def test_hasp_hooks_execute_without_crash_in_process(
     try:
         session = frida.attach(test_process.pid)
         script = session.create_script(script_content)
-        script.on("message", on_message)
+        script.on("message", on_message)  # type: ignore[call-overload]
         script.load()
 
         time.sleep(2.0)
@@ -722,7 +722,7 @@ def test_all_referenced_modules_checked_before_hook(
 
     Validates graceful handling when dongle DLLs are not present in target.
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -739,7 +739,7 @@ def test_error_handling_in_hook_installation(dongle_emulator: DongleEmulator) ->
 
     Validates script handles exceptions during hook attachment gracefully.
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -756,7 +756,7 @@ def test_logging_provides_actionable_debugging_info(
     Validates console.log statements provide vendor codes, feature IDs,
     handles, and operation details.
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 
@@ -775,7 +775,7 @@ def test_script_handles_missing_exports_gracefully(
 
     Validates that missing exports don't cause script failure.
     """
-    dongle_emulator._install_dongle_hooks(["HASP"])
+    dongle_emulator._install_dongle_hooks(["HASP"])  # type: ignore[attr-defined]
     frida_hooks = [h for h in dongle_emulator.hooks if h.get("type") == "frida"]
     script_content = frida_hooks[0]["script"]
 

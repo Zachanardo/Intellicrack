@@ -28,15 +28,15 @@ try:
     )
     MODULE_AVAILABLE = True
 except ImportError:
-    CloudLicenseBypass = None
-    CloudLicenseProtocolHandler = None
-    LicenseState = None
-    MITMProxyAddon = None
-    ProtocolStateMachine = None
-    ProtocolType = None
-    ResponseSynthesizer = None
-    TLSInterceptor = None
-    create_cloud_license_bypass = None
+    CloudLicenseBypass = None  # type: ignore[misc, assignment]
+    CloudLicenseProtocolHandler = None  # type: ignore[misc, assignment]
+    LicenseState = None  # type: ignore[misc, assignment]
+    MITMProxyAddon = None  # type: ignore[misc, assignment]
+    ProtocolStateMachine = None  # type: ignore[misc, assignment]
+    ProtocolType = None  # type: ignore[misc, assignment]
+    ResponseSynthesizer = None  # type: ignore[misc, assignment]
+    TLSInterceptor = None  # type: ignore[misc, assignment]
+    create_cloud_license_bypass = None  # type: ignore[assignment]
     MODULE_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not available")
@@ -167,9 +167,9 @@ class TestProtocolStateMachine:
         assert sm.state == LicenseState.AUTHENTICATING, "State must be AUTHENTICATING"
 
         assert sm.transition(LicenseState.AUTHENTICATED), "AUTHENTICATING -> AUTHENTICATED must succeed"
-        assert sm.state == LicenseState.AUTHENTICATED, "State must be AUTHENTICATED"
+        assert sm.state == LicenseState.AUTHENTICATED, "State must be AUTHENTICATED"  # type: ignore[comparison-overlap]
 
-        assert sm.transition(LicenseState.VALIDATING), "AUTHENTICATED -> VALIDATING must succeed"
+        assert sm.transition(LicenseState.VALIDATING), "AUTHENTICATED -> VALIDATING must succeed"  # type: ignore[unreachable]
         assert sm.transition(LicenseState.VALIDATED), "VALIDATING -> VALIDATED must succeed"
         assert sm.transition(LicenseState.ACTIVE), "VALIDATED -> ACTIVE must succeed"
 
@@ -207,7 +207,7 @@ class TestProtocolStateMachine:
         sm.store_session_data("complex_data", {"nested": {"value": [1, 2, 3]}})
 
         assert sm.get_session_data("user_id") == "test_user_123", "Must retrieve simple data"
-        assert sm.get_session_data("complex_data")["nested"]["value"] == [1, 2, 3], "Must retrieve complex data"
+        assert sm.get_session_data("complex_data")["nested"]["value"] == [1, 2, 3], "Must retrieve complex data"  # type: ignore[index]
         assert sm.get_session_data("nonexistent") is None, "Must return None for missing data"
 
 
@@ -409,7 +409,7 @@ class TestMITMProxyAddon:
             headers={"Authorization": "Bearer test"}
         )
 
-        addon.request(flow)
+        addon.request(flow)  # type: ignore[arg-type]
 
         assert addon.request_count == 1, "Must track request count"
         assert len(addon.intercepted_requests) == 1, "Must store intercepted request"
@@ -662,7 +662,7 @@ class TestEdgeCasesNetworkTimeouts:
         sm.store_session_data("retry_count", 0)
         for i in range(3):
             retry_count = sm.get_session_data("retry_count")
-            sm.store_session_data("retry_count", retry_count + 1)
+            sm.store_session_data("retry_count", retry_count + 1)  # type: ignore[operator]
 
         final_count = sm.get_session_data("retry_count")
         assert final_count == 3, "Must track retry attempts"
@@ -674,7 +674,7 @@ class TestEdgeCasesNetworkTimeouts:
 
         error = sm.get_session_data("network_error")
         assert error is not None
-        assert "network" in error.lower() or "unreachable" in error.lower()
+        assert "network" in error.lower() or "unreachable" in error.lower()  # type: ignore[attr-defined]
 
 
 class TestEdgeCasesInvalidJSON:

@@ -31,30 +31,30 @@ from intellicrack.core.analysis.protection_scanner import (
 class RealTestApp:
     """Real test application interface for protection scanner testing."""
 
-    def __init__(self, binary_path=None) -> None:
-        self.protection_results = {}
-        self.scan_status = []
-        self.scan_progress = 0
-        self.error_messages = []
-        self.loaded_binary_path = binary_path or r"C:\test\sample.exe"
+    def __init__(self, binary_path: str | None = None) -> None:
+        self.protection_results: dict[str, Any] = {}
+        self.scan_status: list[str] = []
+        self.scan_progress: int = 0
+        self.error_messages: list[str] = []
+        self.loaded_binary_path: str = binary_path or r"C:\test\sample.exe"
 
-    def update_protection_results(self, results):
+    def update_protection_results(self, results: dict[str, Any]) -> None:
         """Update protection analysis results."""
         self.protection_results.update(results)
 
-    def update_scan_status(self, status):
+    def update_scan_status(self, status: str) -> None:
         """Update scan status message."""
         self.scan_status.append(status)
 
-    def set_scan_progress(self, progress):
+    def set_scan_progress(self, progress: int) -> None:
         """Set scan progress percentage."""
         self.scan_progress = progress
 
-    def show_error_message(self, message):
+    def show_error_message(self, message: str) -> None:
         """Record error message."""
         self.error_messages.append(message)
 
-    def get_loaded_binary_path(self):
+    def get_loaded_binary_path(self) -> str:
         """Get the currently loaded binary path."""
         return self.loaded_binary_path
 
@@ -69,7 +69,7 @@ class TestProtectionScannerRealWorldCapabilities:
     """
 
     @pytest.fixture
-    def test_app(self) -> None:
+    def test_app(self) -> RealTestApp:
         """Create a real test application instance."""
         return RealTestApp()
 
@@ -525,7 +525,7 @@ class TestProtectionScannerRealWorldCapabilities:
             analyzer = BinaryAnalyzer()
 
             # Perform analysis
-            binary_results = analyzer.analyze_file(sample_pe_binary)
+            binary_results = analyzer.analyze_file(sample_pe_binary)  # type: ignore[attr-defined]
 
             # Run protection scan
             scan_thread = threading.Thread(

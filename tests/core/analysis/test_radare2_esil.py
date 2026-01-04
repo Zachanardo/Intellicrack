@@ -20,8 +20,8 @@ try:
     from intellicrack.core.analysis.radare2_esil import ESILAnalysisEngine, analyze_binary_esil
     AVAILABLE = True
 except ImportError:
-    ESILAnalysisEngine = None
-    analyze_binary_esil = None
+    ESILAnalysisEngine = None  # type: ignore[misc, assignment]
+    analyze_binary_esil = None  # type: ignore[assignment]
     AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not AVAILABLE, reason="Module not available")
@@ -49,7 +49,7 @@ class TestESILAnalysisEngine:
         return f.name
 
     @pytest.fixture
-    def engine(self, sample_binary_path) -> Any:
+    def engine(self, sample_binary_path: Any) -> Any:
         """Create ESILAnalysisEngine instance for testing."""
         return ESILAnalysisEngine(sample_binary_path)
 
@@ -548,7 +548,7 @@ class TestAnalyzeBinaryESILFunction:
             'detailed_reporting': True
         }
 
-        result = analyze_binary_esil(sample_binary_path, analysis_options)
+        result = analyze_binary_esil(sample_binary_path, analysis_options)  # type: ignore[arg-type]
 
         # Should return comprehensive analysis results
         assert isinstance(result, dict)
@@ -635,7 +635,7 @@ class TestAnalyzeBinaryESILFunction:
             'detect_protections': False
         }
 
-        minimal_result = analyze_binary_esil(sample_binary_path, minimal_options)
+        minimal_result = analyze_binary_esil(sample_binary_path, minimal_options)  # type: ignore[arg-type]
 
         # Should provide basic analysis
         assert isinstance(minimal_result, dict)
@@ -652,7 +652,7 @@ class TestAnalyzeBinaryESILFunction:
             'advanced_patterns': True
         }
 
-        comprehensive_result = analyze_binary_esil(sample_binary_path, comprehensive_options)
+        comprehensive_result = analyze_binary_esil(sample_binary_path, comprehensive_options)  # type: ignore[arg-type]
 
         # Should provide more detailed analysis than minimal
         assert len(comprehensive_result.keys()) >= len(minimal_result.keys())
@@ -702,15 +702,15 @@ class TestESILIntegrationScenarios:
         engine = ESILAnalysisEngine(complex_binary_path)
 
         # Initialize ESIL VM for analysis
-        vm_result = engine.initialize_esil_vm()
-        assert vm_result['status'] == 'initialized'
+        vm_result = engine.initialize_esil_vm()  # type: ignore[call-arg]
+        assert vm_result['status'] == 'initialized'  # type: ignore[index]
 
         # Emulate potential license validation function
         license_func_addr = 0x401200
         emulation_result = engine.emulate_function_execution(license_func_addr)
 
         # Analyze for license validation patterns
-        patterns = engine._detect_license_validation_patterns(emulation_result)
+        patterns = engine._detect_license_validation_patterns(emulation_result)  # type: ignore[call-arg, func-returns-value]
 
         # Workflow should provide actionable security research insights
         assert patterns['validation_detected'] in [True, False]  # Valid result either way
@@ -742,7 +742,7 @@ class TestESILIntegrationScenarios:
         # Analyze each function for anti-analysis techniques
         all_techniques = {}
         for addr_str, result in batch_results['individual_results'].items():
-            techniques = engine._detect_anti_analysis_techniques(result)
+            techniques = engine._detect_anti_analysis_techniques(result)  # type: ignore[call-arg, func-returns-value]
             all_techniques[addr_str] = techniques
 
         # Comparative analysis should identify evasion patterns
@@ -791,12 +791,12 @@ class TestESILPerformanceValidation:
         # Measure initialization performance
         import time
         start_time = time.time()
-        vm_result = engine.initialize_esil_vm()
+        vm_result = engine.initialize_esil_vm()  # type: ignore[call-arg]
         init_time = time.time() - start_time
 
         # Initialization should complete in reasonable time
         assert init_time < 5.0  # Maximum 5 seconds for initialization
-        assert vm_result['status'] == 'initialized'
+        assert vm_result['status'] == 'initialized'  # type: ignore[index]
 
         # Test batch emulation performance
         start_time = time.time()
@@ -836,7 +836,7 @@ class TestESILPerformanceValidation:
 
         # Perform analysis with multiple engines
         for engine in engines:
-            engine.initialize_esil_vm()
+            engine.initialize_esil_vm()  # type: ignore[call-arg]
             engine.emulate_function_execution(0x401000)
 
         final_memory = process.memory_info().rss

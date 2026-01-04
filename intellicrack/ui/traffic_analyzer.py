@@ -26,6 +26,7 @@ from typing import Any, TypedDict
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
+    QCloseEvent,
     QComboBox,
     QDialog,
     QFileDialog,
@@ -1557,6 +1558,22 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
             bar = "█" * min(int(count / 10), 50)
             viz_text += f"Port {port:5d} {bar} {count}\n"
         return viz_text
+
+    def closeEvent(self, event: QCloseEvent | None) -> None:
+        """Handle dialog close event.
+
+        Stops the update timer and any running capture to prevent crashes
+        from timer callbacks accessing deleted widget.
+
+        Args:
+            event: The close event object.
+
+        """
+        if hasattr(self, "update_timer") and self.update_timer is not None:
+            self.update_timer.stop()
+        self._stop_capture()
+        if event is not None:
+            super().closeEvent(event)
 
 
 # Network capture management functions for main_app binding

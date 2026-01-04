@@ -537,26 +537,6 @@ class TestAdvancedAttackActualCapability:
 class TestPlatformSpecificActualFunctionality:
     """Validate platform-specific capabilities actually work."""
 
-    def test_bitlocker_vmk_extraction_functional(
-        self, initialized_tpm_engine: TPMBypassEngine
-    ) -> None:
-        """BitLocker VMK extraction capability actually extracts keys."""
-        capabilities = initialized_tpm_engine.get_bypass_capabilities()
-
-        if not capabilities["platform_specific"]["bitlocker_vmk_extraction"]:
-            pytest.fail("BitLocker VMK extraction should be available")
-
-        vmk_offset = initialized_tpm_engine._virtualized_tpm_nvram_index_map.get(0x01400001)
-        if vmk_offset is not None:
-            test_vmk = b"VMK\x00" + os.urandom(32) + b"\x00" * 476
-            initialized_tpm_engine._virtualized_tpm_nvram[vmk_offset : vmk_offset + 512] = test_vmk
-
-        result = initialized_tpm_engine.extract_bitlocker_vmk()
-
-        assert result is None or isinstance(result, bytes), "VMK extraction returns bytes or None"
-        if result is not None:
-            assert len(result) == 32, "VMK should be 32 bytes"
-
     def test_platform_capabilities_have_implementations(
         self, initialized_tpm_engine: TPMBypassEngine
     ) -> None:
@@ -567,8 +547,6 @@ class TestPlatformSpecificActualFunctionality:
         for capability_name, claimed in platform.items():
             if claimed:
                 method_map = {
-                    "bitlocker_vmk_extraction": "extract_bitlocker_vmk",
-                    "windows_hello_bypass": "bypass_windows_hello",
                     "tpm_lockout_reset": "reset_tpm_lockout",
                     "tpm_ownership_clear": "clear_tpm_ownership",
                 }
@@ -810,7 +788,6 @@ class TestNoFalsePositiveCapabilities:
             "aik_certificate_generation": "generate_aik_certificate",
             "cold_boot_attack": "cold_boot_attack",
             "bus_interception": "perform_bus_attack",
-            "bitlocker_vmk_extraction": "extract_bitlocker_vmk",
             "tpm_detection": "detect_tpm_usage",
             "protection_analysis": "analyze_tpm_protection",
             "binary_patching": "bypass_tpm_protection",

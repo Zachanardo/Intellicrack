@@ -64,7 +64,7 @@ class TestRootCAGeneration:
                 root_cert.signature,
                 root_cert.tbs_certificate_bytes,
                 padding.PKCS1v15(),
-                root_cert.signature_hash_algorithm,
+                root_cert.signature_hash_algorithm,  # type: ignore[arg-type]
             )
         except Exception as e:
             pytest.fail(f"Root CA signature verification failed: {e}")
@@ -198,7 +198,7 @@ class TestIntermediateCAGeneration:
                 intermediate_cert.signature,
                 intermediate_cert.tbs_certificate_bytes,
                 padding.PKCS1v15(),
-                intermediate_cert.signature_hash_algorithm,
+                intermediate_cert.signature_hash_algorithm,  # type: ignore[arg-type]
             )
         except Exception as e:
             pytest.fail(f"Intermediate CA signature verification failed: {e}")
@@ -342,7 +342,7 @@ class TestLeafCertificateGeneration:
                 leaf_cert.signature,
                 leaf_cert.tbs_certificate_bytes,
                 padding.PKCS1v15(),
-                leaf_cert.signature_hash_algorithm,
+                leaf_cert.signature_hash_algorithm,  # type: ignore[arg-type]
             )
         except Exception as e:
             pytest.fail(f"Leaf certificate signature verification failed: {e}")
@@ -396,7 +396,7 @@ class TestLeafCertificateGeneration:
         san = leaf_cert.extensions.get_extension_for_oid(
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME
         ).value
-        dns_names: List[Any] = list(san.get_values_for_type(x509.DNSName))
+        dns_names: List[Any] = list(san.get_values_for_type(x509.DNSName))  # type: ignore[attr-defined]
         assert "example.com" in dns_names
         assert "*.example.com" in dns_names
 
@@ -415,7 +415,7 @@ class TestLeafCertificateGeneration:
         san = leaf_cert.extensions.get_extension_for_oid(
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME
         ).value
-        dns_names: List[Any] = list(san.get_values_for_type(x509.DNSName))
+        dns_names: List[Any] = list(san.get_values_for_type(x509.DNSName))  # type: ignore[attr-defined]
         assert dns_names.count("*.example.com") == 1
 
     def test_leaf_cert_uses_2048_bit_rsa_key(self) -> None:
@@ -508,7 +508,7 @@ class TestLeafCertificateGeneration:
         ).value
 
         assert isinstance(leaf_aki, x509.AuthorityKeyIdentifier)
-        assert leaf_aki.key_identifier == intermediate_ski.digest
+        assert leaf_aki.key_identifier == intermediate_ski.digest  # type: ignore[attr-defined]
 
     def test_leaf_cert_validity_period_is_1_year(self) -> None:
         """Leaf certificate is valid for approximately 1 year (365 days)."""
@@ -567,7 +567,7 @@ class TestFullChainGeneration:
                 chain.root_cert.signature,
                 chain.root_cert.tbs_certificate_bytes,
                 padding.PKCS1v15(),
-                chain.root_cert.signature_hash_algorithm,
+                chain.root_cert.signature_hash_algorithm,  # type: ignore[arg-type]
             )
         except Exception as e:
             pytest.fail(f"Root CA signature verification failed: {e}")
@@ -577,7 +577,7 @@ class TestFullChainGeneration:
                 chain.intermediate_cert.signature,
                 chain.intermediate_cert.tbs_certificate_bytes,
                 padding.PKCS1v15(),
-                chain.intermediate_cert.signature_hash_algorithm,
+                chain.intermediate_cert.signature_hash_algorithm,  # type: ignore[arg-type]
             )
         except Exception as e:
             pytest.fail(f"Intermediate CA signature verification failed: {e}")
@@ -587,7 +587,7 @@ class TestFullChainGeneration:
                 chain.leaf_cert.signature,
                 chain.leaf_cert.tbs_certificate_bytes,
                 padding.PKCS1v15(),
-                chain.leaf_cert.signature_hash_algorithm,
+                chain.leaf_cert.signature_hash_algorithm,  # type: ignore[arg-type]
             )
         except Exception as e:
             pytest.fail(f"Leaf certificate signature verification failed: {e}")
@@ -625,7 +625,7 @@ class TestFullChainGeneration:
         san = chain.leaf_cert.extensions.get_extension_for_oid(
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME
         ).value
-        dns_names: List[Any] = list(san.get_values_for_type(x509.DNSName))
+        dns_names: List[Any] = list(san.get_values_for_type(x509.DNSName))  # type: ignore[attr-defined]
         assert "*.example.com" in dns_names
 
     def test_full_chain_validity_periods_are_nested(self) -> None:
@@ -827,7 +827,7 @@ class TestCertificatePinningBypass:
                 new_leaf_cert.signature,
                 new_leaf_cert.tbs_certificate_bytes,
                 padding.PKCS1v15(),
-                new_leaf_cert.signature_hash_algorithm,
+                new_leaf_cert.signature_hash_algorithm,  # type: ignore[arg-type]
             )
         except Exception as e:
             pytest.fail(f"New leaf certificate signature verification failed: {e}")
@@ -873,7 +873,7 @@ class TestCertificatePinningBypass:
         eku = chain.leaf_cert.extensions.get_extension_for_oid(
             ExtensionOID.EXTENDED_KEY_USAGE
         ).value
-        assert x509.oid.ExtendedKeyUsageOID.SERVER_AUTH in eku
+        assert x509.oid.ExtendedKeyUsageOID.SERVER_AUTH in eku  # type: ignore[operator]
 
 
 class TestCryptographicOperations:
@@ -936,10 +936,10 @@ class TestCryptographicOperations:
         cert_public = chain.leaf_cert.public_key()
 
         private_public_numbers = private_key_public.public_numbers()
-        cert_public_numbers = cert_public.public_numbers()
+        cert_public_numbers = cert_public.public_numbers()  # type: ignore[union-attr]
 
-        assert private_public_numbers.n == cert_public_numbers.n
-        assert private_public_numbers.e == cert_public_numbers.e
+        assert private_public_numbers.n == cert_public_numbers.n  # type: ignore[union-attr]
+        assert private_public_numbers.e == cert_public_numbers.e  # type: ignore[union-attr]
 
     def test_root_ca_can_verify_complete_chain(self) -> None:
         """Root CA public key can verify intermediate, intermediate verifies leaf."""
@@ -956,19 +956,19 @@ class TestCryptographicOperations:
                 chain.root_cert.signature,
                 chain.root_cert.tbs_certificate_bytes,
                 padding.PKCS1v15(),
-                chain.root_cert.signature_hash_algorithm,
+                chain.root_cert.signature_hash_algorithm,  # type: ignore[arg-type]
             )
             root_public.verify(
                 chain.intermediate_cert.signature,
                 chain.intermediate_cert.tbs_certificate_bytes,
                 padding.PKCS1v15(),
-                chain.intermediate_cert.signature_hash_algorithm,
+                chain.intermediate_cert.signature_hash_algorithm,  # type: ignore[arg-type]
             )
             intermediate_public.verify(
                 chain.leaf_cert.signature,
                 chain.leaf_cert.tbs_certificate_bytes,
                 padding.PKCS1v15(),
-                chain.leaf_cert.signature_hash_algorithm,
+                chain.leaf_cert.signature_hash_algorithm,  # type: ignore[arg-type]
             )
         except Exception as e:
             pytest.fail(f"Chain verification failed: {e}")
@@ -1136,7 +1136,7 @@ class TestRealWorldUsageScenarios:
                 chain.intermediate_cert.signature,
                 chain.intermediate_cert.tbs_certificate_bytes,
                 padding.PKCS1v15(),
-                chain.intermediate_cert.signature_hash_algorithm,
+                chain.intermediate_cert.signature_hash_algorithm,  # type: ignore[arg-type]
             )
         except Exception as e:
             pytest.fail(f"Step 1: Root verification of intermediate failed: {e}")
@@ -1146,7 +1146,7 @@ class TestRealWorldUsageScenarios:
                 chain.leaf_cert.signature,
                 chain.leaf_cert.tbs_certificate_bytes,
                 padding.PKCS1v15(),
-                chain.leaf_cert.signature_hash_algorithm,
+                chain.leaf_cert.signature_hash_algorithm,  # type: ignore[arg-type]
             )
         except Exception as e:
             pytest.fail(f"Step 2: Intermediate verification of leaf failed: {e}")
@@ -1154,7 +1154,7 @@ class TestRealWorldUsageScenarios:
         leaf_not_ca = (
             chain.leaf_cert.extensions.get_extension_for_oid(
                 ExtensionOID.BASIC_CONSTRAINTS
-            ).value.ca
+            ).value.ca  # type: ignore[attr-defined]
             is False
         )
         assert leaf_not_ca
@@ -1167,7 +1167,7 @@ class TestRealWorldUsageScenarios:
         san = chain.leaf_cert.extensions.get_extension_for_oid(
             ExtensionOID.SUBJECT_ALTERNATIVE_NAME
         ).value
-        dns_names: List[Any] = list(san.get_values_for_type(x509.DNSName))
+        dns_names: List[Any] = list(san.get_values_for_type(x509.DNSName))  # type: ignore[attr-defined]
 
         assert "*.example.com" in dns_names
 

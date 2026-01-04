@@ -16,7 +16,7 @@ import time
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import lz4.frame
 import msgpack
@@ -27,7 +27,7 @@ from intellicrack.core.analysis.ghidra_project_manager import GhidraProject, Ghi
 
 
 @pytest.fixture
-def temp_projects_dir() -> Path:
+def temp_projects_dir() -> Generator[Path, None, None]:
     """Create temporary directory for projects."""
     temp_dir: Path = Path(tempfile.mkdtemp())
     yield temp_dir
@@ -52,19 +52,19 @@ def sample_binary(tmp_path: Path) -> Path:
 def sample_analysis_result(sample_binary: Path) -> GhidraAnalysisResult:
     """Create sample analysis result."""
     functions: dict[int, GhidraFunction] = {
-        0x401000: GhidraFunction(
+        0x401000: GhidraFunction(  # type: ignore[call-arg]
             address=0x401000,
             name="main",
             size=256,
             signature="int main(int argc, char** argv)",
             return_type="int",
-            parameters=["argc: int", "argv: char**"],
+            parameters=["argc: int", "argv: char**"],  # type: ignore[list-item]
             decompiled_code="int main(int argc, char** argv) {\n    return 0;\n}",
             basic_blocks=[],
             call_graph=[],
             xrefs=[],
         ),
-        0x401100: GhidraFunction(
+        0x401100: GhidraFunction(  # type: ignore[call-arg]
             address=0x401100,
             name="CheckLicense",
             size=128,
@@ -79,7 +79,7 @@ def sample_analysis_result(sample_binary: Path) -> GhidraAnalysisResult:
     }
 
     data_types: dict[str, GhidraDataType] = {
-        "LICENSE_INFO": GhidraDataType(
+        "LICENSE_INFO": GhidraDataType(  # type: ignore[call-arg]
             name="LICENSE_INFO",
             size=64,
             kind="struct",
@@ -99,7 +99,7 @@ def sample_analysis_result(sample_binary: Path) -> GhidraAnalysisResult:
         sections=[{"name": ".text", "start": 0x401000, "size": 0x1000}],
         entry_point=0x401000,
         image_base=0x400000,
-        vtables=[],
+        vtables=[],  # type: ignore[arg-type]
         exception_handlers=[],
         metadata={"analyzed": True},
     )
@@ -184,7 +184,7 @@ def test_save_new_version(project_manager: GhidraProjectManager, sample_binary: 
         binary_path=sample_analysis_result.binary_path,
         architecture=sample_analysis_result.architecture,
         compiler=sample_analysis_result.compiler,
-        functions={**sample_analysis_result.functions, 0x401200: GhidraFunction(
+        functions={**sample_analysis_result.functions, 0x401200: GhidraFunction(  # type: ignore[call-arg]
             address=0x401200,
             name="NewFunction",
             size=64,
@@ -203,7 +203,7 @@ def test_save_new_version(project_manager: GhidraProjectManager, sample_binary: 
         sections=sample_analysis_result.sections,
         entry_point=sample_analysis_result.entry_point,
         image_base=sample_analysis_result.image_base,
-        vtables=[],
+        vtables=[],  # type: ignore[arg-type]
         exception_handlers=[],
         metadata={},
     )
@@ -253,13 +253,13 @@ def test_diff_versions_detects_added_functions(project_manager: GhidraProjectMan
         binary_path=sample_analysis_result.binary_path,
         architecture=sample_analysis_result.architecture,
         compiler=sample_analysis_result.compiler,
-        functions={**sample_analysis_result.functions, 0x401300: GhidraFunction(
+        functions={**sample_analysis_result.functions, 0x401300: GhidraFunction(  # type: ignore[call-arg]
             address=0x401300,
             name="ValidateLicense",
             size=192,
             signature="BOOL ValidateLicense(char* serial)",
             return_type="BOOL",
-            parameters=["serial: char*"],
+            parameters=["serial: char*"],  # type: ignore[list-item]
             decompiled_code="BOOL ValidateLicense(char* serial) {\n    return FALSE;\n}",
             basic_blocks=[],
             call_graph=[],
@@ -272,7 +272,7 @@ def test_diff_versions_detects_added_functions(project_manager: GhidraProjectMan
         sections=sample_analysis_result.sections,
         entry_point=sample_analysis_result.entry_point,
         image_base=sample_analysis_result.image_base,
-        vtables=[],
+        vtables=[],  # type: ignore[arg-type]
         exception_handlers=[],
         metadata={},
     )
@@ -304,7 +304,7 @@ def test_diff_versions_detects_removed_functions(project_manager: GhidraProjectM
         sections=sample_analysis_result.sections,
         entry_point=sample_analysis_result.entry_point,
         image_base=sample_analysis_result.image_base,
-        vtables=[],
+        vtables=[],  # type: ignore[arg-type]
         exception_handlers=[],
         metadata={},
     )
@@ -323,7 +323,7 @@ def test_diff_versions_detects_modified_functions(project_manager: GhidraProject
     v1 = project.current_version
 
     modified_funcs: dict[int, GhidraFunction] = dict(sample_analysis_result.functions)
-    modified_funcs[0x401100] = GhidraFunction(
+    modified_funcs[0x401100] = GhidraFunction(  # type: ignore[call-arg]
         address=0x401100,
         name="CheckLicense",
         size=256,
@@ -348,7 +348,7 @@ def test_diff_versions_detects_modified_functions(project_manager: GhidraProject
         sections=sample_analysis_result.sections,
         entry_point=sample_analysis_result.entry_point,
         image_base=sample_analysis_result.image_base,
-        vtables=[],
+        vtables=[],  # type: ignore[arg-type]
         exception_handlers=[],
         metadata={},
     )
@@ -490,7 +490,7 @@ def test_large_analysis_compression_efficiency(project_manager: GhidraProjectMan
     large_functions: dict[int, GhidraFunction] = {}
     for i in range(1000):
         addr = 0x400000 + (i * 0x100)
-        large_functions[addr] = GhidraFunction(
+        large_functions[addr] = GhidraFunction(  # type: ignore[call-arg]
             address=addr,
             name=f"Function_{i}",
             size=256,
@@ -515,7 +515,7 @@ def test_large_analysis_compression_efficiency(project_manager: GhidraProjectMan
         sections=[],
         entry_point=0x400000,
         image_base=0x400000,
-        vtables=[],
+        vtables=[],  # type: ignore[arg-type]
         exception_handlers=[],
         metadata={},
     )

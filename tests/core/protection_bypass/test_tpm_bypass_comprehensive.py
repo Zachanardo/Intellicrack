@@ -38,7 +38,7 @@ class TestTPMBypassEngineInitialization:
         engine = TPMBypassEngine()
 
         assert engine.pcr_banks is not None
-        assert engine.virtualized_tpm is not None
+        assert engine.virtualized_tpm is not None  # type: ignore[attr-defined]
         assert engine.memory_map is not None
         assert engine.command_hooks is not None
         assert engine.intercepted_commands is not None
@@ -83,12 +83,12 @@ class TestTPMBypassEngineInitialization:
         """Virtualized TPM contains NVRAM and handle storage."""
         engine = TPMBypassEngine()
 
-        assert engine.virtualized_tpm["state"] == "ready"
-        assert len(engine.virtualized_tpm["nvram"]) > 0
-        assert "persistent_handles" in engine.virtualized_tpm
-        assert "transient_handles" in engine.virtualized_tpm
-        assert "session_handles" in engine.virtualized_tpm
-        assert "nvram_index_map" in engine.virtualized_tpm
+        assert engine.virtualized_tpm["state"] == "ready"  # type: ignore[attr-defined]
+        assert len(engine.virtualized_tpm["nvram"]) > 0  # type: ignore[attr-defined]
+        assert "persistent_handles" in engine.virtualized_tpm  # type: ignore[attr-defined]
+        assert "transient_handles" in engine.virtualized_tpm  # type: ignore[attr-defined]
+        assert "session_handles" in engine.virtualized_tpm  # type: ignore[attr-defined]
+        assert "nvram_index_map" in engine.virtualized_tpm  # type: ignore[attr-defined]
 
 
 class TestAttestationBypass:
@@ -180,8 +180,8 @@ class TestSealedKeyExtraction:
 
         test_key = os.urandom(256)
         nvram_index = 0x01400001
-        nvram_offset = engine.virtualized_tpm["nvram_index_map"][nvram_index]
-        engine.virtualized_tpm["nvram"][nvram_offset : nvram_offset + len(test_key)] = test_key
+        nvram_offset = engine.virtualized_tpm["nvram_index_map"][nvram_index]  # type: ignore[attr-defined]
+        engine.virtualized_tpm["nvram"][nvram_offset : nvram_offset + len(test_key)] = test_key  # type: ignore[attr-defined]
 
         extracted_keys = engine.extract_sealed_keys()
 
@@ -195,8 +195,8 @@ class TestSealedKeyExtraction:
 
         test_data = os.urandom(512)
         nvram_index = 0x01400002
-        nvram_offset = engine.virtualized_tpm["nvram_index_map"][nvram_index]
-        engine.virtualized_tpm["nvram"][nvram_offset : nvram_offset + 512] = test_data
+        nvram_offset = engine.virtualized_tpm["nvram_index_map"][nvram_index]  # type: ignore[attr-defined]
+        engine.virtualized_tpm["nvram"][nvram_offset : nvram_offset + 512] = test_data  # type: ignore[attr-defined]
 
         retrieved_data = engine.read_nvram_raw(nvram_index, b"")
 
@@ -589,52 +589,7 @@ class TestPCRManipulation:
 
 
 class TestWindowsSpecificBypass:
-    """Test Windows-specific TPM bypass operations."""
-
-    def test_extract_bitlocker_vmk_finds_vmk_marker(self) -> None:
-        """BitLocker VMK extraction locates VMK marker in NVRAM."""
-        engine = TPMBypassEngine()
-
-        vmk_data = b"VMK\x00" + os.urandom(32) + os.urandom(100)
-        nvram_offset = 0x1000
-        engine.virtualized_tpm["nvram"][nvram_offset : nvram_offset + len(vmk_data)] = vmk_data
-
-        vmk = engine.extract_bitlocker_vmk()
-
-        assert vmk is not None
-        assert len(vmk) == 32
-        assert vmk == vmk_data[4:36]
-
-    def test_extract_bitlocker_vmk_finds_nonzero_key(self) -> None:
-        """BitLocker VMK extraction finds valid non-zero key material."""
-        engine = TPMBypassEngine()
-
-        vmk_key = os.urandom(32)
-        nvram_offset = 0x2000
-        engine.virtualized_tpm["nvram"][nvram_offset : nvram_offset + 512] = vmk_key + os.urandom(480)
-
-        vmk = engine.extract_bitlocker_vmk()
-
-        assert vmk is not None
-        assert len(vmk) == 32
-        assert any(b != 0 for b in vmk)
-
-    def test_bypass_windows_hello_extracts_hello_indices(self) -> None:
-        """Windows Hello bypass extracts keys from Hello NVRAM indices."""
-        engine = TPMBypassEngine()
-
-        hello_key_data = os.urandom(256)
-        hello_index = 0x01800003
-        nvram_offset = engine.virtualized_tpm["nvram_index_map"].get(hello_index, 0x5000)
-        engine.virtualized_tpm["nvram"][nvram_offset : nvram_offset + len(hello_key_data)] = hello_key_data
-
-        hello_keys = engine.bypass_windows_hello()
-
-        assert isinstance(hello_keys, dict)
-        assert len(hello_keys) > 0
-        assert "biometric_template" in hello_keys
-        assert "biometric_hash" in hello_keys
-        assert "pin_unlock" in hello_keys
+    """Test Windows-specific TPM bypass operations for license protection."""
 
     def test_cold_boot_attack_extracts_memory_residue(self) -> None:
         """Cold boot attack extracts TPM memory residue."""
@@ -649,23 +604,23 @@ class TestWindowsSpecificBypass:
         """TPM lockout reset sends DictionaryAttackLockReset command."""
         engine = TPMBypassEngine()
 
-        engine.virtualized_tpm["lockout_count"] = 5
+        engine.virtualized_tpm["lockout_count"] = 5  # type: ignore[attr-defined]
 
         success = engine.reset_tpm_lockout()
 
         assert success
-        assert engine.virtualized_tpm["lockout_count"] == 0
+        assert engine.virtualized_tpm["lockout_count"] == 0  # type: ignore[attr-defined]
 
     def test_clear_tpm_ownership_resets_hierarchy_auth(self) -> None:
         """TPM ownership clear resets all hierarchy authorizations."""
         engine = TPMBypassEngine()
 
-        engine.virtualized_tpm["hierarchy_auth"][0x40000001] = b"test_auth"
+        engine.virtualized_tpm["hierarchy_auth"][0x40000001] = b"test_auth"  # type: ignore[attr-defined]
 
         success = engine.clear_tpm_ownership()
 
         assert success
-        assert engine.virtualized_tpm["hierarchy_auth"][0x40000001] == b""
+        assert engine.virtualized_tpm["hierarchy_auth"][0x40000001] == b""  # type: ignore[attr-defined]
 
 
 class TestKeyUnsealing:
@@ -1011,7 +966,7 @@ class TestEdgeCasesAndErrorHandling:
         """Sealed key extraction handles empty NVRAM gracefully."""
         engine = TPMBypassEngine()
 
-        engine.virtualized_tpm["nvram"] = bytearray(33554432)
+        engine.virtualized_tpm["nvram"] = bytearray(33554432)  # type: ignore[attr-defined]
 
         keys = engine.extract_sealed_keys()
 

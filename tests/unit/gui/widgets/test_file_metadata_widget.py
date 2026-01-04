@@ -19,17 +19,17 @@ try:
     from intellicrack.ui.widgets.file_metadata_widget import FileMetadataWidget
     GUI_AVAILABLE = True
 except ImportError:
-    QApplication = None
-    QWidget = None
-    QLabel = None
-    QTextEdit = None
-    Qt = None
-    QFileInfo = None
-    QGroupBox = None
-    QPushButton = None
-    QTest = None
-    QThread = None
-    FileMetadataWidget = None
+    QApplication = None  # type: ignore[misc, assignment]
+    QWidget = None  # type: ignore[misc, assignment]
+    QLabel = None  # type: ignore[misc, assignment]
+    QTextEdit = None  # type: ignore[misc, assignment]
+    Qt = None  # type: ignore[misc, assignment]
+    QFileInfo = None  # type: ignore[misc, assignment]
+    QGroupBox = None  # type: ignore[misc, assignment]
+    QPushButton = None  # type: ignore[misc, assignment]
+    QTest = None  # type: ignore[misc, assignment]
+    QThread = None  # type: ignore[misc, assignment]
+    FileMetadataWidget = None  # type: ignore[misc, assignment]
     GUI_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not GUI_AVAILABLE, reason="GUI modules not available")
@@ -440,7 +440,7 @@ class TestFileMetadataWidget:
                     assert indicator not in text, f"Placeholder found: {text}"
 
         check_widget_content(self.widget)
-        for child in self.widget.findChildren(object):
+        for child in self.widget.findChildren(object):  # type: ignore[type-var]
             check_widget_content(child)
 
     def test_thread_safety_real_async_operations(self, qtbot: Any, sample_file: tuple[str, int, Any]) -> None:
@@ -448,7 +448,8 @@ class TestFileMetadataWidget:
 
 
         # Ensure operations happen in GUI thread
-        assert QThread.currentThread() == QApplication.instance().thread()
+        app = QApplication.instance()
+        assert app is not None and QThread.currentThread() == app.thread()
 
         file_path, expected_size, file_info = sample_file
 

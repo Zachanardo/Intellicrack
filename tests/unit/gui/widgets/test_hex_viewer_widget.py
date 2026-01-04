@@ -12,18 +12,20 @@ from typing import Any
 from collections.abc import Generator
 
 try:
+    from PyQt6.QtCore import QObject
     from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QTableWidget
     from intellicrack.ui.dialogs.common_imports import QTest, Qt
     from intellicrack.ui.widgets.hex_viewer_widget import HexViewerWidget
     GUI_AVAILABLE = True
 except ImportError:
-    QApplication = None
-    QWidget = None
-    QTextEdit = None
-    QTableWidget = None
-    QTest = None
-    Qt = None
-    HexViewerWidget = None
+    QObject = None  # type: ignore[assignment, misc]
+    QApplication = None  # type: ignore[assignment, misc]
+    QWidget = None  # type: ignore[assignment, misc]
+    QTextEdit = None  # type: ignore[assignment, misc]
+    QTableWidget = None  # type: ignore[assignment, misc]
+    QTest = None  # type: ignore[assignment, misc]
+    Qt = None  # type: ignore[assignment, misc]
+    HexViewerWidget = None  # type: ignore[assignment, misc]
     GUI_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not GUI_AVAILABLE, reason="GUI modules not available")
@@ -277,7 +279,7 @@ class TestHexViewerWidget:
                 export_path = export_file.name
 
             try:
-                if exported_data := self.widget.export_selection(export_path):
+                if exported_data := self.widget.export_selection(export_path):  # type: ignore[call-arg, func-returns-value]
                     assert len(exported_data) <= len(binary_data)
 
             finally:
@@ -405,7 +407,7 @@ class TestHexViewerWidget:
                     assert indicator not in text, f"Placeholder found: {text}"
 
         check_widget_content(self.widget)
-        for child in self.widget.findChildren(object):
+        for child in self.widget.findChildren(QObject):
             check_widget_content(child)
 
     def test_memory_efficiency_real_large_file_handling(self, qtbot: Any) -> None:

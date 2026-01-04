@@ -21,6 +21,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
+import struct
 import time
 import traceback
 from typing import Any
@@ -817,13 +819,28 @@ except ImportError as e:
     plt = None
 
 try:
-    from intellicrack.handlers.capstone_handler import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs, capstone
+    from intellicrack.handlers.capstone_handler import (
+        CS_ARCH_X86,
+        CS_GRP_CALL,
+        CS_GRP_JUMP,
+        CS_GRP_RET,
+        CS_MODE_32,
+        CS_MODE_64,
+        CS_OPT_DETAIL,
+        Cs,
+        X86_OP_IMM,
+        X86_OP_MEM,
+        X86_OP_REG,
+        capstone,
+    )
 
     CAPSTONE_AVAILABLE = True
 except ImportError as e:
     logger.exception("Import error in cfg_explorer: %s", e)
     capstone = None
     CS_ARCH_X86 = CS_MODE_32 = CS_MODE_64 = Cs = None
+    CS_OPT_DETAIL = CS_GRP_CALL = CS_GRP_JUMP = CS_GRP_RET = None
+    X86_OP_IMM = X86_OP_MEM = X86_OP_REG = None
     CAPSTONE_AVAILABLE = False
 
 try:
@@ -853,6 +870,895 @@ try:
 except ImportError as e:
     logger.exception("Import error in cfg_explorer: %s", e)
     PYQT_AVAILABLE = False
+
+
+from dataclasses import dataclass, field
+from enum import Enum
+
+
+class BlockType(Enum):
+    """Enumeration of basic block types in CFG."""
+
+    ENTRY = "entry"
+    EXIT = "exit"
+    NORMAL = "normal"
+    LOOP_HEADER = "loop_header"
+    CONDITIONAL = "conditional"
+    SWITCH = "switch"
+    CALL = "call"
+    RETURN = "return"
+
+
+class EdgeType(Enum):
+    """Enumeration of CFG edge types."""
+
+    UNCONDITIONAL = "unconditional"
+    CONDITIONAL_TRUE = "conditional_true"
+    CONDITIONAL_FALSE = "conditional_false"
+    CALL = "call"
+    FALLTHROUGH = "fallthrough"
+    SWITCH_CASE = "switch_case"
+    EXCEPTION = "exception"
+
+
+@dataclass
+class Instruction:
+    """Represents a single disassembled instruction."""
+
+    address: int
+    size: int
+    mnemonic: str
+    op_str: str
+    bytes: bytes
+    is_jump: bool = False
+    is_call: bool = False
+    is_return: bool = False
+    is_conditional: bool = False
+    jump_target: int | None = None
+    groups: list[int] = field(default_factory=list)
+
+
+@dataclass
+class BasicBlock:
+    """Represents a basic block in the CFG."""
+
+    start_addr: int
+    end_addr: int
+    instructions: list[Instruction] = field(default_factory=list)
+    successors: list[int] = field(default_factory=list)
+    predecessors: list[int] = field(default_factory=list)
+    block_type: BlockType = BlockType.NORMAL
+    dominators: set[int] = field(default_factory=set)
+    immediate_dominator: int | None = None
+    loop_depth: int = 0
+
+
+@dataclass
+class CFG:
+    """Represents a complete Control Flow Graph."""
+
+    blocks: dict[int, BasicBlock] = field(default_factory=dict)
+    entry_address: int = 0
+    exit_addresses: list[int] = field(default_factory=list)
+    edges: dict[int, list[tuple[int, EdgeType]]] = field(default_factory=dict)
+    loops: list[list[int]] = field(default_factory=list)
+    dominator_tree: dict[int, list[int]] = field(default_factory=dict)
+
+
+class CFGBuilder:
+    """Builds Control Flow Graphs from binary code using Capstone disassembly."""
+
+    def __init__(self, arch: int = CS_ARCH_X86, mode: int = CS_MODE_64) -> None:
+        """Initialize CFG builder with architecture and mode.
+
+        Args:
+            arch: Capstone architecture constant (CS_ARCH_X86, etc.)
+            mode: Capstone mode constant (CS_MODE_32, CS_MODE_64, etc.)
+
+        """
+        self.arch: int = arch
+        self.mode: int = mode
+        self.md: Any = None
+
+        if CAPSTONE_AVAILABLE and Cs is not None:
+            try:
+                self.md = Cs(arch, mode)
+                if CS_OPT_DETAIL is not None:
+                    self.md.option(CS_OPT_DETAIL, True)
+            except Exception as e:
+                logger.warning("Failed to initialize Capstone: %s", e)
+                self.md = None
+
+    def build_cfg(self, code: bytes, base_addr: int, max_instructions: int = 10000) -> CFG:
+        """Build CFG from raw code bytes.
+
+        Args:
+            code: Raw machine code bytes
+            base_addr: Virtual address of code start
+            max_instructions: Maximum instructions to process (prevents infinite loops)
+
+        Returns:
+            Complete CFG with basic blocks and edges
+
+        """
+        cfg: CFG = CFG(entry_address=base_addr)
+        instructions: list[Instruction] = self._disassemble(code, base_addr, max_instructions)
+
+        if not instructions:
+            logger.warning("No instructions disassembled from code")
+            return cfg
+
+        leaders: set[int] = self._find_leaders(instructions, base_addr)
+        blocks: dict[int, BasicBlock] = self._build_blocks(instructions, leaders)
+        self._connect_edges(blocks, cfg)
+        self._identify_block_types(blocks, cfg)
+        self._detect_loops(blocks, cfg)
+        self._build_dominator_tree(blocks, cfg)
+
+        cfg.blocks = blocks
+        return cfg
+
+    def _extract_jump_targets(self, insn: Any, code: bytes, base_addr: int) -> list[int]:
+        """Extract all possible jump targets including indirect jumps.
+
+        Args:
+            insn: Capstone instruction object
+            code: Raw code bytes for jump table resolution
+            base_addr: Base address of the code
+
+        Returns:
+            List of potential jump target addresses
+
+        """
+        targets: list[int] = []
+
+        if not hasattr(insn, "operands") or not insn.operands:
+            return targets
+
+        for op in insn.operands:
+            if not hasattr(op, "type"):
+                continue
+
+            if op.type == X86_OP_IMM:
+                targets.append(op.imm)
+            elif op.type == X86_OP_MEM and insn.mnemonic == "jmp":
+                if hasattr(op, "mem") and hasattr(op.mem, "disp") and op.mem.disp:
+                    table_targets = self._resolve_jump_table(code, base_addr, op.mem.disp)
+                    targets.extend(table_targets)
+
+        return targets
+
+    def _resolve_jump_table(self, code: bytes, base_addr: int, table_addr: int) -> list[int]:
+        """Attempt to resolve entries from a jump table.
+
+        Args:
+            code: Raw code bytes
+            base_addr: Base address of the code
+            table_addr: Address of the jump table
+
+        Returns:
+            List of resolved jump targets
+
+        """
+        targets: list[int] = []
+
+        if table_addr < base_addr or table_addr >= base_addr + len(code):
+            return targets
+
+        offset = table_addr - base_addr
+        max_entries = 100
+
+        try:
+            for _ in range(max_entries):
+                if offset + 4 > len(code):
+                    break
+
+                entry = struct.unpack("<I", code[offset : offset + 4])[0]
+
+                if base_addr <= entry < base_addr + len(code):
+                    targets.append(entry)
+                    offset += 4
+                else:
+                    break
+
+        except Exception as e:
+            logger.debug("Jump table resolution error: %s", e)
+
+        return targets
+
+    def _disassemble(self, code: bytes, base_addr: int, max_instructions: int) -> list[Instruction]:
+        """Disassemble code using Capstone.
+
+        Args:
+            code: Raw binary code
+            base_addr: Base address for disassembly
+            max_instructions: Maximum instructions to process
+
+        Returns:
+            List of Instruction objects
+
+        """
+        instructions: list[Instruction] = []
+
+        if not self.md or not CAPSTONE_AVAILABLE:
+            logger.warning("Capstone not available, cannot disassemble")
+            return instructions
+
+        try:
+            count: int = 0
+            for insn in self.md.disasm(code, base_addr):
+                if count >= max_instructions:
+                    break
+
+                is_jump: bool = (
+                    CS_GRP_JUMP in insn.groups if hasattr(insn, "groups") and CS_GRP_JUMP is not None else False
+                )
+                is_call: bool = (
+                    CS_GRP_CALL in insn.groups if hasattr(insn, "groups") and CS_GRP_CALL is not None else False
+                )
+                is_return: bool = (
+                    CS_GRP_RET in insn.groups if hasattr(insn, "groups") and CS_GRP_RET is not None else False
+                )
+
+                is_conditional: bool = False
+                jump_target: int | None = None
+
+                if is_jump or is_call:
+                    is_conditional = any(
+                        mnem in insn.mnemonic.lower()
+                        for mnem in ["je", "jne", "jz", "jnz", "jg", "jl", "jge", "jle", "ja", "jb", "jbe", "jae"]
+                    )
+
+                    if X86_OP_IMM is not None and X86_OP_MEM is not None:
+                        jump_targets = self._extract_jump_targets(insn, code, base_addr)
+                        if jump_targets:
+                            jump_target = jump_targets[0]
+                    elif insn.op_str and insn.op_str.startswith("0x"):
+                        try:
+                            jump_target = int(insn.op_str, 16)
+                        except ValueError:
+                            pass
+
+                instruction: Instruction = Instruction(
+                    address=insn.address,
+                    size=insn.size,
+                    mnemonic=insn.mnemonic,
+                    op_str=insn.op_str,
+                    bytes=bytes(insn.bytes),
+                    is_jump=is_jump,
+                    is_call=is_call,
+                    is_return=is_return,
+                    is_conditional=is_conditional,
+                    jump_target=jump_target,
+                    groups=list(insn.groups) if hasattr(insn, "groups") else [],
+                )
+
+                instructions.append(instruction)
+                count += 1
+
+        except Exception as e:
+            logger.error("Disassembly error: %s", e)
+
+        return instructions
+
+    def _find_leaders(self, instructions: list[Instruction], base_addr: int) -> set[int]:
+        """Identify basic block leader addresses.
+
+        Leaders are:
+        - First instruction
+        - Target of any jump/branch
+        - Instruction immediately following a branch or call
+
+        Args:
+            instructions: List of disassembled instructions
+            base_addr: Base address of code
+
+        Returns:
+            Set of leader addresses
+
+        """
+        leaders: set[int] = {base_addr}
+
+        for i, insn in enumerate(instructions):
+            if insn.jump_target is not None:
+                leaders.add(insn.jump_target)
+
+            if insn.is_jump or insn.is_call or insn.is_return:
+                if i + 1 < len(instructions):
+                    leaders.add(instructions[i + 1].address)
+
+        return leaders
+
+    def _build_blocks(self, instructions: list[Instruction], leaders: set[int]) -> dict[int, BasicBlock]:
+        """Build basic blocks from instructions and leaders.
+
+        Args:
+            instructions: List of disassembled instructions
+            leaders: Set of basic block leader addresses
+
+        Returns:
+            Dictionary mapping block start address to BasicBlock
+
+        """
+        blocks: dict[int, BasicBlock] = {}
+        current_block: list[Instruction] = []
+        block_start: int | None = None
+
+        for insn in instructions:
+            if insn.address in leaders:
+                if current_block and block_start is not None:
+                    end_addr: int = current_block[-1].address + current_block[-1].size - 1
+                    blocks[block_start] = BasicBlock(
+                        start_addr=block_start,
+                        end_addr=end_addr,
+                        instructions=current_block[:],
+                    )
+
+                current_block = []
+                block_start = insn.address
+
+            current_block.append(insn)
+
+            if insn.is_return or (insn.is_jump and not insn.is_conditional):
+                if block_start is not None:
+                    end_addr = insn.address + insn.size - 1
+                    blocks[block_start] = BasicBlock(
+                        start_addr=block_start,
+                        end_addr=end_addr,
+                        instructions=current_block[:],
+                    )
+                current_block = []
+                block_start = None
+
+        if current_block and block_start is not None:
+            end_addr = current_block[-1].address + current_block[-1].size - 1
+            blocks[block_start] = BasicBlock(
+                start_addr=block_start,
+                end_addr=end_addr,
+                instructions=current_block[:],
+            )
+
+        return blocks
+
+    def _connect_edges(self, blocks: dict[int, BasicBlock], cfg: CFG) -> None:
+        """Connect basic blocks with edges based on control flow.
+
+        Args:
+            blocks: Dictionary of basic blocks
+            cfg: CFG object to populate with edges
+
+        """
+        for block_addr, block in blocks.items():
+            if not block.instructions:
+                continue
+
+            last_insn: Instruction = block.instructions[-1]
+
+            if last_insn.is_return:
+                cfg.exit_addresses.append(block_addr)
+                continue
+
+            if last_insn.is_jump:
+                if last_insn.jump_target and last_insn.jump_target in blocks:
+                    edge_type: EdgeType = (
+                        EdgeType.CONDITIONAL_TRUE if last_insn.is_conditional else EdgeType.UNCONDITIONAL
+                    )
+
+                    block.successors.append(last_insn.jump_target)
+                    blocks[last_insn.jump_target].predecessors.append(block_addr)
+
+                    if block_addr not in cfg.edges:
+                        cfg.edges[block_addr] = []
+                    cfg.edges[block_addr].append((last_insn.jump_target, edge_type))
+
+                if last_insn.is_conditional:
+                    fallthrough: int = last_insn.address + last_insn.size
+                    if fallthrough in blocks:
+                        block.successors.append(fallthrough)
+                        blocks[fallthrough].predecessors.append(block_addr)
+
+                        if block_addr not in cfg.edges:
+                            cfg.edges[block_addr] = []
+                        cfg.edges[block_addr].append((fallthrough, EdgeType.CONDITIONAL_FALSE))
+
+            elif last_insn.is_call:
+                fallthrough_addr: int = last_insn.address + last_insn.size
+                if fallthrough_addr in blocks:
+                    block.successors.append(fallthrough_addr)
+                    blocks[fallthrough_addr].predecessors.append(block_addr)
+
+                    if block_addr not in cfg.edges:
+                        cfg.edges[block_addr] = []
+                    cfg.edges[block_addr].append((fallthrough_addr, EdgeType.FALLTHROUGH))
+
+            else:
+                next_addr: int = last_insn.address + last_insn.size
+                if next_addr in blocks:
+                    block.successors.append(next_addr)
+                    blocks[next_addr].predecessors.append(block_addr)
+
+                    if block_addr not in cfg.edges:
+                        cfg.edges[block_addr] = []
+                    cfg.edges[block_addr].append((next_addr, EdgeType.UNCONDITIONAL))
+
+    def _identify_block_types(self, blocks: dict[int, BasicBlock], cfg: CFG) -> None:
+        """Identify and classify basic block types.
+
+        Args:
+            blocks: Dictionary of basic blocks
+            cfg: CFG object with entry and exit information
+
+        """
+        for block_addr, block in blocks.items():
+            if block_addr == cfg.entry_address:
+                block.block_type = BlockType.ENTRY
+            elif block_addr in cfg.exit_addresses:
+                block.block_type = BlockType.RETURN
+            elif block.instructions and block.instructions[-1].is_call:
+                block.block_type = BlockType.CALL
+            elif len(block.successors) > 2:
+                block.block_type = BlockType.SWITCH
+            elif len(block.successors) == 2:
+                block.block_type = BlockType.CONDITIONAL
+            else:
+                block.block_type = BlockType.NORMAL
+
+    def _detect_loops(self, blocks: dict[int, BasicBlock], cfg: CFG) -> None:
+        """Detect natural loops in the CFG using back edges.
+
+        Args:
+            blocks: Dictionary of basic blocks
+            cfg: CFG object to populate with loop information
+
+        """
+        visited: set[int] = set()
+        rec_stack: set[int] = set()
+        back_edges: list[tuple[int, int]] = []
+
+        def dfs(node: int) -> None:
+            """Depth-first search to find back edges.
+
+            Args:
+                node: Current node address being visited
+
+            """
+            visited.add(node)
+            rec_stack.add(node)
+
+            if node in blocks:
+                for successor in blocks[node].successors:
+                    if successor not in visited:
+                        dfs(successor)
+                    elif successor in rec_stack:
+                        back_edges.append((node, successor))
+
+            rec_stack.remove(node)
+
+        if cfg.entry_address in blocks:
+            dfs(cfg.entry_address)
+
+        for tail, header in back_edges:
+            loop_nodes: list[int] = self._extract_loop_nodes(blocks, header, tail)
+            if loop_nodes:
+                cfg.loops.append(loop_nodes)
+
+                for node in loop_nodes:
+                    if node in blocks:
+                        blocks[node].loop_depth += 1
+                        if node == header:
+                            blocks[node].block_type = BlockType.LOOP_HEADER
+
+    def _extract_loop_nodes(self, blocks: dict[int, BasicBlock], header: int, tail: int) -> list[int]:
+        """Extract all nodes in a natural loop.
+
+        Args:
+            blocks: Dictionary of basic blocks
+            header: Loop header address
+            tail: Back edge tail address
+
+        Returns:
+            List of addresses in the loop
+
+        """
+        loop_nodes: set[int] = {header, tail}
+        worklist: list[int] = [tail]
+
+        while worklist:
+            node: int = worklist.pop()
+            if node not in blocks:
+                continue
+
+            for pred in blocks[node].predecessors:
+                if pred not in loop_nodes:
+                    loop_nodes.add(pred)
+                    worklist.append(pred)
+
+        return list(loop_nodes)
+
+    def _build_dominator_tree(self, blocks: dict[int, BasicBlock], cfg: CFG) -> None:
+        """Build dominator tree using iterative algorithm with optimization.
+
+        Args:
+            blocks: Dictionary of basic blocks
+            cfg: CFG object to populate with dominator tree
+
+        """
+        if not blocks or cfg.entry_address not in blocks:
+            return
+
+        all_nodes: set[int] = set(blocks.keys())
+        dominators: dict[int, set[int]] = {}
+
+        for node in all_nodes:
+            dominators[node] = all_nodes.copy()
+
+        dominators[cfg.entry_address] = {cfg.entry_address}
+
+        changed: bool = True
+        iteration: int = 0
+        max_iterations: int = 100
+
+        while changed and iteration < max_iterations:
+            changed = False
+            iteration += 1
+
+            for node in all_nodes:
+                if node == cfg.entry_address:
+                    continue
+
+                if node not in blocks:
+                    continue
+
+                new_dom: set[int] = all_nodes.copy()
+
+                for pred in blocks[node].predecessors:
+                    if pred in dominators:
+                        new_dom &= dominators[pred]
+
+                new_dom.add(node)
+
+                if new_dom != dominators[node]:
+                    dominators[node] = new_dom
+                    changed = True
+
+        if iteration >= max_iterations:
+            logger.warning("Dominator computation hit iteration limit for CFG with %d blocks", len(blocks))
+
+        for node in all_nodes:
+            if node in blocks:
+                blocks[node].dominators = dominators.get(node, set())
+                self._find_immediate_dominator(node, blocks, dominators)
+
+        self._build_dom_tree_dict(blocks, cfg)
+
+    def _find_immediate_dominator(
+        self, node: int, blocks: dict[int, BasicBlock], dominators: dict[int, set[int]]
+    ) -> None:
+        """Find immediate dominator for a node.
+
+        Args:
+            node: Node address to find immediate dominator for
+            blocks: Dictionary of basic blocks
+            dominators: Dominator sets for all nodes
+
+        """
+        if node not in dominators:
+            return
+
+        node_doms: set[int] = dominators[node] - {node}
+
+        if not node_doms:
+            return
+
+        for candidate in node_doms:
+            if candidate not in dominators:
+                continue
+
+            candidate_doms: set[int] = dominators[candidate] - {candidate}
+
+            if node_doms - {candidate} == candidate_doms:
+                if node in blocks:
+                    blocks[node].immediate_dominator = candidate
+                return
+
+    def _build_dom_tree_dict(self, blocks: dict[int, BasicBlock], cfg: CFG) -> None:
+        """Build dominator tree as adjacency list.
+
+        Args:
+            blocks: Dictionary of basic blocks
+            cfg: CFG object to populate with dominator tree
+
+        """
+        for node, block in blocks.items():
+            if block.immediate_dominator is not None:
+                idom: int = block.immediate_dominator
+                if idom not in cfg.dominator_tree:
+                    cfg.dominator_tree[idom] = []
+                cfg.dominator_tree[idom].append(node)
+
+
+class CFGAnalyzer:
+    """Analyzes Control Flow Graphs for license protection patterns."""
+
+    def __init__(self, cfg: CFG) -> None:
+        """Initialize CFG analyzer.
+
+        Args:
+            cfg: Control Flow Graph to analyze
+
+        """
+        self.cfg: CFG = cfg
+
+    def find_paths_to_block(self, target_addr: int, max_paths: int = 100, max_depth: int = 100) -> list[list[int]]:
+        """Find all paths from entry to target block using path-based cycle detection.
+
+        Args:
+            target_addr: Address of target basic block
+            max_paths: Maximum number of paths to find
+            max_depth: Maximum path depth to prevent infinite recursion
+
+        Returns:
+            List of paths (each path is list of block addresses)
+
+        """
+        paths: list[list[int]] = []
+
+        def dfs(current: int, path: list[int]) -> None:
+            """Depth-first search to find paths with path-based cycle detection.
+
+            Args:
+                current: Current block address
+                path: Current path taken
+
+            """
+            if len(paths) >= max_paths:
+                return
+
+            if len(path) > max_depth:
+                return
+
+            if current == target_addr:
+                paths.append(path[:])
+                return
+
+            if current not in self.cfg.blocks:
+                return
+
+            for successor in self.cfg.blocks[current].successors:
+                if successor not in path:
+                    path.append(successor)
+                    dfs(successor, path)
+                    path.pop()
+
+        if self.cfg.entry_address in self.cfg.blocks:
+            dfs(self.cfg.entry_address, [self.cfg.entry_address])
+
+        return paths
+
+    def detect_switch_dispatchers(self) -> list[int]:
+        """Detect switch-case dispatch blocks (common in VM protections).
+
+        Returns:
+            List of addresses of potential switch dispatcher blocks
+
+        """
+        dispatchers: list[int] = []
+
+        for addr, block in self.cfg.blocks.items():
+            if len(block.successors) > 2:
+                dispatchers.append(addr)
+
+        return dispatchers
+
+    def detect_opaque_predicates(self) -> list[tuple[int, str]]:
+        """Detect potential opaque predicates (always-true or always-false conditions).
+
+        Returns:
+            List of (address, reason) tuples for potential opaque predicates
+
+        """
+        predicates: list[tuple[int, str]] = []
+
+        opaque_patterns: list[tuple[str, str]] = [
+            (r"xor\s+(\w+),\s*\1", "xor reg, reg (always zero)"),
+            (r"test\s+(\w+),\s*\1", "test reg, reg (self-test)"),
+            (r"cmp\s+(\w+),\s*\1", "cmp reg, reg (always equal)"),
+            (r"or\s+(\w+),\s*0xffffffff", "or reg, -1 (always -1)"),
+            (r"or\s+(\w+),\s*-1", "or reg, -1 (always -1)"),
+            (r"and\s+(\w+),\s*0x0", "and reg, 0 (always zero)"),
+            (r"and\s+(\w+),\s*0", "and reg, 0 (always zero)"),
+            (r"sub\s+(\w+),\s*\1", "sub reg, reg (always zero)"),
+        ]
+
+        for addr, block in self.cfg.blocks.items():
+            if block.block_type != BlockType.CONDITIONAL:
+                continue
+
+            if len(block.successors) != 2:
+                continue
+
+            true_branch: int = block.successors[0]
+            false_branch: int = block.successors[1]
+
+            if true_branch in self.cfg.blocks and false_branch in self.cfg.blocks:
+                true_block: BasicBlock = self.cfg.blocks[true_branch]
+                false_block: BasicBlock = self.cfg.blocks[false_branch]
+
+                if not true_block.instructions:
+                    predicates.append((addr, "Empty true branch - possible opaque predicate"))
+                elif not false_block.instructions:
+                    predicates.append((addr, "Empty false branch - possible opaque predicate"))
+
+            if block.instructions:
+                for insn in block.instructions[-3:]:
+                    disasm: str = f"{insn.mnemonic} {insn.op_str}".lower()
+
+                    for pattern, description in opaque_patterns:
+                        if re.search(pattern, disasm, re.IGNORECASE):
+                            predicates.append((addr, f"{description}: {insn.mnemonic} {insn.op_str}"))
+                            break
+
+                    if "cmp" in insn.mnemonic.lower() and insn.op_str:
+                        ops: list[str] = insn.op_str.split(",")
+                        if len(ops) == 2:
+                            try:
+                                op2 = ops[1].strip()
+
+                                if op2.startswith("0x7fffffff") or op2 == "2147483647":
+                                    predicates.append((addr, f"cmp with MAX_INT: {insn.mnemonic} {insn.op_str}"))
+                                elif op2.startswith("0x80000000") or op2 == "-2147483648":
+                                    predicates.append((addr, f"cmp with MIN_INT: {insn.mnemonic} {insn.op_str}"))
+                            except Exception:
+                                pass
+
+        return predicates
+
+    def find_unreachable_code(self) -> list[int]:
+        """Find basic blocks that are unreachable from entry.
+
+        Returns:
+            List of unreachable block addresses
+
+        """
+        reachable: set[int] = set()
+        worklist: list[int] = [self.cfg.entry_address]
+
+        while worklist:
+            current: int = worklist.pop()
+            if current in reachable:
+                continue
+
+            reachable.add(current)
+
+            if current in self.cfg.blocks:
+                for successor in self.cfg.blocks[current].successors:
+                    if successor not in reachable:
+                        worklist.append(successor)
+
+        unreachable: list[int] = [addr for addr in self.cfg.blocks if addr not in reachable]
+        return unreachable
+
+    def find_license_check_paths(self) -> list[dict[str, Any]]:
+        """Find potential license check code paths with reduced false positives.
+
+        Returns:
+            List of dictionaries with license check analysis
+
+        """
+        license_paths: list[dict[str, Any]] = []
+        license_keywords: list[str] = [
+            "license",
+            "regist",
+            "valid",
+            "serial",
+            "key",
+            "trial",
+            "expire",
+            "activ",
+            "auth",
+            "check",
+        ]
+
+        for addr, block in self.cfg.blocks.items():
+            license_score: int = 0
+            reasons: list[str] = []
+
+            has_license_strings: bool = self._has_license_strings_nearby(addr, license_keywords)
+            if has_license_strings:
+                license_score += 5
+                reasons.append("License-related strings nearby")
+
+            calls_validation_api: bool = self._calls_crypto_or_validation_api(block)
+            if calls_validation_api:
+                license_score += 3
+                reasons.append("Calls cryptographic or validation API")
+
+            has_conditional_checks: bool = False
+            for insn in block.instructions:
+                if any(kw in insn.mnemonic.lower() for kw in ["cmp", "test"]):
+                    has_conditional_checks = True
+
+                if "call" in insn.mnemonic.lower():
+                    if any(kw in insn.op_str.lower() for kw in license_keywords):
+                        license_score += 3
+                        reasons.append(f"License-related function call at {hex(insn.address)}")
+
+            if has_conditional_checks and block.block_type == BlockType.CONDITIONAL:
+                license_score += 1
+                reasons.append("Has conditional branching")
+
+            if len(block.successors) == 2 and license_score >= 3:
+                license_score += 1
+                reasons.append("Binary branching pattern")
+
+            if license_score >= 5:
+                license_paths.append(
+                    {
+                        "address": hex(addr),
+                        "score": license_score,
+                        "reasons": reasons,
+                        "block_type": block.block_type.value,
+                        "successors": [hex(s) for s in block.successors],
+                    }
+                )
+
+        return license_paths
+
+    def _has_license_strings_nearby(self, addr: int, keywords: list[str]) -> bool:
+        """Check if license-related strings are referenced near this address.
+
+        Args:
+            addr: Block address to check
+            keywords: List of license-related keywords
+
+        Returns:
+            True if license-related strings found nearby
+
+        """
+        if addr not in self.cfg.blocks:
+            return False
+
+        block: BasicBlock = self.cfg.blocks[addr]
+
+        for insn in block.instructions:
+            if insn.op_str:
+                for keyword in keywords:
+                    if keyword in insn.op_str.lower():
+                        return True
+
+        return False
+
+    def _calls_crypto_or_validation_api(self, block: BasicBlock) -> bool:
+        """Check if block calls cryptographic or validation APIs.
+
+        Args:
+            block: Basic block to check
+
+        Returns:
+            True if crypto/validation APIs are called
+
+        """
+        crypto_apis: list[str] = [
+            "crypt",
+            "hash",
+            "md5",
+            "sha",
+            "aes",
+            "rsa",
+            "verify",
+            "check",
+            "valid",
+            "compare",
+        ]
+
+        for insn in block.instructions:
+            if "call" in insn.mnemonic.lower():
+                if insn.op_str:
+                    for api in crypto_apis:
+                        if api in insn.op_str.lower():
+                            return True
+
+        return False
 
 
 class CFGExplorer:

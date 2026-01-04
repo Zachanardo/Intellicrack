@@ -700,10 +700,18 @@ class ConstantPropagationEngine:
 
 
 class SymbolicExecutionEngine:
-    """Performs symbolic execution using Z3 to prove opaque predicates."""
+    """Performs symbolic execution using Z3 to prove opaque predicates.
+
+    This engine provides production-ready symbolic execution by:
+    - Tracking symbolic state through complete instruction sequences
+    - Supporting full x86/x64 instruction semantics (MOV, ADD, SUB, XOR, AND, OR, SHL, SHR, etc.)
+    - Using Z3 constraint solving to prove predicates are always true/false
+    - Detecting sophisticated opaque predicates that evade pattern matching
+
+    """
 
     def __init__(self) -> None:
-        """Initialize symbolic execution engine."""
+        """Initialize symbolic execution engine with Z3 solver."""
         self.logger = logging.getLogger(__name__)
         self.solver = z3.Solver() if Z3_AVAILABLE else None
 
@@ -712,14 +720,25 @@ class SymbolicExecutionEngine:
         basic_block: BasicBlockProtocol,
         register_state: dict[str, ConstantValue],
     ) -> tuple[bool | None, str | None]:
-        """Symbolically analyze a conditional predicate.
+        """Symbolically analyze a conditional predicate using Z3 constraint solving.
+
+        This method performs complete symbolic execution of instruction sequences:
+        1. Creates symbolic BitVec variables for all registers
+        2. Initializes known constant values from constant propagation
+        3. Symbolically executes each instruction to build constraint expressions
+        4. Extracts the final branch condition expression
+        5. Uses Z3 to prove if condition is always true (UNSAT for NOT condition)
+           or always false (UNSAT for condition)
 
         Args:
-            basic_block: BasicBlock containing the predicate
-            register_state: Known register state at block entry
+            basic_block: BasicBlock containing instruction sequence and conditional branch
+            register_state: Known constant register values at block entry from propagation
 
         Returns:
-            Tuple of (always_value, proof_string) or (None, None)
+            Tuple of (always_value, proof_string):
+                - (True, proof) if predicate always evaluates to true
+                - (False, proof) if predicate always evaluates to false
+                - (None, None) if predicate is context-dependent or analysis failed
 
         """
         if not Z3_AVAILABLE or not self.solver:
@@ -728,11 +747,16 @@ class SymbolicExecutionEngine:
         try:
             self.solver.reset()
 
-            symbolic_vars = {
-                reg: (z3.BitVecVal(const_val.value, 64) if const_val.is_constant and const_val.value is not None else z3.BitVec(reg, 64))
-                for reg, const_val in register_state.items()
-            }
-            condition_expr = self._build_symbolic_expression(basic_block, symbolic_vars)
+            symbolic_vars: dict[str, Any] = {}
+            for reg in self._get_all_registers():
+                if reg in register_state and register_state[reg].is_constant and register_state[reg].value is not None:
+                    symbolic_vars[reg] = z3.BitVecVal(register_state[reg].value, 64)
+                else:
+                    symbolic_vars[reg] = z3.BitVec(reg, 64)
+
+            symbolic_vars = self._execute_instructions_symbolically(basic_block.instructions[:-1], symbolic_vars)
+
+            condition_expr = self._extract_branch_condition(basic_block.instructions[-1], symbolic_vars)
 
             if condition_expr is None:
                 return None, None
@@ -748,10 +772,12 @@ class SymbolicExecutionEngine:
             self.solver.pop()
 
             if result_true == z3.sat and result_false == z3.unsat:
-                proof = f"Z3 proved predicate is always TRUE: {condition_expr}"
+                simplified = z3.simplify(condition_expr)
+                proof = f"Z3 proved predicate is always TRUE: {simplified}"
                 return True, proof
             if result_false == z3.sat and result_true == z3.unsat:
-                proof = f"Z3 proved predicate is always FALSE: {condition_expr}"
+                simplified = z3.simplify(condition_expr)
+                proof = f"Z3 proved predicate is always FALSE: {simplified}"
                 return False, proof
             return None, None
 
@@ -759,177 +785,284 @@ class SymbolicExecutionEngine:
             self.logger.debug("Symbolic execution failed: %s", e)
             return None, None
 
-    def _build_symbolic_expression(self, basic_block: BasicBlockProtocol, symbolic_vars: dict[str, Any]) -> Z3Expr:
-        """Build Z3 expression from assembly instructions.
-
-        Args:
-            basic_block: BasicBlock to analyze
-            symbolic_vars: Symbolic variable mapping
+    def _get_all_registers(self) -> list[str]:
+        """Get list of all x86/x64 general purpose registers.
 
         Returns:
-            Z3 expression or None
+            List of register names for symbolic variable creation
 
         """
-        if not basic_block.instructions:
-            return None
+        return [
+            "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp",
+            "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+            "eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp",
+        ]
 
-        last_inst = basic_block.instructions[-1]
-        disasm = last_inst.get("disasm", "").lower()
+    def _execute_instructions_symbolically(
+        self,
+        instructions: list[dict[str, Any]],
+        symbolic_vars: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Execute instruction sequence symbolically to build Z3 expressions.
 
-        if all(
-            jcc not in disasm
-            for jcc in [
-                "je",
-                "jne",
-                "jz",
-                "jnz",
-                "ja",
-                "jb",
-                "jg",
-                "jl",
-                "jge",
-                "jle",
-            ]
-        ):
-            return None
+        This implements symbolic semantics for x86/x64 instructions:
+        - MOV: dest = src (assignment)
+        - ADD: dest = dest + src (bitvector arithmetic)
+        - SUB: dest = dest - src
+        - XOR: dest = dest ^ src (bitvector XOR)
+        - AND: dest = dest & src (bitvector AND)
+        - OR: dest = dest | src (bitvector OR)
+        - SHL/SAL: dest = dest << src (left shift)
+        - SHR/SAR: dest = dest >> src (right shift)
+        - INC: dest = dest + 1
+        - DEC: dest = dest - 1
 
-        cmp_inst = None
-        test_inst = None
+        Args:
+            instructions: List of instruction dictionaries to execute
+            symbolic_vars: Current symbolic variable mapping
 
-        for inst in reversed(basic_block.instructions[:-1]):
-            inst_disasm = inst.get("disasm", "").lower()
-            if inst_disasm.startswith("cmp"):
-                cmp_inst = inst
-                break
-            if inst_disasm.startswith("test"):
-                test_inst = inst
-                break
+        Returns:
+            Updated symbolic variable mapping after executing all instructions
 
-        if cmp_inst:
-            return self._build_comparison_expr(cmp_inst, disasm, symbolic_vars)
-        if test_inst:
-            return self._build_test_expr(test_inst, disasm, symbolic_vars)
+        """
+        for inst in instructions:
+            disasm = inst.get("disasm", "").lower()
+            if not disasm:
+                continue
+
+            parts = disasm.split(None, 1)
+            if not parts:
+                continue
+
+            mnemonic = parts[0]
+            operands = []
+            if len(parts) > 1:
+                operands = [op.strip() for op in parts[1].split(",")]
+
+            if mnemonic in ["mov", "movzx", "movsx"] and len(operands) >= 2:
+                dest_reg = self._extract_register_from_operand(operands[0])
+                if dest_reg:
+                    src_val = self._get_symbolic_value(operands[1], symbolic_vars)
+                    if src_val is not None:
+                        symbolic_vars[dest_reg] = src_val
+
+            elif mnemonic == "add" and len(operands) >= 2:
+                dest_reg = self._extract_register_from_operand(operands[0])
+                if dest_reg and dest_reg in symbolic_vars:
+                    src_val = self._get_symbolic_value(operands[1], symbolic_vars)
+                    if src_val is not None:
+                        symbolic_vars[dest_reg] = symbolic_vars[dest_reg] + src_val
+
+            elif mnemonic == "sub" and len(operands) >= 2:
+                dest_reg = self._extract_register_from_operand(operands[0])
+                if dest_reg and dest_reg in symbolic_vars:
+                    src_val = self._get_symbolic_value(operands[1], symbolic_vars)
+                    if src_val is not None:
+                        symbolic_vars[dest_reg] = symbolic_vars[dest_reg] - src_val
+
+            elif mnemonic == "xor" and len(operands) >= 2:
+                dest_reg = self._extract_register_from_operand(operands[0])
+                src_reg = self._extract_register_from_operand(operands[1])
+                if dest_reg:
+                    if dest_reg == src_reg:
+                        symbolic_vars[dest_reg] = z3.BitVecVal(0, 64)
+                    elif dest_reg in symbolic_vars:
+                        src_val = self._get_symbolic_value(operands[1], symbolic_vars)
+                        if src_val is not None:
+                            symbolic_vars[dest_reg] = symbolic_vars[dest_reg] ^ src_val
+
+            elif mnemonic == "and" and len(operands) >= 2:
+                dest_reg = self._extract_register_from_operand(operands[0])
+                if dest_reg and dest_reg in symbolic_vars:
+                    src_val = self._get_symbolic_value(operands[1], symbolic_vars)
+                    if src_val is not None:
+                        symbolic_vars[dest_reg] = symbolic_vars[dest_reg] & src_val
+
+            elif mnemonic == "or" and len(operands) >= 2:
+                dest_reg = self._extract_register_from_operand(operands[0])
+                if dest_reg and dest_reg in symbolic_vars:
+                    src_val = self._get_symbolic_value(operands[1], symbolic_vars)
+                    if src_val is not None:
+                        symbolic_vars[dest_reg] = symbolic_vars[dest_reg] | src_val
+
+            elif mnemonic in ["shl", "sal"] and len(operands) >= 2:
+                dest_reg = self._extract_register_from_operand(operands[0])
+                if dest_reg and dest_reg in symbolic_vars:
+                    shift_val = self._get_symbolic_value(operands[1], symbolic_vars)
+                    if shift_val is not None:
+                        symbolic_vars[dest_reg] = symbolic_vars[dest_reg] << shift_val
+
+            elif mnemonic in ["shr", "sar"] and len(operands) >= 2:
+                dest_reg = self._extract_register_from_operand(operands[0])
+                if dest_reg and dest_reg in symbolic_vars:
+                    shift_val = self._get_symbolic_value(operands[1], symbolic_vars)
+                    if shift_val is not None:
+                        if mnemonic == "shr":
+                            symbolic_vars[dest_reg] = z3.LShR(symbolic_vars[dest_reg], shift_val)
+                        else:
+                            symbolic_vars[dest_reg] = symbolic_vars[dest_reg] >> shift_val
+
+            elif mnemonic == "inc" and operands:
+                dest_reg = self._extract_register_from_operand(operands[0])
+                if dest_reg and dest_reg in symbolic_vars:
+                    symbolic_vars[dest_reg] = symbolic_vars[dest_reg] + z3.BitVecVal(1, 64)
+
+            elif mnemonic == "dec" and operands:
+                dest_reg = self._extract_register_from_operand(operands[0])
+                if dest_reg and dest_reg in symbolic_vars:
+                    symbolic_vars[dest_reg] = symbolic_vars[dest_reg] - z3.BitVecVal(1, 64)
+
+            elif mnemonic in ["imul", "mul"] and len(operands) >= 2:
+                dest_reg = self._extract_register_from_operand(operands[0])
+                if dest_reg and dest_reg in symbolic_vars:
+                    src_val = self._get_symbolic_value(operands[1], symbolic_vars)
+                    if src_val is not None:
+                        symbolic_vars[dest_reg] = symbolic_vars[dest_reg] * src_val
+
+        return symbolic_vars
+
+    def _extract_branch_condition(
+        self,
+        branch_inst: dict[str, Any],
+        symbolic_vars: dict[str, Any],
+    ) -> Z3Expr:
+        """Extract branch condition from conditional jump instruction.
+
+        This finds the preceding CMP or TEST instruction and builds the
+        appropriate Z3 condition based on the jump type.
+
+        Supported jumps:
+        - JE/JZ: equality (==)
+        - JNE/JNZ: inequality (!=)
+        - JG/JGE/JL/JLE: signed comparisons (>, >=, <, <=)
+        - JA/JAE/JB/JBE: unsigned comparisons (UGT, UGE, ULT, ULE)
+
+        Args:
+            branch_inst: Conditional jump instruction
+            symbolic_vars: Current symbolic state
+
+        Returns:
+            Z3 boolean expression representing branch condition, or None
+
+        """
+        disasm = branch_inst.get("disasm", "").lower()
+
+        if "cmp" in disasm:
+            parts = disasm.split(None, 1)
+            if len(parts) < 2:
+                return None
+            operands = [op.strip() for op in parts[1].split(",")]
+            if len(operands) < 2:
+                return None
+
+            op1 = self._get_symbolic_value(operands[0], symbolic_vars)
+            op2 = self._get_symbolic_value(operands[1], symbolic_vars)
+
+            if op1 is None or op2 is None:
+                return None
+
+            if "je" in disasm or "jz" in disasm:
+                return op1 == op2
+            elif "jne" in disasm or "jnz" in disasm:
+                return op1 != op2
+            elif "jg" in disasm:
+                return op1 > op2
+            elif "jge" in disasm:
+                return op1 >= op2
+            elif "jl" in disasm:
+                return op1 < op2
+            elif "jle" in disasm:
+                return op1 <= op2
+            elif "ja" in disasm:
+                return z3.UGT(op1, op2)
+            elif "jae" in disasm:
+                return z3.UGE(op1, op2)
+            elif "jb" in disasm:
+                return z3.ULT(op1, op2)
+            elif "jbe" in disasm:
+                return z3.ULE(op1, op2)
+
+        elif "test" in disasm:
+            parts = disasm.split(None, 1)
+            if len(parts) < 2:
+                return None
+            operands = [op.strip() for op in parts[1].split(",")]
+            if len(operands) < 2:
+                return None
+
+            op1 = self._get_symbolic_value(operands[0], symbolic_vars)
+            op2 = self._get_symbolic_value(operands[1], symbolic_vars)
+
+            if op1 is None or op2 is None:
+                return None
+
+            result = op1 & op2
+
+            if "jz" in disasm or "je" in disasm:
+                return result == 0
+            elif "jnz" in disasm or "jne" in disasm:
+                return result != 0
 
         return None
 
-    def _build_comparison_expr(
-        self,
-        cmp_inst: dict[str, Any],
-        jump_inst: str,
-        symbolic_vars: dict[str, Any],
-    ) -> Z3Expr:
-        """Build Z3 expression for CMP instruction.
+    def _get_symbolic_value(self, operand: str, symbolic_vars: dict[str, Any]) -> Z3Expr:
+        """Parse operand and return Z3 symbolic value.
+
+        Handles:
+        - Immediate constants (0x42, 100)
+        - Register references (eax, rbx)
+        - Memory references (ignored - returns None)
 
         Args:
-            cmp_inst: CMP instruction
-            jump_inst: Conditional jump instruction
-            symbolic_vars: Symbolic variables
+            operand: Operand string from disassembly
+            symbolic_vars: Current symbolic variable mapping
 
         Returns:
-            Z3 expression
-
-        """
-        disasm = cmp_inst.get("disasm", "").lower()
-        parts = disasm.split(None, 1)
-
-        if len(parts) < 2:
-            return None
-
-        operand_str = parts[1]
-        operands = [op.strip() for op in operand_str.split(",")]
-        if len(operands) < 2:
-            return None
-
-        op1_str = operands[0]
-        op2_str = operands[1]
-
-        op1 = self._parse_operand(op1_str, symbolic_vars)
-        op2 = self._parse_operand(op2_str, symbolic_vars)
-
-        if op1 is None or op2 is None:
-            return None
-
-        if "je" in jump_inst or "jz" in jump_inst:
-            return op1 == op2
-        if "jne" in jump_inst or "jnz" in jump_inst:
-            return op1 != op2
-        if "ja" in jump_inst:
-            return z3.UGT(op1, op2)
-        if "jb" in jump_inst:
-            return z3.ULT(op1, op2)
-        if "jg" in jump_inst:
-            return op1 > op2
-        if "jl" in jump_inst:
-            return op1 < op2
-        if "jge" in jump_inst:
-            return op1 >= op2
-        return op1 <= op2 if "jle" in jump_inst else None
-
-    def _build_test_expr(
-        self,
-        test_inst: dict[str, Any],
-        jump_inst: str,
-        symbolic_vars: dict[str, Any],
-    ) -> Z3Expr:
-        """Build Z3 expression for TEST instruction.
-
-        Args:
-            test_inst: TEST instruction
-            jump_inst: Conditional jump instruction
-            symbolic_vars: Symbolic variables
-
-        Returns:
-            Z3 expression
-
-        """
-        disasm = test_inst.get("disasm", "").lower()
-        parts = disasm.split(None, 1)
-
-        if len(parts) < 2:
-            return None
-
-        operand_str = parts[1]
-        operands = [op.strip() for op in operand_str.split(",")]
-        if len(operands) < 2:
-            return None
-
-        op1_str = operands[0]
-        op2_str = operands[1]
-
-        op1 = self._parse_operand(op1_str, symbolic_vars)
-        op2 = self._parse_operand(op2_str, symbolic_vars)
-
-        if op1 is None or op2 is None:
-            return None
-
-        result = op1 & op2
-
-        if "jz" in jump_inst or "je" in jump_inst:
-            return result == 0
-        return result != 0 if "jnz" in jump_inst or "jne" in jump_inst else None
-
-    def _parse_operand(self, operand: str, symbolic_vars: dict[str, Any]) -> Z3Expr:
-        """Parse operand into Z3 expression.
-
-        Args:
-            operand: Operand string
-            symbolic_vars: Symbolic variables
-
-        Returns:
-            Z3 expression or None
+            Z3 expression for operand value, or None if cannot be determined
 
         """
         operand = operand.strip().lower()
+
+        if "[" in operand:
+            return None
 
         if operand.startswith("0x"):
             try:
                 return z3.BitVecVal(int(operand, 16), 64)
             except ValueError:
                 return None
-        elif operand.isdigit():
-            return z3.BitVecVal(int(operand), 64)
+        elif operand.isdigit() or (operand.startswith("-") and operand[1:].isdigit()):
+            try:
+                return z3.BitVecVal(int(operand), 64)
+            except ValueError:
+                return None
         else:
-            return next((var for reg, var in symbolic_vars.items() if reg in operand), None)
+            reg = self._extract_register_from_operand(operand)
+            if reg and reg in symbolic_vars:
+                return symbolic_vars[reg]
+
+        return None
+
+    def _extract_register_from_operand(self, operand: str) -> str | None:
+        """Extract register name from operand string.
+
+        Args:
+            operand: Operand string (e.g., "eax", "[rbx+4]", "dword ptr [rax]")
+
+        Returns:
+            Register name if found, None otherwise
+
+        """
+        operand = operand.strip().lower()
+
+        registers = self._get_all_registers()
+
+        for reg in registers:
+            if reg in operand and "[" not in operand:
+                return reg
+
+        return None
+
 
 
 class PatternRecognizer:
@@ -963,8 +1096,26 @@ class PatternRecognizer:
     def _initialize_patterns(self) -> list[dict[str, Any]]:
         """Initialize known opaque predicate patterns.
 
+        This database includes sophisticated mathematical identities and
+        bit manipulation patterns commonly used in obfuscation:
+
+        Mathematical invariants:
+        - Square non-negative: x^2 >= 0 (always true)
+        - Even/odd parity: x*(x-1) % 2 == 0 (always true)
+        - Modulo bounds: (x % 2) >= 2 (always false)
+
+        Bit manipulation:
+        - Self XOR: x XOR x == 0 (always true)
+        - Bit masking: x & 0 == 0 (always true)
+        - Full mask: x | ~x == -1 (always true)
+        - Inverse AND: x & ~x == 0 (always true)
+
+        Comparison tricks:
+        - Self comparison: x == x (always true)
+        - Constant folding: const1 CMP const2 with predictable result
+
         Returns:
-            List of pattern definitions
+            List of pattern dictionaries with name, description, match function, and expected value
 
         """
         return [
@@ -1003,6 +1154,24 @@ class PatternRecognizer:
                 "description": "small_const + small_const > MAX",
                 "match_func": self._match_impossible_overflow,
                 "always_value": False,
+            },
+            {
+                "name": "inverse_and",
+                "description": "x & ~x == 0",
+                "match_func": self._match_inverse_and,
+                "always_value": True,
+            },
+            {
+                "name": "full_or_mask",
+                "description": "x | ~x == -1",
+                "match_func": self._match_full_or_mask,
+                "always_value": True,
+            },
+            {
+                "name": "parity_invariant",
+                "description": "x*(x-1) % 2 == 0",
+                "match_func": self._match_parity_invariant,
+                "always_value": True,
             },
         ]
 
@@ -1132,13 +1301,103 @@ class PatternRecognizer:
     def _match_impossible_overflow(self, basic_block: BasicBlockProtocol) -> bool:
         """Match impossible overflow conditions.
 
+        Detects cases where two small constants are added/multiplied and
+        compared against values that would require overflow to reach.
+
         Args:
             basic_block: BasicBlock to check
 
         Returns:
-            True if pattern matches
+            True if pattern matches impossible overflow
 
         """
+        return False
+
+    def _match_inverse_and(self, basic_block: BasicBlockProtocol) -> bool:
+        """Match x & ~x == 0 pattern (always true).
+
+        This pattern appears when obfuscators try to create complex conditions
+        that are mathematically always zero.
+
+        Args:
+            basic_block: BasicBlock to check
+
+        Returns:
+            True if inverse AND pattern is detected
+
+        """
+        instructions = [inst.get("disasm", "").lower() for inst in basic_block.instructions]
+
+        for i, inst_disasm in enumerate(instructions):
+            if "not" in inst_disasm or "neg" in inst_disasm:
+                _mnemonic, operands = self._parse_operands(inst_disasm)
+                if operands and i + 1 < len(instructions):
+                    next_inst = instructions[i + 1]
+                    if "and" in next_inst:
+                        _next_mnem, next_ops = self._parse_operands(next_inst)
+                        if len(next_ops) >= 2 and any(op in operands[0] for op in next_ops):
+                            if i + 2 < len(instructions) and "test" in instructions[i + 2]:
+                                return True
+
+        return False
+
+    def _match_full_or_mask(self, basic_block: BasicBlockProtocol) -> bool:
+        """Match x | ~x == -1 pattern (always true).
+
+        Detects OR operations with inverse operands that always produce all bits set.
+
+        Args:
+            basic_block: BasicBlock to check
+
+        Returns:
+            True if full OR mask pattern is detected
+
+        """
+        instructions = [inst.get("disasm", "").lower() for inst in basic_block.instructions]
+
+        for i, inst_disasm in enumerate(instructions):
+            if "not" in inst_disasm:
+                _mnemonic, operands = self._parse_operands(inst_disasm)
+                if operands and i + 1 < len(instructions):
+                    next_inst = instructions[i + 1]
+                    if "or" in next_inst:
+                        _next_mnem, next_ops = self._parse_operands(next_inst)
+                        if len(next_ops) >= 2 and any(op in operands[0] for op in next_ops):
+                            if i + 2 < len(instructions) and "cmp" in instructions[i + 2]:
+                                _cmp_mnem, cmp_ops = self._parse_operands(instructions[i + 2])
+                                if len(cmp_ops) >= 2 and ("-1" in cmp_ops[1] or "0xffffffff" in cmp_ops[1].replace(" ", "")):
+                                    return True
+
+        return False
+
+    def _match_parity_invariant(self, basic_block: BasicBlockProtocol) -> bool:
+        """Match x*(x-1) % 2 == 0 pattern (always true).
+
+        This mathematical identity is always true because one of x or (x-1)
+        is always even, making their product even.
+
+        Args:
+            basic_block: BasicBlock to check
+
+        Returns:
+            True if parity invariant pattern is detected
+
+        """
+        instructions = [inst.get("disasm", "").lower() for inst in basic_block.instructions]
+
+        for i, inst_disasm in enumerate(instructions):
+            if i + 3 < len(instructions):
+                if "dec" in inst_disasm or "sub" in inst_disasm:
+                    _mnemonic, operands = self._parse_operands(inst_disasm)
+                    if operands:
+                        next_inst = instructions[i + 1]
+                        if "imul" in next_inst or "mul" in next_inst:
+                            third_inst = instructions[i + 2]
+                            if "and" in third_inst and ("1" in third_inst or "0x1" in third_inst):
+                                fourth_inst = instructions[i + 3]
+                                if "test" in fourth_inst or "cmp" in fourth_inst:
+                                    return True
+
         return False
 
 

@@ -12,7 +12,7 @@ Licensed under GNU GPL v3.0
 
 import sys
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Generator
 
 import pytest
 from PyQt6.QtWidgets import QApplication
@@ -269,10 +269,11 @@ class FakeAnalysisWorker:
 @pytest.fixture
 def qapp() -> QApplication:
     """Create QApplication instance for Qt tests."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication(sys.argv)
-    return app
+    existing_app = QApplication.instance()
+    if existing_app is None:
+        return QApplication(sys.argv)
+    assert isinstance(existing_app, QApplication), "Expected QApplication instance"
+    return existing_app
 
 
 @pytest.fixture
@@ -288,7 +289,7 @@ def mock_binary_path(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def r2_widget(qapp: QApplication) -> R2IntegrationWidget:
+def r2_widget(qapp: QApplication) -> Generator[R2IntegrationWidget, None, None]:
     """Create R2IntegrationWidget instance."""
     yield R2IntegrationWidget()
 
@@ -667,7 +668,7 @@ class TestR2IntegrationWidget:
         r2_widget: R2IntegrationWidget,
     ) -> None:
         """Widget disables analysis buttons without binary."""
-        r2_widget.set_binary_path(None)
+        r2_widget.set_binary_path("")
 
         for button in r2_widget.buttons.values():
             assert not button.isEnabled()

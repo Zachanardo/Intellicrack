@@ -10,7 +10,7 @@ Licensed under GNU GPL v3.0
 """
 
 import sys
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 from PyQt6.QtCore import QObject, pyqtSignal
@@ -76,7 +76,8 @@ def qapp() -> QApplication:
     """Create QApplication instance for Qt tests."""
     app = QApplication.instance()
     if app is None:
-        app = QApplication(sys.argv)
+        return QApplication(sys.argv)
+    assert isinstance(app, QApplication), "Expected QApplication instance"
     return app
 
 
@@ -92,7 +93,7 @@ def shared_context() -> dict[str, Any]:
 
 
 @pytest.fixture
-def base_tab(qapp: QApplication, shared_context: dict[str, Any]) -> TestTab:
+def base_tab(qapp: QApplication, shared_context: dict[str, Any]) -> Generator[TestTab, None, None]:
     """Create TestTab instance."""
     tab = TestTab(shared_context)
     yield tab

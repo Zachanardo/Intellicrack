@@ -43,7 +43,7 @@ class TestKeystoneAssemblerFunctionality:
 
     def test_assemble_x86_32bit_nop(self) -> None:
         """Assembler produces correct x86 32-bit NOP instruction."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -56,7 +56,7 @@ class TestKeystoneAssemblerFunctionality:
 
     def test_assemble_x86_64bit_nop(self) -> None:
         """Assembler produces correct x86 64-bit NOP instruction."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_64
         )
@@ -69,7 +69,7 @@ class TestKeystoneAssemblerFunctionality:
 
     def test_assemble_x86_32bit_ret(self) -> None:
         """Assembler produces correct x86 32-bit RET instruction."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -82,7 +82,7 @@ class TestKeystoneAssemblerFunctionality:
 
     def test_assemble_x86_32bit_mov_immediate(self) -> None:
         """Assembler produces correct x86 32-bit MOV with immediate value."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -96,7 +96,7 @@ class TestKeystoneAssemblerFunctionality:
 
     def test_assemble_x86_64bit_mov_immediate(self) -> None:
         """Assembler produces correct x86 64-bit MOV with immediate value."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_64
         )
@@ -111,7 +111,7 @@ class TestKeystoneAssemblerFunctionality:
 
     def test_assemble_x86_32bit_jmp_relative(self) -> None:
         """Assembler produces correct x86 32-bit relative JMP."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -124,7 +124,7 @@ class TestKeystoneAssemblerFunctionality:
 
     def test_assemble_x86_32bit_call(self) -> None:
         """Assembler produces correct x86 32-bit CALL instruction."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -137,7 +137,7 @@ class TestKeystoneAssemblerFunctionality:
 
     def test_assemble_x86_32bit_push_pop(self) -> None:
         """Assembler produces correct x86 32-bit PUSH/POP sequence."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -151,7 +151,7 @@ class TestKeystoneAssemblerFunctionality:
 
     def test_assemble_x86_32bit_xor_register(self) -> None:
         """Assembler produces correct x86 32-bit XOR for zeroing register."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -165,7 +165,7 @@ class TestKeystoneAssemblerFunctionality:
 
     def test_assemble_arm_nop(self) -> None:
         """Assembler produces correct ARM NOP instruction."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_ARM,
             keystone_handler.KS_MODE_ARM
         )
@@ -177,7 +177,7 @@ class TestKeystoneAssemblerFunctionality:
 
     def test_assemble_arm64_nop(self) -> None:
         """Assembler produces correct ARM64 NOP instruction."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_ARM64,
             0
         )
@@ -189,7 +189,7 @@ class TestKeystoneAssemblerFunctionality:
 
     def test_assemble_arm_mov_immediate(self) -> None:
         """Assembler produces correct ARM MOV with immediate value."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_ARM,
             keystone_handler.KS_MODE_ARM
         )
@@ -201,7 +201,7 @@ class TestKeystoneAssemblerFunctionality:
 
     def test_assemble_thumb_nop(self) -> None:
         """Assembler produces correct Thumb mode NOP instruction."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_ARM,
             keystone_handler.KS_MODE_THUMB
         )
@@ -213,7 +213,7 @@ class TestKeystoneAssemblerFunctionality:
 
     def test_assemble_multiple_x86_instructions(self) -> None:
         """Assembler produces correct multi-instruction sequence."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -225,7 +225,7 @@ class TestKeystoneAssemblerFunctionality:
 
     def test_assemble_x86_conditional_jump(self) -> None:
         """Assembler produces correct x86 conditional jump."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -245,7 +245,7 @@ class TestKeystoneAssemblerErrors:
 
     def test_assemble_invalid_instruction_raises_error(self) -> None:
         """Assembler raises error for invalid instruction syntax."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -255,7 +255,7 @@ class TestKeystoneAssemblerErrors:
 
     def test_assemble_empty_string_returns_none(self) -> None:
         """Assembler returns None for empty instruction string."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -266,7 +266,7 @@ class TestKeystoneAssemblerErrors:
 
     def test_assemble_invalid_register_raises_error(self) -> None:
         """Assembler raises error for invalid register name."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -276,7 +276,7 @@ class TestKeystoneAssemblerErrors:
 
     def test_assemble_arm_instruction_in_x86_mode_raises_error(self) -> None:
         """Assembler raises error when ARM instruction used in x86 mode."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -316,7 +316,7 @@ class TestKeystonePatching:
 
     def test_assemble_license_check_bypass_nop_sled(self) -> None:
         """Assembler produces NOP sled for license check bypass."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -329,7 +329,7 @@ class TestKeystonePatching:
 
     def test_assemble_unconditional_jump_for_bypass(self) -> None:
         """Assembler produces unconditional jump for protection bypass."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -342,7 +342,7 @@ class TestKeystonePatching:
 
     def test_assemble_return_true_for_license_validation(self) -> None:
         """Assembler produces code sequence to force license validation success."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_32
         )
@@ -356,7 +356,7 @@ class TestKeystonePatching:
 
     def test_assemble_register_zeroing_for_flag_reset(self) -> None:
         """Assembler produces register zeroing for flag manipulation."""
-        ks = keystone_handler.Ks(
+        ks = keystone_handler.Ks(  # type: ignore[misc]
             keystone_handler.KS_ARCH_X86,
             keystone_handler.KS_MODE_64
         )

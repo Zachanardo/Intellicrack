@@ -13,12 +13,12 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 
 try:
-    from intellicrack.ai.script_generation_agent import (
+    from intellicrack.ai.script_generation_agent import (  # type: ignore[attr-defined]
         ScriptGenerationAgent,
         ScriptGenerationRequest,
         ScriptGenerationResult,
@@ -32,7 +32,7 @@ except ImportError:
     SCRIPT_GEN_AVAILABLE = False
 
 try:
-    from intellicrack.ai.script_generation_prompts import (
+    from intellicrack.ai.script_generation_prompts import (  # type: ignore[attr-defined]
         PromptTemplate,
         PromptCategory,
         ScriptPromptLibrary,
@@ -44,7 +44,7 @@ except ImportError:
     SCRIPT_PROMPTS_AVAILABLE = False
 
 try:
-    from intellicrack.ai.protection_aware_script_gen import (
+    from intellicrack.ai.protection_aware_script_gen import (  # type: ignore[attr-defined]
         ProtectionAwareGenerator,
         ProtectionContext,
         ProtectionType,
@@ -57,7 +57,7 @@ except ImportError:
     PROTECTION_AWARE_AVAILABLE = False
 
 try:
-    from intellicrack.ai.script_editor import (
+    from intellicrack.ai.script_editor import (  # type: ignore[attr-defined]
         CodeModification,
         EditOperation,
         ScriptEditor,
@@ -69,7 +69,7 @@ except ImportError:
     SCRIPT_EDITOR_AVAILABLE = False
 
 try:
-    from intellicrack.ai.intelligent_code_modifier import (
+    from intellicrack.ai.intelligent_code_modifier import (  # type: ignore[attr-defined]
         IntelligentCodeModifier,
         ModificationIntent,
         get_code_modifier,
@@ -87,7 +87,7 @@ WINDOWS_SYSTEM_BINARIES = {
 
 
 @pytest.fixture
-def temp_dir() -> Path:
+def temp_dir() -> Generator[Path, None, None]:
     """Create temporary directory for test artifacts."""
     with tempfile.TemporaryDirectory() as tmpdir:
         yield Path(tmpdir)
@@ -650,7 +650,7 @@ class TestIntelligentCodeModifier:
 """
 
         try:
-            modified_code = modifier.modify_code(
+            modified_code = modifier.modify_code(  # type: ignore[attr-defined]
                 code=original_code,
                 intent=ModificationIntent.BYPASS_CHECK,
                 target_function="validate_license",
@@ -674,7 +674,7 @@ class TestIntelligentCodeModifier:
 """
 
         try:
-            modified_code = modifier.modify_code(
+            modified_code = modifier.modify_code(  # type: ignore[attr-defined]
                 code=original_code, intent=ModificationIntent.REMOVE_PROTECTION
             )
 
@@ -692,7 +692,7 @@ class TestIntelligentCodeModifier:
 """
 
         try:
-            modified_code = modifier.modify_code(
+            modified_code = modifier.modify_code(  # type: ignore[attr-defined]
                 code=original_code, intent=ModificationIntent.ADD_LOGGING
             )
 
@@ -768,7 +768,7 @@ class TestIntegration:
             pass
 
     @pytest.mark.skipif(not SCRIPT_GEN_AVAILABLE, reason="ScriptGenerationAgent not available")
-    def test_snapshot_operations_log_success_status(self, caplog) -> None:
+    def test_snapshot_operations_log_success_status(self, caplog: pytest.LogCaptureFixture) -> None:
         """Test that snapshot restore/delete operations log success status."""
         import logging
         caplog.set_level(logging.INFO)

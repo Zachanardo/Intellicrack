@@ -9,8 +9,8 @@ for validating that the test environment is properly configured and functional.
 import pytest
 
 class TestBasic:
-    def test_math(self):
+    def test_math(self) -> None:
         pass
 
-    def test_string(self):
+    def test_string(self) -> None:
         assert "test".upper() == "TEST"

@@ -50,7 +50,7 @@ class FakeHTTPResponse:
 
     def raise_for_status(self) -> None:
         if self.status_code >= 400:
-            http_error = requests.exceptions.HTTPError(response=self)
+            http_error = requests.exceptions.HTTPError(response=self)  # type: ignore[arg-type]
             raise http_error
 
 
@@ -232,9 +232,9 @@ class TestModelInfo:
             ],
         )
 
-        assert len(model.capabilities) == 5
-        assert "vision" in model.capabilities
-        assert "tool-use" in model.capabilities
+        assert len(model.capabilities) == 5  # type: ignore[arg-type]
+        assert "vision" in model.capabilities  # type: ignore[operator]
+        assert "tool-use" in model.capabilities  # type: ignore[operator]
 
 
 class TestBaseProviderClient:
@@ -532,7 +532,7 @@ class TestOpenAIProviderClient:
         assert len(fallback) == 2
         assert fallback[0].id == "gpt-4o"
         assert fallback[0].context_length == 128000
-        assert "vision" in fallback[0].capabilities
+        assert "vision" in fallback[0].capabilities  # type: ignore[operator]
 
         assert fallback[1].id == "gpt-4-turbo"
         assert fallback[1].context_length == 128000
@@ -664,10 +664,10 @@ class TestAnthropicProviderClient:
         models = client.fetch_models()
 
         sonnet_35 = models[0]
-        assert "text-generation" in sonnet_35.capabilities
-        assert "chat" in sonnet_35.capabilities
-        assert "vision" in sonnet_35.capabilities
-        assert "tool-use" in sonnet_35.capabilities
+        assert "text-generation" in sonnet_35.capabilities  # type: ignore[operator]
+        assert "chat" in sonnet_35.capabilities  # type: ignore[operator]
+        assert "vision" in sonnet_35.capabilities  # type: ignore[operator]
+        assert "tool-use" in sonnet_35.capabilities  # type: ignore[operator]
 
     def test_fetch_models_api_failure_uses_fallback(self) -> None:
         """fetch_models uses fallback on API failure."""
@@ -693,10 +693,10 @@ class TestAnthropicProviderClient:
         assert len(fallback) == 2
         assert fallback[0].id == "claude-3-5-sonnet-20241022"
         assert fallback[0].context_length == 200000
-        assert "tool-use" in fallback[0].capabilities
+        assert "tool-use" in fallback[0].capabilities  # type: ignore[operator]
 
         assert fallback[1].id == "claude-3-5-haiku-20241022"
-        assert "tool-use" in fallback[1].capabilities
+        assert "tool-use" in fallback[1].capabilities  # type: ignore[operator]
 
 
 class TestOllamaProviderClient:

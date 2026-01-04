@@ -16,7 +16,7 @@ the Free Software Foundation, either version 3 of the License, or
 import platform
 import subprocess
 import sys
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 
@@ -66,12 +66,12 @@ class TestGPUMonitorWorkerIntegration:
     """Integration tests for GPUMonitorWorker with real GPU hardware."""
 
     @pytest.fixture
-    def worker(self):
+    def worker(self) -> GPUMonitorWorker:
         """Create a GPUMonitorWorker instance."""
         return GPUMonitorWorker()
 
     @pytest.mark.skipif(not is_nvidia_available(), reason="NVIDIA GPU not available")
-    def test_nvidia_gpu_real_detection(self, worker):
+    def test_nvidia_gpu_real_detection(self, worker: GPUMonitorWorker) -> None:
         """Test NVIDIA GPU detection with real nvidia-smi."""
         gpus = worker._get_nvidia_gpu_info()
 
@@ -89,7 +89,7 @@ class TestGPUMonitorWorkerIntegration:
             assert 0 <= gpu['power'] <= 1000.0
 
     @pytest.mark.skipif(not is_wmi_available(), reason="WMI/Windows GPU not available")
-    def test_intel_gpu_real_detection(self, worker):
+    def test_intel_gpu_real_detection(self, worker: GPUMonitorWorker) -> None:
         """Test Intel GPU detection with real WMI on Windows."""
         gpus = worker._get_intel_arc_info()
 
@@ -105,7 +105,7 @@ class TestGPUMonitorWorkerIntegration:
                 assert 0 <= gpu['power'] <= 500.0
 
     @pytest.mark.skipif(not is_wmi_available(), reason="WMI/Windows GPU not available")
-    def test_amd_gpu_real_detection(self, worker):
+    def test_amd_gpu_real_detection(self, worker: GPUMonitorWorker) -> None:
         """Test AMD GPU detection with real WMI on Windows."""
         gpus = worker._get_amd_gpu_info()
 
@@ -120,25 +120,25 @@ class TestGPUMonitorWorkerIntegration:
                 assert gpu['memory_used'] <= gpu['memory_total']
                 assert 0 <= gpu['power'] <= 600.0
 
-    def test_nvidia_gpu_not_available_graceful_failure(self, worker):
+    def test_nvidia_gpu_not_available_graceful_failure(self, worker: GPUMonitorWorker) -> None:
         """Test NVIDIA GPU detection gracefully handles absence of nvidia-smi."""
         if not is_nvidia_available():
             gpus = worker._get_nvidia_gpu_info()
             assert gpus == [], "Should return empty list when nvidia-smi not available"
 
-    def test_intel_gpu_not_available_graceful_failure(self, worker):
+    def test_intel_gpu_not_available_graceful_failure(self, worker: GPUMonitorWorker) -> None:
         """Test Intel GPU detection gracefully handles WMI unavailability."""
         if not is_wmi_available():
             gpus = worker._get_intel_arc_info()
             assert gpus == [], "Should return empty list when WMI not available"
 
-    def test_amd_gpu_not_available_graceful_failure(self, worker):
+    def test_amd_gpu_not_available_graceful_failure(self, worker: GPUMonitorWorker) -> None:
         """Test AMD GPU detection gracefully handles WMI unavailability."""
         if not is_wmi_available():
             gpus = worker._get_amd_gpu_info()
             assert gpus == [], "Should return empty list when WMI not available"
 
-    def test_collect_gpu_data_real_platform(self, worker):
+    def test_collect_gpu_data_real_platform(self, worker: GPUMonitorWorker) -> None:
         """Test GPU data collection on real platform."""
         data = worker._collect_gpu_data()
 
@@ -159,7 +159,7 @@ class TestGPUMonitorWorkerIntegration:
                 assert 'memory_total' in gpu
                 assert 'power' in gpu
 
-    def test_nvidia_gpu_value_validation(self, worker):
+    def test_nvidia_gpu_value_validation(self, worker: GPUMonitorWorker) -> None:
         """Test NVIDIA GPU values are within realistic ranges."""
         if is_nvidia_available():
             gpus = worker._get_nvidia_gpu_info()
@@ -171,7 +171,7 @@ class TestGPUMonitorWorkerIntegration:
                 assert gpu['memory_used'] >= 0
                 assert gpu['memory_total'] > 0
 
-    def test_intel_gpu_value_validation(self, worker):
+    def test_intel_gpu_value_validation(self, worker: GPUMonitorWorker) -> None:
         """Test Intel GPU values are within realistic ranges."""
         if is_wmi_available():
             gpus = worker._get_intel_arc_info()
@@ -183,7 +183,7 @@ class TestGPUMonitorWorkerIntegration:
                 assert gpu['memory_used'] >= 0
                 assert gpu['memory_total'] > 0
 
-    def test_amd_gpu_value_validation(self, worker):
+    def test_amd_gpu_value_validation(self, worker: GPUMonitorWorker) -> None:
         """Test AMD GPU values are within realistic ranges."""
         if is_wmi_available():
             gpus = worker._get_amd_gpu_info()
@@ -200,11 +200,11 @@ class TestSystemMonitorWorkerIntegration:
     """Integration tests for SystemMonitorWorker with real system metrics."""
 
     @pytest.fixture
-    def worker(self):
+    def worker(self) -> SystemMonitorWorker:
         """Create a SystemMonitorWorker instance."""
         return SystemMonitorWorker()
 
-    def test_collect_metrics_real_system(self, worker):
+    def test_collect_metrics_real_system(self, worker: SystemMonitorWorker) -> None:
         """Test metrics collection with real system data."""
         metrics = worker._collect_metrics()
 
@@ -222,7 +222,7 @@ class TestSystemMonitorWorkerIntegration:
         assert metrics.disk_write_mb >= 0
 
     @pytest.mark.skipif(not is_gputil_available(), reason="GPU not available")
-    def test_collect_metrics_with_real_gpu(self, worker):
+    def test_collect_metrics_with_real_gpu(self, worker: SystemMonitorWorker) -> None:
         """Test metrics collection with real GPU data."""
         metrics = worker._collect_metrics()
 
@@ -235,7 +235,7 @@ class TestSystemMonitorWorkerIntegration:
         if metrics.gpu_temp is not None:
             assert 0 <= metrics.gpu_temp <= 150
 
-    def test_collect_metrics_no_gpu_graceful(self, worker):
+    def test_collect_metrics_no_gpu_graceful(self, worker: SystemMonitorWorker) -> None:
         """Test metrics collection gracefully handles no GPU."""
         metrics = worker._collect_metrics()
 
@@ -244,7 +244,7 @@ class TestSystemMonitorWorkerIntegration:
             assert metrics.gpu_memory_percent is None
             assert metrics.gpu_temp is None
 
-    def test_collect_metrics_multiple_calls(self, worker):
+    def test_collect_metrics_multiple_calls(self, worker: SystemMonitorWorker) -> None:
         """Test multiple metrics collections work correctly."""
         metrics1 = worker._collect_metrics()
         metrics2 = worker._collect_metrics()
@@ -253,7 +253,7 @@ class TestSystemMonitorWorkerIntegration:
         assert metrics1.cpu_percent >= 0
         assert metrics2.cpu_percent >= 0
 
-    def test_network_io_calculation(self, worker):
+    def test_network_io_calculation(self, worker: SystemMonitorWorker) -> None:
         """Test network I/O delta calculation."""
         metrics1 = worker._collect_metrics()
 
@@ -265,7 +265,7 @@ class TestSystemMonitorWorkerIntegration:
         assert metrics2.network_sent_mb >= 0
         assert metrics2.network_recv_mb >= 0
 
-    def test_disk_io_calculation(self, worker):
+    def test_disk_io_calculation(self, worker: SystemMonitorWorker) -> None:
         """Test disk I/O delta calculation."""
         metrics1 = worker._collect_metrics()
 
@@ -277,7 +277,7 @@ class TestSystemMonitorWorkerIntegration:
         assert metrics2.disk_read_mb >= 0
         assert metrics2.disk_write_mb >= 0
 
-    def test_gpu_value_validation_real_data(self, worker):
+    def test_gpu_value_validation_real_data(self, worker: SystemMonitorWorker) -> None:
         """Test GPU values from real GPUtil are validated."""
         metrics = worker._collect_metrics()
 
@@ -296,7 +296,7 @@ class TestSystemMonitorWorkerIntegration:
             assert metrics.gpu_temp >= 0.0
             assert metrics.gpu_temp <= 150.0
 
-    def test_metrics_consistency_over_time(self, worker):
+    def test_metrics_consistency_over_time(self, worker: SystemMonitorWorker) -> None:
         """Test metrics remain consistent over multiple collections."""
         import time
 
@@ -311,7 +311,7 @@ class TestSystemMonitorWorkerIntegration:
             assert 0 <= metrics.memory_percent <= 100
             assert metrics.memory_used_gb <= metrics.memory_total_gb
 
-    def test_cpu_per_core_count_matches_system(self, worker):
+    def test_cpu_per_core_count_matches_system(self, worker: SystemMonitorWorker) -> None:
         """Test CPU per-core count matches actual system CPU count."""
         import psutil
 
@@ -320,7 +320,7 @@ class TestSystemMonitorWorkerIntegration:
 
         assert len(metrics.cpu_per_core) == system_cpu_count
 
-    def test_memory_totals_match_system(self, worker):
+    def test_memory_totals_match_system(self, worker: SystemMonitorWorker) -> None:
         """Test memory totals match actual system memory."""
         import psutil
 

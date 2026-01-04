@@ -355,8 +355,10 @@ class TestAnalysisPage:
     def test_page_has_licensing_tree(self, analysis_page: AnalysisPage) -> None:
         """Page has licensing files tree widget."""
         assert analysis_page.licensing_tree is not None
+        header_item = analysis_page.licensing_tree.headerItem()
+        assert header_item is not None, "Expected header item"
         headers = [
-            analysis_page.licensing_tree.headerItem().text(i)
+            header_item.text(i)
             for i in range(analysis_page.licensing_tree.columnCount())
         ]
         assert "File" in headers
@@ -563,8 +565,8 @@ class TestProgramSelectorConvenienceFunctions:
         original_init = ProgramSelectorDialog.__init__
 
         def fake_init(self: ProgramSelectorDialog) -> None:
-            self.exec = fake_dialog.exec
-            self.get_selected_program_data = fake_dialog.get_selected_program_data
+            setattr(self, "exec", fake_dialog.exec)
+            setattr(self, "get_selected_program_data", fake_dialog.get_selected_program_data)
 
         monkeypatch.setattr(ProgramSelectorDialog, "__init__", fake_init)
 
@@ -582,8 +584,8 @@ class TestProgramSelectorConvenienceFunctions:
         fake_dialog.set_exec_return_value(0)
 
         def fake_init(self: ProgramSelectorDialog) -> None:
-            self.exec = fake_dialog.exec
-            self.get_selected_program_data = fake_dialog.get_selected_program_data
+            setattr(self, "exec", fake_dialog.exec)
+            setattr(self, "get_selected_program_data", fake_dialog.get_selected_program_data)
 
         monkeypatch.setattr(ProgramSelectorDialog, "__init__", fake_init)
 

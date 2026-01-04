@@ -10,7 +10,7 @@ Licensed under GNU General Public License v3.0
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from PyQt6.QtCore import Qt, QTimer
@@ -49,10 +49,13 @@ def sample_binary(tmp_path: Path) -> Path:
 @pytest.fixture
 def mock_main_app(qtbot: object) -> QMainWindow:
     app = QMainWindow()
-    app.tab_widget = QTabWidget()
-    app.setCentralWidget(app.tab_widget)
-    app.binary_path = None
-    app.statusBar().showMessage("Ready")
+    tab_widget = QTabWidget()
+    setattr(app, "tab_widget", tab_widget)
+    app.setCentralWidget(tab_widget)
+    setattr(app, "binary_path", None)
+    status_bar = app.statusBar()
+    if status_bar is not None:
+        status_bar.showMessage("Ready")
     return app
 
 
@@ -98,9 +101,10 @@ class TestR2UIManagerIntegration:
         success = manager.integrate_with_application(mock_main_app)
 
         assert success
-        assert mock_main_app.tab_widget.count() >= 2
+        tab_widget = cast(QTabWidget, getattr(mock_main_app, "tab_widget"))
+        assert tab_widget.count() >= 2
 
-        tab_names = [mock_main_app.tab_widget.tabText(i) for i in range(mock_main_app.tab_widget.count())]
+        tab_names = [tab_widget.tabText(i) for i in range(tab_widget.count())]
         assert "Radare2 Analysis" in tab_names
         assert "Enhanced Analysis" in tab_names
 
@@ -111,7 +115,7 @@ class TestR2UIManagerIntegration:
 
         assert hasattr(mock_main_app, "r2_ui_manager")
         assert hasattr(mock_main_app, "r2_widget")
-        assert mock_main_app.r2_ui_manager is manager
+        assert getattr(mock_main_app, "r2_ui_manager") is manager
 
     def test_status_bar_integration(self, qtbot: object, mock_main_app: QMainWindow) -> None:
         manager = R2UIManager(mock_main_app)
@@ -120,7 +124,9 @@ class TestR2UIManagerIntegration:
         manager.status_updated.emit("Test status message")
 
         QApplication.processEvents()
-        status_text = mock_main_app.statusBar().currentMessage()
+        status_bar = mock_main_app.statusBar()
+        assert status_bar is not None
+        status_text = status_bar.currentMessage()
         assert "R2: Test status message" in status_text
 
 
@@ -268,12 +274,14 @@ class TestR2UIManagerMenuIntegration:
     def test_menu_integration_creates_entries(self, qtbot: object) -> None:
         main_app = QMainWindow()
         menubar = main_app.menuBar()
+        assert menubar is not None
 
         manager = R2UIManager(main_app)
         manager._integrate_menu_items(main_app)
 
-        menus = [menubar.actions()[i].text() for i in range(len(menubar.actions()))]
-        assert "Radare2" in menus or len(menubar.actions()) == 0
+        actions = menubar.actions()
+        menus = [actions[i].text() for i in range(len(actions))]
+        assert "Radare2" in menus or len(actions) == 0
 
 
 class TestR2UIManagerCleanup:

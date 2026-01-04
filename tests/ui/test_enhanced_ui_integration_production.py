@@ -6,6 +6,7 @@ components that provide comprehensive radare2 analysis integration.
 Copyright (C) 2025 Zachary Flint
 """
 
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any, Callable
 
@@ -119,11 +120,11 @@ def qapp() -> QApplication:
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
-    return app
+    return app  # type: ignore[return-value]
 
 
 @pytest.fixture
-def enhanced_dashboard(qapp: QApplication, monkeypatch: pytest.MonkeyPatch) -> EnhancedAnalysisDashboard:
+def enhanced_dashboard(qapp: QApplication, monkeypatch: pytest.MonkeyPatch) -> Generator[EnhancedAnalysisDashboard, None, None]:
     """Create EnhancedAnalysisDashboard instance for testing."""
     def fake_setup_overview_tab(self: EnhancedAnalysisDashboard) -> None:
         pass
@@ -136,10 +137,10 @@ def enhanced_dashboard(qapp: QApplication, monkeypatch: pytest.MonkeyPatch) -> E
 
     dashboard = EnhancedAnalysisDashboard()
     dashboard.stats_labels = {
-        "files_analyzed": FakeLabel("0"),
-        "vulnerabilities_found": FakeLabel("0"),
-        "license_functions": FakeLabel("0"),
-        "bypass_opportunities": FakeLabel("0"),
+        "files_analyzed": FakeLabel("0"),  # type: ignore[dict-item]
+        "vulnerabilities_found": FakeLabel("0"),  # type: ignore[dict-item]
+        "license_functions": FakeLabel("0"),  # type: ignore[dict-item]
+        "bypass_opportunities": FakeLabel("0"),  # type: ignore[dict-item]
     }
 
     from intellicrack.handlers.pyqt6_handler import QListWidget, QLabel
@@ -151,7 +152,7 @@ def enhanced_dashboard(qapp: QApplication, monkeypatch: pytest.MonkeyPatch) -> E
 
 
 @pytest.fixture
-def enhanced_main_window(qapp: QApplication) -> EnhancedMainWindow:
+def enhanced_main_window(qapp: QApplication) -> Generator[EnhancedMainWindow, None, None]:
     """Create EnhancedMainWindow instance for testing."""
     window = EnhancedMainWindow()
     yield window
@@ -214,7 +215,7 @@ class TestEnhancedAnalysisDashboard:
         enhanced_dashboard.add_activity("Test activity message")
 
         assert enhanced_dashboard.activity_list.count() == initial_count + 1
-        latest_item = enhanced_dashboard.activity_list.item(0).text()
+        latest_item = enhanced_dashboard.activity_list.item(0).text()  # type: ignore[union-attr]
         assert "Test activity message" in latest_item
 
     def test_add_activity_limits_list_to_20_items(
@@ -387,7 +388,7 @@ class TestEnhancedMainWindow:
         fake_dialog.open_file_result = (test_file, "All Files (*)")
 
         fake_r2_widget = FakeR2Widget()
-        enhanced_main_window.dashboard.r2_widget = fake_r2_widget
+        enhanced_main_window.dashboard.r2_widget = fake_r2_widget  # type: ignore[assignment]
 
         monkeypatch.setattr(
             "intellicrack.ui.enhanced_ui_integration.QFileDialog",
@@ -423,7 +424,7 @@ class TestEnhancedMainWindow:
         enhanced_main_window.binary_path = "D:\\test\\sample.exe"
 
         fake_r2_widget = FakeR2Widget()
-        enhanced_main_window.dashboard.r2_widget = fake_r2_widget
+        enhanced_main_window.dashboard.r2_widget = fake_r2_widget  # type: ignore[assignment]
 
         enhanced_main_window._start_analysis("vulnerability")
 
@@ -536,8 +537,8 @@ class TestEnhancedApplicationCreation:
 
         menu_bar = fake_app.menuBar()
         menu_titles = [
-            menu_bar.actions()[i].text()
-            for i in range(len(menu_bar.actions()))
+            menu_bar.actions()[i].text()  # type: ignore[union-attr]
+            for i in range(len(menu_bar.actions()))  # type: ignore[union-attr]
         ]
         assert "Enhanced Analysis" in menu_titles
 

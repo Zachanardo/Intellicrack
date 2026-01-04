@@ -13,6 +13,7 @@ import time
 import traceback
 from datetime import datetime
 from pathlib import Path
+from typing import Callable
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -56,7 +57,7 @@ class TestRunner:
         self.failed = 0
         self.errors: list[tuple[str, str]] = []
 
-    def run_test(self, test_name: str, test_func) -> None:
+    def run_test(self, test_name: str, test_func: "Callable[[], None]") -> None:
         """Run a single test function."""
         try:
             print(f"Running: {test_name}...", end=" ")
@@ -340,8 +341,8 @@ def main() -> None:
 
     runner.print_summary()
 
-    return 0 if runner.failed == 0 else 1
+    sys.exit(0 if runner.failed == 0 else 1)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

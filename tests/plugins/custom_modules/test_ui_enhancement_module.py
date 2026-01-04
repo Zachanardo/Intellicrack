@@ -24,7 +24,7 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Generator, List, Optional
 
 import pytest
 
@@ -242,7 +242,7 @@ def temp_config_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def fake_ui_controller() -> FakeUIController:
+def fake_ui_controller() -> Generator[FakeUIController, None, None]:
     """Create real test double for UI controller."""
     controller = FakeUIController()
     yield controller
@@ -250,7 +250,7 @@ def fake_ui_controller() -> FakeUIController:
 
 
 @pytest.fixture
-def fake_module_loader() -> FakeModuleLoader:
+def fake_module_loader() -> Generator[FakeModuleLoader, None, None]:
     """Create real test double for module loader."""
     loader = FakeModuleLoader()
     yield loader
@@ -283,7 +283,7 @@ class TestUITheme:
     def test_theme_equality(self) -> None:
         """Theme equality works correctly."""
         assert UITheme.DARK == UITheme.DARK
-        assert UITheme.DARK != UITheme.LIGHT
+        assert UITheme.DARK != UITheme.LIGHT  # type: ignore[comparison-overlap]
         assert UITheme.CYBERPUNK == UITheme("cyberpunk")
 
 
@@ -893,11 +893,11 @@ class TestFileExplorerPanel:
     def test_file_explorer_initialization(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """File explorer panel initializes with components."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         assert explorer.parent == frame
         assert explorer.config == ui_config
-        assert explorer.ui_controller == fake_ui_controller
+        assert explorer.ui_controller == fake_ui_controller  # type: ignore[comparison-overlap]
         assert explorer.frame is not None
         assert explorer.toolbar is not None
         assert explorer.tree is not None
@@ -908,7 +908,7 @@ class TestFileExplorerPanel:
     def test_file_explorer_file_size_formatting(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """File explorer formats file sizes correctly."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         assert explorer.format_file_size(500) == "500.0 B"
         assert explorer.format_file_size(2048) == "2.0 KB"
@@ -918,7 +918,7 @@ class TestFileExplorerPanel:
     def test_file_explorer_get_file_icons(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """File explorer returns appropriate icons for file types."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         assert explorer.get_file_icon(Path("test.exe")) != ""
         assert explorer.get_file_icon(Path("test.dll")) != ""
@@ -928,7 +928,7 @@ class TestFileExplorerPanel:
     def test_file_explorer_navigate_up(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, tmp_path: Path) -> None:
         """File explorer navigates to parent directory."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         test_dir = tmp_path / "subdir"
         test_dir.mkdir()
@@ -941,7 +941,7 @@ class TestFileExplorerPanel:
     def test_file_explorer_analyze_file_triggers_controller(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, tmp_path: Path) -> None:
         """File explorer triggers analysis through controller."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         test_file = tmp_path / "test.exe"
         test_file.write_bytes(b"MZ\x90\x00")
@@ -954,7 +954,7 @@ class TestFileExplorerPanel:
     def test_file_explorer_refresh_tree_with_files(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, tmp_path: Path) -> None:
         """File explorer refreshes tree with actual files."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         (tmp_path / "test1.exe").write_bytes(b"data")
         (tmp_path / "test2.dll").write_bytes(b"data")
@@ -969,7 +969,7 @@ class TestFileExplorerPanel:
     def test_file_explorer_file_size_edge_cases(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """File explorer handles edge case file sizes."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         assert "0.0 B" in explorer.format_file_size(0)
         assert "TB" in explorer.format_file_size(1099511627776)
@@ -977,7 +977,7 @@ class TestFileExplorerPanel:
     def test_file_explorer_icon_for_unknown_type(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """File explorer returns default icon for unknown file type."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         icon = explorer.get_file_icon(Path("test.unknown"))
         assert icon != ""
@@ -985,7 +985,7 @@ class TestFileExplorerPanel:
     def test_file_explorer_navigate_back(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, tmp_path: Path) -> None:
         """File explorer back navigation works."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         subdir = tmp_path / "subdir"
         subdir.mkdir()
@@ -1002,11 +1002,11 @@ class TestAnalysisViewerPanel:
     def test_analysis_viewer_initialization(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """Analysis viewer panel initializes with tabs."""
         frame = ttk.Frame(tk_root)
-        viewer = AnalysisViewerPanel(frame, ui_config, fake_ui_controller)
+        viewer = AnalysisViewerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         assert viewer.parent == frame
         assert viewer.config == ui_config
-        assert viewer.ui_controller == fake_ui_controller
+        assert viewer.ui_controller == fake_ui_controller  # type: ignore[comparison-overlap]
         assert viewer.frame is not None
         assert viewer.notebook is not None
         assert viewer.overview_frame is not None
@@ -1016,7 +1016,7 @@ class TestAnalysisViewerPanel:
     def test_analysis_viewer_update_with_result(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, analysis_result: AnalysisResult) -> None:
         """Analysis viewer updates with analysis result."""
         frame = ttk.Frame(tk_root)
-        viewer = AnalysisViewerPanel(frame, ui_config, fake_ui_controller)
+        viewer = AnalysisViewerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         viewer.update_analysis(analysis_result)
 
@@ -1028,7 +1028,7 @@ class TestAnalysisViewerPanel:
     def test_analysis_viewer_bypass_methods_display(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, analysis_result: AnalysisResult) -> None:
         """Analysis viewer displays bypass methods."""
         frame = ttk.Frame(tk_root)
-        viewer = AnalysisViewerPanel(frame, ui_config, fake_ui_controller)
+        viewer = AnalysisViewerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         viewer.update_analysis(analysis_result)
 
@@ -1041,7 +1041,7 @@ class TestAnalysisViewerPanel:
     def test_analysis_viewer_low_confidence_display(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """Analysis viewer handles low confidence results."""
         frame = ttk.Frame(tk_root)
-        viewer = AnalysisViewerPanel(frame, ui_config, fake_ui_controller)
+        viewer = AnalysisViewerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         low_confidence_result = AnalysisResult(
             target_file="unknown.exe",
@@ -1058,7 +1058,7 @@ class TestAnalysisViewerPanel:
     def test_analysis_viewer_multiple_updates(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, analysis_result: AnalysisResult) -> None:
         """Analysis viewer handles multiple sequential updates."""
         frame = ttk.Frame(tk_root)
-        viewer = AnalysisViewerPanel(frame, ui_config, fake_ui_controller)
+        viewer = AnalysisViewerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         viewer.update_analysis(analysis_result)
 
@@ -1082,18 +1082,18 @@ class TestScriptGeneratorPanel:
     def test_script_generator_initialization(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """Script generator panel initializes with tabs."""
         frame = ttk.Frame(tk_root)
-        generator = ScriptGeneratorPanel(frame, ui_config, fake_ui_controller)
+        generator = ScriptGeneratorPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         assert generator.parent == frame
         assert generator.config == ui_config
-        assert generator.ui_controller == fake_ui_controller
+        assert generator.ui_controller == fake_ui_controller  # type: ignore[comparison-overlap]
         assert generator.frame is not None
         assert generator.notebook is not None
 
     def test_script_generator_has_required_tabs(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """Script generator has all required tabs."""
         frame = ttk.Frame(tk_root)
-        generator = ScriptGeneratorPanel(frame, ui_config, fake_ui_controller)
+        generator = ScriptGeneratorPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         tab_count = generator.notebook.index("end")
         assert tab_count >= 3
@@ -1391,7 +1391,7 @@ class TestEdgeCases:
     def test_file_explorer_handles_nonexistent_path(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController) -> None:
         """File explorer handles nonexistent directory."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         explorer.current_path = Path("C:\\nonexistent\\directory\\path")
         explorer.refresh_tree()
@@ -1460,7 +1460,7 @@ class TestEdgeCases:
     def test_file_explorer_empty_directory(self, tk_root: tk.Tk, ui_config: UIConfig, fake_ui_controller: FakeUIController, tmp_path: Path) -> None:
         """File explorer handles empty directory."""
         frame = ttk.Frame(tk_root)
-        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)
+        explorer = FileExplorerPanel(frame, ui_config, fake_ui_controller)  # type: ignore[arg-type]
 
         empty_dir = tmp_path / "empty"
         empty_dir.mkdir()

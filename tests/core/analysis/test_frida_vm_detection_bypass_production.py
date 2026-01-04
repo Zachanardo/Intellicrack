@@ -274,24 +274,26 @@ class TestVMDetectionBypassCPUID:
 
         detections: list[ProtectionInfo] = bypasser.detect_vm_detection()
 
-        cpuid_detections: list[ProtectionInfo] = [d for d in detections if "CPUID" in d.details.get("method", "")]
+        cpuid_detections: list[ProtectionInfo] = [d for d in detections if "CPUID" in str(d.details.get("method", ""))]
         assert len(cpuid_detections) > 0, "CPUID VM detection must be identified"
 
         cpuid_hypervisor_detections = [
             d for d in cpuid_detections
-            if "Hypervisor Bit" in d.details.get("method", "")
+            if "Hypervisor Bit" in str(d.details.get("method", ""))
         ]
 
         if cpuid_hypervisor_detections:
             for detection in cpuid_hypervisor_detections:
-                original_ecx = detection.details.get("original_ecx", "")
-                spoofed_ecx = detection.details.get("spoofed_ecx", "")
+                original_ecx_raw = detection.details.get("original_ecx", "")
+                spoofed_ecx_raw = detection.details.get("spoofed_ecx", "")
 
-                assert original_ecx != "", "Must capture original ECX value"
-                assert spoofed_ecx != "", "Must provide spoofed ECX value"
+                assert original_ecx_raw != "", "Must capture original ECX value"
+                assert spoofed_ecx_raw != "", "Must provide spoofed ECX value"
 
-                original_val = int(original_ecx, 16) if isinstance(original_ecx, str) else original_ecx
-                spoofed_val = int(spoofed_ecx, 16) if isinstance(spoofed_ecx, str) else spoofed_ecx
+                original_ecx_str = str(original_ecx_raw)
+                spoofed_ecx_str = str(spoofed_ecx_raw)
+                original_val = int(original_ecx_str, 16) if isinstance(original_ecx_raw, str) else int(str(original_ecx_raw))
+                spoofed_val = int(spoofed_ecx_str, 16) if isinstance(spoofed_ecx_raw, str) else int(str(spoofed_ecx_raw))
 
                 assert (original_val & 0x80000000) != (spoofed_val & 0x80000000), \
                     "Hypervisor bit (bit 31) must be modified"
@@ -337,7 +339,7 @@ class TestVMDetectionBypassCPUID:
 
         hypervisor_leaf_detections: list[ProtectionInfo] = [
             d for d in detections
-            if "Hypervisor Leaf" in d.details.get("method", "")
+            if "Hypervisor Leaf" in str(d.details.get("method", ""))
         ]
 
         if hypervisor_leaf_detections:
@@ -406,7 +408,7 @@ class TestVMDetectionBypassCPUID:
         session.detach()
         device.kill(pid)
 
-        assert any("CPUID" in d.details.get("method", "") for d in detections_2), \
+        assert any("CPUID" in str(d.details.get("method", "")) for d in detections_2), \
             "Bypass must implement CPUID handler replacement (not just NOP patching)"
 
 
@@ -430,7 +432,7 @@ class TestVMDetectionBypassRDTSC:
 
         rdtsc_detections: list[ProtectionInfo] = [
             d for d in detections
-            if "RDTSC" in d.details.get("method", "") or "Timing" in d.details.get("method", "")
+            if "RDTSC" in str(d.details.get("method", "")) or "Timing" in str(d.details.get("method", ""))
         ]
 
         assert len(rdtsc_detections) > 0, \
@@ -519,7 +521,7 @@ class TestVMDetectionBypassRDTSC:
 
         if len(results_rdtscp) > 0 and results_rdtscp[0].get("count", 0) > 0:
             rdtscp_detections: list[ProtectionInfo] = [
-                d for d in detections_rdtscp if "RDTSCP" in d.details.get("method", "")
+                d for d in detections_rdtscp if "RDTSCP" in str(d.details.get("method", ""))
             ]
             assert len(rdtscp_detections) > 0, \
                 "RDTSCP instructions must be hooked with full emulation"
@@ -558,7 +560,7 @@ class TestVMDetectionBypassRDTSC:
 
         timing_detections: list[ProtectionInfo] = [
             d for d in detections_timing
-            if "Timing" in d.details.get("method", "") or "RDTSC" in d.details.get("method", "")
+            if "Timing" in str(d.details.get("method", "")) or "RDTSC" in str(d.details.get("method", ""))
         ]
 
         assert len(timing_detections) > 0, \
@@ -591,7 +593,7 @@ class TestVMDetectionBypassRegistryKeys:
 
         registry_detections: list[ProtectionInfo] = [
             d for d in detections_registry
-            if "Registry" in d.details.get("method", "")
+            if "Registry" in str(d.details.get("method", ""))
         ]
 
         if is_running_in_vm():
@@ -600,7 +602,7 @@ class TestVMDetectionBypassRegistryKeys:
 
             spoofed_detections: list[ProtectionInfo] = [
                 d for d in registry_detections
-                if "Spoofed" in d.details.get("method", "")
+                if "Spoofed" in str(d.details.get("method", ""))
             ]
 
             if spoofed_detections:
@@ -637,7 +639,7 @@ class TestVMDetectionBypassRegistryKeys:
 
         manufacturer_spoofed: list[ProtectionInfo] = [
             d for d in detections_mfg
-            if "SystemManufacturer" in d.details.get("key", "")
+            if "SystemManufacturer" in str(d.details.get("key", ""))
             or "SystemManufacturer" in str(d.details)
         ]
 
@@ -675,8 +677,8 @@ class TestVMDetectionBypassHypervisorSpecific:
 
         vmware_port_detections: list[ProtectionInfo] = [
             d for d in detections_vmware
-            if "VMware Backdoor" in d.details.get("method", "")
-            or "IN/OUT" in d.details.get("method", "")
+            if "VMware Backdoor" in str(d.details.get("method", ""))
+            or "IN/OUT" in str(d.details.get("method", ""))
         ]
 
         potential_vmware: bool = "vmware" in platform.system().lower() or is_running_in_vm()
@@ -740,7 +742,7 @@ class TestVMDetectionBypassHypervisorSpecific:
 
         ntquery_detections: list[ProtectionInfo] = [
             d for d in detections_hv
-            if "NtQuerySystemInformation" in d.details.get("method", "")
+            if "NtQuerySystemInformation" in str(d.details.get("method", ""))
         ]
 
         if len(ntquery_detections) > 0:
@@ -776,8 +778,8 @@ class TestVMDetectionBypassSMBIOS:
 
         smbios_detections: list[ProtectionInfo] = [
             d for d in detections_smbios
-            if "SMBIOS" in d.details.get("method", "")
-            or "GetSystemFirmwareTable" in d.details.get("method", "")
+            if "SMBIOS" in str(d.details.get("method", ""))
+            or "GetSystemFirmwareTable" in str(d.details.get("method", ""))
         ]
 
         assert len(smbios_detections) > 0, \
@@ -785,7 +787,7 @@ class TestVMDetectionBypassSMBIOS:
 
         string_replaced_detections: list[ProtectionInfo] = [
             d for d in smbios_detections
-            if "String Replaced" in d.details.get("method", "")
+            if "String Replaced" in str(d.details.get("method", ""))
         ]
 
         if is_running_in_vm() and len(string_replaced_detections) > 0:
@@ -822,7 +824,7 @@ class TestVMDetectionBypassSMBIOS:
 
         smbios_spoofing: list[ProtectionInfo] = [
             d for d in detections_smbios2
-            if "SMBIOS Spoofing" in d.details.get("method", "")
+            if "SMBIOS Spoofing" in str(d.details.get("method", ""))
             or "SMBIOS" in str(d.type)
         ]
 
@@ -865,9 +867,9 @@ class TestVMDetectionBypassDescriptorTables:
 
         descriptor_detections: list[ProtectionInfo] = [
             d for d in detections_desc
-            if "SIDT" in d.details.get("method", "")
-            or "SGDT" in d.details.get("method", "")
-            or "SLDT" in d.details.get("method", "")
+            if "SIDT" in str(d.details.get("method", ""))
+            or "SGDT" in str(d.details.get("method", ""))
+            or "SLDT" in str(d.details.get("method", ""))
         ]
 
         if len(descriptor_detections) > 0:
@@ -926,7 +928,7 @@ class TestVMDetectionBypassEdgeCases:
 
         wmi_detections = [
             d for d in detections
-            if "WMI" in d.details.get("method", "")
+            if "WMI" in str(d.details.get("method", ""))
         ]
 
         if len(wmi_detections) > 0:
@@ -956,7 +958,7 @@ class TestVMDetectionBypassEdgeCases:
 
         hardware_enum_detections = [
             d for d in detections
-            if "Hardware Enumeration" in d.details.get("method", "")
+            if "Hardware Enumeration" in str(d.details.get("method", ""))
         ]
 
         if len(hardware_enum_detections) > 0:
@@ -1030,7 +1032,7 @@ class TestVMDetectionBypassIntegration:
 
         detections = bypasser.detect_vm_detection()
 
-        bypass_methods = set(d.details.get("method", "") for d in detections)
+        bypass_methods = set(str(d.details.get("method", "")) for d in detections)
 
         nop_patching_methods = [m for m in bypass_methods if "NOP" in m.upper()]
         assert len(nop_patching_methods) == 0, \

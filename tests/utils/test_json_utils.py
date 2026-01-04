@@ -223,11 +223,11 @@ class TestDumpsLoads:
         serialized = dumps(data)
         deserialized = loads(serialized)
 
-        assert isinstance(deserialized["analysis"]["timestamp"], datetime)
-        assert isinstance(deserialized["analysis"]["duration"], timedelta)
-        assert isinstance(deserialized["analysis"]["binary_path"], Path)
-        assert isinstance(deserialized["analysis"]["protections"], set)
-        assert isinstance(deserialized["analysis"]["entropy_samples"], bytes)
+        assert isinstance(deserialized["analysis"]["timestamp"], datetime)  # type: ignore[index]
+        assert isinstance(deserialized["analysis"]["duration"], timedelta)  # type: ignore[index]
+        assert isinstance(deserialized["analysis"]["binary_path"], Path)  # type: ignore[index]
+        assert isinstance(deserialized["analysis"]["protections"], set)  # type: ignore[index]
+        assert isinstance(deserialized["analysis"]["entropy_samples"], bytes)  # type: ignore[index]
 
     def test_dumps_with_indent(self) -> None:
         """dumps applies indentation for readability."""
@@ -257,7 +257,7 @@ class TestDumpLoad:
 
         with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             temp_path = f.name
-            dump(data, f)
+            dump(data, f)  # type: ignore[arg-type]
 
         try:
             with open(temp_path) as f:
@@ -276,13 +276,13 @@ class TestDumpLoad:
 
         with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             temp_path = f.name
-            dump(data, f)
+            dump(data, f)  # type: ignore[arg-type]
 
         try:
             with open(temp_path) as f:
                 loaded = load(f)
-                assert isinstance(loaded["timestamp"], datetime)
-                assert isinstance(loaded["duration"], timedelta)
+                assert isinstance(loaded["timestamp"], datetime)  # type: ignore[index]
+                assert isinstance(loaded["duration"], timedelta)  # type: ignore[index]
         finally:
             Path(temp_path).unlink(missing_ok=True)
 
@@ -297,15 +297,15 @@ class TestDumpLoad:
 
         with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             temp_path = f.name
-            dump(data, f)
+            dump(data, f)  # type: ignore[arg-type]
 
         try:
             with open(temp_path) as f:
                 loaded = load(f)
-                assert isinstance(loaded["binary"], Path)
-                assert isinstance(loaded["analyzed"], datetime)
-                assert loaded["protections"] == ["vmprotect", "themida"]
-                assert isinstance(loaded["entropy"], bytes)
+                assert isinstance(loaded["binary"], Path)  # type: ignore[index]
+                assert isinstance(loaded["analyzed"], datetime)  # type: ignore[index]
+                assert loaded["protections"] == ["vmprotect", "themida"]  # type: ignore[index]
+                assert isinstance(loaded["entropy"], bytes)  # type: ignore[index]
         finally:
             Path(temp_path).unlink(missing_ok=True)
 
@@ -377,8 +377,8 @@ class TestSafeSerialization:
             temp_path = Path(f.name)
 
         try:
-            with open(temp_path, "wb") as f:
-                pickle.dump(data, f)
+            with open(temp_path, "wb") as wb_f:
+                pickle.dump(data, wb_f)
 
             with pytest.raises(pickle.UnpicklingError):
                 safe_deserialize(temp_path, use_pickle=True)
@@ -418,10 +418,10 @@ class TestSafeSerialization:
                 pickle.dump(data, f)
 
             loaded = safe_deserialize(temp_path, use_pickle=True)
-            assert isinstance(loaded["datetime"], datetime)
-            assert isinstance(loaded["date"], date)
-            assert isinstance(loaded["time"], time)
-            assert isinstance(loaded["timedelta"], timedelta)
+            assert isinstance(loaded["datetime"], datetime)  # type: ignore[index]
+            assert isinstance(loaded["date"], date)  # type: ignore[index]
+            assert isinstance(loaded["time"], time)  # type: ignore[index]
+            assert isinstance(loaded["timedelta"], timedelta)  # type: ignore[index]
         finally:
             temp_path.unlink(missing_ok=True)
 
@@ -458,9 +458,9 @@ class TestSafeSerialization:
             safe_serialize(data, temp_path)
             loaded = safe_deserialize(temp_path)
 
-            assert isinstance(loaded["analysis_time"], datetime)
-            assert isinstance(loaded["binary_path"], Path)
-            assert isinstance(loaded["entropy"], bytes)
-            assert isinstance(loaded["protections"], set)
+            assert isinstance(loaded["analysis_time"], datetime)  # type: ignore[index]
+            assert isinstance(loaded["binary_path"], Path)  # type: ignore[index]
+            assert isinstance(loaded["entropy"], bytes)  # type: ignore[index]
+            assert isinstance(loaded["protections"], set)  # type: ignore[index]
         finally:
             temp_path.unlink(missing_ok=True)

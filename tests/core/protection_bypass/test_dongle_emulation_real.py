@@ -40,16 +40,16 @@ try:
     )
     MODULE_AVAILABLE: bool = True
 except ImportError:
-    CryptoEngine = None  # type: ignore[assignment]
-    DongleMemory = None  # type: ignore[assignment]
-    HardwareDongleEmulator = None  # type: ignore[assignment]
-    HASPDongle = None  # type: ignore[assignment]
-    HASPStatus = None  # type: ignore[assignment]
-    SentinelDongle = None  # type: ignore[assignment]
-    SentinelStatus = None  # type: ignore[assignment]
-    USBDescriptor = None  # type: ignore[assignment]
-    USBEmulator = None  # type: ignore[assignment]
-    WibuKeyDongle = None  # type: ignore[assignment]
+    CryptoEngine = None  # type: ignore[misc, assignment]
+    DongleMemory = None  # type: ignore[misc, assignment]
+    HardwareDongleEmulator = None  # type: ignore[misc, assignment]
+    HASPDongle = None  # type: ignore[misc, assignment]
+    HASPStatus = None  # type: ignore[misc, assignment]
+    SentinelDongle = None  # type: ignore[misc, assignment]
+    SentinelStatus = None  # type: ignore[misc, assignment]
+    USBDescriptor = None  # type: ignore[misc, assignment]
+    USBEmulator = None  # type: ignore[misc, assignment]
+    WibuKeyDongle = None  # type: ignore[misc, assignment]
     MODULE_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not available")
@@ -518,18 +518,18 @@ class TestHardwareDongleEmulator:
 
     def test_hasp_status_codes(self) -> None:
         """Test HASP status code enumeration."""
-        assert HASPStatus.HASP_STATUS_OK == 0
-        assert HASPStatus.HASP_MEM_RANGE == 1
-        assert HASPStatus.HASP_TOO_SHORT == 2
-        assert HASPStatus.HASP_INV_HND == 3
-        assert HASPStatus.HASP_KEYNOTFOUND == 7
+        assert HASPStatus.HASP_STATUS_OK == 0  # type: ignore[comparison-overlap]
+        assert HASPStatus.HASP_MEM_RANGE == 1  # type: ignore[comparison-overlap]
+        assert HASPStatus.HASP_TOO_SHORT == 2  # type: ignore[comparison-overlap]
+        assert HASPStatus.HASP_INV_HND == 3  # type: ignore[comparison-overlap]
+        assert HASPStatus.HASP_KEYNOTFOUND == 7  # type: ignore[comparison-overlap]
 
     def test_sentinel_status_codes(self) -> None:
         """Test Sentinel status code enumeration."""
-        assert SentinelStatus.SP_SUCCESS == 0
-        assert SentinelStatus.SP_INVALID_FUNCTION_CODE == 1
-        assert SentinelStatus.SP_UNIT_NOT_FOUND == 2
-        assert SentinelStatus.SP_ACCESS_DENIED == 3
+        assert SentinelStatus.SP_SUCCESS == 0  # type: ignore[comparison-overlap]
+        assert SentinelStatus.SP_INVALID_FUNCTION_CODE == 1  # type: ignore[comparison-overlap]
+        assert SentinelStatus.SP_UNIT_NOT_FOUND == 2  # type: ignore[comparison-overlap]
+        assert SentinelStatus.SP_ACCESS_DENIED == 3  # type: ignore[comparison-overlap]
 
     def test_multiple_hasp_dongles(self) -> None:
         """Test creation of multiple HASP dongles."""
@@ -556,7 +556,7 @@ class TestHardwareDongleEmulator:
 
         handler_called = False
 
-        def test_handler(data) -> None:
+        def test_handler(data: bytes) -> bytes:
             nonlocal handler_called
             handler_called = True
             return b'RESPONSE'

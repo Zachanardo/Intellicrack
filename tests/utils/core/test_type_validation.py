@@ -41,7 +41,7 @@ class TestValidateFilePath:
     def test_rejects_non_string_path(self) -> None:
         """validate_file_path rejects non-string path types."""
         with pytest.raises(TypeError, match="path must be str, bytes, or PathLike"):
-            validate_file_path(123)  # type: ignore[arg-type]
+            validate_file_path(123)
 
     def test_rejects_empty_path(self) -> None:
         """validate_file_path rejects empty paths by default."""
@@ -109,10 +109,10 @@ class TestValidateIntegerRange:
     def test_rejects_non_integer(self) -> None:
         """validate_integer_range rejects non-integer types."""
         with pytest.raises(TypeError, match="must be int"):
-            validate_integer_range(3.14, "param")  # type: ignore[arg-type]
+            validate_integer_range(3.14, "param")
 
         with pytest.raises(TypeError, match="must be int"):
-            validate_integer_range("123", "param")  # type: ignore[arg-type]
+            validate_integer_range("123", "param")
 
     def test_rejects_negative_when_disallowed(self) -> None:
         """validate_integer_range rejects negative values when allow_negative=False."""
@@ -163,10 +163,10 @@ class TestValidateBytesData:
     def test_rejects_non_bytes(self) -> None:
         """validate_bytes_data rejects non-bytes types."""
         with pytest.raises(TypeError, match="must be bytes"):
-            validate_bytes_data("string")  # type: ignore[arg-type]
+            validate_bytes_data("string")
 
         with pytest.raises(TypeError, match="must be bytes"):
-            validate_bytes_data([1, 2, 3])  # type: ignore[arg-type]
+            validate_bytes_data([1, 2, 3])
 
     def test_rejects_empty_by_default(self) -> None:
         """validate_bytes_data rejects empty bytes by default."""
@@ -210,7 +210,7 @@ class TestValidateBytesData:
     def test_custom_parameter_name(self) -> None:
         """validate_bytes_data uses custom parameter name in errors."""
         with pytest.raises(TypeError, match="binary_data must be bytes"):
-            validate_bytes_data("invalid", name="binary_data")  # type: ignore[arg-type]
+            validate_bytes_data("invalid", name="binary_data")
 
 
 class TestValidateStringList:
@@ -223,10 +223,10 @@ class TestValidateStringList:
     def test_rejects_non_list(self) -> None:
         """validate_string_list rejects non-list types."""
         with pytest.raises(TypeError, match="must be list"):
-            validate_string_list("not a list")  # type: ignore[arg-type]
+            validate_string_list("not a list")
 
         with pytest.raises(TypeError, match="must be list"):
-            validate_string_list(("tuple", "not", "list"))  # type: ignore[arg-type]
+            validate_string_list(("tuple", "not", "list"))
 
     def test_rejects_empty_list_by_default(self) -> None:
         """validate_string_list rejects empty lists by default."""
@@ -240,7 +240,7 @@ class TestValidateStringList:
     def test_rejects_non_string_items(self) -> None:
         """validate_string_list rejects lists containing non-strings."""
         with pytest.raises(TypeError, match=r"strings\[1\] must be str"):
-            validate_string_list(["valid", 123, "string"])  # type: ignore[list-item]
+            validate_string_list(["valid", 123, "string"])
 
     def test_rejects_empty_strings_by_default(self) -> None:
         """validate_string_list rejects empty strings in list by default."""
@@ -277,7 +277,7 @@ class TestValidateMemoryAddress:
     def test_rejects_non_integer(self) -> None:
         """validate_memory_address rejects non-integer types."""
         with pytest.raises(TypeError, match="must be int"):
-            validate_memory_address("0x400000")  # type: ignore[arg-type]
+            validate_memory_address("0x400000")
 
     def test_rejects_zero_by_default(self) -> None:
         """validate_memory_address rejects zero (null pointer) by default."""
@@ -318,7 +318,7 @@ class TestValidateProcessId:
     def test_rejects_non_integer(self) -> None:
         """validate_process_id rejects non-integer types."""
         with pytest.raises(TypeError, match="must be int"):
-            validate_process_id("1234")  # type: ignore[arg-type]
+            validate_process_id("1234")
 
     def test_rejects_zero(self) -> None:
         """validate_process_id rejects zero as invalid PID."""
@@ -414,7 +414,7 @@ class TestValidationIntegration:
     def test_validation_error_messages_include_parameter_names(self) -> None:
         """Validation errors include parameter names for debugging."""
         with pytest.raises(TypeError, match="binary_data must be bytes"):
-            validate_bytes_data("invalid", name="binary_data")  # type: ignore[arg-type]
+            validate_bytes_data("invalid", name="binary_data")
 
         with pytest.raises(ValueError, match="license_keys cannot be empty"):
             validate_string_list([], name="license_keys", allow_empty_list=False)

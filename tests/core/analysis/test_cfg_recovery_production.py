@@ -604,8 +604,7 @@ class TestCFGCorrectness:
                         ), f"Instructions in block {hex(block_addr)} must be in sequential order"
 
 
-@pytest.fixture
-def simple_pe_binary(tmp_path: Path) -> Path:
+def _create_simple_pe_binary(tmp_path: Path) -> Path:
     """Create simple PE binary for testing.
 
     Uses existing test fixture binary if available, otherwise creates minimal PE.
@@ -642,6 +641,12 @@ def simple_pe_binary(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
+def simple_pe_binary(tmp_path: Path) -> Path:
+    """Fixture wrapper for creating simple PE binary."""
+    return _create_simple_pe_binary(tmp_path)
+
+
+@pytest.fixture
 def licensed_binary(tmp_path: Path) -> Path:
     """Binary with license check patterns for testing."""
     fixture_path: Path = (
@@ -656,12 +661,11 @@ def licensed_binary(tmp_path: Path) -> Path:
     if fixture_path.exists():
         return fixture_path
 
-    return simple_pe_binary(tmp_path)
+    return _create_simple_pe_binary(tmp_path)
 
 
-@pytest.fixture
-def protected_binary(tmp_path: Path) -> Path:
-    """Protected binary for testing complex CFG scenarios."""
+def _create_protected_binary(tmp_path: Path) -> Path:
+    """Create protected binary for testing complex CFG scenarios."""
     fixture_path: Path = (
         Path(__file__).parent.parent.parent / "fixtures" / "binaries" / "protected" / "vmprotect_protected.exe"
     )
@@ -676,31 +680,37 @@ def protected_binary(tmp_path: Path) -> Path:
     if upx_path.exists():
         return upx_path
 
-    return simple_pe_binary(tmp_path)
+    return _create_simple_pe_binary(tmp_path)
+
+
+@pytest.fixture
+def protected_binary(tmp_path: Path) -> Path:
+    """Fixture wrapper for creating protected binary."""
+    return _create_protected_binary(tmp_path)
 
 
 @pytest.fixture
 def seh_binary(tmp_path: Path) -> Path:
     """Binary with SEH exception handling."""
-    return simple_pe_binary(tmp_path)
+    return _create_simple_pe_binary(tmp_path)
 
 
 @pytest.fixture
 def cpp_exception_binary(tmp_path: Path) -> Path:
     """Binary with C++ exception handling."""
-    return simple_pe_binary(tmp_path)
+    return _create_simple_pe_binary(tmp_path)
 
 
 @pytest.fixture
 def switch_table_binary(tmp_path: Path) -> Path:
     """Binary with switch/case jump tables."""
-    return simple_pe_binary(tmp_path)
+    return _create_simple_pe_binary(tmp_path)
 
 
 @pytest.fixture
 def tail_call_binary(tmp_path: Path) -> Path:
     """Binary with tail call optimization."""
-    return simple_pe_binary(tmp_path)
+    return _create_simple_pe_binary(tmp_path)
 
 
 @pytest.fixture
@@ -713,10 +723,10 @@ def obfuscated_binary(tmp_path: Path) -> Path:
     if themida_path.exists():
         return themida_path
 
-    return protected_binary(tmp_path)
+    return _create_protected_binary(tmp_path)
 
 
 @pytest.fixture
 def overlapping_code_binary(tmp_path: Path) -> Path:
     """Binary with overlapping code sections."""
-    return protected_binary(tmp_path)
+    return _create_protected_binary(tmp_path)

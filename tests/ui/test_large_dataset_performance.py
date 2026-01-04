@@ -36,13 +36,13 @@ try:
     PYQT6_AVAILABLE = True
 except ImportError:
     PYQT6_AVAILABLE = False
-    Qt = None
-    QTimer = None
-    QApplication = None
-    QTableWidget = None
-    QTableWidgetItem = None
-    QListWidget = None
-    QTextEdit = None
+    Qt = None  # type: ignore[misc, assignment]
+    QTimer = None  # type: ignore[misc, assignment]
+    QApplication = None  # type: ignore[misc, assignment]
+    QTableWidget = None  # type: ignore[misc, assignment]
+    QTableWidgetItem = None  # type: ignore[misc, assignment]
+    QListWidget = None  # type: ignore[misc, assignment]
+    QTextEdit = None  # type: ignore[misc, assignment]
 
 if PYQT6_AVAILABLE:
     from intellicrack.ui.widgets.hex_viewer import HexViewerWidget
@@ -62,7 +62,7 @@ def qapp() -> QApplication:
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
-    return app
+    return app  # type: ignore[return-value]
 
 
 @pytest.fixture
@@ -285,6 +285,8 @@ class TestLargeListWidgets:
         hidden_count = 0
         for i in range(list_widget.count()):
             item = list_widget.item(i)
+            if item is None:
+                continue
             if "IMPORTANT" not in item.text():
                 item.setHidden(True)
                 hidden_count += 1
@@ -331,7 +333,7 @@ class TestHexViewerPerformance:
 
         start_time = time.time()
 
-        hex_viewer.load_file(str(large_binary_file))
+        hex_viewer.load_file(str(large_binary_file))  # type: ignore[attr-defined]
 
         load_time = time.time() - start_time
 
@@ -345,7 +347,7 @@ class TestHexViewerPerformance:
     ) -> None:
         """Hex viewer scrolling is smooth with large files."""
         hex_viewer = HexViewerWidget()
-        hex_viewer.load_file(str(large_binary_file))
+        hex_viewer.load_file(str(large_binary_file))  # type: ignore[attr-defined]
 
         start_time = time.time()
 
@@ -362,13 +364,13 @@ class TestHexViewerPerformance:
     ) -> None:
         """Hex viewer search in 100MB file completes efficiently."""
         hex_viewer = HexViewerWidget()
-        hex_viewer.load_file(str(massive_binary_file))
+        hex_viewer.load_file(str(massive_binary_file))  # type: ignore[attr-defined]
 
         search_pattern = b"LICENSE-KEY-"
 
         start_time = time.time()
 
-        results = hex_viewer.search_pattern(search_pattern)
+        results = hex_viewer.search_pattern(search_pattern)  # type: ignore[attr-defined]
 
         search_time = time.time() - start_time
 
@@ -386,7 +388,7 @@ class TestHexViewerPerformance:
         initial_memory = process.memory_info().rss / 1024 / 1024
 
         hex_viewer = HexViewerWidget()
-        hex_viewer.load_file(str(massive_binary_file))
+        hex_viewer.load_file(str(massive_binary_file))  # type: ignore[attr-defined]
 
         loaded_memory = process.memory_info().rss / 1024 / 1024
         memory_increase = loaded_memory - initial_memory
@@ -443,8 +445,10 @@ class TestTextEditorPerformance:
         cursor.movePosition(cursor.MoveOperation.Start)
 
         search_text = "TARGET"
+        doc = text_edit.document()
+        assert doc is not None
         while True:
-            cursor = text_edit.document().find(search_text, cursor)
+            cursor = doc.find(search_text, cursor)
             if cursor.isNull():
                 break
             found_positions.append(cursor.position())

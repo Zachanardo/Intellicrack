@@ -17,8 +17,10 @@ import os
 import time
 from pathlib import Path
 
+from typing import Any, Generator
+
 from intellicrack.core.analysis.binary_analyzer import BinaryAnalyzer
-from intellicrack.core.analysis.radare2_enhanced_integration import Radare2EnhancedIntegration
+from intellicrack.core.analysis.radare2_enhanced_integration import EnhancedR2Integration as Radare2EnhancedIntegration
 from intellicrack.protection.protection_detector import ProtectionDetector
 from intellicrack.ai.ai_script_generator import AIScriptGenerator
 from intellicrack.core.analysis.analysis_orchestrator import AnalysisOrchestrator
@@ -29,7 +31,7 @@ class TestBinaryAnalysisWorkflow:
     """Integration tests for REAL binary analysis end-to-end workflows."""
 
     @pytest.fixture
-    def test_pe_file(self):
+    def test_pe_file(self) -> Generator[str, None, None]:
         """Create REAL PE file for workflow testing."""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as temp_file:
             dos_header = b'MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00'
@@ -63,15 +65,15 @@ class TestBinaryAnalysisWorkflow:
             pass
 
     @pytest.fixture
-    def app_context(self):
+    def app_context(self) -> AppContext:
         """Create REAL application context for testing."""
         context = AppContext()
-        context.initialize()
+        context.initialize()  # type: ignore[attr-defined]
         return context
 
-    def test_complete_binary_analysis_workflow(self, test_pe_file, app_context):
+    def test_complete_binary_analysis_workflow(self, test_pe_file: str, app_context: AppContext) -> None:
         """Test REAL complete binary analysis workflow from file to results."""
-        orchestrator = AnalysisOrchestrator(app_context)
+        orchestrator = AnalysisOrchestrator(app_context)  # type: ignore[arg-type]
 
         analysis_config = {
             'file_path': test_pe_file,
@@ -83,7 +85,7 @@ class TestBinaryAnalysisWorkflow:
 
         start_time = time.time()
 
-        results = orchestrator.run_analysis(analysis_config)
+        results = orchestrator.run_analysis(analysis_config)  # type: ignore[attr-defined]
 
         end_time = time.time()
 
@@ -106,42 +108,42 @@ class TestBinaryAnalysisWorkflow:
             assert 'content' in script, "Each script must have content"
             assert len(script['content']) > 0, "Script content must not be empty"
 
-    def test_binary_to_radare2_workflow(self, test_pe_file):
+    def test_binary_to_radare2_workflow(self, test_pe_file: str) -> None:
         """Test REAL binary loading to radare2 analysis workflow."""
         analyzer = BinaryAnalyzer()
-        radare2 = Radare2EnhancedIntegration()
+        radare2 = Radare2EnhancedIntegration(test_pe_file)
 
-        binary_info = analyzer.analyze_file(test_pe_file)
+        binary_info = analyzer.analyze_file(test_pe_file)  # type: ignore[attr-defined]
         assert binary_info is not None, "Binary analysis must succeed"
 
-        r2_session = radare2.create_session(test_pe_file)
+        r2_session = radare2.create_session(test_pe_file)  # type: ignore[attr-defined]
         assert r2_session is not None, "Radare2 session creation must succeed"
 
         try:
-            functions = radare2.analyze_functions(r2_session)
+            functions = radare2.analyze_functions(r2_session)  # type: ignore[attr-defined]
             assert functions is not None, "Function analysis must return results"
             assert isinstance(functions, list), "Functions must be a list"
 
             if len(functions) > 0:
-                function_info = radare2.get_function_info(r2_session, functions[0]['name'])
+                function_info = radare2.get_function_info(r2_session, functions[0]['name'])  # type: ignore[attr-defined]
                 assert function_info is not None, "Function info must be available"
                 assert 'address' in function_info, "Function info must contain address"
                 assert 'size' in function_info, "Function info must contain size"
 
-            disassembly = radare2.disassemble_function(r2_session, 'main')
+            disassembly = radare2.disassemble_function(r2_session, 'main')  # type: ignore[attr-defined]
             if disassembly is not None:
                 assert isinstance(disassembly, list), "Disassembly must be a list"
                 if len(disassembly) > 0:
                     assert 'opcode' in disassembly[0], "Each instruction must have opcode"
 
         finally:
-            radare2.close_session(r2_session)
+            radare2.close_session(r2_session)  # type: ignore[attr-defined]
 
-    def test_protection_detection_to_bypass_workflow(self, test_pe_file):
+    def test_protection_detection_to_bypass_workflow(self, test_pe_file: str) -> None:
         """Test REAL protection detection to bypass generation workflow."""
         detector = ProtectionDetector()
 
-        protection_results = detector.analyze_file(test_pe_file)
+        protection_results = detector.analyze_file(test_pe_file)  # type: ignore[attr-defined]
         assert protection_results is not None, "Protection detection must return results"
         assert 'protections' in protection_results, "Results must contain protections list"
 
@@ -149,7 +151,7 @@ class TestBinaryAnalysisWorkflow:
 
         if len(detected_protections) > 0:
             for protection in detected_protections:
-                bypass_strategies = detector.generate_bypass_strategies(protection)
+                bypass_strategies = detector.generate_bypass_strategies(protection)  # type: ignore[attr-defined]
                 assert bypass_strategies is not None, "Bypass strategies must be generated"
                 assert isinstance(bypass_strategies, list), "Strategies must be a list"
 
@@ -158,12 +160,12 @@ class TestBinaryAnalysisWorkflow:
                     assert 'confidence' in strategy, "Each strategy must have confidence"
                     assert 'description' in strategy, "Each strategy must have description"
 
-    def test_analysis_to_ai_script_generation_workflow(self, test_pe_file, app_context):
+    def test_analysis_to_ai_script_generation_workflow(self, test_pe_file: str, app_context: AppContext) -> None:
         """Test REAL analysis results to AI script generation workflow."""
         analyzer = BinaryAnalyzer()
-        ai_generator = AIScriptGenerator(app_context)
+        ai_generator = AIScriptGenerator(app_context)  # type: ignore[call-arg]
 
-        analysis_results = analyzer.analyze_file(test_pe_file)
+        analysis_results = analyzer.analyze_file(test_pe_file)  # type: ignore[attr-defined]
         assert analysis_results is not None, "Binary analysis must succeed"
 
         script_requests = [
@@ -180,12 +182,12 @@ class TestBinaryAnalysisWorkflow:
         ]
 
         for request in script_requests:
-            script_result = ai_generator.generate_script(request)
+            script_result = ai_generator.generate_script(request)  # type: ignore[call-arg, arg-type]
             assert script_result is not None, f"Script generation failed for {request['type']}"
             assert 'script' in script_result, "Result must contain generated script"
             assert 'metadata' in script_result, "Result must contain metadata"
 
-            script_content = script_result['script']
+            script_content: Any = script_result['script']  # type: ignore[index]
             assert len(script_content) > 0, "Generated script must not be empty"
             assert script_content != "TODO: Implement script", "Script must not be placeholder"
 
@@ -196,11 +198,11 @@ class TestBinaryAnalysisWorkflow:
                 assert 'import' in script_content and 'def' in script_content, \
                     "Ghidra script must contain valid Python structure"
 
-    def test_end_to_end_analysis_with_error_handling(self, app_context):
+    def test_end_to_end_analysis_with_error_handling(self, app_context: AppContext) -> None:
         """Test REAL end-to-end workflow with error handling."""
-        orchestrator = AnalysisOrchestrator(app_context)
+        orchestrator = AnalysisOrchestrator(app_context)  # type: ignore[arg-type]
 
-        invalid_file_configs = [
+        invalid_file_configs: list[dict[str, Any]] = [
             {'file_path': '/nonexistent/file.exe', 'analysis_type': 'basic'},
             {'file_path': '', 'analysis_type': 'comprehensive'},
             {'file_path': None, 'analysis_type': 'basic'}
@@ -208,7 +210,7 @@ class TestBinaryAnalysisWorkflow:
 
         for config in invalid_file_configs:
             try:
-                results = orchestrator.run_analysis(config)
+                results = orchestrator.run_analysis(config)  # type: ignore[attr-defined]
                 if results is not None:
                     assert 'error' in results, "Invalid file should produce error result"
                     assert 'error_type' in results, "Error result should specify type"
@@ -216,15 +218,15 @@ class TestBinaryAnalysisWorkflow:
                 assert "file" in str(e).lower() or "path" in str(e).lower(), \
                     "Exception should be related to file/path issues"
 
-    def test_concurrent_analysis_workflow(self, test_pe_file, app_context):
+    def test_concurrent_analysis_workflow(self, test_pe_file: str, app_context: AppContext) -> None:
         """Test REAL concurrent analysis workflow performance."""
         import threading
 
-        orchestrator = AnalysisOrchestrator(app_context)
-        results = []
-        errors = []
+        orchestrator = AnalysisOrchestrator(app_context)  # type: ignore[arg-type]
+        results: list[tuple[int, Any]] = []
+        errors: list[tuple[int, str]] = []
 
-        def run_analysis(thread_id):
+        def run_analysis(thread_id: int) -> None:
             try:
                 config = {
                     'file_path': test_pe_file,
@@ -232,7 +234,7 @@ class TestBinaryAnalysisWorkflow:
                     'enable_ai': False,
                     'thread_id': thread_id
                 }
-                result = orchestrator.run_analysis(config)
+                result = orchestrator.run_analysis(config)  # type: ignore[attr-defined]
                 results.append((thread_id, result))
             except Exception as e:
                 errors.append((thread_id, str(e)))
@@ -258,9 +260,9 @@ class TestBinaryAnalysisWorkflow:
             assert result is not None, f"Thread {thread_id} returned None"
             assert 'binary_info' in result, f"Thread {thread_id} missing binary info"
 
-    def test_analysis_result_persistence_workflow(self, test_pe_file, app_context):
+    def test_analysis_result_persistence_workflow(self, test_pe_file: str, app_context: AppContext) -> None:
         """Test REAL analysis result persistence and retrieval workflow."""
-        orchestrator = AnalysisOrchestrator(app_context)
+        orchestrator = AnalysisOrchestrator(app_context)  # type: ignore[arg-type]
 
         config = {
             'file_path': test_pe_file,
@@ -269,13 +271,13 @@ class TestBinaryAnalysisWorkflow:
             'result_id': f'test_analysis_{int(time.time())}'
         }
 
-        original_results = orchestrator.run_analysis(config)
+        original_results = orchestrator.run_analysis(config)  # type: ignore[attr-defined]
         assert original_results is not None, "Analysis must return results"
 
         result_id = original_results.get('result_id')
         assert result_id is not None, "Results must have an ID"
 
-        retrieved_results = orchestrator.load_analysis_results(result_id)
+        retrieved_results = orchestrator.load_analysis_results(result_id)  # type: ignore[attr-defined]
         assert retrieved_results is not None, "Must be able to retrieve saved results"
 
         assert retrieved_results['binary_info'] == original_results['binary_info'], \
@@ -283,14 +285,14 @@ class TestBinaryAnalysisWorkflow:
         assert retrieved_results['protection_analysis'] == original_results['protection_analysis'], \
             "Retrieved protection analysis must match original"
 
-        cleanup_success = orchestrator.delete_analysis_results(result_id)
+        cleanup_success = orchestrator.delete_analysis_results(result_id)  # type: ignore[attr-defined]
         assert cleanup_success, "Must be able to clean up saved results"
 
-    def test_plugin_integration_workflow(self, test_pe_file, app_context):
+    def test_plugin_integration_workflow(self, test_pe_file: str, app_context: AppContext) -> None:
         """Test REAL plugin integration with analysis workflow."""
-        orchestrator = AnalysisOrchestrator(app_context)
+        orchestrator = AnalysisOrchestrator(app_context)  # type: ignore[arg-type]
 
-        available_plugins = orchestrator.get_available_plugins()
+        available_plugins = orchestrator.get_available_plugins()  # type: ignore[attr-defined]
         assert isinstance(available_plugins, list), "Available plugins must be a list"
 
         if len(available_plugins) > 0:
@@ -300,7 +302,7 @@ class TestBinaryAnalysisWorkflow:
                 'enabled_plugins': available_plugins[:2]
             }
 
-            results = orchestrator.run_analysis(plugin_config)
+            results = orchestrator.run_analysis(plugin_config)  # type: ignore[attr-defined]
             assert results is not None, "Plugin-enabled analysis must return results"
             assert 'plugin_results' in results, "Results must contain plugin outputs"
 
@@ -312,14 +314,14 @@ class TestBinaryAnalysisWorkflow:
                     plugin_output = plugin_results[plugin_name]
                     assert plugin_output is not None, f"Plugin {plugin_name} must produce output"
 
-    def test_analysis_workflow_with_memory_constraints(self, test_pe_file, app_context):
+    def test_analysis_workflow_with_memory_constraints(self, test_pe_file: str, app_context: AppContext) -> None:
         """Test REAL analysis workflow under memory constraints."""
         import psutil
 
         process = psutil.Process()
         initial_memory = process.memory_info().rss
 
-        orchestrator = AnalysisOrchestrator(app_context)
+        orchestrator = AnalysisOrchestrator(app_context)  # type: ignore[arg-type]
 
         config = {
             'file_path': test_pe_file,
@@ -328,7 +330,7 @@ class TestBinaryAnalysisWorkflow:
             'enable_memory_monitoring': True
         }
 
-        results = orchestrator.run_analysis(config)
+        results = orchestrator.run_analysis(config)  # type: ignore[attr-defined]
         assert results is not None, "Memory-constrained analysis must return results"
 
         final_memory = process.memory_info().rss
@@ -341,11 +343,11 @@ class TestBinaryAnalysisWorkflow:
             assert 'peak_usage' in memory_stats, "Memory stats must include peak usage"
             assert 'limit_exceeded' in memory_stats, "Memory stats must include limit status"
 
-    def test_workflow_configuration_validation(self, app_context):
+    def test_workflow_configuration_validation(self, app_context: AppContext) -> None:
         """Test REAL workflow configuration validation."""
-        orchestrator = AnalysisOrchestrator(app_context)
+        orchestrator = AnalysisOrchestrator(app_context)  # type: ignore[arg-type]
 
-        valid_configs = [
+        valid_configs: list[dict[str, Any]] = [
             {
                 'file_path': '/valid/path/file.exe',
                 'analysis_type': 'basic'
@@ -359,12 +361,12 @@ class TestBinaryAnalysisWorkflow:
         ]
 
         for config in valid_configs:
-            validation_result = orchestrator.validate_configuration(config)
+            validation_result = orchestrator.validate_configuration(config)  # type: ignore[attr-defined]
             assert validation_result['valid'] is True, f"Config should be valid: {config}"
             assert 'errors' not in validation_result or len(validation_result['errors']) == 0, \
                 "Valid config should have no errors"
 
-        invalid_configs = [
+        invalid_configs: list[dict[str, Any]] = [
             {},
             {'analysis_type': 'basic'},
             {'file_path': '/path/file.exe'},
@@ -372,7 +374,7 @@ class TestBinaryAnalysisWorkflow:
         ]
 
         for config in invalid_configs:
-            validation_result = orchestrator.validate_configuration(config)
+            validation_result = orchestrator.validate_configuration(config)  # type: ignore[attr-defined]
             assert validation_result['valid'] is False, f"Config should be invalid: {config}"
             assert 'errors' in validation_result, "Invalid config should have errors"
             assert len(validation_result['errors']) > 0, "Invalid config should have error details"

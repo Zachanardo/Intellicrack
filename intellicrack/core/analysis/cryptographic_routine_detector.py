@@ -69,6 +69,18 @@ class DataFlowNode:
 
 
 @dataclass
+class InstructionPattern:
+    """Represents an instruction pattern match for crypto detection."""
+
+    pattern_type: str
+    offset: int
+    sequence_length: int
+    confidence: float
+    algorithm_hint: CryptoAlgorithm | None = None
+    details: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
 class CryptoConstant:
     """Represents a cryptographic constant found in binary."""
 
@@ -783,6 +795,501 @@ class CryptographicRoutineDetector:
         self.constant_cache: dict[bytes, CryptoConstant] = {}
         self.data_flow_cache: dict[int, list[DataFlowNode]] = {}
 
+    def detect_instruction_patterns(
+        self,
+        data: bytes,
+        base_addr: int = 0,
+    ) -> list[InstructionPattern]:
+        """Detect cryptographic operations through instruction pattern analysis.
+
+        Args:
+            data: Binary code to analyze for instruction patterns.
+            base_addr: Base address for offset calculations.
+
+        Returns:
+            List of InstructionPattern objects representing detected crypto operations.
+
+        """
+        patterns: list[InstructionPattern] = []
+
+        patterns.extend(self._detect_rotation_sequences(data, base_addr))
+        patterns.extend(self._detect_xor_chains(data, base_addr))
+        patterns.extend(self._detect_crypto_loops(data, base_addr))
+        patterns.extend(self._detect_bitwise_majority(data, base_addr))
+        patterns.extend(self._detect_galois_field_ops(data, base_addr))
+        patterns.extend(self._detect_modular_arithmetic(data, base_addr))
+
+        logger.info("Detected %d instruction patterns", len(patterns))
+        return patterns
+
+    def _integrate_instruction_patterns(self, patterns: list[InstructionPattern]) -> None:
+        """Integrate instruction patterns into crypto detections.
+
+        Converts InstructionPattern objects into CryptoDetection objects and merges
+        with existing detections.
+
+        Args:
+            patterns: List of instruction patterns to integrate.
+
+        """
+        pattern_groups: dict[tuple[int, str], list[InstructionPattern]] = {}
+
+        for pattern in patterns:
+            key = (pattern.offset // 1024 * 1024, pattern.pattern_type)
+            if key not in pattern_groups:
+                pattern_groups[key] = []
+            pattern_groups[key].append(pattern)
+
+        for (base_offset, pattern_type), group in pattern_groups.items():
+            if not group:
+                continue
+
+            combined_confidence = max(p.confidence for p in group)
+            combined_details: dict[str, Any] = {}
+
+            for p in group:
+                combined_details.update(p.details)
+
+            algorithm_hints = [p.algorithm_hint for p in group if p.algorithm_hint is not None]
+            algorithm = algorithm_hints[0] if algorithm_hints else CryptoAlgorithm.CUSTOM
+
+            if len(algorithm_hints) > 1:
+                most_common = max(set(algorithm_hints), key=algorithm_hints.count)
+                algorithm = most_common
+                combined_confidence = min(0.95, combined_confidence + 0.1)
+
+            variant_map = {
+                "rotation_sequence": "Hash Function (Rotation-based)",
+                "xor_chain": "Stream Cipher (XOR-based)",
+                "fixed_iteration_loop": "Block Cipher (Fixed Rounds)",
+                "bitwise_majority_choice": "Hash Function (Majority/Choice)",
+                "galois_field_multiplication": "AES MixColumns (GF Multiply)",
+                "modular_arithmetic": "Public Key Crypto (Modular Ops)",
+            }
+
+            variant = variant_map.get(pattern_type, "Custom Crypto Pattern")
+
+            detection = CryptoDetection(
+                algorithm=algorithm,
+                offset=base_offset,
+                size=max(p.offset - base_offset + p.sequence_length * 16 for p in group),
+                confidence=combined_confidence,
+                variant=variant,
+                details={
+                    "pattern_type": pattern_type,
+                    "patterns_merged": len(group),
+                    **combined_details,
+                    "detection_method": "instruction_pattern_analysis",
+                },
+            )
+
+            self.detections.append(detection)
+            logger.debug("Integrated %d %s patterns into detection at 0x%08x", len(group), pattern_type, base_offset)
+
+    def _detect_rotation_sequences(self, data: bytes, base_addr: int) -> list[InstructionPattern]:
+        """Detect sequences of bit rotation instructions common in hash algorithms.
+
+        Identifies ROL/ROR/SHLD/SHRD patterns typical in SHA, MD5, and other hash functions.
+
+        Args:
+            data: Binary code to analyze.
+            base_addr: Base address for offset calculations.
+
+        Returns:
+            List of rotation sequence patterns detected.
+
+        """
+        patterns: list[InstructionPattern] = []
+
+        try:
+            md = self.md_64 if len(data) > 0x100000 else self.md_32
+
+            for i in range(0, len(data) - 512, 128):
+                rotation_count = 0
+                rotation_positions: list[int] = []
+                rotation_types: list[str] = []
+
+                try:
+                    for insn in md.disasm(data[i : i + 512], base_addr + i):
+                        if insn.mnemonic in ["rol", "ror", "shld", "shrd"]:
+                            rotation_count += 1
+                            rotation_positions.append(insn.address)
+                            rotation_types.append(insn.mnemonic)
+                except (CsError, ValueError):
+                    continue
+
+                if rotation_count >= 4:
+                    algorithm_hint = None
+                    confidence = 0.6
+
+                    if rotation_count >= 8:
+                        algorithm_hint = CryptoAlgorithm.SHA1
+                        confidence = 0.75
+                    elif rotation_count >= 6:
+                        algorithm_hint = CryptoAlgorithm.MD5
+                        confidence = 0.7
+
+                    pattern = InstructionPattern(
+                        pattern_type="rotation_sequence",
+                        offset=base_addr + i,
+                        sequence_length=rotation_count,
+                        confidence=confidence,
+                        algorithm_hint=algorithm_hint,
+                        details={
+                            "rotation_count": rotation_count,
+                            "rotation_types": rotation_types,
+                            "positions": rotation_positions,
+                        },
+                    )
+                    patterns.append(pattern)
+                    logger.debug("Rotation sequence detected at 0x%08x (%d rotations)", base_addr + i, rotation_count)
+
+        except (TypeError, ValueError, AttributeError) as e:
+            logger.debug("Error in rotation detection: %s", e, exc_info=True)
+
+        return patterns
+
+    def _detect_xor_chains(self, data: bytes, base_addr: int) -> list[InstructionPattern]:
+        """Detect XOR chains typical in stream ciphers and hash functions.
+
+        Args:
+            data: Binary code to analyze.
+            base_addr: Base address for offset calculations.
+
+        Returns:
+            List of XOR chain patterns detected.
+
+        """
+        patterns: list[InstructionPattern] = []
+
+        try:
+            md = self.md_64 if len(data) > 0x100000 else self.md_32
+
+            for i in range(0, len(data) - 512, 128):
+                xor_count = 0
+                consecutive_xors = 0
+                max_consecutive = 0
+                xor_positions: list[int] = []
+
+                try:
+                    prev_xor = False
+                    for insn in md.disasm(data[i : i + 512], base_addr + i):
+                        if insn.mnemonic == "xor" and len(insn.operands) >= 2:
+                            if hasattr(insn.operands[0], "reg") and hasattr(insn.operands[1], "reg"):
+                                if insn.operands[0].reg != insn.operands[1].reg:
+                                    xor_count += 1
+                                    xor_positions.append(insn.address)
+
+                                    if prev_xor:
+                                        consecutive_xors += 1
+                                        max_consecutive = max(max_consecutive, consecutive_xors)
+                                    else:
+                                        consecutive_xors = 1
+
+                                    prev_xor = True
+                                    continue
+
+                        prev_xor = False
+                except (CsError, ValueError, AttributeError):
+                    continue
+
+                if xor_count >= 6:
+                    confidence = min(0.9, 0.5 + (xor_count * 0.05))
+
+                    algorithm_hint = None
+                    if max_consecutive >= 4:
+                        algorithm_hint = CryptoAlgorithm.RC4
+                        confidence = min(0.85, confidence + 0.1)
+
+                    pattern = InstructionPattern(
+                        pattern_type="xor_chain",
+                        offset=base_addr + i,
+                        sequence_length=xor_count,
+                        confidence=confidence,
+                        algorithm_hint=algorithm_hint,
+                        details={
+                            "xor_count": xor_count,
+                            "max_consecutive": max_consecutive,
+                            "positions": xor_positions,
+                        },
+                    )
+                    patterns.append(pattern)
+                    logger.debug("XOR chain detected at 0x%08x (%d XORs, %d consecutive)", base_addr + i, xor_count, max_consecutive)
+
+        except (TypeError, ValueError, AttributeError) as e:
+            logger.debug("Error in XOR chain detection: %s", e, exc_info=True)
+
+        return patterns
+
+    def _detect_crypto_loops(self, data: bytes, base_addr: int) -> list[InstructionPattern]:
+        """Detect fixed-iteration loops typical in block ciphers.
+
+        Identifies loops with constant iteration counts (10, 12, 14 for AES; 16 for DES, etc.).
+
+        Args:
+            data: Binary code to analyze.
+            base_addr: Base address for offset calculations.
+
+        Returns:
+            List of crypto loop patterns detected.
+
+        """
+        patterns: list[InstructionPattern] = []
+
+        crypto_round_counts = {
+            10: CryptoAlgorithm.AES,
+            12: CryptoAlgorithm.AES,
+            14: CryptoAlgorithm.AES,
+            16: CryptoAlgorithm.DES,
+            32: CryptoAlgorithm.BLOWFISH,
+            20: CryptoAlgorithm.CHACHA20,
+            64: CryptoAlgorithm.SHA256,
+            80: CryptoAlgorithm.SHA1,
+        }
+
+        try:
+            md = self.md_64 if len(data) > 0x100000 else self.md_32
+
+            for i in range(0, len(data) - 1024, 256):
+                loop_constants: list[int] = []
+                cmp_instructions: list[tuple[int, int]] = []
+
+                try:
+                    for insn in md.disasm(data[i : i + 1024], base_addr + i):
+                        if insn.mnemonic in ["cmp", "test"] and len(insn.operands) >= 2:
+                            if hasattr(insn.operands[1], "imm"):
+                                constant = insn.operands[1].imm
+                                if 8 <= constant <= 100:
+                                    loop_constants.append(constant)
+                                    cmp_instructions.append((insn.address, constant))
+
+                        elif insn.mnemonic in ["mov", "lea"] and len(insn.operands) >= 2:
+                            if hasattr(insn.operands[1], "imm"):
+                                constant = insn.operands[1].imm
+                                if constant in crypto_round_counts:
+                                    loop_constants.append(constant)
+                except (CsError, ValueError, AttributeError):
+                    continue
+
+                for constant in loop_constants:
+                    if constant in crypto_round_counts:
+                        pattern = InstructionPattern(
+                            pattern_type="fixed_iteration_loop",
+                            offset=base_addr + i,
+                            sequence_length=1,
+                            confidence=0.8,
+                            algorithm_hint=crypto_round_counts[constant],
+                            details={
+                                "round_count": constant,
+                                "algorithm": crypto_round_counts[constant].name,
+                                "cmp_instructions": cmp_instructions,
+                            },
+                        )
+                        patterns.append(pattern)
+                        logger.debug("Fixed-iteration loop detected at 0x%08x (rounds: %d, likely %s)", base_addr + i, constant, crypto_round_counts[constant].name)
+                        break
+
+        except (TypeError, ValueError, AttributeError) as e:
+            logger.debug("Error in loop detection: %s", e, exc_info=True)
+
+        return patterns
+
+    def _detect_bitwise_majority(self, data: bytes, base_addr: int) -> list[InstructionPattern]:
+        """Detect bitwise majority/choice functions used in SHA algorithms.
+
+        SHA uses functions like MAJ(x,y,z) = (x AND y) XOR (x AND z) XOR (y AND z).
+
+        Args:
+            data: Binary code to analyze.
+            base_addr: Base address for offset calculations.
+
+        Returns:
+            List of bitwise majority patterns detected.
+
+        """
+        patterns: list[InstructionPattern] = []
+
+        try:
+            md = self.md_64 if len(data) > 0x100000 else self.md_32
+
+            for i in range(0, len(data) - 512, 128):
+                and_count = 0
+                or_count = 0
+                xor_count = 0
+                operation_sequence: list[str] = []
+
+                try:
+                    for insn in md.disasm(data[i : i + 512], base_addr + i):
+                        if insn.mnemonic == "and":
+                            and_count += 1
+                            operation_sequence.append("AND")
+                        elif insn.mnemonic == "or":
+                            or_count += 1
+                            operation_sequence.append("OR")
+                        elif insn.mnemonic == "xor":
+                            if len(insn.operands) >= 2 and hasattr(insn.operands[0], "reg") and hasattr(insn.operands[1], "reg"):
+                                if insn.operands[0].reg != insn.operands[1].reg:
+                                    xor_count += 1
+                                    operation_sequence.append("XOR")
+                except (CsError, ValueError, AttributeError):
+                    continue
+
+                if and_count >= 3 and (xor_count >= 2 or or_count >= 1):
+                    pattern = InstructionPattern(
+                        pattern_type="bitwise_majority_choice",
+                        offset=base_addr + i,
+                        sequence_length=and_count + xor_count + or_count,
+                        confidence=0.75,
+                        algorithm_hint=CryptoAlgorithm.SHA256,
+                        details={
+                            "and_count": and_count,
+                            "xor_count": xor_count,
+                            "or_count": or_count,
+                            "sequence": operation_sequence[:10],
+                        },
+                    )
+                    patterns.append(pattern)
+                    logger.debug("Bitwise majority/choice detected at 0x%08x (AND:%d, XOR:%d, OR:%d)", base_addr + i, and_count, xor_count, or_count)
+
+        except (TypeError, ValueError, AttributeError) as e:
+            logger.debug("Error in bitwise majority detection: %s", e, exc_info=True)
+
+        return patterns
+
+    def _detect_galois_field_ops(self, data: bytes, base_addr: int) -> list[InstructionPattern]:
+        """Detect Galois field multiplication used in AES MixColumns.
+
+        Looks for specific shift-XOR patterns characteristic of GF(2^8) multiplication.
+
+        Args:
+            data: Binary code to analyze.
+            base_addr: Base address for offset calculations.
+
+        Returns:
+            List of Galois field operation patterns detected.
+
+        """
+        patterns: list[InstructionPattern] = []
+
+        try:
+            md = self.md_64 if len(data) > 0x100000 else self.md_32
+
+            for i in range(0, len(data) - 512, 128):
+                shift_xor_sequences = 0
+                last_shift = -1
+                instruction_pairs: list[tuple[str, str]] = []
+
+                try:
+                    instructions_list: list[tuple[int, str]] = []
+                    for insn in md.disasm(data[i : i + 512], base_addr + i):
+                        instructions_list.append((insn.address, insn.mnemonic))
+
+                    for idx in range(len(instructions_list) - 1):
+                        addr1, mnem1 = instructions_list[idx]
+                        addr2, mnem2 = instructions_list[idx + 1]
+
+                        if mnem1 in ["shl", "shr", "sal", "sar"] and mnem2 == "xor":
+                            shift_xor_sequences += 1
+                            instruction_pairs.append((mnem1, mnem2))
+                            last_shift = idx
+
+                        elif idx > 0 and mnem1 == "xor" and idx - 1 <= last_shift + 1:
+                            shift_xor_sequences += 0.5
+
+                except (CsError, ValueError, AttributeError):
+                    continue
+
+                if shift_xor_sequences >= 3:
+                    pattern = InstructionPattern(
+                        pattern_type="galois_field_multiplication",
+                        offset=base_addr + i,
+                        sequence_length=int(shift_xor_sequences),
+                        confidence=0.8,
+                        algorithm_hint=CryptoAlgorithm.AES,
+                        details={
+                            "shift_xor_sequences": int(shift_xor_sequences),
+                            "pairs": instruction_pairs[:5],
+                        },
+                    )
+                    patterns.append(pattern)
+                    logger.debug("Galois field operations detected at 0x%08x (%d sequences)", base_addr + i, int(shift_xor_sequences))
+
+        except (TypeError, ValueError, AttributeError) as e:
+            logger.debug("Error in Galois field detection: %s", e, exc_info=True)
+
+        return patterns
+
+    def _detect_modular_arithmetic(self, data: bytes, base_addr: int) -> list[InstructionPattern]:
+        """Detect modular arithmetic patterns used in RSA and other public-key crypto.
+
+        Identifies multiplication, division, and modulo operations in sequence.
+
+        Args:
+            data: Binary code to analyze.
+            base_addr: Base address for offset calculations.
+
+        Returns:
+            List of modular arithmetic patterns detected.
+
+        """
+        patterns: list[InstructionPattern] = []
+
+        try:
+            md = self.md_64 if len(data) > 0x100000 else self.md_32
+
+            for i in range(0, len(data) - 1024, 256):
+                mul_count = 0
+                div_count = 0
+                mod_count = 0
+                large_int_ops = 0
+                adc_sbb_count = 0
+
+                try:
+                    for insn in md.disasm(data[i : i + 1024], base_addr + i):
+                        if insn.mnemonic in ["mul", "imul", "mulx"]:
+                            mul_count += 1
+                        elif insn.mnemonic in ["div", "idiv"]:
+                            div_count += 1
+                            mod_count += 1
+                        elif insn.mnemonic in ["adc", "sbb"]:
+                            adc_sbb_count += 1
+
+                        if len(insn.operands) >= 2:
+                            for op in insn.operands:
+                                if hasattr(op, "imm") and op.imm > 0xFFFFFFFF:
+                                    large_int_ops += 1
+                                    break
+
+                except (CsError, ValueError, AttributeError):
+                    continue
+
+                if (mul_count >= 4 and div_count >= 2) or (mul_count >= 6 and adc_sbb_count >= 4):
+                    confidence = 0.7
+                    if large_int_ops >= 2:
+                        confidence = 0.85
+
+                    pattern = InstructionPattern(
+                        pattern_type="modular_arithmetic",
+                        offset=base_addr + i,
+                        sequence_length=mul_count + div_count,
+                        confidence=confidence,
+                        algorithm_hint=CryptoAlgorithm.RSA,
+                        details={
+                            "mul_count": mul_count,
+                            "div_count": div_count,
+                            "mod_count": mod_count,
+                            "adc_sbb_count": adc_sbb_count,
+                            "large_int_ops": large_int_ops,
+                        },
+                    )
+                    patterns.append(pattern)
+                    logger.debug("Modular arithmetic detected at 0x%08x (MUL:%d, DIV:%d, ADC/SBB:%d)", base_addr + i, mul_count, div_count, adc_sbb_count)
+
+        except (TypeError, ValueError, AttributeError) as e:
+            logger.debug("Error in modular arithmetic detection: %s", e, exc_info=True)
+
+        return patterns
+
     def detect_all(
         self,
         data: bytes,
@@ -809,6 +1316,9 @@ class CryptographicRoutineDetector:
         self.data_flow_cache = {}
 
         logger.info("Starting cryptographic routine detection on %d bytes", len(data))
+
+        instruction_patterns = self.detect_instruction_patterns(data, base_addr)
+        self._integrate_instruction_patterns(instruction_patterns)
 
         self._detect_crypto_constants(data, base_addr)
 

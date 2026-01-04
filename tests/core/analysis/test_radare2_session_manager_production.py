@@ -22,7 +22,7 @@ import logging
 import threading
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 
@@ -81,7 +81,7 @@ def alternative_binary_path() -> str:
 
 
 @pytest.fixture(scope="function")
-def session_pool() -> R2SessionPool:
+def session_pool() -> Generator[R2SessionPool, None, None]:
     """Create isolated session pool for testing."""
     pool: R2SessionPool = R2SessionPool(
         max_sessions=5,
@@ -94,7 +94,7 @@ def session_pool() -> R2SessionPool:
 
 
 @pytest.fixture(autouse=True)
-def cleanup_global_pool() -> None:
+def cleanup_global_pool() -> Generator[None, None, None]:
     """Cleanup global pool after each test."""
     yield
     shutdown_global_pool()
@@ -140,7 +140,7 @@ class TestR2SessionWrapperLifecycle:
         )
         session.connect()
 
-        result: str = session.execute("i")
+        result: str = session.execute("i")  # type: ignore[assignment]
 
         assert isinstance(result, str)
         assert result != ""
@@ -155,7 +155,7 @@ class TestR2SessionWrapperLifecycle:
         )
         session.connect()
 
-        result: dict | list = session.execute("ij", expect_json=True)
+        result: dict[str, Any] | list[Any] = session.execute("ij", expect_json=True)  # type: ignore[assignment]
 
         assert isinstance(result, (dict, list))
         session.disconnect()
@@ -173,7 +173,7 @@ class TestR2SessionWrapperLifecycle:
         session.disconnect()
 
         assert session.r2 is None
-        assert session.state == SessionState.CLOSED
+        assert session.state.value == SessionState.CLOSED.value
 
     def test_session_wrapper_raises_error_without_connection(self, test_binary_path: str) -> None:
         """SessionWrapper raises error when executing without connection."""
@@ -206,7 +206,7 @@ class TestR2SessionWrapperLifecycle:
         )
 
         session.connect()
-        functions: list = session.execute("aflj", expect_json=True)
+        functions: list[Any] = session.execute("aflj", expect_json=True)  # type: ignore[assignment]
 
         assert isinstance(functions, list)
         session.disconnect()
@@ -463,7 +463,7 @@ class TestR2SessionPoolContextManager:
     ) -> None:
         """Pool context manager provides working session."""
         with session_pool.session(test_binary_path) as session:
-            result: str = session.execute("i")
+            result: str = session.execute("i")  # type: ignore[assignment]
 
             assert isinstance(result, str)
             assert result != ""
@@ -552,7 +552,7 @@ class TestGlobalSessionPool:
     def test_r2_session_pooled_context_manager(self, test_binary_path: str) -> None:
         """r2_session_pooled provides working session from global pool."""
         with r2_session_pooled(test_binary_path) as session:
-            result: str = session.execute("i")
+            result: str = session.execute("i")  # type: ignore[assignment]
 
             assert isinstance(result, str)
             assert result != ""
@@ -576,7 +576,7 @@ class TestThreadSafety:
 
         def worker() -> None:
             with session_pool.session(test_binary_path) as session:
-                result: str = session.execute("i")
+                result: str = session.execute("i")  # type: ignore[assignment]
                 assert isinstance(result, str)
 
         threads: list[threading.Thread] = []
@@ -669,8 +669,8 @@ class TestRealWorldWorkflows:
 
         for binary in binaries:
             with session_pool.session(binary) as session:
-                info: dict = session.execute("ij", expect_json=True)
-                functions: list = session.execute("aflj", expect_json=True)
+                info: dict[str, Any] = session.execute("ij", expect_json=True)  # type: ignore[assignment]
+                functions: list[Any] = session.execute("aflj", expect_json=True)  # type: ignore[assignment]
                 results[binary] = {
                     "info": info,
                     "functions": len(functions) if isinstance(functions, list) else 0,
@@ -689,7 +689,7 @@ class TestRealWorldWorkflows:
                 pass
 
         with session_pool.session(test_binary_path) as session2:
-            result: str = session2.execute("i")
+            result: str = session2.execute("i")  # type: ignore[assignment]
             assert isinstance(result, str)
 
 
@@ -998,7 +998,7 @@ class TestSessionPoolConcurrency:
 
         def worker() -> None:
             with session_pool.session(test_binary_path) as session:
-                result: str = session.execute("i")
+                result: str = session.execute("i")  # type: ignore[assignment]
                 with lock:
                     results.append(isinstance(result, str) and result != "")
 
@@ -1106,10 +1106,10 @@ class TestSessionMetricsAccuracy:
         assert session.state == SessionState.IDLE
 
         session.connect()
-        assert session.state == SessionState.ACTIVE
+        assert session.state.value == SessionState.ACTIVE.value
 
         session.disconnect()
-        assert session.state == SessionState.CLOSED
+        assert session.state.value == SessionState.CLOSED.value
 
     def test_session_reconnect_updates_state(self, test_binary_path: str) -> None:
         """Session reconnect updates state to RECONNECTING then ACTIVE."""

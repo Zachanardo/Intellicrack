@@ -19,15 +19,25 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import datetime
+import hashlib
 import json
 import logging
+import math
 import os
+from collections import defaultdict
 from typing import Any
 
 from intellicrack.utils.logger import logger
 
 from ...utils.protection_utils import calculate_entropy
 
+try:
+    import numpy as np
+
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
+    logger.warning("NumPy not available - LSH performance will be degraded")
 
 try:
     from intellicrack.handlers.pefile_handler import pefile
@@ -37,7 +47,208 @@ except ImportError as e:
     logger.exception("Import error in binary_similarity_search: %s", e)
     HAS_PEFILE = False
 
-__all__ = ["BinarySimilaritySearch"]
+__all__ = ["BinarySimilaritySearch", "MinHashLSH"]
+
+
+class MinHashLSH:
+    """Locality-Sensitive Hashing using MinHash for approximate nearest neighbor search.
+
+    This implementation enables scalable similarity search across large binary corpora
+    by using MinHash signatures and LSH bucketing to identify similar license protection
+    patterns without pairwise comparisons.
+    """
+
+    def __init__(self, num_perm: int = 128, threshold: float = 0.5, num_bands: int = 32) -> None:
+        """Initialize MinHash LSH index.
+
+        Args:
+            num_perm: Number of hash permutations for MinHash signature (default: 128).
+            threshold: Jaccard similarity threshold for candidate retrieval (0.0-1.0).
+            num_bands: Number of LSH bands for bucketing (default: 32 for 0.5 threshold).
+        """
+        self.num_perm = num_perm
+        self.threshold = threshold
+        self.num_bands = num_bands
+        self.rows_per_band = num_perm // num_bands
+
+        self._hash_funcs: list[tuple[int, int]] = self._generate_hash_functions()
+        self._buckets: dict[tuple[int, int], set[str]] = defaultdict(set)
+        self._signatures: dict[str, list[int]] = {}
+        self._path_to_index: dict[str, int] = {}
+
+    def _generate_hash_functions(self) -> list[tuple[int, int]]:
+        """Generate deterministic universal hash function parameters for MinHash.
+
+        Returns:
+            List of (a, b) tuples for hash function h(x) = (a*x + b) mod prime.
+        """
+        prime = 2**31 - 1
+        hash_funcs: list[tuple[int, int]] = []
+
+        for i in range(self.num_perm):
+            h = hashlib.sha256(f"hash_func_{i}".encode()).digest()
+            a = int.from_bytes(h[:4], "little") % prime
+            if a == 0:
+                a = 1
+            b = int.from_bytes(h[4:8], "little") % prime
+            hash_funcs.append((a, b))
+
+        return hash_funcs
+
+    def _hash_band_deterministic(self, band_signature: tuple[int, ...]) -> int:
+        """Compute deterministic hash of a band signature.
+
+        Args:
+            band_signature: Tuple of MinHash values for a band.
+
+        Returns:
+            Deterministic hash value for the band.
+        """
+        band_bytes = "|".join(str(x) for x in band_signature).encode()
+        return int(hashlib.md5(band_bytes).hexdigest()[:16], 16)
+
+    def compute_minhash_signature(self, features: set[str]) -> list[int]:
+        """Compute MinHash signature for a set of features.
+
+        Args:
+            features: Set of feature strings (imports, exports, function names, etc.).
+
+        Returns:
+            MinHash signature as list of minimum hash values.
+        """
+        if not features:
+            return [0] * self.num_perm
+
+        if HAS_NUMPY:
+            signature = np.full(self.num_perm, np.inf, dtype=np.float64)
+        else:
+            signature = [float("inf")] * self.num_perm
+
+        prime = 2**31 - 1
+
+        for feature in features:
+            feature_hash = int(hashlib.sha256(feature.encode()).hexdigest()[:16], 16)
+
+            for i, (a, b) in enumerate(self._hash_funcs):
+                h = (a * feature_hash + b) % prime
+                if HAS_NUMPY:
+                    signature[i] = min(signature[i], h)
+                else:
+                    signature[i] = min(signature[i], h)
+
+        if HAS_NUMPY:
+            return signature.astype(np.int64).tolist()
+        return [int(s) if s != float("inf") else 0 for s in signature]
+
+    def insert(self, key: str, features: set[str]) -> None:
+        """Insert a binary into the LSH index.
+
+        Args:
+            key: Unique identifier for the binary (typically file path).
+            features: Set of binary features for MinHash computation.
+        """
+        signature = self.compute_minhash_signature(features)
+        self._signatures[key] = signature
+        self._path_to_index[key] = len(self._path_to_index)
+
+        for band_idx in range(self.num_bands):
+            start = band_idx * self.rows_per_band
+            end = start + self.rows_per_band
+            band_signature = tuple(signature[start:end])
+            band_hash = self._hash_band_deterministic(band_signature)
+            self._buckets[(band_idx, band_hash)].add(key)
+
+    def query(self, features: set[str]) -> list[tuple[str, float]]:
+        """Find similar items using LSH buckets.
+
+        Args:
+            features: Set of features to query against the index.
+
+        Returns:
+            List of (key, similarity) tuples sorted by similarity (descending).
+        """
+        signature = self.compute_minhash_signature(features)
+        candidates: set[str] = set()
+
+        for band_idx in range(self.num_bands):
+            start = band_idx * self.rows_per_band
+            end = start + self.rows_per_band
+            band_signature = tuple(signature[start:end])
+            band_hash = self._hash_band_deterministic(band_signature)
+            candidates.update(self._buckets.get((band_idx, band_hash), set()))
+
+        results: list[tuple[str, float]] = []
+        for candidate in candidates:
+            if candidate in self._signatures:
+                similarity = self._estimate_jaccard_similarity(signature, self._signatures[candidate])
+                if similarity >= self.threshold:
+                    results.append((candidate, similarity))
+
+        results.sort(key=lambda x: x[1], reverse=True)
+        return results
+
+    def _estimate_jaccard_similarity(self, sig1: list[int], sig2: list[int]) -> float:
+        """Estimate Jaccard similarity from MinHash signatures.
+
+        Args:
+            sig1: First MinHash signature.
+            sig2: Second MinHash signature.
+
+        Returns:
+            Estimated Jaccard similarity (0.0-1.0).
+        """
+        if len(sig1) != len(sig2):
+            return 0.0
+
+        matches = sum(a == b for a, b in zip(sig1, sig2))
+        return matches / len(sig1)
+
+    def get_signature(self, key: str) -> list[int] | None:
+        """Retrieve stored MinHash signature for a binary.
+
+        Args:
+            key: Binary identifier.
+
+        Returns:
+            MinHash signature if exists, None otherwise.
+        """
+        return self._signatures.get(key)
+
+    def remove(self, key: str) -> bool:
+        """Remove a binary from the LSH index.
+
+        Args:
+            key: Binary identifier to remove.
+
+        Returns:
+            True if removed, False if not found.
+        """
+        if key not in self._signatures:
+            return False
+
+        signature = self._signatures[key]
+
+        for band_idx in range(self.num_bands):
+            start = band_idx * self.rows_per_band
+            end = start + self.rows_per_band
+            band_signature = tuple(signature[start:end])
+            band_hash = self._hash_band_deterministic(band_signature)
+
+            if (band_idx, band_hash) in self._buckets:
+                self._buckets[(band_idx, band_hash)].discard(key)
+
+        del self._signatures[key]
+        if key in self._path_to_index:
+            del self._path_to_index[key]
+        return True
+
+    def size(self) -> int:
+        """Get number of items in the index.
+
+        Returns:
+            Number of indexed binaries.
+        """
+        return len(self._signatures)
 
 
 class BinarySimilaritySearch:
@@ -47,23 +258,28 @@ class BinarySimilaritySearch:
     between binary files and associated cracking patterns.
     """
 
-    def __init__(self, database_path: str = "binary_database.json") -> None:
+    def __init__(self, database_path: str = "binary_database.json", use_lsh: bool = True) -> None:
         """Initialize the binary similarity search engine with database configuration.
 
         Args:
             database_path: Path to the database file to load or create.
+            use_lsh: Enable LSH indexing for fast similarity search (default: True).
 
         """
         self.database_path = database_path
         self.database: dict[str, Any] = {}
-        self.hash_functions: list[Any] = []
-        self.feature_extractors: list[Any] = []
+        self.use_lsh = use_lsh
         self.logger = logging.getLogger("IntellicrackLogger.BinarySearch")
         self.fuzzy_match_stats: dict[str, int] = {
             "total_comparisons": 0,
             "matches_found": 0,
             "sample_size": 0,
         }
+
+        if use_lsh:
+            self.lsh_index = MinHashLSH(num_perm=128, threshold=0.5, num_bands=32)
+        else:
+            self.lsh_index = None
 
         self.load_database(database_path)
 
@@ -104,16 +320,13 @@ class BinarySimilaritySearch:
 
         """
         try:
-            # Check if binary already exists in database
             for existing in self.database["binaries"]:
                 if existing["path"] == binary_path:
                     self.logger.warning("Binary %s already exists in database", binary_path)
                     return False
 
-            # Extract binary features
             features = self._extract_binary_features(binary_path)
 
-            # Add to database
             binary_entry = {
                 "path": binary_path,
                 "filename": os.path.basename(binary_path),
@@ -124,6 +337,11 @@ class BinarySimilaritySearch:
             }
 
             self.database["binaries"].append(binary_entry)
+
+            if self.use_lsh and self.lsh_index is not None:
+                feature_set = self._extract_feature_set_for_lsh(features)
+                self.lsh_index.insert(binary_path, feature_set)
+
             self._save_database()
 
             self.logger.info("Added binary %s to database", binary_path)
@@ -132,6 +350,39 @@ class BinarySimilaritySearch:
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.exception("Error adding binary %s to database: %s", binary_path, e)
             return False
+
+    def _extract_feature_set_for_lsh(self, features: dict[str, Any]) -> set[str]:
+        """Extract feature set for LSH indexing.
+
+        Args:
+            features: Binary features dictionary.
+
+        Returns:
+            Set of feature strings for MinHash computation.
+        """
+        feature_set: set[str] = set()
+
+        imports = features.get("imports", [])
+        if isinstance(imports, list):
+            feature_set.update(imports)
+
+        exports = features.get("exports", [])
+        if isinstance(exports, list):
+            feature_set.update(exports)
+
+        strings = features.get("strings", [])
+        if isinstance(strings, list):
+            feature_set.update(strings[:100])
+
+        sections = features.get("sections", [])
+        if isinstance(sections, list):
+            for section in sections:
+                if isinstance(section, dict):
+                    name = section.get("name", "")
+                    if name:
+                        feature_set.add(f"section:{name}")
+
+        return feature_set
 
     def _extract_binary_features(self, binary_path: str) -> dict[str, Any]:
         """Extract structural features from a binary file.
@@ -212,6 +463,10 @@ class BinarySimilaritySearch:
                     strings = self._extract_strings(data)
                     features["strings"] = strings[:50]  # Limit to first 50 strings
 
+                    pe.close()
+
+                except pefile.PEFormatError as pef:
+                    self.logger.warning("Malformed PE file %s: %s", binary_path, pef)
                 except (OSError, ValueError, RuntimeError) as e:
                     self.logger.warning("PE analysis failed for %s: %s", binary_path, e)
 
@@ -248,26 +503,46 @@ class BinarySimilaritySearch:
 
         """
         try:
-            # Extract binary features
             target_features = self._extract_binary_features(binary_path)
-
-            # Calculate similarity with each binary in the database
             similar_binaries = []
-            for binary in self.database["binaries"]:
-                similarity = self._calculate_similarity(target_features, binary["features"])
-                if similarity >= threshold:
-                    similar_binaries.append(
-                        {
-                            "path": binary["path"],
-                            "filename": binary.get("filename", os.path.basename(binary["path"])),
-                            "similarity": similarity,
-                            "cracking_patterns": binary["cracking_patterns"],
-                            "added": binary.get("added", "Unknown"),
-                            "file_size": binary.get("file_size", 0),
-                        },
-                    )
 
-            # Sort by similarity (descending)
+            if self.use_lsh and self.lsh_index is not None and self.lsh_index.size() > 0:
+                feature_set = self._extract_feature_set_for_lsh(target_features)
+                lsh_candidates = self.lsh_index.query(feature_set)
+
+                for candidate_path, lsh_similarity in lsh_candidates:
+                    for binary in self.database["binaries"]:
+                        if binary["path"] == candidate_path:
+                            detailed_similarity = self._calculate_similarity(target_features, binary["features"])
+
+                            if detailed_similarity >= threshold:
+                                similar_binaries.append(
+                                    {
+                                        "path": binary["path"],
+                                        "filename": binary.get("filename", os.path.basename(binary["path"])),
+                                        "similarity": detailed_similarity,
+                                        "lsh_similarity": lsh_similarity,
+                                        "cracking_patterns": binary["cracking_patterns"],
+                                        "added": binary.get("added", "Unknown"),
+                                        "file_size": binary.get("file_size", 0),
+                                    }
+                                )
+                            break
+            else:
+                for binary in self.database["binaries"]:
+                    similarity = self._calculate_similarity(target_features, binary["features"])
+                    if similarity >= threshold:
+                        similar_binaries.append(
+                            {
+                                "path": binary["path"],
+                                "filename": binary.get("filename", os.path.basename(binary["path"])),
+                                "similarity": similarity,
+                                "cracking_patterns": binary["cracking_patterns"],
+                                "added": binary.get("added", "Unknown"),
+                                "file_size": binary.get("file_size", 0),
+                            }
+                        )
+
             similar_binaries.sort(key=lambda x: x["similarity"], reverse=True)
 
             self.logger.info("Found %d similar binaries for %s", len(similar_binaries), binary_path)
@@ -1227,7 +1502,12 @@ class BinarySimilaritySearch:
             return 0.0
 
     def _generate_rolling_hash(self, strings: list[str]) -> str:
-        """Generate a rolling hash for fuzzy matching.
+        """Generate a content-preserving hash for string similarity.
+
+        Note: This is NOT a true fuzzy/similarity-preserving hash. It computes
+        a cryptographic hash (SHA256) which has avalanche property - a single
+        bit change produces a completely different hash. For actual similarity
+        detection, use compute_minhash_signature() instead.
 
         Args:
             strings: List of strings to hash.
@@ -1242,11 +1522,9 @@ class BinarySimilaritySearch:
 
             import hashlib
 
-            # Combine strings and create rolling hash
-            combined = " ".join(strings[:20])  # Use first 20 strings
+            combined = " ".join(strings[:20])
             hash_bytes = hashlib.sha256(combined.encode()).digest()
 
-            # Convert to hex string for comparison
             return hash_bytes.hex()
 
         except Exception as e:
@@ -1268,7 +1546,6 @@ class BinarySimilaritySearch:
             if not hash1 or not hash2 or len(hash1) != len(hash2):
                 return 0.0
 
-            # Calculate Hamming distance
             differences = sum(c1 != c2 for c1, c2 in zip(hash1, hash2, strict=False))
             similarity = 1.0 - (differences / len(hash1))
 
@@ -1277,6 +1554,260 @@ class BinarySimilaritySearch:
         except Exception as e:
             self.logger.exception("Error calculating hash similarity: %s", e)
             return 0.0
+
+    def compute_instruction_ngrams(self, binary_path: str, n: int = 4) -> set[str]:
+        """Extract instruction n-grams from binary for pattern matching.
+
+        Args:
+            binary_path: Path to binary file.
+            n: N-gram size (default: 4 for 4-byte sequences).
+
+        Returns:
+            Set of instruction n-gram signatures.
+        """
+        ngrams: set[str] = set()
+
+        try:
+            if not os.path.exists(binary_path):
+                return ngrams
+
+            with open(binary_path, "rb") as f:
+                data = f.read()
+
+            if HAS_PEFILE:
+                try:
+                    pe = pefile.PE(binary_path)
+
+                    for section in pe.sections:
+                        if b".text" in section.Name or section.Characteristics & 0x20000000:
+                            section_data = section.get_data()
+
+                            for i in range(len(section_data) - n + 1):
+                                ngram_bytes = section_data[i : i + n]
+                                ngram_sig = ngram_bytes.hex()
+                                ngrams.add(ngram_sig)
+
+                                if len(ngrams) > 10000:
+                                    break
+
+                    pe.close()
+
+                except pefile.PEFormatError as pef:
+                    self.logger.warning("Malformed PE file for n-grams: %s", pef)
+                except Exception as pe_error:
+                    self.logger.warning("PE analysis failed for n-grams: %s", pe_error)
+            else:
+                for i in range(0, min(len(data), 100000), n):
+                    ngram_bytes = data[i : i + n]
+                    if len(ngram_bytes) == n:
+                        ngrams.add(ngram_bytes.hex())
+
+        except Exception as e:
+            self.logger.exception("Error computing instruction n-grams: %s", e)
+
+        return ngrams
+
+    def calculate_instruction_ngram_similarity(self, binary_path1: str, binary_path2: str, n: int = 4) -> float:
+        """Calculate similarity based on instruction n-grams.
+
+        Args:
+            binary_path1: First binary path.
+            binary_path2: Second binary path.
+            n: N-gram size (default: 4).
+
+        Returns:
+            Jaccard similarity of instruction n-grams (0.0-1.0).
+        """
+        try:
+            ngrams1 = self.compute_instruction_ngrams(binary_path1, n)
+            ngrams2 = self.compute_instruction_ngrams(binary_path2, n)
+
+            if not ngrams1 or not ngrams2:
+                return 0.0
+
+            intersection = len(ngrams1.intersection(ngrams2))
+            union = len(ngrams1.union(ngrams2))
+
+            return intersection / union if union > 0 else 0.0
+
+        except Exception as e:
+            self.logger.exception("Error calculating instruction n-gram similarity: %s", e)
+            return 0.0
+
+    def compute_cfg_hash(self, binary_path: str) -> str:
+        """Compute instruction pattern hash for function-level similarity.
+
+        Note: This is NOT a true CFG hash. It captures call/jump instruction
+        patterns but not actual control flow graph structure. These patterns
+        are unstable across recompilation as addresses change.
+
+        Args:
+            binary_path: Path to binary file.
+
+        Returns:
+            Instruction pattern hash signature (hex string).
+        """
+        try:
+            if not os.path.exists(binary_path):
+                return ""
+
+            cfg_features: list[str] = []
+
+            if HAS_PEFILE:
+                try:
+                    pe = pefile.PE(binary_path)
+
+                    for section in pe.sections:
+                        if b".text" in section.Name:
+                            section_data = section.get_data()
+
+                            call_patterns = self._extract_call_patterns(section_data)
+                            cfg_features.extend(call_patterns)
+
+                            jump_patterns = self._extract_jump_patterns(section_data)
+                            cfg_features.extend(jump_patterns)
+
+                    pe.close()
+
+                except pefile.PEFormatError as pef:
+                    self.logger.warning("Malformed PE file for CFG extraction: %s", pef)
+                except Exception as pe_error:
+                    self.logger.warning("PE CFG extraction failed: %s", pe_error)
+
+            if not cfg_features:
+                with open(binary_path, "rb") as f:
+                    data = f.read(100000)
+                    cfg_features.append(hashlib.sha256(data).hexdigest())
+
+            combined = "|".join(sorted(cfg_features))
+            cfg_hash = hashlib.sha256(combined.encode()).hexdigest()
+
+            return cfg_hash
+
+        except Exception as e:
+            self.logger.exception("Error computing CFG hash: %s", e)
+            return ""
+
+    def _extract_call_patterns(self, data: bytes) -> list[str]:
+        """Extract CALL instruction patterns from binary data.
+
+        Args:
+            data: Binary data to analyze.
+
+        Returns:
+            List of call pattern signatures.
+        """
+        patterns: list[str] = []
+
+        call_opcodes = [b"\xe8", b"\xff\x15", b"\xff\xd0", b"\xff\xd1", b"\xff\xd2"]
+
+        for opcode in call_opcodes:
+            offset = 0
+            while True:
+                idx = data.find(opcode, offset)
+                if idx == -1:
+                    break
+
+                context = data[max(0, idx - 4) : idx + 8]
+                pattern_sig = f"call:{context.hex()}"
+                patterns.append(pattern_sig)
+
+                offset = idx + 1
+
+                if len(patterns) > 500:
+                    break
+
+        return patterns
+
+    def _extract_jump_patterns(self, data: bytes) -> list[str]:
+        """Extract jump instruction patterns from binary data.
+
+        Args:
+            data: Binary data to analyze.
+
+        Returns:
+            List of jump pattern signatures.
+        """
+        patterns: list[str] = []
+
+        jump_opcodes = [b"\xeb", b"\xe9", b"\x74", b"\x75", b"\x7e", b"\x7f"]
+
+        for opcode in jump_opcodes:
+            offset = 0
+            while True:
+                idx = data.find(opcode, offset)
+                if idx == -1:
+                    break
+
+                context = data[max(0, idx - 2) : idx + 6]
+                pattern_sig = f"jmp:{context.hex()}"
+                patterns.append(pattern_sig)
+
+                offset = idx + 1
+
+                if len(patterns) > 500:
+                    break
+
+        return patterns
+
+    def calculate_cfg_similarity(self, binary_path1: str, binary_path2: str) -> float:
+        """Calculate CFG-based similarity between two binaries.
+
+        Args:
+            binary_path1: First binary path.
+            binary_path2: Second binary path.
+
+        Returns:
+            CFG similarity score (0.0-1.0).
+        """
+        try:
+            cfg_hash1 = self.compute_cfg_hash(binary_path1)
+            cfg_hash2 = self.compute_cfg_hash(binary_path2)
+
+            if not cfg_hash1 or not cfg_hash2:
+                return 0.0
+
+            if cfg_hash1 == cfg_hash2:
+                return 1.0
+
+            return self._calculate_hash_similarity(cfg_hash1, cfg_hash2)
+
+        except Exception as e:
+            self.logger.exception("Error calculating CFG similarity: %s", e)
+            return 0.0
+
+    def find_protection_variants(self, binary_path: str, variant_threshold: float = 0.85) -> list[dict[str, Any]]:
+        """Find protection variants across binary corpus using advanced similarity.
+
+        Args:
+            binary_path: Reference binary path.
+            variant_threshold: High similarity threshold for variant detection.
+
+        Returns:
+            List of likely protection variants with detailed similarity metrics.
+        """
+        try:
+            results = self.search_similar_binaries(binary_path, threshold=variant_threshold)
+
+            for result in results:
+                result_path = result["path"]
+
+                ngram_sim = self.calculate_instruction_ngram_similarity(binary_path, result_path)
+                result["ngram_similarity"] = ngram_sim
+
+                cfg_sim = self.calculate_cfg_similarity(binary_path, result_path)
+                result["cfg_similarity"] = cfg_sim
+
+                composite_score = (result["similarity"] * 0.5 + ngram_sim * 0.3 + cfg_sim * 0.2)
+                result["composite_similarity"] = composite_score
+
+            results.sort(key=lambda x: x.get("composite_similarity", 0), reverse=True)
+
+            return results
+
+        except Exception as e:
+            self.logger.exception("Error finding protection variants: %s", e)
+            return []
 
     def get_database_stats(self) -> dict[str, Any]:
         """Get statistics about the binary database.
@@ -1351,6 +1882,9 @@ class BinarySimilaritySearch:
             self.database["binaries"] = [b for b in self.database["binaries"] if b["path"] != binary_path]
 
             if len(self.database["binaries"]) < original_count:
+                if self.use_lsh and self.lsh_index is not None:
+                    self.lsh_index.remove(binary_path)
+
                 self._save_database()
                 self.logger.info("Removed binary %s from database", binary_path)
                 return True
@@ -1374,11 +1908,30 @@ class BinarySimilaritySearch:
         try:
             self.database_path = database_path
             self.database = self._load_database()
+
+            if self.use_lsh and self.lsh_index is not None:
+                self._rebuild_lsh_index()
+
             self.logger.info("Loaded database from %s", database_path)
             return True
         except Exception as e:
             self.logger.exception("Error loading database %s: %s", database_path, e)
             return False
+
+    def _rebuild_lsh_index(self) -> None:
+        """Rebuild LSH index from current database."""
+        if not self.use_lsh or self.lsh_index is None:
+            return
+
+        self.lsh_index = MinHashLSH(num_perm=128, threshold=0.5, num_bands=32)
+
+        for binary in self.database.get("binaries", []):
+            try:
+                features = binary.get("features", {})
+                feature_set = self._extract_feature_set_for_lsh(features)
+                self.lsh_index.insert(binary["path"], feature_set)
+            except Exception as e:
+                self.logger.warning("Failed to index binary %s: %s", binary.get("path", "unknown"), e)
 
     def find_similar(self, binary_path: str, threshold: float = 0.7) -> list[dict[str, Any]]:
         """Find similar binaries to the given binary.

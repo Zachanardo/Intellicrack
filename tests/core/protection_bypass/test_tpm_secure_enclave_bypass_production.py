@@ -263,10 +263,10 @@ class TestTPMKeyManagement:
 
         public_key = serialization.load_der_public_key(key.public_key, backend=default_backend())
         try:
-            public_key.verify(
+            public_key.verify(  # type: ignore[union-attr, call-arg]
                 signature,
                 test_data,
-                padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
+                padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),  # type: ignore[arg-type]
                 hashes.SHA256(),
             )
             signature_valid = True
@@ -291,7 +291,7 @@ class TestTPMKeyManagement:
 
         public_key = serialization.load_der_public_key(key.public_key, backend=default_backend())
         try:
-            public_key.verify(signature, test_data, ec.ECDSA(hashes.SHA256()))
+            public_key.verify(signature, test_data, ec.ECDSA(hashes.SHA256()))  # type: ignore[union-attr, call-arg, arg-type]
             signature_valid = True
         except Exception:
             signature_valid = False
@@ -1217,8 +1217,8 @@ class TestEnclaveMemoryAnalysis:
         assert measurements is None or isinstance(measurements, dict)
 
 
-class TestSecureBootDetection:
-    """Test secure boot and platform security detection."""
+class TestPlatformSecurityStateDetection:
+    """Test platform security state detection for license analysis."""
 
     def test_check_secure_boot_returns_bool(self, bypass_system: Any) -> None:
         """Secure boot check returns boolean value."""

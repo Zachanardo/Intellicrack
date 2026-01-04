@@ -115,9 +115,9 @@ class TestR2ErrorHandlerInitialization:
         self, error_handler: R2ErrorHandler
     ) -> None:
         """Performance monitor is initialized."""
-        assert "operation_times" in error_handler.performance_monitor
-        assert "failure_rates" in error_handler.performance_monitor
-        assert "recovery_success_rates" in error_handler.performance_monitor
+        assert "operation_times" in error_handler.performance_monitor  # type: ignore[attr-defined]
+        assert "failure_rates" in error_handler.performance_monitor  # type: ignore[attr-defined]
+        assert "recovery_success_rates" in error_handler.performance_monitor  # type: ignore[attr-defined]
 
 
 class TestErrorSeverityClassification:
@@ -268,7 +268,7 @@ class TestErrorContext:
         with error_handler.error_context("successful_operation"):
             time.sleep(0.01)
 
-        assert "successful_operation" in error_handler.performance_monitor["operation_times"]
+        assert "successful_operation" in error_handler.performance_monitor["operation_times"]  # type: ignore[attr-defined]
 
     def test_error_context_records_failures(
         self, error_handler: R2ErrorHandler
@@ -278,7 +278,7 @@ class TestErrorContext:
             with error_handler.error_context("failing_operation"):
                 raise ValueError("Test failure")
 
-        assert "failing_operation" in error_handler.performance_monitor["failure_rates"]
+        assert "failing_operation" in error_handler.performance_monitor["failure_rates"]  # type: ignore[attr-defined]
 
 
 class TestCircuitBreaker:
@@ -452,15 +452,15 @@ class TestPerformanceMonitoring:
         """Performance is recorded for operations."""
         error_handler._record_performance("test_op", 1.5, success=True)
 
-        assert "test_op" in error_handler.performance_monitor["operation_times"]
-        assert 1.5 in error_handler.performance_monitor["operation_times"]["test_op"]
+        assert "test_op" in error_handler.performance_monitor["operation_times"]  # type: ignore[attr-defined]
+        assert 1.5 in error_handler.performance_monitor["operation_times"]["test_op"]  # type: ignore[attr-defined]
 
     def test_performance_history_limited(self, error_handler: R2ErrorHandler) -> None:
         """Performance history is limited to 100 entries."""
         for i in range(150):
             error_handler._record_performance("test_op", float(i), success=True)
 
-        assert len(error_handler.performance_monitor["operation_times"]["test_op"]) == 100
+        assert len(error_handler.performance_monitor["operation_times"]["test_op"]) == 100  # type: ignore[attr-defined]
 
     def test_failure_rate_tracking(self, error_handler: R2ErrorHandler) -> None:
         """Failure rates are tracked correctly."""
@@ -470,7 +470,7 @@ class TestPerformanceMonitoring:
         for _ in range(3):
             error_handler._record_performance("test_op", 1.0, success=False)
 
-        rates = error_handler.performance_monitor["failure_rates"]["test_op"]
+        rates = error_handler.performance_monitor["failure_rates"]["test_op"]  # type: ignore[attr-defined]
         assert rates["successes"] == 7
         assert rates["failures"] == 3
 
@@ -593,14 +593,14 @@ class TestRecoverySuccessRates:
         """Recovery successes are recorded."""
         error_handler._record_recovery_success("test_action")
 
-        rates = error_handler.performance_monitor["recovery_success_rates"]
+        rates = error_handler.performance_monitor["recovery_success_rates"]  # type: ignore[attr-defined]
         assert rates["test_action"]["successes"] == 1
 
     def test_recovery_failure_recorded(self, error_handler: R2ErrorHandler) -> None:
         """Recovery failures are recorded."""
         error_handler._record_recovery_failure("test_action")
 
-        rates = error_handler.performance_monitor["recovery_success_rates"]
+        rates = error_handler.performance_monitor["recovery_success_rates"]  # type: ignore[attr-defined]
         assert rates["test_action"]["failures"] == 1
 
     def test_recovery_rate_calculation(self, error_handler: R2ErrorHandler) -> None:

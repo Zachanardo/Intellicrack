@@ -130,7 +130,7 @@ class TestCertificateBuilder:
 
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
-        cert = builder.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())
+        cert = builder.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())  # type: ignore[attr-defined]
 
         subject_dict = {attr.oid._name: attr.value for attr in cert.subject}
 
@@ -149,7 +149,7 @@ class TestCertificateBuilder:
 
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
-        cert = builder.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())
+        cert = builder.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())  # type: ignore[attr-defined]
 
         issuer_dict = {attr.oid._name: attr.value for attr in cert.issuer}
 
@@ -167,9 +167,9 @@ class TestCertificateBuilder:
 
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
-        cert1 = builder1.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())
+        cert1 = builder1.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())  # type: ignore[attr-defined]
 
-        cert2 = builder2.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())
+        cert2 = builder2.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())  # type: ignore[attr-defined]
 
         assert cert1.serial_number != cert2.serial_number
 
@@ -182,7 +182,7 @@ class TestCertificateBuilder:
 
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
-        cert = builder.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())
+        cert = builder.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())  # type: ignore[attr-defined]
 
         now = datetime.datetime.now(datetime.UTC)
         assert cert.not_valid_before <= now
@@ -197,7 +197,7 @@ class TestCertificateBuilder:
 
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
-        cert = builder.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())
+        cert = builder.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())  # type: ignore[attr-defined]
 
         duration = cert.not_valid_after - cert.not_valid_before
         assert duration.days == 365
@@ -211,7 +211,7 @@ class TestCertificateBuilder:
 
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
-        extended_builder = builder.add_extension(
+        extended_builder = builder.add_extension(  # type: ignore[attr-defined]
             x509.BasicConstraints(ca=True, path_length=0),
             critical=True,
         )
@@ -235,7 +235,7 @@ class TestCertificateBuilderIntegration:
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
         cert = (
-            builder.public_key(private_key.public_key())
+            builder.public_key(private_key.public_key())  # type: ignore[attr-defined]
             .add_extension(
                 x509.SubjectAlternativeName([x509.DNSName("localhost")]),
                 critical=False,
@@ -255,7 +255,7 @@ class TestCertificateBuilderIntegration:
 
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
-        cert = builder.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())
+        cert = builder.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())  # type: ignore[attr-defined]
 
         now = datetime.datetime.now(datetime.UTC)
         assert cert.not_valid_before <= now <= cert.not_valid_after
@@ -270,7 +270,7 @@ class TestCertificateBuilderIntegration:
             if builder is None:
                 pytest.skip("cryptography not available")
 
-            cert = builder.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())
+            cert = builder.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())  # type: ignore[attr-defined]
             certs.append(cert)
 
         serial_numbers = [cert.serial_number for cert in certs]
@@ -286,7 +286,7 @@ class TestCertificateBuilderIntegration:
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
         cert = (
-            builder.public_key(private_key.public_key())
+            builder.public_key(private_key.public_key())  # type: ignore[attr-defined]
             .add_extension(
                 x509.KeyUsage(
                     digital_signature=True,
@@ -365,7 +365,7 @@ class TestCertificateCommonIntegration:
             pytest.skip("cryptography not available")
 
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-        cert = builder.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())
+        cert = builder.public_key(private_key.public_key()).sign(private_key, hashes.SHA256())  # type: ignore[attr-defined]
 
         not_before_manual, not_after_manual = get_certificate_validity_dates(365)
 
@@ -394,7 +394,7 @@ class TestCertificateCommonIntegration:
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
         custom_builder = (
-            builder.not_valid_before(not_before_custom)
+            builder.not_valid_before(not_before_custom)  # type: ignore[attr-defined]
             .not_valid_after(not_after_custom)
         )
 

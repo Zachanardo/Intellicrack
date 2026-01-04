@@ -217,7 +217,7 @@ class TestQEMUImageDiscovery:
         images = discovery_instance.discover_images()
 
         assert discovery_instance._cache_valid is True
-        assert len(discovery_instance._cache) > 0
+        assert len(discovery_instance._cache) > 0  # type: ignore[unreachable]
         assert discovery_instance._cache == images
 
     def test_cache_reused_on_subsequent_calls(self, discovery_instance: QEMUImageDiscovery) -> None:

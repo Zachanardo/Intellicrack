@@ -135,7 +135,8 @@ def qapp() -> QApplication:
     """Create QApplication for tests."""
     app = QApplication.instance()
     if app is None:
-        app = QApplication([])
+        return QApplication([])
+    assert isinstance(app, QApplication), "Expected QApplication instance"
     return app
 
 
@@ -213,10 +214,11 @@ class TestQuickStartPanel:
         self, qapp: QApplication, patched_config_manager: FakeConfigManager
     ) -> None:
         """Quick start panel contains file open button."""
+        from PyQt6.QtWidgets import QPushButton
         tab = DashboardTab()
 
         panel = tab.create_quick_start_panel()
-        buttons = panel.findChildren(type(panel.findChild(type(None))))
+        buttons = panel.findChildren(QPushButton)
 
         assert panel is not None
 
@@ -404,6 +406,7 @@ class TestRecentFilesList:
             tab.binary_selected.connect(on_binary_selected)
 
             item = tab.recent_files_list.item(0)
+            assert item is not None, "Expected recent files list item"
             tab.load_recent_file(item)
 
             assert signal_emitted
@@ -493,7 +496,7 @@ class TestSystemMonitorIntegration:
             alert_type_received = alert_type
             original_handler(alert_type, message)
 
-        tab.handle_system_alert = test_handler
+        setattr(tab, "handle_system_alert", test_handler)
 
         tab.system_monitor.alert_triggered.emit("CPU", "CPU usage high")
 

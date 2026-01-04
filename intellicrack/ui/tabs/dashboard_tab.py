@@ -120,10 +120,13 @@ class DashboardTab(BaseTab):
             None
 
         """
+        logger.debug("DashboardTab.setup_content() called")
         layout_config = self.config_manager.get_layout_config()
         layout = self.layout()
         if layout is None:
+            logger.error("DashboardTab: layout is None! Cannot set up content.")
             return
+        logger.debug("DashboardTab: layout found, type=%s", type(layout).__name__)
 
         layout.setSpacing(layout_config.panel_spacing)
         layout.setContentsMargins(

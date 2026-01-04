@@ -43,19 +43,19 @@ try:
     PYQT6_AVAILABLE = True
 except ImportError:
     PYQT6_AVAILABLE = False
-    QThread = None
-    QObject = None
-    QMutex = None
-    QWaitCondition = None
-    QThreadPool = None
-    QTimer = None
-    QApplication = None
-    QTableWidget = None
-    QTableWidgetItem = None
-    QListWidget = None
-    QTextEdit = None
-    QProgressBar = None
-    pyqtSignal = None
+    QThread: Any = None  # type: ignore[no-redef]
+    QObject: Any = None  # type: ignore[no-redef]
+    QMutex: Any = None  # type: ignore[no-redef]
+    QWaitCondition: Any = None  # type: ignore[no-redef]
+    QThreadPool: Any = None  # type: ignore[no-redef]
+    QTimer: Any = None  # type: ignore[no-redef]
+    QApplication: Any = None  # type: ignore[no-redef]
+    QTableWidget: Any = None  # type: ignore[no-redef]
+    QTableWidgetItem: Any = None  # type: ignore[no-redef]
+    QListWidget: Any = None  # type: ignore[no-redef]
+    QTextEdit: Any = None  # type: ignore[no-redef]
+    QProgressBar: Any = None  # type: ignore[no-redef]
+    pyqtSignal: Any = None  # type: ignore[no-redef]
 
 from intellicrack.utils.logger import get_logger
 
@@ -67,12 +67,12 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> "QApplication":
     """Create QApplication instance for Qt tests."""
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
-    return app
+    return app  # type: ignore[return-value]
 
 
 class DataProcessor(QThread):
@@ -296,8 +296,8 @@ class TestConcurrentAccess:
         """Wait conditions synchronize thread execution correctly."""
         mutex = QMutex()
         condition = QWaitCondition()
-        data_ready = [False]
-        data = []
+        data_ready: list[bool] = [False]
+        data: list[int] = []
 
         class Producer(QThread):
             def __init__(self, mutex_ref: QMutex, condition_ref: QWaitCondition,
@@ -324,7 +324,7 @@ class TestConcurrentAccess:
                 self.condition = condition_ref
                 self.data = data_ref
                 self.ready = ready_ref
-                self.consumed = []
+                self.consumed: list[int] = []
 
             def run(self) -> None:
                 self.mutex.lock()
@@ -483,6 +483,7 @@ class TestThreadPoolManagement:
                     results.append(self.task_id)
 
         pool = QThreadPool.globalInstance()
+        assert pool is not None, "QThreadPool.globalInstance() returned None"
         task_count = 10
 
         for i in range(task_count):
@@ -498,6 +499,7 @@ class TestThreadPoolManagement:
     ) -> None:
         """Thread pool respects maximum thread count setting."""
         pool = QThreadPool.globalInstance()
+        assert pool is not None, "QThreadPool.globalInstance() returned None"
 
         max_threads = pool.maxThreadCount()
         assert max_threads > 0

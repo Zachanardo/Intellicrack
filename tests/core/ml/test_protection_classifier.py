@@ -18,8 +18,9 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import Any
 import struct
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
@@ -37,7 +38,7 @@ class TestBinaryFeatureExtractor:
         return BinaryFeatureExtractor()
 
     @pytest.fixture
-    def valid_pe_binary(self, tmp_path) -> Any:
+    def valid_pe_binary(self, tmp_path: Path) -> Any:
         """Create a minimal valid PE binary for testing."""
         pe_file = tmp_path / "test.exe"
 
@@ -118,7 +119,7 @@ class TestBinaryFeatureExtractor:
         return pe_file
 
     @pytest.fixture
-    def vmprotect_like_binary(self, tmp_path) -> Any:
+    def vmprotect_like_binary(self, tmp_path: Path) -> Any:
         """Create a binary with VMProtect-like characteristics."""
         pe_file = tmp_path / "vmprotect_test.exe"
 
@@ -198,8 +199,8 @@ class TestBinaryFeatureExtractor:
         assert not np.any(np.isinf(features))
 
     def test_feature_extraction_vmprotect_characteristics(
-        self, extractor, vmprotect_like_binary
-    ):
+        self, extractor: BinaryFeatureExtractor, vmprotect_like_binary: Path
+    ) -> None:
         """Test that VMProtect-like binaries produce distinctive features."""
         features = extractor.extract_features(vmprotect_like_binary)
 
@@ -321,7 +322,7 @@ class TestBinaryFeatureExtractor:
 
             section_table = bytearray(40)
             section_name = test_case.get('section_name', b'.text\x00\x00\x00')
-            section_table[:8] = section_name
+            section_table[:8] = section_name  # type: ignore[call-overload]
             section_table[8:12] = struct.pack('<I', 1000)
             section_table[12:16] = struct.pack('<I', 0x1000)
             section_table[16:20] = struct.pack('<I', 1000)
@@ -330,9 +331,9 @@ class TestBinaryFeatureExtractor:
 
             section_data = bytearray(1000)
             if 'entry_point_sig' in test_case:
-                section_data[:5] = test_case['entry_point_sig']
+                section_data[:5] = test_case['entry_point_sig']  # type: ignore[call-overload]
             if 'signature_bytes' in test_case:
-                section_data[500:500+len(test_case['signature_bytes'])] = test_case['signature_bytes']
+                section_data[500:500+len(test_case['signature_bytes'])] = test_case['signature_bytes']  # type: ignore[call-overload, arg-type]
 
             padding_size = section_raw_offset - header_size
             pe_data = dos_header + b'\x00' * 64 + b'PE\x00\x00' + coff_header + optional_header + section_table + b'\x00' * padding_size + section_data
@@ -373,7 +374,7 @@ class TestProtectionClassifier:
     """Tests for protection classifier."""
 
     @pytest.fixture
-    def classifier(self, tmp_path) -> Any:
+    def classifier(self, tmp_path: Path) -> Any:
         """Create classifier instance with temp model path."""
         model_path = tmp_path / "test_model"
         return ProtectionClassifier(model_path=model_path)
@@ -474,8 +475,8 @@ class TestProtectionClassifier:
             classifier.predict(test_file)
 
     def test_predict_with_trained_model(
-        self, classifier, synthetic_training_data, tmp_path
-    ):
+        self, classifier: ProtectionClassifier, synthetic_training_data: Any, tmp_path: Path
+    ) -> None:
         """Test prediction with trained model."""
         X, y = synthetic_training_data
         classifier.train(X, y, n_estimators=50, cross_validate=False)
@@ -575,15 +576,15 @@ class TestProtectionClassifier:
         assert abs(result1.confidence - result2.confidence) < 1e-6
 
     def test_model_handles_all_protection_types(
-        self, classifier, synthetic_training_data
-    ):
+        self, classifier: ProtectionClassifier, synthetic_training_data: Any
+    ) -> None:
         """Test that model can classify all protection types."""
         X, y = synthetic_training_data
         classifier.train(X, y, n_estimators=50, cross_validate=False)
 
         expected_classes = {'VMProtect', 'Themida', 'Enigma', 'Obsidium',
                                  'ASProtect', 'UPX', 'None'}
-        actual_classes = set(classifier.label_encoder.classes_)
+        actual_classes = set(classifier.label_encoder.classes_)  # type: ignore[union-attr]
 
         assert expected_classes.issubset(actual_classes)
 

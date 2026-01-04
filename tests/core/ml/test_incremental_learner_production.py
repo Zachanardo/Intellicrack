@@ -41,7 +41,7 @@ class TestTrainingSampleDataClass:
 
     def test_training_sample_creates_with_required_fields(self) -> None:
         """TrainingSample initializes with all required fields."""
-        feature_vector: np.ndarray = np.random.randn(50).astype(np.float32)
+        feature_vector: np.ndarray[Any, np.dtype[np.floating[Any]]] = np.random.randn(50).astype(np.float32)
 
         sample: TrainingSample = TrainingSample(
             binary_path=Path("/test/binary.exe"),
@@ -62,7 +62,7 @@ class TestTrainingSampleDataClass:
 
     def test_training_sample_defaults(self) -> None:
         """TrainingSample uses default values for optional fields."""
-        feature_vector: np.ndarray = np.zeros(10, dtype=np.float32)
+        feature_vector: np.ndarray[Any, np.dtype[np.floating[Any]]] = np.zeros(10, dtype=np.float32)
 
         sample: TrainingSample = TrainingSample(
             binary_path=Path("/test.exe"),
@@ -109,7 +109,7 @@ class TestIncrementalLearnerInitialization:
         """Create classifier for testing."""
         model_path: Path = tmp_path / "test_model"
         model_path.mkdir()
-        return ProtectionClassifier(model_path=str(model_path))
+        return ProtectionClassifier(model_path=model_path)
 
     def test_incremental_learner_initializes_with_classifier(self, classifier: ProtectionClassifier, tmp_path: Path) -> None:
         """IncrementalLearner initializes with classifier and buffer."""
@@ -166,7 +166,7 @@ class TestAddingSamples:
         """Create incremental learner for testing."""
         model_path: Path = tmp_path / "model"
         model_path.mkdir()
-        classifier = ProtectionClassifier(model_path=str(model_path))
+        classifier = ProtectionClassifier(model_path=model_path)
 
         buffer_path: Path = tmp_path / "buffer.pkl"
 
@@ -274,10 +274,10 @@ class TestAutoRetrain:
         model_path: Path = tmp_path / "model"
         model_path.mkdir()
 
-        classifier = ProtectionClassifier(model_path=str(model_path))
+        classifier = ProtectionClassifier(model_path=model_path)
 
-        X_train: np.ndarray = np.random.randn(100, 50).astype(np.float32)
-        y_train: np.ndarray = np.array(["none"] * 50 + ["vmprotect"] * 50)
+        X_train: np.ndarray[Any, np.dtype[np.floating[Any]]] = np.random.randn(100, 50).astype(np.float32)
+        y_train: np.ndarray[Any, np.dtype[np.object_]] = np.array(["none"] * 50 + ["vmprotect"] * 50)
         classifier.train(X=X_train, y=y_train, n_estimators=10)
 
         buffer_path: Path = tmp_path / "buffer.pkl"
@@ -310,7 +310,7 @@ class TestAutoRetrain:
         model_path: Path = tmp_path / "model"
         model_path.mkdir()
 
-        classifier = ProtectionClassifier(model_path=str(model_path))
+        classifier = ProtectionClassifier(model_path=model_path)
         learner = IncrementalLearner(classifier=classifier, auto_retrain=False)
 
         threshold: int = IncrementalLearner.RETRAIN_THRESHOLD
@@ -332,10 +332,10 @@ class TestIncrementalRetraining:
         model_path: Path = tmp_path / "model"
         model_path.mkdir()
 
-        classifier = ProtectionClassifier(model_path=str(model_path))
+        classifier = ProtectionClassifier(model_path=model_path)
 
-        X_initial: np.ndarray = np.random.randn(100, 50).astype(np.float32)
-        y_initial: np.ndarray = np.array(["none"] * 50 + ["vmprotect"] * 50)
+        X_initial: np.ndarray[Any, np.dtype[np.floating[Any]]] = np.random.randn(100, 50).astype(np.float32)
+        y_initial: np.ndarray[Any, np.dtype[np.object_]] = np.array(["none"] * 50 + ["vmprotect"] * 50)
         classifier.train(X=X_initial, y=y_initial, n_estimators=10)
 
         learner = IncrementalLearner(classifier=classifier, auto_retrain=False)
@@ -386,7 +386,7 @@ class TestIncrementalRetraining:
         model_path: Path = tmp_path / "model"
         model_path.mkdir()
 
-        classifier = ProtectionClassifier(model_path=str(model_path))
+        classifier = ProtectionClassifier(model_path=model_path)
         learner = IncrementalLearner(classifier=classifier)
 
         results: dict[str, Any] = learner.retrain_incremental()
@@ -414,10 +414,10 @@ class TestSampleQualityEvaluation:
         model_path: Path = tmp_path / "model"
         model_path.mkdir()
 
-        classifier = ProtectionClassifier(model_path=str(model_path))
+        classifier = ProtectionClassifier(model_path=model_path)
 
-        X_train: np.ndarray = np.random.randn(200, 50).astype(np.float32)
-        y_train: np.ndarray = np.array(["none"] * 100 + ["vmprotect"] * 100)
+        X_train: np.ndarray[Any, np.dtype[np.floating[Any]]] = np.random.randn(200, 50).astype(np.float32)
+        y_train: np.ndarray[Any, np.dtype[np.object_]] = np.array(["none"] * 100 + ["vmprotect"] * 100)
         classifier.train(X=X_train, y=y_train, n_estimators=20)
 
         return IncrementalLearner(classifier=classifier)
@@ -465,10 +465,10 @@ class TestUncertainPredictions:
         model_path: Path = tmp_path / "model"
         model_path.mkdir()
 
-        classifier = ProtectionClassifier(model_path=str(model_path))
+        classifier = ProtectionClassifier(model_path=model_path)
 
-        X_train: np.ndarray = np.random.randn(200, 50).astype(np.float32)
-        y_train: np.ndarray = np.array(["none"] * 100 + ["vmprotect"] * 100)
+        X_train: np.ndarray[Any, np.dtype[np.floating[Any]]] = np.random.randn(200, 50).astype(np.float32)
+        y_train: np.ndarray[Any, np.dtype[np.object_]] = np.array(["none"] * 100 + ["vmprotect"] * 100)
         classifier.train(X=X_train, y=y_train, n_estimators=20)
 
         learner = IncrementalLearner(classifier=classifier)
@@ -518,7 +518,7 @@ class TestBufferStatistics:
         """Create learner for testing."""
         model_path: Path = tmp_path / "model"
         model_path.mkdir()
-        classifier = ProtectionClassifier(model_path=str(model_path))
+        classifier = ProtectionClassifier(model_path=model_path)
         return IncrementalLearner(classifier=classifier)
 
     def test_get_buffer_statistics_empty_buffer(self, learner: IncrementalLearner) -> None:

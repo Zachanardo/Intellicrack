@@ -68,7 +68,7 @@ class TestPerformanceMonitorInitialization:
     def test_metrics_lock_created(self, performance_monitor: R2PerformanceMonitor) -> None:
         """Thread lock created for metrics protection."""
         assert performance_monitor.metrics_lock is not None
-        assert isinstance(performance_monitor.metrics_lock, threading.RLock)
+        assert type(performance_monitor.metrics_lock).__name__ == "RLock"
 
 
 class TestSessionManagement:
@@ -209,6 +209,7 @@ class TestOperationTracking:
         )
 
         assert finalized.bytes_processed == 1024
+        assert performance_monitor.current_session is not None
         assert performance_monitor.current_session.total_bytes_processed == 1024
 
     def test_multiple_operations_in_session(self, performance_monitor: R2PerformanceMonitor) -> None:
@@ -550,6 +551,7 @@ class TestThreadSafety:
 
         session = performance_monitor.end_session()
 
+        assert session is not None
         assert session.cache_hits == 18
         assert session.cache_misses == 8
 
@@ -562,6 +564,7 @@ class TestEdgeCases:
         performance_monitor.start_session("zero_ops")
         session = performance_monitor.end_session()
 
+        assert session is not None
         assert session.total_operations == 0
         assert session.average_duration_ms == 0.0
 
@@ -612,6 +615,7 @@ class TestPerformanceOptimization:
 
         session = performance_monitor.end_session()
 
+        assert session is not None
         assert session.total_operations == 1000
         assert session.total_bytes_processed == 100000
 
@@ -623,4 +627,5 @@ class TestPerformanceOptimization:
             op = performance_monitor.start_operation("memory_test")
             performance_monitor.end_operation(op, success=True)
 
+        assert performance_monitor.current_session is not None
         assert len(performance_monitor.current_session.operations) == 100

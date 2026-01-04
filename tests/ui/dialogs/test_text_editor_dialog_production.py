@@ -4,6 +4,7 @@ Tests real text editing functionality with syntax highlighting.
 """
 
 from pathlib import Path
+from typing import Generator
 
 import pytest
 
@@ -17,10 +18,11 @@ from intellicrack.ui.dialogs.text_editor_dialog import TextEditorDialog
 @pytest.fixture(scope="module")
 def qapp() -> QApplication:
     """Create QApplication instance."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    return app
+    existing_app = QApplication.instance()
+    if existing_app is None:
+        return QApplication([])
+    assert isinstance(existing_app, QApplication), "Expected QApplication instance"
+    return existing_app
 
 
 @pytest.fixture
@@ -32,7 +34,7 @@ def test_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def editor_dialog(qapp: QApplication) -> TextEditorDialog:
+def editor_dialog(qapp: QApplication) -> Generator[TextEditorDialog, None, None]:
     """Create text editor dialog."""
     dialog = TextEditorDialog()
     yield dialog

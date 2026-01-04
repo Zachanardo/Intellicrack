@@ -14,7 +14,7 @@ import tempfile
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Generator, Optional
 
 import pytest
 
@@ -47,9 +47,8 @@ class FakeTrialResetEngine:
     def __init__(self) -> None:
         self._trial_info: Optional[TrialInfo] = TrialInfo(
             product_name="WinRAR",
-            trial_type=TrialType.DAYS_BASED,
+            trial_type=TrialType.TIME_BASED,
             trial_days=40,
-            days_remaining=15,
             usage_count=25,
             install_date=datetime.now() - timedelta(days=25),
             first_run_date=datetime.now() - timedelta(days=25),
@@ -155,9 +154,8 @@ def fake_expired_trial_info() -> TrialInfo:
     """Create expired trial information."""
     return TrialInfo(
         product_name="VMware Workstation",
-        trial_type=TrialType.DAYS_BASED,
+        trial_type=TrialType.TIME_BASED,
         trial_days=30,
-        days_remaining=0,
         usage_count=45,
         install_date=datetime.now() - timedelta(days=45),
         first_run_date=datetime.now() - timedelta(days=45),
@@ -174,7 +172,7 @@ def fake_expired_trial_info() -> TrialInfo:
 
 
 @pytest.fixture
-def temp_backup_dir() -> Path:
+def temp_backup_dir() -> Generator[Path, None, None]:
     """Create temporary directory for backup files."""
     with tempfile.TemporaryDirectory(prefix="trial_backups_") as tmpdir:
         yield Path(tmpdir)
@@ -325,7 +323,7 @@ class TestTrialScanning:
     def test_scan_worker_thread_operation(self, qapp: Any, fake_engine: FakeTrialResetEngine) -> None:
         """Scan worker thread performs scanning in background."""
         worker = TrialResetWorker(
-            engine=fake_engine,
+            engine=fake_engine,  # type: ignore[arg-type]
             operation="scan",
             params={"product_name": "VMware"}
         )
@@ -375,14 +373,20 @@ class TestTrialReset:
         """Reset worker terminates related processes before reset."""
         trial_info = TrialInfo(
             product_name="WinRAR",
-            trial_type=TrialType.DAYS_BASED,
+            trial_type=TrialType.TIME_BASED,
             trial_days=40,
-            days_remaining=15,
+            usage_count=0,
+            install_date=datetime.now(),
+            first_run_date=datetime.now(),
+            last_run_date=datetime.now(),
+            trial_expired=False,
+            registry_keys=[],
+            files=[],
             processes=["WinRAR.exe", "UnRAR.exe"]
         )
 
         worker = TrialResetWorker(
-            engine=fake_engine,
+            engine=fake_engine,  # type: ignore[arg-type]
             operation="reset",
             params={
                 "trial_info": trial_info,
@@ -405,12 +409,20 @@ class TestTrialReset:
         """Reset worker executes selected reset strategy."""
         trial_info = TrialInfo(
             product_name="VMware",
-            trial_type=TrialType.DAYS_BASED,
-            trial_days=30
+            trial_type=TrialType.TIME_BASED,
+            trial_days=30,
+            usage_count=0,
+            install_date=datetime.now(),
+            first_run_date=datetime.now(),
+            last_run_date=datetime.now(),
+            trial_expired=False,
+            registry_keys=[],
+            files=[],
+            processes=[]
         )
 
         worker = TrialResetWorker(
-            engine=fake_engine,
+            engine=fake_engine,  # type: ignore[arg-type]
             operation="reset",
             params={
                 "trial_info": trial_info,
@@ -482,9 +494,8 @@ class TestTrialBackup:
         """Backup worker creates JSON backup file with trial data."""
         trial_info = TrialInfo(
             product_name="WinRAR",
-            trial_type=TrialType.DAYS_BASED,
+            trial_type=TrialType.TIME_BASED,
             trial_days=40,
-            days_remaining=15,
             usage_count=25,
             install_date=datetime.now(),
             first_run_date=datetime.now(),
@@ -498,7 +509,7 @@ class TestTrialBackup:
         backup_path = temp_backup_dir / "winrar_backup.json"
 
         worker = TrialResetWorker(
-            engine=fake_engine,
+            engine=fake_engine,  # type: ignore[arg-type]
             operation="backup",
             params={
                 "trial_info": trial_info,
@@ -562,7 +573,7 @@ class TestTrialMonitoring:
     def test_monitor_worker_continuous_scanning(self, qapp: Any, fake_engine: FakeTrialResetEngine) -> None:
         """Monitor worker performs continuous trial scanning."""
         worker = TrialResetWorker(
-            engine=fake_engine,
+            engine=fake_engine,  # type: ignore[arg-type]
             operation="monitor",
             params={"product_name": "WinRAR"}
         )
@@ -584,7 +595,7 @@ class TestTrialMonitoring:
     def test_stop_monitoring(self, qapp: Any, fake_engine: FakeTrialResetEngine) -> None:
         """Monitoring can be stopped by interruption request."""
         worker = TrialResetWorker(
-            engine=fake_engine,
+            engine=fake_engine,  # type: ignore[arg-type]
             operation="monitor",
             params={"product_name": "VMware"}
         )
@@ -698,7 +709,7 @@ class TestExpiredTrialHandling:
 
         if dialog.current_trial_info:
             assert dialog.current_trial_info.trial_expired is True
-            assert dialog.current_trial_info.days_remaining == 0
+            assert dialog.current_trial_info.trial_days == 30
 
 
 class TestErrorHandling:
@@ -754,7 +765,7 @@ class TestErrorHandling:
         fake_engine.set_scan_exception(Exception("Access denied"))
 
         worker = TrialResetWorker(
-            engine=fake_engine,
+            engine=fake_engine,  # type: ignore[arg-type]
             operation="scan",
             params={"product_name": "WinRAR"}
         )
@@ -776,12 +787,20 @@ class TestErrorHandling:
 
         trial_info = TrialInfo(
             product_name="WinRAR",
-            trial_type=TrialType.DAYS_BASED,
-            trial_days=40
+            trial_type=TrialType.TIME_BASED,
+            trial_days=40,
+            usage_count=0,
+            install_date=datetime.now(),
+            first_run_date=datetime.now(),
+            last_run_date=datetime.now(),
+            trial_expired=False,
+            registry_keys=[],
+            files=[],
+            processes=[]
         )
 
         worker = TrialResetWorker(
-            engine=fake_engine,
+            engine=fake_engine,  # type: ignore[arg-type]
             operation="reset",
             params={
                 "trial_info": trial_info,
@@ -826,12 +845,20 @@ class TestPerformanceAndStability:
         """Trial reset completes within acceptable time."""
         trial_info = TrialInfo(
             product_name="WinRAR",
-            trial_type=TrialType.DAYS_BASED,
-            trial_days=40
+            trial_type=TrialType.TIME_BASED,
+            trial_days=40,
+            usage_count=0,
+            install_date=datetime.now(),
+            first_run_date=datetime.now(),
+            last_run_date=datetime.now(),
+            trial_expired=False,
+            registry_keys=[],
+            files=[],
+            processes=[]
         )
 
         worker = TrialResetWorker(
-            engine=fake_engine,
+            engine=fake_engine,  # type: ignore[arg-type]
             operation="reset",
             params={
                 "trial_info": trial_info,
@@ -848,7 +875,7 @@ class TestPerformanceAndStability:
     def test_worker_thread_cleanup(self, qapp: Any, fake_engine: FakeTrialResetEngine) -> None:
         """Worker thread properly cleans up after operations."""
         worker = TrialResetWorker(
-            engine=fake_engine,
+            engine=fake_engine,  # type: ignore[arg-type]
             operation="scan",
             params={"product_name": "VMware"}
         )

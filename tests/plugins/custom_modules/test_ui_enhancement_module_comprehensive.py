@@ -15,7 +15,7 @@ import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Generator, List, Optional
 
 import pytest
 
@@ -160,7 +160,7 @@ def sample_analysis_result() -> AnalysisResult:
 
 
 @pytest.fixture
-def temp_directory() -> Path:
+def temp_directory() -> Generator[Path, None, None]:
     """Create temporary directory for file operations."""
     with tempfile.TemporaryDirectory() as tmpdir:
         temp_path = Path(tmpdir)
@@ -538,10 +538,10 @@ class TestFileExplorerPanel:
     def test_file_explorer_initialization(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController) -> None:
         """Verify FileExplorerPanel initializes correctly."""
         config = UIConfig()
-        explorer = FileExplorerPanel(tk_root, config, fake_ui_controller)
+        explorer = FileExplorerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         assert explorer.config == config
-        assert explorer.ui_controller == fake_ui_controller
+        assert explorer.ui_controller == fake_ui_controller  # type: ignore[comparison-overlap]
         assert isinstance(explorer.current_path, Path)
         assert explorer.tree is not None
 
@@ -549,7 +549,7 @@ class TestFileExplorerPanel:
     def test_file_explorer_refresh_tree(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, temp_directory: Path) -> None:
         """Verify FileExplorerPanel displays directory contents."""
         config = UIConfig()
-        explorer = FileExplorerPanel(tk_root, config, fake_ui_controller)
+        explorer = FileExplorerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
         explorer.current_path = temp_directory
 
         explorer.refresh_tree()
@@ -587,7 +587,7 @@ class TestFileExplorerPanel:
     def test_file_explorer_go_up(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, temp_directory: Path) -> None:
         """Verify FileExplorerPanel navigates up directory correctly."""
         config = UIConfig()
-        explorer = FileExplorerPanel(tk_root, config, fake_ui_controller)
+        explorer = FileExplorerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
         explorer.current_path = temp_directory
 
         parent_path = temp_directory.parent
@@ -599,7 +599,7 @@ class TestFileExplorerPanel:
     def test_file_explorer_on_path_change(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, temp_directory: Path) -> None:
         """Verify FileExplorerPanel handles path entry changes."""
         config = UIConfig()
-        explorer = FileExplorerPanel(tk_root, config, fake_ui_controller)
+        explorer = FileExplorerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         explorer.path_var.set(str(temp_directory))
         event = FakeEvent()
@@ -611,7 +611,7 @@ class TestFileExplorerPanel:
     def test_file_explorer_copy_path(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, temp_directory: Path) -> None:
         """Verify FileExplorerPanel copies file path to clipboard."""
         config = UIConfig()
-        explorer = FileExplorerPanel(tk_root, config, fake_ui_controller)
+        explorer = FileExplorerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
         explorer.current_path = temp_directory
         explorer.refresh_tree()
 
@@ -630,17 +630,17 @@ class TestAnalysisViewerPanel:
     def test_analysis_viewer_initialization(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController) -> None:
         """Verify AnalysisViewerPanel initializes correctly."""
         config = UIConfig()
-        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)
+        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         assert viewer.config == config
-        assert viewer.ui_controller == fake_ui_controller
+        assert viewer.ui_controller == fake_ui_controller  # type: ignore[comparison-overlap]
         assert viewer.current_analysis is None
         assert viewer.notebook is not None
 
     def test_analysis_viewer_update_analysis(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, sample_analysis_result: AnalysisResult) -> None:
         """Verify AnalysisViewerPanel updates with analysis results."""
         config = UIConfig()
-        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)
+        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         viewer.update_analysis(sample_analysis_result)
 
@@ -651,7 +651,7 @@ class TestAnalysisViewerPanel:
     def test_analysis_viewer_update_overview(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, sample_analysis_result: AnalysisResult, temp_directory: Path) -> None:
         """Verify AnalysisViewerPanel updates overview tab correctly."""
         config = UIConfig()
-        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)
+        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         test_file = temp_directory / "test.exe"
         sample_analysis_result.target_file = str(test_file)
@@ -664,7 +664,7 @@ class TestAnalysisViewerPanel:
     def test_analysis_viewer_bypass_methods_display(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, sample_analysis_result: AnalysisResult) -> None:
         """Verify AnalysisViewerPanel displays bypass methods correctly."""
         config = UIConfig()
-        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)
+        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         viewer.update_overview(sample_analysis_result)
 
@@ -675,7 +675,7 @@ class TestAnalysisViewerPanel:
     def test_analysis_viewer_add_to_history(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, sample_analysis_result: AnalysisResult) -> None:
         """Verify AnalysisViewerPanel adds results to history."""
         config = UIConfig()
-        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)
+        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         viewer.add_to_history(sample_analysis_result)
 
@@ -685,7 +685,7 @@ class TestAnalysisViewerPanel:
     def test_analysis_viewer_clear_history(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, sample_analysis_result: AnalysisResult) -> None:
         """Verify AnalysisViewerPanel clears history correctly."""
         config = UIConfig()
-        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)
+        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         viewer.add_to_history(sample_analysis_result)
         assert len(viewer.history_tree.get_children()) == 1
@@ -707,7 +707,7 @@ class TestAnalysisViewerPanel:
     def test_analysis_viewer_export_history_json(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, sample_analysis_result: AnalysisResult, temp_directory: Path) -> None:
         """Verify AnalysisViewerPanel exports history to JSON correctly."""
         config = UIConfig()
-        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)
+        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         viewer.add_to_history(sample_analysis_result)
 
@@ -742,17 +742,17 @@ class TestScriptGeneratorPanel:
     def test_script_generator_initialization(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController) -> None:
         """Verify ScriptGeneratorPanel initializes correctly."""
         config = UIConfig()
-        generator = ScriptGeneratorPanel(tk_root, config, fake_ui_controller)
+        generator = ScriptGeneratorPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         assert generator.config == config
-        assert generator.ui_controller == fake_ui_controller
+        assert generator.ui_controller == fake_ui_controller  # type: ignore[comparison-overlap]
         assert generator.script_history == []
         assert generator.notebook is not None
 
     def test_script_generator_frida_tab_exists(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController) -> None:
         """Verify ScriptGeneratorPanel creates Frida tab."""
         config = UIConfig()
-        generator = ScriptGeneratorPanel(tk_root, config, fake_ui_controller)
+        generator = ScriptGeneratorPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         tab_count = generator.notebook.index("end")
         assert tab_count >= 1
@@ -763,7 +763,7 @@ class TestScriptGeneratorPanel:
     def test_script_generator_save_script(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, temp_directory: Path) -> None:
         """Verify ScriptGeneratorPanel saves scripts to file correctly."""
         config = UIConfig()
-        generator = ScriptGeneratorPanel(tk_root, config, fake_ui_controller)
+        generator = ScriptGeneratorPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         test_script = "console.log('test');"
         generator.frida_editor.insert(1.0, test_script)
@@ -793,7 +793,7 @@ class TestScriptGeneratorPanel:
     def test_script_generator_load_script(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, temp_directory: Path) -> None:
         """Verify ScriptGeneratorPanel loads scripts from file correctly."""
         config = UIConfig()
-        generator = ScriptGeneratorPanel(tk_root, config, fake_ui_controller)
+        generator = ScriptGeneratorPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         test_script = "console.log('loaded script');"
         script_file = temp_directory / "load_test.js"
@@ -817,7 +817,7 @@ class TestScriptGeneratorPanel:
     def test_script_generator_add_to_history(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController) -> None:
         """Verify ScriptGeneratorPanel adds scripts to history."""
         config = UIConfig()
-        generator = ScriptGeneratorPanel(tk_root, config, fake_ui_controller)
+        generator = ScriptGeneratorPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         generator.add_to_script_history("Frida", "License Bypass", "test script content")
 
@@ -1074,7 +1074,7 @@ class TestEdgeCases:
     def test_file_explorer_with_nonexistent_path(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController) -> None:
         """Verify FileExplorerPanel handles nonexistent paths gracefully."""
         config = UIConfig()
-        explorer = FileExplorerPanel(tk_root, config, fake_ui_controller)
+        explorer = FileExplorerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
         explorer.current_path = Path("/nonexistent/path/that/does/not/exist")
 
         explorer.refresh_tree()
@@ -1094,7 +1094,7 @@ class TestEdgeCases:
     def test_analysis_viewer_with_empty_result(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController) -> None:
         """Verify AnalysisViewerPanel handles minimal analysis result."""
         config = UIConfig()
-        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)
+        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         minimal_result = AnalysisResult(
             target_file="",
@@ -1112,7 +1112,7 @@ class TestEdgeCases:
     def test_script_generator_empty_script_save(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, temp_directory: Path) -> None:
         """Verify ScriptGeneratorPanel saves empty scripts correctly."""
         config = UIConfig()
-        generator = ScriptGeneratorPanel(tk_root, config, fake_ui_controller)
+        generator = ScriptGeneratorPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         save_file = temp_directory / "empty_script.js"
 
@@ -1145,7 +1145,7 @@ class TestWidgetInteractions:
     def test_file_explorer_double_click_directory(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, temp_directory: Path) -> None:
         """Verify FileExplorerPanel double-click navigates into directory."""
         config = UIConfig()
-        explorer = FileExplorerPanel(tk_root, config, fake_ui_controller)
+        explorer = FileExplorerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
         explorer.current_path = temp_directory
         explorer.refresh_tree()
 
@@ -1179,7 +1179,7 @@ class TestWidgetInteractions:
     def test_analysis_viewer_details_selection(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, sample_analysis_result: AnalysisResult) -> None:
         """Verify AnalysisViewerPanel handles details tree selection."""
         config = UIConfig()
-        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)
+        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         viewer.update_details(sample_analysis_result)
 
@@ -1199,7 +1199,7 @@ class TestFileOperations:
     def test_export_history_csv_format(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController, sample_analysis_result: AnalysisResult, temp_directory: Path) -> None:
         """Verify AnalysisViewerPanel exports history to CSV correctly."""
         config = UIConfig()
-        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)
+        viewer = AnalysisViewerPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         viewer.add_to_history(sample_analysis_result)
 
@@ -1354,7 +1354,7 @@ class TestDataPersistence:
     def test_script_history_accumulation(self, tk_root: tk.Tk, fake_ui_controller: FakeUIController) -> None:
         """Verify script history accumulates correctly."""
         config = UIConfig()
-        generator = ScriptGeneratorPanel(tk_root, config, fake_ui_controller)
+        generator = ScriptGeneratorPanel(tk_root, config, fake_ui_controller)  # type: ignore[arg-type]
 
         generator.add_to_script_history("Frida", "Type1", "script1")
         generator.add_to_script_history("Ghidra", "Type2", "script2")

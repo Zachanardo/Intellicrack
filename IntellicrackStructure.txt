@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Fri, Jan 02, 2026 08:45:12 PM
+Generated: Sun, Jan 04, 2026 03:34:10 AM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -964,6 +964,12 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── print_dialog.py
 │   ├── statistics.py
 │   └── statistics_dialog.py
+├── intellicrack/
+│   └── plugins/
+│       └── custom_modules/
+│           ├── binary_patcher_plugin.py
+│           ├── network_analysis_plugin.py
+│           └── simple_analysis_plugin.py
 ├── llm/
 │   ├── models/
 │   │   └── downloads/

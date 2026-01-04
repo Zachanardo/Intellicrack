@@ -7,6 +7,7 @@ licensing analysis workflows.
 
 import json
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -27,7 +28,7 @@ def temp_binary_file(tmp_path: Path) -> Path:
 def temp_project_file(tmp_path: Path) -> Path:
     """Create temporary project file for testing."""
     project_file = tmp_path / "test_project.icp"
-    project_data = {
+    project_data: dict[str, Any] = {
         "name": "Test Project",
         "created_at": "2025-01-01T00:00:00",
         "binary_path": None,
@@ -39,7 +40,7 @@ def temp_project_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def app_context() -> AppContext:
+def app_context() -> Generator[AppContext, None, None]:
     """Provide fresh app context for each test."""
     context = AppContext()
     yield context
@@ -655,6 +656,7 @@ class TestAppContextTaskManagement:
         if app_context.task_completed:
             assert signal_emitted
             assert emitted_id == "task-001"
+            assert emitted_result is not None
             assert emitted_result["crack_successful"] is True
 
     def test_fail_task_emits_signal(self, app_context: AppContext) -> None:

@@ -141,7 +141,7 @@ class TestFridaStalkerEngine:
         """
         stalker = FridaStalkerEngine(frida_session)
 
-        threads = frida_session.enumerate_threads()
+        threads = frida_session.enumerate_threads()  # type: ignore[attr-defined]
         assert len(threads) > 0, "No threads found in target process"
 
         main_thread_id: int = threads[0].id
@@ -175,7 +175,7 @@ class TestFridaStalkerEngine:
         """
         stalker = FridaStalkerEngine(frida_session)
 
-        threads = frida_session.enumerate_threads()
+        threads = frida_session.enumerate_threads()  # type: ignore[attr-defined]
         assert len(threads) > 0
 
         thread_id: int = threads[0].id
@@ -319,7 +319,7 @@ class TestFridaHeapTracker:
 
         time.sleep(2)
 
-        leaks: List[Optional[HeapAllocation]] = tracker.find_leaks()
+        leaks: List[Optional[HeapAllocation]] = tracker.find_leaks()  # type: ignore[assignment]
 
         assert isinstance(leaks, list)
 
@@ -488,7 +488,7 @@ class TestFridaNativeReplacer:
         """
         replacer = FridaNativeReplacer(frida_session)
 
-        modules = frida_session.enumerate_modules()
+        modules = frida_session.enumerate_modules()  # type: ignore[attr-defined]
         assert len(modules) > 0
 
         main_module = modules[0]
@@ -523,7 +523,7 @@ class TestFridaNativeReplacer:
         """
         replacer = FridaNativeReplacer(frida_session)
 
-        modules = frida_session.enumerate_modules()
+        modules = frida_session.enumerate_modules()  # type: ignore[attr-defined]
         if len(modules) == 0:
             pytest.skip("No modules found")
 
@@ -548,7 +548,7 @@ class TestFridaNativeReplacer:
 
         time.sleep(0.5)
 
-        restore_success: bool = replacer.restore_function(test_address)
+        restore_success: bool = replacer.restore_function(test_address)  # type: ignore[attr-defined]
 
         assert isinstance(restore_success, bool)
 
@@ -574,7 +574,7 @@ class TestFridaRPCInterface:
         """
         rpc = FridaRPCInterface(frida_session)
 
-        modules = frida_session.enumerate_modules()
+        modules = frida_session.enumerate_modules()  # type: ignore[attr-defined]
         assert len(modules) > 0
 
         main_module = modules[0]
@@ -595,7 +595,7 @@ class TestFridaRPCInterface:
         test_data: bytes = b"\x90" * 16
 
         try:
-            alloc_address: int = rpc.script.exports.memory.allocate(16)
+            alloc_address: int = rpc.script.exports.memory.allocate(16)  # type: ignore[attr-defined]
             assert isinstance(alloc_address, int)
             assert alloc_address > 0
 
@@ -811,20 +811,20 @@ class TestIntegrationScenarios:
 
         time.sleep(2)
 
-        stats = hooking.heap_tracker.get_stats()
+        stats = hooking.heap_tracker.get_stats()  # type: ignore[union-attr]
         assert isinstance(stats, dict)
-        assert stats["totalAllocations"] > 0, "Heap tracker not capturing allocations"
+        assert stats["totalAllocations"] > 0, "Heap tracker not capturing allocations"  # type: ignore[operator]
 
-        threads = hooking.thread_monitor.get_current_threads()
+        threads = hooking.thread_monitor.get_current_threads()  # type: ignore[union-attr]
         assert len(threads) > 0, "Thread monitor not finding threads"
 
-        pid_result = hooking.rpc_interface.evaluate("Process.id")
-        assert pid_result > 0, "RPC interface not executing code"
+        pid_result = hooking.rpc_interface.evaluate("Process.id")  # type: ignore[union-attr]
+        assert pid_result > 0, "RPC interface not executing code"  # type: ignore[operator]
 
-        modules = frida_session.enumerate_modules()
+        modules = frida_session.enumerate_modules()  # type: ignore[attr-defined]
         if len(modules) > 0:
             test_address = int(modules[0].base_address)
-            data = hooking.rpc_interface.memory_read(test_address, 4)
+            data = hooking.rpc_interface.memory_read(test_address, 4)  # type: ignore[union-attr]
             assert len(data) == 4, "Memory reading not working"
 
     def test_memory_scan_and_patch_workflow(
@@ -839,7 +839,7 @@ class TestIntegrationScenarios:
         rpc = hooking.init_rpc_interface()
 
         try:
-            alloc_address = rpc.script.exports.memory.allocate(64)
+            alloc_address = rpc.script.exports.memory.allocate(64)  # type: ignore[attr-defined]
             assert alloc_address > 0
 
             test_pattern = b"\x41" * 32
@@ -873,7 +873,7 @@ class TestIntegrationScenarios:
         time.sleep(3)
 
         stats = tracker.get_stats()
-        assert stats["totalAllocations"] > 0
+        assert stats["totalAllocations"] > 0  # type: ignore[operator]
 
         initial_allocated = stats["currentAllocated"]
 
@@ -881,8 +881,8 @@ class TestIntegrationScenarios:
 
         stats = tracker.get_stats()
 
-        assert stats["totalAllocations"] >= 0
-        assert stats["currentAllocated"] >= 0
+        assert stats["totalAllocations"] >= 0  # type: ignore[operator]
+        assert stats["currentAllocated"] >= 0  # type: ignore[operator]
 
         leaks = tracker.find_leaks()
         assert isinstance(leaks, list)
@@ -907,7 +907,7 @@ class TestWindowsSpecificFeatures:
         rpc = FridaRPCInterface(frida_session)
 
         try:
-            value = rpc.script.exports.registry.read(
+            value = rpc.script.exports.registry.read(  # type: ignore[attr-defined]
                 "HKLM",
                 "SOFTWARE\\Microsoft\\Windows\\CurrentVersion",
                 "ProgramFilesDir",

@@ -124,7 +124,10 @@ class TestProtectionTypeEnum:
     def test_protection_type_comparison(self) -> None:
         """ProtectionType members support equality comparison."""
         assert ProtectionType.LICENSE == ProtectionType.LICENSE
-        assert ProtectionType.ANTI_DEBUG != ProtectionType.LICENSE
+        # Use variables to avoid literal type inference for inequality check
+        type_a: ProtectionType = ProtectionType.ANTI_DEBUG
+        type_b: ProtectionType = ProtectionType.LICENSE
+        assert type_a != type_b
 
     def test_protection_type_access_by_name(self) -> None:
         """ProtectionType members accessible by string name."""
@@ -199,7 +202,10 @@ class TestHookCategoryEnum:
     def test_hook_category_comparison(self) -> None:
         """HookCategory members support equality comparison."""
         assert HookCategory.CRITICAL == HookCategory.CRITICAL
-        assert HookCategory.HIGH != HookCategory.LOW
+        # Use variables to avoid literal type inference for inequality check
+        cat_high: HookCategory = HookCategory.HIGH
+        cat_low: HookCategory = HookCategory.LOW
+        assert cat_high != cat_low
 
     def test_hook_category_access_by_name(self) -> None:
         """HookCategory members accessible by string name."""
@@ -308,9 +314,10 @@ class TestHookCategoryUsageScenarios:
 
     def test_can_determine_if_critical_hook(self) -> None:
         """HookCategory allows identifying critical hooks."""
-        critical = HookCategory.CRITICAL
+        critical: HookCategory = HookCategory.CRITICAL
+        low: HookCategory = HookCategory.LOW
         assert critical == HookCategory.CRITICAL
-        assert critical != HookCategory.LOW
+        assert critical != low
 
     def test_hook_category_string_representation(self) -> None:
         """HookCategory members have meaningful string representation."""
@@ -345,7 +352,7 @@ class TestEnumRobustness:
         """ProtectionType enum members are immutable."""
         original_value = ProtectionType.LICENSE.value
         with pytest.raises(AttributeError):
-            ProtectionType.LICENSE.value = "Modified"
+            setattr(ProtectionType.LICENSE, "value", "Modified")
 
         assert ProtectionType.LICENSE.value == original_value
 
@@ -353,6 +360,6 @@ class TestEnumRobustness:
         """HookCategory enum members are immutable."""
         original_value = HookCategory.CRITICAL.value
         with pytest.raises(AttributeError):
-            HookCategory.CRITICAL.value = "modified"
+            setattr(HookCategory.CRITICAL, "value", "modified")
 
         assert HookCategory.CRITICAL.value == original_value

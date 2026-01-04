@@ -17,7 +17,7 @@ try:
     VM_WORKFLOW_AVAILABLE = True
 except ImportError:
     VM_WORKFLOW_AVAILABLE = False
-    VMWorkflowManager = None
+    VMWorkflowManager = None  # type: ignore[assignment,misc]
 
 
 pytestmark = pytest.mark.skipif(
@@ -31,7 +31,7 @@ class FakeLogger:
 
     def __init__(self) -> None:
         """Initialize fake logger."""
-        self.messages: List[tuple] = []
+        self.messages: List[tuple[str, str]] = []
 
     def info(self, msg: str) -> None:
         """Log info message."""
@@ -139,7 +139,7 @@ class TestVMWorkflowManager(unittest.TestCase):
         manager = VMWorkflowManager()
         fake_qemu = FakeQEMUManager()
 
-        manager.qemu_manager = fake_qemu
+        manager.qemu_manager = fake_qemu  # type: ignore[assignment]
 
         assert len(fake_qemu.created_snapshots) == 0
         assert len(fake_qemu.cleaned_snapshots) == 0

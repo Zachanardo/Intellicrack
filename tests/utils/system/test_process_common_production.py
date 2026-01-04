@@ -38,7 +38,7 @@ class TestRunSubprocessSafely:
     def test_run_subprocess_safely_simple_command(self) -> None:
         """Simple command executes successfully."""
         cmd: list[str] = ["python", "--version"]
-        result: subprocess.CompletedProcess = run_subprocess_safely(cmd, timeout=5)
+        result: subprocess.CompletedProcess[str] = run_subprocess_safely(cmd, timeout=5)
 
         assert result.returncode == 0
         assert len(result.stdout) > 0
@@ -46,7 +46,7 @@ class TestRunSubprocessSafely:
     def test_run_subprocess_safely_captures_output(self) -> None:
         """Subprocess captures stdout and stderr."""
         cmd: list[str] = ["python", "-c", "print('test output')"]
-        result: subprocess.CompletedProcess = run_subprocess_safely(cmd, timeout=5)
+        result: subprocess.CompletedProcess[str] = run_subprocess_safely(cmd, timeout=5)
 
         assert "test output" in result.stdout
         assert result.returncode == 0
@@ -54,14 +54,14 @@ class TestRunSubprocessSafely:
     def test_run_subprocess_safely_handles_stderr(self) -> None:
         """Subprocess captures stderr output."""
         cmd: list[str] = ["python", "-c", "import sys; sys.stderr.write('error\\n')"]
-        result: subprocess.CompletedProcess = run_subprocess_safely(cmd, timeout=5)
+        result: subprocess.CompletedProcess[str] = run_subprocess_safely(cmd, timeout=5)
 
         assert "error" in result.stderr or result.returncode == 0
 
     def test_run_subprocess_safely_returns_exit_code(self) -> None:
         """Subprocess returns actual exit code."""
         cmd: list[str] = ["python", "-c", "import sys; sys.exit(42)"]
-        result: subprocess.CompletedProcess = run_subprocess_safely(cmd, timeout=5, capture_output=True)
+        result: subprocess.CompletedProcess[str] = run_subprocess_safely(cmd, timeout=5, capture_output=True)
 
         assert result.returncode == 42
 
@@ -82,15 +82,15 @@ class TestRunSubprocessSafely:
     def test_run_subprocess_safely_capture_output_false(self) -> None:
         """capture_output=False doesn't capture stdout/stderr."""
         cmd: list[str] = ["python", "-c", "print('test')"]
-        result: subprocess.CompletedProcess = run_subprocess_safely(cmd, timeout=5, capture_output=False)
+        result: subprocess.CompletedProcess[str] = run_subprocess_safely(cmd, timeout=5, capture_output=False)
 
         assert result.stdout is None
-        assert result.stderr is None
+        assert result.stderr is None  # type: ignore[unreachable]
 
     def test_run_subprocess_safely_text_mode(self) -> None:
         """Output is returned as text strings."""
         cmd: list[str] = ["python", "-c", "print('text mode')"]
-        result: subprocess.CompletedProcess = run_subprocess_safely(cmd, timeout=5)
+        result: subprocess.CompletedProcess[str] = run_subprocess_safely(cmd, timeout=5)
 
         assert isinstance(result.stdout, str)
         assert isinstance(result.stderr, str)
@@ -99,7 +99,7 @@ class TestRunSubprocessSafely:
     def test_run_subprocess_safely_windows_command(self) -> None:
         """Windows-specific command executes correctly."""
         cmd: list[str] = ["cmd", "/c", "echo test"]
-        result: subprocess.CompletedProcess = run_subprocess_safely(cmd, timeout=5)
+        result: subprocess.CompletedProcess[str] = run_subprocess_safely(cmd, timeout=5)
 
         assert result.returncode == 0
         assert "test" in result.stdout
@@ -108,7 +108,7 @@ class TestRunSubprocessSafely:
     def test_run_subprocess_safely_unix_command(self) -> None:
         """Unix-specific command executes correctly."""
         cmd: list[str] = ["echo", "test"]
-        result: subprocess.CompletedProcess = run_subprocess_safely(cmd, timeout=5)
+        result: subprocess.CompletedProcess[str] = run_subprocess_safely(cmd, timeout=5)
 
         assert result.returncode == 0
         assert "test" in result.stdout
@@ -331,7 +331,7 @@ class TestProcessCommonIntegration:
         """run_subprocess_safely and create_popen_safely produce similar results."""
         cmd: list[str] = ["python", "-c", "print('consistency')"]
 
-        result_run: subprocess.CompletedProcess = run_subprocess_safely(cmd, timeout=5)
+        result_run: subprocess.CompletedProcess[str] = run_subprocess_safely(cmd, timeout=5)
         proc: subprocess.Popen[str] = create_popen_safely(cmd)
         stdout_popen, stderr_popen = proc.communicate(timeout=5)
 
@@ -343,7 +343,7 @@ class TestProcessCommonIntegration:
         """Real process execution works end-to-end."""
         cmd: list[str] = ["python", "-c", "import sys; print('chain test'); sys.exit(0)"]
 
-        result: subprocess.CompletedProcess = run_subprocess_safely(cmd, timeout=5)
+        result: subprocess.CompletedProcess[str] = run_subprocess_safely(cmd, timeout=5)
 
         assert result.returncode == 0
         assert "chain test" in result.stdout

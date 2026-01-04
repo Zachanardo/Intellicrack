@@ -8,7 +8,7 @@ and integration between UI components and analysis engines.
 import os
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 from PyQt6.QtCore import QTimer
@@ -22,12 +22,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> Generator[QApplication, None, None]:
     """Create QApplication instance for testing."""
-    if not QApplication.instance():
+    existing_app = QApplication.instance()
+    if existing_app is None:
         yield QApplication(sys.argv)
     else:
-        yield QApplication.instance()
+        assert isinstance(existing_app, QApplication), "Expected QApplication instance"
+        yield existing_app
 
 
 class FakeModelManager:
@@ -57,7 +59,9 @@ class FakeDashboardManager:
 
 
 @pytest.fixture
-def main_app(qapp: QApplication, monkeypatch: pytest.MonkeyPatch) -> IntellicrackApp:
+def main_app(
+    qapp: QApplication, monkeypatch: pytest.MonkeyPatch
+) -> Generator[IntellicrackApp, None, None]:
     """Create IntellicrackApp instance for testing."""
     os.environ["QT_QPA_PLATFORM"] = "offscreen"
     os.environ["INTELLICRACK_TESTING"] = "1"
@@ -184,7 +188,9 @@ class TestIntellicrackAppOutputMethods(IntellicrackTestBase):
         test_status = "Test status message"
         main_app.set_status_message(test_status)
 
-        status_text = main_app.statusBar().currentMessage()
+        status_bar = main_app.statusBar()
+        assert status_bar is not None, "Status bar should exist"
+        status_text = status_bar.currentMessage()
         assert test_status in status_text or status_text != ""
 
     def test_append_analysis_results_adds_results(self, main_app: IntellicrackApp) -> None:
@@ -248,7 +254,7 @@ class TestIntellicrackAppTaskHandlers(IntellicrackTestBase):
         """_on_task_progress updates progress indicator."""
         main_app._on_task_progress(50)
 
-        if hasattr(main_app, "progress_bar"):
+        if hasattr(main_app, "progress_bar") and main_app.progress_bar is not None:
             assert main_app.progress_bar.value() == 50
 
     def test_on_task_completed_logs_completion(self, main_app: IntellicrackApp) -> None:

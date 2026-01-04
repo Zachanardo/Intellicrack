@@ -216,7 +216,7 @@ def test_frida_timeout_error_handling(simple_target_binary: Path, timeout_script
 
         with pytest.raises((frida.TimedOutError, TimeoutError, OSError)):
             script = session.create_script(timeout_script)
-            script.load(timeout=2)
+            script.load(timeout=2)  # type: ignore[call-arg]
 
             device.resume(pid)
 
@@ -260,7 +260,7 @@ def test_architecture_compatibility_check_before_injection(
             if message.get("type") == "send":
                 print(f"[Arch Check] {message.get('payload')}")
 
-        script.on("message", on_message)
+        script.on("message", on_message)  # type: ignore[call-overload]
         script.load()
 
         device.resume(pid)
@@ -310,7 +310,7 @@ def test_process_crash_during_instrumentation(simple_target_binary: Path, crash_
             print(f"[Crash Test] Detached: {reason}, crash_info: {crash_info}")
             crash_detected = True
 
-        session.on("detached", on_detached)
+        session.on("detached", on_detached)  # type: ignore[arg-type]
 
         script = session.create_script(crash_causing_script)
         script.load()
@@ -372,7 +372,7 @@ def test_graceful_shutdown_on_connection_loss(simple_target_binary: Path, archit
             print(f"[Connection Loss] Detached: {reason}")
             connection_lost = True
 
-        session.on("detached", on_detached)
+        session.on("detached", on_detached)  # type: ignore[arg-type]
 
         script = session.create_script(architecture_probe_script)
         script.load()
@@ -428,7 +428,7 @@ def test_configurable_timeout_values(simple_target_binary: Path, architecture_pr
         short_timeout_script = session.create_script(architecture_probe_script)
 
         start_time = time.time()
-        short_timeout_script.load(timeout=1)
+        short_timeout_script.load(timeout=1)  # type: ignore[call-arg]
         load_duration = time.time() - start_time
 
         assert load_duration < 2.0, "Short timeout (1s) was not enforced - timeout configuration missing"
@@ -440,7 +440,7 @@ def test_configurable_timeout_values(simple_target_binary: Path, architecture_pr
         long_timeout_script = session.create_script(architecture_probe_script)
 
         start_time = time.time()
-        long_timeout_script.load(timeout=10)
+        long_timeout_script.load(timeout=10)  # type: ignore[call-arg]
         load_duration = time.time() - start_time
 
         assert load_duration < 11.0, "Long timeout (10s) was not enforced - timeout configuration missing"
@@ -486,7 +486,7 @@ def test_frozen_process_timeout_handling(simple_target_binary: Path, timeout_scr
         timeout_occurred = False
 
         try:
-            script.load(timeout=3)
+            script.load(timeout=3)  # type: ignore[call-arg]
             device.resume(pid)
 
             time.sleep(5)
@@ -546,10 +546,10 @@ def test_long_running_operation_timeout(
             if message.get("type") == "send":
                 print(f"[Long Running] {message.get('payload')}")
 
-        script.on("message", on_message)
+        script.on("message", on_message)  # type: ignore[call-overload]
 
         start_time = time.time()
-        script.load(timeout=15)
+        script.load(timeout=15)  # type: ignore[call-arg]
         load_duration = time.time() - start_time
 
         assert load_duration < 16, "Script loading exceeded configured timeout"
@@ -600,7 +600,7 @@ def test_multiple_timeout_configurations_sequential(
             script = session.create_script(architecture_probe_script)
 
             start_time = time.time()
-            script.load(timeout=timeout_value)
+            script.load(timeout=timeout_value)  # type: ignore[call-arg]
             duration = time.time() - start_time
 
             assert duration < timeout_value + 1, (
@@ -650,7 +650,7 @@ def test_timeout_error_provides_diagnostic_information(simple_target_binary: Pat
         script = session.create_script(timeout_script)
 
         try:
-            script.load(timeout=1)
+            script.load(timeout=1)  # type: ignore[call-arg]
 
         except (frida.TimedOutError, TimeoutError, OSError) as e:
             error_message = str(e)

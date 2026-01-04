@@ -7,13 +7,13 @@ import sys
 
 from intellicrack.core.analysis.radare2_bypass_generator import R2BypassGenerator
 
-def test_enhanced_patch_instructions():
+def test_enhanced_patch_instructions() -> bool:
     """Test enhanced patch instruction generation."""
     print("Testing Enhanced Patch Instruction Generation")
     print("=" * 50)
 
-    # Create bypass generator instance
-    generator = R2BypassGenerator()
+    # Create bypass generator instance with a dummy binary path
+    generator = R2BypassGenerator(binary_path="test.exe")
 
     # Test enhanced instruction generation
     test_methods = [
@@ -64,7 +64,7 @@ def test_enhanced_patch_instructions():
 
     return True
 
-def main():
+def main() -> int:
     """Main test function."""
     try:
         if success := test_enhanced_patch_instructions():

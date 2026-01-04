@@ -11,7 +11,7 @@ import tempfile
 import time
 import struct
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -20,8 +20,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 class RealWorldUIIntegrationTester:
     """Tests UI integration against real modern protection systems."""
 
-    def __init__(self):
-        self.test_results = {
+    def __init__(self) -> None:
+        self.test_results: Dict[str, Any] = {
             "tests_run": 0,
             "tests_passed": 0,
             "tests_failed": 0,
@@ -66,7 +66,7 @@ class RealWorldUIIntegrationTester:
         # Print summary
         self._print_summary()
 
-        return self.test_results["tests_failed"] == 0
+        return bool(self.test_results["tests_failed"] == 0)
 
     def _create_real_flexlm_binary(self) -> str:
         """Create a REAL FlexLM protected binary for testing."""
@@ -417,7 +417,7 @@ class RealWorldUIIntegrationTester:
         print("\n[*] Testing Protection Analysis tab...")
 
         try:
-            from intellicrack.ui.main_app import IntellicrackMainApp
+            from intellicrack.ui.main_app import IntellicrackMainApp  # type: ignore[attr-defined]
             from PyQt6.QtWidgets import QApplication
 
             # Set offscreen for testing
@@ -542,7 +542,7 @@ class RealWorldUIIntegrationTester:
             print(f"    Error testing performance: {e}")
             return False
 
-    def _print_summary(self):
+    def _print_summary(self) -> None:
         """Print test summary."""
         print("\n" + "=" * 60)
         print("REAL-WORLD UI INTEGRATION TEST SUMMARY")
@@ -575,9 +575,9 @@ class RealWorldUIIntegrationTester:
         print("=" * 60)
 
 
-def main():
+def main() -> int:
     """Run real-world UI integration tests."""
-    tester = RealWorldUIIntegrationTester()
+    tester: RealWorldUIIntegrationTester = RealWorldUIIntegrationTester()
     success = tester.run_tests()
 
     if success:

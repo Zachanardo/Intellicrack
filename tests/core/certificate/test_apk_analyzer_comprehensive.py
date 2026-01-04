@@ -665,7 +665,7 @@ class TestAPKDecompilation:
         analyzer.apk_path = sample_apk
         analyzer.temp_dir = Path(tempfile.mkdtemp())
 
-        shutil.which = fake_which
+        shutil.which = fake_which  # type: ignore[assignment]
         try:
             result = analyzer._decompile_apk()
         finally:
@@ -708,7 +708,7 @@ class TestAPKDecompilation:
         def timeout_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
             if "apktool" in str(args):
                 raise subprocess.TimeoutExpired("apktool", 300)
-            return original_run(*args, **kwargs)
+            return original_run(*args, **kwargs)  # type: ignore[call-overload, no-any-return]
 
         analyzer = APKAnalyzer()
         analyzer.apk_path = sample_apk
@@ -717,7 +717,7 @@ class TestAPKDecompilation:
         if not shutil.which("apktool"):
             pytest.skip("apktool not available")
 
-        subprocess.run = timeout_run
+        subprocess.run = timeout_run  # type: ignore[assignment]
         try:
             result = analyzer._decompile_apk()
         finally:
@@ -772,7 +772,7 @@ class TestDataStructures:
         config.domain_configs.append(DomainConfig(["example.com"], [pin]))
         assert config.has_pinning
 
-        empty_config = NetworkSecurityConfig()
+        empty_config = NetworkSecurityConfig()  # type: ignore[unreachable]
         empty_config.base_config = DomainConfig(["*"], [pin])
         assert empty_config.has_pinning
 

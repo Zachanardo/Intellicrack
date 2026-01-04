@@ -18,8 +18,9 @@ import threading
 import time
 import struct
 from pathlib import Path
+from typing import Any
 
-from intellicrack.core.network.cloud_license_hooker import CloudLicenseHooker
+from intellicrack.core.network.cloud_license_hooker import CloudLicenseHooker  # type: ignore[attr-defined]
 from intellicrack.core.network_capture import NetworkCapture
 from intellicrack.core.app_context import AppContext
 
@@ -254,7 +255,7 @@ class TestRealNetworkOperations:
     """Functional tests for REAL network operations and license emulation."""
 
     @pytest.fixture
-    def flexlm_protocol_data(self):
+    def flexlm_protocol_data(self) -> dict[str, Any]:
         """Create REAL FlexLM protocol data for testing."""
         return {
             'handshake': {
@@ -274,7 +275,7 @@ class TestRealNetworkOperations:
         }
 
     @pytest.fixture
-    def hasp_protocol_data(self):
+    def hasp_protocol_data(self) -> dict[str, Any]:
         """Create REAL HASP protocol data for testing."""
         return {
             'init_packet': {
@@ -300,7 +301,7 @@ class TestRealNetworkOperations:
         }
 
     @pytest.fixture
-    def adobe_license_data(self):
+    def adobe_license_data(self) -> dict[str, Any]:
         """Create REAL Adobe license protocol data."""
         return {
             'activation_request': {
@@ -319,13 +320,13 @@ class TestRealNetworkOperations:
         }
 
     @pytest.fixture
-    def app_context(self):
+    def app_context(self) -> AppContext:
         """Create REAL application context."""
         context = AppContext()
-        context.initialize()
+        context.initialize()  # type: ignore[attr-defined]
         return context
 
-    def test_real_flexlm_license_emulation(self, flexlm_protocol_data):
+    def test_real_flexlm_license_emulation(self, flexlm_protocol_data: dict[str, Any]) -> None:
         """Test REAL FlexLM license server emulation."""
         hooker = CloudLicenseHooker()
 
@@ -378,7 +379,7 @@ class TestRealNetworkOperations:
         finally:
             hooker.stop_license_server(server)
 
-    def test_real_hasp_dongle_emulation(self, hasp_protocol_data):
+    def test_real_hasp_dongle_emulation(self, hasp_protocol_data: dict[str, Any]) -> None:
         """Test REAL HASP dongle emulation."""
         hooker = CloudLicenseHooker()
 
@@ -419,7 +420,7 @@ class TestRealNetworkOperations:
         assert encrypted != plaintext, "Encrypted data must differ from plaintext"
         assert len(encrypted) >= len(plaintext), "Encrypted data size must be appropriate"
 
-    def test_real_adobe_license_protocol(self, adobe_license_data):
+    def test_real_adobe_license_protocol(self, adobe_license_data: dict[str, Any]) -> None:
         """Test REAL Adobe license protocol emulation."""
         hooker = CloudLicenseHooker()
 
@@ -456,7 +457,7 @@ class TestRealNetworkOperations:
         assert 'valid' in validation_response, "Validation must return status"
         assert 'features' in validation_response, "Validation must return features"
 
-    def test_real_license_server_encryption(self, app_context):
+    def test_real_license_server_encryption(self, app_context: AppContext) -> None:
         """Test REAL encrypted communication with license servers."""
         hooker = CloudLicenseHooker()
 
@@ -494,7 +495,7 @@ class TestRealNetworkOperations:
         signature_valid = hooker.verify_response_signature(validation_response)
         assert signature_valid, "Response signature must be valid"
 
-    def test_real_network_capture_analysis(self, app_context):
+    def test_real_network_capture_analysis(self, app_context: AppContext) -> None:
         """Test REAL network capture and protocol analysis."""
         capture = NetworkCapture()
 
@@ -511,7 +512,7 @@ class TestRealNetworkOperations:
             )
 
             # Create license protocol packets
-            packets = []
+            packets: list[bytes] = []
 
             # FlexLM packet
             flexlm_data = b'\x00\x00\x00\x14\x00\x00\x00\x01FLEX'
@@ -546,24 +547,24 @@ class TestRealNetworkOperations:
 
         try:
             # Parse PCAP
-            parsed = capture.parse_pcap_file(pcap_file)
+            parsed = capture.parse_pcap_file(pcap_file)  # type: ignore[attr-defined]
             assert parsed is not None, "Must parse PCAP file"
             assert 'packets' in parsed, "Must extract packets"
             assert len(parsed['packets']) >= 2, "Must parse both packets"
 
             # Analyze protocols
             for packet in parsed['packets']:
-                if protocol := capture.detect_license_protocol(packet):
+                if protocol := capture.detect_license_protocol(packet):  # type: ignore[attr-defined]
                     assert 'protocol' in protocol, "Must identify protocol"
                     assert protocol['protocol'] in ['flexlm', 'hasp', 'adobe'], \
                             "Must identify known license protocol"
 
                     # Extract and analyze payload
-                    payload = capture.extract_license_payload(packet, protocol['protocol'])
+                    payload = capture.extract_license_payload(packet, protocol['protocol'])  # type: ignore[attr-defined]
                     assert payload is not None, "Must extract license payload"
 
             # Generate analysis report
-            analysis = capture.analyze_capture_for_licenses(parsed)
+            analysis = capture.analyze_capture_for_licenses(parsed)  # type: ignore[attr-defined]
             assert analysis is not None, "Must generate analysis"
             assert 'license_protocols_found' in analysis, "Must identify license protocols"
             assert 'statistics' in analysis, "Must include statistics"
@@ -571,7 +572,7 @@ class TestRealNetworkOperations:
         finally:
             os.unlink(pcap_file)
 
-    def test_real_multi_protocol_switching(self, app_context):
+    def test_real_multi_protocol_switching(self, app_context: AppContext) -> None:
         """Test REAL multi-protocol communication switching."""
         protocols = CommunicationProtocols()
 
@@ -602,7 +603,7 @@ class TestRealNetworkOperations:
 
         for protocol_name, config in protocol_configs.items():
             # Initialize protocol
-            initialized = protocols.initialize_protocol(protocol_name, config)
+            initialized = protocols.initialize_protocol(protocol_name, config)  # type: ignore[arg-type]
             assert initialized, f"Must initialize {protocol_name} protocol"
 
             # Get protocol handler
@@ -627,10 +628,10 @@ class TestRealNetworkOperations:
             elif protocol_name == 'custom_tcp':
                 packet = handler.build_custom_packet(b'test_data')
                 assert packet is not None, "Must build custom packet"
-                if config.get('obfuscation'):
+                if config.get('obfuscation'):  # type: ignore[attr-defined]
                     assert packet != b'test_data', "Packet must be obfuscated"
 
-    def test_real_session_management(self, app_context):
+    def test_real_session_management(self, app_context: AppContext) -> None:
         """Test REAL session management functionality."""
         session_manager = SessionManager()
 
@@ -683,7 +684,7 @@ class TestRealNetworkOperations:
         assert 'active_sessions' in session_data, "Must include active sessions"
         assert 'terminated_sessions' in session_data, "Must include terminated sessions"
 
-    def test_real_protocol_fuzzing(self, flexlm_protocol_data, app_context):
+    def test_real_protocol_fuzzing(self, flexlm_protocol_data: dict[str, Any], app_context: AppContext) -> None:
         """Test REAL protocol fuzzing for license bypass."""
         hooker = CloudLicenseHooker()
 
@@ -700,7 +701,7 @@ class TestRealNetworkOperations:
 
         for fuzz_name, fuzz_func in fuzz_templates.items():
             # Generate fuzzed packet
-            fuzzed = fuzz_func(original_packet)
+            fuzzed = fuzz_func(original_packet)  # type: ignore[no-untyped-call]
             assert fuzzed != original_packet, f"Fuzz {fuzz_name} must modify packet"
 
             # Test parsing robustness
@@ -713,7 +714,7 @@ class TestRealNetworkOperations:
                 assert 'parse' in str(e).lower() or 'invalid' in str(e).lower(), \
                         f"Exception should be parsing-related for {fuzz_name}"
 
-    def test_real_license_server_rate_limiting(self, app_context):
+    def test_real_license_server_rate_limiting(self, app_context: AppContext) -> None:
         """Test REAL rate limiting for license server communication."""
         hooker = CloudLicenseHooker()
 
@@ -760,7 +761,7 @@ class TestRealNetworkOperations:
         assert len(history) == rate_limit_config['burst_size'], "History must track all burst requests"
         assert all('timestamp' in req for req in history), "All requests must have timestamps"
 
-    def test_real_license_protocol_obfuscation(self, app_context):
+    def test_real_license_protocol_obfuscation(self, app_context: AppContext) -> None:
         """Test REAL license protocol obfuscation techniques."""
         hooker = CloudLicenseHooker()
 
@@ -815,7 +816,7 @@ class TestRealNetworkOperations:
         poly_decoded = hooker.polymorphic_decode_license(poly_encoded, poly_config)
         assert poly_decoded == test_license, "Must decode to original license"
 
-    def test_real_license_server_anti_detection(self, app_context):
+    def test_real_license_server_anti_detection(self, app_context: AppContext) -> None:
         """Test REAL anti-detection techniques for license server emulation."""
         hooker = CloudLicenseHooker()
 

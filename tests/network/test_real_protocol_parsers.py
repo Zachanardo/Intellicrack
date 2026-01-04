@@ -35,14 +35,14 @@ class TestRealProtocolParsers:
     """Functional tests for REAL network protocol parsing operations."""
 
     @pytest.fixture
-    def app_context(self):
+    def app_context(self) -> Any:
         """Create REAL application context."""
         context = AppContext()
-        context.initialize()
+        context.initialize()  # type: ignore[attr-defined]
         return context
 
     @pytest.fixture
-    def flexlm_packets(self):
+    def flexlm_packets(self) -> Dict[str, bytes]:
         """Create REAL FlexLM protocol packets."""
         # License request packet
         request = b''
@@ -97,7 +97,7 @@ class TestRealProtocolParsers:
         return packets
 
     @pytest.fixture
-    def hasp_packets(self):
+    def hasp_packets(self) -> Dict[str, bytes]:
         """Create REAL HASP protocol packets."""
         # Login packet
         login = b''
@@ -138,7 +138,7 @@ class TestRealProtocolParsers:
         return packets
 
     @pytest.fixture
-    def adobe_packets(self):
+    def adobe_packets(self) -> Dict[str, bytes]:
         """Create REAL Adobe Creative Cloud packets."""
         # Activation request
         activation_request = {
@@ -215,7 +215,7 @@ class TestRealProtocolParsers:
         return packets
 
     @pytest.fixture
-    def kms_packets(self):
+    def kms_packets(self) -> Dict[str, bytes]:
         """Create REAL KMS (Key Management Service) packets."""
         # KMS activation request
         kms_request = b''
@@ -255,7 +255,7 @@ class TestRealProtocolParsers:
         kms_response += b'\x00' * 64  # Reserved
         return {'activation_request': kms_request, 'activation_response': kms_response}
 
-    def test_real_flexlm_protocol_parsing(self, flexlm_packets, app_context):
+    def test_real_flexlm_protocol_parsing(self, flexlm_packets: Dict[str, bytes], app_context: Any) -> None:
         """Test REAL FlexLM protocol packet parsing."""
         parser = FlexLMParser()
 
@@ -294,7 +294,7 @@ class TestRealProtocolParsers:
         assert heartbeat_result['packet_type'] == 'heartbeat', "Must identify heartbeat"
         assert heartbeat_result['data']['host_id'] == 0x12345678, "Must extract host ID"
 
-    def test_real_hasp_protocol_parsing(self, hasp_packets, app_context):
+    def test_real_hasp_protocol_parsing(self, hasp_packets: Dict[str, bytes], app_context: Any) -> None:
         """Test REAL HASP protocol packet parsing."""
         parser = HASPParser()
 
@@ -334,7 +334,7 @@ class TestRealProtocolParsers:
         assert read_data['address'] == 0x0000, "Must extract address"
         assert read_data['length'] == 256, "Must extract read length"
 
-    def test_real_adobe_protocol_parsing(self, adobe_packets, app_context):
+    def test_real_adobe_protocol_parsing(self, adobe_packets: Dict[str, bytes], app_context: Any) -> None:
         """Test REAL Adobe Creative Cloud protocol parsing."""
         parser = AdobeParser()
 
@@ -378,7 +378,7 @@ class TestRealProtocolParsers:
         assert 'photoshop_core' in features, "Must extract features"
         assert len(features) >= 3, "Must have multiple features"
 
-    def test_real_kms_protocol_parsing(self, kms_packets, app_context):
+    def test_real_kms_protocol_parsing(self, kms_packets: Dict[str, bytes], app_context: Any) -> None:
         """Test REAL KMS protocol packet parsing."""
         parser = KMSParser()
 
@@ -410,7 +410,7 @@ class TestRealProtocolParsers:
         assert response_data['current_count'] == 50, "Must extract current count"
         assert 'KMS-SERVER-2024' in response_data['server_name'], "Must extract server name"
 
-    def test_real_multi_protocol_detection(self, flexlm_packets, hasp_packets, adobe_packets, kms_packets, app_context):
+    def test_real_multi_protocol_detection(self, flexlm_packets: Dict[str, bytes], hasp_packets: Dict[str, bytes], adobe_packets: Dict[str, bytes], kms_packets: Dict[str, bytes], app_context: Any) -> None:
         """Test REAL multi-protocol detection and routing."""
         protocol_parsers = ProtocolParsers()
 
@@ -438,7 +438,7 @@ class TestRealProtocolParsers:
             assert parse_result['valid'], f"Parsed packet must be valid for {expected_protocol}"
             assert parse_result['protocol'] == expected_protocol, "Protocol must match detection"
 
-    def test_real_protocol_state_tracking(self, flexlm_packets, app_context):
+    def test_real_protocol_state_tracking(self, flexlm_packets: Dict[str, bytes], app_context: Any) -> None:
         """Test REAL protocol state tracking across multiple packets."""
         parser = FlexLMParser()
         state_tracker = parser.create_session_tracker()
@@ -481,7 +481,7 @@ class TestRealProtocolParsers:
         assert 'last_heartbeat' in final_state, "Must track heartbeat time"
         assert final_state['state'] == 'active', "Must show active state"
 
-    def test_real_protocol_error_handling(self, app_context):
+    def test_real_protocol_error_handling(self, app_context: Any) -> None:
         """Test REAL protocol error handling and malformed packets."""
         parser = FlexLMParser()
 
@@ -508,7 +508,7 @@ class TestRealProtocolParsers:
         assert not oversized_result['valid'], "Oversized packet must be invalid"
         assert 'size_limit' in oversized_result['error'], "Must identify size limit error"
 
-    def test_real_protocol_performance_parsing(self, flexlm_packets, hasp_packets, app_context):
+    def test_real_protocol_performance_parsing(self, flexlm_packets: Dict[str, bytes], hasp_packets: Dict[str, bytes], app_context: Any) -> None:
         """Test REAL protocol parsing performance with large packet volumes."""
         protocol_parsers = ProtocolParsers()
 
@@ -545,7 +545,7 @@ class TestRealProtocolParsers:
         throughput = len(packet_batch) / processing_time
         assert throughput > 50, "Should process at least 50 packets per second"
 
-    def test_real_protocol_fragmentation_handling(self, flexlm_packets, app_context):
+    def test_real_protocol_fragmentation_handling(self, flexlm_packets: Dict[str, bytes], app_context: Any) -> None:
         """Test REAL protocol handling of fragmented packets."""
         parser = FlexLMParser()
 
@@ -581,7 +581,7 @@ class TestRealProtocolParsers:
         parse_result = parser.parse_packet(reassembled)
         assert parse_result['valid'], "Reassembled packet must parse correctly"
 
-    def test_real_protocol_encryption_detection(self, app_context):
+    def test_real_protocol_encryption_detection(self, app_context: Any) -> None:
         """Test REAL protocol encryption and obfuscation detection."""
         protocol_parsers = ProtocolParsers()
 
@@ -618,7 +618,7 @@ class TestRealProtocolParsers:
             else:
                 assert not detection_result['encryption_detected'], "Must not detect encryption in plaintext"
 
-    def test_real_protocol_signature_validation(self, flexlm_packets, hasp_packets, app_context):
+    def test_real_protocol_signature_validation(self, flexlm_packets: Dict[str, bytes], hasp_packets: Dict[str, bytes], app_context: Any) -> None:
         """Test REAL protocol signature validation and integrity checking."""
         protocol_parsers = ProtocolParsers()
 

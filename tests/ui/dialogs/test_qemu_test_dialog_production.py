@@ -4,7 +4,7 @@ Tests real dialog functionality for QEMU script testing safety checks.
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 
@@ -20,7 +20,8 @@ def qapp() -> QApplication:
     """Create QApplication instance for GUI tests."""
     app = QApplication.instance()
     if app is None:
-        app = QApplication([])
+        return QApplication([])
+    assert isinstance(app, QApplication), "Expected QApplication instance"
     return app
 
 
@@ -33,7 +34,7 @@ def sample_binary_path(tmp_path: Path) -> str:
 
 
 @pytest.fixture
-def qemu_dialog(qapp: QApplication, sample_binary_path: str) -> QEMUTestDialog:
+def qemu_dialog(qapp: QApplication, sample_binary_path: str) -> Generator[QEMUTestDialog, None, None]:
     """Create QEMU test dialog instance."""
     dialog = QEMUTestDialog(
         script_type="frida",

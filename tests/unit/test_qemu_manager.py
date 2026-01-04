@@ -18,8 +18,8 @@ try:
     QEMU_MANAGER_AVAILABLE = True
 except ImportError:
     QEMU_MANAGER_AVAILABLE = False
-    QEMUManager = None
-    QEMUSnapshot = None
+    QEMUManager = None  # type: ignore[misc, assignment]
+    QEMUSnapshot = None  # type: ignore[misc, assignment]
 
 
 pytestmark = pytest.mark.skipif(
@@ -67,7 +67,7 @@ class FakeConfig:
             }
         }
         self.save_called = False
-        self.set_called_with: List[tuple] = []
+        self.set_called_with: List[tuple[str, Any]] = []
 
     def get(self, path: str = "", default: Any = None) -> Any:
         """Get configuration value."""
@@ -152,7 +152,7 @@ class TestQEMUManager(unittest.TestCase):
         """Test VM information collection."""
         manager = QEMUManager()
 
-        snapshot1 = QEMUSnapshot(
+        snapshot1 = QEMUSnapshot(  # type: ignore[call-arg]
             snapshot_id="snap1",
             vm_name="test_vm_1",
             disk_path=str(Path(self.temp_dir) / "vm1.qcow2"),
@@ -164,7 +164,7 @@ class TestQEMUManager(unittest.TestCase):
         )
         snapshot1.created_at = datetime.now()
 
-        snapshot2 = QEMUSnapshot(
+        snapshot2 = QEMUSnapshot(  # type: ignore[call-arg]
             snapshot_id="snap2",
             vm_name="test_vm_2",
             disk_path=str(Path(self.temp_dir) / "vm2.qcow2"),
@@ -202,7 +202,7 @@ class TestQEMUManager(unittest.TestCase):
         """Test snapshot creation and management."""
         manager = QEMUManager()
 
-        test_snapshot = QEMUSnapshot(
+        test_snapshot = QEMUSnapshot(  # type: ignore[call-arg]
             snapshot_id="test_snap",
             vm_name="test_vm",
             disk_path=str(Path(self.temp_dir) / "test.qcow2"),
@@ -265,7 +265,7 @@ class TestQEMUManager(unittest.TestCase):
 
     def test_snapshot_data_structure(self) -> None:
         """Test QEMUSnapshot data structure."""
-        snapshot = QEMUSnapshot(
+        snapshot = QEMUSnapshot(  # type: ignore[call-arg]
             snapshot_id="data_test",
             vm_name="data_vm",
             disk_path="/path/to/disk.qcow2",
@@ -279,7 +279,7 @@ class TestQEMUManager(unittest.TestCase):
         assert snapshot.snapshot_id == "data_test"
         assert snapshot.vm_name == "data_vm"
         assert snapshot.disk_path == "/path/to/disk.qcow2"
-        assert snapshot.ssh_host == "127.0.0.1"
+        assert snapshot.ssh_host == "127.0.0.1"  # type: ignore[attr-defined]
         assert snapshot.ssh_port == 22222
 
     def test_configuration_update(self) -> None:

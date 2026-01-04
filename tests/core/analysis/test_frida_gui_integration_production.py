@@ -10,7 +10,7 @@ Licensed under GNU General Public License v3.0
 import json
 import tempfile
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any, Generator, cast
 
 import pytest
 
@@ -44,9 +44,12 @@ def qapp() -> Generator[QApplication | None, None, None]:
         yield None
         return
 
-    app = QApplication.instance()
-    if app is None:
+    existing = QApplication.instance()
+    app: QApplication
+    if existing is None:
         app = QApplication([])
+    else:
+        app = cast(QApplication, existing)
     yield app
 
 
@@ -194,10 +197,10 @@ class TestFridaScriptParameterWidget:
         widget = FridaScriptParameterWidget(sample_script_config)
 
         max_retries_widget = widget.parameter_widgets["max_retries"]
-        max_retries_widget.setValue(10)
+        max_retries_widget.setValue(10)  # type: ignore[attr-defined]
 
         timeout_widget = widget.parameter_widgets["timeout_seconds"]
-        timeout_widget.setValue(60.75)
+        timeout_widget.setValue(60.75)  # type: ignore[attr-defined]
 
         params = widget.get_parameters()
 
@@ -205,7 +208,7 @@ class TestFridaScriptParameterWidget:
         assert params["timeout_seconds"] == 60.75
 
     def test_save_preset_creates_json_file(
-        self, qapp: QApplication, sample_script_config: FridaScriptConfig, temp_preset_dir: Path, monkeypatch
+        self, qapp: QApplication, sample_script_config: FridaScriptConfig, temp_preset_dir: Path, monkeypatch: Any
     ) -> None:
         """save_preset creates JSON file with parameter values."""
         widget = FridaScriptParameterWidget(sample_script_config)
@@ -227,7 +230,7 @@ class TestFridaScriptParameterWidget:
         assert saved_params["max_retries"] == 3
 
     def test_load_preset_restores_parameter_values(
-        self, qapp: QApplication, sample_script_config: FridaScriptConfig, temp_preset_dir: Path, monkeypatch
+        self, qapp: QApplication, sample_script_config: FridaScriptConfig, temp_preset_dir: Path, monkeypatch: Any
     ) -> None:
         """load_preset restores parameters from saved preset file."""
         preset_data = {"enable_logging": False, "max_retries": 99, "timeout_seconds": 120.5, "optional_param": "test"}
@@ -244,10 +247,10 @@ class TestFridaScriptParameterWidget:
 
         widget.load_preset()
 
-        assert widget.parameter_widgets["enable_logging"].isChecked() is False
-        assert widget.parameter_widgets["max_retries"].value() == 99
-        assert widget.parameter_widgets["timeout_seconds"].value() == 120.5
-        assert widget.parameter_widgets["optional_param"].text() == "test"
+        assert widget.parameter_widgets["enable_logging"].isChecked() is False  # type: ignore[attr-defined]
+        assert widget.parameter_widgets["max_retries"].value() == 99  # type: ignore[attr-defined]
+        assert widget.parameter_widgets["timeout_seconds"].value() == 120.5  # type: ignore[attr-defined]
+        assert widget.parameter_widgets["optional_param"].text() == "test"  # type: ignore[attr-defined]
 
 
 @pytest.mark.skipif(not PYQT_AVAILABLE, reason="PyQt6 not available")
@@ -357,10 +360,11 @@ class TestScriptOutputTab:
 
         data = {"license_info": {"type": "trial", "days_remaining": 30, "features": ["basic", "advanced"]}}
 
-        tab.update_data_tree(data)
+        tab.update_data_tree(data)  # type: ignore[arg-type]
 
         assert tab.data_tree.topLevelItemCount() == 1
         root_item = tab.data_tree.topLevelItem(0)
+        assert root_item is not None
         assert root_item.text(0) == "license_info"
 
     def test_clear_output_removes_all_messages(self, qapp: QApplication) -> None:
@@ -434,8 +438,12 @@ console.log('Line 3');"""
         widget.add_breakpoint(42, "x > 10")
 
         assert widget.breakpoints_widget.rowCount() == 1
-        assert widget.breakpoints_widget.item(0, 0).text() == "42"
-        assert widget.breakpoints_widget.item(0, 2).text() == "x > 10"
+        item_0_0 = widget.breakpoints_widget.item(0, 0)
+        assert item_0_0 is not None
+        assert item_0_0.text() == "42"
+        item_0_2 = widget.breakpoints_widget.item(0, 2)
+        assert item_0_2 is not None
+        assert item_0_2.text() == "x > 10"
         assert 42 in widget.breakpoints
 
     def test_update_callstack_displays_stack_frames(self, qapp: QApplication) -> None:
@@ -447,7 +455,9 @@ console.log('Line 3');"""
         widget.update_callstack(stack)
 
         assert widget.callstack_widget.count() == 3
-        assert widget.callstack_widget.item(0).text() == "main() at 0x401000"
+        callstack_item = widget.callstack_widget.item(0)
+        assert callstack_item is not None
+        assert callstack_item.text() == "main() at 0x401000"
 
     def test_log_console_appends_messages(self, qapp: QApplication) -> None:
         """log_console appends messages to console output."""
@@ -496,7 +506,9 @@ class TestFridaScriptCreatorWidget:
         widget.add_hook()
 
         assert widget.hooks_list.count() == 1
-        assert "kernel32.dll!VirtualProtect (onEnter)" in widget.hooks_list.item(0).text()
+        hook_item = widget.hooks_list.item(0)
+        assert hook_item is not None
+        assert "kernel32.dll!VirtualProtect (onEnter)" in hook_item.text()
 
     def test_validate_script_detects_missing_hooks(self, qapp: QApplication) -> None:
         """validate_script detects when no hooks are defined."""
@@ -572,7 +584,7 @@ class TestIntegrationFunctions:
 
         show_output_viewer(main_app)
 
-        assert main_app.frida_output_widget.isVisible() is True
+        assert main_app.frida_output_widget.isVisible() is True  # type: ignore[attr-defined]
 
     def test_show_debugger_creates_debugger_window(self, qapp: QApplication) -> None:
         """show_debugger creates debugger window."""

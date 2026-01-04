@@ -5,6 +5,7 @@ buttons, file browsers, and other common UI patterns.
 """
 
 import pytest
+from collections.abc import Generator
 from typing import Callable
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
@@ -22,16 +23,16 @@ from intellicrack.ui.shared_ui_layouts import UILayoutHelpers
 
 
 @pytest.fixture(scope="module")
-def qt_app() -> QApplication:
+def qt_app() -> Generator[QApplication, None, None]:
     """Provide Qt application instance for tests."""
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
-    yield app
+    yield app  # type: ignore[misc]
 
 
 @pytest.fixture
-def test_dialog(qt_app: QApplication) -> QDialog:
+def test_dialog(qt_app: QApplication) -> Generator[QDialog, None, None]:
     """Create test dialog for layout operations."""
     dialog = QDialog()
     yield dialog
@@ -39,7 +40,7 @@ def test_dialog(qt_app: QApplication) -> QDialog:
 
 
 @pytest.fixture
-def test_widget(qt_app: QApplication) -> QWidget:
+def test_widget(qt_app: QApplication) -> Generator[QWidget, None, None]:
     """Create test widget for layout operations."""
     widget = QWidget()
     yield widget
@@ -123,7 +124,7 @@ class TestCreateTabbedDialogLayout:
         )
 
         assert tab_widget in [
-            main_layout.itemAt(i).widget()
+            main_layout.itemAt(i).widget()  # type: ignore[union-attr]
             for i in range(main_layout.count())
         ]
 
@@ -240,9 +241,9 @@ class TestCreateFileBrowseWidget:
         layout, line_edit, browse_btn = UILayoutHelpers.create_file_browse_widget()
 
         widgets_in_layout = [
-            layout.itemAt(i).widget()
+            layout.itemAt(i).widget()  # type: ignore[union-attr]
             for i in range(layout.count())
-            if layout.itemAt(i).widget() is not None
+            if layout.itemAt(i).widget() is not None  # type: ignore[union-attr]
         ]
 
         assert line_edit in widgets_in_layout
@@ -253,9 +254,9 @@ class TestCreateFileBrowseWidget:
         layout, line_edit, browse_btn = UILayoutHelpers.create_file_browse_widget()
 
         widgets_in_layout = [
-            layout.itemAt(i).widget()
+            layout.itemAt(i).widget()  # type: ignore[union-attr]
             for i in range(layout.count())
-            if layout.itemAt(i).widget() is not None
+            if layout.itemAt(i).widget() is not None  # type: ignore[union-attr]
         ]
 
         assert browse_btn in widgets_in_layout
@@ -463,7 +464,7 @@ class TestCreateTabsFromSpecs:
         """Empty tab specs list creates no tabs."""
         tab_widget = QTabWidget()
 
-        tab_specs = []
+        tab_specs: list[tuple[str, QWidget]] = []
         UILayoutHelpers.create_tabs_from_specs(tab_widget, tab_specs)
 
         assert tab_widget.count() == 0
@@ -528,5 +529,5 @@ class TestUILayoutHelpersIntegration:
         UILayoutHelpers.setup_standard_form_field(layout1, "Field 1:", widget1)
         UILayoutHelpers.setup_standard_form_field(layout2, "Field 2:", widget2)
 
-        assert layout1.rowCount() == 1
-        assert layout2.rowCount() == 1
+        assert layout1.rowCount() == 1  # type: ignore[union-attr]
+        assert layout2.rowCount() == 1  # type: ignore[union-attr]

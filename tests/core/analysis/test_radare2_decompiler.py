@@ -9,7 +9,7 @@ Tests use real binary samples and expect sophisticated decompilation outcomes
 that prove Intellicrack's effectiveness as a security research platform.
 """
 
-from typing import Any
+from typing import Any, Generator
 import pytest
 import os
 import tempfile
@@ -26,8 +26,8 @@ try:
     )
     AVAILABLE = True
 except ImportError:
-    R2DecompilationEngine = None
-    analyze_binary_decompilation = None
+    R2DecompilationEngine = None  # type: ignore[misc, assignment]
+    analyze_binary_decompilation = None  # type: ignore[assignment]
     AVAILABLE = False
 
 pytestmark = [
@@ -40,7 +40,7 @@ class TestBinarySamples:
     """Helper class to generate real binary test samples."""
 
     @staticmethod
-    def create_simple_pe_binary():
+    def create_simple_pe_binary() -> bytes:
         """Create a minimal but valid PE binary for testing."""
         # PE header structure for a minimal Windows executable
         pe_data = bytearray()
@@ -185,7 +185,7 @@ class TestBinarySamples:
         return bytes(pe_data)
 
     @staticmethod
-    def create_complex_binary_with_obfuscation():
+    def create_complex_binary_with_obfuscation() -> bytes:
         """Create a more complex binary with obfuscation patterns."""
         base_pe = TestBinarySamples.create_simple_pe_binary()
         pe_data = bytearray(base_pe)
@@ -220,7 +220,7 @@ class TestBinarySamples:
 
 
 @pytest.fixture(scope="class")
-def test_binaries() -> None:
+def test_binaries() -> Generator[dict[str, str], None, None]:
     """Create temporary test binaries for testing."""
     temp_dir = tempfile.mkdtemp(prefix="intellicrack_test_")
 
@@ -282,7 +282,7 @@ class TestR2DecompilationEngineCore:
     """Test core decompilation functionality."""
 
     @pytest.fixture
-    def engine(self, test_binaries) -> Any:
+    def engine(self, test_binaries: dict[str, str]) -> Any:
         """Create engine instance for testing."""
         return R2DecompilationEngine(test_binaries["simple_pe"])
 
@@ -377,7 +377,7 @@ class TestR2DecompilationEngineAnalysis:
     """Test advanced analysis capabilities."""
 
     @pytest.fixture
-    def engine(self, test_binaries) -> Any:
+    def engine(self, test_binaries: dict[str, str]) -> Any:
         return R2DecompilationEngine(test_binaries["complex_pe"])
 
     def test_extract_variables_sophisticated(self, engine: Any) -> None:
@@ -541,7 +541,7 @@ class TestR2DecompilationEngineLicenseAnalysis:
     """Test license-specific analysis capabilities."""
 
     @pytest.fixture
-    def engine(self, test_binaries) -> Any:
+    def engine(self, test_binaries: dict[str, str]) -> Any:
         return R2DecompilationEngine(test_binaries["simple_pe"])
 
     def test_generate_license_bypass_suggestions_actionable(self, engine: Any) -> None:
@@ -628,7 +628,7 @@ class TestR2DecompilationEngineLicenseAnalysis:
             assert isinstance(should_analyze, bool)
 
             # Should intelligently filter based on function characteristics
-            if 'license' in func['name'].lower() or 'check' in func['name'].lower():
+            if 'license' in func['name'].lower() or 'check' in func['name'].lower():  # type: ignore[attr-defined]
                 assert should_analyze == True, f"Should analyze license-related function: {func['name']}"
 
     def test_get_confidence_reason_explanatory(self, engine: Any) -> None:
@@ -651,7 +651,7 @@ class TestR2DecompilationEngineReporting:
     """Test analysis reporting and export functionality."""
 
     @pytest.fixture
-    def engine_with_analysis(self, test_binaries) -> Any:
+    def engine_with_analysis(self, test_binaries: dict[str, str]) -> Any:
         return R2DecompilationEngine(test_binaries["simple_pe"])
 
     def test_export_analysis_report_comprehensive_formats(self, engine_with_analysis: Any) -> None:
@@ -752,7 +752,7 @@ class TestAnalyzeFunction:
             'export_format': 'json'
         }
 
-        result = analyze_binary_decompilation(test_binaries["simple_pe"], options=options)
+        result = analyze_binary_decompilation(test_binaries["simple_pe"], options=options)  # type: ignore[call-arg]
 
         assert result is not None
         # Should respect analysis options
@@ -780,7 +780,7 @@ class TestR2DecompilationEngineIntegration:
     """Integration tests for comprehensive workflow validation."""
 
     @pytest.fixture
-    def engine(self, test_binaries) -> Any:
+    def engine(self, test_binaries: dict[str, str]) -> Any:
         return R2DecompilationEngine(test_binaries["complex_pe"])
 
     def test_complete_security_research_workflow(self, engine: Any) -> None:
@@ -862,7 +862,7 @@ class TestR2DecompilationEngineRealWorldScenarios:
 
         # Should handle sophisticated protection mechanisms
         license_analysis = engine.analyze_license_functions()
-        bypass_suggestions = engine.generate_license_bypass_suggestions()
+        bypass_suggestions = engine.generate_license_bypass_suggestions()  # type: ignore[call-arg]
 
         # Should provide meaningful analysis for protected software
         assert license_analysis is not None
@@ -878,8 +878,8 @@ class TestR2DecompilationEngineRealWorldScenarios:
         engine = R2DecompilationEngine(test_binaries["complex_pe"])
 
         # Should handle obfuscated code
-        cfg_analysis = engine._analyze_control_flow(0x401000)
-        vulnerability_patterns = engine._detect_vulnerability_patterns()
+        cfg_analysis = engine._analyze_control_flow(0x401000)  # type: ignore[arg-type]
+        vulnerability_patterns = engine._detect_vulnerability_patterns()  # type: ignore[call-arg]
 
         # Should detect obfuscation and provide analysis
         assert cfg_analysis is not None

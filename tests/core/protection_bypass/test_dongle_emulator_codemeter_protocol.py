@@ -29,7 +29,7 @@ from typing import Any
 import pefile
 import pytest
 
-from intellicrack.core.protection_bypass.dongle_emulator import (
+from intellicrack.core.protection_bypass.dongle_emulator import (  # type: ignore[attr-defined]
     CRYPTO_AVAILABLE,
     FRIDA_AVAILABLE,
     CryptoEngine,
@@ -794,12 +794,12 @@ class TestTimeTamperDetectionComplete:
 
     def test_rtc_counter_monotonic_increase_enforcement(self, wibukey_dongle_realistic: WibuKeyDongle) -> None:
         """RTC counter enforces monotonic increase detecting time manipulation."""
-        initial_rtc = wibukey_dongle_realistic.rtc_counter
-        wibukey_dongle_realistic.rtc_counter += 1000
+        initial_rtc = wibukey_dongle_realistic.rtc_counter  # type: ignore[attr-defined]
+        wibukey_dongle_realistic.rtc_counter += 1000  # type: ignore[attr-defined]
 
-        assert wibukey_dongle_realistic.rtc_counter == initial_rtc + 1000
+        assert wibukey_dongle_realistic.rtc_counter == initial_rtc + 1000  # type: ignore[attr-defined]
 
-        backward_time_jump = wibukey_dongle_realistic.rtc_counter - 2000
+        backward_time_jump = wibukey_dongle_realistic.rtc_counter - 2000  # type: ignore[attr-defined]
         time_tamper_detected = backward_time_jump < initial_rtc
 
         assert time_tamper_detected, "Backward time jump must be detected"
@@ -835,12 +835,12 @@ class TestTimeTamperDetectionComplete:
         self, wibukey_dongle_realistic: WibuKeyDongle
     ) -> None:
         """Monotonic time counter prevents backward time jumps."""
-        wibukey_dongle_realistic.rtc_counter = 10000
+        wibukey_dongle_realistic.rtc_counter = 10000  # type: ignore[attr-defined]
 
-        previous_counter = wibukey_dongle_realistic.rtc_counter
-        wibukey_dongle_realistic.rtc_counter += 500
+        previous_counter = wibukey_dongle_realistic.rtc_counter  # type: ignore[attr-defined]
+        wibukey_dongle_realistic.rtc_counter += 500  # type: ignore[attr-defined]
 
-        assert wibukey_dongle_realistic.rtc_counter > previous_counter
+        assert wibukey_dongle_realistic.rtc_counter > previous_counter  # type: ignore[attr-defined]
 
         attempt_backward_jump = 5000
         tamper_detected = attempt_backward_jump < previous_counter
@@ -990,7 +990,7 @@ class TestCodeMeterFridaScriptCompleteness:
         """Frida script includes CmAccess hook for container access interception."""
         emulator = HardwareDongleEmulator()
 
-        script = emulator._generate_frida_script(["CodeMeter"])
+        script = emulator._generate_frida_script(["CodeMeter"])  # type: ignore[attr-defined]
 
         assert "CmAccess" in script, "Frida script must hook CmAccess API"
         assert "Module.findExportByName" in script
@@ -1000,7 +1000,7 @@ class TestCodeMeterFridaScriptCompleteness:
         """Frida script includes CmCrypt hook for encryption interception."""
         emulator = HardwareDongleEmulator()
 
-        script = emulator._generate_frida_script(["CodeMeter"])
+        script = emulator._generate_frida_script(["CodeMeter"])  # type: ignore[attr-defined]
 
         assert "CmCrypt" in script, "Frida script must hook CmCrypt API"
 
@@ -1008,7 +1008,7 @@ class TestCodeMeterFridaScriptCompleteness:
         """Frida script includes CmGetInfo hook for dongle info interception."""
         emulator = HardwareDongleEmulator()
 
-        script = emulator._generate_frida_script(["CodeMeter"])
+        script = emulator._generate_frida_script(["CodeMeter"])  # type: ignore[attr-defined]
 
         assert "CmGetInfo" in script, "Frida script must hook CmGetInfo API"
 
@@ -1016,7 +1016,7 @@ class TestCodeMeterFridaScriptCompleteness:
         """Frida script includes CmRelease hook for container release tracking."""
         emulator = HardwareDongleEmulator()
 
-        script = emulator._generate_frida_script(["CodeMeter"])
+        script = emulator._generate_frida_script(["CodeMeter"])  # type: ignore[attr-defined]
 
         assert "CmRelease" in script, "Frida script must hook CmRelease API"
 
@@ -1024,7 +1024,7 @@ class TestCodeMeterFridaScriptCompleteness:
         """Frida script includes CmSetFeature hook for feature selection."""
         emulator = HardwareDongleEmulator()
 
-        script = emulator._generate_frida_script(["CodeMeter"])
+        script = emulator._generate_frida_script(["CodeMeter"])  # type: ignore[attr-defined]
 
         assert "CmSetFeature" in script, "Frida script must hook CmSetFeature API"
 
@@ -1032,7 +1032,7 @@ class TestCodeMeterFridaScriptCompleteness:
         """Frida script includes CmBoxSequence hook for serial number retrieval."""
         emulator = HardwareDongleEmulator()
 
-        script = emulator._generate_frida_script(["CodeMeter"])
+        script = emulator._generate_frida_script(["CodeMeter"])  # type: ignore[attr-defined]
 
         assert "CmBoxSequence" in script, "Frida script must hook CmBoxSequence API"
 
@@ -1040,7 +1040,7 @@ class TestCodeMeterFridaScriptCompleteness:
         """Frida script includes CmCalculatePioCoreKey hook for key derivation."""
         emulator = HardwareDongleEmulator()
 
-        script = emulator._generate_frida_script(["CodeMeter"])
+        script = emulator._generate_frida_script(["CodeMeter"])  # type: ignore[attr-defined]
 
         assert "CmCalculatePioCoreKey" in script, "Frida script must hook CmCalculatePioCoreKey API"
 
@@ -1048,7 +1048,7 @@ class TestCodeMeterFridaScriptCompleteness:
         """Frida script detects WibuCm64.dll and WibuKey64.dll modules."""
         emulator = HardwareDongleEmulator()
 
-        script = emulator._generate_frida_script(["CodeMeter"])
+        script = emulator._generate_frida_script(["CodeMeter"])  # type: ignore[attr-defined]
 
         assert "WibuCm64.dll" in script, "Frida script must detect WibuCm64.dll"
         assert "WibuKey64.dll" in script, "Frida script must detect WibuKey64.dll"
@@ -1057,7 +1057,7 @@ class TestCodeMeterFridaScriptCompleteness:
         """Frida script replaces return values to bypass license checks."""
         emulator = HardwareDongleEmulator()
 
-        script = emulator._generate_frida_script(["CodeMeter"])
+        script = emulator._generate_frida_script(["CodeMeter"])  # type: ignore[attr-defined]
 
         assert "retval.replace(0)" in script, "Frida script must replace return values to success"
 
@@ -1065,7 +1065,7 @@ class TestCodeMeterFridaScriptCompleteness:
         """Frida script includes logging for debugging and analysis."""
         emulator = HardwareDongleEmulator()
 
-        script = emulator._generate_frida_script(["CodeMeter"])
+        script = emulator._generate_frida_script(["CodeMeter"])  # type: ignore[attr-defined]
 
         assert "console.log" in script, "Frida script must include logging"
         assert "[CodeMeter]" in script, "Frida script must identify CodeMeter operations"

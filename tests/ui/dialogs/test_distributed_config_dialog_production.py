@@ -23,7 +23,8 @@ def qapp() -> QApplication:
     """Create QApplication instance for tests."""
     app = QApplication.instance()
     if app is None:
-        app = QApplication([])
+        return QApplication([])
+    assert isinstance(app, QApplication), "Expected QApplication instance"
     return app
 
 

@@ -24,147 +24,147 @@ try:
     from intellicrack.handlers import frida_handler
     FRIDA_HANDLER_AVAILABLE = True
 except ImportError:
-    frida_handler = None
+    frida_handler = None  # type: ignore[assignment]
     FRIDA_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import torch_handler
     TORCH_HANDLER_AVAILABLE = True
 except ImportError:
-    torch_handler = None
+    torch_handler = None  # type: ignore[assignment]
     TORCH_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import torch_xpu_handler
     TORCH_XPU_HANDLER_AVAILABLE = True
 except ImportError:
-    torch_xpu_handler = None
+    torch_xpu_handler = None  # type: ignore[assignment]
     TORCH_XPU_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import capstone_handler
     CAPSTONE_HANDLER_AVAILABLE = True
 except ImportError:
-    capstone_handler = None
+    capstone_handler = None  # type: ignore[assignment]
     CAPSTONE_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import keystone_handler
     KEYSTONE_HANDLER_AVAILABLE = True
 except ImportError:
-    keystone_handler = None
+    keystone_handler = None  # type: ignore[assignment]
     KEYSTONE_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import pefile_handler
     PEFILE_HANDLER_AVAILABLE = True
 except ImportError:
-    pefile_handler = None
+    pefile_handler = None  # type: ignore[assignment]
     PEFILE_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import lief_handler
     LIEF_HANDLER_AVAILABLE = True
 except ImportError:
-    lief_handler = None
+    lief_handler = None  # type: ignore[assignment]
     LIEF_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import pyelftools_handler
     PYELFTOOLS_HANDLER_AVAILABLE = True
 except ImportError:
-    pyelftools_handler = None
+    pyelftools_handler = None  # type: ignore[assignment]
     PYELFTOOLS_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import cryptography_handler
     CRYPTOGRAPHY_HANDLER_AVAILABLE = True
 except ImportError:
-    cryptography_handler = None
+    cryptography_handler = None  # type: ignore[assignment]
     CRYPTOGRAPHY_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import requests_handler
     REQUESTS_HANDLER_AVAILABLE = True
 except ImportError:
-    requests_handler = None
+    requests_handler = None  # type: ignore[assignment]
     REQUESTS_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import aiohttp_handler
     AIOHTTP_HANDLER_AVAILABLE = True
 except ImportError:
-    aiohttp_handler = None
+    aiohttp_handler = None  # type: ignore[assignment]
     AIOHTTP_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import psutil_handler
     PSUTIL_HANDLER_AVAILABLE = True
 except ImportError:
-    psutil_handler = None
+    psutil_handler = None  # type: ignore[assignment]
     PSUTIL_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import wmi_handler
     WMI_HANDLER_AVAILABLE = True
 except ImportError:
-    wmi_handler = None
+    wmi_handler = None  # type: ignore[assignment]
     WMI_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import numpy_handler
     NUMPY_HANDLER_AVAILABLE = True
 except ImportError:
-    numpy_handler = None
+    numpy_handler = None  # type: ignore[assignment]
     NUMPY_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import matplotlib_handler
     MATPLOTLIB_HANDLER_AVAILABLE = True
 except ImportError:
-    matplotlib_handler = None
+    matplotlib_handler = None  # type: ignore[assignment]
     MATPLOTLIB_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import pyqt6_handler
     PYQT6_HANDLER_AVAILABLE = True
 except ImportError:
-    pyqt6_handler = None
+    pyqt6_handler = None  # type: ignore[assignment]
     PYQT6_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import tkinter_handler
     TKINTER_HANDLER_AVAILABLE = True
 except ImportError:
-    tkinter_handler = None
+    tkinter_handler = None  # type: ignore[assignment]
     TKINTER_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import sqlite3_handler
     SQLITE3_HANDLER_AVAILABLE = True
 except ImportError:
-    sqlite3_handler = None
+    sqlite3_handler = None  # type: ignore[assignment]
     SQLITE3_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import pdfkit_handler
     PDFKIT_HANDLER_AVAILABLE = True
 except ImportError:
-    pdfkit_handler = None
+    pdfkit_handler = None  # type: ignore[assignment]
     PDFKIT_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import opencl_handler
     OPENCL_HANDLER_AVAILABLE = True
 except ImportError:
-    opencl_handler = None
+    opencl_handler = None  # type: ignore[assignment]
     OPENCL_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import tensorflow_handler
     TENSORFLOW_HANDLER_AVAILABLE = True
 except ImportError:
-    tensorflow_handler = None
+    tensorflow_handler = None  # type: ignore[assignment]
     TENSORFLOW_HANDLER_AVAILABLE = False
 
 HANDLERS_DIR = Path(__file__).parent.parent.parent.parent / "intellicrack" / "handlers"
@@ -244,7 +244,7 @@ class TestFridaHandler:
             pytest.skip("Testing with real Frida requires actual device access")
 
         def get_device_manager_info() -> dict[str, Any]:
-            dm = frida_handler.DeviceManager()
+            dm = frida_handler.DeviceManager()  # type: ignore[misc]
             device = dm.get_local_device()
             return {"id": device.id, "name": device.name, "type": device.type}
 
@@ -267,7 +267,7 @@ class TestFridaHandler:
         lock = threading.Lock()
 
         def enumerate_with_gil() -> None:
-            dm = frida_handler.DeviceManager()
+            dm = frida_handler.DeviceManager()  # type: ignore[misc]
             device = dm.get_local_device()
             device.enumerate_processes()
             with lock:

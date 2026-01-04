@@ -269,9 +269,9 @@ class TestHardwareIDGeneration:
 
         import intellicrack.core.patching.windows_activator as wa_module
 
-        original_wmi = wa_module.wmi
+        original_wmi = getattr(wa_module, "wmi", None)
         try:
-            wa_module.wmi = None
+            setattr(wa_module, "wmi", None)
 
             hwid = activator.generate_hwid()
 
@@ -282,7 +282,7 @@ class TestHardwareIDGeneration:
             assert len(parts) == 5
 
         finally:
-            wa_module.wmi = original_wmi
+            setattr(wa_module, "wmi", original_wmi)
 
     def test_generate_hwid_uses_platform_info_in_fallback(self) -> None:
         """generate_hwid fallback incorporates platform information."""
@@ -290,9 +290,9 @@ class TestHardwareIDGeneration:
 
         import intellicrack.core.patching.windows_activator as wa_module
 
-        original_wmi = wa_module.wmi
+        original_wmi = getattr(wa_module, "wmi", None)
         try:
-            wa_module.wmi = None
+            setattr(wa_module, "wmi", None)
 
             hwid = activator.generate_hwid()
 
@@ -308,7 +308,7 @@ class TestHardwareIDGeneration:
             assert hwid == expected_hwid
 
         finally:
-            wa_module.wmi = original_wmi
+            setattr(wa_module, "wmi", original_wmi)
 
 
 class TestActivationStatusRetrieval:
@@ -947,9 +947,9 @@ class TestEdgeCases:
 
         import intellicrack.core.patching.windows_activator as wa_module
 
-        original_wmi = wa_module.wmi
+        original_wmi = getattr(wa_module, "wmi", None)
         try:
-            wa_module.wmi = None
+            setattr(wa_module, "wmi", None)
 
             hwid = activator.generate_hwid()
 
@@ -957,7 +957,7 @@ class TestEdgeCases:
             assert len(hwid.split("-")) == 5
 
         finally:
-            wa_module.wmi = original_wmi
+            setattr(wa_module, "wmi", original_wmi)
 
     @WINDOWS_ONLY
     def test_activate_office_with_unsupported_version(self) -> None:

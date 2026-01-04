@@ -11,7 +11,7 @@ import hashlib
 import json
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, cast
 from unittest.mock import Mock, patch
 
 import pytest
@@ -465,7 +465,7 @@ class TestAddressNormalization:
         standardizer = R2JSONStandardizer()
 
         assert standardizer._normalize_address("invalid") == "0x0"
-        assert standardizer._normalize_address(None) == "0x0"
+        assert standardizer._normalize_address(cast("str | int", None)) == "0x0"
 
 
 class TestFileOperations:
@@ -552,7 +552,7 @@ class TestValidationSystem:
         score = standardizer._calculate_completeness_score(complete_data)
         assert 0.0 <= score <= 1.0
 
-        incomplete_data = {
+        incomplete_data: Dict[str, Any] = {
             "analysis_results": {
                 "field1": "",
                 "field2": None,
@@ -700,7 +700,7 @@ class TestStatisticalCalculations:
         """Percentile calculation computes distribution correctly."""
         standardizer = R2JSONStandardizer()
 
-        values = list(range(1, 101))
+        values: List[float] = [float(i) for i in range(1, 101)]
         percentiles = standardizer._calculate_percentiles(values)
 
         assert "p25" in percentiles
@@ -899,7 +899,7 @@ class TestBatchStandardization:
         test_file = tmp_path / "batch.exe"
         test_file.write_bytes(b"MZ" + b"\x00" * 100)
 
-        results = [
+        results: List[tuple[str, Dict[str, Any], str]] = [
             ("decompilation", {"license_functions": []}, str(test_file)),
             ("strings", {"license_strings": []}, str(test_file)),
             ("imports", {"imports": []}, str(test_file)),
@@ -915,7 +915,7 @@ class TestBatchStandardization:
         test_file = tmp_path / "test.exe"
         test_file.write_bytes(b"MZ")
 
-        results = [
+        results: List[tuple[str, Dict[str, Any], str]] = [
             ("decompilation", {"license_functions": []}, str(test_file)),
             ("invalid_type", {}, "/nonexistent.exe"),
         ]
@@ -973,11 +973,12 @@ class TestDataNormalization:
         """String list normalization handles different input formats."""
         standardizer = R2JSONStandardizer()
 
-        strings = [
+        strings_raw: List[Any] = [
             {"string": "License Key", "address": 0x500000},
             {"value": "Serial", "addr": "0x500100"},
             "Plain String",
         ]
+        strings = cast(List[Dict[str, Any]], strings_raw)
 
         normalized = standardizer._normalize_string_list(strings)
 
@@ -990,7 +991,7 @@ class TestDataNormalization:
         """Import list normalization standardizes import metadata."""
         standardizer = R2JSONStandardizer()
 
-        imports = [
+        imports: List[Dict[str, Any] | str] = [
             {"name": "CreateFileA", "library": "kernel32.dll", "address": 0x401000},
             {"function": "RegOpenKeyA", "dll": "advapi32.dll"},
             "LoadLibrary",

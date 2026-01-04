@@ -33,12 +33,12 @@ try:
     )
     AVAILABLE = True
 except ImportError:
-    EmulationResult = None
-    EmulationType = None
-    ExploitPrimitive = None
-    ExploitType = None
-    Radare2Emulator = None
-    TaintInfo = None
+    EmulationResult = None  # type: ignore[misc, assignment]
+    EmulationType = None  # type: ignore[misc, assignment]
+    ExploitPrimitive = None  # type: ignore[misc, assignment]
+    ExploitType = None  # type: ignore[misc, assignment]
+    Radare2Emulator = None  # type: ignore[misc, assignment]
+    TaintInfo = None  # type: ignore[misc, assignment]
     AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not AVAILABLE, reason="Module not available")
@@ -239,7 +239,7 @@ class TestUnicornEmulation:
 
         assert success is True
         assert emulator.uc is not None
-        assert isinstance(emulator.uc, unicorn.Uc)
+        assert isinstance(emulator.uc, unicorn.Uc)  # type: ignore[attr-defined]
 
         emulator.close()
 

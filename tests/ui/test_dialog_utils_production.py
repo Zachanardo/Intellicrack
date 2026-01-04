@@ -29,7 +29,7 @@ def qapp() -> QApplication:
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
-    return app
+    return app  # type: ignore[return-value]
 
 
 class MockDialog(QWidget):
@@ -71,7 +71,7 @@ class TestSetupFooter:
 
         setup_footer(dialog, layout)
 
-        style = dialog.status_label.styleSheet()
+        style = dialog.status_label.styleSheet()  # type: ignore[attr-defined]
         assert "color" in style or style == ""
 
     def test_footer_close_button_connected(self, qapp: QApplication) -> None:
@@ -81,8 +81,8 @@ class TestSetupFooter:
 
         setup_footer(dialog, layout)
 
-        assert dialog.close_btn is not None
-        assert dialog.close_btn.text() == "Close"
+        assert dialog.close_btn is not None  # type: ignore[attr-defined]
+        assert dialog.close_btn.text() == "Close"  # type: ignore[attr-defined]
 
     def test_footer_added_to_layout(self, qapp: QApplication) -> None:
         """Footer is added to the provided layout."""
@@ -115,7 +115,7 @@ class TestSetupBinaryHeader:
 
         setup_binary_header(dialog, layout)
 
-        tooltip = dialog.binary_path_edit.toolTip()
+        tooltip = dialog.binary_path_edit.toolTip()  # type: ignore[attr-defined]
         assert "binary" in tooltip.lower() or "executable" in tooltip.lower()
 
     def test_browse_button_connected(self, qapp: QApplication) -> None:
@@ -125,8 +125,8 @@ class TestSetupBinaryHeader:
 
         setup_binary_header(dialog, layout)
 
-        assert dialog.browse_btn is not None
-        assert dialog.browse_btn.text() == "Browse"
+        assert dialog.browse_btn is not None  # type: ignore[attr-defined]
+        assert dialog.browse_btn.text() == "Browse"  # type: ignore[attr-defined]
 
     def test_binary_path_edit_minimum_width(self, qapp: QApplication) -> None:
         """Binary path edit has minimum width for usability."""
@@ -135,7 +135,7 @@ class TestSetupBinaryHeader:
 
         setup_binary_header(dialog, layout)
 
-        assert dialog.binary_path_edit.minimumWidth() >= 300
+        assert dialog.binary_path_edit.minimumWidth() >= 300  # type: ignore[attr-defined]
 
     def test_binary_path_edit_initial_value(self, qapp: QApplication) -> None:
         """Binary path edit shows initial path if set."""
@@ -145,7 +145,7 @@ class TestSetupBinaryHeader:
 
         setup_binary_header(dialog, layout)
 
-        assert dialog.binary_path_edit.text() == "/path/to/test.exe"
+        assert dialog.binary_path_edit.text() == "/path/to/test.exe"  # type: ignore[attr-defined]
 
     def test_binary_path_edit_empty_when_no_initial(self, qapp: QApplication) -> None:
         """Binary path edit is empty when no initial path."""
@@ -154,7 +154,7 @@ class TestSetupBinaryHeader:
 
         setup_binary_header(dialog, layout)
 
-        assert dialog.binary_path_edit.text() == ""
+        assert dialog.binary_path_edit.text() == ""  # type: ignore[attr-defined]
 
     def test_browse_button_has_tooltip(self, qapp: QApplication) -> None:
         """Browse button has informative tooltip."""
@@ -163,7 +163,7 @@ class TestSetupBinaryHeader:
 
         setup_binary_header(dialog, layout)
 
-        tooltip = dialog.browse_btn.toolTip()
+        tooltip = dialog.browse_btn.toolTip()  # type: ignore[attr-defined]
         assert "browse" in tooltip.lower() or "select" in tooltip.lower()
 
 
@@ -178,7 +178,7 @@ class TestConnectBinarySignals:
         setup_binary_header(dialog, layout)
         connect_binary_signals(dialog)
 
-        dialog.binary_path_edit.setText("/new/path.exe")
+        dialog.binary_path_edit.setText("/new/path.exe")  # type: ignore[attr-defined]
 
         assert dialog.binary_path == "/new/path.exe"
 
@@ -191,7 +191,7 @@ class TestConnectBinarySignals:
         connect_binary_signals(dialog)
 
         test_path = "/test/executable.dll"
-        dialog.binary_path_edit.setText(test_path)
+        dialog.binary_path_edit.setText(test_path)  # type: ignore[attr-defined]
 
         assert dialog.binary_path == test_path
 
@@ -213,11 +213,11 @@ class TestBrowseBinaryFile:
 
         from intellicrack.ui import dialog_utils
 
-        monkeypatch.setattr(dialog_utils.QFileDialog, "getOpenFileName", mock_get_open_filename)
+        monkeypatch.setattr(dialog_utils.QFileDialog, "getOpenFileName", mock_get_open_filename)  # type: ignore[attr-defined]
 
         browse_binary_file(dialog)
 
-        assert dialog.binary_path_edit.text() == str(test_file)
+        assert dialog.binary_path_edit.text() == str(test_file)  # type: ignore[attr-defined]
         assert dialog.binary_path == str(test_file)
 
         test_file.unlink()
@@ -229,18 +229,18 @@ class TestBrowseBinaryFile:
         setup_binary_header(dialog, layout)
 
         original_path = "/original/path.exe"
-        dialog.binary_path_edit.setText(original_path)
+        dialog.binary_path_edit.setText(original_path)  # type: ignore[attr-defined]
 
         def mock_get_open_filename(*args: Any, **kwargs: Any) -> tuple[str, str]:
             return "", ""
 
         from intellicrack.ui import dialog_utils
 
-        monkeypatch.setattr(dialog_utils.QFileDialog, "getOpenFileName", mock_get_open_filename)
+        monkeypatch.setattr(dialog_utils.QFileDialog, "getOpenFileName", mock_get_open_filename)  # type: ignore[attr-defined]
 
         browse_binary_file(dialog)
 
-        assert dialog.binary_path_edit.text() == original_path
+        assert dialog.binary_path_edit.text() == original_path  # type: ignore[attr-defined]
 
 
 class TestOnBinaryPathChanged:
@@ -303,11 +303,11 @@ class TestIntegrationScenarios:
         setup_binary_header(dialog1, layout1)
         setup_binary_header(dialog2, layout2)
 
-        dialog1.binary_path_edit.setText("/path1.exe")
-        dialog2.binary_path_edit.setText("/path2.exe")
+        dialog1.binary_path_edit.setText("/path1.exe")  # type: ignore[attr-defined]
+        dialog2.binary_path_edit.setText("/path2.exe")  # type: ignore[attr-defined]
 
-        assert dialog1.binary_path_edit.text() == "/path1.exe"
-        assert dialog2.binary_path_edit.text() == "/path2.exe"
+        assert dialog1.binary_path_edit.text() == "/path1.exe"  # type: ignore[attr-defined]
+        assert dialog2.binary_path_edit.text() == "/path2.exe"  # type: ignore[attr-defined]
 
     def test_layout_structure_correct(self, qapp: QApplication) -> None:
         """Dialog layout structure is correct with all components."""
@@ -348,10 +348,10 @@ class TestEdgeCases:
         layout = QVBoxLayout()
 
         setup_binary_header(dialog, layout)
-        first_edit = dialog.binary_path_edit
+        first_edit = dialog.binary_path_edit  # type: ignore[attr-defined]
 
         setup_binary_header(dialog, layout)
-        second_edit = dialog.binary_path_edit
+        second_edit = dialog.binary_path_edit  # type: ignore[attr-defined]
 
         assert first_edit is not second_edit
 

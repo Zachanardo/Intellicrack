@@ -36,7 +36,7 @@ from intellicrack.core.certificate.layer_detector import (
 @pytest.fixture
 def sample_pe_with_crypto() -> Generator[Path, None, None]:
     """Create temporary PE binary importing crypto DLLs."""
-    pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+    pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)  # type: ignore[call-arg]
 
     pe.add_library("crypt32.dll")
     pe.add_library("sspicli.dll")
@@ -55,7 +55,7 @@ def sample_pe_with_crypto() -> Generator[Path, None, None]:
 @pytest.fixture
 def sample_pe_with_openssl() -> Generator[Path, None, None]:
     """Create temporary PE binary importing OpenSSL."""
-    pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+    pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)  # type: ignore[call-arg]
 
     pe.add_library("libssl.dll")
     pe.add_library("libcrypto.dll")
@@ -74,7 +74,7 @@ def sample_pe_with_openssl() -> Generator[Path, None, None]:
 @pytest.fixture
 def sample_pe_with_cert_pinning() -> Generator[Path, None, None]:
     """Create temporary PE binary with certificate pinning indicators."""
-    pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+    pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)  # type: ignore[call-arg]
 
     section: Any = lief.PE.Section(".rdata")
     section.content = list(b"certificate pin validation SHA-256 cert_verify")
@@ -94,7 +94,7 @@ def sample_pe_with_cert_pinning() -> Generator[Path, None, None]:
 @pytest.fixture
 def sample_pe_with_embedded_cert() -> Generator[Path, None, None]:
     """Create temporary PE binary with embedded certificate."""
-    pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+    pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)  # type: ignore[call-arg]
 
     cert_data: bytes = b"-----BEGIN CERTIFICATE-----\nMIIBkTCB+wIJAKHHCgVZU"
     section: Any = lief.PE.Section(".cert")
@@ -353,10 +353,10 @@ class TestOSLevelDetection:
         """Detect OS level confidence scales with number of crypto DLL imports."""
         detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        pe1: Any = lief.PE.Binary("test1", lief.PE.PE_TYPE.PE32)
+        pe1: Any = lief.PE.Binary("test1", lief.PE.PE_TYPE.PE32)  # type: ignore[call-arg]
         pe1.add_library("crypt32.dll")
 
-        pe2: Any = lief.PE.Binary("test2", lief.PE.PE_TYPE.PE32)
+        pe2: Any = lief.PE.Binary("test2", lief.PE.PE_TYPE.PE32)  # type: ignore[call-arg]
         pe2.add_library("crypt32.dll")
         pe2.add_library("sspicli.dll")
         pe2.add_library("schannel.dll")
@@ -371,7 +371,7 @@ class TestOSLevelDetection:
         """Detect OS level adds evidence entries for detected DLLs."""
         detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+        pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)  # type: ignore[call-arg]
         pe.add_library("crypt32.dll")
 
         layer_info: LayerInfo | None = detector._detect_os_level(pe)
@@ -383,7 +383,7 @@ class TestOSLevelDetection:
         """Detect OS level returns None without crypto DLL imports."""
         detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+        pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)  # type: ignore[call-arg]
         pe.add_library("kernel32.dll")
 
         layer_info: LayerInfo | None = detector._detect_os_level(pe)
@@ -413,7 +413,7 @@ class TestLibraryLevelDetection:
         """Detect library level adds evidence for TLS libraries."""
         detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+        pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)  # type: ignore[call-arg]
         pe.add_library("libssl.dll")
 
         layer_info: LayerInfo | None = detector._detect_library_level(pe)
@@ -424,7 +424,7 @@ class TestLibraryLevelDetection:
         """Detect library level returns None without TLS library imports."""
         detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+        pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)  # type: ignore[call-arg]
         pe.add_library("kernel32.dll")
 
         layer_info: LayerInfo | None = detector._detect_library_level(pe)
@@ -538,7 +538,7 @@ class TestServerLevelDetection:
         """Detect server level identifies activation/license server indicators."""
         detector: ValidationLayerDetector = ValidationLayerDetector()
 
-        pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+        pe: Any = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)  # type: ignore[call-arg]
         section: Any = lief.PE.Section(".rdata")
         section.content = list(b"license_server activation verify_license")
         pe.add_section(section)
@@ -609,7 +609,7 @@ class TestLayerDetectionIntegration:
         """Detect validation layers filters out low confidence detections."""
         detector = ValidationLayerDetector()
 
-        pe = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
+        pe = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)  # type: ignore[call-arg]
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as f:
             temp_path = Path(f.name)

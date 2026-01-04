@@ -166,7 +166,7 @@ class TestAnalysisTabInitialization:
         """Create AnalysisTab instance for testing."""
         from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
-        return AnalysisTab(shared_context=fake_context)
+        return AnalysisTab(shared_context=fake_context)  # type: ignore[arg-type]
 
     def test_analysis_tab_initialization(self, analysis_tab: Any) -> None:
         """AnalysisTab initializes with correct default state."""
@@ -233,7 +233,7 @@ class TestAnalysisTabInitialization:
         from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
         initial_connected = len(fake_context.app_context.binary_loaded._connected_slots)
-        tab = AnalysisTab(shared_context=fake_context)
+        tab = AnalysisTab(shared_context=fake_context)  # type: ignore[arg-type]
 
         assert len(fake_context.app_context.binary_loaded._connected_slots) > initial_connected
         assert len(fake_context.app_context.binary_unloaded._connected_slots) > 0
@@ -272,7 +272,7 @@ class TestAnalysisTabBinaryLoading:
         """Create AnalysisTab instance for testing."""
         from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
-        return AnalysisTab(shared_context=fake_context)
+        return AnalysisTab(shared_context=fake_context)  # type: ignore[arg-type]
 
     def test_binary_loading_updates_tab_state(
         self, analysis_tab: Any, sample_pe_binary: Path
@@ -373,7 +373,7 @@ class TestAnalysisTabStaticAnalysis:
         """Create AnalysisTab instance."""
         from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
-        return AnalysisTab(shared_context=fake_context)
+        return AnalysisTab(shared_context=fake_context)  # type: ignore[arg-type]
 
     def test_find_license_indicators_detects_strings(
         self, analysis_tab: Any, sample_pe_binary: Path
@@ -466,7 +466,7 @@ class TestAnalysisTabProtectionDetection:
         """Create AnalysisTab instance."""
         from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
-        return AnalysisTab(shared_context=fake_context)
+        return AnalysisTab(shared_context=fake_context)  # type: ignore[arg-type]
 
     @pytest.fixture
     def vmprotect_binary(self, tmp_path: Path) -> Path:
@@ -531,7 +531,7 @@ class TestAnalysisTabExportImport:
         """Create AnalysisTab instance."""
         from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
-        tab = AnalysisTab(shared_context=fake_context)
+        tab = AnalysisTab(shared_context=fake_context)  # type: ignore[arg-type]
         tab.analysis_results = {
             "protections": ["VMProtect", "Themida"],
             "license_checks": [{"address": "0x401000", "type": "serial"}],
@@ -554,13 +554,13 @@ class TestAnalysisTabExportImport:
         try:
             from PyQt6.QtWidgets import QFileDialog
             original_dialog = QFileDialog.getSaveFileName
-            QFileDialog.getSaveFileName = FakeFileDialog.getSaveFileName
+            QFileDialog.getSaveFileName = FakeFileDialog.getSaveFileName  # type: ignore[method-assign]
 
             analysis_tab.export_analysis_results()
         finally:
-            if original_dialog:
+            if original_dialog is not None:
                 from PyQt6.QtWidgets import QFileDialog
-                QFileDialog.getSaveFileName = original_dialog
+                QFileDialog.getSaveFileName = original_dialog  # type: ignore[method-assign]
 
         if export_file.exists():
             with open(export_file, encoding="utf-8") as f:
@@ -587,13 +587,13 @@ class TestAnalysisTabExportImport:
         try:
             from PyQt6.QtWidgets import QFileDialog
             original_dialog = QFileDialog.getSaveFileName
-            QFileDialog.getSaveFileName = FakeFileDialog.getSaveFileName
+            QFileDialog.getSaveFileName = FakeFileDialog.getSaveFileName  # type: ignore[method-assign]
 
             analysis_tab.export_structure_analysis()
         finally:
-            if original_dialog:
+            if original_dialog is not None:
                 from PyQt6.QtWidgets import QFileDialog
-                QFileDialog.getSaveFileName = original_dialog
+                QFileDialog.getSaveFileName = original_dialog  # type: ignore[method-assign]
 
         if export_file.exists():
             assert export_file.stat().st_size > 0
@@ -632,7 +632,7 @@ class TestAnalysisTabProfileManagement:
         """Create AnalysisTab instance."""
         from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
-        return AnalysisTab(shared_context=fake_context)
+        return AnalysisTab(shared_context=fake_context)  # type: ignore[arg-type]
 
     def test_update_profile_settings_quick_scan(
         self, analysis_tab: Any

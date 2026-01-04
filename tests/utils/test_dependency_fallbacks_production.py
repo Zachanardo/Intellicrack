@@ -11,6 +11,7 @@ Tests validate REAL dependency fallback capabilities:
 """
 
 import sys
+from types import ModuleType
 from typing import Any, Callable, Dict, Optional
 
 import pytest
@@ -417,7 +418,7 @@ class TestSafeImportFunctions:
         def raise_import_error(*args: Any, **kwargs: Any) -> None:
             raise ImportError("No pandas")
 
-        fake_pandas = FakePandasModule(should_fail=True)
+        fake_pandas: Any = FakePandasModule(should_fail=True)
         fake_pandas.DataFrame = type(
             "DataFrame", (), {"__init__": raise_import_error}
         )
@@ -478,8 +479,9 @@ class TestSafeImportFunctions:
         """safe_import_pyelftools returns True when available."""
         try:
             result = safe_import_pyelftools()
-            assert isinstance(result, bool) or result is None
-            assert PYELFTOOLS_AVAILABLE or result is False
+            assert result is None or isinstance(result, bool)
+            if result is not None:
+                assert PYELFTOOLS_AVAILABLE or result is False
         except ImportError:
             pass
 
@@ -500,7 +502,7 @@ class TestSafeModuleReplacer:
     def test_module_replacer_replaces_module_in_sys_modules(self) -> None:
         """SafeModuleReplacer replaces module in sys.modules."""
         replacer = SafeModuleReplacer()
-        original_module = FakeModule("test_module_replace", "1.0.0")
+        original_module: Any = FakeModule("test_module_replace", "1.0.0")
         sys.modules["test_module_replace"] = original_module
 
         replacer.replace_module(
@@ -513,7 +515,7 @@ class TestSafeModuleReplacer:
     def test_module_replacer_stores_original_module(self) -> None:
         """SafeModuleReplacer stores original module for restoration."""
         replacer = SafeModuleReplacer()
-        original_module = FakeModule("test_module_store", "1.0.0")
+        original_module: Any = FakeModule("test_module_store", "1.0.0")
         sys.modules["test_module_store"] = original_module
 
         replacer.replace_module(
@@ -526,7 +528,7 @@ class TestSafeModuleReplacer:
     def test_module_replacer_restores_original_module(self) -> None:
         """SafeModuleReplacer restores original module correctly."""
         replacer = SafeModuleReplacer()
-        original_module = FakeModule("test_module_restore", "1.0.0")
+        original_module: Any = FakeModule("test_module_restore", "1.0.0")
         sys.modules["test_module_restore"] = original_module
 
         replacer.replace_module(

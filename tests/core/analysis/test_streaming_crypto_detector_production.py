@@ -28,11 +28,11 @@ import tempfile
 import time
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Generator
 
 import pytest
 
-from intellicrack.core.analysis.cryptographic_routine_detector import CryptoAlgorithm, CryptographicRoutineDetector
+from intellicrack.core.analysis.cryptographic_routine_detector import CryptoAlgorithm, CryptoDetection, CryptographicRoutineDetector
 from intellicrack.core.analysis.streaming_crypto_detector import (
     ChunkCryptoResults,
     StreamingCryptoDetector,
@@ -110,7 +110,7 @@ def quick_detector() -> StreamingCryptoDetector:
 
 
 @pytest.fixture
-def temp_binary_with_aes() -> Path:
+def temp_binary_with_aes() -> Generator[Path, None, None]:
     """Create temporary binary containing AES S-box for testing."""
     detector = CryptographicRoutineDetector()
 
@@ -131,7 +131,7 @@ def temp_binary_with_aes() -> Path:
 
 
 @pytest.fixture
-def temp_binary_with_sha256() -> Path:
+def temp_binary_with_sha256() -> Generator[Path, None, None]:
     """Create temporary binary containing SHA-256 constants."""
     sha256_constants = [
         0x428A2F98, 0x71374491, 0xB5C0FBCF, 0xE9B5DBA5,
@@ -158,7 +158,7 @@ def temp_binary_with_sha256() -> Path:
 
 
 @pytest.fixture
-def temp_binary_with_rsa_constants() -> Path:
+def temp_binary_with_rsa_constants() -> Generator[Path, None, None]:
     """Create temporary binary containing RSA public exponent."""
     rsa_exponent = 65537
 
@@ -177,7 +177,7 @@ def temp_binary_with_rsa_constants() -> Path:
 
 
 @pytest.fixture
-def temp_large_binary_with_crypto() -> Path:
+def temp_large_binary_with_crypto() -> Generator[Path, None, None]:
     """Create large temporary binary with crypto constants distributed throughout."""
     detector = CryptographicRoutineDetector()
 
@@ -226,7 +226,7 @@ def progress_tracker() -> dict[str, Any]:
 
 
 @pytest.fixture
-def progress_callback(progress_tracker: dict[str, Any]) -> Callable:
+def progress_callback(progress_tracker: dict[str, Any]) -> Callable[[Any], None]:
     """Fixture providing progress callback function."""
     def callback(progress: Any) -> None:
         progress_tracker["calls"] += 1
@@ -288,7 +288,14 @@ class TestStreamingCryptoDetectorInitialization:
         detector = streaming_detector
 
         detector.detection_offsets.add(0x1000)
-        detector.global_detections.append(None)
+        dummy_detection = CryptoDetection(
+            algorithm=CryptoAlgorithm.AES,
+            offset=0x1000,
+            size=256,
+            confidence=0.95,
+            variant="AES-256",
+        )
+        detector.global_detections.append(dummy_detection)
 
         detector.initialize_analysis(system_binary)
 
@@ -844,7 +851,7 @@ class TestStreamingProgressCallbacks:
         self,
         temp_binary_with_aes: Path,
         progress_tracker: dict[str, Any],
-        progress_callback: Callable,
+        progress_callback: Callable[[Any], None],
     ) -> None:
         """Progress callback is invoked during streaming analysis."""
         results = analyze_crypto_streaming(
@@ -860,7 +867,7 @@ class TestStreamingProgressCallbacks:
         self,
         temp_binary_with_aes: Path,
         progress_tracker: dict[str, Any],
-        progress_callback: Callable,
+        progress_callback: Callable[[Any], None],
     ) -> None:
         """Progress callback tracks bytes processed correctly."""
         binary_size = temp_binary_with_aes.stat().st_size
@@ -878,7 +885,7 @@ class TestStreamingProgressCallbacks:
         self,
         temp_binary_with_aes: Path,
         progress_tracker: dict[str, Any],
-        progress_callback: Callable,
+        progress_callback: Callable[[Any], None],
     ) -> None:
         """Progress callback reports analysis stages."""
         results = analyze_crypto_streaming(
@@ -894,7 +901,7 @@ class TestStreamingProgressCallbacks:
         self,
         temp_binary_with_aes: Path,
         progress_tracker: dict[str, Any],
-        progress_callback: Callable,
+        progress_callback: Callable[[Any], None],
     ) -> None:
         """Progress values increase monotonically during analysis."""
         results = analyze_crypto_streaming(

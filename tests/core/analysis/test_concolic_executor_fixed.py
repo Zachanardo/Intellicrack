@@ -36,14 +36,16 @@ from tests.base_test import IntellicrackTestBase
 class RealSymbolicEngineTestHarness:
     """Real test harness for symbolic engine testing with actual implementations."""
 
-    def __init__(self, engine_name) -> None:
-        self.engine_name = engine_name
-        self.test_results = {}
-        self.execution_logs = []
+    def __init__(self, engine_name: str) -> None:
+        self.engine_name: str = engine_name
+        self.test_results: dict[str, dict[str, Any]] = {}
+        self.execution_logs: list[str] = []
 
-    def execute_path_exploration(self, binary_path, target_address, avoid_addresses):
+    def execute_path_exploration(
+        self, binary_path: str, target_address: int | None, avoid_addresses: list[int] | None
+    ) -> dict[str, Any]:
         """Execute real path exploration testing."""
-        result = {
+        result: dict[str, Any] = {
             'success': True,
             'engine': self.engine_name,
             'paths_explored': 5,
@@ -62,9 +64,9 @@ class RealSymbolicEngineTestHarness:
         self.execution_logs.append(f"Explored paths for {binary_path}")
         return result
 
-    def execute_license_bypass(self, binary_path):
+    def execute_license_bypass(self, binary_path: str) -> dict[str, Any]:
         """Execute real license bypass discovery."""
-        result = {
+        result: dict[str, Any] = {
             'success': True,
             'bypass_found': True,
             'engine': self.engine_name,
@@ -106,7 +108,7 @@ class TestConcolicExecutionEngineFixed(IntellicrackTestBase):
         else:
             # Filter for existing binaries
             self.pe_binaries = [p for p in self.pe_binaries if p.exists()]
-            self.test_binary = self.pe_binaries[0] if self.pe_binaries else self._create_realistic_pe_binary()
+            self.test_binary = self.pe_binaries[0] if self.pe_binaries else self._create_realistic_pe_binary()  # type: ignore[assignment]
             if not self.pe_binaries:
                 self.created_binaries.append(self.test_binary)
 
@@ -118,7 +120,7 @@ class TestConcolicExecutionEngineFixed(IntellicrackTestBase):
             except OSError:
                 pass
 
-    def _create_realistic_pe_binary(self) -> None:
+    def _create_realistic_pe_binary(self) -> str:
         """Create realistic PE binary with license check patterns for testing."""
         # Create a minimal but valid PE binary structure
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as f:
@@ -736,7 +738,7 @@ class TestProductionReadinessCriteria(IntellicrackTestBase):
             except OSError:
                 pass
 
-    def _create_production_test_binary(self) -> None:
+    def _create_production_test_binary(self) -> str:
         """Create production-grade test binary."""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as f:
             # Production-grade PE structure

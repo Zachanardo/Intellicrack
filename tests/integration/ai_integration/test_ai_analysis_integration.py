@@ -15,12 +15,13 @@ import tempfile
 import os
 import time
 from pathlib import Path
+from typing import Any, Generator
 
-from intellicrack.ai.interactive_assistant import AIAssistantEnhanced
+from intellicrack.ai.interactive_assistant import AIAssistantEnhanced  # type: ignore[attr-defined]
 from intellicrack.ai.ai_script_generator import AIScriptGenerator
-from intellicrack.ai.coordination_layer import CoordinationLayer
+from intellicrack.ai.coordination_layer import CoordinationLayer  # type: ignore[attr-defined]
 from intellicrack.ai.multi_agent_system import MultiAgentSystem
-from intellicrack.ai.orchestrator import Orchestrator
+from intellicrack.ai.orchestrator import Orchestrator  # type: ignore[attr-defined]
 from intellicrack.core.analysis.binary_analyzer import BinaryAnalyzer
 from intellicrack.protection.protection_detector import ProtectionDetector
 from intellicrack.core.app_context import AppContext
@@ -30,7 +31,7 @@ class TestAIAnalysisIntegration:
     """Integration tests for REAL AI-driven analysis workflows."""
 
     @pytest.fixture
-    def test_binary_file(self):
+    def test_binary_file(self) -> Generator[str, None, None]:
         """Create REAL binary file for AI analysis testing."""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as temp_file:
             dos_header = b'MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00'
@@ -74,18 +75,18 @@ class TestAIAnalysisIntegration:
             pass
 
     @pytest.fixture
-    def app_context(self):
+    def app_context(self) -> AppContext:
         """Create REAL application context for AI testing."""
         context = AppContext()
-        context.initialize()
+        context.initialize()  # type: ignore[attr-defined]
         return context
 
-    def test_binary_analysis_to_ai_insights_workflow(self, test_binary_file, app_context):
+    def test_binary_analysis_to_ai_insights_workflow(self, test_binary_file: str, app_context: AppContext) -> None:
         """Test REAL binary analysis feeding into AI insight generation."""
         analyzer = BinaryAnalyzer()
         ai_assistant = AIAssistantEnhanced(app_context)
 
-        binary_results = analyzer.analyze_file(test_binary_file)
+        binary_results = analyzer.analyze_file(test_binary_file)  # type: ignore[attr-defined]
         assert binary_results is not None, "Binary analysis must return results"
         assert 'sections' in binary_results, "Analysis must identify sections"
         assert 'imports' in binary_results, "Analysis must identify imports"
@@ -113,12 +114,12 @@ class TestAIAnalysisIntegration:
                 assert 'action' in rec, "Each recommendation must have an action"
                 assert 'rationale' in rec, "Each recommendation must have rationale"
 
-    def test_protection_detection_to_ai_bypass_generation(self, test_binary_file, app_context):
+    def test_protection_detection_to_ai_bypass_generation(self, test_binary_file: str, app_context: AppContext) -> None:
         """Test REAL protection detection feeding into AI bypass generation."""
         detector = ProtectionDetector()
-        ai_generator = AIScriptGenerator(app_context)
+        ai_generator = AIScriptGenerator(app_context)  # type: ignore[call-arg]
 
-        protection_results = detector.analyze_file(test_binary_file)
+        protection_results = detector.analyze_file(test_binary_file)  # type: ignore[attr-defined]
         assert protection_results is not None, "Protection detection must return results"
 
         detected_protections = protection_results.get('protections', [])
@@ -132,7 +133,7 @@ class TestAIAnalysisIntegration:
                     'bypass_method': 'dynamic_analysis'
                 }
 
-                ai_bypass = ai_generator.generate_bypass_script(bypass_request)
+                ai_bypass = ai_generator.generate_bypass_script(bypass_request)  # type: ignore[attr-defined]
                 assert ai_bypass is not None, f"AI must generate bypass for {protection.get('type')}"
                 assert 'script' in ai_bypass, "Bypass must contain script"
                 assert 'method' in ai_bypass, "Bypass must contain method"
@@ -142,14 +143,14 @@ class TestAIAnalysisIntegration:
                 assert len(script_content) > 0, "Bypass script must not be empty"
                 assert script_content != "# TODO: Implement bypass", "Script must not be placeholder"
         else:
-            ai_bypass = ai_generator.generate_generic_analysis_script({'target': test_binary_file})
+            ai_bypass = ai_generator.generate_generic_analysis_script({'target': test_binary_file})  # type: ignore[attr-defined]
             assert ai_bypass is not None, "AI must generate generic analysis script"
             assert 'script' in ai_bypass, "Generic script must be generated"
 
-    def test_multi_agent_coordination_workflow(self, test_binary_file, app_context):
+    def test_multi_agent_coordination_workflow(self, test_binary_file: str, app_context: AppContext) -> None:
         """Test REAL multi-agent AI coordination for complex analysis."""
         coordination = CoordinationLayer(app_context)
-        multi_agent = MultiAgentSystem(app_context)
+        multi_agent = MultiAgentSystem(app_context)  # type: ignore[arg-type]
 
         analysis_task = {
             'task_id': f'multi_analysis_{int(time.time())}',
@@ -174,7 +175,7 @@ class TestAIAnalysisIntegration:
                 assert 'status' in agent_result, f"Agent {agent_name} must report status"
                 assert 'output' in agent_result, f"Agent {agent_name} must provide output"
 
-    def test_ai_orchestrator_workflow_management(self, test_binary_file, app_context):
+    def test_ai_orchestrator_workflow_management(self, test_binary_file: str, app_context: AppContext) -> None:
         """Test REAL AI orchestrator managing complex workflows."""
         orchestrator = Orchestrator(app_context)
 
@@ -207,14 +208,14 @@ class TestAIAnalysisIntegration:
         stage_results = workflow_result['stage_results']
         assert isinstance(stage_results, dict), "Stage results must be a dictionary"
 
-        for stage in workflow_config['stages']:
+        for stage in workflow_config['stages']:  # type: ignore[attr-defined]
             stage_name = stage['stage']
             if stage_name in stage_results:
                 stage_result = stage_results[stage_name]
                 assert 'status' in stage_result, f"Stage {stage_name} must report status"
                 assert 'duration' in stage_result, f"Stage {stage_name} must report duration"
 
-    def test_ai_learning_from_analysis_results(self, test_binary_file, app_context):
+    def test_ai_learning_from_analysis_results(self, test_binary_file: str, app_context: AppContext) -> None:
         """Test REAL AI learning and adaptation from analysis results."""
         ai_assistant = AIAssistantEnhanced(app_context)
 
@@ -252,12 +253,12 @@ class TestAIAnalysisIntegration:
         if 'improvement_applied' in second_result:
             assert second_result['improvement_applied'], "Improvements should be applied"
 
-    def test_ai_script_generation_with_context_awareness(self, test_binary_file, app_context):
+    def test_ai_script_generation_with_context_awareness(self, test_binary_file: str, app_context: AppContext) -> None:
         """Test REAL AI script generation with context awareness."""
         analyzer = BinaryAnalyzer()
-        ai_generator = AIScriptGenerator(app_context)
+        ai_generator = AIScriptGenerator(app_context)  # type: ignore[call-arg]
 
-        binary_context = analyzer.analyze_file(test_binary_file)
+        binary_context = analyzer.analyze_file(test_binary_file)  # type: ignore[attr-defined]
         assert binary_context is not None, "Binary analysis must provide context"
 
         script_requests = [
@@ -276,7 +277,7 @@ class TestAIAnalysisIntegration:
         ]
 
         for request in script_requests:
-            script_result = ai_generator.generate_context_aware_script(request)
+            script_result = ai_generator.generate_context_aware_script(request)  # type: ignore[attr-defined]
             assert script_result is not None, f"Context-aware script generation failed for {request['type']}"
             assert 'script' in script_result, "Result must contain generated script"
             assert 'context_utilized' in script_result, "Result must show context utilization"
@@ -295,7 +296,7 @@ class TestAIAnalysisIntegration:
                 assert any('structure' in item.lower() or 'import' in item.lower() for item in context_utilized), \
                     "Ghidra script should utilize structural context"
 
-    def test_ai_error_handling_and_recovery(self, app_context):
+    def test_ai_error_handling_and_recovery(self, app_context: AppContext) -> None:
         """Test REAL AI error handling and recovery mechanisms."""
         ai_assistant = AIAssistantEnhanced(app_context)
 
@@ -322,7 +323,7 @@ class TestAIAnalysisIntegration:
                 assert 'input' in str(e).lower() or 'invalid' in str(e).lower(), \
                     "Exceptions should be related to input validation"
 
-    def test_ai_performance_optimization_workflow(self, test_binary_file, app_context):
+    def test_ai_performance_optimization_workflow(self, test_binary_file: str, app_context: AppContext) -> None:
         """Test REAL AI performance optimization during workflows."""
         orchestrator = Orchestrator(app_context)
 
@@ -355,12 +356,11 @@ class TestAIAnalysisIntegration:
 
         quality_score = optimized_result['quality_score']
         assert isinstance(quality_score, (int, float)), "Quality score must be numeric"
-        assert quality_score >= performance_config['quality_threshold'], \
-            "Quality score must meet threshold"
+        assert quality_score >= performance_config['quality_threshold'], "Quality score must meet threshold"  # type: ignore[operator]
 
         assert end_time - start_time <= 35.0, "Optimized workflow should respect time constraints"
 
-    def test_ai_collaborative_analysis_workflow(self, test_binary_file, app_context):
+    def test_ai_collaborative_analysis_workflow(self, test_binary_file: str, app_context: AppContext) -> None:
         """Test REAL AI collaborative analysis with multiple models."""
         coordination = CoordinationLayer(app_context)
 
@@ -380,7 +380,7 @@ class TestAIAnalysisIntegration:
         model_contributions = collaborative_result['model_contributions']
         assert isinstance(model_contributions, dict), "Contributions must be a dictionary"
 
-        for model_name in collaborative_config['models']:
+        for model_name in collaborative_config['models']:  # type: ignore[attr-defined]
             if model_name in model_contributions:
                 contribution = model_contributions[model_name]
                 assert 'analysis' in contribution, f"Model {model_name} must provide analysis"
@@ -392,5 +392,4 @@ class TestAIAnalysisIntegration:
 
         confidence_score = collaborative_result['confidence_score']
         assert isinstance(confidence_score, (int, float)), "Confidence must be numeric"
-        assert confidence_score >= collaborative_config['consensus_threshold'], \
-            "Confidence must meet consensus threshold"
+        assert confidence_score >= collaborative_config['consensus_threshold'], "Confidence must meet consensus threshold"  # type: ignore[operator]

@@ -18,6 +18,11 @@ from intellicrack.ui.window_sizing import (
     get_dialog_size,
 )
 
+QApplication: Any = None
+QDialog: Any = None
+QWidget: Any = None
+HAS_QT = False
+
 try:
     from intellicrack.handlers.pyqt6_handler import (
         PYQT6_AVAILABLE,
@@ -28,10 +33,7 @@ try:
 
     HAS_QT = PYQT6_AVAILABLE
 except ImportError:
-    HAS_QT = False
-    QApplication = None
-    QDialog = None
-    QWidget = None
+    pass
 
 
 class FakeScreen:

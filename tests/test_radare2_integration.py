@@ -50,7 +50,7 @@ except ImportError:
     r2pipe = None
 
 from intellicrack.core.analysis.radare2_enhanced_integration import (
-    Radare2EnhancedIntegration,
+    EnhancedR2Integration as Radare2EnhancedIntegration,
 )
 
 
@@ -398,11 +398,16 @@ class TestIntellicrackRadare2Integration:
     @pytest.mark.skipif(not R2PIPE_AVAILABLE or not RADARE2_AVAILABLE, reason="r2pipe or radare2 not available")
     def test_radare2_enhanced_integration_initialization(self) -> None:
         """Test Radare2EnhancedIntegration initialization."""
+        test_dir = tempfile.mkdtemp()
         try:
-            integration = Radare2EnhancedIntegration()
+            binary_path = Path(test_dir) / "test.exe"
+            binary_path.write_bytes(b'MZ\x90\x00' + b'\x00' * 100)
+            integration = Radare2EnhancedIntegration(str(binary_path))
             assert integration is not None
         except Exception:
             pytest.skip("Enhanced integration initialization failed")
+        finally:
+            shutil.rmtree(test_dir)
 
     def test_intellicrack_radare2_modules_exist(self) -> None:
         """Test that all Intellicrack radare2 modules are importable."""

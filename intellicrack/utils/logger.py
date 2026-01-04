@@ -265,9 +265,13 @@ def log_all_methods[C: type](cls: C) -> C:
         The class with all public methods decorated with logging.
 
     """
+    import types
+
     for attr_name, attr_value in cls.__dict__.items():
-        if callable(attr_value) and not attr_name.startswith("__"):
-            setattr(cls, attr_name, log_function_call(attr_value))
+        if not attr_name.startswith("__"):
+            is_method = isinstance(attr_value, (types.FunctionType, types.MethodType))
+            if is_method:
+                setattr(cls, attr_name, log_function_call(attr_value))
     return cls
 
 

@@ -35,6 +35,7 @@ from pathlib import Path
 from intellicrack.handlers.pyqt6_handler import (
     QAction,
     QApplication,
+    QCloseEvent,
     QColor,
     QEvent,
     QFont,
@@ -780,3 +781,18 @@ class EmbeddedTerminalWidget(QWidget):
 
         """
         return self._pid
+
+    def closeEvent(self, event: QCloseEvent | None) -> None:
+        """Handle widget close event.
+
+        Stops the output timer and any running process to prevent crashes
+        from timer callbacks accessing deleted widget.
+
+        Args:
+            event: The close event object.
+
+        """
+        if hasattr(self, "_output_timer") and self._output_timer is not None:
+            self._output_timer.stop()
+        self.stop_process()
+        super().closeEvent(event)

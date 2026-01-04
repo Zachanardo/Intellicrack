@@ -9,16 +9,19 @@ import os
 import importlib.util
 import traceback
 from pathlib import Path
+from types import ModuleType
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 
-def load_module_from_path(module_name, file_path):
+def load_module_from_path(module_name: str, file_path: str) -> Optional[ModuleType]:
     """Load a module from a file path."""
     spec = importlib.util.spec_from_file_location(module_name, file_path)
     if spec is None:
         return None
     module = importlib.util.module_from_spec(spec)
     try:
-        spec.loader.exec_module(module)
+        if spec.loader is not None:
+            spec.loader.exec_module(module)
         return module
     except Exception as e:
         print(f"Error loading module {module_name}: {e}")
@@ -26,7 +29,7 @@ def load_module_from_path(module_name, file_path):
         return None
 
 
-def validate_traffic_analyzer_import():
+def validate_traffic_analyzer_import() -> Tuple[bool, Optional[Type[Any]]]:
     """Validate that NetworkTrafficAnalyzer can be imported."""
     print("Testing NetworkTrafficAnalyzer import...")
 
@@ -45,7 +48,7 @@ def validate_traffic_analyzer_import():
         return False, None
 
 
-def validate_test_file():
+def validate_test_file() -> Tuple[bool, Optional[ModuleType]]:
     """Validate that the test file can be loaded."""
     print("\nTesting test file import...")
 
@@ -56,7 +59,7 @@ def validate_test_file():
         return False, None
 
     # Load test module
-    test_module = load_module_from_path("test_traffic_analyzer", test_file_path)
+    test_module = load_module_from_path("test_traffic_analyzer", str(test_file_path))
 
     if test_module is None:
         print("FAIL Failed to load test module")
@@ -79,12 +82,12 @@ def validate_test_file():
     return True, test_module
 
 
-def analyze_test_coverage(analyzer_class, test_module):
+def analyze_test_coverage(analyzer_class: Type[Any], test_module: ModuleType) -> Tuple[float, float]:
     """Analyze what methods are covered by tests."""
     print("\nAnalyzing test coverage...")
 
     # Get all methods from NetworkTrafficAnalyzer
-    analyzer_methods = []
+    analyzer_methods: List[Dict[str, Any]] = []
     for method_name in dir(analyzer_class):
         if callable(getattr(analyzer_class, method_name)):
             method = getattr(analyzer_class, method_name)
@@ -105,10 +108,10 @@ def analyze_test_coverage(analyzer_class, test_module):
     print(f"OK Found {len(test_methods)} test methods")
 
     # Analyze coverage mapping
-    method_coverage = {}
+    method_coverage: Dict[str, Dict[str, Any]] = {}
     for method in analyzer_methods:
-        method_name = method["name"]
-        method_coverage[method_name] = {"covered": False, "covering_tests": [], "is_critical": method["is_critical"]}
+        method_name_str: str = method["name"]
+        method_coverage[method_name_str] = {"covered": False, "covering_tests": [], "is_critical": method["is_critical"]}
 
     # Map tests to methods
     for test_name in test_methods:
@@ -182,7 +185,7 @@ def analyze_test_coverage(analyzer_class, test_module):
     return method_coverage_pct, critical_coverage_pct
 
 
-def test_basic_functionality(analyzer_class):
+def test_basic_functionality(analyzer_class: Type[Any]) -> bool:
     """Test basic functionality of NetworkTrafficAnalyzer."""
     print("\nTesting basic functionality...")
 
@@ -244,7 +247,7 @@ def test_basic_functionality(analyzer_class):
         return False
 
 
-def assess_production_readiness(method_coverage_pct, critical_coverage_pct):
+def assess_production_readiness(method_coverage_pct: float, critical_coverage_pct: float) -> bool:
     """Assess if the test suite is ready for production."""
     print(f"\n{'=' * 60}")
     print("PRODUCTION READINESS ASSESSMENT")
@@ -283,20 +286,20 @@ def assess_production_readiness(method_coverage_pct, critical_coverage_pct):
     return overall_score >= 75
 
 
-def main():
+def main() -> bool:
     """Run comprehensive validation."""
     print("NetworkTrafficAnalyzer Test Validation")
     print("=" * 60)
 
     # Step 1: Validate imports
     import_success, analyzer_class = validate_traffic_analyzer_import()
-    if not import_success:
+    if not import_success or analyzer_class is None:
         print("FAIL Cannot proceed - import failed")
         return False
 
     # Step 2: Validate test file
     test_load_success, test_module = validate_test_file()
-    if not test_load_success:
+    if not test_load_success or test_module is None:
         print("FAIL Cannot proceed - test file load failed")
         return False
 

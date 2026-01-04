@@ -18,7 +18,7 @@ Licensed under GNU GPL v3
 
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 
@@ -255,7 +255,7 @@ def sample_pe_binary() -> bytes:
 
 
 @pytest.fixture
-def temp_pe_file(sample_pe_binary: bytes) -> Path:
+def temp_pe_file(sample_pe_binary: bytes) -> Generator[Path, None, None]:
     """Create temporary PE file for testing."""
     with tempfile.NamedTemporaryFile(mode="wb", suffix=".exe", delete=False) as f:
         f.write(sample_pe_binary)
@@ -343,13 +343,16 @@ class TestVisualPatchEditorDialog:
         assert dialog.patch_list.count() == 3
 
         item0 = dialog.patch_list.item(0)
+        assert item0 is not None, "Expected patch list item 0"
         assert "0x401000" in item0.text()
         assert "NOP out license check" in item0.text()
 
         item1 = dialog.patch_list.item(1)
+        assert item1 is not None, "Expected patch list item 1"
         assert "0x401010" in item1.text()
 
         item2 = dialog.patch_list.item(2)
+        assert item2 is not None, "Expected patch list item 2"
         assert "0x401020" in item2.text()
 
         dialog.close()
@@ -412,7 +415,9 @@ class TestVisualPatchEditorDialog:
         assert dialog.patches[0]["new_bytes"] == b"\xC3"
         assert dialog.patches[0]["description"] == "Modified description"
 
-        item_text = dialog.patch_list.item(0).text()
+        item = dialog.patch_list.item(0)
+        assert item is not None, "Expected patch list item 0"
+        item_text = item.text()
         assert "0x401234" in item_text
         assert "Modified description" in item_text
 

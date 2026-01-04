@@ -17,9 +17,9 @@ import pytest
 
 
 try:
-    import angr  # type: ignore[import-untyped]
-    import claripy  # type: ignore[import-untyped]
-    from angr.exploration_techniques import DFS  # type: ignore[import-untyped]
+    import angr
+    import claripy
+    from angr.exploration_techniques import DFS
 
     ANGR_AVAILABLE = True
 except ImportError:
@@ -302,7 +302,7 @@ class TestSymbolicStateCreation:
             load_options={"main_opts": {"base_addr": 0}},
         )
 
-        state = project.factory.blank_state(addr=0x1000)
+        state = project.factory.blank_state(addr=0x1000)  # type: ignore[no-untyped-call]
 
         assert state is not None
         assert state.addr == 0x1000
@@ -315,7 +315,7 @@ class TestSymbolicStateCreation:
             load_options={"main_opts": {"base_addr": 0}},
         )
 
-        state = project.factory.call_state(
+        state = project.factory.call_state(  # type: ignore[no-untyped-call]
             0x1000,
             add_options={
                 angr.options.SYMBOLIC_WRITE_ADDRESSES,
@@ -335,7 +335,7 @@ class TestSymbolicStateCreation:
             load_options={"main_opts": {"base_addr": 0}},
         )
 
-        state = project.factory.blank_state(addr=0x1000)
+        state = project.factory.blank_state(addr=0x1000)  # type: ignore[no-untyped-call]
 
         vm_stack = claripy.BVS("vm_stack", 32 * 8)
         vm_ip = claripy.BVS("vm_ip", 32)
@@ -354,7 +354,7 @@ class TestSymbolicStateCreation:
             load_options={"main_opts": {"base_addr": 0}},
         )
 
-        state = project.factory.blank_state(addr=0x1000)
+        state = project.factory.blank_state(addr=0x1000)  # type: ignore[no-untyped-call]
 
         vm_stack = claripy.BVS("vm_stack", 64 * 8)
         vm_ip = claripy.BVS("vm_ip", 64)
@@ -373,7 +373,7 @@ class TestSymbolicStateCreation:
             load_options={"main_opts": {"base_addr": 0}},
         )
 
-        state = project.factory.blank_state(addr=0x1000)
+        state = project.factory.blank_state(addr=0x1000)  # type: ignore[no-untyped-call]
 
         vm_stack = claripy.BVS("vm_stack", 32)
 
@@ -396,8 +396,8 @@ class TestSymbolicExecution:
             load_options={"main_opts": {"base_addr": 0}},
         )
 
-        state = project.factory.blank_state(addr=0x1000)
-        simgr = project.factory.simgr(state)
+        state = project.factory.blank_state(addr=0x1000)  # type: ignore[no-untyped-call]
+        simgr = project.factory.simgr(state)  # type: ignore[no-untyped-call]
 
         assert simgr is not None
         assert len(simgr.active) == 1
@@ -410,8 +410,8 @@ class TestSymbolicExecution:
             load_options={"main_opts": {"base_addr": 0}},
         )
 
-        state = project.factory.blank_state(addr=0x1000)
-        simgr = project.factory.simgr(state)
+        state = project.factory.blank_state(addr=0x1000)  # type: ignore[no-untyped-call]
+        simgr = project.factory.simgr(state)  # type: ignore[no-untyped-call]
 
         try:
             simgr.explore(n=10)
@@ -427,10 +427,10 @@ class TestSymbolicExecution:
             load_options={"main_opts": {"base_addr": 0}},
         )
 
-        state = project.factory.blank_state(addr=0x1000)
-        simgr = project.factory.simgr(state)
+        state = project.factory.blank_state(addr=0x1000)  # type: ignore[no-untyped-call]
+        simgr = project.factory.simgr(state)  # type: ignore[no-untyped-call]
 
-        dfs_technique = DFS()
+        dfs_technique = DFS()  # type: ignore[no-untyped-call]
         simgr.use_technique(dfs_technique)
 
         assert dfs_technique in simgr._techniques
@@ -443,8 +443,8 @@ class TestSymbolicExecution:
             load_options={"main_opts": {"base_addr": 0}},
         )
 
-        state = project.factory.blank_state(addr=0x1000)
-        simgr = project.factory.simgr(state)
+        state = project.factory.blank_state(addr=0x1000)  # type: ignore[no-untyped-call]
+        simgr = project.factory.simgr(state)  # type: ignore[no-untyped-call]
 
         guided_technique = GuidedVMExploration(
             vm_dispatcher=0x1100,
@@ -463,8 +463,8 @@ class TestSymbolicExecution:
             load_options={"main_opts": {"base_addr": 0}},
         )
 
-        state = project.factory.blank_state(addr=0x1000)
-        simgr = project.factory.simgr(state)
+        state = project.factory.blank_state(addr=0x1000)  # type: ignore[no-untyped-call]
+        simgr = project.factory.simgr(state)  # type: ignore[no-untyped-call]
 
         mitigation = PathExplosionMitigation(max_active=50, max_total=500)
         simgr.use_technique(mitigation)
@@ -560,7 +560,7 @@ class TestConstraintSolving:
             load_options={"main_opts": {"base_addr": 0}},
         )
 
-        state = project.factory.blank_state(addr=0x1000)
+        state = project.factory.blank_state(addr=0x1000)  # type: ignore[no-untyped-call]
 
         val = claripy.BVS("test_val", 32)
         state.solver.add(val >= 0x1000)
@@ -576,7 +576,7 @@ class TestConstraintSolving:
             load_options={"main_opts": {"base_addr": 0}},
         )
 
-        state = project.factory.blank_state(addr=0x1000)
+        state = project.factory.blank_state(addr=0x1000)  # type: ignore[no-untyped-call]
 
         val = claripy.BVS("eval_test", 32)
         state.solver.add(val >= 0x1000)
@@ -927,7 +927,7 @@ class TestMemoryAndStateManagement:
             load_options={"main_opts": {"base_addr": 0}},
         )
 
-        state = project.factory.blank_state(addr=0x1000)
+        state = project.factory.blank_state(addr=0x1000)  # type: ignore[no-untyped-call]
 
         mem_addr = claripy.BVS("mem_addr", 32)
         mem_val = claripy.BVS("mem_val", 32)
@@ -952,7 +952,7 @@ class TestMemoryAndStateManagement:
             load_options={"main_opts": {"base_addr": 0}},
         )
 
-        state = project.factory.blank_state(addr=0x1000)
+        state = project.factory.blank_state(addr=0x1000)  # type: ignore[no-untyped-call]
 
         initial_eax = state.regs.eax
 
@@ -969,7 +969,7 @@ class TestMemoryAndStateManagement:
             load_options={"main_opts": {"base_addr": 0}},
         )
 
-        state = project.factory.blank_state(addr=0x1000)
+        state = project.factory.blank_state(addr=0x1000)  # type: ignore[no-untyped-call]
 
         assert hasattr(state, "history")
         assert hasattr(state.history, "bbl_addrs")

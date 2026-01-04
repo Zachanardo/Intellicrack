@@ -568,7 +568,7 @@ class AdvancedToolDiscovery:
 
         tool_configs: dict[str, dict[str, Any]] = {
             "ghidra": {
-                "executables": ["ghidra", "ghidraRun", "ghidraRun.bat"],
+                "executables": ["ghidraRun.bat", "ghidraRun.exe", "ghidra.exe"] if sys.platform == "win32" else ["ghidra", "ghidraRun"],
                 "search_strategy": "installation_based",
                 "required": False,
                 "priority": "high",
@@ -1036,6 +1036,14 @@ class AdvancedToolDiscovery:
             Dictionary containing validation results and tool information.
 
         """
+        # CRITICAL FIX: Ensure we only attempt to validate actual files, not directories
+        if not os.path.exists(tool_path) or not os.path.isfile(tool_path):
+            return {
+                "available": False,
+                "path": tool_path,
+                "validation": {"valid": False, "issues": ["Path is not a file"]},
+            }
+
         result: dict[str, Any] = {
             "available": False,
             "path": tool_path,

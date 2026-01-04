@@ -221,19 +221,24 @@ class TestProtocolStateMachineProduction:
         sm = ProtocolStateMachine(ProtocolType.HTTP_REST)
 
         assert sm.transition(LicenseState.AUTHENTICATING) is True
-        assert sm.state == LicenseState.AUTHENTICATING
+        current_state: LicenseState = sm.state
+        assert current_state == LicenseState.AUTHENTICATING
 
         assert sm.transition(LicenseState.AUTHENTICATED) is True
-        assert sm.state == LicenseState.AUTHENTICATED
+        current_state = sm.state
+        assert current_state == LicenseState.AUTHENTICATED
 
         assert sm.transition(LicenseState.VALIDATING) is True
-        assert sm.state == LicenseState.VALIDATING
+        current_state = sm.state
+        assert current_state == LicenseState.VALIDATING
 
         assert sm.transition(LicenseState.VALIDATED) is True
-        assert sm.state == LicenseState.VALIDATED
+        current_state = sm.state
+        assert current_state == LicenseState.VALIDATED
 
         assert sm.transition(LicenseState.ACTIVE) is True
-        assert sm.state == LicenseState.ACTIVE
+        current_state = sm.state
+        assert current_state == LicenseState.ACTIVE
 
     def test_invalid_state_transitions_rejected(self) -> None:
         """Invalid state transitions are rejected and state unchanged."""
@@ -519,7 +524,7 @@ class TestMITMProxyAddonProduction:
         """Request interception properly tracks intercepted requests."""
         state_machine = ProtocolStateMachine(ProtocolType.HTTP_REST)
         synthesizer = ResponseSynthesizer()
-        rules = {"block": [], "modify": []}
+        rules: dict[str, list[Any]] = {"block": [], "modify": []}
 
         addon = MITMProxyAddon(rules, state_machine, synthesizer)
 
@@ -573,9 +578,12 @@ class TestMITMProxyAddonProduction:
 
         assert flow.response is not None
         assert flow.response.status_code == 200
-        assert state_machine.state == LicenseState.ACTIVE
+        state_after: LicenseState = state_machine.state
+        assert state_after == LicenseState.ACTIVE
 
-        response_data = json.loads(flow.response.text)
+        response_text = flow.response.text
+        assert response_text is not None
+        response_data = json.loads(response_text)
         assert response_data["valid"] is True
         assert response_data["status"] == "active"
 
@@ -602,7 +610,9 @@ class TestMITMProxyAddonProduction:
         assert flow.response is not None
         assert flow.response.status_code == 200
         assert "text/xml" in flow.response.headers["Content-Type"]
-        assert "<soap:Envelope" in flow.response.text
+        response_text = flow.response.text
+        assert response_text is not None
+        assert "<soap:Envelope" in response_text
 
 
 class TestCloudLicenseProtocolHandlerProduction:

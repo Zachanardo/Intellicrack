@@ -15,7 +15,7 @@ import pickle
 import tempfile
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import numpy as np
 import pytest
@@ -54,7 +54,7 @@ def qapp() -> Any:
 
 
 @pytest.fixture
-def temp_dir() -> Path:
+def temp_dir() -> Generator[Path, None, None]:
     """Create temporary directory for test files."""
     with tempfile.TemporaryDirectory(prefix="finetuning_test_") as tmpdir:
         yield Path(tmpdir)
@@ -428,11 +428,11 @@ class TestLicenseAnalysisNeuralNetwork:
         )
 
         assert "metrics" in training_results
-        assert "loss_history" in training_results["metrics"]
-        assert len(training_results["metrics"]["loss_history"]) == 5
+        assert "loss_history" in training_results["metrics"]  # type: ignore[operator]
+        assert len(training_results["metrics"]["loss_history"]) == 5  # type: ignore[index]
 
-        final_loss = training_results["metrics"]["loss_history"][-1]
-        assert final_loss < initial_loss
+        final_loss = training_results["metrics"]["loss_history"][-1]  # type: ignore[index]
+        assert final_loss < initial_loss  # type: ignore[operator]
 
     def test_network_training_with_validation_data(self) -> None:
         """Neural network performs validation during training."""
@@ -452,9 +452,9 @@ class TestLicenseAnalysisNeuralNetwork:
             validation_data=(X_val, y_val),
         )
 
-        assert "validation_loss" in training_results["metrics"]
-        assert "validation_accuracy" in training_results["metrics"]
-        assert len(training_results["metrics"]["validation_loss"]) == 3
+        assert "validation_loss" in training_results["metrics"]  # type: ignore[operator]
+        assert "validation_accuracy" in training_results["metrics"]  # type: ignore[operator]
+        assert len(training_results["metrics"]["validation_loss"]) == 3  # type: ignore[index]
 
     def test_network_eval_mode(self) -> None:
         """Neural network switches to evaluation mode correctly."""
@@ -478,7 +478,7 @@ class TestLicenseAnalysisNeuralNetwork:
         assert "predictions" in prediction
         assert "confidence" in prediction
         assert "top_class" in prediction
-        assert prediction["predictions"].shape == (1, 32)
+        assert prediction["predictions"].shape == (1, 32)  # type: ignore[union-attr]
 
     def test_network_parameters_method(self) -> None:
         """Neural network returns flattened parameter list."""
@@ -899,9 +899,9 @@ class TestTrainingThread:
         X_val = np.random.randn(5, 1024)
         y_val = np.eye(32)[np.random.randint(0, 32, 5)]
 
-        thread._train_pytorch_license_model(
-            (X_train, y_train),
-            (X_val, y_val),
+        thread._train_pytorch_license_model(  # type: ignore[call-arg]
+            (X_train, y_train),  # type: ignore[arg-type]
+            (X_val, y_val),  # type: ignore[arg-type]
             epochs=1
         )
 
@@ -920,7 +920,7 @@ class TestTrainingThread:
         assert thread.is_stopped is False
         thread.stop()
         assert thread.is_stopped is True
-        assert thread.status == TrainingStatus.ERROR
+        assert thread.status == TrainingStatus.ERROR  # type: ignore[unreachable]
 
     def test_training_thread_pause_mechanism(
         self, sample_model_file: Path, sample_training_dataset: Path
@@ -953,7 +953,7 @@ class TestTrainingThread:
         assert thread.status == TrainingStatus.PAUSED
 
         thread.resume()
-        assert thread.status == TrainingStatus.TRAINING
+        assert thread.status == TrainingStatus.TRAINING  # type: ignore[comparison-overlap]
 
     def test_training_thread_creates_fallback_model(self, sample_training_dataset: Path) -> None:
         """TrainingThread creates fallback model when PyTorch unavailable."""
@@ -1534,7 +1534,7 @@ class TestDatasetFormats:
             f.write(json.dumps({"input": "Test 1", "output": "Output 1"}) + "\n")
             f.write(json.dumps({"input": "Test 2", "output": "Output 2"}) + "\n")
 
-        samples = []
+        samples: list[dict[str, Any]] = []
         with open(dataset_path, encoding="utf-8") as f:
             samples.extend(json.loads(line.strip()) for line in f)
         assert len(samples) == 2
@@ -1679,7 +1679,7 @@ class TestConvenienceFunctions:
         dialog = create_model_finetuning_dialog(parent)
 
         assert dialog is not None
-        assert dialog.parent == parent
+        assert dialog.parent == parent  # type: ignore[comparison-overlap]
 
 
 @pytest.mark.real_data

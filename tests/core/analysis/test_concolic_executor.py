@@ -16,11 +16,11 @@ import pytest
 from intellicrack.core.analysis.concolic_executor import (
     MANTICORE_AVAILABLE,
     ConcolicExecutionEngine,
-    Manticore,
     NativeConcolicState,
-    Plugin,
     run_concolic_execution,
 )
+from intellicrack.core.analysis.concolic_executor import Manticore  # type: ignore[attr-defined]
+from intellicrack.core.analysis.concolic_executor import Plugin  # type: ignore[attr-defined]
 
 
 CAPSTONE_AVAILABLE = False
@@ -317,7 +317,7 @@ class TestNativeConcolicState:
         original.memory[0x2000] = 0x42
         original.registers["eax"] = 0x100
         original.constraints.append("ZF==1")
-        original.execution_trace.append({"pc": 0x1000, "instruction": "test"})
+        original.execution_trace.append({"pc": 0x1000, "instruction": "test"})  # type: ignore[typeddict-item]
 
         forked = original.fork()
 
@@ -361,7 +361,7 @@ class TestNativeConcolicState:
 
         state.set_register("ebx", b"SYMBOLIC", symbolic=True)
 
-        assert state.registers["ebx"] == b"SYMBOLIC"
+        assert state.registers["ebx"] == b"SYMBOLIC"  # type: ignore[comparison-overlap]
         assert state.symbolic_registers["ebx"] == b"SYMBOLIC"
 
     def test_get_register_returns_value(self) -> None:
@@ -691,7 +691,7 @@ class TestManticoreNativeImplementation:
         state = NativeConcolicState(pc=0x1000)
         state.arch = "x64"
         state.registers["rsp"] = 0x7FFF0000
-        state.memory[0x7FFF0000:0x7FFF0008] = struct.pack("<Q", 0x2000)
+        state.memory[0x7FFF0000:0x7FFF0008] = struct.pack("<Q", 0x2000)  # type: ignore[index, assignment]
 
         m._manual_decode_instruction(state, bytes([0xC3]))
 
@@ -855,7 +855,7 @@ class TestConcolicExecutionEngine:
         assert engine.binary_path == str(simple_pe_binary)
         assert engine.max_iterations == 100
         assert engine.timeout == 300
-        assert engine.logger is not None
+        assert engine.logger is not None  # type: ignore[attr-defined]
 
     def test_initialization_with_missing_binary(self, tmp_path: Path) -> None:
         """ConcolicExecutionEngine raises error for missing binary."""
@@ -996,7 +996,7 @@ class TestConcolicExecutionEngine:
         engine = ConcolicExecutionEngine.__new__(ConcolicExecutionEngine)
         engine.binary_path = str(invalid_binary)
         engine.timeout = 1
-        engine.logger = logging.getLogger("test")
+        engine.logger = logging.getLogger("test")  # type: ignore[attr-defined]
 
         results = engine._native_analyze(str(invalid_binary))
 
@@ -1069,7 +1069,7 @@ class TestEdgeCases:
 
         state.set_register("eax", b"\x12\x34\x56\x78", symbolic=True)
 
-        assert state.registers["eax"] == b"\x12\x34\x56\x78"
+        assert state.registers["eax"] == b"\x12\x34\x56\x78"  # type: ignore[comparison-overlap]
         assert state.symbolic_registers["eax"] == b"\x12\x34\x56\x78"
 
     def test_execution_with_empty_binary(self, tmp_path: Path) -> None:
@@ -1184,7 +1184,7 @@ class TestEdgeCases:
 
     def test_concolic_engine_timeout_configuration(self, simple_pe_binary: Path) -> None:
         """ConcolicExecutionEngine respects timeout configuration."""
-        engine = ConcolicExecutionEngine(str(simple_pe_binary), timeout=0.5)
+        engine = ConcolicExecutionEngine(str(simple_pe_binary), timeout=0.5)  # type: ignore[arg-type]
 
         assert engine.timeout == 0.5
 
@@ -1307,7 +1307,7 @@ class TestRealWorldScenarios:
         engine = ConcolicExecutionEngine.__new__(ConcolicExecutionEngine)
         engine.binary_path = str(corrupt_binary)
         engine.timeout = 1
-        engine.logger = logging.getLogger("test")
+        engine.logger = logging.getLogger("test")  # type: ignore[attr-defined]
 
         results = engine._native_analyze(str(corrupt_binary))
 

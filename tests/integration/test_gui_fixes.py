@@ -13,7 +13,7 @@ from intellicrack.ui.widgets.cpu_status_widget import CPUStatusWidget
 from intellicrack.ui.widgets.gpu_status_widget import GPUStatusWidget
 
 
-def test_gui_fixes():
+def test_gui_fixes() -> int:
     """Test all GUI fixes are working correctly."""
     print("=" * 60)
     print("Testing All GUI Fixes")
@@ -31,7 +31,7 @@ def test_gui_fixes():
     app_context = AppContext()
 
     # Create shared context dictionary
-    shared_context = {
+    shared_context: dict[str, object] = {
         "app_context": app_context,
         "task_manager": None,
         "main_window": main_window

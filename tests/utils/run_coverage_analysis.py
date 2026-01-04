@@ -179,13 +179,13 @@ def analyze_test_coverage_manually() -> bool:
     test_file = project_root / "tests/unit/core/analysis/test_analysis_orchestrator.py"
     if not test_file.exists():
         print("FAIL Test file not found!")
-        return
+        return False
 
     # Read the source file
     source_file = project_root / "intellicrack/core/analysis/analysis_orchestrator.py"
     if not source_file.exists():
         print("FAIL Source file not found!")
-        return
+        return False
 
     try:
         test_content = Path(test_file).read_text()

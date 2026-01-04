@@ -79,7 +79,7 @@ class TestBinaryManagement:
     def test_set_binary_normalizes_path(self, manager: ParallelProcessingManager, test_binary: str) -> None:
         """set_binary() stores absolute path."""
         manager.set_binary(test_binary)
-        assert os.path.isabs(manager.binary_path)
+        assert os.path.isabs(manager.binary_path)  # type: ignore[arg-type]
 
 
 class TestTaskManagement:
@@ -149,7 +149,7 @@ class TestChunkBasedProcessing:
         mgr.set_binary(str(small_binary))
         results = mgr.process_binary_chunks()
 
-        assert len(results) == 1
+        assert len(results) == 1  # type: ignore[arg-type]
 
 
 class TestTaskBasedProcessing:
@@ -201,7 +201,7 @@ class TestPatternSearching:
     ) -> None:
         """run_parallel_pattern_search() finds patterns in binary."""
         patterns = [b"TEST_PATTERN", b"FIND_ME"]
-        matches = configured_manager.run_parallel_pattern_search(patterns, chunk_size_mb=1)
+        matches = configured_manager.run_parallel_pattern_search(patterns, chunk_size_mb=1)  # type: ignore[arg-type]
 
         assert isinstance(matches, list)
         test_pattern_found = any(b"TEST_PATTERN" in str(m.get("match", b"")).encode() for m in matches if "match" in m)
@@ -212,7 +212,7 @@ class TestPatternSearching:
     ) -> None:
         """run_parallel_pattern_search() returns match positions."""
         patterns = [b"MZ"]
-        if matches := configured_manager.run_parallel_pattern_search(patterns):
+        if matches := configured_manager.run_parallel_pattern_search(patterns):  # type: ignore[arg-type]
             assert all("position" in m for m in matches)
             assert matches[0]["position"] == 0
 
@@ -221,7 +221,7 @@ class TestPatternSearching:
     ) -> None:
         """run_parallel_pattern_search() handles patterns with no matches."""
         patterns = [b"NONEXISTENT_PATTERN_XYZ123"]
-        matches = configured_manager.run_parallel_pattern_search(patterns)
+        matches = configured_manager.run_parallel_pattern_search(patterns)  # type: ignore[arg-type]
         assert isinstance(matches, list)
 
 
@@ -409,7 +409,7 @@ class TestEdgeCasesAndErrorHandling:
         mgr.set_binary(test_binary)
         results = mgr.process_binary_chunks()
 
-        assert len(results) == 1
+        assert len(results) == 1  # type: ignore[arg-type]
 
     def test_parallel_pattern_search_with_empty_patterns(
         self, configured_manager: ParallelProcessingManager

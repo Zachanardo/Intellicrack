@@ -60,7 +60,7 @@ def create_test_analysis_result(**kwargs: Any) -> Any:
         "vtables": {},
         "exception_handlers": [],
     } | kwargs
-    return GhidraAnalysisResult(**defaults)
+    return GhidraAnalysisResult(**defaults)  # type: ignore[arg-type]
 
 
 @pytest.fixture

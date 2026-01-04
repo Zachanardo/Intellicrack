@@ -24,6 +24,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 import shutil
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -69,7 +70,7 @@ def temp_binary(tmp_path: Path, protected_binary: Path) -> Path:
 
 
 @pytest.fixture
-def sample_license_analysis() -> dict:
+def sample_license_analysis() -> dict[str, Any]:
     """Sample license analysis data for testing."""
     return {
         "license_checks": [
@@ -94,7 +95,7 @@ def sample_license_analysis() -> dict:
 
 
 @pytest.fixture
-def sample_r2_patches() -> list[dict]:
+def sample_r2_patches() -> list[dict[str, Any]]:
     """Sample R2 patch data for testing."""
     return [
         {
@@ -133,7 +134,7 @@ class TestIntegratedPatchGeneration:
         self,
         integrator: R2PatchIntegrator,
         protected_binary: Path,
-        sample_license_analysis: dict,
+        sample_license_analysis: dict[str, Any],
     ) -> None:
         """generate_integrated_patches must return result dictionary."""
         result = integrator.generate_integrated_patches(
@@ -149,7 +150,7 @@ class TestIntegratedPatchGeneration:
         self,
         integrator: R2PatchIntegrator,
         protected_binary: Path,
-        sample_license_analysis: dict,
+        sample_license_analysis: dict[str, Any],
     ) -> None:
         """generate_integrated_patches must include integration metadata."""
         result = integrator.generate_integrated_patches(
@@ -165,7 +166,7 @@ class TestIntegratedPatchGeneration:
     def test_generate_integrated_patches_handles_missing_binary(
         self,
         integrator: R2PatchIntegrator,
-        sample_license_analysis: dict,
+        sample_license_analysis: dict[str, Any],
     ) -> None:
         """generate_integrated_patches must handle missing binary gracefully."""
         result = integrator.generate_integrated_patches(
@@ -181,7 +182,7 @@ class TestIntegratedPatchGeneration:
         self,
         integrator: R2PatchIntegrator,
         protected_binary: Path,
-        sample_license_analysis: dict,
+        sample_license_analysis: dict[str, Any],
     ) -> None:
         """generate_integrated_patches must store binary path in result."""
         result = integrator.generate_integrated_patches(
@@ -198,7 +199,7 @@ class TestR2ToBinaryPatchConversion:
     def test_convert_r2_to_binary_patches_returns_list(
         self,
         integrator: R2PatchIntegrator,
-        sample_r2_patches: list[dict],
+        sample_r2_patches: list[dict[str, Any]],
     ) -> None:
         """_convert_r2_to_binary_patches must return list of BinaryPatch objects."""
         r2_result = {"automated_patches": sample_r2_patches, "memory_patches": []}
@@ -211,7 +212,7 @@ class TestR2ToBinaryPatchConversion:
     def test_convert_r2_to_binary_patches_processes_automated_patches(
         self,
         integrator: R2PatchIntegrator,
-        sample_r2_patches: list[dict],
+        sample_r2_patches: list[dict[str, Any]],
     ) -> None:
         """_convert_r2_to_binary_patches must process automated patches."""
         r2_result = {"automated_patches": sample_r2_patches, "memory_patches": []}
@@ -223,7 +224,7 @@ class TestR2ToBinaryPatchConversion:
     def test_convert_r2_to_binary_patches_processes_memory_patches(
         self,
         integrator: R2PatchIntegrator,
-        sample_r2_patches: list[dict],
+        sample_r2_patches: list[dict[str, Any]],
     ) -> None:
         """_convert_r2_to_binary_patches must process memory patches."""
         r2_result = {"automated_patches": [], "memory_patches": sample_r2_patches}
@@ -237,7 +238,7 @@ class TestR2ToBinaryPatchConversion:
         integrator: R2PatchIntegrator,
     ) -> None:
         """_convert_r2_to_binary_patches must handle empty patch lists."""
-        r2_result = {"automated_patches": [], "memory_patches": []}
+        r2_result: dict[str, list[dict[str, Any]]] = {"automated_patches": [], "memory_patches": []}
 
         patches = integrator._convert_r2_to_binary_patches(r2_result)
 

@@ -25,11 +25,14 @@ from intellicrack.ui.dialogs.export_dialog import ExportDialog, ExportWorker
 @pytest.fixture(scope="session")
 def qapp() -> QApplication:
     """Create QApplication instance for all tests."""
-    app = QApplication.instance()
-    if app is None:
+    existing_app = QApplication.instance()
+    if existing_app is None:
         app = QApplication([])
-    app.setApplicationName("IntellicrackExportTest")
-    return app
+        app.setApplicationName("IntellicrackExportTest")
+        return app
+    assert isinstance(existing_app, QApplication), "Expected QApplication instance"
+    existing_app.setApplicationName("IntellicrackExportTest")
+    return existing_app
 
 
 @pytest.fixture

@@ -262,7 +262,7 @@ class TestAnalysisScriptsWhitelist(TestFridaAnalyzerModule):
         if isinstance(whitelist, tuple):
             # Tuples are immutable by design
             with self.assertRaises(TypeError):
-                whitelist[0] = "malicious_script"
+                whitelist[0] = "malicious_script"  # type: ignore[index]
         elif isinstance(whitelist, list):
             # Lists should be defensive copies or protected
             original_len: int = len(whitelist)

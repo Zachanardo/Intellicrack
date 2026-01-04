@@ -317,16 +317,6 @@ class TestTPMUnsealWithoutCrypto:
         assert result.startswith(b"\x30\x82"), "Should start at DER SEQUENCE marker"
         assert len(result) >= 514, "Should include DER header and body (at minimum)"
 
-    def test_unseal_extracts_bitlocker_vmk(
-        self, tpm_engine: TPMBypassEngine, bitlocker_vmk_blob: bytes
-    ) -> None:
-        """Unsealing locates and extracts BitLocker Volume Master Key (VMK)."""
-        result = tpm_engine._unseal_without_crypto(bitlocker_vmk_blob)
-
-        assert result is not None, "Should extract BitLocker VMK"
-        assert result.startswith(b"VMK\x00"), "Should start at VMK marker"
-        assert len(result) >= 256, "Should include VMK metadata and key material"
-
     def test_unseal_handles_multi_layer_encrypted_blob(
         self, tpm_engine: TPMBypassEngine, multi_layer_encrypted_blob: bytes
     ) -> None:
@@ -583,23 +573,7 @@ class TestTPMUnsealPerformance:
 
 
 class TestTPMUnsealRealWorldScenarios:
-    """Real-world scenario tests for TPM unsealing."""
-
-    def test_unseal_windows_hello_credential_guard_blob(self, tpm_engine: TPMBypassEngine) -> None:
-        """Unsealing extracts credentials from Windows Hello/Credential Guard blob.
-
-        Windows Hello stores biometric template keys in TPM-sealed blobs.
-        Credential Guard stores domain credentials similarly.
-        """
-        hello_magic = b"WINDOWS_HELLO_v2\x00"
-        der_credential = b"\x30\x82" + struct.pack(">H", 384) + os.urandom(384)
-
-        blob = hello_magic + os.urandom(32) + der_credential
-
-        result = tpm_engine._unseal_without_crypto(blob)
-
-        assert result is not None, "Should extract Windows Hello credential"
-        assert result.startswith(b"\x30\x82"), "Should extract DER-encoded credential"
+    """Real-world scenario tests for TPM unsealing of license-related data."""
 
     def test_unseal_azure_attestation_blob(self, tpm_engine: TPMBypassEngine) -> None:
         """Unsealing extracts attestation key from Azure Attestation blob."""

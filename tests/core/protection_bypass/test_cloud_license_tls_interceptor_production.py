@@ -31,7 +31,7 @@ import tempfile
 import threading
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 from cryptography import x509
@@ -45,7 +45,7 @@ from intellicrack.core.protection_bypass.cloud_license import TLSInterceptor
 
 
 @pytest.fixture
-def temp_cert_dir() -> Path:
+def temp_cert_dir() -> Generator[Path, None, None]:
     """Create temporary directory for test certificates."""
     with tempfile.TemporaryDirectory() as tmpdir:
         yield Path(tmpdir)
@@ -58,10 +58,10 @@ def tls_interceptor() -> TLSInterceptor:
 
 
 @pytest.fixture
-def real_tls_server(temp_cert_dir: Path) -> dict[str, Any]:
+def real_tls_server(temp_cert_dir: Path) -> Generator[dict[str, Any], None, None]:
     """Create real TLS server for testing interception.
 
-    Returns:
+    Yields:
         Dictionary with server thread, port, certificate, and stop event
     """
     server_key = rsa.generate_private_key(
@@ -743,7 +743,9 @@ def test_tls_interceptor_supports_ecc_certificates_for_modern_tls(
     )
 
     assert isinstance(ecc_cert, x509.Certificate)
-    assert ecc_cert.public_key().curve.name == "secp256r1"
+    public_key = ecc_cert.public_key()
+    assert isinstance(public_key, ec.EllipticCurvePublicKey)
+    assert public_key.curve.name == "secp256r1"
 
 
 def test_tls_interceptor_handles_multiple_concurrent_certificate_generations(

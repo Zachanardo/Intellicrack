@@ -8,6 +8,7 @@ Licensed under GNU General Public License v3.0
 
 import tempfile
 from pathlib import Path
+from typing import Generator
 
 import pytest
 
@@ -18,17 +19,18 @@ from intellicrack.ui.icon_manager import IconManager, get_icon, get_icon_manager
 @pytest.fixture(scope="module")
 def qapp() -> QApplication:
     """Create QApplication instance for tests."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    return app
+    existing_app = QApplication.instance()
+    if existing_app is None:
+        return QApplication([])
+    assert isinstance(existing_app, QApplication), "Expected QApplication instance"
+    return existing_app
 
 
 class TestIconManager:
     """Production tests for IconManager class."""
 
     @pytest.fixture
-    def temp_icon_dir(self) -> Path:
+    def temp_icon_dir(self) -> Generator[Path, None, None]:
         """Create temporary icon directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             yield Path(tmpdir)
@@ -278,7 +280,7 @@ class TestEdgeCases:
     """Test edge cases and error handling."""
 
     @pytest.fixture
-    def temp_icon_dir(self) -> Path:
+    def temp_icon_dir(self) -> Generator[Path, None, None]:
         """Create temporary icon directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             yield Path(tmpdir)

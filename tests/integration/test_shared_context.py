@@ -15,7 +15,7 @@ from intellicrack.ui.tabs.exploitation_tab import ExploitationTab
 from intellicrack.ui.tabs.tools_tab import ToolsTab
 
 
-def test_shared_context():
+def test_shared_context() -> bool:
     """Test that binary loading is shared across all tabs."""
     print("=" * 60)
     print("Testing Shared Context Functionality")
@@ -28,7 +28,7 @@ def test_shared_context():
     app_context = AppContext()
 
     # Create shared context dictionary
-    shared_context = {
+    shared_context: dict[str, object] = {
         "app_context": app_context,
         "task_manager": None,
         "main_window": None

@@ -121,7 +121,7 @@ def get_qt_app() -> Optional[QApplication]:
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
-    return app
+    return app  # type: ignore[return-value]
 
 
 @pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 not available")
@@ -151,7 +151,7 @@ class TestIntellicrackMainWindow:
 
     def test_tab_widget_real_tabs_created(self, qtbot: Any) -> None:
         """Test that REAL tabs are created and accessible."""
-        tab_widget = self.main_window.tab_widget
+        tab_widget = self.main_window.tab_widget  # type: ignore[attr-defined]
         assert tab_widget.count() >= 6
 
         tab_titles: List[str] = [tab_widget.tabText(i) for i in range(tab_widget.count())]
@@ -191,8 +191,8 @@ class TestIntellicrackMainWindow:
         assert not analyze_button.isEnabled()
 
         if hasattr(self.main_window, "file_path_label"):
-            self.main_window.current_file_path = "C:\\test_binary.exe"
-            self.main_window._update_ui_state()
+            self.main_window.current_file_path = "C:\\test_binary.exe"  # type: ignore[attr-defined]
+            self.main_window._update_ui_state()  # type: ignore[attr-defined]
             qtbot.wait(100)
 
     def test_status_bar_real_updates(self, qtbot: Any) -> None:
@@ -208,7 +208,7 @@ class TestIntellicrackMainWindow:
 
     def test_tab_switching_real_widget_focus(self, qtbot: Any) -> None:
         """Test REAL tab switching and widget focus."""
-        tab_widget = self.main_window.tab_widget
+        tab_widget = self.main_window.tab_widget  # type: ignore[attr-defined]
         initial_tab: int = tab_widget.currentIndex()
 
         for i in range(tab_widget.count()):
@@ -225,12 +225,12 @@ class TestIntellicrackMainWindow:
         menu_bar = self.main_window.menuBar()
         assert menu_bar is not None
 
-        menus = menu_bar.findChildren(object)
+        menus = menu_bar.findChildren(object)  # type: ignore[type-var]
         assert len(menus) > 0
 
         for menu in menu_bar.actions():
             if menu.menu():
-                for action in menu.menu().actions():
+                for action in menu.menu().actions():  # type: ignore[union-attr]
                     if not action.isSeparator():
                         assert action.text() != ""
 
@@ -265,7 +265,7 @@ class TestIntellicrackMainWindow:
         assert central_widget is not None
         assert central_widget.parent() == self.main_window
 
-        tab_widget = self.main_window.tab_widget
+        tab_widget = self.main_window.tab_widget  # type: ignore[attr-defined]
         assert tab_widget.parent() == central_widget
 
         for i in range(tab_widget.count()):
@@ -295,7 +295,7 @@ class TestIntellicrackMainWindow:
 
     def test_analysis_workflow_real_orchestrator_integration(self, qtbot: Any) -> None:
         """Test REAL analysis workflow with orchestrator integration."""
-        orchestrator = self.main_window.analysis_orchestrator
+        orchestrator = self.main_window.analysis_orchestrator  # type: ignore[attr-defined]
         assert orchestrator is not None
 
         if hasattr(self.main_window, "_run_analysis"):
@@ -330,7 +330,7 @@ class TestIntellicrackMainWindow:
         if theme_manager := self.main_window.theme_manager:
             original_stylesheet: str = self.main_window.styleSheet()
 
-            theme_manager.apply_dark_theme()
+            theme_manager.apply_dark_theme()  # type: ignore[attr-defined]
             qtbot.wait(100)
 
             dark_stylesheet: str = self.main_window.styleSheet()

@@ -434,8 +434,9 @@ class TestPlatformCompatibility:
         """Linux-specific configuration applied on Linux."""
         if sys.platform == "win32":
             pytest.skip("Linux-specific test")
+            return  # type: ignore[unreachable]
 
-        monkeypatch.setattr(os, "environ", {"DISPLAY": ""})
+        monkeypatch.setattr(os, "environ", {"DISPLAY": ""})  # type: ignore[unreachable]
 
         import importlib
 

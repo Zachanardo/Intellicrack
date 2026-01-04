@@ -22,7 +22,7 @@ import os
 import struct
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 
@@ -37,7 +37,7 @@ from intellicrack.protection.intellicrack_protection_core import (
 
 
 @pytest.fixture
-def temp_pe32_binary() -> Path:
+def temp_pe32_binary() -> Generator[Path, None, None]:
     """Create realistic PE32 binary with protection signatures."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".exe")
 
@@ -77,7 +77,7 @@ def temp_pe32_binary() -> Path:
 
 
 @pytest.fixture
-def temp_pe64_vmprotect() -> Path:
+def temp_pe64_vmprotect() -> Generator[Path, None, None]:
     """Create PE64 binary with VMProtect signatures."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".exe")
 
@@ -102,7 +102,7 @@ def temp_pe64_vmprotect() -> Path:
 
 
 @pytest.fixture
-def temp_elf64_binary() -> Path:
+def temp_elf64_binary() -> Generator[Path, None, None]:
     """Create ELF64 binary for cross-platform testing."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix="")
 
@@ -129,7 +129,7 @@ def temp_elf64_binary() -> Path:
 
 
 @pytest.fixture
-def temp_upx_packed_binary() -> Path:
+def temp_upx_packed_binary() -> Generator[Path, None, None]:
     """Create UPX-packed binary for packer detection."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".exe")
 

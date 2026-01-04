@@ -115,7 +115,9 @@ class TestLogMessage:
         log_message("Test message")
 
         assert len(fake_logger.log_calls) == 1
-        level, message, kwargs = fake_logger.get_last_call()
+        last_call = fake_logger.get_last_call()
+        assert last_call is not None
+        level, message, kwargs = last_call
         assert "Test message" in message
 
     def test_accepts_string_level(self, fake_logger: FakeLogger) -> None:
@@ -145,7 +147,9 @@ class TestLogMessage:
             context={"key1": "value1", "key2": 42},
         )
 
-        level, message, kwargs = fake_logger.get_last_call()
+        last_call = fake_logger.get_last_call()
+        assert last_call is not None
+        level, message, kwargs = last_call
         assert "Context:" in message
         assert "key1=value1" in message or "key2=42" in message
 
@@ -153,7 +157,9 @@ class TestLogMessage:
         """log_message includes source identifier in message."""
         log_message("Test", source="test_module.test_function")
 
-        level, message, kwargs = fake_logger.get_last_call()
+        last_call = fake_logger.get_last_call()
+        assert last_call is not None
+        level, message, kwargs = last_call
         assert "Source:" in message
         assert "test_module.test_function" in message
 
@@ -163,7 +169,9 @@ class TestLogMessage:
 
         log_message("Test", exception=test_exception)
 
-        level, message, kwargs = fake_logger.get_last_call()
+        last_call = fake_logger.get_last_call()
+        assert last_call is not None
+        level, message, kwargs = last_call
         assert "Exception:" in message
         assert "ValueError" in message
 

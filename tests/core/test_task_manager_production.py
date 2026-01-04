@@ -14,7 +14,7 @@ from intellicrack.core.task_manager import BaseTask, CallableTask, TaskManager, 
 
 
 @pytest.fixture
-def task_manager(qtbot: Any) -> TaskManager:  # noqa: ARG001
+def task_manager(qtbot: Any) -> TaskManager:  # type: ignore[misc] # noqa: ARG001
     """Create fresh TaskManager instance."""
     max_threads: int = 4
     manager: TaskManager = TaskManager(max_thread_count=max_threads)
@@ -162,7 +162,7 @@ def test_callable_task_execution(task_manager: TaskManager, qtbot: Any) -> None:
 def test_callable_task_with_kwargs(task_manager: TaskManager, qtbot: Any) -> None:
     """Callable tasks handle keyword arguments correctly."""
     def compute_power(base: int, exponent: int) -> int:
-        return base ** exponent
+        return base ** exponent  # type: ignore[no-any-return]
 
     task_id: str = task_manager.submit_callable(
         func=compute_power,
@@ -251,7 +251,7 @@ def test_task_error_handling(task_manager: TaskManager, qtbot: Any) -> None:
     assert "Intentional test failure" in error_events[0][2]
 
 
-def test_task_signals_emission(task_manager: TaskManager, qtbot) -> None:
+def test_task_signals_emission(task_manager: TaskManager, qtbot: Any) -> None:
     """Tasks emit all lifecycle signals correctly."""
     signals_received = {
         "started": False,
@@ -286,7 +286,7 @@ def test_task_signals_emission(task_manager: TaskManager, qtbot) -> None:
     assert all(signals_received.values()), f"Missing signals: {signals_received}"
 
 
-def test_task_manager_signals(task_manager: TaskManager, qtbot) -> None:
+def test_task_manager_signals(task_manager: TaskManager, qtbot: Any) -> None:
     """TaskManager emits manager-level signals correctly."""
     manager_signals = {
         "task_submitted": False,
@@ -301,7 +301,7 @@ def test_task_manager_signals(task_manager: TaskManager, qtbot) -> None:
         manager_signals["all_tasks_completed"] = True
 
     def on_active_task_count_changed(count: int) -> None:
-        manager_signals["active_task_count_changed"].append(count)
+        manager_signals["active_task_count_changed"].append(count)  # type: ignore[attr-defined]
 
     task_manager.task_submitted.connect(on_task_submitted)
     task_manager.all_tasks_completed.connect(on_all_tasks_completed)
@@ -315,11 +315,11 @@ def test_task_manager_signals(task_manager: TaskManager, qtbot) -> None:
 
     assert manager_signals["task_submitted"]
     assert manager_signals["all_tasks_completed"]
-    assert 1 in manager_signals["active_task_count_changed"]
-    assert 0 in manager_signals["active_task_count_changed"]
+    assert 1 in manager_signals["active_task_count_changed"]  # type: ignore[operator]
+    assert 0 in manager_signals["active_task_count_changed"]  # type: ignore[operator]
 
 
-def test_task_history_tracking(task_manager: TaskManager, qtbot) -> None:
+def test_task_history_tracking(task_manager: TaskManager, qtbot: Any) -> None:
     """TaskManager maintains accurate task history."""
     task1 = SimpleTask(value=2)
     task2 = SimpleTask(value=3)
@@ -347,7 +347,7 @@ def test_task_history_tracking(task_manager: TaskManager, qtbot) -> None:
         assert isinstance(entry["finished_at"], str)
 
 
-def test_task_history_size_limit(task_manager: TaskManager, qtbot) -> None:
+def test_task_history_size_limit(task_manager: TaskManager, qtbot: Any) -> None:
     """TaskManager limits history to prevent memory growth."""
     for i in range(110):
         task = SimpleTask(value=i, delay=0.001)
@@ -361,7 +361,7 @@ def test_task_history_size_limit(task_manager: TaskManager, qtbot) -> None:
     assert len(history) == max_history_size
 
 
-def test_callable_task_with_task_parameter(task_manager: TaskManager, qtbot) -> None:
+def test_callable_task_with_task_parameter(task_manager: TaskManager, qtbot: Any) -> None:
     """Callable tasks receive task reference when function accepts 'task' parameter."""
     task_ref_received = []
 
@@ -386,7 +386,7 @@ def test_callable_task_with_task_parameter(task_manager: TaskManager, qtbot) -> 
     assert isinstance(task_ref_received[0], BaseTask)
 
 
-def test_concurrent_task_thread_safety(task_manager: TaskManager, qtbot) -> None:
+def test_concurrent_task_thread_safety(task_manager: TaskManager, qtbot: Any) -> None:
     """TaskManager handles concurrent task submissions safely."""
     shared_state = {"counter": 0}
 
@@ -408,7 +408,7 @@ def test_concurrent_task_thread_safety(task_manager: TaskManager, qtbot) -> None
         pass
 
 
-def test_task_custom_id(task_manager: TaskManager, qtbot) -> None:
+def test_task_custom_id(task_manager: TaskManager, qtbot: Any) -> None:
     """Tasks accept and preserve custom task IDs."""
     custom_id = "custom-task-id-12345"
     task = SimpleTask(value=7, task_id=custom_id)
@@ -424,7 +424,7 @@ def test_task_custom_id(task_manager: TaskManager, qtbot) -> None:
     assert result == expected_result
 
 
-def test_get_active_tasks(task_manager: TaskManager, qtbot) -> None:
+def test_get_active_tasks(task_manager: TaskManager, qtbot: Any) -> None:
     """get_active_tasks returns correct task descriptions."""
     task1 = ProgressTask(steps=10, step_delay=0.1)
     task2 = ProgressTask(steps=10, step_delay=0.1)
@@ -459,7 +459,7 @@ def test_task_status_enum() -> None:
     assert TaskStatus.CANCELLED.value == "cancelled"
 
 
-def test_task_timestamps(task_manager: TaskManager, qtbot) -> None:
+def test_task_timestamps(task_manager: TaskManager, qtbot: Any) -> None:
     """Tasks record accurate start and finish timestamps."""
     task = SimpleTask(value=5, delay=0.1)
 
@@ -496,7 +496,7 @@ def test_get_result_for_nonexistent_task(task_manager: TaskManager) -> None:
     assert result is None
 
 
-def test_task_with_none_result(task_manager: TaskManager, qtbot) -> None:
+def test_task_with_none_result(task_manager: TaskManager, qtbot: Any) -> None:
     """Tasks that return None store result correctly."""
     def return_none() -> None:
         return None

@@ -755,7 +755,7 @@ class TestFailureConditions:
     ) -> None:
         """Missing VMProtect 1.x key schedule implementation causes decryption failure."""
         original_method = vmprotect_handler._vmprotect_1x_key_schedule
-        vmprotect_handler._vmprotect_1x_key_schedule = lambda key: []
+        setattr(vmprotect_handler, "_vmprotect_1x_key_schedule", lambda key: [])
 
         encrypted = b"\xDE\xAD\xBE\xEF" * 16
         key = b"\x12\x34\x56\x78" * 4
@@ -765,14 +765,14 @@ class TestFailureConditions:
                 encrypted, key, ProtectionType.VMPROTECT_1X
             )
 
-        vmprotect_handler._vmprotect_1x_key_schedule = original_method
+        setattr(vmprotect_handler, "_vmprotect_1x_key_schedule", original_method)
 
     def test_missing_2x_key_schedule_fails_decryption(
         self, vmprotect_handler: VMProtectHandler
     ) -> None:
         """Missing VMProtect 2.x key schedule implementation causes decryption failure."""
         original_method = vmprotect_handler._vmprotect_2x_key_schedule
-        vmprotect_handler._vmprotect_2x_key_schedule = lambda key: []
+        setattr(vmprotect_handler, "_vmprotect_2x_key_schedule", lambda key: [])
 
         encrypted = b"\xCA\xFE\xBA\xBE" * 16
         key = b"\xAA\xBB\xCC\xDD" * 8
@@ -782,14 +782,14 @@ class TestFailureConditions:
                 encrypted, key, ProtectionType.VMPROTECT_2X
             )
 
-        vmprotect_handler._vmprotect_2x_key_schedule = original_method
+        setattr(vmprotect_handler, "_vmprotect_2x_key_schedule", original_method)
 
     def test_missing_3x_key_schedule_fails_decryption(
         self, vmprotect_handler: VMProtectHandler
     ) -> None:
         """Missing VMProtect 3.x key schedule implementation causes decryption failure."""
         original_method = vmprotect_handler._vmprotect_3x_key_schedule
-        vmprotect_handler._vmprotect_3x_key_schedule = lambda key: []
+        setattr(vmprotect_handler, "_vmprotect_3x_key_schedule", lambda key: [])
 
         encrypted = b"\x0D\xF0\xAD\xBA" * 16
         key = hashlib.sha512(b"test").digest()
@@ -799,14 +799,14 @@ class TestFailureConditions:
                 encrypted, key, ProtectionType.VMPROTECT_3X
             )
 
-        vmprotect_handler._vmprotect_3x_key_schedule = original_method
+        setattr(vmprotect_handler, "_vmprotect_3x_key_schedule", original_method)
 
     def test_incomplete_key_schedule_produces_invalid_output(
         self, vmprotect_handler: VMProtectHandler
     ) -> None:
         """Incomplete key schedule produces invalid decryption output."""
         original_method = vmprotect_handler._vmprotect_1x_key_schedule
-        vmprotect_handler._vmprotect_1x_key_schedule = lambda key: [0] * 44
+        setattr(vmprotect_handler, "_vmprotect_1x_key_schedule", lambda key: [0] * 44)
 
         key = b"\x12\x34\x56\x78" * 4
         plaintext = b"\x90\xC3\xCC\xF4" * 16
@@ -821,4 +821,4 @@ class TestFailureConditions:
 
         assert decrypted != plaintext
 
-        vmprotect_handler._vmprotect_1x_key_schedule = original_method
+        setattr(vmprotect_handler, "_vmprotect_1x_key_schedule", original_method)

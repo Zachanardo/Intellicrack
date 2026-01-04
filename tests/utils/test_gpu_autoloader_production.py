@@ -320,10 +320,10 @@ class TestGPUSetup:
 
         def raise_on_first_call() -> FakeTorchModule:
             if not hasattr(raise_on_first_call, "call_count"):
-                raise_on_first_call.call_count = 0
-            raise_on_first_call.call_count += 1
+                raise_on_first_call.call_count = 0  # type: ignore[attr-defined]
+            raise_on_first_call.call_count += 1  # type: ignore[attr-defined]
 
-            if raise_on_first_call.call_count == 1:
+            if raise_on_first_call.call_count == 1:  # type: ignore[attr-defined]
                 raise RuntimeError("XPU error")
             return FakeTorchModule(cuda_available=True)
 
@@ -344,10 +344,10 @@ class TestGPUSetup:
 
         def raise_pybind11_error() -> FakeTorchModule:
             if not hasattr(raise_pybind11_error, "call_count"):
-                raise_pybind11_error.call_count = 0
-            raise_pybind11_error.call_count += 1
+                raise_pybind11_error.call_count = 0  # type: ignore[attr-defined]
+            raise_pybind11_error.call_count += 1  # type: ignore[attr-defined]
 
-            if raise_pybind11_error.call_count == 1:
+            if raise_pybind11_error.call_count == 1:  # type: ignore[attr-defined]
                 raise RuntimeError("pybind11::gil_scoped_acquire error")
             return FakeTorchModule()
 
@@ -886,7 +886,7 @@ class TestDetectGPUFrameworks:
         result = detect_gpu_frameworks()
 
         assert result["cuda"] is True
-        assert "CUDA" in result["available_frameworks"]
+        assert "CUDA" in result["available_frameworks"]  # type: ignore[operator]
 
     def test_handles_missing_frameworks(
         self, monkeypatch: pytest.MonkeyPatch

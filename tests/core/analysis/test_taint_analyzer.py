@@ -144,7 +144,7 @@ class TestTaintAnalyzerInitialization(unittest.TestCase):
 
     def test_analyzer_validates_taint_tracking_parameters(self) -> None:
         """Test that analyzer validates taint tracking parameters and handles edge cases."""
-        invalid_configs = [
+        invalid_configs: list[dict[str, Any]] = [
             {"tracking_granularity": "invalid_level"},  # Invalid granularity
             {"analysis_depth": {"max_call_depth": -1}},  # Invalid depth
             {"performance_config": {"memory_limit_mb": -100}},  # Invalid memory limit
@@ -153,10 +153,11 @@ class TestTaintAnalyzerInitialization(unittest.TestCase):
         ]
 
         for invalid_config in invalid_configs:
-            analyzer = TaintAnalyzer(self.test_binary_path, invalid_config)
+            analyzer = TaintAnalyzer(invalid_config)
+            analyzer.set_binary(self.test_binary_path)
             # Should not crash and should provide sensible defaults
             self.assertIsNotNone(analyzer.config)
-            self.assertTrue(hasattr(analyzer, 'taint_engine'))
+            self.assertTrue(hasattr(analyzer, 'logger'))
 
 
 class TestTaintSourceIdentification(unittest.TestCase):
@@ -336,7 +337,7 @@ class TestDataFlowTracking(unittest.TestCase):
 
     def test_analyze_string_operations_performs_character_level_tracking(self) -> None:
         """Test that string operation analysis performs character-level taint tracking."""
-        string_operations = [
+        string_operations: list[dict[str, Any]] = [
             {'func': 'strcpy', 'src': 'tainted_input', 'dst': 'buffer', 'length': 'unknown'},
             {'func': 'strcat', 'src': 'user_data', 'dst': 'output_buffer', 'length': 'dynamic'},
             {'func': 'sprintf', 'format': 'format_string', 'args': ['tainted_arg1', 'clean_arg2']},
@@ -359,7 +360,7 @@ class TestDataFlowTracking(unittest.TestCase):
 
     def test_control_flow_sensitive_tracking_maintains_path_context(self) -> None:
         """Test that control flow sensitive tracking maintains path context information."""
-        control_flow_scenarios = [
+        control_flow_scenarios: list[dict[str, Any]] = [
             {
                 'type': 'conditional_branch',
                 'condition': 'tainted_value > threshold',
@@ -441,7 +442,7 @@ class TestSinkDetectionAndVulnerabilityAnalysis(unittest.TestCase):
 
     def test_detect_memory_corruption_sinks_identifies_buffer_vulnerabilities(self) -> None:
         """Test that memory corruption sink detection identifies buffer overflow vulnerabilities."""
-        memory_functions = [
+        memory_functions: list[dict[str, Any]] = [
             {'name': 'strcpy', 'dst_buffer': {'size': 64, 'taint': 'partial'}, 'src_data': {'size': 'unknown', 'taint': 'full'}},
             {'name': 'sprintf', 'format': 'tainted_format', 'buffer': {'size': 128, 'taint': 'none'}},
             {'name': 'memcpy', 'dst': 'heap_buffer', 'src': 'tainted_input', 'size': 'user_controlled'},
@@ -858,23 +859,20 @@ class TestPerformanceOptimization(unittest.TestCase):
 
     def test_parallel_taint_analysis_scales_with_multiple_threads(self) -> None:
         """Test that parallel taint analysis scales effectively with multiple threads."""
-        analysis_workload = {
-            'functions_to_analyze': list(range(0x401000, 0x401000 + (50 * 0x100), 0x100)),  # 50 functions
-            'thread_configurations': [1, 2, 4, 8],
-            'workload_distribution': 'balanced'
-        }
+        functions_to_analyze: list[int] = list(range(0x401000, 0x401000 + (50 * 0x100), 0x100))
+        thread_configurations: list[int] = [1, 2, 4, 8]
 
-        performance_comparison = {}
-        for thread_count in analysis_workload['thread_configurations']:
+        performance_comparison: dict[int, dict[str, float]] = {}
+        for thread_count in thread_configurations:
             start_time = time.time()
             results = self.analyzer.analyze_functions_parallel(
-                analysis_workload['functions_to_analyze'],
+                functions_to_analyze,
                 thread_count
             )
             analysis_time = time.time() - start_time
             performance_comparison[thread_count] = {
                 'time': analysis_time,
-                'results_count': len(results) if results else 0
+                'results_count': float(len(results) if results else 0)
             }
 
         # Validate parallel processing scalability
@@ -892,9 +890,10 @@ class TestPerformanceOptimization(unittest.TestCase):
 
     def test_memory_efficient_analysis_manages_large_datasets(self) -> None:
         """Test that memory-efficient analysis manages large datasets effectively."""
-        large_dataset_config = {
+        memory_limit_str = '256MB'
+        large_dataset_config: dict[str, Any] = {
             'binary_size': '100MB',
-            'memory_limit': '256MB',
+            'memory_limit': memory_limit_str,
             'streaming_analysis': True,
             'incremental_processing': True,
             'checkpoint_frequency': '10MB'
@@ -913,8 +912,8 @@ class TestPerformanceOptimization(unittest.TestCase):
                     if 'memory_mb' in metric:
                         self.assertTrue(memory_analysis[metric] > 0)
                         # Should respect memory limits
-                        if large_dataset_config['memory_limit']:
-                            limit_mb = int(large_dataset_config['memory_limit'].replace('MB', ''))
+                        if memory_limit_str:
+                            limit_mb = int(memory_limit_str.replace('MB', ''))
                             # Allow some overhead but should be reasonably close to limit
                             self.assertTrue(memory_analysis[metric] <= limit_mb * 1.2)
 

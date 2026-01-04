@@ -12,7 +12,7 @@ from typing import Final
 
 import pytest
 
-from intellicrack.core.analysis.frida_protection_bypass import (
+from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
     FridaProtectionBypass,
     ProtectionInfo,
 )
@@ -90,15 +90,15 @@ def test_detect_upx3_x86_standard_signatures(bypass: FridaProtectionBypass) -> N
 
     detections: list[ProtectionInfo] = bypass.detect_packers()
 
-    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]
+    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]  # type: ignore[attr-defined]
     assert len(upx_detections) > 0, "UPX packer not detected in standard UPX3 x86 binary"
 
     upx_info: ProtectionInfo = upx_detections[0]
     assert upx_info.confidence >= 0.8, (
         f"UPX detection confidence too low: {upx_info.confidence}, expected >= 0.8"
     )
-    assert upx_info.version.startswith("3."), (
-        f"Incorrect UPX version detected: {upx_info.version}, expected 3.x"
+    assert upx_info.version.startswith("3."), (  # type: ignore[attr-defined]
+        f"Incorrect UPX version detected: {upx_info.version}, expected 3.x"  # type: ignore[attr-defined]
     )
 
 
@@ -132,7 +132,7 @@ def test_detect_upx3_x64_signatures(bypass: FridaProtectionBypass) -> None:
 
     detections: list[ProtectionInfo] = bypass.detect_packers()
 
-    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]
+    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]  # type: ignore[attr-defined]
     assert len(upx_detections) > 0, "UPX packer not detected in UPX3 x64 binary"
 
     upx_info: ProtectionInfo = upx_detections[0]
@@ -163,7 +163,7 @@ def test_detect_upx4_x86_advanced_signatures(bypass: FridaProtectionBypass) -> N
 
     detections: list[ProtectionInfo] = bypass.detect_packers()
 
-    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]
+    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]  # type: ignore[attr-defined]
     assert len(upx_detections) > 0, "UPX 4.x packer not detected"
 
     upx_info: ProtectionInfo = upx_detections[0]
@@ -196,7 +196,7 @@ def test_detect_upx4_x64_signatures(bypass: FridaProtectionBypass) -> None:
 
     detections: list[ProtectionInfo] = bypass.detect_packers()
 
-    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]
+    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]  # type: ignore[attr-defined]
     assert len(upx_detections) > 0, "UPX 4.x x64 packer not detected"
 
 
@@ -236,7 +236,7 @@ def test_detect_modified_upx_stub(bypass: FridaProtectionBypass) -> None:
 
     detections: list[ProtectionInfo] = bypass.detect_packers()
 
-    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]
+    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]  # type: ignore[attr-defined]
     assert len(upx_detections) > 0, (
         "Modified UPX stub not detected - heuristic detection failed"
     )
@@ -270,7 +270,7 @@ def test_detect_upx_lzma_compression(bypass: FridaProtectionBypass) -> None:
 
     detections: list[ProtectionInfo] = bypass.detect_packers()
 
-    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]
+    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]  # type: ignore[attr-defined]
     assert len(upx_detections) > 0, "UPX LZMA compressed binary not detected"
 
     upx_info: ProtectionInfo = upx_detections[0]
@@ -299,7 +299,7 @@ def test_detect_custom_upx_build(bypass: FridaProtectionBypass) -> None:
 
     detections: list[ProtectionInfo] = bypass.detect_packers()
 
-    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]
+    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]  # type: ignore[attr-defined]
     assert len(upx_detections) > 0, (
         "Custom UPX build not detected - detection may be too signature-dependent"
     )
@@ -327,7 +327,7 @@ def test_detect_upx_with_overlay_data(bypass: FridaProtectionBypass) -> None:
 
     detections: list[ProtectionInfo] = bypass.detect_packers()
 
-    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]
+    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]  # type: ignore[attr-defined]
     assert len(upx_detections) > 0, "UPX with overlay data not detected"
 
     upx_info: ProtectionInfo = upx_detections[0]
@@ -419,7 +419,7 @@ def test_upx_best_compression_detection(bypass: FridaProtectionBypass) -> None:
 
     detections: list[ProtectionInfo] = bypass.detect_packers()
 
-    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]
+    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]  # type: ignore[attr-defined]
     assert len(upx_detections) > 0, "UPX --best compression not detected"
 
 
@@ -444,7 +444,7 @@ def test_upx_brute_compression_detection(bypass: FridaProtectionBypass) -> None:
 
     detections: list[ProtectionInfo] = bypass.detect_packers()
 
-    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]
+    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]  # type: ignore[attr-defined]
     assert len(upx_detections) > 0, "UPX --brute compression not detected"
 
 
@@ -561,7 +561,7 @@ def test_upx_detection_no_false_positives_on_clean_binary(
 
     detections: list[ProtectionInfo] = bypass.detect_packers()
 
-    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]
+    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]  # type: ignore[attr-defined]
     assert len(upx_detections) == 0, (
         f"False positive: UPX detected in unpacked binary with confidence "
         f"{upx_detections[0].confidence if upx_detections else 'N/A'}"
@@ -620,7 +620,7 @@ def test_upx_detection_multiple_upx_sections(bypass: FridaProtectionBypass) -> N
 
     detections: list[ProtectionInfo] = bypass.detect_packers()
 
-    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]
+    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]  # type: ignore[attr-defined]
     assert len(upx_detections) == 1, (
         f"Expected exactly 1 UPX detection, got {len(upx_detections)} - "
         "detection may be duplicating results"
@@ -715,7 +715,7 @@ def test_upx_detection_confidence_scoring(bypass: FridaProtectionBypass) -> None
 
     detections: list[ProtectionInfo] = bypass.detect_packers()
 
-    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]
+    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]  # type: ignore[attr-defined]
     if len(upx_detections) == 0:
         pytest.skip("No UPX detection to test confidence scoring")
 
@@ -765,14 +765,14 @@ def test_upx_detection_version_identification(bypass: FridaProtectionBypass) -> 
 
     detections: list[ProtectionInfo] = bypass.detect_packers()
 
-    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]
+    upx_detections: list[ProtectionInfo] = [d for d in detections if "UPX" in d.name]  # type: ignore[attr-defined]
     if len(upx_detections) == 0:
         pytest.skip("No UPX detection to test version identification")
 
     upx_info: ProtectionInfo = upx_detections[0]
-    assert upx_info.version is not None and len(upx_info.version) > 0, (
+    assert upx_info.version is not None and len(upx_info.version) > 0, (  # type: ignore[attr-defined]
         "UPX version not identified in detection results"
     )
-    assert upx_info.version[0].isdigit(), (
-        f"UPX version format invalid: {upx_info.version}"
+    assert upx_info.version[0].isdigit(), (  # type: ignore[attr-defined]
+        f"UPX version format invalid: {upx_info.version}"  # type: ignore[attr-defined]
     )

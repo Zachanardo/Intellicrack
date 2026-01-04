@@ -324,7 +324,7 @@ class TestComputeHardwareIdHash:
 
     def test_hardware_id_hash_basic(self) -> None:
         """compute_hardware_id_hash returns hash bytes and hex string."""
-        components = ["CPU-12345", "MAC-AABBCCDD", "DISK-XYZ"]
+        components: list[bytes | str] = ["CPU-12345", "MAC-AABBCCDD", "DISK-XYZ"]
 
         hash_bytes, hex_str = compute_hardware_id_hash(components)
 
@@ -335,7 +335,7 @@ class TestComputeHardwareIdHash:
 
     def test_hardware_id_hash_deterministic(self) -> None:
         """compute_hardware_id_hash produces consistent output for same components."""
-        components = ["CPU-ID", "MAC-ADDR", "DISK-SN"]
+        components: list[bytes | str] = ["CPU-ID", "MAC-ADDR", "DISK-SN"]
 
         result1 = compute_hardware_id_hash(components)
         result2 = compute_hardware_id_hash(components)
@@ -344,14 +344,16 @@ class TestComputeHardwareIdHash:
 
     def test_hardware_id_hash_order_sensitive(self) -> None:
         """compute_hardware_id_hash is sensitive to component order."""
-        result1 = compute_hardware_id_hash(["A", "B", "C"])
-        result2 = compute_hardware_id_hash(["C", "B", "A"])
+        list1: list[bytes | str] = ["A", "B", "C"]
+        list2: list[bytes | str] = ["C", "B", "A"]
+        result1 = compute_hardware_id_hash(list1)
+        result2 = compute_hardware_id_hash(list2)
 
         assert result1 != result2
 
     def test_hardware_id_hash_accepts_bytes_components(self) -> None:
         """compute_hardware_id_hash accepts bytes components."""
-        components = [b"CPU-12345", b"MAC-AABBCC"]
+        components: list[bytes | str] = [b"CPU-12345", b"MAC-AABBCC"]
 
         hash_bytes, hex_str = compute_hardware_id_hash(components)
 
@@ -360,7 +362,7 @@ class TestComputeHardwareIdHash:
 
     def test_hardware_id_hash_mixed_types(self) -> None:
         """compute_hardware_id_hash handles mixed string/bytes components."""
-        components = ["CPU-STRING", b"MAC-BYTES", "DISK-STRING"]
+        components: list[bytes | str] = ["CPU-STRING", b"MAC-BYTES", "DISK-STRING"]
 
         hash_bytes, hex_str = compute_hardware_id_hash(components)
 
@@ -369,7 +371,7 @@ class TestComputeHardwareIdHash:
 
     def test_hardware_id_hash_hex_format(self) -> None:
         """compute_hardware_id_hash produces valid hex string."""
-        components = ["TEST1", "TEST2"]
+        components: list[bytes | str] = ["TEST1", "TEST2"]
 
         _, hex_str = compute_hardware_id_hash(components)
 
@@ -377,7 +379,7 @@ class TestComputeHardwareIdHash:
 
     def test_hardware_id_hash_matches_bytes(self) -> None:
         """compute_hardware_id_hash hex string matches bytes."""
-        components = ["CPU", "MAC"]
+        components: list[bytes | str] = ["CPU", "MAC"]
 
         hash_bytes, hex_str = compute_hardware_id_hash(components)
 
@@ -392,7 +394,7 @@ class TestComputeHardwareIdHash:
 
     def test_hardware_id_hash_realistic_components(self) -> None:
         """compute_hardware_id_hash handles realistic hardware identifiers."""
-        components = [
+        components: list[bytes | str] = [
             "CPU-Intel-Core-i7-12700K-Serial-12345",
             "MAC-00:1A:2B:3C:4D:5E",
             "DISK-SN-WD-WCC4E1234567",
@@ -406,7 +408,7 @@ class TestComputeHardwareIdHash:
 
     def test_hardware_id_hash_single_component(self) -> None:
         """compute_hardware_id_hash works with single component."""
-        components = ["SINGLE-HWID"]
+        components: list[bytes | str] = ["SINGLE-HWID"]
 
         hash_bytes, hex_str = compute_hardware_id_hash(components)
 
@@ -415,7 +417,7 @@ class TestComputeHardwareIdHash:
 
     def test_hardware_id_hash_many_components(self) -> None:
         """compute_hardware_id_hash handles many hardware components."""
-        components = [f"COMPONENT-{i}" for i in range(20)]
+        components: list[bytes | str] = [f"COMPONENT-{i}" for i in range(20)]
 
         hash_bytes, hex_str = compute_hardware_id_hash(components)
 
@@ -440,7 +442,7 @@ class TestSipHashIntegration:
     def test_hardware_locked_license_workflow(self) -> None:
         """SipHash functions support hardware-locked licensing."""
         license_key = "HWID-LICENSE-XYZ"
-        hardware_components = ["CPU-12345", "MAC-AABBCC"]
+        hardware_components: list[bytes | str] = ["CPU-12345", "MAC-AABBCC"]
 
         license_hash_bytes, _ = hash_license_key(license_key)
         hwid_hash_bytes, hwid_hex = compute_hardware_id_hash(hardware_components)
@@ -474,7 +476,7 @@ class TestSipHashIntegration:
 
     def test_hardware_id_uniqueness(self) -> None:
         """compute_hardware_id_hash produces unique IDs for different hardware."""
-        hw_configs = [
+        hw_configs: list[list[bytes | str]] = [
             ["CPU-A", "MAC-1"],
             ["CPU-B", "MAC-1"],
             ["CPU-A", "MAC-2"],

@@ -79,7 +79,7 @@ class TestComprehensiveR2IntegrationDetection:
 
         integration = ComprehensiveR2Integration()
         window = QMainWindow()
-        window.tab_widget = QTabWidget()
+        window.tab_widget = QTabWidget()  # type: ignore[attr-defined]
 
         method = integration._detect_integration_method(window)
 
@@ -94,7 +94,7 @@ class TestComprehensiveR2IntegrationDetection:
 
         integration = ComprehensiveR2Integration()
         widget = QWidget()
-        widget.tab_widget = QTabWidget()
+        widget.tab_widget = QTabWidget()  # type: ignore[attr-defined]
 
         method = integration._detect_integration_method(widget)
 
@@ -138,8 +138,8 @@ class TestComprehensiveR2IntegrationWithRealWidgets:
 
         integration = ComprehensiveR2Integration()
         window = QMainWindow()
-        window.tab_widget = QTabWidget()
-        window.setCentralWidget(window.tab_widget)
+        window.tab_widget = QTabWidget()  # type: ignore[attr-defined]
+        window.setCentralWidget(window.tab_widget)  # type: ignore[attr-defined]
 
         result = integration.integrate_with_application(window)
 
@@ -156,14 +156,14 @@ class TestComprehensiveR2IntegrationWithRealWidgets:
 
         integration = ComprehensiveR2Integration()
         window = QMainWindow()
-        window.tab_widget = QTabWidget()
-        window.setCentralWidget(window.tab_widget)
+        window.tab_widget = QTabWidget()  # type: ignore[attr-defined]
+        window.setCentralWidget(window.tab_widget)  # type: ignore[attr-defined]
 
-        initial_count = window.tab_widget.count()
+        initial_count = window.tab_widget.count()  # type: ignore[attr-defined]
 
         integration.integrate_with_application(window)
 
-        assert window.tab_widget.count() >= initial_count
+        assert window.tab_widget.count() >= initial_count  # type: ignore[attr-defined]
 
         window.close()
         window.deleteLater()
@@ -175,7 +175,7 @@ class TestComprehensiveR2IntegrationWithRealWidgets:
 
         integration = ComprehensiveR2Integration()
         widget = QWidget()
-        widget.tab_widget = QTabWidget()
+        widget.tab_widget = QTabWidget()  # type: ignore[attr-defined]
 
         result = integration.integrate_with_application(widget)
 
@@ -191,7 +191,7 @@ class TestComprehensiveR2IntegrationWithRealWidgets:
 
         integration = ComprehensiveR2Integration()
         window = QMainWindow()
-        window.tab_widget = QTabWidget()
+        window.tab_widget = QTabWidget()  # type: ignore[attr-defined]
 
         integration.integrate_with_application(window)
 
@@ -232,7 +232,7 @@ class TestComprehensiveR2IntegrationStatusTracking:
 
         integration = ComprehensiveR2Integration()
         window = QMainWindow()
-        window.tab_widget = QTabWidget()
+        window.tab_widget = QTabWidget()  # type: ignore[attr-defined]
 
         integration.integrate_with_application(window)
         status = integration.get_integration_status()
@@ -252,7 +252,7 @@ class TestComprehensiveR2IntegrationCleanup:
 
         integration = ComprehensiveR2Integration()
         window = QMainWindow()
-        window.tab_widget = QTabWidget()
+        window.tab_widget = QTabWidget()  # type: ignore[attr-defined]
 
         integration.integrate_with_application(window)
         integration.cleanup()
@@ -280,7 +280,7 @@ class TestComprehensiveR2IntegrationCleanup:
 
         integration = ComprehensiveR2Integration()
         window = QMainWindow()
-        window.tab_widget = QTabWidget()
+        window.tab_widget = QTabWidget()  # type: ignore[attr-defined]
 
         integration.integrate_with_application(window)
         integration.cleanup()
@@ -298,9 +298,9 @@ class TestComprehensiveR2IntegrationMultipleApps:
 
         integration = ComprehensiveR2Integration()
         window1 = QMainWindow()
-        window1.tab_widget = QTabWidget()
+        window1.tab_widget = QTabWidget()  # type: ignore[attr-defined]
         window2 = QMainWindow()
-        window2.tab_widget = QTabWidget()
+        window2.tab_widget = QTabWidget()  # type: ignore[attr-defined]
 
         integration.integrate_with_application(window1)
         integration.integrate_with_application(window2)
@@ -341,7 +341,7 @@ class TestComprehensiveR2IntegrationErrorHandling:
 
         integration = ComprehensiveR2Integration()
         window = QMainWindow()
-        window.tab_widget = QTabWidget()
+        window.tab_widget = QTabWidget()  # type: ignore[attr-defined]
 
         integration.integrate_with_application(window)
         manager = integration.get_ui_manager()
@@ -382,7 +382,7 @@ class TestModuleLevelIntegrationFunctions:
         cleanup_integration()
 
         window = QMainWindow()
-        window.tab_widget = QTabWidget()
+        window.tab_widget = QTabWidget()  # type: ignore[attr-defined]
 
         result = integrate_radare2_comprehensive(window)
 
@@ -402,7 +402,7 @@ class TestModuleLevelIntegrationFunctions:
         cleanup_integration()
 
         window = QMainWindow()
-        window.tab_widget = QTabWidget()
+        window.tab_widget = QTabWidget()  # type: ignore[attr-defined]
 
         integrate_radare2_comprehensive(window)
         status = get_integration_status()
@@ -421,7 +421,7 @@ class TestModuleLevelIntegrationFunctions:
         )
 
         window = QMainWindow()
-        window.tab_widget = QTabWidget()
+        window.tab_widget = QTabWidget()  # type: ignore[attr-defined]
 
         integrate_radare2_comprehensive(window)
         integration1 = get_comprehensive_integration()
@@ -448,18 +448,18 @@ class TestTabIntegrationFunctionality:
         cleanup_integration()
 
         window = QMainWindow()
-        window.tab_widget = QTabWidget()
-        window.setCentralWidget(window.tab_widget)
+        window.tab_widget = QTabWidget()  # type: ignore[attr-defined]
+        window.setCentralWidget(window.tab_widget)  # type: ignore[attr-defined]
 
         integrate_radare2_comprehensive(window)
 
-        if window.tab_widget.count() > 0:
-            window.tab_widget.setCurrentIndex(0)
-            assert window.tab_widget.currentIndex() == 0
+        if window.tab_widget.count() > 0:  # type: ignore[attr-defined]
+            window.tab_widget.setCurrentIndex(0)  # type: ignore[attr-defined]
+            assert window.tab_widget.currentIndex() == 0  # type: ignore[attr-defined]
 
-        if window.tab_widget.count() > 1:
-            window.tab_widget.setCurrentIndex(1)
-            assert window.tab_widget.currentIndex() == 1
+        if window.tab_widget.count() > 1:  # type: ignore[attr-defined]
+            window.tab_widget.setCurrentIndex(1)  # type: ignore[attr-defined]
+            assert window.tab_widget.currentIndex() == 1  # type: ignore[attr-defined]
 
         window.deleteLater()
         qapp.processEvents()
@@ -474,17 +474,17 @@ class TestTabIntegrationFunctionality:
         cleanup_integration()
 
         window = QMainWindow()
-        window.tab_widget = QTabWidget()
-        window.setCentralWidget(window.tab_widget)
+        window.tab_widget = QTabWidget()  # type: ignore[attr-defined]
+        window.setCentralWidget(window.tab_widget)  # type: ignore[attr-defined]
 
         existing_widget = QWidget()
-        window.tab_widget.addTab(existing_widget, "Existing Tab")
+        window.tab_widget.addTab(existing_widget, "Existing Tab")  # type: ignore[attr-defined]
 
-        initial_count = window.tab_widget.count()
+        initial_count = window.tab_widget.count()  # type: ignore[attr-defined]
         integrate_radare2_comprehensive(window)
 
-        assert window.tab_widget.count() >= initial_count
-        assert window.tab_widget.tabText(0) == "Existing Tab"
+        assert window.tab_widget.count() >= initial_count  # type: ignore[attr-defined]
+        assert window.tab_widget.tabText(0) == "Existing Tab"  # type: ignore[attr-defined]
 
         window.deleteLater()
         qapp.processEvents()
@@ -499,8 +499,8 @@ class TestIntegrationBinaryPathSync:
 
         integration = ComprehensiveR2Integration()
         window = QMainWindow()
-        window.tab_widget = QTabWidget()
-        window.binary_path = "test.exe"
+        window.tab_widget = QTabWidget()  # type: ignore[attr-defined]
+        window.binary_path = "test.exe"  # type: ignore[attr-defined]
 
         integration.integrate_with_application(window)
 

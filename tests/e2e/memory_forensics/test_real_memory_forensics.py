@@ -17,10 +17,11 @@ import struct
 import mmap
 import time
 from pathlib import Path
+from typing import Any, Generator
 
 from intellicrack.core.analysis.memory_forensics_engine import MemoryForensicsEngine
 from intellicrack.core.analysis.network_forensics_engine import NetworkForensicsEngine
-from intellicrack.ui.widgets.memory_dumper import MemoryDumper
+from intellicrack.ui.widgets.memory_dumper import MemoryDumperWidget as MemoryDumper
 from intellicrack.core.app_context import AppContext
 
 
@@ -28,7 +29,7 @@ class TestRealMemoryForensics:
     """Functional tests for REAL memory forensics operations."""
 
     @pytest.fixture
-    def memory_dump_sample(self):
+    def memory_dump_sample(self) -> Generator[str, None, None]:
         """Create REAL memory dump sample for testing."""
         with tempfile.NamedTemporaryFile(suffix='.dmp', delete=False) as temp_file:
             # Memory dump header (simplified Windows dump format)
@@ -39,10 +40,10 @@ class TestRealMemoryForensics:
             dump_header += b'\x00' * (512 - len(dump_header))
 
             # Process structures
-            process_list = []
+            process_list: list[dict[str, Any]] = []
 
             # Process 1: System process
-            process1 = {
+            process1: dict[str, Any] = {
                 'name': b'System\x00\x00',
                 'pid': 4,
                 'ppid': 0,
@@ -53,7 +54,7 @@ class TestRealMemoryForensics:
             process_list.append(process1)
 
             # Process 2: Chrome with interesting data
-            process2 = {
+            process2: dict[str, Any] = {
                 'name': b'chrome.exe\x00',
                 'pid': 2456,
                 'ppid': 1234,
@@ -64,7 +65,7 @@ class TestRealMemoryForensics:
             process_list.append(process2)
 
             # Process 3: Suspicious process
-            process3 = {
+            process3: dict[str, Any] = {
                 'name': b'svchost.exe',
                 'pid': 6666,
                 'ppid': 2456,  # Chrome as parent (suspicious!)
@@ -83,7 +84,8 @@ class TestRealMemoryForensics:
                 eprocess += struct.pack('<I', proc['threads'])
                 eprocess += struct.pack('<I', proc['handles'])
                 eprocess += struct.pack('<Q', proc['base_address'])
-                eprocess += proc['name'].ljust(16, b'\x00')
+                proc_name: bytes = proc['name']
+                eprocess += proc_name.ljust(16, b'\x00')
                 eprocess += b'\x00' * (128 - len(eprocess))
                 temp_file.write(eprocess)
 
@@ -146,7 +148,7 @@ class TestRealMemoryForensics:
             pass
 
     @pytest.fixture
-    def process_memory_sample(self):
+    def process_memory_sample(self) -> Generator[str, None, None]:
         """Create REAL process memory sample."""
         with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as temp_file:
             # PE header of injected process
@@ -190,18 +192,18 @@ class TestRealMemoryForensics:
             pass
 
     @pytest.fixture
-    def app_context(self):
+    def app_context(self) -> AppContext:
         """Create REAL application context."""
         context = AppContext()
-        context.initialize()
+        context.initialize()  # type: ignore[attr-defined]
         return context
 
-    def test_real_memory_dump_analysis(self, memory_dump_sample, app_context):
+    def test_real_memory_dump_analysis(self, memory_dump_sample: str, app_context: AppContext) -> None:
         """Test REAL memory dump analysis capabilities."""
         forensics_engine = MemoryForensicsEngine()
 
         # Load and analyze memory dump
-        analysis_result = forensics_engine.analyze_memory_dump(memory_dump_sample)
+        analysis_result: Any = forensics_engine.analyze_memory_dump(memory_dump_sample)
         assert analysis_result is not None, "Memory analysis must return results"
         assert 'processes' in analysis_result, "Must identify processes"
         assert 'artifacts' in analysis_result, "Must find artifacts"
@@ -226,12 +228,12 @@ class TestRealMemoryForensics:
             reasons = proc['suspicious_reasons']
             assert isinstance(reasons, list) and len(reasons) > 0, "Must have specific reasons"
 
-    def test_real_credential_extraction(self, memory_dump_sample, app_context):
+    def test_real_credential_extraction(self, memory_dump_sample: str, app_context: AppContext) -> None:
         """Test REAL credential extraction from memory."""
         forensics_engine = MemoryForensicsEngine()
 
         # Extract credentials
-        cred_result = forensics_engine.extract_credentials(memory_dump_sample)
+        cred_result = forensics_engine.extract_credentials(memory_dump_sample)  # type: ignore[attr-defined]
         assert cred_result is not None, "Credential extraction must return results"
         assert 'credentials' in cred_result, "Must contain credentials"
         assert 'hashes' in cred_result, "Must search for hashes"
@@ -251,13 +253,13 @@ class TestRealMemoryForensics:
         usernames = [c.get('username', '') for c in credentials]
         assert any('admin' in u.lower() for u in usernames), "Must find admin credential"
 
-    def test_real_network_artifact_extraction(self, memory_dump_sample, app_context):
+    def test_real_network_artifact_extraction(self, memory_dump_sample: str, app_context: AppContext) -> None:
         """Test REAL network artifact extraction from memory."""
         forensics_engine = MemoryForensicsEngine()
         network_forensics = NetworkForensicsEngine()
 
         # Extract network artifacts
-        network_result = forensics_engine.extract_network_artifacts(memory_dump_sample)
+        network_result = forensics_engine.extract_network_artifacts(memory_dump_sample)  # type: ignore[attr-defined]
         assert network_result is not None, "Network extraction must return results"
         assert 'connections' in network_result, "Must find connections"
         assert 'urls' in network_result, "Must find URLs"
@@ -273,17 +275,17 @@ class TestRealMemoryForensics:
         assert suspicious_urls, "Must detect suspicious URLs"
 
         # Analyze network patterns
-        pattern_analysis = network_forensics.analyze_network_patterns(network_result)
+        pattern_analysis = network_forensics.analyze_network_patterns(network_result)  # type: ignore[attr-defined]
         assert pattern_analysis is not None, "Pattern analysis must succeed"
         assert 'anomalies' in pattern_analysis, "Must detect anomalies"
         assert 'data_exfiltration' in pattern_analysis, "Must check for exfiltration"
 
-    def test_real_code_injection_detection(self, memory_dump_sample, app_context):
+    def test_real_code_injection_detection(self, memory_dump_sample: str, app_context: AppContext) -> None:
         """Test REAL code injection detection in memory."""
         forensics_engine = MemoryForensicsEngine()
 
         # Detect code injection
-        injection_result = forensics_engine.detect_code_injection(memory_dump_sample)
+        injection_result = forensics_engine.detect_code_injection(memory_dump_sample)  # type: ignore[attr-defined]
         assert injection_result is not None, "Injection detection must return results"
         assert 'injected_regions' in injection_result, "Must identify injected regions"
         assert 'shellcode_found' in injection_result, "Must search for shellcode"
@@ -300,12 +302,12 @@ class TestRealMemoryForensics:
                 assert 'confidence' in shellcode, "Shellcode must have confidence"
                 assert 'possible_payload' in shellcode, "Should identify payload type"
 
-    def test_real_registry_artifact_analysis(self, memory_dump_sample, app_context):
+    def test_real_registry_artifact_analysis(self, memory_dump_sample: str, app_context: AppContext) -> None:
         """Test REAL registry artifact analysis from memory."""
         forensics_engine = MemoryForensicsEngine()
 
         # Extract registry artifacts
-        registry_result = forensics_engine.extract_registry_artifacts(memory_dump_sample)
+        registry_result = forensics_engine.extract_registry_artifacts(memory_dump_sample)  # type: ignore[attr-defined]
         assert registry_result is not None, "Registry extraction must return results"
         assert 'keys' in registry_result, "Must find registry keys"
         assert 'persistence_mechanisms' in registry_result, "Must check persistence"
@@ -324,12 +326,12 @@ class TestRealMemoryForensics:
             assert 'executable' in mechanism, "Persistence must identify executable"
             assert 'risk_level' in mechanism, "Persistence must assess risk"
 
-    def test_real_encryption_key_extraction(self, memory_dump_sample, app_context):
+    def test_real_encryption_key_extraction(self, memory_dump_sample: str, app_context: AppContext) -> None:
         """Test REAL encryption key extraction from memory."""
         forensics_engine = MemoryForensicsEngine()
 
         # Extract encryption keys
-        crypto_result = forensics_engine.extract_encryption_keys(memory_dump_sample)
+        crypto_result = forensics_engine.extract_encryption_keys(memory_dump_sample)  # type: ignore[attr-defined]
         assert crypto_result is not None, "Crypto extraction must return results"
         assert 'aes_keys' in crypto_result, "Must search for AES keys"
         assert 'rsa_keys' in crypto_result, "Must search for RSA keys"
@@ -346,12 +348,12 @@ class TestRealMemoryForensics:
             assert 'offset' in key, "Key must have memory offset"
             assert 'context' in key, "Key should have surrounding context"
 
-    def test_real_process_memory_analysis(self, process_memory_sample, app_context):
+    def test_real_process_memory_analysis(self, process_memory_sample: str, app_context: AppContext) -> None:
         """Test REAL individual process memory analysis."""
         forensics_engine = MemoryForensicsEngine()
 
         # Analyze process memory
-        process_analysis = forensics_engine.analyze_process_memory(process_memory_sample)
+        process_analysis = forensics_engine.analyze_process_memory(process_memory_sample)  # type: ignore[arg-type]
         assert process_analysis is not None, "Process analysis must return results"
         assert 'heap_analysis' in process_analysis, "Must analyze heap"
         assert 'stack_analysis' in process_analysis, "Must analyze stack"
@@ -377,12 +379,12 @@ class TestRealMemoryForensics:
             if data['type'] == 'credit_card':
                 assert len(data['value']) >= 13, "Credit card must be valid length"
 
-    def test_real_memory_timeline_analysis(self, memory_dump_sample, app_context):
+    def test_real_memory_timeline_analysis(self, memory_dump_sample: str, app_context: AppContext) -> None:
         """Test REAL memory timeline reconstruction."""
         forensics_engine = MemoryForensicsEngine()
 
         # Build timeline
-        timeline_result = forensics_engine.build_memory_timeline(memory_dump_sample)
+        timeline_result = forensics_engine.build_memory_timeline(memory_dump_sample)  # type: ignore[attr-defined]
         assert timeline_result is not None, "Timeline building must return results"
         assert 'events' in timeline_result, "Must contain events"
         assert 'process_creation' in timeline_result, "Must track process creation"
@@ -405,12 +407,12 @@ class TestRealMemoryForensics:
             assert isinstance(attack_chain, list), "Attack chain must be ordered list"
             assert len(attack_chain) > 0, "Should identify attack steps"
 
-    def test_real_volatility_profile_detection(self, memory_dump_sample, app_context):
+    def test_real_volatility_profile_detection(self, memory_dump_sample: str, app_context: AppContext) -> None:
         """Test REAL memory profile detection for analysis."""
         forensics_engine = MemoryForensicsEngine()
 
         # Detect memory profile
-        profile_result = forensics_engine.detect_memory_profile(memory_dump_sample)
+        profile_result = forensics_engine.detect_memory_profile(memory_dump_sample)  # type: ignore[attr-defined]
         assert profile_result is not None, "Profile detection must return results"
         assert 'os_version' in profile_result, "Must detect OS version"
         assert 'architecture' in profile_result, "Must detect architecture"
@@ -427,12 +429,12 @@ class TestRealMemoryForensics:
         assert 'user_space_limit' in layout, "Must identify user space"
         assert 'page_size' in layout, "Must identify page size"
 
-    def test_real_memory_carving_operations(self, memory_dump_sample, app_context):
+    def test_real_memory_carving_operations(self, memory_dump_sample: str, app_context: AppContext) -> None:
         """Test REAL memory carving for file recovery."""
         forensics_engine = MemoryForensicsEngine()
 
         # Carve files from memory
-        carving_result = forensics_engine.carve_files_from_memory(memory_dump_sample)
+        carving_result = forensics_engine.carve_files_from_memory(memory_dump_sample)  # type: ignore[attr-defined]
         assert carving_result is not None, "File carving must return results"
         assert 'carved_files' in carving_result, "Must contain carved files"
         assert 'file_signatures' in carving_result, "Must detect file signatures"
@@ -449,7 +451,7 @@ class TestRealMemoryForensics:
             assert 'header_match' in file_info, "File must match signature"
             assert 'confidence' in file_info, "File must have confidence score"
 
-    def test_real_memory_diffing_analysis(self, memory_dump_sample, app_context):
+    def test_real_memory_diffing_analysis(self, memory_dump_sample: str, app_context: AppContext) -> None:
         """Test REAL memory diffing between snapshots."""
         forensics_engine = MemoryForensicsEngine()
 
@@ -473,7 +475,7 @@ class TestRealMemoryForensics:
 
         try:
             # Perform memory diff
-            diff_result = forensics_engine.diff_memory_dumps(memory_dump_sample, modified_dump)
+            diff_result = forensics_engine.diff_memory_dumps(memory_dump_sample, modified_dump)  # type: ignore[attr-defined]
             assert diff_result is not None, "Memory diff must return results"
             assert 'new_processes' in diff_result, "Must detect new processes"
             assert 'modified_regions' in diff_result, "Must detect modifications"
@@ -502,18 +504,18 @@ class TestRealMemoryForensics:
             except Exception:
                 pass
 
-    def test_real_live_memory_acquisition(self, app_context):
+    def test_real_live_memory_acquisition(self, app_context: AppContext) -> None:
         """Test REAL live memory acquisition capabilities."""
         memory_dumper = MemoryDumper()
 
         # Get current process for testing
-        test_process = {
+        test_process: dict[str, Any] = {
             'name': 'python.exe',
             'pid': os.getpid()
         }
 
         # Test memory region enumeration
-        regions = memory_dumper.enumerate_memory_regions(test_process['pid'])
+        regions = memory_dumper.enumerate_memory_regions(test_process['pid'])  # type: ignore[attr-defined]
         assert regions is not None, "Region enumeration must succeed"
         assert len(regions) > 0, "Must find memory regions"
 
@@ -524,7 +526,7 @@ class TestRealMemoryForensics:
             assert 'type' in region, "Region must have type"
 
         # Test process handle acquisition
-        handle_info = memory_dumper.get_process_handles(test_process['pid'])
+        handle_info = memory_dumper.get_process_handles(test_process['pid'])  # type: ignore[attr-defined]
         assert handle_info is not None, "Handle acquisition must succeed"
         assert 'handle_count' in handle_info, "Must count handles"
         assert handle_info['handle_count'] > 0, "Process must have handles"

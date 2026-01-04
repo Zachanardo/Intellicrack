@@ -119,6 +119,7 @@ class TestStartSnapshotComparison:
         success, data, error = start_snapshot_comparison(snapshots, "snap1", "snap2")
 
         assert success is True
+        assert data is not None, "Expected data to be set on success"
         assert data["s1"]["data"] == "first"
         assert data["s2"]["data"] == "second"
 
@@ -280,6 +281,7 @@ class TestSnapshotCommonIntegration:
 
         success, data, error = start_snapshot_comparison(snapshots, "before", "after")
         assert success is True
+        assert data is not None, "Expected data to be set on success"
 
         file_changes: dict[str, list[str]] = compare_file_lists(
             data["s1"]["files"],
@@ -305,5 +307,6 @@ class TestSnapshotCommonIntegration:
         success, data, error = start_snapshot_comparison(snapshots, "snap1", "snap2")
 
         assert success is True
+        assert data is not None, "Expected data to be set on success"
         assert data["s1"]["processes"][0]["pid"] == 100
         assert data["s2"]["processes"][0]["pid"] == 200

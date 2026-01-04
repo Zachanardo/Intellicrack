@@ -485,10 +485,10 @@ def test_settings_tab_accent_color_selection_applies(
 
     FakeQColorDialog.selected_color = test_color
 
-    apply_calls = {"count": 0, "color": None}
+    apply_calls: dict[str, Any] = {"count": 0, "color": None}
 
     def fake_apply_accent_color(color_hex: str) -> None:
-        apply_calls["count"] += 1
+        apply_calls["count"] = int(apply_calls["count"]) + 1
         apply_calls["color"] = color_hex
 
     monkeypatch.setattr(

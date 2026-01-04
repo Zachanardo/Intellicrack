@@ -784,7 +784,7 @@ class TestLicensingCrackWorkflow:
 
         integration = GhidraBinaryIntegration(mock_ghidra_path)
 
-        responses = [
+        responses: list[dict[str, Any]] = [
             {"success": True, "vmprotect_detected": True, "themida_detected": False, "enigma_detected": False},
             {"success": True, "oep": 0x401000},
             {"success": True, "validation_functions": 5},

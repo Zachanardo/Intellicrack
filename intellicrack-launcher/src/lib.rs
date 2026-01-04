@@ -35,6 +35,7 @@ pub mod process_manager;
 pub mod process_optimization;
 pub mod python_integration;
 pub mod security;
+pub mod signals;
 pub mod startup_checks;
 pub mod tensorflow_validator;
 pub mod tool_discovery;
@@ -114,79 +115,21 @@ impl IntellicrackLauncher {
             env_config_duration
         );
 
-        // Skip GIL safety initialization from Rust - Python will handle it lazily
-        // let gil_safety_start = std::time::Instant::now();
-        // GilSafetyManager::initialize_gil_safety()?;
-        // let gil_safety_duration = gil_safety_start.elapsed();
-        // tracing::info!(
-        //     "GIL safety initialization completed in {:.2?}",
-        //     gil_safety_duration
-        // );
+        // CRITICAL FIX: Skip PyO3 embedding entirely to avoid segfaults on Windows
+        // PyO3's embedded Python initialization causes memory corruption with certain
+        // DLL configurations (Intel MKL, oneAPI). Instead, we use subprocess mode
+        // which is safer and more reliable.
         tracing::info!(
-            "Skipping Rust-side GIL initialization - Python will initialize on first use"
+            "Using subprocess mode for Python execution (PyO3 embedding disabled for stability)"
         );
 
-        // NOW initialize Python with the correct environment and GIL safety
-        let python_init_start = std::time::Instant::now();
-        let mut python = match PythonIntegration::initialize() {
-            Ok(py) => py,
-            Err(e) => {
-                tracing::error!("Python initialization failed: {}", e);
-                #[cfg(target_os = "windows")]
-                {
-                    use std::ffi::OsStr;
-                    use std::os::windows::ffi::OsStrExt;
+        // Set PyBind11 environment variable for any Python code that might use it
+        unsafe {
+            std::env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1");
+        }
+        tracing::info!("PyBind11 GIL safety environment configured");
 
-                    let error_msg = format!(
-                        "Failed to initialize Python interpreter.\n\n\
-                         Error: {}\n\n\
-                         This may be caused by:\n\
-                         1. Missing or corrupted DLL files\n\
-                         2. Intel MKL version conflicts (system vs pixi)\n\
-                         3. Entry point errors in mkl_sycl_blas.5.dll\n\n\
-                         Run scripts/dll_diagnostics.py for detailed analysis.\n\n\
-                         Press OK to exit safely.",
-                        e
-                    );
-
-                    let wide: Vec<u16> = OsStr::new(&error_msg)
-                        .encode_wide()
-                        .chain(std::iter::once(0))
-                        .collect();
-                    let title: Vec<u16> = OsStr::new("Intellicrack - Python Initialization Failed")
-                        .encode_wide()
-                        .chain(std::iter::once(0))
-                        .collect();
-
-                    unsafe {
-                        winapi::um::winuser::MessageBoxW(
-                            std::ptr::null_mut(),
-                            wide.as_ptr(),
-                            title.as_ptr(),
-                            winapi::um::winuser::MB_OK | winapi::um::winuser::MB_ICONERROR,
-                        );
-                    }
-                }
-                eprintln!("\n❌ FATAL: Python initialization failed");
-                eprintln!("Error: {}", e);
-                eprintln!("\nRun: pixi run python scripts/dll_diagnostics.py");
-                eprintln!("To diagnose DLL loading issues.");
-                std::process::exit(1);
-            }
-        };
-        let python_init_duration = python_init_start.elapsed();
-        tracing::info!(
-            "Python integration initialized in {:.2?}",
-            python_init_duration
-        );
-
-        // Configure PyBind11 compatibility
-        python.configure_pybind11_compatibility()?;
-
-        self.python = Some(python);
-
-        // Security initialization will be handled by Python subprocess to avoid embedded Python issues
-        // The Rust launcher just sets up the environment - Python does the actual security init
+        // Security initialization will be handled by Python subprocess
         tracing::info!("Security initialization deferred to Python subprocess");
 
         // Skip comprehensive dependency validation for faster startup
@@ -207,17 +150,16 @@ impl IntellicrackLauncher {
         let rust_setup_duration = total_launch_start.elapsed();
         tracing::info!("Total Rust setup completed in {:.2?}", rust_setup_duration);
 
-        // Check for test mode
+        // Launch main application via subprocess
+        // This is the only safe way to run Python with complex DLL dependencies
         let main_exec_start = std::time::Instant::now();
         let exit_code = if std::env::var("RUST_LAUNCHER_TEST_MODE").is_ok() {
-            tracing::info!("Test mode enabled - running environment verification");
-            self.python
-                .as_ref()
-                .ok_or_else(|| anyhow::anyhow!("Python not initialized"))?
-                .run_environment_test()?
+            tracing::info!("Test mode enabled - running basic environment check via subprocess");
+            tokio::task::spawn_blocking(Self::run_environment_test_subprocess).await??
         } else {
             // Launch main application via subprocess to avoid embedded Python issues
-            self.launch_intellicrack_subprocess()?
+            // Run in blocking thread to ensure signal handling works while waiting
+            tokio::task::spawn_blocking(Self::launch_intellicrack_subprocess).await??
         };
         let main_exec_duration = main_exec_start.elapsed();
         tracing::info!(
@@ -264,7 +206,52 @@ impl IntellicrackLauncher {
         println!("Launching Intellicrack...\n");
     }
 
-    fn launch_intellicrack_subprocess(&self) -> Result<i32> {
+    fn run_environment_test_subprocess() -> Result<i32> {
+        use std::process::Command;
+
+        tracing::info!("Running environment test via subprocess");
+
+        let python_exe = std::env::var("PYTHON_SYS_EXECUTABLE")
+            .or_else(|_| std::env::var("PYTHONEXECUTABLE"))
+            .unwrap_or_else(|_| {
+                if cfg!(windows) {
+                    "python.exe".to_string()
+                } else {
+                    "python3".to_string()
+                }
+            });
+
+        let mut cmd = Command::new(&python_exe);
+        cmd.arg("-c")
+            .arg("import sys; print('Python version:', sys.version); print('Environment test passed'); sys.exit(0)");
+
+        cmd.env_remove("MSYS2_PATH_TYPE")
+            .env_remove("ORIGINAL_PATH")
+            .env_remove("ORIGINAL_TEMP")
+            .env_remove("ORIGINAL_TMP");
+
+        match cmd.output() {
+            Ok(output) => {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                let stderr = String::from_utf8_lossy(&output.stderr);
+
+                if !stdout.is_empty() {
+                    tracing::info!("Test output: {}", stdout.trim());
+                }
+                if !stderr.is_empty() {
+                    tracing::warn!("Test stderr: {}", stderr.trim());
+                }
+
+                Ok(output.status.code().unwrap_or(1))
+            }
+            Err(e) => {
+                tracing::error!("Environment test failed: {}", e);
+                Err(anyhow::anyhow!("Environment test failed: {}", e))
+            }
+        }
+    }
+
+    fn launch_intellicrack_subprocess() -> Result<i32> {
         use std::process::Command;
         use std::thread;
         use std::time::Duration;
@@ -287,13 +274,14 @@ impl IntellicrackLauncher {
         cmd.arg("-c")
             .arg("import sys; import intellicrack.main; sys.exit(intellicrack.main.main())");
 
-        cmd.env_remove("CYGWIN")
-            .env_remove("MSYS")
-            .env_remove("MSYSTEM")
-            .env_remove("MSYS2_PATH_TYPE")
+        cmd.env_remove("MSYS2_PATH_TYPE")
             .env_remove("ORIGINAL_PATH")
             .env_remove("ORIGINAL_TEMP")
             .env_remove("ORIGINAL_TMP");
+
+        // Capture stdio for centralized logging
+        cmd.stdout(std::process::Stdio::piped());
+        cmd.stderr(std::process::Stdio::piped());
 
         #[cfg(windows)]
         {
@@ -304,8 +292,34 @@ impl IntellicrackLauncher {
         }
 
         let mut child = match cmd.spawn() {
-            Ok(child) => {
+            Ok(mut child) => {
                 tracing::info!("Python subprocess spawned (PID: {})", child.id());
+
+                // Spawn output capture threads
+                if let Some(stdout) = child.stdout.take() {
+                    std::thread::spawn(move || {
+                        use std::io::{BufRead, BufReader};
+                        let reader = BufReader::new(stdout);
+                        for line in reader.lines() {
+                            if let Ok(l) = line {
+                                tracing::info!(target: "python", "{}", l);
+                            }
+                        }
+                    });
+                }
+
+                if let Some(stderr) = child.stderr.take() {
+                    std::thread::spawn(move || {
+                        use std::io::{BufRead, BufReader};
+                        let reader = BufReader::new(stderr);
+                        for line in reader.lines() {
+                            if let Ok(l) = line {
+                                tracing::error!(target: "python", "{}", l);
+                            }
+                        }
+                    });
+                }
+
                 child
             }
             Err(e) => {
@@ -346,11 +360,23 @@ impl IntellicrackLauncher {
                 tracing::info!("Python subprocess started (PID: {})", child.id());
                 println!("\n✓ Python subprocess started successfully");
                 println!("PID: {}", child.id());
-                println!("\nNote: Process survival after 500ms does NOT guarantee GUI appeared.");
                 println!(
-                    "Check for GUI window or monitor process output for actual launch confirmation."
+                    "Monitoring process output..."
                 );
-                Ok(0)
+
+                // WAIT for the process to exit so we can capture logs!
+                tracing::info!("Waiting for Python process to exit...");
+                match child.wait() {
+                    Ok(status) => {
+                        let code = status.code().unwrap_or(0);
+                        tracing::info!("Python process exited with code {}", code);
+                        Ok(code)
+                    }
+                    Err(e) => {
+                        tracing::error!("Failed to wait on child: {}", e);
+                        Err(anyhow::anyhow!("Failed to wait on child: {}", e))
+                    }
+                }
             }
             Err(e) => {
                 tracing::error!("Failed to check process status: {}", e);

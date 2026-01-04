@@ -15,10 +15,11 @@ from intellicrack.ui.style_manager import StyleManager
 @pytest.fixture(scope="module")
 def qapp() -> QApplication:
     """Create QApplication instance for tests."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    return app
+    existing_app = QApplication.instance()
+    if existing_app is None:
+        return QApplication([])
+    assert isinstance(existing_app, QApplication), "Expected QApplication instance"
+    return existing_app
 
 
 class TestStyleManagerMappings:

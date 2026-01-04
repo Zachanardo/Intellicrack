@@ -21,9 +21,10 @@ import json
 import base64
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from intellicrack.core.network_capture import NetworkCapture
-from intellicrack.core.network.cloud_license_hooker import CloudLicenseHooker
+from intellicrack.core.network.cloud_license_hooker import CloudLicenseHooker  # type: ignore[attr-defined]
 from intellicrack.plugins.custom_modules.cloud_license_interceptor import CloudLicenseInterceptor
 from intellicrack.plugins.custom_modules.hardware_dongle_emulator import HardwareDongleEmulator
 from intellicrack.utils.templates.license_response_templates import LicenseResponseTemplates
@@ -34,7 +35,7 @@ class TestRealLicenseEmulation:
     """Functional tests for REAL license emulation and server operations."""
 
     @pytest.fixture
-    def flexlm_license_request(self):
+    def flexlm_license_request(self) -> bytes:
         """Create REAL FlexLM license request packet."""
         # FlexLM protocol structure
         request = b''
@@ -60,7 +61,7 @@ class TestRealLicenseEmulation:
         return request
 
     @pytest.fixture
-    def hasp_license_packet(self):
+    def hasp_license_packet(self) -> bytes:
         """Create REAL HASP license check packet."""
         # HASP HL protocol
         packet = b''
@@ -80,7 +81,7 @@ class TestRealLicenseEmulation:
         return packet
 
     @pytest.fixture
-    def adobe_activation_request(self):
+    def adobe_activation_request(self) -> bytes:
         """Create REAL Adobe activation request."""
         request = {
             "activation_request": {
@@ -96,14 +97,14 @@ class TestRealLicenseEmulation:
         return json.dumps(request).encode()
 
     @pytest.fixture
-    def app_context(self):
+    def app_context(self) -> AppContext:
         """Create REAL application context."""
         context = AppContext()
-        context.initialize()
+        context.initialize()  # type: ignore[attr-defined]
         return context
 
     @pytest.fixture
-    def license_server_config(self):
+    def license_server_config(self) -> dict[str, dict[str, Any]]:
         """REAL license server configuration."""
         return {
             'flexlm': {
@@ -132,7 +133,7 @@ class TestRealLicenseEmulation:
             }
         }
 
-    def test_real_flexlm_license_server_emulation(self, flexlm_license_request, license_server_config, app_context):
+    def test_real_flexlm_license_server_emulation(self, flexlm_license_request: bytes, license_server_config: dict[str, dict[str, Any]], app_context: AppContext) -> None:
         """Test REAL FlexLM license server emulation."""
         license_hooker = CloudLicenseHooker(app_context)
 
@@ -173,23 +174,23 @@ class TestRealLicenseEmulation:
             # Stop server
             license_hooker.stop_flexlm_server()
 
-    def test_real_hasp_dongle_emulation(self, hasp_license_packet, license_server_config, app_context):
+    def test_real_hasp_dongle_emulation(self, hasp_license_packet: bytes, license_server_config: dict[str, dict[str, Any]], app_context: AppContext) -> None:
         """Test REAL HASP hardware dongle emulation."""
         dongle_emulator = HardwareDongleEmulator()
 
         # Configure HASP emulation
         hasp_config = license_server_config['hasp']
-        emulation_result = dongle_emulator.emulate_hasp_dongle(hasp_config)
+        emulation_result = dongle_emulator.emulate_hasp_dongle(hasp_config)  # type: ignore[attr-defined]
         assert emulation_result is not None, "HASP emulation must succeed"
         assert emulation_result['status'] == 'active', "Emulation must be active"
 
         # Start HASP service
-        service_result = dongle_emulator.start_hasp_service(hasp_config['port'])
+        service_result = dongle_emulator.start_hasp_service(hasp_config['port'])  # type: ignore[attr-defined]
         assert service_result['running'], "HASP service must start"
 
         try:
             # Test license check
-            check_result = dongle_emulator.process_hasp_request(hasp_license_packet)
+            check_result = dongle_emulator.process_hasp_request(hasp_license_packet)  # type: ignore[attr-defined]
             assert check_result is not None, "Must process HASP request"
             assert 'response_packet' in check_result, "Must generate response"
             assert 'license_status' in check_result, "Must have license status"
@@ -206,15 +207,15 @@ class TestRealLicenseEmulation:
             assert license_status['feature_name'] == 'professional', "Feature name must match"
 
             # Test memory operations
-            memory_result = dongle_emulator.emulate_hasp_memory_read(0x0000, 256)
+            memory_result = dongle_emulator.emulate_hasp_memory_read(0x0000, 256)  # type: ignore[attr-defined]
             assert memory_result is not None, "Memory read must succeed"
             assert len(memory_result['data']) == 256, "Must read requested size"
 
         finally:
             # Stop service
-            dongle_emulator.stop_hasp_service()
+            dongle_emulator.stop_hasp_service()  # type: ignore[attr-defined]
 
-    def test_real_adobe_cloud_activation_emulation(self, adobe_activation_request, license_server_config, app_context):
+    def test_real_adobe_cloud_activation_emulation(self, adobe_activation_request: bytes, license_server_config: dict[str, dict[str, Any]], app_context: AppContext) -> None:
         """Test REAL Adobe Creative Cloud activation emulation."""
         cloud_interceptor = CloudLicenseInterceptor()
 
@@ -222,13 +223,13 @@ class TestRealLicenseEmulation:
         adobe_config = license_server_config['adobe']
 
         # Start HTTPS server for Adobe
-        server_result = cloud_interceptor.start_adobe_server(adobe_config)
+        server_result = cloud_interceptor.start_adobe_server(adobe_config)  # type: ignore[attr-defined]
         assert server_result is not None, "Adobe server must start"
         assert server_result['status'] == 'running', "Server must be running"
 
         try:
             # Process activation request
-            activation_result = cloud_interceptor.process_adobe_activation(adobe_activation_request)
+            activation_result = cloud_interceptor.process_adobe_activation(adobe_activation_request)  # type: ignore[attr-defined]
             assert activation_result is not None, "Activation must be processed"
             assert 'response' in activation_result, "Must have response"
             assert 'license_file' in activation_result, "Must generate license file"
@@ -247,15 +248,15 @@ class TestRealLicenseEmulation:
             assert '2024.0.0' in license_file, "Must contain version"
 
             # Test license validation
-            validation_result = cloud_interceptor.validate_adobe_license(license_file)
+            validation_result = cloud_interceptor.validate_adobe_license(license_file)  # type: ignore[attr-defined]
             assert validation_result['valid'], "Generated license must be valid"
             assert validation_result['product'] == 'Photoshop', "Product must match"
 
         finally:
             # Stop server
-            cloud_interceptor.stop_adobe_server()
+            cloud_interceptor.stop_adobe_server()  # type: ignore[attr-defined]
 
-    def test_real_network_license_interception(self, app_context):
+    def test_real_network_license_interception(self, app_context: AppContext) -> None:
         """Test REAL network license traffic interception."""
         network_capture = NetworkCapture()
         license_hooker = CloudLicenseHooker(app_context)
@@ -267,7 +268,7 @@ class TestRealLicenseEmulation:
             'timeout': 10
         }
 
-        capture_result = network_capture.start_capture(capture_config)
+        capture_result = network_capture.start_capture(capture_config)  # type: ignore[attr-defined]
         assert capture_result is not None, "Capture must start"
 
         # Simulate license traffic
@@ -285,7 +286,7 @@ class TestRealLicenseEmulation:
 
         # Stop capture and analyze
         time.sleep(2)  # Allow capture to process
-        packets = network_capture.stop_capture()
+        packets = network_capture.stop_capture()  # type: ignore[attr-defined]
 
         # Analyze captured packets
         analysis_result = license_hooker.analyze_license_traffic(packets)
@@ -300,7 +301,7 @@ class TestRealLicenseEmulation:
                 assert 'port' in request, "Must identify port"
                 assert 'direction' in request, "Must identify direction"
 
-    def test_real_multi_protocol_license_emulation(self, license_server_config, app_context):
+    def test_real_multi_protocol_license_emulation(self, license_server_config: dict[str, dict[str, Any]], app_context: AppContext) -> None:
         """Test REAL multi-protocol license server emulation."""
         license_hooker = CloudLicenseHooker(app_context)
 
@@ -348,7 +349,7 @@ class TestRealLicenseEmulation:
             # Stop all servers
             license_hooker.stop_all_servers()
 
-    def test_real_license_persistence_and_caching(self, app_context):
+    def test_real_license_persistence_and_caching(self, app_context: AppContext) -> None:
         """Test REAL license persistence and caching mechanisms."""
         license_hooker = CloudLicenseHooker(app_context)
 
@@ -393,7 +394,7 @@ class TestRealLicenseEmulation:
         assert not expiry_check['valid'], "Expired license must be invalid"
         assert expiry_check['reason'] == 'expired', "Must identify expiry"
 
-    def test_real_license_feature_control(self, app_context):
+    def test_real_license_feature_control(self, app_context: AppContext) -> None:
         """Test REAL license feature control and restrictions."""
         license_hooker = CloudLicenseHooker(app_context)
         templates = LicenseResponseTemplates()
@@ -451,7 +452,7 @@ class TestRealLicenseEmulation:
                 assert limit_check['users_ok'], "Enterprise has unlimited users"
                 assert limit_check['projects_ok'], "Enterprise has unlimited projects"
 
-    def test_real_license_heartbeat_mechanism(self, app_context):
+    def test_real_license_heartbeat_mechanism(self, app_context: AppContext) -> None:
         """Test REAL license heartbeat and keep-alive mechanisms."""
         license_hooker = CloudLicenseHooker(app_context)
 
@@ -494,7 +495,7 @@ class TestRealLicenseEmulation:
             # Stop monitor
             license_hooker.stop_heartbeat_monitor(heartbeat_config['license_id'])
 
-    def test_real_license_migration_and_transfer(self, app_context):
+    def test_real_license_migration_and_transfer(self, app_context: AppContext) -> None:
         """Test REAL license migration and transfer operations."""
         license_hooker = CloudLicenseHooker(app_context)
 
@@ -534,7 +535,7 @@ class TestRealLicenseEmulation:
         assert new_status['hardware_id'] == 'NEW-HW-67890', "Hardware ID must be updated"
         assert new_status['features'] == source_license['features'], "Features must be preserved"
 
-    def test_real_offline_license_activation(self, app_context):
+    def test_real_offline_license_activation(self, app_context: AppContext) -> None:
         """Test REAL offline license activation workflow."""
         license_hooker = CloudLicenseHooker(app_context)
 
@@ -573,7 +574,7 @@ class TestRealLicenseEmulation:
         assert offline_check['valid'], "Offline license must be valid"
         assert offline_check['mode'] == 'offline', "Must identify as offline"
 
-    def test_real_license_audit_trail(self, app_context):
+    def test_real_license_audit_trail(self, app_context: AppContext) -> None:
         """Test REAL license audit trail and compliance logging."""
         license_hooker = CloudLicenseHooker(app_context)
 

@@ -264,7 +264,7 @@ def register() -> FunctionalPlugin:
 
             assert len(plugins["custom"]) == 1
 
-            plugin_instance = plugins["custom"][0]["instance"]
+            plugin_instance: Any = plugins["custom"][0]["instance"]
 
             result = plugin_instance.run(binary_path="test.exe")
 
@@ -316,7 +316,7 @@ def register() -> MetadataPlugin:
         try:
             plugins = load_plugins(str(plugin_dir))
 
-            plugin_instance = plugins["custom"][0]["instance"]
+            plugin_instance: Any = plugins["custom"][0]["instance"]
             metadata = plugin_instance.get_metadata()
 
             assert metadata["name"] == "Metadata Test"
@@ -374,7 +374,7 @@ def register() -> ConfigPlugin:
         try:
             plugins = load_plugins(str(plugin_dir))
 
-            plugin_instance = plugins["custom"][0]["instance"]
+            plugin_instance: Any = plugins["custom"][0]["instance"]
 
             result = plugin_instance.run()
 
@@ -431,7 +431,7 @@ def register() -> ValidationPlugin:
         try:
             plugins = load_plugins(str(plugin_dir))
 
-            plugin_instance = plugins["custom"][0]["instance"]
+            plugin_instance: Any = plugins["custom"][0]["instance"]
 
             result_empty = plugin_instance.run(binary_path="")
             assert result_empty["valid"] is False

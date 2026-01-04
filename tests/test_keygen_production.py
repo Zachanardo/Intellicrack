@@ -390,6 +390,7 @@ class TestConstraintExtractorAlgorithmBuilding:
         algorithm: ExtractedAlgorithm = extractor._build_hash_algorithm("sha256", [])
 
         test_key = "PRODUCTKEY999"
+        assert algorithm.validation_function is not None
         result = algorithm.validation_function(test_key)
         expected = hashlib.sha256(test_key.encode()).hexdigest()
         assert result == expected
@@ -411,6 +412,7 @@ class TestConstraintExtractorAlgorithmBuilding:
         algorithm: ExtractedAlgorithm = extractor._build_multiplicative_algorithm(constraints)
 
         test_key = "ABC123"
+        assert algorithm.validation_function is not None
         result = algorithm.validation_function(test_key)
 
         expected = 0
@@ -427,6 +429,7 @@ class TestConstraintExtractorAlgorithmBuilding:
         algorithm: ExtractedAlgorithm = extractor._build_modular_algorithm([])
 
         test_key = "ABC123"
+        assert algorithm.validation_function is not None
         result = algorithm.validation_function(test_key)
 
         numeric = "".join(c if c.isdigit() else str(ord(c) - ord("A") + 10) for c in test_key)

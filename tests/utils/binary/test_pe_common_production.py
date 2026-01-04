@@ -141,7 +141,7 @@ class TestIteratePEImportsWithDLL:
         def callback(dll: str, func: str) -> tuple[str, str]:
             return (dll, func)
 
-        for result in iterate_pe_imports_with_dll(pe, callback):
+        for result in iterate_pe_imports_with_dll(pe, callback):  # type: ignore[attr-defined]
             results.append(result)
 
         assert len(results) == 3
@@ -158,7 +158,7 @@ class TestIteratePEImportsWithDLL:
             import_objects.append(imp)
             return func
 
-        list(iterate_pe_imports_with_dll(pe, callback, include_import_obj=True))
+        list(iterate_pe_imports_with_dll(pe, callback, include_import_obj=True))  # type: ignore[call-overload]
 
         assert len(import_objects) == 1
         assert import_objects[0].name == b"TestFunc"
@@ -170,7 +170,7 @@ class TestIteratePEImportsWithDLL:
         def callback(dll: str, func: str) -> str | None:
             return func if "Keep" in func else None
 
-        results = list(iterate_pe_imports_with_dll(pe, callback))
+        results = list(iterate_pe_imports_with_dll(pe, callback))  # type: ignore[call-overload]
 
         assert len(results) == 2
         assert "Keep" in results
@@ -184,7 +184,7 @@ class TestIteratePEImportsWithDLL:
         def callback(dll: str, func: str) -> str:
             return func
 
-        results = list(iterate_pe_imports_with_dll(pe, callback))
+        results = list(iterate_pe_imports_with_dll(pe, callback))  # type: ignore[call-overload]
 
         assert not results
 
@@ -202,7 +202,7 @@ class TestIteratePEImportsWithDLL:
         def callback(dll: str, func: str) -> str:
             return func
 
-        results = list(iterate_pe_imports_with_dll(pe, callback))
+        results = list(iterate_pe_imports_with_dll(pe, callback))  # type: ignore[call-overload]
 
         assert len(results) == 1
         assert "ValidFunc" in results
@@ -384,7 +384,7 @@ class TestEdgeCases:
             return func
 
         try:
-            results = list(iterate_pe_imports_with_dll(pe, failing_callback))
+            results = list(iterate_pe_imports_with_dll(pe, failing_callback))  # type: ignore[call-overload]
             assert "Func1" in results
         except ValueError:
             pass
@@ -424,7 +424,7 @@ class TestPerformance:
         import time
 
         start_time = time.time()
-        results = list(iterate_pe_imports_with_dll(pe, callback))
+        results = list(iterate_pe_imports_with_dll(pe, callback))  # type: ignore[call-overload]
         duration = time.time() - start_time
 
         assert len(results) == 1000

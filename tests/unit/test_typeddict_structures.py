@@ -24,18 +24,18 @@ try:
     TYPEDDICT_IMPORTS_AVAILABLE = True
 except ImportError:
     TYPEDDICT_IMPORTS_AVAILABLE = False
-    BinaryFormatNetworkResult = None
-    NetworkAnalysisResult = None
-    NetworkCodeAnalysisResult = None
-    NetworkStringsResult = None
-    AnalysisTimingStats = None
-    CachedResult = None
-    PerformanceStats = None
-    ScriptMetadataDict = None
-    ensure_dict = None
-    ensure_list = None
-    get_typed_item = None
-    validate_type = None
+    BinaryFormatNetworkResult = None  # type: ignore[misc, assignment]
+    NetworkAnalysisResult = None  # type: ignore[misc, assignment]
+    NetworkCodeAnalysisResult = None  # type: ignore[misc, assignment]
+    NetworkStringsResult = None  # type: ignore[misc, assignment]
+    AnalysisTimingStats = None  # type: ignore[misc, assignment]
+    CachedResult = None  # type: ignore[misc, assignment]
+    PerformanceStats = None  # type: ignore[misc, assignment]
+    ScriptMetadataDict = None  # type: ignore[misc, assignment]
+    ensure_dict = None  # type: ignore[assignment]
+    ensure_list = None  # type: ignore[assignment]
+    get_typed_item = None  # type: ignore[assignment]
+    validate_type = None  # type: ignore[assignment]
 
 
 pytestmark = pytest.mark.skipif(

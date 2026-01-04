@@ -97,7 +97,7 @@ class TestRunSubprocessCheck:
 
     def test_run_subprocess_check_success(self) -> None:
         """Successful command with check=True works."""
-        result: subprocess.CompletedProcess = run_subprocess_check(
+        result: subprocess.CompletedProcess[str] = run_subprocess_check(
             ["python", "-c", "print('success')"],
             check=False
         )
@@ -107,7 +107,7 @@ class TestRunSubprocessCheck:
 
     def test_run_subprocess_check_captures_output(self) -> None:
         """Subprocess with check captures output."""
-        result: subprocess.CompletedProcess = run_subprocess_check(
+        result: subprocess.CompletedProcess[str] = run_subprocess_check(
             ["python", "-c", "print('captured')"]
         )
 
@@ -116,7 +116,7 @@ class TestRunSubprocessCheck:
 
     def test_run_subprocess_check_text_mode(self) -> None:
         """Subprocess with check returns text."""
-        result: subprocess.CompletedProcess = run_subprocess_check(
+        result: subprocess.CompletedProcess[str] = run_subprocess_check(
             ["python", "-c", "print('text')"],
             text=True
         )
@@ -133,7 +133,7 @@ class TestRunSubprocessCheck:
 
     def test_run_subprocess_check_returns_completed_process(self) -> None:
         """Subprocess check returns CompletedProcess object."""
-        result: subprocess.CompletedProcess = run_subprocess_check(
+        result: subprocess.CompletedProcess[str] = run_subprocess_check(
             ["python", "--version"]
         )
 
@@ -306,7 +306,7 @@ class TestSubprocessUtilsEdgeCases:
 
     def test_run_subprocess_check_without_capture(self) -> None:
         """Subprocess check with capture_output=False works."""
-        result: subprocess.CompletedProcess = run_subprocess_check(
+        result: subprocess.CompletedProcess[str] = run_subprocess_check(
             ["python", "-c", "print('no capture')"],
             capture_output=False
         )

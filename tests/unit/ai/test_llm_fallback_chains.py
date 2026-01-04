@@ -1028,7 +1028,7 @@ class TestRealWorldScenarios:
                 raise Exception("Intermittent error")
             return original_chat(messages, model_id, tools)
 
-        primary_backend.chat = intermittent_chat
+        setattr(primary_backend, "chat", intermittent_chat)
 
         messages = [LLMMessage(role="user", content="Test message")]
 

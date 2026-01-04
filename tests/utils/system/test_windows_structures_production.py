@@ -9,6 +9,7 @@ import ctypes
 import sys
 
 import pytest
+from typing import Any
 
 from intellicrack.utils.system.windows_structures import (
     COMMON_LICENSE_DOMAINS,
@@ -66,7 +67,7 @@ class TestWindowsContext:
             context: WindowsContext = WindowsContext()
             CONTEXT, CONTEXT_FULL = context.create_context_structure()
 
-            ctx_instance = CONTEXT()
+            ctx_instance = CONTEXT()  # type: ignore[misc]
             assert hasattr(ctx_instance, "Rax")
             assert hasattr(ctx_instance, "Rip")
             assert hasattr(ctx_instance, "Rsp")
@@ -78,7 +79,7 @@ class TestWindowsContext:
             context: WindowsContext = WindowsContext()
             CONTEXT, CONTEXT_FULL = context.create_context_structure()
 
-            ctx_instance = CONTEXT()
+            ctx_instance = CONTEXT()  # type: ignore[misc]
             assert hasattr(ctx_instance, "Eax")
             assert hasattr(ctx_instance, "Eip")
             assert hasattr(ctx_instance, "Esp")
@@ -97,7 +98,7 @@ class TestWindowsContext:
         context: WindowsContext = WindowsContext()
         CONTEXT, CONTEXT_FULL = context.create_context_structure()
 
-        ctx_instance = CONTEXT()
+        ctx_instance = CONTEXT()  # type: ignore[misc]
         result: bool = context.set_thread_context(0, ctx_instance)
 
         assert not result
@@ -109,7 +110,7 @@ class TestWindowsContext:
             context: WindowsContext = WindowsContext()
             CONTEXT, _ = context.create_context_structure()
 
-            ctx_instance = CONTEXT()
+            ctx_instance = CONTEXT()  # type: ignore[misc]
             ctx_instance.Rip = 0x12345678
 
             entry_point: int = context.get_entry_point(ctx_instance)
@@ -122,7 +123,7 @@ class TestWindowsContext:
             context: WindowsContext = WindowsContext()
             CONTEXT, _ = context.create_context_structure()
 
-            ctx_instance = CONTEXT()
+            ctx_instance = CONTEXT()  # type: ignore[misc]
             ctx_instance.Eip = 0x87654321
 
             entry_point: int = context.get_entry_point(ctx_instance)
@@ -144,7 +145,7 @@ class TestWindowsProcessStructures:
         """STARTUPINFO has required fields."""
         STARTUPINFO = WindowsProcessStructures.create_startup_info()
 
-        startup_info = STARTUPINFO()
+        startup_info = STARTUPINFO()  # type: ignore[misc]
         assert hasattr(startup_info, "cb")
         assert hasattr(startup_info, "lpReserved")
         assert hasattr(startup_info, "dwFlags")
@@ -164,7 +165,7 @@ class TestWindowsProcessStructures:
         """PROCESS_INFORMATION has required fields."""
         PROCESS_INFORMATION = WindowsProcessStructures.create_process_information()
 
-        process_info = PROCESS_INFORMATION()
+        process_info = PROCESS_INFORMATION()  # type: ignore[misc]
         assert hasattr(process_info, "hProcess")
         assert hasattr(process_info, "hThread")
         assert hasattr(process_info, "dwProcessId")
@@ -175,8 +176,8 @@ class TestWindowsProcessStructures:
         """STARTUPINFO cb field is DWORD type."""
         STARTUPINFO = WindowsProcessStructures.create_startup_info()
 
-        startup_info = STARTUPINFO()
-        startup_info.cb = ctypes.sizeof(STARTUPINFO)
+        startup_info = STARTUPINFO()  # type: ignore[misc]
+        startup_info.cb = ctypes.sizeof(STARTUPINFO)  # type: ignore[arg-type]
 
         assert startup_info.cb > 0
 
@@ -236,7 +237,7 @@ class TestParseObjdumpLine:
     def test_parse_objdump_line_valid_instruction(self) -> None:
         """Valid objdump line is parsed correctly."""
         line: str = "  401000:\t55\t\tpush   %rbp"
-        result: dict | None = parse_objdump_line(line)
+        result: dict[str, Any] | None = parse_objdump_line(line)
 
         assert result is not None
         assert result["mnemonic"] == "push"
@@ -245,7 +246,7 @@ class TestParseObjdumpLine:
     def test_parse_objdump_line_with_operands(self) -> None:
         """Objdump line with operands is parsed."""
         line: str = "  401001:\t48 89 e5\t\tmov    %rsp,%rbp"
-        result: dict | None = parse_objdump_line(line)
+        result: dict[str, Any] | None = parse_objdump_line(line)
 
         assert result is not None
         assert result["mnemonic"] == "mov"
@@ -254,28 +255,28 @@ class TestParseObjdumpLine:
     def test_parse_objdump_line_invalid_format(self) -> None:
         """Invalid objdump line returns None."""
         line: str = "invalid line format"
-        result: dict | None = parse_objdump_line(line)
+        result: dict[str, Any] | None = parse_objdump_line(line)
 
         assert result is None
 
     def test_parse_objdump_line_empty_string(self) -> None:
         """Empty string returns None."""
         line: str = ""
-        result: dict | None = parse_objdump_line(line)
+        result: dict[str, Any] | None = parse_objdump_line(line)
 
         assert result is None
 
     def test_parse_objdump_line_no_instruction(self) -> None:
         """Line without instruction returns None."""
         line: str = "  401000:"
-        result: dict | None = parse_objdump_line(line)
+        result: dict[str, Any] | None = parse_objdump_line(line)
 
         assert result is None
 
     def test_parse_objdump_line_complex_instruction(self) -> None:
         """Complex instruction with multiple operands is parsed."""
         line: str = "  401010:\t48 8b 45 f8\t\tmov    -0x8(%rbp),%rax"
-        result: dict | None = parse_objdump_line(line)
+        result: dict[str, Any] | None = parse_objdump_line(line)
 
         assert result is not None
         assert result["mnemonic"] == "mov"
@@ -325,8 +326,8 @@ class TestWindowsStructuresIntegration:
         STARTUPINFO = WindowsProcessStructures.create_startup_info()
         PROCESS_INFORMATION = WindowsProcessStructures.create_process_information()
 
-        assert ctypes.sizeof(STARTUPINFO) > 0
-        assert ctypes.sizeof(PROCESS_INFORMATION) > 0
+        assert ctypes.sizeof(STARTUPINFO) > 0  # type: ignore[arg-type]
+        assert ctypes.sizeof(PROCESS_INFORMATION) > 0  # type: ignore[arg-type]
 
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only test")
     def test_context_structure_size_matches_architecture(self) -> None:
@@ -334,7 +335,7 @@ class TestWindowsStructuresIntegration:
         context: WindowsContext = WindowsContext()
         CONTEXT, _ = context.create_context_structure()
 
-        size: int = ctypes.sizeof(CONTEXT)
+        size: int = ctypes.sizeof(CONTEXT)  # type: ignore[arg-type]
 
         if ctypes.sizeof(ctypes.c_void_p) == 8:
             assert size > 0
@@ -357,7 +358,7 @@ class TestWindowsStructuresIntegration:
             "  401005:\tc3\t\tret",
         ]
 
-        parsed: list[dict] = []
+        parsed: list[dict[str, Any]] = []
         for line in lines:
             if result := parse_objdump_line(line):
                 parsed.append(result)
@@ -376,7 +377,7 @@ class TestWindowsStructuresEdgeCases:
         context: WindowsContext = WindowsContext()
         CONTEXT, _ = context.create_context_structure()
 
-        ctx_instance = CONTEXT()
+        ctx_instance = CONTEXT()  # type: ignore[misc]
         entry_point: int = context.get_entry_point(ctx_instance)
 
         assert entry_point == 0
@@ -384,7 +385,7 @@ class TestWindowsStructuresEdgeCases:
     def test_parse_objdump_line_with_leading_whitespace(self) -> None:
         """Objdump line with leading whitespace is parsed."""
         line: str = "     401000:\t55\t\tpush   %rbp"
-        result: dict | None = parse_objdump_line(line)
+        result: dict[str, Any] | None = parse_objdump_line(line)
 
         assert result is not None
         assert result["mnemonic"] == "push"
@@ -392,7 +393,7 @@ class TestWindowsStructuresEdgeCases:
     def test_parse_objdump_line_with_hex_operands(self) -> None:
         """Objdump line with hex operands is parsed."""
         line: str = "  401000:\tb8 00 00 00 00\t\tmov    $0x0,%eax"
-        result: dict | None = parse_objdump_line(line)
+        result: dict[str, Any] | None = parse_objdump_line(line)
 
         assert result is not None
         assert result["mnemonic"] == "mov"
@@ -403,6 +404,6 @@ class TestWindowsStructuresEdgeCases:
         STARTUPINFO = WindowsProcessStructures.create_startup_info()
 
         for _ in range(10):
-            startup = STARTUPINFO()
-            startup.cb = ctypes.sizeof(STARTUPINFO)
+            startup = STARTUPINFO()  # type: ignore[misc]
+            startup.cb = ctypes.sizeof(STARTUPINFO)  # type: ignore[arg-type]
             assert startup.cb > 0

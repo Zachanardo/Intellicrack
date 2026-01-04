@@ -5,7 +5,11 @@ PYTHON_SYS_EXECUTABLE = "D:\\Intellicrack\\.pixi\\envs\\default\\python.exe"
 PATH = { value = "D:\\Intellicrack\\.pixi\\envs\\default\\bin;D:\\Intellicrack\\.pixi\\envs\\default\\Library\\mingw-w64\\bin;D:\\Intellicrack\\.pixi\\envs\\default\\Library\\bin", relative = true }
 RUSTC = { value = "D:\\Intellicrack\\.pixi\\envs\\default\\Library\\bin\\rustc.exe", force = true, relative = false }
 CARGO = { value = "D:\\Intellicrack\\.pixi\\envs\\default\\Library\\bin\\cargo.exe", force = true, relative = false }
+LIB = { value = "C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.50.35717\\lib\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.26100.0\\ucrt\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.26100.0\\um\\x64", force = true }
 
 [build]
 rustflags = ["-L", "D:\\Intellicrack\\.pixi\\envs\\default\\libs"]
 rustc = "D:\\Intellicrack\\.pixi\\envs\\default\\Library\\bin\\rustc.exe"
+
+[target.x86_64-pc-windows-msvc]
+linker = "C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.50.35717\\bin\\Hostx64\\x64\\link.exe"

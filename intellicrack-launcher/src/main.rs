@@ -176,8 +176,14 @@ async fn main() -> Result<()> {
         eprintln!("Please check logs/intellicrack-launcher.* for details");
     }));
 
-    // Set up Ctrl+C handler for graceful shutdown
-    let shutdown_signal = tokio::signal::ctrl_c();
+    // Set up centralized signal handling
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+    let shutdown_flag = Arc::new(AtomicBool::new(false));
+    if let Err(e) = intellicrack_launcher::signals::register_signal_handlers(shutdown_flag.clone()) {
+        warn!("Failed to register signal handlers: {}", e);
+    }
+
     let launcher_future = async {
         // Initialize and run launcher
         match IntellicrackLauncher::new().await {
@@ -197,12 +203,22 @@ async fn main() -> Result<()> {
         }
     };
 
-    // Wait for either completion or Ctrl+C
+    // Check shutdown flag periodically or wait for completion
+    let shutdown_checker = async {
+        loop {
+            if shutdown_flag.load(Ordering::SeqCst) {
+                return;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        }
+    };
+
+    // Wait for either completion or shutdown signal
     tokio::select! {
         _ = launcher_future => {
             // Launcher completed naturally
         }
-        _ = shutdown_signal => {
+        _ = shutdown_checker => {
             info!("Received shutdown signal, terminating...");
             println!("\nShutdown requested - terminating launcher...");
             std::process::exit(130); // Standard SIGINT exit code

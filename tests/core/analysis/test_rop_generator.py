@@ -164,7 +164,7 @@ class TestROPChainGeneratorCore:
             generator.set_binary(temp_binary.name)
 
             # Add target function for testing
-            generator.add_target_function('system', 0x401000)
+            generator.add_target_function('system', 0x401000)  # type: ignore[arg-type]
 
             # Generate ROP chain for shell execution
             rop_chain: Any = generator.generate_chain(
@@ -206,9 +206,9 @@ class TestROPChainGeneratorCore:
         generator = ROPChainGenerator()
 
         # Add various target functions
-        generator.add_target_function('system', 0x401000)
-        generator.add_target_function('execve', 0x402000)
-        generator.add_target_function('license_check', 0x403000)
+        generator.add_target_function('system', 0x401000)  # type: ignore[arg-type]
+        generator.add_target_function('execve', 0x402000)  # type: ignore[arg-type]
+        generator.add_target_function('license_check', 0x403000)  # type: ignore[arg-type]
 
         # Anti-placeholder validation: Target functions should be stored
         assert len(generator.target_functions) >= 3, "Target functions not stored properly"
@@ -235,13 +235,13 @@ class TestROPChainGeneratorCore:
 
         try:
             generator.set_binary(temp_binary.name)
-            generator.add_target_function('system', 0x401000)
+            generator.add_target_function('system', 0x401000)  # type: ignore[arg-type]
 
             # Generate a chain to have data for reports
             chain: Any = generator.generate_chain('system')
 
             # Test report generation
-            report: str = generator.generate_report()
+            report: str = generator.generate_report()  # type: ignore[assignment]
             assert isinstance(report, str), "Report should be string"
             assert len(report) > 0, "Report should not be empty"
 
@@ -289,7 +289,7 @@ class TestROPChainGeneratorCore:
             ]
 
             for target, kwargs in chain_types:
-                generator.add_target_function(target, 0x401000 + len(target))
+                generator.add_target_function(target, 0x401000 + len(target))  # type: ignore[arg-type]
 
                 # Generate chain with specific type
                 chain: Any = generator.generate_chain(target, **kwargs)
@@ -396,7 +396,7 @@ class TestROPGeneratorModuleFunctions:
     def test_run_rop_chain_generator_comprehensive(self) -> None:
         """Test comprehensive ROP chain generation workflow."""
         # Test the main entry point function
-        result = run_rop_chain_generator(self.real_app)
+        result = run_rop_chain_generator(self.real_app)  # type: ignore[func-returns-value]
 
         # Anti-placeholder validation: Function should complete without errors
         # The function returns None but should have side effects
@@ -416,7 +416,7 @@ class TestROPGeneratorModuleFunctions:
         # Test with no binary path
         app_no_binary: RealApplication = RealApplication(binary_path=None)
 
-        result: None = run_rop_chain_generator(app_no_binary)
+        result: None = run_rop_chain_generator(app_no_binary)  # type: ignore[func-returns-value]
 
         # Should return early without errors
         assert result is None, "Function should return None for no binary"
@@ -557,7 +557,7 @@ class TestROPGeneratorIntegrationValidation:
             assert generator.binary_path == self.temp_binary, "Generator should have correct binary path"
 
             # Test that generator has some functionality
-            generator.add_target_function('test_target', 0x401000)
+            generator.add_target_function('test_target', 0x401000)  # type: ignore[arg-type]
             assert len(generator.target_functions) > 0, "Should be able to add targets after workflow"
 
     def _create_realistic_test_binary(self) -> str:
@@ -587,7 +587,7 @@ class TestROPGeneratorIntegrationValidation:
         temp_file.write(binary_content)
         temp_file.close()
 
-        return temp_file.name
+        return temp_file.name  # type: ignore[no-any-return]
 
 
 # Anti-Placeholder Validation Tests
@@ -650,8 +650,8 @@ class TestAntiPlaceholderValidation:
             generator.set_binary(temp_binary.name)
 
             # Add different target functions
-            generator.add_target_function('system', 0x401000)
-            generator.add_target_function('execve', 0x402000)
+            generator.add_target_function('system', 0x401000)  # type: ignore[arg-type]
+            generator.add_target_function('execve', 0x402000)  # type: ignore[arg-type]
 
             # Generate chains for different targets
             chain1 = generator.generate_chain('system', chain_type='shell_execution')
@@ -686,7 +686,7 @@ class TestAntiPlaceholderValidation:
 
         try:
             generator.set_binary(temp_binary.name)
-            generator.add_target_function('system', 0x401000)
+            generator.add_target_function('system', 0x401000)  # type: ignore[arg-type]
 
             # Find gadgets and generate a chain to have content for report
             generator.find_gadgets()
@@ -724,7 +724,7 @@ class TestAntiPlaceholderValidation:
 
         try:
             generator.set_binary(temp_binary.name)
-            generator.add_target_function('system', 0x401000)
+            generator.add_target_function('system', 0x401000)  # type: ignore[arg-type]
 
             # Find gadgets and generate content to have meaningful statistics
             generator.find_gadgets()
@@ -747,7 +747,7 @@ class TestAntiPlaceholderValidation:
             stats_before = generator.get_statistics().copy()
 
             # Add another target and generate another chain
-            generator.add_target_function('execve', 0x402000)
+            generator.add_target_function('execve', 0x402000)  # type: ignore[arg-type]
             chain2 = generator.generate_chain('execve')
 
             stats_after = generator.get_statistics()

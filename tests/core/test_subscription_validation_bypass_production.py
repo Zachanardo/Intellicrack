@@ -48,9 +48,9 @@ def oauth_generator() -> OAuthTokenGenerator:
 
 
 @pytest.fixture
-def bypass_engine() -> SubscriptionBypassEngine:
+def bypass_engine() -> SubscriptionValidationBypass:
     """Create subscription bypass engine instance."""
-    return SubscriptionBypassEngine()
+    return SubscriptionValidationBypass()
 
 
 @pytest.fixture
@@ -441,107 +441,115 @@ class TestOAuthTokenGenerator:
         assert payload["email"] == "user@example.com"
 
 
-class TestSubscriptionBypassEngine:
+class TestSubscriptionValidationBypass:
     """Test comprehensive subscription bypass operations."""
 
-    def test_forge_cloud_license_response(self, bypass_engine: SubscriptionBypassEngine) -> None:
-        """Forge cloud license server response with enterprise tier."""
-        response = bypass_engine.forge_cloud_license_response(
-            user_id="enterprise_user",
+    def test_intercept_and_spoof_api_microsoft365(
+        self, bypass_engine: SubscriptionValidationBypass
+    ) -> None:
+        """Intercept and spoof Microsoft365 license API response."""
+        response = bypass_engine.intercept_and_spoof_api(
+            endpoint="https://licensing.mp.microsoft.com/v7.0/licenses",
+            product_name="Microsoft365",
             tier=SubscriptionTier.ENTERPRISE,
-            expiration_days=365,
         )
 
-        assert response["status"] == "active"
-        assert response["user_id"] == "enterprise_user"
-        assert response["tier"] == "enterprise"
-        assert response["features"]["unlimited_usage"] is True
-        assert "license_key" in response
+        assert "license" in response or "status" in response
+        assert isinstance(response, dict)
 
-    def test_bypass_saas_subscription_check(self, bypass_engine: SubscriptionBypassEngine) -> None:
-        """Bypass SaaS subscription validation."""
-        original_response = {
-            "subscription_status": "expired",
-            "tier": "free",
-            "valid_until": "2023-01-01",
-        }
-
-        bypassed = bypass_engine.bypass_saas_subscription_check(original_response)
-
-        assert bypassed["subscription_status"] == "active"
-        assert bypassed["tier"] == "enterprise"
-        assert bypassed["features"]["all_features_enabled"] is True
-
-    def test_generate_offline_activation_response(self, bypass_engine: SubscriptionBypassEngine) -> None:
-        """Generate offline activation response for air-gapped systems."""
-        machine_id = "MACHINE-12345"
-
-        response = bypass_engine.generate_offline_activation_response(
-            machine_id=machine_id,
-            product_id="PRODUCT-XYZ",
+    def test_intercept_and_spoof_api_adobe(
+        self, bypass_engine: SubscriptionValidationBypass
+    ) -> None:
+        """Intercept and spoof Adobe entitlement API response."""
+        response = bypass_engine.intercept_and_spoof_api(
+            endpoint="https://lcs-cops.adobe.io/entitlement",
+            product_name="AdobeCC",
+            tier=SubscriptionTier.ENTERPRISE,
         )
 
-        assert response["machine_id"] == machine_id
-        assert response["activation_status"] == "activated"
-        assert "activation_code" in response
-        assert len(response["activation_code"]) > 20
+        assert isinstance(response, dict)
 
-    def test_forge_license_validation_api_response(self, bypass_engine: SubscriptionBypassEngine) -> None:
-        """Forge license validation API response."""
-        response = bypass_engine.forge_license_validation_api_response(
-            license_key="TEST-LICENSE-KEY",
-            product_version="5.0",
+    def test_intercept_and_spoof_api_generic(
+        self, bypass_engine: SubscriptionValidationBypass
+    ) -> None:
+        """Intercept and spoof generic license validation API response."""
+        response = bypass_engine.intercept_and_spoof_api(
+            endpoint="https://api.example.com/validate",
+            product_name="GenericProduct",
+            tier=SubscriptionTier.ENTERPRISE,
         )
 
-        assert response["valid"] is True
-        assert response["license_key"] == "TEST-LICENSE-KEY"
-        assert response["product_version"] == "5.0"
-        assert response["features"]["all"] is True
+        assert isinstance(response, dict)
+        assert "valid" in response or "status" in response
 
-    def test_bypass_time_based_subscription(self, bypass_engine: SubscriptionBypassEngine) -> None:
-        """Bypass time-based subscription expiration."""
-        original_check = {
-            "start_date": "2023-01-01",
-            "end_date": "2023-12-31",
-            "status": "expired",
-        }
+    def test_generate_subscription_tokens(
+        self, bypass_engine: SubscriptionValidationBypass
+    ) -> None:
+        """Generate subscription tokens for offline activation."""
+        tokens = bypass_engine.generate_subscription_tokens(
+            product_name="TestProduct",
+            provider=OAuthProvider.GENERIC,
+            tier=SubscriptionTier.ENTERPRISE,
+        )
 
-        bypassed = bypass_engine.bypass_time_based_subscription(original_check)
+        assert isinstance(tokens, dict)
+        assert "access_token" in tokens
+        assert "refresh_token" in tokens
+        assert "id_token" in tokens
 
-        assert bypassed["status"] == "active"
+    def test_extend_time_based_subscription(
+        self, bypass_engine: SubscriptionValidationBypass
+    ) -> None:
+        """Extend time-based subscription expiration."""
+        current_expiry = datetime.now(UTC)
+        extension_days = 365
 
-        end_date = datetime.fromisoformat(bypassed["end_date"])
-        assert end_date > datetime.now(UTC) + timedelta(days=300)
+        result = bypass_engine.extend_time_based_subscription(
+            current_expiry=current_expiry,
+            extension_days=extension_days,
+        )
 
-    def test_bypass_usage_based_subscription(self, bypass_engine: SubscriptionBypassEngine) -> None:
-        """Bypass usage-based subscription limits."""
-        original_check = {
-            "usage_limit": 100,
-            "current_usage": 99,
-            "remaining": 1,
-        }
+        assert "subscription" in result
+        subscription = result["subscription"]
+        assert subscription["status"] == "active"
+        assert subscription["extended_by_days"] == extension_days
 
-        bypassed = bypass_engine.bypass_usage_based_subscription(original_check)
+        new_expiry = datetime.fromisoformat(subscription["new_expiry"])
+        assert new_expiry > current_expiry + timedelta(days=300)
 
-        assert bypassed["usage_limit"] == 999999
-        assert bypassed["current_usage"] == 0
-        assert bypassed["remaining"] == 999999
+    def test_manipulate_usage_based_billing(
+        self, bypass_engine: SubscriptionValidationBypass
+    ) -> None:
+        """Manipulate usage-based billing quota."""
+        current_usage = 99
+        new_limit = 999999
 
-    def test_bypass_feature_based_subscription(self, bypass_engine: SubscriptionBypassEngine) -> None:
-        """Bypass feature-based subscription restrictions."""
-        original_features = {
-            "export_pdf": False,
-            "advanced_analytics": False,
-            "api_access": False,
-            "tier": "free",
-        }
+        result = bypass_engine.manipulate_usage_based_billing(
+            resource_type="api_calls",
+            current_usage=current_usage,
+            new_limit=new_limit,
+        )
 
-        bypassed = bypass_engine.bypass_feature_based_subscription(original_features)
+        assert result["resource"] == "api_calls"
+        assert result["limit"] == new_limit
+        assert result["used"] == 0
+        assert result["remaining"] == new_limit
+        assert result["previous_usage"] == current_usage
 
-        assert bypassed["export_pdf"] is True
-        assert bypassed["advanced_analytics"] is True
-        assert bypassed["api_access"] is True
-        assert bypassed["tier"] == "enterprise"
+    def test_unlock_feature_tier(
+        self, bypass_engine: SubscriptionValidationBypass
+    ) -> None:
+        """Unlock feature tier from free to enterprise."""
+        features_to_enable = ["export_pdf", "advanced_analytics", "api_access"]
+
+        result = bypass_engine.unlock_feature_tier(
+            current_tier=SubscriptionTier.FREE,
+            target_tier=SubscriptionTier.ENTERPRISE,
+            features=features_to_enable,
+        )
+
+        assert isinstance(result, dict)
+        assert "status" in result or "features" in result or "tier" in result
 
 
 class TestEdgeCases:

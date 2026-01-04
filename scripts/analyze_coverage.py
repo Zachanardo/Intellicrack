@@ -6,7 +6,7 @@ from collections import defaultdict
 from pathlib import Path
 
 
-def get_source_modules():
+def get_source_modules() -> dict[str, str]:
     """Get all source module names and paths."""
     modules = {}
     for root, dirs, files in os.walk('intellicrack'):
@@ -19,7 +19,7 @@ def get_source_modules():
     return modules
 
 
-def get_test_targets():
+def get_test_targets() -> defaultdict[str, list[str]]:
     """Get all modules that have corresponding test files."""
     targets = defaultdict(list)
     for root, dirs, files in os.walk('tests'):
@@ -33,7 +33,7 @@ def get_test_targets():
     return targets
 
 
-def analyze_coverage():
+def analyze_coverage() -> None:
     """Analyze test coverage and identify gaps."""
     source_modules = get_source_modules()
     test_targets = get_test_targets()

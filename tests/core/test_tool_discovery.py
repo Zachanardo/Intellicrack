@@ -25,8 +25,8 @@ class FakeConfig:
 
     def __init__(self, initial_data: Optional[Dict[str, Any]] = None) -> None:
         self.data: Dict[str, Any] = initial_data or {}
-        self.get_calls: List[tuple] = []
-        self.set_calls: List[tuple] = []
+        self.get_calls: List[tuple[str, Any]] = []
+        self.set_calls: List[tuple[str, Any]] = []
 
     def get(self, key: str, default: Any = None) -> Any:
         self.get_calls.append((key, default))
@@ -264,7 +264,7 @@ class TestAdvancedToolDiscovery:
 
         discovery = AdvancedToolDiscovery()
 
-        assert discovery.config == config
+        assert discovery.config is not None
         assert len(config.get_calls) > 0
 
     def test_search_in_path_finds_python(

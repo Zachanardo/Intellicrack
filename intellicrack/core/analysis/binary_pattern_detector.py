@@ -12,7 +12,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ...utils.logger import get_logger
 
@@ -27,6 +27,8 @@ try:
 except ImportError:
     CAPSTONE_AVAILABLE = False
     logger.warning("Capstone not available - advanced pattern matching limited")
+    if TYPE_CHECKING:
+        from capstone import Cs
 
 try:
     import pefile
@@ -555,6 +557,10 @@ class BinaryPatternDetector:
             matches = self._reloc_match(data, pattern)
         elif pattern.match_type == PatternMatchType.CROSS_REFERENCE:
             matches = self._xref_match(data, pattern)
+        elif pattern.match_type == PatternMatchType.FUZZY:
+            matches = self._fuzzy_match(data, pattern)
+        elif pattern.match_type == PatternMatchType.SEMANTIC:
+            matches = self._semantic_match(data, pattern)
 
         return matches
 
@@ -725,7 +731,7 @@ class BinaryPatternDetector:
 
         return matches
 
-    def _match_instruction_sequence(self, data: bytes, offset: int, pattern_insns: list[dict[str, Any]], cs: Cs) -> bool:
+    def _match_instruction_sequence(self, data: bytes, offset: int, pattern_insns: list[dict[str, Any]], cs: "Cs") -> bool:
         """Match instruction sequence semantically.
 
         Args:
@@ -758,7 +764,7 @@ class BinaryPatternDetector:
         except Exception:
             return False
 
-    def _get_instruction_sequence_size(self, data: bytes, offset: int, count: int, cs: Cs) -> int:
+    def _get_instruction_sequence_size(self, data: bytes, offset: int, count: int, cs: "Cs") -> int:
         """Get total size of instruction sequence.
 
         Args:
@@ -1122,6 +1128,367 @@ class BinaryPatternDetector:
         except Exception as e:
             logger.exception("Failed to import patterns: %s", e)
             return 0
+
+    def _fuzzy_match(self, data: bytes, pattern: BinaryPattern) -> list[PatternMatch]:
+        """Perform fuzzy pattern matching using weighted byte similarity.
+
+        Compares pattern bytes to candidate bytes with configurable
+        weights for fixed vs. wildcard positions. Uses anchor-based
+        optimization to avoid scanning every byte offset.
+
+        Args:
+            data: Binary data to scan.
+            pattern: Pattern to match with fuzzy similarity.
+
+        Returns:
+            Fuzzy pattern matches exceeding similarity threshold.
+        """
+        matches: list[PatternMatch] = []
+        pattern_len = len(pattern.pattern_bytes)
+        similarity_threshold = pattern.metadata.get("similarity_threshold", 0.70)
+
+        if pattern_len == 0 or pattern_len > len(data):
+            return matches
+
+        anchor_byte, anchor_offset = self._find_anchor_byte(pattern)
+        if anchor_byte is None:
+            anchor_positions = range(len(data) - pattern_len + 1)
+        else:
+            anchor_positions = self._find_byte_positions(data, anchor_byte, anchor_offset, pattern_len)
+
+        for offset in anchor_positions:
+            candidate = data[offset : offset + pattern_len]
+            similarity = self._calculate_similarity(pattern.pattern_bytes, pattern.mask, candidate)
+
+            if similarity >= similarity_threshold:
+                ctx_start = max(0, offset - pattern.context_size)
+                ctx_end = min(len(data), offset + pattern_len + pattern.context_size)
+
+                confidence = pattern.confidence * similarity
+
+                match = PatternMatch(
+                    pattern=pattern,
+                    offset=offset,
+                    matched_bytes=candidate,
+                    confidence=confidence,
+                    context_before=data[ctx_start:offset],
+                    context_after=data[offset + pattern_len : ctx_end],
+                )
+
+                match.semantic_info = {"similarity_score": similarity, "fuzzy_matched": True}
+
+                if CAPSTONE_AVAILABLE:
+                    match.disassembly = self._disassemble_region(data, offset, pattern_len)
+
+                matches.append(match)
+
+                if pattern.max_matches > 0 and len(matches) >= pattern.max_matches:
+                    break
+
+        return matches
+
+    def _find_anchor_byte(self, pattern: BinaryPattern) -> tuple[int | None, int]:
+        """Find best anchor byte in pattern for fast scanning.
+
+        Selects the first fixed byte (mask 0xFF) to use as anchor point.
+
+        Args:
+            pattern: Pattern to find anchor byte in.
+
+        Returns:
+            Tuple of (anchor_byte, offset_in_pattern) or (None, 0) if no fixed bytes.
+        """
+        for i, (byte, mask) in enumerate(zip(pattern.pattern_bytes, pattern.mask, strict=False)):
+            if mask == 0xFF:
+                return (byte, i)
+        return (None, 0)
+
+    def _find_byte_positions(self, data: bytes, anchor_byte: int, anchor_offset: int, pattern_len: int) -> list[int]:
+        """Find all positions where anchor byte appears at correct offset.
+
+        Args:
+            data: Binary data to scan.
+            anchor_byte: Byte value to search for.
+            anchor_offset: Offset of anchor within pattern.
+            pattern_len: Total pattern length.
+
+        Returns:
+            List of candidate offsets (adjusted for pattern start).
+        """
+        positions = []
+        search_start = 0
+
+        while True:
+            pos = data.find(bytes([anchor_byte]), search_start)
+            if pos == -1:
+                break
+
+            pattern_start = pos - anchor_offset
+            if pattern_start >= 0 and pattern_start + pattern_len <= len(data):
+                positions.append(pattern_start)
+
+            search_start = pos + 1
+
+        return positions
+
+    def _calculate_similarity(self, pattern: bytes, mask: bytes, candidate: bytes) -> float:
+        """Calculate similarity score between pattern and candidate using weighted byte matching.
+
+        Args:
+            pattern: Pattern bytes to compare.
+            mask: Mask bytes indicating which bytes must match (0xFF) or can vary (0x00).
+            candidate: Candidate bytes to compare against pattern.
+
+        Returns:
+            Similarity score between 0.0 and 1.0.
+        """
+        if len(pattern) != len(candidate):
+            return 0.0
+
+        if len(pattern) == 0:
+            return 1.0
+
+        matching_bytes = 0
+        total_weight = 0
+
+        for p_byte, m_byte, c_byte in zip(pattern, mask, candidate, strict=False):
+            if m_byte == 0xFF:
+                total_weight += 2
+                if p_byte == c_byte:
+                    matching_bytes += 2
+            else:
+                total_weight += 1
+                byte_similarity = 1.0 - (abs(p_byte - c_byte) / 255.0)
+                matching_bytes += byte_similarity
+
+        return matching_bytes / total_weight if total_weight > 0 else 0.0
+
+    def _semantic_match(self, data: bytes, pattern: BinaryPattern) -> list[PatternMatch]:
+        """Match patterns semantically by analyzing instruction functionality.
+
+        Args:
+            data: Binary data to scan.
+            pattern: Pattern to match semantically.
+
+        Returns:
+            Semantically equivalent pattern matches.
+        """
+        if not CAPSTONE_AVAILABLE:
+            return self._wildcard_match(data, pattern)
+
+        matches: list[PatternMatch] = []
+
+        arch = pattern.metadata.get("arch", CS_ARCH_X86)
+        mode = pattern.metadata.get("mode")
+        if mode is None:
+            mode = self._detect_binary_mode(data)
+
+        cs = Cs(arch, mode)
+        cs.detail = True
+
+        pattern_semantics = self._extract_semantic_signature_with_cs(pattern.pattern_bytes, cs)
+
+        if not pattern_semantics:
+            return self._wildcard_match(data, pattern)
+
+        scan_window = min(len(pattern.pattern_bytes) * 3, 50)
+
+        offset = 0
+        while offset < len(data) - scan_window:
+            try:
+                code_slice = data[offset : offset + scan_window]
+                insn = next(cs.disasm(code_slice, offset), None)
+
+                if insn is None:
+                    offset += 1
+                    continue
+
+                candidate_semantics = self._extract_semantic_signature_with_cs(data[offset : offset + scan_window], cs)
+
+                if self._semantics_match(pattern_semantics, candidate_semantics):
+                    match_size = self._get_semantic_match_size(data, offset, len(pattern_semantics), cs)
+
+                    ctx_start = max(0, offset - pattern.context_size)
+                    ctx_end = min(len(data), offset + match_size + pattern.context_size)
+
+                    match = PatternMatch(
+                        pattern=pattern,
+                        offset=offset,
+                        matched_bytes=data[offset : offset + match_size],
+                        confidence=pattern.confidence * 0.85,
+                        context_before=data[ctx_start:offset],
+                        context_after=data[offset + match_size : ctx_end],
+                    )
+
+                    match.semantic_info = {
+                        "semantic_signature": candidate_semantics,
+                        "instruction_count": len(candidate_semantics),
+                        "semantic_matched": True,
+                        "mode": "64-bit" if mode == CS_MODE_64 else "32-bit",
+                    }
+
+                    match.disassembly = self._disassemble_region(data, offset, match_size)
+
+                    matches.append(match)
+
+                    if pattern.max_matches > 0 and len(matches) >= pattern.max_matches:
+                        break
+
+                offset += insn.size
+
+            except StopIteration:
+                offset += 1
+            except Exception:
+                offset += 1
+
+        return matches
+
+    def _detect_binary_mode(self, data: bytes) -> int:
+        """Detect x86 vs x64 architecture from binary data.
+
+        Checks PE header machine type if available, otherwise defaults to 64-bit
+        as the majority of modern protected software is 64-bit.
+
+        Args:
+            data: Binary data to analyze.
+
+        Returns:
+            CS_MODE_32 for 32-bit or CS_MODE_64 for 64-bit binaries.
+        """
+        if not CAPSTONE_AVAILABLE:
+            return CS_MODE_64
+
+        if len(data) < 2 or data[:2] != b"MZ":
+            return CS_MODE_64
+
+        if not PEFILE_AVAILABLE:
+            return CS_MODE_64
+
+        try:
+            pe = pefile.PE(data=data, fast_load=True)
+            machine_type = pe.FILE_HEADER.Machine
+
+            if machine_type == 0x014C:
+                return CS_MODE_32
+            elif machine_type == 0x8664:
+                return CS_MODE_64
+            else:
+                return CS_MODE_64
+
+        except Exception:
+            return CS_MODE_64
+
+    def _extract_semantic_signature(self, code: bytes) -> list[dict[str, Any]]:
+        """Extract semantic signature from code bytes using default 32-bit mode.
+
+        Deprecated: Use _extract_semantic_signature_with_cs instead.
+
+        Args:
+            code: Code bytes to analyze.
+
+        Returns:
+            List of instruction semantic signatures.
+        """
+        if not CAPSTONE_AVAILABLE or len(code) == 0:
+            return []
+
+        return self._extract_semantic_signature_with_cs(code, self.cs_x86)
+
+    def _extract_semantic_signature_with_cs(self, code: bytes, cs: "Cs") -> list[dict[str, Any]]:
+        """Extract semantic signature from code bytes using specified disassembler.
+
+        Args:
+            code: Code bytes to analyze.
+            cs: Capstone disassembler instance configured for target architecture.
+
+        Returns:
+            List of instruction semantic signatures.
+        """
+        if not CAPSTONE_AVAILABLE or len(code) == 0:
+            return []
+
+        signatures: list[dict[str, Any]] = []
+
+        try:
+            for insn in cs.disasm(code, 0):
+                sig: dict[str, Any] = {
+                    "mnemonic": insn.mnemonic,
+                    "groups": list(insn.groups),
+                    "op_count": len(insn.operands),
+                }
+
+                if insn.operands:
+                    sig["op_types"] = [op.type for op in insn.operands]
+
+                    if insn.group(CS_GRP_CALL) or insn.group(CS_GRP_JUMP):
+                        sig["control_flow"] = True
+
+                    for op in insn.operands:
+                        if op.type == X86_OP_IMM:
+                            sig["has_immediate"] = True
+                        elif op.type == X86_OP_MEM:
+                            sig["has_memory"] = True
+
+                signatures.append(sig)
+
+        except Exception as e:
+            logger.debug("Failed to extract semantic signature: %s", e)
+
+        return signatures
+
+    def _semantics_match(self, pattern_sigs: list[dict[str, Any]], candidate_sigs: list[dict[str, Any]]) -> bool:
+        """Check if semantic signatures match.
+
+        Args:
+            pattern_sigs: Pattern semantic signatures.
+            candidate_sigs: Candidate semantic signatures.
+
+        Returns:
+            True if signatures semantically match, False otherwise.
+        """
+        if not pattern_sigs or not candidate_sigs:
+            return False
+
+        if len(candidate_sigs) < len(pattern_sigs):
+            return False
+
+        for pat_sig, cand_sig in zip(pattern_sigs, candidate_sigs[: len(pattern_sigs)], strict=False):
+            if pat_sig["mnemonic"] != cand_sig["mnemonic"]:
+                return False
+
+            if pat_sig.get("control_flow") and not cand_sig.get("control_flow"):
+                return False
+
+            if pat_sig.get("has_immediate") != cand_sig.get("has_immediate"):
+                if not (pat_sig.get("has_memory") and cand_sig.get("has_memory")):
+                    return False
+
+        return True
+
+    def _get_semantic_match_size(self, data: bytes, offset: int, insn_count: int, cs: "Cs") -> int:
+        """Get byte size of semantic match.
+
+        Args:
+            data: Binary data.
+            offset: Starting offset.
+            insn_count: Number of instructions to measure.
+            cs: Capstone disassembler instance.
+
+        Returns:
+            Total byte size of matched instructions.
+        """
+        size = 0
+        code = data[offset : offset + 100]
+
+        try:
+            for i, insn in enumerate(cs.disasm(code, offset)):
+                if i >= insn_count:
+                    break
+                size += insn.size
+        except Exception:
+            size = min(len(code), insn_count * 5)
+
+        return size if size > 0 else len(code)
 
     def get_pattern_statistics(self) -> dict[str, Any]:
         """Get pattern database statistics.

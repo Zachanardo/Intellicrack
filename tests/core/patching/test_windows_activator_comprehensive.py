@@ -272,7 +272,7 @@ class TestActivationMethodEnum:
         """ActivationMethod members can be compared."""
         method = ActivationMethod.HWID
         assert method == ActivationMethod.HWID
-        assert method != ActivationMethod.KMS38
+        assert method != ActivationMethod.KMS38  # type: ignore[comparison-overlap]
 
 
 class TestActivationStatusEnum:
@@ -655,9 +655,9 @@ class TestActivateAliasMethods:
             called_with.append(method)
             return {"success": True}
 
-        activator.activate_windows = fake_activate  # type: ignore[method-assign]
+        activator.activate_windows = fake_activate  # type: ignore[method-assign, assignment]
         activator.activate("hwid")
-        activator.activate_windows = original_activate  # type: ignore[method-assign]
+        activator.activate_windows = original_activate  # type: ignore[method-assign, assignment]
 
         assert len(called_with) == 1
         assert called_with[0] == ActivationMethod.HWID
@@ -671,9 +671,9 @@ class TestActivateAliasMethods:
             called_with.append(method)
             return {"success": True}
 
-        activator.activate_windows = fake_activate  # type: ignore[method-assign]
+        activator.activate_windows = fake_activate  # type: ignore[method-assign, assignment]
         activator.activate("kms38")
-        activator.activate_windows = original_activate  # type: ignore[method-assign]
+        activator.activate_windows = original_activate  # type: ignore[method-assign, assignment]
 
         assert len(called_with) == 1
         assert called_with[0] == ActivationMethod.KMS38
@@ -687,9 +687,9 @@ class TestActivateAliasMethods:
             called_with.append(method)
             return {"success": True}
 
-        activator.activate_windows = fake_activate  # type: ignore[method-assign]
+        activator.activate_windows = fake_activate  # type: ignore[method-assign, assignment]
         activator.activate("ohook")
-        activator.activate_windows = original_activate  # type: ignore[method-assign]
+        activator.activate_windows = original_activate  # type: ignore[method-assign, assignment]
 
         assert len(called_with) == 1
         assert called_with[0] == ActivationMethod.ONLINE_KMS
@@ -703,9 +703,9 @@ class TestActivateAliasMethods:
             called_with.append(method)
             return {"success": True}
 
-        activator.activate_windows = fake_activate  # type: ignore[method-assign]
+        activator.activate_windows = fake_activate  # type: ignore[method-assign, assignment]
         activator.activate("HWID")
-        activator.activate_windows = original_activate  # type: ignore[method-assign]
+        activator.activate_windows = original_activate  # type: ignore[method-assign, assignment]
 
         assert len(called_with) == 1
         assert called_with[0] == ActivationMethod.HWID
@@ -719,9 +719,9 @@ class TestActivateAliasMethods:
             called_with.append(method)
             return {"success": True}
 
-        activator.activate_windows = fake_activate  # type: ignore[method-assign]
+        activator.activate_windows = fake_activate  # type: ignore[method-assign, assignment]
         activator.activate_windows_kms()
-        activator.activate_windows = original_activate  # type: ignore[method-assign]
+        activator.activate_windows = original_activate  # type: ignore[method-assign, assignment]
 
         assert len(called_with) == 1
         assert called_with[0] == ActivationMethod.KMS38
@@ -735,9 +735,9 @@ class TestActivateAliasMethods:
             called_with.append(method)
             return {"success": True}
 
-        activator.activate_windows = fake_activate  # type: ignore[method-assign]
+        activator.activate_windows = fake_activate  # type: ignore[method-assign, assignment]
         activator.activate_windows_digital()
-        activator.activate_windows = original_activate  # type: ignore[method-assign]
+        activator.activate_windows = original_activate  # type: ignore[method-assign, assignment]
 
         assert len(called_with) == 1
         assert called_with[0] == ActivationMethod.HWID
@@ -896,13 +896,13 @@ class TestOfficeActivation:
         original_status: Callable[[], dict[str, Any]] = activator_with_mock_script._get_office_status
 
         activator_with_mock_script._detect_office_version = lambda: "2016"  # type: ignore[method-assign]
-        activator_with_mock_script._activate_office_c2r = lambda version: {"success": True}  # type: ignore[method-assign]
+        activator_with_mock_script._activate_office_c2r = lambda version: {"success": True}  # type: ignore[method-assign, assignment]
         activator_with_mock_script._get_office_status = lambda: {"status": "activated"}  # type: ignore[method-assign]
 
         result = activator_with_mock_script.activate_office("auto")
 
         activator_with_mock_script._detect_office_version = original_detect  # type: ignore[method-assign]
-        activator_with_mock_script._activate_office_c2r = original_c2r  # type: ignore[method-assign]
+        activator_with_mock_script._activate_office_c2r = original_c2r  # type: ignore[method-assign, assignment]
         activator_with_mock_script._get_office_status = original_status  # type: ignore[method-assign]
 
         assert result["success"]
@@ -938,7 +938,7 @@ class TestOfficeActivation:
         original_c2r = activator_with_mock_script._activate_office_c2r
         original_status = activator_with_mock_script._get_office_status
 
-        activator_with_mock_script._activate_office_c2r = fake_c2r  # type: ignore[method-assign]
+        activator_with_mock_script._activate_office_c2r = fake_c2r  # type: ignore[method-assign, assignment]
         activator_with_mock_script._get_office_status = lambda: {"status": "activated"}  # type: ignore[method-assign]
 
         result = activator_with_mock_script.activate_office("2019")
@@ -970,8 +970,8 @@ class TestOfficeActivation:
         original_msi = activator_with_mock_script._activate_office_msi
         original_status = activator_with_mock_script._get_office_status
 
-        activator_with_mock_script._activate_office_c2r = fake_c2r  # type: ignore[method-assign]
-        activator_with_mock_script._activate_office_msi = fake_msi  # type: ignore[method-assign]
+        activator_with_mock_script._activate_office_c2r = fake_c2r  # type: ignore[method-assign, assignment]
+        activator_with_mock_script._activate_office_msi = fake_msi  # type: ignore[method-assign, assignment]
         activator_with_mock_script._get_office_status = lambda: {"status": "activated"}  # type: ignore[method-assign]
 
         result = activator_with_mock_script.activate_office("2016")

@@ -166,7 +166,7 @@ class TestScriptParameterInjection:
             "log_level": "verbose"
         }
 
-        injected = script_manager._inject_parameters(script_content, parameters)
+        injected = script_manager._inject_parameters(script_content, parameters)  # type: ignore[attr-defined]
 
         assert "LicenseCheck" in injected
         assert "verbose" in injected
@@ -178,7 +178,7 @@ class TestScriptParameterInjection:
         script_content = "Target: {{target_function}}"
 
         # Should leave placeholder if parameter not provided
-        injected = script_manager._inject_parameters(script_content, {})
+        injected = script_manager._inject_parameters(script_content, {})  # type: ignore[attr-defined]
 
         assert "{{target_function}}" in injected
 
@@ -278,7 +278,7 @@ class TestResultHandling:
 
     def test_result_creation(self) -> None:
         """Test creating a ScriptResult."""
-        result = ScriptResult(
+        result = ScriptResult(  # type: ignore[call-arg]
             script_name="test.js",
             success=True,
             output="Test output",
@@ -289,13 +289,13 @@ class TestResultHandling:
         )
 
         assert result.success is True
-        assert result.execution_time_ms == 100
-        assert len(result.data_collected) == 2
+        assert result.execution_time_ms == 100  # type: ignore[attr-defined]
+        assert len(result.data_collected) == 2  # type: ignore[attr-defined]
 
     def test_result_export_json(self, script_manager: FridaScriptManager, tmp_path: Path) -> None:
         """Test exporting results to JSON."""
         results = [
-            ScriptResult(
+            ScriptResult(  # type: ignore[call-arg]
                 script_name="test1.js",
                 success=True,
                 output="Output 1",
@@ -304,7 +304,7 @@ class TestResultHandling:
                 hooks_triggered=3,
                 data_collected=["data1"]
             ),
-            ScriptResult(
+            ScriptResult(  # type: ignore[call-arg]
                 script_name="test2.js",
                 success=False,
                 output="Output 2",
@@ -316,7 +316,7 @@ class TestResultHandling:
         ]
 
         output_file = tmp_path / "results.json"
-        script_manager.export_results(results, output_file, format="json")
+        script_manager.export_results(results, output_file, format="json")  # type: ignore[call-arg, arg-type]
 
         assert output_file.exists()
 
@@ -359,7 +359,7 @@ class TestScriptLibraryIntegration:
 
         # Verify each script has proper configuration
         for _script_name, config in manager.scripts.items():
-            assert config.script_path.exists()
+            assert config.script_path.exists()  # type: ignore[attr-defined]
             assert config.category in ScriptCategory
             assert len(config.description) > 0
 

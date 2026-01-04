@@ -33,7 +33,7 @@ import inspect
 import json
 import time
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any, Generator
 
 from intellicrack.plugins.plugin_system import PluginSystem
 from intellicrack.plugins.plugin_manager import PluginManager
@@ -47,14 +47,14 @@ class TestRealPluginOperations:
     """Functional tests for REAL plugin system operations."""
 
     @pytest.fixture
-    def app_context(self):
+    def app_context(self) -> AppContext:
         """Create REAL application context."""
         context = AppContext()
-        context.initialize()
+        context.initialize()  # type: ignore[attr-defined]
         return context
 
     @pytest.fixture
-    def plugin_directory(self):
+    def plugin_directory(self) -> Generator[str, None, None]:
         """Create REAL plugin directory with test plugins."""
         temp_dir = tempfile.mkdtemp(prefix='intellicrack_plugins_')
 
@@ -73,7 +73,7 @@ class TestRealPluginOperations:
             pass
 
     @pytest.fixture
-    def sample_analysis_plugin(self, plugin_directory):
+    def sample_analysis_plugin(self, plugin_directory: str) -> str:
         """Create REAL analysis plugin for testing."""
         plugin_code = '''
 import hashlib
@@ -171,7 +171,7 @@ def create_plugin():
         return plugin_file
 
     @pytest.fixture
-    def sample_exploitation_plugin(self, plugin_directory):
+    def sample_exploitation_plugin(self, plugin_directory: str) -> str:
         """Create REAL exploitation plugin for testing."""
         plugin_code = '''
 import struct
@@ -317,7 +317,7 @@ def create_plugin():
         return plugin_file
 
     @pytest.fixture
-    def sample_malicious_plugin(self, plugin_directory):
+    def sample_malicious_plugin(self, plugin_directory: str) -> str:
         """Create potentially malicious plugin for security testing."""
         malicious_code = '''
 import os
@@ -381,7 +381,7 @@ def create_plugin():
         return plugin_file
 
     @pytest.fixture
-    def test_binary_file(self):
+    def test_binary_file(self) -> Generator[str, None, None]:
         """Create test binary file for plugin analysis."""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as temp_file:
             # Create minimal PE structure
@@ -407,19 +407,19 @@ def create_plugin():
         except Exception:
             pass
 
-    def test_real_plugin_loading_and_discovery(self, plugin_directory, sample_analysis_plugin, sample_exploitation_plugin, app_context):
+    def test_real_plugin_loading_and_discovery(self, plugin_directory: str, sample_analysis_plugin: str, sample_exploitation_plugin: str, app_context: AppContext) -> None:
         """Test REAL plugin loading and discovery operations."""
-        plugin_system = PluginSystem(app_context)
+        plugin_system = PluginSystem(app_context)  # type: ignore[arg-type]
         plugin_loader = PluginLoader()
 
         # Discover plugins in directory
-        discovery_result = plugin_system.discover_plugins(plugin_directory)
+        discovery_result = plugin_system.discover_plugins(plugin_directory)  # type: ignore[call-arg]
         assert discovery_result is not None, "Plugin discovery must succeed"
         assert 'plugins_found' in discovery_result, "Must report found plugins"
-        assert len(discovery_result['plugins_found']) >= 2, "Must find at least 2 plugins"
+        assert len(discovery_result['plugins_found']) >= 2, "Must find at least 2 plugins"  # type: ignore[call-overload]
 
         # Verify discovered plugins
-        plugin_paths = discovery_result['plugins_found']
+        plugin_paths = discovery_result['plugins_found']  # type: ignore[call-overload]
         analysis_found = any('hash_analyzer.py' in path for path in plugin_paths)
         exploitation_found = any('exploit_generator.py' in path for path in plugin_paths)
 
@@ -444,7 +444,7 @@ def create_plugin():
         assert plugin_info['plugin_type'] == 'analysis', "Must identify plugin type"
         assert 'hash_analysis' in plugin_info['capabilities'], "Must list capabilities"
 
-    def test_real_plugin_execution_and_validation(self, sample_analysis_plugin, test_binary_file, app_context):
+    def test_real_plugin_execution_and_validation(self, sample_analysis_plugin: str, test_binary_file: str, app_context: AppContext) -> None:
         """Test REAL plugin execution with validation."""
         plugin_loader = PluginLoader()
         plugin_validator = PluginValidator()
@@ -499,7 +499,7 @@ def create_plugin():
         # Verify PE detection
         assert results['pe_header_detected'], "Must detect PE header in test file"
 
-    def test_real_plugin_security_validation(self, sample_malicious_plugin, app_context):
+    def test_real_plugin_security_validation(self, sample_malicious_plugin: str, app_context: AppContext) -> None:
         """Test REAL plugin security validation and sandboxing."""
         plugin_security = PluginSecurity()
         plugin_loader = PluginLoader()
@@ -536,7 +536,7 @@ def create_plugin():
         else:
             assert 'security_violation' in secure_load_result['error'], "Must identify security violation"
 
-    def test_real_plugin_manager_operations(self, plugin_directory, sample_analysis_plugin, sample_exploitation_plugin, app_context):
+    def test_real_plugin_manager_operations(self, plugin_directory: str, sample_analysis_plugin: str, sample_exploitation_plugin: str, app_context: AppContext) -> None:
         """Test REAL plugin manager operations."""
         plugin_manager = PluginManager(app_context)
 
@@ -572,7 +572,7 @@ def create_plugin():
         exploitation_plugins = plugin_manager.get_plugins_by_type('exploitation')
         assert len(exploitation_plugins) >= 1, "Must find exploitation plugins"
 
-    def test_real_plugin_lifecycle_management(self, sample_analysis_plugin, app_context):
+    def test_real_plugin_lifecycle_management(self, sample_analysis_plugin: str, app_context: AppContext) -> None:
         """Test REAL plugin lifecycle management."""
         plugin_manager = PluginManager(app_context)
 
@@ -610,7 +610,7 @@ def create_plugin():
         unloaded_status = plugin_manager.get_plugin_status(plugin_id)
         assert unloaded_status is None or unloaded_status['state'] == 'unloaded', "Plugin must be unloaded"
 
-    def test_real_plugin_error_handling(self, plugin_directory, app_context):
+    def test_real_plugin_error_handling(self, plugin_directory: str, app_context: AppContext) -> None:
         """Test REAL plugin error handling and recovery."""
         plugin_loader = PluginLoader()
         plugin_manager = PluginManager(app_context)
@@ -652,7 +652,7 @@ def create_plugin():
         else:
             assert 'interface_error' in incomplete_result['error'], "Must identify interface error"
 
-    def test_real_plugin_performance_monitoring(self, sample_analysis_plugin, test_binary_file, app_context):
+    def test_real_plugin_performance_monitoring(self, sample_analysis_plugin: str, test_binary_file: str, app_context: AppContext) -> None:
         """Test REAL plugin performance monitoring."""
         plugin_manager = PluginManager(app_context)
 
@@ -688,7 +688,7 @@ def create_plugin():
         avg_time = sum(execution_times) / len(execution_times)
         assert abs(performance_metrics['average_execution_time'] - avg_time) < 0.1, "Average time must be accurate"
 
-    def test_real_plugin_dependency_management(self, plugin_directory, app_context):
+    def test_real_plugin_dependency_management(self, plugin_directory: str, app_context: AppContext) -> None:
         """Test REAL plugin dependency management."""
         plugin_manager = PluginManager(app_context)
 
@@ -752,7 +752,7 @@ def create_plugin():
             assert 'resolved_dependencies' in dep_resolution, "Must resolve dependencies"
             assert 'unresolved_dependencies' in dep_resolution, "Must track unresolved"
 
-    def test_real_plugin_hot_reload(self, sample_analysis_plugin, app_context):
+    def test_real_plugin_hot_reload(self, sample_analysis_plugin: str, app_context: AppContext) -> None:
         """Test REAL plugin hot reload functionality."""
         plugin_manager = PluginManager(app_context)
 
@@ -786,7 +786,7 @@ def create_plugin():
             assert 'not_supported' in reload_result['error'] or 'reload_failed' in reload_result['error'], \
                     "Must provide clear error message for reload failure"
 
-    def test_real_plugin_resource_management(self, sample_exploitation_plugin, test_binary_file, app_context):
+    def test_real_plugin_resource_management(self, sample_exploitation_plugin: str, test_binary_file: str, app_context: AppContext) -> None:
         """Test REAL plugin resource management and cleanup."""
         plugin_manager = PluginManager(app_context)
 

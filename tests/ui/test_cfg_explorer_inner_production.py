@@ -188,7 +188,7 @@ class TestNetworkXIntegration:
 
         assert hasattr(app, "cfg_graph")
         assert isinstance(app.cfg_graph, nx.DiGraph)
-        assert app.cfg_analysis_tools["networkx_available"] is True
+        assert app.cfg_analysis_tools["networkx_available"] is True  # type: ignore[attr-defined]
 
     def test_networkx_builds_cfg_with_functions_and_edges(self) -> None:
         """NetworkX builds CFG with real function nodes and control flow edges."""
@@ -209,7 +209,7 @@ class TestNetworkXIntegration:
             {"from": "0x401200", "to": "0x401000", "type": "jump", "condition": "jz"},
         ]
 
-        metrics = app.build_cfg_with_networkx(functions, edges)
+        metrics = app.build_cfg_with_networkx(functions, edges)  # type: ignore[attr-defined]
 
         assert metrics["nodes"] == 3
         assert metrics["edges"] == 3
@@ -217,16 +217,16 @@ class TestNetworkXIntegration:
         assert "centrality" in metrics
         assert "pagerank" in metrics
 
-        assert app.cfg_graph.has_node("0x401000")
-        assert app.cfg_graph.has_node("0x401100")
-        assert app.cfg_graph.has_node("0x401200")
+        assert app.cfg_graph.has_node("0x401000")  # type: ignore[attr-defined]
+        assert app.cfg_graph.has_node("0x401100")  # type: ignore[attr-defined]
+        assert app.cfg_graph.has_node("0x401200")  # type: ignore[attr-defined]
 
-        assert app.cfg_graph.nodes["0x401000"]["label"] == "main"
-        assert app.cfg_graph.nodes["0x401100"]["size"] == 80
-        assert app.cfg_graph.nodes["0x401200"]["confidence"] == 0.85
+        assert app.cfg_graph.nodes["0x401000"]["label"] == "main"  # type: ignore[attr-defined]
+        assert app.cfg_graph.nodes["0x401100"]["size"] == 80  # type: ignore[attr-defined]
+        assert app.cfg_graph.nodes["0x401200"]["confidence"] == 0.85  # type: ignore[attr-defined]
 
-        assert app.cfg_graph.has_edge("0x401000", "0x401100")
-        assert app.cfg_graph.edges["0x401100", "0x401200"]["type"] == "call"
+        assert app.cfg_graph.has_edge("0x401000", "0x401100")  # type: ignore[attr-defined]
+        assert app.cfg_graph.edges["0x401100", "0x401200"]["type"] == "call"  # type: ignore[attr-defined]
 
     def test_networkx_calculates_graph_metrics_correctly(self) -> None:
         """NetworkX calculates accurate graph metrics for CFG analysis."""
@@ -249,7 +249,7 @@ class TestNetworkXIntegration:
             {"from": "0x3000", "to": "0x4000", "type": "call"},
         ]
 
-        metrics = app.build_cfg_with_networkx(functions, edges)
+        metrics = app.build_cfg_with_networkx(functions, edges)  # type: ignore[attr-defined]
 
         assert metrics["nodes"] == 4
         assert metrics["edges"] == 4
@@ -345,8 +345,8 @@ class TestLicensePatternDetection:
         hit = activation_hits[0]
         assert "address" in hit
         assert "context" in hit
-        assert hit["address"].startswith("0x")
-        assert len(hit["context"]) > 0
+        assert hit["address"].startswith("0x")  # type: ignore[attr-defined]
+        assert len(hit["context"]) > 0  # type: ignore[arg-type]
 
     def test_finds_multiple_license_patterns_in_single_binary(self) -> None:
         """CFG explorer finds all license patterns present in binary."""
@@ -484,7 +484,7 @@ class TestGraphVisualizationData:
         app = MockApp()
         explorer = CfgExplorerInner()
 
-        app.cfg_detected_functions = [
+        app.cfg_detected_functions = [  # type: ignore[attr-defined]
             {"address": "0x401000", "confidence": 0.9},
             {"address": "0x401100", "confidence": 0.85},
             {"address": "0x401200", "confidence": 0.88},
@@ -493,15 +493,15 @@ class TestGraphVisualizationData:
         explorer._initialize_graph_visualization_data(app)
         explorer._build_sample_cfg_graph(app)
 
-        assert len(app.cfg_graph_data["nodes"]) == 3
-        assert len(app.cfg_graph_data["edges"]) > 0
+        assert len(app.cfg_graph_data["nodes"]) == 3  # type: ignore[attr-defined]
+        assert len(app.cfg_graph_data["edges"]) > 0  # type: ignore[attr-defined]
 
-        node_ids = [node["id"] for node in app.cfg_graph_data["nodes"]]
+        node_ids = [node["id"] for node in app.cfg_graph_data["nodes"]]  # type: ignore[attr-defined]
         assert "func_0" in node_ids
         assert "func_1" in node_ids
         assert "func_2" in node_ids
 
-        for node in app.cfg_graph_data["nodes"]:
+        for node in app.cfg_graph_data["nodes"]:  # type: ignore[attr-defined]
             assert "address" in node
             assert "label" in node
             assert "confidence" in node
@@ -511,7 +511,7 @@ class TestGraphVisualizationData:
         app = MockApp()
         explorer = CfgExplorerInner()
 
-        app.cfg_detected_functions = []
+        app.cfg_detected_functions = []  # type: ignore[attr-defined]
         explorer._initialize_graph_visualization_data(app)
         explorer._build_sample_cfg_graph(app)
 
@@ -528,22 +528,22 @@ class TestCfgAnalysisResults:
         app = MockApp()
         explorer = CfgExplorerInner()
 
-        app.cfg_binary_format = "PE"
-        app.cfg_analysis_tools = {
+        app.cfg_binary_format = "PE"  # type: ignore[attr-defined]
+        app.cfg_analysis_tools = {  # type: ignore[attr-defined]
             "networkx_available": True,
             "radare2_available": False,
             "matplotlib_available": True,
             "capstone_available": True,
         }
-        app.cfg_detected_functions = [
+        app.cfg_detected_functions = [  # type: ignore[attr-defined]
             {"address": "0x401000", "confidence": 0.95},
             {"address": "0x401100", "confidence": 0.90},
         ]
-        app.cfg_license_hits = [
+        app.cfg_license_hits = [  # type: ignore[attr-defined]
             {"keyword": "license", "address": "0x402000"},
             {"keyword": "serial", "address": "0x402050"},
         ]
-        app.cfg_graph_data = {
+        app.cfg_graph_data = {  # type: ignore[attr-defined]
             "nodes": [{"id": "func_0"}, {"id": "func_1"}],
             "edges": [{"from": "func_0", "to": "func_1"}],
             "current_layout": "spring",
@@ -567,7 +567,7 @@ class TestCfgAnalysisResults:
         app = MockApp()
         explorer = CfgExplorerInner()
 
-        app.cfg_analysis_tools = {
+        app.cfg_analysis_tools = {  # type: ignore[attr-defined]
             "networkx_available": True,
             "radare2_available": True,
             "matplotlib_available": False,
@@ -604,8 +604,8 @@ class TestMatplotlibIntegration:
         explorer._initialize_cfg_analysis_tools(app)
         explorer._setup_matplotlib_integration(app)
 
-        app.cfg_analysis_tools["networkx_available"] = False
-        result = app.visualize_cfg_with_matplotlib()
+        app.cfg_analysis_tools["networkx_available"] = False  # type: ignore[attr-defined]
+        result = app.visualize_cfg_with_matplotlib()  # type: ignore[attr-defined]
 
         assert "error" in result
         assert "NetworkX not available" in result["error"]
@@ -624,13 +624,13 @@ class TestMatplotlibIntegration:
         ]
         edges = [{"from": "0x1000", "to": "0x2000", "type": "call"}]
 
-        app.build_cfg_with_networkx(functions, edges)
+        app.build_cfg_with_networkx(functions, edges)  # type: ignore[attr-defined]
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
             save_path = tmp.name
 
         try:
-            result = app.visualize_cfg_with_matplotlib(save_path=save_path)
+            result = app.visualize_cfg_with_matplotlib(save_path=save_path)  # type: ignore[attr-defined]
 
             assert "status" in result
             assert result["status"] == "saved"
@@ -653,7 +653,7 @@ class TestCapstoneIntegration:
 
         explorer._setup_capstone_integration(app)
 
-        if app.cfg_analysis_tools.get("capstone_available"):
+        if app.cfg_analysis_tools.get("capstone_available"):  # type: ignore[attr-defined]
             assert hasattr(app, "disassemble_with_capstone")
             assert callable(app.disassemble_with_capstone)
 
@@ -664,11 +664,11 @@ class TestCapstoneIntegration:
         explorer._initialize_cfg_analysis_tools(app)
         explorer._setup_capstone_integration(app)
 
-        if not app.cfg_analysis_tools.get("capstone_available"):
+        if not app.cfg_analysis_tools.get("capstone_available"):  # type: ignore[attr-defined]
             pytest.skip("Capstone not available")
 
         binary_data = b"\x55\x48\x89\xe5\x48\x83\xec\x20\xc3"
-        result = app.disassemble_with_capstone(binary_data, offset=0x1000, arch="x86", mode="64")
+        result = app.disassemble_with_capstone(binary_data, offset=0x1000, arch="x86", mode="64")  # type: ignore[attr-defined]
 
         assert result["status"] == "success"
         assert "instructions" in result
@@ -687,7 +687,7 @@ class TestCapstoneIntegration:
         explorer._initialize_cfg_analysis_tools(app)
         explorer._setup_capstone_integration(app)
 
-        if not app.cfg_analysis_tools.get("capstone_available"):
+        if not app.cfg_analysis_tools.get("capstone_available"):  # type: ignore[attr-defined]
             pytest.skip("Capstone not available")
 
         binary_data = (
@@ -699,7 +699,7 @@ class TestCapstoneIntegration:
             b"\xc3"
         )
 
-        result = app.disassemble_with_capstone(binary_data, offset=0x1000, arch="x86", mode="64")
+        result = app.disassemble_with_capstone(binary_data, offset=0x1000, arch="x86", mode="64")  # type: ignore[attr-defined]
 
         assert result["status"] == "success"
         assert "basic_blocks" in result

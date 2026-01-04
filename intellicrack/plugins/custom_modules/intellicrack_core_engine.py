@@ -2285,11 +2285,11 @@ class EventBus:
         """
         self.subscribers: dict[str, list[Callable[[Event], Awaitable[None]]]] = {}
         self.event_queue: asyncio.Queue[Event] = asyncio.Queue(maxsize=max_queue_size)
-        self.running = False
+        self.running: bool = False
         self.processor_task: asyncio.Task[None] | None = None
         self.logger: logging.Logger | None = None
         self.event_history: list[Event] = []
-        self.max_history_size = 1000
+        self.max_history_size: int = 1000
         self.stats = {
             "events_processed": 0,
             "events_failed": 0,
@@ -3980,7 +3980,7 @@ class AnalysisCoordinator:
         self.active_analyses: dict[str, dict[str, Any]] = {}
         self.analysis_queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
         self.coordinator_task: asyncio.Task[None] | None = None
-        self.running = False
+        self.running: bool = False
 
         # Analysis templates
         self.analysis_templates = {
@@ -4462,11 +4462,11 @@ class ResourceManager:
         # Resource pools
         self.process_pool: ProcessPoolExecutor | None = None
         self.thread_pool: ThreadPoolExecutor | None = None
-        self.max_workers = config.get("max_workers", mp.cpu_count())
+        self.max_workers: int = config.get("max_workers", mp.cpu_count())
 
         # Monitoring
         self.monitoring_task: asyncio.Task[None] | None = None
-        self.running = False
+        self.running: bool = False
 
         # Resource tracking
         self.resource_stats = {
@@ -4844,7 +4844,7 @@ class IntellicrackcoreEngine:
         )
 
         # Engine state
-        self.running = False
+        self.running: bool = False
         self.startup_time: datetime | None = None
 
         # API interface

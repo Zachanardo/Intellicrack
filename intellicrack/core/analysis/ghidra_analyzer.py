@@ -25,15 +25,13 @@ import re
 import shutil
 import subprocess
 import tempfile
-
-
 from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Thread
 from typing import Any, Protocol
+from xml.etree.ElementTree import Element
 
 from defusedxml import ElementTree as ET
-from defusedxml.ElementTree import Element
 
 from intellicrack.core.config_manager import get_config
 from intellicrack.utils.subprocess_security import secure_popen

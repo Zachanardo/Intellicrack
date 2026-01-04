@@ -139,15 +139,15 @@ class RegressionTestBehavioralAnalysisQEMU:
         """
         sock = Mock(spec=socket.socket)
 
+        qmp_recv_call_count = 0
+
         def qmp_recv_side_effect(size: int) -> bytes:
-            if not hasattr(qmp_recv_side_effect, "call_count"):
-                qmp_recv_side_effect.call_count = 0
+            nonlocal qmp_recv_call_count
+            qmp_recv_call_count += 1
 
-            qmp_recv_side_effect.call_count += 1
-
-            if qmp_recv_side_effect.call_count == 1:
+            if qmp_recv_call_count == 1:
                 return b'{"QMP": {"version": {"qemu": "6.2.0"}}, "capabilities": []}\n'
-            elif qmp_recv_side_effect.call_count == 2:
+            elif qmp_recv_call_count == 2:
                 return b'{"return": {}}\n'
             else:
                 return b'{"return": {"status": "running"}}\n'
@@ -397,15 +397,15 @@ class RegressionTestBehavioralAnalysisQEMU:
 
         mock_qmp_socket = Mock(spec=socket.socket)
 
+        qmp_snapshot_call_count = 0
+
         def qmp_recv_snapshot(size: int) -> bytes:
-            if not hasattr(qmp_recv_snapshot, "call_count"):
-                qmp_recv_snapshot.call_count = 0
+            nonlocal qmp_snapshot_call_count
+            qmp_snapshot_call_count += 1
 
-            qmp_recv_snapshot.call_count += 1
-
-            if qmp_recv_snapshot.call_count == 1:
+            if qmp_snapshot_call_count == 1:
                 return b'{"QMP": {"version": {}}}\n'
-            elif qmp_recv_snapshot.call_count == 2:
+            elif qmp_snapshot_call_count == 2:
                 return b'{"return": {}}\n'
             else:
                 return b'{"return": "snapshot_created"}\n'
@@ -702,15 +702,19 @@ class RegressionTestBehavioralAnalysisQEMU:
             patch("socket.socket") as mock_socket,
             patch.object(analyzer.qemu_controller, "_prepare_disk_image"),
         ):
-            mock_socket.side_effect = lambda *args: (
-                mock_monitor_socket
-                if args == ()
-                else mock_qmp_socket
-                if hasattr(mock_socket, "_qmp_called")
-                else (
-                    setattr(mock_socket, "_qmp_called", True) or mock_monitor_socket
-                )
-            )
+            qmp_socket_called = False
+
+            def socket_side_effect(*args: Any) -> Mock:
+                nonlocal qmp_socket_called
+                if args == ():
+                    return mock_monitor_socket
+                elif qmp_socket_called:
+                    return mock_qmp_socket
+                else:
+                    qmp_socket_called = True
+                    return mock_monitor_socket
+
+            mock_socket.side_effect = socket_side_effect
 
             mock_qmp_recv_count = 0
 

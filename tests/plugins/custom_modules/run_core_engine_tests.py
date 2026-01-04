@@ -26,14 +26,14 @@ except ImportError as e:
     sys.exit(1)
 
 
-async def test_event_bus_basic():
+async def test_event_bus_basic() -> None:
     """Test basic EventBus functionality."""
     print("\nTest: EventBus basic operations")
 
     bus = EventBus()
-    received = []
+    received: list[Event] = []
 
-    async def handler(event):
+    async def handler(event: Event) -> None:
         received.append(event)
 
     bus.subscribe("test", handler)
@@ -50,7 +50,7 @@ async def test_event_bus_basic():
     print("✓ EventBus delivers events to subscribers")
 
 
-async def test_plugin_manager_discovery(tmp_path):
+async def test_plugin_manager_discovery(tmp_path: Path) -> None:
     """Test plugin discovery."""
     print("\nTest: PluginManager discovery")
 
@@ -80,7 +80,7 @@ class TestPlugin:
     print(f"✓ Discovered {len(discovered)} plugin(s)")
 
 
-async def test_core_engine_initialization(tmp_path):
+async def test_core_engine_initialization(tmp_path: Path) -> None:
     """Test core engine initialization."""
     print("\nTest: Core engine initialization")
 
@@ -114,7 +114,7 @@ async def test_core_engine_initialization(tmp_path):
     print("✓ Core engine initialized all components")
 
 
-async def test_core_engine_start_stop(tmp_path):
+async def test_core_engine_start_stop(tmp_path: Path) -> None:
     """Test core engine start/stop."""
     print("\nTest: Core engine start/stop")
 
@@ -145,10 +145,10 @@ async def test_core_engine_start_stop(tmp_path):
     await engine.stop()
     assert not engine.running, "Engine should be stopped"
 
-    print("✓ Core engine starts and stops successfully")
+    print("✓ Core engine starts and stops successfully")  # type: ignore[unreachable]
 
 
-async def test_workflow_registration():
+async def test_workflow_registration() -> None:
     """Test workflow registration."""
     print("\nTest: Workflow registration")
 
@@ -183,7 +183,7 @@ async def test_workflow_registration():
     print("✓ Workflow registered successfully")
 
 
-async def test_json_formatter():
+async def test_json_formatter() -> None:
     """Test JSON log formatting."""
     print("\nTest: JSON formatter")
 
@@ -209,7 +209,7 @@ async def test_json_formatter():
     print("✓ JSON formatter produces valid JSON")
 
 
-async def main():
+async def main() -> None:
     """Run all tests."""
     print("=" * 60)
     print("Running Core Engine Tests")

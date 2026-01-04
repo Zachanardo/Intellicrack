@@ -10,7 +10,7 @@ from typing import Any, TypedDict
 
 import pytest
 
-from intellicrack.core.analysis.radare2_patch_engine import (
+from intellicrack.core.analysis.radare2_patch_engine import (  # type: ignore[attr-defined]
     PatchEngine,
     PatchOperation,
     PatchType,
@@ -43,7 +43,7 @@ class TestPatchEngineFailureDetection:
                 address=0xFFFFFFFF,
                 original_bytes=b"\x00\x00",
                 patch_bytes=b"\x90\x90",
-                patch_type=PatchType.NOP,
+                patch_type=PatchType.NOP,  # type: ignore[attr-defined]
                 description="Invalid address patch"
             )
 
@@ -70,7 +70,7 @@ class TestPatchEngineFailureDetection:
                 address=len(pe_header),
                 original_bytes=b"\x75\x10",
                 patch_bytes=b"\xEB\x10",
-                patch_type=PatchType.JMP,
+                patch_type=PatchType.JMP,  # type: ignore[attr-defined]
                 description="Mismatched original bytes"
             )
 
@@ -97,7 +97,7 @@ class TestPatchEngineFailureDetection:
                 address=200,
                 original_bytes=b"\x00\x00",
                 patch_bytes=b"\x90\x90",
-                patch_type=PatchType.NOP,
+                patch_type=PatchType.NOP,  # type: ignore[attr-defined]
                 description="Out of bounds patch"
             )
 
@@ -129,7 +129,7 @@ class TestReadOnlyFileHandling:
                 address=2,
                 original_bytes=b"\x74\x10",
                 patch_bytes=b"\xEB\x10",
-                patch_type=PatchType.JMP,
+                patch_type=PatchType.JMP,  # type: ignore[attr-defined]
                 description="Readonly file patch"
             )
 
@@ -162,7 +162,7 @@ class TestMultiplePatchConflicts:
                 address=2,
                 original_bytes=b"\x74\x10\x75",
                 patch_bytes=b"\x90\x90\x90",
-                patch_type=PatchType.NOP,
+                patch_type=PatchType.NOP,  # type: ignore[attr-defined]
                 description="First patch"
             )
 
@@ -170,7 +170,7 @@ class TestMultiplePatchConflicts:
                 address=3,
                 original_bytes=b"\x10\x75\x20",
                 patch_bytes=b"\x90\x90\x90",
-                patch_type=PatchType.NOP,
+                patch_type=PatchType.NOP,  # type: ignore[attr-defined]
                 description="Overlapping patch"
             )
 
@@ -197,7 +197,7 @@ class TestMultiplePatchConflicts:
                 address=2,
                 original_bytes=b"\x74\x10",
                 patch_bytes=b"\xEB\x10",
-                patch_type=PatchType.JMP,
+                patch_type=PatchType.JMP,  # type: ignore[attr-defined]
                 description="First modification"
             )
 
@@ -211,7 +211,7 @@ class TestMultiplePatchConflicts:
                 address=2,
                 original_bytes=b"\x74\x10",
                 patch_bytes=b"\x90\x90",
-                patch_type=PatchType.NOP,
+                patch_type=PatchType.NOP,  # type: ignore[attr-defined]
                 description="Second modification after external change"
             )
 
@@ -238,7 +238,7 @@ class TestCorruptedBinaryHandling:
                 address=10,
                 original_bytes=b"\x00\x00",
                 patch_bytes=b"\x90\x90",
-                patch_type=PatchType.NOP,
+                patch_type=PatchType.NOP,  # type: ignore[attr-defined]
                 description="Patch corrupted binary"
             )
 
@@ -260,7 +260,7 @@ class TestCorruptedBinaryHandling:
                 address=10,
                 original_bytes=b"\x00\x00",
                 patch_bytes=b"\x90\x90",
-                patch_type=PatchType.NOP,
+                patch_type=PatchType.NOP,  # type: ignore[attr-defined]
                 description="Patch truncated file"
             )
 
@@ -292,7 +292,7 @@ class TestBackupAndRestore:
                 address=4,
                 original_bytes=b"\x75\x10",
                 patch_bytes=b"\xEB\x10",
-                patch_type=PatchType.JMP,
+                patch_type=PatchType.JMP,  # type: ignore[attr-defined]
                 description="Failing patch with backup"
             )
 
@@ -328,7 +328,7 @@ class TestBackupAndRestore:
                 address=2,
                 original_bytes=b"\x74\x10",
                 patch_bytes=b"\xEB\x10",
-                patch_type=PatchType.JMP,
+                patch_type=PatchType.JMP,  # type: ignore[attr-defined]
                 description="Patch with verification"
             )
 
@@ -361,21 +361,21 @@ class TestBatchPatchFailures:
                     address=2,
                     original_bytes=b"\x74\x10",
                     patch_bytes=b"\xEB\x10",
-                    patch_type=PatchType.JMP,
+                    patch_type=PatchType.JMP,  # type: ignore[attr-defined]
                     description="Valid patch 1"
                 ),
                 PatchOperation(
                     address=100,
                     original_bytes=b"\xFF\xFF",
                     patch_bytes=b"\x90\x90",
-                    patch_type=PatchType.NOP,
+                    patch_type=PatchType.NOP,  # type: ignore[attr-defined]
                     description="Invalid original bytes"
                 ),
                 PatchOperation(
                     address=4,
                     original_bytes=b"\x75\x20",
                     patch_bytes=b"\xEB\x20",
-                    patch_type=PatchType.JMP,
+                    patch_type=PatchType.JMP,  # type: ignore[attr-defined]
                     description="Valid patch 2"
                 )
             ]
@@ -410,14 +410,14 @@ class TestBatchPatchFailures:
                     address=2,
                     original_bytes=b"\x74\x10",
                     patch_bytes=b"\xEB\x10",
-                    patch_type=PatchType.JMP,
+                    patch_type=PatchType.JMP,  # type: ignore[attr-defined]
                     description="Valid patch"
                 ),
                 PatchOperation(
                     address=1000,
                     original_bytes=b"\x00\x00",
                     patch_bytes=b"\x90\x90",
-                    patch_type=PatchType.NOP,
+                    patch_type=PatchType.NOP,  # type: ignore[attr-defined]
                     description="Invalid address"
                 )
             ]
@@ -445,7 +445,7 @@ class TestLockedFileHandling:
             address=0x1000,
             original_bytes=b"\x00\x00",
             patch_bytes=b"\x90\x90",
-            patch_type=PatchType.NOP,
+            patch_type=PatchType.NOP,  # type: ignore[attr-defined]
             description="Patch system DLL"
         )
 
@@ -469,7 +469,7 @@ class TestInvalidPatchOperations:
                 address=10,
                 original_bytes=b"\x00\x00",
                 patch_bytes=b"",
-                patch_type=PatchType.NOP,
+                patch_type=PatchType.NOP,  # type: ignore[attr-defined]
                 description="Empty patch bytes"
             )
 
@@ -493,7 +493,7 @@ class TestInvalidPatchOperations:
                 address=2,
                 original_bytes=b"\x74\x10",
                 patch_bytes=b"\xEB\x10\x90",
-                patch_type=PatchType.JMP,
+                patch_type=PatchType.JMP,  # type: ignore[attr-defined]
                 description="Mismatched length"
             )
 

@@ -18,18 +18,18 @@ try:
     from intellicrack.ui.widgets.console_widget import ConsoleWidget
     GUI_AVAILABLE = True
 except ImportError:
-    QApplication = None
-    QWidget = None
-    QTextEdit = None
-    QPushButton = None
-    QLineEdit = None
-    QCheckBox = None
-    QClipboard = None
-    QTest = None
-    QTextCursor = None
-    QThread = None
-    Qt = None
-    ConsoleWidget = None
+    QApplication = None  # type: ignore[misc, assignment]
+    QWidget = None  # type: ignore[misc, assignment]
+    QTextEdit = None  # type: ignore[misc, assignment]
+    QPushButton = None  # type: ignore[misc, assignment]
+    QLineEdit = None  # type: ignore[misc, assignment]
+    QCheckBox = None  # type: ignore[misc, assignment]
+    QClipboard = None  # type: ignore[misc, assignment]
+    QTest = None  # type: ignore[misc, assignment]
+    QTextCursor = None  # type: ignore[misc, assignment]
+    QThread = None  # type: ignore[misc, assignment]
+    Qt = None  # type: ignore[misc, assignment]
+    ConsoleWidget = None  # type: ignore[misc, assignment]
     GUI_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not GUI_AVAILABLE, reason="GUI modules not available")
@@ -78,7 +78,7 @@ class FakeFileDialog:
     def configure_instance(cls, file_path: str = "", filter_string: str = "") -> 'FakeFileDialog':
         """Configure the singleton instance for getSaveFileName."""
         instance = cls(file_path, filter_string)
-        cls._instance = instance
+        cls._instance = instance  # type: ignore[attr-defined]
         return instance
 
 
@@ -465,7 +465,7 @@ class TestConsoleWidget:
                     assert indicator not in text, f"Placeholder found: {text}"
 
         check_widget_content(self.widget)
-        for child in self.widget.findChildren(object):
+        for child in self.widget.findChildren(object):  # type: ignore[type-var]
             check_widget_content(child)
 
     def test_memory_management_real_log_rotation(self, qtbot: Any) -> None:
@@ -492,7 +492,7 @@ class TestConsoleWidget:
 
 
         # Ensure operations happen in GUI thread
-        assert QThread.currentThread() == QApplication.instance().thread()
+        assert QThread.currentThread() == QApplication.instance().thread()  # type: ignore[union-attr]
 
         # Test concurrent log operations
         if hasattr(self.widget, 'append_output'):

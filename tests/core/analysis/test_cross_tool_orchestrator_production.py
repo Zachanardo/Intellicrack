@@ -184,7 +184,7 @@ def protected_pe_binary(temp_workspace: Path) -> Path:
 
 
 @pytest.fixture
-def orchestrator(test_binary_path: Path) -> CrossToolOrchestrator:
+def orchestrator(test_binary_path: Path) -> CrossToolOrchestrator:  # type: ignore[misc]
     """Create CrossToolOrchestrator instance."""
     orch = CrossToolOrchestrator(str(test_binary_path))
     yield orch
@@ -259,9 +259,9 @@ class TestSharedMemoryIPC:
         test_data = {"status": "complete"}
         ipc.send_message(MessageType.STATUS, test_data)
 
-        ipc.mmap_obj.seek(10)
-        ipc.mmap_obj.write(b'\xFF' * 10)
-        ipc.mmap_obj.flush()
+        ipc.mmap_obj.seek(10)  # type: ignore[union-attr]
+        ipc.mmap_obj.write(b'\xFF' * 10)  # type: ignore[union-attr]
+        ipc.mmap_obj.flush()  # type: ignore[union-attr]
 
         received = ipc.receive_message()
         assert received is None
@@ -465,7 +465,7 @@ class TestFailureRecovery:
 
         recovery_executed = []
 
-        def test_recovery(error: Exception, context: dict) -> None:
+        def test_recovery(error: Exception, context: dict[str, Any] | None) -> None:
             recovery_executed.append(True)
 
         recovery.register_recovery_strategy("test_tool", test_recovery)
@@ -481,7 +481,7 @@ class TestFailureRecovery:
         """Recovery stops after exceeding maximum retry attempts."""
         recovery = FailureRecovery(max_retries=2)
 
-        def failing_recovery(error: Exception, context: dict) -> None:
+        def failing_recovery(error: Exception, context: dict[str, Any] | None) -> None:
             raise RuntimeError("Recovery failed")
 
         recovery.register_recovery_strategy("failing_tool", failing_recovery)
@@ -784,12 +784,12 @@ class TestCrossToolOrchestrator:
 
         original_run_radare2 = orchestrator._run_radare2_analysis_with_ipc
 
-        def tracked_run_radare2(config=None):
+        def tracked_run_radare2(config: dict[str, Any] | None = None) -> None:
             threads_created.append(threading.current_thread())
             orchestrator.analysis_complete["radare2"] = True
             orchestrator.analysis_results["radare2"] = {"components": {}}
 
-        orchestrator._run_radare2_analysis_with_ipc = tracked_run_radare2
+        orchestrator._run_radare2_analysis_with_ipc = tracked_run_radare2  # type: ignore[method-assign]
 
         result = orchestrator.run_parallel_analysis(tools=["radare2"])
 
@@ -952,15 +952,15 @@ class TestSequentialWorkflow:
 
     def test_respects_workflow_dependencies(self, orchestrator: CrossToolOrchestrator) -> None:
         """Sequential workflow waits for dependencies before execution."""
-        execution_order = []
+        execution_order: list[str] = []
 
-        def track_execution(tool_name: str):
+        def track_execution(tool_name: str) -> None:
             execution_order.append(tool_name)
             orchestrator.analysis_complete[tool_name] = True
             orchestrator.analysis_results[tool_name] = {}
 
         original_r2 = orchestrator._run_radare2_analysis
-        orchestrator._run_radare2_analysis = lambda c: track_execution("radare2")
+        orchestrator._run_radare2_analysis = lambda c: track_execution("radare2")  # type: ignore[method-assign, assignment, misc]
 
         workflow = [
             {"tool": "radare2", "config": {}, "depends_on": []},

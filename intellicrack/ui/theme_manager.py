@@ -206,9 +206,66 @@ class ThemeManager:
         """
         return """
 /* Intellicrack Dark Theme */
+* {
+    color: #FFFFFF;
+}
+
 QMainWindow {
     background-color: #1E1E1E;
+}
+
+QWidget#central_widget {
+    background-color: #1E1E1E;
+}
+
+QSplitter {
+    background-color: #1E1E1E;
+}
+
+QSplitter::handle {
+    background-color: #3C3C3C;
+}
+
+QSplitter::handle:horizontal {
+    width: 4px;
+}
+
+QSplitter::handle:vertical {
+    height: 4px;
+}
+
+QGroupBox {
+    background-color: #2B2B2B;
+    border: 1px solid #4A4A4A;
+    border-radius: 4px;
+    margin-top: 1em;
+    padding-top: 10px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 5px;
     color: #FFFFFF;
+}
+
+QScrollArea {
+    background-color: #1E1E1E;
+    border: none;
+}
+
+QScrollArea > QWidget > QWidget {
+    background-color: #1E1E1E;
+}
+
+/* Frame and Panel Styling */
+QFrame {
+    background-color: #2B2B2B;
+    border: none;
+}
+
+QLabel {
+    background-color: transparent;
 }
 
 /* Tab Styling - Dark Mode with High Contrast */
@@ -593,9 +650,56 @@ QPushButton#resetButton:pressed {
         """
         return """
 /* Intellicrack Light Theme - Enhanced Contrast */
+* {
+    color: #1A1A1A;
+}
+
 QMainWindow {
     background-color: #F8F8F8;
+}
+
+QWidget#central_widget {
+    background-color: #F8F8F8;
+}
+
+QSplitter {
+    background-color: #F8F8F8;
+}
+
+QSplitter::handle {
+    background-color: #CCCCCC;
+}
+
+QSplitter::handle:horizontal {
+    width: 4px;
+}
+
+QSplitter::handle:vertical {
+    height: 4px;
+}
+
+QGroupBox {
+    background-color: #FFFFFF;
+    border: 1px solid #CCCCCC;
+    border-radius: 4px;
+    margin-top: 1em;
+    padding-top: 10px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 5px;
     color: #1A1A1A;
+}
+
+QScrollArea {
+    background-color: #F8F8F8;
+    border: none;
+}
+
+QScrollArea > QWidget > QWidget {
+    background-color: #F8F8F8;
 }
 
 /* Tab Styling - Light Mode */

@@ -101,7 +101,7 @@ def suspended_notepad() -> Generator[int, None, None]:
     PROCESS_ALL_ACCESS = 0x001F0FFF
 
     startup_info = subprocess.STARTUPINFO()
-    process_info = subprocess.PROCESS_INFORMATION()
+    process_info = subprocess.PROCESS_INFORMATION()  # type: ignore[attr-defined]
 
     notepad_path = str(Path(r"C:\Windows\System32\notepad.exe"))
 
@@ -114,7 +114,7 @@ def suspended_notepad() -> Generator[int, None, None]:
         CREATE_SUSPENDED,
         None,
         None,
-        ctypes.byref(startup_info),
+        ctypes.byref(startup_info),  # type: ignore[arg-type]
         ctypes.byref(process_info),
     )
 
@@ -670,23 +670,23 @@ class TestExceptionHandling:
 
     def test_exception_code_enum_values(self) -> None:
         """ExceptionCode enum has correct Windows exception codes."""
-        assert ExceptionCode.EXCEPTION_ACCESS_VIOLATION == 0xC0000005
-        assert ExceptionCode.EXCEPTION_BREAKPOINT == 0x80000003
-        assert ExceptionCode.EXCEPTION_SINGLE_STEP == 0x80000004
-        assert ExceptionCode.EXCEPTION_INT_DIVIDE_BY_ZERO == 0xC0000094
-        assert ExceptionCode.EXCEPTION_ILLEGAL_INSTRUCTION == 0xC000001D
-        assert ExceptionCode.EXCEPTION_GUARD_PAGE == 0x80000001
+        assert ExceptionCode.EXCEPTION_ACCESS_VIOLATION == 0xC0000005  # type: ignore[comparison-overlap]
+        assert ExceptionCode.EXCEPTION_BREAKPOINT == 0x80000003  # type: ignore[comparison-overlap]
+        assert ExceptionCode.EXCEPTION_SINGLE_STEP == 0x80000004  # type: ignore[comparison-overlap]
+        assert ExceptionCode.EXCEPTION_INT_DIVIDE_BY_ZERO == 0xC0000094  # type: ignore[comparison-overlap]
+        assert ExceptionCode.EXCEPTION_ILLEGAL_INSTRUCTION == 0xC000001D  # type: ignore[comparison-overlap]
+        assert ExceptionCode.EXCEPTION_GUARD_PAGE == 0x80000001  # type: ignore[comparison-overlap]
 
     def test_debug_event_enum_values(self) -> None:
         """DebugEvent enum has correct Windows debug event codes."""
-        assert DebugEvent.EXCEPTION_DEBUG_EVENT == 1
-        assert DebugEvent.CREATE_THREAD_DEBUG_EVENT == 2
-        assert DebugEvent.CREATE_PROCESS_DEBUG_EVENT == 3
-        assert DebugEvent.EXIT_THREAD_DEBUG_EVENT == 4
-        assert DebugEvent.EXIT_PROCESS_DEBUG_EVENT == 5
-        assert DebugEvent.LOAD_DLL_DEBUG_EVENT == 6
-        assert DebugEvent.UNLOAD_DLL_DEBUG_EVENT == 7
-        assert DebugEvent.OUTPUT_DEBUG_STRING_EVENT == 8
+        assert DebugEvent.EXCEPTION_DEBUG_EVENT == 1  # type: ignore[comparison-overlap]
+        assert DebugEvent.CREATE_THREAD_DEBUG_EVENT == 2  # type: ignore[comparison-overlap]
+        assert DebugEvent.CREATE_PROCESS_DEBUG_EVENT == 3  # type: ignore[comparison-overlap]
+        assert DebugEvent.EXIT_THREAD_DEBUG_EVENT == 4  # type: ignore[comparison-overlap]
+        assert DebugEvent.EXIT_PROCESS_DEBUG_EVENT == 5  # type: ignore[comparison-overlap]
+        assert DebugEvent.LOAD_DLL_DEBUG_EVENT == 6  # type: ignore[comparison-overlap]
+        assert DebugEvent.UNLOAD_DLL_DEBUG_EVENT == 7  # type: ignore[comparison-overlap]
+        assert DebugEvent.OUTPUT_DEBUG_STRING_EVENT == 8  # type: ignore[comparison-overlap]
 
 
 class TestAntiDebuggingDetection:
@@ -907,7 +907,7 @@ class TestCodeRelocation:
     def test_relocate_code_preserves_instructions(self, debugger: LicenseDebugger) -> None:
         """Code relocation preserves non-relocated instructions."""
         original_code = b"\x90\x90\x90\x90\x90"
-        reloc_offsets = []
+        reloc_offsets: list[int] = []
 
         relocated = debugger.relocate_code(
             original_code, 0x401000, 0x501000, reloc_offsets

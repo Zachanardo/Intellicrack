@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any, Generator, Iterator
 import pytest
 
 if TYPE_CHECKING:
-    from intellicrack.core.analysis.frida_protection_bypass import (
+    from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
         FridaProtectionBypass,
         ProtectionInfo,
     )
@@ -94,7 +94,7 @@ def bypass_instance(test_process_pid: int) -> Generator[FridaProtectionBypass, N
         Initialized FridaProtectionBypass instance.
 
     """
-    from intellicrack.core.analysis.frida_protection_bypass import (
+    from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
         FridaProtectionBypass,
     )
 
@@ -353,7 +353,7 @@ class TestWindowsCertPinningBypass:
         detected_methods = []
         for detection in detections:
             method = detection.details.get("method", "")
-            if any(schannel in method for schannel in schannel_methods):
+            if any(schannel in method for schannel in schannel_methods):  # type: ignore[operator]
                 detected_methods.append(method)
 
         if not detected_methods:
@@ -439,7 +439,7 @@ class TestAndroidCertPinningBypass:
             "javax.net.ssl.SSLContext.init",
         ]
 
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -474,7 +474,7 @@ class TestAndroidCertPinningBypass:
             "okhttp3.internal.tls.OkHostnameVerifier.verify",
         ]
 
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -506,7 +506,7 @@ class TestAndroidCertPinningBypass:
             "android.net.http.X509TrustManagerExtensions.checkServerTrusted",
         ]
 
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -543,7 +543,7 @@ class TestIOSCertPinningBypass:
             "SecTrustGetCertificateAtIndex",
         ]
 
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -575,7 +575,7 @@ class TestIOSCertPinningBypass:
             "NSURLCredential credentialForTrust:",
         ]
 
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -605,7 +605,7 @@ class TestIOSCertPinningBypass:
             "ServerTrustPolicy.evaluate",  # Alamofire 5.x
         ]
 
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -641,7 +641,7 @@ class TestModernFrameworkCertPinningBypass:
             "SSL_do_handshake",  # BoringSSL used by Flutter
         ]
 
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -665,7 +665,7 @@ class TestModernFrameworkCertPinningBypass:
 
         Test FAILS because React Native specific bypass not implemented.
         """
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -695,7 +695,7 @@ class TestModernFrameworkCertPinningBypass:
             "Mono.Security.Protocol.Tls.SslClientStream.RaiseServerCertificateValidation",
         ]
 
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -731,7 +731,7 @@ class TestCustomTLSImplementations:
             "SSL_CTX_set_cert_verify_callback",
         ]
 
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -757,7 +757,7 @@ class TestCustomTLSImplementations:
 
         Test FAILS because BoringSSL bypass not implemented.
         """
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -788,7 +788,7 @@ class TestCustomTLSImplementations:
             "mbedtls_ssl_handshake",
         ]
 
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -825,7 +825,7 @@ class TestEdgeCaseCertPinningBypass:
             "Tbsi_Context_Create",
         ]
 
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -859,7 +859,7 @@ class TestEdgeCaseCertPinningBypass:
             "SSL_CTX_use_PrivateKey",
         ]
 
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -891,7 +891,7 @@ class TestEdgeCaseCertPinningBypass:
             "CertFindCertificateInStore",
         ]
 
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -917,7 +917,7 @@ class TestEdgeCaseCertPinningBypass:
 
         Test FAILS because CT bypass not implemented.
         """
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 
@@ -947,7 +947,7 @@ class TestEdgeCaseCertPinningBypass:
             "CertGetCertificateChain",  # CERT_CHAIN_REVOCATION_CHECK_*
         ]
 
-        from intellicrack.core.analysis.frida_protection_bypass import (
+        from intellicrack.core.analysis.frida_protection_bypass import (  # type: ignore[attr-defined]
             FridaProtectionBypass,
         )
 

@@ -65,7 +65,7 @@ class TestAnalysisStatsGenerator:
             {"type": "trial", "value": 3},
         ]
 
-        counts = AnalysisStatsGenerator.count_by_attribute(items, "type")
+        counts = AnalysisStatsGenerator.count_by_attribute(items, "type")  # type: ignore[arg-type]
 
         assert counts["license"] == 1
         assert counts["trial"] == 1
@@ -119,7 +119,7 @@ class TestAnalysisStatsGenerator:
             {"value": 30},
         ]
 
-        stats = AnalysisStatsGenerator.aggregate_numeric_stats(items, "value")
+        stats = AnalysisStatsGenerator.aggregate_numeric_stats(items, "value")  # type: ignore[arg-type]
 
         assert stats["count"] == 3
         assert stats["avg"] == 20.0
@@ -196,7 +196,7 @@ class TestAnalysisStatsGenerator:
         ]
 
         time_series = AnalysisStatsGenerator.generate_time_series_stats(
-            items, "timestamp", "value", interval_seconds=3600
+            items, "timestamp", "value", interval_seconds=3600  # type: ignore[arg-type]
         )
 
         assert time_series["total_buckets"] >= 1
@@ -259,7 +259,7 @@ class TestAnalysisStatsGenerator:
         """Detect outliers using IQR method identifies anomalies."""
         values = [10, 12, 14, 13, 11, 15, 100, 9, 13, 14]
 
-        outliers = AnalysisStatsGenerator.detect_outliers(values, method="iqr")
+        outliers = AnalysisStatsGenerator.detect_outliers(values, method="iqr")  # type: ignore[arg-type]
 
         assert 6 in outliers
         assert len(outliers) >= 1
@@ -268,7 +268,7 @@ class TestAnalysisStatsGenerator:
         """Detect outliers using Z-score method identifies anomalies."""
         values = [50, 52, 51, 53, 50, 200, 49, 51, 52, 50]
 
-        outliers = AnalysisStatsGenerator.detect_outliers(values, method="zscore")
+        outliers = AnalysisStatsGenerator.detect_outliers(values, method="zscore")  # type: ignore[arg-type]
 
         assert 5 in outliers
         assert len(outliers) >= 1
@@ -277,7 +277,7 @@ class TestAnalysisStatsGenerator:
         """Detect outliers returns empty for normal distribution."""
         values = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
-        outliers = AnalysisStatsGenerator.detect_outliers(values, method="iqr")
+        outliers = AnalysisStatsGenerator.detect_outliers(values, method="iqr")  # type: ignore[arg-type]
 
         assert len(outliers) == 0
 
@@ -285,7 +285,7 @@ class TestAnalysisStatsGenerator:
         """Detect outliers handles insufficient data."""
         values = [10, 20]
 
-        outliers = AnalysisStatsGenerator.detect_outliers(values, method="iqr")
+        outliers = AnalysisStatsGenerator.detect_outliers(values, method="iqr")  # type: ignore[arg-type]
 
         assert len(outliers) == 0
 
@@ -293,7 +293,7 @@ class TestAnalysisStatsGenerator:
         """Generate percentiles calculates standard percentiles."""
         values = list(range(1, 101))
 
-        percentiles = AnalysisStatsGenerator.generate_percentiles(values)
+        percentiles = AnalysisStatsGenerator.generate_percentiles(values)  # type: ignore[arg-type]
 
         assert 25 in percentiles
         assert 50 in percentiles
@@ -308,7 +308,7 @@ class TestAnalysisStatsGenerator:
         """Generate percentiles handles custom percentile values."""
         values = list(range(1, 11))
 
-        percentiles = AnalysisStatsGenerator.generate_percentiles(values, [10, 90])
+        percentiles = AnalysisStatsGenerator.generate_percentiles(values, [10, 90])  # type: ignore[arg-type]
 
         assert 10 in percentiles
         assert 90 in percentiles
@@ -358,7 +358,7 @@ class TestAnalysisStatsGenerator:
         def failing_recommendations() -> None:
             raise RuntimeError("Test error")
 
-        result = AnalysisStatsGenerator.safe_recommendation_generation(failing_recommendations)
+        result = AnalysisStatsGenerator.safe_recommendation_generation(failing_recommendations)  # type: ignore[arg-type]
 
         assert len(result) > 0
         assert any("unable" in r.lower() for r in result)
@@ -465,7 +465,7 @@ class TestEdgeCases:
         """Stats generator handles non-dict items gracefully."""
         items = [1, 2, "string", None, {"type": "valid"}]
 
-        counts = AnalysisStatsGenerator.count_by_attribute(items, "type")
+        counts = AnalysisStatsGenerator.count_by_attribute(items, "type")  # type: ignore[arg-type]
 
         assert counts["valid"] == 1
 
@@ -514,7 +514,7 @@ class TestEdgeCases:
             {"value": 0},
         ]
 
-        stats = AnalysisStatsGenerator.aggregate_numeric_stats(items, "value")
+        stats = AnalysisStatsGenerator.aggregate_numeric_stats(items, "value")  # type: ignore[arg-type]
 
         assert stats["count"] == 3
         assert stats["min"] == 1e-10

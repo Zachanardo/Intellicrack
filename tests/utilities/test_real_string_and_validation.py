@@ -13,11 +13,11 @@ import re
 import unicodedata
 import string
 import random
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
-from intellicrack.utils.core.string_utils import StringUtils
-from intellicrack.utils.core.type_validation import TypeValidator
-from intellicrack.utils.binary.hex_utils import HexUtils
+from intellicrack.utils.core.string_utils import StringUtils  # type: ignore[attr-defined]
+from intellicrack.utils.core.type_validation import TypeValidator  # type: ignore[attr-defined]
+from intellicrack.utils.binary.hex_utils import HexUtils  # type: ignore[attr-defined]
 from intellicrack.utils.validation.import_validator import ImportValidator
 from intellicrack.core.app_context import AppContext
 
@@ -26,14 +26,14 @@ class TestRealStringAndValidation:
     """Functional tests for REAL string manipulation and validation operations."""
 
     @pytest.fixture
-    def app_context(self):
+    def app_context(self) -> Any:
         """Create REAL application context."""
         context = AppContext()
-        context.initialize()
+        context.initialize()  # type: ignore[attr-defined]
         return context
 
     @pytest.fixture
-    def test_strings(self):
+    def test_strings(self) -> Dict[str, str]:
         """REAL test strings with various formats."""
         return {
             'ascii': 'Hello World 123!',
@@ -57,7 +57,7 @@ class TestRealStringAndValidation:
             'malformed_utf8': b'\xff\xfe\xfd\xfc'.decode('latin1')
         }
 
-    def test_real_string_manipulation_operations(self, test_strings, app_context):
+    def test_real_string_manipulation_operations(self, test_strings: Dict[str, str], app_context: Any) -> None:
         """Test REAL string manipulation functions."""
         string_utils = StringUtils()
 
@@ -104,7 +104,7 @@ class TestRealStringAndValidation:
         )
         assert join_result == 'hello, world and test', "Smart join must format correctly"
 
-    def test_real_string_encoding_operations(self, test_strings, app_context):
+    def test_real_string_encoding_operations(self, test_strings: Dict[str, str], app_context: Any) -> None:
         """Test REAL string encoding and decoding."""
         string_utils = StringUtils()
 
@@ -145,7 +145,7 @@ class TestRealStringAndValidation:
         url_decoded = string_utils.url_decode(url_encoded)
         assert url_decoded == test_strings['url_like'], "URL round-trip must preserve content"
 
-    def test_real_hex_utilities(self, app_context):
+    def test_real_hex_utilities(self, app_context: Any) -> None:
         """Test REAL hexadecimal utilities."""
         hex_utils = HexUtils()
 
@@ -189,7 +189,7 @@ class TestRealStringAndValidation:
         little_endian = hex_utils.swap_endianness('12345678')
         assert little_endian == '78563412', "Endianness swap must work correctly"
 
-    def test_real_type_validation(self, app_context):
+    def test_real_type_validation(self, app_context: Any) -> None:
         """Test REAL type validation operations."""
         validator = TypeValidator()
 
@@ -247,7 +247,7 @@ class TestRealStringAndValidation:
             result = validator.validate_format(value, format_type)
             assert result == should_pass, f"Format validation for {value} as {format_type} failed"
 
-    def test_real_pattern_matching(self, test_strings, app_context):
+    def test_real_pattern_matching(self, test_strings: Dict[str, str], app_context: Any) -> None:
         """Test REAL pattern matching operations."""
         string_utils = StringUtils()
 
@@ -284,7 +284,7 @@ class TestRealStringAndValidation:
         assert fuzzy_result is not None, "Fuzzy match must return result"
         assert fuzzy_result['similarity'] > 0.7, "Similar strings should have high similarity"
 
-    def test_real_string_security_validation(self, app_context):
+    def test_real_string_security_validation(self, app_context: Any) -> None:
         """Test REAL string security validation."""
         string_utils = StringUtils()
 
@@ -328,7 +328,7 @@ class TestRealStringAndValidation:
             result = string_utils.detect_path_traversal(path)
             assert result == should_detect, f"Path traversal detection failed for {path}"
 
-    def test_real_import_validation(self, app_context):
+    def test_real_import_validation(self, app_context: Any) -> None:
         """Test REAL import validation."""
         validator = ImportValidator()
 
@@ -336,7 +336,7 @@ class TestRealStringAndValidation:
         safe_imports = ['os', 'sys', 'json', 'datetime', 'pathlib']
 
         for module_name in safe_imports:
-            result = validator.validate_import(module_name)
+            result = validator.validate_import(module_name)  # type: ignore[attr-defined]
             assert result is not None, f"Import validation for {module_name} must work"
             assert result['safe'], f"{module_name} should be considered safe"
 
@@ -344,7 +344,7 @@ class TestRealStringAndValidation:
         dangerous_imports = ['subprocess', 'eval', 'exec', '__import__']
 
         for module_name in dangerous_imports:
-            if result := validator.validate_import(module_name):
+            if result := validator.validate_import(module_name):  # type: ignore[attr-defined]
                 assert not result.get('safe', True), f"{module_name} should be flagged as unsafe"
 
         # Test import path validation
@@ -356,11 +356,11 @@ class TestRealStringAndValidation:
         ]
 
         for import_path, should_be_safe in import_paths:
-            if result := validator.validate_import_path(import_path):
+            if result := validator.validate_import_path(import_path):  # type: ignore[attr-defined]
                 assert result['safe'] == should_be_safe, \
                         f"Import path validation failed for {import_path}"
 
-    def test_real_text_analysis(self, test_strings, app_context):
+    def test_real_text_analysis(self, test_strings: Dict[str, str], app_context: Any) -> None:
         """Test REAL text analysis operations."""
         string_utils = StringUtils()
 
@@ -404,7 +404,7 @@ class TestRealStringAndValidation:
                 assert 'detected_language' in lang_result, "Must detect language"
                 assert 'confidence' in lang_result, "Must have confidence score"
 
-    def test_real_performance_string_operations(self, app_context):
+    def test_real_performance_string_operations(self, app_context: Any) -> None:
         """Test REAL performance of string operations."""
         string_utils = StringUtils()
 

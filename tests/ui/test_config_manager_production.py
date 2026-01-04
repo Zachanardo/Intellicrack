@@ -10,7 +10,7 @@ Licensed under GNU General Public License v3.0
 import os
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 
@@ -109,7 +109,7 @@ class TestUIConfigManager:
     """Production tests for UIConfigManager."""
 
     @pytest.fixture
-    def temp_config_dir(self) -> Path:
+    def temp_config_dir(self) -> Generator[Path, None, None]:
         """Create temporary config directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             config_dir = Path(tmpdir)
@@ -395,7 +395,7 @@ class TestEdgesCases:
     """Test edge cases and error handling."""
 
     @pytest.fixture
-    def config_manager(self) -> UIConfigManager:
+    def config_manager(self) -> Generator[UIConfigManager, None, None]:
         """Create isolated config manager."""
         with tempfile.TemporaryDirectory() as tmpdir:
             os.environ["INTELLICRACK_CONFIG_DIR"] = str(tmpdir)

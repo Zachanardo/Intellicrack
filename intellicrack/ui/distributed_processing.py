@@ -1731,6 +1731,8 @@ class DistributedProcessingDialog(QDialog):
             event: Close event object
 
         """
+        if HAS_PYQT6 and hasattr(self, "update_timer") and self.update_timer is not None:
+            self.update_timer.stop()
         self.stop_workers()
         if HAS_PYQT6 and event is not None:
             super().closeEvent(event)

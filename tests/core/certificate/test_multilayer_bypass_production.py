@@ -560,7 +560,7 @@ class TestEdgeCasesCertificateChainValidationFailures:
         )
 
         assert result.success is False
-        assert "expired" in result.error_message.lower()
+        assert "expired" in result.error_message.lower()  # type: ignore[union-attr]
 
     def test_chain_validation_with_untrusted_root(self) -> None:
         """Certificate chain validation failure due to untrusted root CA."""
@@ -572,7 +572,7 @@ class TestEdgeCasesCertificateChainValidationFailures:
         )
 
         assert result.success is False
-        assert "untrusted" in result.error_message.lower()
+        assert "untrusted" in result.error_message.lower()  # type: ignore[union-attr]
 
     def test_chain_validation_with_broken_chain(self) -> None:
         """Certificate chain validation failure due to broken chain."""
@@ -584,7 +584,7 @@ class TestEdgeCasesCertificateChainValidationFailures:
         )
 
         assert result.success is False
-        assert "chain" in result.error_message.lower()
+        assert "chain" in result.error_message.lower()  # type: ignore[union-attr]
 
     def test_chain_validation_with_revoked_cert(self) -> None:
         """Certificate chain validation failure due to revoked certificate."""
@@ -596,7 +596,7 @@ class TestEdgeCasesCertificateChainValidationFailures:
         )
 
         assert result.success is False
-        assert "revoked" in result.error_message.lower()
+        assert "revoked" in result.error_message.lower()  # type: ignore[union-attr]
 
 
 class TestEdgeCasesTimeoutScenarios:
@@ -612,7 +612,7 @@ class TestEdgeCasesTimeoutScenarios:
         )
 
         assert result.success is False
-        assert "timeout" in result.error_message.lower()
+        assert "timeout" in result.error_message.lower()  # type: ignore[union-attr]
 
     def test_frida_injection_timeout(self) -> None:
         """Frida injection timeout is handled gracefully."""
@@ -624,8 +624,8 @@ class TestEdgeCasesTimeoutScenarios:
         )
 
         assert result.success is False
-        assert "frida" in result.error_message.lower()
-        assert "timeout" in result.error_message.lower()
+        assert "frida" in result.error_message.lower()  # type: ignore[union-attr]
+        assert "timeout" in result.error_message.lower()  # type: ignore[union-attr]
 
     def test_verification_timeout_after_bypass(self) -> None:
         """Verification timeout after bypass attempt is handled."""
@@ -637,8 +637,8 @@ class TestEdgeCasesTimeoutScenarios:
         )
 
         assert result.success is False
-        assert "verification" in result.error_message.lower()
-        assert "timeout" in result.error_message.lower()
+        assert "verification" in result.error_message.lower()  # type: ignore[union-attr]
+        assert "timeout" in result.error_message.lower()  # type: ignore[union-attr]
 
     def test_multiple_timeout_failures(self) -> None:
         """Multiple timeout failures across stages tracked correctly."""
@@ -817,7 +817,7 @@ class TestEdgeCasesResourceExhaustion:
         )
 
         assert result.success is False
-        assert "memory" in result.error_message.lower()
+        assert "memory" in result.error_message.lower()  # type: ignore[union-attr]
 
     def test_too_many_hooks_installed(self) -> None:
         """Too many Frida hooks causing resource exhaustion."""
@@ -829,7 +829,7 @@ class TestEdgeCasesResourceExhaustion:
         )
 
         assert result.success is False
-        assert "resource" in result.error_message.lower() or "hooks" in result.error_message.lower()
+        assert "resource" in result.error_message.lower() or "hooks" in result.error_message.lower()  # type: ignore[union-attr]
 
     def test_process_spawn_failure(self) -> None:
         """Process spawn failure due to resource limits."""
@@ -841,7 +841,7 @@ class TestEdgeCasesResourceExhaustion:
         )
 
         assert result.success is False
-        assert "process" in result.error_message.lower() or "spawn" in result.error_message.lower()
+        assert "process" in result.error_message.lower() or "spawn" in result.error_message.lower()  # type: ignore[union-attr]
 
 
 class TestDependencyGraphOperations:

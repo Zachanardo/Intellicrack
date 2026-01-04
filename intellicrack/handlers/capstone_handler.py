@@ -86,6 +86,7 @@ try:
         debug,
         version_bind,
     )
+    from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_OP_REG
 
     HAS_CAPSTONE = True
     CAPSTONE_AVAILABLE = True
@@ -140,6 +141,11 @@ except ImportError as e:
     CS_GRP_IRET = 5
     CS_GRP_PRIVILEGE = 6
     CS_GRP_BRANCH_RELATIVE = 7
+
+    # x86 operand type constants
+    X86_OP_IMM = 2
+    X86_OP_MEM = 3
+    X86_OP_REG = 1
 
     class FallbackCsError(Exception):
         """Capstone error exception."""
@@ -1167,6 +1173,9 @@ __all__ = [
     "CsError",
     "CsInsn",
     "HAS_CAPSTONE",
+    "X86_OP_IMM",
+    "X86_OP_MEM",
+    "X86_OP_REG",
     "capstone",
     "cs_disasm_quick",
     "cs_version",

@@ -32,11 +32,11 @@ try:
     )
     MODULE_AVAILABLE = True
 except ImportError:
-    ControlFlowAnalyzer = None
-    PatchPointSelector = None
-    LicenseCheckRemover = None
-    CheckType = None
-    LicenseCheck = None
+    ControlFlowAnalyzer = None  # type: ignore[misc, assignment]
+    PatchPointSelector = None  # type: ignore[misc, assignment]
+    LicenseCheckRemover = None  # type: ignore[misc, assignment]
+    CheckType = None  # type: ignore[misc, assignment]
+    LicenseCheck = None  # type: ignore[misc, assignment]
     MODULE_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE or not DEPENDENCIES_AVAILABLE, reason="Module or dependencies not available")
@@ -193,7 +193,7 @@ class TestPatchPointSelector:
 class TestIntelligentPatching:
     """Test intelligent patching with real binaries."""
 
-    def create_test_binary(self, tmp_path):
+    def create_test_binary(self, tmp_path: Any) -> Any:
         """Create a minimal PE binary for testing."""
         binary_path = tmp_path / "test.exe"
 

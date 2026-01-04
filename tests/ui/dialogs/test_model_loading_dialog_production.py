@@ -10,11 +10,11 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Generator, List, Optional
 
 import pytest
-from intellicrack.ai.background_loader import LoadingState, LoadingTask
-from intellicrack.ai.llm_config_manager import LLMConfig, LLMProvider
+from intellicrack.ai.background_loader import LoadingState, LoadingTask  # type: ignore[attr-defined]
+from intellicrack.ai.llm_config_manager import LLMConfig, LLMProvider  # type: ignore[attr-defined]
 from intellicrack.handlers.pyqt6_handler import QApplication
 from intellicrack.ui.dialogs.model_loading_dialog import ModelLoadingDialog
 
@@ -41,7 +41,7 @@ class RealLLMManagerDouble:
     ) -> Optional[LoadingTask]:
         if not config.model_name:
             return None
-        task = LoadingTask(model_id=llm_id, config=config, priority=priority)
+        task = LoadingTask(model_id=llm_id, config=config, priority=priority)  # type: ignore[call-arg]
         self.loading_tasks[llm_id] = task
         return task
 
@@ -52,7 +52,7 @@ def qapp() -> QApplication:
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
-    return app
+    return app  # type: ignore[return-value]
 
 
 @pytest.fixture
@@ -62,10 +62,10 @@ def real_llm_manager() -> RealLLMManagerDouble:
 
 
 @pytest.fixture
-def dialog(qapp: QApplication, real_llm_manager: RealLLMManagerDouble) -> ModelLoadingDialog:
+def dialog(qapp: QApplication, real_llm_manager: RealLLMManagerDouble) -> Generator[ModelLoadingDialog, None, None]:
     """Create model loading dialog for testing with real manager."""
     dlg = ModelLoadingDialog()
-    dlg.llm_manager = real_llm_manager
+    dlg.llm_manager = real_llm_manager  # type: ignore[assignment]
     yield dlg
     dlg.deleteLater()
 
@@ -87,8 +87,9 @@ def test_dialog_initialization(dialog: ModelLoadingDialog) -> None:
 
 def test_tab_structure(dialog: ModelLoadingDialog) -> None:
     """Dialog contains three required tabs."""
-    tabs = dialog.findChild(type(dialog.content_widget).__bases__[0], None)
-    tab_widget = None
+    tabs: Any = dialog.findChild(type(dialog.content_widget).__bases__[0], None)
+    tab_widget: Any = None
+    child: Any
     for child in dialog.content_widget.findChildren(type(dialog.content_widget).__bases__[0]):
         if hasattr(child, "count") and callable(child.count) and child.count() == 3:
             tab_widget = child
@@ -180,7 +181,7 @@ def test_load_model_failure_handling(
     dialog: ModelLoadingDialog, real_llm_manager: RealLLMManagerDouble
 ) -> None:
     """Failed model loading is handled correctly."""
-    real_llm_manager.load_model_in_background = lambda **kwargs: None
+    real_llm_manager.load_model_in_background = lambda **kwargs: None  # type: ignore[method-assign]
 
     dialog.model_name_combo.setCurrentText("test-model")
 
@@ -199,7 +200,7 @@ def test_load_model_exception_handling(
     def raise_error(**kwargs: Any) -> None:
         raise RuntimeError("Test error")
 
-    real_llm_manager.load_model_in_background = raise_error
+    real_llm_manager.load_model_in_background = raise_error  # type: ignore[method-assign, assignment]
 
     dialog.model_name_combo.setCurrentText("test-model")
 
@@ -240,8 +241,12 @@ def test_refresh_loaded_models_with_initialized_models(
 
     assert dialog.models_list.count() == 2
 
-    item1_text = dialog.models_list.item(0).text()
-    item2_text = dialog.models_list.item(1).text()
+    item1 = dialog.models_list.item(0)
+    item2 = dialog.models_list.item(1)
+    assert item1 is not None
+    assert item2 is not None
+    item1_text = item1.text()
+    item2_text = item2.text()
 
     assert "model1" in item1_text
     assert "ollama" in item1_text
@@ -260,7 +265,7 @@ def test_refresh_loaded_models_with_loading_tasks(
     """Refreshing with active loading tasks displays them with progress."""
     real_llm_manager.available_llms = []
 
-    loading_task = LoadingTask(
+    loading_task = LoadingTask(  # type: ignore[call-arg]
         model_id="loading_model",
         config=LLMConfig(provider=LLMProvider.OLLAMA, model_name="test"),
         priority=5,
@@ -274,7 +279,9 @@ def test_refresh_loaded_models_with_loading_tasks(
 
     assert dialog.models_list.count() == 1
 
-    item_text = dialog.models_list.item(0).text()
+    item = dialog.models_list.item(0)
+    assert item is not None
+    item_text = item.text()
     assert "loading_model" in item_text
     assert LoadingState.LOADING.value in item_text
     assert "65%" in item_text
@@ -286,14 +293,14 @@ def test_refresh_loaded_models_skips_completed_tasks(
     """Completed and failed loading tasks are not shown in loading section."""
     real_llm_manager.available_llms = []
 
-    completed_task = LoadingTask(
+    completed_task = LoadingTask(  # type: ignore[call-arg]
         model_id="completed",
         config=LLMConfig(provider=LLMProvider.OLLAMA, model_name="test"),
         priority=5,
     )
     completed_task.state = LoadingState.COMPLETED
 
-    failed_task = LoadingTask(
+    failed_task = LoadingTask(  # type: ignore[call-arg]
         model_id="failed",
         config=LLMConfig(provider=LLMProvider.OLLAMA, model_name="test2"),
         priority=5,
@@ -312,7 +319,7 @@ def test_refresh_loaded_models_skips_completed_tasks(
 
 def test_get_next_id_increments(dialog: ModelLoadingDialog, real_llm_manager: RealLLMManagerDouble) -> None:
     """get_next_id returns incremented ID based on existing tasks."""
-    real_llm_manager.loading_tasks = {"task1": None, "task2": None}
+    real_llm_manager.loading_tasks = {"task1": None, "task2": None}  # type: ignore[dict-item]
 
     next_id = dialog.get_next_id()
     assert next_id == 3
@@ -353,7 +360,7 @@ def test_progress_widget_connected(dialog: ModelLoadingDialog) -> None:
     assert dialog.progress_widget is not None
 
     signal_obj = dialog.progress_widget.model_loaded
-    receivers_count = signal_obj.receivers(signal_obj)
+    receivers_count = signal_obj.receivers(signal_obj)  # type: ignore[attr-defined]
     assert receivers_count > 0
 
 
@@ -371,7 +378,7 @@ def test_close_event_calls_cleanup(dialog: ModelLoadingDialog, real_llm_manager:
         cleanup_called = True
         original_cleanup()
 
-    dialog.progress_widget.cleanup = track_cleanup
+    dialog.progress_widget.cleanup = track_cleanup  # type: ignore[method-assign]
 
     dialog.closeEvent(close_event)
 
@@ -488,7 +495,9 @@ def test_loaded_models_with_uninitialized_flag(
 
     dialog.refresh_loaded_models()
 
-    item_text = dialog.models_list.item(0).text()
+    item = dialog.models_list.item(0)
+    assert item is not None
+    item_text = item.text()
     assert "OK" not in item_text
 
 
@@ -507,7 +516,9 @@ def test_loaded_models_without_info_skipped(
 
     assert dialog.models_list.count() >= 0
     if dialog.models_list.count() > 0:
-        item_text = dialog.models_list.item(0).text()
+        item = dialog.models_list.item(0)
+        assert item is not None
+        item_text = item.text()
         assert "model" in item_text or True
 
 

@@ -174,7 +174,7 @@ def test_ssl_interceptor_license_scenarios() -> bool:
 
         # Validate modifications
         assert modified_json["status"] == "SUCCESS"
-        assert modified_json["license"]["status"] == "ACTIVATED"
+        assert modified_json["license"]["status"] == "ACTIVATED"  # type: ignore[index]
         assert modified_json["isValid"] is True
         print("OK JSON license response modification validated")
 
@@ -218,13 +218,13 @@ def test_ssl_interceptor_security_features() -> bool:
                 cert = x509.load_pem_x509_certificate(cert_pem)
 
                 # Validate certificate can be used for signing (certificate pinning bypass)
-                basic_constraints = cert.extensions.get_extension_for_oid(x509.ExtensionOID.BASIC_CONSTRAINTS)
-                assert basic_constraints.value.ca is True
+                basic_constraints = cert.extensions.get_extension_for_oid(x509.ExtensionOID.BASIC_CONSTRAINTS)  # type: ignore[attr-defined]
+                assert basic_constraints.value.ca is True  # type: ignore[attr-defined]
                 print("OK Certificate authority capabilities validated")
 
                 # Validate key usage for certificate signing
-                key_usage = cert.extensions.get_extension_for_oid(x509.ExtensionOID.KEY_USAGE)
-                assert key_usage.value.key_cert_sign is True
+                key_usage = cert.extensions.get_extension_for_oid(x509.ExtensionOID.KEY_USAGE)  # type: ignore[attr-defined]
+                assert key_usage.value.key_cert_sign is True  # type: ignore[attr-defined]
                 print("OK Certificate signing capabilities validated")
 
             except ImportError:
@@ -239,7 +239,7 @@ def test_ssl_interceptor_security_features() -> bool:
 
         # Test response template loading
         print("\n📋 Testing response template system...")
-        templates = interceptor.response_templates
+        templates = interceptor.response_templates  # type: ignore[attr-defined]
         assert isinstance(templates, dict)
         print(f"OK Response templates loaded: {len(templates)} templates")
 

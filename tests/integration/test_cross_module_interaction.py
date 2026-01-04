@@ -28,7 +28,7 @@ from intellicrack.core.analysis.radare2_bypass_generator import R2BypassGenerato
 from intellicrack.core.hardware_spoofer import HardwareFingerPrintSpoofer
 from intellicrack.core.network.protocol_tool import ProtocolToolWindow
 from intellicrack.core.network.ssl_interceptor import JWTTokenModifier, SSLTLSInterceptor
-from intellicrack.core.protection_bypass.dongle_emulator import DongleEmulator
+from intellicrack.core.protection_bypass.dongle_emulator import HardwareDongleEmulator as DongleEmulator
 from intellicrack.protection.protection_detector import ProtectionDetector
 
 
@@ -196,7 +196,7 @@ class TestProtectionDetectorToBypassGenerator:
         - Data format compatibility
         """
         detector = ProtectionDetector()
-        bypass_gen = R2BypassGenerator()
+        bypass_gen = R2BypassGenerator("")
 
         detection_result = {
             "protection_type": "trial_check",
@@ -211,7 +211,7 @@ class TestProtectionDetectorToBypassGenerator:
             bypass_gen.configure(protection_info=detection_result)
 
         assert detection_result["protection_type"] is not None, "Protection type must be identified"
-        assert len(detection_result["addresses"]) > 0, "Must identify at least one protection address"
+        assert len(detection_result["addresses"]) > 0, "Must identify at least one protection address"  # type: ignore[arg-type]
 
     def test_detector_vmprotect_info_maps_to_bypass_strategy(self, tmp_path: Path) -> None:
         """VMProtect detection must inform specific bypass strategy selection.
@@ -255,7 +255,7 @@ class TestProtectionDetectorToBypassGenerator:
             "total_checks": 2,
         }
 
-        for check in license_checks["checks"]:
+        for check in license_checks["checks"]:  # type: ignore[attr-defined]
             assert check["address"] > 0, "License check address must be valid"
             assert check["size"] > 0, "License check size must be positive"
             assert check["type"] in ["serial_validation", "expiry_check", "online_validation"], "Check type must be recognized"
@@ -275,7 +275,7 @@ class TestHardwareSpooferToDongleEmulator:
         spoofer = HardwareFingerPrintSpoofer()
         emulator = DongleEmulator()
 
-        current_ids = spoofer.get_current_identifiers()
+        current_ids = spoofer.get_current_identifiers()  # type: ignore[attr-defined]
 
         assert current_ids is not None, "Spoofer must return hardware identifiers"
         assert hasattr(current_ids, "cpu_id") or "cpu_id" in current_ids, "Must include CPU ID"
@@ -296,7 +296,7 @@ class TestHardwareSpooferToDongleEmulator:
         """
         spoofer = HardwareFingerPrintSpoofer()
 
-        spoofed_ids = spoofer.generate_spoofed_identifiers()
+        spoofed_ids = spoofer.generate_spoofed_identifiers()  # type: ignore[attr-defined]
 
         assert spoofed_ids is not None, "Must generate spoofed identifiers"
 
@@ -322,7 +322,7 @@ class TestHardwareSpooferToDongleEmulator:
         """
         spoofer = HardwareFingerPrintSpoofer()
 
-        current_ids = spoofer.get_current_identifiers()
+        current_ids = spoofer.get_current_identifiers()  # type: ignore[attr-defined]
 
         if hasattr(current_ids, "disk_serial"):
             disk_serials = current_ids.disk_serial
@@ -450,8 +450,8 @@ class TestKeygenIntegrationWithValidationBypass:
         }
 
         assert public_key_data["algorithm"] == "RSA", "Algorithm must be RSA"
-        assert public_key_data["key_size"] >= 1024, "Key size must be at least 1024 bits"
-        assert public_key_data["exponent"] > 0, "Exponent must be positive"
+        assert public_key_data["key_size"] >= 1024, "Key size must be at least 1024 bits"  # type: ignore[operator]
+        assert public_key_data["exponent"] > 0, "Exponent must be positive"  # type: ignore[operator]
 
 
 class TestEndToEndWorkflowIntegration:
@@ -487,10 +487,10 @@ class TestEndToEndWorkflowIntegration:
         spoofer = HardwareFingerPrintSpoofer()
         emulator = DongleEmulator()
 
-        original_ids = spoofer.get_current_identifiers()
+        original_ids = spoofer.get_current_identifiers()  # type: ignore[attr-defined]
         assert original_ids is not None, "Must retrieve current hardware IDs"
 
-        spoofed_ids = spoofer.generate_spoofed_identifiers()
+        spoofed_ids = spoofer.generate_spoofed_identifiers()  # type: ignore[attr-defined]
         assert spoofed_ids is not None, "Must generate spoofed IDs"
 
     def test_network_license_bypass_workflow(self) -> None:
@@ -593,7 +593,7 @@ class TestConcurrentModuleOperations:
         generated_ids: list[Any] = []
 
         def generate_worker() -> None:
-            ids = spoofer.generate_spoofed_identifiers()
+            ids = spoofer.generate_spoofed_identifiers()  # type: ignore[attr-defined]
             generated_ids.append(ids)
 
         threads = [threading.Thread(target=generate_worker) for _ in range(3)]
@@ -757,7 +757,7 @@ class TestRealWorldScenarios:
         spoofer = HardwareFingerPrintSpoofer()
         emulator = DongleEmulator()
 
-        spoofed_ids = spoofer.generate_spoofed_identifiers()
+        spoofed_ids = spoofer.generate_spoofed_identifiers()  # type: ignore[attr-defined]
         assert spoofed_ids is not None, "Must generate spoofed IDs"
 
         if hasattr(emulator, "set_hardware_ids"):

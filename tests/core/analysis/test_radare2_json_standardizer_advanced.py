@@ -329,7 +329,7 @@ class TestComplexAnalysisMethods:
 
     def test_analyze_component_interactions_finds_relationships(self, standardizer: R2JSONStandardizer) -> None:
         """analyze_component_interactions identifies component relationships."""
-        components = {
+        components: Dict[str, Dict[str, Any]] = {
             "functions": {"functions": [{"name": "CheckLicense", "calls": ["CryptAcquireContext"]}]},
             "imports": {"imports": [{"name": "CryptAcquireContext"}]},
         }
@@ -340,7 +340,7 @@ class TestComplexAnalysisMethods:
 
     def test_find_complementary_findings_identifies_complementary_data(self, standardizer: R2JSONStandardizer) -> None:
         """find_complementary_findings identifies complementary findings."""
-        components = {
+        components: Dict[str, Dict[str, Any]] = {
             "decompilation": {"license_functions": ["validate_key"]},
             "strings": {"license_strings": [{"string": "Enter License Key"}]},
         }
@@ -373,7 +373,7 @@ class TestComplexAnalysisMethods:
 
     def test_synthesize_recommendations_generates_actionable_advice(self, standardizer: R2JSONStandardizer) -> None:
         """synthesize_recommendations generates actionable recommendations."""
-        components = {
+        components: Dict[str, Dict[str, Any]] = {
             "vulnerability": {"vulnerabilities": [{"type": "buffer_overflow", "severity": "high"}]},
             "bypass": {"bypass_suggestions": [{"type": "patch", "success_probability": 0.85}]},
         }
@@ -384,7 +384,7 @@ class TestComplexAnalysisMethods:
 
     def test_find_significant_correlations_identifies_correlations(self, standardizer: R2JSONStandardizer) -> None:
         """find_significant_correlations identifies significant correlations."""
-        components = {
+        components: Dict[str, Dict[str, Any]] = {
             "comp1": {"functions": [{"complexity": 10}, {"complexity": 15}]},
             "comp2": {"vulnerabilities": [{"risk_score": 8.5}]},
         }
@@ -395,7 +395,7 @@ class TestComplexAnalysisMethods:
 
     def test_identify_causal_relationships_finds_causality(self, standardizer: R2JSONStandardizer) -> None:
         """identify_causal_relationships identifies causal patterns."""
-        components = {
+        components: Dict[str, Dict[str, Any]] = {
             "functions": {"license_functions": [{"name": "check_key", "complexity": 20}]},
             "vulnerabilities": {"vulnerabilities": [{"function": "check_key", "type": "overflow"}]},
         }
@@ -406,7 +406,7 @@ class TestComplexAnalysisMethods:
 
     def test_build_dependency_graph_constructs_graph(self, standardizer: R2JSONStandardizer) -> None:
         """build_dependency_graph constructs dependency graph."""
-        components = {
+        components: Dict[str, Dict[str, Any]] = {
             "functions": {"functions": [{"name": "main", "calls": ["check_license"]}]},
             "imports": {"imports": [{"name": "CryptAcquireContext"}]},
         }
@@ -444,7 +444,7 @@ class TestSpecializedNormalization:
 
     def test_normalize_cfg_patterns_normalizes_patterns(self, standardizer: R2JSONStandardizer) -> None:
         """normalize_cfg_patterns normalizes control flow patterns."""
-        pattern_list = [
+        pattern_list: List[Dict[str, Any] | str] = [
             {"type": "loop", "pattern": "for_loop", "count": 5},
             {"type": "conditional", "pattern": "if_else", "count": 12},
         ]
@@ -713,7 +713,7 @@ class TestComprehensiveWorkflows:
 
     def test_perform_cross_component_analysis_comprehensive(self, standardizer: R2JSONStandardizer) -> None:
         """perform_cross_component_analysis performs comprehensive analysis."""
-        components = {
+        components: Dict[str, Dict[str, Any]] = {
             "decompilation": {
                 "analysis_results": {
                     "license_functions": [{"name": "check_key", "confidence": 0.9}]

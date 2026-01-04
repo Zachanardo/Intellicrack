@@ -13,7 +13,7 @@ import json
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Generator
 
 import pytest
 
@@ -265,7 +265,7 @@ def qapp() -> Any:
 
 
 @pytest.fixture
-def temp_scripts_dir() -> Path:
+def temp_scripts_dir() -> Generator[Path, None, None]:
     """Create temporary directory for Frida script testing."""
     with tempfile.TemporaryDirectory(prefix="frida_scripts_") as tmpdir:
         scripts_path = Path(tmpdir)
@@ -447,6 +447,7 @@ class TestProcessAttachment:
 
         assert frida_dialog.attach_btn.isEnabled(), "Attach button should be enabled after selection"
         assert hasattr(frida_dialog, "selected_process")
+        assert frida_dialog.selected_process is not None
         assert frida_dialog.selected_process["pid"] == 1234
         assert frida_dialog.selected_process["name"] == "target.exe"
 
@@ -463,7 +464,7 @@ class TestProcessAttachment:
         frida_dialog.attach_to_process()
 
         assert frida_dialog.frida_worker is not None
-        assert frida_dialog.frida_worker.operation == "attach"
+        assert frida_dialog.frida_worker.operation == "attach"  # type: ignore[unreachable]
         assert frida_dialog.frida_worker.params["pid"] == 5678
 
     def test_successful_attachment_updates_ui_state(self, frida_dialog: FridaManagerDialog) -> None:
@@ -476,7 +477,7 @@ class TestProcessAttachment:
         assert frida_dialog.detach_btn.isEnabled(), "Detach button should be enabled"
         assert frida_dialog.suspend_btn.isEnabled(), "Suspend button should be enabled"
         assert frida_dialog.load_script_btn.isEnabled(), "Load script button should be enabled"
-        assert "licensed.exe" in frida_dialog.current_session
+        assert frida_dialog.current_session is not None and "licensed.exe" in frida_dialog.current_session
 
     def test_failed_attachment_maintains_attach_button(self, frida_dialog: FridaManagerDialog) -> None:
         """Failed attachment keeps attach button enabled for retry."""
@@ -504,8 +505,8 @@ class TestScriptManagement:
         assert frida_dialog.scripts_list.count() >= 3, "Should find test scripts"
 
         script_names = [
-            frida_dialog.scripts_list.item(i).text()
-            for i in range(frida_dialog.scripts_list.count())
+            item.text() for i in range(frida_dialog.scripts_list.count())
+            if (item := frida_dialog.scripts_list.item(i)) is not None
         ]
 
         assert "basic_hook" in script_names
@@ -535,7 +536,7 @@ class TestScriptManagement:
         frida_dialog.load_selected_script()
 
         assert frida_dialog.frida_worker is not None
-        assert frida_dialog.frida_worker.operation == "load_script"
+        assert frida_dialog.frida_worker.operation == "load_script"  # type: ignore[unreachable]
         params = frida_dialog.frida_worker.params
 
         assert params["script_name"] == "test_bypass"
@@ -586,7 +587,7 @@ Interceptor.attach(ptr("0x400000"), {
         frida_dialog.setup_ui()
         fake_worker = FakeFridaWorker(frida_dialog.frida_manager)
         fake_worker.params = {"script_name": "bypass_trial"}
-        frida_dialog.frida_worker = fake_worker
+        frida_dialog.frida_worker = fake_worker  # type: ignore[assignment]
 
         initial_count = frida_dialog.loaded_scripts_list.count()
 
@@ -595,6 +596,7 @@ Interceptor.attach(ptr("0x400000"), {
         assert frida_dialog.loaded_scripts_list.count() == initial_count + 1
 
         last_item = frida_dialog.loaded_scripts_list.item(initial_count)
+        assert last_item is not None
         assert last_item.text() == "bypass_trial"
 
     def test_delete_script_removes_from_filesystem(
@@ -611,11 +613,11 @@ Interceptor.attach(ptr("0x400000"), {
         frida_dialog.reload_script_list()
 
         item = QListWidgetItem("deletable")
-        item.setData(Qt.UserRole, str(test_script))
+        item.setData(Qt.UserRole, str(test_script))  # type: ignore[attr-defined]
 
         fake_msg_box = FakeQMessageBox()
         from intellicrack.handlers.pyqt6_handler import QMessageBox
-        fake_msg_box.set_question_return(QMessageBox.Yes)
+        fake_msg_box.set_question_return(QMessageBox.Yes)  # type: ignore[attr-defined]
 
         monkeypatch.setattr("intellicrack.ui.dialogs.frida_manager_dialog.QMessageBox", fake_msg_box)
 
@@ -648,16 +650,23 @@ class TestProtectionDetection:
         frida_dialog.update_performance_stats()
 
         for i in range(frida_dialog.protection_grid.rowCount()):
-            prot_name = frida_dialog.protection_grid.item(i, 0).text()
+            prot_item = frida_dialog.protection_grid.item(i, 0)
             status_item = frida_dialog.protection_grid.item(i, 1)
+            if prot_item is None or status_item is None:
+                continue
+            prot_name = prot_item.text()
 
             if prot_name == "Anti-Debugging":
                 assert status_item.text() == "DETECTED"
-                evidence = frida_dialog.protection_grid.item(i, 2).text()
+                evidence_item = frida_dialog.protection_grid.item(i, 2)
+                assert evidence_item is not None
+                evidence = evidence_item.text()
                 assert "IsDebuggerPresent" in evidence
             elif prot_name == "License Verification":
                 assert status_item.text() == "DETECTED"
-                evidence = frida_dialog.protection_grid.item(i, 2).text()
+                evidence_item = frida_dialog.protection_grid.item(i, 2)
+                assert evidence_item is not None
+                evidence = evidence_item.text()
                 assert "ValidateSerial" in evidence
 
     def test_bypass_protection_triggers_adaptation(
@@ -709,8 +718,8 @@ class TestPresetConfiguration:
         assert len(fake_frida_manager._load_script_calls) == 2
 
         loaded_scripts = [
-            frida_dialog.loaded_scripts_list.item(i).text()
-            for i in range(frida_dialog.loaded_scripts_list.count())
+            item.text() for i in range(frida_dialog.loaded_scripts_list.count())
+            if (item := frida_dialog.loaded_scripts_list.item(i)) is not None
         ]
 
         assert "basic_hook.js" in loaded_scripts
@@ -871,7 +880,7 @@ class TestLogManagement:
         frida_dialog.init_ui()
 
         fake_console = FakeLogConsole()
-        frida_dialog.log_console = fake_console
+        frida_dialog.log_console = fake_console  # type: ignore[assignment]
 
         frida_dialog.filter_logs("Hooks")
 
@@ -982,7 +991,7 @@ class TestAIScriptGeneration:
             generation_called = True
             generation_path = path
 
-        frida_dialog.start_ai_script_generation = fake_start_generation
+        frida_dialog.start_ai_script_generation = fake_start_generation  # type: ignore[method-assign, assignment]
         frida_dialog.generate_ai_script()
 
         assert generation_called
@@ -1018,7 +1027,7 @@ class TestProcessControl:
             def data(self, role: int) -> str:
                 return "local"
 
-        frida_dialog.device_list.setCurrentRow(0)
+        frida_dialog.device_list.setCurrentRow(0)  # type: ignore[attr-defined]
 
         fake_frida_module = FakeFridaModule()
         fake_frida_module._local_device = fake_device
@@ -1035,7 +1044,7 @@ class TestProcessControl:
     ) -> None:
         """Suspend and resume operations toggle process execution state."""
         frida_dialog.setup_ui()
-        frida_dialog.current_session = FakeSession(1234)
+        frida_dialog.current_session = FakeSession(1234)  # type: ignore[assignment]
 
         frida_dialog.suspend_btn.setEnabled(True)
         frida_dialog.resume_btn.setEnabled(False)
@@ -1062,7 +1071,7 @@ class TestStructuredMessages:
         frida_dialog.setup_ui()
 
         fake_console = FakeLogConsole()
-        frida_dialog.log_console = fake_console
+        frida_dialog.log_console = fake_console  # type: ignore[assignment]
 
         payload = {
             "message": "License check bypassed successfully",
@@ -1113,6 +1122,8 @@ class TestStructuredMessages:
             if prot_item and "Packing" in prot_item.text():
                 status_item = frida_dialog.protection_grid.item(i, 1)
                 evidence_item = frida_dialog.protection_grid.item(i, 2)
+                assert status_item is not None
+                assert evidence_item is not None
 
                 assert status_item.text() == "DETECTED"
                 assert ".vmp0 section" in evidence_item.text()
@@ -1140,7 +1151,7 @@ class TestDialogCleanup:
 
         mock_event = FakeCloseEvent()
 
-        frida_dialog.closeEvent(mock_event)
+        frida_dialog.closeEvent(mock_event)  # type: ignore[arg-type]
 
         assert fake_frida_manager._cleanup_called
         assert mock_event.accepted
@@ -1161,7 +1172,7 @@ class TestScriptDuplication:
         frida_dialog.setup_ui()
 
         item = QListWidgetItem("bypass_trial")
-        item.setData(Qt.UserRole, str(original_script))
+        item.setData(Qt.UserRole, str(original_script))  # type: ignore[attr-defined]
 
         edit_called = False
 
@@ -1169,7 +1180,7 @@ class TestScriptDuplication:
             nonlocal edit_called
             edit_called = True
 
-        frida_dialog.edit_script = fake_edit_script
+        frida_dialog.edit_script = fake_edit_script  # type: ignore[method-assign, assignment]
         frida_dialog.duplicate_script(item)
 
         copy_script = temp_scripts_dir / "bypass_trial_copy1.js"
@@ -1344,7 +1355,7 @@ class TestScriptContextMenu:
         test_script.write_text("console.log('test');")
 
         item = QListWidgetItem("context_test")
-        item.setData(Qt.UserRole, str(test_script))
+        item.setData(Qt.UserRole, str(test_script))  # type: ignore[attr-defined]
         frida_dialog.scripts_list.addItem(item)
 
         fake_menu = FakeQMenu()
@@ -1354,7 +1365,7 @@ class TestScriptContextMenu:
         class FakePosition:
             pass
 
-        frida_dialog.show_script_context_menu(FakePosition())
+        frida_dialog.show_script_context_menu(FakePosition())  # type: ignore[arg-type]
 
 
 class TestFridaAvailability:

@@ -5,7 +5,7 @@ Tests real report generation, analysis integration, and export functionality.
 
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 import pytest
 
@@ -20,10 +20,11 @@ from intellicrack.ui.dialogs.report_manager_dialog import ReportGenerationThread
 @pytest.fixture(scope="module")
 def qapp() -> QApplication:
     """Create QApplication instance for GUI tests."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    return app
+    existing_app = QApplication.instance()
+    if existing_app is None:
+        return QApplication([])
+    assert isinstance(existing_app, QApplication), "Expected QApplication instance"
+    return existing_app
 
 
 @pytest.fixture
@@ -42,7 +43,7 @@ def sample_binary(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def report_manager(qapp: QApplication) -> ReportManagerDialog:
+def report_manager(qapp: QApplication) -> Generator[ReportManagerDialog, None, None]:
     """Create ReportManagerDialog instance."""
     dialog = ReportManagerDialog()
     yield dialog

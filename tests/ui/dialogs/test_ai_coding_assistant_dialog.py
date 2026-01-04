@@ -30,9 +30,9 @@ try:
     PYQT6_AVAILABLE = True
 except ImportError:
     PYQT6_AVAILABLE = False
-    Qt = None
-    QApplication = None
-    QTextDocument = None
+    Qt = None  # type: ignore[misc, assignment]
+    QApplication = None  # type: ignore[misc, assignment]
+    QTextDocument = None  # type: ignore[misc, assignment]
 
 if PYQT6_AVAILABLE:
     from intellicrack.ai.code_analysis_tools import AIAssistant
@@ -44,12 +44,12 @@ if PYQT6_AVAILABLE:
         FileTreeWidget,
     )
 else:
-    AIAssistant = None
-    AICodingAssistantDialog = None
-    AICodingAssistantWidget = None
-    ChatWidget = None
-    CodeEditor = None
-    FileTreeWidget = None
+    AIAssistant = None  # type: ignore[misc, assignment]
+    AICodingAssistantDialog = None  # type: ignore[misc, assignment]
+    AICodingAssistantWidget = None  # type: ignore[misc, assignment]
+    ChatWidget = None  # type: ignore[misc, assignment]
+    CodeEditor = None  # type: ignore[misc, assignment]
+    FileTreeWidget = None  # type: ignore[misc, assignment]
 
 from intellicrack.utils.logger import get_logger
 
@@ -62,12 +62,12 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture(scope="module")
-def qapp() -> QApplication:
+def qapp() -> "QApplication":
     """Create QApplication instance for Qt tests."""
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
-    return app
+    return app  # type: ignore[return-value]
 
 
 @pytest.fixture
@@ -115,7 +115,9 @@ class TestFileTreeWidget:
         """FileTreeWidget initializes with default configuration."""
         tree = FileTreeWidget()
 
-        assert tree.headerItem().text(0) == "Project Files"
+        header = tree.headerItem()
+        assert header is not None
+        assert header.text(0) == "Project Files"
         assert tree.alternatingRowColors() is True
         assert tree.current_root is None
         assert len(tree.supported_extensions) > 0
@@ -148,6 +150,7 @@ class TestFileTreeWidget:
         tree.file_selected.connect(lambda path: selected_files.append(path))
 
         root_item = tree.topLevelItem(0)
+        assert root_item is not None
         for i in range(root_item.childCount()):
             child = root_item.child(i)
             if child and child.text(0) == "keygen.py":
@@ -165,6 +168,7 @@ class TestFileTreeWidget:
         tree.set_root_directory(str(temp_project_dir))
 
         root_item = tree.topLevelItem(0)
+        assert root_item is not None
         file_items = []
 
         for i in range(root_item.childCount()):
@@ -185,6 +189,7 @@ class TestFileTreeWidget:
         tree.set_root_directory(str(temp_project_dir))
 
         root_item = tree.topLevelItem(0)
+        assert root_item is not None
         root_item.setExpanded(True)
 
         expanded_before = tree.get_expanded_items()
@@ -192,6 +197,7 @@ class TestFileTreeWidget:
         tree.refresh_tree()
 
         root_item_after = tree.topLevelItem(0)
+        assert root_item_after is not None
         assert root_item_after.isExpanded()
 
 
@@ -426,7 +432,7 @@ class TestAICodingAssistantWidget:
     ) -> None:
         """AICodingAssistantWidget creates new research files."""
         widget = AICodingAssistantWidget()
-        widget.current_project_dir = temp_project_dir
+        widget.current_project_dir = str(temp_project_dir)
 
         initial_tabs = widget.editor_tabs.count()
 
@@ -472,7 +478,7 @@ class TestRealAICodeGeneration:
         assert widget.editor_tabs.count() > 0
 
         if current_editor := widget.editor_tabs.currentWidget():
-            generated_code = current_editor.toPlainText()
+            generated_code = current_editor.toPlainText()  # type: ignore[attr-defined]
 
             assert len(generated_code) > 100
             assert "def " in generated_code or "class " in generated_code
@@ -498,7 +504,7 @@ class TestRealAICodeGeneration:
 
         if widget.editor_tabs.count() > 0:
             if current_editor := widget.editor_tabs.currentWidget():
-                generated_code = current_editor.toPlainText()
+                generated_code = current_editor.toPlainText()  # type: ignore[attr-defined]
 
                 self._validate_python_syntax(generated_code)
 
@@ -534,7 +540,7 @@ class TestRealAICodeGeneration:
 
         if widget.editor_tabs.count() > 0:
             if current_editor := widget.editor_tabs.currentWidget():
-                generated_code = current_editor.toPlainText()
+                generated_code = current_editor.toPlainText()  # type: ignore[attr-defined]
 
                 assert "Interceptor" in generated_code or \
                            "frida" in generated_code.lower() or \
@@ -895,7 +901,7 @@ class TestIntegrationWorkflows:
 
         if widget.editor_tabs.count() > 0:
             if current_editor := widget.editor_tabs.currentWidget():
-                generated_code = current_editor.toPlainText()
+                generated_code = current_editor.toPlainText()  # type: ignore[attr-defined]
 
                 assert len(generated_code) > 100
 

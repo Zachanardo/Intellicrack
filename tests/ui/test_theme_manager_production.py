@@ -214,10 +214,11 @@ class FakeLogger:
 @pytest.fixture
 def qapp() -> QApplication:
     """Provide QApplication instance for theme testing."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    return app
+    existing_app = QApplication.instance()
+    if existing_app is None:
+        return QApplication([])
+    assert isinstance(existing_app, QApplication), "Expected QApplication instance"
+    return existing_app
 
 
 @pytest.fixture
@@ -619,7 +620,10 @@ class TestThemeManagerErrorHandling:
 
         theme_manager._apply_theme()
 
-        stylesheet = QApplication.instance().styleSheet()
+        app_instance = QApplication.instance()
+        assert app_instance is not None, "QApplication instance should exist"
+        assert isinstance(app_instance, QApplication), "Expected QApplication instance"
+        stylesheet = app_instance.styleSheet()
         assert len(stylesheet) > 0
 
     def test_apply_builtin_dark_theme_as_fallback_when_exception_occurs(

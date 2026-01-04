@@ -250,7 +250,7 @@ def test_session_handles_status_messages(test_binary: Path, temp_dir: Path) -> N
         "payload": {"type": "status", "message": "Test status"},
     }
 
-    session._on_message(message, None)
+    session._on_message(message, None)  # type: ignore[arg-type]
 
     assert messages_received
     assert any("Test status" in msg for msg in messages_received)
@@ -277,7 +277,7 @@ def test_session_handles_api_call_events(test_binary: Path, temp_dir: Path) -> N
         },
     }
 
-    session._on_message(message, None)
+    session._on_message(message, None)  # type: ignore[arg-type]
 
     assert len(session.api_calls) == 1
     assert session.api_calls[0].api_name == "kernel32.dll!CreateFileW"
@@ -303,7 +303,7 @@ def test_session_handles_licensing_events(test_binary: Path, temp_dir: Path) -> 
         },
     }
 
-    session._on_message(message, None)
+    session._on_message(message, None)  # type: ignore[arg-type]
 
     assert len(session.licensing_routines) == 1
     assert "app.exe:0x1000" in session.licensing_routines
@@ -327,7 +327,7 @@ def test_session_handles_progress_updates(test_binary: Path, temp_dir: Path) -> 
         },
     }
 
-    session._on_message(message, None)
+    session._on_message(message, None)  # type: ignore[arg-type]
 
     assert session.stats.total_instructions == 5000
     assert session.stats.unique_blocks == 250
@@ -377,7 +377,7 @@ def test_session_handles_trace_complete(test_binary: Path, temp_dir: Path) -> No
         },
     }
 
-    session._on_message(message, None)
+    session._on_message(message, None)  # type: ignore[arg-type]
 
     assert session.stats.total_instructions == 10000
     assert len(session.coverage_data) == 2
@@ -416,7 +416,7 @@ def test_session_handles_function_trace(test_binary: Path, temp_dir: Path) -> No
         },
     }
 
-    session._on_message(message, None)
+    session._on_message(message, None)  # type: ignore[arg-type]
 
     assert len(session.trace_events) == 1
     assert session.trace_events[0].event_type == "call"
@@ -446,7 +446,7 @@ def test_session_handles_module_coverage(test_binary: Path, temp_dir: Path) -> N
         },
     }
 
-    session._on_message(message, None)
+    session._on_message(message, None)  # type: ignore[arg-type]
 
     assert any("75.5" in msg for msg in messages_received)
 
@@ -680,7 +680,7 @@ def test_message_handler_with_invalid_payload(test_binary: Path, temp_dir: Path)
 
     invalid_message = {"type": "send", "payload": None}
 
-    session._on_message(invalid_message, None)
+    session._on_message(invalid_message, None)  # type: ignore[arg-type]
 
 
 def test_message_handler_with_error_type(test_binary: Path, temp_dir: Path) -> None:
@@ -701,7 +701,7 @@ def test_message_handler_with_error_type(test_binary: Path, temp_dir: Path) -> N
         "stack": "Error: Test error\n  at test.js:10",
     }
 
-    session._on_message(error_message, None)
+    session._on_message(error_message, None)  # type: ignore[arg-type]
 
     assert any("Error" in msg for msg in messages_received)
 

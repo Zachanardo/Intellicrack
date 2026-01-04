@@ -527,13 +527,16 @@ class TestEventBus:
         """EventBus starts event processing loop and stops cleanly."""
         event_bus = EventBus()
 
-        assert event_bus.running is False
+        running_initial: bool = event_bus.running
+        assert not running_initial
 
         await event_bus.start()
-        assert event_bus.running is True
+        running_after_start: bool = event_bus.running
+        assert running_after_start
 
         await event_bus.stop()
-        assert event_bus.running is False
+        running_after_stop: bool = event_bus.running
+        assert not running_after_stop
 
     @pytest.mark.asyncio
     async def test_event_bus_delivers_events_to_subscribers(self) -> None:
@@ -679,15 +682,18 @@ class TestResourceManager:
         logger = logging.getLogger("test")
         manager = ResourceManager(sample_config["engine"], logger)
 
-        assert manager.running is False
+        running_initial: bool = manager.running
+        assert not running_initial
 
         await manager.start()
-        assert manager.running is True
+        running_after_start: bool = manager.running
+        assert running_after_start
         assert manager.process_pool is not None
         assert manager.thread_pool is not None
 
         await manager.stop()
-        assert manager.running is False
+        running_after_stop: bool = manager.running
+        assert not running_after_stop
 
     @pytest.mark.asyncio
     async def test_resource_manager_provides_resource_stats(self, sample_config: dict[str, Any]) -> None:
@@ -753,14 +759,17 @@ class Plugin:
 
         engine = IntellicrackcoreEngine(str(config_file))
 
-        assert engine.running is False
+        running_initial: bool = engine.running
+        assert not running_initial
 
         await engine.start()
-        assert engine.running is True
+        running_after_start: bool = engine.running
+        assert running_after_start
         assert engine.startup_time is not None
 
         await engine.stop()
-        assert engine.running is False
+        running_after_stop: bool = engine.running
+        assert not running_after_stop
 
     @pytest.mark.asyncio
     async def test_core_engine_api_analyze_binary(self, config_file: Path, sample_binary: Path) -> None:

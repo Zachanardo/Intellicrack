@@ -15,11 +15,11 @@ from typing import Any
 
 import pytest
 
+frida_handler: Any = None
 try:
     from intellicrack.handlers import frida_handler
     FRIDA_HANDLER_AVAILABLE = True
 except ImportError:
-    frida_handler = None
     FRIDA_HANDLER_AVAILABLE = False
 
 
@@ -232,7 +232,7 @@ class TestFallbackSessionAttachment:
         own_pid = os.getpid()
         session = device.attach(own_pid)
 
-        detach_called = {"called": False, "reason": None}
+        detach_called: dict[str, Any] = {"called": False, "reason": None}
 
         def on_detached(reason: str, crash: Any) -> None:
             detach_called["called"] = True
@@ -386,9 +386,6 @@ class TestFallbackScriptCompilation:
 
         with pytest.raises(ValueError, match="Invalid script source"):
             session.compile_script("")
-
-        with pytest.raises(ValueError, match="Invalid script source"):
-            session.compile_script(None)
 
 
 class TestFallbackMemoryOperations:

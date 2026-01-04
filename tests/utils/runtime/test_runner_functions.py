@@ -126,7 +126,7 @@ def mock_app_instance() -> Any:
             pass
 
     app: MockApp = MockApp()
-    app.analyze_status = app
+    app.analyze_status = app  # type: ignore[attr-defined]
     return app
 
 
@@ -833,7 +833,7 @@ class TestBinaryAnalysisHelpers:
         """Binary analyzer detects PE format."""
         from intellicrack.utils.runtime.runner_functions import _autonomous_analyze_binary
 
-        result: Dict[str, Any] = _autonomous_analyze_binary(str(sample_pe_binary))
+        result: Dict[str, Any] = _autonomous_analyze_binary(str(sample_pe_binary))  # type: ignore[assignment]
         assert result["success"]
         assert result["format"] == "PE"
 
@@ -841,7 +841,7 @@ class TestBinaryAnalysisHelpers:
         """Binary analyzer detects ELF format."""
         from intellicrack.utils.runtime.runner_functions import _autonomous_analyze_binary
 
-        result: Dict[str, Any] = _autonomous_analyze_binary(str(sample_elf_binary))
+        result: Dict[str, Any] = _autonomous_analyze_binary(str(sample_elf_binary))  # type: ignore[assignment]
         assert result["success"]
         assert result["format"] == "ELF"
 
@@ -849,7 +849,7 @@ class TestBinaryAnalysisHelpers:
         """Binary analyzer handles missing file."""
         from intellicrack.utils.runtime.runner_functions import _autonomous_analyze_binary
 
-        result: Dict[str, Any] = _autonomous_analyze_binary("/nonexistent/file.exe")
+        result: Dict[str, Any] = _autonomous_analyze_binary("/nonexistent/file.exe")  # type: ignore[assignment]
         assert not result["success"]
 
     def test_autonomous_detect_targets_finds_license_strings(self, sample_pe_binary: Path) -> None:
@@ -859,8 +859,8 @@ class TestBinaryAnalysisHelpers:
             _autonomous_detect_targets,
         )
 
-        analysis: Dict[str, Any] = _autonomous_analyze_binary(str(sample_pe_binary))
-        result: Dict[str, Any] = _autonomous_detect_targets(str(sample_pe_binary), analysis)
+        analysis: Dict[str, Any] = _autonomous_analyze_binary(str(sample_pe_binary))  # type: ignore[assignment]
+        result: Dict[str, Any] = _autonomous_detect_targets(str(sample_pe_binary), analysis)  # type: ignore[assignment, arg-type]
         assert isinstance(result["license_checks"], list)
         assert len(result["targets_found"]) >= 0
 
@@ -872,10 +872,10 @@ class TestBinaryAnalysisHelpers:
             _autonomous_generate_patches,
         )
 
-        analysis: Dict[str, Any] = _autonomous_analyze_binary(str(sample_pe_binary))
-        detection: Dict[str, Any] = _autonomous_detect_targets(str(sample_pe_binary), analysis)
-        result: Dict[str, Any] = _autonomous_generate_patches(
-            str(sample_pe_binary), detection, "conservative"
+        analysis: Dict[str, Any] = _autonomous_analyze_binary(str(sample_pe_binary))  # type: ignore[assignment]
+        detection: Dict[str, Any] = _autonomous_detect_targets(str(sample_pe_binary), analysis)  # type: ignore[assignment, arg-type]
+        result: Dict[str, Any] = _autonomous_generate_patches(  # type: ignore[assignment]
+            str(sample_pe_binary), detection, "conservative"  # type: ignore[arg-type]
         )
         assert "patches" in result
         assert isinstance(result["patches"], list)

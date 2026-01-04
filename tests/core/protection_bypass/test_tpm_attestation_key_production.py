@@ -72,8 +72,8 @@ class TestTPMAttestationKeyGeneration:
         challenge1: bytes = b"test_challenge_1"
         challenge2: bytes = b"test_challenge_2"
 
-        response1: dict[str, Any] = bypass_engine.process_attestation_challenge(challenge1)
-        response2: dict[str, Any] = bypass_engine.process_attestation_challenge(challenge2)
+        response1: dict[str, Any] = bypass_engine.process_attestation_challenge(challenge1)  # type: ignore[attr-defined]
+        response2: dict[str, Any] = bypass_engine.process_attestation_challenge(challenge2)  # type: ignore[attr-defined]
 
         signature1: str = response1["signature"]
         signature2: str = response2["signature"]
@@ -96,8 +96,8 @@ class TestTPMAttestationKeyGeneration:
 
         challenge: bytes = b"identical_challenge"
 
-        response1: dict[str, Any] = bypass1.process_attestation_challenge(challenge)
-        response2: dict[str, Any] = bypass2.process_attestation_challenge(challenge)
+        response1: dict[str, Any] = bypass1.process_attestation_challenge(challenge)  # type: ignore[attr-defined]
+        response2: dict[str, Any] = bypass2.process_attestation_challenge(challenge)  # type: ignore[attr-defined]
 
         certificates1: list[Any] = response1["certificates"]
         certificates2: list[Any] = response2["certificates"]
@@ -114,7 +114,7 @@ class TestTPMAttestationKeyGeneration:
         Verifies extraction attempts real TPM access and falls back to generation
         when TPM unavailable. Tests platform-specific extraction logic.
         """
-        ek_cert_bytes: bytes | None = bypass_engine._extract_tpm_ek_certificate()  # type: ignore[attr-defined]
+        ek_cert_bytes: bytes | None = bypass_engine._extract_tpm_ek_certificate()
 
         if ek_cert_bytes is not None:
             assert len(ek_cert_bytes) > 100, "Real TPM EK certificate should be >100 bytes"
@@ -122,7 +122,7 @@ class TestTPMAttestationKeyGeneration:
             try:
                 cert: x509.Certificate = x509.load_der_x509_certificate(ek_cert_bytes, default_backend())
                 assert cert.subject is not None, "Certificate must have subject"
-                subject_cn: list[x509.NameAttribute] = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
+                subject_cn: list[x509.NameAttribute[str | bytes]] = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
                 if subject_cn:
                     cn_value: Any = subject_cn[0].value
                     assert "TPM" in str(cn_value) or "EK" in str(cn_value), "Certificate should identify as TPM EK"
@@ -208,7 +208,7 @@ class TestTPMAttestationKeyGeneration:
         assert isinstance(public_key, rsa.RSAPublicKey), "TPM EK must use RSA key"
         assert public_key.key_size == 2048, "TPM EK must be RSA-2048"
 
-        key_usage_ext: x509.Extension[x509.KeyUsage] = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.KEY_USAGE)
+        key_usage_ext: x509.Extension[x509.KeyUsage] = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.KEY_USAGE)  # type: ignore[assignment]
         key_usage: x509.KeyUsage = key_usage_ext.value
         assert key_usage.digital_signature, "TPM EK must have digital signature usage"
         assert key_usage.key_encipherment, "TPM EK must have key encipherment usage"
@@ -266,7 +266,7 @@ class TestTPMAttestationKeyGeneration:
         platform_id: Any = platform_info["platform_id"]
         if platform_id:
             challenge: bytes = b"test_challenge"
-            response: dict[str, Any] = bypass_engine.process_attestation_challenge(challenge)
+            response: dict[str, Any] = bypass_engine.process_attestation_challenge(challenge)  # type: ignore[attr-defined]
 
             certificates: list[Any] = response["certificates"]
             assert len(certificates) > 0, "Attestation must include certificates"
@@ -287,7 +287,7 @@ class TestTPMAttestationKeyGeneration:
         signatures: list[Any] = []
 
         for challenge in challenges:
-            response: dict[str, Any] = bypass_engine.process_attestation_challenge(challenge)
+            response: dict[str, Any] = bypass_engine.process_attestation_challenge(challenge)  # type: ignore[attr-defined]
             sig: Any = response["signature"]
             signatures.append(sig)
 
@@ -369,7 +369,7 @@ class TestTPMKeyDerivationFunctions:
         """
         tpm_emulator = bypass_engine.tpm_emulator
 
-        key_template = b"\x00" * 32
+        key_template: dict[str, Any] = {}
         rc, srk = tpm_emulator.create_primary_key(0x40000001, b"", key_template)
 
         assert rc == TPM_RC.SUCCESS, "SRK creation must succeed"
@@ -388,26 +388,26 @@ class TestTPMKeyDerivationFunctions:
         pcr_index = 7
         expected_pcr = hashlib.sha256(b"expected_state").digest()
 
-        tpm_emulator.pcrs[pcr_index] = expected_pcr
+        tpm_emulator.pcrs[pcr_index] = expected_pcr  # type: ignore[attr-defined]
 
         policy_digest = hashlib.sha256(b"policy" + expected_pcr).digest()
 
-        key_template = b"\x00" * 32
-        rc, key = tpm_emulator.create_primary_key(0x40000001, b"", key_template)
+        key_template2: dict[str, Any] = {}
+        rc, key = tpm_emulator.create_primary_key(0x40000001, b"", key_template2)
         assert rc == TPM_RC.SUCCESS, "Key creation must succeed"
 
         sealed_data = b"sensitive_license_data"
-        rc, blob = tpm_emulator.seal_data(key.handle, sealed_data, policy_digest)
+        rc, blob = tpm_emulator.seal_data(key.handle, sealed_data, policy_digest)  # type: ignore[attr-defined, union-attr]
 
         if rc == TPM_RC.SUCCESS and blob is not None:
-            tpm_emulator.pcrs[pcr_index] = expected_pcr
-            rc_unseal, unsealed = tpm_emulator.unseal_data(key.handle, blob, policy_digest)
+            tpm_emulator.pcrs[pcr_index] = expected_pcr  # type: ignore[attr-defined]
+            rc_unseal, unsealed = tpm_emulator.unseal_data(key.handle, blob, policy_digest)  # type: ignore[attr-defined, union-attr]
 
             if rc_unseal == TPM_RC.SUCCESS:
                 assert unsealed == sealed_data, "Unsealed data must match original when PCR correct"
 
-            tpm_emulator.pcrs[pcr_index] = hashlib.sha256(b"wrong_state").digest()
-            rc_unseal_fail, _ = tpm_emulator.unseal_data(key.handle, blob, policy_digest)
+            tpm_emulator.pcrs[pcr_index] = hashlib.sha256(b"wrong_state").digest()  # type: ignore[attr-defined]
+            rc_unseal_fail, _ = tpm_emulator.unseal_data(key.handle, blob, policy_digest)  # type: ignore[attr-defined, union-attr]
             assert rc_unseal_fail != TPM_RC.SUCCESS, "Unsealing must fail with wrong PCR"
 
 
@@ -457,7 +457,7 @@ class TestPlatformSpecificAttestationChains:
         Windows Hello TPM-based authentication.
         """
         challenge = b"windows_hello_challenge"
-        response = bypass_engine.process_attestation_challenge(challenge)
+        response = bypass_engine.process_attestation_challenge(challenge)  # type: ignore[attr-defined]
 
         assert "signature" in response, "Attestation must include signature"
         assert "certificates" in response, "Attestation must include certificates"
@@ -502,7 +502,7 @@ class TestEdgeCasesAndSpecialConfigurations:
         platform_info = bypass_engine._detect_platform_info()
 
         challenge = b"vtpm_challenge"
-        response = bypass_engine.process_attestation_challenge(challenge)
+        response = bypass_engine.process_attestation_challenge(challenge)  # type: ignore[attr-defined]
 
         assert len(response["signature"]) > 0, "vTPM attestation must produce signature"
         assert len(response["certificates"]) > 0, "vTPM attestation must include certificates"
@@ -514,7 +514,7 @@ class TestEdgeCasesAndSpecialConfigurations:
         with proper JWT structure and claims.
         """
         challenge = b"azure_attestation_challenge"
-        response = bypass_engine.process_attestation_challenge(challenge)
+        response = bypass_engine.process_attestation_challenge(challenge)  # type: ignore[attr-defined]
 
         assert "signature" in response, "Azure attestation requires signature"
         assert "certificates" in response, "Azure attestation requires certificate chain"
@@ -532,7 +532,7 @@ class TestEdgeCasesAndSpecialConfigurations:
 
         if platform_info["has_tpm"]:
             challenge = b"ftpm_test_challenge"
-            response = bypass_engine.process_attestation_challenge(challenge)
+            response = bypass_engine.process_attestation_challenge(challenge)  # type: ignore[attr-defined]
 
             assert response is not None, "fTPM attestation must succeed"
             assert len(response["signature"]) > 0, "fTPM must produce valid signatures"
@@ -544,7 +544,7 @@ class TestEdgeCasesAndSpecialConfigurations:
         with magic value, qualified signer, clock info, and PCR digest.
         """
         challenge = b"quote_validation_challenge"
-        response = bypass_engine.process_attestation_challenge(challenge)
+        response = bypass_engine.process_attestation_challenge(challenge)  # type: ignore[attr-defined]
 
         if response.get("signature"):
             sig_bytes = base64.b64decode(response["signature"])
@@ -580,7 +580,7 @@ class TestEdgeCasesAndSpecialConfigurations:
         TPM version (TCG spec compliance).
         """
         challenge = b"version_specific_challenge"
-        response = bypass_engine.process_attestation_challenge(challenge)
+        response = bypass_engine.process_attestation_challenge(challenge)  # type: ignore[attr-defined]
 
         assert "signature" in response, "Quote must include signature"
 
@@ -602,7 +602,7 @@ class TestEdgeCasesAndSpecialConfigurations:
         }
 
         challenge = b"trustzone_challenge"
-        response = bypass_engine.process_attestation_challenge(challenge)
+        response = bypass_engine.process_attestation_challenge(challenge)  # type: ignore[attr-defined]
 
         assert response is not None, "ARM TrustZone attestation must be supported"
         assert len(response.get("signature", "")) > 0, "TrustZone attestation must include signature"
@@ -618,7 +618,7 @@ class TestEdgeCasesAndSpecialConfigurations:
         challenges = [os.urandom(32) for _ in range(20)]
 
         def process_challenge(challenge: bytes) -> dict[str, Any]:
-            return bypass_engine.process_attestation_challenge(challenge)
+            return bypass_engine.process_attestation_challenge(challenge)  # type: ignore[attr-defined, no-any-return]
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             results = list(executor.map(process_challenge, challenges))
@@ -640,7 +640,7 @@ class TestEdgeCasesAndSpecialConfigurations:
             "platform_id": None,
         }):
             challenge = b"fallback_challenge"
-            response = bypass_engine.process_attestation_challenge(challenge)
+            response = bypass_engine.process_attestation_challenge(challenge)  # type: ignore[attr-defined]
 
             assert len(response["signature"]) > 0, "Attestation must work even without platform detection"
             assert len(response["certificates"]) > 0, "Fallback certificates must be generated"
@@ -665,7 +665,7 @@ class TestCryptographicValidation:
         verifiable using the public key from generated certificates.
         """
         challenge = b"crypto_validation_challenge"
-        response = bypass_engine.process_attestation_challenge(challenge)
+        response = bypass_engine.process_attestation_challenge(challenge)  # type: ignore[attr-defined]
 
         sig_bytes = base64.b64decode(response["signature"])
         cert_bytes = base64.b64decode(response["certificates"][0])

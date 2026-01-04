@@ -12,6 +12,7 @@ import pytest
 import tempfile
 import time
 from pathlib import Path
+from typing import Any, Callable, Generator, List, Tuple
 
 from intellicrack.core.analysis.analysis_orchestrator import (
     AnalysisOrchestrator,
@@ -25,15 +26,16 @@ class TestAnalysisOrchestratorIntegration(IntellicrackTestBase):
     """Test orchestrated analysis integration across multiple real engines."""
 
     @pytest.fixture(autouse=True)
-    def setup(self, real_pe_binary, real_elf_binary, real_protected_binary, temp_workspace):
+    def setup(self, real_pe_binary: str, real_elf_binary: str, real_protected_binary: str, temp_workspace: Path) -> Generator[None, None, None]:
         """Set up integration test with multiple real binaries."""
         self.orchestrator = AnalysisOrchestrator()
         self.pe_binary = real_pe_binary
         self.elf_binary = real_elf_binary
         self.protected_binary = real_protected_binary
         self.temp_dir = temp_workspace
+        yield
 
-    def test_full_security_research_workflow_real(self):
+    def test_full_security_research_workflow_real(self) -> None:
         """Test REAL complete security research workflow on protected binary."""
         # Run full analysis on protected binary (most comprehensive test)
         result = self.orchestrator.analyze_binary(self.protected_binary)
@@ -73,7 +75,7 @@ class TestAnalysisOrchestratorIntegration(IntellicrackTestBase):
                     if len(high_entropy) > 0:
                         assert all(chunk['suspicious'] for chunk in high_entropy)
 
-    def test_multi_format_analysis_integration_real(self):
+    def test_multi_format_analysis_integration_real(self) -> None:
         """Test REAL integration across different binary formats."""
         # Analyze both PE and ELF to test format-specific integration
         pe_result = self.orchestrator.analyze_binary(
@@ -111,7 +113,7 @@ class TestAnalysisOrchestratorIntegration(IntellicrackTestBase):
                 # ELF-specific characteristics
                 assert elf_basic['file_type'] in ['ELF', 'Executable and Linkable Format'] or 'ELF' in str(elf_basic)
 
-    def test_progressive_analysis_depth_integration_real(self):
+    def test_progressive_analysis_depth_integration_real(self) -> None:
         """Test REAL progressive analysis depth integration."""
         # Start with basic analysis
         basic_phases = [AnalysisPhase.PREPARATION, AnalysisPhase.BASIC_INFO]
@@ -141,7 +143,7 @@ class TestAnalysisOrchestratorIntegration(IntellicrackTestBase):
         # More comprehensive analysis should produce more data
         assert static_data_size >= basic_data_size
 
-    def test_error_propagation_and_recovery_integration_real(self):
+    def test_error_propagation_and_recovery_integration_real(self) -> None:
         """Test REAL error propagation and recovery across integrated components."""
         # Empty file
         empty_file = self.temp_dir / "empty.exe"
@@ -180,7 +182,7 @@ class TestAnalysisOrchestratorIntegration(IntellicrackTestBase):
                     assert ':' in error  # Should include phase name
                     assert len(error) > 20  # Should be descriptive
 
-    def test_performance_integration_across_phases_real(self):
+    def test_performance_integration_across_phases_real(self) -> None:
         """Test REAL performance integration across multiple analysis phases."""
         # Measure performance of integrated analysis
         phases_to_test = [
@@ -206,7 +208,7 @@ class TestAnalysisOrchestratorIntegration(IntellicrackTestBase):
             # Entropy analysis should be relatively fast
             assert total_time < 45.0  # Entropy should not dominate time
 
-    def test_data_flow_integration_between_phases_real(self):
+    def test_data_flow_integration_between_phases_real(self) -> None:
         """Test REAL data flow and dependencies between analysis phases."""
         # Run comprehensive analysis to test data flow
         result = self.orchestrator.analyze_binary(
@@ -245,7 +247,7 @@ class TestAnalysisOrchestratorIntegration(IntellicrackTestBase):
             assert 'completed_phases' in final_data
             assert final_data['completed_phases'] == len(result.phases_completed)
 
-    def test_external_tool_integration_coordination_real(self):
+    def test_external_tool_integration_coordination_real(self) -> None:
         """Test REAL coordination between external analysis tools."""
         # Test integration with external tools (radare2, ghidra, etc.)
         phases_with_external_tools = [
@@ -278,13 +280,13 @@ class TestAnalysisOrchestratorIntegration(IntellicrackTestBase):
                     external_tool_indicators = ['radare2', 'ghidra', 'qemu', 'initialization', 'not found']
                     assert any(indicator in error_msg.lower() for indicator in external_tool_indicators)
 
-    def test_signal_coordination_across_workflow_real(self):
+    def test_signal_coordination_across_workflow_real(self) -> None:
         """Test REAL signal coordination across complete workflow."""
         # Track signals across complete workflow
-        signals_received = []
+        signals_received: List[Tuple[str, int, float]] = []
 
-        def signal_tracker(signal_name):
-            def handler(*args):
+        def signal_tracker(signal_name: str) -> Callable[..., None]:
+            def handler(*args: Any) -> None:
                 signals_received.append((signal_name, len(args), time.time()))
             return handler
 
@@ -315,7 +317,7 @@ class TestAnalysisOrchestratorIntegration(IntellicrackTestBase):
         signal_times = [s[2] for s in signals_received]
         assert signal_times == sorted(signal_times)  # Chronological order
 
-    def test_memory_and_resource_coordination_real(self):
+    def test_memory_and_resource_coordination_real(self) -> None:
         """Test REAL memory and resource coordination across analysis workflow."""
         import psutil
         import os
@@ -353,7 +355,7 @@ class TestAnalysisOrchestratorIntegration(IntellicrackTestBase):
         # Workflow should complete successfully
         assert result.success is True or len(result.errors) > 0
 
-    def test_batch_analysis_integration_real(self):
+    def test_batch_analysis_integration_real(self) -> None:
         """Test REAL batch analysis integration across multiple binaries."""
         # Test batch processing integration
         test_binaries = [self.pe_binary, self.elf_binary]
@@ -391,7 +393,7 @@ class TestAnalysisOrchestratorIntegration(IntellicrackTestBase):
                 'error' not in elf_basic and 'file_type' in elf_basic):
                 assert pe_basic['file_type'] != elf_basic['file_type']
 
-    def _validate_cross_phase_consistency(self, result: OrchestrationResult):
+    def _validate_cross_phase_consistency(self, result: OrchestrationResult) -> None:
         """Validate consistency of data across different analysis phases."""
         file_sizes = [
             phase_result['file_size']

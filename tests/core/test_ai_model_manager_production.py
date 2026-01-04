@@ -660,7 +660,7 @@ class TestAIModelManagerModelRetrieval:
         model = manager.get_model("gpt-4")
 
         assert manager.models["gpt-4"]["instance"] is not None
-        assert manager.models["gpt-4"]["instance"] == model
+        assert manager.models["gpt-4"]["instance"] == model  # type: ignore[unreachable]
 
     def test_subsequent_get_model_returns_cached_instance(
         self,

@@ -291,11 +291,9 @@ class IntellicrackApp(QMainWindow):
         self.task_manager = get_task_manager()
         self.logger.info("Initialized AppContext and TaskManager for state management")
 
-        config_dict = validate_type(CONFIG, dict)
-        model_repos = config_dict.get("model_repositories", {})
-        local_config = model_repos.get("local", {}) if isinstance(model_repos, dict) else {}
-        models_dir = local_config.get("models_directory", "models") if isinstance(local_config, dict) else "models"
-        self.model_manager: ModelManager | None = ModelManager(str(models_dir))
+        models_dir = CONFIG.get("model_repositories.local.models_directory", "models")
+        models_dir_str = str(models_dir) if models_dir else "models"
+        self.model_manager: ModelManager | None = ModelManager(models_dir_str)
 
     def _initialize_ai_orchestrator(self) -> None:
         """Initialize AI orchestration and coordination components."""
@@ -402,8 +400,7 @@ class IntellicrackApp(QMainWindow):
         self.current_binary: str = ""
         self.ghidra_analysis_result: Any = None
         self.ghidra_scripts_used: list[dict[str, Any]] = []
-        config_dict = validate_type(CONFIG, dict)
-        selected_path = config_dict.get("selected_model_path", None)
+        selected_path = CONFIG.get("selected_model_path", None)
         self.selected_model_path: str | None = str(selected_path) if selected_path is not None else None
 
         if self.selected_model_path is not None and os.path.exists(self.selected_model_path):
@@ -601,14 +598,18 @@ class IntellicrackApp(QMainWindow):
 
         # Create central widget and layout
         self.central_widget = QWidget()
+        self.central_widget.setObjectName("central_widget")
         self.setCentralWidget(self.central_widget)
 
         self.main_layout = QVBoxLayout(self.central_widget)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
 
         self.create_toolbar()
 
         self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
-        self.main_layout.addWidget(self.main_splitter)
+        self.main_splitter.setChildrenCollapsible(False)
+        self.main_layout.addWidget(self.main_splitter, 1)
 
     def _setup_tabs_and_themes(self) -> None:
         """Set up tab widget and apply themes."""
@@ -655,6 +656,8 @@ class IntellicrackApp(QMainWindow):
         self.main_splitter.addWidget(self.output_panel)
         self.main_splitter.setStretchFactor(0, 7)
         self.main_splitter.setStretchFactor(1, 3)
+        # Set explicit initial sizes to ensure proper layout
+        self.main_splitter.setSizes([800, 400])
 
     def _create_modular_tabs(self) -> None:
         """Create all modular tab instances with shared context."""
@@ -775,7 +778,36 @@ class IntellicrackApp(QMainWindow):
         terminal_mgr = get_terminal_manager()
         terminal_mgr.set_main_app(self)
 
+        # Install event filter for comprehensive UI interaction logging
+        QApplication.instance().installEventFilter(self)
+
         self._ui_initialized = True
+
+    def eventFilter(self, obj: object, event: Any) -> bool:
+        """Global event filter to log UI interactions for debugging."""
+        try:
+            from intellicrack.handlers.pyqt6_handler import QEvent, QMouseEvent, QKeyEvent
+
+            if event.type() == QEvent.Type.MouseButtonPress:
+                mouse_event = cast(QMouseEvent, event)
+                widget_name = obj.objectName() if hasattr(obj, "objectName") else str(type(obj).__name__)
+                pos = mouse_event.position()
+                self.logger.debug(
+                    "GUI Interaction: Mouse Click at (%d, %d) on widget '%s' (Button: %d)",
+                    pos.x(), pos.y(), widget_name, mouse_event.button().value
+                )
+            elif event.type() == QEvent.Type.KeyPress:
+                key_event = cast(QKeyEvent, event)
+                widget_name = obj.objectName() if hasattr(obj, "objectName") else str(type(obj).__name__)
+                self.logger.debug(
+                    "GUI Interaction: Key Press '%s' (Key: %d) on widget '%s'",
+                    key_event.text(), key_event.key(), widget_name
+                )
+        except Exception as e:
+            # Log the exception to help debug crashes
+            self.logger.exception("Error in event filter: %s", e)
+        
+        return super().eventFilter(obj, event)
 
     def _setup_status_bar(self) -> None:
         """Set up the status bar with progress bar and permanent widgets."""
@@ -1187,15 +1219,9 @@ class IntellicrackApp(QMainWindow):
     def restore_window_state(self) -> None:
         """Restore window state from configuration."""
         try:
-            from ..core.config_manager import get_config
-
-            config = get_config()
-            config_dict = validate_type(config, dict)
-            ui_config = config_dict.get("ui", {})
-            if isinstance(ui_config, dict):
-                geometry = ui_config.get("window_geometry")
-                if geometry is not None and isinstance(geometry, (list, tuple)) and len(geometry) >= 4:
-                    self.setGeometry(int(geometry[0]), int(geometry[1]), int(geometry[2]), int(geometry[3]))
+            geometry = CONFIG.get("ui.window_geometry")
+            if geometry is not None and isinstance(geometry, (list, tuple)) and len(geometry) >= 4:
+                self.setGeometry(int(geometry[0]), int(geometry[1]), int(geometry[2]), int(geometry[3]))
         except Exception as e:
             self.logger.debug("Could not restore window state: %s", e)
 
@@ -1885,9 +1911,13 @@ def launch() -> int:
         # Close splash screen when main window is ready
         if splash:
             main_window.show()
+            app.processEvents()  # Force UI to paint before closing splash
             splash.finish(main_window)
         else:
             main_window.show()
+
+        # Force UI to repaint after showing
+        app.processEvents()
 
         # Run the Qt event loop
         return app.exec()

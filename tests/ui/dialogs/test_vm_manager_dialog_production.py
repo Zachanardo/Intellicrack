@@ -4,6 +4,8 @@ Tests real vm_manager functionality.
 """
 
 from pathlib import Path
+from typing import cast
+
 import pytest
 
 PyQt6 = pytest.importorskip("PyQt6")
@@ -18,7 +20,7 @@ def qapp() -> QApplication:
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
-    return app
+    return cast(QApplication, app)
 
 
 class TestDialogInitialization:

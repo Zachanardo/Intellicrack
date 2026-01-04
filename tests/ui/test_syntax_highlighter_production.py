@@ -22,10 +22,11 @@ from intellicrack.ui.syntax_highlighter import (
 @pytest.fixture
 def qapp() -> QApplication:
     """Provide QApplication instance for Qt text document testing."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    return app
+    existing_app = QApplication.instance()
+    if existing_app is None:
+        return QApplication([])
+    assert isinstance(existing_app, QApplication), "Expected QApplication instance"
+    return existing_app
 
 
 @pytest.fixture

@@ -101,6 +101,9 @@ def qapp() -> QApplication:
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
+        app.setApplicationName("IntellicrackGhidraScriptTest")
+        return app
+    assert isinstance(app, QApplication), "Expected QApplication instance"
     app.setApplicationName("IntellicrackGhidraScriptTest")
     return app
 
@@ -317,6 +320,7 @@ class TestGhidraScriptSelector:
         assert root_count == 1
 
         category_item = dialog.script_tree.topLevelItem(0)
+        assert category_item is not None, "Expected category item 0"
         visible_count = category_item.childCount()
         assert visible_count == 1
 
@@ -324,6 +328,7 @@ class TestGhidraScriptSelector:
         dialog._populate_tree()
 
         category_item = dialog.script_tree.topLevelItem(0)
+        assert category_item is not None, "Expected category item 0"
         visible_count = category_item.childCount()
         assert visible_count == 2
 
@@ -358,7 +363,7 @@ class TestGhidraScriptSelector:
         found_protection = False
         for i in range(dialog.script_tree.topLevelItemCount()):
             item = dialog.script_tree.topLevelItem(i)
-            if item.text(0) == "ValidScript":
+            if item is not None and item.text(0) == "ValidScript":
                 found_protection = True
 
         assert found_protection
@@ -376,7 +381,7 @@ class TestGhidraScriptSelector:
         found = False
         for i in range(dialog.script_tree.topLevelItemCount()):
             item = dialog.script_tree.topLevelItem(i)
-            if item.text(0) == "ValidScript":
+            if item is not None and item.text(0) == "ValidScript":
                 found = True
                 break
 
@@ -530,6 +535,7 @@ class TestGhidraScriptSelectorIntegration:
         dialog._populate_tree()
 
         category_item = dialog.script_tree.topLevelItem(0)
+        assert category_item is not None, "Expected category item 0"
         script_item = category_item.child(0)
 
         dialog.script_tree.setCurrentItem(script_item)

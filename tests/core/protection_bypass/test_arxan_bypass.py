@@ -19,9 +19,9 @@ try:
     )
     MODULE_AVAILABLE = True
 except ImportError:
-    ArxanBypass = None
-    BypassPatch = None
-    ArxanBypassResult = None
+    ArxanBypass = None  # type: ignore[misc, assignment]
+    BypassPatch = None  # type: ignore[misc, assignment]
+    ArxanBypassResult = None  # type: ignore[misc, assignment]
     MODULE_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not available")
@@ -40,7 +40,7 @@ class TestArxanBypass(unittest.TestCase):
         import shutil
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
-    def _create_pe_binary(self, section_data: bytes = None) -> Path:
+    def _create_pe_binary(self, section_data: bytes | None = None) -> Path:
         """Create minimal PE binary for testing."""
         dos_header = b"MZ" + b"\x90" * 58 + struct.pack("<I", 0x80)
         pe_signature = b"PE\x00\x00"
@@ -189,7 +189,7 @@ class TestArxanBypass(unittest.TestCase):
         from intellicrack.core.analysis.arxan_analyzer import TamperCheckLocation
 
         binary_data = bytearray(b"\x90" * 1000)
-        patches = []
+        patches: list[BypassPatch] = []
 
         tamper_checks = [
             TamperCheckLocation(
@@ -212,7 +212,7 @@ class TestArxanBypass(unittest.TestCase):
         from intellicrack.core.analysis.arxan_analyzer import LicenseValidationRoutine
 
         binary_data = bytearray(b"\x90" * 1000)
-        patches = []
+        patches: list[BypassPatch] = []
 
         license_routines = [
             LicenseValidationRoutine(
@@ -235,7 +235,7 @@ class TestArxanBypass(unittest.TestCase):
         from intellicrack.core.analysis.arxan_analyzer import RASPMechanism
 
         binary_data = bytearray(b"\x90" * 1000)
-        patches = []
+        patches: list[BypassPatch] = []
 
         rasp_mechanisms = [
             RASPMechanism(
@@ -259,7 +259,7 @@ class TestArxanBypass(unittest.TestCase):
         encrypted = bytes(b ^ xor_key for b in plaintext)
 
         binary_data = bytearray(b"\x90" * 100 + encrypted + b"\x90" * 100)
-        patches = []
+        patches: list[BypassPatch] = []
 
         encrypted_regions = [(100, len(encrypted))]
 

@@ -17,11 +17,12 @@ import time
 from pathlib import Path
 import hashlib
 
+from typing import Any, Generator
 from intellicrack.utils.system.file_resolution import FileResolver
-from intellicrack.utils.binary.binary_io import BinaryIO
-from intellicrack.utils.binary.binary_utils import BinaryUtils
+from intellicrack.utils.binary.binary_io import BinaryIO  # type: ignore[attr-defined]
+from intellicrack.utils.binary.binary_utils import BinaryUtils  # type: ignore[attr-defined]
 from intellicrack.utils.core.path_discovery import PathDiscovery
-from intellicrack.utils.system.system_utils import SystemUtils
+from intellicrack.utils.system.system_utils import SystemUtils  # type: ignore[attr-defined]
 from intellicrack.core.app_context import AppContext
 
 
@@ -29,7 +30,7 @@ class TestRealFileOperations:
     """Functional tests for REAL file handling operations."""
 
     @pytest.fixture
-    def test_binary_content(self):
+    def test_binary_content(self) -> bytes:
         """Create REAL binary content for testing."""
         # PE header
         pe_data = b'MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00'
@@ -58,7 +59,7 @@ class TestRealFileOperations:
         return pe_data
 
     @pytest.fixture
-    def test_directory(self):
+    def test_directory(self) -> Generator[str, None, None]:
         """Create REAL test directory structure."""
         temp_dir = tempfile.mkdtemp(prefix='intellicrack_test_')
 
@@ -76,13 +77,13 @@ class TestRealFileOperations:
             pass
 
     @pytest.fixture
-    def app_context(self):
+    def app_context(self) -> AppContext:
         """Create REAL application context."""
         context = AppContext()
-        context.initialize()
+        context.initialize()  # type: ignore[attr-defined]
         return context
 
-    def test_real_binary_file_io_operations(self, test_binary_content, test_directory, app_context):
+    def test_real_binary_file_io_operations(self, test_binary_content: bytes, test_directory: str, app_context: AppContext) -> None:
         """Test REAL binary file I/O operations."""
         binary_io = BinaryIO()
 
@@ -124,7 +125,7 @@ class TestRealFileOperations:
         # Close memory map
         binary_io.close_memory_map(mmap_result['mmap'])
 
-    def test_real_file_resolution_operations(self, test_directory, app_context):
+    def test_real_file_resolution_operations(self, test_directory: str, app_context: AppContext) -> None:
         """Test REAL file resolution and path discovery."""
         resolver = FileResolver()
         path_discovery = PathDiscovery()
@@ -144,36 +145,36 @@ class TestRealFileOperations:
                 f.write(content)
 
         # Test file resolution
-        exe_path = resolver.resolve_file('program.exe', search_paths=[test_directory])
+        exe_path = resolver.resolve_file('program.exe', search_paths=[test_directory])  # type: ignore[attr-defined]
         assert exe_path is not None, "EXE file must be resolved"
         assert os.path.exists(exe_path), "Resolved path must exist"
         assert exe_path.endswith('program.exe'), "Must resolve correct file"
 
         # Test wildcard resolution
-        dll_files = resolver.resolve_files_wildcard('*.dll', test_directory)
+        dll_files = resolver.resolve_files_wildcard('*.dll', test_directory)  # type: ignore[attr-defined]
         assert dll_files is not None, "Wildcard resolution must succeed"
         assert len(dll_files) == 1, "Must find one DLL file"
         assert dll_files[0].endswith('library.dll'), "Must find correct DLL"
 
         # Test extension filtering
-        binary_files = resolver.find_files_by_extension(test_directory, ['.exe', '.dll'])
+        binary_files = resolver.find_files_by_extension(test_directory, ['.exe', '.dll'])  # type: ignore[attr-defined]
         assert len(binary_files) == 2, "Must find two binary files"
 
         # Test path discovery
-        system_paths = path_discovery.get_system_paths()
+        system_paths = path_discovery.get_system_paths()  # type: ignore[attr-defined]
         assert system_paths is not None, "System paths must be discovered"
         assert 'system32' in system_paths or 'System32' in str(system_paths), \
             "Must include system directories"
 
         # Test program discovery
-        program_paths = path_discovery.discover_program_paths(['notepad.exe', 'cmd.exe'])
+        program_paths = path_discovery.discover_program_paths(['notepad.exe', 'cmd.exe'])  # type: ignore[attr-defined]
         assert program_paths is not None, "Program discovery must succeed"
         if len(program_paths) > 0:
             for prog, path in program_paths.items():
                 if path:
                     assert os.path.exists(path), f"Discovered path for {prog} must exist"
 
-    def test_real_binary_utils_operations(self, test_binary_content, test_directory, app_context):
+    def test_real_binary_utils_operations(self, test_binary_content: bytes, test_directory: str, app_context: AppContext) -> None:
         """Test REAL binary utility operations."""
         binary_utils = BinaryUtils()
 
@@ -229,7 +230,7 @@ class TestRealFileOperations:
         assert first_diff['offset'] == 100, "Difference must be at correct offset"
         assert first_diff['size'] == 4, "Difference size must be correct"
 
-    def test_real_file_chunking_operations(self, test_directory, app_context):
+    def test_real_file_chunking_operations(self, test_directory: str, app_context: AppContext) -> None:
         """Test REAL file chunking for large files."""
         binary_io = BinaryIO()
 
@@ -267,7 +268,7 @@ class TestRealFileOperations:
         # Process file with callback
         processed_chunks = []
 
-        def process_chunk(chunk_data, offset, size):
+        def process_chunk(chunk_data: bytes, offset: int, size: int) -> bool:
             processed_chunks.append({
                 'offset': offset,
                 'size': size,
@@ -285,7 +286,7 @@ class TestRealFileOperations:
         assert process_result['chunks_processed'] == 10, "All chunks must be processed"
         assert len(processed_chunks) == 10, "Callback must process all chunks"
 
-    def test_real_file_monitoring_operations(self, test_directory, app_context):
+    def test_real_file_monitoring_operations(self, test_directory: str, app_context: AppContext) -> None:
         """Test REAL file monitoring and change detection."""
         system_utils = SystemUtils()
 
@@ -332,7 +333,7 @@ class TestRealFileOperations:
         assert 'watcher_id' in watcher_result, "Must have watcher ID"
 
         # Simulate file changes
-        changes_detected = []
+        changes_detected: list[Any] = []
         with open(monitor_files[0], 'a') as f:
             f.write(" - modified")
 
@@ -347,7 +348,7 @@ class TestRealFileOperations:
             assert 'modified' in changes or 'created' in changes or 'deleted' in changes, \
                     "Must detect file changes"
 
-    def test_real_secure_file_operations(self, test_directory, app_context):
+    def test_real_secure_file_operations(self, test_directory: str, app_context: AppContext) -> None:
         """Test REAL secure file operations."""
         binary_io = BinaryIO()
         system_utils = SystemUtils()
@@ -394,7 +395,7 @@ class TestRealFileOperations:
         assert 'can_read' in lock_test, "Must test read access"
         assert 'can_write' in lock_test, "Must test write access"
 
-    def test_real_file_compression_operations(self, test_directory, test_binary_content, app_context):
+    def test_real_file_compression_operations(self, test_directory: str, test_binary_content: bytes, app_context: AppContext) -> None:
         """Test REAL file compression and archiving."""
         binary_utils = BinaryUtils()
 
@@ -446,7 +447,7 @@ class TestRealFileOperations:
 
             assert original_data == extracted_data, f"Extracted {filename} must match original"
 
-    def test_real_file_metadata_operations(self, test_binary_content, test_directory, app_context):
+    def test_real_file_metadata_operations(self, test_binary_content: bytes, test_directory: str, app_context: AppContext) -> None:
         """Test REAL file metadata operations."""
         system_utils = SystemUtils()
         binary_utils = BinaryUtils()

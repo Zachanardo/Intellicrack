@@ -19,7 +19,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from intellicrack.core.license.keygen import (
+from intellicrack.core.license.keygen import (  # type: ignore[attr-defined]
     ExtractedAlgorithm,
     KeyConstraint,
     LicenseKeygenEngine,
@@ -225,14 +225,14 @@ class TestAdaptiveIterationLimits:
             def count_simple(*args: Any, **kwargs: Any) -> GeneratedSerial:
                 nonlocal simple_calls
                 simple_calls += 1
-                return GeneratedSerial("A" * 10, "simple", 0.9)
+                return GeneratedSerial("A" * 10, "simple", 0.9)  # type: ignore[arg-type]
 
             def count_complex(*args: Any, **kwargs: Any) -> GeneratedSerial:
                 nonlocal complex_calls
                 complex_calls += 1
                 if complex_calls < 50000:
-                    return GeneratedSerial(f"FAIL{complex_calls:06d}", "complex", 0.0)
-                return GeneratedSerial("ABC1234567", "complex", 0.9)
+                    return GeneratedSerial(f"FAIL{complex_calls:06d}", "complex", 0.0)  # type: ignore[arg-type]
+                return GeneratedSerial("ABC1234567", "complex", 0.9)  # type: ignore[arg-type]
 
             mock_generate.side_effect = count_simple
             keygen_engine.synthesize_key(simple_constraints_algo)
@@ -354,7 +354,7 @@ class TestParallelGeneration:
                 call_count += 1
                 if call_count % 10 == 0:
                     raise RuntimeError("Simulated worker failure")
-                return GeneratedSerial(f"KEY{call_count:08d}", "test", 0.9)
+                return GeneratedSerial(f"KEY{call_count:08d}", "test", 0.9)  # type: ignore[arg-type]
 
             mock_synth.side_effect = intermittent_failure
 
@@ -385,7 +385,7 @@ class TestProgressReporting:
             def track_progress(*args: Any, **kwargs: Any) -> GeneratedSerial:
                 for i in range(0, 100000, 5000):
                     progress_callback(i, 100000)
-                return GeneratedSerial("RESULT", "test", 0.9)
+                return GeneratedSerial("RESULT", "test", 0.9)  # type: ignore[arg-type]
 
             mock_synth.side_effect = track_progress
 
@@ -426,8 +426,8 @@ class TestProgressReporting:
                 if call_count % 1000 == 0:
                     capture_progress(call_count, 50000)
                 if call_count >= 50000:
-                    return GeneratedSerial("SUCCESS", "test", 0.9)
-                return GeneratedSerial(f"FAIL{call_count}", "test", 0.0)
+                    return GeneratedSerial("SUCCESS", "test", 0.9)  # type: ignore[arg-type]
+                return GeneratedSerial(f"FAIL{call_count}", "test", 0.0)  # type: ignore[arg-type]
 
             mock_generate.side_effect = count_and_report
 
@@ -483,10 +483,10 @@ class TestCheckpointResume:
                 resume_calls += 1
 
                 seed: int = kwargs.get("seed", 0)
-                if isinstance(seed, int) and seed > checkpoint_data.get("attempts", 0):
-                    return GeneratedSerial("X" + "A" * 18 + "Z", "test", 0.9)
+                if isinstance(seed, int) and seed > checkpoint_data.get("attempts", 0):  # type: ignore[operator]
+                    return GeneratedSerial("X" + "A" * 18 + "Z", "test", 0.9)  # type: ignore[arg-type]
 
-                return GeneratedSerial(f"RESUME{resume_calls:010d}", "test", 0.0)
+                return GeneratedSerial(f"RESUME{resume_calls:010d}", "test", 0.0)  # type: ignore[arg-type]
 
             mock_generate.side_effect = resume_generation
 
@@ -540,9 +540,9 @@ class TestLargeKeySpaceHandling:
                 attempts += 1
 
                 if attempts > 100000:
-                    return GeneratedSerial("0" * 32, "fallback", 0.1)
+                    return GeneratedSerial("0" * 32, "fallback", 0.1)  # type: ignore[arg-type]
 
-                return GeneratedSerial(f"FAIL{attempts:028d}", "test", 0.0)
+                return GeneratedSerial(f"FAIL{attempts:028d}", "test", 0.0)  # type: ignore[arg-type]
 
             mock_generate.side_effect = limited_attempts
 
@@ -632,9 +632,9 @@ class TestComplexConstraints:
                 attempts += 1
 
                 if attempts > 50000:
-                    return GeneratedSerial("VALID_KEY_123456", "test", 0.9)
+                    return GeneratedSerial("VALID_KEY_123456", "test", 0.9)  # type: ignore[arg-type]
 
-                return GeneratedSerial(f"INVALID{attempts:09d}", "test", 0.0)
+                return GeneratedSerial(f"INVALID{attempts:09d}", "test", 0.0)  # type: ignore[arg-type]
 
             mock_generate.side_effect = complex_generation
 
@@ -677,9 +677,9 @@ class TestComplexConstraints:
                 call_count += 1
 
                 if call_count > 1000000:
-                    return GeneratedSerial("crypto_key_12345678", "test", 0.7)
+                    return GeneratedSerial("crypto_key_12345678", "test", 0.7)  # type: ignore[arg-type]
 
-                return GeneratedSerial(f"FAIL{call_count:016d}", "test", 0.0)
+                return GeneratedSerial(f"FAIL{call_count:016d}", "test", 0.0)  # type: ignore[arg-type]
 
             mock_generate.side_effect = crypto_generation
 
@@ -714,7 +714,7 @@ class TestEdgeCases:
         with patch.object(
             keygen_engine.generator, "generate_serial"
         ) as mock_generate:
-            mock_generate.return_value = GeneratedSerial("FALLBACK", "test", 0.0)
+            mock_generate.return_value = GeneratedSerial("FALLBACK", "test", 0.0)  # type: ignore[arg-type]
 
             result = keygen_engine.synthesize_key(impossible_algo)
             elapsed = time.time() - start_time
@@ -781,9 +781,9 @@ class TestEdgeCases:
                 attempts += 1
 
                 if attempts > 5000000:
-                    return GeneratedSerial("A" + "X" * 22 + "Z", "test", 0.6)
+                    return GeneratedSerial("A" + "X" * 22 + "Z", "test", 0.6)  # type: ignore[arg-type]
 
-                return GeneratedSerial(f"FAIL{attempts:020d}", "test", 0.0)
+                return GeneratedSerial(f"FAIL{attempts:020d}", "test", 0.0)  # type: ignore[arg-type]
 
             mock_generate.side_effect = massive_search
 
@@ -840,9 +840,9 @@ class TestEdgeCases:
                 calls += 1
 
                 if calls > 100000:
-                    return GeneratedSerial("PRO" + "X" * 12, "test", 0.7)
+                    return GeneratedSerial("PRO" + "X" * 12, "test", 0.7)  # type: ignore[arg-type]
 
-                return GeneratedSerial(f"LEARN{calls:010d}", "test", 0.0)
+                return GeneratedSerial(f"LEARN{calls:010d}", "test", 0.0)  # type: ignore[arg-type]
 
             mock_generate.side_effect = adaptive_generation
 

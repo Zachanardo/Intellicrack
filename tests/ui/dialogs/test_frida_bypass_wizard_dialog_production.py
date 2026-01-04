@@ -13,7 +13,7 @@ import json
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Generator, List, Optional
 
 import pytest
 
@@ -185,7 +185,7 @@ def fake_wizard() -> FakeFridaBypassWizard:
 
 
 @pytest.fixture
-def temp_script_dir() -> Path:
+def temp_script_dir() -> Generator[Path, None, None]:
     """Create temporary directory with sample Frida scripts."""
     with tempfile.TemporaryDirectory(prefix="frida_scripts_") as tmpdir:
         scripts_path = Path(tmpdir)
@@ -264,8 +264,9 @@ class TestFridaBypassWizardDialogInitialization:
         assert dialog.process_table.columnCount() == 4
 
         headers = [
-            dialog.process_table.horizontalHeaderItem(i).text()
+            item.text()
             for i in range(dialog.process_table.columnCount())
+            if (item := dialog.process_table.horizontalHeaderItem(i)) is not None
         ]
         assert "PID" in headers
         assert "Name" in headers
@@ -315,7 +316,7 @@ class TestProcessSelection:
         dialog = FridaBypassWizardDialog()
 
         dialog.manual_process_input.setText("1234")
-        dialog.validate_process_input()
+        dialog.validate_process_input(dialog.manual_process_input.text())
 
         assert dialog.input_valid_label.isVisible()
 
@@ -326,7 +327,7 @@ class TestProcessSelection:
         dialog = FridaBypassWizardDialog()
 
         dialog.manual_process_input.setText("notepad.exe")
-        dialog.validate_process_input()
+        dialog.validate_process_input(dialog.manual_process_input.text())
 
         assert dialog.input_valid_label.isVisible()
 
@@ -339,9 +340,10 @@ class TestProcessSelection:
 
         if dialog.process_table.rowCount() > 0:
             dialog.process_table.selectRow(0)
-            selected_pid = dialog.process_table.item(0, 0).text()
-
-            assert selected_pid.isdigit()
+            item = dialog.process_table.item(0, 0)
+            if item is not None:
+                selected_pid = item.text()
+                assert selected_pid.isdigit()
 
 
 class TestBypassModeConfiguration:
@@ -400,7 +402,7 @@ class TestFridaWorkerThread:
     def test_worker_thread_auto_bypass_detects_protections(self, qapp: Any, fake_wizard: FakeFridaBypassWizard) -> None:
         """Worker thread auto-bypass mode detects and bypasses protections."""
         worker = FridaWorkerThread(
-            wizard=fake_wizard,
+            wizard=fake_wizard,  # type: ignore[arg-type]
             target_process="1234",
             mode="Auto-detect & Bypass",
             options={}
@@ -424,7 +426,7 @@ class TestFridaWorkerThread:
     def test_worker_thread_auto_bypass_applies_high_confidence_bypasses(self, qapp: Any, fake_wizard: FakeFridaBypassWizard) -> None:
         """Worker thread applies bypasses for high-confidence detections."""
         worker = FridaWorkerThread(
-            wizard=fake_wizard,
+            wizard=fake_wizard,  # type: ignore[arg-type]
             target_process="1234",
             mode="Auto-detect & Bypass",
             options={}
@@ -440,7 +442,7 @@ class TestFridaWorkerThread:
         script_path = temp_script_dir / "license_bypass.js"
 
         worker = FridaWorkerThread(
-            wizard=fake_wizard,
+            wizard=fake_wizard,  # type: ignore[arg-type]
             target_process="test.exe",
             mode="Manual Script Injection",
             options={"script_path": str(script_path)}
@@ -458,7 +460,7 @@ class TestFridaWorkerThread:
     def test_worker_thread_analysis_mode_returns_protection_details(self, qapp: Any, fake_wizard: FakeFridaBypassWizard) -> None:
         """Worker thread analysis mode returns detailed protection information."""
         worker = FridaWorkerThread(
-            wizard=fake_wizard,
+            wizard=fake_wizard,  # type: ignore[arg-type]
             target_process="1234",
             mode="Protection Analysis",
             options={}
@@ -481,7 +483,7 @@ class TestFridaWorkerThread:
     def test_worker_thread_hook_monitoring_injects_monitor_script(self, qapp: Any, fake_wizard: FakeFridaBypassWizard) -> None:
         """Worker thread hook monitoring mode injects comprehensive API monitor."""
         worker = FridaWorkerThread(
-            wizard=fake_wizard,
+            wizard=fake_wizard,  # type: ignore[arg-type]
             target_process="1234",
             mode="Hook Monitoring",
             options={}
@@ -503,7 +505,7 @@ class TestFridaWorkerThread:
         fake_wizard.set_attach_failure()
 
         worker = FridaWorkerThread(
-            wizard=fake_wizard,
+            wizard=fake_wizard,  # type: ignore[arg-type]
             target_process="9999",
             mode="Auto-detect & Bypass",
             options={}
@@ -523,7 +525,7 @@ class TestFridaWorkerThread:
     def test_worker_thread_stop_mechanism(self, qapp: Any, fake_wizard: FakeFridaBypassWizard) -> None:
         """Worker thread respects stop request during execution."""
         worker = FridaWorkerThread(
-            wizard=fake_wizard,
+            wizard=fake_wizard,  # type: ignore[arg-type]
             target_process="1234",
             mode="Hook Monitoring",
             options={}
@@ -599,7 +601,7 @@ class TestRealTimeMonitoring:
         dialog = FridaBypassWizardDialog()
 
         worker = FridaWorkerThread(
-            wizard=fake_wizard,
+            wizard=fake_wizard,  # type: ignore[arg-type]
             target_process="1234",
             mode="Auto-detect & Bypass",
             options={}
@@ -624,7 +626,7 @@ class TestRealTimeMonitoring:
 
         if hasattr(dialog, "status_label"):
             worker = FridaWorkerThread(
-                wizard=fake_wizard,
+                wizard=fake_wizard,  # type: ignore[arg-type]
                 target_process="1234",
                 mode="Auto-detect & Bypass",
                 options={}
@@ -685,7 +687,7 @@ class TestDialogIntegration:
         dialog = FridaBypassWizardDialog()
 
         worker = FridaWorkerThread(
-            wizard=fake_wizard,
+            wizard=fake_wizard,  # type: ignore[arg-type]
             target_process="1234",
             mode="Hook Monitoring",
             options={}
@@ -704,7 +706,7 @@ class TestErrorHandling:
     def test_worker_thread_handles_script_file_not_found(self, qapp: Any, fake_wizard: FakeFridaBypassWizard) -> None:
         """Worker thread handles missing script file gracefully."""
         worker = FridaWorkerThread(
-            wizard=fake_wizard,
+            wizard=fake_wizard,  # type: ignore[arg-type]
             target_process="1234",
             mode="Manual Script Injection",
             options={"script_path": "/nonexistent/script.js"}
@@ -723,7 +725,7 @@ class TestErrorHandling:
     def test_worker_thread_handles_empty_script_path(self, qapp: Any, fake_wizard: FakeFridaBypassWizard) -> None:
         """Worker thread handles empty script path in manual mode."""
         worker = FridaWorkerThread(
-            wizard=fake_wizard,
+            wizard=fake_wizard,  # type: ignore[arg-type]
             target_process="1234",
             mode="Manual Script Injection",
             options={}
@@ -771,7 +773,7 @@ class TestPerformanceAndStability:
     def test_worker_thread_cleans_up_resources(self, qapp: Any, fake_wizard: FakeFridaBypassWizard) -> None:
         """Worker thread properly cleans up Frida resources after completion."""
         worker = FridaWorkerThread(
-            wizard=fake_wizard,
+            wizard=fake_wizard,  # type: ignore[arg-type]
             target_process="1234",
             mode="Protection Analysis",
             options={}
@@ -790,7 +792,7 @@ class TestPerformanceAndStability:
 
         for i in range(3):
             worker = FridaWorkerThread(
-                wizard=fake_wizard,
+                wizard=fake_wizard,  # type: ignore[arg-type]
                 target_process=str(1000 + i),
                 mode="Protection Analysis",
                 options={}

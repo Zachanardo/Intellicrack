@@ -4,11 +4,14 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 import pytest
 
+import intellicrack.core.processing.emulator_manager as emulator_module
 from intellicrack.core.processing.emulator_manager import EmulatorManager, get_emulator_manager, run_with_qemu, run_with_qiling
+
+QILING_AVAILABLE: bool = getattr(emulator_module, "QILING_AVAILABLE", False)
 
 
 class FakeQEMUInstance:
@@ -139,7 +142,7 @@ class TestQEMUEmulatorManagement:
     def test_stop_qemu_handles_stopped_instance(self, emulator_manager: EmulatorManager) -> None:
         """stop_qemu handles case where QEMU instance exists but is not running."""
         fake_qemu = FakeQEMUInstance()
-        emulator_manager.qemu_instance = fake_qemu
+        emulator_manager.qemu_instance = cast(Any, fake_qemu)
         emulator_manager.qemu_running = False
         emulator_manager.stop_qemu()
         assert not fake_qemu.stop_system_called
@@ -155,8 +158,6 @@ class TestQilingEmulatorManagement:
         binary1.write_bytes(b"MZ" + b"\x00" * 100)
         binary2.write_bytes(b"MZ" + b"\x00" * 100)
 
-        from intellicrack.core.processing.emulator_manager import QILING_AVAILABLE
-
         if not QILING_AVAILABLE:
             pytest.skip("Qiling not available")
 
@@ -170,8 +171,6 @@ class TestQilingEmulatorManagement:
 
     def test_ensure_qiling_emits_status_signals(self, emulator_manager: EmulatorManager, real_binary_path: str) -> None:
         """ensure_qiling_ready emits appropriate status signals."""
-        from intellicrack.core.processing.emulator_manager import QILING_AVAILABLE
-
         if not QILING_AVAILABLE:
             pytest.skip("Qiling not available")
 
@@ -191,7 +190,6 @@ class TestEmulatorCleanup:
 
     def test_cleanup_clears_qiling_instances(self, emulator_manager: EmulatorManager, real_binary_path: str) -> None:
         """cleanup() clears all Qiling emulator instances."""
-        from intellicrack.core.processing.emulator_manager import QILING_AVAILABLE
 
         if QILING_AVAILABLE:
             emulator_manager.ensure_qiling_ready(real_binary_path)
@@ -203,7 +201,7 @@ class TestEmulatorCleanup:
     def test_cleanup_stops_running_qemu(self, emulator_manager: EmulatorManager) -> None:
         """cleanup() stops QEMU if running."""
         fake_qemu = FakeQEMUInstance()
-        emulator_manager.qemu_instance = fake_qemu
+        emulator_manager.qemu_instance = cast(Any, fake_qemu)
         emulator_manager.qemu_running = True
 
         emulator_manager.cleanup()
@@ -215,7 +213,7 @@ class TestEmulatorCleanup:
     def test_cleanup_handles_qemu_stop_errors(self, emulator_manager: EmulatorManager) -> None:
         """cleanup() handles errors during QEMU shutdown gracefully."""
         fake_qemu = FakeQEMUInstance(should_fail=True)
-        emulator_manager.qemu_instance = fake_qemu
+        emulator_manager.qemu_instance = cast(Any, fake_qemu)
         emulator_manager.qemu_running = True
 
         emulator_manager.cleanup()
@@ -319,7 +317,6 @@ class TestRunWithQiling:
 
     def test_run_with_qiling_returns_error_when_qiling_unavailable(self, real_binary_path: str) -> None:
         """run_with_qiling returns error dict when Qiling fails to initialize."""
-        from intellicrack.core.processing.emulator_manager import QILING_AVAILABLE
 
         if QILING_AVAILABLE:
             pytest.skip("Qiling is available, test expects unavailable state")
@@ -399,7 +396,6 @@ class TestEmulatorThreadSafety:
         self, emulator_manager: EmulatorManager, tmp_path: Path
     ) -> None:
         """Concurrent Qiling instance creation is thread-safe."""
-        from intellicrack.core.processing.emulator_manager import QILING_AVAILABLE
 
         if not QILING_AVAILABLE:
             pytest.skip("Qiling not available")
@@ -457,7 +453,6 @@ class TestEmulatorSignalEmission:
 
     def test_status_changed_signal_on_qiling_init(self, emulator_manager: EmulatorManager, real_binary_path: str) -> None:
         """emulator_status_changed signal emitted during Qiling initialization."""
-        from intellicrack.core.processing.emulator_manager import QILING_AVAILABLE
 
         if not QILING_AVAILABLE:
             pytest.skip("Qiling not available")
@@ -494,7 +489,6 @@ class TestEmulatorEdgeCases:
 
     def test_qiling_ready_with_corrupted_binary(self, tmp_path: Path) -> None:
         """ensure_qiling_ready handles corrupted binary data."""
-        from intellicrack.core.processing.emulator_manager import QILING_AVAILABLE
 
         if not QILING_AVAILABLE:
             pytest.skip("Qiling not available")

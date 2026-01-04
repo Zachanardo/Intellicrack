@@ -305,6 +305,13 @@ class AuditLogger:
         # Thread safety
         self._lock = threading.RLock()
 
+        # Queue for non-blocking logging
+        import queue
+        self._log_queue: queue.Queue[AuditEvent | None] = queue.Queue()
+        self._running = True
+        self._worker_thread = threading.Thread(target=self._log_worker, daemon=True, name="AuditLoggerWorker")
+        self._worker_thread.start()
+
         # Current log file
         self._current_file: Path | None = None
         self._current_size = 0
@@ -325,6 +332,26 @@ class AuditLogger:
                 description="Audit logging system initialized",
             ),
         )
+
+    def _log_worker(self) -> None:
+        """Worker thread to process log events from the queue."""
+        while self._running:
+            try:
+                event = self._log_queue.get()
+                if event is None:
+                    break
+                self._write_event(event)
+                self._log_queue.task_done()
+            except Exception as e:
+                # Fallback logging to avoid crash loops
+                print(f"Critical error in audit log worker: {e}")
+
+    def shutdown(self) -> None:
+        """Gracefully shutdown the audit logger worker."""
+        self._running = False
+        self._log_queue.put(None)
+        if self._worker_thread.is_alive():
+            self._worker_thread.join(timeout=2.0)
 
     def _get_default_log_dir(self) -> Path:
         """Get platform-specific audit log directory.
@@ -459,7 +486,17 @@ class AuditLogger:
         self._current_size = 0
 
     def log_event(self, event: AuditEvent) -> None:
-        """Log an audit event with integrity protection.
+        """Log an audit event asynchronously.
+
+        Queues the event for processing by the worker thread.
+
+        Args:
+            event: The AuditEvent to log.
+        """
+        self._log_queue.put(event)
+
+    def _write_event(self, event: AuditEvent) -> None:
+        """Internal method to write an audit event to disk.
 
         Writes an audit event to the log file with tamper-detection features
         including hash chaining, optional encryption, and automatic log rotation.

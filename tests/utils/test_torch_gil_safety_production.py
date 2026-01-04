@@ -478,7 +478,8 @@ class TestLockReentrancy:
 
         @torch_thread_safe
         def outer_function(x: int) -> int:
-            return inner_function(x) * 2
+            result: int = inner_function(x) * 2
+            return result
 
         result = outer_function(5)
         assert result == 12

@@ -660,6 +660,7 @@ class TestHardwareBoundKeyGeneration:
         )
 
         assert result.hardware_id == machine_fingerprint
+        assert result.raw_bytes is not None
         assert machine_fingerprint.encode() in result.raw_bytes
 
 
@@ -737,6 +738,7 @@ class TestTimeBasedKeyGeneration:
             )
 
             expected_expiration = current_time + days * 86400
+            assert result.expiration is not None
             assert abs(result.expiration - expected_expiration) < 10
 
 
@@ -1226,7 +1228,9 @@ class TestCompleteWorkflows:
         )
 
         assert cracked_license.algorithm == "rsa_signed"
+        assert cracked_license.features is not None
         assert len(cracked_license.features) == 8
+        assert cracked_license.expiration is not None
         assert cracked_license.expiration > int(time.time()) + 86400 * 3000
 
     def test_workflow_generate_hardware_locked_licenses_multiple_machines(self) -> None:
@@ -1275,4 +1279,5 @@ class TestCompleteWorkflows:
         for i, lic in enumerate(trial_licenses):
             expected_days = [7, 14, 30, 60, 90][i]
             expected_expiration = current_time + expected_days * 86400
+            assert lic.expiration is not None
             assert abs(lic.expiration - expected_expiration) < 20

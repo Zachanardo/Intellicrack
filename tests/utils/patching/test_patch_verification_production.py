@@ -111,7 +111,7 @@ class TestPatchVerification:
         ]
 
         app = FakeApp(str(tiny_exe))
-        results = verify_patches(app, str(patched_path), instructions)
+        results = verify_patches(app, str(patched_path), instructions)  # type: ignore[arg-type]
 
         assert len(results) > 0
         assert any("verified successfully" in r for r in results)
@@ -145,7 +145,7 @@ class TestPatchVerification:
         ]
 
         app = FakeApp(str(tiny_exe))
-        results = verify_patches(app, str(patched_path), instructions)
+        results = verify_patches(app, str(patched_path), instructions)  # type: ignore[arg-type]
 
         assert len(results) > 0
         assert any("verification failed" in r.lower() for r in results)
@@ -181,7 +181,7 @@ class TestPatchVerification:
                 )
 
         app = FakeApp(str(test_exe))
-        results = verify_patches(app, str(patched_path), instructions)
+        results = verify_patches(app, str(patched_path), instructions)  # type: ignore[arg-type]
 
         assert len(results) > 0
         assert any("3 patches succeeded" in r for r in results)
@@ -207,7 +207,7 @@ class TestPatchVerification:
         ]
 
         app = FakeApp(str(test_exe))
-        results = verify_patches(app, str(patched_path), instructions)
+        results = verify_patches(app, str(patched_path), instructions)  # type: ignore[arg-type]
 
         assert len(results) > 0
         assert any("failed" in r.lower() for r in results)
@@ -347,7 +347,7 @@ class TestPatchVerificationEdgeCases:
         shutil.copy2(test_exe, patched_path)
 
         app = FakeApp(str(test_exe))
-        results = verify_patches(app, str(patched_path), [])
+        results = verify_patches(app, str(patched_path), [])  # type: ignore[arg-type]
 
         assert len(results) > 0
         assert any("0 patches succeeded" in r for r in results)
@@ -370,7 +370,7 @@ class TestPatchVerificationEdgeCases:
         ]
 
         app = FakeApp(str(test_exe))
-        results = verify_patches(app, str(patched_path), instructions)
+        results = verify_patches(app, str(patched_path), instructions)  # type: ignore[arg-type]
 
         assert len(results) > 0
         assert any("Invalid patch" in r for r in results)
@@ -396,7 +396,7 @@ class TestPatchVerificationEdgeCases:
         ]
 
         app = FakeApp(str(test_exe))
-        results = verify_patches(app, str(patched_path), instructions)
+        results = verify_patches(app, str(patched_path), instructions)  # type: ignore[arg-type]
 
         assert len(results) > 0
 
@@ -425,7 +425,7 @@ class TestPatchVerificationEdgeCases:
         ]
 
         app = FakeApp(str(test_exe))
-        verify_patches(app, str(patched_path), instructions)
+        verify_patches(app, str(patched_path), instructions)  # type: ignore[arg-type]
 
         patched_pe = pefile.PE(str(patched_path))
         patched_sections = [(s.Name, s.SizeOfRawData) for s in patched_pe.sections]
@@ -566,7 +566,7 @@ class TestPatchVerificationIntegration:
         ]
 
         app = FakeApp(str(test_exe))
-        results = verify_patches(app, str(patched_path), instructions)
+        results = verify_patches(app, str(patched_path), instructions)  # type: ignore[arg-type]
 
         assert len(results) > 0
         assert any("verified successfully" in r for r in results)
@@ -609,7 +609,7 @@ class TestPatchVerificationIntegration:
                 )
 
         app = FakeApp(str(test_exe))
-        results = verify_patches(app, str(patched_path), instructions)
+        results = verify_patches(app, str(patched_path), instructions)  # type: ignore[arg-type]
 
         assert len(results) > 0
         assert any("3 patches succeeded" in r for r in results)

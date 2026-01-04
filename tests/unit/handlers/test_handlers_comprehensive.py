@@ -13,119 +13,119 @@ try:
     from intellicrack.handlers import pefile_handler
     PEFILE_HANDLER_AVAILABLE = True
 except ImportError:
-    pefile_handler = None
+    pefile_handler = None  # type: ignore[assignment]
     PEFILE_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import lief_handler
     LIEF_HANDLER_AVAILABLE = True
 except ImportError:
-    lief_handler = None
+    lief_handler = None  # type: ignore[assignment]
     LIEF_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import capstone_handler
     CAPSTONE_HANDLER_AVAILABLE = True
 except ImportError:
-    capstone_handler = None
+    capstone_handler = None  # type: ignore[assignment]
     CAPSTONE_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import keystone_handler
     KEYSTONE_HANDLER_AVAILABLE = True
 except ImportError:
-    keystone_handler = None
+    keystone_handler = None  # type: ignore[assignment]
     KEYSTONE_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import numpy_handler
     NUMPY_HANDLER_AVAILABLE = True
 except ImportError:
-    numpy_handler = None
+    numpy_handler = None  # type: ignore[assignment]
     NUMPY_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import requests_handler
     REQUESTS_HANDLER_AVAILABLE = True
 except ImportError:
-    requests_handler = None
+    requests_handler = None  # type: ignore[assignment]
     REQUESTS_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import psutil_handler
     PSUTIL_HANDLER_AVAILABLE = True
 except ImportError:
-    psutil_handler = None
+    psutil_handler = None  # type: ignore[assignment]
     PSUTIL_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import sqlite3_handler
     SQLITE3_HANDLER_AVAILABLE = True
 except ImportError:
-    sqlite3_handler = None
+    sqlite3_handler = None  # type: ignore[assignment]
     SQLITE3_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import aiohttp_handler
     AIOHTTP_HANDLER_AVAILABLE = True
 except ImportError:
-    aiohttp_handler = None
+    aiohttp_handler = None  # type: ignore[assignment]
     AIOHTTP_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import tensorflow_handler
     TENSORFLOW_HANDLER_AVAILABLE = True
 except ImportError:
-    tensorflow_handler = None
+    tensorflow_handler = None  # type: ignore[assignment]
     TENSORFLOW_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import torch_handler
     TORCH_HANDLER_AVAILABLE = True
 except ImportError:
-    torch_handler = None
+    torch_handler = None  # type: ignore[assignment]
     TORCH_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import pyqt6_handler
     PYQT6_HANDLER_AVAILABLE = True
 except ImportError:
-    pyqt6_handler = None
+    pyqt6_handler = None  # type: ignore[assignment]
     PYQT6_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import tkinter_handler
     TKINTER_HANDLER_AVAILABLE = True
 except ImportError:
-    tkinter_handler = None
+    tkinter_handler = None  # type: ignore[assignment]
     TKINTER_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import wmi_handler
     WMI_HANDLER_AVAILABLE = True
 except ImportError:
-    wmi_handler = None
+    wmi_handler = None  # type: ignore[assignment]
     WMI_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import opencl_handler
     OPENCL_HANDLER_AVAILABLE = True
 except ImportError:
-    opencl_handler = None
+    opencl_handler = None  # type: ignore[assignment]
     OPENCL_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import pdfkit_handler
     PDFKIT_HANDLER_AVAILABLE = True
 except ImportError:
-    pdfkit_handler = None
+    pdfkit_handler = None  # type: ignore[assignment]
     PDFKIT_HANDLER_AVAILABLE = False
 
 try:
     from intellicrack.handlers import pyelftools_handler
     PYELFTOOLS_HANDLER_AVAILABLE = True
 except ImportError:
-    pyelftools_handler = None
+    pyelftools_handler = None  # type: ignore[assignment]
     PYELFTOOLS_HANDLER_AVAILABLE = False
 
 
@@ -145,8 +145,8 @@ class TestPEFileHandler:
             assert hasattr(pefile_handler, "_FallbackSECTION_CHARACTERISTICS")
             assert hasattr(pefile_handler, "_FallbackMACHINE_TYPE")
 
-            assert pefile_handler._FallbackMACHINE_TYPE.IMAGE_FILE_MACHINE_I386 == 0x14C
-            assert pefile_handler._FallbackMACHINE_TYPE.IMAGE_FILE_MACHINE_AMD64 == 0x8664
+            assert pefile_handler._FallbackMACHINE_TYPE.IMAGE_FILE_MACHINE_I386 == 0x14C  # type: ignore[attr-defined]
+            assert pefile_handler._FallbackMACHINE_TYPE.IMAGE_FILE_MACHINE_AMD64 == 0x8664  # type: ignore[attr-defined]
 
 
 @pytest.mark.skipif(not LIEF_HANDLER_AVAILABLE, reason="lief_handler not available")
@@ -226,7 +226,7 @@ class TestKeystoneHandler:
 
     def test_keystone_architecture_constants(self) -> None:
         """Keystone architecture constants are available."""
-        if not keystone_handler.HAS_KEYSTONE:
+        if not keystone_handler.HAS_KEYSTONE:  # type: ignore[attr-defined]
             assert hasattr(keystone_handler, "KS_ARCH_X86")
             assert hasattr(keystone_handler, "KS_ARCH_ARM")
             assert hasattr(keystone_handler, "KS_MODE_32")
@@ -276,7 +276,7 @@ class TestRequestsHandler:
     def test_fallback_session_creation(self) -> None:
         """Fallback Session can be created."""
         if not requests_handler.HAS_REQUESTS:
-            session = requests_handler.FallbackSession()
+            session = requests_handler.FallbackSession()  # type: ignore[attr-defined]
 
             assert session is not None
             assert hasattr(session, "get")
@@ -336,7 +336,7 @@ class TestAiohttpHandler:
     def test_fallback_client_session(self) -> None:
         """Fallback ClientSession can be created."""
         if not aiohttp_handler.HAS_AIOHTTP:
-            session = aiohttp_handler.FallbackClientSession()
+            session = aiohttp_handler.FallbackClientSession()  # type: ignore[attr-defined]
 
             assert session is not None
             assert hasattr(session, "get")
@@ -368,7 +368,7 @@ class TestTorchHandler:
             tensor = torch_handler.FallbackTensor([1.0, 2.0, 3.0])
 
             assert tensor is not None
-            assert len(tensor.data) == 3
+            assert len(tensor.data) == 3  # type: ignore[arg-type]
 
 
 @pytest.mark.skipif(not PYQT6_HANDLER_AVAILABLE, reason="pyqt6_handler not available")
@@ -454,7 +454,7 @@ class TestHandlerIntegration:
     def test_disassembly_with_fallback(self) -> None:
         """Disassembly functionality available with fallback."""
         if not capstone_handler.HAS_CAPSTONE:
-            disasm = capstone_handler.FallbackDisassembler(
+            disasm = capstone_handler.FallbackDisassembler(  # type: ignore[attr-defined]
                 capstone_handler.CS_ARCH_X86, capstone_handler.CS_MODE_32
             )
 

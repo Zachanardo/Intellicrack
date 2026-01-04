@@ -4,6 +4,7 @@ Tests real program discovery and selection functionality.
 """
 
 from pathlib import Path
+from typing import Generator
 
 import pytest
 
@@ -17,10 +18,11 @@ from intellicrack.ui.dialogs.smart_program_selector_dialog import SmartProgramSe
 @pytest.fixture(scope="module")
 def qapp() -> QApplication:
     """Create QApplication instance."""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    return app
+    existing_app = QApplication.instance()
+    if existing_app is None:
+        return QApplication([])
+    assert isinstance(existing_app, QApplication), "Expected QApplication instance"
+    return existing_app
 
 
 @pytest.fixture
@@ -36,7 +38,7 @@ def temp_programs(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def selector_dialog(qapp: QApplication) -> SmartProgramSelectorDialog:
+def selector_dialog(qapp: QApplication) -> Generator[SmartProgramSelectorDialog, None, None]:
     """Create smart program selector dialog."""
     dialog = SmartProgramSelectorDialog()
     yield dialog

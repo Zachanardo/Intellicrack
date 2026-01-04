@@ -59,7 +59,7 @@ def real_config() -> RealConfigManager:
 def preferences_dialog(qapp: QApplication, real_config: RealConfigManager) -> PreferencesDialog:
     """Create PreferencesDialog with real configuration."""
     dialog = PreferencesDialog()
-    dialog.config = real_config
+    dialog.config = real_config  # type: ignore[assignment]
     return dialog
 
 
@@ -239,7 +239,7 @@ class TestConfigurationLoading:
         }
 
         dialog = PreferencesDialog()
-        dialog.config = real_config
+        dialog.config = real_config  # type: ignore[assignment]
         dialog.load_preferences()
 
         assert dialog.theme_combo.currentText() == "Light"
@@ -259,7 +259,7 @@ class TestConfigurationLoading:
         }
 
         dialog = PreferencesDialog()
-        dialog.config = real_config
+        dialog.config = real_config  # type: ignore[assignment]
         dialog.load_preferences()
 
         assert dialog.qemu_preference_combo.currentIndex() == 1
@@ -281,7 +281,7 @@ class TestConfigurationLoading:
         }
 
         dialog = PreferencesDialog()
-        dialog.config = real_config
+        dialog.config = real_config  # type: ignore[assignment]
         dialog.load_preferences()
 
         assert not dialog.warn_dangerous_checkbox.isChecked()
@@ -305,7 +305,7 @@ class TestConfigurationLoading:
         }
 
         dialog = PreferencesDialog()
-        dialog.config = real_config
+        dialog.config = real_config  # type: ignore[assignment]
         dialog.load_preferences()
 
         assert dialog.default_model_combo.currentText() == "Claude"
@@ -339,7 +339,7 @@ class TestConfigurationLoading:
         }
 
         dialog = PreferencesDialog()
-        dialog.config = real_config
+        dialog.config = real_config  # type: ignore[assignment]
         dialog.load_preferences()
 
         assert dialog.hex_bytes_per_row.value() == 32
@@ -447,7 +447,7 @@ class TestPreferenceSaving:
         real_config: RealConfigManager,
     ) -> None:
         """Saving preferences stores general settings to config."""
-        preferences_dialog.config = real_config
+        preferences_dialog.config = real_config  # type: ignore[assignment]
         preferences_dialog.theme_combo.setCurrentText("Light")
         preferences_dialog.auto_save_checkbox.setChecked(False)
         preferences_dialog.backup_checkbox.setChecked(True)
@@ -465,7 +465,7 @@ class TestPreferenceSaving:
         real_config: RealConfigManager,
     ) -> None:
         """Saving preferences stores QEMU testing settings."""
-        preferences_dialog.config = real_config
+        preferences_dialog.config = real_config  # type: ignore[assignment]
         preferences_dialog.qemu_preference_combo.setCurrentIndex(1)
         preferences_dialog.qemu_timeout_spin.setValue(90)
         preferences_dialog.qemu_memory_spin.setValue(3072)
@@ -482,7 +482,7 @@ class TestPreferenceSaving:
         real_config: RealConfigManager,
     ) -> None:
         """Saving preferences stores script execution settings."""
-        preferences_dialog.config = real_config
+        preferences_dialog.config = real_config  # type: ignore[assignment]
         preferences_dialog.script_timeout_spin.setValue(180)
         preferences_dialog.capture_output_checkbox.setChecked(False)
         preferences_dialog.verbose_output_checkbox.setChecked(True)
@@ -499,7 +499,7 @@ class TestPreferenceSaving:
         real_config: RealConfigManager,
     ) -> None:
         """Saving preferences stores security settings."""
-        preferences_dialog.config = real_config
+        preferences_dialog.config = real_config  # type: ignore[assignment]
         preferences_dialog.warn_dangerous_checkbox.setChecked(False)
         preferences_dialog.confirm_patches_checkbox.setChecked(False)
         preferences_dialog.sandbox_default_checkbox.setChecked(True)
@@ -520,7 +520,7 @@ class TestPreferenceSaving:
         real_config: RealConfigManager,
     ) -> None:
         """Saving preferences stores AI model settings."""
-        preferences_dialog.config = real_config
+        preferences_dialog.config = real_config  # type: ignore[assignment]
         preferences_dialog.default_model_combo.setCurrentText("GPT-3.5-turbo")
         preferences_dialog.api_key_edit.setText("sk-new-key")
         preferences_dialog.max_tokens_spin.setValue(1500)
@@ -578,7 +578,7 @@ class TestHexViewerSettingsAutoSave:
         }
 
         dialog = PreferencesDialog()
-        dialog.config = real_config
+        dialog.config = real_config  # type: ignore[assignment]
 
         dialog.hex_bytes_per_row.setValue(24)
 
@@ -592,7 +592,7 @@ class TestHexViewerSettingsAutoSave:
         real_config: RealConfigManager,
     ) -> None:
         """Saving hex viewer settings stores display configuration."""
-        preferences_dialog.config = real_config
+        preferences_dialog.config = real_config  # type: ignore[assignment]
         preferences_dialog.hex_bytes_per_row.setValue(24)
         preferences_dialog.hex_group_size.setCurrentText("4")
         preferences_dialog.hex_uppercase.setChecked(False)
@@ -613,7 +613,7 @@ class TestHexViewerSettingsAutoSave:
         real_config: RealConfigManager,
     ) -> None:
         """Saving hex viewer settings stores font configuration."""
-        preferences_dialog.config = real_config
+        preferences_dialog.config = real_config  # type: ignore[assignment]
         preferences_dialog.hex_font_family.setCurrentText("Monaco")
         preferences_dialog.hex_font_size.setValue(14)
 
@@ -628,7 +628,7 @@ class TestHexViewerSettingsAutoSave:
         real_config: RealConfigManager,
     ) -> None:
         """Saving hex viewer settings stores performance configuration."""
-        preferences_dialog.config = real_config
+        preferences_dialog.config = real_config  # type: ignore[assignment]
         preferences_dialog.hex_max_memory.setValue(1000)
         preferences_dialog.hex_cache_size.setValue(200)
         preferences_dialog.hex_chunk_size.setValue(128)
@@ -647,7 +647,7 @@ class TestHexViewerSettingsAutoSave:
         real_config: RealConfigManager,
     ) -> None:
         """Saving hex viewer settings stores search configuration."""
-        preferences_dialog.config = real_config
+        preferences_dialog.config = real_config  # type: ignore[assignment]
         preferences_dialog.hex_search_history.setValue(100)
         preferences_dialog.hex_search_chunk.setValue(512)
         preferences_dialog.hex_incremental_search.setChecked(False)
@@ -670,7 +670,7 @@ class TestApplyAndAccept:
         real_config: RealConfigManager,
     ) -> None:
         """Applying preferences saves settings without closing dialog."""
-        preferences_dialog.config = real_config
+        preferences_dialog.config = real_config  # type: ignore[assignment]
         preferences_dialog.theme_combo.setCurrentText("Dark")
 
         preferences_dialog.apply_preferences()
@@ -695,7 +695,7 @@ class TestApplyAndAccept:
         real_config: RealConfigManager,
     ) -> None:
         """Accepting preferences saves settings and closes dialog."""
-        preferences_dialog.config = real_config
+        preferences_dialog.config = real_config  # type: ignore[assignment]
         preferences_dialog.theme_combo.setCurrentText("Light")
 
         preferences_dialog.accept_preferences()
@@ -726,7 +726,7 @@ class TestQEMUPreferenceMapping:
         }
 
         dialog = PreferencesDialog()
-        dialog.config = real_config
+        dialog.config = real_config  # type: ignore[assignment]
         dialog.load_preferences()
 
         assert dialog.qemu_preference_combo.currentIndex() == 0
@@ -742,7 +742,7 @@ class TestQEMUPreferenceMapping:
         }
 
         dialog = PreferencesDialog()
-        dialog.config = real_config
+        dialog.config = real_config  # type: ignore[assignment]
         dialog.load_preferences()
 
         assert dialog.qemu_preference_combo.currentIndex() == 1
@@ -758,7 +758,7 @@ class TestQEMUPreferenceMapping:
         }
 
         dialog = PreferencesDialog()
-        dialog.config = real_config
+        dialog.config = real_config  # type: ignore[assignment]
         dialog.load_preferences()
 
         assert dialog.qemu_preference_combo.currentIndex() == 2
@@ -769,7 +769,7 @@ class TestQEMUPreferenceMapping:
         real_config: RealConfigManager,
     ) -> None:
         """Saving QEMU preference index 0 stores 'ask'."""
-        preferences_dialog.config = real_config
+        preferences_dialog.config = real_config  # type: ignore[assignment]
         preferences_dialog.qemu_preference_combo.setCurrentIndex(0)
 
         preferences_dialog.save_preferences()
@@ -782,7 +782,7 @@ class TestQEMUPreferenceMapping:
         real_config: RealConfigManager,
     ) -> None:
         """Saving QEMU preference index 1 stores 'always'."""
-        preferences_dialog.config = real_config
+        preferences_dialog.config = real_config  # type: ignore[assignment]
         preferences_dialog.qemu_preference_combo.setCurrentIndex(1)
 
         preferences_dialog.save_preferences()
@@ -795,7 +795,7 @@ class TestQEMUPreferenceMapping:
         real_config: RealConfigManager,
     ) -> None:
         """Saving QEMU preference index 2 stores 'never'."""
-        preferences_dialog.config = real_config
+        preferences_dialog.config = real_config  # type: ignore[assignment]
         preferences_dialog.qemu_preference_combo.setCurrentIndex(2)
 
         preferences_dialog.save_preferences()

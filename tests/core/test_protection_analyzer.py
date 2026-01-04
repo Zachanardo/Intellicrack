@@ -61,9 +61,9 @@ class TestProtectionAnalyzerInitialization:
     def test_initialization_with_custom_logger(self) -> None:
         """Test initialization accepts custom logger."""
         custom_logger: FakeLogger = FakeLogger()
-        analyzer: ProtectionAnalyzer = ProtectionAnalyzer(logger=custom_logger)
+        analyzer: ProtectionAnalyzer = ProtectionAnalyzer(logger=custom_logger)  # type: ignore[arg-type]
 
-        assert analyzer.logger is custom_logger
+        assert analyzer.logger is custom_logger  # type: ignore[comparison-overlap]
 
     def test_load_protection_signatures_returns_all_protections(self) -> None:
         """Test _load_protection_signatures returns complete signature database."""
@@ -487,7 +487,7 @@ class TestSectionAnalysis:
             "suspicious_sections": [],
         }
 
-        suspicious = [s for s in result["sections"] if s.get("entropy", 0) > 7.0]
+        suspicious = [s for s in result["sections"] if s.get("entropy", 0) > 7.0]  # type: ignore[operator]
         assert len(suspicious) == 1
         assert suspicious[0]["name"] == ".vmp"
 
@@ -631,7 +631,7 @@ class TestRecommendationGeneration:
             {"name": "VMProtect", "type": "protector", "severity": "high"},
         ]
         entropy_analysis = {"overall_entropy": 5.0}
-        section_analysis = {"suspicious_sections": []}
+        section_analysis: dict[str, Any] = {"suspicious_sections": []}
         anti_analysis = {"anti_debug_detected": False}
 
         recommendations = analyzer._generate_recommendations(
@@ -646,9 +646,9 @@ class TestRecommendationGeneration:
         """Test _generate_recommendations recommends entropy analysis for high-entropy files."""
         analyzer = ProtectionAnalyzer()
 
-        detected_protections = []
+        detected_protections: list[dict[str, Any]] = []
         entropy_analysis = {"overall_entropy": 7.8}
-        section_analysis = {"suspicious_sections": []}
+        section_analysis: dict[str, Any] = {"suspicious_sections": []}
         anti_analysis = {"anti_debug_detected": False}
 
         recommendations = analyzer._generate_recommendations(
@@ -663,9 +663,9 @@ class TestRecommendationGeneration:
         """Test _generate_recommendations recommends anti-debug bypass."""
         analyzer = ProtectionAnalyzer()
 
-        detected_protections = []
+        detected_protections: list[dict[str, Any]] = []
         entropy_analysis = {"overall_entropy": 5.0}
-        section_analysis = {"suspicious_sections": []}
+        section_analysis: dict[str, Any] = {"suspicious_sections": []}
         anti_analysis = {"anti_debug_detected": True, "techniques": ["IsDebuggerPresent"]}
 
         recommendations = analyzer._generate_recommendations(
@@ -679,9 +679,9 @@ class TestRecommendationGeneration:
         """Test _generate_recommendations notes suspicious sections."""
         analyzer = ProtectionAnalyzer()
 
-        detected_protections = []
+        detected_protections: list[dict[str, Any]] = []
         entropy_analysis = {"overall_entropy": 5.0}
-        section_analysis = {"suspicious_sections": [{"name": ".vmp", "entropy": 7.9}]}
+        section_analysis: dict[str, Any] = {"suspicious_sections": [{"name": ".vmp", "entropy": 7.9}]}
         anti_analysis = {"anti_debug_detected": False}
 
         recommendations = analyzer._generate_recommendations(
@@ -695,9 +695,9 @@ class TestRecommendationGeneration:
         """Test _generate_recommendations provides standard advice for clean binaries."""
         analyzer = ProtectionAnalyzer()
 
-        detected_protections = []
+        detected_protections: list[dict[str, Any]] = []
         entropy_analysis = {"overall_entropy": 5.0}
-        section_analysis = {"suspicious_sections": []}
+        section_analysis: dict[str, Any] = {"suspicious_sections": []}
         anti_analysis = {"anti_debug_detected": False}
 
         recommendations = analyzer._generate_recommendations(
@@ -715,7 +715,7 @@ class TestRiskScoreCalculation:
         """Test _calculate_risk_score returns 0 for clean files."""
         analyzer = ProtectionAnalyzer()
 
-        detected_protections = []
+        detected_protections: list[dict[str, Any]] = []
         entropy_analysis = {"overall_entropy": 5.0}
         anti_analysis = {"anti_debug_detected": False, "techniques": []}
 
@@ -761,7 +761,7 @@ class TestRiskScoreCalculation:
         """Test _calculate_risk_score increases for high entropy."""
         analyzer = ProtectionAnalyzer()
 
-        detected_protections = []
+        detected_protections: list[dict[str, Any]] = []
         high_entropy_analysis = {"overall_entropy": 7.8}
         low_entropy_analysis = {"overall_entropy": 5.0}
         anti_analysis = {"anti_debug_detected": False, "techniques": []}
@@ -775,7 +775,7 @@ class TestRiskScoreCalculation:
         """Test _calculate_risk_score increases for anti-analysis techniques."""
         analyzer = ProtectionAnalyzer()
 
-        detected_protections = []
+        detected_protections: list[dict[str, Any]] = []
         entropy_analysis = {"overall_entropy": 5.0}
         anti_analysis_detected = {"anti_debug_detected": True, "techniques": ["IsDebuggerPresent", "RDTSC timing"]}
         anti_analysis_clean = {"anti_debug_detected": False, "techniques": []}

@@ -15,14 +15,14 @@ try:
     from intellicrack.core.analysis.binary_similarity_search import BinarySimilaritySearch, create_similarity_search
     AVAILABLE = True
 except ImportError:
-    BinarySimilaritySearch = None
-    create_similarity_search = None
+    BinarySimilaritySearch = None  # type: ignore[misc, assignment]
+    create_similarity_search = None  # type: ignore[assignment]
     AVAILABLE = False
 
 try:
     from tests.base_test import IntellicrackTestBase
 except ImportError:
-    IntellicrackTestBase = object
+    IntellicrackTestBase = object  # type: ignore[misc, assignment]
 
 pytestmark = pytest.mark.skipif(not AVAILABLE, reason="Module not available")
 
@@ -490,21 +490,21 @@ class TestBinarySimilaritySearch(IntellicrackTestBase):
                 self.assert_real_output(similar_binaries)
 
                 # Verify result structure
-                for result in similar_binaries:
-                    assert 'path' in result
-                    assert 'filename' in result
-                    assert 'similarity' in result
-                    assert 'cracking_patterns' in result
-                    assert 'added' in result
-                    assert 'file_size' in result
+                for match in similar_binaries:
+                    assert 'path' in match
+                    assert 'filename' in match
+                    assert 'similarity' in match
+                    assert 'cracking_patterns' in match
+                    assert 'added' in match
+                    assert 'file_size' in match
 
                     # Validate similarity score
-                    similarity = result['similarity']
+                    similarity = match['similarity']
                     assert isinstance(similarity, float)
                     assert 0.1 <= similarity <= 1.0  # Above threshold
 
                     # Validate cracking patterns
-                    assert isinstance(result['cracking_patterns'], list)
+                    assert isinstance(match['cracking_patterns'], list)
 
                 # Results should be sorted by similarity (descending)
                 if len(similar_binaries) > 1:

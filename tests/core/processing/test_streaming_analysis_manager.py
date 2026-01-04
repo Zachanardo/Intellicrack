@@ -23,11 +23,11 @@ try:
     )
     MODULE_AVAILABLE = True
 except ImportError:
-    ChunkContext = None
-    StreamingAnalysisManager = None
-    StreamingAnalyzer = None
-    StreamingConfig = None
-    StreamingProgress = None
+    ChunkContext = None  # type: ignore[assignment, misc]
+    StreamingAnalysisManager = None  # type: ignore[assignment, misc]
+    StreamingAnalyzer = None  # type: ignore[assignment, misc]
+    StreamingConfig = None  # type: ignore[assignment, misc]
+    StreamingProgress = None  # type: ignore[assignment, misc]
     MODULE_AVAILABLE = False
 
 pytestmark = pytest.mark.skipif(not MODULE_AVAILABLE, reason="Module not available")
@@ -39,7 +39,7 @@ if MODULE_AVAILABLE:
 
         def __init__(self) -> None:
             """Initialize dummy analyzer."""
-            self.chunks_analyzed = []
+            self.chunks_analyzed: list[dict[str, Any]] = []
             self.initialized = False
             self.finalized = False
 
@@ -47,7 +47,7 @@ if MODULE_AVAILABLE:
             """Initialize dummy analyzer."""
             self.initialized = True
 
-        def analyze_chunk(self, context: ChunkContext) -> dict:
+        def analyze_chunk(self, context: ChunkContext) -> dict[str, Any]:
             """Analyze chunk and track it."""
             self.chunks_analyzed.append(
                 {
@@ -59,18 +59,18 @@ if MODULE_AVAILABLE:
             )
             return {"chunk_offset": context.offset, "data_length": context.size}
 
-        def merge_results(self, results: list[dict]) -> dict:
+        def merge_results(self, results: list[dict[str, Any]]) -> dict[str, Any]:
             """Merge chunk results."""
             total_bytes = sum(r.get("data_length", 0) for r in results)
             return {"total_chunks": len(results), "total_bytes": total_bytes}
 
-        def finalize_analysis(self, merged_results: dict) -> dict:
+        def finalize_analysis(self, merged_results: dict[str, Any]) -> dict[str, Any]:
             """Finalize analysis."""
             self.finalized = True
             merged_results["completed"] = True
             return merged_results
 else:
-    DummyAnalyzer = None
+    DummyAnalyzer = None  # type: ignore[assignment, misc]
 
 
 class TestStreamingAnalysisManager:
@@ -185,7 +185,7 @@ class TestStreamingAnalysisManager:
 
         progress_updates = []
 
-        def progress_callback(progress: StreamingProgress):
+        def progress_callback(progress: StreamingProgress) -> None:
             progress_updates.append(
                 {
                     "stage": progress.current_stage,

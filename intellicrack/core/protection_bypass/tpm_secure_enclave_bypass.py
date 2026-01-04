@@ -1660,20 +1660,30 @@ class SecureEnclaveBypass:
         return json.dumps(response).encode()
 
     def _create_tpm_quote(self, challenge: bytes) -> str:
-        """Create TPM quote using real TPM commands or extracted attestation data.
+        """Create TPM 2.0 quote with proper TPMS_ATTEST structure.
 
-        Generates a properly formatted TPM 2.0 quote structure with PCR digest,
-        timestamp, and HMAC signature per TPM specification.
+        Generates a TPM 2.0 quote following the exact specification in TPM 2.0
+        Part 2 (Structures) for TPMS_ATTEST and TPMS_QUOTE_INFO. The quote
+        structure includes magic number, attestation type, qualified signer,
+        extra data (nonce), clock info, firmware version, and the attested
+        TPMS_QUOTE_INFO containing PCR selection and digest.
+
+        The resulting structure is:
+        - TPM2B_ATTEST (size-prefixed TPMS_ATTEST)
+        - TPMT_SIGNATURE (algorithm identifiers and signature)
 
         Args:
             challenge: Challenge bytes to include in quote as extra data/nonce.
+                This prevents replay attacks by binding the quote to a specific
+                attestation request.
 
         Returns:
-            str: Base64-encoded TPM quote string containing attestation data
-                and signature.
+            str: Base64-encoded TPM quote string containing complete attestation
+                data and cryptographic signature per TPM 2.0 specification.
 
         Raises:
-            ValueError: If TPM quote generation fails.
+            ValueError: If TPM quote generation fails due to missing PCR data
+                or attestation key.
         """
         # Use TPM emulator to generate properly formatted quote
         rc, pcr_selection = self._select_pcrs_for_quote()
@@ -1681,65 +1691,101 @@ class SecureEnclaveBypass:
             # Fall back to extracted quote from legitimate system
             return self._extract_cached_tpm_quote(challenge)
 
-        # Create quote structure according to TPM 2.0 specification
-        quote = bytearray()
+        # Create TPMS_ATTEST structure per TPM 2.0 Part 2, Section 10.12.8
+        attest_struct = bytearray()
 
-        # TPM2B_ATTEST structure
+        # magic: TPM_GENERATED_VALUE (0xFF544347 = 'TCG' in ASCII with marker)
+        attest_struct.extend(struct.pack(">I", 0xFF544347))
+
+        # TPM_ST_ATTEST_QUOTE type (0x8018)
+        attest_struct.extend(struct.pack(">H", 0x8018))
+
+        # qualifiedSigner: TPM2B_NAME of the signing key
+        # TPM name = hash algorithm ID + hash of public area
+        signer_name_data = self._get_attestation_key_name()
+        signer_name = bytearray()
+        signer_name.extend(struct.pack(">H", TPM_ALG.SHA256))
+        signer_name.extend(signer_name_data)
+
+        # TPM2B_NAME structure (size prefix)
+        attest_struct.extend(struct.pack(">H", len(signer_name)))
+        attest_struct.extend(signer_name)
+
+        # extraData: TPM2B_DATA containing the challenge/nonce
+        attest_struct.extend(struct.pack(">H", len(challenge)))
+        attest_struct.extend(challenge)
+
+        # clockInfo: TPMS_CLOCK_INFO structure
+        # Contains: clock (8 bytes), resetCount (4 bytes), restartCount (4 bytes), safe (1 byte)
+        clock_value = int(secrets.randbelow(720) + 1) * 3600 * 1000  # 1-720 hours in ms
+        reset_count = secrets.randbelow(5)  # Number of TPM resets (0-4)
+        restart_count = secrets.randbelow(10)  # Number of TPM restarts (0-9)
+        safe = 1  # Clock is advancing normally
+
+        attest_struct.extend(struct.pack(">Q", clock_value))
+        attest_struct.extend(struct.pack(">I", reset_count))
+        attest_struct.extend(struct.pack(">I", restart_count))
+        attest_struct.extend(struct.pack("B", safe))
+
+        # firmwareVersion: 8 bytes (typically date in format YYYYMMDD + revision)
+        attest_struct.extend(struct.pack(">Q", 0x2024010100000001))
+
+        # attested: TPMU_ATTEST union (type TPM_ST_ATTEST_QUOTE -> TPMS_QUOTE_INFO)
+        # TPMS_QUOTE_INFO contains pcrSelect and pcrDigest
         quote_info = bytearray()
 
-        # TPMS_ATTEST structure
-        # Magic value for TPM_GENERATED_VALUE
-        quote_info.extend(struct.pack(">I", 0xFF544347))
-
-        # Type: TPM_ST_ATTEST_QUOTE
-        quote_info.extend(struct.pack(">H", 0x8018))
-
-        # Qualified signer name (handle of signing key)
-        signer_name = self._get_attestation_key_name()
-        quote_info.extend(struct.pack(">H", len(signer_name)))
-        quote_info.extend(signer_name)
-
-        # Extra data (nonce/challenge)
-        quote_info.extend(struct.pack(">H", len(challenge)))
-        quote_info.extend(challenge)
-
-        # Clock info
-        clock_info = struct.pack(
-            ">QIQB",
-            int(time.time() * 1000),  # Clock
-            0,  # Reset count
-            0,  # Restart count
-            1,
-        )  # Safe
-        quote_info.extend(clock_info)
-
-        # Firmware version
-        quote_info.extend(struct.pack(">Q", 0x20200101))
-
-        # PCR selection and digest
-        pcr_digest = self._compute_pcr_digest(pcr_selection)
-        quote_info.extend(struct.pack(">H", len(pcr_selection)))
+        # pcrSelect: TPML_PCR_SELECTION (list of PCR selection structures)
         quote_info.extend(pcr_selection)
+
+        # pcrDigest: TPM2B_DIGEST (hash of selected PCR values)
+        pcr_digest = self._compute_pcr_digest(pcr_selection)
         quote_info.extend(struct.pack(">H", len(pcr_digest)))
         quote_info.extend(pcr_digest)
 
-        # Add size prefix for TPM2B structure
-        quote.extend(struct.pack(">H", len(quote_info)))
-        quote.extend(quote_info)
+        # Append the TPMS_QUOTE_INFO to TPMS_ATTEST
+        attest_struct.extend(quote_info)
 
-        # Sign the quote using extracted or emulated attestation key
-        signature = self._sign_tpm_quote(bytes(quote_info))
+        # Create TPM2B_ATTEST (size-prefixed TPMS_ATTEST)
+        tpm2b_attest = bytearray()
+        tpm2b_attest.extend(struct.pack(">H", len(attest_struct)))
+        tpm2b_attest.extend(attest_struct)
 
-        # TPMT_SIGNATURE structure
+        # Sign the TPMS_ATTEST structure (not the TPM2B wrapper)
+        signature, key_type = self._sign_tpm_quote(bytes(attest_struct))
+
+        # Create TPMT_SIGNATURE structure per TPM 2.0 Part 2, Section 11.2.4
         sig_struct = bytearray()
-        sig_struct.extend(struct.pack(">H", TPM_ALG.RSASSA))
-        sig_struct.extend(struct.pack(">H", TPM_ALG.SHA256))
-        sig_struct.extend(struct.pack(">H", len(signature)))
-        sig_struct.extend(signature)
 
-        quote.extend(sig_struct)
+        if key_type == TPM_ALG.ECC:
+            # ECDSA signature
+            sig_struct.extend(struct.pack(">H", TPM_ALG.ECDSA))
+            sig_struct.extend(struct.pack(">H", TPM_ALG.SHA256))
 
-        return base64.b64encode(bytes(quote)).decode("ascii")
+            # ECDSA signature is r || s (each 32 bytes for P-256)
+            # signature should be 64 bytes total
+            if len(signature) != 64:
+                raise ValueError("ECDSA signature must be 64 bytes (r || s)")
+            signature_r = signature[:32]
+            signature_s = signature[32:]
+
+            # TPM2B_ECC_PARAMETER for r
+            sig_struct.extend(struct.pack(">H", len(signature_r)))
+            sig_struct.extend(signature_r)
+
+            # TPM2B_ECC_PARAMETER for s
+            sig_struct.extend(struct.pack(">H", len(signature_s)))
+            sig_struct.extend(signature_s)
+        else:
+            # RSA signature (RSASSA)
+            sig_struct.extend(struct.pack(">H", TPM_ALG.RSASSA))
+            sig_struct.extend(struct.pack(">H", TPM_ALG.SHA256))
+            sig_struct.extend(struct.pack(">H", len(signature)))
+            sig_struct.extend(signature)
+
+        # Combine TPM2B_ATTEST + TPMT_SIGNATURE for complete quote response
+        complete_quote = tpm2b_attest + sig_struct
+
+        return base64.b64encode(bytes(complete_quote)).decode("ascii")
 
     def _create_sgx_quote(self, challenge: bytes) -> str:
         """Create SGX quote using real enclave measurements or extracted attestation.
@@ -1936,20 +1982,21 @@ class SecureEnclaveBypass:
 
         return info
 
-    def _sign_tpm_quote(self, quote_data: bytes) -> bytes:
+    def _sign_tpm_quote(self, quote_data: bytes) -> tuple[bytes, TPM_ALG]:
         """Sign TPM quote using extracted or emulated attestation key.
 
         Attempts to sign with TPM emulator's restricted attestation key, falling
-        back to loaded/generated software RSA key if TPM key unavailable.
+        back to loaded/generated software key (RSA or ECC) if TPM key unavailable.
 
         Args:
             quote_data: Quote data bytes to sign.
 
         Returns:
-            bytes: RSA-PSS signature bytes (256 bytes for 2048-bit RSA key).
+            tuple[bytes, TPM_ALG]: Tuple containing signature bytes and key algorithm
+                type. For RSA: 256 bytes RSASSA-PKCS1-v1_5. For ECC: 64 bytes (r || s).
 
         Raises:
-            TypeError: If attestation key is not an RSA private key.
+            TypeError: If attestation key is not an RSA or ECC private key.
             ValueError: If quote signing fails.
         """
         from cryptography.hazmat.primitives.asymmetric import rsa
@@ -1961,18 +2008,44 @@ class SecureEnclaveBypass:
                 if key.attributes & 0x00040000:  # Restricted key (attestation)
                     rc, signature = self.tpm_emulator.sign(handle, quote_data, key.auth_value)
                     if rc == TPM_RC.SUCCESS and signature is not None:
-                        return signature
+                        return signature, key.algorithm
 
         # Fall back to software signing with extracted key
         attestation_key = self._load_attestation_key()
+
+        # Check if ECC key
+        if isinstance(attestation_key, ec.EllipticCurvePrivateKey):
+            try:
+                der_signature: bytes = attestation_key.sign(
+                    quote_data,
+                    ec.ECDSA(hashes.SHA256()),
+                )
+
+                # Convert DER signature to raw r || s format (64 bytes for P-256)
+                from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
+
+                r, s = decode_dss_signature(der_signature)
+                signature = r.to_bytes(32, byteorder="big") + s.to_bytes(32, byteorder="big")
+
+                return signature, TPM_ALG.ECC
+            except Exception as e:
+                logger.exception("Failed to sign TPM quote with ECC key: %s", e)
+                raise ValueError(f"TPM quote ECC signing failed: {e}") from e
+
+        # RSA key
         if not isinstance(attestation_key, rsa.RSAPrivateKey):
-            raise TypeError("Attestation key must be RSA private key")
-        result: bytes = attestation_key.sign(
-            quote_data,
-            padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
-            hashes.SHA256(),
-        )
-        return result
+            raise TypeError("Attestation key must be RSA or ECC private key")
+
+        try:
+            result: bytes = attestation_key.sign(
+                quote_data,
+                padding.PKCS1v15(),
+                hashes.SHA256(),
+            )
+            return result, TPM_ALG.RSA
+        except Exception as e:
+            logger.exception("Failed to sign TPM quote: %s", e)
+            raise ValueError(f"TPM quote signing failed: {e}") from e
 
     def _sign_sgx_quote(self, report_data: bytes) -> bytes:
         """Sign SGX quote using ECDSA attestation key.
@@ -2000,17 +2073,18 @@ class SecureEnclaveBypass:
         result: bytes = attestation_key.sign(report_data, ec.ECDSA(hashes.SHA256()))
         return result
 
-    def _load_attestation_key(self) -> rsa.RSAPrivateKey:
+    def _load_attestation_key(self) -> rsa.RSAPrivateKey | ec.EllipticCurvePrivateKey:
         """Load TPM attestation key from system or cache.
 
         Loads an existing TPM attestation key from PEM file, or generates and
-        saves a new 2048-bit RSA key if none exists.
+        saves a new 2048-bit RSA key if none exists. Supports both RSA and ECC keys.
 
         Returns:
-            rsa.RSAPrivateKey: RSA private key for TPM attestation operations.
+            rsa.RSAPrivateKey | ec.EllipticCurvePrivateKey: Private key for TPM
+                attestation operations. RSA (2048-bit) or ECC (P-256).
 
         Raises:
-            TypeError: If loaded key is not an RSA private key.
+            TypeError: If loaded key is not an RSA or ECC private key.
             FileNotFoundError: If key file cannot be created.
         """
         from cryptography.hazmat.backends import default_backend
@@ -2022,11 +2096,12 @@ class SecureEnclaveBypass:
         if key_file.exists():
             with open(key_file, "rb") as f:
                 loaded_key = serialization.load_pem_private_key(f.read(), password=None, backend=default_backend())
-                if not isinstance(loaded_key, rsa.RSAPrivateKey):
-                    raise TypeError("Loaded key must be RSA private key")
+                if not isinstance(loaded_key, (rsa.RSAPrivateKey, ec.EllipticCurvePrivateKey)):
+                    raise TypeError("Loaded key must be RSA or ECC private key")
                 return loaded_key
 
-        # Generate new attestation key
+        # Generate new RSA attestation key by default
+        # To use ECC, manually create an ECC key and save it to this path
         key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 
         # Save for future use
@@ -2122,11 +2197,12 @@ class SecureEnclaveBypass:
         digest = hashlib.sha256()
 
         # Parse selection to determine which PCRs to include
+        # Bitmap starts at offset 7 (after 4-byte count + 2-byte hash alg + 1-byte sizeofSelect)
         for i in range(24):
             byte_idx = i // 8
             bit_idx = i % 8
 
-            if pcr_selection[byte_idx + 5] & (1 << bit_idx):
+            if pcr_selection[byte_idx + 7] & (1 << bit_idx):
                 digest.update(self.tpm_emulator.pcr_banks[TPM_ALG.SHA256][i])
 
         return digest.digest()

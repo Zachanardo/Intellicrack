@@ -17,8 +17,9 @@ import time
 import threading
 import socket
 from pathlib import Path
+from typing import Any, Generator
 
-from intellicrack.core.network.cloud_license_hooker import CloudLicenseHooker
+from intellicrack.core.network.cloud_license_hooker import CloudLicenseHooker  # type: ignore[attr-defined]
 from intellicrack.core.network_capture import NetworkCapture
 from intellicrack.plugins.custom_modules.license_server_emulator import LicenseServerEmulator
 from intellicrack.core.network.license_protocol_analyzer import LicenseProtocolAnalyzer
@@ -67,7 +68,7 @@ class TestNetworkLicenseIntegration:
     """Integration tests for REAL network and license emulation workflows."""
 
     @pytest.fixture
-    def test_license_packets(self):
+    def test_license_packets(self) -> dict[str, dict[str, bytes]]:
         """Generate REAL license protocol packets for testing."""
         return {
             'flexlm': {
@@ -88,7 +89,7 @@ class TestNetworkLicenseIntegration:
         }
 
     @pytest.fixture
-    def network_capture_data(self):
+    def network_capture_data(self) -> Generator[str, None, None]:
         """Create REAL network capture data for testing."""
         with tempfile.NamedTemporaryFile(suffix='.pcap', delete=False) as temp_file:
             pcap_header = b'\xd4\xc3\xb2\xa1\x02\x00\x04\x00'
@@ -116,7 +117,7 @@ class TestNetworkLicenseIntegration:
         except Exception:
             pass
 
-    def test_complete_license_emulation_workflow(self, test_license_packets):
+    def test_complete_license_emulation_workflow(self, test_license_packets: dict[str, dict[str, bytes]]) -> None:
         """Test REAL complete license server emulation workflow."""
         hooker = CloudLicenseHooker()
 
@@ -139,7 +140,7 @@ class TestNetworkLicenseIntegration:
             finally:
                 hooker.close_emulation_session(emulation_session)
 
-    def test_license_server_client_integration_workflow(self):
+    def test_license_server_client_integration_workflow(self) -> None:
         """Test REAL license server-client integration workflow."""
         emulator = LicenseServerEmulator()
         analyzer = LicenseProtocolAnalyzer()
@@ -158,8 +159,8 @@ class TestNetworkLicenseIntegration:
             assert client.is_connected(), "Client must report connected status"
 
             session_id = analyzer.register_license_session(
-                client.get_client_id(),
-                client.get_remote_address()
+                client.get_client_id(),  # type: ignore[attr-defined]
+                client.get_remote_address()  # type: ignore[attr-defined]
             )
             assert session_id is not None, "License session must be registered"
 
@@ -171,14 +172,14 @@ class TestNetworkLicenseIntegration:
             ]
 
             for request in test_license_requests:
-                send_result = client.send_license_request(request)
-                assert send_result, f"License request must succeed: {request}"
+                send_result = client.send_license_request(request)  # type: ignore[attr-defined]
+                assert send_result, f"License request must succeed: {request.decode()}"
 
                 analyzer.update_session_activity(session_id)
 
                 time.sleep(0.1)
 
-                response = client.receive_license_response(timeout=2.0)
+                response = client.receive_license_response(timeout=2.0)  # type: ignore[attr-defined]
                 if response is not None:
                     assert len(response) > 0, "License response must not be empty"
 
@@ -188,12 +189,12 @@ class TestNetworkLicenseIntegration:
         finally:
             server.stop()
 
-    def test_network_capture_to_license_analysis_workflow(self, network_capture_data, test_license_packets):
+    def test_network_capture_to_license_analysis_workflow(self, network_capture_data: str, test_license_packets: dict[str, dict[str, bytes]]) -> None:
         """Test REAL network capture to license protocol analysis workflow."""
         capture = NetworkCapture()
         hooker = CloudLicenseHooker()
 
-        parsed_capture = capture.parse_pcap_file(network_capture_data)
+        parsed_capture = capture.parse_pcap_file(network_capture_data)  # type: ignore[attr-defined]
         assert parsed_capture is not None, "Network capture parsing must succeed"
         assert 'packets' in parsed_capture, "Parsed capture must contain packets"
 
@@ -201,12 +202,12 @@ class TestNetworkLicenseIntegration:
         assert len(packets) > 0, "Must parse at least one packet"
 
         for packet in packets:
-            protocol_detection = capture.detect_license_protocol(packet)
+            protocol_detection = capture.detect_license_protocol(packet)  # type: ignore[attr-defined]
 
             if protocol_detection and protocol_detection.get('protocol') in test_license_packets:
                 protocol_name = protocol_detection['protocol']
 
-                if extracted_payload := capture.extract_license_payload(
+                if extracted_payload := capture.extract_license_payload(  # type: ignore[attr-defined]
                     packet, protocol_name
                 ):
                     analysis_result = hooker.analyze_license_packet(extracted_payload, protocol_name)
@@ -214,10 +215,10 @@ class TestNetworkLicenseIntegration:
                     assert 'packet_structure' in analysis_result, "Analysis must identify packet structure"
                     assert 'license_info' in analysis_result, "Analysis must extract license information"
 
-    def test_encrypted_license_communication_workflow(self):
+    def test_encrypted_license_communication_workflow(self) -> None:
         """Test REAL encrypted license communication workflow."""
         emulator = LicenseServerEmulator()
-        server = emulator.create_encrypted_license_server(host='127.0.0.1', port=0)
+        server = emulator.create_encrypted_license_server(host='127.0.0.1', port=0)  # type: ignore[attr-defined]
 
         try:
             server.start_async()
@@ -225,7 +226,7 @@ class TestNetworkLicenseIntegration:
 
             time.sleep(0.5)
 
-            client = emulator.create_encrypted_license_client()
+            client = emulator.create_encrypted_license_client()  # type: ignore[attr-defined]
             connection_result = client.connect('127.0.0.1', server_port, timeout=5.0)
             assert connection_result, "Encrypted license client must connect successfully"
 
@@ -252,7 +253,7 @@ class TestNetworkLicenseIntegration:
         finally:
             server.stop()
 
-    def test_multi_protocol_license_server_workflow(self, test_license_packets):
+    def test_multi_protocol_license_server_workflow(self, test_license_packets: dict[str, dict[str, bytes]]) -> None:
         """Test REAL multi-protocol license server workflow."""
         hooker = CloudLicenseHooker()
 
@@ -285,10 +286,10 @@ class TestNetworkLicenseIntegration:
         finally:
             hooker.stop_emulation_server(emulation_server)
 
-    def test_license_protocol_switching_workflow(self):
+    def test_license_protocol_switching_workflow(self) -> None:
         """Test REAL license protocol switching workflow."""
         emulator = LicenseServerEmulator()
-        license_server = emulator.create_adaptive_license_server(host='127.0.0.1', port=0)
+        license_server = emulator.create_adaptive_license_server(host='127.0.0.1', port=0)  # type: ignore[attr-defined]
 
         try:
             license_server.start_async()
@@ -308,7 +309,7 @@ class TestNetworkLicenseIntegration:
                 current_protocol = license_server.get_current_protocol()
                 assert current_protocol == config['name'], f"Current protocol must be {config['name']}"
 
-                client = emulator.create_protocol_client(config['name'])
+                client = emulator.create_protocol_client(config['name'])  # type: ignore[attr-defined]
                 assert client is not None, f"Must create license client for {config['name']}"
 
                 try:
@@ -319,13 +320,13 @@ class TestNetworkLicenseIntegration:
         finally:
             license_server.stop()
 
-    def test_concurrent_license_emulation_workflow(self, test_license_packets):
+    def test_concurrent_license_emulation_workflow(self, test_license_packets: dict[str, dict[str, bytes]]) -> None:
         """Test REAL concurrent license emulation workflow."""
         hooker = CloudLicenseHooker()
-        results = []
-        errors = []
+        results: list[tuple[int, str, str, int]] = []
+        errors: list[tuple[int, str, str]] = []
 
-        def emulate_protocol(protocol_name, packets, thread_id):
+        def emulate_protocol(protocol_name: str, packets: dict[str, bytes], thread_id: int) -> None:
             try:
                 session = hooker.create_emulation_session(f"{protocol_name}_{thread_id}")
 
@@ -366,7 +367,7 @@ class TestNetworkLicenseIntegration:
         for thread_id, protocol_name, packet_type, response_length in results:
             assert response_length > 0, f"Thread {thread_id} {protocol_name} {packet_type} must produce response"
 
-    def test_network_forensics_integration_workflow(self, network_capture_data):
+    def test_network_forensics_integration_workflow(self, network_capture_data: str) -> None:
         """Test REAL network forensics integration workflow."""
         capture = NetworkCapture()
         hooker = CloudLicenseHooker()
@@ -378,7 +379,7 @@ class TestNetworkLicenseIntegration:
             'identify_patterns': True
         }
 
-        forensics_result = capture.perform_forensic_analysis(forensics_config)
+        forensics_result = capture.perform_forensic_analysis(forensics_config)  # type: ignore[attr-defined]
         assert forensics_result is not None, "Forensic analysis must return results"
         assert 'timeline' in forensics_result, "Results must contain timeline"
         assert 'protocols_detected' in forensics_result, "Results must contain detected protocols"
@@ -397,7 +398,7 @@ class TestNetworkLicenseIntegration:
                 assert 'protocol' in traffic_entry, "Traffic entry must identify protocol"
                 assert 'data_size' in traffic_entry, "Traffic entry must have data size"
 
-    def test_license_server_failover_workflow(self, test_license_packets):
+    def test_license_server_failover_workflow(self, test_license_packets: dict[str, dict[str, bytes]]) -> None:
         """Test REAL license server failover workflow."""
         hooker = CloudLicenseHooker()
 
@@ -444,7 +445,7 @@ class TestNetworkLicenseIntegration:
             hooker.stop_emulation_server(primary_server)
             hooker.stop_emulation_server(backup_server)
 
-    def test_network_performance_monitoring_workflow(self):
+    def test_network_performance_monitoring_workflow(self) -> None:
         """Test REAL network performance monitoring workflow."""
         capture = NetworkCapture()
         protocols = CommunicationProtocols()
@@ -456,23 +457,24 @@ class TestNetworkLicenseIntegration:
             'duration': 3.0
         }
 
-        monitoring_session = capture.start_performance_monitoring(monitor_config)
+        monitoring_session = capture.start_performance_monitoring(monitor_config)  # type: ignore[attr-defined]
         assert monitoring_session is not None, "Performance monitoring must start"
 
         time.sleep(1.0)
 
-        test_traffic = protocols.generate_test_traffic('tcp', count=10)
+        test_traffic = protocols.generate_test_traffic('tcp', count=10)  # type: ignore[attr-defined]
         assert test_traffic, "Must generate test traffic"
 
         time.sleep(2.5)
 
-        monitoring_results = capture.stop_performance_monitoring(monitoring_session)
+        monitoring_results = capture.stop_performance_monitoring(monitoring_session)  # type: ignore[attr-defined]
         assert monitoring_results is not None, "Performance monitoring must return results"
         assert 'metrics' in monitoring_results, "Results must contain metrics"
         assert 'summary' in monitoring_results, "Results must contain summary"
 
-        metrics = monitoring_results['metrics']
-        for metric_name in monitor_config['metrics']:
+        metrics: dict[str, Any] = monitoring_results['metrics']
+        metric_names = ['throughput', 'latency', 'packet_loss']
+        for metric_name in metric_names:
             if metric_name in metrics:
                 metric_data = metrics[metric_name]
                 assert isinstance(metric_data, dict), f"Metric {metric_name} must be a dictionary"
