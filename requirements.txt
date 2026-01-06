@@ -40,7 +40,7 @@ bitsandbytes==0.49.0
 bitstring==4.3.1
 black==25.12.0
 blinker==1.9.0
-bokeh==3.8.1
+bokeh==3.8.2
 boolean_py==5.0
 boto3==1.41.5
 botocore==1.41.5
