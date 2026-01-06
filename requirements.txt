@@ -330,7 +330,7 @@ pylint==4.0.4
 pymdown_extensions==10.19.1
 pymem==1.14.0
 pymongo==4.15.5
-pynacl==1.6.1
+pynacl==1.6.2
 pynput==1.8.1
 pyopencl==2025.2.7
 pyopenssl==25.3.0
